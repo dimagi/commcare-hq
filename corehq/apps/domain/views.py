@@ -4,7 +4,7 @@ import datetime
 from decimal import Decimal
 import logging
 import json
-import cStringIO
+import io
 
 import pytz
 from couchdbkit import ResourceNotFound
@@ -89,7 +89,7 @@ from dimagi.utils.web import json_request
 from corehq import privileges, feature_previews
 from django_prbac.utils import has_privilege
 from corehq.apps.accounting.models import (
-    Subscription, CreditLine, SoftwareProductType, SubscriptionType,
+    Subscription, CreditLine, SubscriptionType,
     DefaultProductPlan, SoftwarePlanEdition, BillingAccount,
     BillingAccountType,
     Invoice, BillingRecord, InvoicePdf, PaymentMethodType,
@@ -575,7 +575,6 @@ def drop_repeater(request, domain, repeater_id):
 
 @require_POST
 @require_can_edit_web_users
-@toggles.ENABLE_REPEATER_EDIT_AND_PAUSE.required_decorator()
 def pause_repeater(request, domain, repeater_id):
     rep = Repeater.get(repeater_id)
     rep.pause()
@@ -585,7 +584,6 @@ def pause_repeater(request, domain, repeater_id):
 
 @require_POST
 @require_can_edit_web_users
-@toggles.ENABLE_REPEATER_EDIT_AND_PAUSE.required_decorator()
 def resume_repeater(request, domain, repeater_id):
     rep = Repeater.get(repeater_id)
     rep.resume()
@@ -776,9 +774,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
     def get_product_summary(self, plan_version, account, subscription):
         product_rate = plan_version.product_rate
         return {
-            'name': SoftwareProductType.COMMCARE,
             'monthly_fee': _("USD %s /month") % product_rate.monthly_fee,
-            'type': SoftwareProductType.COMMCARE,
             'subscription_credit': self._fmt_credit(self._credit_grand_total(
                 CreditLine.get_credits_by_subscription_and_features(
                     subscription, is_product=True
@@ -1335,7 +1331,7 @@ class InternalSubscriptionManagementView(BaseAdminProjectSettingsView):
             'is_form_editable': self.is_form_editable,
             'plan_name': Subscription.get_subscribed_plan_by_domain(self.domain),
             'select_subscription_type_form': self.select_subscription_type_form,
-            'subscription_management_forms': self.slug_to_form.values(),
+            'subscription_management_forms': list(self.slug_to_form.values()),
             'today': datetime.date.today(),
         }
 
@@ -1826,8 +1822,10 @@ class EmailOnDowngradeView(View):
         )
 
         send_mail_async.delay(
-            'Subscription downgrade for {}'.format(request.domain),
-            message, settings.DEFAULT_FROM_EMAIL, [settings.GROWTH_EMAIL]
+            '{}Subscription downgrade for {}'.format(
+                '[staging] ' if settings.SERVER_ENVIRONMENT == "staging" else "",
+                request.domain
+            ), message, settings.DEFAULT_FROM_EMAIL, [settings.GROWTH_EMAIL]
         )
         return json_response({'success': True})
 
@@ -2090,7 +2088,7 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
 
             if image:
                 im = Image.open(image)
-                out = cStringIO.StringIO()
+                out = io.BytesIO()
                 im.thumbnail((200, 200), Image.ANTIALIAS)
                 im.save(out, new_domain.image_type.split('/')[-1])
                 new_domain.put_attachment(content=out.getvalue(), name=image.name)
@@ -2167,7 +2165,7 @@ class ManageProjectMediaView(BaseAdminProjectSettingsView):
     def page_context(self):
         return {
             'media': self.project_media_data,
-            'licenses': LICENSES.items(),
+            'licenses': list(LICENSES.items()),
         }
 
     @retry_resource(3)

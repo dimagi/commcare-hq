@@ -10,16 +10,10 @@ from django.db.models.aggregates import Sum
 from django.utils.translation import ugettext as _
 
 from corehq.util.quickcache import quickcache
-from custom.icds_reports.const import LocationTypes, ChartColors
+from custom.icds_reports.const import LocationTypes, ChartColors, MapColors
 from custom.icds_reports.models import AggChildHealthMonthly
 from custom.icds_reports.utils import apply_exclude, chosen_filters_to_labels, indian_formatted_number, \
     get_child_locations
-
-RED = '#de2d26'
-ORANGE = '#fc9272'
-BLUE = '#006fdf'
-PINK = '#fee0d2'
-GREY = '#9D9D9D'
 
 
 @quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
@@ -81,9 +75,11 @@ def get_prevalence_of_stunting_data_map(domain, config, loc_level, show_test=Fal
         data_for_map[on_map_name]['total_measured'] += total_measured
         data_for_map[on_map_name]['original_name'].append(name)
 
+    values = []
     for data_for_location in six.itervalues(data_for_map):
         numerator = data_for_location['moderate'] + data_for_location['severe']
         value = numerator * 100 / (data_for_location['total'] or 1)
+        values.append(value)
         if value < 25:
             data_for_location.update({'fillKey': '0%-25%'})
         elif 25 <= value < 38:
@@ -92,13 +88,12 @@ def get_prevalence_of_stunting_data_map(domain, config, loc_level, show_test=Fal
             data_for_location.update({'fillKey': '38%-100%'})
 
     fills = OrderedDict()
-    fills.update({'0%-25%': PINK})
-    fills.update({'25%-38%': ORANGE})
-    fills.update({'38%-100%': RED})
-    fills.update({'defaultFill': GREY})
+    fills.update({'0%-25%': MapColors.PINK})
+    fills.update({'25%-38%': MapColors.ORANGE})
+    fills.update({'38%-100%': MapColors.RED})
+    fills.update({'defaultFill': MapColors.GREY})
 
-    sum_of_indicators = moderate_total + severe_total + normal_total
-    percent_unmeasured = (valid_total - sum_of_indicators) * 100 / float(valid_total or 1)
+    percent_unmeasured = (valid_total - measured_total) * 100 / float(valid_total or 1)
 
     gender_label, age_label, chosen_filters = chosen_filters_to_labels(config, default_interval='6 - 60 months')
 
@@ -110,7 +105,7 @@ def get_prevalence_of_stunting_data_map(domain, config, loc_level, show_test=Fal
         ),
         "fills": fills,
         "rightLegend": {
-            "average": "%.2f" % (((moderate_total + severe_total) * 100) / float(valid_total or 1)),
+            "average": "%.2f" % ((sum(values)) / float(len(values) or 1)),
             "info": _((
                 "Percentage of children ({}) enrolled for ICDS services with height-for-age below "
                 "-2Z standard deviations of the WHO Child Growth Standards median."
@@ -120,7 +115,7 @@ def get_prevalence_of_stunting_data_map(domain, config, loc_level, show_test=Fal
             )),
             "extended_info": [
                 {
-                    'indicator': 'Total Children{} weighed in given month:'.format(chosen_filters),
+                    'indicator': 'Total Children{} eligible to have height measured:'.format(chosen_filters),
                     'value': indian_formatted_number(valid_total)
                 },
                 {
@@ -134,15 +129,15 @@ def get_prevalence_of_stunting_data_map(domain, config, loc_level, show_test=Fal
                 },
                 {
                     'indicator': '% Severely stunted{}:'.format(chosen_filters),
-                    'value': '%.2f%%' % (severe_total * 100 / float(valid_total or 1))
+                    'value': '%.2f%%' % (severe_total * 100 / float(measured_total or 1))
                 },
                 {
                     'indicator': '% Moderately stunted{}:'.format(chosen_filters),
-                    'value': '%.2f%%' % (moderate_total * 100 / float(valid_total or 1))
+                    'value': '%.2f%%' % (moderate_total * 100 / float(measured_total or 1))
                 },
                 {
                     'indicator': '% Normal{}:'.format(chosen_filters),
-                    'value': '%.2f%%' % (normal_total * 100 / float(valid_total or 1))
+                    'value': '%.2f%%' % (normal_total * 100 / float(measured_total or 1))
                 }
             ]
         },
@@ -166,7 +161,7 @@ def get_prevalence_of_stunting_data_chart(domain, config, loc_level, show_test=F
         moderate=Sum('stunting_moderate'),
         severe=Sum('stunting_severe'),
         normal=Sum('stunting_normal'),
-        valid=Sum('height_eligible'),
+        valid=Sum('height_measured_in_month'),
     ).order_by('month')
 
     if not show_test:
@@ -323,7 +318,7 @@ def get_prevalence_of_stunting_sector_data(domain, config, loc_level, location_i
         for prop, value in six.iteritems(row_values):
             tooltips_data[name][prop] += value
 
-        value = ((moderate or 0) + (severe or 0)) / float(valid or 1)
+        value = ((moderate or 0) + (severe or 0)) / float(total_measured or 1)
         chart_data['blue'].append([
             name, value
         ])
@@ -349,7 +344,7 @@ def get_prevalence_of_stunting_sector_data(domain, config, loc_level, location_i
                 "key": "",
                 "strokeWidth": 2,
                 "classed": "dashed",
-                "color": BLUE
+                "color": MapColors.BLUE
             },
         ]
     }

@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import division
 from collections import namedtuple
 from functools import wraps
 import hashlib
@@ -298,7 +299,12 @@ class DynamicallyPredictablyRandomToggle(PredictablyRandomToggle):
             toggle = Toggle.get(self.slug)
         except ResourceNotFound:
             return self.default_randomness
-        return getattr(toggle, self.RANDOMNESS_KEY, self.default_randomness)
+        dynamic_randomness = getattr(toggle, self.RANDOMNESS_KEY, self.default_randomness)
+        try:
+            dynamic_randomness = float(dynamic_randomness)
+            return dynamic_randomness
+        except ValueError:
+            return self.default_randomness
 
 
 # if no namespaces are specified the user namespace is assumed
@@ -334,7 +340,7 @@ def all_toggles():
     """
     Loads all toggles
     """
-    return all_toggles_by_name_in_scope(globals()).values()
+    return list(all_toggles_by_name_in_scope(globals()).values())
 
 
 def all_toggles_by_name():
@@ -748,6 +754,13 @@ CUSTOM_PROPERTIES = StaticToggle(
     help_link='https://confluence.dimagi.com/display/internal/CommCare+Android+Developer+Options+--+Internal#'
               'CommCareAndroidDeveloperOptions--Internal-SettingtheValueofaDeveloperOptionfromHQ',
     namespaces=[NAMESPACE_DOMAIN]
+)
+
+WEBAPPS_CASE_MIGRATION = StaticToggle(
+    'webapps_case_migration',
+    "Work-in-progress to support user-written migrations",
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_USER]
 )
 
 ENABLE_LOADTEST_USERS = StaticToggle(
@@ -1449,9 +1462,16 @@ ICDS_UCR_ELASTICSEARCH_DOC_LOADING = DynamicallyPredictablyRandomToggle(
     namespaces=[NAMESPACE_OTHER],
 )
 
-ENABLE_REPEATER_EDIT_AND_PAUSE = StaticToggle(
-    'enable_repeater_edit_and_pause',
-    "Turn on ability to edit a repeater and pause/resume it",
+MOBILE_LOGIN_LOCKOUT = StaticToggle(
+    'mobile_user_login_lockout',
+    "On too many wrong password attempts, lock out mobile users",
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN]
+)
+
+EMAIL_EXPORT_WHEN_DONE_BUTTON = StaticToggle(
+    'email_export_when_done_button',
+    "Show button that emails when export is done",
     TAG_PRODUCT,
     [NAMESPACE_DOMAIN],
 )

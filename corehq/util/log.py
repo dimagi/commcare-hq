@@ -118,7 +118,7 @@ class HqAdminEmailHandler(AdminEmailHandler):
             ])
 
             context.update({
-                'get': request.GET.items(),
+                'get': list(request.GET.items()),
                 'post': SafeExceptionReporterFilter().get_post_parameters(request),
                 'method': request.method,
                 'username': request.user.username if getattr(request, 'user', None) else "",

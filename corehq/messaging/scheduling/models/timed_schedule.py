@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import division
 import calendar
 import hashlib
 import json
@@ -148,7 +149,7 @@ class TimedSchedule(Schedule):
                 # always schedule a negative day.
                 raise InvalidMonthlyScheduleConfiguration("Day must be between -28 and 31, and not be 0")
 
-            year_offset = (instance.schedule_iteration_num - 1) / 12
+            year_offset = (instance.schedule_iteration_num - 1) // 12
             month_offset = (instance.schedule_iteration_num - 1) % 12
 
             year = start_date_with_offset.year + year_offset
@@ -188,18 +189,11 @@ class TimedSchedule(Schedule):
         current_event = self.memoized_events[instance.current_event_num]
         return current_event.memoized_content
 
-    def move_to_next_event(self, instance):
-        instance.current_event_num += 1
-        if instance.current_event_num >= len(self.memoized_events):
-            instance.schedule_iteration_num += 1
-            instance.current_event_num = 0
-        self.set_next_event_due_timestamp(instance)
-
-        if (
+    def total_iterations_complete(self, instance):
+        return (
             self.total_iterations != self.REPEAT_INDEFINITELY and
             instance.schedule_iteration_num > self.total_iterations
-        ):
-            instance.active = False
+        )
 
     def delete_related_events(self):
         for event in self.event_set.all():
@@ -466,3 +460,13 @@ class CasePropertyTimedEvent(AbstractTimedEvent):
 class ScheduledBroadcast(Broadcast):
     schedule = models.ForeignKey('scheduling.TimedSchedule', on_delete=models.CASCADE)
     start_date = models.DateField()
+
+    def soft_delete(self):
+        from corehq.messaging.scheduling.tasks import delete_timed_schedule_instances
+
+        with transaction.atomic():
+            self.deleted = True
+            self.save()
+            self.schedule.deleted = True
+            self.schedule.save()
+            delete_timed_schedule_instances.delay(self.schedule_id)

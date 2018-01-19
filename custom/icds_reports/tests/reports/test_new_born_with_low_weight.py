@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from django.test.utils import override_settings
 
-from custom.icds_reports.const import ChartColors
+from custom.icds_reports.const import ChartColors, MapColors
 from custom.icds_reports.reports.new_born_with_low_weight import get_newborn_with_low_birth_weight_map, \
     get_newborn_with_low_birth_weight_chart, get_newborn_with_low_birth_weight_data
 from django.test import TestCase
@@ -26,7 +26,7 @@ class TestNewBornWithLowWeight(TestCase):
                             "<br/><br/>Newborns with Low Birth Weight are closely associated with foetal "
                             "and neonatal mortality and morbidity, inhibited growth and cognitive development,"
                             " and chronic diseases later in life",
-                    "average": 28.571428571428573,
+                    "average": 25.0,
                     'extended_info': [
                         {'indicator': 'Total Number of Newborns born in given month:', 'value': "7"},
                         {'indicator': 'Number of Newborns with LBW in given month:', 'value': "2"},
@@ -35,10 +35,10 @@ class TestNewBornWithLowWeight(TestCase):
                     ]
                 },
                 "fills": {
-                    "0%-20%": "#fee0d2",
-                    "20%-60%": "#fc9272",
-                    "60%-100%": "#de2d26",
-                    "defaultFill": "#9D9D9D"
+                    "0%-20%": MapColors.PINK,
+                    "20%-60%": MapColors.ORANGE,
+                    "60%-100%": MapColors.RED,
+                    "defaultFill": MapColors.GREY
                 },
                 "data": {
                     "st1": {
@@ -86,10 +86,10 @@ class TestNewBornWithLowWeight(TestCase):
                     ]
                 },
                 "fills": {
-                    "0%-20%": "#fee0d2",
-                    "20%-60%": "#fc9272",
-                    "60%-100%": "#de2d26",
-                    "defaultFill": "#9D9D9D"
+                    "0%-20%": MapColors.PINK,
+                    "20%-60%": MapColors.ORANGE,
+                    "60%-100%": MapColors.RED,
+                    "defaultFill": MapColors.GREY
                 },
                 "data": {
                     'block_map': {
@@ -123,7 +123,7 @@ class TestNewBornWithLowWeight(TestCase):
                     },
                     {
                         "loc_name": "st1",
-                        "percent": 50.0
+                        "percent": 100.0
                     }
                 ],
                 "top_five": [
@@ -133,7 +133,7 @@ class TestNewBornWithLowWeight(TestCase):
                     },
                     {
                         "loc_name": "st1",
-                        "percent": 50.0
+                        "percent": 100.0
                     }
                 ],
                 "chart_data": [
@@ -157,13 +157,13 @@ class TestNewBornWithLowWeight(TestCase):
                             {
                                 "y": 0.0,
                                 "x": 1491004800000,
-                                "all": 8,
+                                "all": 3,
                                 "low_birth": 0
                             },
                             {
-                                "y": 0.2857142857142857,
+                                "y": 0.6666666666666666,
                                 "x": 1493596800000,
-                                "all": 7,
+                                "all": 3,
                                 "low_birth": 2
                             }
                         ],
@@ -177,7 +177,7 @@ class TestNewBornWithLowWeight(TestCase):
                     },
                     {
                         "loc_name": "st1",
-                        "percent": 50.0
+                        "percent": 100.0
                     }
                 ]
             }
@@ -214,7 +214,7 @@ class TestNewBornWithLowWeight(TestCase):
                 },
                 "chart_data": [
                     {
-                        "color": "#006fdf",
+                        "color": MapColors.BLUE,
                         "classed": "dashed",
                         "strokeWidth": 2,
                         "values": [

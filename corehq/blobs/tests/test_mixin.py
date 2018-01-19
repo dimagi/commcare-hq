@@ -6,7 +6,7 @@ from base64 import b64encode
 from copy import deepcopy
 from hashlib import md5
 from os.path import join
-from StringIO import StringIO
+from io import BytesIO
 
 from django.conf import settings
 from django.test import SimpleTestCase
@@ -87,7 +87,7 @@ class TestBlobMixin(BaseTestCase):
         self.assertEqual(self.obj.fetch_attachment(name), data)
 
     def test_put_attachment_with_named_content(self):
-        content = StringIO(b"content")
+        content = BytesIO(b"content")
         content.name = "test.1"
         self.obj.put_attachment(content)
         self.assertEqual(self.obj.fetch_attachment(content.name), "content")
@@ -118,7 +118,7 @@ class TestBlobMixin(BaseTestCase):
 
     def test_document_blobs(self):
         name = "test.1"
-        content = StringIO(b"content")
+        content = BytesIO(b"content")
         self.obj.put_attachment(content, name, content_type="text/plain")
         self.assertEqual(self.obj.blobs[name].content_type, "text/plain")
         self.assertEqual(self.obj.blobs[name].content_length, 7)
@@ -126,7 +126,7 @@ class TestBlobMixin(BaseTestCase):
     def test_deferred_put_attachment(self):
         obj = self.make_doc(DeferredPutBlobDocument)
         name = "test.1"
-        content = StringIO(b"content")
+        content = BytesIO(b"content")
         obj.deferred_put_attachment(content, name, content_type="text/plain")
         self.assertEqual(obj.blobs[name].id, None)
         self.assertEqual(obj.blobs[name].content_type, "text/plain")
@@ -203,7 +203,7 @@ class TestBlobMixin(BaseTestCase):
     def test_save_persists_unsaved_blob(self):
         obj = self.make_doc(DeferredPutBlobDocument)
         name = "test.1"
-        content = StringIO(b"content")
+        content = BytesIO(b"content")
         obj.deferred_put_attachment(content, name, content_type="text/plain")
         obj.save()
         self.assertTrue(obj.saved)
@@ -213,7 +213,7 @@ class TestBlobMixin(BaseTestCase):
 
     def test_blob_directory(self):
         name = "test.1"
-        content = StringIO(b"test_blob_directory content")
+        content = BytesIO(b"test_blob_directory content")
         self.obj.put_attachment(content, name)
         bucket = join("commcarehq_test", self.obj._id)
         blob = self.get_blob(self.obj.blobs[name].id, bucket)
@@ -246,7 +246,7 @@ class TestBlobMixin(BaseTestCase):
 
     def test_put_attachment_deletes_couch_attachment(self):
         name = "test"
-        content = StringIO(b"content")
+        content = BytesIO(b"content")
         doc = self.make_doc(FallbackToCouchDocument)
         doc._attachments = {name: {"length": 25}}
         doc.put_attachment(content, name)

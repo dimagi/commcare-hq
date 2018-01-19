@@ -1,10 +1,21 @@
 from __future__ import absolute_import
 from django.contrib import admin
+from django.core.paginator import Paginator
+from django.utils.functional import cached_property
 from .models import DeviceReportEntry, UserErrorEntry, UserEntry, ForceCloseEntry
+
+
+class TableIsTooBigPaginator(Paginator):
+    @cached_property
+    def count(self):
+        # This is supposed to return the matching count, but that's wicked slow
+        # for massive tables, so just pick a big number
+        return 10000
 
 
 class DeviceReportEntryAdmin(admin.ModelAdmin):
     model = DeviceReportEntry
+    paginator = TableIsTooBigPaginator
     list_display = [
         'domain',
         'username',
@@ -20,8 +31,6 @@ class DeviceReportEntryAdmin(admin.ModelAdmin):
         'date',
         'username',
     ]
-    # postgres SQL count query takes long time on big tables
-    show_full_result_count = False
 
 
 class UserErrorEntryAdmin(admin.ModelAdmin):

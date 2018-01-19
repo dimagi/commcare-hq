@@ -22,6 +22,7 @@
 
 {% block page_content %}
 
+
 {% initial_page_data 'dynamic_properties' dynamic_properties %}
 {% initial_page_data 'timezone_offset' timezone_offset %}
 {% initial_page_data 'xform_api_url' xform_api_url %}
@@ -29,6 +30,9 @@
 {% registerurl "case_form_data" case.domain case.case_id '---' %}
 {% registerurl "case_property_names" case.domain case.case_id %}
 {% registerurl "edit_case" case.domain case.case_id %}
+
+{# This is used in case/partials/repeat_records.html #}
+{% registerurl 'requeue_repeat_record' case.domain %}
 
 <div class="hq-generic-report">
     <div id="report-content">

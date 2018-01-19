@@ -3,7 +3,7 @@ from abc import ABCMeta, abstractmethod
 from collections import namedtuple
 
 import six
-from StringIO import StringIO
+from io import BytesIO
 
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.util.quickcache import quickcache
@@ -432,7 +432,7 @@ def get_cached_case_attachment(domain, case_id, attachment_id, is_image=False):
     cobject = CachedImage(attachment_cache_key) if is_image else CachedObject(attachment_cache_key)
     if not cobject.is_cached():
         content = CaseAccessors(domain).get_attachment_content(case_id, attachment_id)
-        stream = StringIO(content.content_body)
+        stream = BytesIO(content.content_body)
         metadata = {'content_type': content.content_type}
         cobject.cache_put(stream, metadata)
 

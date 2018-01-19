@@ -3,7 +3,7 @@ import six.moves.html_parser
 import json
 import socket
 import uuid
-from StringIO import StringIO
+from io import StringIO
 from collections import defaultdict, namedtuple, OrderedDict, Counter
 from datetime import timedelta, date, datetime
 
@@ -242,7 +242,7 @@ class RecentCouchChangesView(BaseAdminSectionView):
 
         def _to_chart_data(data_dict):
             return [
-                {'label': l, 'value': v} for l, v in sorted(data_dict.items(), key=lambda tup: tup[1], reverse=True)
+                {'label': l, 'value': v} for l, v in sorted(list(data_dict.items()), key=lambda tup: tup[1], reverse=True)
             ][:20]
 
         return {
@@ -734,8 +734,8 @@ def _lookup_id_in_database(doc_id, db_name=None):
         dbs = [_get_db_from_db_name(db_name)]
         response['selected_db'] = db_name
     else:
-        couch_dbs = couch_config.all_dbs_by_slug.values()
-        sql_dbs = _SQL_DBS.values()
+        couch_dbs = list(couch_config.all_dbs_by_slug.values())
+        sql_dbs = list(_SQL_DBS.values())
         dbs = couch_dbs + sql_dbs
 
     db_results = []
@@ -1245,7 +1245,7 @@ class CallcenterUCRCheck(BaseAdminSectionView):
         domain_stats = get_call_center_data_source_stats(domains)
 
         context = {
-            'data': sorted(domain_stats.values(), key=lambda s: s.name),
+            'data': sorted(list(domain_stats.values()), key=lambda s: s.name),
             'domain': domain
         }
 

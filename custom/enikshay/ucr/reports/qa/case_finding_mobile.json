@@ -6,8 +6,7 @@
 
     ],
     "server_environment": [
-        "enikshay",
-        "softlayer"
+        "enikshay"
     ],
     "data_source_table": "episode_qa",
     "report_id": "case_finding_mobile_qa",

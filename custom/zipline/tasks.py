@@ -9,6 +9,7 @@ from dimagi.utils.couch import CriticalSection
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.parsing import json_format_datetime
 from requests.auth import HTTPBasicAuth
+import six
 
 
 ZIPLINE_STATUS_RECEIVED = 'received'
@@ -120,7 +121,7 @@ def get_json_payload_from_order(order):
         'locationCode': order.location_code,
         'products': [
             {'productCode': code, 'quantityOrdered': info.get('quantity')}
-            for code, info in order.products_requested.iteritems()
+            for code, info in six.iteritems(order.products_requested)
         ],
     }
 

@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.conf import settings
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from django.template.loader import render_to_string

@@ -17,7 +17,6 @@ from corehq.apps.accounting.models import (
     FeatureType,
     SoftwarePlanEdition,
     Subscription,
-    SubscriptionManager,
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.ivr.models import Call
@@ -165,7 +164,7 @@ class TestDeleteDomain(TestCase):
     def test_active_subscription_terminated(self):
         self.domain.delete()
 
-        terminated_subscription = Subscription.objects.get(subscriber__domain=self.domain.name)
+        terminated_subscription = Subscription.visible_objects.get(subscriber__domain=self.domain.name)
         self.assertFalse(terminated_subscription.is_active)
         self.assertIsNotNone(terminated_subscription.date_end)
 
@@ -182,7 +181,7 @@ class TestDeleteDomain(TestCase):
         self.domain.delete()
 
         self.assertTrue(
-            super(SubscriptionManager, Subscription.objects).get_queryset().get(
+            Subscription.visible_and_suppressed_objects.get(
                 id=next_subscription.id
             ).is_hidden_to_ops
         )

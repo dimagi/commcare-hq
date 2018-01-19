@@ -22,7 +22,7 @@ def _combine_field_specs(field_specs, exclude_fields):
         if field not in exclude_fields and field not in combined_field_specs:
             combined_field_specs[field] = field_spec
 
-    return sorted(combined_field_specs.values(), key=lambda field_spec: field_spec.field)
+    return sorted(list(combined_field_specs.values()), key=lambda field_spec: field_spec.field)
 
 
 def get_suggested_case_fields(domain, case_type, exclude=None):

@@ -1,10 +1,9 @@
 #!/usr/bin/env python
 from __future__ import absolute_import
-import importlib
 from collections import defaultdict
+import importlib
 import os
 
-from celery.schedules import crontab
 from django.contrib import messages
 import settingshelper as helper
 
@@ -216,6 +215,7 @@ HQ_APPS = (
     'hqscripts',
     'casexml.apps.case',
     'corehq.apps.casegroups',
+    'corehq.apps.case_migrations',
     'casexml.apps.phone',
     'casexml.apps.stock',
     'corehq.apps.cleanup',
@@ -596,6 +596,10 @@ ENIKSHAY_QUEUE = CELERY_MAIN_QUEUE
 # time limit is exceeded.
 CELERYD_TASK_SOFT_TIME_LIMIT = 86400 * 2  # 2 days in seconds
 
+# http://docs.celeryproject.org/en/3.1/configuration.html#celery-event-queue-ttl
+# Keep messages in the events queue only for 2 hours
+CELERY_EVENT_QUEUE_TTL = 2 * 60 * 60
+
 # websockets config
 WEBSOCKET_URL = '/ws/'
 WS4REDIS_PREFIX = 'ws'
@@ -618,7 +622,7 @@ SMS_QUEUE_ENABLED = False
 
 # If an SMS still has not been processed in this number of minutes, enqueue it
 # again.
-SMS_QUEUE_ENQUEUING_TIMEOUT = 60
+SMS_QUEUE_ENQUEUING_TIMEOUT = 180
 
 # Number of minutes a celery task will alot for itself (via lock timeout)
 SMS_QUEUE_PROCESSING_LOCK_TIMEOUT = 5
@@ -681,7 +685,7 @@ PILLOW_RETRY_QUEUE_ENABLED = False
 
 # If an error still has not been processed in this number of minutes, enqueue it
 # again.
-PILLOW_RETRY_QUEUE_ENQUEUING_TIMEOUT = 60
+PILLOW_RETRY_QUEUE_ENQUEUING_TIMEOUT = 60 * 24
 
 # Number of minutes to wait before retrying an unsuccessful processing attempt
 PILLOW_RETRY_REPROCESS_INTERVAL = 5
@@ -785,9 +789,6 @@ COUCH_STALE_QUERY = 'update_after'  # 'ok' for cloudant
 MESSAGE_LOG_OPTIONS = {
     "abbreviated_phone_number_domains": ["mustmgh", "mgh-cgh-uganda"],
 }
-
-IVR_OUTBOUND_RETRIES = 3
-IVR_OUTBOUND_RETRY_INTERVAL = 10
 
 PREVIEWER_RE = '^$'
 
@@ -918,7 +919,7 @@ ENIKSHAY_PRIVATE_API_PASSWORD = None
 # number of docs for UCR to queue asynchronously at once
 # ideally # of documents it takes to process in ~30 min
 ASYNC_INDICATORS_TO_QUEUE = 10000
-ASYNC_INDICATOR_QUEUE_CRONTAB = crontab(minute="*/5")
+ASYNC_INDICATOR_QUEUE_TIMES = None
 DAYS_TO_KEEP_DEVICE_LOGS = 60
 
 MAX_RULE_UPDATES_IN_ONE_RUN = 10000
@@ -1552,17 +1553,8 @@ SMS_LOADED_SQL_BACKENDS = [
     'corehq.messaging.smsbackends.ivory_coast_mtn.models.IvoryCoastMTNBackend',
 ]
 
-IVR_LOADED_SQL_BACKENDS = [
-    'corehq.messaging.ivrbackends.kookoo.models.SQLKooKooBackend',
-]
-
-IVR_BACKEND_MAP = {
-    "91": "MOBILE_BACKEND_KOOKOO",
-}
-
 # The number of seconds to use as a timeout when making gateway requests
 SMS_GATEWAY_TIMEOUT = 5
-IVR_GATEWAY_TIMEOUT = 60
 
 # These are functions that can be called
 # to retrieve custom content in a reminder event.
@@ -2087,7 +2079,7 @@ CUSTOM_UCR_EXPRESSIONS = [
 CUSTOM_UCR_EXPRESSION_LISTS = [
     ('mvp.ucr.reports.expressions.CUSTOM_UCR_EXPRESSIONS'),
     ('custom.icds_reports.ucr.expressions.CUSTOM_UCR_EXPRESSIONS'),
-    ('custom.ucr_ext.expressions.CUSTOM_UCR_EXPRESSIONS'),
+    ('corehq.apps.userreports.expressions.extension_expressions.CUSTOM_UCR_EXPRESSIONS'),
 ]
 
 CUSTOM_UCR_REPORT_FILTERS = [

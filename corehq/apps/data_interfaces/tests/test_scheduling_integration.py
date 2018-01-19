@@ -37,11 +37,12 @@ from corehq.messaging.scheduling.scheduling_partitioned.models import (
     CaseTimedScheduleInstance,
 )
 from corehq.messaging.scheduling.tests.util import delete_alert_schedules, delete_timed_schedules
+from corehq.messaging.tasks import run_messaging_rule
 from corehq.sql_db.util import run_query_across_partitioned_databases
 from datetime import datetime, date, time
 from django.db.models import Q
 from django.test import TestCase
-from mock import patch
+from mock import patch, call
 from six.moves import range
 
 
@@ -751,6 +752,35 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
             self.assertEqual(instances[0].next_event_due, datetime(2017, 8, 6, 13, 0))
             self.assertEqual(instances[0].schedule_revision, schedule.get_schedule_revision())
             self.assertTrue(instances[0].active)
+
+    @run_with_all_backends
+    @patch('corehq.messaging.tasks.sync_case_for_messaging_rule.delay')
+    def test_run_messaging_rule(self, task_patch):
+        schedule = AlertSchedule.create_simple_alert(
+            self.domain,
+            SMSContent(message={'en': 'Hello'})
+        )
+
+        rule = create_empty_rule(self.domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING)
+
+        rule.add_action(
+            CreateScheduleInstanceActionDefinition,
+            alert_schedule_id=schedule.schedule_id,
+            recipients=(('Self', None),),
+        )
+
+        AutomaticUpdateRule.clear_caches(self.domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING)
+
+        with create_case(self.domain, 'person') as case1, create_case(self.domain, 'person') as case2:
+            run_messaging_rule(self.domain, rule.pk)
+            self.assertEqual(task_patch.call_count, 2)
+            task_patch.assert_has_calls(
+                [
+                    call(self.domain, case1.case_id, rule.pk),
+                    call(self.domain, case2.case_id, rule.pk),
+                ],
+                any_order=True
+            )
 
 
 class VisitSchedulerIntegrationHelperTestCase(TestCase):

@@ -55,7 +55,7 @@ def get_products_id(form, property):
 
 def get_rupture_products(form):
     result = []
-    for k, v in form.form.iteritems():
+    for k, v in six.iteritems(form.form):
         if re.match("^rupture.*hv$", k):
             result.append(PRODUCT_MAPPING[k[8:-3]])
     return result
@@ -63,7 +63,7 @@ def get_rupture_products(form):
 
 def get_rupture_products_ids(form):
     result = []
-    for k, v in form.form.iteritems():
+    for k, v in six.iteritems(form.form):
         if re.match("^rupture.*hv$", k):
             product_name = PRODUCT_NAMES.get(PRODUCT_MAPPING[k[8:-3]].lower())
             if product_name is not None:

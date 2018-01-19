@@ -26,7 +26,7 @@ import langcodes
 import os
 import pytz
 import re
-from StringIO import StringIO
+import io
 import tempfile
 from six.moves.urllib.error import URLError
 
@@ -1656,7 +1656,7 @@ def export_case_transactions(request, domain, case_id):
             [headers] + [_make_row(txn) for txn in query_set]
         ]
     ]
-    tmp = StringIO()
+    tmp = io.StringIO()
     export_from_tables(formatted_table, tmp, 'xlsx')
     return export_response(tmp, 'xlsx', '{}-stock-transactions'.format(case.name))
 

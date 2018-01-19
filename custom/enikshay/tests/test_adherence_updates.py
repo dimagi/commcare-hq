@@ -21,6 +21,7 @@ from custom.enikshay.const import (
     SCHEDULE_ID_FIXTURE,
     HISTORICAL_CLOSURE_REASON,
 )
+from custom.enikshay.ledger_utils import get_episode_adherence_ledger
 from custom.enikshay.tasks import (
     EpisodeUpdater,
     EpisodeAdherenceUpdate,
@@ -35,6 +36,23 @@ from custom.enikshay.tests.utils import (
     get_episode_case_structure
 )
 import six
+
+MOCK_FIXTURE_ITEMS = {
+    '99DOTS': {
+        'directly_observed_dose': '13',
+        'manual': '18',
+        'missed_dose': '15',
+        'missing_data': '16',
+        'self_administered_dose': '17',
+        'unobserved_dose': '14'},
+    'enikshay': {
+        'directly_observed_dose': '1',
+        'manual': '6',
+        'missed_dose': '3',
+        'missing_data': '4',
+        'self_administered_dose': '5',
+        'unobserved_dose': '2'},
+}
 
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
@@ -1073,6 +1091,51 @@ class TestAdherenceUpdater(TestCase):
         }
 
         self.assert_properties_equal(expected, updater.update_json())
+
+    @mock.patch('custom.enikshay.ledger_utils._adherence_values_fixture_id', lambda x: '123')
+    @mock.patch('custom.enikshay.ledger_utils._get_all_fixture_items', lambda x, y: MOCK_FIXTURE_ITEMS)
+    def test_ledger_updates(self):
+        adherence_cases = [
+            {
+                "name": '1',
+                "adherence_date": datetime.datetime(2009, 3, 5, 2, 0, 1),
+                "adherence_value": 'unobserved_dose',
+                "adherence_source": "enikshay",
+            },
+            {
+                "name": '2',
+                "adherence_date": datetime.datetime(2009, 3, 5, 1, 0, 1),
+                "adherence_value": 'unobserved_dose',
+                "adherence_source": "99DOTS",
+            },
+            {
+                "name": '3',
+                "adherence_date": datetime.datetime(2016, 3, 5, 2, 0, 1),
+                "adherence_value": 'unobserved_dose',
+                "adherence_source": "MERM",
+            },
+            {
+                "name": '4',
+                "adherence_date": datetime.datetime(2016, 3, 5, 19, 0, 1),  # next day in india
+                "adherence_value": 'unobserved_dose',
+                "adherence_source": "99DOTS",
+            }
+        ]
+        episode = self.create_episode_case(
+            adherence_schedule_date_start=datetime.date(2015, 12, 1),
+            adherence_schedule_id='schedule1',
+            adherence_cases=adherence_cases,
+        )
+        self.case_updater.run()
+        # in case of two doses the relevant one takes over and ledger is updated according to it
+        # so balance is 2 for enikshay instead of 14 for 99Dots
+        enikshay_adherence_ledger = get_episode_adherence_ledger(self.domain, episode.case_id,
+                                                                 "date_2009-03-05")
+        self.assertEqual(enikshay_adherence_ledger.balance, 2)
+
+        # the only adherence on 2016-03-05
+        ninetynine_dots_ledger = get_episode_adherence_ledger(self.domain, episode.case_id, "date_2016-03-05")
+        ninetynine_dots_ledger.balance = 14
 
     def test_missed_and_unknown_doses(self):
         adherence_cases = [{

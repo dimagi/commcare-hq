@@ -98,7 +98,6 @@ class EditRepeaterView(BaseRepeaterView):
             )
 
     @method_decorator(domain_admin_required)
-    @method_decorator(toggles.ENABLE_REPEATER_EDIT_AND_PAUSE.required_decorator())
     def dispatch(self, request, *args, **kwargs):
         if self.request.GET.get('repeater_type'):
             self.kwargs['repeater_type'] = self.request.GET['repeater_type']

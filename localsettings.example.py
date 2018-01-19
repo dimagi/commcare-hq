@@ -141,7 +141,7 @@ _ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 XFORMS_PLAYER_URL = 'http://127.0.0.1:4444'
 
 # email and password for an admin django user, such as one created with
-# ./manage.py bootstrap <project-name> <email> <password>
+# ./manage.py make_superuser <email>
 TOUCHFORMS_API_USER = 'admin@example.com'
 TOUCHFORMS_API_PASSWORD = 'password'
 

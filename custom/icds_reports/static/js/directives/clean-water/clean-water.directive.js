@@ -11,7 +11,7 @@ function CleanWaterController($scope, $routeParams, $location, $filter, infrastr
     }
     vm.userLocationId = userLocationId;
     vm.filtersData = $location.search();
-    vm.label = "AWCs with Clean Drinking Water";
+    vm.label = "AWCs that reported having a source of clean drinking water";
     vm.step = $routeParams.step;
     vm.steps = {
         'map': {route: '/clean_water/map', label: 'Map View'},
@@ -29,7 +29,7 @@ function CleanWaterController($scope, $routeParams, $location, $filter, infrastr
     vm.loaded = false;
     vm.filters = ['gender', 'age'];
     vm.rightLegend = {
-        info: 'Percentage of AWCs with a source of clean drinking water',
+        info: 'Percentage of AWCs that reported having a source of clean drinking water',
     };
     vm.message = storageService.getKey('message') || false;
 
@@ -67,8 +67,8 @@ function CleanWaterController($scope, $routeParams, $location, $filter, infrastr
         var percent = row ? d3.format('.2%')(row.in_month / (row.all || 1)) : "N/A";
         return '<div class="hoverinfo" style="max-width: 200px !important;">' +
             '<p>' + loc.properties.name + '</p>' +
-            '<div>Total number of AWCs with a source of clean drinking water: <strong>' + total + '</strong></div>' +
-            '<div>% of AWCs with a source of clean drinking water: <strong>' + percent + '</strong></div>';
+            '<div>Number of AWCs that reported having a source of clean drinking water: <strong>' + total + '</strong></div>' +
+            '<div>% of AWCs that reported having a source of clean drinking water: <strong>' + percent + '</strong></div>';
     };
 
     vm.loadData = function () {
@@ -201,15 +201,14 @@ function CleanWaterController($scope, $routeParams, $location, $filter, infrastr
                 var tooltip = chart.interactiveLayer.tooltip;
                 tooltip.contentGenerator(function (d) {
                     var data_in_month = _.find(vm.chartData[0].values, function(num) { return d3.time.format('%b %Y')(new Date(num['x'])) === d.value;});
-                    var tooltipContent = vm.tooltipContent(d.value, data_in_month);
-                    return tooltipContent;
+                    return vm.tooltipContent(d.value, data_in_month);
                 });
                 return chart;
             },
         },
         caption: {
             enable: true,
-            html: '<i class="fa fa-info-circle"></i> Percentage of AWCs with a source of clean drinking water',
+            html: '<i class="fa fa-info-circle"></i> Percentage of AWCs that reported having a source of clean drinking water',
             css: {
                 'text-align': 'center',
                 'margin': '0 auto',
@@ -219,9 +218,11 @@ function CleanWaterController($scope, $routeParams, $location, $filter, infrastr
     };
 
     vm.tooltipContent = function (monthName, dataInMonth) {
-        return "<p><strong>" + monthName + "</strong></p><br/>"
-            + "<p>Number of AWCs with a source of clean drinking water: <strong>" + $filter('indiaNumbers')(dataInMonth.in_month) + "</strong></p>"
-            + "<p>% of AWCs with a source of clean drinking water: <strong>" + d3.format('.2%')(dataInMonth.y) + "</strong></p>";
+        var tooltip_content = "<p><strong>" + monthName + "</strong></p><br/>";
+        tooltip_content += "<p>Number of AWCs that reported having a source of clean drinking water: <strong>" + $filter('indiaNumbers')(dataInMonth.in_month) + "</strong></p>";
+        tooltip_content += "<p>% of AWCs that reported having a source of clean drinking water: <strong>" + d3.format('.2%')(dataInMonth.y) + "</strong></p>";
+
+        return tooltip_content;
     };
 
     vm.showAllLocations = function () {

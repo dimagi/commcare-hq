@@ -27,6 +27,14 @@ class ChartColors(object):
     BLUE = '#005ebd'
 
 
+class MapColors(object):
+    RED = '#de2d26'
+    ORANGE = '#fc9272'
+    BLUE = '#006fdf'
+    PINK = '#fee0d2'
+    GREY = '#9D9D9D'
+
+
 LOCATION_TYPES = [
     LocationTypes.STATE,
     LocationTypes.DISTRICT,

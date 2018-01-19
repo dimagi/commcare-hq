@@ -10,16 +10,10 @@ from django.db.models.aggregates import Sum
 from django.utils.translation import ugettext as _
 
 from corehq.util.quickcache import quickcache
-from custom.icds_reports.const import LocationTypes, ChartColors
+from custom.icds_reports.const import LocationTypes, ChartColors, MapColors
 from custom.icds_reports.models import AggCcsRecordMonthly
 from custom.icds_reports.utils import apply_exclude, generate_data_for_map, indian_formatted_number, \
     get_child_locations
-
-RED = '#de2d26'
-ORANGE = '#fc9272'
-BLUE = '#006fdf'
-PINK = '#fee0d2'
-GREY = '#9D9D9D'
 
 
 @quickcache(['domain', 'config', 'loc_level', 'location_id', 'show_test'], timeout=30 * 60)
@@ -90,7 +84,7 @@ def get_institutional_deliveries_sector_data(domain, config, loc_level, location
                 "key": "",
                 "strokeWidth": 2,
                 "classed": "dashed",
-                "color": BLUE
+                "color": MapColors.BLUE
             },
         ]
     }
@@ -113,7 +107,7 @@ def get_institutional_deliveries_data_map(domain, config, loc_level, show_test=F
             queryset = apply_exclude(domain, queryset)
         return queryset
 
-    data_for_map, valid_total, in_month_total = generate_data_for_map(
+    data_for_map, valid_total, in_month_total, average = generate_data_for_map(
         get_data_for(config),
         loc_level,
         'children',
@@ -123,17 +117,17 @@ def get_institutional_deliveries_data_map(domain, config, loc_level, show_test=F
     )
 
     fills = OrderedDict()
-    fills.update({'0%-20%': RED})
-    fills.update({'20%-60%': ORANGE})
-    fills.update({'60%-100%': PINK})
-    fills.update({'defaultFill': GREY})
+    fills.update({'0%-20%': MapColors.RED})
+    fills.update({'20%-60%': MapColors.ORANGE})
+    fills.update({'60%-100%': MapColors.PINK})
+    fills.update({'defaultFill': MapColors.GREY})
 
     return {
         "slug": "institutional_deliveries",
         "label": "Percent Instituitional Deliveries",
         "fills": fills,
         "rightLegend": {
-            "average": (in_month_total * 100) / float(valid_total or 1),
+            "average": average,
             "info": _((
                 "Percentage of pregnant women who delivered in a public or private medical facility "
                 "in the last month. "

@@ -531,6 +531,10 @@ class RepeatRecord(Document):
     next_check = DateTimeProperty()
     succeeded = BooleanProperty(default=False)
 
+    @property
+    def record_id(self):
+        return self._id
+
     @classmethod
     def wrap(cls, data):
         should_bootstrap_attempts = ('attempts' not in data)

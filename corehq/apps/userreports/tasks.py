@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from __future__ import division
 from collections import defaultdict
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 import logging
 
 from botocore.vendored.requests.exceptions import ReadTimeout
@@ -47,6 +47,7 @@ from corehq.util.decorators import serial_task
 from corehq.util.quickcache import quickcache
 from corehq.util.timer import TimingContext
 from corehq.util.view_utils import reverse
+from custom.icds_reports.ucr.expressions import icds_get_related_docs_ids
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.pagination import DatatablesParams
 from pillowtop.dao.couch import ID_CHUNK_SIZE
@@ -230,17 +231,35 @@ def delete_data_source_task(domain, config_id):
 
 
 @periodic_task(
-    run_every=settings.ASYNC_INDICATOR_QUEUE_CRONTAB, queue=settings.CELERY_PERIODIC_QUEUE
+    run_every=crontab(minute='*/5'), queue=settings.CELERY_PERIODIC_QUEUE
 )
 def run_queue_async_indicators_task():
-    queue_async_indicators.delay()
+    """ASYNC_INDICATOR_QUEUE_TIMES will be of the format:
+    {
+        '*': [(begin_hour, end_hour), (begin_hour, end_hour), ...] catch all for days
+        '1': [(begin_hour, end_hour), ...] hours for Monday (Monday 1, Sunday 7)
+    }
+    All times UTC
+    """
+    if not settings.ASYNC_INDICATOR_QUEUE_TIMES:
+        queue_async_indicators.delay()
+        return
+
+    hours_for_today = settings.ASYNC_INDICATOR_QUEUE_TIMES.get(date.today().isoweekday())
+    if not hours_for_today:
+        hours_for_today = settings.ASYNC_INDICATOR_QUEUE_TIMES.get('*')
+
+    for valid_hours in hours_for_today:
+        if valid_hours[0] <= datetime.utcnow().hour <= valid_hours[1]:
+            queue_async_indicators.delay()
+            break
 
 
 @serial_task('queue-async-indicators', timeout=30 * 60, queue=settings.CELERY_PERIODIC_QUEUE, max_retries=0)
 def queue_async_indicators():
     start = datetime.utcnow()
     cutoff = start + ASYNC_INDICATOR_QUEUE_TIME - timedelta(seconds=30)
-    retry_threshold = start - timedelta(hours=1)
+    retry_threshold = start - timedelta(hours=4)
     # don't requeue anything that has been retired more than 20 times
     indicators = AsyncIndicator.objects.filter(unsuccessful_attempts__lt=20)[:settings.ASYNC_INDICATORS_TO_QUEUE]
     indicators_by_domain_doc_type = defaultdict(list)
@@ -304,11 +323,14 @@ def save_document(doc_ids):
         indicator_by_doc_id = {i.doc_id: i for i in indicators}
         doc_store = get_document_store(first_indicator.domain, first_indicator.doc_type)
         indicator_config_ids = first_indicator.indicator_config_ids
+        related_docs_to_rebuild = set()
 
         with timer:
-            for doc in doc_store.iter_documents(doc_ids):
+            for doc in doc_store.iter_documents(indicator_by_doc_id.keys()):
                 indicator = indicator_by_doc_id[doc['_id']]
-                successfully_processed, to_remove = _save_document_helper(indicator, doc)
+                successfully_processed, to_remove, rebuild_related_docs = _save_document_helper(indicator, doc)
+                if rebuild_related_docs:
+                    related_docs_to_rebuild = related_docs_to_rebuild.union(icds_get_related_docs_ids(doc['_id']))
                 if successfully_processed:
                     processed_indicators.append(indicator.pk)
                 else:
@@ -321,6 +343,13 @@ def save_document(doc_ids):
             for indicator, to_remove in failed_indicators:
                 indicator.update_failure(to_remove)
                 indicator.save()
+
+    # remove any related docs that were just rebuilt
+    related_docs_to_rebuild = related_docs_to_rebuild - set(doc_ids)
+    # queue the docs that aren't already queued
+    _queue_indicators(AsyncIndicator.objects.filter(
+        doc_id__in=related_docs_to_rebuild, date_queued=None
+    ))
 
     datadog_counter('commcare.async_indicator.processed_success', num_processed)
     datadog_counter('commcare.async_indicator.processed_fail', num_failed)
@@ -336,10 +365,10 @@ def _save_document_helper(indicator, doc):
     eval_context = EvaluationContext(doc)
     something_failed = False
     configs_to_remove = []
+    configs = dict()
     for config_id in indicator.indicator_config_ids:
-        adapter = None
         try:
-            config = _get_config(config_id)
+            configs[config_id] = _get_config(config_id)
         except (ResourceNotFound, StaticDataSourceConfigurationNotFoundError):
             celery_task_logger.info("{} no longer exists, skipping".format(config_id))
             configs_to_remove.append(config_id)
@@ -348,6 +377,9 @@ def _save_document_helper(indicator, doc):
             celery_task_logger.info("ES errored when trying to retrieve config")
             something_failed = True
             continue
+
+    for config_id, config in six.iteritems(configs):
+        adapter = None
         try:
             adapter = get_indicator_adapter(config, can_handle_laboratory=True)
             adapter.save(doc, eval_context)
@@ -374,7 +406,8 @@ def _save_document_helper(indicator, doc):
         else:
             configs_to_remove.append(config_id)
 
-    return (not something_failed, configs_to_remove)
+    rebuild_related_docs = any(config.icds_rebuild_related_docs for config in six.itervalues(configs) if config)
+    return (not something_failed, configs_to_remove, rebuild_related_docs)
 
 
 @periodic_task(

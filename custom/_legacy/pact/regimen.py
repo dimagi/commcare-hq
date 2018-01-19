@@ -18,7 +18,7 @@ def regimen_dict_from_choice(key_type, regimen_string):
     if nonartregimen it'll be 'nonartregimen' and dot_n_one, etc.
     """
 
-    assert key_type in type_keys.keys(), 'the key_type must be ART or NONART'
+    assert key_type in list(type_keys.keys()), 'the key_type must be ART or NONART'
 
     #ensure regimen_string is in PACT_REGIMEN_CHOICES_DICT
     #get integer day slot from DAY_SLOTS_BY_TIME[str]
@@ -48,7 +48,7 @@ def regimen_string_from_doc(drug_type, doc_dict):
     For a dict of doc properties and a given drug_type (ART, NONART), calculate/confirm the
     regimen string of the times of doses.
     """
-    assert drug_type in type_keys.keys(), "the drug type must be art or nonart"
+    assert drug_type in list(type_keys.keys()), "the drug type must be art or nonart"
     prefix = type_keys[drug_type]
 
     if drug_type == DOT_ART:

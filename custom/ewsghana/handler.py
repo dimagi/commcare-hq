@@ -72,7 +72,7 @@ def handle(verified_contact, text, msg):
     }
 
     def choose_handler(keyword):
-        for k, v in handlers.iteritems():
+        for k, v in six.iteritems(handlers):
             if keyword.lower() in k:
                 return v
         return None

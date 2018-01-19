@@ -214,6 +214,7 @@ class AggAwcMonthly(models.Model):
     infra_cooking_utensils = models.IntegerField(blank=True, null=True)
     infra_medicine_kits = models.IntegerField(blank=True, null=True)
     infra_adequate_space_pse = models.IntegerField(blank=True, null=True)
+    num_awc_infra_last_update = models.IntegerField(blank=True, null=True)
     usage_num_hh_reg = models.IntegerField(blank=True, null=True)
     usage_num_add_person = models.IntegerField(blank=True, null=True)
     usage_num_add_pregnancy = models.IntegerField(blank=True, null=True)
@@ -377,6 +378,8 @@ class AggChildHealthMonthly(models.Model):
     fully_immunized_eligible = models.IntegerField(blank=True, null=True)
     fully_immunized_on_time = models.IntegerField(blank=True, null=True)
     fully_immunized_late = models.IntegerField(blank=True, null=True)
+    weighed_and_height_measured_in_month = models.IntegerField(blank=True, null=True)
+    weighed_and_born_in_month = models.IntegerField(blank=True, null=True)
 
     class Meta:
         app_label = 'icds_model'

@@ -1,6 +1,6 @@
 from __future__ import absolute_import
-from StringIO import StringIO
 from collections import OrderedDict
+from io import BytesIO
 import datetime
 
 import pytz
@@ -8,7 +8,7 @@ from dateutil.rrule import rrule, MONTHLY
 from django.http.response import Http404
 from sqlagg.base import AliasColumn
 from sqlagg.columns import SumColumn, SimpleColumn, CountUniqueColumn
-from sqlagg.filters import EQ, OR, BETWEEN, RawFilter, EQFilter, IN, NOT, AND, ORFilter, GT, GTE
+from sqlagg.filters import EQ, OR, BETWEEN, RawFilter, EQFilter, IN, NOT, AND, ORFilter, GT, GTE, LTE
 from sqlagg.sorting import OrderBy
 
 from corehq.apps.locations.models import SQLLocation
@@ -178,7 +178,7 @@ class ExportableMixin(object):
         return order_by
 
     def to_export(self, format, location):
-        export_file = StringIO()
+        export_file = BytesIO()
         excel_data = self.get_excel_data(location)
 
         export_from_tables(excel_data, export_file, format)
@@ -360,7 +360,9 @@ class AggChildHealthMonthlyDataSource(ProgressReportSqlData):
                     SumColumn('nutrition_status_severely_underweight', filters=self.filters + [
                         NOT(EQ('age_tranche', 'age_72'))
                     ]),
-                    AliasColumn('wer_eligible')
+                    SumColumn('nutrition_status_weighed', filters=self.filters + [
+                        NOT(EQ('age_tranche', 'age_72'))
+                    ]),
                 ],
                 slug='severely_underweight'
             ),
@@ -371,7 +373,9 @@ class AggChildHealthMonthlyDataSource(ProgressReportSqlData):
                     SumColumn('nutrition_status_moderately_underweight', filters=self.filters + [
                         NOT(EQ('age_tranche', 'age_72'))
                     ]),
-                    AliasColumn('wer_eligible')
+                    SumColumn('nutrition_status_weighed', filters=self.filters + [
+                        NOT(EQ('age_tranche', 'age_72'))
+                    ]),
                 ],
                 slug='moderately_underweight'
             ),
@@ -382,7 +386,9 @@ class AggChildHealthMonthlyDataSource(ProgressReportSqlData):
                     SumColumn('nutrition_status_normal', filters=self.filters + [
                         NOT(EQ('age_tranche', 'age_72'))
                     ]),
-                    AliasColumn('wer_eligible')
+                    SumColumn('nutrition_status_weighed', filters=self.filters + [
+                        NOT(EQ('age_tranche', 'age_72'))
+                    ]),
                 ],
                 slug='status_normal'
             ),
@@ -612,7 +618,7 @@ class AggChildHealthMonthlyDataSource(ProgressReportSqlData):
                 percent_num,
                 [
                     SumColumn('low_birth_weight_in_month'),
-                    AliasColumn('born_in_month')
+                    AliasColumn('weighed_and_born_in_month')
                 ],
                 slug='low_birth_weight'
             )
@@ -901,16 +907,16 @@ class AggAWCMonthlyDataSource(ProgressReportSqlData):
                 SumColumn('cases_person_adolescent_girls_15_18')
             ),
             AggregateColumn(
-                '% AWCs with Clean Drinking Water',
+                '% AWCs reported clean drinking water',
                 aggregate_fn=percent_num,
                 columns=[
                     SumColumn('infra_clean_water'),
-                    SumColumn('num_awcs', alias='awcs')
+                    SumColumn('num_awc_infra_last_update', alias='awcs')
                 ],
                 slug='clean_water'
             ),
             AggregateColumn(
-                '% AWCs with functional toilet',
+                '% AWCs reported functional toilet',
                 percent_num,
                 [
                     SumColumn('infra_functional_toilet'),
@@ -919,7 +925,7 @@ class AggAWCMonthlyDataSource(ProgressReportSqlData):
                 slug='functional_toilet'
             ),
             AggregateColumn(
-                '% AWCs with Medicine Kit',
+                '% AWCs reported medicine kit',
                 percent_num,
                 [
                     SumColumn('infra_medicine_kits'),
@@ -928,7 +934,7 @@ class AggAWCMonthlyDataSource(ProgressReportSqlData):
                 slug='medicine_kits'
             ),
             AggregateColumn(
-                '% AWCs with Adult Scale',
+                '% AWCs reported weighing scale for mother and child',
                 percent_num,
                 [
                     SumColumn('infra_adult_weighing_scale'),
@@ -937,7 +943,7 @@ class AggAWCMonthlyDataSource(ProgressReportSqlData):
                 slug='adult_weighing_scale'
             ),
             AggregateColumn(
-                '% AWCs with Baby Scale',
+                '% AWCs reported weighing scale for infants',
                 percent_num,
                 [
                     SumColumn('infra_infant_weighing_scale'),
@@ -1026,7 +1032,9 @@ class ChildrenExport(ExportableMixin, SqlData):
                     SumColumn('nutrition_status_severely_underweight', filters=self.filters + [
                         NOT(EQ('age_tranche', 'age_72'))
                     ]),
-                    AliasColumn('wer_eligible')
+                    SumColumn('nutrition_status_weighed', filters=self.filters + [
+                        NOT(EQ('age_tranche', 'age_72'))
+                    ]),
                 ],
                 slug='percent_severe_underweight'
             ),
@@ -1037,7 +1045,9 @@ class ChildrenExport(ExportableMixin, SqlData):
                     SumColumn('nutrition_status_moderately_underweight', filters=self.filters + [
                         NOT(EQ('age_tranche', 'age_72'))
                     ]),
-                    AliasColumn('wer_eligible')
+                    SumColumn('nutrition_status_weighed', filters=self.filters + [
+                        NOT(EQ('age_tranche', 'age_72'))
+                    ]),
                 ],
                 slug='percent_moderate_underweight'
             ),
@@ -1048,7 +1058,9 @@ class ChildrenExport(ExportableMixin, SqlData):
                     SumColumn('nutrition_status_normal', filters=self.filters + [
                         NOT(EQ('age_tranche', 'age_72'))
                     ]),
-                    AliasColumn('wer_eligible')
+                    SumColumn('nutrition_status_weighed', filters=self.filters + [
+                        NOT(EQ('age_tranche', 'age_72'))
+                    ]),
                 ],
                 slug='percent_normal_weight'
             ),
@@ -1801,47 +1813,47 @@ class AWCInfrastructureExport(ExportableMixin, SqlData):
         columns = self.get_columns_by_loc_level
         agg_columns = [
             AggregateColumn(
-                'Percentage AWCs with drinking water',
+                'Percentage AWCs reported clean drinking water',
                 percent,
                 [
                     SumColumn('infra_clean_water'),
-                    SumColumn('num_awcs')
+                    SumColumn('num_awc_infra_last_update', alias='awcs')
                 ],
                 slug='percent_with_drinking_water'
             ),
             AggregateColumn(
-                'Percentage AWCs with functional toilet',
+                'Percentage AWCs reported functional toilet',
                 percent,
                 [
                     SumColumn('infra_functional_toilet'),
-                    AliasColumn('num_awcs')
+                    AliasColumn('awcs')
                 ],
                 slug='percent_with_functional_toilet'
             ),
             AggregateColumn(
-                'Percentage AWCs with medicine kit',
+                'Percentage AWCs reported medicine kit',
                 percent,
                 [
                     SumColumn('infra_medicine_kits'),
-                    AliasColumn('num_awcs')
+                    AliasColumn('awcs')
                 ],
                 slug='percent_with_medicine_kit'
             ),
             AggregateColumn(
-                'Percentage AWCs with weighing scale: infants',
+                'Percentage AWCs reported weighing scale: infants',
                 percent,
                 [
                     SumColumn('infra_infant_weighing_scale'),
-                    AliasColumn('num_awcs')
+                    AliasColumn('awcs')
                 ],
                 slug='percent_baby_scale'
             ),
             AggregateColumn(
-                'Percentage AWCs with weighing scale: mother and child',
+                'Percentage AWCs reported weighing scale: mother and child',
                 percent,
                 [
                     SumColumn('infra_adult_weighing_scale'),
-                    AliasColumn('num_awcs')
+                    AliasColumn('awcs')
                 ],
                 slug='percent_adult_scale'
             )
@@ -1859,6 +1871,9 @@ class BeneficiaryExport(ExportableMixin, SqlData):
     table_name = 'child_health_monthly_view'
 
     def __init__(self, config=None, loc_level=1, show_test=False):
+        config.update({
+            '5_years': 60,
+        })
         self.config = config
         self.loc_level = loc_level
         self.show_test = show_test
@@ -1897,9 +1912,9 @@ class BeneficiaryExport(ExportableMixin, SqlData):
 
     @property
     def filters(self):
-        filters = []
+        filters = [LTE('age_in_months', '5_years')]
         for key, value in six.iteritems(self.config):
-            if key == 'domain':
+            if key == 'domain' or key == '5_years':
                 continue
             elif key == 'filters':
                 filters.append(self._build_additional_filters(value))
@@ -2202,21 +2217,21 @@ class FactSheetsReport(object):
                         'rows_config': [
                             {
                                 'data_source': 'AggAWCMonthlyDataSource',
-                                'header': 'AWCs with Medicine Kit',
+                                'header': 'AWCs reported medicine kit',
                                 'slug': 'medicine_kits',
                                 'average': [],
                                 'format': 'percent'
                             },
                             {
                                 'data_source': 'AggAWCMonthlyDataSource',
-                                'header': 'AWCs with weighing scale for infants',
+                                'header': 'AWCs reported weighing scale for infants',
                                 'slug': 'baby_weighing_scale',
                                 'average': [],
                                 'format': 'percent'
                             },
                             {
                                 'data_source': 'AggAWCMonthlyDataSource',
-                                'header': 'AWCs with weighing scale for mother and child',
+                                'header': 'AWCs reported weighing scale for mother and child',
                                 'slug': 'adult_weighing_scale',
                                 'average': [],
                                 'format': 'percent'
@@ -2337,14 +2352,14 @@ class FactSheetsReport(object):
                         'rows_config': [
                             {
                                 'data_source': 'AggAWCMonthlyDataSource',
-                                'header': 'AWCs with clean drinking water',
+                                'header': 'AWCs reported clean drinking water',
                                 'slug': 'clean_water',
                                 'average': [],
                                 'format': 'percent'
                             },
                             {
                                 'data_source': 'AggAWCMonthlyDataSource',
-                                'header': 'AWCs with functional toilet',
+                                'header': 'AWCs reported functional toilet',
                                 'slug': 'functional_toilet',
                                 'average': [],
                                 'format': 'percent'

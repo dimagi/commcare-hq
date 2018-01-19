@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from django.test.utils import override_settings
 
-from custom.icds_reports.const import ChartColors
+from custom.icds_reports.const import ChartColors, MapColors
 from custom.icds_reports.reports.children_initiated_data import get_children_initiated_data_map, \
     get_children_initiated_data_chart, get_children_initiated_sector_data
 from django.test import TestCase
@@ -24,7 +24,7 @@ class TestChildrenInitiated(TestCase):
                 "rightLegend": {
                     "info": "Percentage of children between 6 - 8 months"
                             " given timely introduction to solid, semi-solid or soft food.",
-                    "average": 85.0,
+                    "average": 84.65473145780052,
                     'extended_info': [
                         {'indicator': 'Total number of children between age 6 - 8 months:', 'value': "40"},
                         {
@@ -44,10 +44,10 @@ class TestChildrenInitiated(TestCase):
                     ]
                 },
                 "fills": {
-                    "0%-20%": "#de2d26",
-                    "20%-60%": "#fc9272",
-                    "60%-100%": "#fee0d2",
-                    "defaultFill": "#9D9D9D"
+                    "0%-20%": MapColors.RED,
+                    "20%-60%": MapColors.ORANGE,
+                    "60%-100%": MapColors.PINK,
+                    "defaultFill": MapColors.GREY
                 },
                 "data": {
                     "st1": {
@@ -104,10 +104,10 @@ class TestChildrenInitiated(TestCase):
                     ]
                 },
                 "fills": {
-                    "0%-20%": "#de2d26",
-                    "20%-60%": "#fc9272",
-                    "60%-100%": "#fee0d2",
-                    "defaultFill": "#9D9D9D"
+                    "0%-20%": MapColors.RED,
+                    "20%-60%": MapColors.ORANGE,
+                    "60%-100%": MapColors.PINK,
+                    "defaultFill": MapColors.GREY
                 },
                 "data": {
                     'block_map': {
@@ -230,7 +230,7 @@ class TestChildrenInitiated(TestCase):
                 },
                 "chart_data": [
                     {
-                        "color": "#006fdf",
+                        "color": MapColors.BLUE,
                         "classed": "dashed",
                         "strokeWidth": 2,
                         "values": [

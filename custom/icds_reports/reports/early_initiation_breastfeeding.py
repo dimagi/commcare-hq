@@ -10,16 +10,10 @@ from django.db.models.aggregates import Sum
 from django.utils.translation import ugettext as _
 
 from corehq.util.quickcache import quickcache
-from custom.icds_reports.const import LocationTypes, ChartColors
+from custom.icds_reports.const import LocationTypes, ChartColors, MapColors
 from custom.icds_reports.models import AggChildHealthMonthly
 from custom.icds_reports.utils import apply_exclude, generate_data_for_map, chosen_filters_to_labels, \
     indian_formatted_number, get_child_locations
-
-RED = '#de2d26'
-ORANGE = '#fc9272'
-BLUE = '#006fdf'
-PINK = '#fee0d2'
-GREY = '#9D9D9D'
 
 
 @quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
@@ -40,7 +34,7 @@ def get_early_initiation_breastfeeding_map(domain, config, loc_level, show_test=
             queryset = apply_exclude(domain, queryset)
         return queryset
 
-    data_for_map, in_month_total, birth_total = generate_data_for_map(
+    data_for_map, in_month_total, birth_total, average = generate_data_for_map(
         get_data_for(config),
         loc_level,
         'birth',
@@ -50,10 +44,10 @@ def get_early_initiation_breastfeeding_map(domain, config, loc_level, show_test=
     )
 
     fills = OrderedDict()
-    fills.update({'0%-20%': RED})
-    fills.update({'20%-60%': ORANGE})
-    fills.update({'60%-100%': PINK})
-    fills.update({'defaultFill': GREY})
+    fills.update({'0%-20%': MapColors.RED})
+    fills.update({'20%-60%': MapColors.ORANGE})
+    fills.update({'60%-100%': MapColors.PINK})
+    fills.update({'defaultFill': MapColors.GREY})
 
     gender_ignored, age_ignored, chosen_filters = chosen_filters_to_labels(config)
 
@@ -62,7 +56,7 @@ def get_early_initiation_breastfeeding_map(domain, config, loc_level, show_test=
         "label": "Percent Early Initiation of Breastfeeding{}".format(chosen_filters),
         "fills": fills,
         "rightLegend": {
-            "average": (birth_total * 100) / float(in_month_total or 1),
+            "average": average,
             "info": _((
                 "Percentage of children who were put to the breast within one hour of birth."
                 "<br/><br/>"
@@ -233,7 +227,7 @@ def get_early_initiation_breastfeeding_data(domain, config, loc_level, location_
                 "key": "",
                 "strokeWidth": 2,
                 "classed": "dashed",
-                "color": BLUE
+                "color": MapColors.BLUE
             }
         ]
     }

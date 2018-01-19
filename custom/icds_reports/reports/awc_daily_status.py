@@ -10,16 +10,10 @@ from django.db.models.aggregates import Sum
 from django.utils.translation import ugettext as _
 
 from corehq.util.quickcache import quickcache
-from custom.icds_reports.const import LocationTypes, ChartColors
+from custom.icds_reports.const import LocationTypes, ChartColors, MapColors
 from custom.icds_reports.models import AggAwcDailyView
 from custom.icds_reports.utils import apply_exclude, generate_data_for_map, indian_formatted_number, \
     get_child_locations
-
-RED = '#de2d26'
-ORANGE = '#fc9272'
-BLUE = '#006fdf'
-PINK = '#fee0d2'
-GREY = '#9D9D9D'
 
 
 @quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
@@ -48,7 +42,7 @@ def get_awc_daily_status_data_map(domain, config, loc_level, show_test=False):
         config['date'] = (date - relativedelta(days=1)).date()
         data = get_data_for(config)
 
-    data_for_map, valid_total, in_day_total = generate_data_for_map(
+    data_for_map, valid_total, in_day_total, average = generate_data_for_map(
         data,
         loc_level,
         'in_day',
@@ -58,17 +52,17 @@ def get_awc_daily_status_data_map(domain, config, loc_level, show_test=False):
     )
 
     fills = OrderedDict()
-    fills.update({'0%-50%': RED})
-    fills.update({'50%-75%': ORANGE})
-    fills.update({'75%-100%': PINK})
-    fills.update({'defaultFill': GREY})
+    fills.update({'0%-50%': MapColors.RED})
+    fills.update({'50%-75%': MapColors.ORANGE})
+    fills.update({'75%-100%': MapColors.PINK})
+    fills.update({'defaultFill': MapColors.GREY})
 
     return {
         "slug": "awc_daily_statuses",
         "label": "Percent AWCs Open Yesterday",
         "fills": fills,
         "rightLegend": {
-            "average": (in_day_total or 0) * 100 / float(valid_total or 1),
+            "average": average,
             "info": _((
                 "Percentage of Angwanwadi Centers that were open yesterday."
             )),
@@ -76,11 +70,11 @@ def get_awc_daily_status_data_map(domain, config, loc_level, show_test=False):
             "extended_info": [
                 {
                     'indicator': 'Total number of AWCs that were open yesterday:',
-                    'value': indian_formatted_number(valid_total)
+                    'value': indian_formatted_number(in_day_total)
                 },
                 {
                     'indicator': 'Total number of AWCs that have been launched:',
-                    'value': indian_formatted_number(in_day_total)
+                    'value': indian_formatted_number(valid_total)
                 },
                 {
                     'indicator': '% of AWCs open yesterday:',
@@ -265,7 +259,7 @@ def get_awc_daily_status_sector_data(domain, config, loc_level, location_id, sho
                 "key": "",
                 "strokeWidth": 2,
                 "classed": "dashed",
-                "color": BLUE
+                "color": MapColors.BLUE
             }
         ]
     }

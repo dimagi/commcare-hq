@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from django.test.utils import override_settings
 
-from custom.icds_reports.const import ChartColors
+from custom.icds_reports.const import ChartColors, MapColors
 from custom.icds_reports.reports.awc_daily_status import get_awc_daily_status_data_map, \
     get_awc_daily_status_data_chart, get_awc_daily_status_sector_data
 from django.test import TestCase
@@ -26,16 +26,16 @@ class TestAWCDailyStatus(TestCase):
                     "average": 0.0,
                     "period": "Daily",
                     'extended_info': [
-                        {'indicator': 'Total number of AWCs that were open yesterday:', 'value': "19"},
-                        {'indicator': 'Total number of AWCs that have been launched:', 'value': "0"},
+                        {'indicator': 'Total number of AWCs that were open yesterday:', 'value': "0"},
+                        {'indicator': 'Total number of AWCs that have been launched:', 'value': "19"},
                         {'indicator': '% of AWCs open yesterday:', 'value': '0.00%'}
                     ]
                 },
                 "fills": {
-                    "0%-50%": "#de2d26",
-                    "50%-75%": "#fc9272",
-                    "75%-100%": "#fee0d2",
-                    "defaultFill": "#9D9D9D"
+                    "0%-50%": MapColors.RED,
+                    "50%-75%": MapColors.ORANGE,
+                    "75%-100%": MapColors.PINK,
+                    "defaultFill": MapColors.GREY
                 },
                 "data": {
                     "st1": {
@@ -73,11 +73,11 @@ class TestAWCDailyStatus(TestCase):
                     "extended_info": [
                         {
                             "indicator": "Total number of AWCs that were open yesterday:",
-                            "value": "19"
+                            "value": "0"
                         },
                         {
                             "indicator": "Total number of AWCs that have been launched:",
-                            "value": "0"
+                            "value": "19"
                         },
                         {
                             "indicator": "% of AWCs open yesterday:",
@@ -103,10 +103,10 @@ class TestAWCDailyStatus(TestCase):
                 },
                 "slug": "awc_daily_statuses",
                 "fills": {
-                    "0%-50%": "#de2d26",
-                    "50%-75%": "#fc9272",
-                    "75%-100%": "#fee0d2",
-                    "defaultFill": "#9D9D9D"
+                    "0%-50%": MapColors.RED,
+                    "50%-75%": MapColors.ORANGE,
+                    "75%-100%": MapColors.PINK,
+                    "defaultFill": MapColors.GREY
                 }
             }
         )
@@ -129,16 +129,16 @@ class TestAWCDailyStatus(TestCase):
                     "average": 0.0,
                     "period": "Daily",
                     'extended_info': [
-                        {'indicator': 'Total number of AWCs that were open yesterday:', 'value': "8"},
-                        {'indicator': 'Total number of AWCs that have been launched:', 'value': "0"},
+                        {'indicator': 'Total number of AWCs that were open yesterday:', 'value': "0"},
+                        {'indicator': 'Total number of AWCs that have been launched:', 'value': "8"},
                         {'indicator': '% of AWCs open yesterday:', 'value': '0.00%'}
                     ]
                 },
                 "fills": {
-                    "0%-50%": "#de2d26",
-                    "50%-75%": "#fc9272",
-                    "75%-100%": "#fee0d2",
-                    "defaultFill": "#9D9D9D"
+                    "0%-50%": MapColors.RED,
+                    "50%-75%": MapColors.ORANGE,
+                    "75%-100%": MapColors.PINK,
+                    "defaultFill": MapColors.GREY
                 },
                 'data': {
                     'block_map': {
@@ -554,7 +554,7 @@ class TestAWCDailyStatus(TestCase):
                 },
                 "chart_data": [
                     {
-                        "color": "#006fdf",
+                        "color": MapColors.BLUE,
                         "classed": "dashed",
                         "strokeWidth": 2,
                         "values": [
@@ -595,7 +595,7 @@ class TestAWCDailyStatus(TestCase):
                 },
                 "chart_data": [
                     {
-                        "color": "#006fdf",
+                        "color": MapColors.BLUE,
                         "classed": "dashed",
                         "strokeWidth": 2,
                         "values": [

@@ -1,8 +1,9 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import datetime
 from decimal import Decimal
 import itertools
-from StringIO import StringIO
+from io import BytesIO
 from tempfile import NamedTemporaryFile
 
 
@@ -76,8 +77,6 @@ SMALL_INVOICE_THRESHOLD = 100
 
 UNLIMITED_FEATURE_USAGE = -1
 
-CONSISTENT_DATES_CHECK = Q(date_start__lt=F('date_end')) | Q(date_end__isnull=True)
-
 _soft_assert_domain_not_loaded = soft_assert(
     to='{}@{}'.format('npellegrino', 'dimagi.com'),
     exponential_backoff=False,
@@ -114,19 +113,6 @@ class FeatureType(object):
     CHOICES = (
         (USER, USER),
         (SMS, SMS),
-    )
-
-
-class SoftwareProductType(object):
-    COMMCARE = "CommCare"
-    COMMTRACK = "CommTrack"
-    COMMCONNECT = "CommConnect"
-    ANY = ""
-
-    CHOICES = (
-        (COMMCARE, COMMCARE),
-        (COMMTRACK, COMMTRACK),
-        (COMMCONNECT, COMMCONNECT),
     )
 
 
@@ -882,7 +868,7 @@ class Subscriber(models.Model):
         app_label = 'accounting'
 
     def __unicode__(self):
-        return u"DOMAIN %s" % self.domain
+        return "DOMAIN %s" % self.domain
 
     def create_subscription(self, new_plan_version, new_subscription, is_internal_change):
         assert new_plan_version
@@ -983,11 +969,16 @@ class Subscriber(models.Model):
             raise SubscriptionChangeError("The upgrade was not successful.")
 
 
-class SubscriptionManager(models.Manager):
+class VisibleSubscriptionManager(models.Manager):
 
     def get_queryset(self):
-        return super(SubscriptionManager, self).get_queryset().filter(is_hidden_to_ops=False)
+        return super(VisibleSubscriptionManager, self).get_queryset().filter(is_hidden_to_ops=False)
 
+
+class DisabledManager(models.Manager):
+
+    def get_queryset(self):
+        raise NotImplementedError
 
 class Subscription(models.Model):
     """
@@ -1028,7 +1019,9 @@ class Subscription(models.Model):
     is_hidden_to_ops = models.BooleanField(default=False)
     skip_auto_downgrade = models.BooleanField(default=False)
 
-    objects = SubscriptionManager()
+    visible_objects = VisibleSubscriptionManager()
+    visible_and_suppressed_objects = models.Manager()
+    objects = DisabledManager()
 
     class Meta:
         app_label = 'accounting'
@@ -1077,7 +1070,7 @@ class Subscription(models.Model):
 
     @property
     def next_subscription_filter(self):
-        return (Subscription.objects.
+        return (Subscription.visible_objects.
                 filter(subscriber=self.subscriber, date_start__gt=self.date_start).
                 exclude(pk=self.pk).
                 filter(Q(date_end__isnull=True) | ~Q(date_start=F('date_end'))))
@@ -1102,8 +1095,7 @@ class Subscription(models.Model):
         conflicts with other subscriptions related to this subscriber.
         """
         assert date_start is not None
-        for sub in Subscription.objects.filter(
-            CONSISTENT_DATES_CHECK,
+        for sub in Subscription.visible_objects.filter(
             subscriber=self.subscriber,
         ).exclude(
             id=self.id,
@@ -1544,7 +1536,7 @@ class Subscription(models.Model):
     @classmethod
     def get_active_subscription_by_domain(cls, domain_name):
         try:
-            return cls.objects.select_related(
+            return cls.visible_objects.select_related(
                 'plan_version__role'
             ).get(
                 is_active=True,
@@ -1581,7 +1573,7 @@ class Subscription(models.Model):
         date_start = date_start or today
 
         # find subscriptions that end in the future / after this subscription
-        available_subs = Subscription.objects.filter(
+        available_subs = Subscription.visible_objects.filter(
             subscriber=subscriber,
         )
 
@@ -1628,7 +1620,7 @@ class Subscription(models.Model):
             return last_subscription
 
         adjustment_method = adjustment_method or SubscriptionAdjustmentMethod.INTERNAL
-        subscription = Subscription.objects.create(
+        subscription = Subscription.visible_objects.create(
             account=account,
             plan_version=plan_version,
             subscriber=subscriber,
@@ -1658,7 +1650,7 @@ class Subscription(models.Model):
                                            date_start=None):
         subscriber = Subscriber.objects.get_or_create(domain=domain)[0]
         date_start = date_start or datetime.date.today()
-        last_subscription = Subscription.objects.filter(
+        last_subscription = Subscription.visible_objects.filter(
             subscriber=subscriber, date_end=date_start
         )
         if not last_subscription.exists():
@@ -2051,7 +2043,7 @@ class BillingRecordBase(models.Model):
     def send_email(self, contact_emails=None):
         pdf_attachment = {
             'title': self.pdf.get_filename(self.invoice),
-            'file_obj': StringIO(self.pdf.get_data(self.invoice)),
+            'file_obj': BytesIO(self.pdf.get_data(self.invoice)),
             'mimetype': 'application/pdf',
         }
         domain = self.invoice.get_domain()

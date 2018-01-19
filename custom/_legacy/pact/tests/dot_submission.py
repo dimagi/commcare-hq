@@ -335,7 +335,7 @@ class dotsSubmissionTests(TestCase):
                 check_obs_props(non_art_first_2, non_art_first_2_props)
 
             if this_day.date() == (ANCHOR_DATE - timedelta(days=1)).date():
-                self.assertEquals(len(day_data.art.dose_dict.keys()),
+                self.assertEquals(len(list(day_data.art.dose_dict.keys())),
                                   2) # two doses, one for the answered, another for unchecked
                 art_slast = day_data.art.dose_dict[0][0]
                 art_slast_props = {

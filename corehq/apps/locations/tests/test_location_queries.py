@@ -70,7 +70,7 @@ class TestLocationScopedQueryset(BaseTestLocationQuerysetMethods):
         all_locs = (
             SQLLocation.objects.accessible_to_user(self.domain, self.web_user)
         )
-        self.assertItemsEqual(self.locations.values(), all_locs)
+        self.assertItemsEqual(list(self.locations.values()), all_locs)
 
     def test_primary_location_assigned_and_descendants(self):
         self.restrict_user_to_assigned_locations(self.web_user)

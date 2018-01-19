@@ -16,7 +16,7 @@ hqDefine('analytix/js/hubspot', [
     'use strict';
     var _get = initialAnalytics.getFn('hubspot'),
         _logger = logging.getLoggerForApi('Hubspot'),
-        _ready;
+        _ready = $.Deferred();
 
     var _hsq = window._hsq = window._hsq || [];
 
@@ -25,7 +25,7 @@ hqDefine('analytix/js/hubspot', [
             scriptUrl = '//js.hs-analytics.net/analytics/' + utils.getDateHash() + '/' + apiId + '.js';
 
         _logger = logging.getLoggerForApi('Hubspot');
-        _ready = utils.initApi(apiId, scriptUrl, _logger);
+        _ready = utils.initApi(_ready, apiId, scriptUrl, _logger);
     });
 
     /**

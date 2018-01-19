@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import division
 import jsonfield
 import pytz
 import re
@@ -25,6 +26,8 @@ from corehq.messaging.scheduling.models import AlertSchedule, TimedSchedule
 from corehq.messaging.scheduling.tasks import (
     refresh_case_alert_schedule_instances,
     refresh_case_timed_schedule_instances,
+    delete_case_alert_schedule_instances,
+    delete_case_timed_schedule_instances,
 )
 from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import (
     get_case_alert_schedule_instances_for_schedule_id,
@@ -91,6 +94,8 @@ class AutomaticUpdateRule(models.Model):
     # One of the WORKFLOW_* constants on this class describing the workflow
     # that this rule belongs to.
     workflow = models.CharField(max_length=126)
+
+    locked_for_editing = models.BooleanField(default=False)
 
     class Meta:
         app_label = "data_interfaces"
@@ -254,8 +259,19 @@ class AutomaticUpdateRule(models.Model):
         self.save()
 
     def soft_delete(self):
-        self.deleted = True
-        self.save()
+        with transaction.atomic():
+            self.deleted = True
+            self.save()
+            if self.workflow == self.WORKFLOW_SCHEDULING:
+                schedule = self.get_messaging_rule_schedule()
+                schedule.deleted = True
+                schedule.save()
+                if isinstance(schedule, AlertSchedule):
+                    delete_case_alert_schedule_instances.delay(schedule.schedule_id)
+                elif isinstance(schedule, TimedSchedule):
+                    delete_case_timed_schedule_instances.delay(schedule.schedule_id)
+                else:
+                    raise TypeError("Unexpected schedule type")
 
     @unit_testing_only
     def hard_delete(self):
@@ -402,6 +418,20 @@ class AutomaticUpdateRule(models.Model):
                 workflow,
                 active_only=active_only,
             )
+
+    def get_messaging_rule_schedule(self):
+        if self.workflow != self.WORKFLOW_SCHEDULING:
+            raise ValueError("Expected scheduling workflow")
+
+        if len(self.memoized_actions) != 1:
+            raise ValueError("Expected exactly 1 action")
+
+        action = self.memoized_actions[0]
+        action_definition = action.definition
+        if not isinstance(action_definition, CreateScheduleInstanceActionDefinition):
+            raise TypeError("Expected CreateScheduleInstanceActionDefinition")
+
+        return action_definition.schedule
 
 
 class CaseRuleCriteria(models.Model):
@@ -1263,7 +1293,7 @@ class CaseRuleUndoer(object):
         form_ids = list(self.get_submission_queryset().values_list('form_id', flat=True))
         form_id_chunks = chunked(form_ids, chunk_size)
         if progress_bar:
-            length = len(form_ids) / chunk_size
+            length = len(form_ids) // chunk_size
             if len(form_ids) % chunk_size > 0:
                 length += 1
             form_id_chunks = with_progress_bar(form_id_chunks, length=length)

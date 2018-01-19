@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from django.test.utils import override_settings
 
-from custom.icds_reports.const import ChartColors
+from custom.icds_reports.const import ChartColors, MapColors
 from custom.icds_reports.reports.exclusive_breastfeeding import get_exclusive_breastfeeding_data_map, \
     get_exclusive_breastfeeding_data_chart, get_exclusive_breastfeeding_sector_data
 from django.test import TestCase
@@ -27,7 +27,7 @@ class TestExclusiveBreastfeeding(TestCase):
                             "if they recieve only breastmilk with "
                             "no additional food, liquids (even water) "
                             "ensuring optimal nutrition and growth between 0 - 6 months",
-                    "average": 56.0,
+                    "average": 55.608974358974365,
                     'extended_info': [
                         {
                             'indicator': 'Total number of children between ages 0 - 6 months:',
@@ -46,10 +46,10 @@ class TestExclusiveBreastfeeding(TestCase):
                     ]
                 },
                 "fills": {
-                    "0%-20%": "#de2d26",
-                    "20%-60%": "#fc9272",
-                    "60%-100%": "#fee0d2",
-                    "defaultFill": "#9D9D9D"
+                    "0%-20%": MapColors.RED,
+                    "20%-60%": MapColors.ORANGE,
+                    "60%-100%": MapColors.PINK,
+                    "defaultFill": MapColors.GREY
                 },
                 "data": {
                     "st1": {
@@ -108,10 +108,10 @@ class TestExclusiveBreastfeeding(TestCase):
                     ]
                 },
                 "fills": {
-                    "0%-20%": "#de2d26",
-                    "20%-60%": "#fc9272",
-                    "60%-100%": "#fee0d2",
-                    "defaultFill": "#9D9D9D"
+                    "0%-20%": MapColors.RED,
+                    "20%-60%": MapColors.ORANGE,
+                    "60%-100%": MapColors.PINK,
+                    "defaultFill": MapColors.GREY
                 },
                 "data": {
                     'block_map': {
@@ -236,7 +236,7 @@ class TestExclusiveBreastfeeding(TestCase):
                 },
                 "chart_data": [
                     {
-                        "color": "#006fdf",
+                        "color": MapColors.BLUE,
                         "classed": "dashed",
                         "strokeWidth": 2,
                         "values": [

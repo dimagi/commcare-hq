@@ -3,10 +3,10 @@ A collection of functions which test the most basic operations of various servic
 """
 from __future__ import absolute_import
 from collections import namedtuple
+from io import BytesIO
 import datetime
 import json
 import logging
-from StringIO import StringIO
 import time
 
 from django.core import cache
@@ -113,8 +113,8 @@ def check_elasticsearch():
 def check_blobdb():
     """Save something to the blobdb and try reading it back."""
     db = get_blob_db()
-    contents = "It takes Pluto 248 Earth years to complete one orbit!"
-    info = db.put(StringIO(contents), random_url_id(16))
+    contents = b"It takes Pluto 248 Earth years to complete one orbit!"
+    info = db.put(BytesIO(contents), random_url_id(16))
     with db.get(info.identifier) as fh:
         res = fh.read()
     db.delete(info.identifier)

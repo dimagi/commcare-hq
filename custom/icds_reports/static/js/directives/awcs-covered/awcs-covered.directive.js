@@ -11,14 +11,19 @@ function AWCSCoveredController($scope, $routeParams, $location, $filter, icdsCas
     }
     vm.userLocationId = userLocationId;
     vm.filtersData = $location.search();
-    vm.label = "AWC Covered";
+    vm.label = "AWCs Launched";
     vm.step = $routeParams.step;
     vm.steps = {
         'map': {route: '/awcs_covered/map', label: 'Map View'},
         'chart': {route: '/awcs_covered/chart', label: 'Chart View'},
     };
     vm.data = {
-        legendTitle: 'Total AWCs that have launched ICDS CAS',
+        legendTitle: 'Total AWCs that have launched ICDS-CAS. ' +
+        'AWCs are considered launched after submitting at least one Household Registration form.',
+    };
+    vm.rightLegend = {
+        info: 'Total AWCs that have launched ICDS-CAS. ' +
+        'AWCs are considered launched after submitting at least one Household Registration form.',
     };
     vm.chartData = null;
     vm.top_five = [];
@@ -28,9 +33,6 @@ function AWCSCoveredController($scope, $routeParams, $location, $filter, icdsCas
     vm.location_type = null;
     vm.loaded = false;
     vm.filters = ['age', 'gender'];
-    vm.rightLegend = {
-        info: 'Total AWCs that have launched ICDS CAS',
-    };
     vm.message = storageService.getKey('message') || false;
 
     vm.prevDay = moment().subtract(1, 'days').format('Do MMMM, YYYY');

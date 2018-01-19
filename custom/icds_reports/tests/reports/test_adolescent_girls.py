@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from django.test.utils import override_settings
 
-from custom.icds_reports.const import ChartColors
+from custom.icds_reports.const import ChartColors, MapColors
 from custom.icds_reports.reports.adolescent_girls import get_adolescent_girls_data_map, \
     get_adolescent_girls_data_chart, get_adolescent_girls_sector_data
 from django.test import TestCase
@@ -46,8 +46,8 @@ class TestAdolescentGirls(TestCase):
                     ]
                 },
                 "fills": {
-                    "Adolescent Girls": "#006fdf",
-                    "defaultFill": "#9D9D9D"
+                    "Adolescent Girls": MapColors.BLUE,
+                    "defaultFill": MapColors.GREY
                 },
                 "data": {
                     "st1": {
@@ -106,8 +106,8 @@ class TestAdolescentGirls(TestCase):
                     ]
                 },
                 "fills": {
-                    "Adolescent Girls": "#006fdf",
-                    "defaultFill": "#9D9D9D"
+                    "Adolescent Girls": MapColors.BLUE,
+                    "defaultFill": MapColors.GREY
                 },
                 "data": {
                     'block_map': {
@@ -224,7 +224,7 @@ class TestAdolescentGirls(TestCase):
                 },
                 "chart_data": [
                     {
-                        "color": "#006fdf",
+                        "color": MapColors.BLUE,
                         "classed": "dashed",
                         "strokeWidth": 2,
                         "values": [

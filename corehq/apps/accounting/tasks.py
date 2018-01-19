@@ -1,8 +1,11 @@
 from __future__ import absolute_import
+from __future__ import division
+from __future__ import unicode_literals
+import csv
 import datetime
+import io
 import json
 import six.moves.urllib.request, six.moves.urllib.error, six.moves.urllib.parse
-from StringIO import StringIO
 from six.moves.urllib.parse import urlencode
 
 from django.conf import settings
@@ -28,10 +31,11 @@ from corehq.apps.accounting.exceptions import (
 from corehq.apps.accounting.invoicing import DomainInvoiceFactory
 from corehq.apps.accounting.models import (
     BillingAccount,
-    CONSISTENT_DATES_CHECK,
+    CreditLine,
     Currency,
     DefaultProductPlan,
     EntryPoint,
+    FeatureType,
     Invoice,
     SoftwarePlanEdition,
     StripePaymentMethod,
@@ -57,7 +61,12 @@ from corehq.apps.hqmedia.models import HQMediaMixin
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.notifications.models import Notification
 from corehq.apps.users.models import FakeUser, WebUser
-from corehq.const import USER_DATE_FORMAT, USER_MONTH_FORMAT
+from corehq.const import (
+    SERVER_DATE_FORMAT,
+    SERVER_DATETIME_FORMAT_NO_SEC,
+    USER_DATE_FORMAT,
+    USER_MONTH_FORMAT,
+)
 from corehq.util.view_utils import absolute_reverse
 from corehq.util.dates import get_previous_month_date_range
 from corehq.util.soft_assert import soft_assert
@@ -80,8 +89,7 @@ def _activate_subscription(subscription):
 
 
 def activate_subscriptions(based_on_date=None):
-    starting_subscriptions = Subscription.objects.filter(
-        CONSISTENT_DATES_CHECK,
+    starting_subscriptions = Subscription.visible_objects.filter(
         is_active=False,
     )
     if based_on_date:
@@ -132,8 +140,7 @@ def _deactivate_subscription(subscription):
 
 
 def deactivate_subscriptions(based_on_date=None):
-    ending_subscriptions = Subscription.objects.filter(
-        CONSISTENT_DATES_CHECK,
+    ending_subscriptions = Subscription.visible_objects.filter(
         is_active=True,
     )
     if based_on_date:
@@ -153,7 +160,7 @@ def deactivate_subscriptions(based_on_date=None):
 
 def warn_subscriptions_still_active(based_on_date=None):
     ending_date = based_on_date or datetime.date.today()
-    subscriptions_still_active = Subscription.objects.filter(
+    subscriptions_still_active = Subscription.visible_objects.filter(
         date_end__lte=ending_date,
         is_active=True,
     )
@@ -163,7 +170,7 @@ def warn_subscriptions_still_active(based_on_date=None):
 
 def warn_subscriptions_not_active(based_on_date=None):
     based_on_date = based_on_date or datetime.date.today()
-    subscriptions_not_active = Subscription.objects.filter(
+    subscriptions_not_active = Subscription.visible_objects.filter(
         Q(date_end=None) | Q(date_end__gt=based_on_date),
         date_start__lte=based_on_date,
         is_active=False,
@@ -174,7 +181,7 @@ def warn_subscriptions_not_active(based_on_date=None):
 
 def warn_active_subscriptions_per_domain_not_one():
     for domain_name in Domain.get_all_names():
-        active_subscription_count = Subscription.objects.filter(
+        active_subscription_count = Subscription.visible_objects.filter(
             subscriber__domain=domain_name,
             is_active=True,
         ).count()
@@ -320,7 +327,7 @@ def remind_dimagi_contact_subscription_ending_60_days():
 def send_subscription_reminder_emails(num_days):
     today = datetime.date.today()
     date_in_n_days = today + datetime.timedelta(days=num_days)
-    ending_subscriptions = Subscription.objects.filter(
+    ending_subscriptions = Subscription.visible_objects.filter(
         date_end=date_in_n_days, do_not_email_reminder=False, is_trial=False
     )
     for subscription in ending_subscriptions:
@@ -338,7 +345,7 @@ def send_subscription_reminder_emails(num_days):
 def send_subscription_reminder_emails_dimagi_contact(num_days):
     today = datetime.date.today()
     date_in_n_days = today + datetime.timedelta(days=num_days)
-    ending_subscriptions = (Subscription.objects
+    ending_subscriptions = (Subscription.visible_objects
                             .filter(is_active=True)
                             .filter(date_end=date_in_n_days)
                             .filter(do_not_email_reminder=False)
@@ -458,7 +465,7 @@ def weekly_digest():
     today = datetime.date.today()
     in_forty_days = today + datetime.timedelta(days=40)
 
-    ending_in_forty_days = [sub for sub in Subscription.objects.filter(
+    ending_in_forty_days = [sub for sub in Subscription.visible_objects.filter(
             date_end__lte=in_forty_days,
             date_end__gte=today,
             is_active=True,
@@ -504,7 +511,7 @@ def weekly_digest():
 
     table.extend([_fmt_row(sub) for sub in ending_in_forty_days])
 
-    file_to_attach = StringIO()
+    file_to_attach = io.BytesIO()
     export_from_tables(
         [['End in 40 Days', table]],
         file_to_attach,
@@ -578,9 +585,7 @@ def update_exchange_rates(app_id=settings.OPEN_EXCHANGE_RATES_API_ID):
 
 
 def ensure_explicit_community_subscription(domain_name, from_date):
-    if not Subscription.objects.filter(
-        CONSISTENT_DATES_CHECK
-    ).filter(
+    if not Subscription.visible_objects.filter(
         Q(date_end__gt=from_date) | Q(date_end__isnull=True),
         date_start__lte=from_date,
         subscriber__domain=domain_name,
@@ -589,14 +594,12 @@ def ensure_explicit_community_subscription(domain_name, from_date):
 
 
 def assign_explicit_community_subscription(domain_name, start_date, account=None):
-    future_subscriptions = Subscription.objects.filter(
-        CONSISTENT_DATES_CHECK
-    ).filter(
+    future_subscriptions = Subscription.visible_objects.filter(
         date_start__gt=start_date,
         subscriber__domain=domain_name,
     )
     if future_subscriptions.exists():
-        end_date = future_subscriptions.latest('date_start').date_start
+        end_date = future_subscriptions.earliest('date_start').date_start
     else:
         end_date = None
 
@@ -763,3 +766,71 @@ def restore_logos(self, domain_name):
             show_stack_trace=True,
         )
         raise e
+
+
+@periodic_task(run_every=crontab(day_of_month=1, hour=5), queue='background_queue', acks_late=True)
+def send_prepaid_credits_export():
+    headers = [
+        'Account Name', 'Project Space', 'Edition', 'Start Date', 'End Date',
+        '# General Credits', '# Product Credits', '# User Credits', '# SMS Credits', 'Last Date Modified'
+    ]
+
+    body = []
+    for subscription in Subscription.visible_objects.filter(
+        service_type=SubscriptionType.PRODUCT,
+    ).order_by('subscriber__domain', 'id'):
+        general_credit_lines = CreditLine.get_credits_by_subscription_and_features(subscription)
+        product_credit_lines = CreditLine.get_credits_by_subscription_and_features(subscription, is_product=True)
+        user_credit_lines = CreditLine.get_credits_by_subscription_and_features(
+            subscription, feature_type=FeatureType.USER)
+        sms_credit_lines = CreditLine.get_credits_by_subscription_and_features(
+            subscription, feature_type=FeatureType.SMS)
+        all_credit_lines = general_credit_lines | product_credit_lines | user_credit_lines | sms_credit_lines
+
+        body.append([
+            subscription.account.name, subscription.subscriber.domain, subscription.plan_version.plan.edition,
+            subscription.date_start, subscription.date_end,
+            sum(credit_line.balance for credit_line in general_credit_lines),
+            sum(credit_line.balance for credit_line in product_credit_lines),
+            sum(credit_line.balance for credit_line in user_credit_lines),
+            sum(credit_line.balance for credit_line in sms_credit_lines),
+            max(
+                credit_line.last_modified for credit_line in all_credit_lines
+            ).strftime(SERVER_DATETIME_FORMAT_NO_SEC)
+            if all_credit_lines else 'N/A',
+        ])
+
+    for account in BillingAccount.objects.order_by('name', 'id'):
+        general_credit_lines = CreditLine.get_credits_for_account(account)
+        product_credit_lines = CreditLine.get_credits_for_account(account, is_product=True)
+        user_credit_lines = CreditLine.get_credits_for_account(account, feature_type=FeatureType.USER)
+        sms_credit_lines = CreditLine.get_credits_for_account(account, feature_type=FeatureType.SMS)
+        all_credit_lines = general_credit_lines | product_credit_lines | user_credit_lines | sms_credit_lines
+
+        body.append([
+            account.name, '', '', '', '',
+            sum(credit_line.balance for credit_line in general_credit_lines),
+            sum(credit_line.balance for credit_line in product_credit_lines),
+            sum(credit_line.balance for credit_line in user_credit_lines),
+            sum(credit_line.balance for credit_line in sms_credit_lines),
+            max(
+                credit_line.last_modified for credit_line in all_credit_lines
+            ).strftime(SERVER_DATETIME_FORMAT_NO_SEC)
+            if all_credit_lines else 'N/A',
+        ])
+
+    file_obj = io.BytesIO()
+    writer = csv.writer(file_obj)
+    writer.writerow(headers)
+    for row in body:
+        writer.writerow([
+            val.encode('utf-8') if isinstance(val, six.text_type) else six.binary_type(val)
+            for val in row
+        ])
+
+    date_string = datetime.datetime.utcnow().strftime(SERVER_DATE_FORMAT)
+    filename = datetime.datetime.utcnow().strftime('prepaid-credits-export_%s.csv' % date_string)
+    send_HTML_email(
+        'Prepaid Credits Export - %s' % date_string, settings.ACCOUNTS_EMAIL, 'See attached file.',
+        file_attachments=[{'file_obj': file_obj, 'title': filename, 'mimetype': 'text/csv'}],
+    )

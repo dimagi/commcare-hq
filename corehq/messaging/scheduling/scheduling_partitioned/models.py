@@ -187,6 +187,25 @@ class ScheduleInstance(PartitionedModel):
         """
         return self.schedule
 
+    def check_active_flag_against_schedule(self):
+        """
+        Returns True if the active flag was changed and the schedule instance should be saved.
+        Returns False if nothing changed.
+        """
+        if self.active and not self.memoized_schedule.active:
+            self.active = False
+            return True
+
+        if not self.active and self.memoized_schedule.active:
+            if self.memoized_schedule.total_iterations_complete(self):
+                return False
+
+            self.active = True
+            self.memoized_schedule.move_to_next_event_not_in_the_past(self)
+            return True
+
+        return False
+
 
 class AbstractAlertScheduleInstance(ScheduleInstance):
     alert_schedule_id = models.UUIDField()

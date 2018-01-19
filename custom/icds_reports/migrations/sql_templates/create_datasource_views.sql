@@ -159,6 +159,7 @@ CREATE VIEW agg_awc_monthly AS
         "agg_awc"."infra_cooking_utensils" AS "infra_cooking_utensils",
         "agg_awc"."infra_medicine_kits" AS "infra_medicine_kits",
         "agg_awc"."infra_adequate_space_pse" AS "infra_adequate_space_pse",
+        "agg_awc"."num_awc_infra_last_update" AS "num_awc_infra_last_update",
         COALESCE("agg_awc"."usage_num_hh_reg", 0) AS "usage_num_hh_reg",
         COALESCE("agg_awc"."usage_num_add_person", 0) AS "usage_num_add_person",
         COALESCE("agg_awc"."usage_num_add_pregnancy", 0) AS "usage_num_add_pregnancy",
@@ -328,7 +329,9 @@ CREATE VIEW agg_child_health_monthly AS
         COALESCE("agg_child_health"."counsel_play_cf_video", 0) AS "counsel_play_cf_video",
         COALESCE("agg_child_health"."fully_immunized_eligible", 0) AS "fully_immunized_eligible",
         COALESCE("agg_child_health"."fully_immunized_on_time", 0) AS "fully_immunized_on_time",
-        COALESCE("agg_child_health"."fully_immunized_late", 0) AS "fully_immunized_late"
+        COALESCE("agg_child_health"."fully_immunized_late", 0) AS "fully_immunized_late",
+        COALESCE("agg_child_health"."weighed_and_height_measured_in_month", 0) AS "weighed_and_height_measured_in_month",
+        COALESCE("agg_child_health"."weighed_and_born_in_month", 0) AS "weighed_and_born_in_month"
     FROM "public"."awc_location_months" "awc_location_months"
     LEFT JOIN "public"."agg_child_health" "agg_child_health" ON (
         ("awc_location_months"."month" = "agg_child_health"."month") AND

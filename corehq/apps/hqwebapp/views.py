@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import division
 import json
 import logging
 import os
@@ -520,7 +521,7 @@ def assert_initial_page_data(request):
 @require_superuser
 def debug_notify(request):
     try:
-        0 / 0
+        0 // 0
     except ZeroDivisionError:
         notify_exception(request,
             "If you want to achieve a 500-style email-out but don't want the user to see a 500, use notify_exception(request[, message])")
@@ -621,7 +622,7 @@ class BugReportView(View):
                 domain_object.project_description = new_project_description
                 domain_object.save()
 
-            matching_subscriptions = Subscription.objects.filter(
+            matching_subscriptions = Subscription.visible_objects.filter(
                 is_active=True,
                 subscriber__domain=domain,
             )

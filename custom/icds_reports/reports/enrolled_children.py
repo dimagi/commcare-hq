@@ -8,16 +8,10 @@ from django.db.models.aggregates import Sum
 from django.utils.translation import ugettext as _
 
 from corehq.util.quickcache import quickcache
-from custom.icds_reports.const import LocationTypes, ChartColors
+from custom.icds_reports.const import LocationTypes, ChartColors, MapColors
 from custom.icds_reports.models import AggChildHealthMonthly
 from custom.icds_reports.utils import apply_exclude, match_age, chosen_filters_to_labels, \
     indian_formatted_number, get_child_locations
-
-RED = '#de2d26'
-ORANGE = '#fc9272'
-BLUE = '#006fdf'
-PINK = '#fee0d2'
-GREY = '#9D9D9D'
 
 
 @quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
@@ -60,8 +54,8 @@ def get_enrolled_children_data_map(domain, config, loc_level, show_test=False):
         data_for_map[on_map_name]['original_name'].append(name)
 
     fills = OrderedDict()
-    fills.update({'Children': BLUE})
-    fills.update({'defaultFill': GREY})
+    fills.update({'Children': MapColors.BLUE})
+    fills.update({'defaultFill': MapColors.GREY})
 
     gender_ignored, age_label, chosen_filters = chosen_filters_to_labels(config, default_interval='0 - 6 years')
 
@@ -228,7 +222,7 @@ def get_enrolled_children_sector_data(domain, config, loc_level, location_id, sh
                 "key": "",
                 "strokeWidth": 2,
                 "classed": "dashed",
-                "color": BLUE
+                "color": MapColors.BLUE
             }
         ]
     }

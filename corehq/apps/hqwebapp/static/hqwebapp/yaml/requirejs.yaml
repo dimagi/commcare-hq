@@ -5,6 +5,7 @@ dir: ./
 allowSourceOverwrites: true
 keepBuildDir: true
 skipDirOptimize: true   # could turn this off to minify everything
+generateSourceMaps: true
 fileExclusionRegExp: ^\.|\.css$
 modules:
   - name: hqwebapp/js/common

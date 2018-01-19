@@ -34,7 +34,7 @@ An overview of the design, API and data structures used here.
                 - [filter_items Expression](#filte_ritems-expression)
                 - [sort_items Expression](#sort_items-expression)
                 - [reduce_items Expression](#reduce_items-expression)
-                - [flatten_items expression](#flatten_items-expression)
+                - [flatten expression](#flatten-expression)
             - [Named Expressions](#named-expressions)
         - [Boolean Expression Filters](#boolean-expression-filters)
             - [Operators](#operators)
@@ -212,7 +212,7 @@ filter_items    | Filter a list of items to make a new list | `[1, 2, 3, -1, -2,
 map_items       | Map one list to another list | `[{'name': 'a', gender: 'f'}, {'name': 'b, gender: 'm'}]` -> `['a', 'b']`  (list of names from list of child data)
 sort_items      | Sort a list based on an expression | `[{'name': 'a', age: 5}, {'name': 'b, age: 3}]` -> `[{'name': 'b, age: 3}, {'name': 'a', age: 5}]`  (sort child data by age)
 reduce_items    | Aggregate a list of items into one value | sum on `[1, 2, 3]` -> `6`
-flatten_items   | Flatten multiple lists of items into one list | `[[1, 2], [4, 5]]` -> `[1, 2, 4, 5]`
+flatten   | Flatten multiple lists of items into one list | `[[1, 2], [4, 5]]` -> `[1, 2, 4, 5]`
 
 
 
@@ -735,14 +735,14 @@ Function Name  | Example
 ```
 This returns number of family members
 
-##### flatten_items expression
+##### flatten expression
 
-`flatten_items` takes list of list of objects specified by `items_expression` and returns one list of all objects.
+`flatten` takes list of list of objects specified by `items_expression` and returns one list of all objects.
 
 `items_expression` is any valid expression that returns a list of lists. It this doesn't evaluate to a list of lists an empty list is returned. It may be necessary to specify a `datatype` of `array` if the expression could return a single element.
 ```json
 {
-    "type": "flatten_items",
+    "type": "flatten",
     "items_expression": {},
 }
 ```
@@ -2024,6 +2024,7 @@ Following are some custom expressions that are currently available.
 - `location_parent_id`:  A shortcut to get a location's parent ID a location id.
 - `get_case_forms`: A way to get a list of forms submitted for a case.
 - `get_subcases`: A way to get a list of subcases (child cases) for a case.
+- `indexed_case`: A way to get an indexed case from another case.
 
 You can find examples of these in [practical examples](examples/examples.md).
 
