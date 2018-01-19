@@ -128,6 +128,8 @@ var widgetId = 'xxxx';
 $.get(initial_page_data.reverse('more_widget_info', widgetId)).done(function () {...});
 ```
 
+`registerurl` is essentially a special case of initial page data, and it gets messy when used in partials in the same way as initial page data. Encoding a url in a DOM element, in an attribute like `data-url`, is sometimes cleaner than using the `registerurl` template tag. See [partials](https://github.com/dimagi/js-guide/blob/orangejenny-patch-1/integration-patterns.md#partials) above for more detail.
+
 
 ## Toggles and Feature Previews
 In python you generally have the ability to check
