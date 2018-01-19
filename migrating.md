@@ -10,6 +10,10 @@ Basic migration process:
 
 For the sanity of code reviewers, do step 1 in a separate commit that step 2.
 
+Sample PRs:
+- [Externalize JavaScript: Groups](https://github.com/dimagi/commcare-hq/pull/15553) is an example of migrating two straightforward entire pages: one that has inline JavaScript without any Django syntax, and a second that has inline JavaScript that uses some translations and initial page data.
+- [Externalize JavaScript: more report filters](https://github.com/dimagi/commcare-hq/pull/17184/files) is an example of migrating a partial that defines a simple widget.
+
 ## Replacing Django syntax with JavaScript Equivalents
 
 There are a couple of common use cases for using Django inside of JavaScript code.
