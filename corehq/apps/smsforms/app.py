@@ -110,34 +110,33 @@ def submit_unfinished_form(session):
 
     The form is only submitted if the smsforms session has not yet completed.
     """
-    if session.session_is_open:
-        # Get and clean the raw xml
-        try:
-            xml = get_raw_instance(session_id)['output']
-        except InvalidSessionIdException:
-            return
-        root = XML(xml)
-        case_tag_regex = re.compile("^(\{.*\}){0,1}case$") # Use regex in order to search regardless of namespace
-        meta_tag_regex = re.compile("^(\{.*\}){0,1}meta$")
-        timeEnd_tag_regex = re.compile("^(\{.*\}){0,1}timeEnd$")
-        current_timstamp = json_format_datetime(utcnow())
-        for child in root:
-            if case_tag_regex.match(child.tag) is not None:
-                # Found the case tag
-                case_element = child
-                case_element.set("date_modified", current_timstamp)
-                if not session.include_case_updates_in_partial_submissions:
-                    # Remove case actions (create, update, close)
-                    child_elements = [case_action for case_action in case_element]
-                    for case_action in child_elements:
-                        case_element.remove(case_action)
-            elif meta_tag_regex.match(child.tag) is not None:
-                # Found the meta tag, now set the value for timeEnd
-                for meta_child in child:
-                    if timeEnd_tag_regex.match(meta_child.tag):
-                        meta_child.text = current_timstamp
-        cleaned_xml = tostring(root)
-        
-        # Submit the xml
-        result = submit_form_locally(cleaned_xml, session.domain, app_id=session.app_id, partial_submission=True)
-        session.submission_id = result.xform.form_id
+    # Get and clean the raw xml
+    try:
+        xml = get_raw_instance(session_id)['output']
+    except InvalidSessionIdException:
+        return
+    root = XML(xml)
+    case_tag_regex = re.compile("^(\{.*\}){0,1}case$") # Use regex in order to search regardless of namespace
+    meta_tag_regex = re.compile("^(\{.*\}){0,1}meta$")
+    timeEnd_tag_regex = re.compile("^(\{.*\}){0,1}timeEnd$")
+    current_timstamp = json_format_datetime(utcnow())
+    for child in root:
+        if case_tag_regex.match(child.tag) is not None:
+            # Found the case tag
+            case_element = child
+            case_element.set("date_modified", current_timstamp)
+            if not session.include_case_updates_in_partial_submissions:
+                # Remove case actions (create, update, close)
+                child_elements = [case_action for case_action in case_element]
+                for case_action in child_elements:
+                    case_element.remove(case_action)
+        elif meta_tag_regex.match(child.tag) is not None:
+            # Found the meta tag, now set the value for timeEnd
+            for meta_child in child:
+                if timeEnd_tag_regex.match(meta_child.tag):
+                    meta_child.text = current_timstamp
+    cleaned_xml = tostring(root)
+    
+    # Submit the xml
+    result = submit_form_locally(cleaned_xml, session.domain, app_id=session.app_id, partial_submission=True)
+    session.submission_id = result.xform.form_id
