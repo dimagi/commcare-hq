@@ -291,8 +291,8 @@ def _arbitrary_session_properties(**kwargs):
         'reminder_intervals': [],
         'current_reminder_num': 0,
         'current_action_due': arbitrary_date(),
-        'submit_partially_completed_forms': arbitrary_bool(),
-        'include_case_updates_in_partial_submissions': arbitrary_bool(),
+        'submit_partially_completed_forms': False,
+        'include_case_updates_in_partial_submissions': False,
     }
     properties.update(kwargs)
     return properties
