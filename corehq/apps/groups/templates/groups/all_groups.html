@@ -1,6 +1,7 @@
 {% extends "hqwebapp/base_section.html" %}
 {% load i18n %}
 {% load hq_shared_tags %}
+{% requirejs_main "groups/js/all_groups" %}
 
 {% block js %}{{ block.super }}
 <script src="{% static "groups/js/all_groups.js" %}"></script>
