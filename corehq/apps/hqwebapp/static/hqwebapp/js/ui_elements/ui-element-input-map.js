@@ -1,12 +1,16 @@
-/* globals hqDefine, hqImport, $, django */
-
-hqDefine('hqwebapp/js/ui_elements/ui-element-input-map', function () {
+hqDefine('hqwebapp/js/ui_elements/ui-element-input-map', [
+    'jquery',
+    'hqwebapp/js/main',
+], function (
+    $,
+    hqMain
+) {
     'use strict';
     var module = {};
 
     var InputMap = function (show_del_button) {
         var that = this;
-        hqImport("hqwebapp/js/main").eventize(this);
+        hqMain.eventize(this);
         this.ui = $('<div class="form-group hq-input-map" />');
         this.value = {
             key: "",
@@ -22,8 +26,8 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-input-map', function () {
         });
 
         this.$edit_view = $('<div class="form-inline" style="margin-left:5px;" />');
-        var key_input = $('<input type="text" class="form-control enum-key" style="width:220px;" placeholder="' + django.gettext('key') + '" />'),
-            val_input = $('<input type="text" class="form-control enum-value" style="width:220px;" placeholder="' + django.gettext('value') + '" />');
+        var key_input = $('<input type="text" class="form-control enum-key" style="width:220px;" placeholder="' + gettext('key') + '" />'),
+            val_input = $('<input type="text" class="form-control enum-value" style="width:220px;" placeholder="' + gettext('value') + '" />');
         key_input.change(function () {
             that.fire('change');
         });
@@ -35,7 +39,7 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-input-map', function () {
         this.$edit_view.append(val_input);
         if(this.show_delete) {
             var $deleteButton = $('<a href="#" data-enum-action="remove" class="btn btn-danger" />');
-            $deleteButton.append('<i class="fa fa-remove"></i> ' + django.gettext('Delete'));
+            $deleteButton.append('<i class="fa fa-remove"></i> ' + gettext('Delete'));
             $deleteButton.click(function() {
                 that.fire('remove');
                 return false;

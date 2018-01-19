@@ -1,39 +1,55 @@
-/* globals hqImport, hqDefine */
-
-hqDefine('hqwebapp/js/ui-element', function () {
+hqDefine('hqwebapp/js/ui-element', [
+    'underscore',
+    'hqwebapp/js/ui_elements/ui-element-input',
+    'hqwebapp/js/ui_elements/ui-element-select',
+    'hqwebapp/js/ui_elements/ui-element-key-val-list',
+    'hqwebapp/js/ui_elements/ui-element-input-map',
+    'hqwebapp/js/ui_elements/ui-element-checkbox',
+    'hqwebapp/js/ui_elements/ui-element-langcode-button',
+    'hqwebapp/js/ui_elements/ui-element-key-val-mapping',
+], function (
+    _,
+    inputElement,
+    selectElement,
+    keyValueList,
+    inputMap,
+    checkboxElement,
+    langcodeButton,
+    keyValueMapping
+) {
     'use strict';
     var module = {};
 
     module.input = function (value) {
-        return hqImport('hqwebapp/js/ui_elements/ui-element-input').new(value);
+        return inputElement.new(value);
     };
 
     module.textarea = function () {
-        return hqImport('hqwebapp/js/ui_elements/ui-element-input').new_textarea();
+        return inputElement.new_textarea();
     };
 
     module.select = function (options) {
-        return hqImport('hqwebapp/js/ui_elements/ui-element-select').new(options);
+        return selectElement.new(options);
     };
 
     module.map_list = function(guid, modalTitle) {
-        return hqImport('hqwebapp/js/ui_elements/ui-element-key-val-list').new(guid, modalTitle);
+        return keyValueList.new(guid, modalTitle);
     };
 
     module.input_map = function(show_del_button) {
-        return hqImport('hqwebapp/js/ui_elements/ui-element-input-map').new(show_del_button);
+        return inputMap.new(show_del_button);
     };
 
     module.checkbox = function () {
-        return hqImport('hqwebapp/js/ui_elements/ui-element-checkbox').new();
+        return checkboxElement.new();
     };
 
     module.langcode_tag_btn = function ($elem, new_lang) {
-        return hqImport('hqwebapp/js/ui_elements/ui-element-langcode-button').new($elem, new_lang);
+        return langcodeButton.new($elem, new_lang);
     };
 
     module.key_value_mapping = function (options) {
-        return hqImport('hqwebapp/js/ui_elements/ui-element-key-val-mapping').new(options);
+        return keyValueMapping.new(options);
     };
 
     module.serialize = function (obj) {

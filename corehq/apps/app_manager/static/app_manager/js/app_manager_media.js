@@ -1,4 +1,12 @@
-hqDefine('app_manager/js/app_manager_media', function () {
+hqDefine('app_manager/js/app_manager_media', [
+    'jquery',
+    'knockout',
+    'app_manager/js/nav_menu_media_common',
+], function (
+    $,
+    ko,
+    appManagerMenuMedia
+) {
     var AppMenuMediaManager = function (o) {
         /* This interfaces the media reference for a form or module menu
         (as an icon or image) with the upload manager.*/
@@ -151,14 +159,13 @@ hqDefine('app_manager/js/app_manager_media', function () {
     };
 
     function initNavMenuMedia(qualifier, imageRef, audioRef, objectMap, defaultFileName) {
-        var uploaders = hqImport("app_manager/js/nav_menu_media_common");
         var $mediaImage = $('#' + qualifier + 'media_image'),
             $mediaAudio = $('#' + qualifier + 'media_audio');
 
         var menuImage = new AppMenuMediaManager({
             ref: imageRef,
             objectMap: objectMap,
-            uploadController: uploaders.iconUploader,
+            uploadController: appManagerMenuMedia.iconUploader,
             defaultPath: 'jr://file/commcare/image/' + defaultFileName + '.png',
             inputElement: $mediaImage
         });
@@ -166,7 +173,7 @@ hqDefine('app_manager/js/app_manager_media', function () {
         var menuAudio = new AppMenuMediaManager({
             ref: audioRef,
             objectMap: objectMap,
-            uploadController: uploaders.audioUploader,
+            uploadController: appManagerMenuMedia.audioUploader,
             defaultPath: 'jr://file/commcare/audio/' + defaultFileName + '.mp3',
             inputElement: $mediaAudio
         });

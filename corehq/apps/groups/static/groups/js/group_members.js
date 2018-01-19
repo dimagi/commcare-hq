@@ -1,11 +1,18 @@
-/* globals django */
-hqDefine("groups/js/group_members", function() {
-    var initial_page_data = hqImport("hqwebapp/js/initial_page_data").get;
-
+hqDefine("groups/js/group_members", [
+    'jquery',
+    'hqwebapp/js/initial_page_data',
+    'hqwebapp/js/ui-element',
+    'analytix/js/google',
+], function(
+    $,
+    initialPageData,
+    uiElement,
+    googleAnalytics
+) {
     $(function () {
         // custom data
-        var customDataEditor = hqImport('hqwebapp/js/ui-element').map_list(initial_page_data("group_id"), gettext("Group Information"));
-        customDataEditor.val(initial_page_data("group_metadata"));
+        var customDataEditor = uiElement.map_list(initialPageData.get("group_id"), gettext("Group Information"));
+        customDataEditor.val(initialPageData.get("group_metadata"));
         customDataEditor.on("change", function () {
             $("#group-data").val(JSON.stringify(this.val()));
         });
@@ -29,7 +36,7 @@ hqDefine("groups/js/group_members", function() {
         // Delete group event
         var $deleteGroupModalForm = $("#delete_group_modal form");
         $("button:submit", $deleteGroupModalForm).click(function(){
-            hqImport('analytix/js/google').track.event("Editing Group", "Deleted Group", initial_page_data("group_id"), "", {}, function() {
+            googleAnalytics.track.event("Editing Group", "Deleted Group", initialPageData.get("group_id"), "", {}, function() {
                 $deleteGroupModalForm.submit();
             });
             return false;
@@ -58,11 +65,11 @@ hqDefine("groups/js/group_members", function() {
                 var alertClass, message;
                 if (isSuccess) {
                     alertClass = 'alert-success';
-                    message = django.gettext('Successfully saved ') + name.toLowerCase() + '.';
+                    message = gettext('Successfully saved ') + name.toLowerCase() + '.';
                     unsavedChanges[name] = false;
                 } else {
                     alertClass = 'alert-danger';
-                    message = django.gettext('Failed to save ') + name.toLowerCase() + '.';
+                    message = gettext('Failed to save ') + name.toLowerCase() + '.';
                 }
                 $(id).find(':button').enableButton();
                 $('#save-alert').removeClass('alert-error alert-success alert-info').addClass(alertClass);
@@ -74,7 +81,7 @@ hqDefine("groups/js/group_members", function() {
                 }
 
                 if (gaEventLabel){
-                    hqImport('analytix/js/google').track.event('Editing Group', gaEventLabel, initial_page_data("group_id"));
+                    googleAnalytics.track.event('Editing Group', gaEventLabel, initialPageData.get("group_id"));
                 }
             };
         }
@@ -106,7 +113,7 @@ hqDefine("groups/js/group_members", function() {
                 return false;
             });
             $('#group-case-sharing-input').change(function() {
-                if($('#group-case-sharing-input').val() === 'true' && !initial_page_data("domain_uses_case_sharing")) {
+                if($('#group-case-sharing-input').val() === 'true' && !initialPageData.get("domain_uses_case_sharing")) {
                     $('#group-case-sharing-warning').prop("hidden", false);
                 } else {
                     $('#group-case-sharing-warning').prop('hidden', true);

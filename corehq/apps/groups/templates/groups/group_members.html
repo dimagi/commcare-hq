@@ -2,6 +2,7 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 {% load crispy_forms_tags %}
+{% requirejs_main "groups/js/group_members" %}
 
 {% block stylesheets %} {{ block.super }}
     <style type="text/css">
@@ -9,11 +10,6 @@
             line-height: 18px;
         }
     </style>
-{% endblock %}
-
-{% block js %}{{ block.super }}
-    {% include 'hqwebapp/includes/ui_element_js.html' %}
-    <script src="{% static 'groups/js/group_members.js' %}"></script>
 {% endblock %}
 
 {% block page_title %}

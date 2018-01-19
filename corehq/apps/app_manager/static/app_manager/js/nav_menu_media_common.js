@@ -1,15 +1,19 @@
-/* globals HQMediaFileUploadController */
-hqDefine("app_manager/js/nav_menu_media_common", function() {
-    var initial_page_data = hqImport("hqwebapp/js/initial_page_data").get,
-        uploaders = {};
+hqDefine("app_manager/js/nav_menu_media_common", [
+    'underscore',
+    'hqwebapp/js/initial_page_data',
+], function(
+    _,
+    initialPageData
+) {
+    var uploaders = {};
 
-    _.each(initial_page_data("multimedia_upload_managers"), function(uploader, type) {
-        uploaders[type] = new HQMediaFileUploadController(
+    _.each(initialPageData.get("multimedia_upload_managers"), function(uploader, type) {
+        uploaders[type] = new hqImport("hqmedia/MediaUploader/hqmedia.upload_controller.js").HQMediaFileUploadController(
             uploader.slug,
             uploader.media_type,
             _.extend({}, uploader.options, {
-                sessionid: initial_page_data("sessionid"),
-                swfURL: initial_page_data("swfURL"),
+                sessionid: initialPageData.get("sessionid"),
+                swfURL: initialPageData.get("swfURL"),
             })
         );
         uploaders[type].init();

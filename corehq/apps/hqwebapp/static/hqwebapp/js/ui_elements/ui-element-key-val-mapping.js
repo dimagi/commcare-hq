@@ -1,6 +1,19 @@
-/* globals hqDefine, hqImport, $, _, django, ko */
-
-hqDefine('hqwebapp/js/ui_elements/ui-element-key-val-mapping', function () {
+hqDefine('hqwebapp/js/ui_elements/ui-element-key-val-mapping', [
+    'jquery',
+    'knockout',
+    'underscore',
+    'hqwebapp/js/main',
+    'app_manager/js/app_manager_media',
+    'app_manager/js/nav_menu_media_common'
+],
+function (
+    $,
+    ko,
+    _,
+    hqMain,
+    appManagerMedia,
+    appManagerMenuMedia
+) {
     'use strict';
     var module = {};
 
@@ -45,13 +58,11 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-key-val-mapping', function () {
         };
 
 
-        var app_manager = hqImport('app_manager/js/app_manager_media');
-        var uploaders = hqImport("app_manager/js/nav_menu_media_common");
         // attach a media-manager if item.value is a file-path to icon
         if (mappingContext.values_are_icons()) {
             var actualPath = item.value[mappingContext.lang];
             var defaultIconPath = actualPath || self.generateIconPath();
-            this.iconManager = new app_manager.AppMenuMediaManager({
+            this.iconManager = new appManagerMedia.AppMenuMediaManager({
                 ref: {
                     "path": actualPath,
                     "icon_type": "icon-picture",
@@ -60,7 +71,7 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-key-val-mapping', function () {
                     "icon_class": "icon-picture",
                 },
                 objectMap: mappingContext.multimedia,
-                uploadController: uploaders.iconUploader,
+                uploadController: appManagerMenuMedia.iconUploader,
                 defaultPath: defaultIconPath,
                 inputElement: $("#" + self.cssId()),
             });
@@ -120,26 +131,26 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-key-val-mapping', function () {
         self.labels = ko.computed(function() {
             if (this.values_are_icons()) {
                 return {
-                    placeholder: django.gettext('Calculation'),
-                    duplicated: django.gettext('Calculation is duplicated'),
-                    addButton: django.gettext('Add Image'),
-                    badXML: django.gettext('Calculation contains an invalid character.'),
+                    placeholder: gettext('Calculation'),
+                    duplicated: gettext('Calculation is duplicated'),
+                    addButton: gettext('Add Image'),
+                    badXML: gettext('Calculation contains an invalid character.'),
                 };
             }
             else if (this.values_are_conditions()) {
                 return {
-                    placeholder: django.gettext('Calculation'),
-                    duplicated: django.gettext('Calculation is duplicated'),
-                    addButton: django.gettext('Add Key, Value Mapping'),
-                    badXML: django.gettext('Calculation contains an invalid character.'),
+                    placeholder: gettext('Calculation'),
+                    duplicated: gettext('Calculation is duplicated'),
+                    addButton: gettext('Add Key, Value Mapping'),
+                    badXML: gettext('Calculation contains an invalid character.'),
                 };
             }
             else {
                 return {
-                    placeholder: django.gettext('Key'),
-                    duplicated: django.gettext('Key is duplicated'),
-                    addButton: django.gettext('Add Key, Value Mapping'),
-                    badXML: django.gettext('Key contains an invalid character.'),
+                    placeholder: gettext('Key'),
+                    duplicated: gettext('Key is duplicated'),
+                    addButton: gettext('Add Key, Value Mapping'),
+                    badXML: gettext('Key contains an invalid character.'),
                 };
             }
         }, this);
@@ -280,7 +291,7 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-key-val-mapping', function () {
         $div.attr("data-bind", "template: \'key_value_mapping_template\'");
         $div.koApplyBindings(m);
         m.ui = $div;
-        hqImport("hqwebapp/js/main").eventize(m);
+        hqMain.eventize(m);
         m.items.subscribe(function () {
             m.fire('change');
         });
