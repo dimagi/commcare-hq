@@ -742,7 +742,7 @@ class Detail(OrderedXmlObject, IdNode):
         # can't check len(self.variables) directly since NodeList uses an
         # xpath to find it's children which doesn't work here since
         # each node has a custom name
-        return len(self.variables.node.getchildren()) > 0
+        return self._variables is not None and len(self.variables.node.getchildren()) > 0
 
     def get_variables(self):
         """
