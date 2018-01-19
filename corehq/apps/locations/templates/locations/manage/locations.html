@@ -56,7 +56,6 @@
 
     var delete_error_message = '{% trans "An error occurred while deleting your location. If the problem persists, please report an issue" %}';
 
-
     remove_elements_after_action = function(button) {
         $(button).closest('.loc_section').remove();
     };
@@ -66,46 +65,43 @@
         $('#location_tree').koApplyBindings(model);
         model.load(locs);
     });
-
-
     {% if request|toggle_enabled:'LOCATION_SEARCH' %}
 
-    var enableSelect = function() {
+        var enableSelect = function() {
 
-        $('#location_search_select').select2({
-            ajax: {
-                url: '{% url 'location_search' domain %}',
-                    dataType: 'json',
-                    data: function (params) {
-                        console.log(params);
-                        return {
-                            q: params.term,
-                            page_limit: 10,
-                            page: params.page,
-                        };
+            $('#location_search_select').select2({
+                ajax: {
+                    url: '{% url 'location_search' domain %}',
+                        dataType: 'json',
+                        data: function (params) {
+                            console.log(params);
+                            return {
+                                q: params.term,
+                                page_limit: 10,
+                                page: params.page,
+                            };
+                        },
+                        processResults: function (data, params) {
+                            var more = data.more || (params.page * 10) < data.total;
+                            return {results: data.results, more: more};
+                        }
                     },
-                    processResults: function (data, params) {
-                        var more = data.more || (params.page * 10) < data.total;
-                        return {results: data.results, more: more};
-                    }
-                },
-            });
-        };
+                });
+            };
 
-        var reloadSelect = function() {
-            $('#location_search_select').select2('val', null);
+            var reloadSelect = function() {
+                $('#location_search_select').select2('val', null);
+                enableSelect();
+            };
+
             enableSelect();
-        };
 
-        enableSelect();
+        $(function() {
+            var model = new LocationSearchViewModel();
+            $('#location_search').koApplyBindings(model);
+        });
 
-    $(function() {
-        var model = new LocationSearchViewModel();
-        $('#location_search').koApplyBindings(model);
-    });
-
-    {% endif %}
-
+        {% endif %}
 </script>
 {% endblock %}
 
@@ -114,7 +110,6 @@
     <div class="row">
         <div class="col-sm-8">
             <h2>{% trans "Manage Organization Structure" %}</h2>
-
             <p>
                 {% blocktrans %}
                     The Organization feature allows you to represent the real-world 
@@ -215,13 +210,14 @@
 
 {% if has_location_types %}
     <script type="text/html" id="location-template">
+
         <div class="loc_section">
             <!-- header bar -->
             <div class="loc_header" data-bind="if: name() != '_root'" >
                 <div style="float:right;" data-bind="if: can_edit()" id="button-template">
                     {% if not show_inactive %}
                         <a class="btn btn-primary"
-                           data-bind="attr: { href: loc_edit_url(uuid())}">
+                           data-bind="attr: { href: loc_edit_url(uuid()) }">
                             {% trans "Edit" %}
                         </a>
                     {% endif %}
@@ -233,7 +229,7 @@
                         </button>
                     {% else %}
                         <button class="btn btn-info"
-                            data-bind="click: function(data, event) { archive_loc(event.currentTarget, name(), uuid()); }, visible: show_archive_action_button">
+                            data-bind="click: function(data, event) { archive_loc(event.currentTarget, name(), uuid()) }, visible: show_archive_action_button">
                             {% trans "Archive" %}
                         </button>
                     {% endif %}
