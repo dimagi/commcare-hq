@@ -115,7 +115,7 @@ def get_prevalence_of_stunting_data_map(domain, config, loc_level, show_test=Fal
             )),
             "extended_info": [
                 {
-                    'indicator': 'Total Children{} weighed in given month:'.format(chosen_filters),
+                    'indicator': 'Total Children{} eligible to have height measured:'.format(chosen_filters),
                     'value': indian_formatted_number(valid_total)
                 },
                 {

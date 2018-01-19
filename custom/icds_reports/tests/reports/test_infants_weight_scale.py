@@ -99,123 +99,238 @@ class TestInfantsWeightScale(TestCase):
         )
 
     def test_chart_data(self):
-        self.assertDictEqual(
-            get_infants_weight_scale_data_chart(
-                'icds-cas',
-                config={
-                    'month': (2017, 5, 1),
-                    'aggregation_level': 1
-                },
-                loc_level='state'
-            ),
-            {
-                "location_type": "State",
-                "bottom_five": [
-                    {
-                        "loc_name": "st1",
-                        "percent": 1300.0
-                    },
-                    {
-                        "loc_name": "st2",
-                        "percent": 1100.0
-                    }
-                ],
-                "top_five": [
-                    {
-                        "loc_name": "st1",
-                        "percent": 1300.0
-                    },
-                    {
-                        "loc_name": "st2",
-                        "percent": 1100.0
-                    }
-                ],
-                "chart_data": [
-                    {
-                        "color": ChartColors.BLUE,
-                        "classed": "dashed",
-                        "strokeWidth": 2,
-                        "values": [
-                            {
-                                "y": 0.0,
-                                "x": 1485907200000,
-                                "in_month": 0
-                            },
-                            {
-                                "y": 0.0,
-                                "x": 1488326400000,
-                                "in_month": 0
-                            },
-                            {
-                                "y": 5.0,
-                                "x": 1491004800000,
-                                "in_month": 10
-                            },
-                            {
-                                "y": 12.0,
-                                "x": 1493596800000,
-                                "in_month": 24
-                            }
-                        ],
-                        "key": "Percentage of AWCs that reported having a weighing scale for infants"
-                    }
-                ],
-                "all_locations": [
-                    {
-                        "loc_name": "st1",
-                        "percent": 1300.0
-                    },
-                    {
-                        "loc_name": "st2",
-                        "percent": 1100.0
-                    }
-                ]
-            }
+        data = get_infants_weight_scale_data_chart(
+            'icds-cas',
+            config={
+                'month': (2017, 5, 1),
+                'aggregation_level': 1
+            },
+            loc_level='state'
+        )
+        self.assertListEqual(
+            data['chart_data'],
+            [
+                {
+                    "color": ChartColors.BLUE,
+                    "classed": "dashed",
+                    "strokeWidth": 2,
+                    "values": [
+                        {
+                            "y": 0.0,
+                            "x": 1485907200000,
+                            "in_month": 0
+                        },
+                        {
+                            "y": 0.0,
+                            "x": 1488326400000,
+                            "in_month": 0
+                        },
+                        {
+                            "y": 0.7142857142857143,
+                            "x": 1491004800000,
+                            "in_month": 10
+                        },
+                        {
+                            "y": 0.8,
+                            "x": 1493596800000,
+                            "in_month": 24
+                        }
+                    ],
+                    "key": "Percentage of AWCs that reported having a weighing scale for infants"
+                }
+            ]
         )
 
+    def test_chart_data_keys(self):
+        data = get_infants_weight_scale_data_chart(
+            'icds-cas',
+            config={
+                'month': (2017, 5, 1),
+                'aggregation_level': 1
+            },
+            loc_level='state'
+        )
+        self.assertEquals(len(data), 5)
+        self.assertIn('top_five', data)
+        self.assertIn('bottom_five', data)
+        self.assertIn('all_locations', data)
+        self.assertIn('chart_data', data)
+        self.assertIn('location_type', data)
+
+    def test_chart_data_top_five_locations(self):
+        data = get_infants_weight_scale_data_chart(
+            'icds-cas',
+            config={
+                'month': (2017, 5, 1),
+                'aggregation_level': 1
+            },
+            loc_level='state'
+        )
+        self.assertListEqual(
+            data['top_five'],
+            [
+                {
+                    "loc_name": "st2",
+                    "percent": 84.61538461538461
+                },
+                {
+                    "loc_name": "st1",
+                    "percent": 76.47058823529412
+                }
+            ]
+        )
+
+    def test_chart_data_bottom_five_locations(self):
+        data = get_infants_weight_scale_data_chart(
+            'icds-cas',
+            config={
+                'month': (2017, 5, 1),
+                'aggregation_level': 1
+            },
+            loc_level='state'
+        )
+        self.assertListEqual(
+            data['bottom_five'],
+            [
+                {
+                    "loc_name": "st2",
+                    "percent": 84.61538461538461
+                },
+                {
+                    "loc_name": "st1",
+                    "percent": 76.47058823529412
+                }
+            ]
+        )
+
+    def test_chart_data_location_type(self):
+        data = get_infants_weight_scale_data_chart(
+            'icds-cas',
+            config={
+                'month': (2017, 5, 1),
+                'aggregation_level': 1
+            },
+            loc_level='state'
+        )
+        self.assertEquals(data['location_type'], "State")
+
+    def test_chart_data_all_locations(self):
+        data = get_infants_weight_scale_data_chart(
+            'icds-cas',
+            config={
+                'month': (2017, 5, 1),
+                'aggregation_level': 1
+            },
+            loc_level='state'
+        )
+        self.assertListEqual(
+            data['all_locations'],
+            [
+                {
+                    "loc_name": "st2",
+                    "percent": 84.61538461538461
+                },
+                {
+                    "loc_name": "st1",
+                    "percent": 76.47058823529412
+                }
+            ]
+        )
+
+    def test_sector_data_keys(self):
+        data = get_infants_weight_scale_sector_data(
+            'icds-cas',
+            config={
+                'month': (2017, 5, 1),
+                'state_id': 'st1',
+                'district_id': 'd1',
+                'block_id': 'b1',
+                'aggregation_level': 4
+            },
+            location_id='b1',
+            loc_level='supervisor'
+        )
+        self.assertEquals(len(data), 3)
+        self.assertIn('info', data)
+        self.assertIn('tooltips_data', data)
+        self.assertIn('chart_data', data)
+
     def test_sector_data(self):
-        self.assertDictEqual(
-            get_infants_weight_scale_sector_data(
-                'icds-cas',
-                config={
-                    'month': (2017, 5, 1),
-                    'state_id': 'st1',
-                    'district_id': 'd1',
-                    'block_id': 'b1',
-                    'aggregation_level': 4
-                },
-                location_id='b1',
-                loc_level='supervisor'
-            ),
-            {
-                "info": "Percentage of AWCs that reported having a weighing scale for infants",
-                "tooltips_data": {
-                    "s2": {
-                        "in_month": 3,
-                        "all": 1
-                    },
-                    "s1": {
-                        "in_month": 4,
-                        "all": 1
-                    }
-                },
-                "chart_data": [
-                    {
-                        "color": MapColors.BLUE,
-                        "classed": "dashed",
-                        "strokeWidth": 2,
-                        "values": [
-                            [
-                                "s1",
-                                4.0
-                            ],
-                            [
-                                "s2",
-                                3.0
-                            ]
+        data = get_infants_weight_scale_sector_data(
+            'icds-cas',
+            config={
+                'month': (2017, 5, 1),
+                'state_id': 'st1',
+                'district_id': 'd1',
+                'block_id': 'b1',
+                'aggregation_level': 4
+            },
+            location_id='b1',
+            loc_level='supervisor'
+        )
+        self.assertListEqual(
+            data['chart_data'],
+            [
+                {
+                    "color": MapColors.BLUE,
+                    "classed": "dashed",
+                    "strokeWidth": 2,
+                    "values": [
+                        [
+                            "s1",
+                            0.8
                         ],
-                        "key": ""
-                    }
-                ]
+                        [
+                            "s2",
+                            1.0
+                        ]
+                    ],
+                    "key": ""
+                }
+            ]
+        )
+
+    def test_sector_data_info(self):
+        data = get_infants_weight_scale_sector_data(
+            'icds-cas',
+            config={
+                'month': (2017, 5, 1),
+                'state_id': 'st1',
+                'district_id': 'd1',
+                'block_id': 'b1',
+                'aggregation_level': 4
+            },
+            location_id='b1',
+            loc_level='supervisor'
+        )
+        self.assertEquals(
+            data['info'],
+            "Percentage of AWCs that reported having a weighing scale for infants"
+        )
+
+    def test_sector_data_tooltips_data(self):
+        data = get_infants_weight_scale_sector_data(
+            'icds-cas',
+            config={
+                'month': (2017, 5, 1),
+                'state_id': 'st1',
+                'district_id': 'd1',
+                'block_id': 'b1',
+                'aggregation_level': 4
+            },
+            location_id='b1',
+            loc_level='supervisor'
+        )
+        self.assertDictEqual(
+            data['tooltips_data'],
+            {
+                "s2": {
+                    "in_month": 3,
+                    "all": 3
+                },
+                "s1": {
+                    "in_month": 4,
+                    "all": 5
+                }
             }
         )
