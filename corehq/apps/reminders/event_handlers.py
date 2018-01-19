@@ -8,7 +8,6 @@ from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.ivr.models import Call
 from corehq.apps.reminders.util import get_one_way_number_for_recipient
 from corehq.apps.locations.models import SQLLocation
-from corehq.apps.smsforms.app import submit_unfinished_form
 from corehq.apps.smsforms.models import get_session_by_session_id, SQLXFormsSession
 from touchforms.formplayer.api import current_question, TouchformsError
 from corehq.apps.sms.api import (
@@ -334,11 +333,10 @@ def fire_sms_survey_event(reminder, handler, recipients, verified_numbers, logge
             handler.submit_partial_forms and
             (reminder.callback_try_count == len(current_event.callback_timeout_intervals))
         ):
-            # Submit partial form completions
-            for session_id in reminder.xforms_session_ids:
-                contact_id = SQLXFormsSession.get_contact_id_from_session_id(session_id)
-                with critical_section_for_smsforms_sessions(contact_id):
-                    submit_unfinished_form(session_id, handler.include_case_side_effects)
+            # Leaving this as an explicit reminder that all survey related actions now happen
+            # in a different process. Eventually all of this code will be removed when we move
+            # to the new reminders framework.
+            pass
         else:
             # Resend current question
             for session_id in reminder.xforms_session_ids:

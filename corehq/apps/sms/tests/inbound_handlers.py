@@ -5,7 +5,6 @@ from corehq.apps.sms.models import WORKFLOW_KEYWORD
 from corehq.apps.sms.tests.util import TouchformsTestCase, time_parser
 from corehq.apps.reminders.models import (RECIPIENT_OWNER, RECIPIENT_USER_GROUP)
 from corehq.apps.sms.messages import *
-from corehq.apps.smsforms.app import submit_unfinished_form
 from corehq.apps.smsforms.models import SQLXFormsSession
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from datetime import date, time
@@ -796,7 +795,10 @@ class PartialFormSubmissionTestCase(TouchformsTestCase):
         incoming("999123", "mod pid123", "TEST")
         incoming("999123", "2", "TEST")
         session = self.get_open_session(self.user)
-        submit_unfinished_form(session.session_id, include_case_side_effects=True)
+        session.submit_partially_completed_forms = True
+        session.include_case_updates_in_partial_submissions = True
+        session.close()
+        session.save()
 
         form = self.get_last_form_submission()
         self.assertFormQuestionEquals(form, "arm", "arm_b")
@@ -806,7 +808,6 @@ class PartialFormSubmissionTestCase(TouchformsTestCase):
         case = self.get_case("pid123")
         self.assertCasePropertyEquals(case, "arm", "arm_b")
 
-        session = SQLXFormsSession.objects.get(pk=session.pk)
         self.assertFalse(session.is_open)
         self.assertEqual(session.submission_id, form.form_id)
 
@@ -814,7 +815,10 @@ class PartialFormSubmissionTestCase(TouchformsTestCase):
         incoming("999123", "mod pid123", "TEST")
         incoming("999123", "1", "TEST")
         session = self.get_open_session(self.user)
-        submit_unfinished_form(session.session_id, include_case_side_effects=False)
+        session.submit_partially_completed_forms = True
+        session.include_case_updates_in_partial_submissions = False
+        session.close()
+        session.save()
 
         form = self.get_last_form_submission()
         self.assertFormQuestionEquals(form, "arm", "arm_a")
@@ -824,6 +828,5 @@ class PartialFormSubmissionTestCase(TouchformsTestCase):
         case = self.get_case("pid123")
         self.assertCasePropertyEquals(case, "arm", "arm_b")
 
-        session = SQLXFormsSession.objects.get(pk=session.pk)
         self.assertFalse(session.is_open)
         self.assertEqual(session.submission_id, form.form_id)

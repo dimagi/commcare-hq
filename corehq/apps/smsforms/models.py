@@ -95,10 +95,18 @@ class SQLXFormsSession(models.Model):
     def _id(self):
         return self.couch_id
 
-    def end(self, completed):
-        """
-        Marks this as ended (by setting end time).
-        """
+    def close(self):
+        from corehq.apps.smsforms.app import submit_unfinished_form
+
+        if not self.session_is_open:
+            return
+
+        self.mark_completed(False)
+
+        if self.submit_partially_completed_forms:
+            submit_unfinished_form(self)
+
+    def mark_completed(self, completed):
         self.session_is_open = False
         self.completed = completed
         self.modified_time = self.end_time = utcnow()
@@ -145,7 +153,7 @@ class SQLXFormsSession(models.Model):
     def close_all_open_sms_sessions(cls, domain, contact_id):
         sessions = cls.get_all_open_sms_sessions(domain, contact_id)
         for session in sessions:
-            session.end(False)
+            session.close()
             session.save()
 
     @classmethod
