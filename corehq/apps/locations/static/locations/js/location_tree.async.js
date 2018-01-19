@@ -70,7 +70,6 @@ function LocationModel(data, root, depth) {
     this.type = ko.observable();
     this.uuid = ko.observable();
     this.is_archived = ko.observable();
-    this.is_deleted = ko.observable();
     this.can_edit = ko.observable();
     this.children = ko.observableArray();
     this.depth = depth || 0;
@@ -178,9 +177,10 @@ function LocationModel(data, root, depth) {
                 error: 'error',
                 success: function (response) {
                     alert_user(archive_success_message({"name": name}), "success");
-                    $(button).removeSpinnerFromButton();
-                    loc.is_archived(true);
                     remove_elements_after_action(button);
+                    if (location_toggle) {
+                        reloadSelect();
+                            }
                 }
             });
             $(archive_location_modal).modal('hide');
@@ -229,10 +229,10 @@ function LocationModel(data, root, depth) {
                     success: function (response) {
                         if (response.success){
                             alert_user(delete_success_message({"name": name}), "success");
-                            $(button).removeSpinnerFromButton();
-                            loc.is_deleted(true);
                             remove_elements_after_action(button);
-
+                            if (location_toggle) {
+                                reloadSelect();
+                            }
                         }
                         else {
                             alert_user(response.message, "warning");

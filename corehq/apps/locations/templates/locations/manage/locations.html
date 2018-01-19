@@ -21,6 +21,8 @@
     var show_inactive = {{ show_inactive|yesno:"true,false" }};
     var alert_user = hqImport("hqwebapp/js/alert_user").alert_user;
 
+    var location_toggle = {{ request|toggle_enabled:'LOCATION_SEARCH'|yesno:"true,false"}};
+
     function loc_edit_url(loc_id) {
         var template = '{% url "edit_location" domain "-locid-" %}';
         return template.replace('-locid-', loc_id);
@@ -55,10 +57,6 @@
     var delete_error_message = '{% trans "An error occurred while deleting your location. If the problem persists, please report an issue" %}';
 
 
-
-
-
-
     remove_elements_after_action = function(button) {
         $(button).closest('.loc_section').remove();
     };
@@ -69,10 +67,44 @@
         model.load(locs);
     });
 
+
+    {% if request|toggle_enabled:'LOCATION_SEARCH' %}
+
+    var enableSelect = function() {
+
+        $('#location_search_select').select2({
+            ajax: {
+                url: '{% url 'location_search' domain %}',
+                    dataType: 'json',
+                    data: function (params) {
+                        console.log(params);
+                        return {
+                            q: params.term,
+                            page_limit: 10,
+                            page: params.page,
+                        };
+                    },
+                    processResults: function (data, params) {
+                        var more = data.more || (params.page * 10) < data.total;
+                        return {results: data.results, more: more};
+                    }
+                },
+            });
+        };
+
+        var reloadSelect = function() {
+            $('#location_search_select').select2('val', null);
+            enableSelect();
+        };
+
+        enableSelect();
+
     $(function() {
         var model = new LocationSearchViewModel();
         $('#location_search').koApplyBindings(model);
     });
+
+    {% endif %}
 
 </script>
 {% endblock %}
@@ -178,32 +210,8 @@
 
 <link href="{% static 'select2/dist/css/select2.min.css' %}" rel="stylesheet"/>
 <script src="{% static 'select2/dist/js/select2.full.min.js' %}"></script>
-<script>
-    $(function () {
 
-            $('#location_search_select').select2({
-                ajax: {
-                    url: '{% url 'location_search' domain %}',
-                    dataType: 'json',
-                    data: function (params) {
-                        console.log(params);
-                        return {
-                            q: params.term,
-                            page_limit: 10,
-                            page: params.page,
-                        };
-                    },
-                    processResults: function (data, params) {
-                        var more = data.more || (params.page * 10) < data.total;
-                        return {results: data.results, more: more};
-                    }
-                },
-            });
-
-    });
-</script>
-
-    {% endif %}
+{% endif %}
 
 {% if has_location_types %}
     <script type="text/html" id="location-template">
@@ -213,28 +221,24 @@
                 <div style="float:right;" data-bind="if: can_edit()" id="button-template">
                     {% if not show_inactive %}
                         <a class="btn btn-primary"
-                           data-bind="attr: { href: loc_edit_url(uuid())}, visible: !is_deleted() && !is_archived()">
+                           data-bind="attr: { href: loc_edit_url(uuid())}">
                             {% trans "Edit" %}
                         </a>
                     {% endif %}
 
                     {% if show_inactive %}
                         <button class="btn btn-info"
-                            data-bind="click: function(data, event) { unarchive_loc(event.currentTarget, uuid()) }, visible: show_archive_action_button && !is_deleted()">
+                            data-bind="click: function(data, event) { unarchive_loc(event.currentTarget, uuid()) }, visible: show_archive_action_button">
                             {% trans "Unarchive" %}
                         </button>
                     {% else %}
                         <button class="btn btn-info"
-                            data-bind="click: function(data, event) { archive_loc(event.currentTarget, name(), uuid()); }, visible: show_archive_action_button && !is_deleted()">
-                            <span class='glyphicon glyphicon-ok'
-                                data-bind="visible: is_archived()"></span>
+                            data-bind="click: function(data, event) { archive_loc(event.currentTarget, name(), uuid()); }, visible: show_archive_action_button">
                             {% trans "Archive" %}
                         </button>
                     {% endif %}
                     <button class="btn btn-danger"
-                        data-bind="click: function(data, event) { delete_loc(event.currentTarget, name(), uuid()) }, visible: show_archive_action_button && !is_archived()">
-                        <span class='glyphicon glyphicon-ok'
-                                data-bind="visible: is_deleted()"></span>
+                        data-bind="click: function(data, event) { delete_loc(event.currentTarget, name(), uuid()) }, visible: show_archive_action_button">
                         {% trans "Delete" %}
                     </button>
                 </div>
