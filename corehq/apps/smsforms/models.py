@@ -128,17 +128,10 @@ class SQLXFormsSession(models.Model):
             else:
                 return ugettext_noop('Completed')
         else:
-            if self.is_open and self.session_type == XFORMS_SESSION_SMS:
+            if self.session_is_open and self.session_type == XFORMS_SESSION_SMS:
                 return ugettext_noop('In Progress')
             else:
                 return ugettext_noop('Not Finished')
-
-    @property
-    def is_open(self):
-        """
-        True if this session is still open, False otherwise.
-        """
-        return self.end_time is None
 
     @classmethod
     def get_all_open_sms_sessions(cls, domain, contact_id):
@@ -146,7 +139,7 @@ class SQLXFormsSession(models.Model):
             Q(session_type__isnull=True) | Q(session_type=XFORMS_SESSION_SMS),
             domain=domain,
             connection_id=contact_id,
-            end_time__isnull=True,
+            session_is_open=True,
         )
 
     @classmethod

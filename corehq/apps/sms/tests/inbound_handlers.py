@@ -808,7 +808,7 @@ class PartialFormSubmissionTestCase(TouchformsTestCase):
         case = self.get_case("pid123")
         self.assertCasePropertyEquals(case, "arm", "arm_b")
 
-        self.assertFalse(session.is_open)
+        self.assertFalse(session.session_is_open)
         self.assertEqual(session.submission_id, form.form_id)
 
         # Start a modify form, and submit a partial submission without case side effects
@@ -828,5 +828,5 @@ class PartialFormSubmissionTestCase(TouchformsTestCase):
         case = self.get_case("pid123")
         self.assertCasePropertyEquals(case, "arm", "arm_b")
 
-        self.assertFalse(session.is_open)
+        self.assertFalse(session.session_is_open)
         self.assertEqual(session.submission_id, form.form_id)

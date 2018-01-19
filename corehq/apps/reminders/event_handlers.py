@@ -341,7 +341,7 @@ def fire_sms_survey_event(reminder, handler, recipients, verified_numbers, logge
             # Resend current question
             for session_id in reminder.xforms_session_ids:
                 session = get_session_by_session_id(session_id)
-                if session.end_time is None:
+                if session.session_is_open:
                     vn = verified_numbers.get(session.connection_id)
                     if vn is not None:
                         metadata = MessageMetadata(
