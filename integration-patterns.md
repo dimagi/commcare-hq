@@ -65,7 +65,12 @@ It's common to see little bits of inline JavaScript initializing variables and c
 
 Note that the `initial_page_data` approach uses a global namespace (as does the inline JavaScript approach). That is a problem for another day. An error will be thrown if you accidentally register two variables with the same name with `initial_page_data`.
 
-For a couple of use cases, we have specific systems to give you access to certain data.
+### Partials
+
+The initial page data pattern can get messy when working with partials: the `initial_page_data` tag generally needs to go into a base template (a descendant of [hqwebapp/base.html](https://github.com/dimagi/commcare-hq/tree/master/corehq/apps/hqwebapp/templates/hqwebapp/base.html)), not the partial template, so you can end up with tags in a template - or multiple templates - not obviously related to the partial.
+
+An alternative approach to passing server data to partials is to encode is as `data-` attributes. This can get out of hand if there's a lot of complex data to pass, but it often works well for partials that define a widget that just needs a couple of server-provided options. Report filters typically use this approach.
+
 
 ## I18n
 Just like Django lets you use `ugettext('...')` in python
