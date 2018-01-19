@@ -12,7 +12,7 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('file_path')
-        parser.add_argument('token', help='Dropbox access token.')
+        parser.add_argument('token', help='Dropbox access token. See https://blogs.dropbox.com/developers/2014/05/generate-an-access-token-for-your-own-account/')
         parser.add_argument('--dropbox-path', help='Path to store file to in Dropbox.')
 
     def handle(self, file_path, token, **options):
