@@ -48,26 +48,26 @@ class SQLXFormsSession(models.Model):
     reminder_id = models.CharField(null=True, blank=True, max_length=50)
 
     # The phone number to use for correspondence on this survey
-    phone_number = models.CharField(max_length=126, null=True)
+    phone_number = models.CharField(max_length=126)
 
     # The number of minutes after which this session should expire, starting from the start_date.
-    expire_after = models.IntegerField(null=True)
+    expire_after = models.IntegerField()
 
     # True if the session is still open. An open session allows answers to come in to the survey.
-    session_is_open = models.NullBooleanField(default=True)
+    session_is_open = models.BooleanField(default=True)
 
     # A list of integers representing the intervals, in minutes, that reminders should be sent.
     # A reminder in this context just sends the current question of an open survey to the contact
     # in order to remind them to answer it. This can be empty list if no reminders are desired.
-    reminder_intervals = JSONField(null=True)
+    reminder_intervals = JSONField(default=list)
 
     # A zero-based index pointing to the entry in reminder_intervals which represents the
     # currently scheduled reminder.
-    current_reminder_num = models.IntegerField(null=True)
+    current_reminder_num = models.IntegerField(default=0)
 
     # The date and time that the survey framework must take the next action, which would be
     # either sending a reminder or closing the survey session.
-    current_action_due = models.DateTimeField(null=True)
+    current_action_due = models.DateTimeField()
 
     # If True, when the session expires, the form will be submitted with any information collected
     # and the rest of the questions left blank.
