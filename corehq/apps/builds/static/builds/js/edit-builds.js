@@ -1,7 +1,15 @@
-/* globals hqDefine */
-hqDefine('builds/js/edit-builds', function () {
-    var initial_page_data = hqImport('hqwebapp/js/initial_page_data').get,
-        doc = initial_page_data('doc'),
+hqDefine('builds/js/edit-builds', [
+    'jquery',
+    'knockout',
+    'underscore',
+    'hqwebapp/js/initial_page_data',
+], function (
+    $,
+    ko,
+    _,
+    initialPageData
+) {
+    var doc = initialPageData.get('doc'),
         pretty_doc = JSON.stringify(doc, undefined, 2);
 
     function Version(version, label, superuser_only, j2me_enabled) {
@@ -23,8 +31,8 @@ hqDefine('builds/js/edit-builds', function () {
     function Menu() {
         var self = this;
 
-        self.available_versions = initial_page_data('available_versions');
-        self.j2me_enabled_versions = initial_page_data('j2me_enabled_versions');
+        self.available_versions = initialPageData.get('available_versions');
+        self.j2me_enabled_versions = initialPageData.get('j2me_enabled_versions');
         self.versions = ko.observableArray([])
         self.available_ones = [];
         self.available_twos = [];
