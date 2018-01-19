@@ -110,7 +110,7 @@ hqDefine("reports/js/case_details", function() {
         });
 
         self.matchesQuery = function(propertyName) {
-            return !self.query() || propertyName.indexOf(self.query()) !== -1;
+            return !self.query() || propertyName.toLowerCase().indexOf(self.query().toLowerCase()) !== -1;
         };
 
         self.currentPage.subscribe(self.render);
