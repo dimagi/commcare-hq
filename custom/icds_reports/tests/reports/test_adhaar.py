@@ -23,15 +23,15 @@ class TestAdhaar(TestCase):
                 "rightLegend": {
                     "info": "Percentage of individuals registered using CAS "
                             "whose Aadhaar identification has been captured",
-                    "average": 24.764682812040398,
+                    "average": 26.486806467831137,
                     'extended_info': [
                         {
                             'indicator': 'Total number of ICDS beneficiaries whose Aadhaar has been captured:',
-                            'value': "122"
+                            'value': "131"
                         },
                         {
                             'indicator': '% of ICDS beneficiaries whose Aadhaar has been captured:',
-                            'value': '24.45%'
+                            'value': '26.20%'
                         }
                     ]
                 },
@@ -43,14 +43,14 @@ class TestAdhaar(TestCase):
                 },
                 "data": {
                     "st1": {
-                        "in_month": 59,
-                        "all": 217,
+                        "in_month": 64,
+                        "all": 221,
                         'original_name': ["st1"],
                         "fillKey": "25%-50%"
                     },
                     "st2": {
-                        "in_month": 63,
-                        "all": 282,
+                        "in_month": 67,
+                        "all": 279,
                         'original_name': ["st2"],
                         "fillKey": "0%-25%"
                     }
@@ -76,15 +76,15 @@ class TestAdhaar(TestCase):
                 "rightLegend": {
                     "info": "Percentage of individuals registered using CAS "
                             "whose Aadhaar identification has been captured",
-                    "average": 27.1889400921659,
+                    "average": 28.959276018099548,
                     'extended_info': [
                         {
                             'indicator': 'Total number of ICDS beneficiaries whose Aadhaar has been captured:',
-                            'value': "59"
+                            'value': "64"
                         },
                         {
                             'indicator': '% of ICDS beneficiaries whose Aadhaar has been captured:',
-                            'value': '27.19%'
+                            'value': '28.96%'
                         }
                     ]
                 },
@@ -96,9 +96,9 @@ class TestAdhaar(TestCase):
                 },
                 "data": {
                     'block_map': {
-                        'in_month': 59,
+                        'in_month': 64,
                         'original_name': ['b1', 'b2'],
-                        'all': 217,
+                        'all': 221,
                         'fillKey': '25%-50%'
                     }
                 },
@@ -122,21 +122,21 @@ class TestAdhaar(TestCase):
                 "bottom_five": [
                     {
                         "loc_name": "st1",
-                        "percent": 27.1889400921659
+                        "percent": 28.959276018099548
                     },
                     {
                         "loc_name": "st2",
-                        "percent": 22.340425531914892
+                        "percent": 24.014336917562723
                     }
                 ],
                 "top_five": [
                     {
                         "loc_name": "st1",
-                        "percent": 27.1889400921659
+                        "percent": 28.959276018099548
                     },
                     {
                         "loc_name": "st2",
-                        "percent": 22.340425531914892
+                        "percent": 24.014336917562723
                     }
                 ],
                 "chart_data": [
@@ -156,14 +156,14 @@ class TestAdhaar(TestCase):
                                 "all": 0
                             },
                             {
-                                "y": 0.22273781902552203,
+                                "y": 0.25,
                                 "x": 1491004800000,
-                                "all": 431
+                                "all": 484
                             },
                             {
-                                "y": 0.24448897795591182,
+                                "y": 0.262,
                                 "x": 1493596800000,
-                                "all": 499
+                                "all": 500
                             }
                         ],
                         "key": "Percentage of beneficiaries with Aadhaar numbers"
@@ -172,11 +172,11 @@ class TestAdhaar(TestCase):
                 "all_locations": [
                     {
                         "loc_name": "st1",
-                        "percent": 27.1889400921659
+                        "percent": 28.959276018099548
                     },
                     {
                         "loc_name": "st2",
-                        "percent": 22.340425531914892
+                        "percent": 24.014336917562723
                     }
                 ]
             }
@@ -201,12 +201,12 @@ class TestAdhaar(TestCase):
                         "CAS whose Aadhaar identification has been captured",
                 "tooltips_data": {
                     "s2": {
-                        "in_month": 15,
-                        "all": 62
+                        "in_month": 21,
+                        "all": 66
                     },
                     "s1": {
-                        "in_month": 22,
-                        "all": 41
+                        "in_month": 23,
+                        "all": 34
                     }
                 },
                 "chart_data": [
@@ -217,11 +217,11 @@ class TestAdhaar(TestCase):
                         "values": [
                             [
                                 "s1",
-                                0.5365853658536586
+                                0.6764705882352942
                             ],
                             [
                                 "s2",
-                                0.24193548387096775
+                                0.3181818181818182
                             ]
                         ],
                         "key": ""
