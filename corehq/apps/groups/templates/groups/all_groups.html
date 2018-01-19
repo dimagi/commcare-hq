@@ -3,10 +3,6 @@
 {% load hq_shared_tags %}
 {% requirejs_main "groups/js/all_groups" %}
 
-{% block js %}{{ block.super }}
-<script src="{% static "groups/js/all_groups.js" %}"></script>
-{% endblock %}
-
 {% block page_title %}
     {% trans "Groups" %}
 {% endblock %}
