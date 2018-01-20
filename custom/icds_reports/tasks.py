@@ -172,7 +172,7 @@ def aggregate_tables(self, current_task, future_tasks):
 
 @periodic_task(
     queue='background_queue',
-    run_every=crontab(day_of_week='sunday,wednesday', minute=0, hour=21),
+    run_every=crontab(day_of_week='tuesday,thursday,saturday', minute=0, hour=21),
     acks_late=True
 )
 def recalculate_stagnant_cases():
