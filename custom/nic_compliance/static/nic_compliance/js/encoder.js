@@ -1,13 +1,14 @@
 hqDefine('nic_compliance/js/encoder', function () {
     function HexParsr() {
-        function paddingStr() {
+        function randomStr() {
             var s = Math.random().toString(36).slice(2, 8);
-            return s.length === 6 ? s : paddingStr();
+            return s.length === 6 ? s : randomStr();
         }
 
         // private property
-        var _paddingLeft = "sha256$" + paddingStr();
-        var _paddingRight = paddingStr() + "=";
+        var _salt = randomStr();
+        var _paddingLeft = "sha256$" + _salt;
+        var _paddingRight = randomStr() + "=";
 
         var b64EncodeUnicode = function(str){
             return encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, function(match, p1) {
@@ -21,8 +22,17 @@ hqDefine('nic_compliance/js/encoder', function () {
 
         this.encode = function(password) {
             if(password) {
-                var secret_password = this.addPadding(window.btoa(b64EncodeUnicode(password)));
-                return this.addPadding(window.btoa(secret_password));
+                var shaObj256 = new jsSHA256("SHA-256", "TEXT");
+                shaObj256.update(password)
+                var sha256_hashed = shaObj256.getHash("HEX");
+
+                var shaObj256 = new jsSHA256("SHA-256", "TEXT");
+                shaObj256.update(_salt) // prepend salt to hashed password
+                shaObj256.update(sha256_hashed)
+                var hashed_password = "sha256hash$" + _salt + "$" + shaObj256.getHash("HEX");
+                var secret_password = this.addPadding(window.btoa(b64EncodeUnicode(hashed_password)));
+                var final_password = this.addPadding(window.btoa(secret_password));
+                return final_password;
             }
             return password;
         };

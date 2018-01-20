@@ -2247,4 +2247,9 @@ if RESTRICT_USED_PASSWORDS_FOR_NIC_COMPLIANCE:
         }
     ]
 
+if OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE:
+    # Add CustomSHA256PasswordHasher as the first in the list so its picked as default
+    # and hence all the passwords are stored with it's algorithm
+    PASSWORD_HASHERS = ('custom.nic_compliance.hashers.CustomSHA256PasswordHasher',) + PASSWORD_HASHERS
+
 PACKAGE_MONITOR_REQUIREMENTS_FILE = os.path.join(FILEPATH, 'requirements', 'requirements.txt')
