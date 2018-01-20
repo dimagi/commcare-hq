@@ -12,6 +12,7 @@ from custom.icds_reports.sqldata import ChildrenExport, PregnantWomenExport, Exp
 
 
 class TestExportData(TestCase):
+    maxDiff = None
 
     @classmethod
     def setUpClass(cls):
@@ -542,9 +543,9 @@ class TestExportData(TestCase):
                         [
                             "st1",
                             7266,
-                            110,
-                            410,
-                            "26.83 %",
+                            127,
+                            437,
+                            "29.06 %",
                             120,
                             120,
                             171,
@@ -562,9 +563,9 @@ class TestExportData(TestCase):
                         [
                             "st1",
                             7266,
-                            110,
-                            410,
-                            "26.83 %",
+                            127,
+                            437,
+                            "29.06 %",
                             120,
                             120,
                             171,
@@ -582,9 +583,9 @@ class TestExportData(TestCase):
                         [
                             "st1",
                             7266,
-                            110,
-                            410,
-                            "26.83 %",
+                            127,
+                            437,
+                            "29.06 %",
                             120,
                             120,
                             171,
@@ -602,9 +603,9 @@ class TestExportData(TestCase):
                         [
                             "st1",
                             7266,
-                            110,
-                            410,
-                            "26.83 %",
+                            127,
+                            437,
+                            "29.06 %",
                             120,
                             120,
                             171,
@@ -622,9 +623,9 @@ class TestExportData(TestCase):
                         [
                             "st1",
                             7266,
-                            110,
-                            410,
-                            "26.83 %",
+                            127,
+                            437,
+                            "29.06 %",
                             120,
                             120,
                             171,
@@ -642,9 +643,9 @@ class TestExportData(TestCase):
                         [
                             "st2",
                             6662,
-                            108,
-                            520,
-                            "20.77 %",
+                            125,
+                            547,
+                            "22.85 %",
                             139,
                             139,
                             154,
@@ -662,9 +663,9 @@ class TestExportData(TestCase):
                         [
                             "st2",
                             6662,
-                            108,
-                            520,
-                            "20.77 %",
+                            125,
+                            547,
+                            "22.85 %",
                             139,
                             139,
                             154,
@@ -682,9 +683,9 @@ class TestExportData(TestCase):
                         [
                             "st2",
                             6662,
-                            108,
-                            520,
-                            "20.77 %",
+                            125,
+                            547,
+                            "22.85 %",
                             139,
                             139,
                             154,
@@ -702,9 +703,9 @@ class TestExportData(TestCase):
                         [
                             "st2",
                             6662,
-                            108,
-                            520,
-                            "20.77 %",
+                            125,
+                            547,
+                            "22.85 %",
                             139,
                             139,
                             154,
@@ -722,9 +723,9 @@ class TestExportData(TestCase):
                         [
                             "st2",
                             6662,
-                            108,
-                            520,
-                            "20.77 %",
+                            125,
+                            547,
+                            "22.85 %",
                             139,
                             139,
                             154,
