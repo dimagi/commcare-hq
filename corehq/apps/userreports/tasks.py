@@ -411,7 +411,7 @@ def _save_document_helper(indicator, doc):
 
 
 @periodic_task(
-    run_every=crontab(minute="*/15"),
+    run_every=crontab(minute="*/5"),
     queue=settings.CELERY_PERIODIC_QUEUE,
 )
 def async_indicators_metrics():
