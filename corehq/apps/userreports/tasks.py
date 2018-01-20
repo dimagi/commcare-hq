@@ -234,25 +234,8 @@ def delete_data_source_task(domain, config_id):
     run_every=crontab(minute='*/5'), queue=settings.CELERY_PERIODIC_QUEUE
 )
 def run_queue_async_indicators_task():
-    """ASYNC_INDICATOR_QUEUE_TIMES will be of the format:
-    {
-        '*': [(begin_hour, end_hour), (begin_hour, end_hour), ...] catch all for days
-        '1': [(begin_hour, end_hour), ...] hours for Monday (Monday 1, Sunday 7)
-    }
-    All times UTC
-    """
-    if not settings.ASYNC_INDICATOR_QUEUE_TIMES:
+    if time_in_range(datetime.utcnow(), settings.ASYNC_INDICATOR_QUEUE_TIMES):
         queue_async_indicators.delay()
-        return
-
-    hours_for_today = settings.ASYNC_INDICATOR_QUEUE_TIMES.get(date.today().isoweekday())
-    if not hours_for_today:
-        hours_for_today = settings.ASYNC_INDICATOR_QUEUE_TIMES.get('*')
-
-    for valid_hours in hours_for_today:
-        if valid_hours[0] <= datetime.utcnow().hour <= valid_hours[1]:
-            queue_async_indicators.delay()
-            break
 
 
 @serial_task('queue-async-indicators', timeout=30 * 60, queue=settings.CELERY_PERIODIC_QUEUE, max_retries=0)
@@ -272,6 +255,29 @@ def queue_async_indicators():
         _queue_indicators(indicators)
         if datetime.utcnow() > cutoff:
             break
+
+
+def time_in_range(time, time_dictionary):
+    """time_dictionary will be of the format:
+    {
+        '*': [(begin_hour, end_hour), (begin_hour, end_hour), ...] catch all for days
+        1: [(begin_hour, end_hour), ...] hours for Monday (Monday 1, Sunday 7)
+    }
+    All times UTC
+    """
+
+    if not time_dictionary:
+        return True
+
+    hours_for_today = time_dictionary.get(time.isoweekday())
+    if not hours_for_today:
+        hours_for_today = time_dictionary.get('*')
+
+    for valid_hours in hours_for_today:
+        if valid_hours[0] <= time.hour <= valid_hours[1]:
+            return True
+
+    return False
 
 
 def _queue_indicators(indicators):
