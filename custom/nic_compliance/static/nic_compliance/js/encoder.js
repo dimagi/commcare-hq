@@ -22,18 +22,18 @@ hqDefine('nic_compliance/js/encoder', function () {
 
         this.obfuscate = function(password) {
             var secret_password = this.addPadding(window.btoa(b64EncodeUnicode(password)));
-            return this.addPadding(window.btoa(secret_password))
-        }
+            return this.addPadding(window.btoa(secret_password));
+        };
 
         this.encode = function(password) {
             if(password) {
                 var shaObj256 = new jsSHA256("SHA-256", "TEXT");
-                shaObj256.update(password)
+                shaObj256.update(password);
                 var sha256_hashed = shaObj256.getHash("HEX");
 
                 var shaObj256 = new jsSHA256("SHA-256", "TEXT");
-                shaObj256.update(_salt) // prepend salt to hashed password
-                shaObj256.update(sha256_hashed)
+                shaObj256.update(_salt); // prepend salt to hashed password
+                shaObj256.update(sha256_hashed);
                 var hashed_password = "sha256hash$" + _salt + "$" + shaObj256.getHash("HEX");
                 return this.obfuscate(hashed_password);
             }
@@ -56,14 +56,14 @@ hqDefine('nic_compliance/js/encoder', function () {
         if (signup_password_field.length) {
             signup_password_field.parents("form")[0].onsubmit = function() {
                 var password_encoder = new HexParsr();
-                signup_password_field.val(password_encoder.obfuscate(signup_password_field.val()))
-            }
+                signup_password_field.val(password_encoder.obfuscate(signup_password_field.val()));
+            };
         }
 
         // for web user forgot password and reset password
-        var password_reset_fields = $("#id_old_password, #id_new_password1, #id_new_password2")
+        var password_reset_fields = $("#id_old_password, #id_new_password1, #id_new_password2");
         if(password_reset_fields.length) {
-            password_reset_form = $(password_reset_fields[0]).parents('form')[0]
+            var password_reset_form = $(password_reset_fields[0]).parents('form')[0];
             if(password_reset_form) {
                 password_reset_form.onsubmit = function() {
                     var password_encoder = new HexParsr();
@@ -74,10 +74,10 @@ hqDefine('nic_compliance/js/encoder', function () {
 
                     var new_password_fields = $("#id_new_password1, #id_new_password2");
                     for(var i=0; i<new_password_fields.length; i++) {
-                        password_field = $(new_password_fields[i]);
+                        var password_field = $(new_password_fields[i]);
                         password_field.val(password_encoder.obfuscate(password_field.val()));
                     }
-                }
+                };
             }
         }
     });
