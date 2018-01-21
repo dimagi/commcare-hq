@@ -210,7 +210,7 @@ hqDefine('registration/js/new_user.ko', function () {
         var _getDataForSubmission = function () {
             var password = self.password();
             if(typeof(hex_parser) !== 'undefined') {
-                password = (new hex_parser()).encode(self.password());
+                password = (new hex_parser()).obfuscate(self.password());
             }
             return {
                 full_name: self.fullName(),
