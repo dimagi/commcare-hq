@@ -44,6 +44,12 @@ class CustomSHA256PasswordHasher(BasePasswordHasher):
         encoded_2 = hashlib.sha256(force_bytes(salt + sha256_password_hash)).hexdigest()
         return constant_time_compare(hash, encoded_2)
 
+    def hashed_password(self, raw_password):
+        sha256_password = hashlib.sha256(force_bytes(raw_password)).hexdigest()
+        salt = self.salt()
+        hash = hashlib.sha256(force_bytes(salt + sha256_password)).hexdigest()
+        return "%s$%s$%s" % (self.algorithm, salt, hash)
+
     def safe_summary(self, encoded):
         algorithm, hash = encoded.split('$', 1)
         assert algorithm == self.algorithm

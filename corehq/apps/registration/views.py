@@ -40,6 +40,7 @@ from dimagi.utils.couch.resource_conflict import retry_resource
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import get_ip
 from corehq.util.context_processors import get_per_domain_context
+from custom.nic_compliance.hashers import CustomSHA256PasswordHasher
 
 
 def get_domain_context():
@@ -122,9 +123,16 @@ class ProcessRegistrationView(JSONResponseMixin, NewUserNumberAbTestMixin,
 
     def _create_new_account(self, reg_form):
         activate_new_user(reg_form, ip=get_ip(self.request))
+        password = reg_form.cleaned_data['password']
+        if settings.OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE:
+            # CustomSHA256PasswordHasher is enabled for OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE
+            # It does not expect raw password for verification
+            # Since this happens straight after sign up where we have the raw password, it
+            # needs to be converted in the expected hash format
+            password = CustomSHA256PasswordHasher().hashed_password(password)
         new_user = authenticate(
             username=reg_form.cleaned_data['email'],
-            password=reg_form.cleaned_data['password']
+            password=password
         )
         if 'phone_number' in reg_form.cleaned_data and reg_form.cleaned_data['phone_number']:
             web_user = WebUser.get_by_username(new_user.username)
