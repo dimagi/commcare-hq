@@ -60,20 +60,23 @@ hqDefine('nic_compliance/js/encoder', function () {
             }
         }
 
-        // for web user
-        var password_reset_form = $("#password-reset-form");
-        if(password_reset_form.length) {
-            password_reset_form[0].onsubmit = function() {
-                var password_encoder = new HexParsr();
-                var old_password_field = $("#id_old_password");
-                if(old_password_field) {
-                    old_password_field.val(password_encoder.encode(old_password_field.val()));
-                }
+        // for web user forgot password and reset password
+        var password_reset_fields = $("#id_old_password, #id_new_password1, #id_new_password2")
+        if(password_reset_fields.length) {
+            password_reset_form = $(password_reset_fields[0]).parents('form')[0]
+            if(password_reset_form) {
+                password_reset_form.onsubmit = function() {
+                    var password_encoder = new HexParsr();
+                    var old_password_field = $("#id_old_password");
+                    if(old_password_field) {
+                        old_password_field.val(password_encoder.encode(old_password_field.val()));
+                    }
 
-                var new_password_fields = $("#id_new_password1, #id_new_password2");
-                for(var i=0; i<new_password_fields.length; i++) {
-                    password_field = $(new_password_fields[i]);
-                    password_field.val(password_encoder.obfuscate(password_field.val()));
+                    var new_password_fields = $("#id_new_password1, #id_new_password2");
+                    for(var i=0; i<new_password_fields.length; i++) {
+                        password_field = $(new_password_fields[i]);
+                        password_field.val(password_encoder.obfuscate(password_field.val()));
+                    }
                 }
             }
         }
