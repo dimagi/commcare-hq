@@ -204,7 +204,7 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
         html += '<button type="button" class="close" ng-click="$ctrl.closePopup()" ' +
                 'aria-label="Close"><span aria-hidden="true">&times;</span></button>';
         html += "</div>";
-        html +="<div class=\"modal-body\">"
+        html +="<div class=\"modal-body\">";
         window.angular.forEach(vm.data.data[geography.id].original_name, function (value) {
             html += '<button class="btn btn-xs btn-default" ng-click="$ctrl.updateMap(\'' + value + '\')">' + value + '</button>';
         });
