@@ -119,9 +119,10 @@ from corehq.util.workbook_reading import open_any_workbook
 from custom.enikshay.case_utils import CASE_TYPE_PERSON, CASE_TYPE_OCCURRENCE, CASE_TYPE_EPISODE, CASE_TYPE_TEST, \
     CASE_TYPE_DRUG_RESISTANCE, CASE_TYPE_SECONDARY_OWNER
 from custom.enikshay.two_b_datamigration.models import MigratedDRTBCaseCounter
-from custom.enikshay.user_setup import compress_nikshay_id
+from custom.enikshay.user_setup import compress_nikshay_id, join_chunked
 from dimagi.utils.decorators.memoized import memoized
 import six
+from six.moves import filter
 from six.moves import range
 
 logger = logging.getLogger('two_b_datamigration')
@@ -751,7 +752,7 @@ def update_cases_with_readable_ids(commit, domain, person_case_properties, occur
                                    episode_case_properties, secondary_owner_case_properties):
     phi_id = person_case_properties['owner_id']
     person_id_flat = _PersonIdGenerator.generate_person_id_flat(domain, phi_id, commit)
-    person_id = _PersonIdGenerator.get_person_id(person_id_flat)
+    person_id = join_chunked(person_id_flat, 3)
     occurrence_id = person_id + "-O1"
     episode_id = person_id + "-E1"
 
@@ -2166,17 +2167,6 @@ class _PersonIdGenerator(object):
             cls.id_device_body(user, commit) +
             cls._next_serial_count_compressed(commit)
         )
-
-    @classmethod
-    def get_person_id(cls, person_id_flat):
-        """
-        Create a more human readable version of the flat person id.
-        """
-        num_chars_between_hyphens = 3
-        return '-'.join([
-            person_id_flat[i:i + num_chars_between_hyphens]
-            for i in range(0, len(person_id_flat), num_chars_between_hyphens)
-        ])
 
 
 ImportFormat = namedtuple("ImportFormat", "column_mapping constants header_rows")

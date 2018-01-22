@@ -2182,3 +2182,46 @@ class TestEpisode2B(TestDataSourceExpressions):
             weight_band_adult(episode_case, EvaluationContext(episode_case, 0)),
             1
         )
+
+    def test_person_dob(self):
+        episode_case = {
+            '_id': 'episode_case_id',
+            'domain': 'enikshay-test',
+            'treatment_initiation_date': '2017-09-28',
+            'archive_reason': None,
+            'treatment_outcome': 'test',
+            'indices': [
+                {'referenced_id': 'occurrence_case_id'}
+            ]
+        }
+
+        occurrence_case = {
+            '_id': 'occurrence_case_id',
+            'domain': 'enikshay-test',
+            'disease_classification': 'extra_pulmonary',
+            'site_choice': 'other',
+            'site_detail': 'test detail',
+            'indices': [
+                {'referenced_id': 'person_case_id'}
+            ]
+        }
+
+        person_case = {
+            '_id': 'person_case_id',
+            'domain': 'enikshay-test',
+            'owner_id': 'owner-id',
+            'dob': '2017-02-03'
+        }
+
+        self.database.mock_docs = {
+            'episode_case_id': episode_case,
+            'occurrence_case_id': occurrence_case,
+            'person_case_id': person_case
+        }
+
+        expression = self.get_expression('person_dob', 'date')
+
+        self.assertEqual(
+            expression(episode_case, EvaluationContext(episode_case, 0)),
+            '2017-02-03'
+        )

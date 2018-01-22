@@ -22,9 +22,9 @@ import langcodes
 import os
 import pytz
 import re
-from StringIO import StringIO
+import io
 import tempfile
-from urllib2 import URLError
+from six.moves.urllib.error import URLError
 
 from django.conf import settings
 from django.contrib import messages
@@ -69,7 +69,7 @@ import couchexport
 from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors
 from corehq.form_processor.models import UserRequestedRebuild
-from corehq.form_processor.utils import should_use_sql_backend
+
 from couchexport.exceptions import (
     CouchExportException,
     SchemaMismatchException
@@ -81,7 +81,6 @@ from couchexport.shortcuts import (export_data_shared, export_raw_data,
 from couchexport.tasks import rebuild_schemas
 from couchexport.util import SerializableFunction
 from couchforms.filters import instances
-from couchforms.models import XFormDeprecated, XFormInstance
 
 from custom.world_vision import WORLD_VISION_DOMAINS
 from dimagi.utils.chunked import chunked
@@ -107,7 +106,7 @@ from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher
 from corehq.apps.domain.decorators import (
     login_and_domain_required,
     login_or_digest,
-    login_or_digest_or_basic_or_apikey,
+    api_auth,
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.export.custom_export_helpers import make_custom_export_helper
@@ -169,7 +168,9 @@ from .util import (
     get_group,
     group_filter,
     users_matching_filter,
-    resync_case_to_es)
+)
+from corehq.form_processor.utils.xform import resave_form
+from corehq.apps.hqcase.utils import resave_case
 from corehq.apps.hqwebapp.decorators import (
     use_jquery_ui,
     use_select2,
@@ -534,7 +535,7 @@ def _export_default_or_custom_data(request, domain, export_id=None, bulk_export=
 
 
 @csrf_exempt
-@login_or_digest_or_basic_or_apikey()
+@api_auth
 @require_form_export_permission
 @require_GET
 def hq_download_saved_export(req, domain, export_id):
@@ -544,7 +545,7 @@ def hq_download_saved_export(req, domain, export_id):
 
 
 @csrf_exempt
-@login_or_digest_or_basic_or_apikey()
+@api_auth
 @require_form_deid_export_permission
 @require_GET
 def hq_deid_download_saved_export(req, domain, export_id):
@@ -642,7 +643,7 @@ def export_all_form_metadata_async(req, domain):
         simplified=True,
         include_inactive=True
     )
-    user_ids = filter(None, [u["user_id"] for u in users])
+    user_ids = [_f for _f in [u["user_id"] for u in users] if _f]
     format = req.GET.get("format", Format.XLS_2007)
     filename = "%s_forms" % domain
 
@@ -1301,7 +1302,10 @@ class CaseDetailsView(BaseProjectReportSectionView):
                     self.urlname, args=[self.domain, case_id]),
                 "show_transaction_export": toggles.COMMTRACK.enabled(
                     self.request.user.username),
-                "property_details_enabled": toggles.SUPPORT.enabled(self.request.user.username),
+                "property_details_enabled": (
+                    toggles.CASE_PROPERTY_HISTORY.enabled_for_request(self.request)
+                    or toggles.SUPPORT.enabled_for_request(self.request)
+                ),
             },
             "show_case_rebuild": toggles.SUPPORT.enabled(self.request.user.username),
             "can_edit_data": self.request.couch_user.can_edit_data,
@@ -1420,11 +1424,11 @@ def rebuild_case_view(request, domain, case_id):
 @require_case_view_permission
 @require_permission(Permissions.edit_data)
 @require_POST
-def resave_case(request, domain, case_id):
+def resave_case_view(request, domain, case_id):
     """Re-save the case to have it re-processed by pillows
     """
     case = _get_case_or_404(domain, case_id)
-    resync_case_to_es(domain, case)
+    resave_case(domain, case)
     messages.success(
         request,
         _(u'Case %s was successfully saved. Hopefully it will show up in all reports momentarily.' % case.name),
@@ -1517,7 +1521,7 @@ def export_case_transactions(request, domain, case_id):
             [headers] + [_make_row(txn) for txn in query_set]
         ]
     ]
-    tmp = StringIO()
+    tmp = io.StringIO()
     export_from_tables(formatted_table, tmp, 'xlsx')
     return export_response(tmp, 'xlsx', '{}-stock-transactions'.format(case.name))
 
@@ -1840,7 +1844,7 @@ class EditFormInstance(View):
             # any other path associated with it. This allows us to differentiate from parent cases.
             # You might think that you need to populate other session variables like parent_id, but those
             # are never actually used in the form.
-            non_parents = filter(lambda cb: cb.path == [], case_blocks)
+            non_parents = [cb for cb in case_blocks if cb.path == []]
             if len(non_parents) == 1:
                 edit_session_data['case_id'] = non_parents[0].caseblock.get(const.CASE_ATTR_ID)
                 case = CaseAccessors(domain).get_case(edit_session_data['case_id'])
@@ -2017,16 +2021,13 @@ def unarchive_form(request, domain, instance_id):
 @require_permission(Permissions.edit_data)
 @require_POST
 @location_safe
-def resave_form(request, domain, instance_id):
+def resave_form_view(request, domain, instance_id):
     """Re-save the form to have it re-processed by pillows
     """
     from corehq.form_processor.change_publishers import publish_form_saved
     instance = _get_location_safe_form(domain, request.couch_user, instance_id)
     assert instance.domain == domain
-    if should_use_sql_backend(domain):
-        publish_form_saved(instance)
-    else:
-        XFormInstance.get_db().save_doc(instance.to_json())
+    resave_form(domain, instance)
     messages.success(request, _("Form was successfully resaved. It should reappear in reports shortly."))
     return HttpResponseRedirect(reverse('render_form_data', args=[domain, instance_id]))
 

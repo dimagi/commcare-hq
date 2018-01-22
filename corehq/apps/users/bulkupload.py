@@ -40,6 +40,7 @@ from .models import CommCareUser, CouchUser
 from .util import normalize_username, raw_username
 import six
 from six.moves import range
+from six.moves import map
 
 
 class UserUploadError(Exception):
@@ -381,7 +382,7 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, task=None
 
             data = row.get('data')
             email = row.get('email')
-            group_names = map(six.text_type, row.get('group') or [])
+            group_names = list(map(six.text_type, row.get('group') or []))
             language = row.get('language')
             name = row.get('name')
             password = row.get('password')
@@ -598,10 +599,7 @@ def build_data_headers(keys, header_prefix='data'):
 def parse_users(group_memoizer, domain, user_data_model, location_cache, user_filters):
 
     def _get_group_names(user):
-        return sorted(map(
-            lambda id: group_memoizer.get(id).name,
-            Group.by_user(user, wrap=False)
-        ), key=alphanumeric_sort_key)
+        return sorted([group_memoizer.get(id).name for id in Group.by_user(user, wrap=False)], key=alphanumeric_sort_key)
 
     def _get_devices(user):
         """
@@ -653,7 +651,7 @@ def parse_users(group_memoizer, domain, user_data_model, location_cache, user_fi
         group_names = _get_group_names(user)
         user_dict = _make_user_dict(user, group_names, location_cache)
         user_dicts.append(user_dict)
-        unrecognized_user_data_keys.update(user_dict['uncategorized_data'].keys())
+        unrecognized_user_data_keys.update(user_dict['uncategorized_data'])
         user_groups_length = max(user_groups_length, len(group_names))
         max_location_length = max(max_location_length, len(user_dict["location_code"]))
 
@@ -701,7 +699,7 @@ def parse_groups(groups):
     )
     for group in sorted_groups:
         group_dicts.append(_make_group_dict(group))
-        group_data_keys.update(group.metadata.keys() if group.metadata else [])
+        group_data_keys.update(group.metadata if group.metadata else [])
 
     group_headers = ['id', 'name', 'case-sharing?', 'reporting?']
     group_headers.extend(build_data_headers(group_data_keys))

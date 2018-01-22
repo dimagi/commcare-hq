@@ -6,6 +6,7 @@ from copy import copy
 from mimetypes import guess_type
 from corehq.util.pagination import paginate_function, PaginationEventHandler, ArgsProvider
 import six
+from six.moves import filter
 
 
 class CouchAttachmentsBuilder(object):

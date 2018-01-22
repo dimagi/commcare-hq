@@ -42,6 +42,16 @@ function EarlyInitiationBreastfeedingController($scope, $routeParams, $location,
 
     vm.message = storageService.getKey('message') || false;
 
+    vm.prevDay = moment().subtract(1, 'days').format('Do MMMM, YYYY');
+    vm.currentMonth = moment().format("MMMM");
+    vm.showInfoMessage = function () {
+        var selected_month = parseInt($location.search()['month']) ||new Date().getMonth() + 1;
+        var selected_year =  parseInt($location.search()['year']) || new Date().getFullYear();
+        var current_month = new Date().getMonth() + 1;
+        var current_year = new Date().getFullYear();
+        return selected_month === current_month && selected_year === current_year && new Date().getDate() === 1;
+    };
+
     $scope.$watch(function() {
         return vm.selectedLocations;
     }, function (newValue, oldValue) {
@@ -62,14 +72,16 @@ function EarlyInitiationBreastfeedingController($scope, $routeParams, $location,
     }, true);
 
     vm.templatePopup = function(loc, row) {
+        var gender = genderIndex > 0 ? genders[genderIndex].name : '';
+        var chosenFilters = gender ? ' (' + gender + ') ' : '';
         var total = row ? $filter('indiaNumbers')(row.in_month) : 'N/A';
         var birth = row ? $filter('indiaNumbers')(row.birth) : 'N/A';
         var percent = row ? d3.format('.2%')(row.birth / (row.in_month || 1)) : 'N/A';
         return '<div class="hoverinfo" style="max-width: 200px !important;">' +
             '<p>' + loc.properties.name + '</p>' +
-            '<div>Total Number of Children born in the given month: <strong>' + total + '</strong></div>' +
-            '<div>Total Number of Children who were put to the breast within one hour of birth: <strong>' + birth + '</strong></div>' +
-            '<div>% children who were put to the breast within one hour of birth: <strong>' + percent + '</strong></div>';
+            '<div>Total Number of Children born in the given month' + chosenFilters + ': <strong>' + total + '</strong></div>' +
+            '<div>Total Number of Children who were put to the breast within one hour of birth' + chosenFilters + ': <strong>' + birth + '</strong></div>' +
+            '<div>% children who were put to the breast within one hour of birth' + chosenFilters + ': <strong>' + percent + '</strong></div>';
     };
 
     vm.loadData = function () {
@@ -111,7 +123,10 @@ function EarlyInitiationBreastfeedingController($scope, $routeParams, $location,
                     });
                 }) * 100);
                 var range = max - min;
-                vm.chartOptions.chart.forceY = [((min - range/10)/100).toFixed(2), ((max + range/10)/100).toFixed(2)];
+                vm.chartOptions.chart.forceY = [
+                    ((min - range/10)/100).toFixed(2) < 0 ? 0 : ((min - range/10)/100).toFixed(2),
+                    ((max + range/10)/100).toFixed(2),
+                ];
             }
         });
     };

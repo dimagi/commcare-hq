@@ -2398,6 +2398,27 @@
           ]
         },
         "type": "boolean"
+      },
+      {
+        "column_id": "dob",
+        "display_name": null,
+        "datatype": "date",
+        "type": "expression",
+        "transform": {},
+        "is_nullable": true,
+        "is_primary_key": false,
+        "expression": {
+          "type": "related_doc",
+          "related_doc_type": "CommCareCase",
+          "doc_id_expression": {
+            "type": "icds_parent_id"
+          },
+          "value_expression": {
+            "datatype": "date",
+            "property_name": "dob",
+            "type": "property_name"
+          }
+        }
       }
     ],
     "named_expressions": {
@@ -4013,6 +4034,7 @@
     },
     "asynchronous": true,
     "engine_id": "icds-ucr",
+    "icds_rebuild_related_docs": true,
     "sql_column_indexes": [
       {
         "column_ids": [

@@ -1,5 +1,6 @@
 from __future__ import absolute_import
-from cStringIO import StringIO
+import io
+
 from django.db import models, transaction
 
 from casexml.apps.phone.restore import stream_response
@@ -78,9 +79,9 @@ class DemoUserRestore(models.Model):
     def _write_restore_blob(self, restore, db):
 
         if isinstance(restore, six.text_type):
-            restore = StringIO(restore.encode("utf-8"))
+            restore = io.BytesIO(restore.encode("utf-8"))
         elif isinstance(restore, bytes):
-            restore = StringIO(restore)
+            restore = io.BytesIO(restore)
 
         info = db.put(restore, random_url_id(16))
         self.restore_blob_id = info.identifier

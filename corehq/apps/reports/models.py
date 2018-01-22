@@ -7,7 +7,7 @@ from datetime import datetime
 import functools
 import json
 import logging
-from urllib import urlencode
+from six.moves.urllib.parse import urlencode
 
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -69,6 +69,7 @@ from dimagi.utils.logging import notify_exception
 from django_prbac.exceptions import PermissionDenied
 import six
 from six.moves import range
+from six.moves import map
 
 
 class HQUserType(object):
@@ -467,6 +468,8 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
         Get the report's HTML content as rendered by the static view format.
 
         """
+        from corehq.apps.locations.middleware import LocationAccessMiddleware
+
         try:
             if self.report is None:
                 return ReportContent(
@@ -478,6 +481,15 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
                 )
         except Exception:
             pass
+
+        if getattr(self.report, 'is_deprecated', False):
+            return ReportContent(
+                self.report.deprecation_email_message or
+                _("[DEPRECATED] %s report has been deprecated and will stop working soon. "
+                  "Please update your saved reports email settings if needed." % self.report.name
+                  ),
+                None,
+            )
 
         from django.http import HttpRequest, QueryDict
         mock_request = HttpRequest()
@@ -496,6 +508,7 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
 
         # Make sure the request gets processed by PRBAC Middleware
         CCHQPRBACMiddleware.apply_prbac(mock_request)
+        LocationAccessMiddleware.apply_location_access(mock_request)
 
         try:
             dispatch_func = functools.partial(self._dispatcher.__class__.as_view(), mock_request, **self.view_kwargs)
@@ -1009,6 +1022,10 @@ class CaseExportSchema(HQExportSchema):
 
         return props
 
+    @property
+    def has_case_history_table(self):
+        return False  # This check is only for new exports
+
 
 class DefaultFormExportSchema(DefaultExportSchema):
 
@@ -1025,7 +1042,7 @@ def _apply_mapping(export_tables, mapping_dict):
         def _clean_tablename(tablename):
             return mapping_dict.get(tablename, tablename)
         return (_clean_tablename(tabledata[0]), tabledata[1])
-    return map(_clean, export_tables)
+    return list(map(_clean, export_tables))
 
 
 def _apply_removal(export_tables, removal_list):

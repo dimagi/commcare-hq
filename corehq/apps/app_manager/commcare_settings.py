@@ -73,7 +73,7 @@ def _load_commcare_settings_layout(doc_type, user):
                 section['settings'][i] = setting
             else:
                 section['settings'][i] = None
-        section['settings'] = filter(None, section['settings'])
+        section['settings'] = [_f for _f in section['settings'] if _f]
         for setting in section['settings']:
             setting['value'] = None
             for prop in LAYOUT_SETTINGS_TO_TRANSLATE:

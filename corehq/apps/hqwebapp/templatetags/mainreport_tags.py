@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import division
 from django import template
 from django.urls import reverse
 from datetime import datetime, timedelta
@@ -73,10 +74,10 @@ def _get_time_interval_display(num_days):
     elif num_days == 365:
         return "Last Year"
     elif num_days % 365 == 0:
-        yrs = num_days / 365
+        yrs = num_days // 365
         return "Last %s Years" % yrs
     elif num_days % 30 == 0:
-        months = num_days / 30
+        months = num_days // 30
         return "Last %s Months" % months
     else:
         return "Last %s Days" % num_days

@@ -68,7 +68,7 @@ class XFormValidationError(XFormException):
     def __str__(self):
         fatal_error_text = self.format_v1(self.fatal_error)
         ret = u"Validation Error%s" % (': %s' % fatal_error_text if fatal_error_text else '')
-        problems = filter(lambda problem: problem['message'] != self.fatal_error, self.validation_problems)
+        problems = [problem for problem in self.validation_problems if problem['message'] != self.fatal_error]
         if problems:
             ret += u"\n\nMore information:"
             for problem in problems:

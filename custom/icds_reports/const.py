@@ -27,6 +27,14 @@ class ChartColors(object):
     BLUE = '#005ebd'
 
 
+class MapColors(object):
+    RED = '#de2d26'
+    ORANGE = '#fc9272'
+    BLUE = '#006fdf'
+    PINK = '#fee0d2'
+    GREY = '#9D9D9D'
+
+
 LOCATION_TYPES = [
     LocationTypes.STATE,
     LocationTypes.DISTRICT,
@@ -49,3 +57,12 @@ HELPDESK_ROLES = [
 
 
 ICDS_SUPPORT_EMAIL = 'icds-support@dimagi.com'
+
+
+CHILDREN_EXPORT = 1
+PREGNANT_WOMEN_EXPORT = 2
+DEMOGRAPHICS_EXPORT = 3
+SYSTEM_USAGE_EXPORT = 4
+AWC_INFRASTRUCTURE_EXPORT = 5
+BENEFICIARY_LIST_EXPORT = 6
+ISSNIP_MONTHLY_REGISTER_PDF = 7

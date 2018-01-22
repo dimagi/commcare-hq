@@ -67,7 +67,7 @@ class IteratorJSONReader(object):
             if not isinstance(field, six.string_types):
                 raise HeaderValueError(u'Field %s is not a string.' % field)
             self.set_field_value(obj, field, value)
-        return obj.keys()
+        return list(obj)
 
     @classmethod
     def set_field_value(cls, obj, field, value):
@@ -95,7 +95,7 @@ class IteratorJSONReader(object):
         else:
             dud = {}
             cls.set_field_value(dud, field, value)
-            (field, value), = dud.items()
+            (field, value), = list(dud.items())
 
             if field not in obj:
                 obj[field] = []
@@ -179,7 +179,7 @@ class WorksheetJSONReader(IteratorJSONReader):
                     _convert_float(cell.value)
                     for cell in row[:width]
                 ]
-                if not any(cell_values):
+                if not any(cell != '' for cell in cell_values):
                     break
                 yield cell_values
         super(WorksheetJSONReader, self).__init__(iterator())

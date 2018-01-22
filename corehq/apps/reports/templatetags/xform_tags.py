@@ -154,7 +154,7 @@ def _get_form_metadata_context(domain, form, support_enabled=False):
     if support_enabled:
         meta['last_sync_token'] = form.last_sync_token
 
-    definition = get_default_definition(sorted_form_metadata_keys(meta.keys()))
+    definition = get_default_definition(sorted_form_metadata_keys(list(meta)))
     form_meta_data = get_tables_as_columns(meta, definition, timezone=get_timezone_for_request())
     if getattr(form, 'auth_context', None):
         auth_context = AuthContext(form.auth_context)
@@ -212,7 +212,7 @@ def _get_cases_changed_context(domain, form, case_id=None):
             url = "#"
 
         definition = get_default_definition(
-            sorted_case_update_keys(b.keys()),
+            sorted_case_update_keys(list(b)),
             assume_phonetimes=(not form.metadata or
                                (form.metadata.deviceID != CLOUDCARE_DEVICE_ID)),
         )

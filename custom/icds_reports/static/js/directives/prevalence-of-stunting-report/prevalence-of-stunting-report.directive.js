@@ -51,6 +51,16 @@ function PrevalenceOfStuntingReportController($scope, $routeParams, $location, $
 
     vm.message = storageService.getKey('message') || false;
 
+    vm.prevDay = moment().subtract(1, 'days').format('Do MMMM, YYYY');
+    vm.currentMonth = moment().format("MMMM");
+    vm.showInfoMessage = function () {
+        var selected_month = parseInt($location.search()['month']) ||new Date().getMonth() + 1;
+        var selected_year =  parseInt($location.search()['year']) || new Date().getFullYear();
+        var current_month = new Date().getMonth() + 1;
+        var current_year = new Date().getFullYear();
+        return selected_month === current_month && selected_year === current_year && new Date().getDate() === 1;
+    };
+
     $scope.$watch(function() {
         return vm.selectedLocations;
     }, function (newValue, oldValue) {
@@ -71,6 +81,10 @@ function PrevalenceOfStuntingReportController($scope, $routeParams, $location, $
     }, true);
 
     vm.templatePopup = function(loc, row) {
+        var gender = genderIndex > 0 ? genders[genderIndex].name : '';
+        var age = ageIndex > 0 ? ages[ageIndex].name : '6 - 60 months';
+        var delimiter = gender && age ? ', ' : '';
+        var chosenFilters = gender || age ? '(' + gender + delimiter + age + ')' : '';
         var total = row ? $filter('indiaNumbers')(row.total) : 'N/A';
         var measured = row ? $filter('indiaNumbers')(row.total_measured) : 'N/A';
         var sever = row ? d3.format(".2%")(row.severe / (row.total || 1)) : 'N/A';
@@ -79,12 +93,12 @@ function PrevalenceOfStuntingReportController($scope, $routeParams, $location, $
         var unmeasured = row ? d3.format(".2%")((row.total - (row.normal + row.severe + row.moderate)) / (row.total || 1)) : 'N/A';
         return '<div class="hoverinfo" style="max-width: 200px !important;">' +
             '<p>' + loc.properties.name + '</p>' +
-            '<div>Total Children weighed in given month: <strong>' + total + '</strong></div>' +
-            '<div>Total Children with height measured in given month: <strong>' + measured + '</strong></div>' +
-            '<div>% Unmeasured: <strong>' + unmeasured + '</strong></div>' +
-            '<div>% Severely stunted: <strong>' + sever + '</strong></div>' +
-            '<div>% Moderately stunted: <strong>' + moderate +'</strong></div>' +
-            '<div>% Normal: <strong>' + normal + '</strong></div>';
+            '<div>Total Children ' + chosenFilters + ' weighed in given month: <strong>' + total + '</strong></div>' +
+            '<div>Total Children ' + chosenFilters + ' with height measured in given month: <strong>' + measured + '</strong></div>' +
+            '<div>% Unmeasured ' + chosenFilters + ': <strong>' + unmeasured + '</strong></div>' +
+            '<div>% Severely stunted ' + chosenFilters + ': <strong>' + sever + '</strong></div>' +
+            '<div>% Moderately stunted ' + chosenFilters + ': <strong>' + moderate +'</strong></div>' +
+            '<div>% Normal ' + chosenFilters + ': <strong>' + normal + '</strong></div>';
     };
 
     vm.loadData = function () {
@@ -126,7 +140,10 @@ function PrevalenceOfStuntingReportController($scope, $routeParams, $location, $
                     });
                 }) * 100);
                 var range = max - min;
-                vm.chartOptions.chart.forceY = [((min - range/10)/100).toFixed(2), ((max + range/10)/100).toFixed(2)];
+                vm.chartOptions.chart.forceY = [
+                    ((min - range/10)/100).toFixed(2) < 0 ? 0 : ((min - range/10)/100).toFixed(2),
+                    ((max + range/10)/100).toFixed(2),
+                ];
             }
         });
     };

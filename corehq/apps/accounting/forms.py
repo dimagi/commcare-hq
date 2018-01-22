@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import datetime
 from dateutil.relativedelta import relativedelta
 from decimal import Decimal
@@ -1987,7 +1988,7 @@ class InvoiceInfoForm(forms.Form):
         if not invoice.is_wire:
             subscription_link = mark_safe(make_anchor_tag(
                 reverse(EditSubscriptionView.urlname, args=(subscription.id,)),
-                u'{plan_name} ({start_date} - {end_date})'.format(
+                '{plan_name} ({start_date} - {end_date})'.format(
                     plan_name=subscription.plan_version,
                     start_date=subscription.date_start,
                     end_date=subscription.date_end,

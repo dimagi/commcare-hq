@@ -2,7 +2,7 @@ from __future__ import absolute_import
 
 from django.test.utils import override_settings
 
-from custom.icds_reports.const import ChartColors
+from custom.icds_reports.const import ChartColors, MapColors
 from custom.icds_reports.reports.lactating_enrolled_women import get_lactating_enrolled_women_data_map, \
     get_lactating_enrolled_women_sector_data, get_lactating_enrolled_data_chart
 from django.test import TestCase
@@ -50,24 +50,24 @@ class TestLactatingEnrolledWomen(TestCase):
                         "strokeWidth": 2,
                         "values": [
                             {
-                                "y": 0.0,
+                                "y": 0,
                                 "x": 1485907200000,
                                 "all": 0
                             },
                             {
-                                "y": 0.0,
+                                "y": 0,
                                 "x": 1488326400000,
                                 "all": 0
                             },
                             {
-                                "y": 159.0,
+                                "y": 159,
                                 "x": 1491004800000,
-                                "all": 0
+                                "all": 159
                             },
                             {
-                                "y": 166.0,
+                                "y": 166,
                                 "x": 1493596800000,
-                                "all": 0
+                                "all": 166
                             }
                         ],
                         "key": "Total number of lactating women who are enrolled for ICDS services"
@@ -104,15 +104,17 @@ class TestLactatingEnrolledWomen(TestCase):
                 "info": "Lactating Mothers enrolled for ICDS services.",
                 "tooltips_data": {
                     "s2": {
-                        "valid": 24
+                        "valid": 24,
+                        "all": 24
                     },
                     "s1": {
-                        "valid": 19
+                        "valid": 19,
+                        "all": 19
                     }
                 },
                 "chart_data": [
                     {
-                        "color": "#006fdf",
+                        "color": MapColors.BLUE,
                         "classed": "dashed",
                         "strokeWidth": 2,
                         "values": [
@@ -141,26 +143,41 @@ class TestLactatingEnrolledWomen(TestCase):
                     'aggregation_level': 1
                 },
                 loc_level='state'
-            )[0],
+            ),
             {
                 "rightLegend": {
                     "info": "Lactating Mothers enrolled for ICDS services.",
                     "average": 83.0,
-                    "average_format": "number"
+                    "average_format": "number",
+                    'extended_info': [
+                        {
+                            'indicator': 'Number of pregnant women who are enrolled for ICDS services:',
+                            'value': "166"
+                        },
+                        {'indicator': 'Total number of pregnant women who are registered:', 'value': "166"},
+                        {
+                            'indicator': (
+                                'Percentage of registered pregnant women who are enrolled for ICDS services:'
+                            ),
+                            'value': '100.00%'
+                        }
+                    ]
                 },
                 "fills": {
-                    "Women": "#006fdf",
-                    "defaultFill": "#9D9D9D"
+                    "Women": MapColors.BLUE,
+                    "defaultFill": MapColors.GREY
                 },
                 "data": {
                     "st1": {
                         "valid": 87,
-                        'original_name': [],
+                        "all": 87,
+                        'original_name': ["st1"],
                         "fillKey": "Women"
                     },
                     "st2": {
                         "valid": 79,
-                        'original_name': [],
+                        "all": 79,
+                        'original_name': ["st2"],
                         "fillKey": "Women"
                     }
                 },
@@ -180,20 +197,34 @@ class TestLactatingEnrolledWomen(TestCase):
                     'aggregation_level': 3
                 },
                 loc_level='block',
-            )[0],
+            ),
             {
                 "rightLegend": {
                     "info": "Lactating Mothers enrolled for ICDS services.",
                     "average": 43.5,
-                    "average_format": "number"
+                    "average_format": "number",
+                    'extended_info': [
+                        {
+                            'indicator': 'Number of pregnant women who are enrolled for ICDS services:',
+                            'value': "87"
+                        },
+                        {'indicator': 'Total number of pregnant women who are registered:', 'value': "87"},
+                        {
+                            'indicator': (
+                                'Percentage of registered pregnant women who are enrolled for ICDS services:'
+                            ),
+                            'value': '100.00%'
+                        }
+                    ]
                 },
                 "fills": {
-                    "Women": "#006fdf",
-                    "defaultFill": "#9D9D9D"
+                    "Women": MapColors.BLUE,
+                    "defaultFill": MapColors.GREY
                 },
                 "data": {
                     'block_map': {
                         'valid': 87,
+                        'all': 87,
                         'original_name': ['b1', 'b2'],
                         'fillKey': 'Women'
                     }

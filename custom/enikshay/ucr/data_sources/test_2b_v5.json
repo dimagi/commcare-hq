@@ -2732,27 +2732,13 @@
                 "type": "boolean",
                 "column_id": "presumptives_examined_for_diagnosis",
                 "filter": {
-                    "type": "and",
-                    "filters": [
-                        {
-                            "type": "boolean_expression",
-                            "expression": {
-                                "type": "property_name",
-                                "property_name": "episode_type_at_request"
-                            },
-                            "operator": "eq",
-                            "property_value": "presumptive_tb"
-                        },
-                        {
-                            "type": "boolean_expression",
-                            "expression": {
-                                "type": "property_name",
-                                "property_name": "rft_general"
-                            },
-                            "operator": "in",
-                            "property_value": ["diagnosis_dstb", "diagnosis_drtb"]
-                        }
-                    ]
+                    "type": "boolean_expression",
+                    "expression": {
+                        "type": "property_name",
+                        "property_name": "rft_general"
+                    },
+                    "operator": "in",
+                    "property_value": ["diagnosis_dstb", "diagnosis_drtb"]
                 }
             },
             {
@@ -2761,15 +2747,6 @@
                 "filter": {
                     "type": "and",
                     "filters": [
-                        {
-                            "type": "boolean_expression",
-                            "expression": {
-                                "type": "property_name",
-                                "property_name": "episode_type_at_request"
-                            },
-                            "operator": "eq",
-                            "property_value": "presumptive_tb"
-                        },
                         {
                             "type": "boolean_expression",
                             "expression": {
@@ -2795,27 +2772,13 @@
                 "type": "boolean",
                 "column_id": "follow_up_patients_examined",
                 "filter": {
-                    "type": "and",
-                    "filters": [
-                        {
-                            "type": "boolean_expression",
-                            "expression": {
-                                "type": "property_name",
-                                "property_name": "episode_type_at_request"
-                            },
-                            "operator": "in",
-                            "property_value": ["confirmed_tb", "confirmed_drtb"]
-                        },
-                        {
-                            "type": "boolean_expression",
-                            "expression": {
-                                "type": "property_name",
-                                "property_name": "rft_general"
-                            },
-                            "operator": "in",
-                            "property_value": ["follow_up_dstb", "follow_up_drtb"]
-                        }
-                    ]
+                    "type": "boolean_expression",
+                    "expression": {
+                        "type": "property_name",
+                        "property_name": "rft_general"
+                    },
+                    "operator": "in",
+                    "property_value": ["follow_up_dstb", "follow_up_drtb"]
                 }
             },
             {
@@ -2824,15 +2787,6 @@
                 "filter": {
                     "type": "and",
                     "filters": [
-                        {
-                            "type": "boolean_expression",
-                            "expression": {
-                                "type": "property_name",
-                                "property_name": "episode_type_at_request"
-                            },
-                            "operator": "in",
-                            "property_value": ["confirmed_tb", "confirmed_drtb"]
-                        },
                         {
                             "type": "boolean_expression",
                             "expression": {

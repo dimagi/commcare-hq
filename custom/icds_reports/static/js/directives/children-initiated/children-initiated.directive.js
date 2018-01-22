@@ -40,6 +40,16 @@ function ChildrenInitiatedController($scope, $routeParams, $location, $filter, m
     };
     vm.message = storageService.getKey('message') || false;
 
+    vm.prevDay = moment().subtract(1, 'days').format('Do MMMM, YYYY');
+    vm.currentMonth = moment().format("MMMM");
+    vm.showInfoMessage = function () {
+        var selected_month = parseInt($location.search()['month']) ||new Date().getMonth() + 1;
+        var selected_year =  parseInt($location.search()['year']) || new Date().getFullYear();
+        var current_month = new Date().getMonth() + 1;
+        var current_year = new Date().getFullYear();
+        return selected_month === current_month && selected_year === current_year && new Date().getDate() === 1;
+    };
+
     $scope.$watch(function() {
         return vm.selectedLocations;
     }, function (newValue, oldValue) {
@@ -60,14 +70,16 @@ function ChildrenInitiatedController($scope, $routeParams, $location, $filter, m
     }, true);
 
     vm.templatePopup = function(loc, row) {
+        var gender = genderIndex > 0 ? genders[genderIndex].name : '';
+        var chosenFilters = gender ? ' (' + gender + ') ' : '';
         var total = row ? $filter('indiaNumbers')(row.all) : 'N/A';
         var children = row ? $filter('indiaNumbers')(row.children) : 'N/A';
         var percent = row ? d3.format('.2%')(row.children / (row.all || 1)) : 'N/A';
         return '<div class="hoverinfo" style="max-width: 200px !important;">' +
             '<p>' + loc.properties.name + '</p>' +
-            '<div>Total number of children between age 6 - 8 months: <strong>' + total + '</strong></div>' +
-            '<div>Total number of children (6-8 months) given timely introduction to sold or semi-solid food in the given month: <strong>' + children + '</strong></div>' +
-            '<div>% children (6-8 months) given timely introduction to solid or semi-solid food in the given month: <strong>' + percent + '</strong></div>';
+            '<div>Total number of children between age 6 - 8 months' + chosenFilters + ': <strong>' + total + '</strong></div>' +
+            '<div>Total number of children (6-8 months) given timely introduction to sold or semi-solid food in the given month' + chosenFilters + ': <strong>' + children + '</strong></div>' +
+            '<div>% children (6-8 months) given timely introduction to solid or semi-solid food in the given month' + chosenFilters + ': <strong>' + percent + '</strong></div>';
     };
 
     vm.loadData = function () {
@@ -109,7 +121,10 @@ function ChildrenInitiatedController($scope, $routeParams, $location, $filter, m
                     });
                 }) * 100);
                 var range = max - min;
-                vm.chartOptions.chart.forceY = [((min - range/10)/100).toFixed(2), ((max + range/10)/100).toFixed(2)];
+                vm.chartOptions.chart.forceY = [
+                    ((min - range/10)/100).toFixed(2) < 0 ? 0 : ((min - range/10)/100).toFixed(2),
+                    ((max + range/10)/100).toFixed(2),
+                ];
             }
         });
     };

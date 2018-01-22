@@ -232,7 +232,7 @@ class MessagingCaseContactMixin(CommCareMobileContactMixin):
         if len(entries) == 0:
             return None
 
-        return entries.values()[0]
+        return list(entries.values())[0]
 
     @property
     def raw_username(self):

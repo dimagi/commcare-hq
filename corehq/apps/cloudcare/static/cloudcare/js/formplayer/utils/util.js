@@ -170,14 +170,6 @@ Util.CloudcareUrl = function (options) {
         this.sortIndex = null;
     };
 
-    this.setSessionId = function (sessionId) {
-        this.sessionId = sessionId;
-        this.steps = null;
-        this.page = null;
-        this.search = null;
-        this.sortIndex = null;
-    };
-
     this.setQuery = function (queryDict) {
         this.queryDict = queryDict;
     };
@@ -192,7 +184,6 @@ Util.CloudcareUrl = function (options) {
     };
 
     this.onSubmit = function () {
-        this.steps = null;
         this.page = null;
         this.sortIndex = null;
         this.search = null;

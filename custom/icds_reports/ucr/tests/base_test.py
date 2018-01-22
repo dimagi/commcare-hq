@@ -88,7 +88,7 @@ class BaseICDSDatasourceTest(TestCase, TestFileMixin):
             now.return_value = datetime.combine(start_date, datetime.min.time()) + relativedelta(months=1)
             _iteratively_build_table(self.datasource)
             queue_async_indicators()
-        query = self._get_query_object().filter_by(doc_id=case_id)
+        query = self._get_query_object().filter_by(doc_id=case_id).order_by(self.adapter.get_table().columns.month)
         self.assertEqual(query.count(), len(cases))
 
         for index, test_values in cases:

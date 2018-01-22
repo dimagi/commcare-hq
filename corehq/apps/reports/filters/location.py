@@ -53,10 +53,6 @@ class LocationGroupFilterOptions(EmwfOptionsView):
 
     @property
     def data_sources(self):
-        # data sources for options for selection in filter
-        # when searcing for custom locations search limit to just locations
-        if self.custom_locations_search():
-            return [(self.get_locations_size, self.get_locations)]
         return [
             (self.get_groups_size, self.get_groups),
             (self.get_locations_size, self.get_locations),

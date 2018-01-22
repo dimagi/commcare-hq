@@ -320,7 +320,7 @@ class CleanOwnerCaseSyncOperation(object):
                     owner_id, self.restore_state.last_sync_log.date
                 ))
                 # we also need to fetch unowned extension cases that have been modified
-                extension_case_ids = self.restore_state.last_sync_log.extension_index_tree.indices.keys()
+                extension_case_ids = list(self.restore_state.last_sync_log.extension_index_tree.indices.keys())
                 modified_extension_cases = set(filter_cases_modified_since(
                     self.case_accessor, extension_case_ids, self.restore_state.last_sync_log.date
                 ))

@@ -34,8 +34,7 @@ class ExportSchemaTest(TestCase, DocTestMixin):
 
         for index in indices:
             self.addCleanup(
-                lambda idx: map(lambda cp: cp.delete(),
-                                ExportSchema.get_all_checkpoints(idx)),
+                lambda idx: [cp.delete() for cp in ExportSchema.get_all_checkpoints(idx)],
                 index
             )
 
@@ -55,8 +54,7 @@ class ExportSchemaTest(TestCase, DocTestMixin):
 
     def test_get_all_checkpoints(self):
         index = ["mydomain", "myxmlns"]
-        self.addCleanup(lambda: map(lambda cp: cp.delete(),
-                                    ExportSchema.get_all_checkpoints(index)))
+        self.addCleanup(lambda: [cp.delete() for cp in ExportSchema.get_all_checkpoints(index)])
 
         schema1 = ExportSchema(index=index, timestamp=datetime.utcnow())
         schema1.save()

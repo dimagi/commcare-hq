@@ -36,6 +36,13 @@ class ScheduleInstance(PartitionedModel):
     next_event_due = models.DateTimeField()
     active = models.BooleanField()
 
+    RECIPIENT_TYPE_CASE = 'CommCareCase'
+    RECIPIENT_TYPE_MOBILE_WORKER = 'CommCareUser'
+    RECIPIENT_TYPE_WEB_USER = 'WebUser'
+    RECIPIENT_TYPE_CASE_GROUP = 'CommCareCaseGroup'
+    RECIPIENT_TYPE_USER_GROUP = 'Group'
+    RECIPIENT_TYPE_LOCATION = 'Location'
+
     class Meta:
         abstract = True
         index_together = (
@@ -51,17 +58,17 @@ class ScheduleInstance(PartitionedModel):
     @property
     @memoized
     def recipient(self):
-        if self.recipient_type == 'CommCareCase':
+        if self.recipient_type == self.RECIPIENT_TYPE_CASE:
             return CaseAccessors(self.domain).get_case(self.recipient_id)
-        elif self.recipient_type == 'CommCareUser':
+        elif self.recipient_type == self.RECIPIENT_TYPE_MOBILE_WORKER:
             return CommCareUser.get(self.recipient_id)
-        elif self.recipient_type == 'WebUser':
+        elif self.recipient_type == self.RECIPIENT_TYPE_WEB_USER:
             return WebUser.get(self.recipient_id)
-        elif self.recipient_type == 'CommCareCaseGroup':
+        elif self.recipient_type == self.RECIPIENT_TYPE_CASE_GROUP:
             return CommCareCaseGroup.get(self.recipient_id)
-        elif self.recipient_type == 'Group':
+        elif self.recipient_type == self.RECIPIENT_TYPE_USER_GROUP:
             return Group.get(self.recipient_id)
-        elif self.recipient_type == 'Location':
+        elif self.recipient_type == self.RECIPIENT_TYPE_LOCATION:
             return SQLLocation.by_location_id(self.recipient_id)
         else:
             raise UnknownRecipientType(self.recipient_type)
@@ -180,6 +187,25 @@ class ScheduleInstance(PartitionedModel):
         """
         return self.schedule
 
+    def check_active_flag_against_schedule(self):
+        """
+        Returns True if the active flag was changed and the schedule instance should be saved.
+        Returns False if nothing changed.
+        """
+        if self.active and not self.memoized_schedule.active:
+            self.active = False
+            return True
+
+        if not self.active and self.memoized_schedule.active:
+            if self.memoized_schedule.total_iterations_complete(self):
+                return False
+
+            self.active = True
+            self.memoized_schedule.move_to_next_event_not_in_the_past(self)
+            return True
+
+        return False
+
 
 class AbstractAlertScheduleInstance(ScheduleInstance):
     alert_schedule_id = models.UUIDField()
@@ -197,6 +223,38 @@ class AbstractAlertScheduleInstance(ScheduleInstance):
             raise ValueError("Expected an instance of AlertSchedule")
 
         self.alert_schedule_id = value.schedule_id
+
+    @staticmethod
+    def copy_for_recipient(instance, recipient_type, recipient_id):
+        """
+        We can copy alert schedule instances for any recipient because the
+        recipient's time zone doesn't factor into the calculation of the
+        next event due timestamp as it does for timed schedule instances.
+        """
+        if not isinstance(instance, AbstractAlertScheduleInstance):
+            raise TypeError("Expected an alert schedule instance")
+
+        new_instance = type(instance)()
+
+        for field in instance._meta.fields:
+            if field.name not in ['schedule_instance_id', 'recipient_type', 'recipient_id']:
+                setattr(new_instance, field.name, getattr(instance, field.name))
+
+        new_instance.recipient_type = recipient_type
+        new_instance.recipient_id = recipient_id
+
+        return new_instance
+
+    def reset_schedule(self, schedule=None):
+        """
+        Resets this alert schedule instance and puts it into a state which
+        is the same as if it had just spawned now.
+        """
+        schedule = schedule or self.memoized_schedule
+        self.current_event_num = 0
+        self.schedule_iteration_num = 1
+        self.active = True
+        schedule.set_first_event_due_timestamp(self)
 
 
 class AbstractTimedScheduleInstance(ScheduleInstance):
@@ -234,7 +292,7 @@ class AbstractTimedScheduleInstance(ScheduleInstance):
         self.active = True
         schedule.set_first_event_due_timestamp(self, start_date=new_start_date)
         schedule.move_to_next_event_not_in_the_past(self)
-        self.schedule_revision = schedule.memoized_schedule_revision
+        self.schedule_revision = schedule.get_schedule_revision(case=schedule.get_case_or_none(self))
 
 
 class AlertScheduleInstance(AbstractAlertScheduleInstance):
@@ -252,6 +310,13 @@ class TimedScheduleInstance(AbstractTimedScheduleInstance):
 
 
 class CaseScheduleInstanceMixin(object):
+
+    RECIPIENT_TYPE_SELF = 'Self'
+    RECIPIENT_TYPE_CASE_OWNER = 'Owner'
+    RECIPIENT_TYPE_LAST_SUBMTTING_USER = 'LastSubmittingUser'
+    RECIPIENT_TYPE_PARENT_CASE = 'ParentCase'
+    RECIPIENT_TYPE_CHILD_CASE = 'SubCase'
+    RECIPIENT_TYPE_CUSTOM = 'CustomRecipient'
 
     @property
     @memoized
@@ -272,17 +337,17 @@ class CaseScheduleInstanceMixin(object):
     @property
     @memoized
     def recipient(self):
-        if self.recipient_type == 'Self':
+        if self.recipient_type == self.RECIPIENT_TYPE_SELF:
             return self.case
-        elif self.recipient_type == 'Owner':
+        elif self.recipient_type == self.RECIPIENT_TYPE_CASE_OWNER:
             return self.case_owner
-        if self.recipient_type == 'LastSubmittingUser':
+        if self.recipient_type == self.RECIPIENT_TYPE_LAST_SUBMTTING_USER:
             return None
-        elif self.recipient_type == 'ParentCase':
+        elif self.recipient_type == self.RECIPIENT_TYPE_PARENT_CASE:
             return None
-        elif self.recipient_type == 'SubCase':
+        elif self.recipient_type == self.RECIPIENT_TYPE_CHILD_CASE:
             return None
-        elif self.recipient_type == 'CustomRecipient':
+        elif self.recipient_type == self.RECIPIENT_TYPE_CUSTOM:
             custom_function = to_function(
                 settings.AVAILABLE_CUSTOM_SCHEDULING_RECIPIENTS[self.recipient_id][0]
             )

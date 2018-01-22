@@ -13,7 +13,7 @@ from corehq.apps.hqmedia.tasks import build_application_zip
 from corehq.apps.app_manager.views.utils import get_langs
 from corehq.util.view_utils import absolute_reverse, json_error
 from corehq.apps.domain.models import Domain
-from corehq.apps.domain.decorators import login_or_digest_or_basic_or_apikey
+from corehq.apps.domain.decorators import api_auth
 
 from ..dbaccessors import (
     get_build_doc_by_version,
@@ -22,10 +22,11 @@ from ..dbaccessors import (
     get_latest_released_app_doc,
     wrap_app,
 )
+from six.moves import map
 
 
 @json_error
-@login_or_digest_or_basic_or_apikey()
+@api_auth
 def list_apps(request, domain):
     def app_to_json(app):
         return {
@@ -38,7 +39,7 @@ def list_apps(request, domain):
     applications = Domain.get_by_name(domain).applications()
     return json_response({
         'status': 'success',
-        'applications': map(app_to_json, applications),
+        'applications': list(map(app_to_json, applications)),
     })
 
 

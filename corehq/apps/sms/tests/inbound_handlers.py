@@ -9,8 +9,24 @@ from corehq.apps.smsforms.app import submit_unfinished_form
 from corehq.apps.smsforms.models import SQLXFormsSession
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from datetime import date, time
+from mock import patch
 
 
+class MockContextManager(object):
+
+    def __enter__(self):
+        pass
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        pass
+
+
+def mock_critical_section_for_smsforms_sessions(contact_id):
+    return MockContextManager()
+
+
+@patch('corehq.apps.smsforms.util.critical_section_for_smsforms_sessions',
+       new=mock_critical_section_for_smsforms_sessions)
 class KeywordTestCase(TouchformsTestCase):
     """
     Must be run manually (see util.TouchformsTestCase)
@@ -299,7 +315,7 @@ class KeywordTestCase(TouchformsTestCase):
         self.assertFormQuestionEquals(form, "q_int", 50, cast=int)
         self.assertFormQuestionEquals(form, "q_float", 21.3, cast=float)
         self.assertFormQuestionEquals(form, "q_long", -100, cast=int)
-        self.assertFormQuestionEquals(form, "q_date", date(2014, 1, 1))
+        self.assertFormQuestionEquals(form, "q_date", '2014-01-01')
         self.assertFormQuestionEquals(form, "q_time", time(23, 45), cast=time_parser)
 
         # Mobile worker creates a case via structured sms
@@ -382,7 +398,7 @@ class KeywordTestCase(TouchformsTestCase):
         self.assertFormQuestionEquals(form, "q_int", 50, cast=int)
         self.assertFormQuestionEquals(form, "q_float", 21.3, cast=float)
         self.assertFormQuestionEquals(form, "q_long", -100, cast=int)
-        self.assertFormQuestionEquals(form, "q_date", date(2014, 1, 1))
+        self.assertFormQuestionEquals(form, "q_date", '2014-01-01')
         self.assertFormQuestionEquals(form, "q_time", time(23, 45), cast=time_parser)
 
         # Test validation on all fields from structured sms: positional args with custom delimiter
@@ -432,7 +448,7 @@ class KeywordTestCase(TouchformsTestCase):
         self.assertFormQuestionEquals(form, "q_int", 50, cast=int)
         self.assertFormQuestionEquals(form, "q_float", 21.3, cast=float)
         self.assertFormQuestionEquals(form, "q_long", -100, cast=int)
-        self.assertFormQuestionEquals(form, "q_date", date(2014, 1, 1))
+        self.assertFormQuestionEquals(form, "q_date", '2014-01-01')
         self.assertFormQuestionEquals(form, "q_time", time(23, 45), cast=time_parser)
 
         # Test validation on all fields from structured sms: named args with custom delimiter
@@ -482,7 +498,7 @@ class KeywordTestCase(TouchformsTestCase):
         self.assertFormQuestionEquals(form, "q_int", 50, cast=int)
         self.assertFormQuestionEquals(form, "q_float", 21.3, cast=float)
         self.assertFormQuestionEquals(form, "q_long", -100, cast=int)
-        self.assertFormQuestionEquals(form, "q_date", date(2014, 1, 1))
+        self.assertFormQuestionEquals(form, "q_date", '2014-01-01')
         self.assertFormQuestionEquals(form, "q_time", time(23, 45), cast=time_parser)
 
         # Test validation on all fields from structured sms: named args with custom delimiter and joining character
@@ -532,7 +548,7 @@ class KeywordTestCase(TouchformsTestCase):
         self.assertFormQuestionEquals(form, "q_int", 50, cast=int)
         self.assertFormQuestionEquals(form, "q_float", 21.3, cast=float)
         self.assertFormQuestionEquals(form, "q_long", -100, cast=int)
-        self.assertFormQuestionEquals(form, "q_date", date(2014, 1, 1))
+        self.assertFormQuestionEquals(form, "q_date", '2014-01-01')
         self.assertFormQuestionEquals(form, "q_time", time(23, 45), cast=time_parser)
 
         # Test leaving fields blank via structured sms
@@ -743,6 +759,8 @@ class KeywordTestCase(TouchformsTestCase):
         self.assertLastOutboundSMSEquals(self.user2, "Default SMS Response")
 
 
+@patch('corehq.apps.smsforms.util.critical_section_for_smsforms_sessions',
+       new=mock_critical_section_for_smsforms_sessions)
 class PartialFormSubmissionTestCase(TouchformsTestCase):
     """
     Must be run manually (see util.TouchformsTestCase)

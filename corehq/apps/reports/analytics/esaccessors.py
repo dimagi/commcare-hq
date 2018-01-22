@@ -24,6 +24,7 @@ from corehq.apps.hqcase.utils import SYSTEM_FORM_XMLNS
 from corehq.util.quickcache import quickcache
 from dimagi.utils.parsing import string_to_datetime
 import six
+from six.moves import map
 
 PagedResult = namedtuple('PagedResult', 'total hits')
 
@@ -134,7 +135,7 @@ def get_paged_forms_by_type(domain, doc_types, start=0, size=10):
         .domain(domain)
         .remove_default_filter('is_xform_instance')
         .remove_default_filter('has_user')
-        .doc_type(map(lambda doc_type: doc_type.lower(), doc_types))
+        .doc_type([doc_type.lower() for doc_type in doc_types])
         .sort("received_on", desc=True)
         .start(start)
         .size(size)
@@ -306,11 +307,11 @@ def _get_form_counts_by_date(domain, user_ids, datespan, timezone, is_submission
 
     # Convert timestamp into timezone aware dateime. Must divide timestamp by 1000 since python's
     # fromtimestamp takes a timestamp in seconds, whereas elasticsearch's timestamp is in milliseconds
-    results = map(
+    results = list(map(
         lambda result:
             (datetime.fromtimestamp(result.key / 1000).date().isoformat(), result.doc_count),
         results,
-    )
+    ))
     return dict(results)
 
 
@@ -539,7 +540,7 @@ def get_all_user_ids_submitted(domain, app_ids=None):
     if app_ids:
         query = query.app(app_ids)
 
-    return query.run().aggregations.user_id.buckets_dict.keys()
+    return list(query.run().aggregations.user_id.buckets_dict)
 
 
 def get_username_in_last_form_user_id_submitted(domain, user_id):
@@ -619,7 +620,7 @@ def scroll_case_names(domain, case_ids):
 
 def _get_attachment_dicts_from_form(form):
     if 'external_blobs' in form:
-        return form['external_blobs'].values()
+        return list(form['external_blobs'].values())
     return []
 
 

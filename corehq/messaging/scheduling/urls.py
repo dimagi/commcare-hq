@@ -17,6 +17,6 @@ urlpatterns = [
         name=EditScheduleView.urlname),
     url(r'^conditional/$', ConditionalAlertListView.as_view(), name=ConditionalAlertListView.urlname),
     url(r'^conditional/add/$', CreateConditionalAlertView.as_view(), name=CreateConditionalAlertView.urlname),
-    url(r'^conditional/edit/(?P<rule_id>[\d]+)/$', EditConditionalAlertView.as_view(),
+    url(r'^conditional/edit/(?P<rule_id>[\w-]+)/$', EditConditionalAlertView.as_view(),
         name=EditConditionalAlertView.urlname),
 ]

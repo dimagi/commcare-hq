@@ -112,15 +112,25 @@
             <div>
                 <!-- ko if: help() -->
                 <a
-                    class="help-popover"
-                    tabindex="0"
-                    role="button"
-                    data-trigger="focus"
-                    data-placement="top"
-                    data-toggle="popover"
-                    data-bind="attr: { 'data-content': help }">
+                    class="help-text-trigger"
+                    role="button">
                     <i class="fa fa-info-circle"></i>
                 </a>
+                <div class="modal fade" role="dialog">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-body">
+                                <p align="left" data-bind="text: help"></p>
+                            </div>
+                            <div class="modal-footer">
+                                <!-- This needs to be a <span> instead of a <button> because (inexplicably) making it
+                                a button causes it to get clicked automatically when the modal opens, thus closing
+                                the modal immediately after it opens. We have yet to figure out why this is so. -->
+                                <span class="btn btn-default help-modal-close" data-dismiss="modal">{% trans "Close" %}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 <!-- /ko -->
                 <span data-bind="html: ko.utils.unwrapObservable($data.caption_markdown) || caption()"></span>
             </div>

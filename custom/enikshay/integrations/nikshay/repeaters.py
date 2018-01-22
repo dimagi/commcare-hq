@@ -32,7 +32,9 @@ from custom.enikshay.const import (
     HEALTH_ESTABLISHMENT_SUCCESS_RESPONSE_REGEX,
     TREATMENT_INITIATED_IN_PHI,
     ENROLLED_IN_PRIVATE,
+    PRIVATE_HEALTH_ESTABLISHMENT_SECTOR,
 )
+from custom.enikshay.integrations.nikshay.exceptions import NikshayHealthEstablishmentInvalidUpdate
 from custom.enikshay.integrations.nikshay.repeater_generator import (
     NikshayRegisterPatientPayloadGenerator,
     NikshayHIVTestPayloadGenerator,
@@ -41,6 +43,7 @@ from custom.enikshay.integrations.nikshay.repeater_generator import (
     NikshayRegisterPrivatePatientPayloadGenerator,
     NikshayHealthEstablishmentPayloadGenerator,
 )
+from custom.enikshay.integrations.nikshay.utils import get_location_user_for_notification
 from custom.enikshay.integrations.utils import (
     is_valid_person_submission,
     is_valid_test_submission,
@@ -275,6 +278,10 @@ class NikshayHealthEstablishmentRepeater(SOAPRepeaterMixin, LocationRepeater):
     include_app_id_param = False
     friendly_name = _("Forward Nikshay Health Establishments")
 
+    @property
+    def verify(self):
+        return False
+
     @classmethod
     def available_for_domain(cls, domain):
         return NIKSHAY_INTEGRATION.enabled(domain)
@@ -285,11 +292,20 @@ class NikshayHealthEstablishmentRepeater(SOAPRepeaterMixin, LocationRepeater):
         return reverse(RegisterNikshayHealthEstablishmentRepeaterView.urlname, args=[domain])
 
     def allowed_to_forward(self, location):
-        return (
+        _allowed_to_forward = (
             not location.metadata.get('is_test', "yes") == "yes" and
-            location.location_type.name in HEALTH_ESTABLISHMENT_TYPES_TO_FORWARD and
+            location.location_type.code in HEALTH_ESTABLISHMENT_TYPES_TO_FORWARD and
+            location.metadata.get('sector') == PRIVATE_HEALTH_ESTABLISHMENT_SECTOR and
             not location.metadata.get('nikshay_code')
         )
+        if not _allowed_to_forward:
+            return False
+        try:
+            # confirm that there is a location user to get details for notification
+            get_location_user_for_notification(location)
+        except NikshayHealthEstablishmentInvalidUpdate:
+            return False
+        return True
 
     def handle_response(self, result, repeat_record):
         if isinstance(result, Exception):
@@ -309,9 +325,11 @@ class NikshayHealthEstablishmentRepeater(SOAPRepeaterMixin, LocationRepeater):
         # message does not give the final node message here so need to find the real message
         # look at SUCCESSFUL_HEALTH_ESTABLISHMENT_RESPONSE for example
         message_node = message.find("NewDataSet/HE_DETAILS/Message")
-        if message_node:
-            message_text = message_node.text
-        if message_node and re.search(HEALTH_ESTABLISHMENT_SUCCESS_RESPONSE_REGEX, message_text):
+        already_registered_id_node = message.find("NewDataSet/Table1/HE_ID")
+        if already_registered_id_node is not None:
+            attempt = repeat_record.handle_success(result)
+            self.generator.handle_success(result, self.payload_doc(repeat_record), repeat_record)
+        elif message_node is not None and re.search(HEALTH_ESTABLISHMENT_SUCCESS_RESPONSE_REGEX, message_node.text):
             attempt = repeat_record.handle_success(result)
             self.generator.handle_success(result, self.payload_doc(repeat_record), repeat_record)
         else:

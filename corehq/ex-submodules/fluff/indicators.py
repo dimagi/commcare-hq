@@ -298,9 +298,9 @@ class IndicatorDocument(six.with_metaclass(IndicatorDocumentMeta, schema.Documen
         if not left and not right:
             return None
         elif not left or not right:
-            return left.keys() if left else right.keys()
+            return list(left) if left else list(right)
 
-        left_set, right_set = set(left.keys()), set(right.keys())
+        left_set, right_set = set(left), set(right)
         intersect = right_set.intersection(left_set)
 
         added = right_set - intersect
@@ -322,7 +322,7 @@ class IndicatorDocument(six.with_metaclass(IndicatorDocumentMeta, schema.Documen
 
         flat_keys = None
         try:
-            flat_keys = self._flat_fields.keys()
+            flat_keys = list(self._flat_fields)
         except AttributeError:
             pass
 
@@ -354,7 +354,7 @@ class IndicatorDocument(six.with_metaclass(IndicatorDocumentMeta, schema.Documen
                 for name, value in key_columns.items():
                     if value is None:
                         key_columns[name] = default_null_value_placeholder(types[name])
-                all_columns = dict(key_columns.items() + columns.items())
+                all_columns = dict(list(key_columns.items()) + list(columns.items()))
 
                 try:
                     insert = self._table.insert().values(**all_columns)

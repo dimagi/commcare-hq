@@ -10,6 +10,7 @@ from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.dbaccessors import get_built_app_ids_for_app_id
 from dimagi.utils.couch.database import iter_docs
 import six
+from six.moves import map
 
 
 class QuestionMeta(DocumentSchema):
@@ -46,7 +47,7 @@ class FormQuestionSchema(Document):
         def _none_to_empty_string(str):
             return str if str is not None else ''
 
-        key = map(_none_to_empty_string, [domain, app_id, xmlns])
+        key = list(map(_none_to_empty_string, [domain, app_id, xmlns]))
         return hashlib.sha1(':'.join(key)).hexdigest()
 
     @classmethod

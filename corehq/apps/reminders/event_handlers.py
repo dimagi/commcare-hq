@@ -15,7 +15,7 @@ from corehq.apps.sms.api import (
     send_sms, send_sms_to_verified_number, MessageMetadata
 )
 from corehq.apps.smsforms.app import start_session
-from corehq.apps.smsforms.util import form_requires_input
+from corehq.apps.smsforms.util import form_requires_input, critical_section_for_smsforms_sessions
 from corehq.apps.sms.util import format_message_list, touchforms_error_is_config_error
 from corehq.apps.users.cases import get_owner_id, get_wrapped_owner
 from corehq.apps.users.models import CouchUser, WebUser, CommCareUser
@@ -27,7 +27,6 @@ from corehq.apps.sms.models import (
 )
 from django.conf import settings
 from corehq.apps.app_manager.models import Form
-from corehq.apps.ivr.tasks import initiate_outbound_call
 from corehq.form_processor.utils import is_commcarecase
 from dimagi.utils.couch import CriticalSection
 from django.utils.translation import ugettext_noop
@@ -328,12 +327,18 @@ def fire_sms_callback_event(reminder, handler, recipients, verified_numbers, log
 
 
 def fire_sms_survey_event(reminder, handler, recipients, verified_numbers, logged_event):
+    current_event = reminder.current_event
     if reminder.callback_try_count > 0:
         # Handle timeouts
-        if handler.submit_partial_forms and (reminder.callback_try_count == len(reminder.current_event.callback_timeout_intervals)):
+        if (
+            handler.submit_partial_forms and
+            (reminder.callback_try_count == len(current_event.callback_timeout_intervals))
+        ):
             # Submit partial form completions
             for session_id in reminder.xforms_session_ids:
-                submit_unfinished_form(session_id, handler.include_case_side_effects)
+                contact_id = SQLXFormsSession.get_contact_id_from_session_id(session_id)
+                with critical_section_for_smsforms_sessions(contact_id):
+                    submit_unfinished_form(session_id, handler.include_case_side_effects)
         else:
             # Resend current question
             for session_id in reminder.xforms_session_ids:
@@ -355,7 +360,7 @@ def fire_sms_survey_event(reminder, handler, recipients, verified_numbers, logge
 
         # Get the app, module, and form
         try:
-            form_unique_id = reminder.current_event.form_unique_id
+            form_unique_id = current_event.form_unique_id
             form = Form.get_form(form_unique_id)
             app = form.get_app()
             module = form.get_module()
@@ -387,8 +392,7 @@ def fire_sms_survey_event(reminder, handler, recipients, verified_numbers, logge
                 logged_subevent.error(MessagingEvent.ERROR_PHONE_OPTED_OUT)
                 continue
 
-            key = "start-sms-survey-for-contact-%s" % recipient.get_id
-            with CriticalSection([key], timeout=60):
+            with critical_section_for_smsforms_sessions(recipient.get_id):
                 # Get the case to submit the form against, if any
                 if (is_commcarecase(recipient) and
                     not handler.force_surveys_to_use_triggered_case):
@@ -405,9 +409,42 @@ def fire_sms_survey_event(reminder, handler, recipients, verified_numbers, logge
 
                 # Start the new session
                 try:
-                    session, responses = start_session(reminder.domain, recipient,
-                        app, module, form, case_id,
-                        case_for_case_submission=handler.force_surveys_to_use_triggered_case)
+                    if current_event.callback_timeout_intervals:
+                        if handler.submit_partial_forms:
+                            expire_after = sum(current_event.callback_timeout_intervals)
+                            reminder_intervals = current_event.callback_timeout_intervals[:-1]
+                        else:
+                            expire_after = SQLXFormsSession.MAX_SESSION_LENGTH
+                            reminder_intervals = current_event.callback_timeout_intervals
+
+                        submit_partially_completed_forms = handler.submit_partial_forms
+                        include_case_updates_in_partial_submissions = handler.include_case_side_effects
+                    else:
+                        expire_after = SQLXFormsSession.MAX_SESSION_LENGTH
+                        reminder_intervals = []
+                        submit_partially_completed_forms = False
+                        include_case_updates_in_partial_submissions = False
+
+                    session, responses = start_session(
+                        SQLXFormsSession.create_session_object(
+                            reminder.domain,
+                            recipient,
+                            verified_number.phone_number if verified_number else unverified_number,
+                            app,
+                            form,
+                            expire_after=expire_after,
+                            reminder_intervals=reminder_intervals,
+                            submit_partially_completed_forms=submit_partially_completed_forms,
+                            include_case_updates_in_partial_submissions=include_case_updates_in_partial_submissions
+                        ),
+                        reminder.domain,
+                        recipient,
+                        app,
+                        module,
+                        form,
+                        case_id,
+                        case_for_case_submission=handler.force_surveys_to_use_triggered_case
+                    )
                 except TouchformsError as e:
                     human_readable_message = e.response_data.get('human_readable_message', None)
 
@@ -453,56 +490,7 @@ def fire_sms_survey_event(reminder, handler, recipients, verified_numbers, logge
 
 
 def fire_ivr_survey_event(reminder, handler, recipients, verified_numbers, logged_event):
-    domain_obj = Domain.get_by_name(reminder.domain, strict=True)
-    for recipient in recipients:
-        initiate_call = True
-        if reminder.callback_try_count > 0 and reminder.event_initiation_timestamp:
-            initiate_call = not Call.answered_call_exists(
-                recipient.doc_type,
-                recipient.get_id,
-                reminder.event_initiation_timestamp
-            )
-
-        if initiate_call:
-            if (is_commcarecase(recipient) and
-                not handler.force_surveys_to_use_triggered_case):
-                case_id = recipient.case_id
-            else:
-                case_id = reminder.case_id
-            verified_number, unverified_number = get_recipient_phone_number(
-                reminder, recipient, verified_numbers)
-            if verified_number:
-                initiate_outbound_call.delay(
-                    recipient,
-                    reminder.current_event.form_unique_id,
-                    handler.submit_partial_forms,
-                    handler.include_case_side_effects,
-                    handler.max_question_retries,
-                    logged_event.pk,
-                    verified_number=verified_number,
-                    case_id=case_id,
-                    case_for_case_submission=handler.force_surveys_to_use_triggered_case,
-                    timestamp=CaseReminderHandler.get_now(),
-                )
-            elif domain_obj.send_to_duplicated_case_numbers and unverified_number:
-                initiate_outbound_call.delay(
-                    recipient,
-                    reminder.current_event.form_unique_id,
-                    handler.submit_partial_forms,
-                    handler.include_case_side_effects,
-                    handler.max_question_retries,
-                    logged_event.pk,
-                    unverified_number=unverified_number,
-                    case_id=case_id,
-                    case_for_case_submission=handler.force_surveys_to_use_triggered_case,
-                    timestamp=CaseReminderHandler.get_now(),
-                )
-            else:
-                # initiate_outbound_call will create the subevent automatically,
-                # so since we're not initiating the call here, we have to create
-                # the subevent explicitly in order to log the error.
-                logged_subevent = logged_event.create_subevent(handler, reminder, recipient)
-                logged_subevent.error(MessagingEvent.ERROR_NO_PHONE_NUMBER)
+    return
 
 
 def fire_email_event(reminder, handler, recipients, verified_numbers, logged_event):

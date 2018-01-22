@@ -6,7 +6,7 @@ from django.utils.safestring import mark_safe
 
 import langcodes
 import logging
-import urllib
+import six.moves.urllib.request, six.moves.urllib.parse, six.moves.urllib.error
 
 from django.conf import settings
 from django.contrib import messages
@@ -597,7 +597,10 @@ def post_user_role(request, domain):
     if not domain_has_privilege(domain, privileges.ROLE_BASED_ACCESS):
         return json_response({})
     role_data = json.loads(request.body)
-    role_data = dict([(p, role_data[p]) for p in set(UserRole.properties().keys() + ['_id', '_rev']) if p in role_data])
+    role_data = dict(
+        (p, role_data[p])
+        for p in set(list(UserRole.properties()) + ['_id', '_rev']) if p in role_data
+    )
     if (
         not domain_has_privilege(domain, privileges.RESTRICT_ACCESS_BY_LOCATION)
         and not role_data['permissions']['access_all_locations']
@@ -739,7 +742,7 @@ class UserInvitationView(object):
                     track_workflow(request.POST['email'],
                                    "New User Accepted a project invitation",
                                    {"New User Accepted a project invitation": "yes"})
-                    send_hubspot_form(HUBSPOT_NEW_USER_INVITE_FORM, request)
+                    send_hubspot_form(HUBSPOT_NEW_USER_INVITE_FORM, request, user)
                     return HttpResponseRedirect(reverse("domain_homepage", args=[invitation.domain]))
             else:
                 if CouchUser.get_by_username(invitation.email):
@@ -1008,7 +1011,7 @@ def verify_phone_number(request, domain, couch_user_id):
     """
     if 'phone_number' not in request.GET:
         raise Http404('Must include phone number in request.')
-    phone_number = urllib.unquote(request.GET['phone_number'])
+    phone_number = six.moves.urllib.parse.unquote(request.GET['phone_number'])
     user = CouchUser.get_by_user_id(couch_user_id, domain)
 
     result = initiate_sms_verification_workflow(user, phone_number)
@@ -1111,7 +1114,7 @@ def _get_editable_role_choices(domain, couch_user, allow_admin_role):
 
     roles = UserRole.by_domain(domain)
     if not couch_user.is_domain_admin(domain):
-        roles = filter(lambda role: role.is_non_admin_editable, roles)
+        roles = [role for role in roles if role.is_non_admin_editable]
     elif allow_admin_role:
         roles = [AdminUserRole(domain=domain)] + roles
     return [role_to_choice(role) for role in roles]

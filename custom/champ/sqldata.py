@@ -8,6 +8,7 @@ from corehq.apps.userreports.util import get_table_name
 from custom.champ.utils import PREVENTION_XMLNS, ENHANCED_PEER_MOBILIZATION, CHAMP_CAMEROON, POST_TEST_XMLNS, \
     ACCOMPAGNEMENT_XMLNS, SUIVI_MEDICAL_XMLNS
 from custom.utils.utils import clean_IN_filter_value
+from six.moves import filter
 
 
 class ChampSqlData(SqlData):
@@ -405,7 +406,7 @@ class ChampFilter(SqlData):
 
     @property
     def data(self):
-        data = sorted(filter(bool, self._get_data().keys()))
+        data = sorted(filter(bool, list(self._get_data().keys())))
         options = [{'id': '', 'value': 'All'}] + [
             {'id': x, 'value': x} for x in data
         ]

@@ -23,6 +23,7 @@ from custom.enikshay.case_utils import (
     CASE_TYPE_EPISODE, CASE_TYPE_TEST, CASE_TYPE_TRAIL,
     CASE_TYPE_DRTB_HIV_REFERRAL, CASE_TYPE_SECONDARY_OWNER)
 from custom.enikshay.const import ENROLLED_IN_PRIVATE, CASE_VERSION
+from six.moves import filter
 from six.moves import input
 
 logger = logging.getLogger('two_b_datamigration')
@@ -205,7 +206,7 @@ class ENikshay2BMigrator(object):
                 yield person
 
     def migrate_person_case_set(self, person):
-        changes = filter(None,
+        changes = list(filter(None,
             [self.migrate_person(person.person, person.occurrences, person.episodes)]
             + [self.migrate_occurrence(occurrence, person.episodes) for occurrence in person.occurrences]
             + [self.migrate_episode(episode, person.episodes) for episode in person.episodes]
@@ -215,7 +216,7 @@ class ENikshay2BMigrator(object):
             + [self.open_secondary_owners(drtb_hiv, person.person, person.occurrences)
                for drtb_hiv in person.drtb_hiv]
             + [self.close_drtb_hiv(drtb_hiv) for drtb_hiv in person.drtb_hiv]
-        )
+        ))
         if self.commit:
             self.factory.create_or_update_cases(changes)
 
@@ -258,9 +259,11 @@ class ENikshay2BMigrator(object):
 
         phone_number = person.get_case_property('phone_number')
         if phone_number:
+            number = phonenumbers.parse(phone_number, "IN")
+            number.italian_leading_zero = False
             props['contact_phone_number'] = strip_plus(
                 phonenumbers.format_number(
-                    phonenumbers.parse(phone_number, "IN"),
+                    number,
                     phonenumbers.PhoneNumberFormat.E164)
             )
 

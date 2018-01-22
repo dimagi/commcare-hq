@@ -6,7 +6,7 @@
  *  define data, then in JavaScript use this module's get function to
  *  access it.
  */
-hqDefine('hqwebapp/js/initial_page_data', function () {
+hqDefine('hqwebapp/js/initial_page_data', ['jquery', 'underscore'], function ($, _) {
     var data_selector = ".initial-page-data",
         _initData = {},
         url_selector = ".commcarehq-urls",
@@ -16,6 +16,11 @@ hqDefine('hqwebapp/js/initial_page_data', function () {
      *  Find any unregistered data. Error on any duplicates.
      */
     var gather = function(selector, existing) {
+        /*if (document.readyState !== "complete") {
+            console.assert(false, "Attempt to call initial_page_data.gather before document is ready"); // eslint-disable-line no-console
+            $.get('/assert/initial_page_data/');
+        }*/
+
         existing = existing || {};
         $(selector).each(function() {
             _.each($(this).children(), function(div) {

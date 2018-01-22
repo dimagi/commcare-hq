@@ -1,24 +1,19 @@
 from __future__ import absolute_import, division
+
 from collections import OrderedDict, defaultdict
 from datetime import datetime
 
+import six
 from dateutil.relativedelta import relativedelta
 from dateutil.rrule import rrule, MONTHLY
 from django.db.models.aggregates import Sum
 from django.utils.translation import ugettext as _
 
-from corehq.apps.locations.models import SQLLocation
 from corehq.util.quickcache import quickcache
-from custom.icds_reports.const import LocationTypes, ChartColors
+from custom.icds_reports.const import LocationTypes, ChartColors, MapColors
 from custom.icds_reports.models import AggChildHealthMonthly
-from custom.icds_reports.utils import apply_exclude
-import six
-
-RED = '#de2d26'
-ORANGE = '#fc9272'
-BLUE = '#006fdf'
-PINK = '#fee0d2'
-GREY = '#9D9D9D'
+from custom.icds_reports.utils import apply_exclude, chosen_filters_to_labels, indian_formatted_number, \
+    get_child_locations
 
 
 @quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
@@ -54,7 +49,9 @@ def get_prevalence_of_stunting_data_map(domain, config, loc_level, show_test=Fal
 
     moderate_total = 0
     severe_total = 0
+    normal_total = 0
     valid_total = 0
+    measured_total = 0
 
     for row in get_data_for(config):
         valid = row['valid'] or 0
@@ -67,19 +64,22 @@ def get_prevalence_of_stunting_data_map(domain, config, loc_level, show_test=Fal
 
         severe_total += severe
         moderate_total += moderate
+        normal_total += normal
         valid_total += valid
+        measured_total += total_measured
 
         data_for_map[on_map_name]['severe'] += severe
         data_for_map[on_map_name]['moderate'] += moderate
         data_for_map[on_map_name]['normal'] += normal
         data_for_map[on_map_name]['total'] += valid
         data_for_map[on_map_name]['total_measured'] += total_measured
-        if name != on_map_name:
-            data_for_map[on_map_name]['original_name'].append(name)
+        data_for_map[on_map_name]['original_name'].append(name)
 
+    values = []
     for data_for_location in six.itervalues(data_for_map):
         numerator = data_for_location['moderate'] + data_for_location['severe']
         value = numerator * 100 / (data_for_location['total'] or 1)
+        values.append(value)
         if value < 25:
             data_for_location.update({'fillKey': '0%-25%'})
         elif 25 <= value < 38:
@@ -88,29 +88,61 @@ def get_prevalence_of_stunting_data_map(domain, config, loc_level, show_test=Fal
             data_for_location.update({'fillKey': '38%-100%'})
 
     fills = OrderedDict()
-    fills.update({'0%-25%': PINK})
-    fills.update({'25%-38%': ORANGE})
-    fills.update({'38%-100%': RED})
-    fills.update({'defaultFill': GREY})
+    fills.update({'0%-25%': MapColors.PINK})
+    fills.update({'25%-38%': MapColors.ORANGE})
+    fills.update({'38%-100%': MapColors.RED})
+    fills.update({'defaultFill': MapColors.GREY})
 
-    return [
-        {
-            "slug": "severe",
-            "label": "Percent of Children Stunted (6 - 60 months)",
-            "fills": fills,
-            "rightLegend": {
-                "average": "%.2f" % (((moderate_total + severe_total) * 100) / float(valid_total or 1)),
-                "info": _((
-                    "Percentage of children (6-60 months) enrolled for ICDS services with height-for-age below "
-                    "-2Z standard deviations of the WHO Child Growth Standards median."
-                    "<br/><br/>"
-                    "Stunting is a sign of chronic undernutrition and has long lasting harmful "
-                    "consequences on the growth of a child"
-                ))
-            },
-            "data": dict(data_for_map),
-        }
-    ]
+    percent_unmeasured = (valid_total - measured_total) * 100 / float(valid_total or 1)
+
+    gender_label, age_label, chosen_filters = chosen_filters_to_labels(config, default_interval='6 - 60 months')
+
+    return {
+        "slug": "severe",
+        "label": "Percent of Children{gender} Stunted ({age})".format(
+            gender=gender_label,
+            age=age_label
+        ),
+        "fills": fills,
+        "rightLegend": {
+            "average": "%.2f" % ((sum(values)) / float(len(values) or 1)),
+            "info": _((
+                "Percentage of children ({}) enrolled for ICDS services with height-for-age below "
+                "-2Z standard deviations of the WHO Child Growth Standards median."
+                "<br/><br/>"
+                "Stunting is a sign of chronic undernutrition and has long lasting harmful "
+                "consequences on the growth of a child".format(age_label)
+            )),
+            "extended_info": [
+                {
+                    'indicator': 'Total Children{} eligible to have height measured:'.format(chosen_filters),
+                    'value': indian_formatted_number(valid_total)
+                },
+                {
+                    'indicator': 'Total Children{} with height measured in given month:'
+                    .format(chosen_filters),
+                    'value': indian_formatted_number(measured_total)
+                },
+                {
+                    'indicator': '% Unmeasured{}:'.format(chosen_filters),
+                    'value': '%.2f%%' % percent_unmeasured
+                },
+                {
+                    'indicator': '% Severely stunted{}:'.format(chosen_filters),
+                    'value': '%.2f%%' % (severe_total * 100 / float(measured_total or 1))
+                },
+                {
+                    'indicator': '% Moderately stunted{}:'.format(chosen_filters),
+                    'value': '%.2f%%' % (moderate_total * 100 / float(measured_total or 1))
+                },
+                {
+                    'indicator': '% Normal{}:'.format(chosen_filters),
+                    'value': '%.2f%%' % (normal_total * 100 / float(measured_total or 1))
+                }
+            ]
+        },
+        "data": dict(data_for_map),
+    }
 
 
 @quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
@@ -129,7 +161,7 @@ def get_prevalence_of_stunting_data_chart(domain, config, loc_level, show_test=F
         moderate=Sum('stunting_moderate'),
         severe=Sum('stunting_severe'),
         normal=Sum('stunting_normal'),
-        valid=Sum('height_eligible'),
+        valid=Sum('height_measured_in_month'),
     ).order_by('month')
 
     if not show_test:
@@ -262,7 +294,7 @@ def get_prevalence_of_stunting_sector_data(domain, config, loc_level, location_i
         'total_measured': 0
     })
 
-    loc_children = SQLLocation.objects.get(location_id=location_id).get_children()
+    loc_children = get_child_locations(domain, location_id, show_test)
     result_set = set()
 
     for row in data:
@@ -286,7 +318,7 @@ def get_prevalence_of_stunting_sector_data(domain, config, loc_level, location_i
         for prop, value in six.iteritems(row_values):
             tooltips_data[name][prop] += value
 
-        value = ((moderate or 0) + (severe or 0)) / float(valid or 1)
+        value = ((moderate or 0) + (severe or 0)) / float(total_measured or 1)
         chart_data['blue'].append([
             name, value
         ])
@@ -312,7 +344,7 @@ def get_prevalence_of_stunting_sector_data(domain, config, loc_level, location_i
                 "key": "",
                 "strokeWidth": 2,
                 "classed": "dashed",
-                "color": BLUE
+                "color": MapColors.BLUE
             },
         ]
     }

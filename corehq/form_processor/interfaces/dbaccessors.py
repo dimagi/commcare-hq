@@ -3,7 +3,7 @@ from abc import ABCMeta, abstractmethod
 from collections import namedtuple
 
 import six
-from StringIO import StringIO
+from io import BytesIO
 
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.util.quickcache import quickcache
@@ -130,7 +130,7 @@ class FormAccessors(object):
 
     def iter_forms(self, form_ids):
         for chunk in chunked(form_ids, 100):
-            chunk = list(filter(None, chunk))
+            chunk = list([_f for _f in chunk if _f])
             for form in self.get_forms(chunk):
                 yield form
 
@@ -312,7 +312,7 @@ class CaseAccessors(object):
 
     def iter_cases(self, case_ids):
         for chunk in chunked(case_ids, 100):
-            chunk = list(filter(None, chunk))
+            chunk = list([_f for _f in chunk if _f])
             for case in self.get_cases(chunk):
                 yield case
 
@@ -432,7 +432,7 @@ def get_cached_case_attachment(domain, case_id, attachment_id, is_image=False):
     cobject = CachedImage(attachment_cache_key) if is_image else CachedObject(attachment_cache_key)
     if not cobject.is_cached():
         content = CaseAccessors(domain).get_attachment_content(case_id, attachment_id)
-        stream = StringIO(content.content_body)
+        stream = BytesIO(content.content_body)
         metadata = {'content_type': content.content_type}
         cobject.cache_put(stream, metadata)
 

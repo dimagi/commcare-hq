@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+import hashlib
 import math
 from datetime import datetime, timedelta
 from celery.task import task
@@ -20,6 +21,7 @@ from corehq.apps.sms.change_publishers import publish_sms_saved
 from corehq.apps.sms.util import is_contact_active
 from corehq.apps.users.models import CouchUser, CommCareUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.toggles import RETRY_SMS_INDEFINITELY
 from corehq.util.celery_utils import no_result_task
 from corehq.util.timezones.conversions import ServerTime
 from dimagi.utils.couch.cache.cache_core import get_redis_client
@@ -48,6 +50,8 @@ def handle_unsuccessful_processing_attempt(msg):
     msg.num_processing_attempts += 1
     if msg.num_processing_attempts < settings.SMS_QUEUE_MAX_PROCESSING_ATTEMPTS:
         delay_processing(msg, settings.SMS_QUEUE_REPROCESS_INTERVAL)
+    elif msg.direction == OUTGOING and RETRY_SMS_INDEFINITELY.enabled(msg.domain):
+        delay_processing(msg, settings.SMS_QUEUE_REPROCESS_INDEFINITELY_INTERVAL)
     else:
         msg.set_system_error(SMS.ERROR_TOO_MANY_UNSUCCESSFUL_ATTEMPTS)
         remove_from_queue(msg)
@@ -126,6 +130,28 @@ def message_is_stale(msg, utcnow):
         return True
 
 
+def get_connection_slot_from_phone_number(phone_number, max_simultaneous_connections):
+    """
+    Converts phone_number to a number between 0 and max_simultaneous_connections - 1.
+    This is the connection slot number that will need be reserved in order to send
+    the message.
+    """
+    hashed_phone_number = hashlib.sha1(phone_number).hexdigest()
+    return int(hashed_phone_number, base=16) % max_simultaneous_connections
+
+
+def get_connection_slot_lock(phone_number, backend, max_simultaneous_connections):
+    """
+    There is one redis lock per connection slot, numbered from 0 to
+    max_simultaneous_connections - 1.
+    A slot is taken if the lock can't be acquired.
+    """
+    slot = get_connection_slot_from_phone_number(phone_number, max_simultaneous_connections)
+    key = 'backend-%s-connection-slot-%s' % (backend.couch_id, slot)
+    client = get_redis_client()
+    return client.lock(key, timeout=60)
+
+
 def handle_outgoing(msg):
     """
     Should return a requeue flag, so if it returns True, the message will be
@@ -136,6 +162,7 @@ def handle_outgoing(msg):
     sms_rate_limit = backend.get_sms_rate_limit()
     use_rate_limit = sms_rate_limit is not None
     use_load_balancing = isinstance(backend, PhoneLoadBalancingMixin)
+    max_simultaneous_connections = backend.get_max_simultaneous_connections()
     orig_phone_number = None
 
     if use_load_balancing:
@@ -151,11 +178,20 @@ def handle_outgoing(msg):
             # Requeue the message and try it again shortly
             return True
 
+    if max_simultaneous_connections:
+        connection_slot_lock = get_connection_slot_lock(msg.phone_number, backend, max_simultaneous_connections)
+        if not connection_slot_lock.acquire(blocking=False):
+            # Requeue the message and try it again shortly
+            return True
+
     result = send_message_via_backend(
         msg,
         backend=backend,
         orig_phone_number=orig_phone_number
     )
+
+    if max_simultaneous_connections:
+        release_lock(connection_slot_lock, True)
 
     if msg.error:
         remove_from_queue(msg)
@@ -307,7 +343,7 @@ def _sync_case_phone_number(contact_case):
         if len(phone_numbers) == 0:
             phone_number = None
         elif len(phone_numbers) == 1:
-            phone_number = phone_numbers.values()[0]
+            phone_number = list(phone_numbers.values())[0]
         else:
             # We use locks to make sure this scenario doesn't happen, but if it
             # does, just clear the phone number entries and the right one will

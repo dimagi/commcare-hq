@@ -4,10 +4,27 @@
  *
  */
 
-/* globals RMI, $, _, ko */
-
-hqDefine('notifications/js/notifications_service', function () {
+hqDefine('notifications/js/notifications_service', [
+    'jquery',
+    'knockout',
+    'underscore',
+    'hqwebapp/js/initial_page_data',
+    'jquery.rmi/jquery.rmi',
+    'analytix/js/google',
+    'hqwebapp/js/hq.helpers',
+], function (
+    $,
+    ko,
+    _,
+    initialPageData,
+    RMI,
+    googleAnalytics
+) {
     'use strict';
+
+    // Workaround for non-RequireJS pages: when `define` doesn't exist, RMI is just a global variable.
+    RMI = RMI || window.RMI;
+
     var module = {};
     var _private = {};
     _private.RMI = function () {};
@@ -138,17 +155,16 @@ hqDefine('notifications/js/notifications_service', function () {
     };
 
     $(function () {
-        var notifications = hqImport('notifications/js/notifications_service');
         var csrfToken = $("#csrfTokenContainer").val();
-        notifications.setRMI(hqImport('hqwebapp/js/initial_page_data').reverse('notifications_service'), csrfToken);
-        notifications.initService('#js-settingsmenu-notifications');
-        notifications.relativelyPositionUINotify('.alert-ui-notify-relative');
-        notifications.initUINotify('.alert-ui-notify');
+        module.setRMI(initialPageData.reverse('notifications_service'), csrfToken);
+        module.initService('#js-settingsmenu-notifications');
+        module.relativelyPositionUINotify('.alert-ui-notify-relative');
+        module.initUINotify('.alert-ui-notify');
 
         $(document).on('click', '.notification-link', function() {
-            hqImport('analytix/js/google').track.event('Notification', 'Opened Message', this.href);
+            googleAnalytics.track.event('Notification', 'Opened Message', this.href);
         });
-        hqImport('analytix/js/google').track.click($('#notification-icon'), 'Notification', 'Clicked Bell Icon');
+        googleAnalytics.track.click($('#notification-icon'), 'Notification', 'Clicked Bell Icon');
     });
 
     return module;

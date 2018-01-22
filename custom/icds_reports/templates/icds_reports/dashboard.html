@@ -21,9 +21,9 @@
         <link type="text/css" rel="stylesheet" media="all" href="{% static 'angular-busy/dist/angular-busy.min.css' %}"/>
         <link type="text/css" rel="stylesheet" media="all" href="{% static 'perfect-scrollbar/css/perfect-scrollbar.min.css' %}"/>
         <link type="text/css" rel="stylesheet" media="all" href="{% static 'css/icds_dashboard.css' %}"/>
+        
+        {% javascript_libraries underscore=True hq=True %}
         <script type="text/javascript" src="{% static 'nvd3/lib/d3.v3.js' %}"></script>
-        <script type="text/javascript" src="{% static 'jquery/dist/jquery.js' %}"></script>
-        <script src="{% static 'jquery-form/dist/jquery.form.min.js' %}"></script>
         <script type="text/javascript" src="{% static 'datatables/media/js/jquery.dataTables.min.js'%}"></script>
         <script type="text/javascript" src="{% static 'datatables-fixedcolumns/js/dataTables.fixedColumns.js'%}"></script>
         <script type="text/javascript" src="{% static 'datatables-fixedheader/js/dataTables.fixedHeader.js'%}"></script>
@@ -37,8 +37,6 @@
         <script type="text/javascript" src="{% static 'angular-busy/dist/angular-busy.min.js' %}"></script>
         <script type="text/javascript" src="{% static 'ui-select/dist/select.js' %}"></script>
         <script type="text/javascript" src="{% static 'angular-sanitize/angular-sanitize.js' %}"></script>
-        <script type="text/javascript" src="{% static 'bootstrap/dist/js/bootstrap.js' %}"></script>
-        <script type="text/javascript" src="{% static 'underscore/underscore.js' %}"></script>
         <script type="text/javascript" src="{% static 'nvd3/nv.d3.js' %}"></script>
         <script type="text/javascript" src="{% static 'angular-nvd3/dist/angular-nvd3.js' %}"></script>
         <script type="text/javascript" src="{% static 'moment/min/moment-with-locales.min.js' %}"> </script>
@@ -50,12 +48,10 @@
         <script type="text/javascript" src="{% static 'datamaps/dist/datamaps.ind.js' %}"></script>
         <script type="text/javascript" src="{% static 'js/topojsons/states.topojson.js' %}"></script>
         <script type="text/javascript" src="{% static 'js/topojsons/district.topojson.js' %}"></script>
-        <script type="text/javascript" src="{% static 'js/topojsons/block.topojson.js' %}"></script>
+        <script type="text/javascript" src="{% static 'js/topojsons/block_v2.topojson.js' %}"></script>
         <script type="text/javascript" src="{% static 'angular-datamaps/dist/angular-datamaps.js' %}"></script>
         <script type="text/javascript" src="{% static 'angular-bootstrap/ui-bootstrap-tpls.min.js' %}"></script>
 
-        <script type="text/javascript" src="{% static 'hqwebapp/js/hqModules.js' %}"></script>
-        <script type="text/javascript" src="{% static 'hqwebapp/js/initial_page_data.js' %}"></script>
         <script type="text/javascript" src="{% static 'js/icds_app.js' %}"></script>
         <script type="text/javascript" src="{% static 'js/filters/property-filter/property.filter.js' %}"></script>
         <script type="text/javascript" src="{% static 'js/filters/india-numbers/india-numbers.filter.js' %}"></script>
@@ -68,6 +64,7 @@
         <script type="text/javascript" src="{% static 'js/angular-services/icds-cas-reach.service.js' %}"></script>
         <script type="text/javascript" src="{% static 'js/angular-services/demographics.service.js' %}"></script>
         <script type="text/javascript" src="{% static 'js/angular-services/infrastructure.service.js' %}"></script>
+        <script type="text/javascript" src="{% static 'js/angular-services/issnip-status.service.js' %}"></script>
 
         <script type="text/javascript" src="{% static 'js/directives/filters/filters.directive.js' %}"></script>
         <script type="text/javascript" src="{% static 'js/directives/kpi/kpi.directive.js' %}"></script>
@@ -120,13 +117,22 @@
                         <div class="container-fluid">
                             <div class="nav navbar-nav">
                                 <h2 class="dashboard-title">
-
                                     <strong>{% trans "ICDS-CAS Dashboard" %}</strong>
                                 </h2>
                             </div>
                             <nav class="navbar-menus fullmenu" id="hq-full-menu" role="navigation">
                                 <div class="nav-settings-bar pull-right">
                                     <ul class="nav navbar-nav" role="menu">
+                                        <li class="dropdown">
+                                            <span class="pointer">
+                                                <a href="{% static 'media/Dashboard_Training_Manual.pdf' %}" download>
+                                                    <i class="fa fa-question-circle nav-main-icon fa-2x light-grey"
+                                                        uib-popover-html="'Download user manual'"
+                                                        popover-placement="left"
+                                                        popover-trigger="'mouseenter'" style="margin-top: 11px;"></i>
+                                                </a>
+                                            </span>
+                                        </li>
                                         <li class="dropdown" ng-hide="$location.path().indexOf('download') !== -1">
                                             <span>
                                                 <print-report></print-report>
@@ -234,6 +240,8 @@
                     {% registerurl 'medicine_kit' domain '---' %}
                     {% registerurl 'infants_weight_scale' domain '---' %}
                     {% registerurl 'adult_weight_scale' domain '---' %}
+                    {% registerurl 'awc_locations' domain %}
+                    {% registerurl 'issnip_pdf_status' domain %}
                     <div class="ng-view"></div>
                 </div>
             </div>
@@ -271,6 +279,7 @@
     angular.module('icdsApp').constant('userLocationId', {{ user_location_id | JSON }});
     angular.module('icdsApp').constant('reportAnIssueUrl', {{ report_an_issue_url | JSON }});
     angular.module('icdsApp').constant('isWebUser', {{ is_web_user | JSON }});
+    angular.module('icdsApp').constant('haveAccessToFeatures', {{ have_access | JSON }});
     angular.module('icdsApp').constant('genders', [
         {id: '', name: 'All'},
         {id: 'M', name: 'Male'},

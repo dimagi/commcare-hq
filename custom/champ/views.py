@@ -72,8 +72,8 @@ class PrevisionVsAchievementsView(View):
     def get_htc_tst_achievement(self, domain):
         config = {
             'domain': domain,
-            'posttest_date_start': self.post_data.get('htc_tst_posttest_date_start', None),
-            'posttest_date_end': self.post_data.get('htc_tst_posttest_date_end', None),
+            'posttest_date_start': self.post_data.get('htc_tst_post_date_start', None),
+            'posttest_date_end': self.post_data.get('htc_tst_post_date_end', None),
             'hiv_test_date_start': self.post_data.get('htc_tst_hiv_test_date_start', None),
             'hiv_test_date_end': self.post_data.get('htc_tst_hiv_test_date_end', None),
             'age_range': self.post_data.get('htc_tst_age_range', None),
@@ -87,8 +87,8 @@ class PrevisionVsAchievementsView(View):
     def get_htc_pos_achievement(self, domain):
         config = {
             'domain': domain,
-            'posttest_date_start': self.post_data.get('htc_pos_posttest_date_start', None),
-            'posttest_date_end': self.post_data.get('htc_pos_posttest_date_end', None),
+            'posttest_date_start': self.post_data.get('htc_pos_post_date_start', None),
+            'posttest_date_end': self.post_data.get('htc_pos_post_date_end', None),
             'hiv_test_date_start': self.post_data.get('htc_pos_hiv_test_date_start', None),
             'hiv_test_date_end': self.post_data.get('htc_pos_hiv_test_date_end', None),
             'age_range': self.post_data.get('htc_pos_age_range', None),

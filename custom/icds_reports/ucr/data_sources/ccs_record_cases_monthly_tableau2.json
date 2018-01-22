@@ -1760,6 +1760,23 @@
           "name": "postnatal"
         },
         "type": "boolean"
+      },
+      {
+        "column_id": "add",
+        "datatype": "date",
+        "display_name": null,
+        "expression": {
+          "expression": {
+            "datatype": null,
+            "property_name": "add",
+            "type": "property_name"
+          },
+          "type": "root_doc"
+        },
+        "is_nullable": true,
+        "is_primary_key": false,
+        "transform": {},
+        "type": "expression"
       }
     ],
     "named_expressions": {
@@ -3095,6 +3112,7 @@
     },
     "asynchronous": true,
     "engine_id": "icds-ucr",
+    "icds_rebuild_related_docs": true,
     "sql_column_indexes": [
       {
         "column_ids": [

@@ -6,6 +6,7 @@ from crispy_forms.bootstrap import InlineField
 from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
 from crispy_forms import bootstrap as twbscrispy
+from corehq.apps.data_interfaces.forms import validate_case_property_name
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from django.urls import reverse
 from django.template.loader import render_to_string
@@ -25,6 +26,7 @@ from corehq.apps.reminders.event_handlers import TRIAL_MAX_EMAILS
 from corehq.apps.reminders.util import DotExpandedDict, get_form_list
 from corehq.apps.groups.models import Group
 from corehq.apps.sms.models import Keyword
+from corehq.apps.smsforms.models import SQLXFormsSession
 from corehq.apps.users.forms import SupplyPointSelectWidget
 from corehq import toggles
 from corehq.util.timezones.conversions import UserTime
@@ -529,11 +531,16 @@ class BaseScheduleCaseReminderForm(forms.Form):
                 (METHOD_SMS_SURVEY, _('SMS Survey')),
             ])
 
-        if is_previewer and can_use_survey:
-            add_field_choices(self, 'method', [
-                (METHOD_IVR_SURVEY, _('IVR Survey')),
-                (METHOD_SMS_CALLBACK, _('SMS Expecting Callback')),
-            ])
+        if is_edit and is_previewer and can_use_survey:
+            if kwargs['initial']['method'] == METHOD_IVR_SURVEY:
+                add_field_choices(self, 'method', [
+                    (METHOD_IVR_SURVEY, _('IVR Survey')),
+                ])
+
+            if kwargs['initial']['method'] == METHOD_SMS_CALLBACK:
+                add_field_choices(self, 'method', [
+                    (METHOD_SMS_CALLBACK, _('SMS Expecting Callback')),
+                ])
 
         add_field_choices(self, 'method', [
             (METHOD_EMAIL, _('Email')),
@@ -550,7 +557,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
         from corehq.apps.reminders.views import RemindersListView
         self.helper = FormHelper()
         self.helper.label_class = 'col-sm-2 col-md-2 col-lg-2'
-        self.helper.field_class = 'col-sm-4 col-md-4 col-lg-4'
+        self.helper.field_class = 'col-sm-8 col-md-8 col-lg-6'
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 _("Basic Information"),
@@ -621,10 +628,9 @@ class BaseScheduleCaseReminderForm(forms.Form):
                     crispy.Div(
                         InlineField(
                             'start_property',
-                            css_class="input-xlarge",
                             data_bind="autocompleteSelect2: getAvailableCaseProperties",
                         ),
-                        css_class='col-sm-6'
+                        css_class='col-sm-4'
                     ),
                     crispy.Div(
                         InlineField(
@@ -636,12 +642,10 @@ class BaseScheduleCaseReminderForm(forms.Form):
                     crispy.Div(
                         InlineField(
                             'start_value',
-                            style="margin-left: 5px;",
                             data_bind="visible: isStartMatchValueVisible",
                         ),
-                        css_class='col-sm-2'
+                        css_class='col-sm-4'
                     ),
-                    field_class='col-md-8 col-sm-8'
                 ),
                 data_bind="visible: isStartReminderCaseProperty",
             ),
@@ -693,21 +697,17 @@ class BaseScheduleCaseReminderForm(forms.Form):
                     crispy.Div(
                         InlineField(
                             'start_date_offset_type',
-                            css_class="input-xlarge",
                         ),
-                        css_class='col-sm-4'
+                        css_class='col-sm-6'
                     ),
                     crispy.Div(
                         InlineField(
                             'start_date_offset',
-                            css_class='input-mini',
-
                         ),
                         crispy.HTML('<p class="help-inline">day(s)</p>'),
                         style='display: inline; margin-left: 5px;',
-                        css_class='col-sm-2'
+                        css_class='col-sm-4'
                     ),
-                    field_class='col-lg-8 col-md-8'
                 ),
                 data_bind="visible: isStartReminderCaseDate"
             ),
@@ -987,7 +987,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
             'is_trial_project': domain_is_on_trial(self.domain),
             'email_trial_message': EMAIL_TRIAL_MESSAGE % {'limit': TRIAL_MAX_EMAILS},
         }
-        for field_name in self.fields.keys():
+        for field_name in self.fields:
             current_values[field_name] = self[field_name].value()
         return current_values
 
@@ -1046,12 +1046,10 @@ class BaseScheduleCaseReminderForm(forms.Form):
     def clean_start_property(self):
         start_reminder_on = self.cleaned_data['start_reminder_on']
         if start_reminder_on == START_REMINDER_ON_CASE_PROPERTY:
-            start_property = self.cleaned_data['start_property'].strip()
-            if not start_property:
-                raise ValidationError(_(
-                    "Please enter a case property for the match criteria."
-                ))
-            return start_property
+            return validate_case_property_name(
+                self.cleaned_data['start_property'],
+                allow_parent_case_references=False
+            )
         if start_reminder_on == START_REMINDER_ALL_CASES:
             return START_PROPERTY_ALL_CASES_VALUE
         return None
@@ -1101,15 +1099,11 @@ class BaseScheduleCaseReminderForm(forms.Form):
         return DAY_ANY
 
     def clean_start_date(self):
-        if (self.cleaned_data['start_property_offset_type'] ==
-            START_REMINDER_ON_CASE_DATE):
-            start_date = self.cleaned_data['start_date'].strip()
-            if not start_date:
-                raise ValidationError(_(
-                    "You must specify a case property that will provide the "
-                    "start date."
-                ))
-            return start_date
+        if self.cleaned_data['start_property_offset_type'] == START_REMINDER_ON_CASE_DATE:
+            return validate_case_property_name(
+                self.cleaned_data['start_date'],
+                allow_parent_case_references=False
+            )
         return None
 
     def clean_start_date_offset(self):
@@ -1132,13 +1126,10 @@ class BaseScheduleCaseReminderForm(forms.Form):
 
     def clean_recipient_case_match_property(self):
         if self.cleaned_data['recipient'] == RECIPIENT_SUBCASE:
-            case_property = self.cleaned_data['recipient_case_match_property'].strip()
-            if not case_property:
-                raise ValidationError(_(
-                    "You must specify a case property for the case's "
-                    "child case."
-                ))
-            return case_property
+            return validate_case_property_name(
+                self.cleaned_data['recipient_case_match_property'],
+                allow_parent_case_references=False
+            )
         if self.cleaned_data['recipient'] == RECIPIENT_ALL_SUBCASES:
             return '_id'
         return None
@@ -1173,6 +1164,10 @@ class BaseScheduleCaseReminderForm(forms.Form):
                         "Timeout intervals must be a list of positive "
                         "numbers separated by commas."
                     ))
+
+            if sum(timeouts_int) > SQLXFormsSession.MAX_SESSION_LENGTH:
+                raise ValidationError(_("Timeout intervals must add up to less than 7 days."))
+
             return timeouts_int
         return []
 
@@ -1266,11 +1261,8 @@ class BaseScheduleCaseReminderForm(forms.Form):
             # clean fire_time_aux:
             if fire_time_type != FIRE_TIME_CASE_PROPERTY:
                 event['fire_time_aux'] = None
-            elif not event.get('fire_time_aux'):
-                raise ValidationError(_(
-                    "Please enter the case property from which to pull "
-                    "the time."
-                ))
+            else:
+                validate_case_property_name(event['fire_time_aux'], allow_parent_case_references=False)
 
             # clean time_window_length:
             time_window_length = event['time_window_length']
@@ -1363,12 +1355,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
 
     def clean_until(self):
         if self.cleaned_data['stop_condition'] == STOP_CONDITION_CASE_PROPERTY:
-            value = self.cleaned_data['until'].strip()
-            if not value:
-                raise ValidationError(_(
-                    "You must specify a case property for the stop condition."
-                ))
-            return value
+            return validate_case_property_name(self.cleaned_data['until'], allow_parent_case_references=False)
         return None
 
     def clean_max_question_retries(self):
@@ -1503,8 +1490,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
     @classmethod
     def compute_initial(cls, reminder_handler, available_languages):
         initial = {}
-        fields = cls.__dict__['base_fields'].keys()
-        for field in fields:
+        for field in cls.__dict__['base_fields']:
             try:
                 current_val = getattr(reminder_handler, field, Ellipsis)
                 if field == 'events':
@@ -1589,7 +1575,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
 
         if reminder_handler.user_data_filter:
             initial['use_custom_user_data_filter'] = True
-            user_data_field_value = reminder_handler.user_data_filter.items()[0]
+            user_data_field_value = list(reminder_handler.user_data_filter.items())[0]
             initial['custom_user_data_filter_field'] = user_data_field_value[0]
             initial['custom_user_data_filter_value'] = user_data_field_value[1][0]
         else:

@@ -1,17 +1,16 @@
-/* global module, inject */
+/* global module, inject, chai */
 "use strict";
 
 var pageData = hqImport('hqwebapp/js/initial_page_data');
 
 
-describe('AWCsCoveredDirective', function () {
+describe('AWCs Covered Directive', function () {
 
     var $scope, $httpBackend, $location, controller;
 
     pageData.registerUrl('icds-ng-template', 'template');
     pageData.registerUrl('awcs_covered', 'awcs_covered');
     pageData.registerUrl('icds_locations', 'icds_locations');
-
 
     beforeEach(module('icdsApp', function ($provide) {
         $provide.constant("userLocationId", null);
@@ -35,6 +34,9 @@ describe('AWCsCoveredDirective', function () {
         controller.step = 'map';
     }));
 
+    it('tests instantiate the controller properly', function () {
+        chai.expect(controller).not.to.be.a('undefined');
+    });
 
     it('tests initial state', function () {
         assert.equal(controller.mode, 'map');
@@ -74,7 +76,8 @@ describe('AWCsCoveredDirective', function () {
         var result = controller.templatePopup({properties: {name: 'test'}}, {awcs: 15});
         var expected = '<div class="hoverinfo" style="max-width: 200px !important;">'
             + '<p>test</p>'
-            + '<p>Total AWCs that have launched ICDS CAS</p>'
+            + '<p>Total AWCs that have launched ICDS-CAS. '
+            + 'AWCs are considered launched after submitting at least one Household Registration form.</p>'
             + '<div>Number of AWCs Launched: <strong>15</strong></div>';
 
         assert.equal(result, expected);

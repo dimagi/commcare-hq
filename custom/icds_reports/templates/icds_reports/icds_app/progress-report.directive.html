@@ -69,8 +69,8 @@
 
         </div>
         <div ng-if="$ctrl.report">
-            <div class="alert alert-info" ng-show="$ctrl.showWarning" style="margin-top: 30px;">
-                <strong>Info!</strong> "You are downloading data for the current calendar month. Data for this report is calculated using calendar months (for example, January 1st-January 31st). Data for this month will not be complete until the end of the month."
+            <div class="alert alert-info" ng-show="$ctrl.showWarning">
+                <strong>Info!</strong> "You are viewing data for the current calendar month. Data for this report is calculated using calendar months (for example, January 1st-January 31st). Data for this month will not be completed until the end of the month."
             </div>
             <div class="row">
                 <button class="btn btn-info btn-sm right" ng-click="$ctrl.goBack()">Back</button>

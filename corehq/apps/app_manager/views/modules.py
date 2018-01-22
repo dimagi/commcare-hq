@@ -66,6 +66,7 @@ from corehq.apps.app_manager.models import (
     DefaultCaseSearchProperty, get_all_mobile_filter_configs, get_auto_filter_configurations, CustomIcon)
 from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
     require_can_edit_apps, require_deploy_apps
+from six.moves import map
 
 logger = logging.getLogger(__name__)
 
@@ -738,7 +739,7 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
 
     lang = request.COOKIES.get('lang', app.langs[0])
     if short is not None:
-        detail.short.columns = map(DetailColumn.from_json, short)
+        detail.short.columns = list(map(DetailColumn.from_json, short))
         if persist_case_context is not None:
             detail.short.persist_case_context = persist_case_context
             detail.short.persistent_case_context_xml = persistent_case_context_xml
@@ -754,9 +755,9 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
             _save_case_list_lookup_params(detail.short, case_list_lookup, lang)
 
     if long_ is not None:
-        detail.long.columns = map(DetailColumn.from_json, long_)
+        detail.long.columns = list(map(DetailColumn.from_json, long_))
         if tabs is not None:
-            detail.long.tabs = map(DetailTab.wrap, tabs)
+            detail.long.tabs = list(map(DetailTab.wrap, tabs))
         if print_template is not None:
             detail.long.print_template = print_template
     if filter != ():

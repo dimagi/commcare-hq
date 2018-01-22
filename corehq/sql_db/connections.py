@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 import random
 from contextlib import contextmanager
-from urllib import urlencode
+from six.moves.urllib.parse import urlencode
 
 from django.conf import settings
 import sqlalchemy
@@ -13,6 +13,13 @@ DEFAULT_ENGINE_ID = 'default'
 UCR_ENGINE_ID = 'ucr'
 ICDS_UCR_ENGINE_ID = 'icds-ucr'
 ICDS_TEST_UCR_ENGINE_ID = 'icds-test-ucr'
+
+
+def get_icds_ucr_db_alias():
+    try:
+        return connection_manager.get_django_db_alias(ICDS_UCR_ENGINE_ID)
+    except KeyError:
+        return None
 
 
 def create_engine(connection_string):

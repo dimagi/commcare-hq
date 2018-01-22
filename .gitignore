@@ -1,6 +1,7 @@
 *.pyc
 *~
 *.swp
+*.swo
 /local.ini*
 /localsettings*
 /loadtest/test_scripts/localsettings.py

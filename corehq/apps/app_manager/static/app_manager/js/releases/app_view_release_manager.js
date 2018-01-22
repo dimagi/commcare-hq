@@ -19,10 +19,6 @@ hqDefine("app_manager/js/releases/app_view_release_manager", function() {
         el.koApplyBindings(releasesMain);
     }
 
-    $("#onboarding-video").click(function() {
-        hqImport('analytix/js/kissmetrix').track.event('Clicked onboarding video link');
-    });
-
     // View changes / app diff
     var appDiff = hqImport('app_manager/js/releases/app_diff').init('#app-diff-modal .modal-body');
     $('#recent-changes-btn').on('click', function () {
@@ -43,11 +39,11 @@ hqDefine("app_manager/js/releases/app_view_release_manager", function() {
         $profilesTab.koApplyBindings(profileManager);
     }
 
-    if (initial_page_data('intro_only')) {
-        hqImport('app_manager/js/preview_app').forceShowPreview();
-    }
-
     $(function() {
+        if (initial_page_data('intro_only')) {
+            hqImport('app_manager/js/preview_app').forceShowPreview();
+        }
+
         hqImport('analytix/js/kissmetrix').track.event('Visited the Release Manager');
         if (initial_page_data('confirm')) {
             hqImport('analytix/js/google').track.event('User actions', 'User created login', window.location.pathname);

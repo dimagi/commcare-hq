@@ -16,7 +16,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.views.generic.base import TemplateView
 
-from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest_or_basic_or_apikey
+from corehq.apps.domain.decorators import login_and_domain_required, api_auth
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.fixtures.tasks import fixture_upload_async, fixture_download_async
 from corehq.apps.fixtures.dispatcher import require_can_edit_fixtures
@@ -124,13 +124,13 @@ def update_tables(request, domain, data_type_id, test_patch=None):
         if is_identifier_invalid(data_tag):
             validation_errors.append(data_tag)
         for field_name, options in fields_update['fields'].items():
-            method = options.keys()
+            method = list(options.keys())
             if 'update' in method:
                 field_name = options['update']
             if is_identifier_invalid(field_name) and 'remove' not in method:
                 validation_errors.append(field_name)
-        validation_errors = map(lambda e: _("\"%s\" cannot include special characters or "
-                                            "begin with \"xml\" or a number.") % e, validation_errors)
+        validation_errors = [_("\"%s\" cannot include special characters or "
+                                            "begin with \"xml\" or a number.") % e for e in validation_errors]
         if len(data_tag) > 31:
             validation_errors.append(_("Table ID can not be longer than 31 characters."))
 
@@ -173,7 +173,7 @@ def update_types(patches, domain, data_type_id, data_tag, is_global, transaction
             new_fixture_fields.append(old_field)
         if "remove" in patch:
             continue
-    new_fields = fields_patches.keys()
+    new_fields = list(fields_patches.keys())
     for new_field_name in new_fields:
         patch = fields_patches.pop(new_field_name)
         if "is_new" in patch:
@@ -242,8 +242,8 @@ def data_table(request, domain):
             "headers": DataTablesHeader(DataTablesColumn("No lookup Tables Uploaded")),
             "rows": []
         }
-    selected_sheet = sheets.values()[0]
-    selected_sheet_tag = sheets.keys()[0]
+    selected_sheet = list(sheets.values())[0]
+    selected_sheet_tag = list(sheets.keys())[0]
     data_table = {
         "headers": None,
         "rows": None,
@@ -403,7 +403,7 @@ class UploadFixtureAPIResponse(object):
 
 @csrf_exempt
 @require_POST
-@login_or_digest_or_basic_or_apikey()
+@api_auth
 @require_can_edit_fixtures
 def upload_fixture_api(request, domain, **kwargs):
     """

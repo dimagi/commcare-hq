@@ -1,5 +1,5 @@
 from __future__ import absolute_import
-from urllib import urlencode
+from six.moves.urllib.parse import urlencode
 
 from django.urls import reverse
 from django.conf import settings
@@ -43,6 +43,7 @@ from corehq.toggles import PUBLISH_CUSTOM_REPORTS
 from custom.world_vision import WORLD_VISION_DOMAINS
 from dimagi.utils.decorators.memoized import memoized
 from django_prbac.utils import has_privilege
+from six.moves import map
 
 
 class ProjectReportsTab(UITab):
@@ -175,7 +176,7 @@ class ProjectReportsTab(UITab):
             page['show_in_dropdown'] = True
             return page
         return sidebar_to_dropdown([
-            (header, map(show, pages))
+            (header, list(map(show, pages)))
             for header, pages in self.sidebar_items
         ])
 
@@ -579,7 +580,7 @@ class ProjectDataTab(UITab):
                                        args=(self.domain,)),
                         'show_in_dropdown': True,
                         'icon': 'icon icon-list-alt fa fa-list-alt',
-                        'subpages': filter(None, [
+                        'subpages': [_f for _f in [
                             {
                                 'title': _(create_form_cls.page_title),
                                 'urlname': create_form_cls.urlname,
@@ -604,7 +605,7 @@ class ProjectDataTab(UITab):
                                 'title': _(edit_form_cls.page_title),
                                 'urlname': edit_form_cls.urlname,
                             } if self.can_edit_commcare_data else None,
-                        ])
+                        ] if _f]
                     }
                 )
             if self.can_view_case_exports:
@@ -615,7 +616,7 @@ class ProjectDataTab(UITab):
                                        args=(self.domain,)),
                         'show_in_dropdown': True,
                         'icon': 'icon icon-share fa fa-share-square-o',
-                        'subpages': filter(None, [
+                        'subpages': [_f for _f in [
                             {
                                 'title': _(create_case_cls.page_title),
                                 'urlname': create_case_cls.urlname,
@@ -632,7 +633,7 @@ class ProjectDataTab(UITab):
                                 'title': _(edit_case_cls.page_title),
                                 'urlname': edit_case_cls.urlname,
                             } if self.can_edit_commcare_data else None,
-                        ])
+                        ] if _f]
                     })
 
             if self.can_view_sms_exports:
@@ -650,7 +651,7 @@ class ProjectDataTab(UITab):
                     "title": _(DailySavedExportListView.page_title),
                     "url": reverse(DailySavedExportListView.urlname, args=(self.domain,)),
                     "show_in_dropdown": True,
-                    "subpages": filter(None, [
+                    "subpages": [_f for _f in [
                         {
                             'title': _(CreateNewDailySavedFormExport.page_title),
                             'urlname': CreateNewDailySavedFormExport.urlname,
@@ -667,7 +668,7 @@ class ProjectDataTab(UITab):
                             'title': _(EditCaseDailySavedExportView.page_title),
                             'urlname': EditCaseDailySavedExportView.urlname,
                         } if self.can_edit_commcare_data else None,
-                    ])
+                    ] if _f]
                 })
             elif self.should_see_daily_saved_export_paywall:
                 export_data_views.append({
@@ -815,9 +816,8 @@ class ApplicationsTab(UITab):
 
     @property
     def dropdown_items(self):
-        # todo async refresh submenu when on the applications page and
-        # you change the application name
         apps = get_brief_apps_in_domain(self.domain)
+        apps = sorted(apps, key=lambda item: item.name.lower())
         submenu_context = []
         if not apps:
             return submenu_context

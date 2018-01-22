@@ -49,31 +49,41 @@ def remove_quotes(value):
     return value
 
 
+def validate_case_property_characters(value):
+    if not re.match('^[a-zA-Z0-9_-]+$', value):
+        raise ValidationError(
+            _("Property names should only contain alphanumeric characters, underscore, or hyphen.")
+        )
+
+
 def validate_case_property_name(value, allow_parent_case_references=True):
     if not isinstance(value, six.string_types):
         raise ValidationError(_("Please specify a case property name."))
 
     value = value.strip()
-    property_name = re.sub('^(parent/|host/)+', '', value)
-    if not property_name:
+
+    if not value:
         raise ValidationError(_("Please specify a case property name."))
 
-    if '/' in property_name:
-        if not allow_parent_case_references:
+    if not allow_parent_case_references:
+        if '/' in value:
             raise ValidationError(
                 _("Invalid character '/' in case property name: '{}'. "
                   "Parent or host case references are not allowed.").format(value)
             )
+        validate_case_property_characters(value)
+    else:
+        property_name = re.sub('^(parent/|host/)+', '', value)
+        if not property_name:
+            raise ValidationError(_("Please specify a case property name."))
 
-        raise ValidationError(
-            _("Case property reference cannot contain '/' unless referencing the parent "
-              "or host case with 'parent/' or 'host/'")
-        )
+        if '/' in property_name:
+            raise ValidationError(
+                _("Case property reference cannot contain '/' unless referencing the parent "
+                  "or host case with 'parent/' or 'host/'")
+            )
 
-    if not re.match('^[a-zA-Z0-9_-]+$', property_name):
-        raise ValidationError(
-            _("Property names should only contain alphanumeric characters, underscore, or hyphen.")
-        )
+        validate_case_property_characters(property_name)
 
     return value
 
@@ -315,7 +325,7 @@ class AddAutomaticCaseUpdateRuleForm(forms.Form):
         if self.enhancements_enabled:
             self.allow_updates_without_closing()
 
-        _update_property_fields = filter(None, [
+        _update_property_fields = [_f for _f in [
             Field(
                 'update_property_name',
                 ng_model='update_property_name',
@@ -329,9 +339,9 @@ class AddAutomaticCaseUpdateRuleForm(forms.Form):
                 'update_property_value',
                 ng_model='update_property_value',
             )
-        ])
+        ] if _f]
 
-        _basic_info_fields = filter(None, [
+        _basic_info_fields = [_f for _f in [
             Field(
                 'name',
                 ng_model='name',
@@ -375,7 +385,7 @@ class AddAutomaticCaseUpdateRuleForm(forms.Form):
                 *_update_property_fields,
                 ng_show='showUpdateProperty()'
             )
-        ])
+        ] if _f]
 
         self.set_case_type_choices(self.initial.get('case_type'))
         self.helper.layout = Layout(
@@ -651,9 +661,9 @@ class CaseRuleCriteriaForm(forms.Form):
 
         self.is_system_admin = kwargs.pop('is_system_admin', False)
 
-        rule = kwargs.pop('rule', None)
-        if rule:
-            kwargs['initial'] = self.compute_initial(rule)
+        self.initial_rule = kwargs.pop('rule', None)
+        if self.initial_rule:
+            kwargs['initial'] = self.compute_initial(self.initial_rule)
 
         super(CaseRuleCriteriaForm, self).__init__(*args, **kwargs)
 

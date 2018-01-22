@@ -14,7 +14,7 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.apps.userreports.models import StaticDataSourceConfiguration
 from corehq.apps.userreports.util import get_indicator_adapter
-from corehq.sql_db.connections import connection_manager
+from corehq.sql_db.connections import connection_manager, ICDS_UCR_ENGINE_ID
 from custom.icds_reports.tasks import move_ucr_data_into_aggregation_tables
 
 FILE_NAME_TO_TABLE_MAPPING = {
@@ -36,6 +36,7 @@ FILE_NAME_TO_TABLE_MAPPING = {
 
 def setUpModule():
     if settings.USE_PARTITIONED_DATABASE:
+        print('============= WARNING: not running test setup because settings.USE_PARTITIONED_DATABASE is True.')
         return
 
     _call_center_domain_mock = mock.patch(
@@ -76,7 +77,7 @@ def setUpModule():
                 continue
             adapter.build_table()
 
-        engine = connection_manager.get_session_helper(settings.ICDS_UCR_TEST_DATABASE_ALIAS).engine
+        engine = connection_manager.get_engine(ICDS_UCR_ENGINE_ID)
         metadata = sqlalchemy.MetaData(bind=engine)
         metadata.reflect(bind=engine, extend_existing=True)
         path = os.path.join(os.path.dirname(__file__), 'fixtures')
@@ -111,8 +112,7 @@ def tearDownModule():
                 continue
             adapter.drop_table()
 
-        engine = connection_manager.get_session_helper(settings.ICDS_UCR_TEST_DATABASE_ALIAS).engine
-
+        engine = connection_manager.get_engine(ICDS_UCR_ENGINE_ID)
         with engine.begin() as connection:
             metadata = sqlalchemy.MetaData(bind=engine)
             metadata.reflect(bind=engine, extend_existing=True)

@@ -854,7 +854,7 @@ class XForm(WrappedNode):
         if not node_group:
             return None
 
-        lang = lang or self.translations().keys()[0]
+        lang = lang or list(self.translations().keys())[0]
         text_node = node_group.nodes.get(lang)
         if not text_node:
             return None
@@ -930,7 +930,7 @@ class XForm(WrappedNode):
         if not self.exists():
             return []
 
-        return self.translations().keys()
+        return list(self.translations().keys())
 
     def get_questions(self, langs, include_triggers=False,
                       include_groups=False, include_translations=False, form=None):
@@ -1031,10 +1031,7 @@ class XForm(WrappedNode):
                 if data_node.tag_name == 'entry':
                     parent = next(data_node.xml.iterancestors())
                     if len(parent):
-                        is_stock_element = any(map(
-                            lambda namespace: namespace == COMMTRACK_REPORT_XMLNS,
-                            parent.nsmap.values()
-                        ))
+                        is_stock_element = any([namespace == COMMTRACK_REPORT_XMLNS for namespace in parent.nsmap.values()])
                         if is_stock_element:
                             question.update({
                                 "stock_entry_attributes": dict(data_node.xml.attrib),
@@ -2031,7 +2028,7 @@ def _index_on_fields(dicts, fields):
 
 
 VELLUM_TYPE_INDEX = _index_on_fields(
-    [{field: value for field, value in (dct.items() + [('name', key)])}
+    [{field: value for field, value in (list(dct.items()) + [('name', key)])}
      for key, dct in VELLUM_TYPES.items()],
     ('tag', 'type', 'media', 'appearance')
 )

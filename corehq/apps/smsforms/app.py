@@ -5,8 +5,8 @@ from corehq.apps.cloudcare.touchforms_api import CaseSessionDataHelper
 from corehq.apps.smsforms.util import process_sms_form_complete
 from corehq.apps.users.models import CouchUser
 from corehq.form_processor.utils import is_commcarecase
+from corehq.messaging.scheduling.util import utcnow
 from .models import XFORMS_SESSION_SMS, SQLXFormsSession
-from datetime import datetime
 from touchforms.formplayer.api import (
     XFormsConfig,
     DigestAuth,
@@ -26,8 +26,8 @@ AUTH = DigestAuth(settings.TOUCHFORMS_API_USER,
                   settings.TOUCHFORMS_API_PASSWORD)
 
 
-def start_session(domain, contact, app, module, form, case_id=None, yield_responses=False,
-                  session_type=XFORMS_SESSION_SMS, case_for_case_submission=False):
+def start_session(session, domain, contact, app, module, form, case_id=None, yield_responses=False,
+                  case_for_case_submission=False):
     """
     Starts a session in touchforms and saves the record in the database.
     
@@ -66,22 +66,8 @@ def start_session(domain, contact, app, module, form, case_id=None, yield_respon
                           session_data=session_data,
                           auth=AUTH)
 
-    now = datetime.utcnow()
-
-    # just use the contact id as the connection id
-    connection_id = contact.get_id
-
     session_start_info = tfsms.start_session(config)
-    session = SQLXFormsSession(
-        couch_id=uuid.uuid4().hex,  # for legacy reasons we just generate a couch_id for now
-        connection_id=connection_id,
-        session_id=session_start_info.session_id,
-        start_time=now, modified_time=now,
-        form_xmlns=form.xmlns,
-        completed=False, domain=domain,
-        app_id=app.get_id, user_id=contact.get_id,
-        session_type=session_type,
-    )
+    session.session_id = session_start_info.session_id
     session.save()
     responses = session_start_info.first_responses
 
@@ -99,38 +85,14 @@ def start_session(domain, contact, app, module, form, case_id=None, yield_respon
         return (session, _responses_to_text(responses))
 
 
-def get_responses(msg):
-    return _get_responses(msg.domain, msg.couch_recipient, msg.text)
-
-
-def _get_responses(domain, recipient, text, yield_responses=False, session_id=None, update_timestamp=True):
+def get_responses(domain, session_id, text):
     """
     Try to process this message like a session-based submission against
     an xform.
     
     Returns a list of responses if there are any.
     """
-    session = None
-    if session_id is not None:
-        if update_timestamp:
-            # The IVR workflow passes the session id
-            session = SQLXFormsSession.by_session_id(session_id)
-    else:
-        # The SMS workflow grabs the open sms session
-        session = SQLXFormsSession.get_open_sms_session(domain, recipient)
-        if session is not None:
-            session_id = session.session_id
-
-    if update_timestamp and session is not None:
-        session.modified_time = datetime.utcnow()
-        session.save()
-
-    if session_id is not None:
-        # TODO auth
-        if yield_responses:
-            return list(tfsms.next_responses(session_id, text, auth=None))
-        else:
-            return _responses_to_text(tfsms.next_responses(session_id, text, auth=None))
+    return list(tfsms.next_responses(session_id, text))
 
 
 def _responses_to_text(responses):
@@ -161,7 +123,7 @@ def submit_unfinished_form(session_id, include_case_side_effects=False):
         case_tag_regex = re.compile("^(\{.*\}){0,1}case$") # Use regex in order to search regardless of namespace
         meta_tag_regex = re.compile("^(\{.*\}){0,1}meta$")
         timeEnd_tag_regex = re.compile("^(\{.*\}){0,1}timeEnd$")
-        current_timstamp = json_format_datetime(datetime.utcnow())
+        current_timstamp = json_format_datetime(utcnow())
         for child in root:
             if case_tag_regex.match(child.tag) is not None:
                 # Found the case tag

@@ -10,7 +10,7 @@ from collections import (
 )
 from datetime import datetime
 
-from StringIO import StringIO
+from io import BytesIO, StringIO
 from django.db import models
 from jsonfield.fields import JSONField
 from jsonobject import JsonObject
@@ -38,6 +38,7 @@ from dimagi.utils.decorators.memoized import memoized
 from .abstract_models import AbstractXFormInstance, AbstractCommCareCase, CaseAttachmentMixin, IsImageMixin
 from .exceptions import AttachmentNotFound
 import six
+from six.moves import map
 
 XFormInstanceSQL_DB_TABLE = 'form_processor_xforminstancesql'
 XFormAttachmentSQL_DB_TABLE = 'form_processor_xformattachmentsql'
@@ -82,7 +83,7 @@ class Attachment(namedtuple('Attachment', 'name raw_content content_type')):
         return data
 
     def content_as_file(self):
-        return StringIO(self.content)
+        return BytesIO(self.content)
 
 
 class SaveStateMixin(object):
@@ -438,8 +439,10 @@ class AbstractAttachment(PartitionedModel, models.Model, SaveStateMixin):
             raise InvalidAttachment("cannot save attachment without name")
 
         content_readable = content
-        if isinstance(content, six.string_types):
+        if isinstance(content, six.text_type):
             content_readable = StringIO(content)
+        elif isinstance(content, six.binary_type):
+            content_readable = BytesIO(content)
 
         db = get_blob_db()
         bucket = self.blobdb_bucket()
@@ -535,6 +538,7 @@ class XFormOperationSQL(PartitionedModel, SaveStateMixin, models.Model):
     ARCHIVE = 'archive'
     UNARCHIVE = 'unarchive'
     EDIT = 'edit'
+    UUID_DATA_FIX = 'uuid_data_fix'
 
     form = models.ForeignKey(XFormInstanceSQL, to_field='form_id', on_delete=models.CASCADE)
     user_id = models.CharField(max_length=255, null=True)
@@ -765,7 +769,7 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
         return any(index.identifier == index_id for index in self.indices)
 
     def get_index(self, index_id):
-        found = filter(lambda i: i.identifier == index_id, self.indices)
+        found = [i for i in self.indices if i.identifier == index_id]
         if found:
             assert(len(found) == 1)
             return found[0]
@@ -794,10 +798,7 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
 
     def get_transaction_by_form_id(self, form_id):
         from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
-        transactions = filter(
-            lambda t: t.form_id == form_id,
-            self.get_tracked_models_to_create(CaseTransaction)
-        )
+        transactions = [t for t in self.get_tracked_models_to_create(CaseTransaction) if t.form_id == form_id]
         assert len(transactions) <= 1
         transaction = transactions[0] if transactions else None
 
@@ -841,10 +842,7 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
             transactions = CaseAccessorSQL.get_transactions_by_type(self.case_id, transaction_type)
         else:
             transactions = []
-        transactions += filter(
-            lambda t: (t.type & transaction_type) == transaction_type,
-            self.get_tracked_models_to_create(CaseTransaction)
-        )
+        transactions += [t for t in self.get_tracked_models_to_create(CaseTransaction) if (t.type & transaction_type) == transaction_type]
         return transactions
 
     def modified_since_sync(self, sync_log):
@@ -895,10 +893,10 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
         indices = self.indices
 
         if identifier:
-            indices = filter(lambda index: index.identifier == identifier, indices)
+            indices = [index for index in indices if index.identifier == identifier]
 
         if relationship:
-            indices = filter(lambda index: index.relationship_id == relationship, indices)
+            indices = [index for index in indices if index.relationship_id == relationship]
 
         return [index.referenced_case for index in indices]
 
@@ -1243,7 +1241,7 @@ class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
     def form_transaction(cls, case, xform, action_types=None):
         action_types = action_types or []
 
-        if any(map(lambda action_type: not cls._valid_action_type(action_type), action_types)):
+        if any([not cls._valid_action_type(action_type) for action_type in action_types]):
             raise UnknownActionType('Unknown action type found')
 
         type_ = cls.TYPE_FORM

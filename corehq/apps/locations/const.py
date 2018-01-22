@@ -1,4 +1,3 @@
-
 ROOT_LOCATION_TYPE = "TOP"
 
 LOCATION_SHEET_HEADERS = {
@@ -22,3 +21,5 @@ LOCATION_TYPE_SHEET_HEADERS = {
     'shares_cases': 'Shares Cases Y/N',
     'view_descendants': 'View Child Cases (Y/N)',
 }
+
+LOCK_LOCATIONS_TIMEOUT = 60 * 60 * 10  # seconds

@@ -232,3 +232,74 @@ class TestEpisodeFromPersonExpression(ENikshayCaseStructureMixin, TestCase):
             "person_id_expression": "some_random_id",
         })
         self.assertEqual(expression({}, context), None)
+
+
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+class TestRecentReferralFromPersonExpression(ENikshayCaseStructureMixin, TestCase):
+
+    def setUp(self):
+        super(TestRecentReferralFromPersonExpression, self).setUp()
+        self.cases = self.create_case_structure()
+
+    def tearDown(self):
+        super(TestRecentReferralFromPersonExpression, self).tearDown()
+        delete_all_cases()
+
+    def update_referral(self, referral_case_id, update):
+        # Note that the actual app workflow changes additional properties, including the case owner
+        self.factory.update_case(
+            referral_case_id,
+            update=update
+        )
+
+    def test_expression_when_referral_pass_filters(self):
+        referral_1_case_id = uuid.uuid4().hex
+        referral = self.create_referral_case(referral_1_case_id)[0]
+        context = EvaluationContext({"domain": self.domain})
+        expression = ExpressionFactory.from_spec({
+            "type": "enikshay_most_recent_referral_from_person",
+            "person_id_expression": self.person_id,
+        })
+        self.assertEqual(expression({}, context), referral.to_json())
+
+    def test_expression_when_referral_does_not_pass_filters(self):
+        referral_2_case_id = uuid.uuid4().hex
+        self.create_referral_case(referral_2_case_id)
+        self.update_referral(referral_2_case_id, {
+            "referral_closed_reason": "duplicate_referral_reconciliation",
+        })
+
+        context = EvaluationContext({"domain": self.domain})
+        expression = ExpressionFactory.from_spec({
+            "type": "enikshay_most_recent_referral_from_person",
+            "person_id_expression": self.person_id,
+        })
+        self.assertEqual(expression({}, context), None)
+
+
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+class TestRecentEpisodeFromPersonExpression(ENikshayCaseStructureMixin, TestCase):
+
+    def setUp(self):
+        super(TestRecentEpisodeFromPersonExpression, self).setUp()
+        self.cases = self.create_case_structure()
+
+    def tearDown(self):
+        super(TestRecentEpisodeFromPersonExpression, self).tearDown()
+        delete_all_cases()
+
+    def test_expression_when_episode_exists(self):
+        context = EvaluationContext({"domain": self.domain})
+        expression = ExpressionFactory.from_spec({
+            "type": "enikshay_most_recent_episode_from_person",
+            "person_id_expression": self.person_id,
+        })
+        self.assertEqual(expression({}, context), self.cases[self.episode_id].to_json())
+
+    def test_expression_when_episode_does_not_exist(self):
+        context = EvaluationContext({"domain": self.domain})
+        expression = ExpressionFactory.from_spec({
+            "type": "enikshay_most_recent_episode_from_person",
+            "person_id_expression": "some_random_id",
+        })
+        self.assertEqual(expression({}, context), None)

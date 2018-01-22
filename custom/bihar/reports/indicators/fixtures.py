@@ -7,6 +7,7 @@ from corehq.util.translation import localize
 from custom.bihar import BIHAR_DOMAINS
 from custom.bihar.reports.indicators.indicators import IndicatorDataProvider, IndicatorConfig, INDICATOR_SETS
 import six
+from six.moves import filter
 
 # meh
 hard_coded_domains = BIHAR_DOMAINS
@@ -22,7 +23,7 @@ class IndicatorFixtureProvider(FixtureProvider):
         restore_user = restore_state.restore_user
 
         if restore_user.domain in hard_coded_domains:
-            groups = filter(hard_coded_group_filter, restore_user.get_groups())
+            groups = list(filter(hard_coded_group_filter, restore_user.get_groups()))
             if len(groups) == 1:
                 data_provider = IndicatorDataProvider(
                     domain=restore_user.domain,

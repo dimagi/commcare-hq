@@ -20,6 +20,8 @@ from corehq.apps.reminders.util import enqueue_reminder_directly, get_two_way_nu
 from couchdbkit.exceptions import ResourceConflict
 from couchdbkit.resource import ResourceNotFound
 from corehq.apps.smsforms.app import submit_unfinished_form
+from corehq.apps.smsforms.models import SQLXFormsSession
+from corehq.apps.smsforms.util import critical_section_for_smsforms_sessions
 from corehq.util.quickcache import quickcache
 from corehq.util.timezones.conversions import ServerTime, UserTime
 from dimagi.utils.couch import LockableMixIn, CriticalSection
@@ -32,6 +34,7 @@ from dimagi.utils.couch.database import iter_docs
 from django.db import models, transaction
 from string import Formatter
 import six
+from six.moves import filter
 
 
 class IllegalModelStateException(Exception):
@@ -103,7 +106,7 @@ RECIPIENT_CHOICES = [
     RECIPIENT_USER, RECIPIENT_OWNER, RECIPIENT_CASE, RECIPIENT_SURVEY_SAMPLE,
     RECIPIENT_PARENT_CASE, RECIPIENT_SUBCASE, RECIPIENT_USER_GROUP,
     RECIPIENT_LOCATION
-] + settings.AVAILABLE_CUSTOM_REMINDER_RECIPIENTS.keys()
+] + list(settings.AVAILABLE_CUSTOM_REMINDER_RECIPIENTS)
 
 KEYWORD_RECIPIENT_CHOICES = [RECIPIENT_SENDER, RECIPIENT_OWNER, RECIPIENT_USER_GROUP]
 KEYWORD_ACTION_CHOICES = [METHOD_SMS, METHOD_SMS_SURVEY, METHOD_STRUCTURED_SMS]
@@ -1002,7 +1005,9 @@ class CaseReminderHandler(Document):
                     if self.method == METHOD_SMS_SURVEY and self.submit_partial_forms and iteration > 1:
                         # This is to make sure we submit the unfinished forms even when fast-forwarding to the next event after system downtime
                         for session_id in reminder.xforms_session_ids:
-                            submit_unfinished_form(session_id, self.include_case_side_effects)
+                            contact_id = SQLXFormsSession.get_contact_id_from_session_id(session_id)
+                            with critical_section_for_smsforms_sessions(contact_id):
+                                submit_unfinished_form(session_id, self.include_case_side_effects)
                 else:
                     reminder.next_fire = reminder.next_fire + timedelta(minutes = reminder.current_event.callback_timeout_intervals[reminder.callback_try_count])
                     reminder.callback_try_count += 1
@@ -1063,7 +1068,9 @@ class CaseReminderHandler(Document):
                 reminder.xforms_session_ids = old_xforms_session_ids
             elif prev_definition is not None and prev_definition.submit_partial_forms:
                 for session_id in old_xforms_session_ids:
-                    submit_unfinished_form(session_id, prev_definition.include_case_side_effects)
+                    contact_id = SQLXFormsSession.get_contact_id_from_session_id(session_id)
+                    with critical_section_for_smsforms_sessions(contact_id):
+                        submit_unfinished_form(session_id, prev_definition.include_case_side_effects)
     
     def get_active(self, reminder, now, case):
         schedule_not_finished = not (self.max_iteration_count != REPEAT_SCHEDULE_INDEFINITELY and reminder.schedule_iteration_num > self.max_iteration_count)
@@ -1112,7 +1119,7 @@ class CaseReminderHandler(Document):
 
             return True
 
-        return filter(filter_fcn, recipients)
+        return list(filter(filter_fcn, recipients))
 
     def recipient_is_list_of_locations(self, recipient):
         return (isinstance(recipient, list) and
@@ -1407,6 +1414,10 @@ class CaseReminderHandler(Document):
         Double-checks the model for any inconsistencies and raises an
         IllegalModelStateException if any exist.
         """
+        if self.method in (METHOD_IVR_SURVEY, METHOD_SMS_CALLBACK) and self.active:
+            # This shouldn't happen anymore, but include here as a precation
+            raise IllegalModelStateException("IVR functionality has been removed")
+
         def check_attr(name, obj=self):
             # don't allow None or empty string, but allow 0
             if getattr(obj, name) in [None, ""]:
@@ -1682,7 +1693,7 @@ class CaseReminderHandler(Document):
     def get_referenced_forms(cls, domain):
         handlers = cls.get_handlers(domain)
         referenced_forms = [e.form_unique_id for events in [h.events for h in handlers] for e in events]
-        return filter(None, referenced_forms)
+        return [_f for _f in referenced_forms if _f]
 
     @classmethod
     def get_all_reminders(cls, domain=None, due_before=None, ids_only=False):

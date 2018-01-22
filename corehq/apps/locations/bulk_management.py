@@ -456,8 +456,8 @@ class LocationTreeValidator(object):
     """
     def __init__(self, type_rows, location_rows, old_collection=None):
 
-        _to_be_deleted = lambda items: filter(lambda i: i.do_delete, items)
-        _not_to_be_deleted = lambda items: filter(lambda i: not i.do_delete, items)
+        _to_be_deleted = lambda items: [i for i in items if i.do_delete]
+        _not_to_be_deleted = lambda items: [i for i in items if not i.do_delete]
 
         self.all_listed_types = type_rows
         self.location_types = _not_to_be_deleted(type_rows)
@@ -585,7 +585,7 @@ class LocationTreeValidator(object):
 
     @memoized
     def _check_unique_type_codes(self):
-        counts = Counter(lt.code for lt in self.all_listed_types).items()
+        counts = list(Counter(lt.code for lt in self.all_listed_types).items())
         return [
             _(u"Location type code '{}' is used {} times - they should be unique")
             .format(code, count)
@@ -594,7 +594,7 @@ class LocationTreeValidator(object):
 
     @memoized
     def _check_unique_location_codes(self):
-        counts = Counter(l.site_code for l in self.all_listed_locations).items()
+        counts = list(Counter(l.site_code for l in self.all_listed_locations).items())
         return [
             _(u"Location site_code '{}' is used {} times - they should be unique")
             .format(code, count)
@@ -603,7 +603,7 @@ class LocationTreeValidator(object):
 
     @memoized
     def _check_unique_location_ids(self):
-        counts = Counter(l.location_id for l in self.all_listed_locations if l.location_id).items()
+        counts = list(Counter(l.location_id for l in self.all_listed_locations if l.location_id).items())
         return [
             _(u"Location location_id '{}' is listed {} times - they should be listed once")
             .format(location_id, count)
@@ -722,7 +722,7 @@ class LocationTreeValidator(object):
             locs_by_parent[loc.parent_code].append(loc)
         errors = []
         for parent, siblings in locs_by_parent.items():
-            counts = Counter(l.name for l in siblings).items()
+            counts = list(Counter(l.name for l in siblings).items())
             for name, count in counts:
                 if count > 1:
                     errors.append(

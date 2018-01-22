@@ -1,4 +1,5 @@
 /* global DOMPurify */
+hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/ui/sortable'], function($, ko) {
 
 ko.bindingHandlers.hqbSubmitReady = {
     update: function(element, valueAccessor) {
@@ -706,7 +707,9 @@ ko.virtualElements.allowedBindings.stopBinding = true;
 ko.bindingHandlers.popover = {
     update: function(element, valueAccessor) {
         var options = ko.utils.unwrapObservable(valueAccessor());
-        $(element).popover(options);
+        if (options.title || options.context) {     // don't show empty popovers
+            $(element).popover(options);
+        }
     }
 };
 
@@ -733,3 +736,5 @@ ko.bindingHandlers.bind_element = {
         }
     }
 };
+
+});

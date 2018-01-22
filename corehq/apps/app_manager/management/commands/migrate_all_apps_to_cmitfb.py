@@ -15,7 +15,14 @@ class Command(BaseCommand):
         Migrate any non-migrated apps
     '''
 
-    def handle(self, **options):
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '--commit',
+            action='store_true',
+            help="Actually runs the migration. Without this flag, just logs the apps that would be migrated."
+        )
+
+    def handle(self, commit, **options):
         app_query = AppES().is_build(False).term('vellum_case_management', False) \
                            .term('doc_type', 'Application').size(500).source(['domain', '_id'])
 
@@ -25,9 +32,8 @@ class Command(BaseCommand):
         failures = {}
         for hit in hits:
             try:
-                call_command('migrate_app_to_cmitfb', hit['_id'])
+                call_command('migrate_app_to_cmitfb', hit['_id'], dry_run=not(commit), fail_hard=True)
             except Exception:
-                logger.info('migration failed')
                 failures[hit['_id']] = hit['domain']
 
         for id, domain in six.iteritems(failures):

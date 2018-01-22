@@ -220,6 +220,7 @@ nvd3 > svg {
     font-size: 14px;
     padding-right: 0;
     padding-left: 0;
+    z-index: 1;
 }
 
 .navbar-default {
@@ -353,8 +354,9 @@ h4 {
 }
 
 .see-more {
-    float: right;
-    margin-right: 40px;
+    margin-right: 20px;
+    flex: 0 1 auto;
+    margin-left: auto;
 }
 
 .see-more > a {
@@ -454,22 +456,36 @@ h4 {
 }
 
 .kpi-content {
-    position: relative;
     height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-content: center;
+}
+
+.kpi-justify-center {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    flex-grow: 1;
 }
 
 .kpi-percents {
-    bottom: -10px;
-    width: 100%;
-    position: absolute;
+    position: relative;
+    align-items: center;
 }
 
-.kpi-numbers {
+.kpi-percents-text {
+    display: flex;
     position: absolute;
-    width: 100%;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%,-50%);
+    align-items: center;
+}
+
+.kpi-numbers-format {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
 }
 
 .small-table > .small-table-record {
@@ -676,9 +692,11 @@ table.no-footer {
 }
 
 #beneficiariesTable_processing {
-    left: 80%;
+    position: fixed;
+    left: 85%;
     width: 40%;
     height: 40px;
+    top: 25%;
 }
 
 #beneficiariesTable {
@@ -705,7 +723,6 @@ table.dataTable.fixedHeader-locked {
 
 table.dataTable.fixedHeader-floating {
     position: fixed !important;
-    width: 80.3% !important;
 }
 
 table.dataTable.fixedHeader-locked {
@@ -716,14 +733,6 @@ table.dataTable.fixedHeader-locked {
   table.fixedHeader-floating {
     display: none;
   }
-}
-
-.medium-col {
-    width: 12% !important;
-}
-
-.big-col {
-    width: 16% !important;
 }
 
 .locPopup {
@@ -744,3 +753,40 @@ table.dataTable.fixedHeader-locked {
     display: block;
     margin: 5px auto;
 }
+
+table.dataTable,
+table.dataTable th,
+table.dataTable td {
+  -webkit-box-sizing: content-box;
+  -moz-box-sizing: content-box;
+  box-sizing: content-box;
+}
+
+.ui-select-multiple.ui-select-bootstrap {
+    padding: 7px;
+    margin-left: 2px;
+    min-height: 34px;
+}
+
+hr {
+    border-top: 2px solid #eee;
+}
+
+.issnip-spinner-container {
+    display: flex;
+    align-items: center;
+    border: 2px solid #aad1f9;
+    transition: opacity  0.1s linear;
+    padding: 10px;
+    margin-top: 10px;
+    border-radius: 4px;
+}
+
+.issnip-spinner-container a {
+    margin-left: 10px;
+}
+
+.issnip-spinner-container span {
+    margin-left: 5px;
+}
+

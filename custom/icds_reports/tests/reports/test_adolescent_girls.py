@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from django.test.utils import override_settings
 
-from custom.icds_reports.const import ChartColors
+from custom.icds_reports.const import ChartColors, MapColors
 from custom.icds_reports.reports.adolescent_girls import get_adolescent_girls_data_map, \
     get_adolescent_girls_data_chart, get_adolescent_girls_sector_data
 from django.test import TestCase
@@ -19,26 +19,47 @@ class TestAdolescentGirls(TestCase):
                     'aggregation_level': 1
                 },
                 loc_level='state'
-            )[0],
+            ),
             {
                 "rightLegend": {
                     "info": "Total number of adolescent girls who are enrolled for ICDS services",
                     "average": 23.5,
-                    "average_format": "number"
+                    "average_format": "number",
+                    'extended_info': [
+                        {
+                            'indicator': (
+                                'Number of adolescent girls (11 - 18 years) who are enrolled for ICDS services:'
+                            ),
+                            'value': "47"
+                        },
+                        {
+                            'indicator': 'Total number of adolescent girls (11 - 18 years) who are registered:',
+                            'value': "47"
+                        },
+                        {
+                            'indicator': (
+                                'Percentage of registered adolescent girls (11 - 18 years) '
+                                'who are enrolled for ICDS services:'
+                            ),
+                            'value': '100.00%'
+                        }
+                    ]
                 },
                 "fills": {
-                    "Adolescent Girls": "#006fdf",
-                    "defaultFill": "#9D9D9D"
+                    "Adolescent Girls": MapColors.BLUE,
+                    "defaultFill": MapColors.GREY
                 },
                 "data": {
                     "st1": {
                         "valid": 22,
-                        'original_name': [],
+                        "all": 22,
+                        'original_name': ["st1"],
                         "fillKey": "Adolescent Girls"
                     },
                     "st2": {
                         "valid": 25,
-                        'original_name': [],
+                        "all": 25,
+                        'original_name': ["st2"],
                         "fillKey": "Adolescent Girls"
                     }
                 },
@@ -58,20 +79,40 @@ class TestAdolescentGirls(TestCase):
                     'aggregation_level': 3
                 },
                 loc_level='block',
-            )[0],
+            ),
             {
                 "rightLegend": {
                     "info": "Total number of adolescent girls who are enrolled for ICDS services",
                     "average": 11.0,
-                    "average_format": "number"
+                    "average_format": "number",
+                    'extended_info': [
+                        {
+                            'indicator': (
+                                'Number of adolescent girls (11 - 18 years) who are enrolled for ICDS services:'
+                            ),
+                            'value': "22"
+                        },
+                        {
+                            'indicator': 'Total number of adolescent girls (11 - 18 years) who are registered:',
+                            'value': "22"
+                        },
+                        {
+                            'indicator': (
+                                'Percentage of registered adolescent girls (11 - 18 years) '
+                                'who are enrolled for ICDS services:'
+                            ),
+                            'value': '100.00%'
+                        }
+                    ]
                 },
                 "fills": {
-                    "Adolescent Girls": "#006fdf",
-                    "defaultFill": "#9D9D9D"
+                    "Adolescent Girls": MapColors.BLUE,
+                    "defaultFill": MapColors.GREY
                 },
                 "data": {
                     'block_map': {
                         'valid': 22,
+                        'all': 22,
                         'original_name': ['b1', 'b2'],
                         'fillKey': 'Adolescent Girls'}
                 },
@@ -119,24 +160,24 @@ class TestAdolescentGirls(TestCase):
                         "strokeWidth": 2,
                         "values": [
                             {
-                                "y": 0.0,
+                                "y": 0,
                                 "x": 1485907200000,
                                 "all": 0
                             },
                             {
-                                "y": 0.0,
+                                "y": 0,
                                 "x": 1488326400000,
                                 "all": 0
                             },
                             {
-                                "y": 57.0,
+                                "y": 57,
                                 "x": 1491004800000,
-                                "all": 0
+                                "all": 57
                             },
                             {
-                                "y": 47.0,
+                                "y": 47,
                                 "x": 1493596800000,
-                                "all": 0
+                                "all": 47
                             }
                         ],
                         "key": "Total number of adolescent girls who are enrolled for ICDS services"
@@ -173,15 +214,17 @@ class TestAdolescentGirls(TestCase):
                 "info": "Total number of adolescent girls who are enrolled for ICDS services",
                 "tooltips_data": {
                     "s2": {
+                        "all": 6,
                         "valid": 6
                     },
                     "s1": {
-                        "valid": 5
+                        "valid": 5,
+                        "all": 5
                     },
                 },
                 "chart_data": [
                     {
-                        "color": "#006fdf",
+                        "color": MapColors.BLUE,
                         "classed": "dashed",
                         "strokeWidth": 2,
                         "values": [

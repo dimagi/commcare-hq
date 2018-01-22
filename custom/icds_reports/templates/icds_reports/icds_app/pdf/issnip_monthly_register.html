@@ -1,0 +1,455 @@
+{% load menu_tags %}
+{% load compress %}
+{% load hq_shared_tags %}
+{% load i18n %}
+{% load icds_format %}
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>ISSNIP Monthly Register</title>
+        <style type="text/css">
+            @page {
+                margin: 1cm 1cm;
+                size: A4;
+                border: 1px solid white;
+            }
+
+            h1 {
+                text-align: center;
+            }
+
+            th, td {
+                padding: 5px;
+                padding-bottom: 0px !important;
+                vertical-align: middle;
+            }
+
+            .table-no-border {
+                border: none;
+            }
+
+            table {
+                border: 1px solid black;
+            }
+            .row:after {
+                content: "";
+                display: table;
+                clear: both;
+            }
+        </style>
+    </head>
+    <body>
+        {% for data in reports %}
+            <div style="page-break-after: always">
+                <h1>ISSNIP Monthly Register</h1>
+                <div class="row">
+                    <div class="row">
+                        <h2>1. Basic Details</h2>
+                    </div>
+                    <div class="row">
+                        <table class="table">
+                            <thead>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Name of Project: {{ data.report.agg_awc_monthly_data|icds_format:"block_name" }}</td>
+                                    <td>*LGD Code: {{ data.report.agg_awc_monthly_data|icds_format:"awc_name" }}</td>
+                                    <td>*Main AWC / Mini AWC:</td>
+                                </tr>
+                                <tr>
+                                    <td>Name of AWC:</td>
+                                    <td>AWC Code: {{ data.report.agg_awc_monthly_data|icds_format:"awc_site_code" }}</td>
+                                    <td>*Name Of Supervisor: </td>
+                                </tr>
+                                <tr>
+                                    <td>*Name of AWW:</td>
+                                    <td>Mobile number of AWW:</td>
+                                    <td>*Name of AW Helper: </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="row">
+                        <h2>2. Infrastructure</h2>
+                    </div>
+                    <div class="row">
+                        <table class="table-no-border">
+                            <tbody>
+                                <tr>
+                                    <td>Type of AWC building Pucca / Others: {{ data.report.agg_awc_monthly_data|icds_format:"infra_type_of_building" }}</td>
+                                    <td>Owned/rented/Others: {{ data.report.infrastructure_data|icds_type_of_building }}</td>
+                                </tr>
+                                <tr>
+                                    <td>Whether drinking water available at AWC? (Y/N): {{ data.report.agg_awc_monthly_data.infra_clean_water|yesno }}</td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <td>Whether Kitchen available at AWC? (Y/N): {{ data.report.infrastructure_data.kitchen|yesno }}</td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <td>Whether toilet available at AWC? (Y/N): {{ data.report.infrastructure_data.toilet_facility|yesno }}</td>
+                                    <td>Type of toilet at AWC: {{ data.report.infrastructure_data.type_toilet|icds_toilet_type }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="row">
+                        <h2>3. Total Population as per Anganwadi Survey Register</h2>
+                    </div>
+                    <div class="row">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Infants (0- 6 Months)</th>
+                                    <th>Children(6 -36 Months)</th>
+                                    <th>Children (36-72 months)</th>
+                                    <th>Pregnant Women</th>
+                                    <th>Lactating Mothers</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>{{ data.report.child_health_monthly_data|icds_format:"infants_0_6" }}</td>
+                                    <td>{{ data.report.child_health_monthly_data|icds_format:"children_6_36" }}</td>
+                                    <td>{{ data.report.child_health_monthly_data|icds_format:"children_36_72" }}</td>
+                                    <td>{{ data.report.agg_awc_monthly_data|icds_format:"cases_ccs_pregnant_all" }}</td>
+                                    <td>{{ data.report.agg_awc_monthly_data|icds_format:"cases_ccs_lactating_all" }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="row">
+                        <h2>4. AWC Functioning & services delivered</h2>
+                    </div>
+                    <div class="row">
+                        <table class="table-no-border">
+                            <tbody>
+                                <tr>
+                                    <td>Number of days AWC functioned: {{ data.report.agg_awc_monthly_data|icds_format:"awc_days_open" }}</td>
+                                    <td>Number of days AWC conducted Preschool Education: {{ data.report.agg_awc_monthly_data|icds_format:"awc_days_pse_conducted" }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="row">
+                        <p>*ECCE material available at AWC(Y/N): {{ data.report.infrastructure_data|icds_material_available }}</p>
+                    </div>
+                    <div class="row">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th colspan="1" rowspan="2">Infants (0- 6 Months)</th>
+                                    <th colspan="3">No. of beneficiaries availing Supplementary Nutrition /Month</th>
+                                </tr>
+                                <tr>
+                                    <th>Breakfast</th>
+                                    <th>HCM</th>
+                                    <th>THR</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Normal Children</td>
+                                    <td>{{ data.report.child_health_monthly_data|icds_format:"normal_children_breakfast_and_hcm" }}</td>
+                                    <td>{{ data.report.child_health_monthly_data|icds_format:"normal_children_breakfast_and_hcm" }}</td>
+                                    <td>{{ data.report.child_health_monthly_data|icds_format:"normal_children_thr" }}</td>
+                                </tr>
+                                <tr>
+                                    <td>*Severely underweight Children</td>
+                                    <td>{{ data.report.child_health_monthly_data|icds_format:"severely_underweight_children_breakfast_and_hcm" }}</td>
+                                    <td>{{ data.report.child_health_monthly_data|icds_format:"severely_underweight_children_breakfast_and_hcm" }}</td>
+                                    <td>{{ data.report.child_health_monthly_data|icds_format:"severely_underweight_children_thr" }}</td>
+                                </tr>
+                                <tr>
+                                    <td>Pregnant Women</td>
+                                    <td>N/A</td>
+                                    <td>N/A</td>
+                                    <td>{{ data.report.css_record_monthly|icds_format:"pregnant_women_thr" }}</td>
+                                </tr>
+                                <tr>
+                                    <td>Lactating Mothers</td>
+                                    <td>N/A</td>
+                                    <td>N/A</td>
+                                    <td>{{ data.report.css_record_monthly|icds_format:"lactating_women_thr" }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="row" style="page-break-after: always">
+                    <div class="row">
+                        <h2>5. Services</h2>
+                    </div>
+                    <div class="row">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th colspan="1"></th>
+                                    <th colspan="6">Supplementary Nutrition 21+days in the Reporting Month</th>
+                                    <th colspan="2">Pre- School Education</th>
+                                </tr>
+                                <tr>
+                                    <th rowspan="2" colspan="1">Category </th>
+                                    <th colspan="2">6-36</th>
+                                    <th colspan="2">36-72</th>
+                                    <th colspan="2">Women</th>
+                                    <th colspan="2">36-72 month</th>
+                                </tr>
+                                <tr>
+                                    <th colspan="1">Boys</th>
+                                    <th colspan="1">Girls</th>
+                                    <th colspan="1">Boys</th>
+                                    <th colspan="1">Girls</th>
+                                    <th colspan="1">Pregnant</th>
+                                    <th colspan="1">Lactating</th>
+                                    <th colspan="1">Boys</th>
+                                    <th colspan="1">Girls</th>
+                                </tr>
+                                <tr>
+                                    <th colspan="1">1</th>
+                                    <th colspan="1">2</th>
+                                    <th colspan="1">3</th>
+                                    <th colspan="1">4</th>
+                                    <th colspan="1">5</th>
+                                    <th colspan="1">6</th>
+                                    <th colspan="1">7</th>
+                                    <th colspan="1">8</th>
+                                    <th colspan="1">9</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>SC</td>
+                                    <td>{{ data.report.agg_child_health_monthly|icds_format:"sc_boys_6_36" }}</td>
+                                    <td>{{ data.report.agg_child_health_monthly|icds_format:"sc_girls_6_36" }}</td>
+                                    <td>*</td>
+                                    <td>*</td>
+                                    <td>{{ data.report.ccs_record_monthly_ucr|icds_format:"sc_pregnant" }}</td>
+                                    <td>{{ data.report.ccs_record_monthly_ucr|icds_format:"sc_lactating" }}</td>
+                                    <td>{{ data.report.child_health_monthly_ucr|icds_format:"pre_sc_boys_36_72" }}</td>
+                                    <td>{{ data.report.child_health_monthly_ucr|icds_format:"pre_sc_girls_36_72" }}</td>
+                                </tr>
+                                <tr>
+                                    <td>ST</td>
+                                    <td>{{ data.report.agg_child_health_monthly|icds_format:"st_boys_6_36" }}</td>
+                                    <td>{{ data.report.agg_child_health_monthly|icds_format:"st_girls_6_36" }}</td>
+                                    <td>*</td>
+                                    <td>*</td>
+                                    <td>{{ data.report.ccs_record_monthly_ucr|icds_format:"st_pregnant" }}</td>
+                                    <td>{{ data.report.ccs_record_monthly_ucr|icds_format:"st_lactating" }}</td>
+                                    <td>{{ data.report.child_health_monthly_ucr|icds_format:"pre_st_boys_36_72" }}</td>
+                                    <td>{{ data.report.child_health_monthly_ucr|icds_format:"pre_st_girls_36_72" }}</td>
+                                </tr>
+                                <tr>
+                                    <td>OBC</td>
+                                    <td>{{ data.report.agg_child_health_monthly|icds_format:"obc_boys_6_36" }}</td>
+                                    <td>{{ data.report.agg_child_health_monthly|icds_format:"obc_girls_6_36" }}</td>
+                                    <td>*</td>
+                                    <td>*</td>
+                                    <td>{{ data.report.ccs_record_monthly_ucr|icds_format:"obc_pregnant" }}</td>
+                                    <td>{{ data.report.ccs_record_monthly_ucr|icds_format:"obc_lactating" }}</td>
+                                    <td>{{ data.report.child_health_monthly_ucr|icds_format:"pre_obc_boys_36_72" }}</td>
+                                    <td>{{ data.report.child_health_monthly_ucr|icds_format:"pre_obc_girls_36_72" }}</td>
+                                </tr>
+                                <tr>
+                                    <td>General</td>
+                                    <td>{{ data.report.agg_child_health_monthly|icds_format:"general_boys_6_36" }}</td>
+                                    <td>{{ data.report.agg_child_health_monthly|icds_format:"general_girls_6_36" }}</td>
+                                    <td>*</td>
+                                    <td>*</td>
+                                    <td>{{ data.report.ccs_record_monthly_ucr|icds_format:"general_pregnant" }}</td>
+                                    <td>{{ data.report.ccs_record_monthly_ucr|icds_format:"general_lactating" }}</td>
+                                    <td>{{ data.report.child_health_monthly_ucr|icds_format:"pre_general_boys_36_72" }}</td>
+                                    <td>{{ data.report.child_health_monthly_ucr|icds_format:"pre_general_girls_36_72" }}</td>
+                                </tr>
+                                <tr>
+                                    <td>Total</td>
+                                    <td>{{ data.report.agg_child_health_monthly|icds_format:"total_boys_6_36" }}</td>
+                                    <td>{{ data.report.agg_child_health_monthly|icds_format:"total_girls_6_36" }}</td>
+                                    <td>*</td>
+                                    <td>*</td>
+                                    <td>{{ data.report.ccs_record_monthly_ucr|icds_format:"total_pregnant" }}</td>
+                                    <td>{{ data.report.ccs_record_monthly_ucr|icds_format:"total_lactating" }}</td>
+                                    <td>{{ data.report.child_health_monthly_ucr|icds_format:"pre_total_boys_36_72" }}</td>
+                                    <td>{{ data.report.child_health_monthly_ucr|icds_format:"pre_total_girls_36_72" }}</td>
+                                </tr>
+                                <tr>
+                                    <td>Minority (out of total) </td>
+                                    <td>{{ data.report.agg_child_health_monthly|icds_format:"minority_boys_6_36_num" }} / {{ data.report.agg_child_health_monthly|icds_format:"total_boys_6_36" }}</td>
+                                    <td>{{ data.report.agg_child_health_monthly|icds_format:"minority_girls_6_36_num" }} / {{ data.report.agg_child_health_monthly|icds_format:"total_girls_6_36" }}</td>
+                                    <td></td>
+                                    <td></td>
+                                    <td>{{ data.report.ccs_record_monthly_ucr|icds_format:"minority_pregnant" }} / {{ data.report.agg_child_health_monthly|icds_format:"total_pregnant" }}</td>
+                                    <td>{{ data.report.ccs_record_monthly_ucr|icds_format:"minority_lactating" }} / {{ data.report.agg_child_health_monthly|icds_format:"total_lactating" }}</td>
+                                    <td>{{ data.report.child_health_monthly_ucr|icds_format:"pre_minority_boys_36_72" }} / {{ data.report.agg_child_health_monthly|icds_format:"total_pregnant" }}</td>
+                                    <td>{{ data.report.child_health_monthly_ucr|icds_format:"pre_minority_girls_36_72" }} / {{ data.report.agg_child_health_monthly|icds_format:"total_pregnant" }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="row">
+                        <h2>6. Classification of Nutritional Status of Children as per the WHO Growth Standards</h2>
+                    </div>
+                    <div class="row">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th colspan="1" rowspan="2">Children</th>
+                                    <th colspan="2">No. of Children (0-3years)</th>
+                                    <th colspan="2">No. of Children (3-5years)</th>
+                                </tr>
+                                <tr>
+                                    <th colspan="1">Boys</th>
+                                    <th colspan="1">Girls</th>
+                                    <th colspan="1">Boys</th>
+                                    <th colspan="1">Girls</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Normal (Green)</td>
+                                    <td>{{ data.report.agg_child_health_monthly|icds_format:"boys_normal_0_3" }}</td>
+                                    <td>{{ data.report.agg_child_health_monthly|icds_format:"girls_normal_0_3" }}</td>
+                                    <td>{{ data.report.agg_child_health_monthly|icds_format:"boys_normal_3_5" }}</td>
+                                    <td>{{ data.report.agg_child_health_monthly|icds_format:"girls_normal_3_5" }}</td>
+                                </tr>
+                                <tr>
+                                    <td>Moderately Under weight (yellow)</td>
+                                    <td>{{ data.report.agg_child_health_monthly|icds_format:"boys_moderately_0_3" }}</td>
+                                    <td>{{ data.report.agg_child_health_monthly|icds_format:"girls_moderately_0_3" }}</td>
+                                    <td>{{ data.report.agg_child_health_monthly|icds_format:"boys_moderately_3_5" }}</td>
+                                    <td>{{ data.report.agg_child_health_monthly|icds_format:"girls_moderately_3_5" }}</td>
+                                </tr>
+                                <tr>
+                                    <td>Severely Under weight (Red)</td>
+                                    <td>{{ data.report.agg_child_health_monthly|icds_format:"boys_severely_0_3" }}</td>
+                                    <td>{{ data.report.agg_child_health_monthly|icds_format:"girls_severely_0_3" }}</td>
+                                    <td>{{ data.report.agg_child_health_monthly|icds_format:"boys_severely_3_5" }}</td>
+                                    <td>{{ data.report.agg_child_health_monthly|icds_format:"girls_severely_3_5" }}</td>
+                                </tr>
+                                <tr>
+                                    <td>Stunted (Height for Age)</td>
+                                    <td>{{ data.report.agg_child_health_monthly|icds_format:"boys_stunted_0_3" }}</td>
+                                    <td>{{ data.report.agg_child_health_monthly|icds_format:"girls_stunted_0_3" }}</td>
+                                    <td>{{ data.report.agg_child_health_monthly|icds_format:"boys_stunted_3_5" }}</td>
+                                    <td>{{ data.report.agg_child_health_monthly|icds_format:"girls_stunted_3_5" }}</td>
+                                </tr>
+                                <tr>
+                                    <td>Wasted (Weight for height)</td>
+                                    <td>{{ data.report.agg_child_health_monthly|icds_format:"boys_wasted_0_3" }}</td>
+                                    <td>{{ data.report.agg_child_health_monthly|icds_format:"girls_wasted_0_3" }}</td>
+                                    <td>{{ data.report.agg_child_health_monthly|icds_format:"boys_wasted_3_5" }}</td>
+                                    <td>{{ data.report.agg_child_health_monthly|icds_format:"girls_wasted_3_5" }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="row">
+                        <h2>7. Village Health Sanitation and Nutrition Day (VHSND) activity summary and other details </h2>
+                    </div>
+                    <div class="row">
+                        <table>
+                            <tbody>
+                                <tr>
+                                    <td>Date of VHSND conducted </td>
+                                    <td>{{ data.report.vhnd_data|icds_format:"vhsnd_date_past_month" }}</td>
+                                </tr>
+                                <tr>
+                                    <td>AWW present during VHSND? (Y/N)</td>
+                                    <td>{{ data.report.agg_awc_monthly_data|icds_format:"ls_awc_present" }}</td>
+                                </tr>
+                                <tr>
+                                    <td>Number of antenatal check- ups conducted during the Month </td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <td>Total children Immunized during Month</td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <td>Did Village leaders/VHSNC members participated in VHSND?</td>
+                                    <td>{{ data.report.vhnd_data|icds_format:"local_leader" }}</td>
+                                </tr>
+                                <tr>
+                                    <td>* No of children given de-worming tablets (Children 1-2 yrs-half tablet and above 1 tablet)</td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <td>No of Referrals made for the Month</td>
+                                    <td>{{ data.report.agg_awc_monthly_data|icds_format:"cases_person_referred" }}</td>
+                                </tr>
+                                <tr>
+                                    <td>No of Home visits made during the Month</td>
+                                    <td>{{ data.report.agg_awc_monthly_data|icds_format:"usage_num_home_visit" }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="row">
+                        <h2>8. *THR Distribution </h2>
+                    </div>
+                    <div class="row">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Quantity of THR</th>
+                                    <th>Normal Children</th>
+                                    <th>Pregnant women lactating Mothers</th>
+                                    <th>Severely underweight Children</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Opening Balance</td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <td>Received</td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <td>Distributed</td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <td>Closing balance</td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <br/>
+                <br/>
+                <p>*fields are not be updated by AWW</p>
+                <br/>
+                <br/>
+                <p style="text-align: right; padding-right: 100px;">Signature of AWW</p>
+                <div class="row" style="bottom: 0;">
+                    <img src="data:image/png;base64,{{ data.qrcode_64 }}" width="150" alt="QR Code"/>
+                </div>
+            </div>
+        {% endfor %}
+    </body>
+</html>

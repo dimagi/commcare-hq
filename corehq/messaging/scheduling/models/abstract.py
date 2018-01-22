@@ -2,8 +2,9 @@ from __future__ import absolute_import
 import jsonfield
 import uuid
 from dimagi.utils.decorators.memoized import memoized
-from django.db import models
+from django.db import models, transaction
 from corehq.apps.reminders.util import get_one_way_number_for_recipient
+from corehq.apps.translations.models import StandaloneTranslationDoc
 from corehq.apps.users.models import CommCareUser
 from corehq.messaging.scheduling.exceptions import (
     NoAvailableContent,
@@ -22,6 +23,7 @@ class Schedule(models.Model):
     schedule_id = models.UUIDField(primary_key=True, default=uuid.uuid4)
     domain = models.CharField(max_length=126, db_index=True)
     active = models.BooleanField(default=True)
+    deleted = models.BooleanField(default=False)
 
     # Only matters when the recipient of a ScheduleInstance is a Location
     # If False, only include users at that location as recipients
@@ -49,11 +51,25 @@ class Schedule(models.Model):
     def set_first_event_due_timestamp(self, instance, start_date=None):
         raise NotImplementedError()
 
-    def move_to_next_event(self, instance):
-        raise NotImplementedError()
-
     def get_current_event_content(self, instance):
         raise NotImplementedError()
+
+    def total_iterations_complete(self, instance):
+        """
+        Should return True if the schedule instance has completed the total
+        number of iterations for this schedule.
+        """
+        raise NotImplementedError()
+
+    def move_to_next_event(self, instance):
+        instance.current_event_num += 1
+        if instance.current_event_num >= len(self.memoized_events):
+            instance.schedule_iteration_num += 1
+            instance.current_event_num = 0
+        self.set_next_event_due_timestamp(instance)
+
+        if self.total_iterations_complete(instance):
+            instance.active = False
 
     def move_to_next_event_not_in_the_past(self, instance):
         while instance.active and instance.next_event_due < util.utcnow():
@@ -65,6 +81,33 @@ class Schedule(models.Model):
 
         for k, v in options.items():
             setattr(self, k, v)
+
+    @property
+    @memoized
+    def memoized_language_set(self):
+        from corehq.messaging.scheduling.models import SMSContent, EmailContent
+
+        result = set()
+        for event in self.memoized_events:
+            content = event.memoized_content
+            if isinstance(content, SMSContent):
+                result |= set(content.message)
+            elif isinstance(content, EmailContent):
+                result |= set(content.subject)
+                result |= set(content.message)
+
+        return result
+
+    def delete_related_events(self):
+        """
+        Deletes all Event and Content objects related to this Schedule.
+        """
+        raise NotImplementedError()
+
+    def delete(self, *args, **kwargs):
+        with transaction.atomic():
+            self.delete_related_events()
+            super(Schedule, self).delete(*args, **kwargs)
 
 
 class ContentForeignKeyMixin(models.Model):
@@ -155,6 +198,25 @@ class Content(models.Model):
 
         return phone_number
 
+    @staticmethod
+    def get_cleaned_message(message_dict, language_code):
+        return message_dict.get(language_code, '').strip()
+
+    @staticmethod
+    def get_translation_from_message_dict(message_dict, schedule, preferred_language_code):
+        """
+        :param message_dict: a dictionary of {language code: message}
+        :param schedule: an instance of corehq.messaging.scheduling.models.Schedule
+        :param preferred_language_code: the language code of the user's preferred language
+        """
+        lang_doc = StandaloneTranslationDoc.get_obj(schedule.domain, 'sms')
+        return (
+            Content.get_cleaned_message(message_dict, preferred_language_code) or
+            Content.get_cleaned_message(message_dict, schedule.default_language_code) or
+            (Content.get_cleaned_message(message_dict, lang_doc.default_lang) if lang_doc else None) or
+            Content.get_cleaned_message(message_dict, '*')
+        )
+
     def send(self, recipient, schedule_instance):
         """
         :param recipient: a CommCareUser, WebUser, or CommCareCase/SQL
@@ -167,9 +229,13 @@ class Broadcast(models.Model):
     domain = models.CharField(max_length=126, db_index=True)
     name = models.CharField(max_length=1000)
     last_sent_timestamp = models.DateTimeField(null=True)
+    deleted = models.BooleanField(default=False)
 
     # A List of [recipient_type, recipient_id]
     recipients = jsonfield.JSONField(default=list)
 
     class Meta:
         abstract = True
+
+    def soft_delete(self):
+        raise NotImplementedError()

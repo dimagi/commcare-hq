@@ -30,14 +30,10 @@
   <link type="text/css" rel="stylesheet" media="all" href="{% static 'hqadmin/css/project_map.css' %}" />
   {% endcompress %}
 
+  {% javascript_libraries ko=True hq=True helpers=True %}
   {% compress js %}
   <script src="{% static 'less/dist/less-1.7.3.min.js' %}"></script>
-  <script src="{% static 'jquery/dist/jquery.min.js' %}"></script>
-  <script src="{% static 'bootstrap/dist/js/bootstrap.min.js' %}"></script>
-  <script src="{% static 'knockout/dist/knockout.js' %}"></script>
-  <script src="{% static 'hqwebapp/js/hq.helpers.js' %}"></script>
   <script src="{% static 'leaflet/dist/leaflet.js' %}"></script>
-  <script src="{% static 'hqwebapp/js/hqModules.js' %}"></script>
   <script src="{% static 'hqadmin/js/project_map.js' %}"></script>
   <script src="{% static 'appstore/js/facet_sidebar.js' %}"></script>
   {% endcompress %}

@@ -93,14 +93,12 @@
             </div>
 		{% endblock main_content %}
 	</div>
+    {% javascript_libraries %}
     {% compress js %}
-        <script src="{% static 'jquery/dist/jquery.min.js' %}"></script>
-        <script src="{% static 'bootstrap/dist/js/bootstrap.min.js' %}"></script>
         <script src="{% static 'd3/d3.min.js' %}"></script>
         <script src="{% static 'nvd3/nv.d3.min.js' %}"></script>
         <script src="{% static 'js/ws4redis.js' %}"></script>
         <script src="{% static 'leaflet/dist/leaflet.js' %}"></script>
-        <script src="{% static 'hqwebapp/js/hqModules.js' %}"></script>
         <script src="{% static 'hqadmin/js/dimagisphere_helper.js' %}"></script>
     {% endcompress %}
 </body>

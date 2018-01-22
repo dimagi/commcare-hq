@@ -3,7 +3,7 @@ import six.moves.html_parser
 import json
 import socket
 import uuid
-from StringIO import StringIO
+from io import StringIO
 from collections import defaultdict, namedtuple, OrderedDict, Counter
 from datetime import timedelta, date, datetime
 
@@ -39,6 +39,7 @@ from restkit.errors import Unauthorized
 
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.phone.xml import SYNC_XMLNS
+from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
 from corehq.apps.app_manager.models import ApplicationBase
 from corehq.apps.callcenter.indicator_sets import CallCenterIndicators
 from corehq.apps.callcenter.utils import CallCenterCase
@@ -241,7 +242,7 @@ class RecentCouchChangesView(BaseAdminSectionView):
 
         def _to_chart_data(data_dict):
             return [
-                {'label': l, 'value': v} for l, v in sorted(data_dict.items(), key=lambda tup: tup[1], reverse=True)
+                {'label': l, 'value': v} for l, v in sorted(list(data_dict.items()), key=lambda tup: tup[1], reverse=True)
             ][:20]
 
         return {
@@ -272,7 +273,7 @@ def system_ajax(request):
     db = XFormInstance.get_db()
     if type == "_active_tasks":
         try:
-            tasks = filter(lambda x: x['type'] == "indexer", db.server.active_tasks())
+            tasks = [x for x in db.server.active_tasks() if x['type'] == "indexer"]
         except Unauthorized:
             return json_response({'error': "Unable to access CouchDB Tasks (unauthorized)."}, status_code=500)
 
@@ -532,7 +533,11 @@ class AdminRestoreView(TemplateView):
             report_row_counts = {
                 report.attrib['report_id']: len(report.findall('{{{0}}}rows/{{{0}}}row'.format(RESPONSE_XMLNS)))
                 for report in reports
+                if 'report_id' in report.attrib
             }
+            num_ledger_entries = len(xml_payload.findall(
+                "{{{0}}}balance/{{{0}}}entry".format(COMMTRACK_REPORT_XMLNS)
+            ))
         else:
             if response.status_code in (401, 404):
                 # corehq.apps.ota.views.get_restore_response couldn't find user or user didn't have perms
@@ -552,6 +557,7 @@ class AdminRestoreView(TemplateView):
             location_type_counts = {}
             num_reports = 0
             report_row_counts = {}
+            num_ledger_entries = 0
         formatted_payload = etree.tostring(xml_payload, pretty_print=True)
         hide_xml = self.request.GET.get('hide_xml') == 'true'
         context.update({
@@ -566,6 +572,7 @@ class AdminRestoreView(TemplateView):
             'case_type_counts': case_type_counts,
             'location_type_counts': location_type_counts,
             'report_row_counts': report_row_counts,
+            'num_ledger_entries': num_ledger_entries,
         })
         return context
 
@@ -661,7 +668,7 @@ def stats_data(request):
     except HistoTypeNotFoundException:
         return HttpResponseBadRequest(
             'histogram_type param must be one of <ul><li>{}</li></ul>'
-            .format('</li><li>'.join(HISTO_TYPE_TO_FUNC.keys())))
+            .format('</li><li>'.join(HISTO_TYPE_TO_FUNC)))
 
 
 @require_superuser
@@ -727,8 +734,8 @@ def _lookup_id_in_database(doc_id, db_name=None):
         dbs = [_get_db_from_db_name(db_name)]
         response['selected_db'] = db_name
     else:
-        couch_dbs = couch_config.all_dbs_by_slug.values()
-        sql_dbs = _SQL_DBS.values()
+        couch_dbs = list(couch_config.all_dbs_by_slug.values())
+        sql_dbs = list(_SQL_DBS.values())
         dbs = couch_dbs + sql_dbs
 
     db_results = []
@@ -997,8 +1004,8 @@ def raw_doc(request):
             return HttpResponse(json.dumps({"status": "missing"}),
                                 content_type="application/json", status=404)
 
-    other_couch_dbs = sorted(filter(None, couch_config.all_dbs_by_slug.keys()))
-    context['all_databases'] = ['commcarehq'] + other_couch_dbs + _SQL_DBS.keys()
+    other_couch_dbs = sorted([_f for _f in couch_config.all_dbs_by_slug if _f])
+    context['all_databases'] = ['commcarehq'] + other_couch_dbs + list(_SQL_DBS)
     context['use_code_mirror'] = request.GET.get('code_mirror', 'true').lower() == 'true'
     return render(request, "hqadmin/raw_couch.html", context)
 
@@ -1047,7 +1054,7 @@ def callcenter_test(request):
 
     def view_data(case_id, indicators):
         new_dict = OrderedDict()
-        key_list = sorted(indicators.keys())
+        key_list = sorted(indicators)
         for key in key_list:
             new_dict[key] = indicators[key]
         return {
@@ -1238,7 +1245,7 @@ class CallcenterUCRCheck(BaseAdminSectionView):
         domain_stats = get_call_center_data_source_stats(domains)
 
         context = {
-            'data': sorted(domain_stats.values(), key=lambda s: s.name),
+            'data': sorted(list(domain_stats.values()), key=lambda s: s.name),
             'domain': domain
         }
 

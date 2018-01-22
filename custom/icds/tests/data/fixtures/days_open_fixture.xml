@@ -7,13 +7,13 @@
 			<column id="owner_id">AWC1</column>
 		</row>
 		<row index="1" is_total_row="False">
-			<column id="awc_opened_count">3</column>
-			<column id="count">3</column>
+			<column id="awc_opened_count">6</column>
+			<column id="count">6</column>
 			<column id="owner_id">AWC2</column>
 		</row>
-		<row index="9" is_total_row="True">
-			<column id="awc_opened_count">117</column>
-			<column id="count">129</column>
+		<row index="2" is_total_row="True">
+			<column id="awc_opened_count">9</column>
+			<column id="count">10</column>
 			<column id="owner_id">Total</column>
 		</row>
 	</rows>

@@ -48,6 +48,16 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
     };
     vm.message = storageService.getKey('message') || false;
 
+    vm.prevDay = moment().subtract(1, 'days').format('Do MMMM, YYYY');
+    vm.currentMonth = moment().format("MMMM");
+    vm.showInfoMessage = function () {
+        var selected_month = parseInt($location.search()['month']) ||new Date().getMonth() + 1;
+        var selected_year =  parseInt($location.search()['year']) || new Date().getFullYear();
+        var current_month = new Date().getMonth() + 1;
+        var current_year = new Date().getFullYear();
+        return selected_month === current_month && selected_year === current_year && new Date().getDate() === 1;
+    };
+
 
     $scope.$watch(function() {
         return vm.selectedLocations;
@@ -69,6 +79,10 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
     }, true);
 
     vm.templatePopup = function(loc, row) {
+        var gender = genderIndex > 0 ? genders[genderIndex].name : '';
+        var age = ageIndex > 0 ? ages[ageIndex].name : '0 - 5 years';
+        var delimiter = gender && age ? ', ' : '';
+        var chosenFilters = gender || age ? '(' + gender + delimiter + age + ')' : '';
         var total = row ? $filter('indiaNumbers')(row.total) : 'N/A';
         var underweight = row ? d3.format(".2%")((row.total - (row.severely_underweight + row.moderately_underweight + row.normal)) / (row.total || 1)) : "N/A";
         var severely_underweight = row ? d3.format(".2%")(row.severely_underweight / (row.total || 1)) : 'N/A';
@@ -76,11 +90,11 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
         var normal = row ? d3.format(".2%")(row.normal / (row.total || 1)) : 'N/A';
         return '<div class="hoverinfo" style="max-width: 200px !important;">' +
             '<p>' + loc.properties.name + '</p>' +
-            '<div>Total Children weighed in given month: <strong>' + total + '</strong></div>' +
-            '<div>% Unweighed: <strong>' + underweight + '</strong></div>' +
-            '<div>% Severely Underweight: <strong>' + severely_underweight + '</strong></div>' +
-            '<div>% Moderately Underweight: <strong>' + moderately_underweight +'</strong></div>' +
-            '<div>% Normal: <strong>' + normal + '</strong></div>';
+            '<div>Total Children '+ chosenFilters +' weighed in given month: <strong>' + total + '</strong></div>' +
+            '<div>% Unweighed '+ chosenFilters +': <strong>' + underweight + '</strong></div>' +
+            '<div>% Severely Underweight '+ chosenFilters +': <strong>' + severely_underweight + '</strong></div>' +
+            '<div>% Moderately Underweight '+ chosenFilters +': <strong>' + moderately_underweight +'</strong></div>' +
+            '<div>% Normal '+ chosenFilters +': <strong>' + normal + '</strong></div>';
     };
 
     vm.loadData = function () {
@@ -122,7 +136,10 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
                     });
                 }) * 100);
                 var range = max - min;
-                vm.chartOptions.chart.forceY = [((min - range/10)/100).toFixed(2), ((max + range/10)/100).toFixed(2)];
+                vm.chartOptions.chart.forceY = [
+                    ((min - range/10)/100).toFixed(2) < 0 ? 0 : ((min - range/10)/100).toFixed(2),
+                    ((max + range/10)/100).toFixed(2),
+                ];
             }
         });
     };

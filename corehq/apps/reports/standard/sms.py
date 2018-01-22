@@ -1243,12 +1243,12 @@ class PhoneNumberReport(BaseCommConnectLogReport):
                 id: {'_id': id, 'doc_type': 'CommCareUser'}
                 for id in self.user_ids_in_selected_group
             }
-            query.filter(owner_id__in=users_by_id.keys())
+            query.filter(owner_id__in=list(users_by_id))
         else:
             users_by_id = {u['id']: u for u in get_user_id_and_doc_type_by_domain(self.domain)}
 
         user_ids_with_phone_numbers = set(query.values_list('owner_id', flat=True).distinct())
-        user_ids = set(users_by_id.keys()) - user_ids_with_phone_numbers
+        user_ids = set(users_by_id) - user_ids_with_phone_numbers
         user_types_with_id = sorted([(id, users_by_id[id]['doc_type']) for id in user_ids])
 
         FakePhoneNumber = namedtuple('FakePhoneNumber', ['domain', 'owner_id', 'owner_doc_type'])

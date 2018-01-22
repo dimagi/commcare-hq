@@ -348,7 +348,7 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
                         )
                     }
 
-            return product_aggregation.values()
+            return list(product_aggregation.values())
         else:
             # If we don't need advanced data, we can
             # just do some orm magic.
@@ -411,10 +411,10 @@ class StockStatusBySupplyPointDataSource(StockStatusDataSource):
         data = list(super(StockStatusBySupplyPointDataSource, self).get_data())
 
         products = dict((r['product_id'], r['product_name']) for r in data)
-        product_ids = sorted(products.keys(), key=lambda e: products[e])
+        product_ids = sorted(products, key=lambda e: products[e])
 
         by_supply_point = map_reduce(lambda e: [(e['location_id'],)], data=data, include_docs=True)
-        locs = _location_map(by_supply_point.keys())
+        locs = _location_map(list(by_supply_point))
 
         for loc_id, subcases in six.iteritems(by_supply_point):
             if loc_id not in locs:
@@ -468,7 +468,7 @@ class ReportingStatusDataSource(ReportDataSource, CommtrackDataSourceMixin, Mult
                 doc['_id']: doc['location_id']
                 for doc in iter_docs(SupplyPointCase.get_db(), sp_ids)
             }
-            locations = _location_map(spoint_loc_map.values())
+            locations = _location_map(list(spoint_loc_map.values()))
 
             for spoint_id, loc_id in spoint_loc_map.items():
                 if loc_id not in locations:

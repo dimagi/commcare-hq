@@ -2,7 +2,7 @@ from __future__ import absolute_import
 import json
 import uuid
 from functools import partial
-from urllib import urlencode
+from six.moves.urllib.parse import urlencode
 from django.contrib import messages
 from django.urls import reverse
 from django.http import HttpResponseRedirect, Http404
@@ -134,7 +134,7 @@ def validate_langs(request, existing_langs):
     assert set(rename.keys()).issubset(existing_langs)
     assert set(rename.values()).issubset(langs)
     # assert that there are no repeats in the values of rename
-    assert len(set(rename.values())) == len(rename.values())
+    assert len(set(rename.values())) == len(list(rename.values()))
     # assert that no lang is renamed to an already existing lang
     for old, new in rename.items():
         if old != new:
@@ -199,7 +199,7 @@ def _update_form_ids(app, master_app, id_map):
     updated_source = update_form_unique_ids(app_source, id_map)
 
     attachments = app_source.pop('_attachments')
-    new_wrapped_app = Application.wrap(updated_source)
+    new_wrapped_app = wrap_app(updated_source)
     save = partial(new_wrapped_app.save, increment_version=False)
     return new_wrapped_app.save_attachments(attachments, save)
 
@@ -256,7 +256,7 @@ def unset_practice_mode_configured_apps(domain, mobile_worker_id=None):
 
 
 def handle_custom_icon_edits(request, form_or_module, lang):
-    if add_ons.show("custom_icon_badges", request, form_or_module.get_app()):
+    if toggles.CUSTOM_ICON_BADGES.enabled(request.domain):
         icon_text_body = request.POST.get("custom_icon_text_body")
         icon_xpath = request.POST.get("custom_icon_xpath")
         icon_form = request.POST.get("custom_icon_form")

@@ -2,9 +2,9 @@ function AdditionalModalController($location, $uibModalInstance, filters, gender
     var vm = this;
     vm.filters = filters;
 
-    vm.genders = genders;
+    vm.genders = window.angular.copy(genders);
 
-    vm.ages = ages;
+    vm.ages = window.angular.copy(ages);
 
     var path = $location.path();
     if (path.indexOf('underweight_children') !== -1 || path.indexOf('wasting') !== -1 || path.indexOf('stunting') !== -1) {
@@ -49,13 +49,12 @@ function AdditionalFilterController($scope, $location, $uibModal, storageService
     vm.selectedGender = $location.search()['gender'] !== void(0) ? $location.search()['gender'] : '';
     vm.selectedAge = $location.search()['age'] !== void(0) ? $location.search()['age'] : '';
     var filtersObjects = [];
-    if (vm.filters.indexOf('gender') === -1) {
+    if (vm.filters && vm.filters.indexOf('gender') === -1) {
         filtersObjects.push({ label: 'Gender', value: vm.selectedGender });
     }
-    if (vm.filters.indexOf('age') === -1) {
+    if (vm.filters && vm.filters.indexOf('age') === -1) {
         filtersObjects.push({ label: 'Age', value: vm.selectedAge });
     }
-
 
     vm.getPlaceholder = function() {
         var placeholder = '';

@@ -97,7 +97,7 @@ def active_in_range(gt=None, gte=None, lt=None, lte=None):
 def user_ids_handle_unknown(user_ids):
     missing_users = None in user_ids
 
-    user_ids = filter(None, user_ids)
+    user_ids = [_f for _f in user_ids if _f]
 
     if not missing_users:
         user_filter = user(user_ids)

@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from django.test.utils import override_settings
 
-from custom.icds_reports.const import ChartColors
+from custom.icds_reports.const import ChartColors, MapColors
 from custom.icds_reports.reports.prevalence_of_severe import get_prevalence_of_severe_data_map, \
     get_prevalence_of_severe_data_chart, get_prevalence_of_severe_sector_data
 from django.test import TestCase
@@ -19,7 +19,7 @@ class TestPrevalenceOfSevere(TestCase):
                     'aggregation_level': 1
                 },
                 loc_level='state'
-            )[0],
+            ),
             {
                 "rightLegend": {
                     "info": "Percentage of children between 6 - 60 months enrolled for ICDS services with "
@@ -30,31 +30,40 @@ class TestPrevalenceOfSevere(TestCase):
                             "status for a child who has severe wasting (weight-for-height) below -3 "
                             "Z and Moderate Acute Malnutrition (MAM) is nutritional status for a child "
                             "that has moderate wasting (weight-for-height) below -2Z.",
-                    "average": "1.06"
+                    "average": "0.85",
+                    'extended_info': [
+                        {'indicator': 'Total Children (6 - 60 months) weighed in given month:', 'value': '939'},
+                        {'indicator': 'Total Children (6 - 60 months) with height measured in given month:',
+                         'value': '31'},
+                        {'indicator': '% Unmeasured (6 - 60 months):', 'value': '97.12%'},
+                        {'indicator': '% Severely Acute Malnutrition (6 - 60 months):', 'value': '0.00%'},
+                        {'indicator': '% Moderately Acute Malnutrition (6 - 60 months):', 'value': '25.81%'},
+                        {'indicator': '% Normal (6 - 60 months):', 'value': '61.29%'}
+                    ]
                 },
                 "fills": {
-                    "0%-5%": "#fee0d2",
-                    "5%-7%": "#fc9272",
-                    "7%-100%": "#de2d26",
-                    "defaultFill": "#9D9D9D"
+                    "0%-5%": MapColors.PINK,
+                    "5%-7%": MapColors.ORANGE,
+                    "7%-100%": MapColors.RED,
+                    "defaultFill": MapColors.GREY
                 },
                 "data": {
                     "st1": {
                         "severe": 0,
                         "moderate": 4,
-                        "normal": 5,
+                        "normal": 3,
                         "total_measured": 7,
                         "total": 449,
-                        'original_name': [],
+                        'original_name': ["st1"],
                         "fillKey": "0%-5%"
                     },
                     "st2": {
-                        "severe": 2,
+                        "severe": 0,
                         "moderate": 4,
                         "normal": 16,
-                        "total_measured": 25,
+                        "total_measured": 24,
                         "total": 490,
-                        'original_name': [],
+                        'original_name': ["st2"],
                         "fillKey": "0%-5%"
                     }
                 },
@@ -74,7 +83,7 @@ class TestPrevalenceOfSevere(TestCase):
                     'aggregation_level': 3
                 },
                 loc_level='block',
-            )[0],
+            ),
             {
                 "rightLegend": {
                     "info": "Percentage of children between 6 - 60 months enrolled for ICDS services with "
@@ -85,19 +94,28 @@ class TestPrevalenceOfSevere(TestCase):
                             "status for a child who has severe wasting (weight-for-height) below -3 "
                             "Z and Moderate Acute Malnutrition (MAM) is nutritional status for a child "
                             "that has moderate wasting (weight-for-height) below -2Z.",
-                    "average": "0.89"
+                    "average": "0.89",
+                    'extended_info': [
+                        {'indicator': 'Total Children (6 - 60 months) weighed in given month:', 'value': '449'},
+                        {'indicator': 'Total Children (6 - 60 months) with height measured in given month:',
+                         'value': '7'},
+                        {'indicator': '% Unmeasured (6 - 60 months):', 'value': '98.44%'},
+                        {'indicator': '% Severely Acute Malnutrition (6 - 60 months):', 'value': '0.00%'},
+                        {'indicator': '% Moderately Acute Malnutrition (6 - 60 months):', 'value': '57.14%'},
+                        {'indicator': '% Normal (6 - 60 months):', 'value': '42.86%'}
+                    ]
                 },
                 "fills": {
-                    "0%-5%": "#fee0d2",
-                    "5%-7%": "#fc9272",
-                    "7%-100%": "#de2d26",
-                    "defaultFill": "#9D9D9D"
+                    "0%-5%": MapColors.PINK,
+                    "5%-7%": MapColors.ORANGE,
+                    "7%-100%": MapColors.RED,
+                    "defaultFill": MapColors.GREY
                 },
                 "data": {
                     'block_map': {
                         'moderate': 4,
                         'total_measured': 7,
-                        'normal': 5,
+                        'normal': 3,
                         'original_name': ['b1', 'b2'],
                         'severe': 0,
                         'total': 449,
@@ -123,23 +141,23 @@ class TestPrevalenceOfSevere(TestCase):
                 "location_type": "State",
                 "bottom_five": [
                     {
-                        "loc_name": "st1",
-                        "percent": 0.89086859688196
+                        "loc_name": "st2",
+                        "percent": 16.666666666666668
                     },
                     {
-                        "loc_name": "st2",
-                        "percent": 1.2244897959183674
-                    }
+                        "loc_name": "st1",
+                        "percent": 57.142857142857146
+                    },
                 ],
                 "top_five": [
                     {
-                        "loc_name": "st1",
-                        "percent": 0.89086859688196
+                        "loc_name": "st2",
+                        "percent": 16.666666666666668,
                     },
                     {
-                        "loc_name": "st2",
-                        "percent": 1.2244897959183674
-                    }
+                        "loc_name": "st1",
+                        "percent": 57.142857142857146
+                    },
                 ],
                 "chart_data": [
                     {
@@ -158,14 +176,14 @@ class TestPrevalenceOfSevere(TestCase):
                                 "all": 0
                             },
                             {
-                                "y": 0.006224066390041493,
+                                "y": 0.5454545454545454,
                                 "x": 1491004800000,
-                                "all": 964
+                                "all": 11
                             },
                             {
-                                "y": 0.022364217252396165,
+                                "y": 0.6129032258064516,
                                 "x": 1493596800000,
-                                "all": 939
+                                "all": 31
                             }
                         ],
                         "key": "% normal"
@@ -186,14 +204,14 @@ class TestPrevalenceOfSevere(TestCase):
                                 "all": 0
                             },
                             {
-                                "y": 0.001037344398340249,
+                                "y": 0.09090909090909091,
                                 "x": 1491004800000,
-                                "all": 964
+                                "all": 11
                             },
                             {
-                                "y": 0.008519701810436636,
+                                "y": 0.25806451612903225,
                                 "x": 1493596800000,
-                                "all": 939
+                                "all": 31
                             }
                         ],
                         "key": "% moderately wasted (moderate acute malnutrition)"
@@ -214,14 +232,14 @@ class TestPrevalenceOfSevere(TestCase):
                                 "all": 0
                             },
                             {
-                                "y": 0.002074688796680498,
+                                "y": 0.09090909090909091,
                                 "x": 1491004800000,
-                                "all": 964
+                                "all": 11
                             },
                             {
-                                "y": 0.002129925452609159,
+                                "y": 0.0,
                                 "x": 1493596800000,
-                                "all": 939
+                                "all": 31
                             }
                         ],
                         "key": "% severely wasted (severe acute malnutrition)"
@@ -229,13 +247,13 @@ class TestPrevalenceOfSevere(TestCase):
                 ],
                 "all_locations": [
                     {
-                        "loc_name": "st1",
-                        "percent": 0.89086859688196
+                        "loc_name": "st2",
+                        "percent": 16.666666666666668,
                     },
                     {
-                        "loc_name": "st2",
-                        "percent": 1.2244897959183674
-                    }
+                        "loc_name": "st1",
+                        "percent": 57.142857142857146
+                    },
                 ]
             }
         )
@@ -278,7 +296,7 @@ class TestPrevalenceOfSevere(TestCase):
                 },
                 "chart_data": [
                     {
-                        "color": "#006fdf",
+                        "color": MapColors.BLUE,
                         "classed": "dashed",
                         "strokeWidth": 2,
                         "values": [

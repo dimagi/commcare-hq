@@ -20,10 +20,19 @@ from custom.icds.rules.immunization import (
     immunization_is_due,
 )
 from decimal import Decimal, InvalidOperation
+from dimagi.utils.logging import notify_exception
 from django.template import TemplateDoesNotExist
 from django.template.loader import render_to_string
 
 GROWTH_MONITORING_XMLNS = 'http://openrosa.org/formdesigner/b183124a25f2a0ceab266e4564d3526199ac4d75'
+
+
+def notify_exception_and_return_empty_list():
+    notify_exception(
+        None,
+        message="Error with ICDS custom content handler",
+    )
+    return []
 
 
 def get_last_growth_monitoring_form(domain, case_id):
@@ -93,17 +102,17 @@ def static_negative_growth_indicator(recipient, schedule_instance):
     try:
         child_person_case = child_person_case_from_child_health_case(schedule_instance.case)
     except CaseRelationshipError:
-        return []
+        return notify_exception_and_return_empty_list()
 
     try:
         weight_prev = Decimal(form.form_data.get('weight_prev'))
     except (InvalidOperation, TypeError):
-        return []
+        return notify_exception_and_return_empty_list()
 
     try:
         weight_child = Decimal(form.form_data.get('weight_child'))
     except (InvalidOperation, TypeError):
-        return []
+        return notify_exception_and_return_empty_list()
 
     if weight_child > weight_prev:
         return []
@@ -151,7 +160,7 @@ def render_missed_visit_message(recipient, case_schedule_instance, template):
     try:
         mother_case = mother_person_case_from_ccs_record_case(case_schedule_instance.case)
     except CaseRelationshipError:
-        return []
+        return notify_exception_and_return_empty_list()
 
     if person_case_is_migrated_or_opted_out(mother_case):
         return []
@@ -200,7 +209,7 @@ def cf_visits_complete(recipient, case_schedule_instance):
     try:
         mother_case = mother_person_case_from_ccs_record_case(case_schedule_instance.case)
     except CaseRelationshipError:
-        return []
+        return notify_exception_and_return_empty_list()
 
     context = {
         'beneficiary': mother_case.name,
@@ -249,7 +258,11 @@ def child_vaccinations_complete(recipient, case_schedule_instance):
     if case.type != 'tasks':
         raise ValueError("Expected 'tasks' case")
 
-    child_person_case = child_person_case_from_tasks_case(case)
+    try:
+        child_person_case = child_person_case_from_tasks_case(case)
+    except CaseRelationshipError:
+        return notify_exception_and_return_empty_list()
+
     context = {
         'child_name': child_person_case.name,
     }

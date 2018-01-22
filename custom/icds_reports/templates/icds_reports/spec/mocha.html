@@ -9,7 +9,6 @@
 {% block dependencies %}
 
     <script type="text/javascript" src="{% static 'nvd3/lib/d3.v3.js' %}"></script>
-    <script type="text/javascript" src="{% static 'jquery/dist/jquery.js' %}"></script>
     <script type="text/javascript" src="{% static 'datatables/media/js/jquery.dataTables.min.js'%}"></script>
     <script type="text/javascript" src="{% static 'datatables-fixedcolumns/js/dataTables.fixedColumns.js'%}"></script>
     <script type="text/javascript" src="{% static 'datatables-fixedheader/js/dataTables.fixedHeader.js'%}"></script>
@@ -22,8 +21,6 @@
     <script type="text/javascript" src="{% static 'angular-busy/dist/angular-busy.min.js' %}"></script>
     <script type="text/javascript" src="{% static 'ui-select/dist/select.js' %}"></script>
     <script type="text/javascript" src="{% static 'angular-sanitize/angular-sanitize.js' %}"></script>
-    <script type="text/javascript" src="{% static 'bootstrap/dist/js/bootstrap.js' %}"></script>
-    <script type="text/javascript" src="{% static 'underscore/underscore.js' %}"></script>
     <script type="text/javascript" src="{% static 'nvd3/nv.d3.js' %}"></script>
     <script type="text/javascript" src="{% static 'angular-nvd3/dist/angular-nvd3.js' %}"></script>
     <script type="text/javascript" src="{% static 'moment/min/moment-with-locales.min.js' %}"> </script>
@@ -31,12 +28,11 @@
     <script type="text/javascript" src="{% static 'perfect-scrollbar/js/perfect-scrollbar.jquery.min.js' %}"></script>
     <script type="text/javascript" src="{% static 'angular-perfect-scrollbar/src/angular-perfect-scrollbar.js' %}"></script>
 
-
-
+    <script type="text/javascript" src="{% static 'topojson/topojson.js' %}"></script>
     <script type="text/javascript" src="{% static 'datamaps/dist/datamaps.ind.js' %}"></script>
     <script type="text/javascript" src="{% static 'js/topojsons/states.topojson.js' %}"></script>
     <script type="text/javascript" src="{% static 'js/topojsons/district.topojson.js' %}"></script>
-    <script type="text/javascript" src="{% static 'js/topojsons/block.topojson.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/topojsons/block_v2.topojson.js' %}"></script>
     <script type="text/javascript" src="{% static 'angular-datamaps/dist/angular-datamaps.js' %}"></script>
     <script type="text/javascript" src="{% static 'angular-bootstrap/ui-bootstrap-tpls.min.js' %}"></script>
 
@@ -50,6 +46,7 @@
     <script type="text/javascript" src="{% static 'js/angular-services/icds-cas-reach.service.js' %}"></script>
     <script type="text/javascript" src="{% static 'js/angular-services/demographics.service.js' %}"></script>
     <script type="text/javascript" src="{% static 'js/angular-services/infrastructure.service.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/angular-services/issnip-status.service.js' %}"></script>
 
     <script type="text/javascript" src="{% static 'js/filters/india-numbers/india-numbers.filter.js' %}"></script>
 
@@ -78,7 +75,17 @@
     <script src="{% static 'js/directives/system-usage/system-usage.directive.js' %}"></script>
     <script src="{% static 'js/filters/india-numbers/india-numbers.filter.js' %}"></script>
     <script src="{% static 'js/filters/property-filter/property.filter.js' %}"></script>
-
+    <script src="{% static 'js/directives/kpi/kpi.directive.js' %}"></script>
+    <script src="{% static 'js/directives/navigation/navigation.directive.js' %}"></script>
+    <script src="{% static 'js/directives/dot-link/dot-link.directive.js' %}"></script>
+    <script src="{% static 'js/directives/month-filter/month-filter.directive.js' %}"></script>
+    <script src="{% static 'js/directives/additional-filter/additional-filter.directive.js' %}"></script>
+    <script src="{% static 'js/directives/map-or-sector-view/map-or-sector-view.directive.js' %}"></script>
+    <script src="{% static 'js/directives/indie-map/indie-map.directive.js' %}"></script>
+    <script src="{% static 'js/directives/awc-reports/awc-reports.directive.js' %}"></script>
+    <script src="{% static 'js/directives/location-filter/location-filter.directive.js' %}"></script>
+    <script src="{% static 'js/directives/progress-report/progress-report.directive.js' %}"></script>
+    <script src="{% static 'js/directives/download/download.directive.js' %}"></script>
 
 
 {% endblock %}
@@ -109,6 +116,17 @@
     <script src="{% static 'icds_reports/js/spec/property.filter.spec.js' %}"></script>
     <script src="{% static 'icds_reports/js/spec/system-usage.directive.spec.js' %}"></script>
     <script src="{% static 'icds_reports/js/spec/india-numbers.filter.spec.js' %}"></script>
+    <script src="{% static 'icds_reports/js/spec/kpi.directive.spec.js' %}"></script>
+    <script src="{% static 'icds_reports/js/spec/navigation.directive.spec.js' %}"></script>
+    <script src="{% static 'icds_reports/js/spec/dot-link.directive.spec.js' %}"></script>
+    <script src="{% static 'icds_reports/js/spec/month-filter.directive.spec.js' %}"></script>
+    <script src="{% static 'icds_reports/js/spec/additional-filter.directive.spec.js' %}"></script>
+    <script src="{% static 'icds_reports/js/spec/map-or-sector-view.directive.spec.js' %}"></script>
+    <script src="{% static 'icds_reports/js/spec/indie-map.directive.spec.js' %}"></script>
+    <script src="{% static 'icds_reports/js/spec/awc-reports.directive.spec.js' %}"></script>
+    <script src="{% static 'icds_reports/js/spec/location-filter.directive.spec.js' %}"></script>
+    <script src="{% static 'icds_reports/js/spec/download.directive.spec.js' %}"></script>
+    <script src="{% static 'icds_reports/js/spec/progress-report.directive.spec.js' %}"></script>
+
 
 {% endblock %}
-

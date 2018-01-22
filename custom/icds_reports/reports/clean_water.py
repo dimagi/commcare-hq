@@ -1,25 +1,19 @@
 from __future__ import absolute_import, division
+
 from collections import OrderedDict, defaultdict
 from datetime import datetime
 
+import six
 from dateutil.relativedelta import relativedelta
 from dateutil.rrule import MONTHLY, rrule
-
 from django.db.models.aggregates import Sum
 from django.utils.translation import ugettext as _
 
-from corehq.apps.locations.models import SQLLocation
 from corehq.util.quickcache import quickcache
-from custom.icds_reports.const import LocationTypes, ChartColors
+from custom.icds_reports.const import LocationTypes, ChartColors, MapColors
 from custom.icds_reports.models import AggAwcMonthly
-from custom.icds_reports.utils import apply_exclude, generate_data_for_map
-import six
-
-RED = '#de2d26'
-ORANGE = '#fc9272'
-BLUE = '#006fdf'
-PINK = '#fee0d2'
-GREY = '#9D9D9D'
+from custom.icds_reports.utils import apply_exclude, generate_data_for_map, indian_formatted_number, \
+    get_child_locations
 
 
 @quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
@@ -33,13 +27,14 @@ def get_clean_water_data_map(domain, config, loc_level, show_test=False):
             '%s_name' % loc_level, '%s_map_location_name' % loc_level
         ).annotate(
             in_month=Sum('infra_clean_water'),
-            all=Sum('num_awcs'),
+            all=Sum('num_awc_infra_last_update'),
         ).order_by('%s_name' % loc_level, '%s_map_location_name' % loc_level)
+
         if not show_test:
             queryset = apply_exclude(domain, queryset)
         return queryset
 
-    data_for_map, valid_total, in_month_total = generate_data_for_map(
+    data_for_map, valid_total, in_month_total, average = generate_data_for_map(
         get_data_for(config),
         loc_level,
         'in_month',
@@ -49,25 +44,37 @@ def get_clean_water_data_map(domain, config, loc_level, show_test=False):
     )
 
     fills = OrderedDict()
-    fills.update({'0%-25%': RED})
-    fills.update({'25%-75%': ORANGE})
-    fills.update({'75%-100%': PINK})
-    fills.update({'defaultFill': GREY})
+    fills.update({'0%-25%': MapColors.RED})
+    fills.update({'25%-75%': MapColors.ORANGE})
+    fills.update({'75%-100%': MapColors.PINK})
+    fills.update({'defaultFill': MapColors.GREY})
 
-    return [
-        {
-            "slug": "clean_water",
-            "label": "Percent AWCs with Clean Drinking Water",
-            "fills": fills,
-            "rightLegend": {
-                "average": (in_month_total * 100) / float(valid_total or 1),
-                "info": _((
-                    "Percentage of AWCs with a source of clean drinking water"
-                ))
-            },
-            "data": dict(data_for_map),
-        }
-    ]
+    return {
+        "slug": "clean_water",
+        "label": "Percentage of AWCs that reported having a source of clean drinking water",
+        "fills": fills,
+        "rightLegend": {
+            "average": average,
+            "info": _((
+                "Percentage of AWCs that reported having a source of clean drinking water"
+            )),
+            "extended_info": [
+                {
+                    'indicator': (
+                        'Total number of AWCs with a source of clean drinking water:'
+                    ),
+                    'value': indian_formatted_number(in_month_total)
+                },
+                {
+                    'indicator': (
+                        '% of AWCs with a source of clean drinking water:'
+                    ),
+                    'value': '%.2f%%' % (in_month_total * 100 / float(valid_total or 1))
+                }
+            ]
+        },
+        "data": dict(data_for_map),
+    }
 
 
 @quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
@@ -84,7 +91,7 @@ def get_clean_water_data_chart(domain, config, loc_level, show_test=False):
         'month', '%s_name' % loc_level
     ).annotate(
         in_month=Sum('infra_clean_water'),
-        all=Sum('num_awcs'),
+        all=Sum('num_awc_infra_last_update'),
     ).order_by('month')
 
     if not show_test:
@@ -140,7 +147,7 @@ def get_clean_water_data_chart(domain, config, loc_level, show_test=False):
                         'in_month': value['in_month']
                     } for key, value in six.iteritems(data['blue'])
                 ],
-                "key": "% of AWCs with a source of clean drinking water",
+                "key": "Percentage of AWCs that reported having a source of clean drinking water",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": ChartColors.BLUE
@@ -164,7 +171,7 @@ def get_clean_water_sector_data(domain, config, loc_level, location_id, show_tes
         *group_by
     ).annotate(
         in_month=Sum('infra_clean_water'),
-        all=Sum('num_awcs'),
+        all=Sum('num_awc_infra_last_update')
     ).order_by('%s_name' % loc_level)
 
     if not show_test:
@@ -179,7 +186,7 @@ def get_clean_water_sector_data(domain, config, loc_level, location_id, show_tes
         'all': 0
     })
 
-    loc_children = SQLLocation.objects.get(location_id=location_id).get_children()
+    loc_children = get_child_locations(domain, location_id, show_test)
     result_set = set()
 
     for row in data:
@@ -212,7 +219,7 @@ def get_clean_water_sector_data(domain, config, loc_level, location_id, show_tes
     return {
         "tooltips_data": dict(tooltips_data),
         "info": _((
-            "Percentage of AWCs with a source of clean drinking water"
+            "Percentage of AWCs that reported having a source of clean drinking water"
         )),
         "chart_data": [
             {
@@ -220,7 +227,7 @@ def get_clean_water_sector_data(domain, config, loc_level, location_id, show_tes
                 "key": "",
                 "strokeWidth": 2,
                 "classed": "dashed",
-                "color": BLUE
+                "color": MapColors.BLUE
             },
         ]
     }

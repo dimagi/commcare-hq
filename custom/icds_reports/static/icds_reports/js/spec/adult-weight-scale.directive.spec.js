@@ -1,10 +1,10 @@
-/* global module, inject */
+/* global module, inject, chai */
 "use strict";
 
 var pageData = hqImport('hqwebapp/js/initial_page_data');
 
 
-describe('AdultWeightScaleDirective', function () {
+describe('Adult Weight Scale Directive', function () {
 
     var $scope, $httpBackend, $location, controller;
 
@@ -35,6 +35,9 @@ describe('AdultWeightScaleDirective', function () {
         controller.step = 'map';
     }));
 
+    it('tests instantiate the controller properly', function () {
+        chai.expect(controller).not.to.be.a('undefined');
+    });
 
     it('tests initial state', function () {
         assert.equal(controller.mode, 'map');
@@ -72,10 +75,9 @@ describe('AdultWeightScaleDirective', function () {
 
     it('tests template popup', function () {
         var result = controller.templatePopup({properties: {name: 'test'}}, {in_month: 5, all: 10});
-        assert.equal(result, '<div class="hoverinfo" style="max-width: 200px !important;">' +
-            '<p>test</p>'
-            + '<div>Total number of AWCs with a weighing scale for mother and child: <strong>5</strong></div>'
-            + '<div>% of AWCs with a weighing scale for mother and child: <strong>50.00%</strong></div>');
+        assert.equal(result, '<div class="hoverinfo" style="max-width: 200px !important;"><p>test</p>' +
+            '<div>Total number of AWCs that reported having a weighing scale for mother and child: <strong>5</strong>' +
+            '</div><div>% of AWCs that reported having a weighing scale for mother and child: <strong>50.00%</strong></div>');
     });
 
     it('tests location change', function () {
@@ -170,17 +172,15 @@ describe('AdultWeightScaleDirective', function () {
         });
         assert.equal(controller.chartOptions.caption.html,
             '<i class="fa fa-info-circle"></i> ' +
-            'Percentage of AWCs with weighing scale for mother and child'
-        );
+            'Percentage of AWCs that reported having a weighing scale for mother and child');
     });
 
     it('tests chart tooltip content', function () {
         var data = {y: 0.24561403508771928, all: 171, in_month: 42};
         var month = {value: "Jul 2017", series: []};
 
-        var expected = '<p><strong>Jul 2017</strong></p><br/><p>'
-            + 'Number of AWCs with a weighing scale for mother and child: <strong>42</strong></p>'
-            + '<p>% of AWCs with a weighing scale for mother and child: <strong>24.56%</strong></p>';
+        var expected = '<p><strong>Jul 2017</strong></p><br/><p>Number of AWCs that reported having a weighing scale for mother and child:' +
+            ' <strong>42</strong></p><p>% of AWCs that reported having a weighing scale for mother and child: <strong>24.56%</strong></p>';
 
         var result = controller.tooltipContent(month.value, data);
         assert.equal(expected, result);

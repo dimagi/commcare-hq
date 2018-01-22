@@ -3,7 +3,7 @@ from collections import namedtuple
 import copy
 import logging
 import time
-from urllib import unquote
+from six.moves.urllib.parse import unquote
 
 from django.conf import settings
 from elasticsearch import Elasticsearch
@@ -216,6 +216,9 @@ def run_query(index_name, q, debug_host=None, es_instance_alias=ES_DEFAULT_INSTA
 
 
 def mget_query(index_name, ids, source):
+    if not ids:
+        return []
+
     es_instance = get_es_new()
     es_meta = ES_META[index_name]
     try:

@@ -23,6 +23,7 @@
       {% trans 'Rebuild Data Source'%}
     </button>
     <a href="{% url 'preview_configurable_data_source' domain data_source.get_id %}" class="btn btn-default">{% trans 'Preview data' %}</a>
+    <a href="{% url 'summary_configurable_data_source' domain data_source.get_id %}" class="btn btn-default">{% trans 'Data Source Summary' %}</a>
     <a href="{% url 'configurable_data_source_json' domain data_source.get_id %}" class="btn btn-default">{% trans 'Data Source Source (Advanced)' %}</a>
   </form>
   {% if not data_source.is_deactivated %}

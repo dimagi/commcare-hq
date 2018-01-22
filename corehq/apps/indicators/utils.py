@@ -52,7 +52,7 @@ def get_namespace_name(domain, namespace):
 
 
 def get_indicator_domains():
-    return get_indicator_config().keys()
+    return list(get_indicator_config())
 
 
 def get_mvp_domains():

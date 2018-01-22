@@ -294,10 +294,7 @@ class BaseFilterExportDownloadForm(forms.Form):
         self.domain_object = domain_object
         super(BaseFilterExportDownloadForm, self).__init__(*args, **kwargs)
 
-        self.fields['group'].choices = [("", "")] + map(
-            lambda g: (g._id, g.name),
-            Group.get_reporting_groups(self.domain_object.name)
-        )
+        self.fields['group'].choices = [("", "")] + [(g._id, g.name) for g in Group.get_reporting_groups(self.domain_object.name)]
 
         if not self.domain_object.uses_locations:
             # don't use CommCare Supply as a user_types choice if the domain
@@ -919,15 +916,15 @@ class FormExportFilterBuilder(AbstractExportFilterBuilder):
         """
         form_filters = []
         if can_access_all_locations:
-            form_filters += filter(None, [
+            form_filters += [_f for _f in [
                 self._get_group_filter(group_ids),
                 self._get_user_type_filter(user_types),
-            ])
+            ] if _f]
 
-        form_filters += filter(None, [
+        form_filters += [_f for _f in [
             self._get_users_filter(user_ids),
             self._get_locations_filter(location_ids)
-        ])
+        ] if _f]
 
         form_filters = flatten_non_iterable_list(form_filters)
         if form_filters:
@@ -1048,7 +1045,7 @@ class CaseExportFilterBuilder(AbstractExportFilterBuilder):
 
         default_filters.append(self._get_users_filter(list(user_ids)))
         default_filters.append(LastModifiedByFilter(list(user_ids)))
-        return filter(None, default_filters)
+        return [_f for _f in default_filters if _f]
 
     def _get_selected_locations_and_descendants_ids(self, location_ids):
         return SQLLocation.objects.get_locations_and_children_ids(location_ids)

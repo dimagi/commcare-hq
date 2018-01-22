@@ -4,7 +4,7 @@ import datetime
 from decimal import Decimal
 import logging
 import json
-import cStringIO
+import io
 
 import pytz
 from couchdbkit import ResourceNotFound
@@ -89,7 +89,7 @@ from dimagi.utils.web import json_request
 from corehq import privileges, feature_previews
 from django_prbac.utils import has_privilege
 from corehq.apps.accounting.models import (
-    Subscription, CreditLine, SoftwareProductType, SubscriptionType,
+    Subscription, CreditLine, SubscriptionType,
     DefaultProductPlan, SoftwarePlanEdition, BillingAccount,
     BillingAccountType,
     Invoice, BillingRecord, InvoicePdf, PaymentMethodType,
@@ -148,6 +148,7 @@ from toggle.models import Toggle
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.hqwebapp.signals import clear_login_attempts
 import six
+from six.moves import map
 
 
 PAYMENT_ERROR_MESSAGES = {
@@ -574,6 +575,24 @@ def drop_repeater(request, domain, repeater_id):
 
 @require_POST
 @require_can_edit_web_users
+def pause_repeater(request, domain, repeater_id):
+    rep = Repeater.get(repeater_id)
+    rep.pause()
+    messages.success(request, "Forwarding paused!")
+    return HttpResponseRedirect(reverse(DomainForwardingOptionsView.urlname, args=[domain]))
+
+
+@require_POST
+@require_can_edit_web_users
+def resume_repeater(request, domain, repeater_id):
+    rep = Repeater.get(repeater_id)
+    rep.resume()
+    messages.success(request, "Forwarding resumed!")
+    return HttpResponseRedirect(reverse(DomainForwardingOptionsView.urlname, args=[domain]))
+
+
+@require_POST
+@require_can_edit_web_users
 def test_repeater(request, domain):
     url = request.POST["url"]
     repeater_type = request.POST['repeater_type']
@@ -755,9 +774,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
     def get_product_summary(self, plan_version, account, subscription):
         product_rate = plan_version.product_rate
         return {
-            'name': SoftwareProductType.COMMCARE,
             'monthly_fee': _("USD %s /month") % product_rate.monthly_fee,
-            'type': SoftwareProductType.COMMCARE,
             'subscription_credit': self._fmt_credit(self._credit_grand_total(
                 CreditLine.get_credits_by_subscription_and_features(
                     subscription, is_product=True
@@ -800,7 +817,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
                 )),
             }
 
-        return map(_get_feature_info, plan_version.feature_rates.all())
+        return list(map(_get_feature_info, plan_version.feature_rates.all()))
 
     @property
     def page_context(self):
@@ -1314,7 +1331,7 @@ class InternalSubscriptionManagementView(BaseAdminProjectSettingsView):
             'is_form_editable': self.is_form_editable,
             'plan_name': Subscription.get_subscribed_plan_by_domain(self.domain),
             'select_subscription_type_form': self.select_subscription_type_form,
-            'subscription_management_forms': self.slug_to_form.values(),
+            'subscription_management_forms': list(self.slug_to_form.values()),
             'today': datetime.date.today(),
         }
 
@@ -1788,6 +1805,31 @@ class ConfirmSubscriptionRenewalView(DomainAccountingSettings, AsyncHandlerMixin
         return self.get(request, *args, **kwargs)
 
 
+class EmailOnDowngradeView(View):
+    urlname = "email_on_downgrade"
+
+    def post(self, request, *args, **kwargs):
+        message = '\n'.join([
+            '{user} is downgrading the subscription for {domain} from {old_plan} to {new_plan}.',
+            '',
+            'Note from user: {note}',
+        ]).format(
+            user=request.couch_user.username,
+            domain=request.domain,
+            old_plan=request.POST.get('old_plan', 'unknown'),
+            new_plan=request.POST.get('new_plan', 'unknown'),
+            note=request.POST.get('note', 'none'),
+        )
+
+        send_mail_async.delay(
+            '{}Subscription downgrade for {}'.format(
+                '[staging] ' if settings.SERVER_ENVIRONMENT == "staging" else "",
+                request.domain
+            ), message, settings.DEFAULT_FROM_EMAIL, [settings.GROWTH_EMAIL]
+        )
+        return json_response({'success': True})
+
+
 class ExchangeSnapshotsView(BaseAdminProjectSettingsView):
     template_name = 'domain/snapshot_settings.html'
     urlname = 'domain_snapshot_settings'
@@ -2046,7 +2088,7 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
 
             if image:
                 im = Image.open(image)
-                out = cStringIO.StringIO()
+                out = io.BytesIO()
                 im.thumbnail((200, 200), Image.ANTIALIAS)
                 im.save(out, new_domain.image_type.split('/')[-1])
                 new_domain.put_attachment(content=out.getvalue(), name=image.name)
@@ -2123,7 +2165,7 @@ class ManageProjectMediaView(BaseAdminProjectSettingsView):
     def page_context(self):
         return {
             'media': self.project_media_data,
-            'licenses': LICENSES.items(),
+            'licenses': list(LICENSES.items()),
         }
 
     @retry_resource(3)
@@ -2426,7 +2468,7 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
     def _make_row(self, record):
         row = [
             self._make_state_label(record),
-            record.url if record.url else _(u'Unable to generate url for record'),
+            record.repeater.get_url(record) if record.repeater else _(u'Unable to generate url for record'),
             self._format_date(record.last_checked) if record.last_checked else '---',
             self._format_date(record.next_check) if record.next_check else '---',
             render_to_string('domain/repeaters/partials/attempt_history.html', {'record': record}),
@@ -2486,18 +2528,19 @@ class DomainForwardingOptionsView(BaseAdminProjectSettingsView):
         return {
             'repeaters': self.repeaters,
             'pending_record_count': RepeatRecord.count(self.domain),
+            'gefingerpoken': self.request.couch_user.is_superuser or
+                             toggles.IS_DEVELOPER.enabled(self.request.couch_user.username)
         }
 
 
-class AddRepeaterView(BaseAdminProjectSettingsView):
-    urlname = 'add_repeater'
+class BaseRepeaterView(BaseAdminProjectSettingsView):
     page_title = ugettext_lazy("Forward Data")
-    template_name = 'domain/admin/add_form_repeater.html'
     repeater_form_class = GenericRepeaterForm
+    template_name = 'domain/admin/add_form_repeater.html'
 
     @method_decorator(require_permission(Permissions.edit_motech))
     def dispatch(self, request, *args, **kwargs):
-        return super(BaseProjectSettingsView, self).dispatch(request, *args, **kwargs)
+        return super(BaseRepeaterView, self).dispatch(request, *args, **kwargs)
 
     @property
     def page_url(self):
@@ -2531,6 +2574,47 @@ class AddRepeaterView(BaseAdminProjectSettingsView):
             )
 
     @property
+    def add_repeater_form(self):
+        return None
+
+    @property
+    def page_context(self):
+        return {
+            'form': self.add_repeater_form,
+            'repeater_type': self.repeater_type,
+        }
+
+    def initialize_repeater(self):
+        raise NotImplementedError
+
+    def make_repeater(self):
+        repeater = self.initialize_repeater()
+        return self.set_repeater_attr(repeater, self.add_repeater_form.cleaned_data)
+
+    def set_repeater_attr(self, repeater, cleaned_data):
+        repeater.domain = self.domain
+        repeater.url = cleaned_data['url']
+        repeater.auth_type = cleaned_data['auth_type'] or None
+        repeater.username = cleaned_data['username']
+        repeater.password = cleaned_data['password']
+        repeater.format = cleaned_data['format']
+        return repeater
+
+    def post_save(self, request, repeater):
+        pass
+
+    def post(self, request, *args, **kwargs):
+        if self.add_repeater_form.is_valid():
+            repeater = self.make_repeater()
+            repeater.save()
+            return self.post_save(request, repeater)
+        return self.get(request, *args, **kwargs)
+
+
+class AddRepeaterView(BaseRepeaterView):
+    urlname = 'add_repeater'
+
+    @property
     @memoized
     def add_repeater_form(self):
         if self.request.method == 'POST':
@@ -2544,31 +2628,12 @@ class AddRepeaterView(BaseAdminProjectSettingsView):
             repeater_class=self.repeater_class
         )
 
-    @property
-    def page_context(self):
-        return {
-            'form': self.add_repeater_form,
-            'repeater_type': self.repeater_type,
-        }
+    def initialize_repeater(self):
+        return self.repeater_class()
 
-    def make_repeater(self):
-        repeater = self.repeater_class(
-            domain=self.domain,
-            url=self.add_repeater_form.cleaned_data['url'],
-            auth_type=self.add_repeater_form.cleaned_data['auth_type'] or None,
-            username=self.add_repeater_form.cleaned_data['username'],
-            password=self.add_repeater_form.cleaned_data['password'],
-            format=self.add_repeater_form.cleaned_data['format']
-        )
-        return repeater
-
-    def post(self, request, *args, **kwargs):
-        if self.add_repeater_form.is_valid():
-            repeater = self.make_repeater()
-            repeater.save()
-            messages.success(request, _("Forwarding set up to %s" % repeater.url))
-            return HttpResponseRedirect(reverse(DomainForwardingOptionsView.urlname, args=[self.domain]))
-        return self.get(request, *args, **kwargs)
+    def post_save(self, request, repeater):
+        messages.success(request, _("Forwarding set up to %s" % repeater.url))
+        return HttpResponseRedirect(reverse(DomainForwardingOptionsView.urlname, args=[self.domain]))
 
 
 class AddFormRepeaterView(AddRepeaterView):
@@ -2579,8 +2644,8 @@ class AddFormRepeaterView(AddRepeaterView):
     def page_url(self):
         return reverse(self.urlname, args=[self.domain])
 
-    def make_repeater(self):
-        repeater = super(AddFormRepeaterView, self).make_repeater()
+    def set_repeater_attr(self, repeater, cleaned_data):
+        repeater = super(AddFormRepeaterView, self).set_repeater_attr(repeater, cleaned_data)
         repeater.include_app_id_param = self.add_repeater_form.cleaned_data['include_app_id_param']
         return repeater
 

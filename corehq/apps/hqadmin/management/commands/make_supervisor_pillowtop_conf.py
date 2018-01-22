@@ -19,14 +19,16 @@ class Command(SupervisorConfCommand):
         for pillow_config in all_pillows:
             pillow_name = pillow_config.name
             num_processes = pillow_config.params.get('num_processes', 1)
+            total_processes = pillow_config.params.get('total_processes', num_processes)
+            start_process = pillow_config.params.get('start_process', 0)
             pillow_params = {
                 'pillow_name': pillow_name,
                 'pillow_option': ' --pillow-name %s' % pillow_name,
-                'num_processes': num_processes
+                'total_processes': total_processes
             }
             pillow_params.update(params)
             for process_number in range(num_processes):
-                pillow_params.update({'process_num': process_number})
+                pillow_params.update({'process_num': process_number + start_process})
                 pillow_rendering = super(Command, self).render_configuration_file(conf_template_string, pillow_params)
                 configs.append(pillow_rendering)
         return '\n\n'.join(configs)

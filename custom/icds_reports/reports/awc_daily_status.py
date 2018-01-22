@@ -1,33 +1,28 @@
 from __future__ import absolute_import, division
+
 from collections import OrderedDict, defaultdict
 from datetime import datetime
 
+import six
 from dateutil.relativedelta import relativedelta
 from dateutil.rrule import rrule, DAILY
-
 from django.db.models.aggregates import Sum
 from django.utils.translation import ugettext as _
 
-from corehq.apps.locations.models import SQLLocation
 from corehq.util.quickcache import quickcache
-from custom.icds_reports.const import LocationTypes, ChartColors
+from custom.icds_reports.const import LocationTypes, ChartColors, MapColors
 from custom.icds_reports.models import AggAwcDailyView
-from custom.icds_reports.utils import apply_exclude, generate_data_for_map
-import six
-
-RED = '#de2d26'
-ORANGE = '#fc9272'
-BLUE = '#006fdf'
-PINK = '#fee0d2'
-GREY = '#9D9D9D'
+from custom.icds_reports.utils import apply_exclude, generate_data_for_map, indian_formatted_number, \
+    get_child_locations
 
 
 @quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
 def get_awc_daily_status_data_map(domain, config, loc_level, show_test=False):
+    date = datetime(*config['month'])
+    config['date'] = date
+    del config['month']
 
     def get_data_for(filters):
-        filters['date'] = datetime(*filters['month'])
-        del filters['month']
         queryset = AggAwcDailyView.objects.filter(
             **filters
         ).values(
@@ -42,8 +37,13 @@ def get_awc_daily_status_data_map(domain, config, loc_level, show_test=False):
 
         return queryset
 
-    data_for_map, valid_total, in_day_total = generate_data_for_map(
-        get_data_for(config),
+    data = get_data_for(config)
+    if not data:
+        config['date'] = (date - relativedelta(days=1)).date()
+        data = get_data_for(config)
+
+    data_for_map, valid_total, in_day_total, average = generate_data_for_map(
+        data,
         loc_level,
         'in_day',
         'all',
@@ -52,26 +52,38 @@ def get_awc_daily_status_data_map(domain, config, loc_level, show_test=False):
     )
 
     fills = OrderedDict()
-    fills.update({'0%-50%': RED})
-    fills.update({'50%-75%': ORANGE})
-    fills.update({'75%-100%': PINK})
-    fills.update({'defaultFill': GREY})
+    fills.update({'0%-50%': MapColors.RED})
+    fills.update({'50%-75%': MapColors.ORANGE})
+    fills.update({'75%-100%': MapColors.PINK})
+    fills.update({'defaultFill': MapColors.GREY})
 
-    return [
-        {
-            "slug": "awc_daily_statuses",
-            "label": "Percent AWCs Open Yesterday",
-            "fills": fills,
-            "rightLegend": {
-                "average": (in_day_total or 0) * 100 / float(valid_total or 1),
-                "info": _((
-                    "Percentage of Angwanwadi Centers that were open yesterday."
-                )),
-                'period': 'Daily'
-            },
-            "data": dict(data_for_map),
-        }
-    ]
+    return {
+        "slug": "awc_daily_statuses",
+        "label": "Percent AWCs Open Yesterday",
+        "fills": fills,
+        "rightLegend": {
+            "average": average,
+            "info": _((
+                "Percentage of Angwanwadi Centers that were open yesterday."
+            )),
+            'period': 'Daily',
+            "extended_info": [
+                {
+                    'indicator': 'Total number of AWCs that were open yesterday:',
+                    'value': indian_formatted_number(in_day_total)
+                },
+                {
+                    'indicator': 'Total number of AWCs that have been launched:',
+                    'value': indian_formatted_number(valid_total)
+                },
+                {
+                    'indicator': '% of AWCs open yesterday:',
+                    'value': '%.2f%%' % (in_day_total * 100 / float(valid_total or 1))
+                }
+            ]
+        },
+        "data": dict(data_for_map),
+    }
 
 
 @quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
@@ -176,19 +188,23 @@ def get_awc_daily_status_data_chart(domain, config, loc_level, show_test=False):
 def get_awc_daily_status_sector_data(domain, config, loc_level, location_id, show_test=False):
     group_by = ['%s_name' % loc_level]
 
-    config['date'] = datetime(*config['month'])
+    date = datetime(*config['month'])
+    config['date'] = date
     del config['month']
-    data = AggAwcDailyView.objects.filter(
-        **config
-    ).values(
-        *group_by
-    ).annotate(
-        in_day=Sum('daily_attendance_open'),
-        all=Sum('num_launched_awcs'),
-    ).order_by('%s_name' % loc_level)
 
-    if not show_test:
-        data = apply_exclude(domain, data)
+    def get_data_for(filters):
+        queryset = AggAwcDailyView.objects.filter(
+            **filters
+        ).values(
+            *group_by
+        ).annotate(
+            in_day=Sum('daily_attendance_open'),
+            all=Sum('num_launched_awcs'),
+        ).order_by('%s_name' % loc_level)
+
+        if not show_test:
+            queryset = apply_exclude(domain, queryset)
+        return queryset
 
     chart_data = {
         'blue': [],
@@ -199,10 +215,15 @@ def get_awc_daily_status_sector_data(domain, config, loc_level, location_id, sho
         'all': 0
     })
 
-    loc_children = SQLLocation.objects.get(location_id=location_id).get_children()
+    loc_children = get_child_locations(domain, location_id, show_test)
     result_set = set()
 
-    for row in data:
+    sector_data = get_data_for(config)
+    if not sector_data:
+        config['date'] = (date - relativedelta(days=1)).date()
+        sector_data = get_data_for(config)
+
+    for row in sector_data:
         valid = row['all']
         name = row['%s_name' % loc_level]
         result_set.add(name)
@@ -238,7 +259,7 @@ def get_awc_daily_status_sector_data(domain, config, loc_level, location_id, sho
                 "key": "",
                 "strokeWidth": 2,
                 "classed": "dashed",
-                "color": BLUE
+                "color": MapColors.BLUE
             }
         ]
     }

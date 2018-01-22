@@ -22,6 +22,7 @@ from corehq.apps.es import UserES, GroupES, groups
 from corehq.apps.locations.models import SQLLocation
 
 from phonelog.models import DeviceReportEntry
+from six.moves import map
 
 logger = logging.getLogger(__name__)
 
@@ -104,8 +105,8 @@ class EmwfOptionsView(LoginAndDomainMixin, JSONResponseMixin, View):
         start: The index of the first item to be returned
         size: The number of items to return
         """
-        return map(self.utils.location_tuple,
-                   self.get_locations_query(query)[start:start + size])
+        return list(map(self.utils.location_tuple,
+                   self.get_locations_query(query)[start:start + size]))
 
     def get_locations_size(self, query):
         return self.get_locations_query(query).count()
@@ -286,7 +287,7 @@ class CaseListFilterOptions(EmwfOptionsView):
                   .start(start)
                   .size(size)
                   .sort("name.exact"))
-        return map(self.utils.sharing_group_tuple, groups.run().hits)
+        return list(map(self.utils.sharing_group_tuple, groups.run().hits))
 
 
 @location_safe

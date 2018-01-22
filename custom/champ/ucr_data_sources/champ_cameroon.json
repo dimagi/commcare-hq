@@ -287,8 +287,28 @@
       {
         "type": "expression",
         "expression": {
-          "type": "property_path",
-          "property_path": ["form", "load", "uic"]
+          "type": "conditional",
+          "test": {
+            "type": "boolean_expression",
+            "expression": {
+              "type": "property_name",
+              "property_name": "xmlns",
+              "datatype": "string"
+            },
+            "operator": "eq",
+            "property_value": "http://openrosa.org/formdesigner/E2B4FD32-9A62-4AE8-AAB0-0CE4B8C28AA1"
+          },
+          "expression_if_true": {
+            "type": "property_path",
+            "property_path": ["form", "load", "uic"]
+          },
+          "expression_if_false": {
+              "type": "root_doc",
+              "expression": {
+                "type": "property_name",
+                "property_name": "name"
+            }
+          }
         },
         "column_id": "uic",
         "datatype": "string",

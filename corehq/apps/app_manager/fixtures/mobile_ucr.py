@@ -31,6 +31,7 @@ from corehq.apps.app_manager.dbaccessors import (
     get_apps_in_domain, get_brief_apps_in_domain, get_apps_by_id, get_brief_app
 )
 from six.moves import zip
+from six.moves import map
 
 MOBILE_UCR_RANDOM_THRESHOLD = 1000
 
@@ -59,11 +60,7 @@ class BaseReportFixturesProvider(FixtureProvider):
             return False
 
         apps = self._get_apps(restore_state, restore_user)
-        report_configs = self._get_report_configs(apps).values()
-        if not report_configs:
-            return False
-
-        return True
+        return bool(self._get_report_configs(apps))
 
     def _get_apps(self, restore_state, restore_user):
         app_aware_sync_app = restore_state.params.app
@@ -143,7 +140,7 @@ class ReportFixturesProvider(BaseReportFixturesProvider):
         }
 
         if needed_versions.intersection({MOBILE_UCR_VERSION_1, MOBILE_UCR_MIGRATING_TO_2}):
-            fixtures.extend(self._v1_fixture(restore_user, self._get_report_configs(apps).values()))
+            fixtures.extend(self._v1_fixture(restore_user, list(self._get_report_configs(apps).values())))
         else:
             fixtures.extend(self._empty_v1_fixture(restore_user))
 
@@ -237,8 +234,8 @@ class ReportFixturesProvider(BaseReportFixturesProvider):
             rows_elem.append(_row_to_row_elem(
                 dict(
                     zip(
-                        map(lambda column_config: column_config.column_id, data_source.top_level_columns),
-                        map(str, total_row)
+                        [column_config.column_id for column_config in data_source.top_level_columns],
+                        list(map(str, total_row))
                     )
                 ),
                 data_source.get_total_records(),
@@ -267,7 +264,7 @@ class ReportFixturesProviderV2(BaseReportFixturesProvider):
         }
 
         if needed_versions.intersection({MOBILE_UCR_MIGRATING_TO_2, MOBILE_UCR_VERSION_2}):
-            report_configs = self._get_report_configs(apps).values()
+            report_configs = list(self._get_report_configs(apps).values())
             synced_fixtures, purged_fixture_ids = self._relevant_report_configs(restore_state, report_configs)
             fixtures.extend(self._v2_fixtures(restore_user, synced_fixtures))
             for report_uuid in purged_fixture_ids:
@@ -415,8 +412,8 @@ class ReportFixturesProviderV2(BaseReportFixturesProvider):
             rows_elem.append(_row_to_row_elem(
                 dict(
                     zip(
-                        map(lambda column_config: column_config.column_id, data_source.top_level_columns),
-                        map(str, total_row)
+                        [column_config.column_id for column_config in data_source.top_level_columns],
+                        list(map(str, total_row))
                     )
                 ),
                 data_source.get_total_records(),

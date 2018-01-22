@@ -13,6 +13,7 @@ from custom.intrahealth import (
     PRODUCT_NAMES,
 )
 from custom.intrahealth.utils import get_domain, get_location_by_type, get_loc_from_case
+import six
 
 
 def get_value_from_path(dictionary, path, default_value=None):
@@ -211,7 +212,7 @@ class RupturesDeStocks(fluff.Calculator):
 
     @fluff.date_emitter
     def total(self, form):
-        for k, v in form.form.iteritems():
+        for k, v in six.iteritems(form.form):
             if re.match("^rupture.*hv$", k):
                 if 'date_rapportage' in form.form and form.form['date_rapportage']:
                     product_name = PRODUCT_NAMES.get(PRODUCT_MAPPING[k[8:-3]].lower())

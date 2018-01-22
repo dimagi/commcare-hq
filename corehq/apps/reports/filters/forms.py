@@ -338,7 +338,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
     @memoized
     def _unknown_forms(self):
         nonmatching = set(self._nonmatching_app_forms)
-        fuzzy_forms = set(self._fuzzy_forms.keys())
+        fuzzy_forms = set(self._fuzzy_forms)
 
         unknown = list(nonmatching.difference(fuzzy_forms))
         return [u for u in unknown if u is not None]
@@ -375,7 +375,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
                 for module in app.get('modules', []):
                     for form in module['forms']:
                         if form['xmlns'] == xmlns:
-                            return form['name'].values()[0]
+                            return list(form['name'].values())[0]
 
         guessed_name = guess_form_name_from_submissions_using_xmlns(self.domain, xmlns)
         return guessed_name or (None if none_if_not_found else _("Name Unknown"))
@@ -397,7 +397,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
             val = obj.get(lang)
             if val:
                 return val
-        return obj.get(obj.keys()[0], _('Untitled'))
+        return obj.get(list(obj)[0], _('Untitled'))
 
     @staticmethod
     def _formatted_name_from_app(display_lang, app):

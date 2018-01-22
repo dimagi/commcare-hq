@@ -2,6 +2,7 @@ from __future__ import absolute_import
 import sys
 import traceback
 from contextlib import contextmanager
+import six
 
 
 @contextmanager
@@ -21,7 +22,7 @@ def tee_output(stream):
     except:
         etype, exc, tb = sys.exc_info()
         stream.write("".join(traceback.format_exception(etype, exc, tb)))
-        raise etype, exc, tb
+        six.reraise(etype, exc, tb)
     finally:
         sys.stdout = real_stdout
         sys.stderr = real_stderr

@@ -36,8 +36,8 @@ class TestExplicitCommunitySubscriptions(TestCase):
     def test_no_preexisting_subscription(self):
         self._assign_community_subscriptions()
 
-        self.assertEqual(Subscription.objects.count(), 1)
-        subscription = Subscription.objects.all()[0]
+        self.assertEqual(Subscription.visible_objects.count(), 1)
+        subscription = Subscription.visible_objects.all()[0]
         self.assertEqual(subscription.subscriber.domain, self.domain.name)
         self.assertEqual(subscription.date_start, self.from_date)
         self.assertIsNone(subscription.date_end)
@@ -53,9 +53,9 @@ class TestExplicitCommunitySubscriptions(TestCase):
 
         self._assign_community_subscriptions()
 
-        self.assertEqual(Subscription.objects.count(), 1)
-        self.assertFalse(Subscription.objects.exclude(subscriber__domain=self.domain.name).exists())
-        self.assertEqual(Subscription.objects.all()[0], preexisting_subscription)
+        self.assertEqual(Subscription.visible_objects.count(), 1)
+        self.assertFalse(Subscription.visible_objects.exclude(subscriber__domain=self.domain.name).exists())
+        self.assertEqual(Subscription.visible_objects.all()[0], preexisting_subscription)
 
     def test_preexisting_future_subscription(self):
         future_subscription_start_date = self.from_date + timedelta(days=10)
@@ -69,15 +69,15 @@ class TestExplicitCommunitySubscriptions(TestCase):
 
         self._assign_community_subscriptions()
 
-        self.assertEqual(Subscription.objects.count(), 2)
-        self.assertFalse(Subscription.objects.exclude(subscriber__domain=self.domain.name).exists())
-        self.assertIsNotNone(Subscription.objects.get(
+        self.assertEqual(Subscription.visible_objects.count(), 2)
+        self.assertFalse(Subscription.visible_objects.exclude(subscriber__domain=self.domain.name).exists())
+        self.assertIsNotNone(Subscription.visible_objects.get(
             date_start=self.from_date,
             date_end=future_subscription_start_date,
             plan_version=self._most_recently_created_community_plan_version,
             skip_invoicing_if_no_feature_charges=True,
         ))
-        self.assertIsNotNone(Subscription.objects.get(
+        self.assertIsNotNone(Subscription.visible_objects.get(
             date_start=future_subscription_start_date,
             plan_version=plan_version,
         ))
@@ -96,15 +96,15 @@ class TestExplicitCommunitySubscriptions(TestCase):
 
         self._assign_community_subscriptions()
 
-        self.assertEqual(Subscription.objects.count(), 2)
-        self.assertFalse(Subscription.objects.exclude(subscriber__domain=self.domain.name).exists())
-        self.assertIsNotNone(Subscription.objects.get(
+        self.assertEqual(Subscription.visible_objects.count(), 2)
+        self.assertFalse(Subscription.visible_objects.exclude(subscriber__domain=self.domain.name).exists())
+        self.assertIsNotNone(Subscription.visible_objects.get(
             date_start=self.from_date,
             date_end=None,
             plan_version=self._most_recently_created_community_plan_version,
             skip_invoicing_if_no_feature_charges=True,
         ))
-        self.assertIsNotNone(Subscription.objects.get(
+        self.assertIsNotNone(Subscription.visible_objects.get(
             date_start=past_subscription_start_date,
             date_end=past_subscription_end_date,
             plan_version=plan_version,

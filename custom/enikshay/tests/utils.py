@@ -19,7 +19,6 @@ from custom.enikshay.case_utils import CASE_TYPE_REFERRAL, CASE_TYPE_TRAIL
 from custom.enikshay.const import (
     PRIMARY_PHONE_NUMBER,
     BACKUP_PHONE_NUMBER,
-    MERM_ID,
     PERSON_FIRST_NAME,
     PERSON_LAST_NAME,
     TREATMENT_START_DATE,
@@ -31,6 +30,7 @@ from custom.enikshay.const import (
     OTHER_NUMBER,
     TREATMENT_INITIATED_IN_PHI,
 )
+from custom.enikshay.integrations.ninetyninedots.const import MERM_ID
 from corehq.apps.users.models import CommCareUser
 
 
@@ -321,6 +321,7 @@ class ENikshayCaseStructureMixin(object):
         self.other_number = "0123456666"
         self._episode = None
         self._person = None
+        self._occurrence = None
 
     def tearDown(self):
         delete_all_users()
@@ -335,6 +336,7 @@ class ENikshayCaseStructureMixin(object):
                 extra_update={
                     PRIMARY_PHONE_NUMBER: self.primary_phone_number,
                     BACKUP_PHONE_NUMBER: self.secondary_phone_number,
+                    OTHER_NUMBER: self.other_number,
                     ENROLLED_IN_PRIVATE: 'false',
                 }
             )
@@ -342,10 +344,12 @@ class ENikshayCaseStructureMixin(object):
 
     @property
     def occurrence(self):
-        return get_occurrence_case_structure(
-            self.occurrence_id,
-            self.person
-        )
+        if not self._occurrence:
+            self._occurrence = get_occurrence_case_structure(
+                self.occurrence_id,
+                self.person
+            )
+        return self._occurrence
 
     @property
     def episode(self):
@@ -354,7 +358,6 @@ class ENikshayCaseStructureMixin(object):
                 self.episode_id,
                 self.occurrence,
                 extra_update={
-                    OTHER_NUMBER: self.other_number,
                     TREATMENT_SUPPORTER_PHONE: self.treatment_supporter_phone,
                     WEIGHT_BAND: "adult_55-69"
                 }

@@ -3560,6 +3560,31 @@
                         }
                     ]
                 }
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": "name",
+                "datatype": "date",
+                "expression": {
+                    "value_expression": {
+                        "datatype": "string",
+                        "type": "property_name",
+                        "property_name": "dob"
+                    },
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareCase",
+                    "doc_id_expression": {
+                        "datatype": null,
+                        "type": "named",
+                        "name": "person_id"
+                    }
+                },
+                "is_primary_key": false,
+                "transform": {},
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "person_dob"
             }
         ],
         "named_filters": {
