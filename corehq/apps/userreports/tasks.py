@@ -179,12 +179,14 @@ def _iteratively_build_table(config, resume_helper=None, in_place=False, limit=-
 
 
 @task(queue=UCR_CELERY_QUEUE)
-def compare_ucr_dbs(domain, report_config_id, filter_values, sort_column=None, sort_order=None, params=None):
+def compare_ucr_dbs(domain, report_config_id, filter_values, dynamic_aggregation_columns=None,
+                    sort_column=None, sort_order=None, params=None):
     from corehq.apps.userreports.laboratory.experiment import UCRExperiment
 
     def _run_report(backend_to_use):
         data_source = ReportFactory.from_spec(spec, include_prefilters=True, backend=backend_to_use)
         data_source.set_filter_values(filter_values)
+        data_source.set_dynamic_aggregation_columns(dynamic_aggregation_columns)
         if sort_column:
             data_source.set_order_by(
                 [(data_source.top_level_columns[int(sort_column)].column_id, sort_order.upper())]

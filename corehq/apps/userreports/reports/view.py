@@ -260,6 +260,11 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
             return self._report_config_id
         return self.kwargs['subreport_slug']
 
+    @property
+    def dynamic_aggregation_columns(self):
+        aggregation_field = self.request_dict.get('aggregation_field', None)
+        return [aggregation_field] if aggregation_field else []
+
     _lang = None
 
     @property
@@ -397,6 +402,7 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
             if len(data_source.inner_columns) > 50 and not DISABLE_COLUMN_LIMIT_IN_UCR.enabled(self.domain):
                 raise UserReportsError(_("This report has too many columns to be displayed"))
             data_source.set_filter_values(self.filter_values)
+            data_source.set_dynamic_aggregation_columns(self.dynamic_aggregation_columns)
 
             sort_column = params.get('iSortCol_0')
             sort_order = params.get('sSortDir_0', 'ASC')
@@ -444,8 +450,13 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
             json_response["total_row"] = total_row
         if data_source.data_source.config.backend_id == UCR_LABORATORY_BACKEND:
             compare_ucr_dbs.delay(
-                self.domain, self.report_config_id, self.filter_values,
-                sort_column, sort_order, params
+                domain=self.domain,
+                report_config_id=self.report_config_id,
+                filter_values=self.filter_values,
+                dynamic_aggregation_columns=self.dynamic_aggregation_columns,
+                sort_column=sort_column,
+                sort_order=sort_order,
+                params=params
             )
         return self.render_json_response(json_response)
 
@@ -525,6 +536,7 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
         try:
             data = self.data_source
             data.set_filter_values(self.filter_values)
+            data.set_dynamic_aggregation_columns(self.dynamic_aggregation_columns)
             data.set_order_by([(o['field'], o['order']) for o in self.spec.sort_expression])
         except UserReportsError as e:
             return self.render_json_response({

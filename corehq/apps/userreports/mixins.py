@@ -21,6 +21,7 @@ class ConfigurableReportDataSourceMixin(object):
 
         self._filters = {f.slug: f for f in filters}
         self._filter_values = {}
+        self._dynamic_aggregation_columns = None
         self._deferred_filters = {}
         self._order_by = order_by
         self._aggregation_columns = aggregation_columns
@@ -100,11 +101,18 @@ class ConfigurableReportDataSourceMixin(object):
     def has_total_row(self):
         return any(column_config.calculate_total for column_config in self.top_level_db_columns)
 
+    def set_dynamic_aggregation_columns(self, columns):
+        self._dynamic_aggregation_columns = columns
+
     @property
     def group_by(self):
         # ask each column for its group_by contribution and combine to a single list
+        if self._dynamic_aggregation_columns:
+            aggregation_columns = self._dynamic_aggregation_columns
+        else:
+            aggregation_columns = self.aggregation_columns
         return [
-            group_by for col_id in self.aggregation_columns
+            group_by for col_id in aggregation_columns
             for group_by in self.get_db_column_ids(col_id)
         ]
 

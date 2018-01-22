@@ -77,6 +77,9 @@ class ConfigurableReportDataSource(object):
     def set_order_by(self, columns):
         self.data_source.set_order_by(columns)
 
+    def set_dynamic_aggregation_columns(self, columns):
+        self.data_source.set_dynamic_aggregation_columns(columns)
+
     @property
     def group_by(self):
         return self.data_source.group_by

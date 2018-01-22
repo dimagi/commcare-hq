@@ -14,9 +14,7 @@ from ..util import get_indicator_adapter
 
 
 @override_settings(OVERRIDE_UCR_BACKEND=UCR_SQL_BACKEND)
-class TestReportLocationAggregationSQL(ConfigurableReportTestMixin, LocationHierarchyTestCase):
-    """
-    """
+class TestReportDynamicAggregation(ConfigurableReportTestMixin, LocationHierarchyTestCase):
     location_type_names = ['state', 'county', 'city']
     location_structure = [
         ('Massachusetts', [
@@ -103,7 +101,7 @@ class TestReportLocationAggregationSQL(ConfigurableReportTestMixin, LocationHier
 
     @classmethod
     def setUpClass(cls):
-        super(TestReportLocationAggregationSQL, cls).setUpClass()
+        super(TestReportDynamicAggregation, cls).setUpClass()
         cls._create_data()
         cls._create_data_source()
 
@@ -111,7 +109,7 @@ class TestReportLocationAggregationSQL(ConfigurableReportTestMixin, LocationHier
     def tearDownClass(cls):
         cls.adapter.drop_table()
         cls._delete_everything()
-        super(TestReportLocationAggregationSQL, cls).tearDownClass()
+        super(TestReportDynamicAggregation, cls).tearDownClass()
 
     def _create_report(self, aggregation_columns, columns, sort_expression=None):
         report_config = ReportConfiguration(
@@ -126,7 +124,17 @@ class TestReportLocationAggregationSQL(ConfigurableReportTestMixin, LocationHier
         report_config.save()
         return report_config
 
-    def test_foo(self):
+    def _create_view(self, report_config_id, filter_values):
+        request = HttpRequest()
+        request.method = 'GET'
+        request.GET.update(filter_values)
+        view = ConfigurableReport(request=request)
+        view._domain = self.domain
+        view._lang = "en"
+        view._report_config_id = report_config_id
+        return view
+
+    def test_dynamic_aggregation(self):
         report_config = ReportConfiguration(
             domain=self.domain,
             config_id=self.data_source._id,
@@ -167,10 +175,12 @@ class TestReportLocationAggregationSQL(ConfigurableReportTestMixin, LocationHier
         )
         report_config.save()
 
-        view = ConfigurableReport(request=HttpRequest())
-        view._domain = self.domain
-        view._lang = "en"
-        view._report_config_id = report_config._id
+        view = self._create_view(report_config._id, {'aggregation_field': 'county_id'})
 
-        from pprint import pprint
-        pprint(view.export_table)
+        # Deckard (1 form) and Gaff (10 forms) are both in Middlesex, so the
+        # Middlesex total should be 11.
+        self.assertItemsEqual(
+            view.export_table[0][1][1:],
+            [[self.locations['Middlesex'].location_id, 11, 2],
+             [self.locations['Suffolk'].location_id, 100, 1]]
+        )
