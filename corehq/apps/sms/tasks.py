@@ -464,4 +464,5 @@ def sync_phone_numbers_for_domain(domain):
 def queued_sms():
     return QueuedSMS.objects.count()
 
+
 datadog_gauge_task('commcare.sms.outbound_queued', queued_sms, run_every=crontab())
