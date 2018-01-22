@@ -6,6 +6,7 @@ from datetime import datetime
 from django.core.management.base import BaseCommand
 
 from casexml.apps.case.xform import get_case_ids_from_form
+from corehq.apps.domain.dbaccessors import iter_domains
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.form_processor.backends.sql.processor import FormProcessorSQL
 from corehq.form_processor.models import XFormInstanceSQL, XFormOperationSQL, RebuildWithReason
@@ -70,46 +71,54 @@ def rebuild_cases(cases_to_rebuild_by_domain):
 
 
 class Command(BaseCommand):
-    help = 'Fire all repeaters in a domain.'
+    help = 'Command to reprocess forms that were mistakenly attributed to edit forms due to UUID clash.'
 
     def add_arguments(self, parser):
-        parser.add_argument('domain')
+        parser.add_argument('-d', '--domain')
         parser.add_argument('--db', help='Only process a single Django DB.')
         parser.add_argument('-c', '--case-id', nargs='+', help='Only process cases with these IDs.')
 
     def handle(self, domain, **options):
+        domain = options.get('domain')
         case_ids = options.get('case_id')
         db = options.get('db')
 
         if case_ids:
             form_ids = set()
             for case in CaseAccessorSQL.get_cases(case_ids):
-                assert case.domain == domain, 'Case "%s" not in domain "%s"' % (case.case_id, domain)
+                assert not domain or case.domain == domain, 'Case "%s" not in domain "%s"' % (case.case_id, domain)
                 form_ids.update(case.xform_ids)
 
             check_and_process_forms(form_ids)
         else:
-            form_ids_to_check = set()
-            dbs = [db] if db else get_db_aliases_for_partitioned_query()
-            for dbname in dbs:
-                form_ids_to_check.update(
-                    XFormInstanceSQL.objects.using(dbname)
-                    .filter(domain=domain, state=XFormInstanceSQL.DEPRECATED)
-                    .values_list('orig_id', flat=True)
-                )
+            if domain:
+                domains = [domain]
+            else:
+                domains = iter_domains()
 
-            print('Found %s forms to check' % len(form_ids_to_check))
-            for chunk in chunked(form_ids_to_check, 500):
-                check_and_process_forms(chunk)
+            for domain in domains:
+                print(u"Checking domain: %s" % domain)
+                form_ids_to_check = set()
+                dbs = [db] if db else get_db_aliases_for_partitioned_query()
+                for dbname in dbs:
+                    form_ids_to_check.update(
+                        XFormInstanceSQL.objects.using(dbname)
+                        .filter(domain=domain, state=XFormInstanceSQL.DEPRECATED)
+                        .values_list('orig_id', flat=True)
+                    )
+
+                print('  Found %s forms to check' % len(form_ids_to_check))
+                for chunk in chunked(form_ids_to_check, 500):
+                    check_and_process_forms(chunk)
 
 
 def check_and_process_forms(form_ids):
-    print('Checking %s forms' % len(form_ids))
+    print('  Checking %s forms' % len(form_ids))
     forms_to_process = get_forms_to_reprocess(form_ids)
 
-    print('Found %s forms to reprocess' % len(forms_to_process))
+    print('  Found %s forms to reprocess' % len(forms_to_process))
     cases_to_rebuild = undo_form_edits(forms_to_process)
 
     ncases = sum(len(cases) for cases in cases_to_rebuild.itervalues())
-    print('Rebuilding %s cases' % ncases)
+    print('  Rebuilding %s cases' % ncases)
     rebuild_cases(cases_to_rebuild)
