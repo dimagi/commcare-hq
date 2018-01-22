@@ -27,6 +27,7 @@ class SQLSessionTestCase(TestCase):
             domain='wrong',
             connection_id=contact,
             end_time=None,
+            session_is_open=True,
             session_type=XFORMS_SESSION_SMS,
         )
         self.assertEqual(0, len(SQLXFormsSession.get_all_open_sms_sessions(domain, contact)))
@@ -38,6 +39,7 @@ class SQLSessionTestCase(TestCase):
             domain=domain,
             connection_id='wrong',
             end_time=None,
+            session_is_open=True,
             session_type=XFORMS_SESSION_SMS,
         )
         self.assertEqual(0, len(SQLXFormsSession.get_all_open_sms_sessions(domain, contact)))
@@ -49,6 +51,7 @@ class SQLSessionTestCase(TestCase):
             domain=domain,
             connection_id=contact,
             end_time=datetime.utcnow(),
+            session_is_open=False,
             session_type=XFORMS_SESSION_SMS,
         )
         self.assertEqual(0, len(SQLXFormsSession.get_all_open_sms_sessions(domain, contact)))
@@ -60,6 +63,7 @@ class SQLSessionTestCase(TestCase):
             domain=domain,
             connection_id=contact,
             end_time=None,
+            session_is_open=True,
             session_type=XFORMS_SESSION_IVR,
         )
         self.assertEqual(0, len(SQLXFormsSession.get_all_open_sms_sessions(domain, contact)))
@@ -72,6 +76,7 @@ class SQLSessionTestCase(TestCase):
                 domain=domain,
                 connection_id=contact,
                 end_time=None,
+                session_is_open=True,
                 session_type=XFORMS_SESSION_SMS,
             )
 
@@ -83,6 +88,7 @@ class SQLSessionTestCase(TestCase):
     def test_get_single_open_session(self):
         properties = _arbitrary_session_properties(
             end_time=None,
+            session_is_open=True,
             session_type=XFORMS_SESSION_SMS,
         )
         session = SQLXFormsSession(**properties)
@@ -104,6 +110,7 @@ class SQLSessionTestCase(TestCase):
                 domain=domain,
                 connection_id=contact,
                 end_time=None,
+                session_is_open=True,
                 session_type=XFORMS_SESSION_SMS,
             )
 
@@ -123,6 +130,7 @@ class SQLSessionTestCase(TestCase):
                 domain=domain,
                 connection_id=contact,
                 end_time=None,
+                session_is_open=True,
                 session_type=XFORMS_SESSION_SMS,
             )
 
@@ -136,6 +144,7 @@ class SQLSessionTestCase(TestCase):
             domain=domain,
             connection_id=contact,
             end_time=None,
+            session_is_open=True,
             session_type=XFORMS_SESSION_SMS,
         )
 
@@ -278,12 +287,12 @@ def _arbitrary_session_properties(**kwargs):
         'reminder_id': arbitrary_string(),
         'phone_number': arbitrary_string(10),
         'expire_after': arbitrary_int(60, 1000),
-        'session_is_open': arbitrary_bool(),
+        'session_is_open': False,
         'reminder_intervals': [],
         'current_reminder_num': 0,
         'current_action_due': arbitrary_date(),
-        'submit_partially_completed_forms': arbitrary_bool(),
-        'include_case_updates_in_partial_submissions': arbitrary_bool(),
+        'submit_partially_completed_forms': False,
+        'include_case_updates_in_partial_submissions': False,
     }
     properties.update(kwargs)
     return properties
