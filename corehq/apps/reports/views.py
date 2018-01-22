@@ -1718,6 +1718,13 @@ class FormDataView(BaseProjectReportSectionView):
         return self.form_name
 
     @property
+    def parent_pages(self):
+        return [{
+            'title': inspect.SubmitHistory.name,
+            'url': inspect.SubmitHistory.get_url(self.domain),
+        }]
+
+    @property
     def page_context(self):
         timezone = get_timezone_for_user(self.request.couch_user, self.domain)
         display = self.request.project.get_form_display(self.xform_instance)
