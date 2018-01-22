@@ -60,6 +60,7 @@ class Migration(migrations.Migration):
         migrator.get_migration('get_forms_by_state.sql'),
         migrator.get_migration('get_multiple_cases_indices.sql'),
         migrator.get_migration('get_multiple_forms_attachments.sql'),
+        migrator.get_migration('get_reverse_indexed_cases.sql'),
         migrator.get_migration('hard_delete_cases.sql'),
         migrator.get_migration('revoke_restore_case_transactions_for_form.sql'),
         migrator.get_migration('update_form_problem_and_state.sql'),

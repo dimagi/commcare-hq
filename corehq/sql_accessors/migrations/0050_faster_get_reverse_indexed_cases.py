@@ -5,7 +5,7 @@ from __future__ import absolute_import
 from django.db import migrations
 
 from corehq.form_processor.models import CommCareCaseIndexSQL
-from corehq.sql_db.operations import RawSQLMigration, noop_migration
+from corehq.sql_db.operations import RawSQLMigration
 
 migrator = RawSQLMigration(('corehq', 'sql_accessors', 'sql_templates'), {})
 
@@ -17,5 +17,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        noop_migration()
+        migrator.get_migration('get_reverse_indexed_cases_2.sql'),
     ]
