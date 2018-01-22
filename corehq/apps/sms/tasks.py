@@ -4,9 +4,8 @@ import hashlib
 import math
 from datetime import datetime, timedelta
 
-from celery.task import task, periodic_task
 from celery.schedules import crontab
-from corehq.util.datadog.gauges import datadog_gauge
+from corehq.util.datadog.gauges import datadog_counter, datadog_gauge_task
 from django.conf import settings
 from django.db import DataError, transaction
 
@@ -16,9 +15,8 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.sms.api import (create_billable_for_sms, get_utcnow,
     log_sms_exception, process_incoming, send_message_via_backend)
 from corehq.apps.sms.change_publishers import publish_sms_saved
-from corehq.apps.sms.mixin import (CommCareMobileContactMixin,
-    InvalidFormatException, PhoneNumberException, PhoneNumberInUseException,
-    apply_leniency)
+from corehq.apps.sms.mixin import (InvalidFormatException,
+    PhoneNumberInUseException, apply_leniency)
 from corehq.apps.sms.models import (INCOMING, MigrationStatus, OUTGOING,
     PhoneLoadBalancingMixin, PhoneNumber, QueuedSMS, SMS)
 from corehq.apps.sms.util import is_contact_active
@@ -47,6 +45,9 @@ def remove_from_queue(queued_sms):
 
     if sms.direction == OUTGOING and sms.processed and not sms.error:
         create_billable_for_sms(sms)
+        datadog_counter('commcare.sms.outbound_succeeded')
+    elif sms.direction == OUTGOING:
+        datadog_counter('commcare.sms.outbound_failed')
     elif sms.direction == INCOMING and sms.domain and domain_has_privilege(sms.domain, privileges.INBOUND_SMS):
         create_billable_for_sms(sms)
 
@@ -460,13 +461,7 @@ def sync_phone_numbers_for_domain(domain):
     MigrationStatus.set_migration_completed('phone_sync_domain_%s' % domain)
 
 
-@periodic_task(run_every=crontab(minute="*/15"), queue=settings.CELERY_PERIODIC_QUEUE)
-def run_datadog_sms_metrics():
-    now = datetime.utcnow()
-    window_start = now - timedelta(minutes=15)
-    queued = QueuedSMS.objects.count()
-    successful = SMS.objects.filter(direction='O', date__gt=window_start, date__lte=now, processed=True).count()
-    failed = SMS.objects.filter(direction='O', date__gt=window_start, date__lte=now, processed=False).count()
-    datadog_gauge('commcare.sms.outboud_queued', queued)
-    datadog_gauge('commcare.sms.outbound_successful', successful)
-    datadog_gauge('commcare.sms.outbound_failed', failed)
+def queued_sms():
+    return QueuedSMS.objects.count()
+
+datadog_gauge_task('commcare.sms.outbound_queued', queued_sms, run_every=crontab())
