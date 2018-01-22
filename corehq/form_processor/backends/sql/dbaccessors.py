@@ -874,7 +874,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             return []
 
         cases = list(CommCareCaseSQL.objects.raw(
-            'SELECT * FROM get_reverse_indexed_cases(%s, %s, %s, %s)',
+            'SELECT * FROM get_reverse_indexed_cases_3(%s, %s, %s, %s)',
             [domain, case_ids, case_types, is_closed])
         )
         cases_by_id = {case.case_id: case for case in cases}

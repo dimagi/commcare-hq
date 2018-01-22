@@ -1,6 +1,6 @@
-DROP FUNCTION IF EXISTS get_reverse_indexed_cases(TEXT, TEXT[]);
+DROP FUNCTION IF EXISTS get_reverse_indexed_cases_3(TEXT, TEXT[]);
 
-CREATE FUNCTION get_reverse_indexed_cases(
+CREATE FUNCTION get_reverse_indexed_cases_3(
     domain_name TEXT,
     case_ids TEXT[],
     case_types TEXT[] DEFAULT NULL,
