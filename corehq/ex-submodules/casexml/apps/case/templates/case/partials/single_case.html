@@ -23,10 +23,8 @@
     <div class="row">
         <div class="col-sm-12">
             <ul class="nav nav-tabs" style="margin-bottom: 10px;">
-                {% if dynamic_properties %}
                 <li class="active"><a href="#properties" data-toggle="tab">{% trans "Case Properties" %}</a></li>
-                {% endif %}
-                <li {% if not dynamic_properties %}class="active"{% endif %}><a href="#history" data-toggle="tab">{% trans "Case History" %}</a></li>
+                <li><a href="#history" data-toggle="tab">{% trans "Case History" %}</a></li>
                 {% if case.has_indices %}
                 <li><a href="#related" data-toggle="tab">{% trans "Related Cases" %}</a></li>
                 {% endif %}
@@ -42,13 +40,30 @@
             </ul>
 
             <div class="tab-content">
-                {% if dynamic_properties %}
                 <div class="tab-pane active" id="properties">
                     <div class="row-fluid">
+                    {% if dynamic_properties %}
                         {% render_tables dynamic_properties dynamic_properties_options %}
+                    {% else %}
+                        <div class="well clearfix col-lg-10 col-md-12 col-sm-12">
+                            <a target="_blank" class="pull-right"
+                               href="https://www.youtube.com/watch?v=AVSLmCJxPjY&feature=youtu.be&t=3m34s">
+                                <img src="{% static 'hqwebapp/images/case_properties_video.png' %}"
+                                     style="margin-left: 20px; width: 320px; height: 180px" /><!-- have to specify width & height -->
+                            </a>
+                            {% blocktrans %}
+                                <p>
+                                    You haven't saved any questions as case properties.
+                                    Only case properties become part of a case.
+                                </p>
+                                <p>
+                                    Watch this video to learn how to save questions as case properties.
+                                </p>
+                            {% endblocktrans %}
+                        </div>
+                    {% endif %}
                     </div>
                 </div><!-- end properties tab -->
-                {% endif %}
 
                 {% if case.has_indices %}
                 <div class="tab-pane" id="related">
@@ -99,7 +114,7 @@
                 </div> <!-- end case-ledgers tab -->
                 {% endif %}
 
-                <div class="tab-pane {% if not dynamic_properties %}active{% endif %} row" id="history">
+                <div class="tab-pane row" id="history">
                     <div class="col-sm-5 dataTables_wrapper">
                         <ul data-bind="foreach: $root.form_type_facets">
                             <li>
