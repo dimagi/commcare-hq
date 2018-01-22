@@ -1073,7 +1073,7 @@ class XForm(WrappedNode):
                     bind = self.get_bind(path + '/@' + attrib)
                     question = {
                         "tag": "hidden",
-                        "value": path,
+                        "value": '{}/@{}'.format(path, attrib),
                         "repeat": node_info['repeat'],
                         "group": node_info['repeat'],
                         "type": "DataBindOnly",
@@ -1095,7 +1095,7 @@ class XForm(WrappedNode):
                                 'calculate': ref.attrib.get('value'),
                             })
 
-                    hashtag_path = self.hashtag_path(path)
+                    hashtag_path = '{}/@{}'.format(self.hashtag_path(path), attrib)
                     question.update({
                         "label": hashtag_path,
                         "hashtagValue": hashtag_path,
