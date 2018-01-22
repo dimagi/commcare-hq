@@ -275,7 +275,7 @@ class NewSubscriptionView(AccountingSectionView, AsyncHandlerMixin):
             try:
                 subscription = self.subscription_form.create_subscription()
                 return HttpResponseRedirect(
-                    reverse(ManageBillingAccountView.urlname, args=(subscription.account.id,))
+                    reverse(EditSubscriptionView.urlname, args=(subscription.id,))
                 )
             except NewSubscriptionError as e:
                 errors = ErrorList()
