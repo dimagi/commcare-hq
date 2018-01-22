@@ -170,6 +170,15 @@ function LocationModel(data, root, depth) {
         $(button).closest('.loc_section').remove();
     };
 
+    this.archive_success_message = _.template(django.gettext("You have successfully archived the location <%=name%>"));
+
+    this.delete_success_message = _.template(django.gettext(
+        "You have successfully deleted the location <%=name%> and all of its child locations"
+        )
+    );
+
+    this.delete_error_message = django.gettext("An error occurred while deleting your location. If the problem persists, please report an issue");
+
     this.loc_archive_url = function(loc_id) {
         var initial_page_data = hqImport('hqwebapp/js/initial_page_data');
         var template = initial_page_data.reverse('archive_location');
@@ -205,15 +214,15 @@ function LocationModel(data, root, depth) {
                 dataType: 'json',
                 error: 'error',
                 success: function () {
-                    alert_user(archive_success_message({"name": name}), "success");
+                    alert_user(loc.archive_success_message({"name": name}), "success");
                     loc.remove_elements_after_action(button);
                     if (hqImport('hqwebapp/js/toggles').toggleEnabled('LOCATION_SEARCH')) {
                         reloadSelect();
-                    };
+                    }
                 },
             });
             $(archive_location_modal).modal('hide');
-            hqImport('analytix/js/google').track.event('Organization Structure', 'Archive')
+            hqImport('analytix/js/google').track.event('Organization Structure', 'Archive');
         }
 
         var modal_context = {
@@ -251,13 +260,13 @@ function LocationModel(data, root, depth) {
                     type: 'DELETE',
                     url: loc.loc_delete_url(loc_id),
                     dataType: 'json',
-                    error: function (response, status, error) {
-                        alert_user(delete_error_message, "warning");
+                    error: function (response, status) {
+                        alert_user(loc.delete_error_message, "warning");
                         $(button).enableButton();
                     },
                     success: function (response) {
                         if (response.success){
-                            alert_user(delete_success_message({"name": name}), "success");
+                            alert_user(loc.delete_success_message({"name": name}), "success");
                             loc.remove_elements_after_action(button);
                             if (hqImport('hqwebapp/js/toggles').toggleEnabled('LOCATION_SEARCH')) {
                                 reloadSelect();

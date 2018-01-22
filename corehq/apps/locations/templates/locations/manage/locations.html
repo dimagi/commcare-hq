@@ -25,14 +25,6 @@
         return template.replace('-locid-', loc_id);
     }
 
-    var archive_success_message = _.template('{% trans "You have successfully archived the location <%=name%>" %}');
-
-    var delete_success_message = _.template(
-        '{% trans "You have successfully deleted the location <%=name%> and all of its child locations" %}'
-    );
-
-    var delete_error_message = '{% trans "An error occurred while deleting your location. If the problem persists, please report an issue" %}';
-
 
     $(function() {
         var model = new LocationTreeViewModel(hierarchy);
