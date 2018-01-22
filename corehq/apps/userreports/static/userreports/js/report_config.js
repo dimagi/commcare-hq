@@ -102,6 +102,14 @@ var reportBuilder = function () {  // eslint-disable-line
         self.dateRangeOptions = config['dateRangeOptions'];
 
         self.existingReportId = config['existingReport'];
+        self.reportTitle = ko.observable(config['reportTitle']);
+        self.reportTitle.subscribe(function () {
+            self.saveButton.fire('change');
+        });
+        self.reportDescription = ko.observable(config['reportDescription']);
+        self.reportDescription.subscribe(function () {
+            self.saveButton.fire('change');
+        });
 
         self.columnOptions = config["columnOptions"];  // Columns that could be added to the report
         self.reportPreviewUrl = config["reportPreviewUrl"];  // Fetch the preview data asynchronously.
@@ -445,8 +453,8 @@ var reportBuilder = function () {  // eslint-disable-line
             );
             return {
                 "existing_report": self.existingReportId,
-                "report_title": $('#report-title').val(), // From the inline-edit component
-                "report_description": $('#report-description').val(),  // From the inline-edit component
+                "report_title": self.reportTitle(),
+                "report_description": self.reportDescription(),
                 "report_type": self.reportType(),
                 "aggregate": self.isAggregationEnabled(),
                 "chart": self.selectedChart(),
