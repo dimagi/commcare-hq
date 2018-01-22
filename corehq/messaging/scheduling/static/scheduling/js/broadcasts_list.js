@@ -59,15 +59,17 @@ hqDefine("scheduling/js/broadcasts_list", function() {
                     "targets": [4],
                     "render": function(data, type, row) {
                         var id = row[row.length - 1];
+                        var editable = row[row.length - 2];
+                        var disabled = editable ? '' : ' disabled ';
                         var button_id = 'activate-button-for-scheduled-broadcast-' + id;
                         var active = row[3];
                         if(active) {
-                            return '<button id="' + button_id + '" \
+                            return '<button id="' + button_id + '"' + disabled + '\
                                             class="btn btn-default" \
                                             onclick="hqImport(\'scheduling/js/broadcasts_list\').deactivateScheduledBroadcast(' + id + ')"> \
                                    ' + gettext("Deactivate") + '</button>';
                         } else {
-                            return '<button id="' + button_id + '" + \
+                            return '<button id="' + button_id + '"' + disabled + '\
                                             class="btn btn-default" + \
                                             onclick="hqImport(\'scheduling/js/broadcasts_list\').activateScheduledBroadcast(' + id + ')"> \
                                    ' + gettext("Activate") + '</button>';

@@ -113,6 +113,7 @@ class BroadcastListView(BaseMessagingSectionView, DataTablesAJAXPaginationMixin)
                 self._format_time(broadcast.last_sent_timestamp),
                 broadcast.schedule.active,
                 '< action placeholder >',
+                self.can_use_inbound_sms or not broadcast.schedule.memoized_uses_sms_survey,
                 broadcast.id,
             ])
         return self.datatables_ajax_response(data, total_records)
@@ -143,6 +144,9 @@ class BroadcastListView(BaseMessagingSectionView, DataTablesAJAXPaginationMixin)
 
     def get_scheduled_broadcast_activate_ajax_response(self, active_flag, broadcast_id):
         broadcast = self.get_scheduled_broadcast(broadcast_id)
+        if not self.can_use_inbound_sms and broadcast.schedule.memoized_uses_sms_survey:
+            return HttpResponseBadRequest()
+
         TimedSchedule.objects.filter(schedule_id=broadcast.schedule_id).update(active=active_flag)
         refresh_timed_schedule_instances.delay(
             broadcast.schedule_id,
@@ -302,7 +306,7 @@ class EditScheduleView(CreateScheduleView):
 
         inbound_sms_restriction = (
             not self.can_use_inbound_sms and
-            self.schedule.memozied_uses_sms_survey
+            self.schedule.memoized_uses_sms_survey
         )
 
         return immediate_broadcast_restriction or inbound_sms_restriction
@@ -344,12 +348,14 @@ class ConditionalAlertListView(BaseMessagingSectionView, DataTablesAJAXPaginatio
         rules = query[self.display_start:self.display_start + self.display_length]
         data = []
         for rule in rules:
+            schedule = rule.get_messaging_rule_schedule()
             data.append([
                 '< delete placeholder >',
                 rule.name,
                 rule.case_type,
-                rule.get_messaging_rule_schedule().active,
+                schedule.active,
                 '< action placeholder >',
+                self.can_use_inbound_sms or not schedule.memoized_uses_sms_survey,
                 rule.locked_for_editing,
                 MessagingRuleProgressHelper(rule.pk).get_progress_pct(),
                 rule.pk,
@@ -386,6 +392,9 @@ class ConditionalAlertListView(BaseMessagingSectionView, DataTablesAJAXPaginatio
         """
         with transaction.atomic():
             schedule = rule.get_messaging_rule_schedule()
+            if not self.can_use_inbound_sms and schedule.memoized_uses_sms_survey:
+                return HttpResponseBadRequest()
+
             schedule.active = active_flag
             schedule.save()
             initiate_messaging_rule_run(self.domain, rule.pk)
@@ -567,7 +576,7 @@ class EditConditionalAlertView(CreateConditionalAlertView):
 
         inbound_sms_restriction = (
             not self.can_use_inbound_sms and
-            self.schedule.memozied_uses_sms_survey
+            self.schedule.memoized_uses_sms_survey
         )
 
         return system_admin_restriction or inbound_sms_restriction

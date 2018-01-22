@@ -70,10 +70,11 @@ hqDefine("scheduling/js/conditional_alert_list", function() {
                     "targets": [4],
                     "render": function(data, type, row) {
                         var id = row[row.length - 1];
+                        var editable = row[row.length - 4];
                         var button_id = 'activate-button-for-' + id;
                         var active = row[3];
                         var locked_for_editing = row[row.length - 3];
-                        var disabled = locked_for_editing ? 'disabled' : '';
+                        var disabled = (locked_for_editing || !editable) ? 'disabled' : '';
                         if(active) {
                             return '<button id="' + button_id + '" \
                                             class="btn btn-default" \

@@ -100,7 +100,11 @@ class Schedule(models.Model):
         return result
 
     @cached_property
-    def memozied_uses_sms_survey(self):
+    def memoized_uses_sms_survey(self):
+        """
+        Prefixed with memoized_ to make it obvious that this property is
+        memoized and also relies on self.memoized_events.
+        """
         from corehq.messaging.scheduling.models import SMSSurveyContent
 
         for event in self.memoized_events:
