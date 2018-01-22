@@ -153,7 +153,8 @@ class TestAdultWeightScale(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(data['label'], 'Percentage of AWCs that reported having a weighing scale for mother and child')
+        self.assertEquals(data['label'],
+                          'Percentage of AWCs that reported having a weighing scale for mother and child')
 
     def test_map_name_two_locations_represent_by_one_topojson(self):
         data = get_adult_weight_scale_data_map(

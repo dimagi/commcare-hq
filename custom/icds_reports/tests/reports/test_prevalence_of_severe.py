@@ -84,14 +84,14 @@ class TestPrevalenceOfSevere(TestCase):
             loc_level='state'
         )
         expected = (
-                    "Percentage of children between 6 - 60 months enrolled for ICDS services with "
-                    "weight-for-height below -2 standard deviations of the WHO Child Growth Standards "
-                    "median. <br/><br/>Wasting in children is a symptom of acute undernutrition "
-                    "usually as a consequence of insufficient food intake or a high incidence "
-                    "of infectious diseases. Severe Acute Malnutrition (SAM) is nutritional "
-                    "status for a child who has severe wasting (weight-for-height) below -3 "
-                    "Z and Moderate Acute Malnutrition (MAM) is nutritional status for a child "
-                    "that has moderate wasting (weight-for-height) below -2Z."
+            "Percentage of children between 6 - 60 months enrolled for ICDS services with "
+            "weight-for-height below -2 standard deviations of the WHO Child Growth Standards "
+            "median. <br/><br/>Wasting in children is a symptom of acute undernutrition "
+            "usually as a consequence of insufficient food intake or a high incidence "
+            "of infectious diseases. Severe Acute Malnutrition (SAM) is nutritional "
+            "status for a child who has severe wasting (weight-for-height) below -3 "
+            "Z and Moderate Acute Malnutrition (MAM) is nutritional status for a child "
+            "that has moderate wasting (weight-for-height) below -2Z."
         )
         self.assertEquals(data['rightLegend']['info'], expected)
 
