@@ -1062,7 +1062,7 @@ class XForm(WrappedNode):
 
                 questions.append(question)
 
-        for path, node_info in save_to_case_nodes.iteritems():
+        for path, node_info in six.iteritems(save_to_case_nodes):
             data_node = node_info['data_node']
             try:
                 case_node = next(data_node.iterancestors('{cx2}case'))
