@@ -141,6 +141,8 @@ class TestFormExportSubcases(TestCase, TestXmlMixin):
         for table in instance.tables:
             table.selected = True
             for column in table.columns:
+                if column.item.path[-1].name == '@case_id' and not column.item.transform:
+                    self.assertFalse(column.is_advanced)
                 column.selected = True
 
         with patch('corehq.apps.export.export.get_export_documents') as docs:
