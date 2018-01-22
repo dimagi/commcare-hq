@@ -65,6 +65,7 @@ function LocationSearchViewModel() {
 
 function LocationModel(data, root, depth) {
     var loc = this;
+    var alert_user = hqImport("hqwebapp/js/alert_user").alert_user;
 
     this.name = ko.observable();
     this.type = ko.observable();
@@ -165,23 +166,51 @@ function LocationModel(data, root, depth) {
         return true;
     };
 
-    archive_loc = function(button, name, loc_id) {
+    this.remove_elements_after_action = function(button) {
+        $(button).closest('.loc_section').remove();
+    };
+
+    this.loc_archive_url = function(loc_id) {
+        var initial_page_data = hqImport('hqwebapp/js/initial_page_data');
+        var template = initial_page_data.reverse('archive_location');
+        return template.replace('-locid-', loc_id);
+    };
+
+    this.loc_unarchive_url = function(loc_id) {
+        var initial_page_data = hqImport('hqwebapp/js/initial_page_data');
+        var template = initial_page_data.reverse('unarchive_location');
+        return template.replace('-locid-', loc_id);
+    };
+
+    this.loc_delete_url = function(loc_id) {
+        var initial_page_data = hqImport('hqwebapp/js/initial_page_data');
+        var template = initial_page_data.reverse('delete_location');
+        return template.replace('-locid-', loc_id);
+    };
+
+    this.loc_descendant_url = function(loc_id) {
+        var initial_page_data = hqImport('hqwebapp/js/initial_page_data');
+        var template = initial_page_data.reverse('location_descendants_count');
+        return template.replace('-locid-', loc_id);
+    };
+
+    this.archive_loc = function(button, name, loc_id) {
         var archive_location_modal = $('#archive-location-modal')[0];
 
         function archive_fn() {
             $(button).disableButton();
             $.ajax({
                 type: 'POST',
-                url: loc_archive_url(loc_id),
+                url: loc.loc_archive_url(loc_id),
                 dataType: 'json',
                 error: 'error',
-                success: function (response) {
+                success: function () {
                     alert_user(archive_success_message({"name": name}), "success");
-                    remove_elements_after_action(button);
-                    if (location_toggle) {
+                    loc.remove_elements_after_action(button);
+                    if (hqImport('hqwebapp/js/toggles').toggleEnabled('LOCATION_SEARCH')) {
                         reloadSelect();
-                            }
-                }
+                    };
+                },
             });
             $(archive_location_modal).modal('hide');
             hqImport('analytix/js/google').track.event('Organization Structure', 'Archive')
@@ -190,27 +219,27 @@ function LocationModel(data, root, depth) {
         var modal_context = {
             "name": name,
             "loc_id": loc_id,
-            "archive_fn": archive_fn
+            "archive_fn": archive_fn,
         };
         ko.cleanNode(archive_location_modal);
         $(archive_location_modal).koApplyBindings(modal_context);
         $(archive_location_modal).modal('show');
     };
 
-    unarchive_loc = function(button, loc_id) {
+    this.unarchive_loc = function(button, loc_id) {
         $(button).disableButton();
         $.ajax({
             type: 'POST',
-            url: loc_unarchive_url(loc_id),
+            url: loc.loc_unarchive_url(loc_id),
             dataType: 'json',
             error: 'error',
-            success: function (response) {
-                remove_elements_after_action(button);
-            }
+            success: function () {
+                loc.remove_elements_after_action(button);
+            },
         });
     };
 
-    delete_loc = function(button, name, loc_id) {
+    this.delete_loc = function(button, name, loc_id) {
         var delete_location_modal = $('#delete-location-modal')[0];
         var modal_context;
 
@@ -220,7 +249,7 @@ function LocationModel(data, root, depth) {
 
                 $.ajax({
                     type: 'DELETE',
-                    url: loc_delete_url(loc_id),
+                    url: loc.loc_delete_url(loc_id),
                     dataType: 'json',
                     error: function (response, status, error) {
                         alert_user(delete_error_message, "warning");
@@ -229,8 +258,8 @@ function LocationModel(data, root, depth) {
                     success: function (response) {
                         if (response.success){
                             alert_user(delete_success_message({"name": name}), "success");
-                            remove_elements_after_action(button);
-                            if (location_toggle) {
+                            loc.remove_elements_after_action(button);
+                            if (hqImport('hqwebapp/js/toggles').toggleEnabled('LOCATION_SEARCH')) {
                                 reloadSelect();
                             }
                         }
@@ -238,16 +267,16 @@ function LocationModel(data, root, depth) {
                             alert_user(response.message, "warning");
 
                         }
-                    }
+                    },
                 });
                 $(delete_location_modal).modal('hide');
-                hqImport('analytix/js/google').track.event('Organization Structure', 'Delete')
+                hqImport('analytix/js/google').track.event('Organization Structure', 'Delete');
             }
         }
 
         $.ajax({
             type: 'GET',
-            url: loc_descendant_url(loc_id),
+            url: this.loc_descendant_url(loc_id),
             dataType: 'json',
             success: function (response) {
                 modal_context = {
@@ -255,12 +284,12 @@ function LocationModel(data, root, depth) {
                     "loc_id": loc_id,
                     "delete_fn": delete_fn,
                     "count": response.count,
-                    "signOff": ko.observable('')
+                    "signOff": ko.observable(''),
                 };
                 ko.cleanNode(delete_location_modal);
                 ko.applyBindings(modal_context, delete_location_modal);
                 $(delete_location_modal).modal('show');
-            }
+            },
         });
     };
 }

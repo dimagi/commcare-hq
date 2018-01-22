@@ -232,6 +232,7 @@ class LocationsListView(BaseLocationView):
         else:
             return [to_json(user.get_sql_location(self.domain))]
 
+
 class LocationsSearchView(EmwfOptionsView):
     @property
     def data_sources(self):

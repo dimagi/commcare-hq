@@ -19,32 +19,9 @@
     var can_edit_root = {{ can_edit_root|yesno:"true,false" }};
     var hierarchy = {{ hierarchy|JSON }};
     var show_inactive = {{ show_inactive|yesno:"true,false" }};
-    var alert_user = hqImport("hqwebapp/js/alert_user").alert_user;
-
-    var location_toggle = {{ request|toggle_enabled:'LOCATION_SEARCH'|yesno:"true,false"}};
 
     function loc_edit_url(loc_id) {
         var template = '{% url "edit_location" domain "-locid-" %}';
-        return template.replace('-locid-', loc_id);
-    }
-
-    function loc_archive_url(loc_id) {
-        var template = '{% url "archive_location" domain "-locid-" %}';
-        return template.replace('-locid-', loc_id);
-    }
-
-    function loc_unarchive_url(loc_id) {
-        var template = '{% url "unarchive_location" domain "-locid-" %}';
-        return template.replace('-locid-', loc_id);
-    }
-
-    function loc_delete_url(loc_id) {
-        var template = '{% url "delete_location" domain "-locid-" %}';
-        return template.replace('-locid-', loc_id);
-    }
-
-    function loc_descendant_url(loc_id) {
-        var template = '{% url "location_descendants_count" domain "-locid-" %}';
         return template.replace('-locid-', loc_id);
     }
 
@@ -56,9 +33,6 @@
 
     var delete_error_message = '{% trans "An error occurred while deleting your location. If the problem persists, please report an issue" %}';
 
-    remove_elements_after_action = function(button) {
-        $(button).closest('.loc_section').remove();
-    };
 
     $(function() {
         var model = new LocationTreeViewModel(hierarchy);
@@ -106,6 +80,11 @@
 {% endblock %}
 
 {% block page_content %}
+    {% registerurl 'archive_location' domain '-locid-' %}
+    {% registerurl 'unarchive_location' domain '-locid-' %}
+    {% registerurl 'delete_location' domain '-locid-' %}
+    {% registerurl 'location_descendants_count' domain '-locid-'%}
+
 <header>
     <div class="row">
         <div class="col-sm-8">
