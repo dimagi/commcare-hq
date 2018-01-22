@@ -8,14 +8,13 @@ from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.ivr.models import Call
 from corehq.apps.reminders.util import get_one_way_number_for_recipient
 from corehq.apps.locations.models import SQLLocation
-from corehq.apps.smsforms.app import submit_unfinished_form
 from corehq.apps.smsforms.models import get_session_by_session_id, SQLXFormsSession
-from touchforms.formplayer.api import current_question, TouchformsError
+from touchforms.formplayer.api import TouchformsError
 from corehq.apps.sms.api import (
     send_sms, send_sms_to_verified_number, MessageMetadata
 )
 from corehq.apps.smsforms.app import start_session
-from corehq.apps.smsforms.util import form_requires_input
+from corehq.apps.smsforms.util import form_requires_input, critical_section_for_smsforms_sessions
 from corehq.apps.sms.util import format_message_list, touchforms_error_is_config_error
 from corehq.apps.users.cases import get_owner_id, get_wrapped_owner
 from corehq.apps.users.models import CouchUser, WebUser, CommCareUser
@@ -329,29 +328,10 @@ def fire_sms_callback_event(reminder, handler, recipients, verified_numbers, log
 def fire_sms_survey_event(reminder, handler, recipients, verified_numbers, logged_event):
     current_event = reminder.current_event
     if reminder.callback_try_count > 0:
-        # Handle timeouts
-        if (
-            handler.submit_partial_forms and
-            (reminder.callback_try_count == len(current_event.callback_timeout_intervals))
-        ):
-            # Submit partial form completions
-            for session_id in reminder.xforms_session_ids:
-                submit_unfinished_form(session_id, handler.include_case_side_effects)
-        else:
-            # Resend current question
-            for session_id in reminder.xforms_session_ids:
-                session = get_session_by_session_id(session_id)
-                if session.end_time is None:
-                    vn = verified_numbers.get(session.connection_id)
-                    if vn is not None:
-                        metadata = MessageMetadata(
-                            workflow=get_workflow(handler),
-                            reminder_id=reminder._id,
-                            xforms_session_couch_id=session._id,
-                        )
-                        resp = current_question(session_id)
-                        send_sms_to_verified_number(vn, resp.event.text_prompt, metadata,
-                            logged_subevent=session.related_subevent)
+        # Leaving this as an explicit reminder that all survey related actions now happen
+        # in a different process. Eventually all of this code will be removed when we move
+        # to the new reminders framework.
+        pass
     else:
         reminder.xforms_session_ids = []
         domain_obj = Domain.get_by_name(reminder.domain, strict=True)
@@ -390,8 +370,7 @@ def fire_sms_survey_event(reminder, handler, recipients, verified_numbers, logge
                 logged_subevent.error(MessagingEvent.ERROR_PHONE_OPTED_OUT)
                 continue
 
-            key = "start-sms-survey-for-contact-%s" % recipient.get_id
-            with CriticalSection([key], timeout=60):
+            with critical_section_for_smsforms_sessions(recipient.get_id):
                 # Get the case to submit the form against, if any
                 if (is_commcarecase(recipient) and
                     not handler.force_surveys_to_use_triggered_case):

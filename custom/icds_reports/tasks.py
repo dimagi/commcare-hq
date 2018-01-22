@@ -35,7 +35,7 @@ celery_task_logger = logging.getLogger('celery.task')
 
 UCRAggregationTask = namedtuple("UCRAggregationTask", ['type', 'date'])
 
-DASHBOARD_TEAM_MEMBERS = ['jemord', 'lbagnoli', 'ssrikrishnan']
+DASHBOARD_TEAM_MEMBERS = ['jemord', 'lbagnoli', 'ssrikrishnan', 'mharrison']
 _dashboard_team_soft_assert = soft_assert(to=[
     '{}@{}'.format(member_id, 'dimagi.com') for member_id in DASHBOARD_TEAM_MEMBERS
 ])
@@ -172,7 +172,7 @@ def aggregate_tables(self, current_task, future_tasks):
 
 @periodic_task(
     queue='background_queue',
-    run_every=crontab(day_of_week='sunday,wednesday', minute=0, hour=21),
+    run_every=crontab(day_of_week='tuesday,thursday,saturday', minute=0, hour=21),
     acks_late=True
 )
 def recalculate_stagnant_cases():

@@ -214,7 +214,6 @@ CRISPY_ALLOWED_TEMPLATE_PACKS = (
 HQ_APPS = (
     'django_digest',
     'auditcare',
-    'hqscripts',
     'casexml.apps.case',
     'corehq.apps.casegroups',
     'corehq.apps.case_migrations',
@@ -421,7 +420,8 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'custom.m4change',
 )
 
-INSTALLED_APPS = DEFAULT_APPS + HQ_APPS + ENIKSHAY_APPS
+# any built-in management commands we want to override should go in hqscripts
+INSTALLED_APPS = ('hqscripts',) + DEFAULT_APPS + HQ_APPS + ENIKSHAY_APPS
 
 # after login, django redirects to this URL
 # rather than the default 'accounts/profile'
@@ -2113,7 +2113,6 @@ CUSTOM_UCR_EXPRESSIONS = [
 CUSTOM_UCR_EXPRESSION_LISTS = [
     ('mvp.ucr.reports.expressions.CUSTOM_UCR_EXPRESSIONS'),
     ('custom.icds_reports.ucr.expressions.CUSTOM_UCR_EXPRESSIONS'),
-    ('custom.ucr_ext.expressions.CUSTOM_UCR_EXPRESSIONS'),
     ('corehq.apps.userreports.expressions.extension_expressions.CUSTOM_UCR_EXPRESSIONS'),
 ]
 

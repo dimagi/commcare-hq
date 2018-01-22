@@ -346,13 +346,17 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
             {'age_tranche__in': [0, 6, 72]},
             'stunting_severe'
         )
-        wer_eligible = exclude_records_by_age_for_column(
+        nutrition_status_weighed = exclude_records_by_age_for_column(
             {'age_tranche': 72},
-            'wer_eligible'
+            'nutrition_status_weighed'
         )
-        height_eligible = exclude_records_by_age_for_column(
+        height_measured_in_month = exclude_records_by_age_for_column(
             {'age_tranche__in': [0, 6, 72]},
-            'height_eligible'
+            'height_measured_in_month'
+        )
+        weighed_and_height_measured_in_month = exclude_records_by_age_for_column(
+            {'age_tranche__in': [0, 6, 72]},
+            'weighed_and_height_measured_in_month'
         )
 
         queryset = AggChildHealthMonthly.objects.filter(
@@ -363,17 +367,19 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
             underweight=(
                 Sum(moderately_underweight) + Sum(severely_underweight)
             ),
-            valid_wer_eligible=Sum(wer_eligible),
+            valid_weighed=Sum(nutrition_status_weighed),
             immunized=(
                 Sum('fully_immunized_on_time') + Sum('fully_immunized_late')
             ),
             eligible=Sum('fully_immunized_eligible'),
             wasting=Sum(wasting_moderate) + Sum(wasting_severe),
-            height_eli=Sum(height_eligible),
+            height_measured_in_month=Sum(height_measured_in_month),
+            weighed_and_height_measured_in_month=Sum(weighed_and_height_measured_in_month),
             stunting=Sum(stunting_moderate) + Sum(stunting_severe),
             low_birth=Sum('low_birth_weight_in_month'),
             birth=Sum('bf_at_birth'),
             born=Sum('born_in_month'),
+            weighed_and_born_in_month=Sum('weighed_and_born_in_month'),
             month_ebf=Sum('ebf_in_month'),
             ebf=Sum('ebf_eligible'),
             month_cf=Sum('cf_initiation_in_month'),
@@ -434,16 +440,16 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
                         'underweight',
                         this_month_data,
                         prev_month_data,
-                        'valid_wer_eligible'
+                        'valid_weighed'
                     ),
                     'color': 'red' if percent_diff(
                         'underweight',
                         this_month_data,
                         prev_month_data,
-                        'valid_wer_eligible'
+                        'valid_weighed'
                     ) > 0 else 'green',
                     'value': get_value(this_month_data, 'underweight'),
-                    'all': get_value(this_month_data, 'valid_wer_eligible'),
+                    'all': get_value(this_month_data, 'valid_weighed'),
                     'format': 'percent_and_div',
                     'frequency': 'month'
                 },
@@ -464,16 +470,16 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
                         'wasting',
                         this_month_data,
                         prev_month_data,
-                        'height_eli'
+                        'weighed_and_height_measured_in_month'
                     ),
                     'color': 'red' if percent_diff(
                         'wasting',
                         this_month_data,
                         prev_month_data,
-                        'height_eli'
+                        'weighed_and_height_measured_in_month'
                     ) > 0 else 'green',
                     'value': get_value(this_month_data, 'wasting'),
-                    'all': get_value(this_month_data, 'height_eli'),
+                    'all': get_value(this_month_data, 'weighed_and_height_measured_in_month'),
                     'format': 'percent_and_div',
                     'frequency': 'month'
                 },
@@ -493,16 +499,16 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
                         'stunting',
                         this_month_data,
                         prev_month_data,
-                        'height_eli'
+                        'height_measured_in_month'
                     ),
                     'color': 'red' if percent_diff(
                         'stunting',
                         this_month_data,
                         prev_month_data,
-                        'height_eli'
+                        'height_measured_in_month'
                     ) > 0 else 'green',
                     'value': get_value(this_month_data, 'stunting'),
-                    'all': get_value(this_month_data, 'height_eli'),
+                    'all': get_value(this_month_data, 'height_measured_in_month'),
                     'format': 'percent_and_div',
                     'frequency': 'month'
                 },
@@ -548,16 +554,16 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
                         'low_birth',
                         this_month_data,
                         prev_month_data,
-                        'born'
+                        'weighed_and_born_in_month'
                     ),
                     'color': 'red' if percent_diff(
                         'low_birth',
                         this_month_data,
                         prev_month_data,
-                        'born'
+                        'weighed_and_born_in_month'
                     ) > 0 else 'green',
                     'value': get_value(this_month_data, 'low_birth'),
-                    'all': get_value(this_month_data, 'born'),
+                    'all': get_value(this_month_data, 'weighed_and_born_in_month'),
                     'format': 'percent_and_div',
                     'frequency': 'month'
                 },

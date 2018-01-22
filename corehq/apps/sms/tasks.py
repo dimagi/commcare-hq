@@ -1,30 +1,34 @@
 from __future__ import absolute_import
+
+import hashlib
 import math
 from datetime import datetime, timedelta
-from celery.task import task
-from corehq.apps.sms.mixin import (InvalidFormatException,
-    PhoneNumberInUseException, PhoneNumberException, CommCareMobileContactMixin,
-    apply_leniency)
-from corehq.apps.sms.models import (OUTGOING, INCOMING, SMS,
-    PhoneLoadBalancingMixin, QueuedSMS, PhoneNumber, MigrationStatus)
-from corehq.apps.sms.api import (send_message_via_backend, process_incoming,
-    log_sms_exception, create_billable_for_sms, get_utcnow)
-from django.db import transaction, DataError
+
+from celery.schedules import crontab
+from corehq.util.datadog.gauges import datadog_counter, datadog_gauge_task
 from django.conf import settings
+from django.db import DataError, transaction
+
 from corehq import privileges
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.domain.models import Domain
+from corehq.apps.sms.api import (create_billable_for_sms, get_utcnow,
+    log_sms_exception, process_incoming, send_message_via_backend)
+from corehq.apps.sms.change_publishers import publish_sms_saved
+from corehq.apps.sms.mixin import (InvalidFormatException,
+    PhoneNumberInUseException, apply_leniency)
+from corehq.apps.sms.models import (INCOMING, MigrationStatus, OUTGOING,
+    PhoneLoadBalancingMixin, PhoneNumber, QueuedSMS, SMS)
+from corehq.apps.sms.util import is_contact_active
 from corehq.apps.smsbillables.exceptions import RetryBillableTaskException
 from corehq.apps.smsbillables.models import SmsBillable
-from corehq.apps.sms.change_publishers import publish_sms_saved
-from corehq.apps.sms.util import is_contact_active
-from corehq.apps.users.models import CouchUser, CommCareUser
+from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.toggles import RETRY_SMS_INDEFINITELY
 from corehq.util.celery_utils import no_result_task
 from corehq.util.timezones.conversions import ServerTime
+from dimagi.utils.couch import CriticalSection, release_lock
 from dimagi.utils.couch.cache.cache_core import get_redis_client
-from dimagi.utils.couch import release_lock, CriticalSection
 from dimagi.utils.rate_limit import rate_limit
 
 
@@ -41,6 +45,9 @@ def remove_from_queue(queued_sms):
 
     if sms.direction == OUTGOING and sms.processed and not sms.error:
         create_billable_for_sms(sms)
+        datadog_counter('commcare.sms.outbound_succeeded')
+    elif sms.direction == OUTGOING:
+        datadog_counter('commcare.sms.outbound_failed')
     elif sms.direction == INCOMING and sms.domain and domain_has_privilege(sms.domain, privileges.INBOUND_SMS):
         create_billable_for_sms(sms)
 
@@ -129,37 +136,26 @@ def message_is_stale(msg, utcnow):
         return True
 
 
-def connection_slot_key_base(backend):
-    return 'backend-%s-connection-slot-' % backend.couch_id
-
-
-def reserve_connection_slot(backend, max_simultaneous_connections):
+def get_connection_slot_from_phone_number(phone_number, max_simultaneous_connections):
     """
-    There is one redis key per connection slot, numbered from 1 to
-    max_simultaneous_connections.
-    A slot is considered taken if the corresponding redis key exists,
-    or is considered free if it does not exist.
+    Converts phone_number to a number between 0 and max_simultaneous_connections - 1.
+    This is the connection slot number that will need be reserved in order to send
+    the message.
     """
-    with CriticalSection(['reserve-connection-slot-for-%s' % backend.couch_id]):
-        client = get_redis_client()
-        key_base = connection_slot_key_base(backend)
-        slot_keys = client.keys(key_base + '*')
-        reserved_slots = [slot_key.replace(key_base, '') for slot_key in slot_keys]
-
-        for slot_number in range(1, max_simultaneous_connections + 1):
-            slot_string = str(slot_number)
-            if slot_string not in reserved_slots:
-                key = key_base + slot_string
-                client.set(key, 1)
-                client.expire(key, 60)
-                return slot_string
-
-    return None
+    hashed_phone_number = hashlib.sha1(phone_number).hexdigest()
+    return int(hashed_phone_number, base=16) % max_simultaneous_connections
 
 
-def free_connection_slot(backend, slot):
+def get_connection_slot_lock(phone_number, backend, max_simultaneous_connections):
+    """
+    There is one redis lock per connection slot, numbered from 0 to
+    max_simultaneous_connections - 1.
+    A slot is taken if the lock can't be acquired.
+    """
+    slot = get_connection_slot_from_phone_number(phone_number, max_simultaneous_connections)
+    key = 'backend-%s-connection-slot-%s' % (backend.couch_id, slot)
     client = get_redis_client()
-    client.delete(connection_slot_key_base(backend) + slot)
+    return client.lock(key, timeout=60)
 
 
 def handle_outgoing(msg):
@@ -189,8 +185,8 @@ def handle_outgoing(msg):
             return True
 
     if max_simultaneous_connections:
-        connection_slot = reserve_connection_slot(backend, max_simultaneous_connections)
-        if not connection_slot:
+        connection_slot_lock = get_connection_slot_lock(msg.phone_number, backend, max_simultaneous_connections)
+        if not connection_slot_lock.acquire(blocking=False):
             # Requeue the message and try it again shortly
             return True
 
@@ -201,7 +197,7 @@ def handle_outgoing(msg):
     )
 
     if max_simultaneous_connections:
-        free_connection_slot(backend, connection_slot)
+        release_lock(connection_slot_lock, True)
 
     if msg.error:
         remove_from_queue(msg)
@@ -463,3 +459,10 @@ def sync_phone_numbers_for_domain(domain):
         _sync_case_phone_number(case)
 
     MigrationStatus.set_migration_completed('phone_sync_domain_%s' % domain)
+
+
+def queued_sms():
+    return QueuedSMS.objects.count()
+
+
+datadog_gauge_task('commcare.sms.queued', queued_sms, run_every=crontab())

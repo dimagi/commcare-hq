@@ -13,6 +13,7 @@ from corehq.apps.sms.messages import *
 from corehq.apps.sms.handlers.form_session import validate_answer
 from corehq.apps.sms.util import touchforms_error_is_config_error
 from corehq.apps.smsforms.models import SQLXFormsSession
+from corehq.apps.smsforms.util import critical_section_for_smsforms_sessions
 from corehq.apps.reminders.models import (
     METHOD_SMS,
     METHOD_SMS_SURVEY,
@@ -189,17 +190,18 @@ def handle_domain_keywords(v, text, msg, text_words, sessions):
 
 
 def sms_keyword_handler(v, text, msg):
-    text = text.strip()
-    if text == "":
-        return False
+    with critical_section_for_smsforms_sessions(v.owner_id):
+        text = text.strip()
+        if text == "":
+            return False
 
-    sessions = SQLXFormsSession.get_all_open_sms_sessions(v.domain, v.owner_id)
-    text_words = text.upper().split()
+        sessions = SQLXFormsSession.get_all_open_sms_sessions(v.domain, v.owner_id)
+        text_words = text.upper().split()
 
-    if text.startswith("#"):
-        return handle_global_keywords(v, text, msg, text_words, sessions)
-    else:
-        return handle_domain_keywords(v, text, msg, text_words, sessions)
+        if text.startswith("#"):
+            return handle_global_keywords(v, text, msg, text_words, sessions)
+        else:
+            return handle_domain_keywords(v, text, msg, text_words, sessions)
 
 
 def _handle_structured_sms(domain, args, contact_id, session_id,
@@ -472,15 +474,6 @@ def handle_structured_sms(survey_keyword, survey_keyword_action, contact,
     return not error_occurred
 
 
-def refresh_and_close_session(session):
-    if session:
-        session = SQLXFormsSession.objects.get(pk=session.pk)
-        if session.is_open:
-            session.end(False)
-            session.save()
-    return session
-
-
 def add_keyword_metadata(msg, session):
     metadata = MessageMetadata(
         workflow=WORKFLOW_KEYWORD,
@@ -497,7 +490,6 @@ def clean_up_and_send_response(msg, contact, session, error_occurred, error_msg,
         verified_number=None, send_response=False, logged_event=None,
         logged_subevent=None):
 
-    session = refresh_and_close_session(session)
     metadata = add_keyword_metadata(msg, session)
 
     if error_occurred and verified_number and send_response:

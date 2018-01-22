@@ -507,7 +507,7 @@ class BaseMessagingEventReport(BaseCommConnectLogReport):
                 content_type=MessagingEvent.CONTENT_SMS_SURVEY,
                 # without this line, django does a left join which is not what we want
                 xforms_session_id__isnull=False,
-                xforms_session__end_time__isnull=True
+                xforms_session__session_is_open=True
             ).count() > 0
         ):
             status = MessagingEvent.STATUS_IN_PROGRESS
@@ -701,19 +701,19 @@ class MessagingEventsReport(BaseMessagingEventReport):
             # We need to check for id__isnull=False below because the
             # query we make in this report has to do a left join, and
             # in this particular filter we can only validly check
-            # end_time__isnull=True if there actually are
+            # session_is_open=True if there actually are
             # subevent and xforms session records
             event_status_filter = (
                 Q(status=event_status) |
                 Q(messagingsubevent__status=event_status) |
                 (Q(messagingsubevent__xforms_session__id__isnull=False) &
-                 Q(messagingsubevent__xforms_session__end_time__isnull=True))
+                 Q(messagingsubevent__xforms_session__session_is_open=True))
             )
         elif event_status == MessagingEvent.STATUS_NOT_COMPLETED:
             event_status_filter = (
                 Q(status=event_status) |
                 Q(messagingsubevent__status=event_status) |
-                (Q(messagingsubevent__xforms_session__end_time__isnull=False) &
+                (Q(messagingsubevent__xforms_session__session_is_open=False) &
                  Q(messagingsubevent__xforms_session__submission_id__isnull=True))
             )
 

@@ -280,9 +280,9 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
 
     vm.onSelectAWCs = function($item) {
         if ($item.location_id === 'all') {
-            vm.selectedAWCs = [$item];
+            vm.selectedAWCs = [$item.location_id];
         } else if (vm.selectedAWCs.indexOf('all') !== -1) {
-            vm.selectedAWCs = [$item];
+            vm.selectedAWCs = [$item.location_id];
         }
     };
 
