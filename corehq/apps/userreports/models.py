@@ -414,7 +414,7 @@ class ReportConfiguration(UnicodeMixIn, QuickCachedDocumentMixin, Document):
     title = StringProperty()
     description = StringProperty()
     aggregation_columns = StringListProperty()
-    dynamic_aggregation = SchemaProperty(DynamicAggregation)
+    dynamic_aggregation = SchemaListProperty(DynamicAggregation)
     filters = ListProperty()
     columns = ListProperty()
     configured_charts = ListProperty()

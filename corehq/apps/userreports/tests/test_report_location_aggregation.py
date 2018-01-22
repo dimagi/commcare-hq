@@ -132,14 +132,14 @@ class TestReportLocationAggregationSQL(ConfigurableReportTestMixin, LocationHier
             config_id=self.data_source._id,
             title='foo',
             aggregation_columns=["doc_id"],
-            dynamic_aggregation=DynamicAggregation(
+            dynamic_aggregation=[DynamicAggregation(
                 display="Select a location to group by",
                 fields=[
                     DynamicAggregationColumn(display="State", field='state_id'),
                     DynamicAggregationColumn(display="County", field='county_id'),
                     DynamicAggregationColumn(display="City", field='city_id'),
                 ],
-            ),
+            )],
             columns=[
                 {
                     "type": "field",
