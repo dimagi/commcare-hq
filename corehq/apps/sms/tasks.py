@@ -4,7 +4,8 @@ import hashlib
 import math
 from datetime import datetime, timedelta
 
-from celery.task import task
+from celery.task import task, periodic_task
+from celery.schedules import crontab
 from corehq.util.datadog.gauges import datadog_gauge
 from django.conf import settings
 from django.db import DataError, transaction
