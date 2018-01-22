@@ -465,4 +465,4 @@ def queued_sms():
     return QueuedSMS.objects.count()
 
 
-datadog_gauge_task('commcare.sms.outbound_queued', queued_sms, run_every=crontab())
+datadog_gauge_task('commcare.sms.queued', queued_sms, run_every=crontab())
