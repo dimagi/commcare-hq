@@ -339,9 +339,10 @@ class ScheduleForm(Form):
 
         return result
 
-    def __init__(self, domain, schedule, *args, **kwargs):
+    def __init__(self, domain, schedule, can_use_sms_surveys, *args, **kwargs):
         self.domain = domain
         self.initial_schedule = schedule
+        self.can_use_sms_surveys = can_use_sms_surveys
 
         if kwargs.get('initial'):
             raise ValueError("Initial values are set by the form")
@@ -1012,9 +1013,9 @@ class BroadcastForm(ScheduleForm):
         required=False
     )
 
-    def __init__(self, domain, schedule, broadcast, *args, **kwargs):
+    def __init__(self, domain, schedule, can_use_sms_surveys, broadcast, *args, **kwargs):
         self.initial_broadcast = broadcast
-        super(BroadcastForm, self).__init__(domain, schedule, *args, **kwargs)
+        super(BroadcastForm, self).__init__(domain, schedule, can_use_sms_surveys, *args, **kwargs)
 
     def get_layout_fields(self):
         result = super(BroadcastForm, self).get_layout_fields()
@@ -1203,10 +1204,10 @@ class ConditionalAlertScheduleForm(ScheduleForm):
         required=False,
     )
 
-    def __init__(self, domain, schedule, rule, criteria_form, *args, **kwargs):
+    def __init__(self, domain, schedule, can_use_sms_surveys, rule, criteria_form, *args, **kwargs):
         self.initial_rule = rule
         self.criteria_form = criteria_form
-        super(ConditionalAlertScheduleForm, self).__init__(domain, schedule, *args, **kwargs)
+        super(ConditionalAlertScheduleForm, self).__init__(domain, schedule, can_use_sms_surveys, *args, **kwargs)
         if self.initial_rule:
             self.set_read_only_fields_during_editing()
         self.update_recipient_types_choices()

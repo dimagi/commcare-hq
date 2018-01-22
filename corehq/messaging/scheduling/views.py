@@ -43,6 +43,11 @@ from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_user
 from dimagi.utils.couch import CriticalSection
+from django_prbac.utils import has_privilege
+
+
+def can_use_sms_surveys(request):
+    has_privilege(request, privileges.INBOUND_SMS)
 
 
 def get_broadcast_edit_critical_section(broadcast_type, broadcast_id):
@@ -216,10 +221,12 @@ class CreateScheduleView(BaseMessagingSectionView, AsyncHandlerMixin):
 
     @cached_property
     def schedule_form(self):
-        if self.request.method == 'POST':
-            return BroadcastForm(self.domain, self.schedule, self.broadcast, self.request.POST)
+        args = [self.domain, self.schedule, can_use_sms_surveys(self.request), self.broadcast]
 
-        return BroadcastForm(self.domain, self.schedule, self.broadcast)
+        if self.request.method == 'POST':
+            args.append(self.request.POST)
+
+        return BroadcastForm(*args)
 
     @property
     def page_context(self):
@@ -440,11 +447,18 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
 
     @cached_property
     def schedule_form(self):
-        if self.request.method == 'POST':
-            return ConditionalAlertScheduleForm(self.domain, self.schedule, self.rule, self.criteria_form,
-                self.request.POST)
+        args = [
+            self.domain,
+            self.schedule,
+            can_use_sms_surveys(self.request),
+            self.rule,
+            self.criteria_form,
+        ]
 
-        return ConditionalAlertScheduleForm(self.domain, self.schedule, self.rule, self.criteria_form)
+        if self.request.method == 'POST':
+            args.append(self.request.POST)
+
+        return ConditionalAlertScheduleForm(*args)
 
     @property
     def schedule(self):
