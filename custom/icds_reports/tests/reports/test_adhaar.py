@@ -61,16 +61,6 @@ class TestAdhaar(TestCase):
         )
 
     def test_map_name_is_different_data(self):
-        print(get_adhaar_data_map(
-                'icds-cas',
-                config={
-                    'month': (2017, 5, 1),
-                    'state_id': 'st1',
-                    'district_id': 'd1',
-                    'aggregation_level': 3
-                },
-                loc_level='block',
-            ))
         self.assertDictEqual(
             get_adhaar_data_map(
                 'icds-cas',
