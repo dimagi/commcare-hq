@@ -1,3 +1,4 @@
+/* globals django */
 
 function api_get_children(loc_uuid, callback) {
     var params = (loc_uuid ? {parent_id: loc_uuid} : {});
@@ -217,7 +218,7 @@ function LocationModel(data, root, depth) {
                     alert_user(loc.archive_success_message({"name": name}), "success");
                     loc.remove_elements_after_action(button);
                     if (hqImport('hqwebapp/js/toggles').toggleEnabled('LOCATION_SEARCH')) {
-                        reloadSelect();
+                        reloadSelect(); // jshint ignore:line
                     }
                 },
             });
@@ -260,7 +261,7 @@ function LocationModel(data, root, depth) {
                     type: 'DELETE',
                     url: loc.loc_delete_url(loc_id),
                     dataType: 'json',
-                    error: function (response, status) {
+                    error: function (response) {
                         alert_user(loc.delete_error_message, "warning");
                         $(button).enableButton();
                     },
@@ -269,7 +270,7 @@ function LocationModel(data, root, depth) {
                             alert_user(loc.delete_success_message({"name": name}), "success");
                             loc.remove_elements_after_action(button);
                             if (hqImport('hqwebapp/js/toggles').toggleEnabled('LOCATION_SEARCH')) {
-                                reloadSelect();
+                                reloadSelect(); // jshint ignore:line
                             }
                         }
                         else {
