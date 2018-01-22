@@ -1176,6 +1176,13 @@ class Subscription(models.Model):
                 "Can't have a subscription start after the end date."
             )
         self.raise_conflicting_dates(date_start, date_end)
+        self.raise_affected_invoice(date_start, date_end)
+        # check if there's an existing invoice in either of the changed periods
+        # if self.date_start != date_start:
+            # check for invoice with same subscriber in (min, max) range
+        # repeat for date_end
+
+        # consider querying for any invoices that already violate (self.date_start, self.date_end) ranges
         self.date_start = date_start
         self.date_end = date_end
 
