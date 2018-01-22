@@ -86,12 +86,14 @@ from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from dimagi.utils.parsing import json_format_datetime, string_to_boolean
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.decorators.view import get_file
+from django.utils.functional import cached_property
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_response
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.couch.cache import cache_core
 from django.conf import settings
+from django_prbac.utils import has_privilege
 from couchdbkit.resource import ResourceNotFound
 from couchexport.models import Format
 from couchexport.export import export_raw
@@ -113,6 +115,10 @@ def default(request, domain):
 
 class BaseMessagingSectionView(BaseDomainView):
     section_name = ugettext_noop("Messaging")
+
+    @cached_property
+    def can_use_inbound_sms(self):
+        return has_privilege(self.request, privileges.INBOUND_SMS)
 
     @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
     def dispatch(self, *args, **kwargs):

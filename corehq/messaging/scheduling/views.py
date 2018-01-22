@@ -43,11 +43,6 @@ from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_user
 from dimagi.utils.couch import CriticalSection
-from django_prbac.utils import has_privilege
-
-
-def can_use_sms_surveys(request):
-    has_privilege(request, privileges.INBOUND_SMS)
 
 
 def get_broadcast_edit_critical_section(broadcast_type, broadcast_id):
@@ -221,7 +216,7 @@ class CreateScheduleView(BaseMessagingSectionView, AsyncHandlerMixin):
 
     @cached_property
     def schedule_form(self):
-        args = [self.domain, self.schedule, can_use_sms_surveys(self.request), self.broadcast]
+        args = [self.domain, self.schedule, self.can_use_inbound_sms, self.broadcast]
 
         if self.request.method == 'POST':
             args.append(self.request.POST)
@@ -240,6 +235,9 @@ class CreateScheduleView(BaseMessagingSectionView, AsyncHandlerMixin):
             return self.async_response
 
         if self.schedule_form.is_valid():
+            if not self.can_use_inbound_sms and self.schedule_form.uses_sms_survey:
+                return HttpResponseBadRequest()
+
             broadcast, schedule = self.schedule_form.save_broadcast_and_schedule()
             if isinstance(schedule, AlertSchedule):
                 refresh_alert_schedule_instances.delay(schedule.schedule_id, broadcast.recipients)
@@ -295,12 +293,19 @@ class EditScheduleView(CreateScheduleView):
             raise Http404()
 
     @property
-    def read_only_mode(self):
-        return isinstance(self.broadcast, ImmediateBroadcast)
-
-    @property
     def schedule(self):
         return self.broadcast.schedule
+
+    @cached_property
+    def read_only_mode(self):
+        immediate_broadcast_restriction = isinstance(self.broadcast, ImmediateBroadcast)
+
+        inbound_sms_restriction = (
+            not self.can_use_inbound_sms and
+            self.schedule.memozied_uses_sms_survey
+        )
+
+        return immediate_broadcast_restriction or inbound_sms_restriction
 
     def dispatch(self, request, *args, **kwargs):
         with get_broadcast_edit_critical_section(self.broadcast_type, self.broadcast_id):
@@ -415,6 +420,7 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
     page_title = ugettext_lazy('New Conditional Message')
     template_name = 'scheduling/conditional_alert.html'
     async_handlers = [MessagingRecipientHandler]
+    read_only_mode = False
 
     @method_decorator(_requires_new_reminder_framework())
     @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
@@ -450,7 +456,7 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
         args = [
             self.domain,
             self.schedule,
-            can_use_sms_surveys(self.request),
+            self.can_use_inbound_sms,
             self.rule,
             self.criteria_form,
         ]
@@ -467,16 +473,6 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
     @property
     def rule(self):
         return None
-
-    @cached_property
-    def read_only_mode(self):
-        return (
-            not self.is_system_admin and
-            (
-                self.criteria_form.requires_system_admin_to_edit or
-                self.schedule_form.requires_system_admin_to_edit
-            )
-        )
 
     @cached_property
     def is_system_admin(self):
@@ -523,6 +519,9 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
                 # unless the user has permission to
                 return HttpResponseBadRequest()
 
+            if not self.can_use_inbound_sms and self.schedule_form.uses_sms_survey:
+                return HttpResponseBadRequest()
+
             with transaction.atomic():
                 if self.rule:
                     rule = self.rule
@@ -555,6 +554,23 @@ class EditConditionalAlertView(CreateConditionalAlertView):
     @property
     def rule_id(self):
         return self.kwargs.get('rule_id')
+
+    @cached_property
+    def read_only_mode(self):
+        system_admin_restriction = (
+            not self.is_system_admin and
+            (
+                self.criteria_form.requires_system_admin_to_edit or
+                self.schedule_form.requires_system_admin_to_edit
+            )
+        )
+
+        inbound_sms_restriction = (
+            not self.can_use_inbound_sms and
+            self.schedule.memozied_uses_sms_survey
+        )
+
+        return system_admin_restriction or inbound_sms_restriction
 
     @cached_property
     def rule(self):

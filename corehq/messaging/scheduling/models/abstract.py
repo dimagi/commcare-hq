@@ -11,6 +11,7 @@ from corehq.messaging.scheduling.exceptions import (
     UnknownContentType,
 )
 from corehq.messaging.scheduling import util
+from django.utils.functional import cached_property
 
 
 class Schedule(models.Model):
@@ -97,6 +98,16 @@ class Schedule(models.Model):
                 result |= set(content.message)
 
         return result
+
+    @cached_property
+    def memozied_uses_sms_survey(self):
+        from corehq.messaging.scheduling.models import SMSSurveyContent
+
+        for event in self.memoized_events:
+            if isinstance(event.content, SMSSurveyContent):
+                return True
+
+        return False
 
     def delete_related_events(self):
         """

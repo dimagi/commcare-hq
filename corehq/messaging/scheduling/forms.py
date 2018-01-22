@@ -630,6 +630,10 @@ class ScheduleForm(Form):
 
         return result
 
+    @property
+    def uses_sms_survey(self):
+        return self.cleaned_data.get('content') == self.CONTENT_SMS_SURVEY
+
     def clean_user_recipients(self):
         if ScheduleInstance.RECIPIENT_TYPE_MOBILE_WORKER not in self.cleaned_data.get('recipient_types', []):
             return []
