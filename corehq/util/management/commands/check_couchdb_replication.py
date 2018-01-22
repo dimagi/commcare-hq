@@ -1,9 +1,7 @@
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function
 
-import base64
 import json
 
-from django.conf import settings
 from django.core.management.base import BaseCommand
 
 from corehq.util.couchdb_management import couch_config
