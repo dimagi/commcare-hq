@@ -192,6 +192,19 @@ class TestPrevalenceOfStunting(TestCase):
             }
         )
 
+    def test_average_with_two_locations_represent_by_one_topojson(self):
+        data = get_prevalence_of_stunting_data_map(
+            'icds-cas',
+            config={
+                'month': (2017, 5, 1),
+                'state_id': 'st1',
+                'district_id': 'd1',
+                'aggregation_level': 3
+            },
+            loc_level='block',
+        )
+        self.assertEquals(data['rightLegend']['average'], "1.11")
+
     def test_chart_data(self):
         self.assertDictEqual(
             get_prevalence_of_stunting_data_chart(
