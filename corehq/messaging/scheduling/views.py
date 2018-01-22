@@ -313,6 +313,12 @@ class EditScheduleView(CreateScheduleView):
 
     def dispatch(self, request, *args, **kwargs):
         with get_broadcast_edit_critical_section(self.broadcast_type, self.broadcast_id):
+            if not self.can_use_inbound_sms and self.schedule.memoized_uses_sms_survey:
+                messages.warning(
+                    request,
+                    _("This broadcast is not editable because it uses an SMS survey and "
+                      "your current subscription does not allow use of inbound SMS.")
+                )
             return super(EditScheduleView, self).dispatch(request, *args, **kwargs)
 
 
@@ -602,4 +608,10 @@ class EditConditionalAlertView(CreateConditionalAlertView):
             if self.rule.locked_for_editing:
                 messages.warning(request, _("Please allow the rule to finish processing before editing."))
                 return HttpResponseRedirect(reverse(ConditionalAlertListView.urlname, args=[self.domain]))
+            if not self.can_use_inbound_sms and self.schedule.memoized_uses_sms_survey:
+                messages.warning(
+                    request,
+                    _("This alert is not editable because it uses an SMS survey and "
+                      "your current subscription does not allow use of inbound SMS.")
+                )
             return super(EditConditionalAlertView, self).dispatch(request, *args, **kwargs)
