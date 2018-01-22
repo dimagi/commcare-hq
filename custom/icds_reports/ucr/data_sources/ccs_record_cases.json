@@ -1021,50 +1021,74 @@
         }
       },
 	  {
-		"filter": {
-		  "operator": "eq", 
-		  "expression": {
-			"value_expression": {
-			  "datatype": null, 
-			  "type": "property_name", 
-			  "property_name": "migration_status"
-			}, 
-			"type": "related_doc", 
-			"related_doc_type": "CommCareCase", 
-			"doc_id_expression": {
-			  "type": "named", 
-			  "name": "parent_id"
+		"expression": {
+			"type": "conditional",
+			"test": {
+			  "operator": "eq", 
+			  "expression": {
+				"value_expression": {
+				  "datatype": null, 
+				  "type": "property_name", 
+				  "property_name": "migration_status"
+				}, 
+				"type": "related_doc", 
+				"related_doc_type": "CommCareCase", 
+				"doc_id_expression": {
+				  "type": "named", 
+				  "name": "parent_id"
+				}
+			  }, 
+			  "type": "boolean_expression", 
+			  "property_value": "yes"
+			},
+			"expression_if_true": {
+				"type": "constant",
+				"constant": 1
+			},
+			"expression_if_false": {
+				"type": "constant",
+				"constant": 0
 			}
-		  }, 
-		  "type": "boolean_expression", 
-		  "property_value": "yes"
 		}, 
-		"type": "boolean", 
+		"type": "expression", 
 		"column_id": "is_migrated",
-		"is_nullable": true
+		"is_nullable": true,
+		"datatype": "integer"
 	 },
 	 {
-	  "filter": {
-		"operator": "not_eq",
-		"expression": {
-			"value_expression": {
-				"datatype": null,
-				"type": "property_name",
-				"property_name": "registered_status"
+	    "expression": {
+			"type": "conditional",
+			"test": {
+				"operator": "not_eq",
+				"expression": {
+					"value_expression": {
+						"datatype": null,
+						"type": "property_name",
+						"property_name": "registered_status"
+					},
+					"type": "related_doc",
+					"related_doc_type": "CommCareCase",
+					"doc_id_expression": {
+						"type": "named",
+						"name": "parent_id"
+					}
+				},
+				"type": "boolean_expression",
+				"property_value": "not_registered"
 			},
-			"type": "related_doc",
-			"related_doc_type": "CommCareCase",
-			"doc_id_expression": {
-				"type": "named",
-				"name": "parent_id"
+			"expression_if_true": {
+				"type": "constant",
+				"constant": 1
+			},
+			"expression_if_false": {
+				"type": "constant",
+				"constant": 0
 			}
 		},
-		"type": "boolean_expression",
-		"property_value": "not_registered"
-	  },
-	  "type": "boolean",
-	  "column_id": "is_availing",
-	  "is_nullable": true
+		"type": "expression",
+		"column_id": "is_availing",
+		"is_nullable": true,
+		"datatype": "integer"
 	 }
     ],
     "named_expressions": {
