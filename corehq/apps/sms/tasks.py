@@ -1,31 +1,35 @@
 from __future__ import absolute_import
+
 import hashlib
 import math
 from datetime import datetime, timedelta
+
 from celery.task import task
-from corehq.apps.sms.mixin import (InvalidFormatException,
-    PhoneNumberInUseException, PhoneNumberException, CommCareMobileContactMixin,
-    apply_leniency)
-from corehq.apps.sms.models import (OUTGOING, INCOMING, SMS,
-    PhoneLoadBalancingMixin, QueuedSMS, PhoneNumber, MigrationStatus)
-from corehq.apps.sms.api import (send_message_via_backend, process_incoming,
-    log_sms_exception, create_billable_for_sms, get_utcnow)
-from django.db import transaction, DataError
+from corehq.util.datadog.gauges import datadog_gauge
 from django.conf import settings
+from django.db import DataError, transaction
+
 from corehq import privileges
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.domain.models import Domain
+from corehq.apps.sms.api import (create_billable_for_sms, get_utcnow,
+    log_sms_exception, process_incoming, send_message_via_backend)
+from corehq.apps.sms.change_publishers import publish_sms_saved
+from corehq.apps.sms.mixin import (CommCareMobileContactMixin,
+    InvalidFormatException, PhoneNumberException, PhoneNumberInUseException,
+    apply_leniency)
+from corehq.apps.sms.models import (INCOMING, MigrationStatus, OUTGOING,
+    PhoneLoadBalancingMixin, PhoneNumber, QueuedSMS, SMS)
+from corehq.apps.sms.util import is_contact_active
 from corehq.apps.smsbillables.exceptions import RetryBillableTaskException
 from corehq.apps.smsbillables.models import SmsBillable
-from corehq.apps.sms.change_publishers import publish_sms_saved
-from corehq.apps.sms.util import is_contact_active
-from corehq.apps.users.models import CouchUser, CommCareUser
+from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.toggles import RETRY_SMS_INDEFINITELY
 from corehq.util.celery_utils import no_result_task
 from corehq.util.timezones.conversions import ServerTime
+from dimagi.utils.couch import CriticalSection, release_lock
 from dimagi.utils.couch.cache.cache_core import get_redis_client
-from dimagi.utils.couch import release_lock, CriticalSection
 from dimagi.utils.rate_limit import rate_limit
 
 
@@ -453,3 +457,15 @@ def sync_phone_numbers_for_domain(domain):
         _sync_case_phone_number(case)
 
     MigrationStatus.set_migration_completed('phone_sync_domain_%s' % domain)
+
+
+@periodic_task(run_every=crontab(minute="*/15"), queue=settings.CELERY_PERIODIC_QUEUE)
+def run_datadog_sms_metrics():
+    now = datetime.utcnow()
+    window_start = now - timedelta(minutes=15)
+    queued = QueuedSMS.objects.count()
+    successful = SMS.objects.filter(direction='O', date__gt=window_start, date__lte=now, processed=True).count()
+    failed = SMS.objects.filter(direction='O', date__gt=window_start, date__lte=now, processed=False).count()
+    datadog_gauge('commcare.sms.outboud_queued', queued)
+    datadog_gauge('commcare.sms.outbound_successful', successful)
+    datadog_gauge('commcare.sms.outbound_failed', failed)
