@@ -10,7 +10,7 @@ from corehq.util.couchdb_management import couch_config
 
 
 class Command(BaseCommand):
-    help = "Set up replication between two databases (on the CommCare HQ CouchDB cluster)"
+    help = "Check status or cancel replication"
 
     def add_arguments(self, parser):
         parser.add_argument('replication_id')
