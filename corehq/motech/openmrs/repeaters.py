@@ -63,8 +63,7 @@ class OpenmrsRepeater(CaseRepeater):
         """
         if super(OpenmrsRepeater, self).allowed_to_forward(case):
             last_form = FormAccessors(case.domain).get_form(case.xform_ids[-1])
-            from_openmrs = last_form.xmlns == XMLNS_OPENMRS
-            return not from_openmrs
+            return last_form.xmlns != XMLNS_OPENMRS
         return False
 
     def get_payload(self, repeat_record):
