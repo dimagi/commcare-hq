@@ -51,6 +51,7 @@ branches:
   - np/tb/xpath-expression # NP 1/10
 #  - np/tb/markdown # NP 1/10
   - xbryanc:dlemailbutton  # Bryan 1/17
+  - jls/requirejs-system-info # Jenny 1/23
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
