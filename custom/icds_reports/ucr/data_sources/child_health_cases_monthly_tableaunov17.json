@@ -12,17 +12,15 @@
     "icds"
   ],
   "config": {
-    "table_id": "static-child_cases_monthly_tableau_v2",
-    "display_name": "Cases - Child Health for Tableau v2 (Monthly) (Static)",
+    "table_id": "static-child_cases_monthly_tableau_nov17",
+    "display_name": "Cases - Child Health for Tableau Nov 17 (Monthly) (Static)",
     "referenced_doc_type": "CommCareCase",
     "description": "",
     "base_item_expression": {
       "type": "filter_items",
       "items_expression": {
         "expressions": [
-          0,
-          1,
-          2
+          -1
         ],
         "type": "iterator"
       },
@@ -4032,9 +4030,7 @@
         ]
       }
     },
-    "asynchronous": true,
     "engine_id": "icds-ucr",
-    "icds_rebuild_related_docs": true,
     "sql_column_indexes": [
       {
         "column_ids": [
