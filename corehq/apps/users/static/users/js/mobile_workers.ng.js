@@ -329,12 +329,12 @@
                             username: username
                         })
                         .success(function (data) {
-                            if (!!data.success) {
+                            if (data.success) {
                                 visualFormCtrl.usernameSuccess();
                                 $scope.usernameAvailabilityStatus = USERNAME_STATUS.AVAILABLE;
                                 deferred.resolve(data.success);
                                 $scope.usernameStatusMessage = data.success;
-                            } else if (!!data.warning) {
+                            } else if (data.warning) {
                                 visualFormCtrl.usernameWarning();
                                 $scope.usernameAvailabilityStatus = USERNAME_STATUS.AVAILABLE_WARNING;
                                 deferred.resolve(data.warning);
