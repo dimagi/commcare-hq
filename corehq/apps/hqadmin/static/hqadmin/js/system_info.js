@@ -1,5 +1,16 @@
-/* globals hqDefine */
-hqDefine('hqadmin/js/system_info', function () {
+hqDefine('hqadmin/js/system_info', [
+    'jquery',
+    'knockout',
+    'underscore',
+    'hqwebapp/js/initial_page_data',
+    'hqwebapp/js/alert_user',
+], function (
+    $,
+    ko,
+    _,
+    initialPageData,
+    alertUser
+) {
     function format_date(datestring) {
         //parse and format the date timestamps - seconds since epoch into date object
         var date = new Date(datestring * 1000);
