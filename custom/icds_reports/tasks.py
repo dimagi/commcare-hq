@@ -41,7 +41,7 @@ _dashboard_team_soft_assert = soft_assert(to=[
 ])
 
 
-@periodic_task(run_every=crontab(minute=0, hour=21), acks_late=True, queue='background_queue')
+@periodic_task(run_every=crontab(minute=30, hour=23), acks_late=True, queue='background_queue')
 def run_move_ucr_data_into_aggregation_tables_task(date=None):
     move_ucr_data_into_aggregation_tables.delay(date)
 
