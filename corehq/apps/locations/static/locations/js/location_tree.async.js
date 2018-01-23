@@ -46,7 +46,7 @@ function LocationTreeViewModel(hierarchy) {
     };
 }
 
-function LocationSearchViewModel() { // eslint-disable-line no-undef
+function LocationSearchViewModel() { // eslint-disable-line no-unused-vars
     var model = this;
     this.selected_location = ko.observable();
     this.l__selected_location_id = ko.observable();
