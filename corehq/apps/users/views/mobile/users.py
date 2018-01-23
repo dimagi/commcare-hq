@@ -747,7 +747,8 @@ class MobileWorkerListView(HQJSONResponseMixin, BaseUserSettingsView):
         exists = user_exists(full_username)
         if exists.exists:
             if exists.is_deleted:
-                result = {'error': _(u'Username {} is already taken (by a deleted user)').format(username)}
+                result = {'warning': _(u'Username {} belonged to a user that was deleted.'
+                                       u' Reusing it may have unexpected consequences.').format(username)}
             else:
                 result = {'error': _(u'Username {} is already taken').format(username)}
         else:
