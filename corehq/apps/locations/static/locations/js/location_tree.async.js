@@ -46,7 +46,7 @@ function LocationTreeViewModel(hierarchy) {
     };
 }
 
-function LocationSearchViewModel() {
+function LocationSearchViewModel() { // eslint-disable-line no-undef
     var model = this;
     this.selected_location = ko.observable();
     this.l__selected_location_id = ko.observable();
@@ -59,7 +59,7 @@ function LocationSearchViewModel() {
     });
 
     this.selected_location = ko.computed(function() {
-        return new LocationModel({uuid: model.selected_location_id(), can_edit: can_edit_root}, this);
+        return new LocationModel({uuid: model.selected_location_id(), can_edit: can_edit_root}, this); // eslint-disable-line no-undef
     });
 
 }
@@ -254,7 +254,7 @@ function LocationModel(data, root, depth) {
         var modal_context;
 
         function delete_fn() {
-            if (modal_context.count == modal_context.signOff()) {
+            if (modal_context.count === parseInt(modal_context.signOff())) {
                 $(button).disableButton();
 
                 $.ajax({
