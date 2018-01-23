@@ -33,7 +33,7 @@
     });
     {% if request|toggle_enabled:'LOCATION_SEARCH' %}
 
-        var enableSelect = function() {
+        var enableLocationSearchSelect = function() {
 
             $('#location_search_select').select2({
                 ajax: {
@@ -55,12 +55,12 @@
                 });
             };
 
-            var reloadSelect = function() {
+            var reloadLocationSearchSelect = function() {
                 $('#location_search_select').select2('val', null);
-                enableSelect();
+                enableLocationSearchSelect();
             };
 
-            enableSelect();
+            enableLocationSearchSelect();
 
         $(function() {
             var model = new LocationSearchViewModel();

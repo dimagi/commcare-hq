@@ -218,7 +218,7 @@ function LocationModel(data, root, depth) {
                     alert_user(loc.archive_success_message({"name": name}), "success");
                     loc.remove_elements_after_action(button);
                     if (hqImport('hqwebapp/js/toggles').toggleEnabled('LOCATION_SEARCH')) {
-                        reloadSelect(); // jshint ignore:line
+                        reloadLocationSearchSelect(); // eslint-disable-line no-undef
                     }
                 },
             });
@@ -261,7 +261,7 @@ function LocationModel(data, root, depth) {
                     type: 'DELETE',
                     url: loc.loc_delete_url(loc_id),
                     dataType: 'json',
-                    error: function (response) {
+                    error: function () {
                         alert_user(loc.delete_error_message, "warning");
                         $(button).enableButton();
                     },
@@ -270,7 +270,7 @@ function LocationModel(data, root, depth) {
                             alert_user(loc.delete_success_message({"name": name}), "success");
                             loc.remove_elements_after_action(button);
                             if (hqImport('hqwebapp/js/toggles').toggleEnabled('LOCATION_SEARCH')) {
-                                reloadSelect(); // jshint ignore:line
+                                reloadLocationSearchSelect(); // eslint-disable-line no-undef
                             }
                         }
                         else {
