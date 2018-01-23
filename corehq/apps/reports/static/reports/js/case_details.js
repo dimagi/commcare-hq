@@ -7,34 +7,32 @@ hqDefine("reports/js/case_details", function() {
 
         // If there are a lot of items, make a bigger modal and render properties as columns
         // Supports a small one-column modal, a larger two-column modal, or a full-screen three-column modal
-        self.itemsPerPage = new ko.observable(12);
-        self.columnsPerPage = ko.computed(function() {
-            return Math.min(3, Math.ceil(self.propertyNames().length / self.itemsPerPage()));
+        self.itemsPerColumn = 12;
+        self.columnsPerPage = ko.observable(1);
+        self.itemsPerPage = ko.computed(function() {
+            return self.itemsPerColumn * self.columnsPerPage();
         });
-        self.columnsPerPage.subscribe(function(newValue) {
-            self.itemsPerPage(self.itemsPerPage() * newValue);
-        });
-        self.columnClass = ko.computed(function() {
-            return "col-sm-" + (12 / self.columnsPerPage());
-        });
-        self.modalClass = ko.computed(function() {
-            return self.columnsPerPage() === 3 ? "full-screen-modal" : "";
-        });
-        self.modalDialogClass = ko.computed(function() {
-            return self.columnsPerPage() === 2 ? "modal-lg" : "";
+        self.columnClass = ko.observable('');
+        self.modalClass = ko.observable('');
+        self.modalDialogClass = ko.observable('');
+        self.propertyNames.subscribe(function(newValue) {
+            self.columnsPerPage(Math.min(3, Math.ceil(newValue.length / self.itemsPerColumn)));
+            self.columnClass("col-sm-" + (12 / self.columnsPerPage()));
+            self.modalClass(self.columnsPerPage() === 3 ? "full-screen-modal" : "");
+            self.modalDialogClass(self.columnsPerPage() === 2 ? "modal-lg" : "");
         });
 
         // This modal supports pagination and a search box, all of which is done client-side
-        self.currentPage = new ko.observable();
-        self.totalPages = new ko.observable();  // observable because it will change if there's a search query
-        self.query = new ko.observable();
+        self.currentPage = ko.observable();
+        self.totalPages = ko.observable();  // observable because it will change if there's a search query
+        self.query = ko.observable();
 
-        self.showSpinner = new ko.observable(true);
+        self.showSpinner = ko.observable(true);
         self.showPagination = ko.computed(function() {
             return !self.showSpinner() && self.propertyNames().length > self.itemsPerPage();
         });
-        self.showError = new ko.observable(false);
-        self.showRetry = new ko.observable(false);
+        self.showError = ko.observable(false);
+        self.showRetry = ko.observable(false);
         self.disallowSave = ko.computed(function() {
             return self.showSpinner() || self.showError();
         });
