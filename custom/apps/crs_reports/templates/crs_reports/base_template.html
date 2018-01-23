@@ -6,7 +6,7 @@
 {% block title %}Case: {{ report.name }}{% endblock %}
 
 {% block head %} {{ block.super }}
-    {% include "imports/proptable.html" %}
+    <link rel="stylesheet" type="text/css" href="{% static "hqwebapp/css/proptable.css" %}">
 
     <style type="text/css">
         .hq-generic-report {
