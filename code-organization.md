@@ -51,7 +51,7 @@ of code that's truly independent of the rest of the site's JavaScript. They are 
 
 There are also a number of Django templates with legacy `<script>` blocks. By and large,
 these are being "externalized" into separate files as we modernize our JavaScript. See
-[Migrating](./migrating.md) for guidance migrating inline JavaScript to an external .js file.
+[Migrating](./migrating.md#migrating-inline-script-blocks-to-js-files) for guidance migrating inline JavaScript to an external .js file.
 
 
 ## Module patterns
