@@ -1498,6 +1498,9 @@ def case_property_names(request, domain, case_id):
     all_property_names = get_all_case_properties(domain, [case.type])
     try:
         all_property_names = all_property_names[case.type]
+        # external_id is effectively a dynamic property: see CaseDisplayWrapper.dynamic_properties
+        if case.external_id:
+            all_property_names.add('external_id')
         all_property_names.remove('name')
     except KeyError:
         all_property_names = set()
