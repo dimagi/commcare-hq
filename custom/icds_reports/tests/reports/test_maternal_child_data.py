@@ -5,6 +5,7 @@ from custom.icds_reports.reports.maternal_child import get_maternal_child_data
 
 
 class TestMaternalChildData(TestCase):
+    maxDiff = None
 
     def test_data(self):
         self.assertDictEqual(
@@ -68,7 +69,7 @@ class TestMaternalChildData(TestCase):
                         {
                             "redirect": "low_birth",
                             "color": "red",
-                            "all": 3,
+                            "all": 4,
                             "frequency": "month",
                             "format": "percent_and_div",
                             "help_text": "Percentage of newborns born with birth weight less than 2500 grams."

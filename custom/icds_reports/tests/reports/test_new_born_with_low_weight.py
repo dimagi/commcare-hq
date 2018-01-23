@@ -9,7 +9,6 @@ from django.test import TestCase
 
 @override_settings(SERVER_ENVIRONMENT='icds')
 class TestNewBornWithLowWeight(TestCase):
-    maxDiff = None
 
     def test_map_data_keys(self):
         data = get_newborn_with_low_birth_weight_map(
@@ -211,7 +210,7 @@ class TestNewBornWithLowWeight(TestCase):
                     },
                     {
                         "loc_name": "st1",
-                        "percent": 100.0
+                        "percent": 66.66666666666667
                     }
                 ],
                 "top_five": [
@@ -221,7 +220,7 @@ class TestNewBornWithLowWeight(TestCase):
                     },
                     {
                         "loc_name": "st1",
-                        "percent": 100.0
+                        "percent": 66.66666666666667
                     }
                 ],
                 "chart_data": [
@@ -249,9 +248,9 @@ class TestNewBornWithLowWeight(TestCase):
                                 "low_birth": 0
                             },
                             {
-                                "y": 0.6666666666666666,
+                                "y": 0.5,
                                 "x": 1493596800000,
-                                "all": 3,
+                                "all": 4,
                                 "low_birth": 2
                             }
                         ],
@@ -265,7 +264,7 @@ class TestNewBornWithLowWeight(TestCase):
                     },
                     {
                         "loc_name": "st1",
-                        "percent": 100.0
+                        "percent": 66.66666666666667
                     }
                 ]
             }
