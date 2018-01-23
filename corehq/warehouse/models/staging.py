@@ -49,7 +49,8 @@ class StagingTable(models.Model, WarehouseTable):
 
     @classmethod
     def commit(cls, batch):
-        cls.load(batch, append=True)
+        cls.clear_records()
+        cls.load(batch)
         return True
 
     @classmethod

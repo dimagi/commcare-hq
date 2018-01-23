@@ -18,7 +18,7 @@ from corehq.warehouse.models.meta import Batch
 class BaseETLMixin(object):
 
     @classmethod
-    def load(cls, start_datetime, end_datetime):
+    def load(cls, batch):
         raise NotImplementedError
 
 
@@ -37,7 +37,7 @@ class CustomSQLETLMixin(BaseETLMixin):
         return {}
 
     @classmethod
-    def load(cls, batch, append=False):
+    def load(cls, batch):
         from corehq.warehouse.models.shared import WarehouseTable
         '''
         Bulk loads records for a dim or fact table from
@@ -46,14 +46,6 @@ class CustomSQLETLMixin(BaseETLMixin):
 
         assert issubclass(cls, WarehouseTable)
         database = db_for_read_write(cls)
-        if append:
-            batches = cls.objects.distinct('batch').values_list('batch', flat=True)
-            if batches:
-                oldest = Batch.objects.filter(pk__in=batches).order_by('start_datetime').first()
-                if batch.start_datetime < oldest.start_datetime:
-                    batch.end_datetime = oldest.start_datetime
-                else:
-                    return
         with connections[database].cursor() as cursor:
             cursor.execute(cls._sql_query_template(cls.slug, batch))
 
@@ -113,19 +105,10 @@ class CouchToDjangoETLMixin(BaseETLMixin):
         raise NotImplementedError
 
     @classmethod
-    def load(cls, batch, append=False):
+    def load(cls, batch):
         from corehq.warehouse.models.shared import WarehouseTable
 
         assert issubclass(cls, WarehouseTable)
-        if append:
-            batches = cls.objects.distinct('batch').values_list('batch', flat=True)
-            if batches:
-                oldest = Batch.objects.filter(pk__in=batches).order_by('start_datetime').first()
-                if batch.start_datetime < oldest.start_datetime:
-                    batch.end_datetime = oldest.start_datetime
-                else:
-                    return
-
         record_iter = cls.record_iter(batch.start_datetime, batch.end_datetime)
 
         django_batch_records(cls, record_iter, cls.field_mapping(), batch.id)

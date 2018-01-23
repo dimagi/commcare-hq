@@ -9,19 +9,13 @@ from corehq.apps.domain.models import Domain
 from corehq.dbaccessors.couchapps.all_docs import delete_all_docs_by_doc_type
 from corehq.warehouse.models import ApplicationStagingTable
 
-from corehq.warehouse.tests.utils import DEFAULT_BATCH_ID, get_default_batch, create_batch, BaseWarehouseTestCase
+from corehq.warehouse.tests.utils import create_batch, complete_batch, BaseWarehouseTestCase
 from corehq.warehouse.models import (
     GroupStagingTable,
     DomainStagingTable,
     UserStagingTable,
     Batch,
 )
-
-
-def setup_module():
-    start = datetime.utcnow() - timedelta(days=3)
-    end = datetime.utcnow() + timedelta(days=3)
-    create_batch(start, end, DEFAULT_BATCH_ID)
 
 
 def teardown_module():
@@ -37,6 +31,7 @@ class BaseStagingTableTest(BaseWarehouseTestCase):
         super(BaseStagingTableTest, cls).setUpClass()
         for record in cls.records:
             record.save()
+        cls.batch = create_batch(cls.slug)
 
     def tearDown(self):
         self.staging_table_cls.clear_records()
@@ -51,7 +46,7 @@ class BaseStagingTableTest(BaseWarehouseTestCase):
 class StagingRecordsTestsMixin(object):
 
     def test_stage_records(self):
-        batch = get_default_batch()
+        batch = self.batch
 
         self.assertEqual(self.staging_table_cls.objects.count(), 0)
         self.staging_table_cls.commit(batch)
@@ -61,9 +56,8 @@ class StagingRecordsTestsMixin(object):
         self.assertEqual(self.staging_table_cls.objects.count(), len(self.records))
 
     def test_stage_records_no_data(self):
-        start = datetime.utcnow() - timedelta(days=3)
-        end = datetime.utcnow() - timedelta(days=2)
-        batch = create_batch(start, end)
+        complete_batch(self.batch.id)
+        batch = create_batch(self.slug)
 
         self.assertEqual(self.staging_table_cls.objects.count(), 0)
         self.staging_table_cls.commit(batch)
@@ -72,6 +66,7 @@ class StagingRecordsTestsMixin(object):
 
 class TestGroupStagingTable(BaseStagingTableTest, StagingRecordsTestsMixin):
 
+    slug = 'group_dim'
     records = [
         Group(domain='group-staging-test', name='one', case_sharing=True, reporting=True),
         Group(domain='group-staging-test', name='two'),
@@ -85,7 +80,7 @@ class TestGroupStagingTable(BaseStagingTableTest, StagingRecordsTestsMixin):
         super(TestGroupStagingTable, cls).setUpClass()
 
     def test_stage_records_bulk(self):
-        batch = get_default_batch()
+        batch = self.batch
 
         # 1 Query for clearing records
         # 1 Query for inserting recorrds
@@ -102,6 +97,7 @@ class TestGroupStagingTable(BaseStagingTableTest, StagingRecordsTestsMixin):
 
 class TestDomainStagingTable(BaseStagingTableTest, StagingRecordsTestsMixin):
 
+    slug = 'domain_dim'
     records = [
         Domain(name='one', hr_name='One', creating_user_id='abc', is_active=True),
         Domain(name='two', is_active=True),
@@ -117,6 +113,7 @@ class TestDomainStagingTable(BaseStagingTableTest, StagingRecordsTestsMixin):
 
 class TestUserStagingTable(BaseStagingTableTest, StagingRecordsTestsMixin):
 
+    slug = 'user_dim'
     records = [
         # TODO: Make domains compatible with staging table
         # WebUser(
@@ -151,6 +148,7 @@ class TestUserStagingTable(BaseStagingTableTest, StagingRecordsTestsMixin):
 
 class TestAppStagingTable(BaseStagingTableTest, StagingRecordsTestsMixin):
 
+    slug = 'app_dim'
     records = [
         Application(
             domain='test',
