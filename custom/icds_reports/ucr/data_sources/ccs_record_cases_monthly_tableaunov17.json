@@ -20,7 +20,7 @@
       "type": "filter_items",
       "items_expression": {
         "expressions": [
-          -1
+          0
         ],
         "type": "iterator"
       },
@@ -62,7 +62,7 @@
                             "type": "identity"
                           }
                         },
-                        "statement": "iteration - 1"
+                        "statement": "iteration - 2"
                       }
                     }
                   },
@@ -126,7 +126,7 @@
                             "type": "identity"
                           }
                         },
-                        "statement": "iteration - 1"
+                        "statement": "iteration - 2"
                       }
                     }
                   }
@@ -1792,7 +1792,7 @@
                 "type": "base_iteration_number"
               }
             },
-            "statement": "iteration - 1"
+            "statement": "iteration - 2"
           }
         }
       },
@@ -1810,7 +1810,7 @@
                 "type": "base_iteration_number"
               }
             },
-            "statement": "iteration - 1"
+            "statement": "iteration - 2"
           }
         }
       },
