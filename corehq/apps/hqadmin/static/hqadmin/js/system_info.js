@@ -1,5 +1,16 @@
-/* globals hqDefine */
-hqDefine('hqadmin/js/system_info', function () {
+hqDefine('hqadmin/js/system_info', [
+    'jquery',
+    'knockout',
+    'underscore',
+    'hqwebapp/js/initial_page_data',
+    'hqwebapp/js/alert_user',
+], function (
+    $,
+    ko,
+    _,
+    initialPageData,
+    alertUser
+) {
     function format_date(datestring) {
         //parse and format the date timestamps - seconds since epoch into date object
         var date = new Date(datestring * 1000);
@@ -294,7 +305,7 @@ hqDefine('hqadmin/js/system_info', function () {
     
         self.perform_operation = function(operation) {
             self.operation_in_progress(true);
-            $.post(hqImport("hqwebapp/js/initial_page_data").reverse("pillow_operation_api"), {
+            $.post(initialPageData.reverse("pillow_operation_api"), {
                 'pillow_name': self.name,
                 'operation': operation
             }, function( data ) {
@@ -302,7 +313,7 @@ hqDefine('hqadmin/js/system_info', function () {
                 self.update(data);
     
                 if (!data.success) {
-                    hqImport("hqwebapp/js/alert_user").alert_user("Operation failed: " + data.operation + " on "
+                    alertUser.alert_user("Operation failed: " + data.operation + " on "
                             + data.pillow_name + ', ' + data.message, 'danger');
                 }
             }, "json")
@@ -330,13 +341,12 @@ hqDefine('hqadmin/js/system_info', function () {
     }
     
     $(function () {
-        var initial_page_data = hqImport("hqwebapp/js/initial_page_data").get,
-            celery_update = initial_page_data("celery_update"),
-            couch_update = initial_page_data("couch_update"),
-            system_ajax_url = hqImport("hqwebapp/js/initial_page_data").reverse("system_ajax");
+        var celery_update = initialPageData.get("celery_update"),
+            couch_update = initialPageData.get("couch_update"),
+            system_ajax_url = initialPageData.reverse("system_ajax");
         var celeryViewModel = new RefreshableViewModel(system_ajax_url + "?api=flower_poll", CeleryTaskModel, celery_update);
         var couchViewModel;
-        if (initial_page_data("is_bigcouch")) {
+        if (initialPageData.get("is_bigcouch")) {
             var couchViewModel = new RefreshableViewModel(system_ajax_url + "?api=_active_tasks", DesignDocModel, couch_update, 'design_document');
         } else {
             var couchViewModel = new RefreshableViewModel(system_ajax_url + "?api=_active_tasks", ActiveTaskModel, couch_update);
