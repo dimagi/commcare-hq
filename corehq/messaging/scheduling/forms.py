@@ -27,7 +27,10 @@ from django.utils.translation import ugettext as _, ugettext_lazy
 from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.locations.models import SQLLocation
+from corehq.apps.reminders.forms import validate_form_unique_id
+from corehq.apps.reminders.util import get_form_list
 from corehq.apps.sms.util import get_or_create_translation_doc
+from corehq.apps.smsforms.models import SQLXFormsSession
 from corehq.apps.users.models import CommCareUser
 from corehq.messaging.scheduling.exceptions import ImmediateMessageEditAttempt, UnsupportedScheduleError
 from corehq.messaging.scheduling.models import (
@@ -40,6 +43,7 @@ from corehq.messaging.scheduling.models import (
     ImmediateBroadcast,
     ScheduledBroadcast,
     SMSContent,
+    SMSSurveyContent,
 )
 from corehq.messaging.scheduling.scheduling_partitioned.models import ScheduleInstance, CaseScheduleInstanceMixin
 from couchdbkit.resource import ResourceNotFound
@@ -199,12 +203,21 @@ class ScheduleForm(Form):
         choices=(
             (CONTENT_SMS, ugettext_lazy('SMS')),
             # (CONTENT_EMAIL, ugettext_lazy('Email')),
-            # (CONTENT_SMS_SURVEY, ugettext_lazy('SMS Survey')),
         )
     )
     message = CharField(
         required=False,
         widget=HiddenInput,
+    )
+    form_unique_id = ChoiceField(
+        required=False,
+        label=ugettext_lazy("Form"),
+    )
+    survey_expiration_in_hours = IntegerField(
+        required=False,
+        min_value=1,
+        max_value=SQLXFormsSession.MAX_SESSION_LENGTH // 60,
+        label='',
     )
     default_language_code = ChoiceField(
         required=True,
@@ -302,6 +315,12 @@ class ScheduleForm(Form):
         if isinstance(content, SMSContent):
             result['content'] = self.CONTENT_SMS
             result['message'] = content.message
+        elif isinstance(content, SMSSurveyContent):
+            result['content'] = self.CONTENT_SMS_SURVEY
+            result['form_unique_id'] = content.form_unique_id
+            result['survey_expiration_in_hours'] = content.expire_after // 60
+        else:
+            raise TypeError("Unexpected content type: %s" % type(content))
 
     def compute_initial(self):
         result = {}
@@ -354,6 +373,8 @@ class ScheduleForm(Form):
 
         super(ScheduleForm, self).__init__(*args, **kwargs)
 
+        self.add_additional_content_types()
+        self.set_form_unique_id_choices()
         self.set_default_language_code_choices()
         if initial.get('send_frequency'):
             self.update_send_frequency_choices(initial.get('send_frequency'))
@@ -365,6 +386,22 @@ class ScheduleForm(Form):
         self.helper.field_class = 'col-sm-10 col-md-7 col-lg-5'
 
         self.helper.layout = crispy.Layout(*self.get_layout_fields())
+
+    @cached_property
+    def form_choices(self):
+        return [(form['code'], form['name']) for form in get_form_list(self.domain)]
+
+    def add_additional_content_types(self):
+        if (
+            self.can_use_sms_surveys or
+            (self.schedule and self.schedule.memoized_uses_sms_survey)
+        ):
+            self.fields['content'].choices += [
+                (self.CONTENT_SMS_SURVEY, _("SMS Survey")),
+            ]
+
+    def set_form_unique_id_choices(self):
+        self.fields['form_unique_id'].choices = self.form_choices
 
     @property
     def scheduling_fieldset_legend(self):
@@ -527,7 +564,7 @@ class ScheduleForm(Form):
 
     def get_content_layout_fields(self):
         return [
-            crispy.Field('content'),
+            crispy.Field('content', data_bind='value: content'),
             hqcrispy.B3MultiField(
                 _("Message"),
                 crispy.Field(
@@ -538,6 +575,19 @@ class ScheduleForm(Form):
                     crispy.Div(template='scheduling/partial/message_configuration.html'),
                     data_bind='with: message',
                 ),
+                data_bind="visible: content() === '%s'" % self.CONTENT_SMS,
+            ),
+            crispy.Div(
+                crispy.Field('form_unique_id'),
+                hqcrispy.B3MultiField(
+                    _("Expire After"),
+                    crispy.Div(
+                        twbscrispy.InlineField('survey_expiration_in_hours'),
+                        css_class='col-sm-6',
+                    ),
+                    crispy.HTML("<span>%s</span>" % _("hour(s)")),
+                ),
+                data_bind="visible: content() === '%s'" % self.CONTENT_SMS_SURVEY,
             ),
         ]
 
@@ -805,6 +855,9 @@ class ScheduleForm(Form):
         return occurrences
 
     def clean_message(self):
+        if self.cleaned_data.get('content') != self.CONTENT_SMS:
+            return None
+
         value = json.loads(self.cleaned_data['message'])
         cleaned_value = {k: v.strip() for k, v in value.items()}
 
@@ -820,10 +873,38 @@ class ScheduleForm(Form):
 
         return cleaned_value
 
+    def clean_form_unique_id(self):
+        if self.cleaned_data.get('content') != self.CONTENT_SMS_SURVEY:
+            return None
+
+        value = self.cleaned_data.get('form_unique_id')
+        if not value:
+            raise ValidationError(_("This field is required"))
+
+        return validate_form_unique_id(value, self.domain)
+
+    def clean_survey_expiration_in_hours(self):
+        if self.cleaned_data.get('content') != self.CONTENT_SMS_SURVEY:
+            return None
+
+        value = self.cleaned_data.get('survey_expiration_in_hours')
+        if not value:
+            raise ValidationError(_("This field is required"))
+
+        return value
+
     def distill_content(self):
-        return SMSContent(
-            message=self.cleaned_data['message']
-        )
+        if self.cleaned_data['content'] == self.CONTENT_SMS:
+            return SMSContent(
+                message=self.cleaned_data['message']
+            )
+        elif self.cleaned_data['content'] == self.CONTENT_SMS_SURVEY:
+            return SMSSurveyContent(
+                form_unique_id=self.cleaned_data['form_unique_id'],
+                expire_after=self.cleaned_data['survey_expiration_in_hours'] * 60,
+            )
+        else:
+            raise ValueError("Unexpected value for content: '%s'" % self.cleaned_data['content'])
 
     def distill_recipients(self):
         form_data = self.cleaned_data
@@ -1353,7 +1434,7 @@ class ConditionalAlertScheduleForm(ScheduleForm):
                     data_bind="visible: start_offset_type() !== '%s'" % self.START_OFFSET_ZERO,
                 ),
                 crispy.Div(
-                    crispy.HTML("<span>%s</span>" % _("days(s)")),
+                    crispy.HTML("<span>%s</span>" % _("day(s)")),
                     data_bind="visible: start_offset_type() !== '%s'" % self.START_OFFSET_ZERO,
                 ),
                 data_bind="visible: send_frequency() === '%s'" % self.SEND_DAILY,
