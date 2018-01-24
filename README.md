@@ -126,6 +126,7 @@ We use bower to manage our javascript dependencies. In order to download the req
 you'll need to run `./manage.py bower install` and install `bower`. Follow these steps to install:
 
 1. If you do not already have npm:
+
     For Ubuntu: In Ubuntu this is now bundled with NodeJS. An up-to-date version is available on the NodeSource
     repository. Run the following commands:
 
