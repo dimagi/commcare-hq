@@ -3119,6 +3119,7 @@
           "inserted_at"
         ]
       }
-    ]
+    ],
+    "disable_destructive_rebuild": true
   }
 }
