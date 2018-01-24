@@ -578,7 +578,7 @@ class TestExportInstanceFromSavedInstance(TestCase):
         self.assertEqual(len(instance.tables[0].columns), 4 + len(MAIN_FORM_TABLE_PROPERTIES))
         self.assertEqual(
             len([c for c in instance.tables[0].columns if c.is_advanced]),
-            len([x for x in MAIN_FORM_TABLE_PROPERTIES if x.is_advanced]) + 2  # + @case_id, case_name
+            len([x for x in MAIN_FORM_TABLE_PROPERTIES if x.is_advanced]) + 1  # case_name
         )
 
     def _get_instance(self, build_ids_and_versions):

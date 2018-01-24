@@ -24,5 +24,6 @@ CouchAppsPreindexPlugin.register('couchapps', __file__, {
     'exports_forms_by_app': (None, settings.NEW_APPS_DB),
     'forms_by_app_info': (None, settings.NEW_APPS_DB),
     'sync_logs_by_date': settings.SYNCLOGS_DB,
+    'not_deleted': settings.SYNCLOGS_DB,
     'last_modified': (settings.USERS_GROUPS_DB, settings.DOMAINS_DB, settings.NEW_APPS_DB),
 })

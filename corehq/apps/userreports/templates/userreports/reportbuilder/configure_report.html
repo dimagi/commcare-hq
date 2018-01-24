@@ -55,7 +55,7 @@
     <div class="page-edit-header">
       <div class="page-edit-title h1">
         <inline-edit params="
-          value: '{{ report_title|escapejs }}',
+          value: reportTitle,
           id: 'report-title',
           placeholder: '{% trans "Enter report name here"|escapejs %}',
           cols: 50,
@@ -63,7 +63,7 @@
       </div>
       <div class="page-edit-description">
         <inline-edit params="
-          value: {% if report_description %}'{{ report_description|escapejs }}'{% else %}null{% endif %},
+          value: reportDescription,
           id: 'report-description',
           placeholder: '{% trans "Enter report description here"|escapejs %}',
           readOnlyClass: 'app-comment',
@@ -309,6 +309,8 @@
             "previewDatasourceId": "{{ preview_datasource_id }}",
             "existingReport": {% if existing_report %}{{ existing_report.get_id|JSON }}{% else %}null{% endif %},
             "existingReportType": {{ existing_report_type|JSON }},
+            "reportTitle": "{{ report_title|escapejs }}",
+            "reportDescription": {% if report_description %}"{{ report_description|escapejs }}"{% else %}null{% endif %},
             "dataSourceProperties": {{ data_source_properties|JSON }},
             "initialDefaultFilters": {{ initial_default_filters|JSON }},
             "initialUserFilters": {{ initial_user_filters|JSON }},
