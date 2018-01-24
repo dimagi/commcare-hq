@@ -125,11 +125,15 @@ names to the aliases.
 We use bower to manage our javascript dependencies. In order to download the required javascript packages,
 you'll need to run `./manage.py bower install` and install `bower`. Follow these steps to install:
 
-1. If you do not already have it, install [npm](https://www.npmjs.com/). In Ubuntu this is now bundled
-with NodeJS. An up-to-date version is available on the NodeSource repository.
+1. If you do not already have npm:
+
+    For Ubuntu: In Ubuntu this is now bundled with NodeJS. An up-to-date version is available on the NodeSource
+    repository. Run the following commands:
 
         $ curl -sL https://deb.nodesource.com/setup_5.x | sudo -E bash -
         $ sudo apt-get install -y nodejs
+
+    For non-Ubuntu: install [npm](https://www.npmjs.com/)
 
 2. Install bower:
 
