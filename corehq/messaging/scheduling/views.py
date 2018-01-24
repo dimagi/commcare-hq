@@ -107,15 +107,13 @@ class BroadcastListView(BaseMessagingSectionView, DataTablesAJAXPaginationMixin)
 
         data = []
         for broadcast in broadcasts:
-            data.append([
-                '< delete placeholder >',
-                broadcast.name,
-                self._format_time(broadcast.last_sent_timestamp),
-                broadcast.schedule.active,
-                '< action placeholder >',
-                self.can_use_inbound_sms or not broadcast.schedule.memoized_uses_sms_survey,
-                broadcast.id,
-            ])
+            data.append({
+                'name': broadcast.name,
+                'last_sent': self._format_time(broadcast.last_sent_timestamp),
+                'active': broadcast.schedule.active,
+                'editable': self.can_use_inbound_sms or not broadcast.schedule.memoized_uses_sms_survey,
+                'id': broadcast.id,
+            })
         return self.datatables_ajax_response(data, total_records)
 
     def get_immediate_ajax_response(self):
@@ -129,11 +127,11 @@ class BroadcastListView(BaseMessagingSectionView, DataTablesAJAXPaginationMixin)
 
         data = []
         for broadcast in broadcasts:
-            data.append([
-                broadcast.name,
-                self._format_time(broadcast.last_sent_timestamp),
-                broadcast.id,
-            ])
+            data.append({
+                'name': broadcast.name,
+                'last_sent': self._format_time(broadcast.last_sent_timestamp),
+                'id': broadcast.id,
+            })
         return self.datatables_ajax_response(data, total_records)
 
     def get_scheduled_broadcast(self, broadcast_id):
