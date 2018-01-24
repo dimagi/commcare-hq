@@ -100,8 +100,11 @@ class EmailContent(Content):
 class SMSSurveyContent(Content):
     form_unique_id = models.CharField(max_length=126)
 
-    # The number of minutes after which the survey expires
+    # See corehq.apps.smsforms.models.SQLXFormsSession for an
+    # explanation of these properties
     expire_after = models.IntegerField()
+    submit_partially_completed_forms = models.BooleanField(default=False)
+    include_case_updates_in_partial_submissions = models.BooleanField(default=False)
 
     def send(self, recipient, schedule_instance):
         print('*******************************')

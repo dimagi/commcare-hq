@@ -223,6 +223,14 @@ class ScheduleForm(Form):
         required=True,
         label=ugettext_lazy("Default Language"),
     )
+    submit_partially_completed_forms = BooleanField(
+        required=False,
+        label=ugettext_lazy("Submit a partially completed form when the survey session is over"),
+    )
+    include_case_updates_in_partial_submissions = BooleanField(
+        required=False,
+        label=ugettext_lazy("Include case updates in partially completed submissions"),
+    )
 
     def update_send_frequency_choices(self, initial_value):
         def filter_function(two_tuple):
@@ -319,6 +327,9 @@ class ScheduleForm(Form):
             result['content'] = self.CONTENT_SMS_SURVEY
             result['form_unique_id'] = content.form_unique_id
             result['survey_expiration_in_hours'] = content.expire_after // 60
+            result['submit_partially_completed_forms'] = content.submit_partially_completed_forms
+            result['include_case_updates_in_partial_submissions'] = \
+                content.include_case_updates_in_partial_submissions
         else:
             raise TypeError("Unexpected content type: %s" % type(content))
 
@@ -420,6 +431,11 @@ class ScheduleForm(Form):
             crispy.Fieldset(
                 _("Content"),
                 *self.get_content_layout_fields()
+            ),
+            crispy.Fieldset(
+                _("Advanced Survey Options"),
+                *self.get_advanced_survey_layout_fields(),
+                data_bind="visible: content() === '%s'" % self.CONTENT_SMS_SURVEY
             ),
             crispy.Fieldset(
                 _("Advanced"),
@@ -594,6 +610,20 @@ class ScheduleForm(Form):
     def get_advanced_layout_fields(self):
         return [
             crispy.Field('default_language_code'),
+        ]
+
+    def get_advanced_survey_layout_fields(self):
+        return [
+            crispy.Field(
+                'submit_partially_completed_forms',
+                data_bind='checked: submit_partially_completed_forms',
+            ),
+            crispy.Div(
+                crispy.Field(
+                    'include_case_updates_in_partial_submissions',
+                ),
+                data_bind='visible: submit_partially_completed_forms()',
+            )
         ]
 
     @cached_property
@@ -902,6 +932,9 @@ class ScheduleForm(Form):
             return SMSSurveyContent(
                 form_unique_id=self.cleaned_data['form_unique_id'],
                 expire_after=self.cleaned_data['survey_expiration_in_hours'] * 60,
+                submit_partially_completed_forms=self.cleaned_data['submit_partially_completed_forms'],
+                include_case_updates_in_partial_submissions=
+                    self.cleaned_data['include_case_updates_in_partial_submissions']
             )
         else:
             raise ValueError("Unexpected value for content: '%s'" % self.cleaned_data['content'])
