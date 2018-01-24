@@ -25,7 +25,6 @@ from corehq.warehouse.utils import truncate_records_for_cls
 
 
 class BaseDim(models.Model, WarehouseTable):
-    domain = models.CharField(max_length=255)
     batch = models.ForeignKey(
         'Batch',
         on_delete=models.PROTECT,
@@ -65,6 +64,7 @@ class UserDim(BaseDim, CustomSQLETLMixin):
     last_name = models.CharField(max_length=30, null=True)
     email = models.CharField(max_length=255, null=True)
     doc_type = models.CharField(max_length=100)
+    domain = models.CharField(max_length=255)
 
     is_active = models.NullBooleanField()
     is_staff = models.NullBooleanField()
@@ -88,6 +88,7 @@ class GroupDim(BaseDim, CustomSQLETLMixin):
 
     group_id = models.CharField(max_length=255, unique=True)
     name = models.CharField(max_length=255)
+    domain = models.CharField(max_length=255)
 
     case_sharing = models.NullBooleanField()
     reporting = models.NullBooleanField()
@@ -107,6 +108,7 @@ class LocationDim(BaseDim, CustomSQLETLMixin):
     '''
     slug = LOCATION_DIM_SLUG
 
+    domain = models.CharField(max_length=255)
     location_id = models.CharField(max_length=100, unique=True)
     sql_location_id = models.IntegerField()
     name = models.CharField(max_length=255)
@@ -159,6 +161,7 @@ class DomainDim(BaseDim, CustomSQLETLMixin):
     '''
     slug = DOMAIN_DIM_SLUG
 
+    domain = models.CharField(max_length=255)
     domain_id = models.CharField(max_length=255, unique=True)
     default_timezone = models.CharField(max_length=255)
     hr_name = models.CharField(max_length=255, null=True)
@@ -190,6 +193,7 @@ class UserLocationDim(BaseDim, CustomSQLETLMixin):
     # TODO: Write Update SQL Query
     slug = USER_LOCATION_DIM_SLUG
 
+    domain = models.CharField(max_length=255)
     user_dim = models.ForeignKey('UserDim', on_delete=models.CASCADE)
     location_dim = models.ForeignKey('LocationDim', on_delete=models.CASCADE)
 
@@ -206,6 +210,7 @@ class UserGroupDim(BaseDim, CustomSQLETLMixin):
     '''
     slug = USER_GROUP_DIM_SLUG
 
+    domain = models.CharField(max_length=255)
     user_dim = models.ForeignKey('UserDim', on_delete=models.CASCADE)
     group_dim = models.ForeignKey('GroupDim', on_delete=models.CASCADE)
 
@@ -222,6 +227,7 @@ class ApplicationDim(BaseDim, CustomSQLETLMixin):
     '''
     slug = APPLICATION_DIM_SLUG
 
+    domain = models.CharField(max_length=255)
     application_id = models.CharField(max_length=255, unique=True)
     name = models.CharField(max_length=255)
     application_last_modified = models.DateTimeField(null=True)
