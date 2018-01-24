@@ -7,10 +7,10 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _
 from django.views.generic import FormView
 
+from casexml.apps.case.xml import V2
 from casexml.apps.phone.restore import RestoreContent, RestoreResponse
-from casexml.apps.phone.xml import get_registration_element, get_casedb_element
+from casexml.apps.phone.xml import get_registration_element, get_case_element
 from corehq.apps.domain.decorators import domain_admin_required, mobile_auth
-from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views import BaseDomainView
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.toggles import WEBAPPS_CASE_MIGRATION
@@ -50,7 +50,8 @@ class MigrationView(BaseMigrationView, FormView):
 def get_case_and_descendants(domain, case_id):
     from casexml.apps.case.templatetags.case_tags import get_case_hierarchy
     case = CaseAccessors(domain).get_case(case_id)
-    return get_case_hierarchy(case, {})['case_list']
+    return [case for case in get_case_hierarchy(case, {})['case_list']
+            if not case.closed]
 
 
 @mobile_auth
@@ -62,13 +63,14 @@ def migration_restore(request, domain, case_id):
     * Registration block
     * The passed in case and its full network of cases
     """
-    domain_obj = Domain.get_by_name(domain)
     restore_user = request.couch_user
 
     with RestoreContent(restore_user.username) as content:
         content.append(get_registration_element(restore_user))
         for case in get_case_and_descendants(domain, case_id):
-            content.append(get_casedb_element(case))
+            # Formplayer will be creating these cases for the first time, so
+            # include create blocks
+            content.append(get_case_element(case, ('create', 'update'), V2))
         payload = content.get_fileobj()
 
     return RestoreResponse(payload).get_http_response()
