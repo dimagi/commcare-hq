@@ -348,6 +348,7 @@
           "dob"
         ]
       }
-    ]
+    ],
+    "disable_destructive_rebuild": true
   }
 }
