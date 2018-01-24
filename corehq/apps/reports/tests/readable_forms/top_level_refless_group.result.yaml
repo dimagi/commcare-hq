@@ -743,7 +743,16 @@
   tag: hidden, type: DataBindOnly, value: /progress_note/meta/instanceID, constraint: null}
 - {calculate: null, comment: null, group: null, hashtagValue: /progress_note/meta/appVersion,
   label: meta/appVersion, relevant: null, repeat: null, required: null, response: null,
-  tag: hidden, type: DataBindOnly, value: /progress_note/meta/appVersion, constraint: null}
+  tag: hidden, type: DataBindOnly, value: /progress_note/meta/appVersion}
+- {calculate: null, comment: null, constraint: null, group: null, hashtagValue: /progress_note/case/@case_id,
+  label: case/@case_id, relevant: null, repeat: null, required: null, response: null,
+  tag: hidden, type: DataBindOnly, value: /progress_note/case/@case_id}
+- {calculate: /progress_note/meta/userID, comment: null, constraint: null, group: null,
+  hashtagValue: /progress_note/case/@user_id, label: case/@user_id, relevant: null,
+  repeat: null, required: null, response: null, tag: hidden, type: DataBindOnly, value: /progress_note/case/@user_id}
+- {calculate: /progress_note/meta/timeEnd, comment: null, constraint: null, group: null,
+  hashtagValue: /progress_note/case/@date_modified, label: case/@date_modified, relevant: null,
+  repeat: null, required: null, response: null, tag: hidden, type: DataBindOnly, value: /progress_note/case/@date_modified}
 - {calculate: null, comment: null, group: null, label: note/adherence/freetext, relevant: null,
   repeat: null, required: null, response: '67', tag: null, type: null, value:
   /progress_note/note/adherence/freetext}
