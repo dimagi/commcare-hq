@@ -21,18 +21,23 @@ hqDefine("scheduling/js/conditional_alert_list", function() {
                 "infoEmpty": gettext('There are no alerts to display.'),
                 "info": gettext('Showing _START_ to _END_ of _TOTAL_ alerts'),
             },
+            "columns": [
+                {"data": ""},
+                {"data": "name"},
+                {"data": "case_type"},
+                {"data": "active"},
+                {"data": ""},
+            ],
             "columnDefs": [
                 {
                     "targets": [0],
                     "className": "text-center",
                     "render": function(data, type, row) {
-                        var id = row[row.length - 1];
-                        var button_id = 'delete-button-for-' + id;
-                        var locked_for_editing = row[row.length - 3];
-                        var disabled = locked_for_editing ? 'disabled' : '';
+                        var button_id = 'delete-button-for-' + row.id;
+                        var disabled = row.locked_for_editing ? 'disabled' : '';
                         return '<button id="' + button_id + '" \
                                         class="btn btn-danger" \
-                                        onclick="hqImport(\'scheduling/js/conditional_alert_list\').deleteAlert(' + id + ')" \
+                                        onclick="hqImport(\'scheduling/js/conditional_alert_list\').deleteAlert(' + row.id + ')" \
                                         ' + disabled + '> \
                                 <i class="fa fa-remove"></i></button>';
                     },
@@ -40,27 +45,23 @@ hqDefine("scheduling/js/conditional_alert_list", function() {
                 {
                     "targets": [1],
                     "render": function(data, type, row) {
-                        var id = row[row.length - 1];
-                        var url = hqImport("hqwebapp/js/initial_page_data").reverse('edit_conditional_alert', id);
-                        return "<a href='" + url + "'>" + data + "</a>";
+                        var url = hqImport("hqwebapp/js/initial_page_data").reverse('edit_conditional_alert', row.id);
+                        return "<a href='" + url + "'>" + row.name + "</a>";
                     },
                 },
                 {
                     "targets": [3],
                     "render": function(data, type, row) {
-                        var locked_for_editing = row[row.length - 3];
-                        var rule_progress_pct = row[row.length - 2];
-
                         var active_text = '';
-                        if(data) {
+                        if(row.active) {
                             active_text = '<span class="label label-success">' + gettext("Active") + '</span> ';
                         } else {
                             active_text = '<span class="label label-danger">' + gettext("Inactive") + '</span> ';
                         }
 
                         var processing_text = '';
-                        if(locked_for_editing) {
-                            processing_text = '<span class="label label-default">' + gettext("Rule is processing") + ': ' + rule_progress_pct + '%</span> ';
+                        if(row.locked_for_editing) {
+                            processing_text = '<span class="label label-default">' + gettext("Rule is processing") + ': ' + row.progress_pct + '%</span> ';
                         }
 
                         return active_text + processing_text;
@@ -69,22 +70,18 @@ hqDefine("scheduling/js/conditional_alert_list", function() {
                 {
                     "targets": [4],
                     "render": function(data, type, row) {
-                        var id = row[row.length - 1];
-                        var editable = row[row.length - 4];
-                        var button_id = 'activate-button-for-' + id;
-                        var active = row[3];
-                        var locked_for_editing = row[row.length - 3];
-                        var disabled = (locked_for_editing || !editable) ? 'disabled' : '';
-                        if(active) {
+                        var button_id = 'activate-button-for-' + row.id;
+                        var disabled = (row.locked_for_editing || !row.editable) ? 'disabled' : '';
+                        if(row.active) {
                             return '<button id="' + button_id + '" \
                                             class="btn btn-default" \
-                                            onclick="hqImport(\'scheduling/js/conditional_alert_list\').deactivateAlert(' + id + ')" \
+                                            onclick="hqImport(\'scheduling/js/conditional_alert_list\').deactivateAlert(' + row.id + ')" \
                                             ' + disabled + '> \
                                    ' + gettext("Deactivate") + '</button>';
                         } else {
                             return '<button id="' + button_id + '" + \
                                             class="btn btn-default" + \
-                                            onclick="hqImport(\'scheduling/js/conditional_alert_list\').activateAlert(' + id + ')" \
+                                            onclick="hqImport(\'scheduling/js/conditional_alert_list\').activateAlert(' + row.id + ')" \
                                             ' + disabled + '> \
                                    ' + gettext("Activate") + '</button>';
                         }

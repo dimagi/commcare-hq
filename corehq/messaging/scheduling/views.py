@@ -359,17 +359,15 @@ class ConditionalAlertListView(BaseMessagingSectionView, DataTablesAJAXPaginatio
         data = []
         for rule in rules:
             schedule = rule.get_messaging_rule_schedule()
-            data.append([
-                '< delete placeholder >',
-                rule.name,
-                rule.case_type,
-                schedule.active,
-                '< action placeholder >',
-                self.can_use_inbound_sms or not schedule.memoized_uses_sms_survey,
-                rule.locked_for_editing,
-                MessagingRuleProgressHelper(rule.pk).get_progress_pct(),
-                rule.pk,
-            ])
+            data.append({
+                'name': rule.name,
+                'case_type': rule.case_type,
+                'active': schedule.active,
+                'editable': self.can_use_inbound_sms or not schedule.memoized_uses_sms_survey,
+                'locked_for_editing': rule.locked_for_editing,
+                'progress_pct': MessagingRuleProgressHelper(rule.pk).get_progress_pct(),
+                'id': rule.pk,
+            })
 
         return self.datatables_ajax_response(data, total_records)
 
