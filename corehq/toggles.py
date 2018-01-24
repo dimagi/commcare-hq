@@ -1475,3 +1475,10 @@ EMAIL_EXPORT_WHEN_DONE_BUTTON = StaticToggle(
     TAG_PRODUCT,
     [NAMESPACE_DOMAIN],
 )
+
+LOCATION_SEARCH = StaticToggle(
+    'location_search',
+    "Allow search for location in organization structure",
+    TAG_PRODUCT,
+    [NAMESPACE_DOMAIN],
+)
