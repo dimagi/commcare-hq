@@ -59,7 +59,7 @@ function LocationSearchViewModel() { // eslint-disable-line no-unused-vars
     });
 
     this.selected_location = ko.computed(function() {
-        return new LocationModel({uuid: model.selected_location_id(), can_edit: can_edit_root}, this); // eslint-disable-line no-undef
+        return new LocationModel({uuid: model.selected_location_id(), can_edit: can_edit_root, is_archived: show_inactive}, this); // eslint-disable-line no-undef
     });
 
 }
@@ -245,6 +245,9 @@ function LocationModel(data, root, depth) {
             error: 'error',
             success: function () {
                 loc.remove_elements_after_action(button);
+                if (hqImport('hqwebapp/js/toggles').toggleEnabled('LOCATION_SEARCH')) {
+                    reloadLocationSearchSelect(); // eslint-disable-line no-undef
+                }
             },
         });
     };

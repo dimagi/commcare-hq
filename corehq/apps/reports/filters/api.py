@@ -3,6 +3,7 @@ API endpoints for filter options
 """
 from __future__ import absolute_import
 import logging
+import json
 
 from django.views.generic import View
 
@@ -80,24 +81,29 @@ class EmwfOptionsView(LoginAndDomainMixin, JSONResponseMixin, View):
         return parent_name, search_query
 
     def get_locations_query(self, query):
+        show_inactive = json.loads(self.request.GET.get('show_inactive', 'false'))
+        if show_inactive:
+            included_objects = SQLLocation.inactive_objects
+        else:
+            included_objects = SQLLocation.active_objects
         if self.q.startswith('"'):
             parent_name, search_query = self._get_location_specific_custom_filters(query)
             if search_query is None:
                 # autocomplete parent names while user is looking for just the parent name
                 # and has not yet entered any child location name
-                locations = SQLLocation.active_objects.filter(name__istartswith=parent_name, domain=self.domain)
+                locations = included_objects.filter(name__istartswith=parent_name, domain=self.domain)
             else:
                 # if any parent locations with name entered then
                 #    find locations under them
                 # else just return empty queryset
-                parents = SQLLocation.active_objects.filter(name__iexact=parent_name, domain=self.domain)
+                parents = included_objects.filter(name__iexact=parent_name, domain=self.domain)
                 if parent_name and parents.count():
-                    descendants = SQLLocation.active_objects.get_queryset_descendants(parents, include_self=True)
+                    descendants = included_objects.get_queryset_descendants(parents, include_self=True)
                     locations = descendants.filter_by_user_input(self.domain, search_query)
                 else:
-                    return SQLLocation.active_objects.none()
+                    return included_objects.none()
         else:
-            locations = SQLLocation.active_objects.filter_path_by_user_input(self.domain, query)
+            locations = included_objects.filter_path_by_user_input(self.domain, query)
         return locations.accessible_to_user(self.domain, self.request.couch_user)
 
     def get_locations(self, query, start, size):
