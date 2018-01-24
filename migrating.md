@@ -101,6 +101,8 @@ We have the class [HQJSONResponseMixin](https://github.com/dimagi/commcare-hq/bl
 
 The most common and straightforward approach is to make a new js file that belongs to the page you're migrating. Sometimes, the page will already have such a file that you can just add to. Occasionally, it'll make sense to move code to a file shared by several pages, although this takes more thought and creating a new file is always a reasonable fallback.
 
+If you're creating a new file, make it an [hqDefine](https://github.com/dimagi/js-guide/blob/master/code-organization.md#hqdefine) module. As long as the code you're moving doesn't rely on global variables, this should be a nearly trivial change.
+
 It's often necessary to move interactive code (event handlers, knockout model initializations, etc.) into a [document ready handler](https://api.jquery.com/ready/) if it wasn't already in one. Note that we're on jQuery 3, so `$(...)` is the recommended document ready syntax.
 
 ### Adding any new script tags
