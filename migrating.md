@@ -146,7 +146,7 @@ It's fine for multiple pages to use the same main module - this may make sense f
 
 Add `{% requirejs_main 'myApp/js/myModule' %}` near the top of the template: it can go after `load` and `extends` but should appear before content blocks. Note that it's a module name, not a file name, so it doesn't include `.js`.
 
-Remove and other `<script>` tags from the file. You'll be adding these as dependencies to the main module.
+Remove other `<script>` tags from the file. You'll be adding these as dependencies to the main module.
 
 #### Add dependencies
 
@@ -172,7 +172,7 @@ hqDefine("app/js/utils", [
    ...
 });
 ```
-To delcare dependencies:
+To declare dependencies:
 - Check if the module uses jQuery, underscore, or knockout, and if so add them (their module names are all lowercase: 'jquery', 'knockout', 'underscore').
 - Search the module for `hqImport` calls. Add any imported modules do the dependency list and parameter list, and replace calls to `hqImport(...)` with the new parameter name.
 - If you removed any `<script>` tags from the template and haven't yet added them to the dependency list, do that. Dependencies that aren't directly referenced as modules **don't** need to be added as function parameters, but they **do** need to be in the dependency list, so just put them at the end of the list. This tends to happen for custom knockout bindings, which are referenced only in the HTML, or jQuery plugins, which are referenced via the jQuery object rather than by the module's name.
