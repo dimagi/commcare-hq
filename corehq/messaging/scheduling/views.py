@@ -145,7 +145,10 @@ class BroadcastListView(BaseMessagingSectionView, DataTablesAJAXPaginationMixin)
     def get_scheduled_broadcast_activate_ajax_response(self, active_flag, broadcast_id):
         broadcast = self.get_scheduled_broadcast(broadcast_id)
         if not self.can_use_inbound_sms and broadcast.schedule.memoized_uses_sms_survey:
-            return HttpResponseBadRequest()
+            return HttpResponseBadRequest(
+                "Cannot create or edit survey reminders because subscription "
+                "does not have access to inbound SMS"
+            )
 
         TimedSchedule.objects.filter(schedule_id=broadcast.schedule_id).update(active=active_flag)
         refresh_timed_schedule_instances.delay(
@@ -240,7 +243,10 @@ class CreateScheduleView(BaseMessagingSectionView, AsyncHandlerMixin):
 
         if self.schedule_form.is_valid():
             if not self.can_use_inbound_sms and self.schedule_form.uses_sms_survey:
-                return HttpResponseBadRequest()
+                return HttpResponseBadRequest(
+                    "Cannot create or edit survey reminders because subscription "
+                    "does not have access to inbound SMS"
+                )
 
             broadcast, schedule = self.schedule_form.save_broadcast_and_schedule()
             if isinstance(schedule, AlertSchedule):
@@ -399,7 +405,10 @@ class ConditionalAlertListView(BaseMessagingSectionView, DataTablesAJAXPaginatio
         with transaction.atomic():
             schedule = rule.get_messaging_rule_schedule()
             if not self.can_use_inbound_sms and schedule.memoized_uses_sms_survey:
-                return HttpResponseBadRequest()
+                return HttpResponseBadRequest(
+                    "Cannot create or edit survey reminders because subscription "
+                    "does not have access to inbound SMS"
+                )
 
             schedule.active = active_flag
             schedule.save()
@@ -535,7 +544,10 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
                 return HttpResponseBadRequest()
 
             if not self.can_use_inbound_sms and self.schedule_form.uses_sms_survey:
-                return HttpResponseBadRequest()
+                return HttpResponseBadRequest(
+                    "Cannot create or edit survey reminders because subscription "
+                    "does not have access to inbound SMS"
+                )
 
             with transaction.atomic():
                 if self.rule:
