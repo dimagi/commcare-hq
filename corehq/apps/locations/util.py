@@ -129,6 +129,7 @@ class LocationExporter(object):
         self.include_consumption_flag = include_consumption
         self.data_model = get_location_data_model(domain)
         self.administrative_types = {}
+        self.location_types = self.domain_obj.location_types
 
     @property
     @memoized
@@ -148,7 +149,7 @@ class LocationExporter(object):
             self.supply_point_map = get_supply_point_ids_in_domain_by_location(
                 self.domain)
             self.administrative_types = {
-                lt.name for lt in self.domain_obj.location_types
+                lt.name for lt in self.location_types
                 if lt.administrative
 
             }
@@ -259,7 +260,7 @@ class LocationExporter(object):
         })
 
     def get_export_dict(self):
-        location_types = self.domain_obj.location_types
+        location_types = self.location_types
         sheets = [self.type_sheet(location_types)]
         sheets.extend([
             self._loc_type_dict(loc_type)
@@ -267,42 +268,103 @@ class LocationExporter(object):
         ])
         return sheets
 
+    def get_headers(self):
+        headers = {
+            'types': [LOCATION_TYPE_SHEET_HEADERS.keys()],
+        }
+        for loc_type in self.location_types:
+            additional_headers = []
+            additional_headers.extend(self._prefix_headers('data', (f.slug for f in self.data_model.fields)))
+            additional_headers.append('uncategorized_data')
+            if self.include_consumption_flag and loc_type.name not in self.administrative_types:
+                additional_headers.extend(self._prefix_headers('consumption', self.product_codes))
 
-def dump_locations(domain, download_id, include_consumption=False):
-    exporter = LocationExporter(domain, include_consumption=include_consumption)
+            headers[loc_type.code] = [LOCATION_SHEET_HEADERS.keys()[:-2] + additional_headers]
+
+        return list(headers.items())
+
+    def write_data(self, writer):
+        self._write_type_sheet(writer)
+        for location_type in self.location_types:
+            self._write_locations(writer, location_type)
+
+    def _write_locations(self, writer, location_type):
+        include_consumption = self.include_consumption_flag and location_type.name not in self.administrative_types
+        query = SQLLocation.active_objects.filter(
+            domain=self.domain,
+            location_type__name=location_type.name
+        )
+
+        def _row_generator(include_consumption=include_consumption):
+            for loc in query:
+                model_data, uncategorized_data = self.data_model.get_model_and_uncategorized(loc.metadata)
+                row = [
+                    loc.location_id,
+                    loc.site_code,
+                    loc.name,
+                    loc.parent.site_code if loc.parent else '',
+                    loc.latitude or '',
+                    loc.longitude or '',
+                    loc.external_id,
+                    '',  # do delete
+                ]
+                for field in self.data_model.fields:
+                    row.append(model_data[field.slug])
+
+                row.append(', '.join('{}: {}'.format(*d) for d in uncategorized_data.items()))
+
+                if include_consumption:
+                    consumption_data = self.get_consumption(loc)
+                    row.extend([consumption_data[code] for code in self.product_codes])
+                yield row
+
+        writer.write([(location_type.code, _row_generator())])
+
+    @staticmethod
+    def _prefix_headers(prefix, headers):
+        return json_to_headers(
+            {prefix: {header: None for header in headers}}
+        )
+
+    def _write_type_sheet(self, writer):
+        def foreign_code(lt, attr):
+            val = getattr(lt, attr, None)
+            if val:
+                return val.code
+            else:
+                return None
+
+        def coax_boolean(value):
+            if isinstance(value, bool):
+                value = 'yes' if value else 'no'
+            return value
+
+        rows = []
+        for lt in self.location_types:
+            rows.append([
+                lt.code,
+                lt.name,
+                foreign_code(lt, 'parent_type'),
+                '',  # do_delete
+                coax_boolean(lt.shares_cases),
+                coax_boolean(lt.view_descendants),
+            ])
+
+        writer.write([('types', rows)])
+
+
+def dump_locations(domain, download_id, include_consumption=False, task=None):
+    exporter = LocationExporter(domain, include_consumption=include_consumption, task=task)
     use_transfer = settings.SHARED_DRIVE_CONF.transfer_enabled
     filename = '{}_locations.xlsx'.format(domain)
-    file_path = write_to_file(exporter.get_export_dict(), filename, use_transfer)
 
-    expose_download(use_transfer, file_path, filename, download_id, 'xlsx')
-
-
-def write_to_file(locations, filename, use_transfer):
-    """
-    locations = [
-        ('loc_type1', {
-             'headers': ['header1', 'header2', ...]
-             'rows': [
-                 {
-                     'header1': val1
-                     'header2': val2
-                 },
-                 {...},
-             ]
-        })
-    ]
-    """
     outfile = get_download_file_path(use_transfer, filename)
     writer = Excel2007ExportWriter()
-    header_table = [(tab_name, [tab['headers']]) for tab_name, tab in locations]
-    writer.open(header_table=header_table, file=outfile)
-    for tab_name, tab in locations:
-        headers = tab['headers']
-        tab_rows = [[row.get(header, '') for header in headers]
-                    for row in tab['rows']]
-        writer.write([(tab_name, tab_rows)])
+    writer.open(header_table=exporter.get_headers(), file=outfile)
+    exporter.write_data(writer)
     writer.close()
-    return outfile
+
+    expose_download(use_transfer, outfile, filename, download_id, 'xlsx')
 
 
 def get_locations_from_ids(location_ids, domain, base_queryset=None):
