@@ -223,6 +223,17 @@ class ScheduleForm(Form):
         required=True,
         label=ugettext_lazy("Default Language"),
     )
+    survey_reminder_intervals_enabled = ChoiceField(
+        required=False,
+        choices=(
+            ('N', ugettext_lazy("Disabled")),
+            ('Y', ugettext_lazy("Enabled")),
+        ),
+    )
+    survey_reminder_intervals = CharField(
+        required=False,
+        label='',
+    )
     submit_partially_completed_forms = BooleanField(
         required=False,
         label=ugettext_lazy("Submit a partially completed form when the survey session is over"),
@@ -330,6 +341,12 @@ class ScheduleForm(Form):
             result['submit_partially_completed_forms'] = content.submit_partially_completed_forms
             result['include_case_updates_in_partial_submissions'] = \
                 content.include_case_updates_in_partial_submissions
+
+            if content.reminder_intervals:
+                result['survey_reminder_intervals_enabled'] = 'Y'
+                result['survey_reminder_intervals'] = ', '.join([str(i) for i in content.reminder_intervals])
+            else:
+                result['survey_reminder_intervals_enabled'] = 'N'
         else:
             raise TypeError("Unexpected content type: %s" % type(content))
 
@@ -599,9 +616,37 @@ class ScheduleForm(Form):
                     _("Expire After"),
                     crispy.Div(
                         twbscrispy.InlineField('survey_expiration_in_hours'),
-                        css_class='col-sm-6',
+                        css_class='col-sm-4',
                     ),
                     crispy.HTML("<span>%s</span>" % _("hour(s)")),
+                ),
+                hqcrispy.B3MultiField(
+                    _("Reminder Intervals"),
+                    crispy.Div(
+                        twbscrispy.InlineField(
+                            'survey_reminder_intervals_enabled',
+                            data_bind='value: survey_reminder_intervals_enabled',
+                        ),
+                        css_class='col-sm-4',
+                    ),
+                    crispy.Div(
+                        twbscrispy.InlineField(
+                            'survey_reminder_intervals',
+                            placeholder=_("e.g., 30, 60"),
+                        ),
+                        data_bind="visible: survey_reminder_intervals_enabled() === 'Y'",
+                        css_class='col-sm-4',
+                    ),
+                ),
+                hqcrispy.B3MultiField(
+                    '',
+                    crispy.HTML(
+                        '<p class="help-block"><i class="fa fa-info-circle"></i> %s</p>' %
+                        _("Specify a list of comma-separated intervals in minutes. At each interval, if "
+                          "the survey session is still open, the system will resend the current question in the "
+                          "open survey.")
+                    ),
+                    data_bind="visible: survey_reminder_intervals_enabled() === 'Y'",
                 ),
                 data_bind="visible: content() === '%s'" % self.CONTENT_SMS_SURVEY,
             ),
@@ -923,6 +968,40 @@ class ScheduleForm(Form):
 
         return value
 
+    def clean_survey_reminder_intervals(self):
+        if self.cleaned_data.get('content') != self.CONTENT_SMS_SURVEY:
+            return None
+
+        if self.cleaned_data.get('survey_reminder_intervals_enabled') != 'Y':
+            return []
+
+        value = self.cleaned_data.get('survey_reminder_intervals')
+        if not value:
+            raise ValidationError(_("Please specify the reminder intervals or disable them"))
+
+        intervals = []
+        for interval in value.split(','):
+            try:
+                interval = int(interval)
+            except (ValueError, TypeError):
+                raise ValidationError(_("Intervals must be positive numbers"))
+
+            if interval <= 0:
+                raise ValidationError(_("Intervals must be positive numbers"))
+
+            intervals.append(interval)
+
+        survey_expiration_in_hours = self.cleaned_data.get('survey_expiration_in_hours')
+        if survey_expiration_in_hours:
+            survey_expiration_in_minutes = survey_expiration_in_hours * 60
+            if sum(intervals) >= survey_expiration_in_minutes:
+                raise ValidationError(
+                    _("Reminder intervals must add up to less than {} based "
+                      "on the current survey expiration").format(survey_expiration_in_minutes)
+                )
+
+        return intervals
+
     def distill_content(self):
         if self.cleaned_data['content'] == self.CONTENT_SMS:
             return SMSContent(
@@ -932,6 +1011,7 @@ class ScheduleForm(Form):
             return SMSSurveyContent(
                 form_unique_id=self.cleaned_data['form_unique_id'],
                 expire_after=self.cleaned_data['survey_expiration_in_hours'] * 60,
+                reminder_intervals=self.cleaned_data['survey_reminder_intervals'],
                 submit_partially_completed_forms=self.cleaned_data['submit_partially_completed_forms'],
                 include_case_updates_in_partial_submissions=
                     self.cleaned_data['include_case_updates_in_partial_submissions']
