@@ -53,8 +53,8 @@ class TestInstitutionalDeliveriesSector(TestCase):
             'domain': 'icds-cas'
         }
         data = ISSNIPMonthlyReport(config=config).css_record_monthly
-        self.assertEqual(data['pregnant_women_thr'], 17)
-        self.assertEqual(data['lactating_women_thr'], 19)
+        self.assertEqual(data['pregnant_women_thr'], 5)
+        self.assertEqual(data['lactating_women_thr'], 7)
 
     def test_vhnd_data(self):
         config = {

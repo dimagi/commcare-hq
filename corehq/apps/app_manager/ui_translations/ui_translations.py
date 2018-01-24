@@ -50,7 +50,7 @@ def process_ui_translation_upload(app, trans_file):
 def build_ui_translation_download_file(app):
 
     properties = tuple(["property"] + app.langs + ["platform"])
-    temp = io.StringIO()
+    temp = io.BytesIO()
     headers = (("translations", properties),)
 
     row_dict = {}

@@ -140,9 +140,12 @@ describe('Indie Map Directive', function () {
 
     it('tests html content of update map', function () {
         controller.data = mockData;
-        var expected = "<button class=\"btn btn-xs btn-default\" ng-click=\"$ctrl.updateMap('Uttar Pradesh')\">Uttar Pradesh</button>";
+        var expected = '<div class="modal-header"><button type="button" class="close" ' +
+            'ng-click="$ctrl.closePopup()" aria-label="Close"><span aria-hidden="true">&times;</span>' +
+            '</button></div><div class="modal-body"><button class="btn btn-xs btn-default" ' +
+            'ng-click="$ctrl.updateMap(\'Uttar Pradesh\')">Uttar Pradesh</button></div>';
 
-        var result = controller.getContent(mockGeography);
+        var result = controller.getHtmlContent(mockGeography);
         assert.equal(expected, result);
     });
 

@@ -373,6 +373,9 @@ def generate_data_for_map(data, loc_level, num_prop, denom_prop, fill_key_lower,
         on_map_name = row['%s_map_location_name' % loc_level] or name
         in_month = row[num_prop] or 0
 
+        value = row[num_prop] * 100 / (row[denom_prop] or 1)
+        values_to_calculate_average.append(value)
+
         valid_total += valid
         in_month_total += in_month
 
@@ -382,7 +385,6 @@ def generate_data_for_map(data, loc_level, num_prop, denom_prop, fill_key_lower,
 
     for data_for_location in six.itervalues(data_for_map):
         value = data_for_location[num_prop] * 100 / (data_for_location[denom_prop] or 1)
-        values_to_calculate_average.append(value)
         fill_format = '%s%%-%s%%'
         if value < fill_key_lower:
             data_for_location.update({'fillKey': (fill_format % (0, fill_key_lower))})

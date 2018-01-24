@@ -239,7 +239,7 @@ class AbstractCaseAccessor(six.with_metaclass(ABCMeta)):
         raise NotImplementedError
 
     @abstractmethod
-    def get_reverse_indexed_cases(domain, case_ids):
+    def get_reverse_indexed_cases(domain, case_ids, case_types=None, is_closed=None):
         raise NotImplementedError
 
     @abstractmethod
@@ -382,8 +382,8 @@ class CaseAccessors(object):
     def get_all_reverse_indices_info(self, case_ids):
         return self.db_accessor.get_all_reverse_indices_info(self.domain, case_ids)
 
-    def get_reverse_indexed_cases(self, case_ids):
-        return self.db_accessor.get_reverse_indexed_cases(self.domain, case_ids)
+    def get_reverse_indexed_cases(self, case_ids, case_types=None, is_closed=None):
+        return self.db_accessor.get_reverse_indexed_cases(self.domain, case_ids, case_types, is_closed)
 
     def get_attachment_content(self, case_id, attachment_id):
         return self.db_accessor.get_attachment_content(case_id, attachment_id)

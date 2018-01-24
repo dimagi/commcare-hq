@@ -396,6 +396,9 @@ hqDefine("reports/js/case_details", function() {
 
         $("#history").koApplyBindings(new XFormListViewModel());
 
-        $("#properties").koApplyBindings();
+        var $properties = $("#properties");
+        if ($properties.length) {
+            $properties.koApplyBindings();
+        }
     });
 });

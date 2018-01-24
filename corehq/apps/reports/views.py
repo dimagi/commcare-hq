@@ -1295,6 +1295,13 @@ class CaseDetailsView(BaseProjectReportSectionView):
         return reverse(self.urlname, args=(self.domain, self.case_id,))
 
     @property
+    def parent_pages(self):
+        return [{
+            'title': CaseListReport.name,
+            'url': CaseListReport.get_url(domain=self.domain),
+        }]
+
+    @property
     def page_context(self):
         opening_transactions = self.case_instance.get_opening_transactions()
         if not opening_transactions:
@@ -1847,6 +1854,13 @@ class FormDataView(BaseProjectReportSectionView):
     @property
     def page_name(self):
         return self.form_name
+
+    @property
+    def parent_pages(self):
+        return [{
+            'title': inspect.SubmitHistory.name,
+            'url': inspect.SubmitHistory.get_url(self.domain),
+        }]
 
     @property
     def page_context(self):
