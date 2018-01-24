@@ -89,7 +89,8 @@ nvd3 > svg {
     }
 
     table {
-        page-break-after: always;
+        page-break-after: avoid;
+        width: 100% !important;
     }
 
     .break {
@@ -110,6 +111,14 @@ nvd3 > svg {
 
     .report-cell {
         height: 200px;
+    }
+
+    .dataTables_scrollHeadInner {
+        width: 100% !important;
+    }
+
+    .row {
+        width: 100%;
     }
 
     .col-md-1, .col-md-2, .col-md-3, .col-md-4, .col-md-5, .col-md-6,
@@ -796,4 +805,3 @@ hr {
 .issnip-spinner-container span {
     margin-left: 5px;
 }
-
