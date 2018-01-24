@@ -64,7 +64,7 @@ class UserDim(BaseDim, CustomSQLETLMixin):
     last_name = models.CharField(max_length=30, null=True)
     email = models.CharField(max_length=255, null=True)
     doc_type = models.CharField(max_length=100)
-    domain = models.CharField(max_length=255)
+    domain = models.CharField(max_length=255, null=True)
 
     is_active = models.NullBooleanField()
     is_staff = models.NullBooleanField()
