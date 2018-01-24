@@ -423,7 +423,7 @@ class ScheduleForm(Form):
     def add_additional_content_types(self):
         if (
             self.can_use_sms_surveys or
-            (self.schedule and self.schedule.memoized_uses_sms_survey)
+            (self.initial_schedule and self.initial_schedule.memoized_uses_sms_survey)
         ):
             self.fields['content'].choices += [
                 (self.CONTENT_SMS_SURVEY, _("SMS Survey")),
