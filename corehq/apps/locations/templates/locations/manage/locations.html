@@ -42,7 +42,7 @@
                         data: function (params) {
                             console.log(params);
                             return {
-                                q: params.term || "",
+                                q: params.term,
                                 page_limit: 10,
                                 page: params.page,
                                 show_inactive: show_inactive,

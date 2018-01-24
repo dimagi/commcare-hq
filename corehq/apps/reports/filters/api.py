@@ -40,7 +40,7 @@ class EmwfOptionsView(LoginAndDomainMixin, JSONResponseMixin, View):
 
     def get(self, request, domain):
         self.domain = domain
-        self.q = self.request.GET.get('q', None)
+        self.q = self.request.GET.get('q', '')
         try:
             count, options = self.get_options()
             return self.render_json_response({
