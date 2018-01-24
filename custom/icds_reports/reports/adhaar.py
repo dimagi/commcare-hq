@@ -12,12 +12,12 @@ from corehq.util.quickcache import quickcache
 from custom.icds_reports.const import LocationTypes, ChartColors, MapColors
 from custom.icds_reports.models import AggAwcMonthly
 from custom.icds_reports.utils import apply_exclude, generate_data_for_map, indian_formatted_number, \
-    get_child_locations
+    get_child_locations, person_has_aadhaar_column, person_is_beneficiary_column
 import six
 
 
-@quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
-def get_adhaar_data_map(domain, config, loc_level, show_test=False):
+@quickcache(['domain', 'config', 'loc_level', 'show_test', 'beta'], timeout=30 * 60)
+def get_adhaar_data_map(domain, config, loc_level, show_test=False, beta=False):
 
     def get_data_for(filters):
         filters['month'] = datetime(*filters['month'])
@@ -26,8 +26,8 @@ def get_adhaar_data_map(domain, config, loc_level, show_test=False):
         ).values(
             '%s_name' % loc_level, '%s_map_location_name' % loc_level
         ).annotate(
-            in_month=Sum('cases_person_has_aadhaar'),
-            all=Sum('cases_person_beneficiary'),
+            in_month=Sum(person_has_aadhaar_column(beta)),
+            all=Sum(person_is_beneficiary_column(beta)),
         ).order_by('%s_name' % loc_level, '%s_map_location_name' % loc_level)
         if not show_test:
             queryset = apply_exclude(domain, queryset)
@@ -76,8 +76,8 @@ def get_adhaar_data_map(domain, config, loc_level, show_test=False):
     }
 
 
-@quickcache(['domain', 'config', 'loc_level', 'location_id', 'show_test'], timeout=30 * 60)
-def get_adhaar_sector_data(domain, config, loc_level, location_id, show_test=False):
+@quickcache(['domain', 'config', 'loc_level', 'location_id', 'show_test', 'beta'], timeout=30 * 60)
+def get_adhaar_sector_data(domain, config, loc_level, location_id, show_test=False, beta=False):
     group_by = ['%s_name' % loc_level]
 
     config['month'] = datetime(*config['month'])
@@ -86,8 +86,8 @@ def get_adhaar_sector_data(domain, config, loc_level, location_id, show_test=Fal
     ).values(
         *group_by
     ).annotate(
-        in_month=Sum('cases_person_has_aadhaar'),
-        all=Sum('cases_person_beneficiary'),
+        in_month=Sum(person_has_aadhaar_column(beta)),
+        all=Sum(person_is_beneficiary_column(beta)),
     ).order_by('%s_name' % loc_level)
 
     if not show_test:
@@ -149,8 +149,8 @@ def get_adhaar_sector_data(domain, config, loc_level, location_id, show_test=Fal
     }
 
 
-@quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
-def get_adhaar_data_chart(domain, config, loc_level, show_test=False):
+@quickcache(['domain', 'config', 'loc_level', 'show_test', 'beta'], timeout=30 * 60)
+def get_adhaar_data_chart(domain, config, loc_level, show_test=False, beta=False):
     month = datetime(*config['month'])
     three_before = datetime(*config['month']) - relativedelta(months=3)
 
@@ -162,8 +162,8 @@ def get_adhaar_data_chart(domain, config, loc_level, show_test=False):
     ).values(
         'month', '%s_name' % loc_level
     ).annotate(
-        in_month=Sum('cases_person_has_aadhaar'),
-        all=Sum('cases_person_beneficiary'),
+        in_month=Sum(person_has_aadhaar_column(beta)),
+        all=Sum(person_is_beneficiary_column(beta)),
     ).order_by('month')
 
     if not show_test:

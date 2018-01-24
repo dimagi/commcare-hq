@@ -7,11 +7,14 @@ from django.utils.translation import ugettext as _
 
 from corehq.util.quickcache import quickcache
 from custom.icds_reports.models import AggAwcDailyView, AggAwcMonthly
-from custom.icds_reports.utils import percent_increase, percent_diff, get_value, apply_exclude
+from custom.icds_reports.utils import (
+    percent_increase, percent_diff, get_value, apply_exclude,
+    person_has_aadhaar_column, person_is_beneficiary_column
+)
 
 
-@quickcache(['domain', 'now_date', 'config', 'show_test'], timeout=30 * 60)
-def get_demographics_data(domain, now_date, config, show_test=False):
+@quickcache(['domain', 'now_date', 'config', 'show_test', 'beta'], timeout=30 * 60)
+def get_demographics_data(domain, now_date, config, show_test=False, beta=False):
     now_date = datetime(*now_date)
     yesterday_date = (now_date - relativedelta(days=1)).date()
     two_days_ago = (now_date - relativedelta(days=2)).date()
@@ -41,8 +44,8 @@ def get_demographics_data(domain, now_date, config, show_test=False):
                 Sum('cases_person_adolescent_girls_11_14_all') +
                 Sum('cases_person_adolescent_girls_15_18_all')
             ),
-            person_aadhaar=Sum('cases_person_has_aadhaar'),
-            all_persons=Sum('cases_person_beneficiary')
+            person_aadhaar=Sum(person_has_aadhaar_column(beta)),
+            all_persons=Sum(person_is_beneficiary_column(beta))
         )
 
         if not show_test:

@@ -316,7 +316,8 @@ class ProgramSummaryView(View):
                 domain,
                 tuple(now.date().timetuple())[:3],
                 config,
-                include_test
+                include_test,
+                beta=icds_pre_release_features(request.couch_user)
             )
         elif step == 'awc_infrastructure':
             data = get_awc_infrastructure_data(domain, config, include_test)
@@ -559,7 +560,8 @@ class AwcReportsView(View):
                 config,
                 tuple(now.date().timetuple())[:3],
                 tuple(month.timetuple())[:3],
-                include_test
+                include_test,
+                beta=icds_pre_release_features(request.couch_user)
             )
         elif step == 'awc_infrastructure':
             data = get_awc_report_infrastructure(
@@ -654,7 +656,8 @@ class ExportIndicatorView(View):
             return DemographicsExport(
                 config=config,
                 loc_level=aggregation_level,
-                show_test=include_test
+                show_test=include_test,
+                beta=icds_pre_release_features(request.user)
             ).to_export(export_format, location)
         elif indicator == SYSTEM_USAGE_EXPORT:
             return SystemUsageExport(
@@ -731,7 +734,10 @@ class FactSheetsView(View):
         config.update(get_location_filter(location, domain))
         loc_level = get_location_level(config.get('aggregation_level'))
 
-        data = FactSheetsReport(config=config, loc_level=loc_level, show_test=include_test).get_data()
+        beta = icds_pre_release_features(request.user)
+        data = FactSheetsReport(
+            config=config, loc_level=loc_level, show_test=include_test, beta=beta
+        ).get_data()
         return JsonResponse(data=data)
 
 
@@ -1461,18 +1467,17 @@ class AdhaarBeneficiariesView(View):
         loc_level = get_location_level(config.get('aggregation_level'))
 
         data = {}
+        beta = icds_pre_release_features(request.couch_user)
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
-                data = get_adhaar_sector_data(domain, config, loc_level, location, include_test)
+                data = get_adhaar_sector_data(domain, config, loc_level, location, include_test, beta=beta)
             else:
-                data = get_adhaar_data_map(domain, config.copy(), loc_level, include_test)
+                data = get_adhaar_data_map(domain, config.copy(), loc_level, include_test, beta=beta)
                 if loc_level == LocationTypes.BLOCK:
-                    sector = get_adhaar_sector_data(
-                        domain, config, loc_level, location, include_test
-                    )
+                    sector = get_adhaar_sector_data(domain, config, loc_level, location, include_test, beta=beta)
                     data.update(sector)
         elif step == "chart":
-            data = get_adhaar_data_chart(domain, config, loc_level, include_test)
+            data = get_adhaar_data_chart(domain, config, loc_level, include_test, beta=beta)
 
         return JsonResponse(data={
             'report_data': data,
