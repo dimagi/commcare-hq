@@ -14,8 +14,10 @@ hqDefine("reports/js/aggregate_app_status", function() {
               .groupSpacing(0.1)
             ;
 
-            chart.yAxis
-                .tickFormat(d3.format(',f'));
+            chart.yAxis.tickFormat(d3.format(',f'));
+
+            // disable legend click
+            chart.legend.updateState(false);
 
             if (customTooltip) {
                 chart.tooltipContent(customTooltip);
