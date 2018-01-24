@@ -236,7 +236,8 @@ class ScheduleForm(Form):
     )
     submit_partially_completed_forms = BooleanField(
         required=False,
-        label=ugettext_lazy("Submit a partially completed form when the survey session is over"),
+        label=ugettext_lazy("When the survey session expires, submit a partially "
+                            "completed form if the survey is not completed"),
     )
     include_case_updates_in_partial_submissions = BooleanField(
         required=False,
