@@ -1134,8 +1134,8 @@
                 "datatype": "string",
                 "expression": {
                     "value_expression": {
-                        "type": "property_path",
-                        "property_path": "name"
+                        "type": "property_name",
+                        "property_name": "name"
                     },
                     "type": "related_doc",
                     "related_doc_type": "Location",
