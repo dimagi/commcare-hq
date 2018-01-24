@@ -13,6 +13,7 @@ from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.couch.loosechange import map_reduce
 from couchexport.writers import Excel2007ExportWriter
 from corehq.apps.consumption.shortcuts import get_loaded_default_monthly_consumption, build_consumption_dict
+from soil import DownloadBase
 
 from soil.util import get_download_file_path, expose_download
 import six
@@ -123,18 +124,29 @@ def get_location_data_model(domain):
 
 class LocationExporter(object):
 
-    def __init__(self, domain, include_consumption=False):
+    def __init__(self, domain, include_consumption=False, async_task=None):
         self.domain = domain
         self.domain_obj = Domain.get_by_name(domain)
         self.include_consumption_flag = include_consumption
         self.data_model = get_location_data_model(domain)
         self.administrative_types = {}
         self.location_types = self.domain_obj.location_types
+        self.async_task = async_task
+        self._location_count = None
+        self._locations_exported = 0
 
     @property
     @memoized
     def consumption_dict(self):
         return build_consumption_dict(self.domain)
+
+    def _increment_progress(self):
+        if self._location_count is None:
+            self._location_count = SQLLocation.active_objects.filter(domain=self.domain).count()
+            self._progress_update_chunksize = max(10, self._location_count // 100)
+        self._locations_exported += 1
+        if self._locations_exported % self._progress_update_chunksize == 0:
+            DownloadBase.set_progress(self.async_task, self._locations_exported, self._location_count)
 
     @property
     @memoized
@@ -317,6 +329,7 @@ class LocationExporter(object):
                     consumption_data = self.get_consumption(loc)
                     row.extend([consumption_data[code] for code in self.product_codes])
                 yield row
+                self._increment_progress()
 
         writer.write([(location_type.code, _row_generator())])
 
@@ -354,7 +367,7 @@ class LocationExporter(object):
 
 
 def dump_locations(domain, download_id, include_consumption=False, task=None):
-    exporter = LocationExporter(domain, include_consumption=include_consumption, task=task)
+    exporter = LocationExporter(domain, include_consumption=include_consumption, async_task=task)
     use_transfer = settings.SHARED_DRIVE_CONF.transfer_enabled
     filename = '{}_locations.xlsx'.format(domain)
 
