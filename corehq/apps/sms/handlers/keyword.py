@@ -474,15 +474,6 @@ def handle_structured_sms(survey_keyword, survey_keyword_action, contact,
     return not error_occurred
 
 
-def refresh_and_close_session(session):
-    if session:
-        session = SQLXFormsSession.objects.get(pk=session.pk)
-        if session.is_open:
-            session.end(False)
-            session.save()
-    return session
-
-
 def add_keyword_metadata(msg, session):
     metadata = MessageMetadata(
         workflow=WORKFLOW_KEYWORD,
@@ -499,7 +490,6 @@ def clean_up_and_send_response(msg, contact, session, error_occurred, error_msg,
         verified_number=None, send_response=False, logged_event=None,
         logged_subevent=None):
 
-    session = refresh_and_close_session(session)
     metadata = add_keyword_metadata(msg, session)
 
     if error_occurred and verified_number and send_response:

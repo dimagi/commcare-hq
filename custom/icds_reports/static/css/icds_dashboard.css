@@ -736,7 +736,7 @@ table.dataTable.fixedHeader-locked {
 }
 
 .locPopup {
-    position: fixed;
+    position: absolute;
     display:none;
     z-index: 90000;
     background-color: white;
@@ -749,9 +749,16 @@ table.dataTable.fixedHeader-locked {
     width: 100%;
 }
 
-.locPopup > button {
-    display: block;
-    margin: 5px auto;
+.locPopup > .modal-header {
+    padding: 5px;
+}
+
+.locPopup > .modal-body {
+    display: grid;
+}
+
+.locPopup > .modal-body > button {
+    margin: 2px;
 }
 
 table.dataTable,

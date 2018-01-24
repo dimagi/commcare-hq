@@ -1,0 +1,4043 @@
+{
+  "domains": [
+    "icds-dashboard-qa",
+    "icds-sql",
+    "icds-test",
+    "icds-cas",
+    "icds-cas-sandbox"
+  ],
+  "server_environment": [
+    "softlayer",
+    "icds-new",
+    "icds"
+  ],
+  "config": {
+    "table_id": "static-child_cases_monthly_tableau_nov17",
+    "display_name": "Cases - Child Health for Tableau Nov 17 (Monthly) (Static)",
+    "referenced_doc_type": "CommCareCase",
+    "description": "",
+    "base_item_expression": {
+      "type": "filter_items",
+      "items_expression": {
+        "expressions": [
+          0
+        ],
+        "type": "iterator"
+      },
+      "filter_expression": {
+        "type": "or",
+        "filters": [
+          {
+            "operator": "eq",
+            "type": "boolean_expression",
+            "expression": {
+              "type": "root_doc",
+              "expression": {
+                "datatype": null,
+                "type": "property_name",
+                "property_name": "closed"
+              }
+            },
+            "property_value": false
+          },
+          {
+            "operator": "gte",
+            "type": "boolean_expression",
+            "expression": {
+              "type": "diff_days",
+              "from_date_expression": {
+                "type": "month_start_date",
+                "date_expression": {
+                  "date_expression": {
+                    "type": "icds_datetime_now"
+                  },
+                  "type": "add_months",
+                  "months_expression": {
+                    "type": "evaluator",
+                    "context_variables": {
+                      "iteration": {
+                        "type": "identity"
+                      }
+                    },
+                    "statement": "iteration - 2"
+                  }
+                }
+              },
+              "to_date_expression": {
+                "type": "root_doc",
+                "expression": {
+                  "datatype": "date",
+                  "type": "property_name",
+                  "property_name": "closed_on"
+                }
+              }
+            },
+            "property_value": 0
+          }
+        ]
+      }
+    },
+    "configured_filter": {
+      "type": "and",
+      "filters": [
+        {
+          "operator": "eq",
+          "type": "boolean_expression",
+          "expression": {
+            "datatype": null,
+            "type": "property_name",
+            "property_name": "type"
+          },
+          "property_value": "child_health"
+        }
+      ]
+    },
+    "configured_indicators": [
+      {
+        "column_id": "month",
+        "datatype": "date",
+        "display_name": null,
+        "expression": {
+          "type": "named",
+          "name": "month_start"
+        },
+        "is_nullable": false,
+        "is_primary_key": false,
+        "create_index": true,
+        "transform": {},
+        "type": "expression"
+      },
+      {
+        "column_id": "case_id",
+        "datatype": "string",
+        "display_name": null,
+        "expression": {
+          "expression": {
+            "datatype": null,
+            "property_name": "_id",
+            "type": "property_name"
+          },
+          "type": "root_doc"
+        },
+        "is_nullable": false,
+        "is_primary_key": false,
+        "transform": {},
+        "type": "expression"
+      },
+      {
+        "column_id": "person_case_id",
+        "datatype": "string",
+        "display_name": null,
+        "expression": {
+          "type": "icds_parent_id"
+        },
+        "is_nullable": true,
+        "is_primary_key": false,
+        "transform": {},
+        "type": "expression"
+      },
+      {
+        "column_id": "household_case_id",
+        "datatype": "string",
+        "display_name": null,
+        "expression": {
+          "type": "icds_parent_parent_id"
+        },
+        "is_nullable": true,
+        "is_primary_key": false,
+        "transform": {},
+        "type": "expression"
+      },
+      {
+        "column_id": "state_id",
+        "datatype": "string",
+        "display_name": null,
+        "expression": {
+          "location_id_expression": {
+            "location_id_expression": {
+              "location_id_expression": {
+                "location_id_expression": {
+                  "expression": {
+                    "datatype": null,
+                    "property_name": "owner_id",
+                    "type": "property_name"
+                  },
+                  "type": "root_doc"
+                },
+                "type": "location_parent_id"
+              },
+              "type": "location_parent_id"
+            },
+            "type": "location_parent_id"
+          },
+          "type": "location_parent_id"
+        },
+        "is_nullable": true,
+        "is_primary_key": false,
+        "transform": {},
+        "type": "expression"
+      },
+      {
+        "column_id": "district_id",
+        "datatype": "string",
+        "display_name": null,
+        "expression": {
+          "location_id_expression": {
+            "location_id_expression": {
+              "location_id_expression": {
+                "expression": {
+                  "datatype": null,
+                  "property_name": "owner_id",
+                  "type": "property_name"
+                },
+                "type": "root_doc"
+              },
+              "type": "location_parent_id"
+            },
+            "type": "location_parent_id"
+          },
+          "type": "location_parent_id"
+        },
+        "is_nullable": true,
+        "is_primary_key": false,
+        "transform": {},
+        "type": "expression"
+      },
+      {
+        "column_id": "block_id",
+        "datatype": "string",
+        "display_name": null,
+        "expression": {
+          "location_id_expression": {
+            "location_id_expression": {
+              "expression": {
+                "datatype": null,
+                "property_name": "owner_id",
+                "type": "property_name"
+              },
+              "type": "root_doc"
+            },
+            "type": "location_parent_id"
+          },
+          "type": "location_parent_id"
+        },
+        "is_nullable": true,
+        "is_primary_key": false,
+        "transform": {},
+        "type": "expression"
+      },
+      {
+        "column_id": "supervisor_id",
+        "create_index": true,
+        "datatype": "string",
+        "display_name": null,
+        "expression": {
+          "location_id_expression": {
+            "expression": {
+              "datatype": null,
+              "property_name": "owner_id",
+              "type": "property_name"
+            },
+            "type": "root_doc"
+          },
+          "type": "location_parent_id"
+        },
+        "is_nullable": true,
+        "is_primary_key": false,
+        "transform": {},
+        "type": "expression"
+      },
+      {
+        "column_id": "awc_id",
+        "create_index": true,
+        "datatype": "string",
+        "display_name": null,
+        "expression": {
+          "expression": {
+            "datatype": null,
+            "property_name": "owner_id",
+            "type": "property_name"
+          },
+          "type": "root_doc"
+        },
+        "is_nullable": false,
+        "is_primary_key": false,
+        "transform": {},
+        "type": "expression"
+      },
+      {
+        "column_id": "age_in_months",
+        "datatype": "integer",
+        "display_name": null,
+        "expression": {
+          "type": "named",
+          "name": "age_in_months_month_end"
+        },
+        "is_nullable": true,
+        "is_primary_key": false,
+        "transform": {},
+        "type": "expression"
+      },
+      {
+        "column_id": "age_in_years",
+        "datatype": "integer",
+        "display_name": null,
+        "expression": {
+          "context_variables": {
+            "age_in_days": {
+              "type": "named",
+              "name": "age_in_days"
+            }
+          },
+          "statement": "age_in_days / 365.25",
+          "type": "evaluator"
+        },
+        "is_nullable": true,
+        "is_primary_key": false,
+        "transform": {},
+        "type": "expression"
+      },
+      {
+        "column_id": "sex",
+        "datatype": "string",
+        "display_name": null,
+        "expression": {
+          "value_expression": {
+            "datatype": null,
+            "type": "property_name",
+            "property_name": "sex"
+          },
+          "type": "related_doc",
+          "related_doc_type": "CommCareCase",
+          "doc_id_expression": {
+            "type": "icds_parent_id"
+          }
+        },
+        "is_nullable": true,
+        "is_primary_key": false,
+        "transform": {},
+        "type": "expression"
+      },
+      {
+        "column_id": "disabled",
+        "datatype": "string",
+        "display_name": null,
+        "expression": {
+          "name": "disabled",
+          "type": "named"
+        },
+        "is_nullable": true,
+        "is_primary_key": false,
+        "transform": {},
+        "type": "expression"
+      },
+      {
+        "column_id": "caste",
+        "datatype": "string",
+        "display_name": null,
+        "expression": {
+          "name": "caste",
+          "type": "named"
+        },
+        "is_nullable": true,
+        "is_primary_key": false,
+        "transform": {},
+        "type": "expression"
+      },
+      {
+        "column_id": "minority",
+        "datatype": "string",
+        "display_name": null,
+        "expression": {
+          "name": "minority",
+          "type": "named"
+        },
+        "is_nullable": true,
+        "is_primary_key": false,
+        "transform": {},
+        "type": "expression"
+      },
+      {
+        "column_id": "resident",
+        "datatype": "string",
+        "display_name": null,
+        "expression": {
+          "name": "resident",
+          "type": "named"
+        },
+        "is_nullable": true,
+        "is_primary_key": false,
+        "transform": {},
+        "type": "expression"
+      },
+      {
+        "column_id": "age_tranche",
+        "datatype": "integer",
+        "display_name": null,
+        "expression": {
+          "type": "conditional",
+          "test": {
+            "type": "boolean_expression",
+            "operator": "lte",
+            "property_value": 28,
+            "expression": {
+              "type": "named",
+              "name": "age_in_days"
+            }
+          },
+          "expression_if_true": {
+            "type": "constant",
+            "constant": 0
+          },
+          "expression_if_false": {
+            "type": "conditional",
+            "test": {
+              "type": "boolean_expression",
+              "operator": "lte",
+              "property_value": 6,
+              "expression": {
+                "type": "named",
+                "name": "age_in_months_month_start"
+              }
+            },
+            "expression_if_true": {
+              "type": "constant",
+              "constant": 6
+            },
+            "expression_if_false": {
+              "type": "conditional",
+              "test": {
+                "type": "boolean_expression",
+                "operator": "lte",
+                "property_value": 12,
+                "expression": {
+                  "type": "named",
+                  "name": "age_in_months_month_start"
+                }
+              },
+              "expression_if_true": {
+                "type": "constant",
+                "constant": 12
+              },
+              "expression_if_false": {
+                "type": "conditional",
+                "test": {
+                  "type": "boolean_expression",
+                  "operator": "lte",
+                  "property_value": 24,
+                  "expression": {
+                    "type": "named",
+                    "name": "age_in_months_month_start"
+                  }
+                },
+                "expression_if_true": {
+                  "type": "constant",
+                  "constant": 24
+                },
+                "expression_if_false": {
+                  "type": "conditional",
+                  "test": {
+                    "type": "boolean_expression",
+                    "operator": "lte",
+                    "property_value": 36,
+                    "expression": {
+                      "type": "named",
+                      "name": "age_in_months_month_start"
+                    }
+                  },
+                  "expression_if_true": {
+                    "type": "constant",
+                    "constant": 36
+                  },
+                  "expression_if_false": {
+                    "type": "conditional",
+                    "test": {
+                      "type": "boolean_expression",
+                      "operator": "lte",
+                      "property_value": 48,
+                      "expression": {
+                        "type": "named",
+                        "name": "age_in_months_month_start"
+                      }
+                    },
+                    "expression_if_true": {
+                      "type": "constant",
+                      "constant": 48
+                    },
+                    "expression_if_false": {
+                      "type": "conditional",
+                      "test": {
+                        "type": "boolean_expression",
+                        "operator": "lte",
+                        "property_value": 60,
+                        "expression": {
+                          "type": "named",
+                          "name": "age_in_months_month_start"
+                        }
+                      },
+                      "expression_if_true": {
+                        "type": "constant",
+                        "constant": 60
+                      },
+                      "expression_if_false": {
+                        "type": "conditional",
+                        "test": {
+                          "type": "boolean_expression",
+                          "operator": "lte",
+                          "property_value": 72,
+                          "expression": {
+                            "type": "named",
+                            "name": "age_in_months_month_start"
+                          }
+                        },
+                        "expression_if_true": {
+                          "type": "constant",
+                          "constant": 72
+                        },
+                        "expression_if_false": {
+                          "type": "property_name",
+                          "property_name": "no_exist"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "is_nullable": true,
+        "is_primary_key": false,
+        "transform": {},
+        "type": "expression"
+      },
+      {
+        "column_id": "open_in_month",
+        "display_name": null,
+        "filter": {
+          "type": "boolean_expression",
+          "operator": "eq",
+          "property_value": "yes",
+          "expression": {
+            "type": "named",
+            "name": "open_in_month"
+          }
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "alive_in_month",
+        "display_name": null,
+        "filter": {
+          "type": "boolean_expression",
+          "operator": "eq",
+          "property_value": "yes",
+          "expression": {
+            "type": "named",
+            "name": "alive_in_month"
+          }
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "valid_in_month",
+        "display_name": null,
+        "filter": {
+          "type": "boolean_expression",
+          "operator": "eq",
+          "property_value": "yes",
+          "expression": {
+            "type": "named",
+            "name": "valid_in_month"
+          }
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "valid_all_registered_in_month",
+        "display_name": null,
+        "filter": {
+          "type": "boolean_expression",
+          "operator": "eq",
+          "property_value": "yes",
+          "expression": {
+            "type": "named",
+            "name": "valid_all_registered_in_month"
+          }
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "has_aadhar_id",
+        "type": "boolean",
+        "filter": {
+          "type": "boolean_expression",
+          "operator": "eq",
+          "property_value": "yes",
+          "expression": {
+            "type": "icds_get_last_case_property_update",
+            "case_id_expression": {
+              "type": "icds_parent_id"
+            },
+            "case_property": "has_aadhar",
+            "end_date": {
+              "type": "named",
+              "name": "month_end"
+            },
+            "xmlns": [
+              "http://openrosa.org/formdesigner/1D568275-1D19-46DB-8C54-2C9765DF6335",
+              "http://openrosa.org/formdesigner/756ec44475658f3f463f8012632def2bc9fbe731",
+              "http://openrosa.org/formdesigner/991c712a8588b52505d50a6f2262ca962a85e21c"
+            ]
+          }
+        },
+        "comment": "Filter history on add household, add member and edit member"
+      },
+      {
+        "column_id": "wer_eligible",
+        "display_name": null,
+        "filter": {
+          "name": "wer_eligible",
+          "type": "named"
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "weight_recorded_in_month",
+        "type": "expression",
+        "datatype": "decimal",
+        "is_nullable": true,
+        "is_primary_key": false,
+        "transform": {},
+        "display_name": null,
+        "comment": "Filter history on Delivery, Growth Monitoring and Additional Growth Monitoring",
+        "expression": {
+          "type": "conditional",
+          "test": {
+            "type": "named",
+            "name": "wer_eligible"
+          },
+          "expression_if_true": {
+            "type": "icds_get_last_case_property_update",
+            "case_property": "weight_child",
+            "start_date": {
+              "type": "named",
+              "name": "month_start"
+            },
+            "end_date": {
+              "type": "named",
+              "name": "month_end"
+            },
+            "xmlns": [
+              "http://openrosa.org/formdesigner/376FA2E1-6FD1-4C9E-ACB4-E046038CD5E2",
+              "http://openrosa.org/formdesigner/b183124a25f2a0ceab266e4564d3526199ac4d75",
+              "http://openrosa.org/formdesigner/7a55754119359466b1951d7251068bd4f45e73c3"
+            ]
+          },
+          "expression_if_false": {
+            "type": "property_name",
+            "property_name": "no_exist"
+          }
+        }
+      },
+      {
+        "column_id": "nutrition_status_last_recorded",
+        "type": "expression",
+        "datatype": "string",
+        "is_nullable": true,
+        "is_primary_key": false,
+        "transform": {},
+        "display_name": null,
+        "expression": {
+          "type": "conditional",
+          "test": {
+            "type": "named",
+            "name": "wer_eligible"
+          },
+          "expression_if_true": {
+            "type": "named",
+            "name": "nutrition_status_last_recorded"
+          },
+          "expression_if_false": {
+            "type": "property_name",
+            "property_name": "no_exist"
+          }
+        }
+      },
+      {
+        "column_id": "current_month_nutrition_status",
+        "type": "expression",
+        "datatype": "string",
+        "is_nullable": true,
+        "is_primary_key": false,
+        "transform": {},
+        "display_name": null,
+        "expression": {
+          "type": "conditional",
+          "test": {
+            "type": "named",
+            "name": "wer_eligible"
+          },
+          "expression_if_true": {
+            "type": "named",
+            "name": "current_month_nutrition_status"
+          },
+          "expression_if_false": {
+            "type": "property_name",
+            "property_name": "no_exist"
+          }
+        }
+      },
+      {
+        "column_id": "nutrition_status_severely_underweight",
+        "display_name": null,
+        "filter": {
+          "type": "and",
+          "filters": [
+            {
+              "type": "named",
+              "name": "wer_eligible"
+            },
+            {
+              "type": "boolean_expression",
+              "operator": "eq",
+              "property_value": "severely_underweight",
+              "expression": {
+                "type": "named",
+                "name": "nutrition_status_last_recorded"
+              }
+            }
+          ]
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "nutrition_status_moderately_underweight",
+        "display_name": null,
+        "filter": {
+          "type": "and",
+          "filters": [
+            {
+              "type": "named",
+              "name": "wer_eligible"
+            },
+            {
+              "type": "boolean_expression",
+              "operator": "eq",
+              "property_value": "moderately_underweight",
+              "expression": {
+                "type": "named",
+                "name": "nutrition_status_last_recorded"
+              }
+            }
+          ]
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "nutrition_status_normal",
+        "display_name": null,
+        "filter": {
+          "type": "and",
+          "filters": [
+            {
+              "type": "named",
+              "name": "wer_eligible"
+            },
+            {
+              "type": "boolean_expression",
+              "operator": "eq",
+              "property_value": "normal",
+              "expression": {
+                "type": "named",
+                "name": "nutrition_status_last_recorded"
+              }
+            }
+          ]
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "nutrition_status_weighed",
+        "display_name": null,
+        "filter": {
+          "type": "and",
+          "filters": [
+            {
+              "type": "not",
+              "filter": {
+                "type": "boolean_expression",
+                "operator": "eq",
+                "property_value": "unweighed",
+                "expression": {
+                  "type": "named",
+                  "name": "current_month_nutrition_status"
+                }
+              }
+            },
+            {
+              "type": "named",
+              "name": "wer_eligible"
+            }
+          ]
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "nutrition_status_unweighed",
+        "display_name": null,
+        "filter": {
+          "type": "and",
+          "filters": [
+            {
+              "type": "boolean_expression",
+              "operator": "eq",
+              "property_value": "unweighed",
+              "expression": {
+                "type": "named",
+                "name": "current_month_nutrition_status"
+              }
+            },
+            {
+              "type": "named",
+              "name": "wer_eligible"
+            }
+          ]
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "height_eligible",
+        "display_name": null,
+        "filter": {
+          "name": "height_eligible",
+          "type": "named"
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "height_recorded_in_month",
+        "type": "expression",
+        "datatype": "decimal",
+        "is_nullable": true,
+        "is_primary_key": false,
+        "transform": {},
+        "display_name": null,
+        "comment": "Filter history on Additional Growth Monitoring",
+        "expression": {
+          "type": "conditional",
+          "test": {
+            "type": "named",
+            "name": "height_eligible"
+          },
+          "expression_if_true": {
+            "type": "named",
+            "name": "height_recorded_in_month"
+          },
+          "expression_if_false": {
+            "type": "property_name",
+            "property_name": "no_exist"
+          }
+        }
+      },
+      {
+        "column_id": "height_measured_in_month",
+        "display_name": null,
+        "filter": {
+          "type": "and",
+          "filters": [
+            {
+              "type": "not",
+              "filter": {
+                "type": "boolean_expression",
+                "operator": "in",
+                "property_value": [
+                  "",
+                  null
+                ],
+                "expression": {
+                  "type": "named",
+                  "name": "height_recorded_in_month"
+                }
+              }
+            },
+            {
+              "type": "named",
+              "name": "height_eligible"
+            }
+          ]
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "height_not_measured_in_month",
+        "display_name": null,
+        "filter": {
+          "type": "and",
+          "filters": [
+            {
+              "type": "boolean_expression",
+              "operator": "in",
+              "property_value": [
+                "",
+                null
+              ],
+              "expression": {
+                "type": "named",
+                "name": "height_recorded_in_month"
+              }
+            },
+            {
+              "type": "named",
+              "name": "height_eligible"
+            }
+          ]
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "stunting_last_recorded",
+        "type": "expression",
+        "datatype": "string",
+        "is_nullable": true,
+        "is_primary_key": false,
+        "transform": {},
+        "display_name": null,
+        "expression": {
+          "type": "conditional",
+          "test": {
+            "type": "named",
+            "name": "height_eligible"
+          },
+          "expression_if_true": {
+            "type": "named",
+            "name": "stunting_last_recorded"
+          },
+          "expression_if_false": {
+            "type": "property_name",
+            "property_name": "no_exist"
+          }
+        }
+      },
+      {
+        "column_id": "current_month_stunting",
+        "type": "expression",
+        "datatype": "string",
+        "is_nullable": true,
+        "is_primary_key": false,
+        "transform": {},
+        "display_name": null,
+        "expression": {
+          "type": "conditional",
+          "test": {
+            "type": "named",
+            "name": "height_eligible"
+          },
+          "expression_if_true": {
+            "type": "named",
+            "name": "current_month_stunting"
+          },
+          "expression_if_false": {
+            "type": "property_name",
+            "property_name": "no_exist"
+          }
+        }
+      },
+      {
+        "column_id": "stunting_severe",
+        "display_name": null,
+        "filter": {
+          "type": "and",
+          "filters": [
+            {
+              "type": "named",
+              "name": "height_eligible"
+            },
+            {
+              "type": "boolean_expression",
+              "operator": "eq",
+              "property_value": "severe",
+              "expression": {
+                "type": "named",
+                "name": "stunting_last_recorded"
+              }
+            }
+          ]
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "stunting_moderate",
+        "display_name": null,
+        "filter": {
+          "type": "and",
+          "filters": [
+            {
+              "type": "named",
+              "name": "height_eligible"
+            },
+            {
+              "type": "boolean_expression",
+              "operator": "eq",
+              "property_value": "moderate",
+              "expression": {
+                "type": "named",
+                "name": "stunting_last_recorded"
+              }
+            }
+          ]
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "stunting_normal",
+        "display_name": null,
+        "filter": {
+          "type": "and",
+          "filters": [
+            {
+              "type": "named",
+              "name": "height_eligible"
+            },
+            {
+              "type": "boolean_expression",
+              "operator": "eq",
+              "property_value": "normal",
+              "expression": {
+                "type": "named",
+                "name": "stunting_last_recorded"
+              }
+            }
+          ]
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "wasting_last_recorded",
+        "type": "expression",
+        "datatype": "string",
+        "is_nullable": true,
+        "is_primary_key": false,
+        "transform": {},
+        "display_name": null,
+        "expression": {
+          "type": "conditional",
+          "test": {
+            "type": "named",
+            "name": "height_eligible"
+          },
+          "expression_if_true": {
+            "type": "named",
+            "name": "wasting_last_recorded"
+          },
+          "expression_if_false": {
+            "type": "property_name",
+            "property_name": "no_exist"
+          }
+        }
+      },
+      {
+        "column_id": "current_month_wasting",
+        "type": "expression",
+        "datatype": "string",
+        "is_nullable": true,
+        "is_primary_key": false,
+        "transform": {},
+        "display_name": null,
+        "expression": {
+          "type": "conditional",
+          "test": {
+            "type": "named",
+            "name": "height_eligible"
+          },
+          "expression_if_true": {
+            "type": "named",
+            "name": "current_month_wasting"
+          },
+          "expression_if_false": {
+            "type": "property_name",
+            "property_name": "no_exist"
+          }
+        }
+      },
+      {
+        "column_id": "wasting_severe",
+        "display_name": null,
+        "filter": {
+          "type": "and",
+          "filters": [
+            {
+              "type": "named",
+              "name": "height_eligible"
+            },
+            {
+              "type": "boolean_expression",
+              "operator": "eq",
+              "property_value": "severe",
+              "expression": {
+                "type": "named",
+                "name": "wasting_last_recorded"
+              }
+            }
+          ]
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "wasting_moderate",
+        "display_name": null,
+        "filter": {
+          "type": "and",
+          "filters": [
+            {
+              "type": "named",
+              "name": "height_eligible"
+            },
+            {
+              "type": "boolean_expression",
+              "operator": "eq",
+              "property_value": "moderate",
+              "expression": {
+                "type": "named",
+                "name": "wasting_last_recorded"
+              }
+            }
+          ]
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "wasting_normal",
+        "display_name": null,
+        "filter": {
+          "type": "and",
+          "filters": [
+            {
+              "type": "named",
+              "name": "height_eligible"
+            },
+            {
+              "type": "boolean_expression",
+              "operator": "eq",
+              "property_value": "normal",
+              "expression": {
+                "type": "named",
+                "name": "wasting_last_recorded"
+              }
+            }
+          ]
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "thr_eligible",
+        "display_name": null,
+        "filter": {
+          "name": "thr_eligible",
+          "type": "named"
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "num_rations_distributed",
+        "type": "expression",
+        "datatype": "integer",
+        "is_nullable": true,
+        "is_primary_key": false,
+        "transform": {},
+        "display_name": null,
+        "expression": {
+          "type": "conditional",
+          "test": {
+            "type": "named",
+            "name": "thr_eligible"
+          },
+          "expression_if_true": {
+            "type": "named",
+            "name": "rations_distributed"
+          },
+          "expression_if_false": {
+            "type": "property_name",
+            "property_name": "no_exist"
+          }
+        }
+      },
+      {
+        "column_id": "rations_21_plus_distributed",
+        "display_name": null,
+        "filter": {
+          "type": "and",
+          "filters": [
+            {
+              "name": "thr_eligible",
+              "type": "named"
+            },
+            {
+              "type": "boolean_expression",
+              "operator": "gte",
+              "property_value": 21,
+              "expression": {
+                "type": "named",
+                "name": "rations_distributed"
+              }
+            }
+          ]
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "pse_eligible",
+        "display_name": null,
+        "filter": {
+          "name": "pse_eligible",
+          "type": "named"
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "pse_days_attended",
+        "type": "expression",
+        "datatype": "integer",
+        "is_nullable": true,
+        "is_primary_key": false,
+        "transform": {},
+        "display_name": null,
+        "expression": {
+          "type": "conditional",
+          "test": {
+            "type": "named",
+            "name": "pse_eligible"
+          },
+          "expression_if_true": {
+            "type": "named",
+            "name": "pse_days"
+          },
+          "expression_if_false": {
+            "type": "property_name",
+            "property_name": "no_exist"
+          }
+        }
+      },
+      {
+        "column_id": "pse_attended_16_days",
+        "display_name": null,
+        "filter": {
+          "type": "and",
+          "filters": [
+            {
+              "name": "pse_eligible",
+              "type": "named"
+            },
+            {
+              "type": "boolean_expression",
+              "operator": "gte",
+              "property_value": 16,
+              "expression": {
+                "type": "named",
+                "name": "pse_days"
+              }
+            }
+          ]
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "born_in_month",
+        "display_name": null,
+        "filter": {
+          "name": "born_in_month",
+          "type": "named"
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "low_birth_weight_born_in_month",
+        "display_name": null,
+        "filter": {
+          "type": "and",
+          "filters": [
+            {
+              "type": "boolean_expression",
+              "operator": "eq",
+              "property_value": "yes",
+              "expression": {
+                "type": "root_doc",
+                "expression": {
+                  "datatype": null,
+                  "property_name": "low_birth_weight",
+                  "type": "property_name"
+                }
+              }
+            },
+            {
+              "type": "named",
+              "name": "born_in_month"
+            }
+          ]
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "bf_at_birth_born_in_month",
+        "display_name": null,
+        "filter": {
+          "type": "and",
+          "filters": [
+            {
+              "type": "boolean_expression",
+              "operator": "eq",
+              "expression": {
+                "type": "root_doc",
+                "expression": {
+                  "type": "property_name",
+                  "property_name": "breastfed_within_first"
+                }
+              },
+              "property_value": "yes"
+            },
+            {
+              "type": "named",
+              "name": "born_in_month"
+            }
+          ]
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "pnc_eligible",
+        "display_name": null,
+        "filter": {
+          "name": "pnc_eligible",
+          "type": "named"
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "ebf_eligible",
+        "display_name": null,
+        "filter": {
+          "name": "ebf_eligible",
+          "type": "named"
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "ebf_in_month",
+        "display_name": null,
+        "filter": {
+          "type": "and",
+          "filters": [
+            {
+              "type": "boolean_expression",
+              "operator": "eq",
+              "property_value": "yes",
+              "expression": {
+                "type": "nested",
+                "argument_expression": {
+                  "type": "named",
+                  "name": "get_ebf_repeat_in_month"
+                },
+                "value_expression": {
+                  "type": "property_name",
+                  "property_name": "is_ebf"
+                }
+              }
+            },
+            {
+              "name": "ebf_eligible",
+              "type": "named"
+            }
+          ]
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "ebf_no_info_recorded",
+        "display_name": null,
+        "filter": {
+          "type": "and",
+          "filters": [
+            {
+              "type": "boolean_expression",
+              "operator": "in",
+              "property_value": [
+                "",
+                null
+              ],
+              "expression": {
+                "type": "named",
+                "name": "get_ebf_repeat_in_month"
+              }
+            },
+            {
+              "name": "ebf_eligible",
+              "type": "named"
+            }
+          ]
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "ebf_not_breastfeeding_reason",
+        "type": "expression",
+        "datatype": "string",
+        "is_nullable": true,
+        "is_primary_key": false,
+        "transform": {},
+        "display_name": null,
+        "expression": {
+          "type": "conditional",
+          "test": {
+            "type": "named",
+            "name": "ebf_eligible"
+          },
+          "expression_if_true": {
+            "type": "named",
+            "name": "ebf_not_breastfeeding_reason"
+          },
+          "expression_if_false": {
+            "type": "property_name",
+            "property_name": "no_exist"
+          }
+        }
+      },
+      {
+        "column_id": "ebf_drinking_liquid",
+        "display_name": null,
+        "filter": {
+          "type": "and",
+          "filters": [
+            {
+              "type": "or",
+              "filters": [
+                {
+                  "type": "boolean_expression",
+                  "operator": "eq",
+                  "property_value": "yes",
+                  "expression": {
+                    "type": "nested",
+                    "argument_expression": {
+                      "type": "named",
+                      "name": "get_ebf_repeat_in_month"
+                    },
+                    "value_expression": {
+                      "type": "property_name",
+                      "property_name": "water_or_milk"
+                    }
+                  }
+                },
+                {
+                  "type": "boolean_expression",
+                  "operator": "eq",
+                  "property_value": "yes",
+                  "expression": {
+                    "type": "nested",
+                    "argument_expression": {
+                      "type": "named",
+                      "name": "get_ebf_repeat_in_month"
+                    },
+                    "value_expression": {
+                      "type": "property_name",
+                      "property_name": "other_milk_to_child"
+                    }
+                  }
+                },
+                {
+                  "type": "boolean_expression",
+                  "operator": "eq",
+                  "property_value": "yes",
+                  "expression": {
+                    "type": "nested",
+                    "argument_expression": {
+                      "type": "named",
+                      "name": "get_ebf_repeat_in_month"
+                    },
+                    "value_expression": {
+                      "type": "property_name",
+                      "property_name": "tea_other"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "name": "ebf_eligible",
+              "type": "named"
+            }
+          ]
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "ebf_eating",
+        "display_name": null,
+        "filter": {
+          "type": "and",
+          "filters": [
+            {
+              "type": "boolean_expression",
+              "operator": "eq",
+              "property_value": "yes",
+              "expression": {
+                "type": "nested",
+                "argument_expression": {
+                  "type": "named",
+                  "name": "get_ebf_repeat_in_month"
+                },
+                "value_expression": {
+                  "type": "property_name",
+                  "property_name": "eating"
+                }
+              }
+            },
+            {
+              "name": "ebf_eligible",
+              "type": "named"
+            }
+          ]
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "ebf_no_bf_no_milk",
+        "display_name": null,
+        "filter": {
+          "type": "and",
+          "filters": [
+            {
+              "type": "boolean_expression",
+              "operator": "eq",
+              "property_value": "not_enough_milk",
+              "expression": {
+                "type": "named",
+                "name": "ebf_not_breastfeeding_reason"
+              }
+            },
+            {
+              "name": "ebf_eligible",
+              "type": "named"
+            }
+          ]
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "ebf_no_bf_pregnant_again",
+        "display_name": null,
+        "filter": {
+          "type": "and",
+          "filters": [
+            {
+              "type": "boolean_expression",
+              "operator": "eq",
+              "property_value": "pregnant_again",
+              "expression": {
+                "type": "named",
+                "name": "ebf_not_breastfeeding_reason"
+              }
+            },
+            {
+              "name": "ebf_eligible",
+              "type": "named"
+            }
+          ]
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "ebf_no_bf_child_too_old",
+        "display_name": null,
+        "filter": {
+          "type": "and",
+          "filters": [
+            {
+              "type": "boolean_expression",
+              "operator": "eq",
+              "property_value": "child_too_old",
+              "expression": {
+                "type": "named",
+                "name": "ebf_not_breastfeeding_reason"
+              }
+            },
+            {
+              "name": "ebf_eligible",
+              "type": "named"
+            }
+          ]
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "ebf_no_bf_mother_sick",
+        "display_name": null,
+        "filter": {
+          "type": "and",
+          "filters": [
+            {
+              "type": "boolean_expression",
+              "operator": "eq",
+              "property_value": "child_mother_sick",
+              "expression": {
+                "type": "named",
+                "name": "ebf_not_breastfeeding_reason"
+              }
+            },
+            {
+              "name": "ebf_eligible",
+              "type": "named"
+            }
+          ]
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "cf_eligible",
+        "display_name": null,
+        "filter": {
+          "name": "cf_eligible",
+          "type": "named"
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "cf_in_month",
+        "display_name": null,
+        "filter": {
+          "type": "and",
+          "filters": [
+            {
+              "type": "boolean_expression",
+              "operator": "eq",
+              "property_value": "yes",
+              "expression": {
+                "type": "nested",
+                "argument_expression": {
+                  "type": "named",
+                  "name": "get_latest_cf_repeat"
+                },
+                "value_expression": {
+                  "type": "property_name",
+                  "property_name": "comp_feeding"
+                }
+              }
+            },
+            {
+              "name": "cf_eligible",
+              "type": "named"
+            }
+          ]
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "cf_initiation_eligible",
+        "display_name": null,
+        "filter": {
+          "name": "cf_initiation_eligible",
+          "type": "named"
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "cf_initiated",
+        "display_name": null,
+        "filter": {
+          "type": "and",
+          "filters": [
+            {
+              "name": "cf_initiation_eligible",
+              "type": "named"
+            },
+            {
+              "type": "boolean_expression",
+              "operator": "gt",
+              "property_value": 0,
+              "expression": {
+                "type": "reduce_items",
+                "aggregation_fn": "count",
+                "items_expression": {
+                  "type": "filter_items",
+                  "items_expression": {
+                    "type": "named",
+                    "name": "get_all_cf_repeats"
+                  },
+                  "filter_expression": {
+                    "type": "boolean_expression",
+                    "operator": "eq",
+                    "property_value": "yes",
+                    "expression": {
+                      "type": "property_name",
+                      "property_name": "comp_feeding"
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "cf_diet_diversity",
+        "display_name": null,
+        "filter": {
+          "type": "and",
+          "filters": [
+            {
+              "type": "boolean_expression",
+              "operator": "eq",
+              "property_value": "yes",
+              "expression": {
+                "type": "nested",
+                "argument_expression": {
+                  "type": "named",
+                  "name": "get_latest_cf_repeat"
+                },
+                "value_expression": {
+                  "type": "property_name",
+                  "property_name": "diet_diversity"
+                }
+              }
+            },
+            {
+              "name": "cf_eligible",
+              "type": "named"
+            }
+          ]
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "cf_diet_quantity",
+        "display_name": null,
+        "filter": {
+          "type": "and",
+          "filters": [
+            {
+              "type": "boolean_expression",
+              "operator": "eq",
+              "property_value": "yes",
+              "expression": {
+                "type": "nested",
+                "argument_expression": {
+                  "type": "named",
+                  "name": "get_latest_cf_repeat"
+                },
+                "value_expression": {
+                  "type": "property_name",
+                  "property_name": "diet_quantity"
+                }
+              }
+            },
+            {
+              "name": "cf_eligible",
+              "type": "named"
+            }
+          ]
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "cf_handwashing",
+        "display_name": null,
+        "filter": {
+          "type": "and",
+          "filters": [
+            {
+              "type": "boolean_expression",
+              "operator": "eq",
+              "property_value": "1",
+              "expression": {
+                "type": "nested",
+                "argument_expression": {
+                  "type": "named",
+                  "name": "get_latest_cf_repeat"
+                },
+                "value_expression": {
+                  "type": "property_name",
+                  "property_name": "hand_wash"
+                }
+              }
+            },
+            {
+              "name": "cf_eligible",
+              "type": "named"
+            }
+          ]
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "cf_demo",
+        "display_name": null,
+        "filter": {
+          "type": "and",
+          "filters": [
+            {
+              "type": "boolean_expression",
+              "operator": "gt",
+              "property_value": 0,
+              "expression": {
+                "type": "reduce_items",
+                "aggregation_fn": "count",
+                "items_expression": {
+                  "type": "filter_items",
+                  "items_expression": {
+                    "type": "named",
+                    "name": "get_all_cf_repeats"
+                  },
+                  "filter_expression": {
+                    "type": "boolean_expression",
+                    "operator": "eq",
+                    "property_value": "yes",
+                    "expression": {
+                      "type": "property_name",
+                      "property_name": "demo_comp_feeding"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "name": "cf_eligible",
+              "type": "named"
+            }
+          ]
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "fully_immunized_eligible",
+        "display_name": null,
+        "filter": {
+          "name": "fully_immunized_eligible",
+          "type": "named"
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "fully_immunized_on_time",
+        "display_name": null,
+        "filter": {
+          "type": "and",
+          "filters": [
+            {
+              "type": "and",
+              "filters": [
+                {
+                  "type": "not",
+                  "filter": {
+                    "operator": "in",
+                    "type": "boolean_expression",
+                    "expression": {
+                      "type": "related_doc",
+                      "datatype": "date",
+                      "related_doc_type": "CommCareCase",
+                      "doc_id_expression": {
+                        "type": "named",
+                        "name": "task_case_id"
+                      },
+                      "value_expression": {
+                        "type": "property_name",
+                        "property_name": "immun_one_year_date"
+                      }
+                    },
+                    "property_value": [
+                      "",
+                      null
+                    ]
+                  }
+                },
+                {
+                  "type": "boolean_expression",
+                  "operator": "lte",
+                  "property_value": 365,
+                  "expression": {
+                    "from_date_expression": {
+                      "doc_id_expression": {
+                        "type": "icds_parent_id"
+                      },
+                      "related_doc_type": "CommCareCase",
+                      "type": "related_doc",
+                      "value_expression": {
+                        "datatype": "date",
+                        "property_name": "dob",
+                        "type": "property_name"
+                      }
+                    },
+                    "to_date_expression": {
+                      "type": "related_doc",
+                      "datatype": "date",
+                      "related_doc_type": "CommCareCase",
+                      "doc_id_expression": {
+                        "type": "named",
+                        "name": "task_case_id"
+                      },
+                      "value_expression": {
+                        "type": "property_name",
+                        "property_name": "immun_one_year_date"
+                      }
+                    },
+                    "type": "diff_days"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "fully_immunized_eligible",
+              "type": "named"
+            },
+            {
+              "name": "immun_date_before_month_end",
+              "type": "named"
+            }
+          ]
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "fully_immunized_late",
+        "display_name": null,
+        "filter": {
+          "type": "and",
+          "filters": [
+            {
+              "type": "and",
+              "filters": [
+                {
+                  "type": "not",
+                  "filter": {
+                    "operator": "in",
+                    "type": "boolean_expression",
+                    "expression": {
+                      "type": "related_doc",
+                      "datatype": "date",
+                      "related_doc_type": "CommCareCase",
+                      "doc_id_expression": {
+                        "type": "named",
+                        "name": "task_case_id"
+                      },
+                      "value_expression": {
+                        "type": "property_name",
+                        "property_name": "immun_one_year_date"
+                      }
+                    },
+                    "property_value": [
+                      "",
+                      null
+                    ]
+                  }
+                },
+                {
+                  "type": "boolean_expression",
+                  "operator": "gt",
+                  "property_value": 365,
+                  "expression": {
+                    "from_date_expression": {
+                      "doc_id_expression": {
+                        "type": "icds_parent_id"
+                      },
+                      "related_doc_type": "CommCareCase",
+                      "type": "related_doc",
+                      "value_expression": {
+                        "datatype": "date",
+                        "property_name": "dob",
+                        "type": "property_name"
+                      }
+                    },
+                    "to_date_expression": {
+                      "type": "related_doc",
+                      "datatype": "date",
+                      "related_doc_type": "CommCareCase",
+                      "doc_id_expression": {
+                        "type": "named",
+                        "name": "task_case_id"
+                      },
+                      "value_expression": {
+                        "type": "property_name",
+                        "property_name": "immun_one_year_date"
+                      }
+                    },
+                    "type": "diff_days"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "fully_immunized_eligible",
+              "type": "named"
+            },
+            {
+              "name": "immun_date_before_month_end",
+              "type": "named"
+            }
+          ]
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "counsel_ebf",
+        "display_name": null,
+        "filter": {
+          "type": "and",
+          "filters": [
+            {
+              "type": "boolean_expression",
+              "operator": "gt",
+              "property_value": 0,
+              "expression": {
+                "type": "reduce_items",
+                "aggregation_fn": "count",
+                "items_expression": {
+                  "type": "filter_items",
+                  "items_expression": {
+                    "type": "named",
+                    "name": "get_all_ebf_repeats"
+                  },
+                  "filter_expression": {
+                    "type": "or",
+                    "filters": [
+                      {
+                        "type": "boolean_expression",
+                        "operator": "eq",
+                        "property_value": "yes",
+                        "expression": {
+                          "type": "property_name",
+                          "property_name": "counsel_exclusive_bf"
+                        }
+                      },
+                      {
+                        "type": "boolean_expression",
+                        "operator": "eq",
+                        "property_value": "yes",
+                        "expression": {
+                          "type": "property_name",
+                          "property_name": "counsel_only_milk"
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            {
+              "name": "ebf_eligible",
+              "type": "named"
+            }
+          ]
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "counsel_adequate_bf",
+        "display_name": null,
+        "filter": {
+          "type": "and",
+          "filters": [
+            {
+              "type": "boolean_expression",
+              "operator": "gt",
+              "property_value": 0,
+              "expression": {
+                "type": "reduce_items",
+                "aggregation_fn": "count",
+                "items_expression": {
+                  "type": "filter_items",
+                  "items_expression": {
+                    "type": "named",
+                    "name": "get_all_ebf_repeats"
+                  },
+                  "filter_expression": {
+                    "type": "boolean_expression",
+                    "operator": "eq",
+                    "property_value": "yes",
+                    "expression": {
+                      "type": "property_name",
+                      "property_name": "counsel_adequate_bf"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "name": "ebf_eligible",
+              "type": "named"
+            }
+          ]
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "counsel_pediatric_ifa",
+        "display_name": null,
+        "filter": {
+          "type": "and",
+          "filters": [
+            {
+              "type": "boolean_expression",
+              "operator": "gt",
+              "property_value": 0,
+              "expression": {
+                "type": "reduce_items",
+                "aggregation_fn": "count",
+                "items_expression": {
+                  "type": "filter_items",
+                  "items_expression": {
+                    "type": "named",
+                    "name": "get_all_cf_repeats"
+                  },
+                  "filter_expression": {
+                    "type": "boolean_expression",
+                    "operator": "eq",
+                    "property_value": "yes",
+                    "expression": {
+                      "type": "property_name",
+                      "property_name": "counselled_pediatric_ifa"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "name": "cf_eligible",
+              "type": "named"
+            }
+          ]
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "counsel_comp_feeding_vid",
+        "display_name": null,
+        "filter": {
+          "type": "and",
+          "filters": [
+            {
+              "type": "boolean_expression",
+              "operator": "gt",
+              "property_value": 0,
+              "expression": {
+                "type": "reduce_items",
+                "aggregation_fn": "count",
+                "items_expression": {
+                  "type": "filter_items",
+                  "filter_expression": {
+                    "type": "boolean_expression",
+                    "operator": "eq",
+                    "property_value": "yes",
+                    "expression": {
+                      "type": "property_path",
+                      "property_path": [
+                        "form",
+                        "play_comp_feeding_vid"
+                      ]
+                    }
+                  },
+                  "items_expression": {
+                    "type": "icds_get_case_forms_by_date",
+                    "xmlns": [
+                      "http://openrosa.org/formdesigner/792DAF2B-E117-424A-A673-34E1513ABD88"
+                    ],
+                    "end_date": {
+                      "type": "named",
+                      "name": "month_end"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "name": "cf_eligible",
+              "type": "named"
+            }
+          ]
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "counsel_increase_food_bf",
+        "display_name": null,
+        "filter": {
+          "type": "and",
+          "filters": [
+            {
+              "type": "boolean_expression",
+              "operator": "gt",
+              "property_value": 0,
+              "expression": {
+                "type": "reduce_items",
+                "aggregation_fn": "count",
+                "items_expression": {
+                  "type": "filter_items",
+                  "filter_expression": {
+                    "type": "boolean_expression",
+                    "operator": "eq",
+                    "property_value": "yes",
+                    "expression": {
+                      "type": "property_path",
+                      "property_path": [
+                        "form",
+                        "counsel_increase_food_bf"
+                      ]
+                    }
+                  },
+                  "items_expression": {
+                    "type": "icds_get_case_forms_by_date",
+                    "xmlns": [
+                      "http://openrosa.org/formdesigner/D4A7ABD2-A7B8-431B-A88B-38245173B0AE"
+                    ],
+                    "end_date": {
+                      "type": "named",
+                      "name": "month_end"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "name": "pnc_eligible",
+              "type": "named"
+            }
+          ]
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "counsel_manage_breast_problems",
+        "display_name": null,
+        "filter": {
+          "type": "and",
+          "filters": [
+            {
+              "type": "boolean_expression",
+              "operator": "gt",
+              "property_value": 0,
+              "expression": {
+                "type": "reduce_items",
+                "aggregation_fn": "count",
+                "items_expression": {
+                  "type": "filter_items",
+                  "filter_expression": {
+                    "type": "boolean_expression",
+                    "operator": "eq",
+                    "property_value": "yes",
+                    "expression": {
+                      "type": "property_path",
+                      "property_path": [
+                        "form",
+                        "counsel_breast"
+                      ]
+                    }
+                  },
+                  "items_expression": {
+                    "type": "icds_get_case_forms_by_date",
+                    "xmlns": [
+                      "http://openrosa.org/formdesigner/D4A7ABD2-A7B8-431B-A88B-38245173B0AE"
+                    ],
+                    "end_date": {
+                      "type": "named",
+                      "name": "month_end"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "name": "pnc_eligible",
+              "type": "named"
+            }
+          ]
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "counsel_skin_to_skin",
+        "display_name": null,
+        "filter": {
+          "type": "and",
+          "filters": [
+            {
+              "type": "boolean_expression",
+              "operator": "gt",
+              "property_value": 0,
+              "expression": {
+                "type": "reduce_items",
+                "aggregation_fn": "count",
+                "items_expression": {
+                  "type": "filter_items",
+                  "filter_expression": {
+                    "type": "boolean_expression",
+                    "operator": "eq",
+                    "property_value": "yes",
+                    "expression": {
+                      "type": "property_name",
+                      "property_name": "skin_to_skin"
+                    }
+                  },
+                  "items_expression": {
+                    "type": "icds_get_all_forms_repeats",
+                    "forms_expression": {
+                      "type": "icds_get_case_forms_by_date",
+                      "xmlns": [
+                        "http://openrosa.org/formdesigner/D4A7ABD2-A7B8-431B-A88B-38245173B0AE"
+                      ],
+                      "end_date": {
+                        "type": "named",
+                        "name": "month_end"
+                      }
+                    },
+                    "repeat_path": [
+                      "form",
+                      "child",
+                      "item"
+                    ],
+                    "case_id_path": [
+                      "@id"
+                    ]
+                  }
+                }
+              }
+            },
+            {
+              "name": "pnc_eligible",
+              "type": "named"
+            }
+          ]
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "counsel_immediate_breastfeeding",
+        "display_name": null,
+        "filter": {
+          "type": "and",
+          "filters": [
+            {
+              "type": "boolean_expression",
+              "operator": "gt",
+              "expression": {
+                "type": "reduce_items",
+                "aggregation_fn": "count",
+                "items_expression": {
+                  "type": "icds_get_case_forms_by_date",
+                  "xmlns": [
+                    "http://openrosa.org/formdesigner/2864010F-B1B1-4711-8C59-D5B2B81D65DB"
+                  ],
+                  "form_filter": {
+                    "operator": "eq",
+                    "type": "boolean_expression",
+                    "expression": {
+                      "datatype": "string",
+                      "type": "property_path",
+                      "property_path": [
+                        "form",
+                        "bp2",
+                        "immediate_breastfeeding"
+                      ]
+                    },
+                    "property_value": "yes"
+                  },
+                  "case_id_expression": {
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareCase",
+                    "doc_id_expression": {
+                      "type": "icds_parent_id"
+                    },
+                    "value_expression": {
+                      "value_expression": {
+                        "datatype": null,
+                        "type": "property_name",
+                        "property_name": "referenced_id"
+                      },
+                      "type": "nested",
+                      "argument_expression": {
+                        "type": "array_index",
+                        "array_expression": {
+                          "type": "filter_items",
+                          "items_expression": {
+                            "datatype": "array",
+                            "type": "property_name",
+                            "property_name": "indices"
+                          },
+                          "filter_expression": {
+                            "type": "boolean_expression",
+                            "operator": "eq",
+                            "property_value": "mother",
+                            "expression": {
+                              "type": "property_name",
+                              "property_name": "identifier"
+                            }
+                          }
+                        },
+                        "index_expression": {
+                          "type": "constant",
+                          "constant": 0
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "property_value": 0
+            },
+            {
+              "name": "born_in_month",
+              "type": "named"
+            },
+            {
+              "type": "boolean_expression",
+              "operator": "eq",
+              "property_value": "yes",
+              "expression": {
+                "type": "named",
+                "name": "valid_in_month"
+              }
+            }
+          ]
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "dob",
+        "display_name": null,
+        "datatype": "date",
+        "type": "expression",
+        "transform": {},
+        "is_nullable": true,
+        "is_primary_key": false,
+        "expression": {
+          "type": "related_doc",
+          "related_doc_type": "CommCareCase",
+          "doc_id_expression": {
+            "type": "icds_parent_id"
+          },
+          "value_expression": {
+            "datatype": "date",
+            "property_name": "dob",
+            "type": "property_name"
+          }
+        }
+      }
+    ],
+    "named_expressions": {
+      "month_start": {
+        "type": "month_start_date",
+        "date_expression": {
+          "date_expression": {
+            "type": "icds_datetime_now"
+          },
+          "type": "add_months",
+          "months_expression": {
+            "type": "evaluator",
+            "context_variables": {
+              "iteration": {
+                "type": "base_iteration_number"
+              }
+            },
+            "statement": "iteration - 2"
+          }
+        }
+      },
+      "month_end": {
+        "type": "month_end_date",
+        "date_expression": {
+          "date_expression": {
+            "type": "icds_datetime_now"
+          },
+          "type": "add_months",
+          "months_expression": {
+            "type": "evaluator",
+            "context_variables": {
+              "iteration": {
+                "type": "base_iteration_number"
+              }
+            },
+            "statement": "iteration - 2"
+          }
+        }
+      },
+      "age_in_days": {
+        "type": "diff_days",
+        "from_date_expression": {
+          "type": "related_doc",
+          "related_doc_type": "CommCareCase",
+          "doc_id_expression": {
+            "type": "icds_parent_id"
+          },
+          "value_expression": {
+            "datatype": "date",
+            "property_name": "dob",
+            "type": "property_name"
+          }
+        },
+        "to_date_expression": {
+          "type": "named",
+          "name": "month_end"
+        }
+      },
+      "age_in_months_month_start": {
+        "type": "evaluator",
+        "statement": "age_in_days / 30.4",
+        "context_variables": {
+          "age_in_days": {
+            "type": "diff_days",
+            "from_date_expression": {
+              "type": "related_doc",
+              "related_doc_type": "CommCareCase",
+              "doc_id_expression": {
+                "type": "icds_parent_id"
+              },
+              "value_expression": {
+                "datatype": "date",
+                "property_name": "dob",
+                "type": "property_name"
+              }
+            },
+            "to_date_expression": {
+              "type": "named",
+              "name": "month_start"
+            }
+          }
+        }
+      },
+      "age_in_months_month_end": {
+        "type": "evaluator",
+        "statement": "age_in_days / 30.4",
+        "context_variables": {
+          "age_in_days": {
+            "type": "named",
+            "name": "age_in_days"
+          }
+        }
+      },
+      "rations_distributed": {
+        "type": "reduce_items",
+        "aggregation_fn": "sum",
+        "items_expression": {
+          "type": "map_items",
+          "items_expression": {
+            "type": "icds_get_all_forms_repeats",
+            "forms_expression": {
+              "type": "icds_get_case_forms_by_date",
+              "xmlns": [
+                "http://openrosa.org/formdesigner/F1B73934-8B70-4CEE-B462-3E4C81F80E4A"
+              ],
+              "start_date": {
+                "type": "named",
+                "name": "month_start"
+              },
+              "end_date": {
+                "type": "named",
+                "name": "month_end"
+              },
+              "form_filter": {
+                "operator": "eq",
+                "type": "boolean_expression",
+                "expression": {
+                  "datatype": null,
+                  "type": "property_path",
+                  "property_path": [
+                    "form",
+                    "thr_given_child"
+                  ]
+                },
+                "property_value": "1"
+              }
+            },
+            "repeat_path": [
+              "form",
+              "child_thr",
+              "child_persons",
+              "item"
+            ],
+            "case_id_path": [
+              "child_health_case_id"
+            ],
+            "repeat_filter": {
+              "type": "boolean_expression",
+              "operator": "eq",
+              "expression": {
+                "datatype": "string",
+                "type": "property_name",
+                "property_name": "distribute_ration_child"
+              },
+              "property_value": "yes"
+            }
+          },
+          "map_expression": {
+            "datatype": "integer",
+            "type": "property_name",
+            "property_name": "days_ration_given_child"
+          }
+        }
+      },
+      "caste": {
+        "value_expression": {
+          "datatype": null,
+          "type": "property_name",
+          "property_name": "hh_caste"
+        },
+        "type": "related_doc",
+        "related_doc_type": "CommCareCase",
+        "doc_id_expression": {
+          "type": "icds_parent_parent_id"
+        }
+      },
+      "disabled": {
+        "value_expression": {
+          "datatype": null,
+          "type": "property_name",
+          "property_name": "disabled"
+        },
+        "type": "related_doc",
+        "related_doc_type": "CommCareCase",
+        "doc_id_expression": {
+          "type": "icds_parent_id"
+        }
+      },
+      "minority": {
+        "value_expression": {
+          "datatype": null,
+          "type": "property_name",
+          "property_name": "hh_minority"
+        },
+        "type": "related_doc",
+        "related_doc_type": "CommCareCase",
+        "doc_id_expression": {
+          "type": "icds_parent_parent_id"
+        }
+      },
+      "resident": {
+        "value_expression": {
+          "datatype": null,
+          "type": "property_name",
+          "property_name": "resident"
+        },
+        "type": "related_doc",
+        "related_doc_type": "CommCareCase",
+        "doc_id_expression": {
+          "type": "icds_parent_id"
+        }
+      },
+      "nutrition_status_last_recorded": {
+        "type": "switch",
+        "switch_on": {
+          "type": "icds_get_last_case_property_update",
+          "case_property": "zscore_grading_wfa",
+          "end_date": {
+            "type": "named",
+            "name": "month_end"
+          },
+          "xmlns": [
+            "http://openrosa.org/formdesigner/376FA2E1-6FD1-4C9E-ACB4-E046038CD5E2",
+            "http://openrosa.org/formdesigner/b183124a25f2a0ceab266e4564d3526199ac4d75",
+            "http://openrosa.org/formdesigner/7a55754119359466b1951d7251068bd4f45e73c3"
+          ]
+        },
+        "cases": {
+          "red": {
+            "type": "constant",
+            "constant": "severely_underweight"
+          },
+          "yellow": {
+            "type": "constant",
+            "constant": "moderately_underweight"
+          },
+          "green": {
+            "type": "constant",
+            "constant": "normal"
+          },
+          "white": {
+            "type": "constant",
+            "constant": "normal"
+          }
+        },
+        "default": {
+          "type": "constant",
+          "constant": "unknown"
+        }
+      },
+      "current_month_nutrition_status": {
+        "type": "switch",
+        "switch_on": {
+          "type": "icds_get_last_case_property_update",
+          "case_property": "zscore_grading_wfa",
+          "start_date": {
+            "type": "named",
+            "name": "month_start"
+          },
+          "end_date": {
+            "type": "named",
+            "name": "month_end"
+          },
+          "xmlns": [
+            "http://openrosa.org/formdesigner/376FA2E1-6FD1-4C9E-ACB4-E046038CD5E2",
+            "http://openrosa.org/formdesigner/b183124a25f2a0ceab266e4564d3526199ac4d75",
+            "http://openrosa.org/formdesigner/7a55754119359466b1951d7251068bd4f45e73c3"
+          ]
+        },
+        "cases": {
+          "red": {
+            "type": "constant",
+            "constant": "severely_underweight"
+          },
+          "yellow": {
+            "type": "constant",
+            "constant": "moderately_underweight"
+          },
+          "green": {
+            "type": "constant",
+            "constant": "normal"
+          },
+          "white": {
+            "type": "constant",
+            "constant": "normal"
+          }
+        },
+        "default": {
+          "type": "constant",
+          "constant": "unweighed"
+        }
+      },
+      "pse_days": {
+        "type": "icds_get_case_forms_in_date",
+        "case_id_expression": {
+          "expression": {
+            "type": "property_name",
+            "property_name": "_id"
+          },
+          "type": "root_doc"
+        },
+        "from_date_expression": {
+          "type": "named",
+          "name": "month_start"
+        },
+        "to_date_expression": {
+          "type": "named",
+          "name": "month_end"
+        },
+        "xmlns": [
+          "http://openrosa.org/formdesigner/66d52f84d606567ea29d5fae88f569d2763b8b62"
+        ],
+        "count": true
+      },
+      "ebf_not_breastfeeding_reason": {
+        "type": "nested",
+        "argument_expression": {
+          "type": "named",
+          "name": "get_ebf_repeat_in_month"
+        },
+        "value_expression": {
+          "type": "property_name",
+          "property_name": "not_breastfeeding"
+        }
+      },
+      "task_case_id": {
+        "type": "nested",
+        "argument_expression": {
+          "type": "reduce_items",
+          "aggregation_fn": "last_item",
+          "items_expression": {
+            "type": "filter_items",
+            "filter_expression": {
+              "type": "and",
+              "filters": [
+                {
+                  "type": "boolean_expression",
+                  "operator": "eq",
+                  "expression": {
+                    "type": "property_name",
+                    "property_name": "type"
+                  },
+                  "property_value": "tasks"
+                },
+                {
+                  "type": "boolean_expression",
+                  "operator": "eq",
+                  "expression": {
+                    "type": "property_name",
+                    "property_name": "tasks_type",
+                    "datatype": "string"
+                  },
+                  "property_value": "child"
+                }
+              ]
+            },
+            "items_expression": {
+              "type": "get_subcases",
+              "case_id_expression": {
+                "type": "root_doc",
+                "expression": {
+                  "type": "property_name",
+                  "property_name": "_id"
+                }
+              }
+            }
+          }
+        },
+        "value_expression": {
+          "type": "property_name",
+          "property_name": "_id"
+        }
+      },
+      "get_ebf_repeat_in_month": {
+        "type": "icds_get_last_form_repeat",
+        "forms_expression": {
+          "type": "icds_get_case_forms_by_date",
+          "xmlns": [
+            "http://openrosa.org/formdesigner/D4A7ABD2-A7B8-431B-A88B-38245173B0AE",
+            "http://openrosa.org/formdesigner/89097FB1-6C08-48BA-95B2-67BCF0C5091D"
+          ],
+          "start_date": {
+            "type": "named",
+            "name": "month_start"
+          },
+          "end_date": {
+            "type": "named",
+            "name": "month_end"
+          }
+        },
+        "repeat_path": [
+          "form",
+          "child",
+          "item"
+        ],
+        "case_id_path": [
+          "child_health_case_id"
+        ]
+      },
+      "get_latest_cf_repeat": {
+        "type": "icds_get_last_form_repeat",
+        "forms_expression": {
+          "type": "icds_get_case_forms_by_date",
+          "xmlns": [
+            "http://openrosa.org/formdesigner/792DAF2B-E117-424A-A673-34E1513ABD88"
+          ],
+          "end_date": {
+            "type": "named",
+            "name": "month_end"
+          }
+        },
+        "repeat_path": [
+          "form",
+          "child",
+          "item"
+        ],
+        "case_id_path": [
+          "child_health_case_id"
+        ]
+      },
+      "get_all_cf_repeats": {
+        "type": "icds_get_all_forms_repeats",
+        "forms_expression": {
+          "type": "icds_get_case_forms_by_date",
+          "xmlns": [
+            "http://openrosa.org/formdesigner/792DAF2B-E117-424A-A673-34E1513ABD88"
+          ],
+          "end_date": {
+            "type": "named",
+            "name": "month_end"
+          }
+        },
+        "repeat_path": [
+          "form",
+          "child",
+          "item"
+        ],
+        "case_id_path": [
+          "child_health_case_id"
+        ]
+      },
+      "get_all_ebf_repeats": {
+        "type": "icds_get_all_forms_repeats",
+        "forms_expression": {
+          "type": "icds_get_case_forms_by_date",
+          "xmlns": [
+            "http://openrosa.org/formdesigner/D4A7ABD2-A7B8-431B-A88B-38245173B0AE",
+            "http://openrosa.org/formdesigner/89097FB1-6C08-48BA-95B2-67BCF0C5091D"
+          ],
+          "end_date": {
+            "type": "named",
+            "name": "month_end"
+          }
+        },
+        "repeat_path": [
+          "form",
+          "child",
+          "item"
+        ],
+        "case_id_path": [
+          "child_health_case_id"
+        ]
+      },
+      "stunting_last_recorded": {
+        "type": "switch",
+        "switch_on": {
+          "type": "nested",
+          "argument_expression": {
+            "aggregation_fn": "last_item",
+            "type": "reduce_items",
+            "items_expression": {
+              "type": "icds_get_case_forms_by_date",
+              "xmlns": [
+                "http://openrosa.org/formdesigner/7a55754119359466b1951d7251068bd4f45e73c3"
+              ],
+              "end_date": {
+                "type": "named",
+                "name": "month_end"
+              },
+              "form_filter": {
+                "type": "not",
+                "filter": {
+                  "type": "boolean_expression",
+                  "operator": "in",
+                  "expression": {
+                    "type": "property_path",
+                    "property_path": [
+                      "form",
+                      "zscore_grading_hfa"
+                    ]
+                  },
+                  "property_value": [
+                    null,
+                    ""
+                  ]
+                }
+              }
+            }
+          },
+          "value_expression": {
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "zscore_grading_hfa"
+            ]
+          }
+        },
+        "cases": {
+          "red": {
+            "type": "constant",
+            "constant": "severe"
+          },
+          "yellow": {
+            "type": "constant",
+            "constant": "moderate"
+          },
+          "green": {
+            "type": "constant",
+            "constant": "normal"
+          }
+        },
+        "default": {
+          "type": "constant",
+          "constant": "unknown"
+        }
+      },
+      "current_month_stunting": {
+        "type": "switch",
+        "switch_on": {
+          "type": "nested",
+          "argument_expression": {
+            "aggregation_fn": "last_item",
+            "type": "reduce_items",
+            "items_expression": {
+              "type": "icds_get_case_forms_by_date",
+              "xmlns": [
+                "http://openrosa.org/formdesigner/7a55754119359466b1951d7251068bd4f45e73c3"
+              ],
+              "start_date": {
+                "type": "named",
+                "name": "month_start"
+              },
+              "end_date": {
+                "type": "named",
+                "name": "month_end"
+              },
+              "form_filter": {
+                "type": "not",
+                "filter": {
+                  "type": "boolean_expression",
+                  "operator": "in",
+                  "expression": {
+                    "type": "property_path",
+                    "property_path": [
+                      "form",
+                      "zscore_grading_hfa"
+                    ]
+                  },
+                  "property_value": [
+                    null,
+                    ""
+                  ]
+                }
+              }
+            }
+          },
+          "value_expression": {
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "zscore_grading_hfa"
+            ]
+          }
+        },
+        "cases": {
+          "red": {
+            "type": "constant",
+            "constant": "severe"
+          },
+          "yellow": {
+            "type": "constant",
+            "constant": "moderate"
+          },
+          "green": {
+            "type": "constant",
+            "constant": "normal"
+          }
+        },
+        "default": {
+          "type": "constant",
+          "constant": "unmeasured"
+        }
+      },
+      "wasting_last_recorded": {
+        "type": "switch",
+        "switch_on": {
+          "type": "nested",
+          "argument_expression": {
+            "aggregation_fn": "last_item",
+            "type": "reduce_items",
+            "items_expression": {
+              "type": "icds_get_case_forms_by_date",
+              "xmlns": [
+                "http://openrosa.org/formdesigner/7a55754119359466b1951d7251068bd4f45e73c3"
+              ],
+              "end_date": {
+                "type": "named",
+                "name": "month_end"
+              },
+              "form_filter": {
+                "type": "not",
+                "filter": {
+                  "type": "boolean_expression",
+                  "operator": "in",
+                  "expression": {
+                    "type": "property_path",
+                    "property_path": [
+                      "form",
+                      "zscore_grading_wfh"
+                    ]
+                  },
+                  "property_value": [
+                    null,
+                    ""
+                  ]
+                }
+              }
+            }
+          },
+          "value_expression": {
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "zscore_grading_wfh"
+            ]
+          }
+        },
+        "cases": {
+          "red": {
+            "type": "constant",
+            "constant": "severe"
+          },
+          "yellow": {
+            "type": "constant",
+            "constant": "moderate"
+          },
+          "green": {
+            "type": "constant",
+            "constant": "normal"
+          }
+        },
+        "default": {
+          "type": "constant",
+          "constant": "unknown"
+        }
+      },
+      "current_month_wasting": {
+        "type": "switch",
+        "switch_on": {
+          "type": "nested",
+          "argument_expression": {
+            "aggregation_fn": "last_item",
+            "type": "reduce_items",
+            "items_expression": {
+              "type": "icds_get_case_forms_by_date",
+              "xmlns": [
+                "http://openrosa.org/formdesigner/7a55754119359466b1951d7251068bd4f45e73c3"
+              ],
+              "start_date": {
+                "type": "named",
+                "name": "month_start"
+              },
+              "end_date": {
+                "type": "named",
+                "name": "month_end"
+              },
+              "form_filter": {
+                "type": "not",
+                "filter": {
+                  "type": "boolean_expression",
+                  "operator": "in",
+                  "expression": {
+                    "type": "property_path",
+                    "property_path": [
+                      "form",
+                      "zscore_grading_wfh"
+                    ]
+                  },
+                  "property_value": [
+                    null,
+                    ""
+                  ]
+                }
+              }
+            }
+          },
+          "value_expression": {
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "zscore_grading_wfh"
+            ]
+          }
+        },
+        "cases": {
+          "red": {
+            "type": "constant",
+            "constant": "severe"
+          },
+          "yellow": {
+            "type": "constant",
+            "constant": "moderate"
+          },
+          "green": {
+            "type": "constant",
+            "constant": "normal"
+          }
+        },
+        "default": {
+          "type": "constant",
+          "constant": "unmeasured"
+        }
+      },
+      "height_recorded_in_month": {
+        "type": "icds_get_last_case_property_update",
+        "case_property": "height_child",
+        "start_date": {
+          "type": "named",
+          "name": "month_start"
+        },
+        "end_date": {
+          "type": "named",
+          "name": "month_end"
+        },
+        "xmlns": [
+          "http://openrosa.org/formdesigner/7a55754119359466b1951d7251068bd4f45e73c3"
+        ]
+      },
+      "seeking_services": {
+        "type": "conditional",
+        "test": {
+          "type": "not",
+          "filter": {
+            "operator": "eq",
+            "type": "boolean_expression",
+            "expression": {
+              "doc_id_expression": {
+                "type": "icds_parent_id"
+              },
+              "related_doc_type": "CommCareCase",
+              "type": "related_doc",
+              "value_expression": {
+                "property_name": "registered_status",
+                "type": "property_name"
+              }
+            },
+            "property_value": "not_registered"
+          }
+        },
+        "expression_if_true": {
+          "type": "constant",
+          "constant": "yes"
+        },
+        "expression_if_false": {
+          "type": "constant",
+          "constant": "no"
+        }
+      },
+      "not_migrated": {
+        "type": "conditional",
+        "test": {
+          "type": "not",
+          "filter": {
+            "operator": "eq",
+            "type": "boolean_expression",
+            "expression": {
+              "doc_id_expression": {
+                "type": "icds_parent_id"
+              },
+              "related_doc_type": "CommCareCase",
+              "type": "related_doc",
+              "value_expression": {
+                "property_name": "migration_status",
+                "type": "property_name"
+              }
+            },
+            "property_value": "migrated"
+          }
+        },
+        "expression_if_true": {
+          "type": "constant",
+          "constant": "yes"
+        },
+        "expression_if_false": {
+          "type": "constant",
+          "constant": "no"
+        }
+      },
+      "open_in_month": {
+        "type": "conditional",
+        "test": {
+          "type": "and",
+          "filters": [
+            {
+              "type": "boolean_expression",
+              "operator": "gte",
+              "expression": {
+                "type": "diff_days",
+                "from_date_expression": {
+                  "expression": {
+                    "datatype": "date",
+                    "type": "property_name",
+                    "property_name": "opened_on"
+                  },
+                  "type": "root_doc"
+                },
+                "to_date_expression": {
+                  "type": "named",
+                  "name": "month_end"
+                }
+              },
+              "property_value": 0
+            },
+            {
+              "type": "or",
+              "filters": [
+                {
+                  "type": "boolean_expression",
+                  "operator": "eq",
+                  "expression": {
+                    "expression": {
+                      "datatype": "string",
+                      "type": "property_name",
+                      "property_name": "closed"
+                    },
+                    "type": "root_doc"
+                  },
+                  "property_value": "False"
+                },
+                {
+                  "type": "boolean_expression",
+                  "operator": "gte",
+                  "expression": {
+                    "type": "diff_days",
+                    "from_date_expression": {
+                      "type": "named",
+                      "name": "month_start"
+                    },
+                    "to_date_expression": {
+                      "expression": {
+                        "datatype": "date",
+                        "type": "property_name",
+                        "property_name": "closed_on"
+                      },
+                      "type": "root_doc"
+                    }
+                  },
+                  "property_value": 0
+                }
+              ]
+            }
+          ]
+        },
+        "expression_if_true": {
+          "type": "constant",
+          "constant": "yes"
+        },
+        "expression_if_false": {
+          "type": "constant",
+          "constant": "no"
+        }
+      },
+      "alive_in_month": {
+        "type": "conditional",
+        "test": {
+          "type": "or",
+          "filters": [
+            {
+              "operator": "in",
+              "expression": {
+                "value_expression": {
+                  "datatype": "date",
+                  "type": "property_name",
+                  "property_name": "date_death"
+                },
+                "type": "related_doc",
+                "related_doc_type": "CommCareCase",
+                "doc_id_expression": {
+                  "type": "icds_parent_id"
+                }
+              },
+              "type": "boolean_expression",
+              "property_value": [
+                "",
+                null
+              ]
+            },
+            {
+              "operator": "gte",
+              "expression": {
+                "from_date_expression": {
+                  "type": "named",
+                  "name": "month_start"
+                },
+                "type": "diff_days",
+                "to_date_expression": {
+                  "value_expression": {
+                    "datatype": "date",
+                    "type": "property_name",
+                    "property_name": "date_death"
+                  },
+                  "type": "related_doc",
+                  "related_doc_type": "CommCareCase",
+                  "doc_id_expression": {
+                    "type": "icds_parent_id"
+                  }
+                }
+              },
+              "type": "boolean_expression",
+              "property_value": 0
+            }
+          ]
+        },
+        "expression_if_true": {
+          "type": "constant",
+          "constant": "yes"
+        },
+        "expression_if_false": {
+          "type": "constant",
+          "constant": "no"
+        }
+      },
+      "valid_in_month": {
+        "type": "conditional",
+        "test": {
+          "type": "and",
+          "filters": [
+            {
+              "type": "boolean_expression",
+              "operator": "eq",
+              "property_value": "yes",
+              "expression": {
+                "type": "named",
+                "name": "open_in_month"
+              }
+            },
+            {
+              "type": "boolean_expression",
+              "operator": "eq",
+              "property_value": "yes",
+              "expression": {
+                "type": "named",
+                "name": "alive_in_month"
+              }
+            },
+            {
+              "type": "boolean_expression",
+              "operator": "eq",
+              "property_value": "yes",
+              "expression": {
+                "type": "named",
+                "name": "seeking_services"
+              }
+            },
+            {
+              "type": "boolean_expression",
+              "operator": "eq",
+              "property_value": "yes",
+              "expression": {
+                "type": "named",
+                "name": "not_migrated"
+              }
+            },
+            {
+              "type": "not",
+              "filter": {
+                "operator": "in",
+                "type": "boolean_expression",
+                "expression": {
+                  "type": "named",
+                  "name": "age_in_months_month_start"
+                },
+                "property_value": [
+                  "",
+                  null
+                ]
+              }
+            },
+            {
+              "type": "boolean_expression",
+              "operator": "lte",
+              "property_value": 72,
+              "expression": {
+                "type": "named",
+                "name": "age_in_months_month_start"
+              }
+            }
+          ]
+        },
+        "expression_if_true": {
+          "type": "constant",
+          "constant": "yes"
+        },
+        "expression_if_false": {
+          "type": "constant",
+          "constant": "no"
+        }
+      },
+      "valid_all_registered_in_month": {
+        "comment": "this includes all beneficiaries who are valid, whether they are seeking services or not",
+        "type": "conditional",
+        "test": {
+          "type": "and",
+          "filters": [
+            {
+              "type": "boolean_expression",
+              "operator": "eq",
+              "property_value": "yes",
+              "expression": {
+                "type": "named",
+                "name": "open_in_month"
+              }
+            },
+            {
+              "type": "boolean_expression",
+              "operator": "eq",
+              "property_value": "yes",
+              "expression": {
+                "type": "named",
+                "name": "alive_in_month"
+              }
+            },
+            {
+              "type": "not",
+              "filter": {
+                "operator": "in",
+                "type": "boolean_expression",
+                "expression": {
+                  "type": "named",
+                  "name": "age_in_months_month_start"
+                },
+                "property_value": [
+                  "",
+                  null
+                ]
+              }
+            },
+            {
+              "type": "boolean_expression",
+              "operator": "lte",
+              "property_value": 72,
+              "expression": {
+                "type": "named",
+                "name": "age_in_months_month_start"
+              }
+            },
+            {
+              "type": "boolean_expression",
+              "operator": "eq",
+              "property_value": "yes",
+              "expression": {
+                "type": "named",
+                "name": "not_migrated"
+              }
+            }
+          ]
+        },
+        "expression_if_true": {
+          "type": "constant",
+          "constant": "yes"
+        },
+        "expression_if_false": {
+          "type": "constant",
+          "constant": "no"
+        }
+      }
+    },
+    "named_filters": {
+      "wer_eligible": {
+        "type": "and",
+        "filters": [
+          {
+            "type": "not",
+            "filter": {
+              "operator": "in",
+              "type": "boolean_expression",
+              "expression": {
+                "type": "named",
+                "name": "age_in_months_month_start"
+              },
+              "property_value": [
+                "",
+                null
+              ]
+            }
+          },
+          {
+            "type": "boolean_expression",
+            "operator": "lte",
+            "property_value": 60,
+            "expression": {
+              "type": "named",
+              "name": "age_in_months_month_start"
+            }
+          },
+          {
+            "type": "boolean_expression",
+            "operator": "eq",
+            "property_value": "yes",
+            "expression": {
+              "type": "named",
+              "name": "valid_in_month"
+            }
+          }
+        ]
+      },
+      "height_eligible": {
+        "type": "and",
+        "filters": [
+          {
+            "type": "boolean_expression",
+            "operator": "gt",
+            "property_value": 6,
+            "expression": {
+              "type": "named",
+              "name": "age_in_months_month_end"
+            }
+          },
+          {
+            "type": "boolean_expression",
+            "operator": "lte",
+            "property_value": 60,
+            "expression": {
+              "type": "named",
+              "name": "age_in_months_month_start"
+            }
+          },
+          {
+            "type": "boolean_expression",
+            "operator": "eq",
+            "property_value": "yes",
+            "expression": {
+              "type": "named",
+              "name": "valid_in_month"
+            }
+          }
+        ]
+      },
+      "thr_eligible": {
+        "type": "and",
+        "filters": [
+          {
+            "type": "not",
+            "filter": {
+              "operator": "in",
+              "type": "boolean_expression",
+              "expression": {
+                "type": "named",
+                "name": "age_in_days"
+              },
+              "property_value": [
+                "",
+                null
+              ]
+            }
+          },
+          {
+            "type": "boolean_expression",
+            "operator": "lte",
+            "property_value": 36,
+            "expression": {
+              "type": "named",
+              "name": "age_in_months_month_start"
+            }
+          },
+          {
+            "type": "boolean_expression",
+            "operator": "gt",
+            "property_value": 6,
+            "expression": {
+              "type": "named",
+              "name": "age_in_months_month_end"
+            }
+          },
+          {
+            "type": "boolean_expression",
+            "operator": "eq",
+            "property_value": "yes",
+            "expression": {
+              "type": "named",
+              "name": "valid_in_month"
+            }
+          }
+        ]
+      },
+      "pse_eligible": {
+        "type": "and",
+        "filters": [
+          {
+            "type": "not",
+            "filter": {
+              "operator": "in",
+              "type": "boolean_expression",
+              "expression": {
+                "type": "named",
+                "name": "age_in_days"
+              },
+              "property_value": [
+                "",
+                null
+              ]
+            }
+          },
+          {
+            "type": "boolean_expression",
+            "operator": "gt",
+            "property_value": 36,
+            "expression": {
+              "type": "named",
+              "name": "age_in_months_month_end"
+            }
+          },
+          {
+            "type": "boolean_expression",
+            "operator": "lte",
+            "property_value": 72,
+            "expression": {
+              "type": "named",
+              "name": "age_in_months_month_start"
+            }
+          },
+          {
+            "type": "boolean_expression",
+            "operator": "eq",
+            "property_value": "yes",
+            "expression": {
+              "type": "named",
+              "name": "valid_in_month"
+            }
+          }
+        ]
+      },
+      "ebf_eligible": {
+        "type": "and",
+        "filters": [
+          {
+            "type": "not",
+            "filter": {
+              "operator": "in",
+              "type": "boolean_expression",
+              "expression": {
+                "type": "named",
+                "name": "age_in_days"
+              },
+              "property_value": [
+                "",
+                null
+              ]
+            }
+          },
+          {
+            "type": "boolean_expression",
+            "operator": "lte",
+            "property_value": 6,
+            "expression": {
+              "type": "named",
+              "name": "age_in_months_month_start"
+            }
+          },
+          {
+            "type": "boolean_expression",
+            "operator": "eq",
+            "property_value": "yes",
+            "expression": {
+              "type": "named",
+              "name": "valid_in_month"
+            }
+          }
+        ]
+      },
+      "pnc_eligible": {
+        "type": "and",
+        "filters": [
+          {
+            "type": "boolean_expression",
+            "operator": "eq",
+            "property_value": "yes",
+            "expression": {
+              "type": "named",
+              "name": "valid_in_month"
+            }
+          },
+          {
+            "type": "not",
+            "filter": {
+              "operator": "in",
+              "type": "boolean_expression",
+              "expression": {
+                "doc_id_expression": {
+                  "type": "icds_parent_id"
+                },
+                "related_doc_type": "CommCareCase",
+                "type": "related_doc",
+                "value_expression": {
+                  "datatype": "date",
+                  "property_name": "dob",
+                  "type": "property_name"
+                }
+              },
+              "property_value": [
+                "",
+                null
+              ]
+            }
+          },
+          {
+            "type": "boolean_expression",
+            "operator": "gte",
+            "property_value": 0,
+            "expression": {
+              "type": "diff_days",
+              "from_date_expression": {
+                "doc_id_expression": {
+                  "type": "icds_parent_id"
+                },
+                "related_doc_type": "CommCareCase",
+                "type": "related_doc",
+                "value_expression": {
+                  "datatype": "date",
+                  "property_name": "dob",
+                  "type": "property_name"
+                }
+              },
+              "to_date_expression": {
+                "type": "named",
+                "name": "month_end"
+              }
+            }
+          },
+          {
+            "type": "boolean_expression",
+            "operator": "lte",
+            "property_value": 20,
+            "expression": {
+              "type": "diff_days",
+              "from_date_expression": {
+                "doc_id_expression": {
+                  "type": "icds_parent_id"
+                },
+                "related_doc_type": "CommCareCase",
+                "type": "related_doc",
+                "value_expression": {
+                  "datatype": "date",
+                  "property_name": "dob",
+                  "type": "property_name"
+                }
+              },
+              "to_date_expression": {
+                "type": "named",
+                "name": "month_start"
+              }
+            }
+          }
+        ]
+      },
+      "born_in_month": {
+        "type": "and",
+        "filters": [
+          {
+            "type": "boolean_expression",
+            "operator": "eq",
+            "property_value": "yes",
+            "expression": {
+              "type": "named",
+              "name": "seeking_services"
+            }
+          },
+          {
+            "type": "boolean_expression",
+            "operator": "eq",
+            "property_value": "yes",
+            "expression": {
+              "type": "named",
+              "name": "not_migrated"
+            }
+          },
+          {
+            "type": "boolean_expression",
+            "operator": "gte",
+            "property_value": 0,
+            "expression": {
+              "to_date_expression": {
+                "doc_id_expression": {
+                  "type": "icds_parent_id"
+                },
+                "related_doc_type": "CommCareCase",
+                "type": "related_doc",
+                "value_expression": {
+                  "datatype": "date",
+                  "property_name": "dob",
+                  "type": "property_name"
+                }
+              },
+              "from_date_expression": {
+                "type": "named",
+                "name": "month_start"
+              },
+              "type": "diff_days"
+            }
+          },
+          {
+            "type": "boolean_expression",
+            "operator": "gte",
+            "property_value": 0,
+            "expression": {
+              "from_date_expression": {
+                "doc_id_expression": {
+                  "type": "icds_parent_id"
+                },
+                "related_doc_type": "CommCareCase",
+                "type": "related_doc",
+                "value_expression": {
+                  "datatype": "date",
+                  "property_name": "dob",
+                  "type": "property_name"
+                }
+              },
+              "to_date_expression": {
+                "type": "named",
+                "name": "month_end"
+              },
+              "type": "diff_days"
+            }
+          }
+        ]
+      },
+      "cf_eligible": {
+        "type": "and",
+        "filters": [
+          {
+            "type": "not",
+            "filter": {
+              "operator": "in",
+              "type": "boolean_expression",
+              "expression": {
+                "type": "named",
+                "name": "age_in_days"
+              },
+              "property_value": [
+                "",
+                null
+              ]
+            }
+          },
+          {
+            "type": "boolean_expression",
+            "operator": "gt",
+            "property_value": 6,
+            "expression": {
+              "type": "named",
+              "name": "age_in_months_month_end"
+            }
+          },
+          {
+            "type": "boolean_expression",
+            "operator": "lte",
+            "property_value": 24,
+            "expression": {
+              "type": "named",
+              "name": "age_in_months_month_start"
+            }
+          },
+          {
+            "type": "boolean_expression",
+            "operator": "eq",
+            "property_value": "yes",
+            "expression": {
+              "type": "named",
+              "name": "valid_in_month"
+            }
+          }
+        ]
+      },
+      "cf_initiation_eligible": {
+        "type": "and",
+        "filters": [
+          {
+            "type": "not",
+            "filter": {
+              "operator": "in",
+              "type": "boolean_expression",
+              "expression": {
+                "type": "named",
+                "name": "age_in_days"
+              },
+              "property_value": [
+                "",
+                null
+              ]
+            }
+          },
+          {
+            "type": "boolean_expression",
+            "operator": "gt",
+            "property_value": 6,
+            "expression": {
+              "type": "named",
+              "name": "age_in_months_month_end"
+            }
+          },
+          {
+            "type": "boolean_expression",
+            "operator": "lte",
+            "property_value": 8,
+            "expression": {
+              "type": "named",
+              "name": "age_in_months_month_start"
+            }
+          },
+          {
+            "type": "boolean_expression",
+            "operator": "eq",
+            "property_value": "yes",
+            "expression": {
+              "type": "named",
+              "name": "valid_in_month"
+            }
+          }
+        ]
+      },
+      "immun_date_before_month_end": {
+        "type": "and",
+        "filters": [
+          {
+            "type": "not",
+            "filter": {
+              "operator": "in",
+              "type": "boolean_expression",
+              "expression": {
+                "type": "related_doc",
+                "datatype": "date",
+                "related_doc_type": "CommCareCase",
+                "doc_id_expression": {
+                  "type": "named",
+                  "name": "task_case_id"
+                },
+                "value_expression": {
+                  "type": "property_name",
+                  "property_name": "immun_one_year_date"
+                }
+              },
+              "property_value": [
+                "",
+                null
+              ]
+            }
+          },
+          {
+            "type": "boolean_expression",
+            "operator": "gte",
+            "property_value": 0,
+            "expression": {
+              "from_date_expression": {
+                "type": "related_doc",
+                "datatype": "date",
+                "related_doc_type": "CommCareCase",
+                "doc_id_expression": {
+                  "type": "named",
+                  "name": "task_case_id"
+                },
+                "value_expression": {
+                  "type": "property_name",
+                  "property_name": "immun_one_year_date"
+                }
+              },
+              "to_date_expression": {
+                "type": "named",
+                "name": "month_end"
+              },
+              "type": "diff_days"
+            }
+          }
+        ]
+      },
+      "fully_immunized_eligible": {
+        "type": "and",
+        "filters": [
+          {
+            "type": "not",
+            "filter": {
+              "operator": "in",
+              "type": "boolean_expression",
+              "expression": {
+                "type": "named",
+                "name": "age_in_days"
+              },
+              "property_value": [
+                "",
+                null
+              ]
+            }
+          },
+          {
+            "type": "boolean_expression",
+            "operator": "gt",
+            "property_value": 12,
+            "expression": {
+              "type": "named",
+              "name": "age_in_months_month_end"
+            }
+          },
+          {
+            "type": "boolean_expression",
+            "operator": "eq",
+            "property_value": "yes",
+            "expression": {
+              "type": "named",
+              "name": "valid_in_month"
+            }
+          }
+        ]
+      }
+    },
+    "asynchronous": true,
+    "engine_id": "icds-ucr",
+    "sql_column_indexes": [
+      {
+        "column_ids": [
+          "inserted_at"
+        ]
+      }
+    ]
+  }
+}

@@ -69,7 +69,7 @@ def get_single_open_session_or_close_multiple(domain, contact_id):
     count = sessions.count()
     if count > 1:
         for session in sessions:
-            session.end(False)
+            session.mark_completed(False)
             session.save()
         return (True, None)
 

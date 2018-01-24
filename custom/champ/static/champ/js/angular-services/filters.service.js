@@ -37,5 +37,12 @@ window.angular.module('champApp').factory('filtersService', ['$http', function($
                 url: get_url,
             });
         },
+        hierarchy: function() {
+            var get_url = url('hierarchy');
+            return  $http({
+                method: "GET",
+                url: get_url,
+            });
+        },
     };
 }]);
