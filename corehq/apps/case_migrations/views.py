@@ -7,16 +7,13 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _
 from django.views.generic import FormView
 
-from casexml.apps.case.xml import V2
-from casexml.apps.phone.data_providers.case.clean_owners import CleanOwnerSyncPayload
-from casexml.apps.phone.restore import RestoreContent, RestoreResponse, RestoreState, RestoreParams
-from casexml.apps.phone.xml import get_registration_element
-from corehq.apps.domain.decorators import domain_admin_required
+from casexml.apps.phone.restore import RestoreContent, RestoreResponse
+from casexml.apps.phone.xml import get_registration_element, get_casedb_element
+from corehq.apps.domain.decorators import domain_admin_required, mobile_auth
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views import BaseDomainView
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.toggles import WEBAPPS_CASE_MIGRATION
-from corehq.util.timer import TimingContext
 from corehq.util import reverse
 
 from .forms import MigrationForm
@@ -50,14 +47,13 @@ class MigrationView(BaseMigrationView, FormView):
         return HttpResponseRedirect(self.page_url)
 
 
-def get_related_case_ids(domain, case_id):
+def get_case_and_descendants(domain, case_id):
     from casexml.apps.case.templatetags.case_tags import get_case_hierarchy
     case = CaseAccessors(domain).get_case(case_id)
-    child_cases = {c.case_id for c in get_case_hierarchy(case, {})['case_list']}
-    return child_cases
+    return get_case_hierarchy(case, {})['case_list']
 
 
-@domain_admin_required
+@mobile_auth
 @WEBAPPS_CASE_MIGRATION.required_decorator()
 def migration_restore(request, domain, case_id):
     """Restore endpoint used in bulk case migrations
@@ -68,18 +64,11 @@ def migration_restore(request, domain, case_id):
     """
     domain_obj = Domain.get_by_name(domain)
     restore_user = request.couch_user
-    restore_params = RestoreParams(device_id="case_migration", version=V2)
-    restore_state = RestoreState(domain_obj, restore_user.to_ota_restore_user(domain), restore_params)
-    restore_state.start_sync()
-    timing_context = TimingContext('migration-restore-{}-{}'.format(domain, restore_user.username))
-    case_ids = get_related_case_ids(domain, case_id)
+
     with RestoreContent(restore_user.username) as content:
         content.append(get_registration_element(restore_user))
-
-        sync_payload = CleanOwnerSyncPayload(timing_context, case_ids, restore_state)
-        sync_payload.extend_response(content)
-
+        for case in get_case_and_descendants(domain, case_id):
+            content.append(get_casedb_element(case))
         payload = content.get_fileobj()
 
-    restore_state.finish_sync()
     return RestoreResponse(payload).get_http_response()

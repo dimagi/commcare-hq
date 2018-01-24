@@ -5,7 +5,7 @@ from django.test import TestCase
 from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseIndex
 from casexml.apps.case.const import CASE_INDEX_CHILD
 
-from ..views import get_related_case_ids
+from ..views import get_case_and_descendants
 
 
 class TestRelatedCases(TestCase):
@@ -51,10 +51,10 @@ class TestRelatedCases(TestCase):
         )
 
     def test_get_related_case_ids(self):
-        related_ids = get_related_case_ids(self.domain, self.dad.case_id)
+        related_cases = get_case_and_descendants(self.domain, self.dad.case_id)
         # cases "above" this one should not be included
         self.assertItemsEqual(
-            related_ids,
+            [c.case_id for c in related_cases],
             [self.dad.case_id, self.kid.case_id, self.kid2.case_id,
              self.grandkid.case_id]
         )
