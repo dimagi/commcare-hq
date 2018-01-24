@@ -41,11 +41,9 @@ def create_historical_checkpoints():
 
 @periodic_task(run_every=crontab(minute=0), queue='background_queue')
 def check_non_dimagi_superusers():
-    non_dimagis_superuser = (
-        get_user_model().objects
-        .filter((Q(is_staff=True) | Q(is_superuser=True)) & ~Q(username__endswith='@dimagi.com'))
-        .values_list('username', flat=True)
-    )
+    non_dimagis_superuser = ', '.join((get_user_model().objects.filter(
+        (Q(is_staff=True) | Q(is_superuser=True)) & ~Q(username__endswith='@dimagi.com')
+    ).values_list('username', flat=True)))
     if non_dimagis_superuser:
         _soft_assert_superusers(
             False, "{non_dimagis} have superuser privileges".format(non_dimagis=non_dimagis_superuser))
