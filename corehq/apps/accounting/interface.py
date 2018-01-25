@@ -87,7 +87,7 @@ def invoice_column_cell(invoice):
 
 
 class AddItemInterface(GenericTabularReport):
-    base_template = 'accounting/add_new_item_button.html'
+    base_template = 'accounting/partials/add_new_item_button.html'
     exportable = True
 
     item_name = None
