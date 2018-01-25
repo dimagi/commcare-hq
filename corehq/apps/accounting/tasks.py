@@ -275,7 +275,7 @@ def send_bookkeeper_email(month=None, year=None, emails=None):
     email_content = render_to_string(
         'accounting/email/bookkeeper.html', email_context)
     email_content_plaintext = render_to_string(
-        'accounting/email/bookkeeper.html', email_context)
+        'accounting/email/bookkeeper.txt', email_context)
 
     format_dict = Format.FORMAT_DICT[Format.CSV]
     excel_attachment = {

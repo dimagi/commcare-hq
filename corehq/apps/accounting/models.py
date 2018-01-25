@@ -1440,7 +1440,7 @@ class Subscription(models.Model):
             }
 
             template = 'accounting/email/subscription_ending_reminder.html'
-            template_plaintext = 'accounting/email/subscription_ending_reminder.html'
+            template_plaintext = 'accounting/email/subscription_ending_reminder.txt'
 
         from corehq.apps.domain.views import DomainSubscriptionView
         context = {
