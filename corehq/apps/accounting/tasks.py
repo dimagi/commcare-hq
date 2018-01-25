@@ -447,8 +447,8 @@ def send_autopay_failed(invoice, payment_method):
         'support_email': settings.INVOICING_CONTACT_EMAIL,
     }
 
-    template_html = 'accounting/email/autopay_failed_email.html'
-    template_plaintext = 'accounting/email/autopay_failed_email.txt'
+    template_html = 'accounting/email/autopay_failed.html'
+    template_plaintext = 'accounting/email/autopay_failed.txt'
 
     send_HTML_email(
         subject="Subscription Payment for CommCare Invoice %s was declined" % invoice.invoice_number,
@@ -523,9 +523,9 @@ def weekly_digest():
         'forty_days': in_forty_days.isoformat(),
     }
     email_content = render_to_string(
-        'accounting/email/digest_email.html', email_context)
+        'accounting/email/digest.html', email_context)
     email_content_plaintext = render_to_string(
-        'accounting/email/digest_email.txt', email_context)
+        'accounting/email/digest.txt', email_context)
 
     format_dict = Format.FORMAT_DICT[Format.XLS_2007]
     file_attachment = {

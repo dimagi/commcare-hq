@@ -2128,8 +2128,8 @@ class BillingRecord(BillingRecordBase):
     INVOICE_CONTRACTED_HTML_TEMPLATE = 'accounting/invoice_email_contracted.html'
     INVOICE_CONTRACTED_TEXT_TEMPLATE = 'accounting/invoice_email_contracted_plaintext.html'
 
-    INVOICE_AUTOPAY_HTML_TEMPLATE = 'accounting/email/invoice_email_autopayment.html'
-    INVOICE_AUTOPAY_TEXT_TEMPLATE = 'accounting/email/invoice_email_autopayment.txt'
+    INVOICE_AUTOPAY_HTML_TEMPLATE = 'accounting/email/invoice_autopayment.html'
+    INVOICE_AUTOPAY_TEXT_TEMPLATE = 'accounting/email/invoice_autopayment.txt'
 
     class Meta:
         app_label = 'accounting'
