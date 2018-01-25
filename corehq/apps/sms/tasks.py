@@ -30,6 +30,7 @@ from corehq.util.timezones.conversions import ServerTime
 from dimagi.utils.couch import CriticalSection, release_lock
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.rate_limit import rate_limit
+from django.conf import settings
 
 
 def remove_from_queue(queued_sms):
@@ -292,7 +293,11 @@ def process_sms(queued_sms_pk):
 
 
 def send_to_sms_queue(queued_sms):
-    process_sms.delay(queued_sms.pk)
+    options = {}
+    if queued_sms.direction == OUTGOING and queued_sms.domain in settings.CUSTOM_PROJECT_SMS_QUEUES:
+        options['queue'] = settings.CUSTOM_PROJECT_SMS_QUEUES[queued_sms.domain]
+
+    process_sms.apply_async([queued_sms.pk], **options)
 
 
 @no_result_task(default_retry_delay=10 * 60, max_retries=10, bind=True)
