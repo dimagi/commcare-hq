@@ -620,10 +620,6 @@ FORMPLAYER_URL = 'http://localhost:8080'
 # immediately rather than use the queue.
 SMS_QUEUE_ENABLED = False
 
-# If an SMS still has not been processed in this number of minutes, enqueue it
-# again.
-SMS_QUEUE_ENQUEUING_TIMEOUT = 180
-
 # Number of minutes a celery task will alot for itself (via lock timeout)
 SMS_QUEUE_PROCESSING_LOCK_TIMEOUT = 5
 
