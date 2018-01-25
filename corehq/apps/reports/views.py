@@ -345,7 +345,8 @@ class MySavedReportsView(BaseProjectReportSectionView):
             'user_email': user.get_email(),
             'is_admin': user.is_domain_admin(self.domain),
             'configs': self.good_configs,
-            'scheduled_reports': self.scheduled_reports + self.others_scheduled_reports,
+            'scheduled_reports': self.scheduled_reports,
+            'others_scheduled_reports': self.others_scheduled_reports,
             'report': {
                 'title': self.page_title,
                 'show': True,
@@ -1067,7 +1068,7 @@ class ScheduledReportsView(BaseProjectReportSectionView):
             'is_configurable_map': is_configurable_map,
             'languages_map': languages_map,
             'languages_for_select': languages_for_select,
-            'is_owner': self.request.couch_user._id == self.owner_id,
+            'is_owner': self.is_new or self.request.couch_user._id == self.owner_id,
         })
         return context
 
