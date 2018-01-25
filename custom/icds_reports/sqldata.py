@@ -2651,7 +2651,7 @@ class AWCInfrastructureUCR(SqlData):
     @property
     def group_by(self):
         return [
-            'where_housed', 'provided_building', 'kitchen', 'toilet_facility',
+            'where_housed', 'provided_building', 'other_building', 'kitchen', 'toilet_facility',
             'type_toilet', 'preschool_kit_available', 'preschool_kit_usable'
         ]
 
@@ -2660,6 +2660,7 @@ class AWCInfrastructureUCR(SqlData):
         return [
             DatabaseColumn('where_housed', SimpleColumn('where_housed')),
             DatabaseColumn('provided_building', SimpleColumn('provided_building')),
+            DatabaseColumn('other_building', SimpleColumn('other_building')),
             DatabaseColumn('kitchen', SimpleColumn('kitchen')),
             DatabaseColumn('toilet_facility', SimpleColumn('toilet_facility')),
             DatabaseColumn('type_toilet', SimpleColumn('type_toilet')),
@@ -2684,7 +2685,7 @@ class VHNDFormUCR(SqlData):
 
     @property
     def group_by(self):
-        return ['submitted_on', 'vhsnd_date_past_month', 'local_leader']
+        return ['submitted_on', 'vhsnd_date_past_month', 'local_leader', 'aww_present']
 
     @property
     def order_by(self):
@@ -2694,7 +2695,8 @@ class VHNDFormUCR(SqlData):
     def columns(self):
         return [
             DatabaseColumn('vhsnd_date_past_month', SimpleColumn('vhsnd_date_past_month')),
-            DatabaseColumn('local_leader', SimpleColumn('local_leader'))
+            DatabaseColumn('local_leader', SimpleColumn('local_leader')),
+            DatabaseColumn('aww_present', SimpleColumn('aww_present'))
         ]
 
 
