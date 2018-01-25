@@ -59,6 +59,7 @@ class ConfigurableReportEditForm(DocumentFormBase):
     visible = forms.ChoiceField(label=_('Visible to:'), choices=VISIBILITY_CHOICES)
     description = forms.CharField(required=False)
     aggregation_columns = JsonField(expected_type=list)
+    dynamic_aggregation = JsonField(expected_type=list)
     filters = JsonField(expected_type=list)
     columns = JsonField(expected_type=list)
     configured_charts = JsonField(expected_type=list)
@@ -86,6 +87,7 @@ class ConfigurableReportEditForm(DocumentFormBase):
                 'visible',
                 'description',
                 'aggregation_columns',
+                'dynamic_aggregation',
                 'filters',
                 'columns',
                 'configured_charts',
