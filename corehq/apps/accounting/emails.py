@@ -41,6 +41,6 @@ def send_subscription_change_alert(domain, new_subscription, old_subscription, i
     send_html_email_async.delay(
         email_subject,
         sub_change_email_address,
-        render_to_string('accounting/subscription_change_email.html', email_context),
-        text_content=render_to_string('accounting/subscription_change_email.txt', email_context),
+        render_to_string('accounting/email/subscription_change_email.html', email_context),
+        text_content=render_to_string('accounting/email/subscription_change_email.txt', email_context),
     )
