@@ -51,12 +51,10 @@ hqDefine(
                     return false;
                 }
 
-                var $submitButton = $(this).find("button[type='submit']");
-                if(!isBugReportSubmitting && $submitButton.text() === $submitButton.data("success-text")) {
+                if (!isBugReportSubmitting && $hqwebappBugReportSubmit.text() === $hqwebappBugReportSubmit.data("success-text")) {
                     $hqwebappBugReportModal.modal("hide");
                 } else if (!isBugReportSubmitting) {
                     $hqwebappBugReportCancel.disableButtonNoSpinner();
-                    $submitButton.button('loading');
                     $hqwebappBugReportSubmit.button('loading');
                     $(this).ajaxSubmit({
                         type: "POST",
