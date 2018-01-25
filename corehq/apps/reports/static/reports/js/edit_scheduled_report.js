@@ -45,6 +45,7 @@ hqDefine("reports/js/edit_scheduled_report", function() {
     var isConfigurableMap = initial_page_data('is_configurable_map');
     var languagesMap = initial_page_data('languages_map');
     var languagesForSelect = initial_page_data('languages_for_select');
+    var isOwner = initial_page_data('is_owner');
 
     var updateUcrElements = function(selectedConfigs){
         var showUcrElements = _.any(
@@ -96,7 +97,8 @@ hqDefine("reports/js/edit_scheduled_report", function() {
         'id_config_ids',
         django.gettext("Available Reports"),
         django.gettext("Included Reports"),
-        django.gettext("Search Reports...")
+        django.gettext("Search Reports..."),
+        isOwner
     );
     updateUcrElements($("#id_config_ids").val());
 
