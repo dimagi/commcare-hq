@@ -30,7 +30,6 @@ from corehq.util.timezones.conversions import ServerTime
 from dimagi.utils.couch import CriticalSection, release_lock
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.rate_limit import rate_limit
-from django.conf import settings
 
 
 def remove_from_queue(queued_sms):
