@@ -1,5 +1,6 @@
 from __future__ import absolute_import
-from StringIO import StringIO
+
+import io
 from collections import defaultdict
 from distutils.version import StrictVersion
 import re
@@ -49,7 +50,7 @@ def process_ui_translation_upload(app, trans_file):
 def build_ui_translation_download_file(app):
 
     properties = tuple(["property"] + app.langs + ["platform"])
-    temp = StringIO()
+    temp = io.BytesIO()
     headers = (("translations", properties),)
 
     row_dict = {}

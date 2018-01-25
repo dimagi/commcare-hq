@@ -91,13 +91,7 @@ def get_infants_weight_scale_data_chart(domain, config, loc_level, show_test=Fal
         'month', '%s_name' % loc_level
     ).annotate(
         in_month=Sum('infra_infant_weighing_scale'),
-        all=Sum(
-            Case(
-                When(Q(infra_last_update_date=None), then=1),
-                default=0,
-                output_field=IntegerField()
-            )
-        ),
+        all=Sum('num_awc_infra_last_update'),
     ).order_by('month')
 
     if not show_test:
@@ -176,13 +170,7 @@ def get_infants_weight_scale_sector_data(domain, config, loc_level, location_id,
         *group_by
     ).annotate(
         in_month=Sum('infra_infant_weighing_scale'),
-        all=Sum(
-            Case(
-                When(Q(infra_last_update_date=None), then=1),
-                default=0,
-                output_field=IntegerField()
-            )
-        ),
+        all=Sum('num_awc_infra_last_update'),
     ).order_by('%s_name' % loc_level)
 
     if not show_test:

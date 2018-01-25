@@ -360,7 +360,9 @@ class AggChildHealthMonthlyDataSource(ProgressReportSqlData):
                     SumColumn('nutrition_status_severely_underweight', filters=self.filters + [
                         NOT(EQ('age_tranche', 'age_72'))
                     ]),
-                    AliasColumn('wer_eligible')
+                    SumColumn('nutrition_status_weighed', filters=self.filters + [
+                        NOT(EQ('age_tranche', 'age_72'))
+                    ]),
                 ],
                 slug='severely_underweight'
             ),
@@ -371,7 +373,9 @@ class AggChildHealthMonthlyDataSource(ProgressReportSqlData):
                     SumColumn('nutrition_status_moderately_underweight', filters=self.filters + [
                         NOT(EQ('age_tranche', 'age_72'))
                     ]),
-                    AliasColumn('wer_eligible')
+                    SumColumn('nutrition_status_weighed', filters=self.filters + [
+                        NOT(EQ('age_tranche', 'age_72'))
+                    ]),
                 ],
                 slug='moderately_underweight'
             ),
@@ -382,7 +386,9 @@ class AggChildHealthMonthlyDataSource(ProgressReportSqlData):
                     SumColumn('nutrition_status_normal', filters=self.filters + [
                         NOT(EQ('age_tranche', 'age_72'))
                     ]),
-                    AliasColumn('wer_eligible')
+                    SumColumn('nutrition_status_weighed', filters=self.filters + [
+                        NOT(EQ('age_tranche', 'age_72'))
+                    ]),
                 ],
                 slug='status_normal'
             ),
@@ -612,7 +618,7 @@ class AggChildHealthMonthlyDataSource(ProgressReportSqlData):
                 percent_num,
                 [
                     SumColumn('low_birth_weight_in_month'),
-                    AliasColumn('born_in_month')
+                    AliasColumn('weighed_and_born_in_month')
                 ],
                 slug='low_birth_weight'
             )
@@ -1026,7 +1032,9 @@ class ChildrenExport(ExportableMixin, SqlData):
                     SumColumn('nutrition_status_severely_underweight', filters=self.filters + [
                         NOT(EQ('age_tranche', 'age_72'))
                     ]),
-                    AliasColumn('wer_eligible')
+                    SumColumn('nutrition_status_weighed', filters=self.filters + [
+                        NOT(EQ('age_tranche', 'age_72'))
+                    ]),
                 ],
                 slug='percent_severe_underweight'
             ),
@@ -1037,7 +1045,9 @@ class ChildrenExport(ExportableMixin, SqlData):
                     SumColumn('nutrition_status_moderately_underweight', filters=self.filters + [
                         NOT(EQ('age_tranche', 'age_72'))
                     ]),
-                    AliasColumn('wer_eligible')
+                    SumColumn('nutrition_status_weighed', filters=self.filters + [
+                        NOT(EQ('age_tranche', 'age_72'))
+                    ]),
                 ],
                 slug='percent_moderate_underweight'
             ),
@@ -1048,7 +1058,9 @@ class ChildrenExport(ExportableMixin, SqlData):
                     SumColumn('nutrition_status_normal', filters=self.filters + [
                         NOT(EQ('age_tranche', 'age_72'))
                     ]),
-                    AliasColumn('wer_eligible')
+                    SumColumn('nutrition_status_weighed', filters=self.filters + [
+                        NOT(EQ('age_tranche', 'age_72'))
+                    ]),
                 ],
                 slug='percent_normal_weight'
             ),
@@ -2639,7 +2651,7 @@ class AWCInfrastructureUCR(SqlData):
     @property
     def group_by(self):
         return [
-            'where_housed', 'provided_building', 'kitchen', 'toilet_facility',
+            'where_housed', 'provided_building', 'other_building', 'kitchen', 'toilet_facility',
             'type_toilet', 'preschool_kit_available', 'preschool_kit_usable'
         ]
 
@@ -2648,6 +2660,7 @@ class AWCInfrastructureUCR(SqlData):
         return [
             DatabaseColumn('where_housed', SimpleColumn('where_housed')),
             DatabaseColumn('provided_building', SimpleColumn('provided_building')),
+            DatabaseColumn('other_building', SimpleColumn('other_building')),
             DatabaseColumn('kitchen', SimpleColumn('kitchen')),
             DatabaseColumn('toilet_facility', SimpleColumn('toilet_facility')),
             DatabaseColumn('type_toilet', SimpleColumn('type_toilet')),
@@ -2672,7 +2685,7 @@ class VHNDFormUCR(SqlData):
 
     @property
     def group_by(self):
-        return ['submitted_on', 'vhsnd_date_past_month', 'local_leader']
+        return ['submitted_on', 'vhsnd_date_past_month', 'local_leader', 'aww_present']
 
     @property
     def order_by(self):
@@ -2682,7 +2695,8 @@ class VHNDFormUCR(SqlData):
     def columns(self):
         return [
             DatabaseColumn('vhsnd_date_past_month', SimpleColumn('vhsnd_date_past_month')),
-            DatabaseColumn('local_leader', SimpleColumn('local_leader'))
+            DatabaseColumn('local_leader', SimpleColumn('local_leader')),
+            DatabaseColumn('aww_present', SimpleColumn('aww_present'))
         ]
 
 

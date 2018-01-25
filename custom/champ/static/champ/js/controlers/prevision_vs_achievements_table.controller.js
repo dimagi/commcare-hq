@@ -131,6 +131,14 @@ function PrevisionVsAchievementsTableController($scope, reportsDataService, filt
         });
     };
     vm.getData();
+
+    vm.onSelectOption = function($item, property) {
+        if ($item.id === '') {
+            vm.filters[property] = [$item.id];
+        } else if (vm.filters[property].indexOf('') !== -1) {
+            vm.filters[property] = [$item.id];
+        }
+    };
 }
 
 PrevisionVsAchievementsTableController.$inject = ['$scope', 'reportsDataService', 'filtersService'];

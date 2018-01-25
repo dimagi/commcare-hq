@@ -48,26 +48,26 @@ class SQLXFormsSession(models.Model):
     reminder_id = models.CharField(null=True, blank=True, max_length=50)
 
     # The phone number to use for correspondence on this survey
-    phone_number = models.CharField(max_length=126, null=True)
+    phone_number = models.CharField(max_length=126)
 
     # The number of minutes after which this session should expire, starting from the start_date.
-    expire_after = models.IntegerField(null=True)
+    expire_after = models.IntegerField()
 
     # True if the session is still open. An open session allows answers to come in to the survey.
-    session_is_open = models.NullBooleanField()
+    session_is_open = models.BooleanField(default=True)
 
     # A list of integers representing the intervals, in minutes, that reminders should be sent.
     # A reminder in this context just sends the current question of an open survey to the contact
     # in order to remind them to answer it. This can be empty list if no reminders are desired.
-    reminder_intervals = JSONField(null=True)
+    reminder_intervals = JSONField(default=list)
 
     # A zero-based index pointing to the entry in reminder_intervals which represents the
     # currently scheduled reminder.
-    current_reminder_num = models.IntegerField(null=True)
+    current_reminder_num = models.IntegerField(default=0)
 
     # The date and time that the survey framework must take the next action, which would be
     # either sending a reminder or closing the survey session.
-    current_action_due = models.DateTimeField(null=True)
+    current_action_due = models.DateTimeField()
 
     # If True, when the session expires, the form will be submitted with any information collected
     # and the rest of the questions left blank.
@@ -95,10 +95,18 @@ class SQLXFormsSession(models.Model):
     def _id(self):
         return self.couch_id
 
-    def end(self, completed):
-        """
-        Marks this as ended (by setting end time).
-        """
+    def close(self):
+        from corehq.apps.smsforms.app import submit_unfinished_form
+
+        if not self.session_is_open:
+            return
+
+        self.mark_completed(False)
+
+        if self.submit_partially_completed_forms:
+            submit_unfinished_form(self)
+
+    def mark_completed(self, completed):
         self.session_is_open = False
         self.completed = completed
         self.modified_time = self.end_time = utcnow()
@@ -120,17 +128,10 @@ class SQLXFormsSession(models.Model):
             else:
                 return ugettext_noop('Completed')
         else:
-            if self.is_open and self.session_type == XFORMS_SESSION_SMS:
+            if self.session_is_open and self.session_type == XFORMS_SESSION_SMS:
                 return ugettext_noop('In Progress')
             else:
                 return ugettext_noop('Not Finished')
-
-    @property
-    def is_open(self):
-        """
-        True if this session is still open, False otherwise.
-        """
-        return self.end_time is None
 
     @classmethod
     def get_all_open_sms_sessions(cls, domain, contact_id):
@@ -138,14 +139,14 @@ class SQLXFormsSession(models.Model):
             Q(session_type__isnull=True) | Q(session_type=XFORMS_SESSION_SMS),
             domain=domain,
             connection_id=contact_id,
-            end_time__isnull=True,
+            session_is_open=True,
         )
 
     @classmethod
     def close_all_open_sms_sessions(cls, domain, contact_id):
         sessions = cls.get_all_open_sms_sessions(domain, contact_id)
         for session in sessions:
-            session.end(False)
+            session.close()
             session.save()
 
     @classmethod

@@ -5,7 +5,7 @@ function ServiceUptakeController(reportsDataService, filtersService) {
     vm.title = "Prevision VS Achievements Table";
     vm.filters = {
         month_start: 1,
-        month_end: new Date().getMonth(),
+        month_end: new Date().getMonth() + 1,
         year_start: new Date().getFullYear(),
         year_end:new Date().getFullYear(),
     };
@@ -96,6 +96,14 @@ function ServiceUptakeController(reportsDataService, filtersService) {
                 },
             },
         },
+    };
+
+    vm.onSelectOption = function($item, property) {
+        if ($item.id === '') {
+            vm.filters[property] = [$item.id];
+        } else if (vm.filters[property].indexOf('') !== -1) {
+            vm.filters[property] = [$item.id];
+        }
     };
 }
 

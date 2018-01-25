@@ -713,6 +713,16 @@ class PhoneNumber(UUIDGeneratorMixin, models.Model):
             return list(cls.objects.filter(owner_id=owner_id))
 
     @classmethod
+    def get_phone_number_for_owner(cls, owner_id, phone_number):
+        try:
+            return cls.objects.get(
+                owner_id=owner_id,
+                phone_number=phone_number
+            )
+        except cls.DoesNotExist:
+            return None
+
+    @classmethod
     def _clear_quickcaches(cls, owner_id, phone_number, old_owner_id=None, old_phone_number=None):
         cls.by_owner_id.clear(cls, owner_id)
         if old_owner_id and old_owner_id != owner_id:

@@ -867,14 +867,15 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             return [result.referenced_id for result in results]
 
     @staticmethod
-    def get_reverse_indexed_cases(domain, case_ids):
+    def get_reverse_indexed_cases(domain, case_ids, case_types=None, is_closed=None):
         assert isinstance(case_ids, list)
+        assert case_types is None or isinstance(case_types, list)
         if not case_ids:
             return []
 
         cases = list(CommCareCaseSQL.objects.raw(
-            'SELECT * FROM get_reverse_indexed_cases(%s, %s)',
-            [domain, case_ids])
+            'SELECT * FROM get_reverse_indexed_cases_3(%s, %s, %s, %s)',
+            [domain, case_ids, case_types, is_closed])
         )
         cases_by_id = {case.case_id: case for case in cases}
         indices = list(CommCareCaseIndexSQL.objects.raw(

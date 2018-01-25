@@ -92,13 +92,7 @@ def get_medicine_kit_data_chart(domain, config, loc_level, show_test=False):
         'month', '%s_name' % loc_level
     ).annotate(
         in_month=Sum('infra_medicine_kits'),
-        all=Sum(
-            Case(
-                When(Q(infra_last_update_date=None), then=1),
-                default=0,
-                output_field=IntegerField()
-            )
-        ),
+        all=Sum('num_awc_infra_last_update'),
     ).order_by('month')
 
     if not show_test:

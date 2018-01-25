@@ -414,7 +414,8 @@ api_params:
     public: occurrence
   case_property:
     public: key_population_status
-  choices:
+  validator: custom.enikshay.integrations.ninetyninedots.api_spec.checkbox_validator
+  validator_values:
     public:
       - pediatric
       - plhiv

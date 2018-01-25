@@ -122,7 +122,7 @@ def get_functional_toilet_data_chart(domain, config, loc_level, show_test=False)
 
         date_in_miliseconds = int(date.strftime("%s")) * 1000
 
-        data['blue'][date_in_miliseconds]['y'] += (valid or 0)
+        data['blue'][date_in_miliseconds]['all'] += (valid or 0)
         data['blue'][date_in_miliseconds]['in_month'] += in_month
 
     top_locations = sorted(

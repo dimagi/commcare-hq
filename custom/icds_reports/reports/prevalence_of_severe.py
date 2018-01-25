@@ -30,7 +30,7 @@ def get_prevalence_of_severe_data_map(domain, config, loc_level, show_test=False
             severe=Sum('wasting_severe'),
             normal=Sum('wasting_normal'),
             valid=Sum('height_eligible'),
-            total_measured=Sum('height_measured_in_month'),
+            total_measured=Sum('weighed_and_height_measured_in_month'),
         ).order_by('%s_name' % loc_level, '%s_map_location_name' % loc_level)
 
         if not show_test:
@@ -54,6 +54,7 @@ def get_prevalence_of_severe_data_map(domain, config, loc_level, show_test=False
     valid_total = 0
     measured_total = 0
 
+    values_to_calculate_average = []
     for row in get_data_for(config):
         valid = row['valid'] or 0
         name = row['%s_name' % loc_level]
@@ -62,6 +63,9 @@ def get_prevalence_of_severe_data_map(domain, config, loc_level, show_test=False
         moderate = row['moderate'] or 0
         normal = row['normal'] or 0
         total_measured = row['total_measured'] or 0
+
+        numerator = moderate + severe
+        values_to_calculate_average.append(numerator * 100 / (valid or 1))
 
         severe_total += severe
         moderate_total += moderate
@@ -76,11 +80,9 @@ def get_prevalence_of_severe_data_map(domain, config, loc_level, show_test=False
         data_for_map[on_map_name]['total_measured'] += total_measured
         data_for_map[on_map_name]['original_name'].append(name)
 
-    values = []
     for data_for_location in six.itervalues(data_for_map):
         numerator = data_for_location['moderate'] + data_for_location['severe']
         value = numerator * 100 / (data_for_location['total'] or 1)
-        values.append(value)
         if value < 5:
             data_for_location.update({'fillKey': '0%-5%'})
         elif 5 <= value <= 7:
@@ -107,7 +109,8 @@ def get_prevalence_of_severe_data_map(domain, config, loc_level, show_test=False
         ),
         "fills": fills,
         "rightLegend": {
-            "average": "%.2f" % ((sum(values)) / float(len(values) or 1)),
+            "average": "%.2f" % ((sum(values_to_calculate_average)) /
+                                 float(len(values_to_calculate_average) or 1)),
             "info": _((
                 "Percentage of children between {} enrolled for ICDS services with "
                 "weight-for-height below -2 standard deviations of the WHO Child Growth Standards median. "
@@ -135,15 +138,15 @@ def get_prevalence_of_severe_data_map(domain, config, loc_level, show_test=False
                 },
                 {
                     'indicator': '% Severely Acute Malnutrition{}:'.format(chosen_filters),
-                    'value': '%.2f%%' % (severe_total * 100 / float(valid_total or 1))
+                    'value': '%.2f%%' % (severe_total * 100 / float(measured_total or 1))
                 },
                 {
                     'indicator': '% Moderately Acute Malnutrition{}:'.format(chosen_filters),
-                    'value': '%.2f%%' % (moderate_total * 100 / float(valid_total or 1))
+                    'value': '%.2f%%' % (moderate_total * 100 / float(measured_total or 1))
                 },
                 {
                     'indicator': '% Normal{}:'.format(chosen_filters),
-                    'value': '%.2f%%' % (normal_total * 100 / float(valid_total or 1))
+                    'value': '%.2f%%' % (normal_total * 100 / float(measured_total or 1))
                 }
             ]
         },
@@ -167,7 +170,7 @@ def get_prevalence_of_severe_data_chart(domain, config, loc_level, show_test=Fal
         moderate=Sum('wasting_moderate'),
         severe=Sum('wasting_severe'),
         normal=Sum('wasting_normal'),
-        valid=Sum('height_eligible'),
+        valid=Sum('weighed_and_height_measured_in_month'),
     ).order_by('month')
 
     if not show_test:
@@ -279,7 +282,7 @@ def get_prevalence_of_severe_sector_data(domain, config, loc_level, location_id,
         severe=Sum('wasting_severe'),
         valid=Sum('height_eligible'),
         normal=Sum('wasting_normal'),
-        total_measured=Sum('height_measured_in_month'),
+        total_measured=Sum('weighed_and_height_measured_in_month'),
     ).order_by('%s_name' % loc_level)
 
     if not show_test:

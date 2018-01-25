@@ -22,7 +22,7 @@ import langcodes
 import os
 import pytz
 import re
-from StringIO import StringIO
+import io
 import tempfile
 from six.moves.urllib.error import URLError
 
@@ -1338,6 +1338,13 @@ class CaseDetailsView(BaseProjectReportSectionView):
         return reverse(self.urlname, args=(self.domain, self.case_id,))
 
     @property
+    def parent_pages(self):
+        return [{
+            'title': CaseListReport.name,
+            'url': CaseListReport.get_url(domain=self.domain),
+        }]
+
+    @property
     def page_context(self):
         opening_transactions = self.case_instance.get_opening_transactions()
         if not opening_transactions:
@@ -1576,7 +1583,7 @@ def export_case_transactions(request, domain, case_id):
             [headers] + [_make_row(txn) for txn in query_set]
         ]
     ]
-    tmp = StringIO()
+    tmp = io.StringIO()
     export_from_tables(formatted_table, tmp, 'xlsx')
     return export_response(tmp, 'xlsx', '{}-stock-transactions'.format(case.name))
 
@@ -1764,6 +1771,13 @@ class FormDataView(BaseProjectReportSectionView):
     @property
     def page_name(self):
         return self.form_name
+
+    @property
+    def parent_pages(self):
+        return [{
+            'title': inspect.SubmitHistory.name,
+            'url': inspect.SubmitHistory.get_url(self.domain),
+        }]
 
     @property
     def page_context(self):

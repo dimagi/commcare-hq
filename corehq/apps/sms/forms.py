@@ -327,7 +327,6 @@ class SettingsForm(Form):
                               "}",
                 ),
                 data_bind="visible: showRestrictedSMSTimes",
-                field_class='col-md-10 col-lg-10'
             ),
             hqcrispy.FieldWithHelpBubble(
                 "send_to_duplicated_case_numbers",
@@ -542,7 +541,7 @@ class SettingsForm(Form):
         self.helper = FormHelper()
         self.helper.form_class = "form form-horizontal"
         self.helper.label_class = 'col-sm-2 col-md-2 col-lg-2'
-        self.helper.field_class = 'col-sm-2 col-md-3 col-lg-3'
+        self.helper.field_class = 'col-sm-10 col-lg-8'
         self.helper.layout = crispy.Layout(
             self.section_general,
             self.section_registration,
