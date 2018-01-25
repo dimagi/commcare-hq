@@ -1,5 +1,5 @@
 hqDefine("hqwebapp/js/base_list_view_model", function() {
-    BaseListViewModel = function (o) {
+    var BaseListViewModel = function (o) {
         'use strict';
         var view_model = {};
 
@@ -61,7 +61,7 @@ hqDefine("hqwebapp/js/base_list_view_model", function() {
                 url: action_url,
                 dataType: 'json',
                 error: view_model.unsuccessful_archive_action(button, data_index),
-                success: view_model.successful_archive_action(button, data_index)
+                success: view_model.successful_archive_action(button, data_index),
             });
         };
 
@@ -85,8 +85,8 @@ hqDefine("hqwebapp/js/base_list_view_model", function() {
             };
         };
 
-        view_model.unsuccessful_archive_action = function (button, index) {
-            return function (data) {
+        view_model.unsuccessful_archive_action = function (button) {
+            return function () {
                 $(button).button('unsuccessful');
             };
         };
