@@ -79,7 +79,7 @@ hqDefine(
                 $form.find("#bug-report-url").val(location.href);
             }
 
-            function hqwebappBugReportBeforeSubmit(arr) {
+            function hqwebappBugReportBeforeSubmit() {
                 isBugReportSubmitting = true;
             }
 
