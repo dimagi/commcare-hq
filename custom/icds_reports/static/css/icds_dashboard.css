@@ -101,12 +101,32 @@ nvd3 > svg {
         width: 1152px !important;
     }
 
-    .fa-arrow-down:before {
+    .red.fa.fa-arrow-down:before {
         color: #c61400 !important;
     }
 
-    .fa-arrow-up:before {
+    .green.fa.fa-arrow-down:before {
         color: #07c600 !important;
+    }
+
+    .red.fa.fa-arrow-up:before {
+        color: #c61400 !important;
+    }
+
+    .green.fa.fa-arrow-up:before {
+        color: #07c600 !important;
+    }
+
+    .black {
+        color: #0a0a0a !important;
+    }
+
+    .red {
+        color: #d60000 !important;
+    }
+
+    .green {
+        color: #009811 !important;
     }
 
     .report-cell {
