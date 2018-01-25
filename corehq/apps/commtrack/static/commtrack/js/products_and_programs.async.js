@@ -1,7 +1,7 @@
-/* globals hqDefine */
+/* globals hqDefine, hqImport */
 hqDefine('commtrack/js/products_and_programs.async', function () {
     var CommtrackProductsProgramsViewModel = function (o) {
-        var view_model = BaseListViewModel(o);
+        var view_model = hqImport("hqwebapp/js/base_list_view_model").BaseListViewModel(o);
 
         view_model.currently_searching = ko.observable(false);
 
