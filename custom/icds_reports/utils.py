@@ -373,7 +373,7 @@ def generate_data_for_map(data, loc_level, num_prop, denom_prop, fill_key_lower,
         on_map_name = row['%s_map_location_name' % loc_level] or name
         in_month = row[num_prop] or 0
 
-        value = row[num_prop] * 100 / (row[denom_prop] or 1)
+        value = (row[num_prop] or 0) * 100 / (row[denom_prop] or 1)
         values_to_calculate_average.append(value)
 
         valid_total += valid
