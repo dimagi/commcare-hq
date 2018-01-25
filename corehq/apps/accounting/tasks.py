@@ -447,8 +447,8 @@ def send_autopay_failed(invoice, payment_method):
         'support_email': settings.INVOICING_CONTACT_EMAIL,
     }
 
-    template_html = 'accounting/autopay_failed_email.html'
-    template_plaintext = 'accounting/autopay_failed_email.txt'
+    template_html = 'accounting/email/autopay_failed_email.html'
+    template_plaintext = 'accounting/email/autopay_failed_email.txt'
 
     send_HTML_email(
         subject="Subscription Payment for CommCare Invoice %s was declined" % invoice.invoice_number,
