@@ -523,9 +523,9 @@ def weekly_digest():
         'forty_days': in_forty_days.isoformat(),
     }
     email_content = render_to_string(
-        'accounting/digest_email.html', email_context)
+        'accounting/email/digest_email.html', email_context)
     email_content_plaintext = render_to_string(
-        'accounting/digest_email.txt', email_context)
+        'accounting/email/digest_email.txt', email_context)
 
     format_dict = Format.FORMAT_DICT[Format.XLS_2007]
     file_attachment = {
