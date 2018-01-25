@@ -677,8 +677,8 @@ def _send_downgrade_notice(invoice, context):
     send_html_email_async.delay(
         ugettext('Oh no! Your CommCare subscription for {} has been downgraded'.format(invoice.get_domain())),
         invoice.contact_emails,
-        render_to_string('accounting/downgrade.html', context),
-        render_to_string('accounting/downgrade.txt', context),
+        render_to_string('accounting/email/downgrade.html', context),
+        render_to_string('accounting/email/downgrade.txt', context),
         cc=[settings.ACCOUNTS_EMAIL],
         bcc=[settings.GROWTH_EMAIL],
         email_from=get_dimagi_from_email()
