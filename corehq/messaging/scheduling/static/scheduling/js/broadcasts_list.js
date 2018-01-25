@@ -24,31 +24,36 @@ hqDefine("scheduling/js/broadcasts_list", function() {
                 "info": gettext('Showing _START_ to _END_ of _TOTAL_ broadcasts'),
                 "infoFiltered": gettext('(filtered from _MAX_ total broadcasts)'),
             },
+            "columns": [
+                {"data": ""},
+                {"data": "name"},
+                {"data": "last_sent"},
+                {"data": "active"},
+                {"data": ""},
+            ],
             "columnDefs": [
                 {
                     "targets": [0],
                     "className": "text-center",
                     "render": function(data, type, row) {
-                        var id = row[row.length - 1];
-                        var button_id = 'delete-button-for-scheduled-broadcast-' + id;
+                        var button_id = 'delete-button-for-scheduled-broadcast-' + row.id;
                         return '<button id="' + button_id + '" \
                                         class="btn btn-danger" \
-                                        onclick="hqImport(\'scheduling/js/broadcasts_list\').deleteScheduledBroadcast(' + id + ')"> \
+                                        onclick="hqImport(\'scheduling/js/broadcasts_list\').deleteScheduledBroadcast(' + row.id + ')"> \
                                 <i class="fa fa-remove"></i></button>';
                     },
                 },
                 {
                     "targets": [1],
                     "render": function(data, type, row) {
-                        var id = row[row.length - 1];
-                        var url = hqImport("hqwebapp/js/initial_page_data").reverse('edit_schedule', 'scheduled', id);
-                        return "<a href='" + url + "'>" + data + "</a>";
+                        var url = hqImport("hqwebapp/js/initial_page_data").reverse('edit_schedule', 'scheduled', row.id);
+                        return "<a href='" + url + "'>" + row.name + "</a>";
                     },
                 },
                 {
                     "targets": [3],
-                    "render": function(data) {
-                        if(data) {
+                    "render": function(data, type, row) {
+                        if(row.active) {
                             return '<span class="label label-success">' + gettext("Active") + '</span>';
                         } else {
                             return '<span class="label label-danger">' + gettext("Inactive") + '</span>';
@@ -58,18 +63,17 @@ hqDefine("scheduling/js/broadcasts_list", function() {
                 {
                     "targets": [4],
                     "render": function(data, type, row) {
-                        var id = row[row.length - 1];
-                        var button_id = 'activate-button-for-scheduled-broadcast-' + id;
-                        var active = row[3];
-                        if(active) {
-                            return '<button id="' + button_id + '" \
+                        var disabled = row.editable ? '' : ' disabled ';
+                        var button_id = 'activate-button-for-scheduled-broadcast-' + row.id;
+                        if(row.active) {
+                            return '<button id="' + button_id + '"' + disabled + '\
                                             class="btn btn-default" \
-                                            onclick="hqImport(\'scheduling/js/broadcasts_list\').deactivateScheduledBroadcast(' + id + ')"> \
+                                            onclick="hqImport(\'scheduling/js/broadcasts_list\').deactivateScheduledBroadcast(' + row.id + ')"> \
                                    ' + gettext("Deactivate") + '</button>';
                         } else {
-                            return '<button id="' + button_id + '" + \
+                            return '<button id="' + button_id + '"' + disabled + '\
                                             class="btn btn-default" + \
-                                            onclick="hqImport(\'scheduling/js/broadcasts_list\').activateScheduledBroadcast(' + id + ')"> \
+                                            onclick="hqImport(\'scheduling/js/broadcasts_list\').activateScheduledBroadcast(' + row.id + ')"> \
                                    ' + gettext("Activate") + '</button>';
                         }
                     },
@@ -96,13 +100,16 @@ hqDefine("scheduling/js/broadcasts_list", function() {
                 "info": gettext('Showing _START_ to _END_ of _TOTAL_ messages'),
                 "infoFiltered": gettext('(filtered from _MAX_ total messages)'),
             },
+            "columns": [
+                {"data": "name"},
+                {"data": "last_sent"},
+            ],
             "columnDefs": [
                 {
                     "targets": [0],
                     "render": function(data, type, row) {
-                        var id = row[row.length - 1];
-                        var url = hqImport("hqwebapp/js/initial_page_data").reverse('edit_schedule', 'immediate', id);
-                        return "<a href='" + url + "'>" + data + "</a>";
+                        var url = hqImport("hqwebapp/js/initial_page_data").reverse('edit_schedule', 'immediate', row.id);
+                        return "<a href='" + url + "'>" + row.name + "</a>";
                     },
                 },
             ],

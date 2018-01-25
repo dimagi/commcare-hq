@@ -81,9 +81,12 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
             initial_values.case_group_recipients, 'schedule-case_group_recipients');
         self.case_group_recipients.init();
         self.reset_case_property_enabled = ko.observable(initial_values.reset_case_property_enabled);
+        self.submit_partially_completed_forms = ko.observable(initial_values.submit_partially_completed_forms);
+        self.survey_reminder_intervals_enabled = ko.observable(initial_values.survey_reminder_intervals_enabled);
 
         self.is_trial_project = initial_values.is_trial_project;
         self.displayed_email_trial_message = false;
+        self.content = ko.observable(initial_values.content);
         self.message = new TranslationViewModel(
             hqImport("hqwebapp/js/initial_page_data").get("language_list"),
             initial_values.message

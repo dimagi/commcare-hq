@@ -107,14 +107,13 @@ class BroadcastListView(BaseMessagingSectionView, DataTablesAJAXPaginationMixin)
 
         data = []
         for broadcast in broadcasts:
-            data.append([
-                '< delete placeholder >',
-                broadcast.name,
-                self._format_time(broadcast.last_sent_timestamp),
-                broadcast.schedule.active,
-                '< action placeholder >',
-                broadcast.id,
-            ])
+            data.append({
+                'name': broadcast.name,
+                'last_sent': self._format_time(broadcast.last_sent_timestamp),
+                'active': broadcast.schedule.active,
+                'editable': self.can_use_inbound_sms or not broadcast.schedule.memoized_uses_sms_survey,
+                'id': broadcast.id,
+            })
         return self.datatables_ajax_response(data, total_records)
 
     def get_immediate_ajax_response(self):
@@ -128,11 +127,11 @@ class BroadcastListView(BaseMessagingSectionView, DataTablesAJAXPaginationMixin)
 
         data = []
         for broadcast in broadcasts:
-            data.append([
-                broadcast.name,
-                self._format_time(broadcast.last_sent_timestamp),
-                broadcast.id,
-            ])
+            data.append({
+                'name': broadcast.name,
+                'last_sent': self._format_time(broadcast.last_sent_timestamp),
+                'id': broadcast.id,
+            })
         return self.datatables_ajax_response(data, total_records)
 
     def get_scheduled_broadcast(self, broadcast_id):
@@ -143,6 +142,12 @@ class BroadcastListView(BaseMessagingSectionView, DataTablesAJAXPaginationMixin)
 
     def get_scheduled_broadcast_activate_ajax_response(self, active_flag, broadcast_id):
         broadcast = self.get_scheduled_broadcast(broadcast_id)
+        if not self.can_use_inbound_sms and broadcast.schedule.memoized_uses_sms_survey:
+            return HttpResponseBadRequest(
+                "Cannot create or edit survey reminders because subscription "
+                "does not have access to inbound SMS"
+            )
+
         TimedSchedule.objects.filter(schedule_id=broadcast.schedule_id).update(active=active_flag)
         refresh_timed_schedule_instances.delay(
             broadcast.schedule_id,
@@ -216,10 +221,12 @@ class CreateScheduleView(BaseMessagingSectionView, AsyncHandlerMixin):
 
     @cached_property
     def schedule_form(self):
-        if self.request.method == 'POST':
-            return BroadcastForm(self.domain, self.schedule, self.broadcast, self.request.POST)
+        args = [self.domain, self.schedule, self.can_use_inbound_sms, self.broadcast]
 
-        return BroadcastForm(self.domain, self.schedule, self.broadcast)
+        if self.request.method == 'POST':
+            args.append(self.request.POST)
+
+        return BroadcastForm(*args)
 
     @property
     def page_context(self):
@@ -233,6 +240,12 @@ class CreateScheduleView(BaseMessagingSectionView, AsyncHandlerMixin):
             return self.async_response
 
         if self.schedule_form.is_valid():
+            if not self.can_use_inbound_sms and self.schedule_form.uses_sms_survey:
+                return HttpResponseBadRequest(
+                    "Cannot create or edit survey reminders because subscription "
+                    "does not have access to inbound SMS"
+                )
+
             broadcast, schedule = self.schedule_form.save_broadcast_and_schedule()
             if isinstance(schedule, AlertSchedule):
                 refresh_alert_schedule_instances.delay(schedule.schedule_id, broadcast.recipients)
@@ -288,15 +301,28 @@ class EditScheduleView(CreateScheduleView):
             raise Http404()
 
     @property
-    def read_only_mode(self):
-        return isinstance(self.broadcast, ImmediateBroadcast)
-
-    @property
     def schedule(self):
         return self.broadcast.schedule
 
+    @cached_property
+    def read_only_mode(self):
+        immediate_broadcast_restriction = isinstance(self.broadcast, ImmediateBroadcast)
+
+        inbound_sms_restriction = (
+            not self.can_use_inbound_sms and
+            self.schedule.memoized_uses_sms_survey
+        )
+
+        return immediate_broadcast_restriction or inbound_sms_restriction
+
     def dispatch(self, request, *args, **kwargs):
         with get_broadcast_edit_critical_section(self.broadcast_type, self.broadcast_id):
+            if not self.can_use_inbound_sms and self.schedule.memoized_uses_sms_survey:
+                messages.warning(
+                    request,
+                    _("This broadcast is not editable because it uses an SMS survey and "
+                      "your current subscription does not allow use of inbound SMS.")
+                )
             return super(EditScheduleView, self).dispatch(request, *args, **kwargs)
 
 
@@ -332,16 +358,16 @@ class ConditionalAlertListView(BaseMessagingSectionView, DataTablesAJAXPaginatio
         rules = query[self.display_start:self.display_start + self.display_length]
         data = []
         for rule in rules:
-            data.append([
-                '< delete placeholder >',
-                rule.name,
-                rule.case_type,
-                rule.get_messaging_rule_schedule().active,
-                '< action placeholder >',
-                rule.locked_for_editing,
-                MessagingRuleProgressHelper(rule.pk).get_progress_pct(),
-                rule.pk,
-            ])
+            schedule = rule.get_messaging_rule_schedule()
+            data.append({
+                'name': rule.name,
+                'case_type': rule.case_type,
+                'active': schedule.active,
+                'editable': self.can_use_inbound_sms or not schedule.memoized_uses_sms_survey,
+                'locked_for_editing': rule.locked_for_editing,
+                'progress_pct': MessagingRuleProgressHelper(rule.pk).get_progress_pct(),
+                'id': rule.pk,
+            })
 
         return self.datatables_ajax_response(data, total_records)
 
@@ -374,6 +400,12 @@ class ConditionalAlertListView(BaseMessagingSectionView, DataTablesAJAXPaginatio
         """
         with transaction.atomic():
             schedule = rule.get_messaging_rule_schedule()
+            if not self.can_use_inbound_sms and schedule.memoized_uses_sms_survey:
+                return HttpResponseBadRequest(
+                    "Cannot create or edit survey reminders because subscription "
+                    "does not have access to inbound SMS"
+                )
+
             schedule.active = active_flag
             schedule.save()
             initiate_messaging_rule_run(self.domain, rule.pk)
@@ -408,6 +440,7 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
     page_title = ugettext_lazy('New Conditional Message')
     template_name = 'scheduling/conditional_alert.html'
     async_handlers = [MessagingRecipientHandler]
+    read_only_mode = False
 
     @method_decorator(_requires_new_reminder_framework())
     @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
@@ -440,11 +473,18 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
 
     @cached_property
     def schedule_form(self):
-        if self.request.method == 'POST':
-            return ConditionalAlertScheduleForm(self.domain, self.schedule, self.rule, self.criteria_form,
-                self.request.POST)
+        args = [
+            self.domain,
+            self.schedule,
+            self.can_use_inbound_sms,
+            self.rule,
+            self.criteria_form,
+        ]
 
-        return ConditionalAlertScheduleForm(self.domain, self.schedule, self.rule, self.criteria_form)
+        if self.request.method == 'POST':
+            args.append(self.request.POST)
+
+        return ConditionalAlertScheduleForm(*args)
 
     @property
     def schedule(self):
@@ -453,16 +493,6 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
     @property
     def rule(self):
         return None
-
-    @cached_property
-    def read_only_mode(self):
-        return (
-            not self.is_system_admin and
-            (
-                self.criteria_form.requires_system_admin_to_edit or
-                self.schedule_form.requires_system_admin_to_edit
-            )
-        )
 
     @cached_property
     def is_system_admin(self):
@@ -509,6 +539,12 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
                 # unless the user has permission to
                 return HttpResponseBadRequest()
 
+            if not self.can_use_inbound_sms and self.schedule_form.uses_sms_survey:
+                return HttpResponseBadRequest(
+                    "Cannot create or edit survey reminders because subscription "
+                    "does not have access to inbound SMS"
+                )
+
             with transaction.atomic():
                 if self.rule:
                     rule = self.rule
@@ -543,6 +579,23 @@ class EditConditionalAlertView(CreateConditionalAlertView):
         return self.kwargs.get('rule_id')
 
     @cached_property
+    def read_only_mode(self):
+        system_admin_restriction = (
+            not self.is_system_admin and
+            (
+                self.criteria_form.requires_system_admin_to_edit or
+                self.schedule_form.requires_system_admin_to_edit
+            )
+        )
+
+        inbound_sms_restriction = (
+            not self.can_use_inbound_sms and
+            self.schedule.memoized_uses_sms_survey
+        )
+
+        return system_admin_restriction or inbound_sms_restriction
+
+    @cached_property
     def rule(self):
         try:
             return AutomaticUpdateRule.objects.get(
@@ -563,4 +616,10 @@ class EditConditionalAlertView(CreateConditionalAlertView):
             if self.rule.locked_for_editing:
                 messages.warning(request, _("Please allow the rule to finish processing before editing."))
                 return HttpResponseRedirect(reverse(ConditionalAlertListView.urlname, args=[self.domain]))
+            if not self.can_use_inbound_sms and self.schedule.memoized_uses_sms_survey:
+                messages.warning(
+                    request,
+                    _("This alert is not editable because it uses an SMS survey and "
+                      "your current subscription does not allow use of inbound SMS.")
+                )
             return super(EditConditionalAlertView, self).dispatch(request, *args, **kwargs)
