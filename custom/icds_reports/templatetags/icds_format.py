@@ -29,20 +29,35 @@ def icds_format_def_zero(data, prop):
 
 @register.filter(name='icds_type_of_building')
 def icds_type_of_building(data):
-    housed = ['', 'Owned', 'Rented']
+    housed = ['', 'Owned', 'Rented', 'Neither owned nor rented']
     provided_buildings = [
-        '', 'Panchayat', 'Community', 'Urban Municipality/Corporation', 'Rural Development/ DRDA',
-        'ICDS', 'Other'
+        '', 'Owned (Panchayat)', 'Owned (Community)', 'Owned (Urban Municipality/ Corporation)',
+        'Owned (Rural Development/ DRDA)', 'Owned (ICDS)', 'Owned (Other)'
+    ]
+    other_buildings = [
+        '', 'AWW\'s house', 'AWW Helper\'s house', 'Panchayat building', 'Primary school',
+        'Any religious place', 'Any other community building', 'Open Space'
     ]
     if data:
         where_housed = get_value(data, 'where_housed')
         building = get_value(data, 'provided_building')
-        if where_housed == 3:
+        other_building = get_value(data, 'other_building')
+        if where_housed == 1:
             return provided_buildings[building]
+        elif where_housed == 3:
+            return other_buildings[other_building]
         else:
             return housed[where_housed]
     else:
         return ''
+
+
+@register.filter(name='icds_type_of_awc_building')
+def icds_type_of_awc_building(data):
+    if data:
+        return 'Pucca' if data.lower() == 'pucca' else 'Other'
+    else:
+        return DATA_NOT_ENTERED
 
 
 @register.filter(name='icds_toilet_type')

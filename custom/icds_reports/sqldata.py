@@ -2651,7 +2651,7 @@ class AWCInfrastructureUCR(SqlData):
     @property
     def group_by(self):
         return [
-            'where_housed', 'provided_building', 'kitchen', 'toilet_facility',
+            'where_housed', 'provided_building', 'other_building', 'kitchen', 'toilet_facility',
             'type_toilet', 'preschool_kit_available', 'preschool_kit_usable'
         ]
 
@@ -2660,6 +2660,7 @@ class AWCInfrastructureUCR(SqlData):
         return [
             DatabaseColumn('where_housed', SimpleColumn('where_housed')),
             DatabaseColumn('provided_building', SimpleColumn('provided_building')),
+            DatabaseColumn('other_building', SimpleColumn('other_building')),
             DatabaseColumn('kitchen', SimpleColumn('kitchen')),
             DatabaseColumn('toilet_facility', SimpleColumn('toilet_facility')),
             DatabaseColumn('type_toilet', SimpleColumn('type_toilet')),
