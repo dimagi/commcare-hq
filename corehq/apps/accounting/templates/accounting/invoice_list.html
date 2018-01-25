@@ -7,7 +7,7 @@
 
 {% block page_content %}
     {% for adjust_balance_form in adjust_balance_forms %}
-        {% include 'accounting/adjust_balance.html' %}
+        {% include 'accounting/partials/adjust_balance.html' %}
     {% endfor %}
     {{ block.super }}
 {% endblock %}

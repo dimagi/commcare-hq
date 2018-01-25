@@ -1427,8 +1427,8 @@ class Subscription(models.Model):
                 'domain': domain_name,
                 'ending_on': ending_on,
             }
-            template = 'accounting/trial_ending_reminder_email.html'
-            template_plaintext = 'accounting/trial_ending_reminder_email_plaintext.txt'
+            template = 'accounting/email/trial_ending_reminder.html'
+            template_plaintext = 'accounting/email/trial_ending_reminder.txt'
         else:
             subject = _(
                 "CommCare Alert: %(domain)s's subscription to "
@@ -1439,8 +1439,8 @@ class Subscription(models.Model):
                 'ending_on': ending_on,
             }
 
-            template = 'accounting/subscription_ending_reminder_email.html'
-            template_plaintext = 'accounting/subscription_ending_reminder_email_plaintext.html'
+            template = 'accounting/email/subscription_ending_reminder.html'
+            template_plaintext = 'accounting/email/subscription_ending_reminder.txt'
 
         from corehq.apps.domain.views import DomainSubscriptionView
         context = {
@@ -1489,8 +1489,8 @@ class Subscription(models.Model):
         subject = "Alert: {domain}'s subscription is ending on {end_date}".format(
                   domain=domain,
                   end_date=end_date)
-        template = 'accounting/subscription_ending_reminder_dimagi.html'
-        template_plaintext = 'accounting/subscription_ending_reminder_dimagi_plaintext.html'
+        template = 'accounting/email/subscription_ending_reminder_dimagi.html'
+        template_plaintext = 'accounting/email/subscription_ending_reminder_dimagi.txt'
         context = {
             'domain': domain,
             'end_date': end_date,
@@ -2086,8 +2086,8 @@ class BillingRecordBase(models.Model):
 class WireBillingRecord(BillingRecordBase):
     invoice = models.ForeignKey(WireInvoice, on_delete=models.PROTECT)
 
-    INVOICE_HTML_TEMPLATE = 'accounting/wire_invoice_email.html'
-    INVOICE_TEXT_TEMPLATE = 'accounting/wire_invoice_email_plaintext.html'
+    INVOICE_HTML_TEMPLATE = 'accounting/email/wire_invoice.html'
+    INVOICE_TEXT_TEMPLATE = 'accounting/email/wire_invoice.txt'
 
     class Meta:
         app_label = 'accounting'
@@ -2128,8 +2128,8 @@ class BillingRecord(BillingRecordBase):
     INVOICE_CONTRACTED_HTML_TEMPLATE = 'accounting/invoice_email_contracted.html'
     INVOICE_CONTRACTED_TEXT_TEMPLATE = 'accounting/invoice_email_contracted_plaintext.html'
 
-    INVOICE_AUTOPAY_HTML_TEMPLATE = 'accounting/invoice_email_autopayment.html'
-    INVOICE_AUTOPAY_TEXT_TEMPLATE = 'accounting/invoice_email_autopayment.txt'
+    INVOICE_AUTOPAY_HTML_TEMPLATE = 'accounting/email/invoice_autopayment.html'
+    INVOICE_AUTOPAY_TEXT_TEMPLATE = 'accounting/email/invoice_autopayment.txt'
 
     class Meta:
         app_label = 'accounting'
