@@ -1,30 +1,35 @@
 from __future__ import absolute_import
 
-import uuid
 from base64 import b64encode
 from collections import namedtuple
+import csv
 from datetime import date, datetime, timedelta
+import io
 import logging
 import os
+import uuid
 
-import pytz
 from celery.schedules import crontab
 from celery.task import periodic_task, task
 from dateutil.relativedelta import relativedelta
 from django.conf import settings
 from django.db import Error, IntegrityError, connections
-from corehq.util.view_utils import reverse
+from django.db.models import F
+import pytz
 
 from corehq.apps.locations.models import SQLLocation
-from corehq.apps.reports.util import send_report_download_email
 from corehq.apps.settings.views import get_qrcode
 from corehq.apps.userreports.models import get_datasource_config
 from corehq.apps.userreports.util import get_indicator_adapter
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.const import SERVER_DATE_FORMAT
 from corehq.form_processor.change_publishers import publish_case_saved
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.sql_db.connections import get_icds_ucr_db_alias
 from corehq.util.decorators import serial_task
+from corehq.util.log import send_HTML_email
 from corehq.util.soft_assert import soft_assert
+from corehq.util.view_utils import reverse
+from custom.icds_reports.models import AggChildHealthMonthly
 from custom.icds_reports.reports.issnip_monthly_register import ISSNIPMonthlyReport
 from custom.icds_reports.utils import zip_folder, create_pdf_file
 from dimagi.utils.chunked import chunked
@@ -285,3 +290,76 @@ def prepare_issnip_monthly_register_reports(domain, user, awcs, pdf_format, mont
         'format': pdf_format,
         'link': reverse('icds_download_pdf', params=params, absolute=True, kwargs={'domain': domain})
     }
+
+
+@task(queue='background_queue')
+def icds_data_validation(day):
+    """Checks all AWCs to validate that there will be no inconsistencies in the
+    reporting dashboard.
+    """
+
+    # agg tables store the month like YYYY-MM-01
+    month = day
+    month.replace(day=1)
+    return_values = ('state_name', 'district_name', 'block_name', 'supervisor_name', 'awc_name')
+
+    bad_wasting_awcs = AggChildHealthMonthly.objects.filter(
+        month=month, aggregation_level=5
+    ).exclude(
+        weighed_and_height_measured_in_month=(
+            F('wasting_moderate') + F('wasting_severe') + F('wasting_normal')
+        )
+    ).values_list(*return_values)
+
+    bad_stunting_awcs = AggChildHealthMonthly.objects.filter(month=month, aggregation_level=5).exclude(
+        height_measured_in_month=(
+            F('stunting_severe') + F('stunting_moderate') + F('stunting_normal')
+        )
+    ).values_list(*return_values)
+
+    bad_underweight_awcs = AggChildHealthMonthly.objects.filter(month=month, aggregation_level=5).exclude(
+        nutrition_status_weighed=(
+            F('nutrition_status_normal') +
+            F('nutrition_status_moderately_underweight') +
+            F('nutrition_status_severely_underweight')
+        )
+    ).values_list(*return_values)
+
+    bad_lbw_awcs = AggChildHealthMonthly.objects.filter(month=month, aggregation_level=5).exclude(
+        weighed_and_born_in_month__gt=(
+            F('low_birth_weight_in_month')
+        )
+    ).values_list(*return_values)
+
+    csv_file = io.BytesIO()
+    writer = csv.writer(csv_file)
+    writer.writerow(('type',) + return_values)
+    _icds_add_awcs_to_file(writer, 'wasting', bad_wasting_awcs)
+    _icds_add_awcs_to_file(writer, 'stunting', bad_stunting_awcs)
+    _icds_add_awcs_to_file(writer, 'underweight', bad_underweight_awcs)
+    _icds_add_awcs_to_file(writer, 'low_birth_weight', bad_lbw_awcs)
+
+    email_content = """
+    Incorrect wasting AWCs: {bad_wasting_awcs}
+    Incorrect stunting AWCs: {bad_stunting_awcs}
+    Incorrect underweight AWCs: {bad_underweight_awcs}
+    Incorrect low birth weight AWCs: {bad_lbw_awcs}
+
+    Please see attached file for more details
+    """.format(
+        bad_wasting_awcs=len(bad_wasting_awcs),
+        bad_stunting_awcs=len(bad_stunting_awcs),
+        bad_underweight_awcs=len(bad_underweight_awcs),
+        bad_lbw_awcs=len(bad_lbw_awcs),
+    )
+
+    filename = month.strftime('validation_results_%s.csv' % SERVER_DATE_FORMAT)
+    send_HTML_email(
+        'ICDS Dashboard Validation Results', DASHBOARD_TEAM_MEMBERS, email_content,
+        file_attachments=[{'file_obj': csv_file, 'title': filename, 'mimetype': 'text/csv'}],
+    )
+
+
+def _icds_add_awcs_to_file(csv_writer, error_type, rows):
+    for row in rows:
+        csv_writer.writerow((error_type, ) + row)
