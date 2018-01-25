@@ -17,13 +17,33 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='userdim',
             name='domain',
-            field=models.CharField(max_length=255, null=True),
+            field=models.CharField(max_length=255, null=True, blank=True),
         ),
         HqRunSQL(
             """
             ALTER TABLE warehouse_userdim
             ADD CONSTRAINT domain_conditional_null CHECK
             ((doc_type = 'WebUser' and domain IS NULL) OR (doc_type = 'CommCareUser' and domain is NOT NULL))
+            """,
+            reverse_sql="""
+            ALTER TABLE warehouse_userdim
+            DROP CONSTRAINT IF EXISTS domain_conditional_null;
             """
-        )
+        ),
+        migrations.AlterField(
+            model_name='userstagingtable',
+            name='domain',
+            field=models.CharField(blank=True, max_length=100, null=True),
+        ),
+        HqRunSQL(
+            """
+            ALTER TABLE warehouse_userstagingtable
+            ADD CONSTRAINT domain_conditional_null CHECK
+            ((doc_type = 'WebUser' and domain IS NULL) OR (doc_type = 'CommCareUser' and domain is NOT NULL))
+            """,
+            reverse_sql="""
+            ALTER TABLE warehouse_userstagingtable
+            DROP CONSTRAINT IF EXISTS domain_conditional_null;
+            """
+        ),
     ]

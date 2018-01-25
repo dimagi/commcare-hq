@@ -183,7 +183,7 @@ class UserStagingTable(StagingTable, CouchToDjangoETLMixin):
     email = models.CharField(max_length=255, null=True)
     doc_type = models.CharField(max_length=100)
     base_doc = models.CharField(max_length=100)
-    domain = models.CharField(max_length=100)
+    domain = models.CharField(max_length=100, null=True, blank=True)
 
     is_active = models.BooleanField()
     is_staff = models.BooleanField()
