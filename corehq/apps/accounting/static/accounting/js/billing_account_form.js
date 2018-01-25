@@ -1,4 +1,4 @@
-hqDefine('accounting/js/accounting.billing_account_form.ko', function () {
+hqDefine('accounting/js/billing_account_form', function () {
     var BillingAccountForm = function (is_active) {
         'use strict';
         var self = this;

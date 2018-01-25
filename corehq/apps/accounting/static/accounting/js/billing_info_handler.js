@@ -1,5 +1,5 @@
 /* globals django */
-hqDefine('accounting/js/accounting.billing_info_handler', function () {
+hqDefine('accounting/js/billing_info_handler', function () {
     var AsyncSelect2Handler = function (field, multiple) {
         'use strict';
         var self = this;

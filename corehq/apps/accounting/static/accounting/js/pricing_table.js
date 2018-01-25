@@ -1,4 +1,4 @@
-hqDefine('accounting/js/accounting.pricing_table', function () {
+hqDefine('accounting/js/pricing_table', function () {
     var PricingTable = function (editions, current_edition, isRenewal) {
         'use strict';
         var self = this;
