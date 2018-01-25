@@ -1427,8 +1427,8 @@ class Subscription(models.Model):
                 'domain': domain_name,
                 'ending_on': ending_on,
             }
-            template = 'accounting/trial_ending_reminder_email.html'
-            template_plaintext = 'accounting/trial_ending_reminder_email_plaintext.txt'
+            template = 'accounting/email/trial_ending_reminder.html'
+            template_plaintext = 'accounting/email/trial_ending_reminder.txt'
         else:
             subject = _(
                 "CommCare Alert: %(domain)s's subscription to "

@@ -702,8 +702,8 @@ def _send_downgrade_warning(invoice, context):
             invoice.get_domain()
         )),
         invoice.contact_emails,
-        render_to_string('accounting/downgrade_warning.html', context),
-        render_to_string('accounting/downgrade_warning.txt', context),
+        render_to_string('accounting/email/downgrade_warning.html', context),
+        render_to_string('accounting/email/downgrade_warning.txt', context),
         cc=[settings.ACCOUNTS_EMAIL],
         bcc=[settings.GROWTH_EMAIL],
         email_from=get_dimagi_from_email())
