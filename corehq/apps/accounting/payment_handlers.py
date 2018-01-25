@@ -223,8 +223,8 @@ class InvoiceStripePaymentHandler(BaseStripePaymentHandler):
 
 
 class BulkStripePaymentHandler(BaseStripePaymentHandler):
-    receipt_email_template = 'accounting/bulk_payment_receipt_email.html'
-    receipt_email_template_plaintext = 'accounting/bulk_payment_receipt_email_plaintext.txt'
+    receipt_email_template = 'accounting/email/bulk_payment_receipt_email.html'
+    receipt_email_template_plaintext = 'accounting/email/bulk_payment_receipt_email_plaintext.txt'
 
     def __init__(self, payment_method, domain):
         super(BulkStripePaymentHandler, self).__init__(payment_method, domain)
