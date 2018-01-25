@@ -378,6 +378,8 @@ class AggChildHealthMonthly(models.Model):
     fully_immunized_eligible = models.IntegerField(blank=True, null=True)
     fully_immunized_on_time = models.IntegerField(blank=True, null=True)
     fully_immunized_late = models.IntegerField(blank=True, null=True)
+    weighed_and_height_measured_in_month = models.IntegerField(blank=True, null=True)
+    weighed_and_born_in_month = models.IntegerField(blank=True, null=True)
 
     class Meta:
         app_label = 'icds_model'

@@ -780,10 +780,10 @@ class TestAWCReport(TestCase):
                             "help_text": "Total number of households registered"
                         },
                         {
-                            "all": 6,
+                            "all": 1,
                             "format": "percent_and_div",
-                            "percent": -33.33333333333334,
-                            "value": 1,
+                            "percent": "Data in the previous reporting period was 0",
+                            "value": 0,
                             "label": "Percent Aadhaar-seeded Beneficiaries",
                             "frequency": "month",
                             "help_text": "Percentage of ICDS beneficiaries whose Aadhaar"
@@ -898,10 +898,10 @@ class TestAWCReport(TestCase):
                             "help_text": "Total number of households registered"
                         },
                         {
-                            "all": 6,
+                            "all": 1,
                             "format": "percent_and_div",
                             "percent": "Data in the previous reporting period was 0",
-                            "value": 1,
+                            "value": 0,
                             "label": "Percent Aadhaar-seeded Beneficiaries",
                             "frequency": "day",
                             "help_text": (
@@ -1009,10 +1009,10 @@ class TestAWCReport(TestCase):
                             "help_text": "Total number of households registered"
                         },
                         {
-                            "all": 6,
+                            "all": 1,
                             "format": "percent_and_div",
                             "percent": "Data in the previous reporting period was 0",
-                            "value": 1,
+                            "value": 0,
                             "label": "Percent Aadhaar-seeded Beneficiaries",
                             "frequency": "day",
                             "help_text": (

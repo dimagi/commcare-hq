@@ -89,7 +89,8 @@ nvd3 > svg {
     }
 
     table {
-        page-break-after: always;
+        page-break-after: avoid;
+        width: 100% !important;
     }
 
     .break {
@@ -110,6 +111,14 @@ nvd3 > svg {
 
     .report-cell {
         height: 200px;
+    }
+
+    .dataTables_scrollHeadInner {
+        width: 100% !important;
+    }
+
+    .row {
+        width: 100%;
     }
 
     .col-md-1, .col-md-2, .col-md-3, .col-md-4, .col-md-5, .col-md-6,
@@ -736,7 +745,7 @@ table.dataTable.fixedHeader-locked {
 }
 
 .locPopup {
-    position: fixed;
+    position: absolute;
     display:none;
     z-index: 90000;
     background-color: white;
@@ -749,9 +758,16 @@ table.dataTable.fixedHeader-locked {
     width: 100%;
 }
 
-.locPopup > button {
-    display: block;
-    margin: 5px auto;
+.locPopup > .modal-header {
+    padding: 5px;
+}
+
+.locPopup > .modal-body {
+    display: grid;
+}
+
+.locPopup > .modal-body > button {
+    margin: 2px;
 }
 
 table.dataTable,
@@ -789,4 +805,3 @@ hr {
 .issnip-spinner-container span {
     margin-left: 5px;
 }
-

@@ -32,7 +32,7 @@ class ISSNIPMonthlyReport(object):
         ).values(
             'block_name', 'awc_name', 'awc_site_code', 'infra_type_of_building', 'infra_clean_water',
             'cases_ccs_pregnant_all', 'cases_ccs_lactating_all', 'awc_days_open', 'awc_days_pse_conducted',
-            'usage_num_home_visit', 'ls_awc_present', 'cases_person_referred'
+            'usage_num_home_visit', 'cases_person_referred'
         )
         return data[0] if data else None
 
@@ -78,8 +78,18 @@ class ISSNIPMonthlyReport(object):
         ).values(
             'awc_id'
         ).annotate(
-            pregnant_women_thr=Sum('pregnant') + Sum('thr_eligible'),
-            lactating_women_thr=Sum('lactating') + Sum('thr_eligible'),
+            pregnant_women_thr=Sum(
+                self.filter_by({
+                    'pregnant__gt': 0,
+                    'thr_eligible__gt': 0
+                }, 'pregnant')
+            ),
+            lactating_women_thr=Sum(
+                self.filter_by({
+                    'lactating__gt': 0,
+                    'thr_eligible__gt': 0
+                }, 'lactating')
+            )
         )
         return data[0] if data else None
 
@@ -170,7 +180,7 @@ class ISSNIPMonthlyReport(object):
                 'gender': 'F'
             }, 'stunting_moderate')) + Sum(self.filter_by({
                 'age_tranche__in': ['0', '6', '12', '24', '36'],
-                'gender': 'M'
+                'gender': 'F'
             }, 'stunting_severe')),
             boys_stunted_3_5=Sum(self.filter_by({
                 'age_tranche__in': ['48', '60'],
@@ -184,7 +194,7 @@ class ISSNIPMonthlyReport(object):
                 'gender': 'F'
             }, 'stunting_moderate')) + Sum(self.filter_by({
                 'age_tranche__in': ['48', '60'],
-                'gender': 'M'
+                'gender': 'F'
             }, 'stunting_severe')),
             boys_wasted_0_3=Sum(self.filter_by({
                 'age_tranche__in': ['0', '6', '12', '24', '36'],
@@ -198,7 +208,7 @@ class ISSNIPMonthlyReport(object):
                 'gender': 'F'
             }, 'wasting_moderate')) + Sum(self.filter_by({
                 'age_tranche__in': ['0', '6', '12', '24', '36'],
-                'gender': 'M'
+                'gender': 'F'
             }, 'wasting_severe')),
             boys_wasted_3_5=Sum(self.filter_by({
                 'age_tranche__in': ['48', '60'],
@@ -212,7 +222,7 @@ class ISSNIPMonthlyReport(object):
                 'gender': 'F'
             }, 'wasting_moderate')) + Sum(self.filter_by({
                 'age_tranche__in': ['48', '60'],
-                'gender': 'M'
+                'gender': 'F'
             }, 'wasting_severe')),
             sc_boys_6_36=Sum(self.filter_by({
                 'caste': 'sc',

@@ -789,6 +789,10 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
         detail.long.sort_nodeset_columns = sort_nodeset_columns
 
     if sort_elements is not None:
+        # Attempt to map new elements to old so we don't lose translations
+        # Imperfect because the same field may be used multiple times, or user may change field
+        old_elements_by_field = {e['field']: e for e in detail.short.sort_elements}
+
         detail.short.sort_elements = []
         for sort_element in sort_elements:
             item = SortElement()
@@ -796,6 +800,8 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
             item.type = sort_element['type']
             item.direction = sort_element['direction']
             item.blanks = sort_element['blanks']
+            if item.field in old_elements_by_field:
+                item.display = old_elements_by_field[item.field].display
             item.display[lang] = sort_element['display']
             if toggles.SORT_CALCULATION_IN_CASE_LIST.enabled(domain):
                 item.sort_calculation = sort_element['sort_calculation']

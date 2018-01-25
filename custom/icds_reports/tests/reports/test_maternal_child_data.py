@@ -5,6 +5,7 @@ from custom.icds_reports.reports.maternal_child import get_maternal_child_data
 
 
 class TestMaternalChildData(TestCase):
+    maxDiff = None
 
     def test_data(self):
         self.assertDictEqual(
@@ -22,7 +23,7 @@ class TestMaternalChildData(TestCase):
                         {
                             "redirect": "underweight_children",
                             "color": "green",
-                            "all": 989,
+                            "all": 696,
                             "frequency": "month",
                             "format": "percent_and_div",
                             "help_text": "Percentage of children between 0-5 years enrolled for ICDS services"
@@ -30,14 +31,14 @@ class TestMaternalChildData(TestCase):
                                          " of the WHO Child Growth Standards median. "
                                          "Children who are moderately or severely underweight"
                                          " have a higher risk of mortality.",
-                            "percent": -11.425682507583417,
+                            "percent": -14.901477832512326,
                             "value": 150,
                             "label": "Underweight (Weight-for-Age)"
                         },
                         {
                             "redirect": "wasting",
                             "color": "red",
-                            "all": 939,
+                            "all": 31,
                             "frequency": "month",
                             "format": "percent_and_div",
                             "help_text": "Percentage of children (6-60 months) with weight-for-height below"
@@ -45,7 +46,7 @@ class TestMaternalChildData(TestCase):
                                          "Severe Acute Malnutrition (SAM) or wasting in children is a symptom of"
                                          " acute undernutrition usually as a consequence of insufficient "
                                          "food intake or a high incidence of infectious diseases.",
-                            "percent": 310.6496272630458,
+                            "percent": 41.93548387096772,
                             "value": 8,
                             "label": "Wasting (Weight-for-Height)"
                         }
@@ -53,22 +54,22 @@ class TestMaternalChildData(TestCase):
                     [
                         {
                             "redirect": "stunting",
-                            "color": "red",
-                            "all": 939,
+                            "color": "green",
+                            "all": 32,
                             "frequency": "month",
                             "format": "percent_and_div",
                             "help_text": "Percentage of children (6-60 months) with height-for-age below -2Z"
                                          " standard deviations of the WHO Child Growth Standards median. "
                                          "Stunting is a sign of chronic undernutrition and has "
                                          "long lasting harmful consequences on the growth of a child",
-                            "percent": 116.73174772216308,
+                            "percent": -27.430555555555564,
                             "value": 19,
                             "label": "Stunting (Height-for-Age)"
                         },
                         {
                             "redirect": "low_birth",
                             "color": "red",
-                            "all": 7,
+                            "all": 4,
                             "frequency": "month",
                             "format": "percent_and_div",
                             "help_text": "Percentage of newborns born with birth weight less than 2500 grams."

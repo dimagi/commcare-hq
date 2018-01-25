@@ -99,7 +99,7 @@ def enikshay_task(self):
         send_status_email(domain, task_group.get())
 
 
-@task
+@task(queue=getattr(settings, 'ENIKSHAY_QUEUE', 'celery'))
 def run_task(updater, case_ids):
     return updater.run_batch(case_ids)
 

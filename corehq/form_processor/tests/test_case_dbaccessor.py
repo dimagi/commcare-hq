@@ -103,11 +103,24 @@ class CaseAccessorTestsSQL(TestCase):
 
     def test_get_reverse_indexed_cases(self):
         referenced_case_ids = [uuid.uuid4().hex, uuid.uuid4().hex]
-        _create_case_with_index(referenced_case_ids[0], case_is_deleted=True)  # case shouldn't be included in results
-        expected_case_ids = [_create_case_with_index(case_id)[0].case_id for case_id in referenced_case_ids]
+        _create_case_with_index(uuid.uuid4().hex, case_is_deleted=True)  # case shouldn't be included in results
+        expected_case_ids = [
+            _create_case_with_index(referenced_case_ids[0], case_type='bambino')[0].case_id,
+            _create_case_with_index(referenced_case_ids[1], case_type='child')[0].case_id,
+        ]
+
         cases = CaseAccessorSQL.get_reverse_indexed_cases(DOMAIN, referenced_case_ids)
         self.assertEqual(2, len(cases))
         self.assertEqual(set(expected_case_ids), {c.case_id for c in cases})
+
+        cases = CaseAccessorSQL.get_reverse_indexed_cases(
+            DOMAIN, referenced_case_ids, case_types=['child'], is_closed=False)
+        self.assertEqual(1, len(cases))
+
+        cases[0].closed = True
+        CaseAccessorSQL.save_case(cases[0])
+        cases = CaseAccessorSQL.get_reverse_indexed_cases(DOMAIN, referenced_case_ids, is_closed=True)
+        self.assertEqual(1, len(cases))
 
     def test_hard_delete_case(self):
         case1 = _create_case()
@@ -719,8 +732,9 @@ def _create_case(domain=None, form_id=None, case_type=None, user_id=None, closed
 
 
 def _create_case_with_index(referenced_case_id, identifier='parent', referenced_type='mother',
-                            relationship_id=CommCareCaseIndexSQL.CHILD, case_is_deleted=False):
-    case = _create_case()
+                            relationship_id=CommCareCaseIndexSQL.CHILD, case_is_deleted=False,
+                            case_type='child'):
+    case = _create_case(case_type=case_type)
     case.deleted = case_is_deleted
 
     index = CommCareCaseIndexSQL(

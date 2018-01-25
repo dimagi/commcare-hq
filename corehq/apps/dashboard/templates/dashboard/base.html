@@ -2,6 +2,7 @@
 {% load compress %}
 {% load hq_shared_tags %}
 {% load i18n %}
+{% requirejs_main 'dashboard/js/dashboard' %}
 
 {% block stylesheets %}
 {% if less_debug %}
@@ -18,10 +19,6 @@
 {% endcompress %}
 {% endif %}
 {% endblock stylesheets %}
-
-{% block js %}{{ block.super }}
-    <script src="{% static 'dashboard/js/dashboard.js' %}"></script>
-{% endblock %}
 
 {% block content %}
 {% initial_page_data 'dashboard_tiles' dashboard_tiles %}

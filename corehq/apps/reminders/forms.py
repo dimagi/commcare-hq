@@ -455,12 +455,6 @@ class BaseScheduleCaseReminderForm(forms.Form):
         choices=((n, n) for n in QUESTION_RETRY_CHOICES)
     )
 
-    force_surveys_to_use_triggered_case = forms.BooleanField(
-        required=False,
-        label=ugettext_noop("For Surveys, force answers to affect "
-                              "case sending the survey."),
-    )
-
     use_custom_content_handler = BooleanField(
         required=False,
         label=ugettext_noop("Use Custom Content Handler")
@@ -930,10 +924,6 @@ class BaseScheduleCaseReminderForm(forms.Form):
                                        "the form has not been completed. ")
                 ),
                 data_bind="visible: isPartialSubmissionsVisible() && submit_partial_forms()",
-            ),
-            crispy.Div(
-                twbscrispy.PrependedText('force_surveys_to_use_triggered_case', ''),
-                data_bind="visible: isForceSurveysToUsedTriggeredCaseVisible",
             ),
             crispy.Div(
                 InlineField(
@@ -1447,7 +1437,6 @@ class BaseScheduleCaseReminderForm(forms.Form):
             'include_case_side_effects',
             'default_lang',
             'max_question_retries',
-            'force_surveys_to_use_triggered_case',
         ]
         if self.is_previewer:
             fields.append('custom_content_handler')

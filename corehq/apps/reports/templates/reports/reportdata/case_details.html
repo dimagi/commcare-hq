@@ -17,6 +17,10 @@
 {% endblock %}
 
 {% block page_content %}
+
+{# This is used in case/partials/repeat_records.html #}
+{% registerurl 'requeue_repeat_record' case.domain %}
+
 <div class="hq-generic-report">
     {% render_case case case_display_options %}
     {% if can_edit_data %}
