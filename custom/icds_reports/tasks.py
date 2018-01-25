@@ -173,6 +173,7 @@ def aggregate_tables(self, current_task, future_tasks):
         # temporary soft assert to verify it's completing
         _dashboard_team_soft_assert(False, "Aggregation completed on {}".format(settings.SERVER_ENVIRONMENT))
         celery_task_logger.info("Aggregation has completed")
+        icds_data_validation.delay(aggregation_date)
 
 
 @periodic_task(
