@@ -273,9 +273,9 @@ def send_bookkeeper_email(month=None, year=None, emails=None):
         'month': first_of_month.strftime("%B"),
     }
     email_content = render_to_string(
-        'accounting/bookkeeper_email.html', email_context)
+        'accounting/email/bookkeeper.html', email_context)
     email_content_plaintext = render_to_string(
-        'accounting/bookkeeper_email_plaintext.html', email_context)
+        'accounting/email/bookkeeper.html', email_context)
 
     format_dict = Format.FORMAT_DICT[Format.CSV]
     excel_attachment = {

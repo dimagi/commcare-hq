@@ -1439,8 +1439,8 @@ class Subscription(models.Model):
                 'ending_on': ending_on,
             }
 
-            template = 'accounting/subscription_ending_reminder_email.html'
-            template_plaintext = 'accounting/subscription_ending_reminder_email_plaintext.html'
+            template = 'accounting/email/subscription_ending_reminder.html'
+            template_plaintext = 'accounting/email/subscription_ending_reminder.html'
 
         from corehq.apps.domain.views import DomainSubscriptionView
         context = {
@@ -1489,8 +1489,8 @@ class Subscription(models.Model):
         subject = "Alert: {domain}'s subscription is ending on {end_date}".format(
                   domain=domain,
                   end_date=end_date)
-        template = 'accounting/subscription_ending_reminder_dimagi.html'
-        template_plaintext = 'accounting/subscription_ending_reminder_dimagi_plaintext.html'
+        template = 'accounting/email/subscription_ending_reminder_dimagi.html'
+        template_plaintext = 'accounting/email/subscription_ending_reminder_dimagi.txt'
         context = {
             'domain': domain,
             'end_date': end_date,
@@ -2086,8 +2086,8 @@ class BillingRecordBase(models.Model):
 class WireBillingRecord(BillingRecordBase):
     invoice = models.ForeignKey(WireInvoice, on_delete=models.PROTECT)
 
-    INVOICE_HTML_TEMPLATE = 'accounting/wire_invoice_email.html'
-    INVOICE_TEXT_TEMPLATE = 'accounting/wire_invoice_email_plaintext.html'
+    INVOICE_HTML_TEMPLATE = 'accounting/email/wire_invoice.html'
+    INVOICE_TEXT_TEMPLATE = 'accounting/email/wire_invoice.txt'
 
     class Meta:
         app_label = 'accounting'
