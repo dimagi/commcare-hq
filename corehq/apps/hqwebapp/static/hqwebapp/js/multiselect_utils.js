@@ -50,8 +50,8 @@ hqDefine('hqwebapp/js/multiselect_utils', function () {
     ) {
         if (!isOwner) {
             $('#' + multiselectId).hide().after(
-                $('#' + multiselectId).children().each(function (el) {
-                    $(el).text();
+                $('#' + multiselectId).children().map(function () {
+                    return $("<div>").text($(this).text()).get(0);
                 })
             );
             return;
