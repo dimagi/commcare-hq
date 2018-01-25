@@ -170,8 +170,8 @@ class BaseStripePaymentHandler(object):
 
 
 class InvoiceStripePaymentHandler(BaseStripePaymentHandler):
-    receipt_email_template = 'accounting/invoice_receipt_email.html'
-    receipt_email_template_plaintext = 'accounting/invoice_receipt_email_plaintext.txt'
+    receipt_email_template = 'accounting/email/invoice_receipt.html'
+    receipt_email_template_plaintext = 'accounting/email/invoice_receipt.txt'
 
     def __init__(self, payment_method, domain, invoice):
         super(InvoiceStripePaymentHandler, self).__init__(payment_method, domain)
@@ -397,8 +397,8 @@ class AutoPayInvoicePaymentHandler(object):
 
     def _send_payment_receipt(self, invoice, payment_record):
         from corehq.apps.accounting.tasks import send_purchase_receipt
-        receipt_email_template = 'accounting/invoice_receipt_email.html'
-        receipt_email_template_plaintext = 'accounting/invoice_receipt_email_plaintext.txt'
+        receipt_email_template = 'accounting/email/invoice_receipt.html'
+        receipt_email_template_plaintext = 'accounting/email/invoice_receipt.txt'
         try:
             domain = invoice.subscription.subscriber.domain
             context = {
