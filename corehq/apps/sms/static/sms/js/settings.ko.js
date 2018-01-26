@@ -1,3 +1,5 @@
+hqDefine("sms/js/settings.ko", function() {
+
 function DayTimeWindow(day, start_time, end_time, time_input_relationship) {
     'use strict';
     var self = this;
@@ -33,6 +35,16 @@ function SettingsViewModel(initial) {
     self.sms_conversation_times = ko.observableArray();
     self.use_custom_chat_template = ko.observable();
     self.sms_case_registration_enabled = ko.observable();
+    self.sms_case_registration_owner_id = new SettingsSelect2Handler(
+        initial.sms_case_registration_owner_id,
+        'sms_case_registration_owner_id'
+    );
+    self.sms_case_registration_owner_id.init();
+    self.sms_case_registration_user_id = new SettingsSelect2Handler(
+        initial.sms_case_registration_user_id,
+        'sms_case_registration_user_id'
+    );
+    self.sms_case_registration_user_id.init();
 
     self.showDefaultSMSResponse = ko.computed(function() {
         return self.use_default_sms_response() === "ENABLED";
@@ -135,3 +147,39 @@ function SettingsViewModel(initial) {
     };
 
 }
+
+var BaseSelect2Handler = hqImport("hqwebapp/js/select2_handler").BaseSelect2Handler;
+var SettingsSelect2Handler = function (initialValue, fieldName) {
+    /*
+     * initialValue is an object like {id: ..., text: ...}
+     */
+    BaseSelect2Handler.call(this, {
+        fieldName: fieldName,
+        multiple: false,
+    });
+    var self = this;
+
+    self.getHandlerSlug = function () {
+        return 'sms_settings_async';
+    };
+
+    self.getInitialData = function () {
+        return initialValue;
+    };
+
+    self.value(initialValue ? initialValue.id : '');
+};
+
+SettingsSelect2Handler.prototype = Object.create(SettingsSelect2Handler.prototype);
+SettingsSelect2Handler.prototype.constructor = SettingsSelect2Handler;
+
+
+$(function() {
+    var settingsViewModel = new SettingsViewModel(
+        hqImport("hqwebapp/js/initial_page_data").get("current_values"),
+    );
+    $('#sms-settings-form').koApplyBindings(settingsViewModel);
+    settingsViewModel.init();
+});
+
+});
