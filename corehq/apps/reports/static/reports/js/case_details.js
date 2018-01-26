@@ -126,7 +126,7 @@ hqDefine("reports/js/case_details", function() {
             $button.disableButton();
             $.post({
                 url: hqImport("hqwebapp/js/initial_page_data").reverse("edit_case"),
-                data: _.mapObject(self.properties, function(model, name) {
+                data: _.mapObject(self.properties, function(model) {
                     return model.value();
                 }),
                 success: function() {
