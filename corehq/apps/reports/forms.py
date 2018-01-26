@@ -126,7 +126,7 @@ class ScheduledReportForm(forms.Form):
         choices=ReportNotification.hour_choices())
 
     send_to_owner = forms.BooleanField(
-        label='Send to owner',
+        label='Send to me',
         required=False)
 
     attach_excel = forms.BooleanField(
