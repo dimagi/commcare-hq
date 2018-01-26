@@ -23,11 +23,14 @@
                 return '';
             } else if (self.strength() < 1) {
                 return gettext("Your password is too weak! Try adding numbers or symbols!");
-            } else if (self.strength() == 1) {
+            } else if (self.strength() === 1) {
                 return gettext("Your password is almost strong enough!");
             } else {
                 return gettext("Good Job! Your password is strong!");
             }
+        });
+        self.passwordSufficient = ko.computed(function () {
+            return self.strength() > 1;
         });
     };
 
