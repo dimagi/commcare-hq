@@ -11,8 +11,5 @@
     "mocha": "^2.3.3",
     "uglifyjs": "^2.4.10",
     "js-xpath": "dimagi/js-xpath#v0.0.2-rc1"
-  },
-  "devDependencies": {
-    "eslint": "^4.16.0"
   }
 }
