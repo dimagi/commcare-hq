@@ -74,7 +74,7 @@ def test_ethiopian_to_gregorian(self, date_string, expected_result):
 
 @generate_cases((
     ('2017-05-19 ', date(2009, 9, 11)),
-    ('2017-09-16 ', date(2010, 01, 06)),
+    ('2017-09-16 ', date(2010, 1, 6)),
     ('2009_13_11 ', ''),
     ('abc-13-11', ''),
     (None, ''),
