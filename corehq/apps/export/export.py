@@ -503,9 +503,8 @@ def save_export_payload(export, payload):
     export.last_updated = datetime.datetime.utcnow()
 
     try:
-        export.save()
+        with export.atomic_blobs():
+            export.set_payload(payload)
     except ResourceConflict:
         # task was executed concurrently, so let first to finish win and abort the rest
         pass
-    else:
-        export.set_payload(payload)
