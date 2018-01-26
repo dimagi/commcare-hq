@@ -67,8 +67,11 @@ fi
 
 if [[ $deploy = 'y' && $no_push != 'y' ]]
 then
-    rebuildstaging $args && \
-        echo 'rebuildstaging will no longer deploy for you. From commcarehq-ansible, run `fab staging deploy`'
+    rebuildstaging $args && {
+        which commcare-cloud \
+        && commcare-cloud staging fab deploy \
+        || echo 'Could not auto-deploy for you. Run `commcare-cloud staging fab deploy` to deploy.'
+    }
 else
     rebuildstaging $args
 fi
