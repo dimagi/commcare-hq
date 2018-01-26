@@ -115,7 +115,7 @@ class _FormType(object):
                 title += " [Multiple Forms]"
             name = title
         elif self.xmlns in SYSTEM_FORM_XMLNS_MAP:
-             name = SYSTEM_FORM_XMLNS_MAP[self.xmlns]
+            name = SYSTEM_FORM_XMLNS_MAP[self.xmlns]
         else:
             name = self.xmlns
         return name
