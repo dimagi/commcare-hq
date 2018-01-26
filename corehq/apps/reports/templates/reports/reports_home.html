@@ -109,10 +109,10 @@
                     <td>
                         {# handles old documents #}
                         {% if report.user_ids or report.send_to_owner %}
-                        {% trans "me" %}{% if report.recipient_emails %}, {% endif %}
+                        {% trans "me" %}{% if report.recipient_emails %},{% endif %}
                         {% endif %}
                         {% for email in report.recipient_emails %}
-                        {{ email }},
+                        {{ email }}{% if email != report.recipient_emails|last %},{% endif %}
                         {% endfor %}
                     </td>
 
@@ -120,15 +120,15 @@
                         <div class="btn-toolbar">
 
                             <div class="btn-group">
-                                {% if report.is_editable %}
+                                {% if not report.is_editable %}
+                                    <button type="button" class="btn btn-info disabled" disabled="disabled">
+                                        <i class="fa fa-edit"></i> {% trans "Edit" %}
+                                    </button>
+                                {% else %}
                                     <a class="btn btn-info"
                                         href="{% url "edit_scheduled_report" domain report.get_id %}">
                                         <i class="fa fa-edit"></i> {% trans "Edit" %}
                                     </a>
-                                {% else %}
-                                    <button type="button" class="btn btn-info disabled" disabled="disabled">
-                                        <i class="fa fa-edit"></i> {% trans "Edit" %}
-                                    </button>
                                 {% endif %}
                             </div>
 
@@ -136,7 +136,6 @@
                                 <a class="btn btn-info" href="{% url "view_scheduled_report" domain report.get_id %}">
                                     <i class="fa fa-eye-open"></i> {% trans "View" %}
                                 </a>
-
                                 <a class="btn btn-info" href="{% url "send_test_scheduled_report" domain report.get_id %}">
                                     <i class="fa fa-envelope"></i> {% trans "Send Test" %}
                                 </a>
@@ -175,7 +174,127 @@
                 {% endfor %}
             </tbody>
         </table>
-        {% else %}
+        {% endif %}
+        {% if others_scheduled_reports %}
+        <h3>Other Scheduled Reports (managed by others)</h3>
+        <table class="table table-striped table-bordered">
+            <thead>
+                <tr>
+                    <th>{% trans "Saved Reports" %}</th>
+                    <th>{% trans "Day and Time" %}</th>
+                    <th>{% trans "Recipients" %}</th>
+                    <th>{% trans "Actions" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for report in others_scheduled_reports %}
+                <tr>
+                    <td>
+                        {% if report.configs|length == 1 %}
+                        {% for config in report.configs %}
+                        <a href="{{ config.url }}">{{ config.full_name }}</a>
+                        {% endfor %}
+                        {% else %}
+                        <ul style="float: left">
+                            {% for config in report.configs %}
+                            <li><a href="{{ config.url }}">{{ config.full_name }}</a></li>
+                            {% endfor %}
+                        </ul>
+                        {% endif %}
+                    </td>
+                    <td>{{ report.day_name }} at {{ report.hour }}:00</td>
+                    <td>
+                        {# handles old documents #}
+                        {% if not is_admin %}
+                        {% trans "me (and others)" %}
+                        {% else %}
+                        {% if report.user_ids or report.send_to_owner %}
+                        {{ report.owner_email }}{% if report.recipient_emails %},{% endif %}
+                        {% endif %}
+                        {% for email in report.recipient_emails %}
+                        {% if user_email == email %}{% trans "me" %}{% else %}{{ email }}{% endif %}{% if email != report.recipient_emails|last %},{% endif %}
+                        {% endfor %}
+                        {% endif %}
+                    </td>
+
+                    <td>
+                        <div class="btn-toolbar">
+
+                            <div class="btn-group">
+                                {% if not report.is_editable or not is_admin %}
+                                    <button type="button" class="btn btn-info disabled" disabled="disabled">
+                                        <i class="fa fa-edit"></i> {% trans "Edit" %}
+                                    </button>
+                                {% else %}
+                                    <a class="btn btn-info"
+                                        href="{% url "edit_scheduled_report" domain report.get_id %}">
+                                        <i class="fa fa-edit"></i> {% trans "Edit" %}
+                                    </a>
+                                {% endif %}
+                            </div>
+
+                            <div class="btn-group">
+                                <a class="btn btn-info" href="{% url "view_scheduled_report" domain report.get_id %}">
+                                    <i class="fa fa-eye-open"></i> {% trans "View" %}
+                                </a>
+
+                                {% if not is_admin %}
+                                    <button type="button" class="btn btn-info disabled" disabled="disabled">
+                                        <i class="fa fa-envelope"></i> {% trans "Send Test" %}
+                                    </button>
+                                {% else %}
+                                    <a class="btn btn-info" href="{% url "send_test_scheduled_report" domain report.get_id %}">
+                                        <i class="fa fa-envelope"></i> {% trans "Send Test" %}
+                                    </a>
+                                {% endif %}
+                            </div>
+
+                            <div class="btn-group">
+                                {% if not is_admin %}
+                                    <button type="button" class="btn btn-info disabled" disabled="disabled">
+                                        <i class="fa fa-trash"></i> {% trans "Delete" %}
+                                    </button>
+                                {% else %}
+                                    <button class="btn btn-danger" data-toggle="modal" href="#delete_{{ report.get_id }}">
+                                        <i class="fa fa-trash"></i> {% trans "Delete" %}
+                                    </button>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div id="delete_{{ report.get_id }}"
+                             class="modal fade">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                                        <h4 class="modal-title">{% trans "Stop sending report?" %}</h4>
+                                    </div>
+                                    <form action="{% url "delete_scheduled_report" domain report.get_id %}" method="post">
+                                        {% csrf_token %}
+                                        <div class="modal-body">
+                                            <p>{% trans "Are you sure you want to stop sending this report?" %}</p>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" data-dismiss="modal" class="btn btn-default">{% trans "Cancel" %}</button>
+                                            <button type="submit" class="send-stopper btn btn-danger disable-on-submit">{% trans 'Stop Sending' %}</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+
+                {% endfor %}
+            </tbody>
+        </table>
+        {% if extra_reports %}
+            <a href="?show_all_scheduled_reports=true">
+                {% trans "...and" %} {{ extra_reports }} {% trans "more" %}
+            </a>
+        {% endif %}
+        {% endif %}
+        {% if not scheduled_reports and not others_scheduled_reports %}
 
         <div class="alert alert-info">
             {% blocktrans %}
