@@ -39,3 +39,26 @@ def get_ethiopian_to_gregorian(date_string):
         return EthiopianDateConverter.to_gregorian(year, month, day)
     except Exception:
         return ''
+
+
+def get_gregorian_to_ethiopian(date_string):
+    '''
+    Takes a string gregorian date and converts it to
+    the equivalent ethiopian date
+
+    :param date_string: A date string that is in the format YYYY-MM-DD
+    :returns: An ethiopian datetime or ''
+    '''
+    if not date_string:
+        return ''
+
+    try:
+        year, month, day = date_string.split('-')
+        year, month, day = int(year), int(month), int(day)
+    except ValueError:
+        return ''
+
+    try:
+        return EthiopianDateConverter.to_ethiopian(year, month, day)
+    except Exception:
+        return ''
