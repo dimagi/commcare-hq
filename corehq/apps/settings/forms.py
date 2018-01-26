@@ -33,6 +33,7 @@ class HQPasswordChangeForm(EncodedPasswordChangeFormMixin, PasswordChangeForm):
 
         super(HQPasswordChangeForm, self).__init__(user, *args, **kwargs)
         self.helper = FormHelper()
+        self.helper.form_id = 'password-reset-form'
         self.helper.form_class = 'form form-horizontal'
         self.helper.label_class = 'col-sm-3 col-md-4 col-lg-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'

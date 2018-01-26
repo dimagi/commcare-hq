@@ -4,14 +4,16 @@ import base64
 from datetime import timedelta
 from django.conf import settings
 
-from django.contrib.auth.hashers import get_hasher
+from django.contrib.auth.hashers import SHA1PasswordHasher
 
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 
 from corehq.util.view_utils import get_request
 from custom.nic_compliance.const import EXPIRE_LOGIN_ATTEMPTS_IN, REDIS_LOGIN_ATTEMPTS_LIST_PREFIX
 
-PASSWORD_HASHER = get_hasher()
+# Use SHA1PasswordHasher instead of default CustomSHA256PasswordHasher when set, since it
+# can't be used due to it's custom behaviour
+PASSWORD_HASHER = SHA1PasswordHasher()
 # Passwords set with expected padding length and format would respect this regex
 PASSWORD_REGEX = r"^sha256\$([a-z0-9A-Z]{6})(\S*)([a-z0-9A-Z]{6})=$"
 PASSWORD_REGEX_COMPILER = re.compile(PASSWORD_REGEX)

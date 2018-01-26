@@ -36,7 +36,11 @@ class RegisterWebUserForm(forms.Form):
     email = forms.CharField(label=_("Email"))
     password = forms.CharField(
         label=_("Create Password"),
-        widget=forms.PasswordInput(),
+        widget=forms.PasswordInput(
+            attrs={
+                'id': 'register-webuser-password'
+            }
+        ),
     )
     phone_number = forms.CharField(
         label=_("Include area code or any other prefix"),

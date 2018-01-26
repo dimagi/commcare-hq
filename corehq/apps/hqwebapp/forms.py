@@ -25,7 +25,12 @@ from six.moves import map
 class EmailAuthenticationForm(NoAutocompleteMixin, AuthenticationForm):
     username = forms.EmailField(label=_("E-mail"), max_length=75,
                                 widget=forms.TextInput(attrs={'class': 'form-control'}))
-    password = forms.CharField(label=_("Password"), widget=forms.PasswordInput(attrs={'class': 'form-control'}))
+    password = forms.CharField(label=_("Password"),
+                               widget=forms.PasswordInput(
+                                   attrs={
+                                       'class': 'form-control',
+                                       'id': 'email-auth-password',
+                                   }))
 
     def clean_username(self):
         username = self.cleaned_data.get('username', '').lower()
