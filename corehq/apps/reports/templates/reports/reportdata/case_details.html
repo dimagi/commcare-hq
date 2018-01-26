@@ -282,7 +282,12 @@
                     </ul>
                     <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
                     <button type="submit" class="btn btn-primary" data-bind="click: submitForm, attr: { disabled: disallowSave }">
-                        {% trans "Save" %}
+                        <span data-bind="visible: !showRetry()">
+                            {% trans "Save" %}
+                        </span>
+                        <span data-bind="visible: showRetry()">
+                            {% trans "Try Again" %}
+                        </span>
                     </button>
                 </div>
             </div>

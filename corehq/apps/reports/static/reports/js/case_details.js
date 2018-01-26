@@ -149,6 +149,8 @@ hqDefine("reports/js/case_details", function() {
             }));
             self.initQuery();
             self.currentPage(1);
+            self.showError(false);
+            self.showRetry(false);
             self.render();
         };
 
