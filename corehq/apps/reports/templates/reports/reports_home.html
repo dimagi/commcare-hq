@@ -81,7 +81,10 @@
         </a></p>
         {% if scheduled_reports or others_scheduled_reports %}
         {% include 'reports/partials/scheduled_reports_table.html' with is_owner=True scheduled_reports=scheduled_reports %}
+        {% if others_scheduled_reports %}
+        <h3>Other Scheduled Reports (managed by others)</h3>
         {% include 'reports/partials/scheduled_reports_table.html' with is_owner=False scheduled_reports=others_scheduled_reports %}
+        {% endif %}
         {% else %}
         <div class="alert alert-info">
             {% blocktrans %}

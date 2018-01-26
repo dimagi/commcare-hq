@@ -5,11 +5,11 @@
 {% load compress %}
 {% if scheduled_reports %}
 <table class="table table-striped table-bordered">
-    {% if not is_owner %}
-    <h3>Other Scheduled Reports (managed by others)</h3>
-    {% endif %}
     <thead>
         <tr>
+            {% if not is_owner %}
+            <th>{% trans "Owner" %}</th>
+            {% endif %}
             <th>{% trans "Saved Reports" %}</th>
             <th>{% trans "Day and Time" %}</th>
             <th>{% trans "Recipients" %}</th>
@@ -19,6 +19,11 @@
     <tbody>
         {% for report in scheduled_reports %}
         <tr>
+            {% if not is_owner %}
+            <td>
+                {{ report.owner_email }}
+            </td>
+            {% endif %}
             <td>
                 {% if report.configs|length == 1 %}
                 {% for config in report.configs %}
