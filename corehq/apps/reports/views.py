@@ -122,7 +122,7 @@ from corehq.apps.reports.exceptions import EditFormValidationError
 from corehq.apps.groups.models import Group
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
 from corehq.apps.hqcase.export import export_cases
-from corehq.apps.hqcase.utils import submit_case_blocks
+from corehq.apps.hqcase.utils import submit_case_blocks, EDIT_FORM_XMLNS
 from corehq.apps.hqwebapp.utils import csrf_inline
 from corehq.apps.locations.permissions import can_edit_form_location, location_safe, \
     location_restricted_exception, user_can_access_case
@@ -1546,10 +1546,9 @@ def edit_case_view(request, domain, case_id):
         case_block_kwargs['external_id'] = request.POST['external_id']
 
     if case_block_kwargs:
-        submit_case_blocks([CaseBlock(
-            case_id=case_id,
-            **case_block_kwargs
-        ).as_string()], domain, username=user.username, user_id=user._id, device_id=__name__ + ".edit_case")
+        submit_case_blocks([CaseBlock(case_id=case_id, **case_block_kwargs).as_string()],
+            domain, username=user.username, user_id=user._id, device_id=__name__ + ".edit_case",
+            xmlns=EDIT_FORM_XMLNS)
         messages.success(request, _(u'Case properties saved for %s.' % case.name))
     else:
         messages.success(request, _(u'No changes made to %s.' % case.name))

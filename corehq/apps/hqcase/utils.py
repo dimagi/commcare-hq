@@ -21,6 +21,12 @@ from dimagi.utils.parsing import json_format_datetime
 import six
 
 SYSTEM_FORM_XMLNS = 'http://commcarehq.org/case'
+EDIT_FORM_XMLNS = 'http://commcarehq.org/case/edit'
+
+SYSTEM_FORM_XMLNS_MAP = {
+    SYSTEM_FORM_XMLNS: 'CommCareHQ System Form',
+    EDIT_FORM_XMLNS: 'CommCareHQ Data Correction',
+}
 
 ALLOWED_CASE_IDENTIFIER_TYPES = [
     "contact_phone_number",
