@@ -176,7 +176,7 @@ hqDefine("sms/js/settings.ko", function() {
 
     $(function() {
         var settingsViewModel = new SettingsViewModel(
-            hqImport("hqwebapp/js/initial_page_data").get("current_values"),
+            hqImport("hqwebapp/js/initial_page_data").get("current_values")
         );
         $('#sms-settings-form').koApplyBindings(settingsViewModel);
         settingsViewModel.init();
