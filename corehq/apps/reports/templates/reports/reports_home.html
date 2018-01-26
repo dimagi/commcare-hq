@@ -288,6 +288,11 @@
                 {% endfor %}
             </tbody>
         </table>
+        {% if extra_reports %}
+            <a href="?show_all_scheduled_reports=true">
+                {% trans "...and" %} {{ extra_reports }} {% trans "more" %}
+            </a>
+        {% endif %}
         {% endif %}
         {% if not scheduled_reports and not others_scheduled_reports %}
 

@@ -247,6 +247,8 @@ class MySavedReportsView(BaseProjectReportSectionView):
     page_title = ugettext_noop("My Saved Reports")
     template_name = 'reports/reports_home.html'
 
+    default_scheduled_report_length = 10
+
     @use_jquery_ui
     @use_datatables
     def dispatch(self, request, *args, **kwargs):
@@ -303,8 +305,11 @@ class MySavedReportsView(BaseProjectReportSectionView):
         return scheduled_reports
 
     @property
-    def others_scheduled_reports(self):
+    def show_all_scheduled_reports(self):
+        return self.request.GET.get('show_all_scheduled_reports', False)
 
+    @property
+    def others_scheduled_reports(self):
         if not toggles.SHOW_ALL_SCHEDULED_REPORT_EMAILS.enabled(self.request.couch_user.username):
             return []
 
@@ -340,13 +345,21 @@ class MySavedReportsView(BaseProjectReportSectionView):
     @property
     def page_context(self):
         user = self.request.couch_user
+        others_scheduled_reports = self.others_scheduled_reports
+        if self.show_all_scheduled_reports:
+            num_unlisted_scheduled_reports = 0
+        else:
+            cur_len = len(others_scheduled_reports)
+            num_unlisted_scheduled_reports = max(0, cur_len-self.default_scheduled_report_length)
+            others_scheduled_reports = others_scheduled_reports[:min(self.default_scheduled_report_length, cur_len)]
         return {
             'couch_user': user,
             'user_email': user.get_email(),
             'is_admin': user.is_domain_admin(self.domain),
             'configs': self.good_configs,
             'scheduled_reports': self.scheduled_reports,
-            'others_scheduled_reports': self.others_scheduled_reports,
+            'others_scheduled_reports': others_scheduled_reports,
+            'extra_reports': num_unlisted_scheduled_reports,
             'report': {
                 'title': self.page_title,
                 'show': True,
