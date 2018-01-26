@@ -4,9 +4,9 @@
 {% load i18n %}
 
 {% block js %}{{ block.super }}
-    <script src="{% static 'accounting/js/accounting.billing_info_handler.js' %}"></script>
+    <script src="{% static 'accounting/js/billing_info_handler.js' %}"></script>
     <script src="https://js.stripe.com/v2/"></script>
-    <script src="{% static 'accounting/js/accounting.stripe_card_manager.js' %}"></script>
+    <script src="{% static 'accounting/js/stripe_card_manager.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}

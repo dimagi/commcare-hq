@@ -1,5 +1,5 @@
 /* global Stripe */
-hqDefine('accounting/js/accounting.payment_method_handler', function () {
+hqDefine('accounting/js/payment_method_handler', function () {
     var BillingHandler = function (formId, opts) {
         'use strict';
         var self = this;

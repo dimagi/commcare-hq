@@ -1,5 +1,5 @@
 // This file depends on hqwebapp/js/select2_handler.js
-hqDefine("accounting/js/accounting.software_plan_version_handler", function() {
+hqDefine("accounting/js/software_plan_version_handler", function() {
     $(function() {
         var initial_page_data = hqImport('hqwebapp/js/initial_page_data').get;
         var planVersionFormHandler = new SoftwarePlanVersionFormHandler(
