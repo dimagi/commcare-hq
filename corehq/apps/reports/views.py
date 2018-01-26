@@ -350,8 +350,9 @@ class MySavedReportsView(BaseProjectReportSectionView):
             num_unlisted_scheduled_reports = 0
         else:
             cur_len = len(others_scheduled_reports)
-            num_unlisted_scheduled_reports = max(0, cur_len-self.default_scheduled_report_length)
-            others_scheduled_reports = others_scheduled_reports[:min(self.default_scheduled_report_length, cur_len)]
+            num_unlisted_scheduled_reports = max(0, cur_len - self.default_scheduled_report_length)
+            others_scheduled_reports = others_scheduled_reports[:min(self.default_scheduled_report_length,
+                                                                     cur_len)]
         return {
             'couch_user': user,
             'user_email': user.get_email(),
