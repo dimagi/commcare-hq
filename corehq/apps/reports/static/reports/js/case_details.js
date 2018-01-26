@@ -1,9 +1,16 @@
 hqDefine("reports/js/case_details", function() {
+    var PropertyModel = function(options) {
+        var self = this;
+        self.name = options.name;
+        self.value = ko.observable(options.value || '');
+        self.dirty = ko.observable(false);
+    };
+
     var EditPropertiesModel = function(options) {
         var self = this;
 
         self.propertyNames = ko.observableArray();  // ordered list of names, populated by ajax call because it's slow
-        self.properties;                            // map of name => value
+        self.properties;                            // map of name => PropertyModel
 
         // If there are a lot of items, make a bigger modal and render properties as columns
         // Supports a small one-column modal, a larger two-column modal, or a full-screen three-column modal
@@ -73,10 +80,11 @@ hqDefine("reports/js/case_details", function() {
             added = 0;
             while (added < self.itemsPerPage() && index < self.propertyNames().length) {
                 if (self.matchesQuery(self.propertyNames()[index])) {
-                    self.visibleItems.push({
-                        name: self.propertyNames()[index],
-                        value: self.properties[self.propertyNames()[index]],
-                    });
+                    var name = self.propertyNames()[index];
+                    if (!self.properties[name]) {
+                        self.properties[name] = new PropertyModel({ name: name });
+                    }
+                    self.visibleItems.push(self.properties[name]);
                     added++;
                 }
                 index++;
@@ -113,17 +121,14 @@ hqDefine("reports/js/case_details", function() {
 
         self.currentPage.subscribe(self.render);
 
-        self.propertyChange = function(model, e) {
-            var $input = $(e.currentTarget);
-            self.properties[$input.data('name')] = $input.val();
-        };
-
         self.submitForm = function(model, e) {
             var $button = $(e.currentTarget);
             $button.disableButton();
             $.post({
                 url: hqImport("hqwebapp/js/initial_page_data").reverse("edit_case"),
-                data: self.properties,
+                data: _.mapObject(self.properties, function(model, name) {
+                    return model.value();
+                }),
                 success: function() {
                     window.location.reload();
                 },
@@ -136,7 +141,12 @@ hqDefine("reports/js/case_details", function() {
         };
 
         self.init = function() {
-            self.properties = _.extend({}, options.properties);
+            self.properties = _.extend({}, _.mapObject(options.properties, function(value, name) {
+                return new PropertyModel({
+                    name: name,
+                    value: value,
+                });
+            }));
             self.initQuery();
             self.currentPage(1);
             self.render();

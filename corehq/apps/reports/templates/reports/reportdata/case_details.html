@@ -252,11 +252,16 @@
                             <!-- ko foreach: visibleColumns -->
                                 <div data-bind="attr: { 'class': $root.columnClass }">
                                     <!-- ko foreach: $data -->
-                                        <div class="form-group container-fluid">
-                                            <label class="col-sm-6 control-label" data-bind="text: name"></label>
+                                        <div class="form-group container-fluid" data-bind="css: {'has-success': dirty()}">
+                                            <label class="col-sm-6 control-label">
+                                                <i class="fa fa-pencil-square" data-bind="visible: dirty()"></i>
+                                                <span data-bind="text: name"></span>
+                                            </label>
                                             <div class="col-sm-6">
                                                 <input type="text" class="form-control"
-                                                       data-bind="value: value, attr: { 'data-name': name }, event: { change: $root.propertyChange }" />
+                                                       data-bind="value: value,
+                                                                  attr: { 'data-name': name },
+                                                                  event: { change: function() { this.dirty(true); } }" />
                                             </div>
                                         </div>
                                     <!-- /ko -->
