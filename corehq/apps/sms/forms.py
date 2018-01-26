@@ -503,35 +503,60 @@ class SettingsForm(Form):
                     "is read by anyone, or if it counts as being read only "
                     "to the user who reads it."),
             ),
-        ]
-        if self._cchq_is_previewer:
-            fields.append(
-                hqcrispy.B3MultiField(
-                    _("Chat Template"),
-                    crispy.Div(
-                        InlineField(
-                            "use_custom_chat_template",
-                            data_bind="value: use_custom_chat_template",
-                        ),
-                        css_class='col-sm-4'
-                    ),
-                    crispy.Div(
-                        InlineField(
-                            "custom_chat_template",
-                            data_bind="visible: showCustomChatTemplate",
-                        ),
-                        css_class='col-sm-8'
-                    ),
-                    help_bubble_text=_("To use a custom template to render the "
-                        "chat window, enter it here."),
-                    css_id="custom-chat-template-group",
-                    field_class='col-sm-6 col-md-9 col-lg-9'
-                )
-            )
+        ]   
         return crispy.Fieldset(
             _("Chat Settings"),
             *fields
         )
+
+    @property
+    def section_internal(self):
+        return crispy.Fieldset(
+            _("Internal Settings (Dimagi Only)"),
+            hqcrispy.B3MultiField(
+                _("Chat Template"),
+                crispy.Div(
+                    InlineField(
+                        "use_custom_chat_template",
+                        data_bind="value: use_custom_chat_template",
+                    ),
+                    css_class='col-sm-4'
+                ),
+                crispy.Div(
+                    InlineField(
+                        "custom_chat_template",
+                        data_bind="visible: showCustomChatTemplate",
+                    ),
+                    css_class='col-sm-8'
+                ),
+                help_bubble_text=_("To use a custom template to render the "
+                    "chat window, enter it here."),
+                css_id="custom-chat-template-group",
+            ),
+        )
+
+    @property
+    def sections(self):
+        result = [
+            self.section_general,
+            self.section_registration,
+            self.section_chat,
+        ]
+
+        if self._cchq_is_previewer:
+            result.append(self.section_internal)
+
+        result.append(
+            hqcrispy.FormActions(
+                twbscrispy.StrictButton(
+                    _("Save"),
+                    type="submit",
+                    css_class="btn-primary",
+                ),
+            ),
+        )
+
+        return result
 
     def __init__(self, data=None, cchq_domain=None, cchq_is_previewer=False,
         *args, **kwargs):
@@ -543,18 +568,11 @@ class SettingsForm(Form):
         self.helper.form_class = "form form-horizontal"
         self.helper.label_class = 'col-sm-2 col-md-2 col-lg-2'
         self.helper.field_class = 'col-sm-10 col-lg-8'
+
         self.helper.layout = crispy.Layout(
-            self.section_general,
-            self.section_registration,
-            self.section_chat,
-            hqcrispy.FormActions(
-                twbscrispy.StrictButton(
-                    _("Save"),
-                    type="submit",
-                    css_class="btn-primary",
-                ),
-            ),
+            *self.sections
         )
+
         self.restricted_sms_times_widget_context = {
             "template_name": "ko-template-restricted-sms-times",
             "explanation_text": _("SMS will only be sent when any of the following is true:"),
