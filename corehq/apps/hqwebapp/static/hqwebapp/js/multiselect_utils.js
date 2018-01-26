@@ -45,8 +45,17 @@ hqDefine('hqwebapp/js/multiselect_utils', function () {
         multiselectId,
         selectableHeaderTitle,
         selectedHeaderTitle,
-        searchItemTitle
+        searchItemTitle,
+        isOwner
     ) {
+        if (!isOwner) {
+            $('#' + multiselectId).hide().after(
+                $('#' + multiselectId).children().map(function () {
+                    return $("<div>").text($(this).text()).get(0);
+                })
+            );
+            return;
+        }
         var selectAllId = multiselectId + '-select-all',
             removeAllId = multiselectId + '-remove-all',
             searchSelectableId = multiselectId + '-search-selectable',
