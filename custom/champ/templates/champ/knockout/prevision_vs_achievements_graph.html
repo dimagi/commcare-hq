@@ -1,0 +1,76 @@
+{% extends "champ/knockout/base_async_template.html" %}
+{% load compress %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% block champcontent %}
+    <div id="champApp">
+        <h2 data-bind="text: title"></h2>
+        <div class="row" style="margin-bottom: 40px;">
+            <div class="row">
+                <div class="row bubble" style="width: 80%">
+                    <h4 style="text-align: center">Target Filters</h4>
+                    <div class="col-md-1"></div>
+                    <div class="col-md-2">
+                        <label>District: <span data-bind="text: target_district"></span></label>
+                        <select class="form-control"
+                                multiple="multiple"
+                                data-bind="options: availableValues,
+                                           optionsText: 'value',
+                                           optionsValue: 'id',
+                                           selectedOptions: target_district,
+                                           event: { change: function (data, event) { districtOnSelect(data, event); }},
+                                           select2: {}"></select>
+
+                    </div>
+                    <div class="col-md-2">
+                      <label>CBO:</label>
+                      <ui-select multiple ng-model="mainCtrl.filters.target_cbo" theme="bootstrap" on-remove="mainCtrl.cboOnSelect($item)" on-select="mainCtrl.cboOnSelect($item)">
+                            <ui-select-match placeholder="CBO"><span ng-bind="$item.value"></span></ui-select-match>
+                            <ui-select-choices repeat="cbo.id as cbo in mainCtrl.cbos | propsFilter: {value: $select.search}">
+                                <div ng-bind="cbo.value"></div>
+                            </ui-select-choices>
+                        </ui-select>
+                    </div>
+                    <div class="col-md-2">
+                        <label>Client Type:</label>
+                        <ui-select multiple ng-model="mainCtrl.filters.target_clienttype" theme="bootstrap"  on-remove="mainCtrl.clienttypeOnSelect($item)" on-select="mainCtrl.clienttypeOnSelect($item)">
+                            <ui-select-match placeholder="Client Type"><span ng-bind="$item.value"></span></ui-select-match>
+                            <ui-select-choices repeat="client.id as client in mainCtrl.clientTypes | propsFilter: {value: $select.search}">
+                                <div ng-bind="client.value"></div>
+                            </ui-select-choices>
+                        </ui-select>
+                    </div>
+                    <div class="col-md-2">
+                        <label>User PL:</label>
+                        <ui-select multiple ng-model="mainCtrl.filters.target_userpl" theme="bootstrap">
+                            <ui-select-match placeholder="User PL"><span ng-bind="$item.value"></span></ui-select-match>
+                            <ui-select-choices repeat="user.id as user in mainCtrl.userpls | propsFilter: {value: $select.search}">
+                                <div ng-bind="user.value"></div>
+                            </ui-select-choices>
+                        </ui-select>
+                    </div>
+                    <div class="col-md-2">
+                        <label>Fiscal year:</label>
+                        <ui-select ng-model="mainCtrl.filters.target_fiscal_year" theme="bootstrap">
+                            <ui-select-match placeholder="Fiscal year"><span ng-bind="$select.selected.value"></span></ui-select-match>
+                            <ui-select-choices repeat="year.id as year in mainCtrl.fiscalYears | propsFilter: {value: $select.search}">
+                                <div ng-bind="year.value"></div>
+                            </ui-select-choices>
+                        </ui-select>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+
+{% block js-inline %}
+    <script>
+        $(document).ready(function () {
+            ko.applyBindings(new PrecisionVsAcievementsGraphModel(), $('#champApp').get(0));
+            $('#reportFiltersAccordion').css('display', 'none');
+        });
+    </script>
+{% endblock %}

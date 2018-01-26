@@ -9,8 +9,8 @@ class PrevisionVsAchievementsGraphReport(CustomProjectReport):
     slug = 'prevision_vs_achievements_graph_report'
     name = 'Prevision vs Achievements Graph'
     title = 'Prevision vs Achievements Graph'
-    base_template = 'champ/base_template.html'
-    report_template_path = 'champ/prevision_vs_achievements_graph.html'
+    base_template = 'champ/knockout/base_template.html'
+    report_template_path = 'champ/knockout/prevision_vs_achievements_graph.html'
 
 
 @location_safe
