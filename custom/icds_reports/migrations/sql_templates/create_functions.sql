@@ -959,6 +959,7 @@ DECLARE
 	_child_health_tablename text;
 	_ccs_record_tablename text;
 	_ccs_record_monthly_tablename text;
+	_child_health_monthly_tablename text;
 	_daily_attendance_tablename text;
 	_awc_location_tablename text;
 	_thr_tablename text;
@@ -1006,6 +1007,7 @@ BEGIN
 	_child_health_tablename := 'agg_child_health';
 	_ccs_record_tablename := 'agg_ccs_record';
 	_ccs_record_monthly_tablename := 'ccs_record_monthly' || '_' || _start_date;
+	_child_health_monthly_tablename := 'child_health_monthly' || '_' || _start_date;
 	_thr_tablename := 'agg_thr_data' || '_' || _start_date;
 	EXECUTE 'SELECT table_name FROM ucr_table_name_mapping WHERE table_type = ' || quote_literal('daily_feeding') INTO _daily_attendance_tablename;
 	EXECUTE 'SELECT table_name FROM ucr_table_name_mapping WHERE table_type = ' || quote_literal('awc_location') INTO _awc_location_tablename;
@@ -1190,6 +1192,33 @@ BEGIN
 		'WHERE (opened_on <= ' || quote_literal(_end_date) || ' AND (closed_on IS NULL OR closed_on >= ' || quote_literal(_start_date) || ' )) ' ||
 		'GROUP BY awc_id) ut ' ||
 	'WHERE ut.awc_id = agg_awc.awc_id';
+
+  -- Update child_health cases_person_has_aadhaar and cases_person_beneficiary
+  EXECUTE 'UPDATE ' || quote_ident(_tablename5) || ' agg_awc SET ' ||
+    'cases_person_has_aadhaar_v2 = ut.child_has_aadhar, ' ||
+    'cases_person_beneficiary_v2 = ut.child_beneficiary ' ||
+  'FROM (SELECT ' ||
+    'awc_id, ' ||
+    'sum(has_aadhar_id) as child_has_aadhar, ' ||
+    'count(*) as child_beneficiary ' ||
+    'FROM ' || quote_ident(_child_health_monthly_tablename) || ' ' ||
+    'WHERE valid_in_month = 1' ||
+    'GROUP BY awc_id) ut ' ||
+  'WHERE ut.awc_id = agg_awc.awc_id';
+
+  -- Update ccs_record cases_person_has_aadhaar and cases_person_beneficiary
+  -- pregnant and lactating both imply that the case is open, alive and seeking services in the month
+  EXECUTE 'UPDATE ' || quote_ident(_tablename5) || ' agg_awc SET ' ||
+    'cases_person_has_aadhaar_v2 = cases_person_has_aadhaar_v2 + ut.ccs_has_aadhar, ' ||
+    'cases_person_beneficiary_v2 = cases_person_beneficiary_v2 + ut.ccs_beneficiary ' ||
+  'FROM (SELECT ' ||
+    'awc_id, ' ||
+    'sum(has_aadhar_id) as ccs_has_aadhar, ' ||
+    'count(*) as ccs_beneficiary ' ||
+    'FROM ' || quote_ident(_ccs_record_monthly_tablename) || ' ' ||
+    'WHERE pregnant = 1 OR lactating = 1 ' ||
+    'GROUP BY awc_id) ut ' ||
+  'WHERE ut.awc_id = agg_awc.awc_id';
 
 	-- Pass to combine THR information from ccs record and child health table
 	EXECUTE 'UPDATE ' || quote_ident(_tablename5) || ' SET thr_score = ' ||
@@ -1525,7 +1554,9 @@ BEGIN
         'sum(cases_person_beneficiary), ' ||
         quote_nullable(_null_value) || ', ' ||
         quote_nullable(_null_value) || ', ' ||
-        'sum(num_awc_infra_last_update)';
+        'sum(num_awc_infra_last_update), ' ||
+        'sum(cases_person_has_aadhaar_v2 ), ' ||
+        'sum(cases_person_beneficiary_v2) ';
 
 	EXECUTE 'INSERT INTO ' || quote_ident(_tablename4) || '(SELECT ' ||
 		'state_id, ' ||
@@ -1741,6 +1772,7 @@ DECLARE
     _all_text text;
     _null_value text;
     _rollup_text text;
+    _rollup_text_2 text;
 BEGIN
 	_table_date = ($1)::DATE;
 	_current_month = date_trunc('MONTH', $1)::DATE;
@@ -1778,7 +1810,9 @@ BEGIN
 	    'num_launched_districts, ' ||
 	    'num_launched_blocks, ' ||
 	    'num_launched_supervisors, ' ||
-	    'num_launched_awcs ';
+	    'num_launched_awcs, ' ||
+      'cases_person_has_aadhaar_v2, ' ||
+      'cases_person_beneficiary_v2 ';
 
 	-- DROP and create daily table
 	EXECUTE 'DROP TABLE IF EXISTS ' || quote_ident(_tablename);
@@ -1818,7 +1852,9 @@ BEGIN
             'num_launched_districts, ' ||
             'num_launched_blocks, ' ||
             'num_launched_supervisors, ' ||
-            'num_launched_awcs ' ||
+            'num_launched_awcs, ' ||
+            'cases_person_has_aadhaar_v2, ' ||
+            'cases_person_beneficiary_v2 ' ||
          'FROM agg_awc WHERE aggregation_level = 5 AND month = ' || quote_literal(_current_month) ||
          ')';
 
@@ -1860,6 +1896,9 @@ BEGIN
 		'sum(daily_attendance_open), ' ||
 		'sum(num_awcs), ';
 
+  _rollup_text_2 = 'sum(cases_person_has_aadhaar_v2), ' ||
+    'sum(cases_person_beneficiary_v2) ';
+
 	EXECUTE 'INSERT INTO ' || quote_ident(_tablename) ||
 	    '( '|| _table_columns || ') '
 	    '(SELECT ' ||
@@ -1875,7 +1914,8 @@ BEGIN
 		'CASE WHEN (sum(num_launched_awcs) > 0) THEN 1 ELSE 0 END, ' ||
 		'CASE WHEN (sum(num_launched_awcs) > 0) THEN 1 ELSE 0 END, ' ||
 		'CASE WHEN (sum(num_launched_awcs) > 0) THEN 1 ELSE 0 END, ' ||
-		'sum(num_launched_awcs) ' ||
+		'sum(num_launched_awcs), ' ||
+    _rollup_text_2 ||
 		'FROM ' || quote_ident(_tablename) || ' ' ||
 		'WHERE aggregation_level = 5 ' ||
 		'GROUP BY state_id, district_id, block_id, supervisor_id, date)';
@@ -1895,7 +1935,8 @@ BEGIN
 		'CASE WHEN (sum(num_launched_supervisors) > 0) THEN 1 ELSE 0 END, ' ||
 		'CASE WHEN (sum(num_launched_supervisors) > 0) THEN 1 ELSE 0 END, ' ||
 		'sum(num_launched_supervisors), ' ||
-		'sum(num_launched_awcs) ' ||
+		'sum(num_launched_awcs), ' ||
+    _rollup_text_2 ||
 		'FROM ' || quote_ident(_tablename) || ' ' ||
 		'WHERE aggregation_level = 4 ' ||
 		'GROUP BY state_id, district_id, block_id, date)';
@@ -1915,7 +1956,8 @@ BEGIN
 		'CASE WHEN (sum(num_launched_blocks) > 0) THEN 1 ELSE 0 END, ' ||
 		'sum(num_launched_blocks), ' ||
 		'sum(num_launched_supervisors), ' ||
-		'sum(num_launched_awcs) ' ||
+		'sum(num_launched_awcs), ' ||
+    _rollup_text_2 ||
 		'FROM ' || quote_ident(_tablename) || ' ' ||
 		'WHERE aggregation_level = 3 ' ||
 		'GROUP BY state_id, district_id, date)';
@@ -1935,7 +1977,8 @@ BEGIN
 		'sum(num_launched_districts), ' ||
 		'sum(num_launched_blocks), ' ||
 		'sum(num_launched_supervisors), ' ||
-		'sum(num_launched_awcs) ' ||
+		'sum(num_launched_awcs), ' ||
+    _rollup_text_2 ||
 		'FROM ' || quote_ident(_tablename) || ' ' ||
 		'WHERE aggregation_level = 2 ' ||
 		'GROUP BY state_id, date)';

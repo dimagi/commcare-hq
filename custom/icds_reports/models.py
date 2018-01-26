@@ -75,6 +75,8 @@ class AggAwcDailyView(models.Model):
     num_launched_blocks = models.IntegerField(blank=True, null=True)
     num_launched_supervisors = models.IntegerField(blank=True, null=True)
     num_launched_awcs = models.IntegerField(blank=True, null=True)
+    cases_person_has_aadhaar_v2 = models.IntegerField(blank=True, null=True)
+    cases_person_beneficiary_v2 = models.IntegerField(blank=True, null=True)
 
     class Meta:
         app_label = 'icds_model'
@@ -223,6 +225,8 @@ class AggAwcMonthly(models.Model):
     trained_phase_2 = models.IntegerField(blank=True, null=True)
     trained_phase_3 = models.IntegerField(blank=True, null=True)
     trained_phase_4 = models.IntegerField(blank=True, null=True)
+    cases_person_has_aadhaar_v2 = models.IntegerField(blank=True, null=True)
+    cases_person_beneficiary_v2 = models.IntegerField(blank=True, null=True)
 
     class Meta:
         app_label = 'icds_model'

@@ -501,3 +501,17 @@ def get_child_locations(domain, location_id, show_test):
         ]
     else:
         return list(locations)
+
+
+def person_has_aadhaar_column(beta):
+    if beta:
+        return 'cases_person_has_aadhaar_v2'
+
+    return 'cases_person_has_aadhaar'
+
+
+def person_is_beneficiary_column(beta):
+    if beta:
+        return 'cases_person_beneficiary_v2'
+
+    return 'cases_person_beneficiary'
