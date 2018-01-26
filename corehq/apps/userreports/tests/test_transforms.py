@@ -59,7 +59,7 @@ class TestEthiopianConversion(SimpleTestCase):
 
 @generate_cases((
     ('2009-09-11 ', date(2017, 5, 19)),
-    ('2009-13-11 ', date(2017, 9, 16)),
+    ('2009-13-5 ', date(2017, 9, 10)),
     ('2009_13_11 ', ''),
     ('abc-13-11', ''),
     (None, ''),
@@ -74,7 +74,7 @@ def test_ethiopian_to_gregorian(self, date_string, expected_result):
 
 @generate_cases((
     ('2017-05-19 ', date(2009, 9, 11)),
-    ('2017-09-16 ', date(2010, 1, 6)),
+    ('2017-09-10 ', date(2010, 13, 5)),
     ('2009_13_11 ', ''),
     ('abc-13-11', ''),
     (None, ''),
