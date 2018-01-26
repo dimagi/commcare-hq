@@ -87,7 +87,7 @@ class GetCaseHistorySpec(JsonObject):
         if context.get_cache_value(cache_key) is not None:
             return context.get_cache_value(cache_key)
 
-        # TODO(Sheel/Emord) looks like this is only used when getting the last
+        # TODO(Emord) looks like this is only used when getting the last
         # property update. maybe this could be optimized sort by received_on
         # and stop looking at forms once it finds the update
         case_history = []
