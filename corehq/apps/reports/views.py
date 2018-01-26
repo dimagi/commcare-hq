@@ -247,6 +247,8 @@ class MySavedReportsView(BaseProjectReportSectionView):
     page_title = ugettext_noop("My Saved Reports")
     template_name = 'reports/reports_home.html'
 
+    default_scheduled_report_length = 10
+
     @use_jquery_ui
     @use_datatables
     def dispatch(self, request, *args, **kwargs):
@@ -303,11 +305,62 @@ class MySavedReportsView(BaseProjectReportSectionView):
         return scheduled_reports
 
     @property
+    def show_all_scheduled_reports(self):
+        return self.request.GET.get('show_all_scheduled_reports', False)
+
+    @property
+    def others_scheduled_reports(self):
+        if not toggles.SHOW_ALL_SCHEDULED_REPORT_EMAILS.enabled(self.request.couch_user.username):
+            return []
+
+        def _is_valid(rn):
+            # the _id check is for weird bugs we've seen in the wild that look like
+            # oddities in couch.
+            return (
+                hasattr(rn, "_id")
+                and rn._id
+                and rn.configs
+                and (
+                    not hasattr(rn, 'report_slug')
+                    or rn.report_slug != 'admin_domains'
+                )
+            )
+
+        ret = []
+        key = [self.domain]
+        all_scheduled_reports = ReportNotification.view('reportconfig/user_notifications', reduce=False,
+                                                        include_docs=True, startkey=key, endkey=key + [{}])
+        user = self.request.couch_user
+        user_email = user.get_email()
+        is_admin = user.is_domain_admin(self.domain)
+        for scheduled_report in all_scheduled_reports:
+            if not _is_valid(scheduled_report) or user_email == scheduled_report.owner_email:
+                continue
+            if is_admin:
+                ret.append(scheduled_report)
+            elif user_email in scheduled_report.all_recipient_emails:
+                ret.append(scheduled_report)
+        return ret
+
+    @property
     def page_context(self):
+        user = self.request.couch_user
+        others_scheduled_reports = self.others_scheduled_reports
+        if self.show_all_scheduled_reports:
+            num_unlisted_scheduled_reports = 0
+        else:
+            cur_len = len(others_scheduled_reports)
+            num_unlisted_scheduled_reports = max(0, cur_len - self.default_scheduled_report_length)
+            others_scheduled_reports = others_scheduled_reports[:min(self.default_scheduled_report_length,
+                                                                     cur_len)]
         return {
-            'couch_user': self.request.couch_user,
+            'couch_user': user,
+            'user_email': user.get_email(),
+            'is_admin': user.is_domain_admin(self.domain),
             'configs': self.good_configs,
             'scheduled_reports': self.scheduled_reports,
+            'others_scheduled_reports': others_scheduled_reports,
+            'extra_reports': num_unlisted_scheduled_reports,
             'report': {
                 'title': self.page_title,
                 'show': True,
@@ -897,6 +950,12 @@ class ScheduledReportsView(BaseProjectReportSectionView):
     def scheduled_report_id(self):
         return self.kwargs.get('scheduled_report_id')
 
+    def can_edit_report(self, report_instance):
+        owner = report_instance.owner
+        owner_domain = report_instance.domain
+        current_user = self.request.couch_user
+        return current_user == owner or current_user.is_domain_admin(owner_domain)
+
     @property
     @memoized
     def report_notification(self):
@@ -912,7 +971,7 @@ class ScheduledReportsView(BaseProjectReportSectionView):
             if day_change:
                 instance.day = calculate_day(instance.interval, instance.day, day_change)
 
-            if instance.owner_id != self.request.couch_user._id or instance.domain != self.domain:
+            if not self.can_edit_report(instance):
                 return HttpResponseBadRequest()
         else:
             instance = ReportNotification(
@@ -940,10 +999,21 @@ class ScheduledReportsView(BaseProjectReportSectionView):
         return _("Edit Scheduled Report")
 
     @property
+    def owner_id(self):
+        if self.scheduled_report_id:
+            return ReportNotification.get(self.scheduled_report_id).owner_id
+        else:
+            return None
+
+    @property
     @memoized
     def configs(self):
+        user = self.request.couch_user
+        if (self.scheduled_report_id and user.is_domain_admin(self.domain) and
+                user._id != self.owner_id):
+            return self.report_notification.configs
         return [
-            c for c in ReportConfig.by_domain_and_owner(self.domain, self.request.couch_user._id)
+            c for c in ReportConfig.by_domain_and_owner(self.domain, user._id)
             if c.report and c.report.emailable
         ]
 
@@ -996,7 +1066,7 @@ class ScheduledReportsView(BaseProjectReportSectionView):
             }
         }
 
-        if not self.configs:
+        if not self.configs and not self.request.couch_user.is_domain_admin(self.domain):
             return context
 
         is_configurable_map = {c._id: c.is_configurable_report for c in self.configs}
@@ -1012,6 +1082,7 @@ class ScheduledReportsView(BaseProjectReportSectionView):
             'is_configurable_map': is_configurable_map,
             'languages_map': languages_map,
             'languages_for_select': languages_for_select,
+            'is_owner': self.is_new or self.request.couch_user._id == self.owner_id,
         })
         return context
 
@@ -1106,14 +1177,14 @@ class ReportNotificationUnsubscribeView(TemplateView):
 @login_and_domain_required
 @require_POST
 def delete_scheduled_report(request, domain, scheduled_report_id):
-    user_id = request.couch_user._id
+    user = request.couch_user
     try:
         rep = ReportNotification.get(scheduled_report_id)
     except ResourceNotFound:
         # was probably already deleted by a fast-clicker.
         pass
     else:
-        if user_id != rep.owner._id:
+        if user._id != rep.owner._id and not user.is_domain_admin(domain):
             return HttpResponseBadRequest()
 
         rep.delete()
@@ -1233,7 +1304,6 @@ def render_full_report_notification(request, content, email=None, report_notific
 
 
 @login_and_domain_required
-@permission_required("is_superuser")
 def view_scheduled_report(request, domain, scheduled_report_id):
     content = get_scheduled_report_response(request.couch_user, domain, scheduled_report_id, email=False)[0]
     return render_full_report_notification(request, content)
