@@ -65,7 +65,7 @@ class TestUserDim(BaseWarehouseTestCase):
                 batch_id=cls.batch.id
             ),
             create_user_staging_record(
-                cls.domain,
+                None,
                 user_id='beeboobop',
                 username='web',
                 doc_type='WebUser',
