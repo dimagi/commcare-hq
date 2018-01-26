@@ -1482,11 +1482,3 @@ LOCATION_SEARCH = StaticToggle(
     TAG_PRODUCT,
     [NAMESPACE_DOMAIN],
 )
-
-SHOW_ALL_SCHEDULED_REPORT_EMAILS = StaticToggle(
-    'show_all_scheduled_report_emails',
-    "In the 'My Scheduled Reports' tab, show all reports the user is part of (if the user is an "
-    "admin, show all in the current project)",
-    TAG_PRODUCT,
-    [NAMESPACE_USER],
-)
