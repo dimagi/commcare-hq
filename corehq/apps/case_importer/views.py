@@ -5,6 +5,7 @@ from django.utils.datastructures import MultiValueDictKeyError
 from corehq.apps.app_manager.dbaccessors import get_case_types_from_apps
 from corehq.apps.case_importer import base
 from corehq.apps.case_importer import util as importer_util
+from corehq.apps.case_importer.const import MAX_CASE_IMPORTER_COLUMNS
 from corehq.apps.case_importer.exceptions import ImporterError
 from django.views.decorators.http import require_POST
 from corehq.apps.case_importer.suggested_fields import get_suggested_case_fields
@@ -76,6 +77,13 @@ def excel_config(request, domain):
         return render_error(request, domain,
                             'Your spreadsheet is empty. '
                             'Please try again with a different spreadsheet.')
+
+    if len(columns) > MAX_CASE_IMPORTER_COLUMNS:
+        return render_error(request, domain,
+                            'Your spreadsheet has too many columns. '
+                            'A maximum of %(max_columns)s is supported.' % {
+                                'max_columns': MAX_CASE_IMPORTER_COLUMNS
+                            })
 
     case_types_from_apps = get_case_types_from_apps(domain)
     unrecognized_case_types = [t for t in get_case_types_for_domain_es(domain)
