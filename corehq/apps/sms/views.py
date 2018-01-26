@@ -1897,6 +1897,8 @@ class SMSSettingsView(BaseMessagingSectionView, AsyncHandlerMixin):
                     enabled_disabled(domain_obj.sms_mobile_worker_registration_enabled),
                 "registration_welcome_message":
                     self.get_welcome_message_recipient(domain_obj),
+                "daily_outbound_sms_limit":
+                    domain_obj.daily_outbound_sms_limit,
             }
             form = SettingsForm(initial=initial, cchq_domain=self.domain,
                 cchq_is_previewer=self.previewer)
@@ -1940,10 +1942,12 @@ class SMSSettingsView(BaseMessagingSectionView, AsyncHandlerMixin):
                  "sms_mobile_worker_registration_enabled"),
             ]
             if self.previewer:
-                field_map.append(
+                field_map.extend([
                     ("custom_chat_template",
-                     "custom_chat_template")
-                )
+                     "custom_chat_template"),
+                    ("daily_outbound_sms_limit",
+                     "daily_outbound_sms_limit"),
+                ])
             for (model_field_name, form_field_name) in field_map:
                 setattr(domain_obj, model_field_name,
                     form.cleaned_data[form_field_name])

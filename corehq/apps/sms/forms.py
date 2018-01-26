@@ -283,6 +283,13 @@ class SettingsForm(Form):
         label=ugettext_lazy("Send registration welcome message to"),
     )
 
+    # Internal settings
+    daily_outbound_sms_limit = IntegerField(
+        required=False,
+        label=ugettext_noop("Daily Outbound SMS Limit"),
+        min_value=1000,
+    )
+
     @property
     def section_general(self):
         fields = [
@@ -513,6 +520,7 @@ class SettingsForm(Form):
     def section_internal(self):
         return crispy.Fieldset(
             _("Internal Settings (Dimagi Only)"),
+            crispy.Field('daily_outbound_sms_limit'),
             hqcrispy.B3MultiField(
                 _("Chat Template"),
                 crispy.Div(
@@ -816,6 +824,16 @@ class SettingsForm(Form):
     def clean_sms_conversation_length(self):
         # Just cast to int, the ChoiceField will validate that it is an integer
         return int(self.cleaned_data.get("sms_conversation_length"))
+
+    def clean_daily_outbound_sms_limit(self):
+        if not self._cchq_is_previewer:
+            return None
+
+        value = self.cleaned_data.get("daily_outbound_sms_limit")
+        if not value:
+            raise ValidationError(_("This field is required"))
+
+        return value
 
 
 class BackendForm(Form):
