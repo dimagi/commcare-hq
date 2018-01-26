@@ -22,7 +22,7 @@ def split_date_string(date_string):
     '''
     Takes a date string and splits it up into its component year, month, and day
     :param date_string: A date string that is in the format YYYY-MM-DD
-    :return: a tuple containing (year, month, day) or ''
+    :return: a tuple containing (year, month, day)
     '''
     year, month, day = date_string.split('-')
     year, month, day = int(year), int(month), int(day)
