@@ -38,6 +38,8 @@ treatment_support_designation = {
     'other_community_volunteer': '7',
 }
 
+# needs to be cross checked if enikshay included more values
+# and once for sanity with Nikshay values
 occupation = {
     'air_force': 7,
     'business_person': 7,
@@ -163,4 +165,37 @@ health_establishment_type = {
 
 health_establishment_sector = {
     PRIVATE_HEALTH_ESTABLISHMENT_SECTOR: 'V',
+}
+
+
+key_population = {
+    'known_patient_contact': 1,  # Contact of Known TB Patients
+    # 'no mapping': 2,  # Diabetes
+    # 'no mapping': 3,  # Tobacco
+    'prison_inmate': 4,  # Prison
+    'miner': 5,  # Miner
+    'migrant': 6,  # Migrant
+    'refugee': 7,  # Refugee
+    'slum_dweller': 8,  # Urban Slum
+    'health_care_worker': 9,  # Health Care Worker
+    'tribal_population': 10,  # Other
+    'other': 10,  # Other
+    # 'no mapping': 11,  # Not Applicable
+}
+
+
+area = {
+    'tribal': 'T',
+    'rural': 'R',
+    'urban': 'U',
+    'urban_slum': 'S',
+    'not_known': 'N',
+}
+
+
+marital_status = {
+    'unmarried': 'S',  # Single
+    'married': 'M',  # Married
+    'widowed': 'O',  # Other
+    'separated': 'O'  # Other
 }
