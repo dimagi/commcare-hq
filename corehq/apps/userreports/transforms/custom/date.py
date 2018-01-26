@@ -59,6 +59,7 @@ def get_gregorian_to_ethiopian(date_string):
         return ''
 
     try:
-        return EthiopianDateConverter.to_ethiopian(year, month, day)
+        ethiopian_year, ethiopian_month, ethiopian_day = EthiopianDateConverter.to_ethiopian(year, month, day)
+        return '{}-{}-{}'.format(ethiopian_year, ethiopian_month, ethiopian_day)
     except Exception:
         return ''
