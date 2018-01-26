@@ -3,7 +3,6 @@ from datetime import datetime
 
 from jsonobject.base_properties import DefaultProperty
 from six.moves import filter
-from six.moves import map
 
 from casexml.apps.case.xform import extract_case_blocks
 from corehq.apps.receiverwrapper.util import get_version_from_appversion_text
@@ -95,15 +94,15 @@ class GetCaseHistorySpec(JsonObject):
         for f in forms:
             case_blocks = extract_case_blocks(f)
             if case_blocks:
-                case_history.append(
-                    next(case_block for case_block in case_blocks
-                         if case_block['@case_id'] == case_id))
+                for case_block in case_blocks:
+                    if case_block['@case_id'] == case_id:
+                        case_history.append(case_block)
+
         context.set_cache_value(cache_key, case_history)
         return case_history
 
     def __str__(self):
         return "case_history(\n{cases}\n)".format(cases=add_tabbed_text(str(self._case_forms_expression)))
-
 
 
 class GetCaseHistoryByDateSpec(JsonObject):
