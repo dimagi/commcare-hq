@@ -467,8 +467,8 @@ class BillingAccount(ValidateModelMixin, models.Model):
         send_html_email_async(
             subject,
             old_user,
-            render_to_string('accounting/autopay_card_removed.html', context),
-            text_content=strip_tags(render_to_string('accounting/autopay_card_removed.html', context)),
+            render_to_string('accounting/email/autopay_card_removed.html', context),
+            text_content=strip_tags(render_to_string('accounting/email/autopay_card_removed.html', context)),
         )
 
     def _send_autopay_card_added_email(self, domain):
@@ -496,8 +496,8 @@ class BillingAccount(ValidateModelMixin, models.Model):
         send_html_email_async(
             subject,
             self.auto_pay_user,
-            render_to_string('accounting/invoice_autopay_setup.html', context),
-            text_content=strip_tags(render_to_string('accounting/invoice_autopay_setup.html', context)),
+            render_to_string('accounting/email/invoice_autopay_setup.html', context),
+            text_content=strip_tags(render_to_string('accounting/email/invoice_autopay_setup.html', context)),
         )
 
 
@@ -1950,8 +1950,8 @@ class BillingRecordBase(models.Model):
     pdf_data_id = models.CharField(max_length=48)
     last_modified = models.DateTimeField(auto_now=True)
 
-    INVOICE_HTML_TEMPLATE = 'accounting/invoice_email.html'
-    INVOICE_TEXT_TEMPLATE = 'accounting/invoice_email_plaintext.html'
+    INVOICE_HTML_TEMPLATE = 'accounting/email/invoice.html'
+    INVOICE_TEXT_TEMPLATE = 'accounting/email/invoice.txt'
 
     class Meta:
         abstract = True
@@ -2125,8 +2125,8 @@ class WirePrepaymentBillingRecord(WireBillingRecord):
 
 class BillingRecord(BillingRecordBase):
     invoice = models.ForeignKey(Invoice, on_delete=models.PROTECT)
-    INVOICE_CONTRACTED_HTML_TEMPLATE = 'accounting/invoice_email_contracted.html'
-    INVOICE_CONTRACTED_TEXT_TEMPLATE = 'accounting/invoice_email_contracted_plaintext.html'
+    INVOICE_CONTRACTED_HTML_TEMPLATE = 'accounting/email/invoice_contracted.html'
+    INVOICE_CONTRACTED_TEXT_TEMPLATE = 'accounting/email/invoice_contracted_plaintext.txt'
 
     INVOICE_AUTOPAY_HTML_TEMPLATE = 'accounting/email/invoice_autopayment.html'
     INVOICE_AUTOPAY_TEXT_TEMPLATE = 'accounting/email/invoice_autopayment.txt'

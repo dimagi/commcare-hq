@@ -1645,7 +1645,7 @@ class EnterprisePlanContactForm(forms.Form):
             'domain': self.domain,
             'email': self.web_user.email
         }
-        html_content = render_to_string('accounting/enterprise_request_email.html', context)
+        html_content = render_to_string('accounting/email/enterprise_request.html', context)
         text_content = """
         Email: %(email)s
         Name: %(name)s
