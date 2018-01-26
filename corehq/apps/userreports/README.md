@@ -90,8 +90,8 @@ An overview of the design, API and data structures used here.
             - [Round to the nearest whole number](#round-to-the-nearest-whole-number)
             - [Always round to 3 decimal places](#always-round-to-3-decimal-places)
         - [Date formatting](#date-formatting)
-        - [Converting an ethiopian date string to a gregorian date](#ethiopian-transform)
-        - [Converting a gregorian date string to an ethiopian date](#gregorian-transform)
+        - [Converting an ethiopian date string to a gregorian date](#converting-an-ethiopian-date-string-to-a-gregorian-date)
+        - [Converting a gregorian date string to an ethiopian date](#converting-a-gregorian-date-string-to-an-ethiopian-date)
     - [Charts](#charts)
         - [Pie charts](#pie-charts)
         - [Aggregate multibar charts](#aggregate-multibar-charts)
@@ -1759,7 +1759,7 @@ it will return an empty string.
 ```
 
 ### Converting a gregorian date string to an ethiopian date
-Converts a string in the YYYY-MM-DD format to a gregorian date. For example,
+Converts a string in the YYYY-MM-DD format to an ethiopian date. For example,
 2017-05-19 is converted to date(2009, 09, 11). If it is unable to convert the date,
 it will return an empty string.
 

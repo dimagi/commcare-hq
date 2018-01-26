@@ -85,10 +85,7 @@ def test_gregorian_to_ethiopian(self, date_string, expected_result):
         "custom_type": "gregorian_date_to_ethiopian_date",
     }).get_transform_function()
 
-    # print("$$$$$$date string: {}".format(date_string))
-
     self.assertEqual(expected_result, transform(date_string))
-
 
 class CustomTransformTest(SimpleTestCase):
 
