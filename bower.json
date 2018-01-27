@@ -29,7 +29,7 @@
     "bootstrap-timepicker": "0.5.1",
     "bootstrap-tour": "0.10.2",
     "bootstrap3-typeahead": "~3.1.1",
-    "jquery": "3.2.1",
+    "jquery": "3.3.0",
     "jquery-2.2.4": "jquery#2.2.4",
     "jquery-color": "2.1.2",
     "jquery.cookie": "dimagi/jquery-cookie#1.4.1",
