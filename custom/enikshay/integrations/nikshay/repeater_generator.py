@@ -96,7 +96,6 @@ class BaseNikshayPayloadGenerator(BasePayloadGenerator):
             "RegBy": username,
             "password": password,
             "Source": ENIKSHAY_ID,
-            "source": ENIKSHAY_ID,
             "IP_From": server_ip,
             "IP_FROM": server_ip,
             "ip_address": server_ip,
@@ -747,19 +746,6 @@ def _get_episode_case_properties(episode_case_properties, occurence_case, person
         patient_occupation = episode_case_properties.get('occupation')
         episode_disease_classification = episode_case_properties.get('disease_classification', '')
 
-    if v2:
-        occurrence_key_population = occurence_case.get_case_property('key_populations')
-        if occurrence_key_population:
-            # key populations is multiple choice and hence can have two options like "diabetes tobacco"
-            # so pick the first option
-            occurrence_key_population = occurrence_key_population.split(' ')[0]
-            episode_properties['key_population'] = key_population.get(
-                occurrence_key_population,
-                key_population.get('other')
-            )
-        else:
-            episode_properties['key_population'] = '11'  # Not Applicable
-
     if episode_site_choice:
         site_detail = episode_site.get(episode_site_choice, 'others')
         episode_properties["sitedetail"] = site_detail
@@ -771,16 +757,9 @@ def _get_episode_case_properties(episode_case_properties, occurence_case, person
         episode_date = datetime.date.today()
 
     episode_year = episode_date.year
-    if v2:
-        _patient_occupation = (
-            occupation.get(patient_occupation, occupation['other'])
-            if patient_occupation
-            else occupation['not_known']
-        )
-        episode_properties.update({"occupation": _patient_occupation})
-    else:
-        _patient_occupation = occupation.get(patient_occupation, occupation['other'])
-        episode_properties.update({"poccupation": _patient_occupation})
+
+    _patient_occupation = occupation.get(patient_occupation, occupation['other'])
+    episode_properties.update({"poccupation": _patient_occupation})
     episode_properties.update({
         "pregdate": str(episode_date),
         "ptbyr": str(episode_year),
