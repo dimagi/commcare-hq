@@ -30,6 +30,8 @@ treatment_support_designation = {
     'other_community_volunteer': '7',
 }
 
+# needs to be cross checked if enikshay included more values
+# and once for sanity with Nikshay values
 occupation = {
     'air_force': 7,
     'business_person': 7,
