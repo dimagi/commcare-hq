@@ -700,7 +700,7 @@ def _get_person_case_properties_v2(episode_case, person_case, person_case_proper
 
     district_nikshay_code = _get_location_nikshay_code(person_case_properties.get('current_address_district_choice'))
     if district_nikshay_code:
-        district_details = state_codes.get(district_nikshay_code)
+        district_details = district_codes.get(district_nikshay_code)
         if district_details:
             district = district_details[0]
 
