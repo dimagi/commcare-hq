@@ -695,9 +695,9 @@ def _get_person_case_properties_v2(episode_case, person_case, person_case_proper
         "PHouse_no": person_case_properties.get('current_address', ''),
         # send 0 since that is accepted by Nikshay for this mandatory field
         "Contact_no": (person_case_properties.get(PRIMARY_PHONE_NUMBER) or '0'),
-        "ContactPersonName ": person_case_properties.get('secondary_contact_name_address', ''),
-        "ContactPersonAddress ": person_case_properties.get('secondary_contact_name_address', ''),
-        "ContactPersonMobileNo ": person_case_properties.get(BACKUP_PHONE_NUMBER, ''),
+        "ContactPersonName": person_case_properties.get('secondary_contact_name_address', ''),
+        "ContactPersonAddress": person_case_properties.get('secondary_contact_name_address', ''),
+        "ContactPersonMobileNo": person_case_properties.get(BACKUP_PHONE_NUMBER, ''),
         "Area": area.get(
             person_case_properties.get('area'),
             area.get('not_known')),
