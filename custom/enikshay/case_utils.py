@@ -367,7 +367,7 @@ def get_person_locations(person_case, episode_case=None):
 
 
 def _get_public_locations(person_case, episode_case):
-    PublicPersonLocationHierarchy = namedtuple('PersonLocationHierarchy', 'sto dto tu phi phi_name')
+    PublicPersonLocationHierarchy = namedtuple('PersonLocationHierarchy', 'sto dto tu phi')
     try:
         phi_location_id = None
         if episode_case:
@@ -400,7 +400,6 @@ def _get_public_locations(person_case, episode_case):
             dto=district_location.metadata['nikshay_code'],
             tu=tu_location.metadata['nikshay_code'],
             phi=phi_location.metadata['nikshay_code'],
-            phi_name=phi_location.name,
         )
     except (KeyError, AttributeError) as e:
         raise NikshayCodeNotFound("Nikshay codes not found: {}".format(e))
