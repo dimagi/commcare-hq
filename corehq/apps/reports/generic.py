@@ -492,6 +492,7 @@ class GenericReportView(object):
                 export_target=self.export_target,
                 js_scripts=self.js_scripts,
                 js_options=self.js_options,
+                custom_filter_action_template=self.custom_filter_action_template,
             ),
             current_config_id=current_config_id,
             default_config=default_config,
@@ -846,6 +847,7 @@ class GenericTabularReport(GenericReportView):
     # and return a dictionary of items that will show up in
     # the report context
     extra_context_providers = []
+    custom_filter_action_template = None
 
     @property
     def headers(self):

@@ -68,6 +68,7 @@ from corehq.apps.domain.views import (
     set_published_snapshot,
     test_repeater,
     toggle_diff,
+    send_mock_repeater_report,
 )
 from corehq.motech.repeaters.views import (
     AddCaseRepeaterView,
@@ -164,6 +165,7 @@ domain_settings = [
     url(r'^repeat_record/', RepeatRecordView.as_view(), name=RepeatRecordView.urlname),
     url(r'^repeat_record_report/cancel/', cancel_repeat_record, name='cancel_repeat_record'),
     url(r'^repeat_record_report/requeue/', requeue_repeat_record, name='requeue_repeat_record'),
+    url(r'^repeat_record_report/mock_report/', send_mock_repeater_report, name='send_mock_repeater_report'),
     url(r'^forwarding/$', DomainForwardingOptionsView.as_view(), name=DomainForwardingOptionsView.urlname),
     url(r'^forwarding/new/FormRepeater/$', AddFormRepeaterView.as_view(), {'repeater_type': 'FormRepeater'},
         name=AddFormRepeaterView.urlname),

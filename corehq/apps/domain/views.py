@@ -5,6 +5,7 @@ from decimal import Decimal
 import logging
 import json
 import io
+import csv
 
 import pytz
 from couchdbkit import ResourceNotFound
@@ -120,13 +121,13 @@ from corehq.apps.domain.models import (
     LICENSES,
     TransferDomainRequest,
 )
-from corehq.apps.domain.utils import normalize_domain_name
+from corehq.apps.domain.utils import normalize_domain_name, send_mock_repeater_payloads
 from corehq.apps.hqwebapp.views import BaseSectionPageView, BasePageView, CRUDPaginatedViewMixin
 from corehq.apps.domain.forms import ProjectSettingsForm
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import get_ip, json_response, get_site_domain
 from corehq.apps.users.decorators import require_can_edit_web_users, require_permission
-from corehq.motech.repeaters.forms import GenericRepeaterForm, FormRepeaterForm
+from corehq.motech.repeaters.forms import GenericRepeaterForm, FormRepeaterForm, EmailBulkPayload
 from corehq.motech.repeaters.models import Repeater, RepeatRecord
 from corehq.motech.repeaters.dbaccessors import (
     get_paged_repeat_records,
@@ -562,6 +563,21 @@ def requeue_repeat_record(request, domain):
     if record.cancelled:
         return HttpResponse(status=400)
     return HttpResponse('OK')
+
+
+@require_POST
+@require_can_edit_web_users
+def send_mock_repeater_report(request, domain):
+    try:
+        email_id = request.POST.get('email_id')
+        repeater_id = request.POST.get('repeater_id')
+        data = csv.reader(request.FILES['payload_ids_file'])
+        payload_ids = [row[0] for row in data]
+        send_mock_repeater_payloads(repeater_id, payload_ids, email_id)
+        messages.success(request, _("Successfully emailed payloads."))
+    except Exception as e:
+        messages.error(request, _("Could not process the file. %s") % e.message)
+    return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
 
 
 @require_POST
@@ -2329,6 +2345,7 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
     ajax_pagination = True
     asynchronous = False
     sortable = False
+    custom_filter_action_template = 'domain/partials/custom_repeat_record_report.html'
 
     fields = [
         'corehq.apps.reports.filters.select.RepeaterFilter',
@@ -2500,6 +2517,14 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
             columns.insert(1, DataTablesColumn(_('Payload ID')))
 
         return DataTablesHeader(*columns)
+
+    @property
+    def report_context(self):
+        context = super(DomainForwardingRepeatRecords, self).report_context
+        context.update(
+            email_bulk_payload_form=EmailBulkPayload(domain=self.domain),
+        )
+        return context
 
 
 class DomainForwardingOptionsView(BaseAdminProjectSettingsView):

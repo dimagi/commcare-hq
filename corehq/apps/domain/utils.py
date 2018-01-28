@@ -2,9 +2,13 @@ from __future__ import absolute_import
 from collections import Counter
 import os
 import re
+import datetime
+import json
+import csv
 
 from couchdbkit import ResourceNotFound
 from django.conf import settings
+from django.core.mail import EmailMessage
 
 from corehq import toggles
 from corehq.apps.domain.models import Domain
@@ -111,3 +115,62 @@ def guess_domain_language(domain_name):
     domain = Domain.get_by_name(domain_name)
     counter = Counter([app.default_language for app in domain.applications() if not app.is_remote_app()])
     return counter.most_common(1)[0][0] if counter else 'en'
+
+
+def send_mock_repeater_payloads(repeater_id, payload_ids, email_id):
+    from corehq.motech.repeaters.models import Repeater, RepeatRecord
+    repeater = Repeater.get(repeater_id)
+    repeater_type = repeater.doc_type
+    payloads = dict()
+    headers = ['note']
+    result_file_name = "bulk-payloads-%s-%s-%s.csv" % (repeater.doc_type, repeater.get_id, datetime.datetime.utcnow())
+
+    def get_payload(payload_id):
+        dummy_repeat_record = RepeatRecord(
+            domain=repeater.domain,
+            next_check=datetime.datetime.utcnow(),
+            repeater_id=repeater.get_id,
+            repeater_type=repeater_type,
+            payload_id=payload_id,
+        )
+        payload_doc = repeater.payload_doc(dummy_repeat_record)
+        payload = Repeater(None).get_payload(dummy_repeat_record, payload_doc)
+        if isinstance(payload, dict):
+            return payload
+        else:
+            return json.loads(payload)
+
+    def populate_payloads():
+        for payload_id in payload_ids:
+            try:
+                payload = get_payload(payload_id)
+                payloads[payload_id] = payload
+                headers = list(set(headers + payload.keys()))
+            except Exception as e:
+                payloads[payload_id] = {'note': 'Could not generate payload, %s' % e.message}
+
+    def create_result_file():
+        with open(result_file_name, 'w') as csvfile:
+            headers.append('payload_id')
+            writer = csv.DictWriter(csvfile, fieldnames=headers)
+            writer.writeheader()
+            for payload_id, payload in payloads.items():
+                row = payload
+                row['payload_id'] = payload_id
+                writer.writerow(row)
+
+    def email_payloads():
+        create_result_file()
+        with open(result_file_name) as csvfile:
+            email = EmailMessage(
+                subject="Bulk Payload Report [%s]" % repeater_type,
+                body="PFA report",
+                to=[email_id],
+                from_email=settings.DEFAULT_FROM_EMAIL
+            )
+            email.attach(filename=result_file_name, content=csvfile.read())
+            csvfile.close()
+            email.send()
+
+    populate_payloads()
+    email_payloads()
