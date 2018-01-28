@@ -22,7 +22,6 @@ ARGS = [
     'blow-away',
     'stats',
     'show-diffs',
-    'play',
 ]
 
 
@@ -38,7 +37,6 @@ class Command(BaseCommand):
         parser.add_argument('--blow-away', action='store_true', default=False)
         parser.add_argument('--stats', action='store_true', default=False)
         parser.add_argument('--show-diffs', action='store_true', default=False)
-        parser.add_argument('--play', action='store_true', default=False)
 
     @staticmethod
     def require_only_option(sole_option, options):
@@ -78,15 +76,6 @@ class Command(BaseCommand):
             self.valiate_forms_and_cases(domain)
         if options['show_diffs']:
             self.show_diffs()
-        if options['play']:
-            from corehq.apps.tzmigration.planning import *
-            session = self.planning_db.Session()  # noqa
-            try:
-                import ipdb as pdb
-            except ImportError:
-                import pdb
-
-            pdb.set_trace()
 
     def valiate_forms_and_cases(self, domain):
         form_ids_in_couch = set(get_form_ids_by_type(domain, 'XFormInstance'))
