@@ -12,8 +12,8 @@ from corehq.pillows.utils import get_all_expected_es_indices
 
 from corehq.elastic import get_es_new
 
-from cStringIO import StringIO
-import traceback
+from corehq.util.log import get_traceback_string
+
 from datetime import datetime
 from django.core.mail import mail_admins
 from corehq.pillows.user import add_demo_user_to_user_index
@@ -121,9 +121,7 @@ class Command(BaseCommand):
                 for job in runs:
                     job.get()
             except Exception:
-                f = StringIO()
-                traceback.print_exc(file=f)
-                mail_admins("Pillow preindexing failed", f.getvalue())
+                mail_admins("Pillow preindexing failed", get_traceback_string())
                 raise
             else:
                 mail_admins(
