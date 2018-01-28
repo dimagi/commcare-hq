@@ -645,7 +645,7 @@ def _get_location_nikshay_code(location_id):
     if location_id:
         district_location = SQLLocation.active_objects.get_or_None(location_id=location_id)
         if district_location:
-            district_location.metadata.get('nikshay_code')
+            return district_location.metadata.get('nikshay_code')
     return ""
 
 
