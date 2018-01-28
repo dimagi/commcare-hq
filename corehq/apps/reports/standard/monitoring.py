@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+from __future__ import division
 import datetime
 import math
 import operator
@@ -355,7 +356,7 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
             closed = row.closed_count(landmark_key)
 
             try:
-                p_val = float(modified) * 100. / float(total_touched)
+                p_val = float(modified) * 100 / float(total_touched)
                 proportion = '%.f%%' % p_val
             except ZeroDivisionError:
                 p_val = None
@@ -1153,7 +1154,7 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringFormReportTableBase
         else:
             rows.append(['No Submissions Available for this Date Range'] + ['--']*5)
 
-        self.total_row = [_("Average"), "-", "-", "-", "-", self._format_td_status(int(total_seconds/total), False) if total > 0 else "--"]
+        self.total_row = [_("Average"), "-", "-", "-", "-", self._format_td_status(int(total_seconds // total), False) if total > 0 else "--"]
         return rows
 
     def get_user_link(self, username, user):
@@ -1629,11 +1630,11 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
                     sum(
                         [int(report_data.avg_submissions_by_user.get(user["user_id"], 0))
                         for user in users]
-                    ) / self.num_avg_intervals
+                    ) // self.num_avg_intervals
                 ),
                 # Active users
                 util.numcell("%s / %s" % (active_users, total_users),
-                             value=int((float(active_users) / total_users) * 10000) if total_users else -1,
+                             value=int((float(active_users) // total_users) * 10000) if total_users else -1,
                              raw="%s / %s" % (active_users, total_users)),
                 # Cases opened
                 util.numcell(
@@ -1692,7 +1693,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
                 ),
                 # Average Forms submitted
                 util.numcell(
-                    int(report_data.avg_submissions_by_user.get(user["user_id"], 0)) / self.num_avg_intervals
+                    int(report_data.avg_submissions_by_user.get(user["user_id"], 0)) // self.num_avg_intervals
                 ),
                 # Last Form submission
                 last_form_by_user.get(user["user_id"]) or _(self.NO_FORMS_TEXT),
