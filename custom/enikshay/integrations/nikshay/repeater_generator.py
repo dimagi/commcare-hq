@@ -58,6 +58,10 @@ from custom.enikshay.integrations.nikshay.field_mappings import (
     key_population,
     area,
 )
+from custom.enikshay.integrations.nikshay.codes import (
+    state_codes,
+    district_codes,
+)
 from custom.enikshay.case_utils import update_case
 from dimagi.utils.post import parse_SOAP_response
 from custom.enikshay.location_utils import get_health_establishment_hierarchy_codes
@@ -687,6 +691,19 @@ def _get_person_case_properties(episode_case, person_case, person_case_propertie
 
 
 def _get_person_case_properties_v2(episode_case, person_case, person_case_properties):
+    state, district = None, None
+    state_nikshay_code = _get_location_nikshay_code(person_case_properties.get('current_address_state_choice'))
+    if state_nikshay_code:
+        state_details = state_codes.get(state_nikshay_code)
+        if state_details:
+            state = state_details[0]
+
+    district_nikshay_code = _get_location_nikshay_code(person_case_properties.get('current_address_district_choice'))
+    if district_nikshay_code:
+        district_details = state_codes.get(district_nikshay_code)
+        if district_details:
+            district = district_details[0]
+
     person_properties = {
         "Patient_Name": person_case.name,
         "Gender": gender_mapping.get(person_case_properties.get('sex', ''), ''),
@@ -705,14 +722,14 @@ def _get_person_case_properties_v2(episode_case, person_case, person_case_proper
         "PTaluka": person_case_properties.get('current_address_block_taluka_mandal', ''),
         "PLandmark": person_case_properties.get('current_address_landmark', ''),
         "PPincode": person_case_properties.get('current_address_postal_code', '888888'),
-        "PState": _get_location_name(person_case_properties.get('current_address_state_choice')),
-        "PDistrict": _get_location_name(person_case_properties.get('current_address_district_choice')),
-        "Socioeconomic_Status": person_case_properties.get('socioeconomic_status', 'NA'),
+        "PState": state,
+        "PDistrict": district,
+        "Socioeconomic_Status": person_case_properties.get('socioeconomic_status', 'NA').upper(),
         "HivStatus": hiv_status.get(person_case_properties.get('hiv_status'), hiv_status.get('unknown')),
         "marital_status": marital_status.get(
             person_case_properties.get('marital_status'),
             marital_status.get('unmarried')),
-        "IDdates": datetime.date.today(),
+        "IDdates": str(datetime.date.today()),
     }
     person_locations = get_person_locations(person_case, episode_case)
     person_properties.update(
