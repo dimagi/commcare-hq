@@ -976,11 +976,11 @@ class TestAdherenceUpdater(TestCase):
             output={
                 'three_day_score_count_taken': 1,
                 'one_week_score_count_taken': 1,
-                'two_week_score_count_taken': 3,
+                'two_week_score_count_taken': 2,
                 'month_score_count_taken': 4,
                 'three_day_adherence_score': 33.33,
                 'one_week_adherence_score': 14.29,
-                'two_week_adherence_score': 21.43,
+                'two_week_adherence_score': 14.29,
                 'month_adherence_score': 13.33,
             },
             date_today_in_india=datetime.date(2016, 1, 31)
@@ -1168,12 +1168,12 @@ class TestAdherenceUpdater(TestCase):
         expected = {
             'three_day_score_count_taken': 1,
             'one_week_score_count_taken': 2,
-            'two_week_score_count_taken': 3,
+            'two_week_score_count_taken': 2,
             'month_score_count_taken': 4,
 
             'three_day_unknown_count': 3 - 2,
             'one_week_unknown_count': 7 - 3,
-            'two_week_unknown_count': 14 - 4,
+            'two_week_unknown_count': 14 - 3,
             'month_unknown_count': 30 - 6,
 
             'three_day_missed_count': 1,
@@ -1183,7 +1183,7 @@ class TestAdherenceUpdater(TestCase):
 
             'three_day_unknown_score': 33.33,
             'one_week_unknown_score': 57.14,
-            'two_week_unknown_score': 71.43,
+            'two_week_unknown_score': 78.57,
             'month_unknown_score': 80.0,
 
             'three_day_missed_score': 33.33,
