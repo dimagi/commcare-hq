@@ -1399,17 +1399,14 @@ class CaseDetailsView(BaseProjectReportSectionView):
         }
 
 
-def form_to_json(domain, form, timezone=None):
+def form_to_json(domain, form, timezone):
     form_name = xmlns_to_name(
         domain,
         form.xmlns,
         app_id=form.app_id,
         lang=get_language(),
     )
-    if timezone is None:
-        received_on = json_format_datetime(form.received_on)
-    else:
-        received_on = ServerTime(form.received_on).user_time(timezone).done().strftime("%Y-%m-%d %H:%M")
+    received_on = ServerTime(form.received_on).user_time(timezone).done().strftime("%Y-%m-%d %H:%M")
 
     return {
         'id': form.form_id,
@@ -1439,8 +1436,9 @@ def case_forms(request, domain, case_id):
 
     slice = list(reversed(case.xform_ids))[start_range:end_range]
     forms = FormAccessors(domain).get_forms(slice, ordered=True)
+    timezone = get_timezone_for_user(request.couch_user, domain)
     return json_response([
-        form_to_json(domain, form) for form in forms
+        form_to_json(domain, form, timezone) for form in forms
     ])
 
 
@@ -1455,7 +1453,7 @@ def case_property_changes(request, domain, case_id, case_property_name):
     changes = []
     timezone = get_timezone_for_user(request.couch_user, domain)
     for change in reversed(get_all_changes_to_case_property(case, case_property_name)):
-        change_json = form_to_json(domain, change.transaction.form, timezone=timezone)
+        change_json = form_to_json(domain, change.transaction.form, timezone)
         change_json['new_value'] = change.new_value
         changes.append(change_json)
 

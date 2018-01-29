@@ -296,6 +296,7 @@
     {% endif %}
 
     {% if can_edit_data %}
+    {# Only show section if it's going to contain at least one button #}
     {% if show_properties_edit or show_case_rebuild or not case.closed and not is_usercase %}
     <div id="case-actions" class="clearfix form-actions">
         <div class="col-sm-12">

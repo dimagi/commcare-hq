@@ -10,7 +10,7 @@ hqDefine("reports/js/case_details", function() {
         var self = this;
 
         self.propertyNames = ko.observableArray();  // ordered list of names, populated by ajax call because it's slow
-        self.properties;                            // map of name => PropertyModel
+        self.properties = {};                       // map of name => PropertyModel, populated in init
 
         // If there are a lot of items, make a bigger modal and render properties as columns
         // Supports a small one-column modal, a larger two-column modal, or a full-screen three-column modal
@@ -191,31 +191,7 @@ hqDefine("reports/js/case_details", function() {
             return val;
         };
 
-        self.format_date = function(isodatestring) {
-            if (!isodatestring) {
-                return gettext('present');
-            }
-            //parse and format the date timestamps - seconds since epoch into date object
-            var date = new Date(isodatestring.split('+')[0]);
-
-            // Get the TZ offset based the project's timezone and create a new date
-            // object with that as it's "UTC" date
-            var _configuredTZOffset = hqImport("hqwebapp/js/initial_page_data").get('timezone_offset');
-            date = new Date(date.getTime() + _configuredTZOffset);
-
-            // hours part from the timestamp
-            var hours = self.pad_zero(date.getUTCHours());
-            // minutes part from the timestamp
-            var minutes = self.pad_zero(date.getUTCMinutes());
-
-            var year = date.getUTCFullYear();
-            var month = date.getUTCMonth() + 1;
-            var day = date.getUTCDate();
-
-            return  year + '-' + month + '-' + day + ' ' + hours + ":" + minutes;
-        };
-
-        self.received_on = ko.observable(self.format_date(data.received_on));
+        self.received_on = ko.observable(data.received_on);
         self.userID = ko.observable(data.user.id);
         self.username = ko.observable(self.format_user(data.user.username));
         self.readable_name = ko.observable(data.readable_name);
