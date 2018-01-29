@@ -13,6 +13,7 @@ from django.utils.decorators import method_decorator
 from corehq import privileges
 from corehq import toggles
 from corehq.apps.hqadmin.views import BaseAdminSectionView
+from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form, sign
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback, requires_privilege_plaintext_response
@@ -67,6 +68,7 @@ from corehq.apps.domain.decorators import (
 )
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.utils import is_commcarecase
+from corehq.messaging.scheduling.async_handlers import SMSSettingsAsyncHandler
 from corehq.messaging.smsbackends.test.models import SQLTestSMSBackend
 from corehq.messaging.smsbackends.telerivet.models import SQLTelerivetBackend
 from corehq.apps.translations.models import StandaloneTranslationDoc
@@ -1801,10 +1803,11 @@ def upload_sms_translations(request, domain):
     return HttpResponseRedirect(reverse('sms_languages', args=[domain]))
 
 
-class SMSSettingsView(BaseMessagingSectionView):
+class SMSSettingsView(BaseMessagingSectionView, AsyncHandlerMixin):
     urlname = "sms_settings"
     template_name = "sms/settings.html"
     page_title = ugettext_noop("SMS Settings")
+    async_handlers = [SMSSettingsAsyncHandler]
 
     @property
     def page_name(self):
@@ -1894,6 +1897,8 @@ class SMSSettingsView(BaseMessagingSectionView):
                     enabled_disabled(domain_obj.sms_mobile_worker_registration_enabled),
                 "registration_welcome_message":
                     self.get_welcome_message_recipient(domain_obj),
+                "daily_outbound_sms_limit":
+                    domain_obj.daily_outbound_sms_limit,
             }
             form = SettingsForm(initial=initial, cchq_domain=self.domain,
                 cchq_is_previewer=self.previewer)
@@ -1906,6 +1911,9 @@ class SMSSettingsView(BaseMessagingSectionView):
         }
 
     def post(self, request, *args, **kwargs):
+        if self.async_response is not None:
+            return self.async_response
+
         form = self.form
         if form.is_valid():
             domain_obj = Domain.get_by_name(self.domain, strict=True)
@@ -1934,10 +1942,12 @@ class SMSSettingsView(BaseMessagingSectionView):
                  "sms_mobile_worker_registration_enabled"),
             ]
             if self.previewer:
-                field_map.append(
+                field_map.extend([
                     ("custom_chat_template",
-                     "custom_chat_template")
-                )
+                     "custom_chat_template"),
+                    ("daily_outbound_sms_limit",
+                     "daily_outbound_sms_limit"),
+                ])
             for (model_field_name, form_field_name) in field_map:
                 setattr(domain_obj, model_field_name,
                     form.cleaned_data[form_field_name])
@@ -1977,6 +1987,7 @@ class SMSSettingsView(BaseMessagingSectionView):
     @method_decorator(domain_admin_required)
     @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
     @use_timepicker
+    @use_select2
     def dispatch(self, request, *args, **kwargs):
         return super(SMSSettingsView, self).dispatch(request, *args, **kwargs)
 
