@@ -83,6 +83,10 @@ nvd3 > svg {
     margin: 0 auto !important;
 }
 
+nvd3#sectorChart > div.title.h4 {
+    text-align: center !important;
+}
+
 @media print {
     .white, .fa, .fa-info-circle:before, .number, .second_number {
       color: white !important;
