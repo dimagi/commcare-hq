@@ -11,7 +11,6 @@ from django.utils.translation import ugettext_lazy as _, ungettext
 from couchexport.models import SavedExportSchema
 
 from corehq import privileges
-from corehq.apps.accounting.models import SoftwarePlanEdition
 from corehq.apps.accounting.utils import (
     get_active_reminders_by_domain_name,
     log_accounting_error,
@@ -479,9 +478,9 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
                 return
             num_allowed = user_rate.monthly_limit
             num_extra = num_users - num_allowed
-
             if num_extra > 0:
-                if self.new_plan_version != SoftwarePlanEdition.COMMUNITY:
+                from corehq.apps.accounting.models import DefaultProductPlan
+                if self.new_plan_version != DefaultProductPlan.get_default_plan_version():
                     return _fmt_alert(
                         ungettext(
                             "You have %(num_extra)d Mobile Worker over the monthly "
@@ -508,12 +507,12 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
                     return _fmt_alert(
                         ungettext(
                             "Community plans include 10 Mobile Workers by default. "
-                            "Because you have %(num_extra)d Mobile Worker over this, "
+                            "Because you have %(num_extra)d extra Mobile Worker, "
                             "All your project's Mobile Workers will be deactivated. "
                             "You can re-activate these manually after downgrade. ",
 
                             "Community plans include 10 Mobile Workers by default. "
-                            "Because you have %(num_extra)d Mobile Workers over this, "
+                            "Because you have %(num_extra)d extra Mobile Workers, "
                             "All your project's Mobile Workers will be deactivated. "
                             "You can re-activate these manually after downgrade. ",
                             num_extra
