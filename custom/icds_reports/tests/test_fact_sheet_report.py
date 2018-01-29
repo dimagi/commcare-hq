@@ -6,10 +6,8 @@ from custom.icds_reports.views import FactSheetsReport
 from custom.icds_reports.utils import get_location_level
 
 
-class TestExportData(TestCase):
-    maxDiff = None
-
-    def test_maternal_and_child_nutrition(self):
+class TestFactSheetReportMaternalAndChildNutrition(TestCase):
+    def get_data(self):
         config = {
             'aggregation_level': 1,
             'month': datetime(2017, 6, 1).date(),
@@ -20,12 +18,17 @@ class TestExportData(TestCase):
         }
 
         loc_level = get_location_level(config.get('aggregation_level'))
-        data = FactSheetsReport(config=config, loc_level=loc_level).get_data()
+        return FactSheetsReport(config=config, loc_level=loc_level).get_data()
 
-        self.assertEqual(len(data['config']['sections']), 1)
-        self.assertEqual(len(data['config']['sections'][0]['rows_config']), 12)
+    def test_section_amount(self):
+        self.assertEqual(len(self.get_data()['config']['sections']), 1)
+
+    def test_nutrition_status_of_children_amount_of_config_rows(self):
+        self.assertEqual(len(self.get_data()['config']['sections'][0]['rows_config']), 12)
+
+    def test_status_weighed(self):
         self.assertDictEqual(
-            data['config']['sections'][0]['rows_config'][0],
+            self.get_data()['config']['sections'][0]['rows_config'][0],
             {
                 'average': {
                     'html': 68.97066136250622,
@@ -43,8 +46,10 @@ class TestExportData(TestCase):
                 'slug': 'status_weighed'
             }
         )
+
+    def test_nutrition_status_unweighed(self):
         self.assertDictEqual(
-            data['config']['sections'][0]['rows_config'][1],
+            self.get_data()['config']['sections'][0]['rows_config'][1],
             {
                 'data': [
                     {'html': 'Total number of unweighed children (0-5 Years)'},
@@ -57,8 +62,10 @@ class TestExportData(TestCase):
                 'slug': 'nutrition_status_unweighed'
             }
         )
+
+    def test_severely_underweight(self):
         self.assertDictEqual(
-            data['config']['sections'][0]['rows_config'][2],
+            self.get_data()['config']['sections'][0]['rows_config'][2],
             {
                 'average': {
                     'html': 2.523431867339582,
@@ -77,8 +84,10 @@ class TestExportData(TestCase):
                 'slug': 'severely_underweight'
             }
         )
+
+    def test_moderately_underweight(self):
         self.assertDictEqual(
-            data['config']['sections'][0]['rows_config'][3],
+            self.get_data()['config']['sections'][0]['rows_config'][3],
             {
                 'average': {
                     'html': 20.90843547224225,
@@ -97,8 +106,10 @@ class TestExportData(TestCase):
                 'slug': 'moderately_underweight'
             }
         )
+
+    def test_status_normal(self):
         self.assertDictEqual(
-            data['config']['sections'][0]['rows_config'][4],
+            self.get_data()['config']['sections'][0]['rows_config'][4],
             {
                 'average': {
                     'html': 76.56813266041817,
@@ -116,8 +127,10 @@ class TestExportData(TestCase):
                 'slug': 'status_normal'
             }
         )
+
+    def test_wasting_severe(self):
         self.assertDictEqual(
-            data['config']['sections'][0]['rows_config'][5],
+            self.get_data()['config']['sections'][0]['rows_config'][5],
             {
                 'average': {
                     'html': 0.05254860746190226,
@@ -136,8 +149,10 @@ class TestExportData(TestCase):
                 'slug': 'wasting_severe'
             }
         )
+
+    def test_wasting_moderate(self):
         self.assertDictEqual(
-            data['config']['sections'][0]['rows_config'][6],
+            self.get_data()['config']['sections'][0]['rows_config'][6],
             {
                 'average': {
                     'html': 0.4729374671571203,
@@ -156,8 +171,10 @@ class TestExportData(TestCase):
                 'slug': 'wasting_moderate'
             }
         )
+
+    def test_wasting_normal(self):
         self.assertDictEqual(
-            data['config']['sections'][0]['rows_config'][7],
+            self.get_data()['config']['sections'][0]['rows_config'][7],
             {
                 'average': {
                     'html': 1.3137151865475565,
@@ -175,8 +192,10 @@ class TestExportData(TestCase):
                 'slug': 'wasting_normal'
             }
         )
+
+    def test_stunting_severe(self):
         self.assertDictEqual(
-            data['config']['sections'][0]['rows_config'][8],
+            self.get_data()['config']['sections'][0]['rows_config'][8],
             {
                 'average': {
                     'html': 0.8407777193904361,
@@ -193,10 +212,12 @@ class TestExportData(TestCase):
                 'header': 'Children from 6 - 60 months with severe stunting (height-for-age)',
                 'reverseColors': True,
                 'slug': 'stunting_severe'
-             }
+            }
         )
+
+    def test_stunting_moderate(self):
         self.assertDictEqual(
-            data['config']['sections'][0]['rows_config'][9],
+            self.get_data()['config']['sections'][0]['rows_config'][9],
             {
                 'average': {
                     'html': 0.6305832895428272,
@@ -213,10 +234,12 @@ class TestExportData(TestCase):
                 'header': 'Children from 6 - 60 months with moderate stunting (height-for-age)',
                 'reverseColors': True,
                 'slug': 'stunting_moderate'
-             }
+            }
         )
+
+    def test_stunting_normal(self):
         self.assertDictEqual(
-            data['config']['sections'][0]['rows_config'][10],
+            self.get_data()['config']['sections'][0]['rows_config'][10],
             {
                 'average': {
                     'html': 0.7882291119285338,
@@ -234,8 +257,10 @@ class TestExportData(TestCase):
                 'slug': 'stunting_normal'
             }
         )
+
+    def test_low_birth_weight(self):
         self.assertDictEqual(
-            data['config']['sections'][0]['rows_config'][11],
+            self.get_data()['config']['sections'][0]['rows_config'][11],
             {
                 'average': {
                     'html': 66.66666666666667,
@@ -251,10 +276,11 @@ class TestExportData(TestCase):
                 'format': 'percent',
                 'header': 'Percent of children born in month with low birth weight',
                 'slug': 'low_birth_weight'
-             }
+            }
         )
 
-        # compare rest of retrieved data
+    def test_rest_of_data(self):
+        data = self.get_data()
         del(data['config']['sections'][0]['rows_config'])
         self.assertDictEqual(
             data,
@@ -274,7 +300,9 @@ class TestExportData(TestCase):
             }
         )
 
-    def test_interventions(self):
+
+class TestFactSheetReportInterventions(TestCase):
+    def get_data(self):
         config = {
             'aggregation_level': 1,
             'month': datetime(2017, 6, 1).date(),
@@ -285,12 +313,17 @@ class TestExportData(TestCase):
         }
 
         loc_level = get_location_level(config.get('aggregation_level'))
-        data = FactSheetsReport(config=config, loc_level=loc_level).get_data()
+        return FactSheetsReport(config=config, loc_level=loc_level).get_data()
 
-        self.assertEqual(len(data['config']['sections']), 3)
-        self.assertEqual(len(data['config']['sections'][0]['rows_config']), 1)
+    def test_section_amount(self):
+        self.assertEqual(len(self.get_data()['config']['sections']), 3)
+
+    def test_nutrition_status_of_children_amount_of_config_rows(self):
+        self.assertEqual(len(self.get_data()['config']['sections'][0]['rows_config']), 1)
+
+    def test_nutrition_status_of_children(self):
         self.assertDictEqual(
-            data['config']['sections'][0],
+            self.get_data()['config']['sections'][0],
             {
                 'months': ['Apr 2017', 'May 2017', 'Jun 2017'],
                 'order': 1,
@@ -301,7 +334,8 @@ class TestExportData(TestCase):
                             'sort_key': 10.896898575020955
                         },
                         'data': [
-                            {'html': 'Children 1 year+ who have recieved complete immunization required by age 1.'},
+                            {'html': 'Children 1 year+ who have recieved complete immunization'
+                                     ' required by age 1.'},
                             {'html': 10.765349032800673, 'sort_key': 10.765349032800673},
                             {'html': 10.896898575020955, 'sort_key': 10.896898575020955},
                             {'html': 0}
@@ -316,9 +350,13 @@ class TestExportData(TestCase):
                 'slug': 'nutrition_status_of_children'
             }
         )
-        self.assertEqual(len(data['config']['sections'][1]['rows_config']), 6)
+
+    def test_nutrition_status_of_pregnant_women_amount_of_config_rows(self):
+        self.assertEqual(len(self.get_data()['config']['sections'][1]['rows_config']), 6)
+
+    def test_severe_anemic(self):
         self.assertDictEqual(
-            data['config']['sections'][1]['rows_config'][0],
+            self.get_data()['config']['sections'][1]['rows_config'][0],
             {
                 'average': {
                     'html': 25.806451612903224,
@@ -337,8 +375,10 @@ class TestExportData(TestCase):
                 'slug': 'severe_anemic'
             }
         )
+
+    def test_tetanus_complete(self):
         self.assertDictEqual(
-            data['config']['sections'][1]['rows_config'][1],
+            self.get_data()['config']['sections'][1]['rows_config'][1],
             {
                 'average': {
                     'html': 0.0,
@@ -356,8 +396,10 @@ class TestExportData(TestCase):
                 'slug': 'tetanus_complete'
             }
         )
+
+    def test_anc_1(self):
         self.assertDictEqual(
-            data['config']['sections'][1]['rows_config'][2],
+            self.get_data()['config']['sections'][1]['rows_config'][2],
             {
                 'average': {
                     'html': 0.0,
@@ -375,8 +417,10 @@ class TestExportData(TestCase):
                 'slug': 'anc_1'
             }
         )
+
+    def test_anc_2(self):
         self.assertDictEqual(
-            data['config']['sections'][1]['rows_config'][3],
+            self.get_data()['config']['sections'][1]['rows_config'][3],
             {
                 'average': {
                     'html': 0.0,
@@ -394,8 +438,10 @@ class TestExportData(TestCase):
                 'slug': 'anc_2'
             }
         )
+
+    def test_anc_3(self):
         self.assertDictEqual(
-            data['config']['sections'][1]['rows_config'][4],
+            self.get_data()['config']['sections'][1]['rows_config'][4],
             {
                 'average': {
                     'html': 0.0,
@@ -413,8 +459,10 @@ class TestExportData(TestCase):
                 'slug': 'anc_3'
             }
         )
+
+    def test_anc_4(self):
         self.assertDictEqual(
-            data['config']['sections'][1]['rows_config'][5],
+            self.get_data()['config']['sections'][1]['rows_config'][5],
             {
                 'average': {
                     'html': 0.0,
@@ -432,9 +480,13 @@ class TestExportData(TestCase):
                 'slug': 'anc_4'
             }
         )
-        self.assertEqual(len(data['config']['sections'][2]['rows_config']), 3)
+
+    def test_awc_infrastructure_amount_of_config_rows(self):
+        self.assertEqual(len(self.get_data()['config']['sections'][2]['rows_config']), 3)
+
+    def test_medicine_kits(self):
         self.assertDictEqual(
-            data['config']['sections'][2]['rows_config'][0],
+            self.get_data()['config']['sections'][2]['rows_config'][0],
             {
                 'average': {
                     'html': 66.66666666666667,
@@ -452,8 +504,10 @@ class TestExportData(TestCase):
                 'slug': 'medicine_kits'
             }
         )
+
+    def test_baby_weighing_scale(self):
         self.assertDictEqual(
-            data['config']['sections'][2]['rows_config'][1],
+            self.get_data()['config']['sections'][2]['rows_config'][1],
             {
                 'average': {
                     'html': 80.0,
@@ -471,8 +525,10 @@ class TestExportData(TestCase):
                 'slug': 'baby_weighing_scale'
             }
         )
+
+    def test_adult_weighing_scale(self):
         self.assertDictEqual(
-            data['config']['sections'][2]['rows_config'][2],
+            self.get_data()['config']['sections'][2]['rows_config'][2],
             {
                 'average': {
                     'html': 30.0,
@@ -491,10 +547,11 @@ class TestExportData(TestCase):
             }
         )
 
-        # compare rest of retrieved data
-        del(data['config']['sections'][0]['rows_config'])
-        del(data['config']['sections'][1]['rows_config'])
-        del(data['config']['sections'][2]['rows_config'])
+    def test_rest_of_data(self):
+        data = self.get_data()
+        del (data['config']['sections'][0]['rows_config'])
+        del (data['config']['sections'][1]['rows_config'])
+        del (data['config']['sections'][2]['rows_config'])
         self.assertDictEqual(
             data,
             {
@@ -524,7 +581,9 @@ class TestExportData(TestCase):
             }
         )
 
-    def test_behavior_change(self):
+
+class TestFactSheetReportBehaviorChange(TestCase):
+    def get_data(self):
         config = {
             'aggregation_level': 1,
             'month': datetime(2017, 6, 1).date(),
@@ -535,13 +594,17 @@ class TestExportData(TestCase):
         }
 
         loc_level = get_location_level(config.get('aggregation_level'))
-        data = FactSheetsReport(config=config, loc_level=loc_level).get_data()
+        return FactSheetsReport(config=config, loc_level=loc_level).get_data()
 
-        self.assertEqual(len(data['config']['sections']), 2)
-        self.assertEqual(len(data['config']['sections'][0]['rows_config']), 7)
+    def test_section_amount(self):
+        self.assertEqual(len(self.get_data()['config']['sections']), 2)
 
+    def test_child_feeding_indicators_amount_of_config_rows(self):
+        self.assertEqual(len(self.get_data()['config']['sections'][0]['rows_config']), 7)
+
+    def test_breastfed_at_birth(self):
         self.assertDictEqual(
-            data['config']['sections'][0]['rows_config'][0],
+            self.get_data()['config']['sections'][0]['rows_config'][0],
             {
                 'average': {
                     'html': 57.142857142857146,
@@ -559,8 +622,10 @@ class TestExportData(TestCase):
                 'slug': 'breastfed_at_birth'
             }
         )
+
+    def test_exclusively_breastfed(self):
         self.assertDictEqual(
-            data['config']['sections'][0]['rows_config'][1],
+            self.get_data()['config']['sections'][0]['rows_config'][1],
             {
                 'average': {
                     'html': 56.0,
@@ -578,8 +643,10 @@ class TestExportData(TestCase):
                 'slug': 'exclusively_breastfed'
             }
         )
+
+    def test_cf_initiation(self):
         self.assertDictEqual(
-            data['config']['sections'][0]['rows_config'][2],
+            self.get_data()['config']['sections'][0]['rows_config'][2],
             {
                 'average': {
                     'html': 85.0,
@@ -594,12 +661,15 @@ class TestExportData(TestCase):
                 ],
                 'data_source': 'AggChildHealthMonthlyDataSource',
                 'format': 'percent',
-                'header': 'Children between 6 - 8 months given timely introduction to solid, semi-solid or soft food.',
+                'header': 'Children between 6 - 8 months given timely introduction to solid, '
+                          'semi-solid or soft food.',
                 'slug': 'cf_initiation'
             }
         )
+
+    def test_complementary_feeding(self):
         self.assertDictEqual(
-            data['config']['sections'][0]['rows_config'][3],
+            self.get_data()['config']['sections'][0]['rows_config'][3],
             {
                 'average': {
                     'html': 72.5609756097561,
@@ -617,8 +687,10 @@ class TestExportData(TestCase):
                 'slug': 'complementary_feeding'
             }
         )
+
+    def test_diet_diversity(self):
         self.assertDictEqual(
-            data['config']['sections'][0]['rows_config'][4],
+            self.get_data()['config']['sections'][0]['rows_config'][4],
             {
                 'average': {
                     'html': 57.926829268292686,
@@ -636,8 +708,10 @@ class TestExportData(TestCase):
                 'slug': 'diet_diversity'
             }
         )
+
+    def test_diet_quantity(self):
         self.assertDictEqual(
-            data['config']['sections'][0]['rows_config'][5],
+            self.get_data()['config']['sections'][0]['rows_config'][5],
             {
                 'average': {
                     'html': 47.5609756097561,
@@ -655,8 +729,10 @@ class TestExportData(TestCase):
                 'slug': 'diet_quantity'
             }
         )
+
+    def test_handwashing(self):
         self.assertDictEqual(
-            data['config']['sections'][0]['rows_config'][6],
+            self.get_data()['config']['sections'][0]['rows_config'][6],
             {
                 'average': {
                     'html': 68.29268292682927,
@@ -674,9 +750,13 @@ class TestExportData(TestCase):
                 'slug': 'handwashing'
             }
         )
-        self.assertEqual(len(data['config']['sections'][1]['rows_config']), 3)
+
+    def test_nutrition_status_of_pregnant_women_amount_of_config_rows(self):
+        self.assertEqual(len(self.get_data()['config']['sections'][1]['rows_config']), 3)
+
+    def test_resting(self):
         self.assertDictEqual(
-            data['config']['sections'][1]['rows_config'][0],
+            self.get_data()['config']['sections'][1]['rows_config'][0],
             {
                 'average': {
                     'html': 105.16129032258064,
@@ -694,8 +774,10 @@ class TestExportData(TestCase):
                 'slug': 'resting'
             }
         )
+
+    def test_extra_meal(self):
         self.assertDictEqual(
-            data['config']['sections'][1]['rows_config'][1],
+            self.get_data()['config']['sections'][1]['rows_config'][1],
             {
                 'average': {
                     'html': 105.16129032258064,
@@ -713,8 +795,10 @@ class TestExportData(TestCase):
                 'slug': 'extra_meal'
             }
         )
+
+    def test_trimester(self):
         self.assertDictEqual(
-            data['config']['sections'][1]['rows_config'][2],
+            self.get_data()['config']['sections'][1]['rows_config'][2],
             {
                 'average': {
                     'html': 72.15189873417721,
@@ -735,9 +819,10 @@ class TestExportData(TestCase):
             }
         )
 
-        # compare rest of retrieved data
-        del(data['config']['sections'][0]['rows_config'])
-        del(data['config']['sections'][1]['rows_config'])
+    def test_rest_of_data(self):
+        data = self.get_data()
+        del (data['config']['sections'][0]['rows_config'])
+        del (data['config']['sections'][1]['rows_config'])
         self.assertDictEqual(
             data,
             {
@@ -762,7 +847,9 @@ class TestExportData(TestCase):
             }
         )
 
-    def test_water_sanitation_and_hygiene(self):
+
+class TestFactSheetReportWaterSanitationAndHygiene(TestCase):
+    def get_data(self):
         config = {
             'aggregation_level': 1,
             'month': datetime(2017, 6, 1).date(),
@@ -773,13 +860,17 @@ class TestExportData(TestCase):
         }
 
         loc_level = get_location_level(config.get('aggregation_level'))
-        data = FactSheetsReport(config=config, loc_level=loc_level).get_data()
+        return FactSheetsReport(config=config, loc_level=loc_level).get_data()
 
-        self.assertEqual(len(data['config']['sections']), 1)
-        self.assertEqual(len(data['config']['sections'][0]['rows_config']), 2)
+    def test_section_amount(self):
+        self.assertEqual(len(self.get_data()['config']['sections']), 1)
 
+    def test_awc_infrastructure_amount_of_config_rows(self):
+        self.assertEqual(len(self.get_data()['config']['sections'][0]['rows_config']), 2)
+
+    def test_clean_water(self):
         self.assertDictEqual(
-            data['config']['sections'][0]['rows_config'][0],
+            self.get_data()['config']['sections'][0]['rows_config'][0],
             {
                 'average': {
                     'html': 96.66666666666667,
@@ -797,8 +888,10 @@ class TestExportData(TestCase):
                 'slug': 'clean_water'
             }
         )
+
+    def test_functional_toilet(self):
         self.assertDictEqual(
-            data['config']['sections'][0]['rows_config'][1],
+            self.get_data()['config']['sections'][0]['rows_config'][1],
             {
                 'average': {
                     'html': 50.0,
@@ -817,8 +910,9 @@ class TestExportData(TestCase):
             }
         )
 
-        # compare rest of retrieved data
-        del(data['config']['sections'][0]['rows_config'])
+    def test_rest_of_data(self):
+        data = self.get_data()
+        del (data['config']['sections'][0]['rows_config'])
         self.assertDictEqual(
             data,
             {
@@ -837,7 +931,9 @@ class TestExportData(TestCase):
             }
         )
 
-    def test_demographics(self):
+
+class TestFactSheetReportDemographics(TestCase):
+    def get_data(self):
         config = {
             'aggregation_level': 1,
             'month': datetime(2017, 6, 1).date(),
@@ -848,13 +944,17 @@ class TestExportData(TestCase):
         }
 
         loc_level = get_location_level(config.get('aggregation_level'))
-        data = FactSheetsReport(config=config, loc_level=loc_level).get_data()
+        return FactSheetsReport(config=config, loc_level=loc_level).get_data()
 
-        self.assertEqual(len(data['config']['sections']), 1)
-        self.assertEqual(len(data['config']['sections'][0]['rows_config']), 19)
+    def test_section_amount(self):
+        self.assertEqual(len(self.get_data()['config']['sections']), 1)
 
+    def test_demographics_amount_of_config_rows(self):
+        self.assertEqual(len(self.get_data()['config']['sections'][0]['rows_config']), 19)
+
+    def test_cases_household(self):
         self.assertDictEqual(
-            data['config']['sections'][0]['rows_config'][0],
+            self.get_data()['config']['sections'][0]['rows_config'][0],
             {
                 'average': {
                     'html': 6964,
@@ -871,8 +971,10 @@ class TestExportData(TestCase):
                 'slug': 'cases_household',
             }
         )
+
+    def test_cases_person_all(self):
         self.assertDictEqual(
-            data['config']['sections'][0]['rows_config'][1],
+            self.get_data()['config']['sections'][0]['rows_config'][1],
             {
                 'average': {
                     'html': 962,
@@ -889,8 +991,10 @@ class TestExportData(TestCase):
                 'slug': 'cases_person_all',
             }
         )
+
+    def test_cases_person_beneficiary(self):
         self.assertDictEqual(
-            data['config']['sections'][0]['rows_config'][2],
+            self.get_data()['config']['sections'][0]['rows_config'][2],
             {
                 'average': {
                     'html': 500,
@@ -907,8 +1011,10 @@ class TestExportData(TestCase):
                 'slug': 'cases_person_beneficiary',
             }
         )
+
+    def test_aadhar(self):
         self.assertDictEqual(
-            data['config']['sections'][0]['rows_config'][3],
+            self.get_data()['config']['sections'][0]['rows_config'][3],
             {
                 'average': {
                     'html': 26.2,
@@ -926,8 +1032,10 @@ class TestExportData(TestCase):
                 'slug': 'aadhar',
             }
         )
+
+    def test_cases_ccs_pregnant_all(self):
         self.assertDictEqual(
-            data['config']['sections'][0]['rows_config'][4],
+            self.get_data()['config']['sections'][0]['rows_config'][4],
             {
                 'average': {
                     'html': 155,
@@ -944,8 +1052,10 @@ class TestExportData(TestCase):
                 'slug': 'cases_ccs_pregnant_all',
             }
         )
+
+    def test_cases_ccs_pregnant(self):
         self.assertDictEqual(
-            data['config']['sections'][0]['rows_config'][5],
+            self.get_data()['config']['sections'][0]['rows_config'][5],
             {
                 'average': {
                     'html': 155,
@@ -962,8 +1072,10 @@ class TestExportData(TestCase):
                 'slug': 'cases_ccs_pregnant',
             }
         )
+
+    def test_cases_ccs_lactating_all(self):
         self.assertDictEqual(
-            data['config']['sections'][0]['rows_config'][6],
+            self.get_data()['config']['sections'][0]['rows_config'][6],
             {
                 'average': {
                     'html': 166,
@@ -980,8 +1092,10 @@ class TestExportData(TestCase):
                 'slug': 'cases_ccs_lactating_all',
             }
         )
+
+    def test_cases_ccs_lactating(self):
         self.assertDictEqual(
-            data['config']['sections'][0]['rows_config'][7],
+            self.get_data()['config']['sections'][0]['rows_config'][7],
             {
                 'average': {
                     'html': 166,
@@ -998,8 +1112,10 @@ class TestExportData(TestCase):
                 'slug': 'cases_ccs_lactating',
             }
         )
+
+    def test_cases_child_health_all(self):
         self.assertDictEqual(
-            data['config']['sections'][0]['rows_config'][8],
+            self.get_data()['config']['sections'][0]['rows_config'][8],
             {
                 'average': {
                     'html': 1287,
@@ -1016,8 +1132,10 @@ class TestExportData(TestCase):
                 'slug': 'cases_child_health_all',
             }
         )
+
+    def test_cases_child_health(self):
         self.assertDictEqual(
-            data['config']['sections'][0]['rows_config'][9],
+            self.get_data()['config']['sections'][0]['rows_config'][9],
             {
                 'average': {
                     'html': 1287,
@@ -1034,8 +1152,10 @@ class TestExportData(TestCase):
                 'slug': 'cases_child_health',
             }
         )
+
+    def test_zero(self):
         self.assertDictEqual(
-            data['config']['sections'][0]['rows_config'][10],
+            self.get_data()['config']['sections'][0]['rows_config'][10],
             {
                 'average': {
                     'html': 10,
@@ -1052,8 +1172,10 @@ class TestExportData(TestCase):
                 'slug': 'zero',
             }
         )
+
+    def test_one(self):
         self.assertDictEqual(
-            data['config']['sections'][0]['rows_config'][11],
+            self.get_data()['config']['sections'][0]['rows_config'][11],
             {
                 'average': {
                     'html': 98,
@@ -1070,8 +1192,10 @@ class TestExportData(TestCase):
                 'slug': 'one',
             }
         )
+
+    def test_two(self):
         self.assertDictEqual(
-            data['config']['sections'][0]['rows_config'][12],
+            self.get_data()['config']['sections'][0]['rows_config'][12],
             {
                 'average': {
                     'html': 95,
@@ -1088,8 +1212,10 @@ class TestExportData(TestCase):
                 'slug': 'two',
             }
         )
+
+    def test_three(self):
         self.assertDictEqual(
-            data['config']['sections'][0]['rows_config'][13],
+            self.get_data()['config']['sections'][0]['rows_config'][13],
             {
                 'average': {
                     'html': 450,
@@ -1106,8 +1232,10 @@ class TestExportData(TestCase):
                 'slug': 'three',
             }
         )
+
+    def test_four(self):
         self.assertDictEqual(
-            data['config']['sections'][0]['rows_config'][14],
+            self.get_data()['config']['sections'][0]['rows_config'][14],
             {
                 'average': {
                     'html': 1896,
@@ -1124,8 +1252,10 @@ class TestExportData(TestCase):
                 'slug': 'four',
             }
         )
+
+    def test_cases_person_adolescent_girls_11_14_all(self):
         self.assertDictEqual(
-            data['config']['sections'][0]['rows_config'][15],
+            self.get_data()['config']['sections'][0]['rows_config'][15],
             {
                 'average': {
                     'html': 34,
@@ -1142,8 +1272,10 @@ class TestExportData(TestCase):
                 'slug': 'cases_person_adolescent_girls_11_14_all',
             }
         )
+
+    def test_cases_person_adolescent_girls_15_18_all(self):
         self.assertDictEqual(
-            data['config']['sections'][0]['rows_config'][16],
+            self.get_data()['config']['sections'][0]['rows_config'][16],
             {
                 'average': {
                     'html': 13,
@@ -1160,8 +1292,10 @@ class TestExportData(TestCase):
                 'slug': 'cases_person_adolescent_girls_15_18_all',
             }
         )
+
+    def test_cases_person_adolescent_girls_11_14(self):
         self.assertDictEqual(
-            data['config']['sections'][0]['rows_config'][17],
+            self.get_data()['config']['sections'][0]['rows_config'][17],
             {
                 'average': {
                     'html': 34,
@@ -1178,8 +1312,10 @@ class TestExportData(TestCase):
                 'slug': 'cases_person_adolescent_girls_11_14',
             }
         )
+
+    def test_cases_person_adolescent_girls_15_18(self):
         self.assertDictEqual(
-            data['config']['sections'][0]['rows_config'][18],
+            self.get_data()['config']['sections'][0]['rows_config'][18],
             {
                 'average': {
                     'html': 13,
@@ -1197,8 +1333,9 @@ class TestExportData(TestCase):
             }
         )
 
-        # compare rest of retrieved data
-        del(data['config']['sections'][0]['rows_config'])
+    def test_rest_of_data(self):
+        data = self.get_data()
+        del (data['config']['sections'][0]['rows_config'])
         self.assertDictEqual(
             data,
             {
