@@ -6,6 +6,7 @@ from django import forms
 
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Fieldset, Div, HTML, Field
+from corehq.apps.hqwebapp.fields import RegexField
 from corehq.apps.hqwebapp.widgets import Select2MultipleChoiceWidget
 
 from dimagi.utils.decorators.memoized import memoized
@@ -86,7 +87,10 @@ class CustomDataEditor(object):
         return dict(cleaned_data, **system_data)
 
     def _make_field(self, field):
-        if field.choices:
+        if field.regex:
+            return RegexField(field.regex, field.regex_msg, label=field.label,
+                              required=field.is_required)
+        elif field.choices:
             if not field.is_multiple_choice:
                 choice_field = forms.ChoiceField(
                     label=field.label,
@@ -101,7 +105,8 @@ class CustomDataEditor(object):
                     widget=Select2MultipleChoiceWidget
                 )
             return choice_field
-        return forms.CharField(label=field.label, required=field.is_required)
+        else:
+            return forms.CharField(label=field.label, required=field.is_required)
 
     @property
     @memoized

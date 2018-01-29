@@ -72,3 +72,16 @@ class MultiEmailField(MultiCharField):
     default_error_messages = {
         'invalid': 'Please enter only valid email addresses.'
     }
+
+
+class RegexField(fields.RegexField):
+    def __init__(self, regex, message, *args, **kwargs):
+        self.raw_regex = regex
+        self.message = message
+        super(RegexField, self).__init__(regex, *args, **kwargs)
+
+    def widget_attrs(self, widget):
+        attrs = super(RegexField, self).widget_attrs(widget)
+        attrs['pattern'] = self.raw_regex
+        attrs['title'] = self.message
+        return attrs
