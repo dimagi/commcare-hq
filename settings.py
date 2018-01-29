@@ -233,6 +233,7 @@ HQ_APPS = (
     'corehq.apps.hqcase',
     'corehq.apps.hqwebapp',
     'corehq.apps.hqmedia',
+    'corehq.apps.linked_domain',
     'corehq.apps.locations',
     'corehq.apps.products',
     'corehq.apps.prelogin',
@@ -1447,6 +1448,8 @@ COUCHDB_APPS = [
 
     # applications
     ('app_manager', APPS_DB),
+
+    ('linked_domain', META_DB)
 ]
 
 COUCHDB_APPS += LOCAL_COUCHDB_APPS
