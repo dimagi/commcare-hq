@@ -508,15 +508,15 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
                         ungettext(
                             "Community plans include %(monthly_limit)s Mobile Workers by default. "
                             "Because you have %(num_extra)d extra Mobile Worker, "
-                            "All your project's Mobile Workers will be deactivated. "
+                            "all your project's Mobile Workers will be deactivated. "
                             "You can re-activate these manually after downgrade. "
                             "Each active Mobile Worker over %(monthly_limit)s will result "
                             "in an additional charge of USD %(excess_fee)s, totalling "
-                            "USD %(monthly_total)s per month."
+                            "USD %(monthly_total)s per month.",
 
                             "Community plans include %(monthly_limit)s Mobile Workers by default. "
                             "Because you have %(num_extra)d extra Mobile Workers, "
-                            "All your project's Mobile Workers will be deactivated. "
+                            "all your project's Mobile Workers will be deactivated. "
                             "You can re-activate these manually after downgrade. "
                             "Each active Mobile Worker over %(monthly_limit)s will result "
                             "in an additional charge of USD %(excess_fee)s, totalling "
