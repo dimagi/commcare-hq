@@ -322,7 +322,7 @@ class MySavedReportsView(BaseProjectReportSectionView):
 
     @property
     def others_scheduled_reports(self):
-        if not toggles.SHOW_ALL_SCHEDULED_REPORT_EMAILS.enabled(self.request.couch_user.username):
+        if not toggles.SHOW_ALL_SCHEDULED_REPORT_EMAILS.enabled(self.domain):
             return []
 
         def _is_valid(rn):
@@ -1135,14 +1135,11 @@ class ReportNotificationUnsubscribeView(TemplateView):
     broken_link_error = ugettext_noop('Invalid unsubscribe link')
     report = None
 
-    def get(self, request, *args, **kwargs):
+    def get(self, request, domain, *args, **kwargs):
         if 'success' not in kwargs and 'error' not in kwargs:
             try:
                 self.report = ReportNotification.get(kwargs.pop('scheduled_report_id'))
                 email = kwargs.pop('user_email')
-
-                if kwargs.pop('scheduled_report_secret') != self.report.get_secret(email):
-                    raise ValidationError(self.broken_link_error)
                 if email not in self.report.all_recipient_emails:
                     raise ValidationError(ugettext_noop('This email address has already been unsubscribed.'))
             except ResourceNotFound:

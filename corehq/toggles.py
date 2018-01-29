@@ -1488,5 +1488,5 @@ SHOW_ALL_SCHEDULED_REPORT_EMAILS = StaticToggle(
     "In the 'My Scheduled Reports' tab, show all reports the user is part of (if the user is an "
     "admin, show all in the current project)",
     TAG_PRODUCT,
-    [NAMESPACE_USER],
+    [NAMESPACE_DOMAIN],
 )

@@ -104,6 +104,13 @@
                             </button>
                         {% endif %}
                     </div>
+                    {% if not is_owner and not is_admin %}
+                    <div class="btn-group">
+                        <a class="btn btn-info" href="{% url "notification_unsubscribe" domain report.get_id user_email %}">
+                            <i class="fa fa-ban"></i> {% trans "Unsubscribe me" %}
+                        </a>
+                    </div>
+                    {% endif %}
                 </div>
                 <div id="delete_{{ report.get_id }}"
                      class="modal fade">
