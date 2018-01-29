@@ -163,10 +163,10 @@ health_establishment_sector = {
 }
 
 marital_status = {
-    'unmarried': 'S',  # Single
-    'married': 'M',  # Married
-    'widowed': 'O',  # Other
-    'separated': 'O'  # Other
+    'unmarried': 'Single',  # Single
+    'married': 'Married',  # Married
+    'widowed': 'Other',  # Other
+    'separated': 'Other'  # Other
 }
 
 key_population = {
