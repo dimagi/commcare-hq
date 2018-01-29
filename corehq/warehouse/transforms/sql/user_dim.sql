@@ -1,5 +1,4 @@
 INSERT INTO {{ user_dim }} (
-    domain,
     user_id,
     username,
     user_type,
@@ -18,7 +17,6 @@ INSERT INTO {{ user_dim }} (
     batch_id
 )
 SELECT
-    domain,
     user_id,
     username,
     CASE
@@ -47,8 +45,7 @@ SELECT
     '{{ batch_id }}'
 FROM {{ user_staging }}
 ON CONFLICT (user_id) DO UPDATE
-SET domain = EXCLUDED.domain,
-    username = EXCLUDED.username,
+SET username = EXCLUDED.username,
     user_type = EXCLUDED.user_type,
     first_name = EXCLUDED.first_name,
     last_name = EXCLUDED.last_name,
