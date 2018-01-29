@@ -87,7 +87,7 @@
   },
   "private": true,
   "resolutions": {
-    "jquery": "3.2.1",
+    "jquery": "3.3.0",
     "bootstrap": "3.3.7",
     "select2": "4.0.0",
     "backbone": "0.9.1",
