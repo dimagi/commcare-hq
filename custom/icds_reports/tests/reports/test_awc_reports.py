@@ -1189,7 +1189,7 @@ class TestAWCReport(TestCase):
                         "age": "4 years 11 months ",
                         "current_month_wasting": {
                             "color": "black",
-                            "value": "Normal height for age"
+                            "value": "Normal weight for height"
                         },
                         "current_month_nutrition_status": {
                             "color": "black",
