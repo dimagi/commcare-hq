@@ -294,7 +294,7 @@ def remove_unused_custom_fields_from_users_task(domain):
 @task
 def bulk_deactivate_users(domain):
     from corehq.apps.users.dbaccessors import get_all_commcare_users_by_domain
-    users = get_all_commcare_users_by_domain(domain)
+    users = get_all_commcare_users_by_domain(domain.name)
     for user in users:
         user.is_active = False
         user.save()

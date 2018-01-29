@@ -100,6 +100,12 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
         })
         return privs_to_responses
 
+    def get_response(self):
+        response = super(DomainDowngradeActionHandler, self).get_response()
+        worker_response = self.response_mobile_worker_creation(
+            self.domain, self.new_plan_version)
+        return response and worker_response
+
     @staticmethod
     def response_outbound_sms(domain, new_plan_version):
         """
@@ -224,19 +230,19 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
 
     @staticmethod
     def response_mobile_worker_creation(domain, new_plan_version):
-        """ deactivates users if there are too many for a community plan """
+        """ Deactivates users if there are too many for a community plan """
         from corehq.apps.accounting.models import (
             DefaultProductPlan, FeatureType, UNLIMITED_FEATURE_USAGE)
 
         # checks for community plan
         if (new_plan_version != DefaultProductPlan.get_default_plan_version()):
-            return
+            return True
 
         # checks if unlimited is on for this user
         user_rate = new_plan_version.feature_rates.filter(
             feature__feature_type=FeatureType.USER).latest('date_created')
         if user_rate.monthly_limit == UNLIMITED_FEATURE_USAGE:
-            return
+            return True
 
         # checks for extra users
         num_users = CommCareUser.total_by_domain(
@@ -246,6 +252,7 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
         if num_extra > 0:
             # offloads deactivation onto a separate thread
             bulk_deactivate_users.delay(domain)
+            return True
 
 
 class DomainUpgradeActionHandler(BaseModifySubscriptionActionHandler):
