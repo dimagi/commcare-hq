@@ -3,32 +3,13 @@ import requests
 from couchdbkit.exceptions import ResourceNotFound
 from django.urls.base import reverse
 from requests import ConnectionError
-from requests.auth import AuthBase
 
 from corehq.apps.app_manager.dbaccessors import wrap_app
 from corehq.apps.app_manager.exceptions import RemoteRequestError, RemoteAuthError, ActionNotPermitted
 from corehq.apps.hqmedia.models import CommCareMultimedia
+from corehq.apps.linked_domain.auth import ApiKeyAuth
 from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.logging import notify_exception
-
-
-class ApiKeyAuth(AuthBase):
-    def __init__(self, username, apikey):
-        self.username = username
-        self.apikey = apikey
-
-    def __eq__(self, other):
-        return all([
-            self.username == getattr(other, 'username', None),
-            self.apikey == getattr(other, 'apikey', None)
-        ])
-
-    def __ne__(self, other):
-        return not self == other
-
-    def __call__(self, r):
-        r.headers['Authorization'] = 'apikey %s:%s' % (self.username, self.apikey)
-        return r
 
 
 def get_remote_version(remote_app_details):
