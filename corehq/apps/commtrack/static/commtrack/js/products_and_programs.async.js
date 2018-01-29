@@ -25,7 +25,7 @@ hqDefine('commtrack/js/products_and_programs.async', function () {
                     dataType: 'json',
                     error: function () {
                         view_model.initial_load(true);
-                        $('.hide-until-load').fadeIn();
+                        $('.hide-until-load').removeClass("hide");
                         $('#user-list-notification').text(gettext('Sorry, there was an problem contacting the server ' +
                             'to fetch the data. Please, try again in a little bit.'));
                         view_model.currently_searching(false);
@@ -53,7 +53,7 @@ hqDefine('commtrack/js/products_and_programs.async', function () {
             if (data.success) {
                 if (!view_model.initial_load()) {
                     view_model.initial_load(true);
-                    $('.hide-until-load').fadeIn();
+                    $('.hide-until-load').removeClass("hide");
                 }
                 view_model.current_page(data.current_page);
                 view_model.data_list(data.data_list);
