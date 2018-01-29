@@ -60,15 +60,11 @@ def get_gregorian_to_ethiopian(date_string):
     :returns: An ethiopian datetime or ''
     '''
     if not date_string:
-        return ''
+        return 'error1'
 
-    try:
-        year, month, day = split_date_string(date_string)
-    except ValueError:
-        return ''
+    print('splitting up the date string')
+    year, month, day = split_date_string(date_string)
 
-    try:
-        ethiopian_year, ethiopian_month, ethiopian_day = EthiopianDateConverter.to_ethiopian(year, month, day)
-        return '{:02d}-{:02d}-{:02d}'.format(ethiopian_year, ethiopian_month, ethiopian_day)
-    except Exception:
-        return ''
+    print('converting and formatting')
+    ethiopian_year, ethiopian_month, ethiopian_day = EthiopianDateConverter.to_ethiopian(year, month, day)
+    return '{:02d}-{:02d}-{:02d}'.format(ethiopian_year, ethiopian_month, ethiopian_day)
