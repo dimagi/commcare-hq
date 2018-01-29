@@ -22,6 +22,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.fixtures.models import FixtureDataType
 from corehq.apps.reminders.models import METHOD_SMS_SURVEY, METHOD_IVR_SURVEY
 from corehq.apps.users.models import CommCareUser, UserRole
+from corehq.apps.users.tasks import bulk_deactivate_users
 from corehq.apps.userreports.exceptions import DataSourceConfigurationNotFoundError
 from corehq.const import USER_DATE_FORMAT
 
@@ -91,13 +92,13 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
             privileges.COMMCARE_LOGO_UPLOADER: cls.response_commcare_logo_uploader,
             privileges.ADVANCED_DOMAIN_SECURITY: cls.response_domain_security,
             privileges.PRACTICE_MOBILE_WORKERS: cls.response_practice_mobile_workers,
+            privileges.MOBILE_WORKER_CREATION: cls.response_mobile_worker_creation,
         }
         privs_to_responses.update({
             p: cls.response_report_builder
             for p in privileges.REPORT_BUILDER_ADD_ON_PRIVS
         })
         return privs_to_responses
-
 
     @staticmethod
     def response_outbound_sms(domain, new_plan_version):
@@ -220,6 +221,31 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
     def response_practice_mobile_workers(project, new_plan_version):
         from corehq.apps.app_manager.views.utils import unset_practice_mode_configured_apps
         unset_practice_mode_configured_apps(project.name)
+
+    @staticmethod
+    def response_mobile_worker_creation(domain, new_plan_version):
+        """ deactivates users if there are too many for a community plan """
+        from corehq.apps.accounting.models import (
+            DefaultProductPlan, FeatureType, UNLIMITED_FEATURE_USAGE)
+
+        # checks for community plan
+        if (new_plan_version != DefaultProductPlan.get_default_plan_version()):
+            return
+
+        # checks if unlimited is on for this user
+        user_rate = new_plan_version.feature_rates.filter(
+            feature__feature_type=FeatureType.USER).latest('date_created')
+        if user_rate.monthly_limit == UNLIMITED_FEATURE_USAGE:
+            return
+
+        # checks for extra users
+        num_users = CommCareUser.total_by_domain(
+            domain.name, is_active=True)
+        num_allowed = user_rate.monthly_limit
+        num_extra = num_users - num_allowed
+        if num_extra > 0:
+            # offloads deactivation onto a separate thread
+            bulk_deactivate_users.delay(domain)
 
 
 class DomainUpgradeActionHandler(BaseModifySubscriptionActionHandler):
