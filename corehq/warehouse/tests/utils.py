@@ -20,9 +20,11 @@ import six
 
 
 def create_batch(slug):
+    now = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
     call_command(
         'create_batch',
-        slug
+        slug,
+        now
     )
     return Batch.objects.filter(dag_slug=slug).order_by('-end_datetime').first()
 
