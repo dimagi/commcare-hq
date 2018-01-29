@@ -14,8 +14,8 @@ from .views import (
     DownloadLocationStatusView,
     default, child_locations_for_select2, location_importer_job_poll,
     location_export, unassign_users, archive_location, unarchive_location,
-    delete_location, location_descendants_count, location_download_job_poll
-)
+    delete_location, location_descendants_count, location_download_job_poll,
+    location_lineage)
 
 settings_urls = [
     url(r'^$', default, name='default_locations_view'),
@@ -41,6 +41,7 @@ settings_urls = [
     url(r'^(?P<loc_id>[\w-]+)/archive/$', archive_location, name='archive_location'),
     url(r'^(?P<loc_id>[\w-]+)/unarchive/$', unarchive_location, name='unarchive_location'),
     url(r'^(?P<loc_id>[\w-]+)/delete/$', delete_location, name='delete_location'),
+    url(r'^(?P<loc_id>[\w-]+)/lineage/$', location_lineage, name='location_lineage'),
     url(r'^(?P<loc_id>[\w-]+)/descendants/$', location_descendants_count, name='location_descendants_count'),
     url(r'^(?P<loc_id>[\w-]+)/$', EditLocationView.as_view(), name=EditLocationView.urlname),
 ]

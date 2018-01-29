@@ -46,7 +46,7 @@ function LocationTreeViewModel(hierarchy) {
     };
 }
 
-function LocationSearchViewModel() { // eslint-disable-line no-unused-vars
+function LocationSearchViewModel(tree_model) { // eslint-disable-line no-unused-vars
     var model = this;
     this.selected_location = ko.observable();
     this.l__selected_location_id = ko.observable();
@@ -62,6 +62,50 @@ function LocationSearchViewModel() { // eslint-disable-line no-unused-vars
         return new LocationModel({uuid: model.selected_location_id(), can_edit: can_edit_root, is_archived: show_inactive}, this); // eslint-disable-line no-undef
     });
 
+    this.selected_location_tree = tree_model;
+
+    this.lineage = ko.computed(function() {
+        $.ajax({
+            type: 'GET',
+            url: model.selected_location().loc_lineage_url(model.selected_location().uuid()),
+            dataType: 'json',
+            error: 'error',
+            success: function (response) {
+
+                var expand_tree = function() {
+                    var child = null;
+                    for (var lineage_idx=0; lineage_idx<response.lineage.length; lineage_idx ++) {
+                        var location = response.lineage[lineage_idx];
+                        var data = {name: location.name,
+                        location_type: location.location_type,
+                        uuid: location.location_id,
+                        is_archived: location.is_archived,
+                        can_edit: can_edit_root,
+                        children: child,
+                        expanded: child ? 'semi' : false,
+                        children_status: 'semi_loaded',
+                        };
+                        var level = new LocationModel(data, model.selected_location_tree, response.lineage.length - lineage_idx - 1);
+                        child = Array.of(Object.assign({}, data));
+                    }
+                    var root_children = []
+                    for (var child_idx=0; child_idx<locs.length; child_idx++) {
+                        if (locs[child_idx].name === child[0].name) {
+                            root_children.push(child[0]);
+                        }
+                        else {
+                            root_children.push(locs[child_idx]);
+                        }
+                    }
+                    level = new LocationModel({name: '_root', children: root_children, can_edit: can_edit_root, expanded: 'semi'}, model.selected_location_tree);
+                    return level;
+                };
+
+                model.selected_location_tree.root(expand_tree());
+
+            },
+        });
+    });
 }
 
 function LocationModel(data, root, depth) {
@@ -79,13 +123,18 @@ function LocationModel(data, root, depth) {
     this.expanded = ko.observable(false);
 
     this.expanded.subscribe(function(val) {
-            if (val && this.children_status() == 'not_loaded') {
+            if (val == true && (this.children_status() == 'not_loaded' || this.children_status() === 'semi_loaded')) {
                 this.load_children_async();
             }
         }, this);
 
     this.toggle = function() {
-        this.expanded(!this.expanded() && this.can_have_children());
+        if (this.expanded() === 'semi') {
+            this.expanded(this.can_have_children());
+        }
+        else {
+            this.expanded(!this.expanded() && this.can_have_children());
+        }
     }
 
     this.load = function(data) {
@@ -94,6 +143,10 @@ function LocationModel(data, root, depth) {
         this.uuid(data.uuid);
         this.is_archived(data.is_archived);
         this.can_edit(data.can_edit);
+        this.expanded(data.expanded);
+        if (data.children_status != null) {
+            this.children_status(data.children_status);
+        }
         if (data.children != null) {
             this.set_children(data.children);
         }
@@ -104,10 +157,33 @@ function LocationModel(data, root, depth) {
         if (data) {
             children = _.sortBy(data, function(e) { return e.name; });
         }
-        this.children($.map(children, function(e) {
+
+        if (loc.children().length > 0 && loc.name() != "_root") {
+            for (var child_idx = 0; child_idx < children.length; child_idx++) {
+                if (children[child_idx].name === loc.children()[0].name()) {
+                    children.splice(child_idx, 1);
+                    break;
+                }
+            }
+
+            var model_children = $.map(children, function (e) {
+                return new LocationModel(e, root, loc.depth + 1);
+            });
+            model_children.unshift(loc.children()[0]);
+            this.children(model_children);
+        }
+        else {
+            this.children($.map(children, function(e) {
                     return new LocationModel(e, root, loc.depth + 1);
-                }));
-        this.children_status('loaded');
+            }));
+        }
+
+        if (this.expanded() == true) {
+            this.children_status('loaded');
+        }
+        else if (this.expanded() == 'semi') {
+            this.children_status('semi_loaded');
+        }
     }
 
     this.load_children_async = function(callback) {
@@ -178,7 +254,7 @@ function LocationModel(data, root, depth) {
         )
     );
 
-    this.delete_error_message = django.gettext("An error occurred while deleting your location. If the problem persists, please report an issue");
+    this.delete_error_message = _.template(django.gettext("An error occurred while deleting your location. If the problem persists, please report an issue"));
 
     this.loc_archive_url = function(loc_id) {
         var initial_page_data = hqImport('hqwebapp/js/initial_page_data');
@@ -195,6 +271,12 @@ function LocationModel(data, root, depth) {
     this.loc_delete_url = function(loc_id) {
         var initial_page_data = hqImport('hqwebapp/js/initial_page_data');
         var template = initial_page_data.reverse('delete_location');
+        return template.replace('-locid-', loc_id);
+    };
+
+    this.loc_lineage_url = function(loc_id) {
+        var initial_page_data = hqImport('hqwebapp/js/initial_page_data');
+        var template = initial_page_data.reverse('location_lineage');
         return template.replace('-locid-', loc_id);
     };
 

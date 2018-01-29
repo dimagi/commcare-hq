@@ -600,6 +600,16 @@ def delete_location(request, domain, loc_id):
         )
     })
 
+@location_safe
+def location_lineage(request, domain, loc_id):
+    lineage = SQLLocation.objects.get_locations([loc_id])[0].lineage
+    for ancestor_idx in range(len(lineage)):
+        lineage[ancestor_idx] = SQLLocation.objects.get_locations([lineage[ancestor_idx]])[0].to_json()
+    lineage.insert(0, SQLLocation.objects.get_locations([loc_id])[0].to_json())
+    return json_response({
+        'lineage': lineage
+    })
+
 
 @can_edit_location
 @location_safe
