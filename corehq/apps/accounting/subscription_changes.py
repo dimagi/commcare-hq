@@ -336,12 +336,12 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
         return privs_to_responses
 
     def get_response(self):
-        response = super(DomainDowngradeStatusHandler, self).get_response()
-        response.extend([response for response in [
-                self.response_later_subscription,
-                self.response_mobile_worker_creation,
-            ] if response is not None])
-        return response
+        responses = super(DomainDowngradeStatusHandler, self).get_response()
+        responses.extend([response for response in [
+            self.response_later_subscription,
+            self.response_mobile_worker_creation,
+        ] if response is not None])
+        return responses
 
     @staticmethod
     def response_cloudcare(domain, new_plan_version):
