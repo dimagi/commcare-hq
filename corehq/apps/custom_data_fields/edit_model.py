@@ -4,6 +4,7 @@ import json
 from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator, validate_slug
+from django.shortcuts import redirect
 from django.utils.translation import ugettext as _, ugettext_lazy
 from django import forms
 from corehq.apps.hqwebapp.decorators import use_jquery_ui
@@ -193,7 +194,7 @@ class CustomDataModelMixin(object):
                 six.text_type(self.entity_string)
             )
             messages.success(request, msg)
-            return self.get(request, success=True, *args, **kwargs)
+            return redirect(self.urlname, self.domain)
         else:
             return self.get(request, *args, **kwargs)
 
