@@ -50,7 +50,7 @@ branches:
   - je/cythonized-jsonobject # j$ 1/8
   - np/tb/xpath-expression # NP 1/10
 #  - np/tb/markdown # NP 1/10
-  - xbryanc:showreportemails  # Bryan 1/25
+  - xbryanc:dlemailbutton_updates  # Bryan 1/29
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
