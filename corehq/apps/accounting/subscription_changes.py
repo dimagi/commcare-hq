@@ -639,6 +639,8 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
     def response_practice_mobile_workers(project, new_plan_version):
         from corehq.apps.app_manager.views.utils import get_practice_mode_configured_apps
         apps = get_practice_mode_configured_apps(project.name)
+        if not apps:
+            return None
         return _fmt_alert(
             ungettext(
                 "You have %(num_apps)d application that has a practice mobile worker "
