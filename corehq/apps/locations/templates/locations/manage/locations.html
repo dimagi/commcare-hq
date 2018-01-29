@@ -26,11 +26,6 @@
     }
 
 
-    $(function() {
-        var model = new LocationTreeViewModel(hierarchy);
-        $('#location_tree').koApplyBindings(model);
-        model.load(locs);
-    });
     {% if request|toggle_enabled:'LOCATION_SEARCH' %}
 
         var enableLocationSearchSelect = function() {
@@ -64,11 +59,21 @@
             enableLocationSearchSelect();
 
         $(function() {
-            var model = new LocationSearchViewModel();
+            var tree_model = new LocationTreeViewModel(hierarchy);
+            $('#location_tree').koApplyBindings(tree_model);
+            tree_model.load(locs);
+            var model = new LocationSearchViewModel(tree_model);
             $('#location_search').koApplyBindings(model);
         });
 
-        {% endif %}
+    {% else %}
+        $(function() {
+            var model = new LocationTreeViewModel(hierarchy);
+            $('#location_tree').koApplyBindings(model);
+            model.load(locs);
+        });
+
+    {% endif %}
 </script>
 {% endblock %}
 
@@ -76,6 +81,7 @@
     {% registerurl 'archive_location' domain '-locid-' %}
     {% registerurl 'unarchive_location' domain '-locid-' %}
     {% registerurl 'delete_location' domain '-locid-' %}
+    {% registerurl 'location_lineage' domain '-locid-' %}
     {% registerurl 'location_descendants_count' domain '-locid-'%}
 
 <header>
