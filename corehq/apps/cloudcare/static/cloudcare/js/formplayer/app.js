@@ -154,7 +154,7 @@ FormplayerFrontend.on('startForm', function (data) {
     };
     data.onsubmit = function (resp) {
         if (resp.status === "success") {
-            showSuccess(gettext("Form successfully saved"), $("#cloudcare-notifications"), 10000);
+            showSuccess(resp.submitResponseMessage, $("#cloudcare-notifications"), 50000);
             if (user.environment === FormplayerFrontend.Constants.PREVIEW_APP_ENVIRONMENT) {
                 hqImport('analytix/js/kissmetrix').track.event("[app-preview] User submitted a form");
                 hqImport('analytix/js/google').track.event("App Preview", "User submitted a form");

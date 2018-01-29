@@ -2,6 +2,7 @@
 from __future__ import absolute_import
 from xml.etree import cElementTree as ElementTree
 from django.http import HttpResponse
+from django.utils.translation import ugettext_lazy as _
 import six
 
 RESPONSE_XMLNS = 'http://openrosa.org/http/response'
@@ -68,9 +69,9 @@ class OpenRosaResponse(object):
         return HttpResponse(self.xml(), status=self.status)
 
 
-SUCCESS_RESPONSE = get_openrosa_reponse(u'   √   ', ResponseNature.SUBMIT_SUCCESS, 201)
+SUCCESS_RESPONSE = get_openrosa_reponse(_(u'Form successfully saved'), ResponseNature.SUBMIT_SUCCESS, 201)
 SUBMISSION_IGNORED_RESPONSE = get_openrosa_reponse(
-    u'√ (this submission was ignored)', ResponseNature.SUBMIT_SUCCESS, 201
+    _(u'Form successfully saved (this submission was ignored)'), ResponseNature.SUBMIT_SUCCESS, 201
 )
 BLACKLISTED_RESPONSE = get_openrosa_reponse(
     message=(
