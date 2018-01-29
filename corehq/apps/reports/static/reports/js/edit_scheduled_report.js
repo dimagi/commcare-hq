@@ -92,14 +92,22 @@ hqDefine("reports/js/edit_scheduled_report", function() {
     $("#id_config_ids").change(function(){
         updateUcrElements($(this).val());
     });
-    var multiselect_utils = hqImport('hqwebapp/js/multiselect_utils');
-    multiselect_utils.createFullMultiselectWidget(
-        'id_config_ids',
-        django.gettext("Available Reports"),
-        django.gettext("Included Reports"),
-        django.gettext("Search Reports..."),
-        isOwner
-    );
+    if (!isOwner) {
+        $('#id_config_ids').hide().after(
+            $('#id_config_ids').children().map(function () {
+                return $("<div>").text($(this).text()).get(0);
+            })
+        );
+    }
+    else {
+        var multiselect_utils = hqImport('hqwebapp/js/multiselect_utils');
+        multiselect_utils.createFullMultiselectWidget(
+            'id_config_ids',
+            django.gettext("Available Reports"),
+            django.gettext("Included Reports"),
+            django.gettext("Search Reports...")
+        );
+    }
     updateUcrElements($("#id_config_ids").val());
 
     var scheduled_report_form_helper = new ScheduledReportFormHelper({
