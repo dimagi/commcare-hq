@@ -2,7 +2,7 @@ from __future__ import absolute_import
 from contextlib import closing
 
 from django.db import models, transaction, connections
-from django.contrib.postgres.fields import ArrayField
+from django.contrib.postgres.fields import ArrayField, JSONField
 
 from dimagi.utils.couch.database import iter_docs
 
@@ -183,8 +183,9 @@ class UserStagingTable(StagingTable, CouchToDjangoETLMixin):
     email = models.CharField(max_length=255, null=True)
     doc_type = models.CharField(max_length=100)
     base_doc = models.CharField(max_length=100)
-    domain = models.CharField(max_length=100)
+    domain = models.CharField(max_length=100, null=True, blank=True)
 
+    domain_memberships = JSONField(null=True)
     is_active = models.BooleanField()
     is_staff = models.BooleanField()
     is_superuser = models.BooleanField()
@@ -215,6 +216,7 @@ class UserStagingTable(StagingTable, CouchToDjangoETLMixin):
             ('last_login', 'last_login'),
             ('date_joined', 'date_joined'),
             ('last_modified', 'user_last_modified'),
+            ('domain_memberships', 'domain_memberships'),
         ]
 
     @classmethod

@@ -19,7 +19,7 @@ INSERT INTO {{ user_group_dim }} (
 )
 
 SELECT
-    ud.domain,
+    gd.domain,
     ud.id,
     gd.id,
     now(),
