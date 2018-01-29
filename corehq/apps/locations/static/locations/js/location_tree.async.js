@@ -82,11 +82,22 @@ function LocationSearchViewModel(tree_model) { // eslint-disable-line no-unused-
                         is_archived: location.is_archived,
                         can_edit: can_edit_root,
                         children: child,
-                        expanded: true,
+                        expanded: child ? 'semi' : false,
+                        children_status: 'semi_loaded',
                         };
-                        var level = new LocationModel(data, model.selected_location_tree.root(), response.lineage.length - lineage_idx - 1);
+                        var level = new LocationModel(data, model.selected_location_tree, response.lineage.length - lineage_idx - 1);
                         child = Array.of(Object.assign({}, data));
                     }
+                    var root_children = []
+                    for (var child_idx=0; child_idx<locs.length; child_idx++) {
+                        if (locs[child_idx].name === child[0].name) {
+                            root_children.push(child[0]);
+                        }
+                        else {
+                            root_children.push(locs[child_idx]);
+                        }
+                    }
+                    level = new LocationModel({name: '_root', children: root_children, can_edit: can_edit_root, expanded: 'semi'}, model.selected_location_tree);
                     return level;
                 };
 
@@ -112,13 +123,18 @@ function LocationModel(data, root, depth) {
     this.expanded = ko.observable(false);
 
     this.expanded.subscribe(function(val) {
-            if (val && this.children_status() == 'not_loaded') {
+            if (val == true && (this.children_status() == 'not_loaded' || this.children_status() === 'semi_loaded')) {
                 this.load_children_async();
             }
         }, this);
 
     this.toggle = function() {
-        this.expanded(!this.expanded() && this.can_have_children());
+        if (this.expanded() === 'semi') {
+            this.expanded(this.can_have_children());
+        }
+        else {
+            this.expanded(!this.expanded() && this.can_have_children());
+        }
     }
 
     this.load = function(data) {
@@ -128,6 +144,9 @@ function LocationModel(data, root, depth) {
         this.is_archived(data.is_archived);
         this.can_edit(data.can_edit);
         this.expanded(data.expanded);
+        if (data.children_status != null) {
+            this.children_status(data.children_status);
+        }
         if (data.children != null) {
             this.set_children(data.children);
         }
@@ -141,7 +160,12 @@ function LocationModel(data, root, depth) {
         this.children($.map(children, function(e) {
                     return new LocationModel(e, root, loc.depth + 1);
                 }));
-        this.children_status('loaded');
+        if (this.expanded() == true) {
+            this.children_status('loaded');
+        }
+        else if (this.expanded() == 'semi') {
+            this.children_status('semi_loaded');
+        }
     }
 
     this.load_children_async = function(callback) {
@@ -233,7 +257,6 @@ function LocationModel(data, root, depth) {
     };
 
     this.loc_lineage_url = function(loc_id) {
-        console.log(loc_id);
         var initial_page_data = hqImport('hqwebapp/js/initial_page_data');
         var template = initial_page_data.reverse('location_lineage');
         return template.replace('-locid-', loc_id);
