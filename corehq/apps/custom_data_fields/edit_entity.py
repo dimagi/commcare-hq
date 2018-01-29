@@ -1,12 +1,12 @@
 from __future__ import absolute_import
 from collections import OrderedDict
+from django.core.validators import RegexValidator
 from django.urls import reverse
 from django.utils.translation import ugettext as _
 from django import forms
 
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Fieldset, Div, HTML, Field
-from corehq.apps.hqwebapp.fields import RegexField
 from corehq.apps.hqwebapp.widgets import Select2MultipleChoiceWidget
 
 from dimagi.utils.decorators.memoized import memoized
@@ -88,8 +88,9 @@ class CustomDataEditor(object):
 
     def _make_field(self, field):
         if field.regex:
-            return RegexField(field.regex, field.regex_msg, label=field.label,
-                              required=field.is_required)
+            validator = RegexValidator(field.regex, field.regex_msg)
+            return forms.CharField(label=field.label, required=field.is_required,
+                                   validators=[validator])
         elif field.choices:
             if not field.is_multiple_choice:
                 choice_field = forms.ChoiceField(
