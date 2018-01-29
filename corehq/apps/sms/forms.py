@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 import re
 import json
+from couchdbkit.exceptions import ResourceNotFound
 from crispy_forms.bootstrap import InlineField, StrictButton
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Div
@@ -23,6 +24,7 @@ from corehq.apps.sms.util import (validate_phone_number, strip_plus,
 from corehq.apps.domain.models import DayTimeWindow
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.groups.models import Group
+from corehq.apps.locations.models import SQLLocation
 from dimagi.utils.django.fields import TrimmedCharField
 from dimagi.utils.couch.database import iter_docs
 from django.conf import settings
@@ -263,11 +265,11 @@ class SettingsForm(Form):
         required=False,
         label=ugettext_noop("Default Case Type"),
     )
-    sms_case_registration_owner_id = ChoiceField(
+    sms_case_registration_owner_id = CharField(
         required=False,
         label=ugettext_noop("Default Case Owner"),
     )
-    sms_case_registration_user_id = ChoiceField(
+    sms_case_registration_user_id = CharField(
         required=False,
         label=ugettext_noop("Registration Submitter"),
     )
@@ -279,6 +281,13 @@ class SettingsForm(Form):
     registration_welcome_message = ChoiceField(
         choices=WELCOME_RECIPIENT_CHOICES,
         label=ugettext_lazy("Send registration welcome message to"),
+    )
+
+    # Internal settings
+    daily_outbound_sms_limit = IntegerField(
+        required=False,
+        label=ugettext_noop("Daily Outbound SMS Limit"),
+        min_value=1000,
     )
 
     @property
@@ -502,50 +511,50 @@ class SettingsForm(Form):
                     "to the user who reads it."),
             ),
         ]
-        if self._cchq_is_previewer:
-            fields.append(
-                hqcrispy.B3MultiField(
-                    _("Chat Template"),
-                    crispy.Div(
-                        InlineField(
-                            "use_custom_chat_template",
-                            data_bind="value: use_custom_chat_template",
-                        ),
-                        css_class='col-sm-4'
-                    ),
-                    crispy.Div(
-                        InlineField(
-                            "custom_chat_template",
-                            data_bind="visible: showCustomChatTemplate",
-                        ),
-                        css_class='col-sm-8'
-                    ),
-                    help_bubble_text=_("To use a custom template to render the "
-                        "chat window, enter it here."),
-                    css_id="custom-chat-template-group",
-                    field_class='col-sm-6 col-md-9 col-lg-9'
-                )
-            )
         return crispy.Fieldset(
             _("Chat Settings"),
             *fields
         )
 
-    def __init__(self, data=None, cchq_domain=None, cchq_is_previewer=False,
-        *args, **kwargs):
-        self._cchq_domain = cchq_domain
-        self._cchq_is_previewer = cchq_is_previewer
-        super(SettingsForm, self).__init__(data, *args, **kwargs)
-        self.populate_dynamic_choices()
+    @property
+    def section_internal(self):
+        return crispy.Fieldset(
+            _("Internal Settings (Dimagi Only)"),
+            crispy.Field('daily_outbound_sms_limit'),
+            hqcrispy.B3MultiField(
+                _("Chat Template"),
+                crispy.Div(
+                    InlineField(
+                        "use_custom_chat_template",
+                        data_bind="value: use_custom_chat_template",
+                    ),
+                    css_class='col-sm-4'
+                ),
+                crispy.Div(
+                    InlineField(
+                        "custom_chat_template",
+                        data_bind="visible: showCustomChatTemplate",
+                    ),
+                    css_class='col-sm-8'
+                ),
+                help_bubble_text=_("To use a custom template to render the "
+                    "chat window, enter it here."),
+                css_id="custom-chat-template-group",
+            ),
+        )
 
-        self.helper = FormHelper()
-        self.helper.form_class = "form form-horizontal"
-        self.helper.label_class = 'col-sm-2 col-md-2 col-lg-2'
-        self.helper.field_class = 'col-sm-10 col-lg-8'
-        self.helper.layout = crispy.Layout(
+    @property
+    def sections(self):
+        result = [
             self.section_general,
             self.section_registration,
             self.section_chat,
+        ]
+
+        if self._cchq_is_previewer:
+            result.append(self.section_internal)
+
+        result.append(
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(
                     _("Save"),
@@ -554,6 +563,23 @@ class SettingsForm(Form):
                 ),
             ),
         )
+
+        return result
+
+    def __init__(self, data=None, cchq_domain=None, cchq_is_previewer=False, *args, **kwargs):
+        self._cchq_domain = cchq_domain
+        self._cchq_is_previewer = cchq_is_previewer
+        super(SettingsForm, self).__init__(data, *args, **kwargs)
+
+        self.helper = FormHelper()
+        self.helper.form_class = "form form-horizontal"
+        self.helper.label_class = 'col-sm-2 col-md-2 col-lg-2'
+        self.helper.field_class = 'col-sm-10 col-lg-8'
+
+        self.helper.layout = crispy.Layout(
+            *self.sections
+        )
+
         self.restricted_sms_times_widget_context = {
             "template_name": "ko-template-restricted-sms-times",
             "explanation_text": _("SMS will only be sent when any of the following is true:"),
@@ -592,23 +618,18 @@ class SettingsForm(Form):
                     current_values[field_name] = json.loads(value)
                 else:
                     current_values[field_name] = value
+            elif field_name in ['sms_case_registration_owner_id', 'sms_case_registration_user_id']:
+                if value:
+                    obj = self.get_user_group_or_location(value)
+                    if isinstance(obj, SQLLocation):
+                        current_values[field_name] = {'id': value, 'text': _("Organization: {}").format(obj.name)}
+                    elif isinstance(obj, Group):
+                        current_values[field_name] = {'id': value, 'text': _("User Group: {}").format(obj.name)}
+                    elif isinstance(obj, CommCareUser):
+                        current_values[field_name] = {'id': value, 'text': _("User: {}").format(obj.raw_username)}
             else:
                 current_values[field_name] = value
         return current_values
-
-    def populate_dynamic_choices(self):
-        groups = Group.get_case_sharing_groups(self._cchq_domain)
-        users = CommCareUser.by_domain(self._cchq_domain)
-
-        domain_group_choices = [(group._id, group.name) for group in groups]
-        domain_user_choices = [(user._id, user.raw_username) for user in users]
-        domain_owner_choices = domain_group_choices + domain_user_choices
-
-        choose = [("", _("(Choose)"))]
-        self.fields["sms_case_registration_owner_id"].choices = (
-            choose + domain_owner_choices)
-        self.fields["sms_case_registration_user_id"].choices = (
-            choose + domain_user_choices)
 
     def _clean_dependent_field(self, bool_field, field):
         if self.cleaned_data.get(bool_field):
@@ -738,22 +759,62 @@ class SettingsForm(Form):
         return self._clean_dependent_field("sms_case_registration_enabled",
             "sms_case_registration_type")
 
-    def _clean_registration_id_field(self, field_name):
-        if self.cleaned_data.get("sms_case_registration_enabled"):
-            value = self.cleaned_data.get(field_name)
-            if not value:
-                raise ValidationError(_("This field is required."))
-            # Otherwise, the ChoiceField automatically validates that it is
-            # in the list that is dynamically populated in __init__
-            return value
-        else:
-            return None
+    def get_user_group_or_location(self, object_id):
+        try:
+            return SQLLocation.active_objects.get(
+                domain=self._cchq_domain,
+                location_id=object_id,
+                location_type__shares_cases=True,
+            )
+        except SQLLocation.DoesNotExist:
+            pass
+
+        try:
+            group = Group.get(object_id)
+            if group.doc_type == 'Group' and group.domain == self._cchq_domain and group.case_sharing:
+                return group
+        except ResourceNotFound:
+            pass
+
+        return self.get_user(object_id)
+
+    def get_user(self, object_id):
+        try:
+            user = CommCareUser.get(object_id)
+            if user.doc_type == 'CommCareUser' and user.domain == self._cchq_domain:
+                return user
+        except ResourceNotFound:
+            pass
+
+        return None
 
     def clean_sms_case_registration_owner_id(self):
-        return self._clean_registration_id_field("sms_case_registration_owner_id")
+        if not self.cleaned_data.get("sms_case_registration_enabled"):
+            return None
+
+        value = self.cleaned_data.get("sms_case_registration_owner_id")
+        if not value:
+            raise ValidationError(_("This field is required."))
+
+        obj = self.get_user_group_or_location(value)
+        if not isinstance(obj, (CommCareUser, Group, SQLLocation)):
+            raise ValidationError(_("Please select again"))
+
+        return value
 
     def clean_sms_case_registration_user_id(self):
-        return self._clean_registration_id_field("sms_case_registration_user_id")
+        if not self.cleaned_data.get("sms_case_registration_enabled"):
+            return None
+
+        value = self.cleaned_data.get("sms_case_registration_user_id")
+        if not value:
+            raise ValidationError(_("This field is required."))
+
+        obj = self.get_user(value)
+        if not isinstance(obj, CommCareUser):
+            raise ValidationError(_("Please select again"))
+
+        return value
 
     def clean_sms_mobile_worker_registration_enabled(self):
         return (self.cleaned_data.get("sms_mobile_worker_registration_enabled")
@@ -762,6 +823,16 @@ class SettingsForm(Form):
     def clean_sms_conversation_length(self):
         # Just cast to int, the ChoiceField will validate that it is an integer
         return int(self.cleaned_data.get("sms_conversation_length"))
+
+    def clean_daily_outbound_sms_limit(self):
+        if not self._cchq_is_previewer:
+            return None
+
+        value = self.cleaned_data.get("daily_outbound_sms_limit")
+        if not value:
+            raise ValidationError(_("This field is required"))
+
+        return value
 
 
 class BackendForm(Form):

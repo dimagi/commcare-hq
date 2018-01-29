@@ -1070,12 +1070,12 @@ def get_awc_report_beneficiary(start, length, draw, order, awc_id, month, two_be
             current_month_stunting=get_status(
                 row_data.current_month_stunting,
                 'stunted',
-                'Normal weight for height'
+                'Normal height for age'
             ),
             current_month_wasting=get_status(
                 row_data.current_month_wasting,
                 'wasted',
-                'Normal height for age'
+                'Normal weight for height'
             ),
             pse_days_attended=row_data.pse_days_attended
         )
