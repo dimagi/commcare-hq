@@ -730,6 +730,11 @@ def _get_person_case_properties_v2(episode_case, person_case, person_case_proper
             person_case_properties.get('marital_status'),
             marital_status.get('unmarried')),
         "IDdates": str(datetime.date.today()),
+        "PStreet": "NA",
+        "PWard": "NA",
+        "IFSC_Code": "",
+        "AccountNo": "",
+        "Bank_name": "NA"
     }
     person_locations = get_person_locations(person_case, episode_case)
     person_properties.update(
