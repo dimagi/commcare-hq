@@ -1135,7 +1135,7 @@ class ReportNotificationUnsubscribeView(TemplateView):
     broken_link_error = ugettext_noop('Invalid unsubscribe link')
     report = None
 
-    def get(self, request, domain, *args, **kwargs):
+    def get(self, request, *args, **kwargs):
         if 'success' not in kwargs and 'error' not in kwargs:
             try:
                 self.report = ReportNotification.get(kwargs.pop('scheduled_report_id'))
@@ -1163,9 +1163,6 @@ class ReportNotificationUnsubscribeView(TemplateView):
         try:
             self.report = ReportNotification.get(kwargs.pop('scheduled_report_id'))
             email = kwargs.pop('user_email')
-
-            if kwargs.pop('scheduled_report_secret') != self.report.get_secret(email):
-                raise ValidationError(self.broken_link_error)
 
             self.report.remove_recipient(email)
 
