@@ -157,9 +157,27 @@ function LocationModel(data, root, depth) {
         if (data) {
             children = _.sortBy(data, function(e) { return e.name; });
         }
-        this.children($.map(children, function(e) {
+
+        if (loc.children().length > 0 && loc.name() != "_root") {
+            for (var child_idx = 0; child_idx < children.length; child_idx++) {
+                if (children[child_idx].name === loc.children()[0].name()) {
+                    children.splice(child_idx, 1);
+                    break;
+                }
+            }
+
+            var model_children = $.map(children, function (e) {
+                return new LocationModel(e, root, loc.depth + 1);
+            });
+            model_children.unshift(loc.children()[0]);
+            this.children(model_children);
+        }
+        else {
+            this.children($.map(children, function(e) {
                     return new LocationModel(e, root, loc.depth + 1);
-                }));
+            }));
+        }
+
         if (this.expanded() == true) {
             this.children_status('loaded');
         }
