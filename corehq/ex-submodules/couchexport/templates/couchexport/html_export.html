@@ -8,6 +8,13 @@
 <body>
 {% endif %}
 
+{% if section == "outer_table_begin" %}
+    <table>
+        <tbody>
+        <tr>
+            <td>
+{% endif %}
+
 {% if section == "table_begin" %}
     <table>
 {% endif %}
@@ -39,6 +46,13 @@
 {% if section == "table_end" %}
 </tbody>
 </table>
+{% endif %}
+
+{% if section == "outer_table_end" %}
+            </td>
+        </tr>
+        </tbody>
+    </table>
 {% endif %}
 
 {% if section == "doc_end" %}

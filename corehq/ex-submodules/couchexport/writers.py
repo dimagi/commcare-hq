@@ -503,13 +503,18 @@ class HtmlExportWriter(OnDiskExportWriter):
                 ).encode("utf-8")
             )
 
+        multiple_tables = len(self.table_names) > 1
         write({"section": "doc_begin"})
+        if multiple_tables:
+            write({"section": "outer_table_begin"})
         for index, name in self.table_names.items():
             table_writer = self.tables[index]
             write({"section": "table_begin", "name": name})
             for line in table_writer.get_file():
                 self.file.write(line)
             write({"section": "table_end"})
+        if multiple_tables:
+            write({"section": "outer_table_end"})
         write({"section": "doc_end"})
 
         self.file.seek(0)
