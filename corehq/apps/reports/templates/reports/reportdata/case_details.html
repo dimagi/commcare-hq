@@ -2,45 +2,335 @@
 {% load case_tags %}
 {% load hq_shared_tags %}
 {% load i18n %}
+{% load proptable_tags %}
+{% load timezone_tags %}
 
 {% block title %}Case: {{ case.name }}{% endblock %}
 
 {% block head %} {{ block.super }}
-    {% include "imports/proptable.html" %}
+    <link rel="stylesheet" type="text/css" href="{% static "hqwebapp/css/proptable.css" %}">
 {% endblock %}
 
 {% block js %}{{ block.super }}
     {# This is needed for rendering the case hierarchy. It's included here to prevent an #}
     {# import error: http://manage.dimagi.com/default.asp?223100 #}
     {% include 'cloudcare/includes/formplayer-inline.html' %}
+    <script src="{% static "hqwebapp/js/lib/bootstrap-tab-hashes.js" %}"></script>
+    <script src="{% static "hqwebapp/js/lib/jquery.cachedAjax.js" %}"></script>
     <script src="{% static "reports/js/case_details.js" %}"></script>
 {% endblock %}
 
 {% block page_content %}
 
+
+{% initial_page_data 'dynamic_properties' dynamic_properties %}
+{% initial_page_data 'timezone_offset' timezone_offset %}
+{% initial_page_data 'xform_api_url' xform_api_url %}
+{% initial_page_data 'xform_ids' case.xform_ids %}
+{% registerurl "case_form_data" case.domain case.case_id '---' %}
+{% registerurl "case_property_names" case.domain case.case_id %}
+{% registerurl "edit_case" case.domain case.case_id %}
+
 {# This is used in case/partials/repeat_records.html #}
 {% registerurl 'requeue_repeat_record' case.domain %}
 
 <div class="hq-generic-report">
-    {% render_case case case_display_options %}
+    <div id="report-content">
+    <div id="tabbed-content-container">
+        <div class="row">
+            <div class="col-sm-12">
+                {% include "hqwebapp/proptable/property_table.html" with tables=default_properties_as_table %}
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm-12">
+                <ul class="nav nav-tabs" style="margin-bottom: 10px;">
+                    <li class="active">
+                        <a href="#properties" data-toggle="tab">
+                            {% trans "Case Properties" %}
+                        </a>
+                    </li>
+                    <li><a href="#history" data-toggle="tab">{% trans "Case History" %}</a></li>
+                    {% if case.has_indices %}
+                    <li><a href="#related" data-toggle="tab">{% trans "Related Cases" %}</a></li>
+                    {% endif %}
+                {% if case.case_attachments %}
+                    <li><a href="#case-attachments" data-toggle="tab">{% trans "Attachments" %} ({{ case.case_attachments|length }})</a></li>
+                {% endif %}
+                {% if ledgers %}
+                    <li><a href="#case-ledgers" data-toggle="tab">{% trans "Ledger Sections" %}</a></li>
+                {% endif %}
+                {% if repeat_records %}
+                    <li><a href="#repeat-records" data-toggle="tab">{% trans "Forwarded Records" %}</a></li>
+                {% endif %}
+                </ul>
+
+                <div class="tab-content">
+                    <div class="tab-pane active" id="properties">
+                        <div class="row-fluid">
+                            {% if dynamic_properties %}
+                                {% include "hqwebapp/proptable/property_table.html" with tables=dynamic_properties_as_table %}
+                            {% else %}
+                        <div class="well clearfix col-lg-10 col-md-12 col-sm-12">
+                            <a target="_blank" class="pull-right"
+                               href="https://www.youtube.com/watch?v=AVSLmCJxPjY&feature=youtu.be&t=3m34s">
+                                <img src="{% static 'hqwebapp/images/case_properties_video.png' %}"
+                                     style="margin-left: 20px; width: 320px; height: 180px" /><!-- have to specify width & height -->
+                            </a>
+                            {% blocktrans %}
+                                <p>
+                                    You haven't saved any questions as case properties.
+                                    Only case properties become part of a case.
+                                </p>
+                                <p>
+                                    Watch this video to learn how to save questions as case properties.
+                                </p>
+                            {% endblocktrans %}
+                        </div>
+                            {% endif %}
+                        </div>
+                    </div><!-- end properties tab -->
+
+                    {% if case.has_indices %}
+                    <div class="tab-pane" id="related">
+                        {% render_case_hierarchy case case_hierarchy_options %}
+                    </div>
+                    {% endif %}
+
+                    {% if case.case_attachments %}
+                    <div class="tab-pane" id="case-attachments">
+                        {% include "case/partials/case_attachments.html" %}
+                    </div> <!-- end case-attachments tab -->
+                    {% endif %}
+
+                    {% if repeat_records %}
+                        <div class="tab-pane" id="repeat-records">
+                            {% include "case/partials/repeat_records.html" %}
+                        </div>
+                    {% endif %}
+
+                    {% if ledgers %}
+                    <div class="tab-pane" id="case-ledgers">
+                    {% if show_transaction_export %}
+                        <a href="{% url 'export_case_transactions' case.domain case.case_id %}" class="pull-right">{% trans "download complete transaction history" %}</a>
+                    {% endif %}
+                    {% for section_id, product_map in ledgers.items %}
+                        <h1>{% blocktrans %}Section: {{ section_id }}{% endblocktrans %}</h1>
+                        <table class="table table-striped table-hover">
+                        <thead>
+                            <tr>
+                                <th>{% trans "Product" %}</th>
+                                <th>{% trans "Balance" %}</th>
+                                <th>{% trans "Last Updated" %}</th>
+                            </tr>
+                        </thead>
+                        {% for product_name, stock_state in product_map %}
+                        <tr>
+                            <td>{{ product_name }}</td>
+                            <td>{{ stock_state.stock_on_hand }}</td>
+                            {% if stock_state and stock_state.last_modified_form_id %}
+                            <td><a href="{% url 'render_form_data' case.domain stock_state.last_modified_form_id %}">{{ stock_state.last_modified_date }}</a></td>
+                            {% else %}
+                            <td>{% trans "No transaction found" %}</td>
+                            {% endif %}
+                        </tr>
+                        {% endfor %}
+                        </table>
+                    {% endfor %}
+                    </div> <!-- end case-ledgers tab -->
+                    {% endif %}
+
+                    <div class="tab-pane row" id="history">
+                        <div class="col-sm-5 dataTables_wrapper">
+                            <ul data-bind="foreach: $root.form_type_facets">
+                                <li>
+                                    <strong><span data-bind="text: form_name"></span></strong>:
+                                    <span data-bind="text: form_count"></span>
+                                </li>
+                            </ul>
+                            <div class="hq-loading" data-bind="visible: $root.data_loading">
+                                {% trans "Loading" %}
+                                <img src="/static/hqwebapp/images/ajax-loader.gif" alt="loading indicator"></div>
+                            <table class="table table-striped datatable table-hover">
+                                <thead>
+                                <tr>
+                                    <th class="col-sm-2">{% trans "Received" %} ({{ tz_abbrev }})</th>
+                                    <th class="col-sm-2">{% trans "Form" %}</th>
+                                    <th class="col-sm-2">{% trans "User" %}</th>
+                                </tr>
+                                </thead>
+                                <tbody data-bind="foreach: xforms">
+                                    <tr data-bind='click: $root.clickRow, css: { info: $data.id() == $root.selected_xform_doc_id() }'>
+                                        <td>
+                                            <span data-bind="text: received_on"></span>
+                                        <td>
+                                            <span data-bind="text: readable_name, css: { 'break-all-words': !readable_name().match(/\s/) }"></span>
+                                        </td>
+                                        <td>
+                                            <span data-bind="text: username"></span>
+                                            <div class="pull-right"><i class="fa fa-chevron-right"></i></div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <div class="dataTables_control">
+                                <div class="dataTables_info">
+                                    <span data-bind="text: $root.page_start_num() + '-' + $root.page_end_num() + ' / ' + $root.total_rows()"></span>
+                                </div>
+                                <div class="dataTables_length form-inline">
+                                    <select id="page_size_select" class="form-control" data-bind="options: pagination_options, value: $root.page_size"></select> <span>/ {% trans "page" %}</span>
+                                </div>
+
+                                <div class="pull-right" data-bind="visible: $root.page_count() > 1">
+                                    <ul class="pagination">
+                                        <li>
+                                            <button class="btn btn-sm btn-default" type="button" data-bind="enable: $root.disp_page_index() > 1, click: $root.prevPage">«</button>
+                                        </li>
+                                        <li class="active">
+                                            <select class="form-control" data-bind="options: all_pages(), value: $root.disp_page_index"></select>
+                                        </li>
+                                        <li>
+                                            <button class="btn btn-sm btn-default" type="button" data-bind="enable: $root.page_end_num() < $root.total_rows(), click: $root.nextPage">»</button>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-7">
+                            <div id="xform_data_panel"></div>
+                        </div>
+                    </div> <!-- end case-history tab -->
+                </div>
+
+            </div>
+        </div>
+
+    </div> {# end tabbed-content-container div #}
+    </div> {# end report-container #}
+
+    {% if show_properties_edit %}
+    <!-- class='hide' keeps modal from showing before knockout initializes & overwrites the class -->
+    <div id="edit-dynamic-properties" class="hide" tabindex="-1" data-bind="attr: { 'class': 'modal fade ' + $root.modalClass() }, event: { 'hidden.bs.modal': init }">
+        <div data-bind="attr: { 'class': 'modal-dialog ' + $root.modalDialogClass() }">
+            <div class="modal-content">
+                <div class="modal-header with-controls">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    <div class="form-inline pull-right" data-bind="visible: !showSpinner()">
+                        <div class="input-group input-group-sm">
+                            <input type="text" class="form-control" placeholder="{% trans "Search" %}"
+                                   data-bind="value: query, valueUpdate: 'afterkeydown'" />
+                            <span class="input-group-btn">
+                                <button class="btn btn-default" type="button" data-bind="click: initQuery">
+                                    <i class="fa fa-times"></i>
+                                </button>
+                            </span>
+                        </div>
+                    </div>
+                    <h4 class="modal-title">
+                        {% trans "Data Corrections" %}
+                    </h4>
+                </div>
+                <div class="modal-body" data-bind="css: { 'text-center': showSpinner }">
+                    <div class='alert alert-danger' data-bind="visible: showError">
+                        {% blocktrans %}
+                            Something unexpected happened.
+                            Please refresh the page and try again, or report an issue if the problem persists.
+                        {% endblocktrans %}
+                    </div>
+                    <div class='alert alert-danger' data-bind="visible: showRetry">
+                        {% blocktrans %}
+                            Something unexpected happened.
+                            Please try again, or report an issue if the problem persists.
+                        {% endblocktrans %}
+                    </div>
+                    <i class="fa fa-spinner fa-spin fa-5x" data-bind="visible: showSpinner"></i>
+                    <div data-bind="visible: !showSpinner()">
+                        <div class="text-muted" data-bind="visible: showNoData">{% trans "No properties found" %}</div>
+                        <div class="container-fluid">
+                            <!-- ko foreach: visibleColumns -->
+                                <div data-bind="attr: { 'class': $root.columnClass }">
+                                    <!-- ko foreach: $data -->
+                                        <div class="form-group container-fluid" data-bind="css: {'has-success': dirty()}">
+                                            <label class="col-sm-6 control-label">
+                                                <i class="fa fa-pencil-square" data-bind="visible: dirty()"></i>
+                                                <span data-bind="text: name"></span>
+                                            </label>
+                                            <div class="col-sm-6">
+                                                <input type="text" class="form-control"
+                                                       data-bind="value: value,
+                                                                  attr: { 'data-name': name },
+                                                                  event: { change: function() { this.dirty(true); } }" />
+                                            </div>
+                                        </div>
+                                    <!-- /ko -->
+                                </div>
+                            <!-- /ko -->
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer with-controls">
+                    <ul class="pagination pull-left" data-bind="visible: showPagination">
+                        <li><a href="#" data-bind="click: function() { incrementPage(-1); }">&laquo;</a></li>
+                        <!-- ko foreach: visiblePages -->
+                            <li data-bind="css: { active: $parent.currentPage() == $data }">
+                                <a href="#" data-bind="click: function() { $parent.currentPage($data); }, text: $data"></a>
+                            </li>
+                        <!-- /ko -->
+                        <li><a href="#" data-bind="click: function() { incrementPage(1); }">&raquo;</a></li>
+                    </ul>
+                    <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
+                    <button type="submit" class="btn btn-primary" data-bind="click: submitForm, attr: { disabled: disallowSave }">
+                        <span data-bind="visible: !showRetry()">
+                            {% trans "Save" %}
+                        </span>
+                        <span data-bind="visible: showRetry()">
+                            {% trans "Try Again" %}
+                        </span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
     {% if can_edit_data %}
+    {# Only show section if it's going to contain at least one button #}
+    {% if show_properties_edit or show_case_rebuild or not case.closed and not is_usercase %}
     <div id="case-actions" class="clearfix form-actions">
         <div class="col-sm-12">
+        {% if show_properties_edit %}
+            <button type="button" class="btn btn-default pull-left" id="edit-dynamic-properties-trigger">
+                <i class="fa fa-edit"></i>
+                {% trans 'Data Corrections' %}
+            </button>
+        {% endif %}
         {% if show_case_rebuild %}
             <form action="{% url 'resave_case' domain case_id %}" method="post" class="pull-left">{% csrf_token %}
-                 <button type="submit" class="btn btn-info disable-on-submit" >{% trans 'Resave Case' %}</button>
+                <button type="submit" class="btn btn-default disable-on-submit" >
+                    <i class="fa fa-save"></i>
+                    {% trans 'Resave Case' %}
+                </button>
             </form>
             <form action="{% url 'rebuild_case' domain case_id %}" method="post" class="pull-left">{% csrf_token %}
-                 <button type="submit" class="btn btn-primary disable-on-submit" >{% trans 'Rebuild Case' %}</button>
+                <button type="submit" class="btn btn-default disable-on-submit" >
+                    <i class="fa fa-cubes"></i>
+                    {% trans 'Rebuild Case' %}
+                </button>
             </form>
         {% endif %}
         {% if not case.closed and not is_usercase %}
             <form action="{% url 'close_case' domain case_id %}" method="post" id="close_case" class="pull-left">{% csrf_token %}
-                 <button type="submit" class="btn btn-danger disable-on-submit" >{% trans 'Close Case' %}</button>
+                <button type="submit" class="btn btn-danger disable-on-submit" >
+                    <i class="fa fa-archive"></i>
+                    {% trans 'Close Case' %}
+                </button>
             </form>
         {% endif %}
         </div>
     </div>
+    {% endif %}
     {% endif %}
 </div>
 {% endblock %}
