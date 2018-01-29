@@ -102,7 +102,7 @@ class BaseNikshayPayloadGenerator(BasePayloadGenerator):
             "Source": ENIKSHAY_ID,
             "IP_From": server_ip,
             "IP_FROM": server_ip,
-            "ip_address": server_ip,
+            "IPaddress": server_ip,
         }
 
     @staticmethod
@@ -721,12 +721,12 @@ def _get_person_case_properties_v2(episode_case, person_case, person_case_proper
         "PTown": person_case_properties.get('current_address_village_town_city', ''),
         "PTaluka": person_case_properties.get('current_address_block_taluka_mandal', ''),
         "PLandmark": person_case_properties.get('current_address_landmark', ''),
-        "PPincode": person_case_properties.get('current_address_postal_code', '888888'),
+        "Ppincode": person_case_properties.get('current_address_postal_code', '888888'),
         "PState": state,
         "PDistrict": district,
         "Socioeconomic_Status": person_case_properties.get('socioeconomic_status', 'NA').upper(),
         "HivStatus": hiv_status.get(person_case_properties.get('hiv_status'), hiv_status.get('unknown')),
-        "marital_status": marital_status.get(
+        "Maritial_Status": marital_status.get(
             person_case_properties.get('marital_status'),
             marital_status.get('unmarried')),
         "IDdates": str(datetime.date.today()),
@@ -823,12 +823,12 @@ def _get_episode_case_properties_v2(episode_case_properties, occurence_case, per
         # key populations is multiple choice and hence can have two options like "diabetes tobacco"
         # so pick the first option
         occurrence_key_population = occurrence_key_population.split(' ')[0]
-        episode_properties['key_population'] = key_population.get(
+        episode_properties['KeyPopulation'] = key_population.get(
             occurrence_key_population,
             key_population.get('other')
         )
     else:
-        episode_properties['key_population'] = '11'  # Not Applicable
+        episode_properties['KeyPopulation'] = '11'  # Not Applicable
 
     return episode_properties
 
