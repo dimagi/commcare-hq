@@ -80,8 +80,7 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
             query = query.OR(self.scope_filter())
 
         search_string = CaseSearchFilter.get_value(self.request, self.domain)
-        if search_string:
-            query = query.set_query({"query_string": {"query": search_string}})
+        query = query.search_string_query(search_string)
 
         return query
 
