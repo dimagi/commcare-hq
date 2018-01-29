@@ -42,6 +42,8 @@ class CustomDataField(JsonObject):
     is_required = BooleanProperty()
     label = StringProperty()
     choices = StringListProperty()
+    regex = StringProperty()
+    regex_msg = StringProperty()
     is_multiple_choice = BooleanProperty(default=False)
     # Currently only relevant for location fields
     index_in_fixture = BooleanProperty(default=False)

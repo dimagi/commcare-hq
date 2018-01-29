@@ -7,7 +7,7 @@ from django.core.validators import RegexValidator, validate_slug
 from django.utils.translation import ugettext as _, ugettext_lazy
 from django import forms
 from corehq.apps.hqwebapp.decorators import use_jquery_ui
-from corehq.toggles import MULTIPLE_CHOICE_CUSTOM_FIELD
+from corehq.toggles import MULTIPLE_CHOICE_CUSTOM_FIELD, REGEX_FIELD_VALIDATION
 
 from dimagi.utils.decorators.memoized import memoized
 
@@ -80,6 +80,8 @@ class CustomDataFieldForm(forms.Form):
     is_required = forms.BooleanField(required=False)
     choices = forms.CharField(widget=forms.HiddenInput, required=False)
     is_multiple_choice = forms.BooleanField(required=False)
+    regex = forms.CharField(required=False)
+    regex_msg = forms.CharField(required=False)
     index_in_fixture = forms.BooleanField(required=False)
 
     def __init__(self, raw, *args, **kwargs):
@@ -140,14 +142,26 @@ class CustomDataModelMixin(object):
         definition.save()
 
     def get_field(self, field):
-        multiple_choice_enabled = MULTIPLE_CHOICE_CUSTOM_FIELD.enabled(self.domain)
+        if REGEX_FIELD_VALIDATION.enabled(self.domain) and field.get('regex'):
+            choices = []
+            is_multiple_choice = False
+            regex = field.get('regex')
+            regex_msg = field.get('regex_msg')
+        else:
+            choices = field.get('choices')
+            is_multiple_choice = (field.get('is_multiple_choice')
+                                  if MULTIPLE_CHOICE_CUSTOM_FIELD.enabled(self.domain)
+                                  else False)
+            regex = None
+            regex_msg = None
         return CustomDataField(
             slug=field.get('slug'),
             is_required=field.get('is_required'),
             label=field.get('label'),
-            choices=field.get('choices'),
-            is_multiple_choice=(field.get('is_multiple_choice')
-                                if multiple_choice_enabled else False),
+            choices=choices,
+            is_multiple_choice=is_multiple_choice,
+            regex=regex,
+            regex_msg=regex_msg,
             index_in_fixture=field.get('index_in_fixture'),
         )
 

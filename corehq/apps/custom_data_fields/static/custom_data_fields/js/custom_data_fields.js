@@ -10,25 +10,49 @@ function CustomDataField () {
     self.label = ko.observable();
     self.is_required = ko.observable();
     self.choices = ko.observableArray();
-    self.multipleChoice = ko.observable();
+    self.validationMode = ko.observable(); // 'choice' or 'regex'
+    self.multiple_choice = ko.observable();
+    self.regex = ko.observable();
+    self.regex_msg = ko.observable();
     self.index_in_fixture = ko.observable();
 
     self.addChoice = function () {
+        self.validationMode('choice');
         self.choices.unshift(new Choice());
     };
 
     self.removeChoice = function (choice) {
         self.choices.remove(choice);
+        if (self.choices().length === 0) {
+            self.validationMode(undefined);
+        }
+    };
+
+    self.addRegex = function () {
+        self.validationMode('regex');
+    };
+
+    self.removeRegex = function () {
+        self.validationMode(undefined);
+        self.regex(undefined);
+        self.regex_msg(undefined);
     };
 
     self.init = function (field) {
         self.slug(field.slug);
         self.label(field.label);
         self.is_required(field.is_required);
-        self.choices(field.choices.map(function (choice) {
-            return new Choice(choice);
-        }));
-        self.multipleChoice(field.is_multiple_choice);
+        if (field.choices.length > 0) {
+            self.validationMode('choice');
+            self.choices(field.choices.map(function (choice) {
+                return new Choice(choice);
+            }));
+        } else if (field.regex) {
+            self.validationMode('regex');
+            self.regex(field.regex);
+            self.regex_msg(field.regex_msg);
+        }
+        self.multiple_choice(field.is_multiple_choice);
         self.index_in_fixture(field.index_in_fixture);
     };
 
@@ -45,13 +69,18 @@ function CustomDataField () {
         _.each(choicesToRemove, function (choice) {
             self.removeChoice(choice);
         });
+        if (!self.regex()) {
+            self.removeRegex();
+        }
 
         return {
             'slug': self.slug(),
             'label': self.label(),
             'is_required': self.is_required(),
             'choices': choices,
-            'is_multiple_choice': self.multipleChoice(),
+            'regex': self.regex(),
+            'regex_msg': self.regex_msg(),
+            'is_multiple_choice': self.multiple_choice(),
             'index_in_fixture': self.index_in_fixture(),
         };
     };

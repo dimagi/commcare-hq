@@ -156,9 +156,20 @@
                                         <input type="checkbox" data-bind="checked: is_required"/>
                                     </td>
                                     <td>
-                                        <a data-bind="click: addChoice" type="button" class="btn btn-primary" >
+
+                                        <button data-bind="enable: !validationMode() || validationMode() === 'choice',
+                                                           click: addChoice"
+                                                type="button" class="btn btn-primary" >
                                             <i class="fa fa-plus"></i> {% trans "Add Choice" %}
-                                        </a>
+                                        </button>
+
+                                        {% if request|toggle_enabled:"REGEX_FIELD_VALIDATION" %}
+                                        <button data-bind="enable: !validationMode(), click: addRegex"
+                                                type="button" class="btn btn-primary" >
+                                            <i class="fa fa-plus"></i> {% trans "Add Regex" %}
+                                        </button>
+                                        {% endif %}
+
                                         <ul data-bind="sortable: choices" class="list-unstyled choices-list">
                                             <li data-bind="attr: {'data-order': _sortableOrder}">
                                                 <div class="input-group">
@@ -168,16 +179,29 @@
                                                         <a type="button"
                                                            class="btn btn-danger"
                                                            data-bind="click: $parent.removeChoice">
-                                                            &times;
+                                                            <i class="fa fa-times"></i>
                                                         </a>
                                                     </div>
                                                  </div>
                                             </li>
                                         </ul>
+
+                                        {% if request|toggle_enabled:"REGEX_FIELD_VALIDATION" %}
+                                        <div data-bind="visible: validationMode() === 'regex'">
+                                            <input data-bind="value: regex" class="form-control" type="text"
+                                                   placeholder="{% trans "Regular Expression" %}"/>
+                                            <input data-bind="value: regex_msg" class="form-control" type="text"
+                                                   placeholder="{% trans "Validation Message" %}"/>
+                                            <a data-bind="click: removeRegex" type="button" class="btn btn-danger">
+                                                <i class="fa fa-times"></i> {% trans "Remove Regex" %}
+                                            </a>
+                                        </div>
+                                        {% endif %}
+
                                         {% if request|toggle_enabled:"MULTIPLE_CHOICE_CUSTOM_FIELD" %}
                                             <span data-bind="visible: choices().length !== 0">
                                                 <label style="display: inline" for="multipleChoice">{% trans 'Multiple choice' %}: </label>
-                                                <input data-bind="checked: multipleChoice" id="multipleChoice" type="checkbox"/>
+                                                <input data-bind="checked: multiple_choice" id="multipleChoice" type="checkbox"/>
                                             </span>
                                         {% endif %}
                                     </td>
