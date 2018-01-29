@@ -11,6 +11,7 @@ from django.utils.translation import ugettext_lazy as _, ungettext
 from couchexport.models import SavedExportSchema
 
 from corehq import privileges
+from corehq.apps.accounting.models import SoftwarePlanEdition
 from corehq.apps.accounting.utils import (
     get_active_reminders_by_domain_name,
     log_accounting_error,
@@ -478,28 +479,48 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
                 return
             num_allowed = user_rate.monthly_limit
             num_extra = num_users - num_allowed
+
             if num_extra > 0:
-                return _fmt_alert(
-                    ungettext(
-                        "You have %(num_users)d Mobile Worker over the monthly "
-                        "limit of %(monthly_limit)d for this new plan. There "
-                        "will be an additional monthly charge of USD "
-                        "%(excess_fee)s per Mobile Worker, totalling USD "
-                        "%(monthly_total)s per month, if you select this plan.",
-                        "You have %(num_users)d Mobile Workers over the "
-                        "monthly limit of %(monthly_limit)d for this new plan. "
-                        "There will be an additional monthly charge "
-                        "of USD %(excess_fee)s per Mobile Worker, totalling "
-                        "USD %(monthly_total)s per month, if you "
-                        "select this plan.",
-                        num_extra
-                    ) % {
-                        'num_users': num_extra,
-                        'monthly_limit': user_rate.monthly_limit,
-                        'excess_fee': user_rate.per_excess_fee,
-                        'monthly_total': user_rate.per_excess_fee * num_extra,
-                    }
-                )
+                if self.new_plan_version != SoftwarePlanEdition.COMMUNITY:
+                    return _fmt_alert(
+                        ungettext(
+                            "You have %(num_extra)d Mobile Worker over the monthly "
+                            "limit of %(monthly_limit)d for this new plan. There "
+                            "will be an additional monthly charge of USD "
+                            "%(excess_fee)s per Mobile Worker, totalling USD "
+                            "%(monthly_total)s per month, if you select this plan.",
+
+                            "You have %(num_extra)d Mobile Workers over the "
+                            "monthly limit of %(monthly_limit)d for this new plan. "
+                            "There will be an additional monthly charge "
+                            "of USD %(excess_fee)s per Mobile Worker, totalling "
+                            "USD %(monthly_total)s per month, if you "
+                            "select this plan.",
+                            num_extra
+                        ) % {
+                            'num_extra': num_extra,
+                            'monthly_limit': user_rate.monthly_limit,
+                            'excess_fee': user_rate.per_excess_fee,
+                            'monthly_total': user_rate.per_excess_fee * num_extra,
+                        }
+                    )
+                else:
+                    return _fmt_alert(
+                        ungettext(
+                            "Community plans include 10 Mobile Workers by default. "
+                            "Because you have %(num_extra)d Mobile Worker over this, "
+                            "All your project's Mobile Workers will be deactivated. "
+                            "You can re-activate these manually after downgrade. ",
+
+                            "Community plans include 10 Mobile Workers by default. "
+                            "Because you have %(num_extra)d Mobile Workers over this, "
+                            "All your project's Mobile Workers will be deactivated. "
+                            "You can re-activate these manually after downgrade. ",
+                            num_extra
+                        ) % {
+                            'num_extra': num_extra,
+                        }
+                    )
         except FeatureRate.DoesNotExist:
             log_accounting_error(
                 "It seems that the plan %s did not have rate for Mobile "
