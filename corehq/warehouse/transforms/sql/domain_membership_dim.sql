@@ -1,17 +1,22 @@
 -- remove memberships if there is update to user's domains
-DELETE FROM domain_membership_dim AS dm_dim
-INNER JOIN user_dim
-    dm_dim.user_dim = user_dim.id
-INNER JOIN user_staging
-    user_staging.user_id = user_dim.user_id
+-- ToDo: Fix query
+DELETE dm_dim
+FROM warehouse_domainmembershipdim AS dm_dim
+INNER JOIN (
+    SELECT user_dim.id
+    FROM warehouse_userdim as user_dim
+    INNER JOIN warehouse_userstagingtable as user_staging ON
+    user_staging.user_id = user_dim.user_id)
+updated_users ON dm_dim.user_dim_id = updated_users.id;
 
-INSERT INTO {{ domain_membership_dim }} (
+INSERT INTO warehouse_domainmembershipdim (
     dim_last_modified,
     dim_created_on,
-    user_dim,
+    user_dim_id,
     domain,
     is_domain_admin,
-    deleted
+    deleted,
+    batch_id
 )
 -- webuser memberships
 SELECT
@@ -20,7 +25,8 @@ SELECT
     ddm.id as user_dim_id,
     (ddm.memberships ->> 'domain') as domain,
     (ddm.memberships ->> 'is_admin')::boolean as is_domain_admin,
-    ddm.deleted
+    ddm.deleted,
+    4
 FROM
     (
     SELECT 
@@ -40,7 +46,8 @@ SELECT
     user_dim.id as user_dim_id,
     user_staging.domain,
     false as is_domain_admin,
-    user_dim.deleted
+    user_dim.deleted,
+    4
 FROM warehouse_userstagingtable AS user_staging
 INNER JOIN warehouse_userdim AS user_dim 
 ON user_staging.user_id = user_dim.user_id
