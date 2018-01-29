@@ -506,18 +506,27 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
                 else:
                     return _fmt_alert(
                         ungettext(
-                            "Community plans include 10 Mobile Workers by default. "
+                            "Community plans include %(monthly_limit)s Mobile Workers by default. "
                             "Because you have %(num_extra)d extra Mobile Worker, "
                             "All your project's Mobile Workers will be deactivated. "
-                            "You can re-activate these manually after downgrade. ",
+                            "You can re-activate these manually after downgrade. "
+                            "Each active Mobile Worker over %(monthly_limit)s will result "
+                            "in an additional charge of USD %(excess_fee)s, totalling "
+                            "USD %(monthly_total)s per month."
 
-                            "Community plans include 10 Mobile Workers by default. "
+                            "Community plans include %(monthly_limit)s Mobile Workers by default. "
                             "Because you have %(num_extra)d extra Mobile Workers, "
                             "All your project's Mobile Workers will be deactivated. "
-                            "You can re-activate these manually after downgrade. ",
+                            "You can re-activate these manually after downgrade. "
+                            "Each active Mobile Worker over %(monthly_limit)s will result "
+                            "in an additional charge of USD %(excess_fee)s, totalling "
+                            "USD %(monthly_total)s per month.",
                             num_extra
                         ) % {
                             'num_extra': num_extra,
+                            'monthly_limit': user_rate.monthly_limit,
+                            'excess_fee': user_rate.per_excess_fee,
+                            'monthly_total': user_rate.per_excess_fee * num_extra,
                         }
                     )
         except FeatureRate.DoesNotExist:
