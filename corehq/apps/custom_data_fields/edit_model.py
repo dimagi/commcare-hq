@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 import json
+import re
 
 from django.contrib import messages
 from django.core.exceptions import ValidationError
@@ -93,6 +94,15 @@ class CustomDataFieldForm(forms.Form):
 
     def clean_choices(self):
         return self._raw_choices
+
+    def clean_regex(self):
+        regex = self.cleaned_data.get('regex')
+        if regex:
+            try:
+                re.compile(regex)
+            except Exception:
+                raise ValidationError(_("Not a valid regular expression"))
+        return regex
 
 
 class CustomDataModelMixin(object):
