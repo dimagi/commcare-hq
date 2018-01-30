@@ -146,7 +146,15 @@ class ScheduleInstance(PartitionedModel):
                 yield user
         elif isinstance(self.recipient, SQLLocation):
             location = self.recipient
-            if self.memoized_schedule.include_descendant_locations:
+            if (
+                self.recipient_type == self.RECIPIENT_TYPE_LOCATION and
+                self.memoized_schedule.include_descendant_locations
+            ):
+                # Only include descendant locations when the recipient_type
+                # is RECIPIENT_TYPE_LOCATION. This is because we only do this
+                # for locations the user selected in the UI, and not for
+                # locations that happen to get here because they are a case
+                # owner, for example.
                 location_ids = location.get_descendants(include_self=True).filter(is_archived=False).location_ids()
             else:
                 location_ids = [location.location_id]
