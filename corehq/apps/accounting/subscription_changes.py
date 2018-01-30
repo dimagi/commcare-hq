@@ -248,8 +248,7 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
         num_users = CommCareUser.total_by_domain(
             domain.name, is_active=True)
         num_allowed = user_rate.monthly_limit
-        num_extra = num_users - num_allowed
-        if num_extra > 0:
+        if num_users > num_allowed:
             # offloads deactivation onto a separate thread
             bulk_deactivate_users.delay(domain)
         return True

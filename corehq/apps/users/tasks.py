@@ -296,5 +296,7 @@ def bulk_deactivate_users(domain):
     from corehq.apps.users.dbaccessors import get_all_commcare_users_by_domain
     users = get_all_commcare_users_by_domain(domain.name)
     for user in users:
+        if not user.is_active:
+            continue
         user.is_active = False
         user.save()
