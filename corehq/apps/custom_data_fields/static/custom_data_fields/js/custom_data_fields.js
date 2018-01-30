@@ -17,25 +17,11 @@ function CustomDataField () {
     self.index_in_fixture = ko.observable();
 
     self.addChoice = function () {
-        self.validationMode('choice');
         self.choices.unshift(new Choice());
     };
 
     self.removeChoice = function (choice) {
         self.choices.remove(choice);
-        if (self.choices().length === 0) {
-            self.validationMode(undefined);
-        }
-    };
-
-    self.addRegex = function () {
-        self.validationMode('regex');
-    };
-
-    self.removeRegex = function () {
-        self.validationMode(undefined);
-        self.regex(undefined);
-        self.regex_msg(undefined);
     };
 
     self.init = function (field) {
