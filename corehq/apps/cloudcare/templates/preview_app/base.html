@@ -26,6 +26,7 @@
 {% block csrf_token_block %}
     <input id="csrfTokenContainer" type="hidden" value="{{ csrf_token }}">
 {% endblock %}
+{% analytics_ab_test 'kissmetrics.data_feedback_loop_feb2018' ab_test %}
 <section id="case-crumbs" style="width: 800px"></section>
 <section id="cases"></section>
 <div id="menu-container">
