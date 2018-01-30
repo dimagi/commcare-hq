@@ -76,14 +76,20 @@ class PrevisionVsAchievementsView(ChampView):
             'domain': domain,
             'age': get_age_ranges(self.get_list_property('kp_prev_age')),
             'district': self.get_list_property('kp_prev_district'),
-            'visit_date_start': self.post_data.get('kp_prev_visit_date_start', None),
-            'visit_date_end': self.post_data.get('kp_prev_visit_date_end', None),
+
             'activity_type': self.post_data.get('kp_prev_activity_type', None),
             'type_visit': self.post_data.get('kp_prev_visit_type', None),
             'client_type': self.get_list_property('kp_prev_client_type'),
             'user_id': get_user_ids_for_group(self.get_list_property('kp_prev_user_group')),
             'want_hiv_test': self.post_data.get('kp_prev_want_hiv_test', None),
         }
+        visit_date = self.post_data.get('kp_prev_visit_date', '')
+        if visit_date:
+            start, end = visit_date.split(' - ')
+            config.update({
+                'visit_date_start': start,
+                'visit_date_end': end
+            })
         achievement = UICFromEPMDataSource(config=config).data
         return achievement.get(PREVENTION_XMLNS, {}).get('uic', 0)
 
@@ -409,9 +415,9 @@ class UserGroupsFilter(View):
     def get(self, request, *args, **kwargs):
         domain = self.kwargs['domain']
         groups = Group.by_domain(domain)
-        options = [{'id': '', 'value': 'All'}]
+        options = [{'id': '', 'text': 'All'}]
         return JsonResponse(data={
-            'options': options + [{'id': group.get_id, 'value': group.name} for group in groups]
+            'options': options + [{'id': group.get_id, 'text': group.name} for group in groups]
         })
 
 
@@ -436,13 +442,13 @@ class HierarchyFilter(View):
         def to_filter_format(data, parent_key=None):
             locations = [dict(
                 id='',
-                value='All'
+                text='All'
             )]
             for row in data:
                 loc_id = row.fields['id'].field_list[0].field_value
                 loc = dict(
                     id=loc_id,
-                    value=loc_id
+                    text=loc_id
                 )
                 if parent_key:
                     parent_id = row.fields[parent_key].field_list[0].field_value
