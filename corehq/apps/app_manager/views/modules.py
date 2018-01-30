@@ -953,7 +953,7 @@ def new_module(request, domain, app_id):
                     condition=FormActionCondition(type='always'))
 
                 # one followup form
-                followup = app.new_form(module_id, _("Followup Form"), lang)
+                followup = app.new_form(module_id, _("Followup Form"), lang, attachment="default_followup_form")
                 followup.requires = "case"
                 followup.actions.update_case = UpdateCaseAction(condition=FormActionCondition(type='always'))
 

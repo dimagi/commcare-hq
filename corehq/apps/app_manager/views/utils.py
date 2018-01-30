@@ -149,6 +149,13 @@ def get_blank_form_xml(form_name):
         'name': form_name,
     })
 
+def get_default_followup_form_xml(form_name, context):
+    context.update({
+        'xmlns': str(uuid.uuid4()).upper(),
+        'name': form_name}
+    )
+    return render_to_string("app_manager/default_followup_form.xml", context=context)
+
 
 def overwrite_app(app, master_build, report_map=None):
     excluded_fields = set(Application._meta_fields).union([
