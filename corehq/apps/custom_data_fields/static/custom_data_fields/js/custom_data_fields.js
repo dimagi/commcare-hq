@@ -16,6 +16,11 @@ function CustomDataField () {
     self.regex_msg = ko.observable();
     self.index_in_fixture = ko.observable();
 
+    if (!hqImport('hqwebapp/js/toggles').toggleEnabled('REGEX_FIELD_VALIDATION')) {
+        // if toggle isn't enabled - always show "choice" option
+        self.validationMode('choice');
+    }
+
     self.addChoice = function () {
         self.choices.unshift(new Choice());
     };
