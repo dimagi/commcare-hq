@@ -777,7 +777,7 @@ def _get_person_case_properties_v2(episode_case, person_case, person_case_proper
                                              DUMMY_VALUES['null']),
         "p_landmark": person_case_properties.get('current_address_landmark', ''),
         "p_pincode": property_value_or_backup(person_case_properties.get('current_address_postal_code'),
-                                              '888888'),
+                                              DUMMY_VALUES['pincode']),
         "p_state": state_nikshay_code,
         "p_district": district_nikshay_code,
         "socio_economic_status": property_value_or_backup(person_case_properties.get('socioeconomic_status'),
