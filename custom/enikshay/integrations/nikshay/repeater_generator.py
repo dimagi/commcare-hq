@@ -755,6 +755,10 @@ def _get_person_case_properties(episode_case, person_case, person_case_propertie
     return person_properties
 
 
+def property_value_or_backup(property_value, backup_value):
+    return property if property_value else backup_value
+
+
 def _get_person_case_properties_v2(episode_case, person_case, person_case_properties):
     state_id = _get_location_nikshay_id(person_case_properties.get('current_address_state_choice'),
                                         state_codes)
@@ -769,20 +773,26 @@ def _get_person_case_properties_v2(episode_case, person_case, person_case_proper
         "age": _get_person_age(person_case_properties),
         "p_house_no": person_case_properties.get('current_address', ''),
         # send 0 since that is accepted by Nikshay for this mandatory field
-        "contact_no": (person_case_properties.get(PRIMARY_PHONE_NUMBER) or '0'),
-        "contact_person_name": person_case_properties.get('secondary_contact_name_address', DUMMY_VALUES['null']),
-        "contact_person_address": person_case_properties.get('secondary_contact_name_address', DUMMY_VALUES['null']),
-        "contact_person_mobile_no": person_case_properties.get(BACKUP_PHONE_NUMBER, DUMMY_VALUES['phone_number']),
+        "contact_no": property_value_or_backup(person_case_properties.get(PRIMARY_PHONE_NUMBER), '0'),
+        "contact_person_name": property_value_or_backup(person_case_properties.get('secondary_contact_name_address'),
+                                                        DUMMY_VALUES['null']),
+        "contact_person_address": property_value_or_backup(person_case_properties.get('secondary_contact_name_address'),
+                                                           DUMMY_VALUES['null']),
+        "contact_person_mobile_no": property_value_or_backup(person_case_properties.get(BACKUP_PHONE_NUMBER),
+                                                             DUMMY_VALUES['phone_number']),
         "area": area.get(
             person_case_properties.get('area'),
             area.get('not_known')),
         "p_town": person_case_properties.get('current_address_village_town_city', ''),
-        "p_taluka": person_case_properties.get('current_address_block_taluka_mandal', DUMMY_VALUES['null']),
+        "p_taluka": property_value_or_backup(person_case_properties.get('current_address_block_taluka_mandal'),
+                                             DUMMY_VALUES['null']),
         "p_landmark": person_case_properties.get('current_address_landmark', ''),
-        "p_pincode": person_case_properties.get('current_address_postal_code', '888888'),
+        "p_pincode": property_value_or_backup(person_case_properties.get('current_address_postal_code'),
+                                              '888888'),
         "p_state": state_id,
         "p_district": district_id,
-        "socio_economic_status": person_case_properties.get('socioeconomic_status', 'NA').upper(),
+        "socio_economic_status": property_value_or_backup(person_case_properties.get('socioeconomic_status'),
+                                                          'NA').upper(),
         "hiv_status": hiv_status.get(person_case_properties.get('hiv_status'), hiv_status.get('unknown')),
         "maritial_status": marital_status.get(
             person_case_properties.get('marital_status'),
