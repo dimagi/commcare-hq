@@ -71,7 +71,7 @@ class OpenRosaResponse(object):
 
 def get_openarosa_success_response(message=None):
     if not message:
-        message = _(u'A specific message')
+        message = _(u'Form successfully saved!')
     return get_openrosa_reponse(message, ResponseNature.SUBMIT_SUCCESS, 201)
 
 SUBMISSION_IGNORED_RESPONSE = get_openrosa_reponse(

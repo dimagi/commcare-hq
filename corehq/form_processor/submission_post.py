@@ -13,6 +13,8 @@ from django.http import (
     HttpResponseForbidden,
 )
 from django.conf import settings
+from django.urls import reverse
+from django.utils.translation import ugettext as _
 import sys
 from casexml.apps.phone.restore_caching import AsyncRestoreTaskIdCache, RestorePayloadPathCache
 import couchforms
@@ -154,7 +156,7 @@ class SubmissionPost(object):
         cases = []
         ledgers = []
         submission_type = 'unknown'
-        response_nature = error_message = None
+        openrosa_kwargs = {}
         with result.get_locked_forms() as xforms:
             from casexml.apps.case.xform import get_and_check_xform_domain
             domain = get_and_check_xform_domain(xforms[0])
@@ -197,11 +199,11 @@ class SubmissionPost(object):
                         result = reprocess_form(existing_form, lock_form=False)
                     if result and result.error:
                         submission_type = 'error'
-                        error_message = result.error
+                        openrosa_kwargs['error_message'] = result.error
                         if existing_form.is_error:
-                            response_nature = ResponseNature.PROCESSING_FAILURE
+                            openrosa_kwargs['error_nature'] = ResponseNature.PROCESSING_FAILURE
                         else:
-                            response_nature = ResponseNature.POST_PROCESSING_FAILURE
+                            openrosa_kwargs['error_nature'] = ResponseNature.POST_PROCESSING_FAILURE
                     else:
                         self.interface.save_processed_models([instance])
                 elif not instance.is_error:
@@ -212,7 +214,7 @@ class SubmissionPost(object):
                             PhoneDateValueError, InvalidCaseIndex, CaseValueError) as e:
                         self._handle_known_error(e, instance, xforms)
                         submission_type = 'error'
-                        response_nature = ResponseNature.PROCESSING_FAILURE
+                        openrosa_kwargs['error_nature'] = ResponseNature.PROCESSING_FAILURE
                     except Exception as e:
                         # handle / log the error and reraise so the phone knows to resubmit
                         # note that in the case of edit submissions this won't flag the previous
@@ -222,15 +224,38 @@ class SubmissionPost(object):
                         raise
                     else:
                         instance.initial_processing_complete = True
-                        error_message = self.save_processed_models(case_db, xforms, case_stock_result)
-                        if error_message:
-                            response_nature = ResponseNature.POST_PROCESSING_FAILURE
+                        openrosa_kwargs['error_message'] = self.save_processed_models(case_db, xforms, case_stock_result)
+                        if openrosa_kwargs['error_message']:
+                            openrosa_kwargs['error_nature'] = ResponseNature.POST_PROCESSING_FAILURE
                         cases = case_stock_result.case_models
                         ledgers = case_stock_result.stock_result.models_to_save
+
+                        from corehq.apps.export.views import CaseExportListView, FormExportListView
+                        from corehq.apps.reports.views import CaseDetailsView, FormDataView
+                        messages = [_('Form successfully saved!')]
+                        form_link = reverse(FormDataView.urlname, args=[instance.domain, instance._id])
+                        form_export_link = reverse(FormExportListView.urlname, args=[instance.domain])
+                        if cases:
+                            case_link = reverse(CaseDetailsView.urlname, args=[instance.domain, cases[0]._id])
+                            case_export_link = reverse(CaseExportListView.urlname, args=[instance.domain])
+                            messages.append(_('''
+                                You just submitted <a href="{}">this form</a>, which affected <a href="{}">this case</a>.
+                            ''').format(form_link, case_link))
+                            messages.append(_('''
+                                Click to export your <a href="{}">case</a> or <a href="{}">form</a> data.
+                            ''').format(case_export_link, form_export_link))
+                        else:
+                            messages.append(_('''
+                                You just submitted <a href="{}">this form</a>.
+                            ''').format(form_link))
+                            messages.append(_('''
+                                Click to export your <a href="{}">form</a> data.
+                            ''').format(form_export_link))
+                        openrosa_kwargs['success_message'] = "<br><br>".join(messages)
                 elif instance.is_error:
                     submission_type = 'error'
 
-            response = self._get_open_rosa_response(instance, error_message, response_nature)
+            response = self._get_open_rosa_response(instance, **openrosa_kwargs)
             return FormProcessingResult(response, instance, cases, ledgers, submission_type)
 
     def _invalidate_caches(self, xform):
@@ -342,12 +367,12 @@ class SubmissionPost(object):
         if has_errors:
             raise PostSaveError
 
-    def _get_open_rosa_response(self, instance, error_message=None, error_nature=None):
+    def _get_open_rosa_response(self, instance, success_message=None, error_message=None, error_nature=None):
         if self.is_openrosa_version3:
             instance_ok = instance.is_normal or instance.is_duplicate
             has_error = error_message or error_nature
             if instance_ok and not has_error:
-                response = openrosa_response.get_openarosa_success_response()
+                response = openrosa_response.get_openarosa_success_response(message=success_message)
             else:
                 error_message = error_message or instance.problem
                 response = self.get_retry_response(error_message, error_nature)
