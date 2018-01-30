@@ -252,7 +252,7 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
         if num_extra > 0:
             # offloads deactivation onto a separate thread
             bulk_deactivate_users.delay(domain)
-            return True
+        return True
 
 
 class DomainUpgradeActionHandler(BaseModifySubscriptionActionHandler):
