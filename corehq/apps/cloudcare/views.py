@@ -253,13 +253,15 @@ class PreviewAppView(TemplateView):
     def get(self, request, *args, **kwargs):
         app = get_app(request.domain, kwargs.pop('app_id'))
         ab_test = ab_tests.ABTest(ab_tests.DATA_FEEDBACK_LOOP, self.request)
-        return self.render_to_response({
+        response = self.render_to_response({
             'app': app,
             'formplayer_url': settings.FORMPLAYER_URL,
             "maps_api_key": settings.GMAPS_API_KEY,
             "environment": PREVIEW_APP_ENVIRONMENT,
-            'ab_test': ab_test.context,
+            'ab_test': ab_test.context,     # sets ab test version if needed
         })
+        ab_test.update_response(response)
+        return response
 
 
 class SingleAppLandingPageView(TemplateView):
