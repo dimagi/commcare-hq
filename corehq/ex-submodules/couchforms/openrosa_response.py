@@ -69,7 +69,11 @@ class OpenRosaResponse(object):
         return HttpResponse(self.xml(), status=self.status)
 
 
-SUCCESS_RESPONSE = get_openrosa_reponse(_(u'A specific message'), ResponseNature.SUBMIT_SUCCESS, 201)
+def get_openarosa_success_response(message=None):
+    if not message:
+        message = _(u'A specific message')
+    return get_openrosa_reponse(message, ResponseNature.SUBMIT_SUCCESS, 201)
+
 SUBMISSION_IGNORED_RESPONSE = get_openrosa_reponse(
     _(u'Form successfully saved (this submission was ignored)'), ResponseNature.SUBMIT_SUCCESS, 201
 )

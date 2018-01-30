@@ -347,13 +347,13 @@ class SubmissionPost(object):
             instance_ok = instance.is_normal or instance.is_duplicate
             has_error = error_message or error_nature
             if instance_ok and not has_error:
-                response = openrosa_response.SUCCESS_RESPONSE
+                response = openrosa_response.get_openarosa_success_response()
             else:
                 error_message = error_message or instance.problem
                 response = self.get_retry_response(error_message, error_nature)
         else:
             if instance.is_normal:
-                response = openrosa_response.SUCCESS_RESPONSE
+                response = openrosa_response.get_openarosa_success_response()
             else:
                 response = self.get_v2_submit_error_response(instance)
 
