@@ -748,19 +748,24 @@ def _get_person_case_properties(episode_case, person_case, person_case_propertie
 
 
 def property_value_or_backup(property_value, backup_value):
-    return property if property_value else backup_value
+    return property_value if property_value else backup_value
 
 
 def _get_person_case_properties_v2(episode_case, person_case, person_case_properties):
     state_nikshay_code = _get_location_nikshay_code(person_case_properties.get('current_address_state_choice'))
     district_nikshay_code = _get_location_nikshay_code(person_case_properties.get('current_address_district_choice'))
-
+    house, street, ward = "", "", ""
+    current_address = person_case_properties.get('current_address', '')
+    if current_address:
+        house = current_address[0:50]
+        street = current_address[50:100]
+        ward = current_address[100:150]
     person_properties = {
         "patient_name": person_case.name,
         "gender": gender_mapping.get(person_case_properties.get('sex', ''), ''),
         # 2B is currently setting age_entered but we are in the short term moving it to use age instead
         "age": _get_person_age(person_case_properties),
-        "p_house_no": person_case_properties.get('current_address', ''),
+        "p_house_no": house,
         # send 0 since that is accepted by Nikshay for this mandatory field
         "contact_no": property_value_or_backup(person_case_properties.get(PRIMARY_PHONE_NUMBER), '0'),
         "contact_person_name": property_value_or_backup(person_case_properties.get('secondary_contact_name_address'),
@@ -787,10 +792,10 @@ def _get_person_case_properties_v2(episode_case, person_case, person_case_proper
             person_case_properties.get('marital_status'),
             marital_status.get('unmarried')),
         "id_dates": str(datetime.date.today()),
-        "p_street": "",
-        "p_ward": "",
-        "ifsc_code": DUMMY_VALUES['null'],
-        "account_no": DUMMY_VALUES['null'],
+        "p_street": street,
+        "p_ward": ward,
+        "ifsc_code": "",
+        "account_no": "",
         "bank_name": DUMMY_VALUES['null']
     }
     person_locations = get_person_locations(person_case, episode_case, v2=True)
