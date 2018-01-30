@@ -263,13 +263,13 @@ class TestFactSheetReportMaternalAndChildNutrition(TestCase):
             self.get_data()['config']['sections'][0]['rows_config'][11],
             {
                 'average': {
-                    'html': 66.66666666666667,
-                    'sort_key': 66.66666666666667
+                    'html': 50.0,
+                    'sort_key': 50.0
                 },
                 'data': [
                     {'html': 'Percent of children born in month with low birth weight'},
                     {'html': 0.0, 'sort_key': 0.0},
-                    {'html': 66.66666666666667, 'sort_key': 66.66666666666667},
+                    {'html': 50.0, 'sort_key': 50.0},
                     {'html': 0}
                 ],
                 'data_source': 'AggChildHealthMonthlyDataSource',
