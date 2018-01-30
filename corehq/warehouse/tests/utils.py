@@ -1,32 +1,31 @@
 from __future__ import absolute_import
-import uuid
-import random
-from datetime import datetime
 
-from django.conf import settings
-from django.core.management import call_command
+import random
+import uuid
+from datetime import datetime, timedelta
 from django.test import TestCase
 
-from corehq.form_processor.tests.utils import partitioned
-from corehq.warehouse.models import ApplicationStagingTable
-from corehq.warehouse.models import (
-    UserStagingTable,
-    GroupStagingTable,
-    LocationStagingTable,
-    LocationTypeStagingTable,
-    Batch,
-)
 import six
+from django.conf import settings
+from django.core.management import call_command
+
+from corehq.form_processor.tests.utils import partitioned
+from corehq.warehouse.models import (ApplicationStagingTable, Batch,
+    GroupStagingTable, LocationStagingTable, LocationTypeStagingTable,
+    UserStagingTable)
 
 
 def create_batch(slug):
-    now = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
+    # adding one second because last modified times have milliseconds while the command
+    # does not. this allows us to include all records modified at the same second
+    # which the records in the test are.
+    now = (datetime.utcnow() + timedelta(seconds=1)).strftime('%Y-%m-%d %H:%M:%S')
     call_command(
         'create_batch',
         slug,
         now
     )
-    return Batch.objects.filter(dag_slug=slug).order_by('-end_datetime').first()
+    return Batch.objects.filter(dag_slug=slug).order_by('-created_on').first()
 
 
 def complete_batch(id):
