@@ -123,7 +123,7 @@ function LocationModel(data, root, depth) {
     this.expanded = ko.observable(false);
 
     this.expanded.subscribe(function(val) {
-        if (val == true && (this.children_status() === 'not_loaded' || this.children_status() === 'semi_loaded')) {
+        if (val === true && (this.children_status() === 'not_loaded' || this.children_status() === 'semi_loaded')) {
             this.load_children_async();
         }
     }, this);
