@@ -43,20 +43,26 @@ function CustomDataField () {
     };
 
     self.serialize = function () {
-        var choices = [];
-        var choicesToRemove = [];
-        _.each(self.choices(), function (choice) {
-            if (choice.value()) {
-                choices.push(choice.value());
-            } else {
-                choicesToRemove.push(choice);
-            }
-        });
-        _.each(choicesToRemove, function (choice) {
-            self.removeChoice(choice);
-        });
-        if (!self.regex()) {
-            self.removeRegex();
+        var choices = [],
+            is_multiple_choice = null,
+            regex = null,
+            regex_msg = null;
+        if (self.validationMode() === 'choice') {
+            var choicesToRemove = [];
+            _.each(self.choices(), function (choice) {
+                if (choice.value()) {
+                    choices.push(choice.value());
+                } else {
+                    choicesToRemove.push(choice);
+                }
+            });
+            _.each(choicesToRemove, function (choice) {
+                self.removeChoice(choice);
+            });
+            is_multiple_choice = self.multiple_choice();
+        } else if (self.validationMode() === 'regex') {
+            regex = self.regex();
+            regex_msg = self.regex_msg();
         }
 
         return {
@@ -64,9 +70,9 @@ function CustomDataField () {
             'label': self.label(),
             'is_required': self.is_required(),
             'choices': choices,
-            'regex': self.regex(),
-            'regex_msg': self.regex_msg(),
-            'is_multiple_choice': self.multiple_choice(),
+            'regex': regex,
+            'regex_msg': regex_msg,
+            'is_multiple_choice': is_multiple_choice,
             'index_in_fixture': self.index_in_fixture(),
         };
     };
