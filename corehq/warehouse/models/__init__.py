@@ -5,6 +5,7 @@ from corehq.warehouse.models.dimensions import (
     LocationDim,
     DomainDim,
     UserLocationDim,
+    DomainMembershipDim,
     UserGroupDim,
     ApplicationDim
 )
@@ -47,6 +48,7 @@ def get_cls_by_slug(slug):
         LocationDim.slug: LocationDim,
         DomainDim.slug: DomainDim,
         UserLocationDim.slug: UserLocationDim,
+        DomainMembershipDim.slug: DomainMembershipDim,
         UserGroupDim.slug: UserGroupDim,
         ApplicationDim.slug: ApplicationDim,
 

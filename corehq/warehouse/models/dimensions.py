@@ -14,7 +14,8 @@ from corehq.warehouse.const import (
     LOCATION_STAGING_SLUG,
     LOCATION_TYPE_STAGING_SLUG,
     APPLICATION_DIM_SLUG,
-    APPLICATION_STAGING_SLUG
+    APPLICATION_STAGING_SLUG,
+    DOMAIN_MEMBERSHIP_DIM_SLUG,
 )
 
 from corehq.sql_db.routers import db_for_read_write
@@ -234,3 +235,21 @@ class ApplicationDim(BaseDim, CustomSQLETLMixin):
     @classmethod
     def dependencies(cls):
         return [APPLICATION_STAGING_SLUG]
+
+
+class DomainMembershipDim(BaseDim, CustomSQLETLMixin):
+    '''
+    Dimension for domain memberships for Web/CommCare users
+    '''
+    slug = DOMAIN_MEMBERSHIP_DIM_SLUG
+
+    domain = models.CharField(max_length=255)
+    user_dim = models.ForeignKey('UserDim', on_delete=models.CASCADE)
+    is_domain_admin = models.BooleanField()
+
+    @classmethod
+    def dependencies(cls):
+        return [USER_STAGING_SLUG, USER_DIM_SLUG]
+
+    class Meta:
+        unique_together = ('domain', 'user_dim')
