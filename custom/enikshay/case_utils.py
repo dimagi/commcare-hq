@@ -17,10 +17,6 @@ from custom.enikshay.exceptions import (
     NikshayCodeNotFound,
     NikshayLocationNotFound,
     ENikshayException)
-from custom.enikshay.integrations.nikshay.utils import (
-    forward_via_legacy_api,
-    forward_via_v2_api,
-)
 from corehq.form_processor.exceptions import CaseNotFound
 
 CASE_TYPE_ADHERENCE = "adherence"
@@ -350,7 +346,7 @@ def update_case(domain, case_id, updated_properties, external_id=None,
     )
 
 
-def get_person_locations(person_case, episode_case=None):
+def get_person_locations(person_case, episode_case=None, v2=False):
     """
     picks episode case's treatment_initiating_facility_id if passed else falls back to person's owner id for
     fetching the base location to get the hierarchy
@@ -363,15 +359,15 @@ def get_person_locations(person_case, episode_case=None):
     if person_case.dynamic_case_properties().get(ENROLLED_IN_PRIVATE) == 'true':
         return _get_private_locations(person_case)
     else:
-        return _get_public_locations(person_case, episode_case)
+        return _get_public_locations(person_case, episode_case, v2)
 
 
-def _get_public_locations(person_case, episode_case):
+def _get_public_locations(person_case, episode_case, v2=False):
     PublicPersonLocationHierarchy = namedtuple('PersonLocationHierarchy', 'sto dto tu phi')
     try:
         phi_location_id = None
         if episode_case:
-            if forward_via_v2_api(episode_case):
+            if v2:
                 phi_location_id = episode_case.dynamic_case_properties().get('diagnosing_facility_id')
             else:
                 phi_location_id = episode_case.dynamic_case_properties().get('treatment_initiating_facility_id')
@@ -641,9 +637,5 @@ def person_has_any_legacy_nikshay_notifiable_episode(person_case):
         return False
 
     episode_cases = get_all_episode_confirmed_tb_cases_from_person(domain, person_case.case_id)
-    return any(
-        (
-            valid_nikshay_patient_registration(episode_case.dynamic_case_properties()) and
-            forward_via_legacy_api(episode_case)
-        )
-        for episode_case in episode_cases)
+    return any(valid_nikshay_patient_registration(episode_case.dynamic_case_properties())
+               for episode_case in episode_cases)

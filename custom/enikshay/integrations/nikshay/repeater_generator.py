@@ -615,9 +615,9 @@ def _get_nikshay_id_from_response(response):
 def _get_nikshay_id_from_response_v2(response):
     """
     Sample response body
-        {u'error_message': None,
+        {
          u'nikshay_id': u'MH-BAN-01-01-17-0003    ',
-         u'success': True
+         u'message': "duplicate"
         }
     """
     try:
@@ -642,20 +642,15 @@ def _get_person_age(person_case_properties):
     return person_age
 
 
-def _get_location_nikshay_code(location_id):
+def _get_location_nikshay_id(location_id, codes):
     if location_id:
-        district_location = SQLLocation.active_objects.get_or_None(location_id=location_id)
-        if district_location:
-            return district_location.metadata.get('nikshay_code')
-    return ""
-
-
-def _get_location_name(location_id):
-    if location_id:
-        district_location = SQLLocation.active_objects.get_or_None(location_id=location_id)
-        if district_location:
-            return district_location.name
-    return ""
+        location = SQLLocation.active_objects.get_or_None(location_id=location_id)
+        if location:
+            nikshay_code = location.metadata.get('nikshay_code')
+            if nikshay_code:
+                state_details = codes.get(nikshay_code)
+                if state_details:
+                    return state_details[0]
 
 
 def _get_person_case_properties(episode_case, person_case, person_case_properties):
@@ -692,18 +687,11 @@ def _get_person_case_properties(episode_case, person_case, person_case_propertie
 
 
 def _get_person_case_properties_v2(episode_case, person_case, person_case_properties):
-    state, district = None, None
-    state_nikshay_code = _get_location_nikshay_code(person_case_properties.get('current_address_state_choice'))
-    if state_nikshay_code:
-        state_details = state_codes.get(state_nikshay_code)
-        if state_details:
-            state = state_details[0]
+    state_id = _get_location_nikshay_id(person_case_properties.get('current_address_state_choice'),
+                                        state_codes)
 
-    district_nikshay_code = _get_location_nikshay_code(person_case_properties.get('current_address_district_choice'))
-    if district_nikshay_code:
-        district_details = district_codes.get(district_nikshay_code)
-        if district_details:
-            district = district_details[0]
+    district_id = _get_location_nikshay_id(person_case_properties.get('current_address_district_choice'),
+                                           district_codes)
 
     person_properties = {
         "patient_name": person_case.name,
@@ -723,8 +711,8 @@ def _get_person_case_properties_v2(episode_case, person_case, person_case_proper
         "p_taluka": person_case_properties.get('current_address_block_taluka_mandal', ''),
         "p_landmark": person_case_properties.get('current_address_landmark', ''),
         "p_pincode": person_case_properties.get('current_address_postal_code', '888888'),
-        "p_state": state,
-        "p_district": district,
+        "p_state": state_id,
+        "p_district": district_id,
         "socio_economic_status": person_case_properties.get('socioeconomic_status', 'NA').upper(),
         "hiv_status": hiv_status.get(person_case_properties.get('hiv_status'), hiv_status.get('unknown')),
         "maritial_status": marital_status.get(
@@ -737,7 +725,7 @@ def _get_person_case_properties_v2(episode_case, person_case, person_case_proper
         "account_no": "",
         "bank_name": "NA"
     }
-    person_locations = get_person_locations(person_case, episode_case)
+    person_locations = get_person_locations(person_case, episode_case, v2=True)
     person_properties.update(
         {
             'reg_sto_code': person_locations.sto,

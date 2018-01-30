@@ -32,7 +32,6 @@ from custom.enikshay.const import (
     HEALTH_ESTABLISHMENT_SUCCESS_RESPONSE_REGEX,
     TREATMENT_INITIATED_IN_PHI,
     ENROLLED_IN_PRIVATE,
-    EPISODE_TYPE_CASE_PROPERTY,
 )
 from custom.enikshay.integrations.nikshay.repeater_generator import (
     NikshayRegisterPatientPayloadGenerator,
@@ -47,10 +46,6 @@ from custom.enikshay.integrations.utils import (
     is_valid_person_submission,
     is_valid_test_submission,
     is_valid_archived_submission,
-)
-from custom.enikshay.integrations.nikshay.utils import (
-    forward_via_v2_api,
-    forward_via_legacy_api,
 )
 
 from custom.enikshay.integrations.utils import case_properties_changed
@@ -95,7 +90,6 @@ class NikshayRegisterPatientRepeater(BaseNikshayRepeater):
                 not episode_case_properties.get('nikshay_registered', 'false') == 'true' and
                 not episode_case_properties.get('nikshay_id', False) and
                 valid_nikshay_patient_registration(episode_case_properties) and
-                forward_via_legacy_api(episode_case) and
                 case_properties_changed(episode_case, [EPISODE_PENDING_REGISTRATION]) and
                 is_valid_person_submission(person_case)
             )
@@ -118,24 +112,7 @@ class NikshayRegisterPatientRepeaterV2(BaseNikshayRepeater):
         return reverse(RegisterNikshayPatientRepeaterViewV2.urlname, args=[domain])
 
     def allowed_to_forward(self, episode_case):
-        # When case property episode_type is changed to confirmed_tb
-        allowed_case_types_and_users = self._allowed_case_type(episode_case) and self._allowed_user(episode_case)
-        if allowed_case_types_and_users:
-            episode_case_properties = episode_case.dynamic_case_properties()
-            try:
-                person_case = get_person_case_from_episode(episode_case.domain, episode_case.get_id)
-            except ENikshayCaseNotFound:
-                return False
-            return (
-                not episode_case_properties.get('nikshay_registered', 'false') == 'true' and
-                not episode_case_properties.get('nikshay_id', False) and
-                case_properties_changed(episode_case, [EPISODE_TYPE_CASE_PROPERTY]) and
-                forward_via_v2_api(episode_case) and
-                episode_case.get_case_property(EPISODE_TYPE_CASE_PROPERTY) == DSTB_EPISODE_TYPE and
-                is_valid_person_submission(person_case)
-            )
-        else:
-            return False
+        return False
 
 
 class NikshayHIVTestRepeater(BaseNikshayRepeater):
@@ -200,7 +177,6 @@ class NikshayTreatmentOutcomeRepeater(BaseNikshayRepeater):
                 valid_nikshay_patient_registration(episode_case_properties)
             ) and
             case_properties_changed(episode_case, [TREATMENT_OUTCOME]) and
-            forward_via_legacy_api(episode_case) and
             episode_case_properties.get(TREATMENT_OUTCOME) in treatment_outcome.keys() and
             is_valid_archived_submission(episode_case)
         )
