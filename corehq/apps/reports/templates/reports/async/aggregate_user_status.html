@@ -11,12 +11,12 @@
               <h2>{{ total_users }}</h2>
           </div>
           <div class="col-sm-4 text-center">
-              <h4>{% trans "Users that have Ever Submitted Data" %}</h4>
-              <h2>{{ submission_series.bucket_series.total_percent }} <small>({{ submission_series.bucket_series.total }})</small></h2>
+              <h4>{% trans "Users who have Ever Submitted Data" %}</h4>
+              <h2>{{ submission_series.bucket_series.total_percent }} <small>({{ submission_series.bucket_series.total }} / {{ total_users }})</small></h2>
           </div>
           <div class="col-sm-4 text-center">
-              <h4>{% trans "Users that have Ever Synced" %}</h4>
-              <h2>{{ sync_series.bucket_series.total_percent }} <small>({{ sync_series.bucket_series.total }})</small></h2>
+              <h4>{% trans "Users who have Ever Synced" %}</h4>
+              <h2>{{ sync_series.bucket_series.total_percent }} <small>({{ sync_series.bucket_series.total }} / {{ total_users }})</small></h2>
           </div>
       </div>
       <div class="panel panel-default">

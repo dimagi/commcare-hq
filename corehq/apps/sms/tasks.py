@@ -288,7 +288,15 @@ def process_sms(queued_sms_pk):
 
         release_lock(message_lock, True)
         if requeue:
-            process_sms.delay(queued_sms_pk)
+            send_to_sms_queue(msg)
+
+
+def send_to_sms_queue(queued_sms):
+    options = {}
+    if queued_sms.direction == OUTGOING and queued_sms.domain in settings.CUSTOM_PROJECT_SMS_QUEUES:
+        options['queue'] = settings.CUSTOM_PROJECT_SMS_QUEUES[queued_sms.domain]
+
+    process_sms.apply_async([queued_sms.pk], **options)
 
 
 @no_result_task(default_retry_delay=10 * 60, max_retries=10, bind=True)

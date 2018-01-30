@@ -14,7 +14,8 @@ from custom.icds_reports.models import ChildHealthMonthlyView, AggAwcMonthly, Da
     AggChildHealthMonthly, AggAwcDailyView, AggCcsRecordMonthly
 from custom.icds_reports.utils import apply_exclude, percent_diff, get_value, percent_increase, \
     match_age, get_status, \
-    current_age, exclude_records_by_age_for_column, calculate_date_for_age
+    current_age, exclude_records_by_age_for_column, calculate_date_for_age, \
+    person_has_aadhaar_column, person_is_beneficiary_column
 from custom.icds_reports.const import MapColors
 import six
 
@@ -715,8 +716,8 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
     }
 
 
-@quickcache(['domain', 'config', 'now_date', 'month', 'show_test'], timeout=30 * 60)
-def get_awc_report_demographics(domain, config, now_date, month, show_test=False):
+@quickcache(['domain', 'config', 'now_date', 'month', 'show_test', 'beta'], timeout=30 * 60)
+def get_awc_report_demographics(domain, config, now_date, month, show_test=False, beta=False):
     selected_month = datetime(*month)
     now_date = datetime(*now_date)
     chart = AggChildHealthMonthly.objects.filter(
@@ -764,8 +765,8 @@ def get_awc_report_demographics(domain, config, now_date, month, show_test=False
                 Sum('cases_person_adolescent_girls_11_14_all') +
                 Sum('cases_person_adolescent_girls_15_18_all')
             ),
-            person_aadhaar=Sum('cases_person_has_aadhaar'),
-            all_persons=Sum('cases_person_beneficiary')
+            person_aadhaar=Sum(person_has_aadhaar_column(beta)),
+            all_persons=Sum(person_is_beneficiary_column(beta))
         )
 
         if not show_test:
@@ -1069,12 +1070,12 @@ def get_awc_report_beneficiary(start, length, draw, order, awc_id, month, two_be
             current_month_stunting=get_status(
                 row_data.current_month_stunting,
                 'stunted',
-                'Normal weight for height'
+                'Normal height for age'
             ),
             current_month_wasting=get_status(
                 row_data.current_month_wasting,
                 'wasted',
-                'Normal height for age'
+                'Normal weight for height'
             ),
             pse_days_attended=row_data.pse_days_attended
         )

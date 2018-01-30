@@ -1412,7 +1412,7 @@ class SoftwarePlanVersionForm(forms.Form):
         rates = json.loads(original_data)
         errors = ErrorList()
         if len(rates) != 1:
-            raise ValidationError(_("You must specify at exactly one product rate."))
+            raise ValidationError(_("You must specify exactly one product rate."))
         rate_data = rates[0]
         rate_form = ProductRateForm(rate_data)
         if not rate_form.is_valid():
@@ -1645,7 +1645,7 @@ class EnterprisePlanContactForm(forms.Form):
             'domain': self.domain,
             'email': self.web_user.email
         }
-        html_content = render_to_string('accounting/enterprise_request_email.html', context)
+        html_content = render_to_string('accounting/email/enterprise_request.html', context)
         text_content = """
         Email: %(email)s
         Name: %(name)s

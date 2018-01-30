@@ -196,13 +196,16 @@ def get_usercase_properties(app):
     return {USERCASE_TYPE: []}
 
 
-def all_case_properties_by_domain(domain, include_parent_properties=True):
+def all_case_properties_by_domain(domain, case_types=None, include_parent_properties=True):
     result = {}
     for app in all_apps_by_domain(domain):
         if app.is_remote_app():
             continue
 
-        property_map = get_case_properties(app, app.get_case_types(),
+        if case_types is None:
+            case_types = app.get_case_types()
+
+        property_map = get_case_properties(app, case_types,
             defaults=('name',), include_parent_properties=include_parent_properties)
 
         for case_type, properties in six.iteritems(property_map):

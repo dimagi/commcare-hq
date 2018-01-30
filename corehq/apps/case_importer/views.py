@@ -5,6 +5,7 @@ from django.utils.datastructures import MultiValueDictKeyError
 from corehq.apps.app_manager.dbaccessors import get_case_types_from_apps
 from corehq.apps.case_importer import base
 from corehq.apps.case_importer import util as importer_util
+from corehq.apps.case_importer.const import MAX_CASE_IMPORTER_COLUMNS
 from corehq.apps.case_importer.exceptions import ImporterError
 from django.views.decorators.http import require_POST
 from corehq.apps.case_importer.suggested_fields import get_suggested_case_fields
@@ -53,10 +54,11 @@ def excel_config(request, domain):
     # using the soil framework.
 
     if extension not in importer_util.ALLOWED_EXTENSIONS:
-        return render_error(request, domain,
-                            'The file you chose could not be processed. '
-                            'Please check that it is saved as a Microsoft '
-                            'Excel file.')
+        return render_error(request, domain, _(
+            'The file you chose could not be processed. '
+            'Please check that it is saved as a Microsoft '
+            'Excel file.'
+        ))
 
     # stash content in the default storage for subsequent views
     case_upload = CaseUpload.create(uploaded_file_handle,
@@ -73,22 +75,26 @@ def excel_config(request, domain):
         row_count = spreadsheet.max_row
 
     if row_count == 0:
-        return render_error(request, domain,
-                            'Your spreadsheet is empty. '
-                            'Please try again with a different spreadsheet.')
+        return render_error(request, domain, _(
+            'Your spreadsheet is empty. Please try again with a different spreadsheet.'
+        ))
+
+    if len(columns) > MAX_CASE_IMPORTER_COLUMNS:
+        return render_error(request, domain, _(
+            'Your spreadsheet has too many columns. '
+            'A maximum of %(max_columns)s is supported.'
+        ) % {'max_columns': MAX_CASE_IMPORTER_COLUMNS})
 
     case_types_from_apps = get_case_types_from_apps(domain)
     unrecognized_case_types = [t for t in get_case_types_for_domain_es(domain)
                                if t not in case_types_from_apps]
 
     if len(case_types_from_apps) == 0 and len(unrecognized_case_types) == 0:
-        return render_error(
-            request,
-            domain,
+        return render_error(request, domain, _(
             'No cases have been submitted to this domain and there are no '
             'applications yet. You cannot import case details from an Excel '
             'file until you have existing cases or applications.'
-        )
+        ))
 
     return render(
         request,

@@ -194,7 +194,7 @@ def send_sms_with_backend_name(domain, phone_number, text, backend_name, metadat
 def enqueue_directly(msg):
     try:
         from corehq.apps.sms.management.commands.run_sms_queue import SMSEnqueuingOperation
-        SMSEnqueuingOperation().enqueue_directly(msg)
+        SMSEnqueuingOperation().enqueue(msg)
     except:
         # If this direct enqueue fails, no problem, it will get picked up
         # shortly.

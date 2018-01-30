@@ -50,8 +50,8 @@ class MigrationView(BaseMigrationView, FormView):
 def get_case_and_descendants(domain, case_id):
     from casexml.apps.case.templatetags.case_tags import get_case_hierarchy
     case = CaseAccessors(domain).get_case(case_id)
-    return [case for case in get_case_hierarchy(case, {})['case_list']
-            if not case.closed]
+    return [c for c in get_case_hierarchy(case, {})['case_list']
+            if not c.closed]
 
 
 @mobile_auth

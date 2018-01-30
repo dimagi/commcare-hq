@@ -45,7 +45,7 @@ def patch_error_send():
     )
 
 
-@patch('corehq.apps.sms.management.commands.run_sms_queue.SMSEnqueuingOperation.enqueue_directly', autospec=True)
+@patch('corehq.apps.sms.management.commands.run_sms_queue.SMSEnqueuingOperation.enqueue', autospec=True)
 @patch('corehq.apps.sms.tasks.process_sms.delay', autospec=True)
 @override_settings(SMS_QUEUE_ENABLED=True)
 class QueueingTestCase(BaseSMSTest):

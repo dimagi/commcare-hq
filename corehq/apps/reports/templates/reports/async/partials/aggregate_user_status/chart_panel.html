@@ -3,9 +3,19 @@
 <div id="{{ series.id }}-data" class="hide" data-value='{{ series.get_chart_data_series|JSON }}'></div>
 <div id="{{ series.id }}-percentages" class="hide" data-value='{{ series.get_chart_percent_series|JSON }}'></div>
 <div class="panel-heading">
-  <h3 class="panel-title"><strong>{{ series.title }}</strong></h3>
+  <h3 class="panel-title"><strong>{{ series.title }}</strong>
+      <p class="pull-right">
+          <span class="hq-help-template"
+                data-title="{{ series.title }}"
+                data-container="body"
+                data-content="{{ series.help }}"
+                data-placement="left">
+          </span>
+      </p>
+  </h3>
 </div>
 <div class="panel-body">
+
   <div class="row">
   {% for bucket in series.get_buckets %}
       <div class="col-sm-2 text-center">

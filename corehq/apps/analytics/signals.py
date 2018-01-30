@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from django.conf import settings
 from django.contrib.auth.signals import user_logged_in
 from corehq.apps.accounting.utils import ensure_domain_instance
 from corehq.apps.analytics.tasks import (
@@ -151,7 +152,7 @@ def update_subscription_properties_by_domain(domain):
 @handle_uncaught_exceptions(mail_admins=True)
 def track_user_login(sender, request, user, **kwargs):
     couch_user = CouchUser.from_django_user(user)
-    if couch_user and couch_user.is_web_user():
+    if couch_user and couch_user.is_web_user() and settings.ANALYTICS_IDS.get('HUBSPOT_API_ID'):
         if not request or HUBSPOT_COOKIE not in request.COOKIES:
             # API calls, form submissions etc.
 

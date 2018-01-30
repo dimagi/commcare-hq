@@ -374,7 +374,7 @@ class EpisodeAdherenceUpdate(object):
             return len([
                 status
                 for date, status in six.iteritems(dose_status_by_date)
-                if start_date <= date <= end_date and getattr(status, dose_type)
+                if start_date < date <= end_date and getattr(status, dose_type)
             ])
 
     @staticmethod

@@ -1835,6 +1835,7 @@
           "owner_id"
         ]
       }
-    ]
+    ],
+    "disable_destructive_rebuild": true
   }
 }

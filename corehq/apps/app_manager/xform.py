@@ -205,6 +205,12 @@ class WrappedNode(object):
         else:
             return None
 
+    def iterancestors(self, tag=None, *tags):
+        if self.xml is not None:
+            tags = [t.format(self.namespaces) for t in tags]
+            for n in self.xml.iterancestors(tag.format(**self.namespaces), *tags):
+                yield WrappedNode(n)
+
     @property
     def attrib(self):
         return WrappedAttribs(self.xml.attrib, namespaces=self.namespaces)
@@ -1006,6 +1012,7 @@ class XForm(WrappedNode):
 
         repeat_contexts = sorted(repeat_contexts, reverse=True)
 
+        save_to_case_nodes = {}
         for path, data_node in six.iteritems(leaf_data_nodes):
             if path not in excluded_paths:
                 bind = self.get_bind(path)
@@ -1037,6 +1044,12 @@ class XForm(WrappedNode):
                                 "stock_entry_attributes": dict(data_node.xml.attrib),
                                 "stock_type_attributes": dict(parent.attrib),
                             })
+                if '/case/' in path:
+                    path_to_case = path.split('/case/')[0] + '/case'
+                    save_to_case_nodes[path_to_case] = {
+                        'data_node': data_node,
+                        'repeat': matching_repeat_context,
+                    }
 
                 hashtag_path = self.hashtag_path(path)
                 question.update({
@@ -1048,6 +1061,52 @@ class XForm(WrappedNode):
                     question["translations"] = {}
 
                 questions.append(question)
+
+        for path, node_info in six.iteritems(save_to_case_nodes):
+            data_node = node_info['data_node']
+            try:
+                case_node = next(data_node.iterancestors('{cx2}case'))
+                for attrib in ('case_id', 'user_id', 'date_modified'):
+                    if attrib not in case_node.attrib:
+                        continue
+
+                    bind = self.get_bind(path + '/@' + attrib)
+                    question = {
+                        "tag": "hidden",
+                        "value": '{}/@{}'.format(path, attrib),
+                        "repeat": node_info['repeat'],
+                        "group": node_info['repeat'],
+                        "type": "DataBindOnly",
+                        "calculate": None,
+                        "relevant": None,
+                        "constraint": None,
+                        "comment": None,
+                    }
+                    if bind.exists():
+                        question.update({
+                            "calculate": bind.attrib.get('calculate') if hasattr(bind, 'attrib') else None,
+                            "relevant": bind.attrib.get('relevant') if hasattr(bind, 'attrib') else None,
+                            "constraint": bind.attrib.get('constraint') if hasattr(bind, 'attrib') else None,
+                        })
+                    else:
+                        ref = self.model_node.find('{f}setvalue[@ref="%s"]' % path)
+                        if ref.exists():
+                            question.update({
+                                'calculate': ref.attrib.get('value'),
+                            })
+
+                    hashtag_path = '{}/@{}'.format(self.hashtag_path(path), attrib)
+                    question.update({
+                        "label": hashtag_path,
+                        "hashtagValue": hashtag_path,
+                    })
+
+                    if include_translations:
+                        question["translations"] = {}
+
+                    questions.append(question)
+            except StopIteration:
+                pass
 
         return questions
 

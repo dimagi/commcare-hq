@@ -4,9 +4,7 @@ from __future__ import unicode_literals
 
 from django.db import migrations
 
-from corehq.sql_db.operations import RawSQLMigration
-
-migrator = RawSQLMigration(('custom', 'icds_reports', 'migrations', 'sql_templates'))
+from corehq.sql_db.operations import noop_migration
 
 
 class Migration(migrations.Migration):
@@ -16,5 +14,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrator.get_migration('create_datasource_views.sql'),
+        noop_migration(),
     ]

@@ -618,13 +618,15 @@ FORMPLAYER_URL = 'http://localhost:8080'
 
 ####### SMS Queue Settings #######
 
+CUSTOM_PROJECT_SMS_QUEUES = {
+    'ils-gateway': 'ils_gateway_sms_queue',
+    'ils-gateway-train': 'ils_gateway_sms_queue',
+    'ils-gateway-training': 'ils_gateway_sms_queue',
+}
+
 # Setting this to False will make the system process outgoing and incoming SMS
 # immediately rather than use the queue.
 SMS_QUEUE_ENABLED = False
-
-# If an SMS still has not been processed in this number of minutes, enqueue it
-# again.
-SMS_QUEUE_ENQUEUING_TIMEOUT = 180
 
 # Number of minutes a celery task will alot for itself (via lock timeout)
 SMS_QUEUE_PROCESSING_LOCK_TIMEOUT = 5
@@ -2025,6 +2027,7 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'voucher_v2.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'voucher_v3.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'voucher_v4.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'voucher_v5.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'person_for_referral_report_v2.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'person_for_referral_report_v3.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_for_adherence_report.json'),

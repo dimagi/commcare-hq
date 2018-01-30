@@ -14,7 +14,7 @@
               media="all"
               href="{% static 'font-awesome/css/font-awesome.css' %}"/>
 
-        <link type="text/css" rel="stylesheet" media="all" href="{% static 'hqwebapp/js/lib/nvd3/nv.d3.css' %}">
+        <link type="text/css" rel="stylesheet" media="all" href="{% static 'nvd3/src/nv.d3.css' %}">
         <link type="text/css" rel="stylesheet" media="all" href="{% static 'angular-datatables/dist/css/angular-datatables.min.css' %}">
         <link type="text/css" rel="stylesheet" media="all" href="{% static 'angular-datatables/dist/plugins/bootstrap/datatables.bootstrap.min.css' %}">
         <link type="text/css" rel="stylesheet" media="all" href="{% static 'leaflet/dist/leaflet.css' %}">
@@ -276,7 +276,7 @@
 {% block js-inline %}{% endblock js-inline %}
 <script>
     angular.module('icdsApp').constant('locationHierarchy', {{ location_hierarchy | JSON }});
-    angular.module('icdsApp').constant('userLocationId', {{ user_location_id | JSON }});
+    angular.module('icdsApp').constant('userLocationId', {% if user_location_id %}{{ user_location_id | JSON }}{% endif %});
     angular.module('icdsApp').constant('reportAnIssueUrl', {{ report_an_issue_url | JSON }});
     angular.module('icdsApp').constant('isWebUser', {{ is_web_user | JSON }});
     angular.module('icdsApp').constant('haveAccessToFeatures', {{ have_access | JSON }});

@@ -28,7 +28,6 @@ class TestInstitutionalDeliveriesSector(TestCase):
         self.assertEqual(data['awc_days_open'], 14)
         self.assertIsNone(data['awc_days_pse_conducted'])
         self.assertEqual(data['usage_num_home_visit'], 0)
-        self.assertIsNone(data['ls_awc_present'])
         self.assertEqual(data['cases_person_referred'], 0)
 
     def test_child_health_monthly_data(self):
@@ -64,7 +63,8 @@ class TestInstitutionalDeliveriesSector(TestCase):
         }
         data = ISSNIPMonthlyReport(config=config).vhnd_data
         self.assertEqual(data['vhsnd_date_past_month'], datetime(2017, 5, 13).date())
-        self.assertEquals(data['local_leader'], 1)
+        self.assertEqual(data['local_leader'], 1)
+        self.assertEqual(data['aww_present'], 1)
 
     def test_ccs_record_monthly_ucr(self):
         config = {

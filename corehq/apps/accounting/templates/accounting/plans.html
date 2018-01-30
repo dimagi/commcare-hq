@@ -6,7 +6,7 @@
 {% block js %}{{ block.super }}
     <script src="{% static 'hqwebapp/js/stay-on-tab.js' %}"></script>
     <script src="{% static 'hqwebapp/js/select2_handler.js' %}"></script>
-    <script src="{% static 'accounting/js/accounting.software_plan_version_handler.js' %}"></script>
+    <script src="{% static 'accounting/js/software_plan_version_handler.js' %}"></script>
 {% endblock %}
 
 {% block page_content %}
@@ -29,7 +29,7 @@
         </div>
 
         <div class="tab-pane" id="versions">
-            {% include 'accounting/version_summary_tab.html' %}
+            {% include 'accounting/partials/version_summary_tab.html' %}
         </div>
     </div>
 

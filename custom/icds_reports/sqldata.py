@@ -18,7 +18,8 @@ from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn, AggregateColu
 from corehq.apps.reports.util import get_INFilter_bindparams
 from corehq.apps.userreports.util import get_table_name
 from custom.icds_reports.queries import get_test_state_locations_id
-from custom.icds_reports.utils import ICDSMixin, get_status, calculate_date_for_age, DATA_NOT_ENTERED
+from custom.icds_reports.utils import ICDSMixin, get_status, calculate_date_for_age, \
+    DATA_NOT_ENTERED, person_has_aadhaar_column, person_is_beneficiary_column
 from couchexport.export import export_from_tables
 from couchexport.shortcuts import export_response
 
@@ -135,13 +136,14 @@ def percent(x, y):
 class ExportableMixin(object):
     engine_id = 'icds-test-ucr'
 
-    def __init__(self, config=None, loc_level=1, show_test=False):
+    def __init__(self, config=None, loc_level=1, show_test=False, beta=False):
         self.config = config
         self.loc_level = loc_level
         self.excluded_states = get_test_state_locations_id(self.domain)
         self.config['excluded_states'] = self.excluded_states
         clean_IN_filter_value(self.config, 'excluded_states')
         self.show_test = show_test
+        self.beta = beta
 
     @property
     def domain(self):
@@ -618,7 +620,7 @@ class AggChildHealthMonthlyDataSource(ProgressReportSqlData):
                 percent_num,
                 [
                     SumColumn('low_birth_weight_in_month'),
-                    AliasColumn('weighed_and_born_in_month')
+                    SumColumn('weighed_and_born_in_month')
                 ],
                 slug='low_birth_weight'
             )
@@ -751,13 +753,14 @@ class AggAWCMonthlyDataSource(ProgressReportSqlData):
     table_name = 'agg_awc_monthly'
     engine_id = 'icds-test-ucr'
 
-    def __init__(self, config=None, loc_level='state', show_test=False):
+    def __init__(self, config=None, loc_level='state', show_test=False, beta=False):
         super(AggAWCMonthlyDataSource, self).__init__(config)
         self.loc_key = '%s_id' % loc_level
         self.excluded_states = get_test_state_locations_id(self.domain)
         self.config['excluded_states'] = self.excluded_states
         clean_IN_filter_value(self.config, 'excluded_states')
         self.show_test = show_test
+        self.beta = beta
 
     @property
     def domain(self):
@@ -780,6 +783,14 @@ class AggAWCMonthlyDataSource(ProgressReportSqlData):
     @property
     def order_by(self):
         return [OrderBy('month')]
+
+    @property
+    def person_has_aadhaar_column(self):
+        return person_has_aadhaar_column(self.beta)
+
+    @property
+    def person_is_beneficiary_column(self):
+        return person_is_beneficiary_column(self.beta)
 
     @property
     def columns(self):
@@ -855,14 +866,14 @@ class AggAWCMonthlyDataSource(ProgressReportSqlData):
             ),
             DatabaseColumn(
                 'Total Number of Members Enrolled for Services for services at AWC ',
-                SumColumn('cases_person_beneficiary', alias='cases_person_beneficiary')
+                SumColumn(self.person_is_beneficiary_column, alias=self.person_is_beneficiary_column)
             ),
             AggregateColumn(
                 'Percentage of Beneficiaries with Aadhar',
                 lambda x, y: (x or 0) * 100 / float(y or 1),
                 [
-                    SumColumn('cases_person_has_aadhaar'),
-                    AliasColumn('cases_person_beneficiary')
+                    SumColumn(self.person_has_aadhaar_column),
+                    AliasColumn(self.person_is_beneficiary_column)
                 ],
                 slug='aadhar'
             ),
@@ -1483,20 +1494,20 @@ class DemographicsAWCMonthly(ExportableMixin, SqlData):
             ),
             DatabaseColumn(
                 'beneficiary_persons',
-                SumColumn('cases_person_beneficiary'),
+                SumColumn(self.person_is_beneficiary_column),
                 slug='beneficiary_persons'
             ),
             DatabaseColumn(
                 'person_has_aadhaar',
-                SumColumn('cases_person_has_aadhaar'),
+                SumColumn(self.person_has_aadhaar_column),
                 slug='person_has_aadhaar'
             ),
             AggregateColumn(
                 'num_people_with_aadhar',
                 percent,
                 [
-                    AliasColumn('cases_person_has_aadhaar'),
-                    AliasColumn('cases_person_beneficiary')
+                    AliasColumn(self.person_has_aadhaar_column),
+                    AliasColumn(self.person_is_beneficiary_column)
                 ],
                 slug='num_people_with_aadhar'
             ),
@@ -1552,6 +1563,14 @@ class DemographicsAWCMonthly(ExportableMixin, SqlData):
             )
         ]
         return columns + agg_columns
+
+    @property
+    def person_has_aadhaar_column(self):
+        return person_has_aadhaar_column(self.beta)
+
+    @property
+    def person_is_beneficiary_column(self):
+        return person_is_beneficiary_column(self.beta)
 
 
 class DemographicsExport(ExportableMixin):
@@ -2025,10 +2044,15 @@ class BeneficiaryExport(ExportableMixin, SqlData):
 
 class FactSheetsReport(object):
 
-    def __init__(self, config=None, loc_level='state', show_test=False):
+    def __init__(self, config=None, loc_level='state', show_test=False, beta=False):
         self.loc_level = loc_level
         self.config = config
         self.show_test = show_test
+        self.beta = beta
+
+    @property
+    def person_is_beneficiary_column(self):
+        return person_is_beneficiary_column(self.beta)
 
     @property
     def new_table_config(self):
@@ -2394,7 +2418,7 @@ class FactSheetsReport(object):
                             {
                                 'data_source': 'AggAWCMonthlyDataSource',
                                 'header': 'Total number of members enrolled at AWC',
-                                'slug': 'cases_person_beneficiary',
+                                'slug': self.person_is_beneficiary_column,
                                 'average': [],
 
                             },
@@ -2522,17 +2546,18 @@ class FactSheetsReport(object):
             'AggChildHealthMonthlyDataSource': AggChildHealthMonthlyDataSource(
                 config=self.config,
                 loc_level=self.loc_level,
-                show_test=self.show_test
+                show_test=self.show_test,
             ),
             'AggCCSRecordMonthlyDataSource': AggCCSRecordMonthlyDataSource(
                 config=self.config,
                 loc_level=self.loc_level,
-                show_test=self.show_test
+                show_test=self.show_test,
             ),
             'AggAWCMonthlyDataSource': AggAWCMonthlyDataSource(
                 config=self.config,
                 loc_level=self.loc_level,
-                show_test=self.show_test
+                show_test=self.show_test,
+                beta=self.beta
             )
         }
 
@@ -2651,7 +2676,7 @@ class AWCInfrastructureUCR(SqlData):
     @property
     def group_by(self):
         return [
-            'where_housed', 'provided_building', 'kitchen', 'toilet_facility',
+            'where_housed', 'provided_building', 'other_building', 'kitchen', 'toilet_facility',
             'type_toilet', 'preschool_kit_available', 'preschool_kit_usable'
         ]
 
@@ -2660,6 +2685,7 @@ class AWCInfrastructureUCR(SqlData):
         return [
             DatabaseColumn('where_housed', SimpleColumn('where_housed')),
             DatabaseColumn('provided_building', SimpleColumn('provided_building')),
+            DatabaseColumn('other_building', SimpleColumn('other_building')),
             DatabaseColumn('kitchen', SimpleColumn('kitchen')),
             DatabaseColumn('toilet_facility', SimpleColumn('toilet_facility')),
             DatabaseColumn('type_toilet', SimpleColumn('type_toilet')),
@@ -2684,7 +2710,7 @@ class VHNDFormUCR(SqlData):
 
     @property
     def group_by(self):
-        return ['submitted_on', 'vhsnd_date_past_month', 'local_leader']
+        return ['submitted_on', 'vhsnd_date_past_month', 'local_leader', 'aww_present']
 
     @property
     def order_by(self):
@@ -2694,7 +2720,8 @@ class VHNDFormUCR(SqlData):
     def columns(self):
         return [
             DatabaseColumn('vhsnd_date_past_month', SimpleColumn('vhsnd_date_past_month')),
-            DatabaseColumn('local_leader', SimpleColumn('local_leader'))
+            DatabaseColumn('local_leader', SimpleColumn('local_leader')),
+            DatabaseColumn('aww_present', SimpleColumn('aww_present'))
         ]
 
 

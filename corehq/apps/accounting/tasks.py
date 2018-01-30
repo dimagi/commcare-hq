@@ -273,9 +273,9 @@ def send_bookkeeper_email(month=None, year=None, emails=None):
         'month': first_of_month.strftime("%B"),
     }
     email_content = render_to_string(
-        'accounting/bookkeeper_email.html', email_context)
+        'accounting/email/bookkeeper.html', email_context)
     email_content_plaintext = render_to_string(
-        'accounting/bookkeeper_email_plaintext.html', email_context)
+        'accounting/email/bookkeeper.txt', email_context)
 
     format_dict = Format.FORMAT_DICT[Format.CSV]
     excel_attachment = {
@@ -447,8 +447,8 @@ def send_autopay_failed(invoice, payment_method):
         'support_email': settings.INVOICING_CONTACT_EMAIL,
     }
 
-    template_html = 'accounting/autopay_failed_email.html'
-    template_plaintext = 'accounting/autopay_failed_email.txt'
+    template_html = 'accounting/email/autopay_failed.html'
+    template_plaintext = 'accounting/email/autopay_failed.txt'
 
     send_HTML_email(
         subject="Subscription Payment for CommCare Invoice %s was declined" % invoice.invoice_number,
@@ -523,9 +523,9 @@ def weekly_digest():
         'forty_days': in_forty_days.isoformat(),
     }
     email_content = render_to_string(
-        'accounting/digest_email.html', email_context)
+        'accounting/email/digest.html', email_context)
     email_content_plaintext = render_to_string(
-        'accounting/digest_email.txt', email_context)
+        'accounting/email/digest.txt', email_context)
 
     format_dict = Format.FORMAT_DICT[Format.XLS_2007]
     file_attachment = {
@@ -677,8 +677,8 @@ def _send_downgrade_notice(invoice, context):
     send_html_email_async.delay(
         ugettext('Oh no! Your CommCare subscription for {} has been downgraded'.format(invoice.get_domain())),
         invoice.contact_emails,
-        render_to_string('accounting/downgrade.html', context),
-        render_to_string('accounting/downgrade.txt', context),
+        render_to_string('accounting/email/downgrade.html', context),
+        render_to_string('accounting/email/downgrade.txt', context),
         cc=[settings.ACCOUNTS_EMAIL],
         bcc=[settings.GROWTH_EMAIL],
         email_from=get_dimagi_from_email()
@@ -702,8 +702,8 @@ def _send_downgrade_warning(invoice, context):
             invoice.get_domain()
         )),
         invoice.contact_emails,
-        render_to_string('accounting/downgrade_warning.html', context),
-        render_to_string('accounting/downgrade_warning.txt', context),
+        render_to_string('accounting/email/downgrade_warning.html', context),
+        render_to_string('accounting/email/downgrade_warning.txt', context),
         cc=[settings.ACCOUNTS_EMAIL],
         bcc=[settings.GROWTH_EMAIL],
         email_from=get_dimagi_from_email())
@@ -713,8 +713,8 @@ def _send_overdue_notice(invoice, context):
     send_html_email_async.delay(
         ugettext('CommCare Billing Statement 30 days Overdue for {}'.format(invoice.get_domain())),
         invoice.contact_emails,
-        render_to_string('accounting/30_days.html', context),
-        render_to_string('accounting/30_days.txt', context),
+        render_to_string('accounting/email/30_days.html', context),
+        render_to_string('accounting/email/30_days.txt', context),
         cc=[settings.ACCOUNTS_EMAIL],
         bcc=[settings.GROWTH_EMAIL],
         email_from=get_dimagi_from_email())
@@ -829,7 +829,7 @@ def send_prepaid_credits_export():
         ])
 
     date_string = datetime.datetime.utcnow().strftime(SERVER_DATE_FORMAT)
-    filename = datetime.datetime.utcnow().strftime('prepaid-credits-export_%s.csv' % date_string)
+    filename = 'prepaid-credits-export_%s.csv' % date_string
     send_HTML_email(
         'Prepaid Credits Export - %s' % date_string, settings.ACCOUNTS_EMAIL, 'See attached file.',
         file_attachments=[{'file_obj': file_obj, 'title': filename, 'mimetype': 'text/csv'}],

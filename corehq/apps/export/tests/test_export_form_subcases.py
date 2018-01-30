@@ -101,6 +101,12 @@ class TestFormExportSubcases(TestCase, TestXmlMixin):
                  '#form/prescription/prescription_name'),
                 ('form.prescription.prescription.case.index.parent',
                  '#form/prescription/prescription/case/index/parent'),
+                ('form.prescription.prescription.case.@case_id',
+                 '#form/prescription/prescription/case/@case_id'),
+                ('form.prescription.prescription.case.@user_id',
+                 '#form/prescription/prescription/case/@user_id'),
+                ('form.prescription.prescription.case.@date_modified',
+                 '#form/prescription/prescription/case/@date_modified'),
 
                 # # Verify that we see updates from subcases not in repeat groups (case type "voucher")
                 ('form.subcase_0.case.@case_id', 'subcase_0.@case_id'),

@@ -45,6 +45,7 @@
                                 q: params.term,
                                 page_limit: 10,
                                 page: params.page,
+                                show_inactive: show_inactive,
                             };
                         },
                         processResults: function (data, params) {
@@ -268,8 +269,10 @@
   </div>
 {% endif %}
 
+<div class="col-lg-12">
 <div id="location_tree">
   <div data-bind="template: { name: 'location-template', if: root, data: root }"></div>
+</div>
 </div>
 {% endblock %}
 

@@ -78,7 +78,7 @@
                         <table class="table-no-border">
                             <tbody>
                                 <tr>
-                                    <td>Type of AWC building Pucca / Others: {{ data.report.agg_awc_monthly_data|icds_format:"infra_type_of_building" }}</td>
+                                    <td>Type of AWC building Pucca / Others: {{ data.report.agg_awc_monthly_data.infra_type_of_building|icds_type_of_awc_building }}</td>
                                     <td>Owned/rented/Others: {{ data.report.infrastructure_data|icds_type_of_building }}</td>
                                 </tr>
                                 <tr>
@@ -106,7 +106,7 @@
                             <thead>
                                 <tr>
                                     <th>Infants (0-6 Months)</th>
-                                    <th>Children(6-36 Months)</th>
+                                    <th>Children (6-36 Months)</th>
                                     <th>Children (36-72 months)</th>
                                     <th>Pregnant Women</th>
                                     <th>Lactating Mothers</th>
@@ -367,7 +367,7 @@
                                 </tr>
                                 <tr>
                                     <td>AWW present during VHSND? (Y/N)</td>
-                                    <td>{{ data.report.agg_awc_monthly_data.ls_awc_present|icds_yesno }}</td>
+                                    <td>{{ data.report.vhnd_data.aww_present|icds_yesno }}</td>
                                 </tr>
                                 <tr>
                                     <td>Number of antenatal check- ups conducted during the Month </td>

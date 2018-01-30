@@ -60,6 +60,7 @@ from corehq.apps.accounting.utils import (
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.users.models import WebUser
+from corehq.blobs.mixin import BlobMixin
 from corehq.const import USER_DATE_FORMAT
 from corehq.util.dates import get_first_last_days
 from corehq.util.mixin import ValidateModelMixin
@@ -467,8 +468,8 @@ class BillingAccount(ValidateModelMixin, models.Model):
         send_html_email_async(
             subject,
             old_user,
-            render_to_string('accounting/autopay_card_removed.html', context),
-            text_content=strip_tags(render_to_string('accounting/autopay_card_removed.html', context)),
+            render_to_string('accounting/email/autopay_card_removed.html', context),
+            text_content=strip_tags(render_to_string('accounting/email/autopay_card_removed.html', context)),
         )
 
     def _send_autopay_card_added_email(self, domain):
@@ -496,8 +497,8 @@ class BillingAccount(ValidateModelMixin, models.Model):
         send_html_email_async(
             subject,
             self.auto_pay_user,
-            render_to_string('accounting/invoice_autopay_setup.html', context),
-            text_content=strip_tags(render_to_string('accounting/invoice_autopay_setup.html', context)),
+            render_to_string('accounting/email/invoice_autopay_setup.html', context),
+            text_content=strip_tags(render_to_string('accounting/email/invoice_autopay_setup.html', context)),
         )
 
 
@@ -1427,8 +1428,8 @@ class Subscription(models.Model):
                 'domain': domain_name,
                 'ending_on': ending_on,
             }
-            template = 'accounting/trial_ending_reminder_email.html'
-            template_plaintext = 'accounting/trial_ending_reminder_email_plaintext.txt'
+            template = 'accounting/email/trial_ending_reminder.html'
+            template_plaintext = 'accounting/email/trial_ending_reminder.txt'
         else:
             subject = _(
                 "CommCare Alert: %(domain)s's subscription to "
@@ -1439,8 +1440,8 @@ class Subscription(models.Model):
                 'ending_on': ending_on,
             }
 
-            template = 'accounting/subscription_ending_reminder_email.html'
-            template_plaintext = 'accounting/subscription_ending_reminder_email_plaintext.html'
+            template = 'accounting/email/subscription_ending_reminder.html'
+            template_plaintext = 'accounting/email/subscription_ending_reminder.txt'
 
         from corehq.apps.domain.views import DomainSubscriptionView
         context = {
@@ -1489,8 +1490,8 @@ class Subscription(models.Model):
         subject = "Alert: {domain}'s subscription is ending on {end_date}".format(
                   domain=domain,
                   end_date=end_date)
-        template = 'accounting/subscription_ending_reminder_dimagi.html'
-        template_plaintext = 'accounting/subscription_ending_reminder_dimagi_plaintext.html'
+        template = 'accounting/email/subscription_ending_reminder_dimagi.html'
+        template_plaintext = 'accounting/email/subscription_ending_reminder_dimagi.txt'
         context = {
             'domain': domain,
             'end_date': end_date,
@@ -1950,8 +1951,8 @@ class BillingRecordBase(models.Model):
     pdf_data_id = models.CharField(max_length=48)
     last_modified = models.DateTimeField(auto_now=True)
 
-    INVOICE_HTML_TEMPLATE = 'accounting/invoice_email.html'
-    INVOICE_TEXT_TEMPLATE = 'accounting/invoice_email_plaintext.html'
+    INVOICE_HTML_TEMPLATE = 'accounting/email/invoice.html'
+    INVOICE_TEXT_TEMPLATE = 'accounting/email/invoice.txt'
 
     class Meta:
         abstract = True
@@ -2086,8 +2087,8 @@ class BillingRecordBase(models.Model):
 class WireBillingRecord(BillingRecordBase):
     invoice = models.ForeignKey(WireInvoice, on_delete=models.PROTECT)
 
-    INVOICE_HTML_TEMPLATE = 'accounting/wire_invoice_email.html'
-    INVOICE_TEXT_TEMPLATE = 'accounting/wire_invoice_email_plaintext.html'
+    INVOICE_HTML_TEMPLATE = 'accounting/email/wire_invoice.html'
+    INVOICE_TEXT_TEMPLATE = 'accounting/email/wire_invoice.txt'
 
     class Meta:
         app_label = 'accounting'
@@ -2125,11 +2126,11 @@ class WirePrepaymentBillingRecord(WireBillingRecord):
 
 class BillingRecord(BillingRecordBase):
     invoice = models.ForeignKey(Invoice, on_delete=models.PROTECT)
-    INVOICE_CONTRACTED_HTML_TEMPLATE = 'accounting/invoice_email_contracted.html'
-    INVOICE_CONTRACTED_TEXT_TEMPLATE = 'accounting/invoice_email_contracted_plaintext.html'
+    INVOICE_CONTRACTED_HTML_TEMPLATE = 'accounting/email/invoice_contracted.html'
+    INVOICE_CONTRACTED_TEXT_TEMPLATE = 'accounting/email/invoice_contracted_plaintext.txt'
 
-    INVOICE_AUTOPAY_HTML_TEMPLATE = 'accounting/invoice_email_autopayment.html'
-    INVOICE_AUTOPAY_TEXT_TEMPLATE = 'accounting/invoice_email_autopayment.txt'
+    INVOICE_AUTOPAY_HTML_TEMPLATE = 'accounting/email/invoice_autopayment.html'
+    INVOICE_AUTOPAY_TEXT_TEMPLATE = 'accounting/email/invoice_autopayment.txt'
 
     class Meta:
         app_label = 'accounting'
@@ -2400,10 +2401,12 @@ class BillingRecord(BillingRecordBase):
         )
 
 
-class InvoicePdf(SafeSaveDocument):
+class InvoicePdf(BlobMixin, SafeSaveDocument):
     invoice_id = StringProperty()
     date_created = DateTimeProperty()
     is_wire = BooleanProperty(default=False)
+
+    _migrating_blobs_from_couch = True
 
     def generate_pdf(self, invoice):
         self.save()
