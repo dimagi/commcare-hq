@@ -271,6 +271,13 @@ class RegisterDomainView(TemplateView):
         if not form.is_valid():
             return self.render_to_response(context)
 
+        if settings.RESTRICT_DOMAIN_CREATION and not request.user.is_superuser:
+            context.update({
+                'error_msg': ('Your organization has requested that domain creation should be restricted.'
+                              'For more information, please speak to your administrator.')
+            })
+            return self.render_to_response(context)
+
         reqs_today = RegistrationRequest.get_requests_today()
         max_req = settings.DOMAIN_MAX_REGISTRATION_REQUESTS_PER_DAY
         if reqs_today >= max_req:
