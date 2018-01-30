@@ -620,7 +620,7 @@ class AggChildHealthMonthlyDataSource(ProgressReportSqlData):
                 percent_num,
                 [
                     SumColumn('low_birth_weight_in_month'),
-                    AliasColumn('weighed_and_born_in_month')
+                    SumColumn('weighed_and_born_in_month')
                 ],
                 slug='low_birth_weight'
             )
