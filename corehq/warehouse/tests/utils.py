@@ -11,8 +11,7 @@ from django.core.management import call_command
 
 from corehq.form_processor.tests.utils import partitioned
 from corehq.warehouse.models import (ApplicationStagingTable, Batch,
-    GroupStagingTable, LocationStagingTable, LocationTypeStagingTable,
-    UserStagingTable)
+    GroupStagingTable, LocationStagingTable, UserStagingTable)
 
 
 def create_batch(slug):
@@ -87,7 +86,9 @@ def create_location_staging_record(
         location_id=None,
         location_type_id=None,
         sql_location_id=None,
-        sql_parent_location_id=None):
+        sql_parent_location_id=None,
+        location_type_name=None,
+        location_type_code=None):
     record = LocationStagingTable(
         domain=domain,
         name=name,
@@ -96,20 +97,9 @@ def create_location_staging_record(
         user_id=uuid.uuid4().hex,
         sql_location_id=sql_location_id if sql_location_id is not None else random.randint(0, 100),
         sql_parent_location_id=sql_parent_location_id,
+        location_type_name=location_type_name if location_type_name is not None else '',
+        location_type_code=location_type_code if location_type_code is not None else '',
         location_last_modified=datetime.utcnow(),
-        batch_id=batch_id
-    )
-    record.save()
-    return record
-
-
-def create_location_type_staging_record(domain, name, location_type_id, code=None, batch_id=None):
-    record = LocationTypeStagingTable(
-        domain=domain,
-        name=name,
-        location_type_id=location_type_id,
-        code=code,
-        location_type_last_modified=datetime.utcnow(),
         batch_id=batch_id
     )
     record.save()
@@ -148,31 +138,31 @@ def create_location_records_from_tree(domain, tree, batch_id):
     }
     '''
 
-    location_types = {}
-    _create_location_types_from_tree(domain, tree, location_types, batch_id)
-    _create_locations_from_tree(domain, tree, None, location_types, {}, batch_id)
+#    location_types = {}
+#    _create_location_types_from_tree(domain, tree, location_types, batch_id)
+    _create_locations_from_tree(domain, tree, None, {}, batch_id)
 
 
-def _create_location_types_from_tree(domain, tree, location_types, batch_id):
-    if not tree:
-        return
+# def _create_location_types_from_tree(domain, tree, location_types, batch_id):
+#     if not tree:
+#         return
 
-    for location_tuple, next_tree in six.iteritems(tree):
-        location_name, location_type = location_tuple
+#     for location_tuple, next_tree in six.iteritems(tree):
+#         location_name, location_type = location_tuple
 
-        if location_type not in location_types:
-            location_types[location_type] = create_location_type_staging_record(
-                domain=domain,
-                name=location_type,
-                code=location_type,
-                location_type_id=len(location_types),
-                batch_id=batch_id
-            )
+#         if location_type not in location_types:
+#             location_types[location_type] = create_location_type_staging_record(
+#                 domain=domain,
+#                 name=location_type,
+#                 code=location_type,
+#                 location_type_id=len(location_types),
+#                 batch_id=batch_id
+#             )
 
-        _create_location_types_from_tree(domain, next_tree, location_types, batch_id)
+#         _create_location_types_from_tree(domain, next_tree, location_types, batch_id)
 
 
-def _create_locations_from_tree(domain, tree, parent_id, location_types, next_id, batch_id):
+def _create_locations_from_tree(domain, tree, parent_id, next_id, batch_id):
     if not tree:
         return
 
@@ -183,17 +173,18 @@ def _create_locations_from_tree(domain, tree, parent_id, location_types, next_id
         location_name, location_type = item[0]
         next_tree = item[1]
 
-        location_type_record = location_types[location_type]
         create_location_staging_record(
             domain,
             location_name,
-            location_type_id=location_type_record.location_type_id,
+            location_type_id=index,
             sql_location_id=next_id['id'],
             sql_parent_location_id=parent_id,
-            batch_id=batch_id
+            batch_id=batch_id,
+            location_type_name=location_type,
+            location_type_code=location_type
         )
         next_id['id'] += 1
-        _create_locations_from_tree(domain, next_tree, next_id['id'] - 1, location_types, next_id, batch_id)
+        _create_locations_from_tree(domain, next_tree, next_id['id'] - 1, next_id, batch_id)
 
 
 @partitioned
