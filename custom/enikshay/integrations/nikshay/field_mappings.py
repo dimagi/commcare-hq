@@ -107,6 +107,7 @@ hiv_status = {
     'reactive': 'Pos',
     'non_reactive': 'Neg',
     'unknown': 'Unknown',
+    'other': 'Other'  # only for v2
 }
 
 art_initiated = {

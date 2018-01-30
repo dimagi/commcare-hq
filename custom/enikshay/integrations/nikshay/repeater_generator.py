@@ -760,6 +760,10 @@ def _get_person_case_properties_v2(episode_case, person_case, person_case_proper
         house = current_address[0:50]
         street = current_address[50:100]
         ward = current_address[100:150]
+    person_hiv_status = person_case_properties.get('hiv_status')
+    # use other instead of unknown for v2
+    if person_hiv_status == 'unknown':
+        person_hiv_status = 'other'
     person_properties = {
         "patient_name": person_case.name,
         "gender": gender_mapping.get(person_case_properties.get('sex', ''), ''),
@@ -787,7 +791,7 @@ def _get_person_case_properties_v2(episode_case, person_case, person_case_proper
         "p_district": district_nikshay_code,
         "socio_economic_status": property_value_or_backup(person_case_properties.get('socioeconomic_status'),
                                                           'NA').upper(),
-        "hiv_status": hiv_status.get(person_case_properties.get('hiv_status'), hiv_status.get('unknown')),
+        "hiv_status": hiv_status.get(person_hiv_status, hiv_status.get('other')),
         "maritial_status": marital_status.get(
             person_case_properties.get('marital_status'),
             marital_status.get('unmarried')),
