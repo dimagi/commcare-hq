@@ -48,8 +48,6 @@ branches:
   - vellum-staging # J$ 11/13
   - jls/data-corrections-cases # Jenny 1/4
   - je/cythonized-jsonobject # j$ 1/8
-  - np/tb/xpath-expression # NP 1/10
-#  - np/tb/markdown # NP 1/10
   - xbryanc:dlemailbutton_updates  # Bryan 1/29
   - sophiamcg:organization-structure-search-tree-interaction  # Sophia 1/29
 submodules:
