@@ -1,13 +1,12 @@
 -- remove memberships if there is update to user's domains
--- ToDo: Fix query
-DELETE dm_dim
+DELETE
 FROM warehouse_domainmembershipdim AS dm_dim
-INNER JOIN (
+WHERE dm_dim.user_dim_id IN(
     SELECT user_dim.id
     FROM warehouse_userdim as user_dim
     INNER JOIN warehouse_userstagingtable as user_staging ON
-    user_staging.user_id = user_dim.user_id)
-updated_users ON dm_dim.user_dim_id = updated_users.id;
+    user_staging.user_id = user_dim.user_id
+);
 
 INSERT INTO warehouse_domainmembershipdim (
     dim_last_modified,
