@@ -12,7 +12,7 @@
 			<itext>
 				<translation lang="{{ lang }}" default="">
 					<text id="default_label-label">
-						<value> {{ default_label }} </value>
+						<value> {{default_label}} </value>
 					</text>
 				</translation>
 			</itext>
