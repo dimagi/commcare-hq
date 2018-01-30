@@ -54,25 +54,38 @@ def test_number_format_transform_strings(self, input, expected_result):
 
 
 class TestEthiopianConversion(SimpleTestCase):
-    '''Tests converting ethiopian string dates to gregorian dates'''
-
-    def setUp(self):
-        self.transform = TransformFactory.get_transform({
-            "type": "custom",
-            "custom_type": "ethiopian_date_to_gregorian_date",
-        }).get_transform_function()
+    '''Tests converting ethiopian string dates to gregorian dates and vice versa'''
 
 
 @generate_cases((
     ('2009-09-11 ', date(2017, 5, 19)),
-    ('2009-13-11 ', date(2017, 9, 16)),
+    ('2009-13-5 ', date(2017, 9, 10)),
     ('2009_13_11 ', ''),
     ('abc-13-11', ''),
     (None, ''),
 ), TestEthiopianConversion)
 def test_ethiopian_to_gregorian(self, date_string, expected_result):
-    self.assertEqual(expected_result, self.transform(date_string))
+    transform = TransformFactory.get_transform({
+        "type": "custom",
+        "custom_type": "ethiopian_date_to_gregorian_date",
+    }).get_transform_function()
+    self.assertEqual(expected_result, transform(date_string))
 
+
+@generate_cases((
+    ('2017-05-19 ', '2009-09-11'),
+    # ('2017-09-10 ', '2009-13-05'),
+    # ('2009_13_11 ', ''),
+    # ('abc-13-11', ''),
+    # (None, ''),
+), TestEthiopianConversion)
+def test_gregorian_to_ethiopian(self, date_string, expected_result):
+    transform = TransformFactory.get_transform({
+        "type": "custom",
+        "custom_type": "gregorian_date_to_ethiopian_date",
+    }).get_transform_function()
+
+    self.assertEqual(expected_result, transform(date_string))
 
 class CustomTransformTest(SimpleTestCase):
 
