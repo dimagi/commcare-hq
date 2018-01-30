@@ -1,14 +1,14 @@
 -- remove memberships if there is update to user's domains
 DELETE
-FROM warehouse_domainmembershipdim AS dm_dim
+FROM {{ domain_membership_dim }} AS dm_dim
 WHERE dm_dim.user_dim_id IN(
     SELECT user_dim.id
-    FROM warehouse_userdim as user_dim
-    INNER JOIN warehouse_userstagingtable as user_staging ON
+    FROM {{ user_dim }} as user_dim
+    INNER JOIN {{ user_staging }} as user_staging ON
     user_staging.user_id = user_dim.user_id
 );
 
-INSERT INTO warehouse_domainmembershipdim (
+INSERT INTO {{ domain_membership_dim }} (
     dim_last_modified,
     dim_created_on,
     user_dim_id,
@@ -25,15 +25,15 @@ SELECT
     (ddm.memberships ->> 'domain') as domain,
     (ddm.memberships ->> 'is_admin')::boolean as is_domain_admin,
     ddm.deleted,
-    4
+    {{ batch_id }}
 FROM
     (
     SELECT 
         user_dim.deleted,
         user_dim.id,
         json_array_elements(user_staging.domain_memberships::JSON) as memberships
-    FROM warehouse_userstagingtable AS user_staging
-    INNER JOIN warehouse_userdim AS user_dim 
+    FROM {{ user_staging }} AS user_staging
+    INNER JOIN {{ user_dim }} AS user_dim
     ON user_staging.user_id = user_dim.user_id
     WHERE user_staging.doc_type = 'WebUser'
 ) ddm    
@@ -46,8 +46,8 @@ SELECT
     user_staging.domain,
     false as is_domain_admin,
     user_dim.deleted,
-    4
-FROM warehouse_userstagingtable AS user_staging
-INNER JOIN warehouse_userdim AS user_dim 
+    {{ batch_id }}
+FROM {{ user_staging }} AS user_staging
+INNER JOIN {{ user_dim }} AS user_dim
 ON user_staging.user_id = user_dim.user_id
 WHERE user_staging.doc_type = 'CommCareUser';
