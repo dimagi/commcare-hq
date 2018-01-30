@@ -2800,6 +2800,7 @@
           "opened_on"
         ]
       }
-    ]
+    ],
+    "disable_destructive_rebuild": true
   }
 }

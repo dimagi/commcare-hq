@@ -198,25 +198,36 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
         return mapData;
     };
 
-    vm.getContent = function (geography) {
+    vm.getHtmlContent = function (geography) {
         var html = "";
+        html += "<div class=\"modal-header\">";
+        html += '<button type="button" class="close" ng-click="$ctrl.closePopup()" ' +
+                'aria-label="Close"><span aria-hidden="true">&times;</span></button>';
+        html += "</div>";
+        html +="<div class=\"modal-body\">";
         window.angular.forEach(vm.data.data[geography.id].original_name, function (value) {
             html += '<button class="btn btn-xs btn-default" ng-click="$ctrl.updateMap(\'' + value + '\')">' + value + '</button>';
         });
+        html += "</div>";
         return html;
+    };
+
+    vm.closePopup = function () {
+        var popup = d3.select("#locPopup");
+        popup.classed("hidden", true);
     };
 
     vm.updateMap = function (geography) {
         if (geography.id !== void(0) && vm.data.data[geography.id] && vm.data.data[geography.id].original_name.length > 1) {
-            var html = "";
-            window.angular.forEach(vm.data.data[geography.id].original_name, function (value) {
-                html += '<button class="btn btn-xs btn-default" ng-click="$ctrl.updateMap(\'' + value + '\')">' + value + '</button>';
-            });
-            var css = 'display: block; left: ' + event.clientX + 'px; top: ' + event.clientY + 'px;';
-            var ele = d3.select('#locPopup')
-                .attr('style', css)
+            var html = vm.getHtmlContent(geography);
+            var css = 'display: block; left: ' + event.layerX + 'px; top: ' + event.layerY + 'px;';
+
+            var popup = d3.select('#locPopup');
+            popup.classed("hidden", false);
+            popup.attr('style', css)
                 .html(html);
-            $compile(ele[0])($scope);
+
+            $compile(popup[0])($scope);
         } else {
             var location = geography.id || geography;
             if (geography.id !== void(0) && vm.data.data[geography.id] && vm.data.data[geography.id].original_name.length === 1) {
@@ -232,6 +243,7 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
                 storageService.setKey('search', $location.search());
             });
         }
+
     };
 
 }

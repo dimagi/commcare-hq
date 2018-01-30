@@ -756,6 +756,13 @@ CUSTOM_PROPERTIES = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN]
 )
 
+WEBAPPS_CASE_MIGRATION = StaticToggle(
+    'webapps_case_migration',
+    "Work-in-progress to support user-written migrations",
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_USER]
+)
+
 ENABLE_LOADTEST_USERS = StaticToggle(
     'enable_loadtest_users',
     'Enable creating loadtest users on HQ',
@@ -1460,4 +1467,26 @@ MOBILE_LOGIN_LOCKOUT = StaticToggle(
     "On too many wrong password attempts, lock out mobile users",
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN]
+)
+
+EMAIL_EXPORT_WHEN_DONE_BUTTON = StaticToggle(
+    'email_export_when_done_button',
+    "Show button that emails when export is done",
+    TAG_PRODUCT,
+    [NAMESPACE_DOMAIN],
+)
+
+LOCATION_SEARCH = StaticToggle(
+    'location_search',
+    "Allow search for location in organization structure",
+    TAG_PRODUCT,
+    [NAMESPACE_DOMAIN],
+)
+
+SHOW_ALL_SCHEDULED_REPORT_EMAILS = StaticToggle(
+    'show_all_scheduled_report_emails',
+    "In the 'My Scheduled Reports' tab, show all reports the user is part of (if the user is an "
+    "admin, show all in the current project)",
+    TAG_PRODUCT,
+    [NAMESPACE_USER],
 )

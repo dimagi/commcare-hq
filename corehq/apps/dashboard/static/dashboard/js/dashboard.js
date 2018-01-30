@@ -1,4 +1,14 @@
-hqDefine("dashboard/js/dashboard", function() {
+hqDefine("dashboard/js/dashboard", [
+    'jquery',
+    'knockout',
+    'underscore',
+    'hqwebapp/js/initial_page_data',
+], function(
+    $,
+    ko,
+    _,
+    initialPageData
+) {
     var TileModel = function(options) {
         var self = this;
         self.title = options.title;
@@ -45,7 +55,7 @@ hqDefine("dashboard/js/dashboard", function() {
                 // Send request
                 $.ajax({
                     method: "GET",
-                    url: hqImport('hqwebapp/js/initial_page_data').reverse('dashboard_tile', self.slug),
+                    url: initialPageData.reverse('dashboard_tile', self.slug),
                     data: {
                         itemsPerPage: self.itemsPerPage,
                         currentPage: newValue,
@@ -100,7 +110,7 @@ hqDefine("dashboard/js/dashboard", function() {
 
     $(function() {
         $("#dashboard-tiles").koApplyBindings(new DashboardModel({
-            tiles: hqImport("hqwebapp/js/initial_page_data").get("dashboard_tiles"),
+            tiles: initialPageData.get("dashboard_tiles"),
         }));
     });
 });

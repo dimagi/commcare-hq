@@ -7,7 +7,7 @@
 {% block js %}{{ block.super }}
     {% compress js %}
         <script src="{% static 'hqwebapp/js/stay-on-tab.js' %}"></script>
-        <script src="{% static 'accounting/js/adjust-balance-modal.js' %}"></script>
+        <script src="{% static 'accounting/js/adjust_balance_modal.js' %}"></script>
         <script src="{% static 'accounting/js/subscriptions.js' %}"></script>
     {% endcompress %}
 {% endblock %}
@@ -37,7 +37,7 @@
         </div>
         <!-- Modal Forms for (Subscription -> Invoices ->) Adjust Balance -->
         {% for adjust_balance_form in adjust_balance_forms %}
-            {% include 'accounting/adjust_balance.html' %}
+            {% include 'accounting/partials/adjust_balance.html' %}
         {% endfor %}
 
         {% if can_change_subscription %}
@@ -58,7 +58,7 @@
                 This subscription has ended.
             </div>
             {% endif %}
-            {% include 'accounting/credits_tab.html' %}
+            {% include 'accounting/partials/credits_tab.html' %}
         </div>
 
         <div class="tab-pane" id="cancel">

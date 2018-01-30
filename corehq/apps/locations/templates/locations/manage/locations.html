@@ -19,146 +19,65 @@
     var can_edit_root = {{ can_edit_root|yesno:"true,false" }};
     var hierarchy = {{ hierarchy|JSON }};
     var show_inactive = {{ show_inactive|yesno:"true,false" }};
-    var alert_user = hqImport("hqwebapp/js/alert_user").alert_user;
 
     function loc_edit_url(loc_id) {
         var template = '{% url "edit_location" domain "-locid-" %}';
         return template.replace('-locid-', loc_id);
     }
 
-    function loc_archive_url(loc_id) {
-        var template = '{% url "archive_location" domain "-locid-" %}';
-        return template.replace('-locid-', loc_id);
-    }
-
-    function loc_unarchive_url(loc_id) {
-        var template = '{% url "unarchive_location" domain "-locid-" %}';
-        return template.replace('-locid-', loc_id);
-    }
-
-    function loc_delete_url(loc_id) {
-        var template = '{% url "delete_location" domain "-locid-" %}';
-        return template.replace('-locid-', loc_id);
-    }
-
-    function loc_descendant_url(loc_id) {
-        var template = '{% url "location_descendants_count" domain "-locid-" %}';
-        return template.replace('-locid-', loc_id);
-    }
-
-    var archive_success_message = _.template('{% trans "You have successfully archived the location <%=name%>" %}');
-
-    var delete_success_message = _.template(
-        '{% trans "You have successfully deleted the location <%=name%> and all of its child locations" %}'
-    );
-
-    var delete_error_message = '{% trans "An error occurred while deleting your location. If the problem persists, please report an issue" %}';
-
-    archive_loc = function(button, name, loc_id) {
-        var archive_location_modal = $('#archive-location-modal')[0];
-
-        function archive_fn() {
-            $(button).disableButton();
-            $.ajax({
-                type: 'POST',
-                url: loc_archive_url(loc_id),
-                dataType: 'json',
-                error: 'error',
-                success: function (response) {
-                    alert_user(archive_success_message({"name": name}), "success");
-                    remove_elements_after_action(button);
-                }
-            });
-            $(archive_location_modal).modal('hide');
-            hqImport('analytix/js/google').track.event('Organization Structure', 'Archive')
-        }
-
-        var modal_context = {
-            "name": name,
-            "loc_id": loc_id,
-            "archive_fn": archive_fn
-        };
-        ko.cleanNode(archive_location_modal);
-        $(archive_location_modal).koApplyBindings(modal_context);
-        $(archive_location_modal).modal('show');
-    };
-
-    unarchive_loc = function(button, loc_id) {
-        $(button).disableButton();
-        $.ajax({
-            type: 'POST',
-            url: loc_unarchive_url(loc_id),
-            dataType: 'json',
-            error: 'error',
-            success: function (response) {
-                remove_elements_after_action(button);
-            }
-        });
-    };
-
-    delete_loc = function(button, name, loc_id) {
-        var delete_location_modal = $('#delete-location-modal')[0];
-        var modal_context;
-
-        function delete_fn() {
-            if (modal_context.count == modal_context.signOff()) {
-                $(button).disableButton();
-                $.ajax({
-                    type: 'DELETE',
-                    url: loc_delete_url(loc_id),
-                    dataType: 'json',
-                    error: function (response, status, error) {
-                        alert_user(delete_error_message, "warning");
-                        $(button).enableButton();
-                    },
-                    success: function (response) {
-                        if (response.success){
-                            alert_user(delete_success_message({"name": name}), "success");
-                            remove_elements_after_action(button);
-                        }
-                        else {
-                            alert_user(response.message, "warning");
-                            $(button).enableButton();
-                        }
-                    }
-                });
-                $(delete_location_modal).modal('hide');
-                hqImport('analytix/js/google').track.event('Organization Structure', 'Delete')
-            }
-        }
-
-        $.ajax({
-            type: 'GET',
-            url: loc_descendant_url(loc_id),
-            dataType: 'json',
-            success: function (response) {
-                modal_context = {
-                    "name": name,
-                    "loc_id": loc_id,
-                    "delete_fn": delete_fn,
-                    "count": response.count,
-                    "signOff": ko.observable('')
-                };
-                ko.cleanNode(delete_location_modal);
-                ko.applyBindings(modal_context, delete_location_modal);
-                $(delete_location_modal).modal('show');
-            }
-        });
-    };
-
-    remove_elements_after_action = function(button) {
-        $(button).closest('.loc_section').remove();
-    };
 
     $(function() {
         var model = new LocationTreeViewModel(hierarchy);
         $('#location_tree').koApplyBindings(model);
         model.load(locs);
     });
+    {% if request|toggle_enabled:'LOCATION_SEARCH' %}
+
+        var enableLocationSearchSelect = function() {
+
+            $('#location_search_select').select2({
+                ajax: {
+                    url: '{% url 'location_search' domain %}',
+                        dataType: 'json',
+                        data: function (params) {
+                            console.log(params);
+                            return {
+                                q: params.term,
+                                page_limit: 10,
+                                page: params.page,
+                                show_inactive: show_inactive,
+                            };
+                        },
+                        processResults: function (data, params) {
+                            var more = data.more || (params.page * 10) < data.total;
+                            return {results: data.results, more: more};
+                        }
+                    },
+                });
+            };
+
+            var reloadLocationSearchSelect = function() {
+                $('#location_search_select').select2('val', null);
+                enableLocationSearchSelect();
+            };
+
+            enableLocationSearchSelect();
+
+        $(function() {
+            var model = new LocationSearchViewModel();
+            $('#location_search').koApplyBindings(model);
+        });
+
+        {% endif %}
 </script>
 {% endblock %}
 
 {% block page_content %}
+    {% registerurl 'archive_location' domain '-locid-' %}
+    {% registerurl 'unarchive_location' domain '-locid-' %}
+    {% registerurl 'delete_location' domain '-locid-' %}
+    {% registerurl 'location_descendants_count' domain '-locid-'%}
+
 <header>
     <div class="row">
         <div class="col-sm-8">
@@ -228,13 +147,46 @@
 
 <hr />
 
+{% if request|toggle_enabled:'LOCATION_SEARCH' %}
+
+<div class="col-xs-12 col-md-12 col-lg-12 loc_search" id="location_search">
+    <label for="location_search" class="col-xs-2 col-md-1 col-lg-1 control-label">Location</label>
+
+    <div class="col-xs-7 col-md-7 col-lg-8">
+
+        <select type="text"
+            id="location_search_select"
+            data-bind="value: l__selected_location_id"
+            class="span4 form-control"
+            placeholder="Specify location"
+            name="location_search"
+            style="max-width:80%;"></select>
+
+        <span class="help-block">
+            <i class="fa fa-info-circle"></i>
+            To quick search for a location, write your query as "parent"/descendant. For more info, see the <a href="https://confluence.dimagi.com/display/commcarepublic/Exact+Search+for+Locations" target="_blank">Location Search</a> help page.
+        </span>
+
+    </div>
+
+    <div class="button_section">
+        <div data-bind="template: { name: 'button-template', if: selected_location_id(), data: selected_location}"></div>
+    </div>
+</div>
+
+
+<link href="{% static 'select2/dist/css/select2.min.css' %}" rel="stylesheet"/>
+<script src="{% static 'select2/dist/js/select2.full.min.js' %}"></script>
+
+{% endif %}
+
 {% if has_location_types %}
     <script type="text/html" id="location-template">
 
         <div class="loc_section">
             <!-- header bar -->
             <div class="loc_header" data-bind="if: name() != '_root'">
-                <div style="float:right;" data-bind="if: can_edit()">
+                <div style="float:right;" data-bind="if: can_edit()" id="button-template">
                     {% if not show_inactive %}
                         <a class="btn btn-primary"
                            data-bind="attr: { href: loc_edit_url(uuid()) }">
@@ -317,8 +269,10 @@
   </div>
 {% endif %}
 
+<div class="col-lg-12">
 <div id="location_tree">
   <div data-bind="template: { name: 'location-template', if: root, data: root }"></div>
+</div>
 </div>
 {% endblock %}
 

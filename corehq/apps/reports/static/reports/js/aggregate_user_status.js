@@ -2,7 +2,7 @@
 hqDefine("reports/js/aggregate_app_status", function() {
     function aggregateTooltip(key, x, y, e, graph) {
         return '<p><strong>' + key + '</strong></p>' +
-           '<p>' + e.value + ' since ' + x + '</p>';
+           '<p>' + Math.round(e.value) + '% since ' + x + '</p>';
     }
     function setupCharts(data, div, customTooltip) {
         nv.addGraph(function() {
@@ -14,8 +14,10 @@ hqDefine("reports/js/aggregate_app_status", function() {
               .groupSpacing(0.1)
             ;
 
-            chart.yAxis
-                .tickFormat(d3.format(',f'));
+            chart.yAxis.tickFormat(d3.format(',f'));
+
+            // disable legend click
+            chart.legend.updateState(false);
 
             if (customTooltip) {
                 chart.tooltipContent(customTooltip);

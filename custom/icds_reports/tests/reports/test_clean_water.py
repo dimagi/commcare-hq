@@ -24,7 +24,7 @@ class TestCleanWater(TestCase):
             {
                 "rightLegend": {
                     "info": "Percentage of AWCs that reported having a source of clean drinking water",
-                    "average": 96.66666666666667,
+                    "average": 96.15384615384616,
                     'extended_info': [
                         {
                             'indicator': 'Total number of AWCs with a source of clean drinking water:',

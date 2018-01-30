@@ -309,6 +309,7 @@ class ExportColumn(DocumentSchema):
         :returns: An ExportColumn instance
         """
         is_case_update = item.tag == PROPERTY_TAG_CASE and not isinstance(item, CaseIndexItem)
+        is_case_id = is_case_update and item.path[-1].name == '@case_id'
         is_case_history_update = item.tag == PROPERTY_TAG_UPDATE
         is_label_question = isinstance(item, LabelItem)
 
@@ -316,7 +317,7 @@ class ExportColumn(DocumentSchema):
         constructor_args = {
             "item": item,
             "label": item.readable_path if not is_case_history_update else item.label,
-            "is_advanced": is_case_update or is_label_question,
+            "is_advanced": not is_case_id and (is_case_update or is_label_question),
         }
 
         if isinstance(item, GeopointItem):
@@ -2673,6 +2674,12 @@ class DataFile(models.Model):
     def delete(self, using=None, keep_parents=False):
         self._delete_blob()
         return super(DataFile, self).delete(using, keep_parents)
+
+
+class EmailExportWhenDoneRequest(models.Model):
+    domain = models.CharField(max_length=255)
+    download_id = models.CharField(max_length=255)
+    user_id = models.CharField(max_length=255)
 
 
 # These must match the constants in corehq/apps/export/static/export/js/const.js

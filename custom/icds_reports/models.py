@@ -75,6 +75,8 @@ class AggAwcDailyView(models.Model):
     num_launched_blocks = models.IntegerField(blank=True, null=True)
     num_launched_supervisors = models.IntegerField(blank=True, null=True)
     num_launched_awcs = models.IntegerField(blank=True, null=True)
+    cases_person_has_aadhaar_v2 = models.IntegerField(blank=True, null=True)
+    cases_person_beneficiary_v2 = models.IntegerField(blank=True, null=True)
 
     class Meta:
         app_label = 'icds_model'
@@ -223,6 +225,8 @@ class AggAwcMonthly(models.Model):
     trained_phase_2 = models.IntegerField(blank=True, null=True)
     trained_phase_3 = models.IntegerField(blank=True, null=True)
     trained_phase_4 = models.IntegerField(blank=True, null=True)
+    cases_person_has_aadhaar_v2 = models.IntegerField(blank=True, null=True)
+    cases_person_beneficiary_v2 = models.IntegerField(blank=True, null=True)
 
     class Meta:
         app_label = 'icds_model'
@@ -378,6 +382,8 @@ class AggChildHealthMonthly(models.Model):
     fully_immunized_eligible = models.IntegerField(blank=True, null=True)
     fully_immunized_on_time = models.IntegerField(blank=True, null=True)
     fully_immunized_late = models.IntegerField(blank=True, null=True)
+    weighed_and_height_measured_in_month = models.IntegerField(blank=True, null=True)
+    weighed_and_born_in_month = models.IntegerField(blank=True, null=True)
 
     class Meta:
         app_label = 'icds_model'

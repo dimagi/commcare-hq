@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 import json
+import uuid
 from corehq.apps.accounting.models import SoftwarePlanEdition
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.api.models import ApiUser, PERMISSION_POST_SMS
@@ -11,7 +12,7 @@ from corehq.apps.sms.mixin import BadSMSConfigException
 from corehq.apps.sms.models import (SMS, QueuedSMS,
     SQLMobileBackendMapping, SQLMobileBackend, MobileBackendInvitation,
     PhoneLoadBalancingMixin, BackendMap)
-from corehq.apps.sms.tasks import handle_outgoing, reserve_connection_slot, free_connection_slot
+from corehq.apps.sms.tasks import handle_outgoing, get_connection_slot_from_phone_number, get_connection_slot_lock
 from corehq.apps.sms.tests.util import BaseSMSTest, delete_domain_phone_numbers
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.tests.utils import run_with_all_backends
@@ -818,15 +819,27 @@ class OutgoingFrameworkTestCase(DomainSubscriptionMixin, TestCase):
             SQLMobileBackendMapping.unset_default_domain_backend(self.domain)
 
     def test_reserving_connection_slots(self):
-        self.assertEqual(reserve_connection_slot(self.backend1, 4), '1')
-        self.assertEqual(reserve_connection_slot(self.backend1, 4), '2')
-        self.assertEqual(reserve_connection_slot(self.backend1, 4), '3')
-        self.assertEqual(reserve_connection_slot(self.backend1, 4), '4')
-        self.assertIsNone(reserve_connection_slot(self.backend1, 4))
+        random_slot = get_connection_slot_from_phone_number(uuid.uuid4().hex, 4)
+        self.assertGreaterEqual(random_slot, 0)
+        self.assertLessEqual(random_slot, 3)
 
-        free_connection_slot(self.backend1, '3')
-        self.assertEqual(reserve_connection_slot(self.backend1, 4), '3')
-        self.assertIsNone(reserve_connection_slot(self.backend1, 4))
+        self.assertEqual(get_connection_slot_from_phone_number('999000001', 4), 0)
+        self.assertEqual(get_connection_slot_from_phone_number('999000002', 4), 1)
+        self.assertEqual(get_connection_slot_from_phone_number('999000003', 4), 0)
+
+        lock_999000001 = get_connection_slot_lock('999000001', self.backend1, 4)
+        lock_999000002 = get_connection_slot_lock('999000002', self.backend1, 4)
+        lock_999000003 = get_connection_slot_lock('999000003', self.backend1, 4)
+
+        self.assertTrue(lock_999000001.acquire(blocking=False))
+        self.assertFalse(lock_999000003.acquire(blocking=False))
+        self.assertTrue(lock_999000002.acquire(blocking=False))
+
+        lock_999000001.release()
+        self.assertTrue(lock_999000003.acquire(blocking=False))
+
+        lock_999000002.release()
+        lock_999000003.release()
 
 
 class SQLMobileBackendTestCase(TestCase):

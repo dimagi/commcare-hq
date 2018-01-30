@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2018-01-09 21:42+0000\n"
+"POT-Creation-Date: 2018-01-16 20:26+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: Dimagi Dev <devops@dimagi.com>, 2017\n"
 "Language-Team: Hindi (https://www.transifex.com/dimagi/teams/9388/hi/)\n"
@@ -332,31 +332,27 @@ msgstr ""
 msgid "Crunching app diff..."
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/app_diff.js:92
-msgid "No changes detected"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/releases/app_diff.js:104
+#: corehq/apps/app_manager/static/app_manager/js/releases/app_diff.js:108
 msgid "Error generating the application diff. Please report an issue."
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/app_diff.js:159
+#: corehq/apps/app_manager/static/app_manager/js/releases/app_diff.js:163
 msgid "Form Changes"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/app_diff.js:166
+#: corehq/apps/app_manager/static/app_manager/js/releases/app_diff.js:170
 msgid "Case Changes"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/app_diff.js:243
+#: corehq/apps/app_manager/static/app_manager/js/releases/app_diff.js:247
 msgid "Save Questions"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/app_diff.js:247
+#: corehq/apps/app_manager/static/app_manager/js/releases/app_diff.js:251
 msgid "Load Questions"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/app_diff.js:350
+#: corehq/apps/app_manager/static/app_manager/js/releases/app_diff.js:354
 msgid "[unknown]"
 msgstr ""
 
@@ -2116,7 +2112,7 @@ msgid ""
 "later."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/webformsession.js:332
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/webformsession.js:333
 msgid "We were unable to save this answer. Please try again later."
 msgstr ""
 
@@ -2125,7 +2121,7 @@ msgid "Form successfully saved"
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:376
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js:25
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js:26
 msgid "Waiting for server progress"
 msgstr ""
 
@@ -2143,7 +2139,7 @@ msgstr ""
 msgid "Completed: "
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js:52
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js:53
 msgid ""
 "Unable to connect to form playing service. Please report an issue if you "
 "continue to see this message."
@@ -2477,27 +2473,27 @@ msgstr ""
 msgid "Error saving user"
 msgstr ""
 
-#: corehq/apps/registration/static/registration/js/new_user.ko.js:100
+#: corehq/apps/registration/static/registration/js/new_user.ko.js:106
 msgid "Please enter your name."
 msgstr ""
 
-#: corehq/apps/registration/static/registration/js/new_user.ko.js:109
+#: corehq/apps/registration/static/registration/js/new_user.ko.js:115
 msgid "Please specify an email."
 msgstr ""
 
-#: corehq/apps/registration/static/registration/js/new_user.ko.js:136
+#: corehq/apps/registration/static/registration/js/new_user.ko.js:142
 msgid "There is already a user with this email."
 msgstr ""
 
-#: corehq/apps/registration/static/registration/js/new_user.ko.js:144
+#: corehq/apps/registration/static/registration/js/new_user.ko.js:150
 msgid "Checking email..."
 msgstr ""
 
-#: corehq/apps/registration/static/registration/js/new_user.ko.js:154
+#: corehq/apps/registration/static/registration/js/new_user.ko.js:160
 msgid "Please specify a password."
 msgstr ""
 
-#: corehq/apps/registration/static/registration/js/new_user.ko.js:174
+#: corehq/apps/registration/static/registration/js/new_user.ko.js:180
 msgid "Please specify a project name."
 msgstr ""
 

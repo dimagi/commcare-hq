@@ -17,7 +17,7 @@ class Command(BaseCommand):
     @staticmethod
     def get_password_from_user():
         while True:
-            password = getpass.getpass('Enter Password:')
+            password = getpass.getpass('Create New Password:')
             if password == getpass.getpass('Repeat Password:'):
                 return password
 

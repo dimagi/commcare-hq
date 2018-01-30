@@ -35,7 +35,7 @@ def get_immunization_coverage_data_map(domain, config, loc_level, show_test=Fals
 
         return queryset
 
-    data_for_map, valid_total, in_month_total = generate_data_for_map(
+    data_for_map, valid_total, in_month_total, average = generate_data_for_map(
         get_data_for(config),
         loc_level,
         'children',
@@ -57,7 +57,7 @@ def get_immunization_coverage_data_map(domain, config, loc_level, show_test=Fals
         "label": "Percent Immunization Coverage at 1 year{}".format(chosen_filters),
         "fills": fills,
         "rightLegend": {
-            "average": (in_month_total * 100) / float(valid_total or 1),
+            "average": average,
             "info": _((
                 "Percentage of children 1 year+ who have received complete immunization as per "
                 "National Immunization Schedule of India required by age 1."

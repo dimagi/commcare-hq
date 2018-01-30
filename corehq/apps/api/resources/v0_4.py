@@ -439,7 +439,11 @@ class ApplicationResource(BaseApplicationResource):
                 form_jvalue = {
                     'xmlns': form.xmlns,
                     'name': form.name,
-                    'questions': form.get_questions(langs, include_translations=True),
+                    'questions': form.get_questions(
+                        langs,
+                        include_triggers=True,
+                        include_groups=True,
+                        include_translations=True),
                     'unique_id': form_unique_id,
                 }
                 dehydrated['forms'].append(form_jvalue)

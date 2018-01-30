@@ -11,7 +11,6 @@ from corehq import privileges
 from corehq.apps.app_manager.dbaccessors import domain_has_apps, get_brief_apps_in_domain
 from corehq.apps.dashboard.models import (
     AppsPaginator,
-    DataPaginator,
     ReportsPaginator,
     Tile,
     Tile,
@@ -50,6 +49,7 @@ def default_dashboard_url(request, domain):
     return reverse(DomainDashboardView.urlname, args=[domain])
 
 
+@login_and_domain_required
 def dashboard_tile(request, domain, slug):
     try:
         tile = [t for t in _get_default_tiles(request) if t.slug == slug][0]
@@ -177,7 +177,6 @@ def _get_default_tiles(request):
             title=_('Data'),
             slug='data',
             icon='fcc fcc-data',
-            paginator_class=DataPaginator,
             urlname="data_interfaces_default",
             visibility_check=can_edit_data,
             help_text=_('Export and manage data'),

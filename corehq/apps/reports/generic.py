@@ -1,5 +1,6 @@
 from __future__ import absolute_import
-from StringIO import StringIO
+
+import io
 import datetime
 import re
 import pytz
@@ -651,7 +652,7 @@ class GenericReportView(object):
 
     @property
     def excel_response(self):
-        file = StringIO()
+        file = io.BytesIO()
         export_from_tables(self.export_table, file, self.export_format)
         return file
 
@@ -692,7 +693,7 @@ class GenericReportView(object):
             export_all_rows_task.delay(self.__class__, self.__getstate__())
             return HttpResponse()
         else:
-            temp = StringIO()
+            temp = io.BytesIO()
             export_from_tables(self.export_table, temp, self.export_format)
             return export_response(temp, self.export_format, self.export_name)
 

@@ -1,5 +1,12 @@
-/* globals hqDefine, hqImport */
-hqDefine('toggle_ui/js/flags', function () {
+hqDefine('toggle_ui/js/flags', [
+    'jquery',
+    'knockout',
+    'reports/js/config.dataTables.bootstrap',
+], function (
+    $,
+    ko,
+    datatablesConfig
+) {
     var dataTableElem = '.datatable';
     var viewModel = {
         tagFilter: ko.observable(null)
@@ -14,7 +21,7 @@ hqDefine('toggle_ui/js/flags', function () {
         }
     );
     $('#table-filters').koApplyBindings(viewModel);
-    var table = hqImport("reports/js/config.dataTables.bootstrap").HQReportDataTables({
+    var table = datatablesConfig.HQReportDataTables({
         dataTableElem: dataTableElem,
         showAllRowsOption: true,
         includeFilter: true,

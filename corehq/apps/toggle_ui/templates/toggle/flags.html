@@ -4,13 +4,7 @@
 {% load timezone_tags %}
 {% load compress %}
 
-{% block js %}{{ block.super }}
-    {% compress js %}
-        <script src="{% static 'reports/js/config.dataTables.bootstrap.js' %}"></script>
-        <script src="{% static 'toggle_ui/js/flags.js' %}"></script>
-    {% endcompress %}
-{% endblock %}
-
+{% requirejs_main 'toggle_ui/js/flags' %}
 
 {% block stylesheets %}{{ block.super }}
 <style>

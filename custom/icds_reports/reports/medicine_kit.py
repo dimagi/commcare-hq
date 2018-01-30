@@ -35,7 +35,7 @@ def get_medicine_kit_data_map(domain, config, loc_level, show_test=False):
             queryset = apply_exclude(domain, queryset)
         return queryset
 
-    data_for_map, valid_total, in_month_total = generate_data_for_map(
+    data_for_map, valid_total, in_month_total, average = generate_data_for_map(
         get_data_for(config),
         loc_level,
         'in_month',
@@ -55,7 +55,7 @@ def get_medicine_kit_data_map(domain, config, loc_level, show_test=False):
         "label": "Percentage of AWCs that reported having a Medicine Kit",
         "fills": fills,
         "rightLegend": {
-            "average": (in_month_total * 100) / float(valid_total or 1),
+            "average": average,
             "info": _((
                 "Percentage of AWCs that reported having a Medicine Kit"
             )),
@@ -92,13 +92,7 @@ def get_medicine_kit_data_chart(domain, config, loc_level, show_test=False):
         'month', '%s_name' % loc_level
     ).annotate(
         in_month=Sum('infra_medicine_kits'),
-        all=Sum(
-            Case(
-                When(Q(infra_last_update_date=None), then=1),
-                default=0,
-                output_field=IntegerField()
-            )
-        ),
+        all=Sum('num_awc_infra_last_update'),
     ).order_by('month')
 
     if not show_test:

@@ -279,6 +279,16 @@
         "column_id": "organization",
         "datatype": "string",
         "display_name": "organization"
+      },
+      {
+        "type": "expression",
+        "expression": {
+          "type": "property_path",
+          "property_path": ["form", "want_hiv_test"]
+        },
+        "column_id": "want_hiv_test",
+        "datatype": "string",
+        "display_name": "want_hiv_test"
       }
     ]
   }

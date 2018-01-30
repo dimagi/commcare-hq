@@ -34,7 +34,7 @@ def get_early_initiation_breastfeeding_map(domain, config, loc_level, show_test=
             queryset = apply_exclude(domain, queryset)
         return queryset
 
-    data_for_map, in_month_total, birth_total = generate_data_for_map(
+    data_for_map, in_month_total, birth_total, average = generate_data_for_map(
         get_data_for(config),
         loc_level,
         'birth',
@@ -56,7 +56,7 @@ def get_early_initiation_breastfeeding_map(domain, config, loc_level, show_test=
         "label": "Percent Early Initiation of Breastfeeding{}".format(chosen_filters),
         "fills": fills,
         "rightLegend": {
-            "average": (birth_total * 100) / float(in_month_total or 1),
+            "average": average,
             "info": _((
                 "Percentage of children who were put to the breast within one hour of birth."
                 "<br/><br/>"

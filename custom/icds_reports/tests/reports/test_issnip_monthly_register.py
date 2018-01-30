@@ -28,7 +28,6 @@ class TestInstitutionalDeliveriesSector(TestCase):
         self.assertEqual(data['awc_days_open'], 14)
         self.assertIsNone(data['awc_days_pse_conducted'])
         self.assertEqual(data['usage_num_home_visit'], 0)
-        self.assertIsNone(data['ls_awc_present'])
         self.assertEqual(data['cases_person_referred'], 0)
 
     def test_child_health_monthly_data(self):
@@ -53,8 +52,8 @@ class TestInstitutionalDeliveriesSector(TestCase):
             'domain': 'icds-cas'
         }
         data = ISSNIPMonthlyReport(config=config).css_record_monthly
-        self.assertEqual(data['pregnant_women_thr'], 17)
-        self.assertEqual(data['lactating_women_thr'], 19)
+        self.assertEqual(data['pregnant_women_thr'], 5)
+        self.assertEqual(data['lactating_women_thr'], 7)
 
     def test_vhnd_data(self):
         config = {
@@ -64,7 +63,8 @@ class TestInstitutionalDeliveriesSector(TestCase):
         }
         data = ISSNIPMonthlyReport(config=config).vhnd_data
         self.assertEqual(data['vhsnd_date_past_month'], datetime(2017, 5, 13).date())
-        self.assertEquals(data['local_leader'], 1)
+        self.assertEqual(data['local_leader'], 1)
+        self.assertEqual(data['aww_present'], 1)
 
     def test_ccs_record_monthly_ucr(self):
         config = {
@@ -99,7 +99,7 @@ class TestInstitutionalDeliveriesSector(TestCase):
         data = ISSNIPMonthlyReport(config=config).agg_child_health_monthly
         self.assertEqual(data['boys_normal_0_3'], 1)
         self.assertEqual(data['girls_normal_0_3'], 1)
-        self.assertEqual(data['boys_normal_3_5'], 8)
+        self.assertEqual(data['boys_normal_3_5'], 7)
         self.assertEqual(data['girls_normal_3_5'], 7)
         self.assertEqual(data['boys_moderately_0_3'], 1)
         self.assertEqual(data['girls_moderately_0_3'], 0)

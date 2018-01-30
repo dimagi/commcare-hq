@@ -151,9 +151,20 @@ describe('Progress Report Directive', function () {
         assert.equal(expected, result);
     });
 
+    it('tests get color if current data equal previous month data when round up to 2 digits', function () {
+        var index = 2;
+        var data = [{'html': 'test'}, {'html': 1.11443907}, {'html': 1.1123987007}];
+
+        var expected = 'black';
+
+        var result = controller.getCSS(data, index, false);
+
+        assert.equal(expected, result);
+    });
+
     it('tests get color if previous month data are less than current data', function () {
         var index = 2;
-        var data = [{'html': 'test'}, {'html': 1}, {'html': 2}];
+        var data = [{'html': 'test'}, {'html': 1.11}, {'html': 1.12}];
 
         var expected = 'green fa fa-arrow-up';
 
@@ -164,7 +175,7 @@ describe('Progress Report Directive', function () {
 
     it('tests get color if previous month data are bigger than current data', function () {
         var index = 2;
-        var data = [{'html': 'test'}, {'html': 2}, {'html': 1}];
+        var data = [{'html': 'test'}, {'html': 1.12}, {'html': 1.11}];
 
         var expected = 'red fa fa-arrow-down';
 
@@ -175,9 +186,20 @@ describe('Progress Report Directive', function () {
 
     it('tests get color if previous month data are less than current data and reverse is true', function () {
         var index = 2;
-        var data = [{'html': 'test'}, {'html': 1}, {'html': 2}];
+        var data = [{'html': 'test'}, {'html': 1.11}, {'html': 1.12}];
 
         var expected = 'red fa fa-arrow-up';
+
+        var result = controller.getCSS(data, index, true);
+
+        assert.equal(expected, result);
+    });
+
+    it('tests get color if previous month data are bigger than current data and reverse is true', function () {
+        var index = 2;
+        var data = [{'html': 'test'}, {'html': 1.12}, {'html': 1.11}];
+
+        var expected = 'green fa fa-arrow-down';
 
         var result = controller.getCSS(data, index, true);
 

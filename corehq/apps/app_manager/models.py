@@ -53,6 +53,7 @@ from django.utils.translation import ugettext_lazy
 from couchdbkit.exceptions import BadValueError
 
 from corehq.apps.app_manager.app_schemas.case_properties import ParentCasePropertyBuilder
+from corehq.apps.app_manager.detail_screen import PropertyXpathGenerator
 from corehq.apps.app_manager.remote_link_accessors import get_remote_version, get_remote_master_release
 from corehq.apps.app_manager.suite_xml.utils import get_select_chain
 from corehq.apps.app_manager.suite_xml.generator import SuiteGenerator, MediaSuiteGenerator
@@ -2023,6 +2024,7 @@ class DetailColumn(IndexedSchema):
     header = DictProperty()
     model = StringProperty()
     field = StringProperty()
+    useXpathExpression = BooleanProperty(default=False)
     format = StringProperty()
 
     enum = SchemaListProperty(MappingItem)
@@ -2031,7 +2033,6 @@ class DetailColumn(IndexedSchema):
 
     late_flag = IntegerProperty(default=30)
     advanced = StringProperty(default="")
-    calc_xpath = StringProperty(default=".")
     filter_xpath = StringProperty(default="")
     time_ago_interval = FloatProperty(default=365.25)
 
@@ -2086,6 +2087,14 @@ class DetailColumn(IndexedSchema):
         if isinstance(data.get('enum'), dict):
             data['enum'] = sorted({'key': key, 'value': value}
                                   for key, value in data['enum'].items())
+
+        # Lazy migration: xpath expressions from format to first-class property
+        if data.get('format') == 'calculate':
+            property_xpath = PropertyXpathGenerator(None, None, None, super(DetailColumn, cls).wrap(data)).xpath
+            data['field'] = dot_interpolate(data.get('calc_xpath', '.'), property_xpath)
+            data['useXpathExpression'] = True
+            data['hasAutocomplete'] = False
+            data['format'] = 'plain'
 
         return super(DetailColumn, cls).wrap(data)
 

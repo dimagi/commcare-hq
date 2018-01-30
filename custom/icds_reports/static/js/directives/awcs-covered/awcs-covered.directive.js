@@ -11,13 +11,20 @@ function AWCSCoveredController($scope, $routeParams, $location, $filter, icdsCas
     }
     vm.userLocationId = userLocationId;
     vm.filtersData = $location.search();
-    vm.label = "AWC Covered";
+    vm.label = "AWCs Launched";
     vm.step = $routeParams.step;
     vm.steps = {
         'map': {route: '/awcs_covered/map', label: 'Map View'},
         'chart': {route: '/awcs_covered/chart', label: 'Chart View'},
     };
-    vm.data = {};
+    vm.data = {
+        legendTitle: 'Total AWCs that have launched ICDS-CAS. ' +
+        'AWCs are considered launched after submitting at least one Household Registration form.',
+    };
+    vm.rightLegend = {
+        info: 'Total AWCs that have launched ICDS-CAS. ' +
+        'AWCs are considered launched after submitting at least one Household Registration form.',
+    };
     vm.chartData = null;
     vm.top_five = [];
     vm.bottom_five = [];
@@ -61,6 +68,7 @@ function AWCSCoveredController($scope, $routeParams, $location, $filter, icdsCas
         var awcs = row ? $filter('indiaNumbers')(row.awcs) : 'N/A';
         return '<div class="hoverinfo" style="max-width: 200px !important;">' +
             '<p>' + loc.properties.name + '</p>' +
+            '<p>' + vm.rightLegend.info + '</p>' +
             '<div>Number of AWCs Launched: <strong>' + awcs + '</strong></div>';
     };
 
@@ -211,7 +219,7 @@ function AWCSCoveredController($scope, $routeParams, $location, $filter, icdsCas
         },
         caption: {
             enable: true,
-            html: '<i class="fa fa-info-circle"></i> Number of AWCs Launched',
+            html: '<i class="fa fa-info-circle"></i> ' + vm.data.legendTitle,
             css: {
                 'text-align': 'center',
                 'margin': '0 auto',
@@ -222,6 +230,7 @@ function AWCSCoveredController($scope, $routeParams, $location, $filter, icdsCas
 
     vm.tooltipContent = function(monthName, value) {
         return "<p><strong>" + monthName + "</strong></p><br/>"
+            + vm.data.legendTitle
             + "<p>Number of AWCs Launched: <strong>" + value + "</strong></p>";
     };
 

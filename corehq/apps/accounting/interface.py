@@ -87,7 +87,7 @@ def invoice_column_cell(invoice):
 
 
 class AddItemInterface(GenericTabularReport):
-    base_template = 'accounting/add_new_item_button.html'
+    base_template = 'accounting/partials/add_new_item_button.html'
     exportable = True
 
     item_name = None
@@ -593,7 +593,7 @@ class WireInvoiceInterface(InvoiceInterfaceBase):
         self.is_rendered_as_email = True
         statement_start = StatementPeriodFilter.get_value(
             self.request, self.domain) or datetime.date.today()
-        return render_to_string('accounting/bookkeeper_email.html', {
+        return render_to_string('accounting/email/bookkeeper.html', {
             'headers': self.headers,
             'month': statement_start.strftime("%B"),
             'rows': self.rows,
@@ -879,7 +879,7 @@ class InvoiceInterface(InvoiceInterfaceBase):
         self.is_rendered_as_email = True
         statement_start = StatementPeriodFilter.get_value(
             self.request, self.domain) or datetime.date.today()
-        return render_to_string('accounting/bookkeeper_email.html', {
+        return render_to_string('accounting/email/bookkeeper.html', {
             'headers': self.headers,
             'month': statement_start.strftime("%B"),
             'rows': self.rows,

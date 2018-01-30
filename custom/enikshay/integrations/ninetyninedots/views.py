@@ -74,7 +74,6 @@ def update_patient_adherence(request, domain):
             request,
             message=("An error occurred updating the episode case after receiving a 99DOTS"
                      "adherence case for beneficiary {}. {}").format(beneficiary_id, e))
-
     return json_response({"success": "Patient adherences updated."})
 
 

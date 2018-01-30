@@ -212,9 +212,9 @@ CRISPY_ALLOWED_TEMPLATE_PACKS = (
 HQ_APPS = (
     'django_digest',
     'auditcare',
-    'hqscripts',
     'casexml.apps.case',
     'corehq.apps.casegroups',
+    'corehq.apps.case_migrations',
     'casexml.apps.phone',
     'casexml.apps.stock',
     'corehq.apps.cleanup',
@@ -418,7 +418,8 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'custom.m4change',
 )
 
-INSTALLED_APPS = DEFAULT_APPS + HQ_APPS + ENIKSHAY_APPS
+# any built-in management commands we want to override should go in hqscripts
+INSTALLED_APPS = ('hqscripts',) + DEFAULT_APPS + HQ_APPS + ENIKSHAY_APPS
 
 # after login, django redirects to this URL
 # rather than the default 'accounts/profile'
@@ -595,6 +596,10 @@ ENIKSHAY_QUEUE = CELERY_MAIN_QUEUE
 # time limit is exceeded.
 CELERYD_TASK_SOFT_TIME_LIMIT = 86400 * 2  # 2 days in seconds
 
+# http://docs.celeryproject.org/en/3.1/configuration.html#celery-event-queue-ttl
+# Keep messages in the events queue only for 2 hours
+CELERY_EVENT_QUEUE_TTL = 2 * 60 * 60
+
 # websockets config
 WEBSOCKET_URL = '/ws/'
 WS4REDIS_PREFIX = 'ws'
@@ -611,13 +616,15 @@ FORMPLAYER_URL = 'http://localhost:8080'
 
 ####### SMS Queue Settings #######
 
+CUSTOM_PROJECT_SMS_QUEUES = {
+    'ils-gateway': 'ils_gateway_sms_queue',
+    'ils-gateway-train': 'ils_gateway_sms_queue',
+    'ils-gateway-training': 'ils_gateway_sms_queue',
+}
+
 # Setting this to False will make the system process outgoing and incoming SMS
 # immediately rather than use the queue.
 SMS_QUEUE_ENABLED = False
-
-# If an SMS still has not been processed in this number of minutes, enqueue it
-# again.
-SMS_QUEUE_ENQUEUING_TIMEOUT = 180
 
 # Number of minutes a celery task will alot for itself (via lock timeout)
 SMS_QUEUE_PROCESSING_LOCK_TIMEOUT = 5
@@ -680,7 +687,7 @@ PILLOW_RETRY_QUEUE_ENABLED = False
 
 # If an error still has not been processed in this number of minutes, enqueue it
 # again.
-PILLOW_RETRY_QUEUE_ENQUEUING_TIMEOUT = 60
+PILLOW_RETRY_QUEUE_ENQUEUING_TIMEOUT = 60 * 24
 
 # Number of minutes to wait before retrying an unsuccessful processing attempt
 PILLOW_RETRY_REPROCESS_INTERVAL = 5
@@ -1943,10 +1950,12 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'ccs_record_cases.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'ccs_record_cases_monthly_v2.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'ccs_record_cases_monthly_tableau2.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'ccs_record_cases_monthly_tableaunov17.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'child_cases_monthly_v2.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'child_delivery_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'child_health_cases.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'child_health_cases_monthly_tableau2.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'child_health_cases_monthly_tableaunov17.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'daily_feeding_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'gm_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'hardware_cases.json'),
@@ -1984,6 +1993,7 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'voucher_v2.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'voucher_v3.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'voucher_v4.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'voucher_v5.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'person_for_referral_report_v2.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'person_for_referral_report_v3.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_for_adherence_report.json'),
@@ -2074,7 +2084,6 @@ CUSTOM_UCR_EXPRESSIONS = [
 CUSTOM_UCR_EXPRESSION_LISTS = [
     ('mvp.ucr.reports.expressions.CUSTOM_UCR_EXPRESSIONS'),
     ('custom.icds_reports.ucr.expressions.CUSTOM_UCR_EXPRESSIONS'),
-    ('custom.ucr_ext.expressions.CUSTOM_UCR_EXPRESSIONS'),
     ('corehq.apps.userreports.expressions.extension_expressions.CUSTOM_UCR_EXPRESSIONS'),
 ]
 

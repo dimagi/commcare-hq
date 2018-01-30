@@ -21,6 +21,7 @@ from custom.enikshay.const import (
     SCHEDULE_ID_FIXTURE,
     HISTORICAL_CLOSURE_REASON,
 )
+from custom.enikshay.ledger_utils import get_episode_adherence_ledger
 from custom.enikshay.tasks import (
     EpisodeUpdater,
     EpisodeAdherenceUpdate,
@@ -35,6 +36,23 @@ from custom.enikshay.tests.utils import (
     get_episode_case_structure
 )
 import six
+
+MOCK_FIXTURE_ITEMS = {
+    '99DOTS': {
+        'directly_observed_dose': '13',
+        'manual': '18',
+        'missed_dose': '15',
+        'missing_data': '16',
+        'self_administered_dose': '17',
+        'unobserved_dose': '14'},
+    'enikshay': {
+        'directly_observed_dose': '1',
+        'manual': '6',
+        'missed_dose': '3',
+        'missing_data': '4',
+        'self_administered_dose': '5',
+        'unobserved_dose': '2'},
+}
 
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
@@ -958,11 +976,11 @@ class TestAdherenceUpdater(TestCase):
             output={
                 'three_day_score_count_taken': 1,
                 'one_week_score_count_taken': 1,
-                'two_week_score_count_taken': 3,
+                'two_week_score_count_taken': 2,
                 'month_score_count_taken': 4,
                 'three_day_adherence_score': 33.33,
                 'one_week_adherence_score': 14.29,
-                'two_week_adherence_score': 21.43,
+                'two_week_adherence_score': 14.29,
                 'month_adherence_score': 13.33,
             },
             date_today_in_india=datetime.date(2016, 1, 31)
@@ -1074,6 +1092,51 @@ class TestAdherenceUpdater(TestCase):
 
         self.assert_properties_equal(expected, updater.update_json())
 
+    @mock.patch('custom.enikshay.ledger_utils._adherence_values_fixture_id', lambda x: '123')
+    @mock.patch('custom.enikshay.ledger_utils._get_all_fixture_items', lambda x, y: MOCK_FIXTURE_ITEMS)
+    def test_ledger_updates(self):
+        adherence_cases = [
+            {
+                "name": '1',
+                "adherence_date": datetime.datetime(2009, 3, 5, 2, 0, 1),
+                "adherence_value": 'unobserved_dose',
+                "adherence_source": "enikshay",
+            },
+            {
+                "name": '2',
+                "adherence_date": datetime.datetime(2009, 3, 5, 1, 0, 1),
+                "adherence_value": 'unobserved_dose',
+                "adherence_source": "99DOTS",
+            },
+            {
+                "name": '3',
+                "adherence_date": datetime.datetime(2016, 3, 5, 2, 0, 1),
+                "adherence_value": 'unobserved_dose',
+                "adherence_source": "MERM",
+            },
+            {
+                "name": '4',
+                "adherence_date": datetime.datetime(2016, 3, 5, 19, 0, 1),  # next day in india
+                "adherence_value": 'unobserved_dose',
+                "adherence_source": "99DOTS",
+            }
+        ]
+        episode = self.create_episode_case(
+            adherence_schedule_date_start=datetime.date(2015, 12, 1),
+            adherence_schedule_id='schedule1',
+            adherence_cases=adherence_cases,
+        )
+        self.case_updater.run()
+        # in case of two doses the relevant one takes over and ledger is updated according to it
+        # so balance is 2 for enikshay instead of 14 for 99Dots
+        enikshay_adherence_ledger = get_episode_adherence_ledger(self.domain, episode.case_id,
+                                                                 "date_2009-03-05")
+        self.assertEqual(enikshay_adherence_ledger.balance, 2)
+
+        # the only adherence on 2016-03-05
+        ninetynine_dots_ledger = get_episode_adherence_ledger(self.domain, episode.case_id, "date_2016-03-05")
+        ninetynine_dots_ledger.balance = 14
+
     def test_missed_and_unknown_doses(self):
         adherence_cases = [{
             "name": str(i),
@@ -1105,12 +1168,12 @@ class TestAdherenceUpdater(TestCase):
         expected = {
             'three_day_score_count_taken': 1,
             'one_week_score_count_taken': 2,
-            'two_week_score_count_taken': 3,
+            'two_week_score_count_taken': 2,
             'month_score_count_taken': 4,
 
             'three_day_unknown_count': 3 - 2,
             'one_week_unknown_count': 7 - 3,
-            'two_week_unknown_count': 14 - 4,
+            'two_week_unknown_count': 14 - 3,
             'month_unknown_count': 30 - 6,
 
             'three_day_missed_count': 1,
@@ -1120,7 +1183,7 @@ class TestAdherenceUpdater(TestCase):
 
             'three_day_unknown_score': 33.33,
             'one_week_unknown_score': 57.14,
-            'two_week_unknown_score': 71.43,
+            'two_week_unknown_score': 78.57,
             'month_unknown_score': 80.0,
 
             'three_day_missed_score': 33.33,

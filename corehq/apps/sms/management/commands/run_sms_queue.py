@@ -1,49 +1,49 @@
 from __future__ import absolute_import
-from django.conf import settings
-
-from corehq.toggles import DATA_MIGRATION
-from dimagi.utils.parsing import json_format_datetime
+from corehq.apps.domain_migration_flags.api import any_migrations_in_progress
 from corehq.apps.sms.models import QueuedSMS
-from corehq.apps.sms.tasks import process_sms
-from hqscripts.generic_queue import GenericEnqueuingOperation
+from corehq.apps.sms.tasks import send_to_sms_queue
+from corehq.sql_db.util import handle_connection_failure
+from dimagi.utils.couch.cache.cache_core import get_redis_client
+from dimagi.utils.logging import notify_exception
+from django.core.management.base import BaseCommand
+from time import sleep
 
 
-class SMSEnqueuingOperation(GenericEnqueuingOperation):
-    help = "Runs the SMS Queue"
+def skip_domain(domain):
+    return any_migrations_in_progress(domain)
 
-    def get_queue_name(self):
-        return "sms-queue"
 
-    def get_enqueuing_timeout(self):
-        return settings.SMS_QUEUE_ENQUEUING_TIMEOUT
+class SMSEnqueuingOperation(BaseCommand):
+    help = "Spawns tasks to process queued SMS"
 
-    def get_items_to_be_processed(self, utcnow):
-        for sms in QueuedSMS.get_queued_sms():
-            if DATA_MIGRATION.enabled(sms.domain):
+    def get_enqueue_lock(self, queued_sms):
+        client = get_redis_client()
+        key = "create-task-for-sms-%s-%s" % (
+            queued_sms.pk,
+            queued_sms.datetime_to_process.strftime('%Y-%m-%d %H:%M:%S')
+        )
+        return client.lock(key, timeout=3 * 60 * 60)
+
+    @handle_connection_failure()
+    def create_tasks(self):
+        for queued_sms in QueuedSMS.get_queued_sms():
+            if queued_sms.domain and skip_domain(queued_sms.domain):
                 continue
-            yield {
-                'id': sms.pk,
-                'key': json_format_datetime(sms.datetime_to_process),
-            }
 
-    def use_queue(self):
-        return settings.SMS_QUEUE_ENABLED
+            self.enqueue(queued_sms)
 
-    def enqueue_item(self, pk):
-        process_sms.delay(pk)
+    def enqueue(self, queued_sms):
+        enqueue_lock = self.get_enqueue_lock(queued_sms)
+        if enqueue_lock.acquire(blocking=False):
+            send_to_sms_queue(queued_sms)
 
-    def enqueue_directly(self, sms):
-        """
-        This method is used to try to send a QueuedSMS entry directly to the
-        celery queue, without waiting for it to be enqueued by the handle()
-        thread.
-        """
-        try:
-            self.enqueue(sms.pk, json_format_datetime(sms.datetime_to_process))
-        except:
-            # If anything goes wrong here, no problem, the handle() thread will
-            # pick it up later and enqueue.
-            pass
+    def handle(self, **options):
+        while True:
+            try:
+                self.create_tasks()
+            except:
+                notify_exception(None, message="Could not fetch due survey actions")
+            sleep(10)
 
 
 class Command(SMSEnqueuingOperation):

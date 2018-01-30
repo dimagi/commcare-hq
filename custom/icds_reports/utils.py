@@ -365,12 +365,16 @@ def generate_data_for_map(data, loc_level, num_prop, denom_prop, fill_key_lower,
 
     valid_total = 0
     in_month_total = 0
+    values_to_calculate_average = []
 
     for row in data:
         valid = row[denom_prop] or 0
         name = row['%s_name' % loc_level]
         on_map_name = row['%s_map_location_name' % loc_level] or name
         in_month = row[num_prop] or 0
+
+        value = in_month * 100 / (row[denom_prop] or 1)
+        values_to_calculate_average.append(value)
 
         valid_total += valid
         in_month_total += in_month
@@ -389,7 +393,8 @@ def generate_data_for_map(data, loc_level, num_prop, denom_prop, fill_key_lower,
         elif value >= fill_key_bigger:
             data_for_location.update({'fillKey': (fill_format % (fill_key_bigger, 100))})
 
-    return data_for_map, valid_total, in_month_total
+    average = sum(values_to_calculate_average) / float(len(values_to_calculate_average) or 1)
+    return data_for_map, valid_total, in_month_total, average
 
 
 def calculate_date_for_age(dob, date):
@@ -496,3 +501,17 @@ def get_child_locations(domain, location_id, show_test):
         ]
     else:
         return list(locations)
+
+
+def person_has_aadhaar_column(beta):
+    if beta:
+        return 'cases_person_has_aadhaar_v2'
+
+    return 'cases_person_has_aadhaar'
+
+
+def person_is_beneficiary_column(beta):
+    if beta:
+        return 'cases_person_beneficiary_v2'
+
+    return 'cases_person_beneficiary'

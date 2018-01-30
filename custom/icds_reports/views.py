@@ -4,6 +4,7 @@ import requests
 
 from datetime import datetime, date
 
+from celery.result import AsyncResult
 from dateutil.relativedelta import relativedelta
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied
@@ -315,7 +316,8 @@ class ProgramSummaryView(View):
                 domain,
                 tuple(now.date().timetuple())[:3],
                 config,
-                include_test
+                include_test,
+                beta=icds_pre_release_features(request.couch_user)
             )
         elif step == 'awc_infrastructure':
             data = get_awc_infrastructure_data(domain, config, include_test)
@@ -558,7 +560,8 @@ class AwcReportsView(View):
                 config,
                 tuple(now.date().timetuple())[:3],
                 tuple(month.timetuple())[:3],
-                include_test
+                include_test,
+                beta=icds_pre_release_features(request.couch_user)
             )
         elif step == 'awc_infrastructure':
             data = get_awc_report_infrastructure(
@@ -653,7 +656,8 @@ class ExportIndicatorView(View):
             return DemographicsExport(
                 config=config,
                 loc_level=aggregation_level,
-                show_test=include_test
+                show_test=include_test,
+                beta=icds_pre_release_features(request.user)
             ).to_export(export_format, location)
         elif indicator == SYSTEM_USAGE_EXPORT:
             return SystemUsageExport(
@@ -685,7 +689,7 @@ class ExportIndicatorView(View):
                     location_type__code=AWC_LOCATION_TYPE_CODE
                 ).location_ids()
             pdf_format = request.POST.get('pdfformat')
-            prepare_issnip_monthly_register_reports.delay(
+            task = prepare_issnip_monthly_register_reports.delay(
                 self.kwargs['domain'],
                 self.request.couch_user,
                 awcs,
@@ -693,8 +697,9 @@ class ExportIndicatorView(View):
                 month,
                 year
             )
+            task_id = task.task_id
             url = redirect('icds_dashboard', domain=self.kwargs['domain'])
-            return redirect(url.url + '#/download?show_pdf_message=true')
+            return redirect(url.url + '#/download?task_id=' + task_id)
 
 
 @method_decorator([login_and_domain_required], name='dispatch')
@@ -729,7 +734,10 @@ class FactSheetsView(View):
         config.update(get_location_filter(location, domain))
         loc_level = get_location_level(config.get('aggregation_level'))
 
-        data = FactSheetsReport(config=config, loc_level=loc_level, show_test=include_test).get_data()
+        beta = icds_pre_release_features(request.user)
+        data = FactSheetsReport(
+            config=config, loc_level=loc_level, show_test=include_test, beta=beta
+        ).get_data()
         return JsonResponse(data=data)
 
 
@@ -1459,18 +1467,17 @@ class AdhaarBeneficiariesView(View):
         loc_level = get_location_level(config.get('aggregation_level'))
 
         data = {}
+        beta = icds_pre_release_features(request.couch_user)
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
-                data = get_adhaar_sector_data(domain, config, loc_level, location, include_test)
+                data = get_adhaar_sector_data(domain, config, loc_level, location, include_test, beta=beta)
             else:
-                data = get_adhaar_data_map(domain, config.copy(), loc_level, include_test)
+                data = get_adhaar_data_map(domain, config.copy(), loc_level, include_test, beta=beta)
                 if loc_level == LocationTypes.BLOCK:
-                    sector = get_adhaar_sector_data(
-                        domain, config, loc_level, location, include_test
-                    )
+                    sector = get_adhaar_sector_data(domain, config, loc_level, location, include_test, beta=beta)
                     data.update(sector)
         elif step == "chart":
-            data = get_adhaar_data_chart(domain, config, loc_level, include_test)
+            data = get_adhaar_data_chart(domain, config, loc_level, include_test, beta=beta)
 
         return JsonResponse(data={
             'report_data': data,
@@ -1745,3 +1752,23 @@ class DownloadPDFReport(View):
             response = HttpResponse(client.get(uuid), content_type='application/zip')
             response['Content-Disposition'] = 'attachment; filename="ISSNIP_monthly_register.zip"'
             return response
+
+
+@method_decorator([login_and_domain_required], name='dispatch')
+class CheckPDFReportStatus(View):
+    def get(self, request, *args, **kwargs):
+        task_id = self.request.GET.get('task_id', None)
+
+        res = AsyncResult(task_id)
+        status = res.ready()
+
+        if status:
+            task_result = prepare_issnip_monthly_register_reports.AsyncResult(task_id)
+            result = task_result.get()
+            return JsonResponse(
+                {
+                    'task_ready': status,
+                    'task_result': result
+                }
+            )
+        return JsonResponse({'task_ready': status})

@@ -12,167 +12,324 @@ from custom.icds_reports.const import ChartColors, MapColors
 
 @override_settings(SERVER_ENVIRONMENT='icds')
 class TestFunctionalToilet(TestCase):
+    maxDiff = None
+
+    def test_map_data_keys(self):
+        data = get_functional_toilet_data_map(
+            'icds-cas',
+            config={
+                'month': (2017, 5, 1),
+                'aggregation_level': 1
+            },
+            loc_level='state'
+        )
+        self.assertEquals(len(data), 5)
+        self.assertIn('rightLegend', data)
+        self.assertIn('fills', data)
+        self.assertIn('data', data)
+        self.assertIn('slug', data)
+        self.assertIn('label', data)
+
+    def test_map_data_right_legend_keys(self):
+        data = get_functional_toilet_data_map(
+            'icds-cas',
+            config={
+                'month': (2017, 5, 1),
+                'aggregation_level': 1
+            },
+            loc_level='state'
+        )['rightLegend']
+        self.assertEquals(len(data), 3)
+        self.assertIn('info', data)
+        self.assertIn('average', data)
+        self.assertIn('extended_info', data)
 
     def test_map_data(self):
+        data = get_functional_toilet_data_map(
+            'icds-cas',
+            config={
+                'month': (2017, 5, 1),
+                'aggregation_level': 1
+            },
+            loc_level='state'
+        )
         self.assertDictEqual(
-            get_functional_toilet_data_map(
-                'icds-cas',
-                config={
-                    'month': (2017, 5, 1),
-                    'aggregation_level': 1
-                },
-                loc_level='state'
-            ),
+            data['data'],
             {
-                "rightLegend": {
-                    "info": "Percentage of AWCs that reported having a functional toilet",
-                    "average": 50.0,
-                    'extended_info': [
-                        {'indicator': 'Total number of AWCs with a functional toilet:', 'value': "15"},
-                        {'indicator': '% of AWCs with a functional toilet:', 'value': '50.00%'}
-                    ]
+                "st1": {
+                    "in_month": 8,
+                    "original_name": ["st1"],
+                    "all": 17,
+                    "fillKey": "25%-75%"
                 },
-                "label": "Percentage of AWCs that reported having a functional toilet",
-                "data": {
-                    "st1": {
-                        "in_month": 8,
-                        "original_name": ["st1"],
-                        "all": 17,
-                        "fillKey": "25%-75%"
-                    },
-                    "st2": {
-                        "in_month": 7,
-                        "original_name": ["st2"],
-                        "all": 13,
-                        "fillKey": "25%-75%"
-                    }
-                },
-                "slug": "functional_toilet",
-                "fills": {
-                    "0%-25%": MapColors.RED,
-                    "25%-75%": MapColors.ORANGE,
-                    "75%-100%": MapColors.PINK,
-                    "defaultFill": MapColors.GREY
+                "st2": {
+                    "in_month": 7,
+                    "original_name": ["st2"],
+                    "all": 13,
+                    "fillKey": "25%-75%"
                 }
             }
         )
 
-    def test_map_name_is_different_data(self):
+    def test_map_data_right_legend_info(self):
+        data = get_functional_toilet_data_map(
+            'icds-cas',
+            config={
+                'month': (2017, 5, 1),
+                'aggregation_level': 1
+            },
+            loc_level='state'
+        )
+        expected = (
+            "Percentage of AWCs that reported having a functional toilet"
+        )
+        self.assertEquals(data['rightLegend']['info'], expected)
+
+    def test_map_data_right_legend_average(self):
+        data = get_functional_toilet_data_map(
+            'icds-cas',
+            config={
+                'month': (2017, 5, 1),
+                'aggregation_level': 1
+            },
+            loc_level='state'
+        )
+        self.assertEquals(data['rightLegend']['average'], 50.452488687782804)
+
+    def test_map_data_right_legend_extended_info(self):
+        data = get_functional_toilet_data_map(
+            'icds-cas',
+            config={
+                'month': (2017, 5, 1),
+                'aggregation_level': 1
+            },
+            loc_level='state'
+        )
+        self.assertListEqual(
+            data['rightLegend']['extended_info'],
+            [
+                {'indicator': 'Total number of AWCs with a functional toilet:', 'value': "15"},
+                {'indicator': '% of AWCs with a functional toilet:', 'value': '50.00%'}
+            ]
+        )
+
+    def test_map_data_fills(self):
+        data = get_functional_toilet_data_map(
+            'icds-cas',
+            config={
+                'month': (2017, 5, 1),
+                'aggregation_level': 1
+            },
+            loc_level='state'
+        )
         self.assertDictEqual(
-            get_functional_toilet_data_map(
-                'icds-cas',
-                config={
-                    'month': (2017, 5, 1),
-                    'state_id': 'st1',
-                    'district_id': 'd1',
-                    'aggregation_level': 3
-                },
-                loc_level='block',
-            ),
+            data['fills'],
             {
-                "rightLegend": {
-                    "info": "Percentage of AWCs that reported having a functional toilet",
-                    "average": 47.05882352941177,
-                    'extended_info': [
-                        {'indicator': 'Total number of AWCs with a functional toilet:', 'value': "8"},
-                        {'indicator': '% of AWCs with a functional toilet:', 'value': '47.06%'}
-                    ]
-                },
-                "label": "Percentage of AWCs that reported having a functional toilet",
-                "data": {
-                    "block_map": {
-                        "in_month": 8,
-                        "original_name": [
-                            "b1",
-                            "b2"
-                        ],
-                        "all": 17,
-                        "fillKey": "25%-75%"
-                    }
-                },
-                "slug": "functional_toilet",
-                "fills": {
-                    "0%-25%": MapColors.RED,
-                    "25%-75%": MapColors.ORANGE,
-                    "75%-100%": MapColors.PINK,
-                    "defaultFill": MapColors.GREY
+                "0%-25%": MapColors.RED,
+                "25%-75%": MapColors.ORANGE,
+                "75%-100%": MapColors.PINK,
+                "defaultFill": MapColors.GREY
+            }
+        )
+
+    def test_map_data_slug(self):
+        data = get_functional_toilet_data_map(
+            'icds-cas',
+            config={
+                'month': (2017, 5, 1),
+                'aggregation_level': 1
+            },
+            loc_level='state'
+        )
+        self.assertEquals(data['slug'], 'functional_toilet')
+
+    def test_map_data_label(self):
+        data = get_functional_toilet_data_map(
+            'icds-cas',
+            config={
+                'month': (2017, 5, 1),
+                'aggregation_level': 1
+            },
+            loc_level='state'
+        )
+        self.assertEquals(data['label'], 'Percentage of AWCs that reported having a functional toilet')
+
+    def test_map_name_two_locations_represent_by_one_topojson(self):
+        data = get_functional_toilet_data_map(
+            'icds-cas',
+            config={
+                'month': (2017, 5, 1),
+                'state_id': 'st1',
+                'district_id': 'd1',
+                'aggregation_level': 3
+            },
+            loc_level='block',
+        )
+        self.assertDictEqual(
+            data['data'],
+            {
+                "block_map": {
+                    "in_month": 8,
+                    "original_name": [
+                        "b1",
+                        "b2"
+                    ],
+                    "all": 17,
+                    "fillKey": "25%-75%"
                 }
             }
         )
+
+    def test_average_with_two_locations_represent_by_one_topojson(self):
+        data = get_functional_toilet_data_map(
+            'icds-cas',
+            config={
+                'month': (2017, 5, 1),
+                'state_id': 'st1',
+                'district_id': 'd1',
+                'aggregation_level': 3
+            },
+            loc_level='block',
+        )
+        self.assertEquals(data['rightLegend']['average'], 47.22222222222222)
 
     def test_chart_data(self):
-        self.assertDictEqual(
-            get_functional_toilet_data_chart(
-                'icds-cas',
-                config={
-                    'month': (2017, 5, 1),
-                    'aggregation_level': 1
+        data = get_functional_toilet_data_chart(
+            'icds-cas',
+            config={
+                'month': (2017, 5, 1),
+                'aggregation_level': 1
+            },
+            loc_level='state'
+        )
+        self.assertListEqual(
+            data['chart_data'],
+            [
+                {
+                    "color": ChartColors.BLUE,
+                    "values": [
+                        {
+                            "y": 0.0,
+                            "x": 1485907200000,
+                            "in_month": 0
+                        },
+                        {
+                            "y": 0.0,
+                            "x": 1488326400000,
+                            "in_month": 0
+                        },
+                        {
+                            "y": 0.5714285714285714,
+                            "x": 1491004800000,
+                            "in_month": 8
+                        },
+                        {
+                            "y": 0.5,
+                            "x": 1493596800000,
+                            "in_month": 15
+                        }
+                    ],
+                    "strokeWidth": 2,
+                    "classed": "dashed",
+                    "key": "Percentage of AWCs that reported having a functional toilet"
+                }
+            ]
+        )
+
+    def test_chart_data_keys(self):
+        data = get_functional_toilet_data_chart(
+            'icds-cas',
+            config={
+                'month': (2017, 5, 1),
+                'aggregation_level': 1
+            },
+            loc_level='state'
+        )
+        self.assertEquals(len(data), 5)
+        self.assertIn('top_five', data)
+        self.assertIn('bottom_five', data)
+        self.assertIn('all_locations', data)
+        self.assertIn('chart_data', data)
+        self.assertIn('location_type', data)
+
+    def test_chart_data_top_five(self):
+        data = get_functional_toilet_data_chart(
+            'icds-cas',
+            config={
+                'month': (2017, 5, 1),
+                'aggregation_level': 1
+            },
+            loc_level='state'
+        )
+        self.assertListEqual(
+            data['top_five'],
+            [
+                {
+                    "loc_name": "st2",
+                    "percent": 53.84615384615385
                 },
-                loc_level='state'
-            ),
-            {
-                "chart_data": [
-                    {
-                        "color": ChartColors.BLUE,
-                        "values": [
-                            {
-                                "y": 0.0,
-                                "x": 1485907200000,
-                                "in_month": 0
-                            },
-                            {
-                                "y": 0.0,
-                                "x": 1488326400000,
-                                "in_month": 0
-                            },
-                            {
-                                "y": 8.0,
-                                "x": 1491004800000,
-                                "in_month": 8
-                            },
-                            {
-                                "y": 15.0,
-                                "x": 1493596800000,
-                                "in_month": 15
-                            }
-                        ],
-                        "strokeWidth": 2,
-                        "classed": "dashed",
-                        "key": "Percentage of AWCs that reported having a functional toilet"
-                    }
-                ],
-                "top_five": [
-                    {
-                        "loc_name": "st2",
-                        "percent": 53.84615384615385
-                    },
-                    {
-                        "loc_name": "st1",
-                        "percent": 47.05882352941177
-                    }
-                ],
-                "location_type": "State",
-                "all_locations": [
-                    {
-                        "loc_name": "st2",
-                        "percent": 53.84615384615385
-                    },
-                    {
-                        "loc_name": "st1",
-                        "percent": 47.05882352941177
-                    }
-                ],
-                "bottom_five": [
-                    {
-                        "loc_name": "st2",
-                        "percent": 53.84615384615385
-                    },
-                    {
-                        "loc_name": "st1",
-                        "percent": 47.05882352941177
-                    }
-                ]
-            }
+                {
+                    "loc_name": "st1",
+                    "percent": 47.05882352941177
+                }
+            ]
+        )
+
+    def test_chart_data_bottom_five(self):
+        data = get_functional_toilet_data_chart(
+            'icds-cas',
+            config={
+                'month': (2017, 5, 1),
+                'aggregation_level': 1
+            },
+            loc_level='state'
+        )
+        self.assertListEqual(
+            data['bottom_five'],
+            [
+                {
+                    "loc_name": "st2",
+                    "percent": 53.84615384615385
+                },
+                {
+                    "loc_name": "st1",
+                    "percent": 47.05882352941177
+                }
+            ]
+        )
+
+    def test_chart_data_location_type(self):
+        data = get_functional_toilet_data_chart(
+            'icds-cas',
+            config={
+                'month': (2017, 5, 1),
+                'aggregation_level': 1
+            },
+            loc_level='state'
+        )
+        self.assertEquals(data['location_type'], "State")
+
+    def test_chart_data_all_locations(self):
+        data = get_functional_toilet_data_chart(
+            'icds-cas',
+            config={
+                'month': (2017, 5, 1),
+                'aggregation_level': 1
+            },
+            loc_level='state'
+        )
+        self.assertListEqual(
+            data['all_locations'],
+            [
+                {
+                    "loc_name": "st2",
+                    "percent": 53.84615384615385
+                },
+                {
+                    "loc_name": "st1",
+                    "percent": 47.05882352941177
+                }
+            ]
         )
 
     def test_sector_data(self):
