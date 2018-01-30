@@ -894,12 +894,14 @@ def _get_episode_case_properties_v2(episode_case_properties, occurence_case, per
     occurrence_key_population = occurence_case.get_case_property('key_populations')
     if occurrence_key_population:
         # key populations is multiple choice and hence can have two options like "diabetes tobacco"
-        # so pick the first option
-        occurrence_key_population = occurrence_key_population.split(' ')[0]
-        episode_properties['key_population'] = key_population.get(
-            occurrence_key_population,
-            key_population.get('other')
-        )
+        # so share mapping for each
+        key_populations = set()
+        _occurrence_key_populations = occurrence_key_population.split(' ')
+        for _occurrence_key_population in _occurrence_key_populations:
+            key_populations.add(str(
+                key_population.get(_occurrence_key_population, key_population.get('other')
+            )))
+        episode_properties['key_population'] = ','.join(key_populations)
     else:
         episode_properties['key_population'] = '11'  # Not Applicable
 
