@@ -18,8 +18,6 @@ class Command(BaseCommand):
         parser.add_argument('path')
 
     def handle(self, app_id, path, **options):
-        # todo: would be nice if this worked off remote servers too
-
         # setup directory
         if not os.path.exists(path):
             os.mkdir(path)

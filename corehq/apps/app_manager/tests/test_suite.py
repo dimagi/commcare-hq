@@ -13,6 +13,9 @@ from corehq.apps.app_manager.exceptions import SuiteValidationError, DuplicateIn
 from corehq.apps.app_manager.models import (
     AdvancedModule,
     Application,
+    CaseSearch,
+    CaseSearchProperty,
+    DefaultCaseSearchProperty,
     DetailColumn,
     FormActionCondition,
     GraphConfiguration,
@@ -138,6 +141,26 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             self.get_xml('sort-cache'),
             app.create_suite(),
             "./detail[@id='m0_case_short']"
+        )
+
+    def test_sort_cache_search(self):
+        app = Application.wrap(self.get_json('suite-advanced'))
+        app.modules[0].search_config = CaseSearch(
+            properties=[CaseSearchProperty(name='name', label={'en': 'Name'})],
+        )
+        detail = app.modules[0].case_details.short
+        detail.sort_elements.append(
+            SortElement(
+                field=detail.columns[0].field,
+                type='index',
+                direction='descending',
+                blanks='first',
+            )
+        )
+        self.assertXmlPartialEqual(
+            self.get_xml('sort-cache-search'),
+            app.create_suite(),
+            "./detail[@id='m0_search_short']"
         )
 
     def test_sort_calculation(self):
@@ -1060,10 +1083,15 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
     def test_custom_variables(self):
         factory = AppFactory()
         module, form = factory.new_basic_module('m0', 'case1')
+        factory.form_requires_case(form, 'case')
         short_custom_variables = "<variable function='true()' /><foo function='bar'/>"
-        long_custom_variables = "<bar function='true()' /><baz function='buzz'/>"
+        long_custom_variables = (
+            '<bar function="true()" />'
+            '<baz function="instance(\'locations\')/locations/location[0]"/>'
+        )
         module.case_details.short.custom_variables = short_custom_variables
         module.case_details.long.custom_variables = long_custom_variables
+        suite = factory.app.create_suite()
         self.assertXmlPartialEqual(
             u"""
             <partial>
@@ -1075,8 +1103,18 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
                 </variables>
             </partial>
             """.format(short_variables=short_custom_variables, long_variables=long_custom_variables),
-            factory.app.create_suite(),
+            suite,
             "detail/variables"
+        )
+        self.assertXmlPartialEqual(
+            u"""
+            <partial>
+                <instance id="casedb" src="jr://instance/casedb"/>
+                <instance id="locations" src="jr://fixture/locations"/>
+            </partial>
+            """.format(short_variables=short_custom_variables, long_variables=long_custom_variables),
+            suite,
+            "entry[1]/instance"
         )
 
 

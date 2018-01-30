@@ -14,12 +14,11 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.apps.userreports.models import StaticDataSourceConfiguration
 from corehq.apps.userreports.util import get_indicator_adapter
-from corehq.sql_db.connections import connection_manager
+from corehq.sql_db.connections import connection_manager, ICDS_UCR_ENGINE_ID
 from custom.icds_reports.tasks import move_ucr_data_into_aggregation_tables
 
 FILE_NAME_TO_TABLE_MAPPING = {
     'awc_mgmt': 'config_report_icds-cas_static-awc_mgt_forms_ad1b11f0',
-    'ccs_cases': 'config_report_icds-cas_static-ccs_record_cases_cedcca39',
     'ccs_monthly': 'config_report_icds-cas_static-ccs_record_cases_monthly_d0e2e49e',
     'child_cases': 'config_report_icds-cas_static-child_health_cases_a46c129f',
     'child_monthly': 'config_report_icds-cas_static-child_cases_monthly_tabl_551fd064',
@@ -36,6 +35,7 @@ FILE_NAME_TO_TABLE_MAPPING = {
 
 def setUpModule():
     if settings.USE_PARTITIONED_DATABASE:
+        print('============= WARNING: not running test setup because settings.USE_PARTITIONED_DATABASE is True.')
         return
 
     _call_center_domain_mock = mock.patch(
@@ -55,6 +55,17 @@ def setUpModule():
         location_type=location_type
     )
 
+    awc_location_type = LocationType.objects.create(
+        domain=domain.name,
+        name='awc',
+    )
+    SQLLocation.objects.create(
+        domain=domain.name,
+        name='a7',
+        location_id='a7',
+        location_type=awc_location_type
+    )
+
     with override_settings(SERVER_ENVIRONMENT='icds'):
         configs = StaticDataSourceConfiguration.by_domain('icds-cas')
         adapters = [get_indicator_adapter(config) for config in configs]
@@ -65,7 +76,7 @@ def setUpModule():
                 continue
             adapter.build_table()
 
-        engine = connection_manager.get_session_helper(settings.ICDS_UCR_TEST_DATABASE_ALIAS).engine
+        engine = connection_manager.get_engine(ICDS_UCR_ENGINE_ID)
         metadata = sqlalchemy.MetaData(bind=engine)
         metadata.reflect(bind=engine, extend_existing=True)
         path = os.path.join(os.path.dirname(__file__), 'fixtures')
@@ -100,8 +111,7 @@ def tearDownModule():
                 continue
             adapter.drop_table()
 
-        engine = connection_manager.get_session_helper(settings.ICDS_UCR_TEST_DATABASE_ALIAS).engine
-
+        engine = connection_manager.get_engine(ICDS_UCR_ENGINE_ID)
         with engine.begin() as connection:
             metadata = sqlalchemy.MetaData(bind=engine)
             metadata.reflect(bind=engine, extend_existing=True)

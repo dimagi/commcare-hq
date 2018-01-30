@@ -10,6 +10,8 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
 
         queryFormplayer: function (params, route) {
             var user = FormplayerFrontend.request('currentUser'),
+                lastRecordedLocation = FormplayerFrontend.request('lastRecordedLocation'),
+                timezoneOffsetMillis = (new Date()).getTimezoneOffset() * 60 * 1000 * -1,
                 formplayerUrl = user.formplayer_url,
                 displayOptions = user.displayOptions || {},
                 defer = $.Deferred(),
@@ -33,8 +35,9 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
                     } else {
                         FormplayerFrontend.trigger('clearProgress');
                         defer.resolve(parsedMenus);
-                        if (response.menuSessionId) {
-                            FormplayerFrontend.trigger('configureDebugger', response.menuSessionId);
+                        // Only configure menu debugger if we didn't get a form entry response
+                        if (!(response.session_id)) {
+                            FormplayerFrontend.trigger('configureDebugger');
                         }
                     }
                 },
@@ -65,13 +68,14 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
                 "search_text": params.search,
                 "menu_session_id": params.sessionId,
                 "query_dictionary": params.queryDict,
-                "previewCommand": params.previewCommand,
                 "installReference": params.installReference,
                 "oneQuestionPerScreen": displayOptions.oneQuestionPerScreen,
                 "isPersistent": params.isPersistent,
                 "useLiveQuery": user.useLiveQuery,
                 "sortIndex": params.sortIndex,
                 "preview": params.preview,
+                "geo_location": lastRecordedLocation,
+                "tz_offset_millis": timezoneOffsetMillis,
             });
             options.url = formplayerUrl + '/' + route;
 

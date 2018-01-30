@@ -1,9 +1,11 @@
 from __future__ import absolute_import
+from __future__ import print_function
 import csv
 from django.core.management.base import BaseCommand
 from corehq.apps.locations.models import SQLLocation
 from custom.enikshay.integrations.bets.repeaters import BETSLocationRepeater
 from custom.enikshay.integrations.bets.utils import get_bets_location_json
+from six.moves import map
 
 
 class Command(BaseCommand):
@@ -49,7 +51,7 @@ class Command(BaseCommand):
                         .prefetch_related('parent', 'location_type')):
                 if loc.metadata.get('is_test') != "yes":
                     self.add_loc(loc, writer)
-        print "Wrote to {}".format(filename)
+        print("Wrote to {}".format(filename))
 
     def add_loc(self, location, writer):
         loc_data = get_bets_location_json(location)
@@ -62,4 +64,4 @@ class Command(BaseCommand):
                 return loc_data[obj].get(key, '')
             return loc_data[field]
 
-        writer.writerow(map(get_field, self.field_names))
+        writer.writerow(list(map(get_field, self.field_names)))

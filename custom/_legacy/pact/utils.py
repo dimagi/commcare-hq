@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from corehq.apps.api.es import ReportCaseES
 from pact.enums import PACT_DOTS_DATA_PROPERTY, PACT_DOMAIN
-from StringIO import StringIO
+from io import BytesIO
 from django.test.client import RequestFactory
 from corehq.apps.receiverwrapper.views import post
 
@@ -11,7 +11,7 @@ def submit_xform(url_path, domain, submission_xml_string, extra_meta=None):
     RequestFactory submitter
     """
     rf = RequestFactory()
-    f = StringIO(submission_xml_string.encode('utf-8'))
+    f = BytesIO(submission_xml_string.encode('utf-8'))
     f.name = 'form.xml'
 
     req = rf.post(url_path, data={'xml_submission_file': f}) #, content_type='multipart/form-data')
@@ -94,10 +94,10 @@ def query_per_case_submissions_facet(domain, username=None, limit=100):
 
 
 def get_case_id(xform):
-    if xform['form'].has_key('case'):
-        if xform['form']['case'].has_key('case_id'):
+    if 'case' in xform['form']:
+        if 'case_id' in xform['form']['case']:
             return xform['form']['case']['case_id']
-        elif xform['form']['case'].has_key('@case_id'):
+        elif '@case_id' in xform['form']['case']:
             return xform['form']['case']['@case_id']
     return None
 

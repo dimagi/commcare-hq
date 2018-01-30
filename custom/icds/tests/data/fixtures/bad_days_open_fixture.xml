@@ -9,7 +9,7 @@
 			<column id="count">3</column>
 			<column id="owner_id">AWC2</column>
 		</row>
-		<row index="9" is_total_row="True">
+		<row index="2" is_total_row="True">
 			<column id="count">129</column>
 			<column id="owner_id">Total</column>
 		</row>

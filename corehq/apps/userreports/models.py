@@ -116,6 +116,8 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
     last_modified = DateTimeProperty()
     asynchronous = BooleanProperty(default=False)
     sql_column_indexes = SchemaListProperty(SQLColumnIndexes)
+    icds_rebuild_related_docs = BooleanProperty(default=False)
+    disable_destructive_rebuild = BooleanProperty(default=False)
 
     class Meta(object):
         # prevent JsonObject from auto-converting dates etc.
@@ -255,7 +257,8 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
             self.default_indicators + [
                 IndicatorFactory.from_spec(indicator, self.get_factory_context())
                 for indicator in self.configured_indicators
-            ]
+            ],
+            None,
         )
 
     @property
@@ -351,14 +354,24 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
         return {"settings": es_index_settings}
 
     def get_case_type_or_xmlns_filter(self):
+        """Returns a list of case types or xmlns from the filter of this data source.
+
+        If this can't figure out the case types or xmlns's that filter, then returns [None]
+        """
         def _get_property_value(config_filter, prop_name):
-            if (config_filter.get('type') != 'boolean_expression'
-                    or config_filter['operator'] != 'eq'):
-                return None
+            if config_filter.get('type') != 'boolean_expression':
+                return [None]
+
+            if config_filter['operator'] not in ('eq', 'in'):
+                return [None]
+
             expression = config_filter['expression']
             if expression['type'] == 'property_name' and expression['property_name'] == prop_name:
-                return config_filter['property_value']
-            return None
+                prop_value = config_filter['property_value']
+                if not isinstance(prop_value, list):
+                    prop_value = [prop_value]
+                return prop_value
+            return [None]
 
         if self.referenced_doc_type == 'CommCareCase':
             prop_value = _get_property_value(self.configured_filter, 'type')
@@ -369,7 +382,7 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
             if prop_value:
                 return prop_value
 
-        return None
+        return [None]
 
 
 class ReportMeta(DocumentSchema):
@@ -696,7 +709,7 @@ class StaticReportConfiguration(JsonObject):
         metadata = mapping.get(config_id, None)
         if not metadata:
             raise BadSpecError(_('The report configuration referenced by this report could '
-                                 'not be found: %(report_id)S') % {'report_id': config_id})
+                                 'not be found: %(report_id)s') % {'report_id': config_id})
 
         config = cls._get_from_metadata(metadata)
         if domain and config.domain != domain:
@@ -770,10 +783,9 @@ class AsyncIndicator(models.Model):
         ordering = ["date_created"]
 
     @classmethod
-    def update_indicators(cls, change, config_ids):
-        doc_id = change.id
-        doc_type = change.document['doc_type']
-        domain = change.document['domain']
+    def update_record(cls, doc_id, doc_type, domain, config_ids):
+        if not isinstance(config_ids, list):
+            config_ids = list(config_ids)
         config_ids = sorted(config_ids)
 
         indicator, created = cls.objects.get_or_create(
@@ -792,8 +804,6 @@ class AsyncIndicator(models.Model):
             try:
                 indicator = cls.objects.get(doc_id=doc_id)
             except cls.DoesNotExist:
-                doc_type = change.document['doc_type']
-                domain = change.document['domain']
                 indicator = AsyncIndicator.objects.create(
                     doc_id=doc_id,
                     doc_type=doc_type,
@@ -811,11 +821,18 @@ class AsyncIndicator(models.Model):
 
         return indicator
 
+    @classmethod
+    def update_from_kafka_change(cls, change, config_ids):
+        return cls.update_record(
+            change.id, change.document['doc_type'], change.document['domain'], config_ids
+        )
+
     def update_failure(self, to_remove):
         self.refresh_from_db(fields=['indicator_config_ids'])
         new_indicators = set(self.indicator_config_ids) - set(to_remove)
         self.indicator_config_ids = sorted(list(new_indicators))
         self.unsuccessful_attempts += 1
+        self.date_queued = None
 
 
 def get_datasource_config(config_id, domain):

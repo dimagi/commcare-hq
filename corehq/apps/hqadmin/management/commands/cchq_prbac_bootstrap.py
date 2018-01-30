@@ -12,6 +12,7 @@ from django.core.management.base import BaseCommand
 from corehq import privileges
 from corehq.apps.accounting.utils import ensure_grants, log_removed_grants
 from django_prbac.models import Grant, Role
+from six.moves import input
 
 logger = logging.getLogger(__name__)
 
@@ -55,8 +56,10 @@ class Command(BaseCommand):
         self.verbose = verbose
 
         if fresh_start:
-            confirm_fresh_start = raw_input("Are you sure you want to delete all Roles and start over? You can't do this"
-                                            " if accounting is already set up. Type 'yes' to continue.")
+            confirm_fresh_start = input(
+                "Are you sure you want to delete all Roles and start over? You can't do this"
+                " if accounting is already set up. Type 'yes' to continue."
+            )
             if confirm_fresh_start == 'yes':
                 self.flush_roles()
 
@@ -64,7 +67,7 @@ class Command(BaseCommand):
         self.ensure_roles(self.BOOTSTRAP_PRIVILEGES + self.BOOTSTRAP_PLANS, dry_run)
 
         ensure_grants(
-            self.BOOTSTRAP_GRANTS.items(),  # py3 iterable
+            list(self.BOOTSTRAP_GRANTS.items()),  # py3 iterable
             dry_run=dry_run,
             verbose=self.verbose,
             roles_by_slug=self.roles_by_slug,

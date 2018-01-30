@@ -1,5 +1,6 @@
 from __future__ import absolute_import
-from StringIO import StringIO
+
+import io
 from collections import defaultdict
 from distutils.version import StrictVersion
 import re
@@ -10,6 +11,8 @@ from corehq.apps.app_manager.ui_translations.commcare_versioning import \
 from corehq.apps.translations import system_text_sources
 from corehq.util.workbook_json.excel import WorkbookJSONReader
 from couchexport.export import export_raw_to_writer
+import six
+from six.moves import range
 
 
 def process_ui_translation_upload(app, trans_file):
@@ -18,7 +21,7 @@ def process_ui_translation_upload(app, trans_file):
     commcare_version = get_commcare_version_from_workbook(workbook.wb)
     translations = workbook.get_worksheet(title='translations')
 
-    commcare_ui_strings = load_translations('en', version=2, commcare_version=commcare_version).keys()
+    commcare_ui_strings = list(load_translations('en', version=2, commcare_version=commcare_version).keys())
     default_trans = get_default_translations_for_download(app, commcare_version)
     lang_with_defaults = app.langs[get_index_for_defaults(app.langs)]
 
@@ -47,21 +50,21 @@ def process_ui_translation_upload(app, trans_file):
 def build_ui_translation_download_file(app):
 
     properties = tuple(["property"] + app.langs + ["platform"])
-    temp = StringIO()
+    temp = io.BytesIO()
     headers = (("translations", properties),)
 
     row_dict = {}
     for i, lang in enumerate(app.langs):
         index = i + 1
         trans_dict = app.translations.get(lang, {})
-        for prop, trans in trans_dict.iteritems():
+        for prop, trans in six.iteritems(trans_dict):
             if prop not in row_dict:
                 row_dict[prop] = [prop]
             num_to_fill = index - len(row_dict[prop])
             row_dict[prop].extend(["" for i in range(num_to_fill)] if num_to_fill > 0 else [])
             row_dict[prop].append(trans)
 
-    rows = row_dict.values()
+    rows = list(row_dict.values())
     try:
         commcare_version = str(StrictVersion(app.build_version.vstring))
     except ValueError:

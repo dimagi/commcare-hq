@@ -6,10 +6,17 @@
     <script src="{% static "scheduling/js/broadcasts_list.js" %}"></script>
 {% endblock %}
 
+{% block stylesheets %}{{ block.super }}
+<style>
+    .label {
+        font-size: 100%;
+    }
+</style>
+{% endblock %}
+
 {% block page_content %}
     {% registerurl 'new_list_broadcasts' domain %}
-    {% registerurl 'edit_schedule' domain '---' %}
-    {% initial_page_data 'loader_src' 'hqwebapp/images/ajax-loader.gif'|static %}
+    {% registerurl 'edit_schedule' domain '---' '---' %}
     <div class="btn-group">
         <a href="{% url 'create_schedule' domain %}" class="btn btn-success">
             <i class="fa fa-plus"></i>

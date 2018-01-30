@@ -12,6 +12,7 @@ function RegisteredHouseholdController($scope, $routeParams, $location, $filter,
     vm.filtersData = $location.search();
     vm.label = "Registered Household";
     vm.step = $routeParams.step;
+    vm.userLocationId = userLocationId;
     vm.steps = {
         'map': {route: '/registered_household/map', label: 'Map View'},
         'chart': {route: '/registered_household/chart', label: 'Chart View'},
@@ -22,6 +23,8 @@ function RegisteredHouseholdController($scope, $routeParams, $location, $filter,
     vm.chartData = null;
     vm.top_five = [];
     vm.bottom_five = [];
+    vm.selectedLocations = [];
+    vm.all_locations = [];
     vm.location_type = null;
     vm.loaded = false;
     vm.filters = ['age', 'gender'];
@@ -29,6 +32,16 @@ function RegisteredHouseholdController($scope, $routeParams, $location, $filter,
         info: 'Total AWCs that have launched ICDS CAS',
     };
     vm.message = storageService.getKey('message') || false;
+
+    vm.prevDay = moment().subtract(1, 'days').format('Do MMMM, YYYY');
+    vm.currentMonth = moment().format("MMMM");
+    vm.showInfoMessage = function () {
+        var selected_month = parseInt($location.search()['month']) ||new Date().getMonth() + 1;
+        var selected_year =  parseInt($location.search()['year']) || new Date().getFullYear();
+        var current_month = new Date().getMonth() + 1;
+        var current_year = new Date().getFullYear();
+        return selected_month === current_month && selected_year === current_year && new Date().getDate() === 1;
+    };
 
     $scope.$watch(function() {
         return vm.selectedLocations;
@@ -95,13 +108,16 @@ function RegisteredHouseholdController($scope, $routeParams, $location, $filter,
                     });
                 }));
                 var range = max - min;
-                vm.chartOptions.chart.forceY = [(min - range/10).toFixed(2), (max + range/10).toFixed(2)];
+                vm.chartOptions.chart.forceY = [
+                    (min - range/10).toFixed(2) < 0 ? 0 : (min - range/10).toFixed(2),
+                    (max + range/10).toFixed(2),
+                ];
             }
         });
     };
 
-    var init = function() {
-        var locationId = vm.filtersData.location_id || userLocationId;
+    vm.init = function() {
+        var locationId = vm.filtersData.location_id || vm.userLocationId;
         if (!locationId || locationId === 'all' || locationId === 'null') {
             vm.loadData();
             vm.loaded = true;
@@ -114,7 +130,7 @@ function RegisteredHouseholdController($scope, $routeParams, $location, $filter,
         });
     };
 
-    init();
+    vm.init();
 
     $scope.$on('filtersChange', function() {
         vm.loadData();
@@ -123,7 +139,7 @@ function RegisteredHouseholdController($scope, $routeParams, $location, $filter,
     vm.getDisableIndex = function () {
         var i = -1;
         window.angular.forEach(vm.selectedLocations, function (key, value) {
-            if (key !== null && key.location_id === userLocationId) {
+            if (key !== null && key.location_id === vm.userLocationId) {
                 i = value;
             }
         });
@@ -190,11 +206,8 @@ function RegisteredHouseholdController($scope, $routeParams, $location, $filter,
                         var day = _.find(values, function(num) { return d3.time.format('%b %Y')(new Date(num['x'])) === date;});
                         return d3.format(",")(day['y']);
                     };
-
-                    var tooltip_content = "<p><strong>" + d.value + "</strong></p><br/>";
-                    tooltip_content += "<p>Total number of household registered: <strong>" + findValue(vm.chartData[0].values, d.value) + "</strong></p>";
-
-                    return tooltip_content;
+                    var value = findValue(vm.chartData[0].values, d.value);
+                    return vm.tooltipContent(d.value, value);
                 });
                 return chart;
             },
@@ -208,6 +221,11 @@ function RegisteredHouseholdController($scope, $routeParams, $location, $filter,
                 'width': '900px',
             },
         },
+    };
+
+    vm.tooltipContent = function (monthName, value) {
+        return "<p><strong>" + monthName + "</strong></p><br/>"
+            + "<p>Total number of household registered: <strong>" + value + "</strong></p>";
     };
 
     vm.showAllLocations = function () {

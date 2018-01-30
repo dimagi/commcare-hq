@@ -1,23 +1,10 @@
-function AdditionalModalController($location, $uibModalInstance, filters) {
+function AdditionalModalController($location, $uibModalInstance, filters, genders, ages) {
     var vm = this;
     vm.filters = filters;
 
-    vm.genders = [
-        {id: '', name: 'All'},
-        {id: 'M', name: 'Male'},
-        {id: 'F', name: 'Female'},
-    ];
+    vm.genders = window.angular.copy(genders);
 
-    vm.ages = [
-        {id: '', name: 'All'},
-        {id: '6', name: '0-6 months'},
-        {id: '12', name: '6-12 months'},
-        {id: '24', name: '12-24 months'},
-        {id: '36', name: '24-36 months'},
-        {id: '48', name: '36-48 months'},
-        {id: '60', name: '48-60 months'},
-        {id: '72', name: '60-72 months'},
-    ];
+    vm.ages = window.angular.copy(ages);
 
     var path = $location.path();
     if (path.indexOf('underweight_children') !== -1 || path.indexOf('wasting') !== -1 || path.indexOf('stunting') !== -1) {
@@ -62,13 +49,12 @@ function AdditionalFilterController($scope, $location, $uibModal, storageService
     vm.selectedGender = $location.search()['gender'] !== void(0) ? $location.search()['gender'] : '';
     vm.selectedAge = $location.search()['age'] !== void(0) ? $location.search()['age'] : '';
     var filtersObjects = [];
-    if (vm.filters.indexOf('gender') === -1) {
+    if (vm.filters && vm.filters.indexOf('gender') === -1) {
         filtersObjects.push({ label: 'Gender', value: vm.selectedGender });
     }
-    if (vm.filters.indexOf('age') === -1) {
+    if (vm.filters && vm.filters.indexOf('age') === -1) {
         filtersObjects.push({ label: 'Age', value: vm.selectedAge });
     }
-
 
     vm.getPlaceholder = function() {
         var placeholder = '';
@@ -111,7 +97,7 @@ function AdditionalFilterController($scope, $location, $uibModal, storageService
 }
 
 AdditionalFilterController.$inject = ['$scope', '$location', '$uibModal', 'storageService'];
-AdditionalModalController.$inject = ['$location', '$uibModalInstance', 'filters'];
+AdditionalModalController.$inject = ['$location', '$uibModalInstance', 'filters', 'genders', 'ages'];
 
 window.angular.module('icdsApp').directive("additionalFilter", function() {
     var url = hqImport('hqwebapp/js/initial_page_data').reverse;

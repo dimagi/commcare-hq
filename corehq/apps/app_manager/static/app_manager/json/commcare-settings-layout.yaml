@@ -78,7 +78,6 @@
     - properties.log_prop_daily  # Daily Log Sending Frequency
     - hq.secure_submissions
     - hq.translation_strategy
-    - hq.mobile_ucr_sync_interval
     - hq.mobile_ucr_restore_version
 
 - title: 'Disabled'

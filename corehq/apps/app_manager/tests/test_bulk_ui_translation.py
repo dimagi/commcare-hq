@@ -1,11 +1,12 @@
 from __future__ import absolute_import
 from distutils.version import StrictVersion
 from django.test import SimpleTestCase
-from StringIO import StringIO
+from io import BytesIO
 from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.ui_translations import \
     process_ui_translation_upload, get_default_translations_for_download
 from couchexport.export import export_raw
+import six
 
 
 class BulkUiTranslation(SimpleTestCase):
@@ -20,11 +21,11 @@ class BulkUiTranslation(SimpleTestCase):
         if data is None:
             data = []
             translations = get_default_translations_for_download(self.app, 'latest')
-            for translation_key, translation_value in translations.iteritems():
+            for translation_key, translation_value in six.iteritems(translations):
                 data.append((translation_key, translation_value))
 
         data = (('translations', tuple(data)),)
-        temp = StringIO()
+        temp = BytesIO()
         export_raw(headers, data, temp)
         temp.seek(0)            # .read() is used somewhere so this needs to be at the begininng
         return temp

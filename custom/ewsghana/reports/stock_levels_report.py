@@ -26,6 +26,8 @@ from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _
 from corehq.apps.locations.dbaccessors import get_users_by_location_id
 from corehq.apps.locations.models import get_location, SQLLocation
+from six.moves import range
+import six
 
 
 class StockLevelsLegend(EWSData):
@@ -227,8 +229,8 @@ class InventoryManagementData(EWSData):
                     rows[product_name][i] = calculate_weeks_remaining(
                         state, consumptions.get(state.product_id, None), date)
 
-        for k, v in rows.iteritems():
-            rows[k] = [{'x': key, 'y': value} for key, value in v.iteritems()]
+        for k, v in six.iteritems(rows):
+            rows[k] = [{'x': key, 'y': value} for key, value in six.iteritems(v)]
 
         rows['Understock'] = []
         rows['Overstock'] = []
@@ -246,7 +248,7 @@ class InventoryManagementData(EWSData):
                                  y_axis=Axis(self.chart_y_label, '.1f'))
             chart.height = 600
             values = []
-            for product, value in self.chart_data.iteritems():
+            for product, value in six.iteritems(self.chart_data):
                 values.extend([a['y'] for a in value])
                 chart.add_dataset(product, value,
                                   color='black' if product in ['Understock', 'Overstock'] else None)
@@ -300,17 +302,11 @@ class UsersData(EWSData):
         if self.location.parent.location_type.name == 'district':
             children = self.location.parent.get_descendants()
             availaible_in_charges = list(chain.from_iterable([
-                filter(
-                    lambda u: 'In Charge' in u.user_data.get('role', []),
-                    get_users_by_location_id(self.config['domain'], child.location_id)
-                )
+                [u for u in get_users_by_location_id(self.config['domain'], child.location_id) if 'In Charge' in u.user_data.get('role', [])]
                 for child in children
             ]))
         else:
-            availaible_in_charges = filter(
-                lambda u: 'In Charge' in u.user_data.get('role', []),
-                get_users_by_location_id(self.domain, self.location_id)
-            )
+            availaible_in_charges = [u for u in get_users_by_location_id(self.domain, self.location_id) if 'In Charge' in u.user_data.get('role', [])]
         user_to_dict = lambda sms_user: {
             'id': sms_user.get_id,
             'full_name': sms_user.full_name,
@@ -374,10 +370,7 @@ class StockLevelsReport(MultiReport):
     @memoized
     def data_providers(self):
         config = self.report_config
-        location_types = [loc_type.name for loc_type in filter(
-            lambda loc_type: not loc_type.administrative,
-            Domain.get_by_name(self.domain).location_types
-        )]
+        location_types = [loc_type.name for loc_type in [loc_type for loc_type in Domain.get_by_name(self.domain).location_types if not loc_type.administrative]]
         if not self.needs_filters and get_location(config['location_id']).location_type_name in location_types:
             if self.is_rendered_as_email:
                 return [FacilityReportData(config)]

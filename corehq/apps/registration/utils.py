@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+
 import logging
 from django.utils.translation import ugettext
 import uuid
@@ -22,8 +23,7 @@ from corehq.apps.users.models import WebUser, CouchUser, UserRole
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from dimagi.utils.couch.database import get_safe_write_kwargs
 from corehq.apps.hqwebapp.tasks import send_mail_async
-from corehq.apps.analytics.tasks import track_created_new_project_space_on_hubspot
-from corehq.apps.analytics.utils import get_meta
+from corehq.apps.analytics.tasks import send_hubspot_form, HUBSPOT_CREATED_NEW_PROJECT_SPACE_FORM_ID
 
 
 def activate_new_user(form, is_domain_admin=True, domain=None, ip=None):
@@ -132,8 +132,7 @@ def request_new_domain(request, form, is_new_user=True):
                                        request.user.get_full_name())
     send_new_request_update_email(request.user, get_ip(request), new_domain.name, is_new_user=is_new_user)
 
-    meta = get_meta(request)
-    track_created_new_project_space_on_hubspot.delay(current_user, request.COOKIES, meta)
+    send_hubspot_form(HUBSPOT_CREATED_NEW_PROJECT_SPACE_FORM_ID, request)
     return new_domain.name
 
 
@@ -143,7 +142,7 @@ REGISTRATION_EMAIL_BODY_HTML = u"""
 <p><h2>Want to learn more?</h2></p>
 <p>Check out our tutorials and other documentation on the <a href="{wiki_link}">CommCare Help Site</a>, the home of all CommCare documentation.</p>
 <p><h2>Need Support?</h2></p>
-<p>We encourage you to join the CommCare Users google group, where CommCare users from all over the world ask each other questions and share information over the commcare-users mailing list. Subscribe <a href="{users_link}">here</a></p>
+<p>We encourage you to join the CommCare Forum, where CommCare users from all over the world ask each other questions and share information. Join <a href="{forum_link}">here</a></p>
 <p>If you encounter any technical problems while using CommCareHQ, look for a "Report an Issue" link at the bottom of every page. Our developers will look into the problem as soon as possible.</p>
 <p>We hope you enjoy your experience with CommCareHQ!</p>
 <p>The CommCareHQ Team</p>
@@ -166,8 +165,8 @@ Check out our tutorials and other documentation on the CommCare Help Site, the h
 
 Need Support?
 
-We encourage you to join the CommCare Users google group, where CommCare users from all over the world ask each other questions and share information over the commcare-users mailing list. Subscribe here:
-{users_link}
+We encourage you to join the CommCare Forum, where CommCare users from all over the world ask each other questions and share information. Join here:
+{forum_link}
 
 If you encounter any technical problems while using CommCareHQ, look for a "Report an Issue" link at the bottom of every page. Our developers will look into the problem as soon as possible.
 
@@ -179,7 +178,7 @@ The CommCareHQ Team
 
 
 WIKI_LINK = 'http://help.commcarehq.org'
-USERS_LINK = 'http://groups.google.com/group/commcare-users'
+FORUM_LINK = 'https://forum.dimagi.com/'
 PRICING_LINK = 'https://www.commcarehq.org/pricing'
 
 
@@ -192,7 +191,7 @@ def send_domain_registration_email(recipient, domain_name, guid, full_name):
         "pricing_link": PRICING_LINK,
         "registration_link": registration_link,
         "full_name": full_name,
-        "users_link": USERS_LINK,
+        "forum_link": FORUM_LINK,
         "wiki_link": WIKI_LINK,
         'url_prefix': '' if settings.STATIC_CDN else 'http://' + DNS_name,
     }

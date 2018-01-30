@@ -9,8 +9,9 @@ function InfantsWeightScaleController($scope, $routeParams, $location, $filter, 
     } else {
         storageService.setKey('search', $location.search());
     }
+    vm.userLocationId = userLocationId;
     vm.filtersData = $location.search();
-    vm.label = "AWCs with Weighing Scale: Infants";
+    vm.label = "AWCs Reported Weighing Scale: Infants";
     vm.step = $routeParams.step;
     vm.steps = {
         'map': {route: '/infants_weight_scale/map', label: 'Map View'},
@@ -22,13 +23,25 @@ function InfantsWeightScaleController($scope, $routeParams, $location, $filter, 
     vm.chartData = null;
     vm.top_five = [];
     vm.bottom_five = [];
+    vm.selectedLocations = [];
+    vm.all_locations = [];
     vm.location_type = null;
     vm.loaded = false;
     vm.filters = ['gender', 'age'];
     vm.rightLegend = {
-        info: 'Percentage of AWCs with weighing scale for infants',
+        info: 'Percentage of AWCs that reported having a weighing scale for infants',
     };
     vm.message = storageService.getKey('message') || false;
+
+    vm.prevDay = moment().subtract(1, 'days').format('Do MMMM, YYYY');
+    vm.currentMonth = moment().format("MMMM");
+    vm.showInfoMessage = function () {
+        var selected_month = parseInt($location.search()['month']) ||new Date().getMonth() + 1;
+        var selected_year =  parseInt($location.search()['year']) || new Date().getFullYear();
+        var current_month = new Date().getMonth() + 1;
+        var current_year = new Date().getFullYear();
+        return selected_month === current_month && selected_year === current_year && new Date().getDate() === 1;
+    };
 
     $scope.$watch(function() {
         return vm.selectedLocations;
@@ -54,8 +67,8 @@ function InfantsWeightScaleController($scope, $routeParams, $location, $filter, 
         var percent = row ? d3.format('.2%')(row.in_month / (row.all || 1)) : "N/A";
         return '<div class="hoverinfo" style="max-width: 200px !important;">' +
             '<p>' + loc.properties.name + '</p>' +
-            '<div>Total number of AWCs with a weighing scale for infants: <strong>' + in_month + '</strong></div>' +
-            '<div>% of AWCs with a weighing scale for infants: <strong>' + percent + '</strong></div>';
+            '<div>Total of AWCs that reported having a weighing scale for infants: <strong>' + in_month + '</strong></div>' +
+            '<div>Percentage of AWCs that reported having a weighing scale for infants: <strong>' + percent + '</strong></div>';
     };
 
     vm.loadData = function () {
@@ -97,13 +110,16 @@ function InfantsWeightScaleController($scope, $routeParams, $location, $filter, 
                     });
                 }) * 100);
                 var range = max - min;
-                vm.chartOptions.chart.forceY = [((min - range/10)/100).toFixed(2), ((max + range/10)/100).toFixed(2)];
+                vm.chartOptions.chart.forceY = [
+                    ((min - range/10)/100).toFixed(2) < 0 ? 0 : ((min - range/10)/100).toFixed(2),
+                    ((max + range/10)/100).toFixed(2),
+                ];
             }
         });
     };
 
-    var init = function() {
-        var locationId = vm.filtersData.location_id || userLocationId;
+    vm.init = function() {
+        var locationId = vm.filtersData.location_id || vm.userLocationId;
         if (!locationId || locationId === 'all' || locationId === 'null') {
             vm.loadData();
             vm.loaded = true;
@@ -116,7 +132,7 @@ function InfantsWeightScaleController($scope, $routeParams, $location, $filter, 
         });
     };
 
-    init();
+    vm.init();
 
     $scope.$on('filtersChange', function() {
         vm.loadData();
@@ -125,7 +141,7 @@ function InfantsWeightScaleController($scope, $routeParams, $location, $filter, 
     vm.getDisableIndex = function () {
         var i = -1;
         window.angular.forEach(vm.selectedLocations, function (key, value) {
-            if (key !== null && key.location_id === userLocationId) {
+            if (key !== null && key.location_id === vm.userLocationId) {
                 i = value;
             }
         });
@@ -184,27 +200,30 @@ function InfantsWeightScaleController($scope, $routeParams, $location, $filter, 
             callback: function(chart) {
                 var tooltip = chart.interactiveLayer.tooltip;
                 tooltip.contentGenerator(function (d) {
+                    var dataInMonth = _.find(vm.chartData[0].values, function(num) { return d3.time.format('%b %Y')(new Date(num['x'])) === d.value;});
+                    return vm.tooltipContent(d.value, dataInMonth);
 
-                    var data_in_month = _.find(vm.chartData[0].values, function(num) { return d3.time.format('%b %Y')(new Date(num['x'])) === d.value;});
-
-                    var tooltip_content = "<p><strong>" + d.value + "</strong></p><br/>";
-                    tooltip_content += "<p>Number of AWCs with a weighing scale for infants: <strong>" + $filter('indiaNumbers')(data_in_month.in_month) + "</strong></p>";
-                    tooltip_content += "<p>% of AWCs with a weighing scale for infants: <strong>" + d3.format('.2%')(data_in_month.y) + "</strong></p>";
-
-                    return tooltip_content;
                 });
                 return chart;
             },
         },
         caption: {
             enable: true,
-            html: '<i class="fa fa-info-circle"></i> Percentage of AWCs with weighing scale for infants',
+            html: '<i class="fa fa-info-circle"></i> Percentage of AWCs that reported having a weighing scale for infants',
             css: {
                 'text-align': 'center',
                 'margin': '0 auto',
                 'width': '900px',
             }
         },
+    };
+
+    vm.tooltipContent = function (monthName, dataInMonth) {
+        var tooltip_content = "<p><strong>" + monthName + "</strong></p><br/>";
+        tooltip_content += "<p>Number of AWCs that reported having a weighing scale for infants: <strong>" + $filter('indiaNumbers')(dataInMonth.in_month) + "</strong></p>";
+        tooltip_content += "<p>Percentage of AWCs that reported having a weighing scale for infants: <strong>" + d3.format('.2%')(dataInMonth.y) + "</strong></p>";
+
+        return tooltip_content;
     };
 
     vm.showAllLocations = function () {

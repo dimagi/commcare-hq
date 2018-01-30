@@ -1,4 +1,8 @@
 from __future__ import absolute_import
+from __future__ import print_function
+
+import six
+
 from django.core.management import BaseCommand
 
 from corehq.apps.es import CaseES
@@ -39,7 +43,7 @@ class Command(BaseCommand):
                         self.domain, cases_to_update, self.__module__)
                     fh.write(xform.form_id)
                 except LocalSubmissionError as e:
-                    print unicode(e)
+                    print(six.text_type(e))
                     failed_updates.extend(case[0] for case in cases_to_update)
             fh.write('--------Failed Cases--------------')
             for case_id in failed_updates:

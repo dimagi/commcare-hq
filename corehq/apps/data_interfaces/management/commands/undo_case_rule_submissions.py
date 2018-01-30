@@ -5,6 +5,7 @@ from corehq.apps.data_interfaces.models import CaseRuleUndoer
 from dateutil.parser import parse
 from django.core.management.base import BaseCommand, CommandError
 from django.db.models import Min
+from six.moves import input
 
 
 class Command(BaseCommand):
@@ -65,7 +66,7 @@ class Command(BaseCommand):
         if count == 0:
             return
 
-        answer = raw_input("Are you sure you want to continue? y/n ")
+        answer = input("Are you sure you want to continue? y/n ")
         if answer.strip() != 'y':
             print("Process aborted.")
             return

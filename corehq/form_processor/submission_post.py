@@ -12,6 +12,7 @@ from django.http import (
     HttpResponseBadRequest,
     HttpResponseForbidden,
 )
+from django.conf import settings
 import sys
 from casexml.apps.phone.restore_caching import AsyncRestoreTaskIdCache, RestorePayloadPathCache
 import couchforms
@@ -38,6 +39,7 @@ from dimagi.utils.logging import notify_exception, log_signal_errors
 from phonelog.utils import process_device_log
 
 from celery.task.control import revoke as revoke_celery_task
+import six
 
 CaseStockProcessingResult = namedtuple(
     'CaseStockProcessingResult',
@@ -165,7 +167,9 @@ class SubmissionPost(object):
 
             with case_db_cache as case_db:
                 instance = xforms[0]
-                if instance.xmlns == DEVICE_LOG_XMLNS:
+                # ignore temporarily till we migrate DeviceReportEntry id to bigint
+                ignore_device_logs = settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS
+                if not ignore_device_logs and instance.xmlns == DEVICE_LOG_XMLNS:
                     submission_type = 'device_log'
                     try:
                         process_device_log(self.domain, instance)
@@ -391,7 +395,7 @@ class SubmissionPost(object):
 
 
 def _transform_instance_to_error(interface, exception, instance):
-    error_message = u'{}: {}'.format(type(exception).__name__, unicode(exception))
+    error_message = u'{}: {}'.format(type(exception).__name__, six.text_type(exception))
     return interface.xformerror_from_xform_instance(instance, error_message)
 
 

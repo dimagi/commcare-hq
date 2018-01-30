@@ -16,44 +16,49 @@ class Command(BaseCommand):
         parser.add_argument('domain')
         parser.add_argument('data_source_id')
         parser.add_argument('doc_id')
+        parser.add_argument('--sort', dest='sort', action='store', default='time')
 
     def handle(self, domain, data_source_id, doc_id, **options):
         config, _ = get_datasource_config(data_source_id, domain)
         doc_type = config.referenced_doc_type
         doc_store = get_document_store(domain, doc_type)
         doc = doc_store.get_document(doc_id)
-
+        sort_by = options['sort']
         local_variables = {'config': config, 'doc': doc}
 
         cProfile.runctx('config.get_all_values(doc)', {}, local_variables, 'ucr_stats.log')
-        p = pstats.Stats('ucr_stats.log')
-        p.sort_stats('time')
+        print_profile_stats('ucr_stats.log', sort_by)
 
-        print("Top 10 functions by time\n")
-        p.print_stats(10)
 
-        print("Specs timing\n")
-        p.print_stats('userreports.*specs.*\(__call__\)')
+def print_profile_stats(filename, sort_by):
+    p = pstats.Stats(filename)
+    p.sort_stats(sort_by)
 
-        print("Socket recvs\n")
-        p.print_stats('recv')
+    print("Top 50 functions by {}\n".format(sort_by))
+    p.print_stats(50)
 
-        print("Doc retrievals\n")
-        p.print_stats('document_store.*\(get_document\)')
+    print("Specs timing\n")
+    p.print_stats('userreports.*specs.*\(__call__\)')
 
-        print("Postgres queries\n")
-        p.print_stats('execute.*psycopg')
+    print("Socket recvs\n")
+    p.print_stats('recv')
 
-        print("ES queries\n")
-        p.print_stats('es_query.py.*\(run\)')
+    print("Doc retrievals\n")
+    p.print_stats('document_store.*\(get_document\)')
 
-        print("""
-        Note: Due to overhead in profiling, these times are much larger than the real times.
+    print("Postgres queries\n")
+    p.print_stats('execute.*psycopg')
 
-        Next Steps:
-           1) choose one of the previous calls to investigate
-           2) use print_callees or print_callers to follow the calls
-              * usage https://docs.python.org/2/library/profile.html#pstats.Stats.print_stats
-           3) check out branch je/time-ucr to get logs for processing time of each column
-              (you'll likely need to rebase it on latest master)
-        """)
+    print("ES queries\n")
+    p.print_stats('es_query.py.*\(run\)')
+
+    print("""
+    Note: Due to overhead in profiling, these times are much larger than the real times.
+
+    Next Steps:
+       1) choose one of the previous calls to investigate
+       2) use print_callees or print_callers to follow the calls
+          * usage https://docs.python.org/2/library/profile.html#pstats.Stats.print_stats
+       3) check out branch je/time-ucr to get logs for processing time of each column
+          (you'll likely need to rebase it on latest master)
+    """)

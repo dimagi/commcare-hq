@@ -19,7 +19,6 @@ from soil.exceptions import TaskFailedError
 from soil.util import expose_cached_download, get_download_context
 
 from corehq import toggles
-from corehq.apps.commtrack.tasks import import_locations_async, location_lock_key, LOCK_LOCATIONS_TIMEOUT
 from corehq.apps.commtrack.util import unicode_slug
 from corehq.apps.consumption.shortcuts import get_default_monthly_consumption
 from corehq.apps.custom_data_fields import CustomDataModelMixin
@@ -31,8 +30,10 @@ from corehq.apps.hqwebapp.views import no_permissions
 from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.hqwebapp.decorators import use_jquery_ui, use_multiselect
 from corehq.apps.users.forms import MultipleSelectionForm
+from corehq.apps.locations.const import LOCK_LOCATIONS_TIMEOUT
 from corehq.apps.locations.permissions import location_safe
-from corehq.apps.locations.tasks import download_locations_async
+from corehq.apps.locations.tasks import download_locations_async, import_locations_async
+from corehq.apps.reports.filters.api import EmwfOptionsView
 from corehq.util import reverse
 from corehq.util.files import file_extention_from_filename
 from custom.enikshay.user_setup import ENikshayLocationFormSet
@@ -57,6 +58,8 @@ from .models import LocationType, SQLLocation, filter_for_archived
 from .forms import LocationFormSet, UsersAtLocationForm
 from .tree_utils import assert_no_cycles
 from .util import load_locs_json, location_hierarchy_config, dump_locations
+import six
+from six.moves import map
 
 
 logger = logging.getLogger(__name__)
@@ -75,7 +78,7 @@ def default(request, domain):
 def lock_locations(func):
     # Decorate a post/delete method of a view to ensure concurrent locations edits don't happen.
     def func_wrapper(request, *args, **kwargs):
-        key = location_lock_key(request.domain)
+        key = "import_locations_async-{domain}".format(domain=request.domain)
         client = get_redis_client()
         lock = client.lock(key, timeout=LOCK_LOCATIONS_TIMEOUT)
         if lock.acquire(blocking=False):
@@ -225,9 +228,17 @@ class LocationsListView(BaseLocationView):
                 SQLLocation.objects.filter(domain=self.domain, parent_id=None),
                 self.show_inactive,
             )
-            return map(to_json, locs)
+            return list(map(to_json, locs))
         else:
             return [to_json(user.get_sql_location(self.domain))]
+
+
+class LocationsSearchView(EmwfOptionsView):
+    @property
+    def data_sources(self):
+        return [
+            (self.get_locations_size, self.get_locations),
+        ]
 
 
 class LocationFieldsView(CustomDataModelMixin, BaseLocationView):
@@ -295,7 +306,7 @@ class LocationTypesView(BaseDomainView):
         sql_loc_types = {}
 
         def _is_fake_pk(pk):
-            return isinstance(pk, basestring) and pk.startswith("fake-pk-")
+            return isinstance(pk, six.string_types) and pk.startswith("fake-pk-")
 
         def mk_loctype(name, parent_type, administrative, has_user,
                        shares_cases, view_descendants, pk, code, **kwargs):
@@ -899,9 +910,9 @@ class DownloadLocationStatusView(BaseLocationView):
 @locations_access_required
 @location_safe
 def child_locations_for_select2(request, domain):
-    location_id = request.GET.get('id')
-    ids = request.GET.get('ids')
+    from django.core.paginator import Paginator
     query = request.GET.get('name', '').lower()
+    page = int(request.GET.get('page', 1))
     user = request.couch_user
 
     base_queryset = SQLLocation.objects.accessible_to_user(domain, user)
@@ -909,42 +920,23 @@ def child_locations_for_select2(request, domain):
     def loc_to_payload(loc):
         return {'id': loc.location_id, 'name': loc.get_path_display()}
 
-    if location_id:
-        try:
-            loc = base_queryset.get(location_id=location_id)
-            if loc.domain != domain:
-                raise SQLLocation.DoesNotExist()
-        except SQLLocation.DoesNotExist:
-            return json_response(
-                {'message': 'no location with id %s found' % location_id},
-                status_code=404,
-            )
-        else:
-            return json_response(loc_to_payload(loc))
-    elif ids:
-        from corehq.apps.locations.util import get_locations_from_ids
-        ids = json.loads(ids)
-        try:
-            locations = get_locations_from_ids(ids, domain, base_queryset=base_queryset)
-        except SQLLocation.DoesNotExist:
-            return json_response(
-                {'message': 'one or more locations not found'},
-                status_code=404,
-            )
-        return json_response([loc_to_payload(loc) for loc in locations])
-    else:
-        locs = []
-        user_loc = user.get_sql_location(domain)
+    locs = []
+    user_loc = user.get_sql_location(domain)
 
-        if user_can_edit_any_location(user, request.project):
-            locs = base_queryset.filter(domain=domain, is_archived=False)
-        elif user_loc:
-            locs = user_loc.get_descendants(include_self=True)
+    if user_can_edit_any_location(user, request.project):
+        locs = base_queryset.filter(domain=domain, is_archived=False)
+    elif user_loc:
+        locs = user_loc.get_descendants(include_self=True)
 
-        if locs != [] and query:
-            locs = locs.filter(name__icontains=query)
+    if locs != [] and query:
+        locs = locs.filter(name__icontains=query)
 
-        return json_response(map(loc_to_payload, locs[:10]))
+    # 10 results per page
+    paginator = Paginator(locs, 10)
+    return json_response({
+        'results': list(map(loc_to_payload, paginator.page(page))),
+        'total_count': paginator.count,
+    })
 
 
 class DowngradeLocationsView(BaseDomainView):

@@ -1,14 +1,17 @@
+from __future__ import absolute_import
+
 import datetime
 import csv
 import pytz
-
+import six
 from django.core.management.base import BaseCommand
 from django.utils.dateparse import parse_datetime
+from django.core.mail import EmailMessage
+from django.conf import settings
 
-from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.motech.repeaters.dbaccessors import iter_repeat_records_by_domain
-from casexml.apps.case.util import get_case_property_changed_info
+from casexml.apps.case.util import get_latest_property_change_to_value
 from corehq.util.timezones.utils import get_timezone_for_domain
 
 
@@ -20,7 +23,7 @@ DOMAIN = "enikshay"
 class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('days', type=int)
-        parser.add_argument('--email', type=int)
+        parser.add_argument('--email', type=str)
 
     def handle(self, days, *args, **options):
         email_to = options.get('email')
@@ -59,10 +62,10 @@ class Command(BaseCommand):
                 last_notification_attempt = repeat_record.attempts[-1]
                 assert last_notification_attempt.succeeded
                 assert repeat_record.last_checked == last_notification_attempt.datetime
-                property_changed_info = get_case_property_changed_info(episode_case,
-                                                                       "treatment_initiated",
-                                                                       "yes_phi")
-                xform = property_changed_info.case_transaction.form
+                property_changed_info = get_latest_property_change_to_value(episode_case,
+                                                                            "treatment_initiated",
+                                                                            "yes_phi")
+                xform = property_changed_info.transaction.form
                 form_received_on = pytz.utc.localize(xform.received_on).astimezone(timezone)
                 property_modified_on = parse_datetime(property_changed_info.modified_on).astimezone(timezone)
                 writer.writerow({
@@ -76,17 +79,14 @@ class Command(BaseCommand):
                 })
 
             if email_to:
-                attachment = {
-                    'title': result_file_name,
-                    'mimetype': 'text/csv',
-                    'file_obj': csvfile,
-                }
-
-                message = "Report for time taken for registration notifications yesterday till now"
-                send_html_email_async(
+                email_to = list(email_to) if not isinstance(email_to, six.string_types) else [email_to]
+                csvfile = open(result_file_name)
+                email = EmailMessage(
                     subject="Nikshay Registration Notification Time Report",
-                    recipient=email_to,
-                    html_content=message,
-                    text_content=message,
-                    file_attachments=[attachment]
+                    body="Report for time taken for registration notifications for %s day(s)" % self.days,
+                    to=email_to,
+                    from_email=settings.DEFAULT_FROM_EMAIL
                 )
+                email.attach(filename=result_file_name, content=csvfile.read())
+                csvfile.close()
+                email.send()

@@ -10,6 +10,8 @@ from corehq.apps.users.models import CommCareUser
 from custom.care_pathways.sqldata import GeographySqlData
 from custom.care_pathways.utils import get_domain_configuration, ByTypeHierarchyRecord
 from dimagi.utils.decorators.memoized import memoized
+import six
+from six.moves import range
 
 
 class CareBaseSingleOptionFilter(BaseSingleOptionFilter):
@@ -85,8 +87,8 @@ class GeographyFilter(CareBaseDrilldownOptionFilter):
         return hierarchy
 
     def get_labels(self):
-        return [(v['name'], v['prop']) for k, v in sorted(get_domain_configuration(
-            self.request.domain).geography_hierarchy.iteritems())]
+        return [(v['name'], v['prop']) for k, v in sorted(six.iteritems(get_domain_configuration(
+            self.request.domain).geography_hierarchy))]
 
     @classmethod
     def _get_label_value(cls, request, label):
@@ -192,7 +194,7 @@ class MalawiPPTYearFilter(PPTYearFilter):
     @property
     def options(self):
         start_year = getattr(settings, 'START_YEAR', 2008)
-        years = [(unicode(y), unicode("{0}/{1}".format(y, y+1))) for y in range(start_year, datetime.datetime.utcnow().year + 1)]
+        years = [(six.text_type(y), six.text_type("{0}/{1}".format(y, y+1))) for y in range(start_year, datetime.datetime.utcnow().year + 1)]
         years.reverse()
         return years
 

@@ -5,6 +5,8 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import CouchUser, WebUser, AnonymousCouchUser
 from corehq.util.global_request import get_request
 from corehq.util.soft_assert import soft_assert
+import six
+from functools import reduce
 
 
 def coerce_timezone_value(value):
@@ -49,7 +51,7 @@ def get_timezone_for_user(couch_user_or_id, domain):
         if isinstance(couch_user_or_id, CouchUser):
             requesting_user = couch_user_or_id
         else:
-            assert isinstance(couch_user_or_id, basestring)
+            assert isinstance(couch_user_or_id, six.string_types)
             try:
                 requesting_user = WebUser.get_by_user_id(couch_user_or_id)
             except CouchUser.AccountTypeError:

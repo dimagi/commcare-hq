@@ -10,22 +10,6 @@ from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext
 
-from corehq.util.soft_assert import soft_assert
-
-_soft_assert_dict = soft_assert(
-    to='{}@{}'.format('npellegrino', 'dimagi.com'),
-    exponential_backoff=False,
-)
-
-
-def _get_dict_from_context(context):
-    if isinstance(context, RequestContext):
-        return context.flatten()
-    else:
-        # TODO - remove by Nov 1 2017 if soft assert is never sent
-        _soft_assert_dict(False, "context is type %s" % str(type(context)))
-        return context
-
 
 class BootstrapMultiField(MultiField):
     template = "hqwebapp/crispy/layout/multifield.html"
@@ -57,7 +41,7 @@ class BootstrapMultiField(MultiField):
             'error_list': errors,
             'help_bubble_text': self.help_bubble_text,
         })
-        return render_to_string(self.template, _get_dict_from_context(context))
+        return render_to_string(self.template, context.flatten())
 
     def _get_errors(self, form, fields):
         errors = []
@@ -181,7 +165,7 @@ class StaticField(LayoutObject):
             'field_label': self.field_label,
             'field_value': self.field_value,
         })
-        return render_to_string(self.template, _get_dict_from_context(context))
+        return render_to_string(self.template, context.flatten())
 
 
 class FormStepNumber(LayoutObject):
@@ -195,7 +179,7 @@ class FormStepNumber(LayoutObject):
             'step_label': self.step_label,
         })
 
-        return render_to_string(self.template, _get_dict_from_context(context))
+        return render_to_string(self.template, context.flatten())
 
 
 class ValidationMessage(LayoutObject):
@@ -209,7 +193,7 @@ class ValidationMessage(LayoutObject):
             'ko_observable': self.ko_observable,
         })
 
-        return render_to_string(self.template, _get_dict_from_context(context))
+        return render_to_string(self.template, context.flatten())
 
 
 @contextmanager
@@ -256,7 +240,7 @@ class B3MultiField(LayoutObject):
             'help_bubble_text': self.help_bubble_text,
         })
 
-        context_dict = _get_dict_from_context(context)
+        context_dict = context.flatten()
 
         if not (self.field_class or self.label_class):
             return render_to_string(self.template, context_dict)
@@ -303,7 +287,7 @@ class CrispyTemplate(object):
 
     def render(self, form, form_style, context, template_pack=None):
         context.update(self.context)
-        return render_to_string(self.template, _get_dict_from_context(context))
+        return render_to_string(self.template, context.flatten())
 
 
 class FieldWithHelpBubble(Field):
@@ -343,7 +327,7 @@ class LinkButton(LayoutObject):
             'button_url': self.button_url,
             'button_attrs': flatatt(self.attrs if isinstance(self.attrs, dict) else {}),
         })
-        return render_to_string(self.template, _get_dict_from_context(context))
+        return render_to_string(self.template, context.flatten())
 
 
 class B3TextField(OldField):
@@ -374,3 +358,7 @@ class FieldsetAccordionGroup(AccordionGroup):
 
 class B3HiddenFieldWithErrors(Field):
     template = "hqwebapp/crispy/hidden_with_errors.html"
+
+
+class RadioSelect(Field):
+    template = "hqwebapp/crispy/radioselect.html"

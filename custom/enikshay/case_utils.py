@@ -1,7 +1,10 @@
 from __future__ import absolute_import
 import pytz
 from collections import namedtuple, defaultdict
-from django.utils.dateparse import parse_datetime
+from django.utils.dateparse import (
+    parse_datetime,
+    parse_date,
+)
 from dateutil.parser import parse
 
 from corehq.apps.locations.models import SQLLocation
@@ -10,14 +13,15 @@ from casexml.apps.case.const import ARCHIVED_CASE_OWNER_ID
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.util import post_case_blocks
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from custom.enikshay.const import ENROLLED_IN_PRIVATE
+from custom.enikshay.const import ENROLLED_IN_PRIVATE, SECTORS, PRIVATE_SECTOR, PUBLIC_SECTOR
 from custom.enikshay.exceptions import (
     ENikshayCaseNotFound,
     ENikshayCaseTypeNotFound,
     NikshayCodeNotFound,
     NikshayLocationNotFound,
-    ENikshayException)
+)
 from corehq.form_processor.exceptions import CaseNotFound
+import six
 
 CASE_TYPE_ADHERENCE = "adherence"
 CASE_TYPE_OCCURRENCE = "occurrence"
@@ -33,12 +37,13 @@ CASE_TYPE_PRESCRIPTION_ITEM = "prescription_item"
 CASE_TYPE_VOUCHER = "voucher"
 CASE_TYPE_DRUG_RESISTANCE = "drug_resistance"
 CASE_TYPE_SECONDARY_OWNER = "secondary_owner"
+CASE_TYPE_INVESTIGATION = "investigation"
 
 
 def get_all_parents_of_case(domain, case_id):
     case_accessor = CaseAccessors(domain)
     try:
-        if not isinstance(case_id, basestring):
+        if not isinstance(case_id, six.string_types):
             case_id = case_id.case_id
 
         child_case = case_accessor.get_case(case_id)
@@ -56,21 +61,6 @@ def get_all_parents_of_case(domain, case_id):
         parent_case for parent_case in parent_cases
         if not parent_case.deleted
     ]
-
-
-def get_parent_of_case(domain, case_id, parent_case_type):
-    parent_cases = get_all_parents_of_case(domain, case_id)
-    case_type_open_parent_cases = [
-        parent_case for parent_case in parent_cases
-        if not parent_case.closed and parent_case.type == parent_case_type
-    ]
-
-    if not case_type_open_parent_cases:
-        raise ENikshayCaseNotFound(
-            "Couldn't find any open {} cases for id: {}".format(parent_case_type, case_id)
-        )
-
-    return case_type_open_parent_cases[0]
 
 
 def get_first_parent_of_case(domain, case_id, parent_case_type):
@@ -109,11 +99,8 @@ def get_person_case_from_episode(domain, episode_case_id):
 
 
 def get_all_occurrence_cases_from_person(domain, person_case_id):
-    case_accessor = CaseAccessors(domain)
-    all_cases = case_accessor.get_reverse_indexed_cases([person_case_id])
-    occurrence_cases = [case for case in all_cases
-                        if case.type == CASE_TYPE_OCCURRENCE]
-    return occurrence_cases
+    return CaseAccessors(domain).get_reverse_indexed_cases(
+        [person_case_id], case_types=[CASE_TYPE_OCCURRENCE])
 
 
 def get_open_occurrence_case_from_person(domain, person_case_id):
@@ -124,10 +111,8 @@ def get_open_occurrence_case_from_person(domain, person_case_id):
     Person <--ext-- Occurrence
 
     """
-    case_accessor = CaseAccessors(domain)
-    occurrence_cases = case_accessor.get_reverse_indexed_cases([person_case_id])
-    open_occurrence_cases = [case for case in occurrence_cases
-                             if not case.closed and case.type == CASE_TYPE_OCCURRENCE]
+    open_occurrence_cases = CaseAccessors(domain).get_reverse_indexed_cases(
+        [person_case_id], case_types=[CASE_TYPE_OCCURRENCE], is_closed=False)
     if not open_occurrence_cases:
         raise ENikshayCaseNotFound(
             "Person with id: {} exists but has no open occurrence cases".format(person_case_id)
@@ -163,15 +148,12 @@ def get_associated_episode_case_for_test(test_case, occurrence_case_id):
 
 
 def get_all_episode_confirmed_tb_cases_from_person(domain, person_case_id):
-    case_accessor = CaseAccessors(domain)
-    episode_cases = []
     occurrence_cases = get_all_occurrence_cases_from_person(domain, person_case_id)
-    for occurrence_case in occurrence_cases:
-        all_cases = case_accessor.get_reverse_indexed_cases([occurrence_case.get_id])
-        episode_cases += [case for case in all_cases
-                          if case.type == CASE_TYPE_EPISODE and
-                          case.dynamic_case_properties().get('episode_type') == "confirmed_tb"]
-    return episode_cases
+    return [
+        case for case in CaseAccessors(domain).get_reverse_indexed_cases(
+            [c.case_id for c in occurrence_cases], case_types=[CASE_TYPE_EPISODE])
+        if case.dynamic_case_properties().get('episode_type') == "confirmed_tb"
+    ]
 
 
 def get_open_episode_case_from_occurrence(domain, occurrence_case_id):
@@ -182,13 +164,12 @@ def get_open_episode_case_from_occurrence(domain, occurrence_case_id):
     Occurrence <--ext-- Episode
 
     """
-    case_accessor = CaseAccessors(domain)
-    episode_cases = case_accessor.get_reverse_indexed_cases([occurrence_case_id])
-    open_episode_cases = [case for case in episode_cases
-                          if not case.closed and case.type == CASE_TYPE_EPISODE and
-                          case.dynamic_case_properties().get('episode_type') == "confirmed_tb"]
-    if open_episode_cases:
-        return open_episode_cases[0]
+    open_episode_cases = CaseAccessors(domain).get_reverse_indexed_cases(
+        [occurrence_case_id], case_types=[CASE_TYPE_EPISODE], is_closed=False)
+    confirmed_episode_cases = [case for case in open_episode_cases
+                               if case.dynamic_case_properties().get('episode_type') == "confirmed_tb"]
+    if confirmed_episode_cases:
+        return confirmed_episode_cases[0]
     else:
         raise ENikshayCaseNotFound(
             "Occurrence with id: {} exists but has no open episode cases".format(occurrence_case_id)
@@ -203,10 +184,8 @@ def get_open_drtb_hiv_case_from_episode(domain, episode_case_id):
     episode <--ext-- drtb-hiv-referral
     """
     case_accessor = CaseAccessors(domain)
-    open_drtb_cases = [
-        case for case in case_accessor.get_reverse_indexed_cases([episode_case_id])
-        if not case.closed and case.type == CASE_TYPE_DRTB_HIV_REFERRAL
-    ]
+    open_drtb_cases = case_accessor.get_reverse_indexed_cases(
+        [episode_case_id], case_types=[CASE_TYPE_DRTB_HIV_REFERRAL], is_closed=False)
     if open_drtb_cases:
         return open_drtb_cases[0]
     else:
@@ -230,29 +209,31 @@ def get_open_episode_case_from_person(domain, person_case_id):
 
 def get_open_referral_case_from_person(domain, person_case_id):
     case_accessor = CaseAccessors(domain)
-    reverse_indexed_cases = case_accessor.get_reverse_indexed_cases([person_case_id])
+    reverse_indexed_cases = case_accessor.get_reverse_indexed_cases(
+        [person_case_id], case_types=[CASE_TYPE_REFERRAL, CASE_TYPE_OCCURRENCE], is_closed=False)
     open_referral_cases = [
         case for case in reverse_indexed_cases
-        if not case.closed and case.type == CASE_TYPE_REFERRAL
+        if case.type == CASE_TYPE_REFERRAL
     ]
-    occurrence_cases = [
+    occurrence_case_ids = [
         case.case_id for case in reverse_indexed_cases
-        if not case.closed and case.type == CASE_TYPE_OCCURRENCE
+        if case.type == CASE_TYPE_OCCURRENCE
     ]
-    reversed_indexed_occurrence = case_accessor.get_reverse_indexed_cases(occurrence_cases)
     open_referral_cases.extend(
-        case for case in reversed_indexed_occurrence
-        if not case.closed and case.type == CASE_TYPE_REFERRAL
+        case_accessor.get_reverse_indexed_cases(
+            occurrence_case_ids, case_types=[CASE_TYPE_REFERRAL], is_closed=False
+        )
     )
     if not open_referral_cases:
         return None
     else:
-        return sorted(open_referral_cases, key=(lambda case: case.opened_on))[0]
+        return min(open_referral_cases, key=(lambda case: case.opened_on))
 
 
 def get_latest_trail_case_from_person(domain, person_case_id):
     case_accessor = CaseAccessors(domain)
-    reverse_indexed_cases = case_accessor.get_reverse_indexed_cases([person_case_id])
+    reverse_indexed_cases = case_accessor.get_reverse_indexed_cases(
+        [person_case_id], case_types=[CASE_TYPE_TRAIL, CASE_TYPE_OCCURRENCE])
     trail_cases = [
         case for case in reverse_indexed_cases
         if case.type == CASE_TYPE_TRAIL
@@ -263,8 +244,8 @@ def get_latest_trail_case_from_person(domain, person_case_id):
         case.case_id for case in reverse_indexed_cases
         if case.type == CASE_TYPE_OCCURRENCE and not case.closed
     ]
-    reverse_indexed_occurrence = case_accessor.get_reverse_indexed_cases(occurrence_case_ids)
-    trail_cases.extend([case for case in reverse_indexed_occurrence if case.type == CASE_TYPE_TRAIL])
+    trail_cases.extend(case_accessor.get_reverse_indexed_cases(
+        occurrence_case_ids, case_types=[CASE_TYPE_TRAIL]))
 
     trails_with_server_opened_on = []
     for trail in trail_cases:
@@ -285,7 +266,7 @@ def get_episode_case_from_adherence(domain, adherence_case_id):
     Assumes the following case structure:
     Episode <--ext-- Adherence
     """
-    return get_parent_of_case(domain, adherence_case_id, CASE_TYPE_EPISODE)
+    return get_first_parent_of_case(domain, adherence_case_id, CASE_TYPE_EPISODE)
 
 
 @hqnottest
@@ -301,13 +282,11 @@ def get_private_diagnostic_test_cases_from_episode(domain, episode_case_id):
     """Returns all test cases for a particular episode
     """
     occurrence_case = get_occurrence_case_from_episode(domain, episode_case_id)
-    case_accessor = CaseAccessors(domain)
-    indexed_cases = case_accessor.get_reverse_indexed_cases([occurrence_case.case_id])
+    indexed_cases = CaseAccessors(domain).get_reverse_indexed_cases(
+        [occurrence_case.case_id], case_types=[CASE_TYPE_TEST], is_closed=False)
     open_test_cases = [
         case for case in indexed_cases
-        if not case.closed
-        and case.type == CASE_TYPE_TEST
-        and case.get_case_property('purpose_of_test') == 'diagnostic'
+        if case.get_case_property('purpose_of_test') == 'diagnostic'
         and case.get_case_property('date_reported') is not None
         and case.get_case_property('date_reported') != ''
         and case.get_case_property('enrolled_in_private') == 'true'
@@ -318,13 +297,13 @@ def get_private_diagnostic_test_cases_from_episode(domain, episode_case_id):
 def get_adherence_cases_between_dates(domain, person_case_id, start_date, end_date):
     episode = get_open_episode_case_from_person(domain, person_case_id)
     case_accessor = CaseAccessors(domain)
-    indexed_cases = case_accessor.get_reverse_indexed_cases([episode.case_id])
+    indexed_cases = case_accessor.get_reverse_indexed_cases(
+        [episode.case_id], case_types=[CASE_TYPE_ADHERENCE], is_closed=False)
     open_pertinent_adherence_cases = [
         case for case in indexed_cases
-        if not case.closed and case.type == CASE_TYPE_ADHERENCE and
-        (start_date.astimezone(pytz.UTC) <=
-         parse_datetime(case.dynamic_case_properties().get('adherence_date')).astimezone(pytz.UTC) <=
-         end_date.astimezone(pytz.UTC))
+        if (start_date.astimezone(pytz.UTC) <=
+            parse_datetime(case.dynamic_case_properties().get('adherence_date')).astimezone(pytz.UTC) <=
+            end_date.astimezone(pytz.UTC))
     ]
 
     return open_pertinent_adherence_cases
@@ -357,7 +336,7 @@ def get_person_locations(person_case, episode_case=None, v2=False):
     sto-> cto -> dto -> pcp
     """
     if person_case.dynamic_case_properties().get(ENROLLED_IN_PRIVATE) == 'true':
-        return _get_private_locations(person_case)
+        return _get_private_locations(person_case, episode_case)
     else:
         return _get_public_locations(person_case, episode_case, v2)
 
@@ -401,15 +380,34 @@ def _get_public_locations(person_case, episode_case, v2=False):
         raise NikshayCodeNotFound("Nikshay codes not found: {}".format(e))
 
 
-def _get_private_locations(person_case):
+def _get_private_locations(person_case, episode_case=None):
+    """
+    if episode case is passed
+    - find the location id as episode_treating_hospital on episode
+     - if this location has nikshay code
+      - consider this as the pcp
+     - else
+      - fallback to owner id as the pcp itself
+    """
     PrivatePersonLocationHierarchy = namedtuple('PersonLocationHierarchy', 'sto dto pcp tu')
-    try:
-        pcp_location = SQLLocation.active_objects.get(domain=person_case.domain, location_id=person_case.owner_id)
-    except SQLLocation.DoesNotExist:
-        raise NikshayLocationNotFound(
-            "Location with id {location_id} not found. This is the owner for person with id: {person_id}"
-            .format(location_id=person_case.owner_id, person_id=person_case.case_id)
-        )
+    pcp_location = None
+    if episode_case:
+        episode_treating_hospital = episode_case.get_case_property('episode_treating_hospital')
+        if episode_treating_hospital:
+            pcp_location = SQLLocation.active_objects.get_or_None(
+                location_id=episode_treating_hospital)
+            if pcp_location:
+                if not pcp_location.metadata.get('nikshay_code'):
+                    pcp_location = None
+    if not pcp_location:
+        try:
+            pcp_location = SQLLocation.active_objects.get(
+                domain=person_case.domain, location_id=person_case.owner_id)
+        except SQLLocation.DoesNotExist:
+            raise NikshayLocationNotFound(
+                "Location with id {location_id} not found. This is the owner for person with id: {person_id}"
+                .format(location_id=person_case.owner_id, person_id=person_case.case_id)
+            )
 
     try:
         tu_location_nikshay_code = pcp_location.metadata['nikshay_tu_id'] or None
@@ -423,11 +421,18 @@ def _get_private_locations(person_case):
     except AttributeError:
         raise NikshayLocationNotFound("Location structure error for person: {}".format(person_case.case_id))
     try:
+        dto_code = district_location.metadata['nikshay_code']
+        # HACK: remove this when we have all of the "HE ids" imported from Nikshay
+        pcp_code = pcp_location.metadata.get('nikshay_code') or None
+        # append 0 in beginning to make the code 6-digit
+        if pcp_code and len(pcp_code) == 5:
+            pcp_code = '0' + pcp_code
+        if not dto_code:
+            dto_code = pcp_location.metadata.get('rntcp_district_code')
         return PrivatePersonLocationHierarchy(
             sto=state_location.metadata['nikshay_code'],
-            dto=district_location.metadata['nikshay_code'],
-            # HACK: remove this when we have all of the "HE ids" imported from Nikshay
-            pcp=pcp_location.metadata.get('nikshay_code') or None,
+            dto=dto_code,
+            pcp=pcp_code,
             tu=tu_location_nikshay_code
         )
     except (KeyError, AttributeError) as e:
@@ -437,8 +442,8 @@ def _get_private_locations(person_case):
 @hqnottest
 def get_lab_referral_from_test(domain, test_case_id):
     case_accessor = CaseAccessors(domain)
-    reverse_indexed_cases = case_accessor.get_reverse_indexed_cases([test_case_id])
-    lab_referral_cases = [case for case in reverse_indexed_cases if case.type == CASE_TYPE_LAB_REFERRAL]
+    lab_referral_cases = case_accessor.get_reverse_indexed_cases(
+        [test_case_id], case_types=[CASE_TYPE_LAB_REFERRAL])
     if lab_referral_cases:
         return lab_referral_cases[0]
     else:
@@ -474,12 +479,8 @@ def get_person_case_from_trail(domain, trail_case_id):
 
 
 def get_adherence_cases_from_episode(domain, episode_case_id):
-    indexed_cases = CaseAccessors(domain).get_reverse_indexed_cases([episode_case_id])
-    adherence_cases = [
-        case for case in indexed_cases
-        if case.type == CASE_TYPE_ADHERENCE
-    ]
-    return adherence_cases
+    return CaseAccessors(domain).get_reverse_indexed_cases(
+        [episode_case_id], case_types=[CASE_TYPE_ADHERENCE])
 
 
 def get_adherence_cases_by_day(domain, episode_case_id):
@@ -574,14 +575,10 @@ def get_person_case_from_voucher(domain, voucher_case_id):
 
 def get_prescription_vouchers_from_episode(domain, episode_case_id):
     case_accessor = CaseAccessors(domain)
-    prescription_cases = [
-        case for case in case_accessor.get_reverse_indexed_cases([episode_case_id])
-        if case.type == CASE_TYPE_PRESCRIPTION
-    ]
-    return [
-        c for c in case_accessor.get_reverse_indexed_cases([case.case_id for case in prescription_cases])
-        if c.type == CASE_TYPE_VOUCHER
-    ]
+    prescription_cases = case_accessor.get_reverse_indexed_cases(
+        [episode_case_id], case_types=[CASE_TYPE_PRESCRIPTION])
+    return case_accessor.get_reverse_indexed_cases(
+        [case.case_id for case in prescription_cases], case_types=[CASE_TYPE_VOUCHER])
 
 
 def get_fulfilled_prescription_vouchers_from_episode(domain, episode_case_id):
@@ -593,7 +590,7 @@ def get_fulfilled_prescription_vouchers_from_episode(domain, episode_case_id):
 
 
 def get_prescription_from_voucher(domain, voucher_id):
-    return get_parent_of_case(domain, voucher_id, CASE_TYPE_PRESCRIPTION)
+    return get_first_parent_of_case(domain, voucher_id, CASE_TYPE_PRESCRIPTION)
 
 
 def get_all_episode_ids(domain):
@@ -602,9 +599,21 @@ def get_all_episode_ids(domain):
     return case_ids
 
 
-def iter_all_active_person_episode_cases(domain, case_ids):
+def get_sector(case):
+    valid_types = [CASE_TYPE_EPISODE, CASE_TYPE_PERSON]
+    if case.type not in valid_types:
+        raise ValueError('Must pass in an {} case'.format(", ".join(valid_types)))
+    if case.get_case_property(ENROLLED_IN_PRIVATE) == 'true':
+        return PRIVATE_SECTOR
+    return PUBLIC_SECTOR
+
+
+def iter_all_active_person_episode_cases(domain, case_ids, sector=None):
     """From a list of case_ids, return all the active episodes and associate person case
     """
+    if sector is not None and sector not in SECTORS:
+        raise ValueError('sector argument should be one of {}, or None'.format(SECTORS))
+
     case_accessor = CaseAccessors(domain)
     episode_cases = case_accessor.iter_cases(case_ids)
     for episode_case in episode_cases:
@@ -612,6 +621,11 @@ def iter_all_active_person_episode_cases(domain, case_ids):
             continue
 
         if episode_case.closed:
+            continue
+
+        if sector == PRIVATE_SECTOR and episode_case.get_case_property(ENROLLED_IN_PRIVATE) != 'true':
+            continue
+        elif sector == PUBLIC_SECTOR and episode_case.get_case_property(ENROLLED_IN_PRIVATE) == 'true':
             continue
 
         try:
@@ -639,3 +653,80 @@ def person_has_any_legacy_nikshay_notifiable_episode(person_case):
     episode_cases = get_all_episode_confirmed_tb_cases_from_person(domain, person_case.case_id)
     return any(valid_nikshay_patient_registration(episode_case.dynamic_case_properties())
                for episode_case in episode_cases)
+
+
+def get_most_recent_referral_case_from_person(domain, person_case_id):
+    case_accessor = CaseAccessors(domain)
+    reverse_indexed_cases = case_accessor.get_reverse_indexed_cases(
+        [person_case_id], case_types=[CASE_TYPE_REFERRAL, CASE_TYPE_OCCURRENCE])
+    open_referral_cases = [
+        case for case in reverse_indexed_cases
+        if case.type == CASE_TYPE_REFERRAL
+    ]
+    occurrence_case_ids = [
+        case.case_id for case in reverse_indexed_cases
+        if not case.closed and case.type == CASE_TYPE_OCCURRENCE
+    ]
+    open_referral_cases.extend(
+        case_accessor.get_reverse_indexed_cases(
+            occurrence_case_ids, case_types=[CASE_TYPE_REFERRAL]))
+    valid_referral_cases = [
+        case for case in open_referral_cases if (
+            case.dynamic_case_properties().get('referral_closed_reason') != 'duplicate_referral_reconciliation'
+        )
+    ]
+    if not valid_referral_cases:
+        return None
+    else:
+        return max(valid_referral_cases, key=(lambda case: case.opened_on))
+
+
+def get_most_recent_episode_case_from_person(domain, person_case_id):
+    occurrence_cases = get_all_occurrence_cases_from_person(domain, person_case_id)
+    episode_cases = [
+        case for case in CaseAccessors(domain).get_reverse_indexed_cases(
+            [c.case_id for c in occurrence_cases], case_types=[CASE_TYPE_EPISODE])
+        if case.dynamic_case_properties().get('close_reason') not in [
+            'invalid_episode', 'duplicate', 'invalid_registration'
+        ]
+    ]
+    if not episode_cases:
+        return None
+    else:
+        return max(episode_cases, key=(lambda case: case.opened_on))
+
+
+def get_all_vouchers_from_person(domain, person_case):
+    """Returns all voucher cases under tests or prescriptions"""
+    accessor = CaseAccessors(domain)
+    potential_voucher_parents = []
+    episode_ids = []
+    occurrence_case_ids = [
+        occurrence_case.case_id
+        for occurrence_case in accessor.get_reverse_indexed_cases(
+            [person_case.case_id], case_types=[CASE_TYPE_OCCURRENCE])
+    ]
+    for case in accessor.get_reverse_indexed_cases(
+            occurrence_case_ids, case_types=[CASE_TYPE_TEST, CASE_TYPE_EPISODE]):
+        if case.type == CASE_TYPE_TEST:
+            potential_voucher_parents.append(case.case_id)
+        if case.type == CASE_TYPE_EPISODE:
+            episode_ids.append(case.case_id)
+
+    potential_voucher_parents.extend(
+        prescription_case.case_id
+        for prescription_case in accessor.get_reverse_indexed_cases(
+            episode_ids, case_types=[CASE_TYPE_PRESCRIPTION])
+    )
+    return accessor.get_reverse_indexed_cases(
+        potential_voucher_parents, case_types=[CASE_TYPE_VOUCHER])
+
+
+def get_adherence_cases_by_date(adherence_cases):
+    adherence_cases_by_date = defaultdict(list)
+    for case in adherence_cases:
+        adherence_date = case.get('adherence_date')
+        if adherence_date:
+            adherence_date = parse_date(case['adherence_date']) or parse_datetime(case['adherence_date']).date()
+            adherence_cases_by_date[adherence_date].append(case)
+    return adherence_cases_by_date

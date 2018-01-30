@@ -7,6 +7,8 @@ from kafka.common import TopicAndPartition
 from pillowtop.models import (
     DjangoPillowCheckpoint, KafkaCheckpoint, str_to_kafka_seq, kafka_seq_to_str
 )
+from six.moves import input
+from six.moves import range
 
 
 class Command(BaseCommand):
@@ -20,7 +22,7 @@ class Command(BaseCommand):
         parser.add_argument('num_partitions', type=int)
 
     def handle(self, topic, num_partitions, **options):
-        stop_pillows = raw_input("did you stop pillows? [y/n]")
+        stop_pillows = input("did you stop pillows? [y/n]")
         if stop_pillows not in ['y', 'yes']:
             print("then stop them")
 
@@ -33,7 +35,7 @@ class Command(BaseCommand):
             "the script in the kafka install directory (likely /opt/kafka/bin)"
             "If an error occurs about a port, you can prefix the command with JMX_PORT=9998"
         )
-        added_partition = raw_input("have you run {} ? [y/n]".format(kafka_command))
+        added_partition = input("have you run {} ? [y/n]".format(kafka_command))
         if added_partition not in ['y', 'yes']:
             print("then run it on the kafka machine")
 

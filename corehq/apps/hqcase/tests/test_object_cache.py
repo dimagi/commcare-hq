@@ -1,5 +1,5 @@
 from __future__ import absolute_import
-import StringIO
+import io
 import hashlib
 import time
 
@@ -26,10 +26,10 @@ def hack_local_url(url):
 
 
 def rebuild_stream(response_iter):
-    data = StringIO.StringIO()
+    data = io.BytesIO()
     try:
         while True:
-            payload = response_iter.next()
+            payload = next(response_iter)
             if payload:
                 data.write(payload)
     except StopIteration:

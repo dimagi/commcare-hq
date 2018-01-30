@@ -10,11 +10,12 @@ from corehq.apps.es import case_search as case_search_es
          .domain('testproject')
 """
 from __future__ import absolute_import
-from . import filters, queries
 
+from corehq.apps.es.aggregations import TermsAggregation, BucketResult
 from corehq.apps.es.cases import CaseES, owner
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_ALIAS
 
+from . import filters, queries
 
 PATH = "case_properties"
 RELEVANCE_SCORE = "commcare_search_score"
@@ -131,3 +132,47 @@ def flatten_result(hit):
         if key and value:
             result[key] = value
     return result
+
+
+class CasePropertyAggregationResult(BucketResult):
+
+    @property
+    def raw_buckets(self):
+        return self.result[self.aggregation.field]['values']['buckets']
+
+    @property
+    def buckets(self):
+        """returns a list of buckets rather than a namedtuple since case property values can
+        have non-valid python names
+        """
+        return self.bucket_list
+
+
+class CasePropertyAggregation(TermsAggregation):
+    type = "case_property"
+    result_class = CasePropertyAggregationResult
+
+    def __init__(self, name, field, size=None):
+        self.name = name
+        self.field = field
+        self.body = {
+            "nested": {
+                "path": "case_properties"
+            },
+            "aggs": {
+                field: {
+                    "filter": {
+                        "term": {
+                            "case_properties.key": field,
+                        }
+                    },
+                    "aggs": {
+                        "values": {
+                            "terms": {
+                                "field": "case_properties.value"
+                            }
+                        }
+                    }
+                }
+            }
+        }

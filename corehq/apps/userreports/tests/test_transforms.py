@@ -189,3 +189,20 @@ class TranslationTransform(SimpleTestCase):
                     "2": {"en": "two", "es": "dos"}
                 },
             })
+
+
+class MultiValueStringTranslationTransform(SimpleTestCase):
+
+    def test_multi_translation(self):
+        transform = TransformFactory.get_transform({
+            "type": "multiple_value_string_translation",
+            "translations": {
+                "#0000FF": "Blue",
+                "#800080": "Purple"
+            },
+            "delimiter": " "
+        }).get_transform_function()
+        self.assertEqual(transform('#0000FF #800080'), 'Blue Purple')
+        self.assertEqual(transform('#800080 #123456'), 'Purple #123456')
+        self.assertEqual(transform('#123 #123456'), '#123 #123456')
+        self.assertEqual(transform("#0000FF"), "Blue")

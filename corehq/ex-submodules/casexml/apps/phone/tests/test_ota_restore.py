@@ -3,10 +3,8 @@ from datetime import datetime
 from django.test import TestCase
 import os
 from django.test.utils import override_settings
-from casexml.apps.phone.tests.utils import (
-    deprecated_generate_restore_payload,
-    get_restore_config,
-)
+from casexml.apps.phone.tests.utils import deprecated_generate_restore_payload
+from casexml.apps.phone.utils import get_restore_config
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from casexml.apps.case.tests.util import check_xml_line_by_line, delete_all_cases, delete_all_sync_logs, \
     delete_all_xforms
@@ -314,11 +312,11 @@ class OtaRestoreTest(BaseOtaRestoreTest):
         newcase = submit_form_locally(xml_data, domain=self.project.name).case
 
         self.assertTrue(isinstance(newcase.adate, dict))
-        self.assertEqual(date(2012, 02, 01), newcase.adate["#text"])
+        self.assertEqual(date(2012, 2, 1), newcase.adate["#text"])
         self.assertEqual("i am an attribute", newcase.adate["@someattr"])
         self.assertTrue(isinstance(newcase.dateattr, dict))
         self.assertEqual("this shouldn't break", newcase.dateattr["#text"])
-        self.assertEqual(date(2012, 01, 01), newcase.dateattr["@somedate"])
+        self.assertEqual(date(2012, 1, 1), newcase.dateattr["@somedate"])
         self.assertTrue(isinstance(newcase.stringattr, dict))
         self.assertEqual("neither should this", newcase.stringattr["#text"])
         self.assertEqual("i am a string", newcase.stringattr["@somestring"])

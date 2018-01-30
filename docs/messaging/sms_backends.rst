@@ -53,7 +53,9 @@ To write the outbound backend code:
         framework to retry the SMS, raise an exception in this method, otherwise if no exception is raised the framework takes
         that to mean the process was successful
 
-#. Add the backend to sms.SMS_LOADED_SQL_BACKENDS
+#. Add the backend to settings.HQ_APPS and settings.SMS_LOADED_SQL_BACKENDS
+
+#. Run ./manage.py makemigrations sms; Django will just create a proxy model for the backend model, but no database changes will occur
 
 #. Add an outbound test for the backend in `corehq.apps.sms.tests.test_backends <https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/sms/tests/test_backends.py>`_.
    This will test that the backend is reachable by the framework, but any testing of the direct API connection with the gateway

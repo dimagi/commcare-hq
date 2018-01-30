@@ -32,7 +32,7 @@ class PactPatientForm(Form):
     race = forms.ChoiceField(choices=PACT_RACE_CHOICES)
     preferred_language = forms.ChoiceField(choices=PACT_LANGUAGE_CHOICES)
 
-    mass_health_expiration = forms.DateField(label = "Mass Health expiration date (m/d/y)", input_formats=['%m/%d/%Y',''], widget=forms.DateInput(format = '%m/%d/%Y'), required=False)
+    mass_health_expiration = forms.DateField(label = "Mass Health expiration date (m/d/y)", input_formats=['%m/%d/%Y', ''], widget=forms.DateInput(format = '%m/%d/%Y'), required=False)
     ssn = forms.CharField(label="Social Security Number", required=False)
 
     hp = forms.ChoiceField(label="Primary health promoter", choices=())
@@ -83,13 +83,13 @@ class PactPatientForm(Form):
 
         # hack, if any of the names, change remake the name and initials
         name_changed = False
-        if 'first_name' in ret.keys():
+        if 'first_name' in list(ret.keys()):
             name_changed = True
             first_name = ret['first_name']
         else:
             first_name = self.casedoc.first_name
 
-        if 'last_name' in ret.keys():
+        if 'last_name' in list(ret.keys()):
             name_changed = True
             last_name = ret['last_name']
         else:

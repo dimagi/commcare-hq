@@ -22,6 +22,7 @@ from .xpath import CaseIDXPath, session_var, QualifiedScheduleFormXPath
 from .exceptions import XFormException, CaseError, XFormValidationError, BindNotFound, XFormValidationFailed
 import collections
 import re
+import six
 
 
 VALID_VALUE_FORMS = ('image', 'audio', 'video', 'video-inline', 'expanded-audio', 'markdown')
@@ -30,7 +31,7 @@ VALID_VALUE_FORMS = ('image', 'audio', 'video', 'video-inline', 'expanded-audio'
 def parse_xml(string):
     # Work around: ValueError: Unicode strings with encoding
     # declaration are not supported.
-    if isinstance(string, unicode):
+    if isinstance(string, six.text_type):
         string = string.encode("utf-8")
     try:
         return ET.fromstring(string, parser=ET.XMLParser(encoding="utf-8", remove_comments=True))
@@ -163,7 +164,7 @@ class WrappedAttribs(object):
 class WrappedNode(object):
 
     def __init__(self, xml, namespaces=namespaces):
-        if isinstance(xml, basestring):
+        if isinstance(xml, six.string_types):
             self.xml = parse_xml(xml) if xml else None
         else:
             self.xml = xml
@@ -204,6 +205,12 @@ class WrappedNode(object):
         else:
             return None
 
+    def iterancestors(self, tag=None, *tags):
+        if self.xml is not None:
+            tags = [t.format(self.namespaces) for t in tags]
+            for n in self.xml.iterancestors(tag.format(**self.namespaces), *tags):
+                yield WrappedNode(n)
+
     @property
     def attrib(self):
         return WrappedAttribs(self.xml.attrib, namespaces=self.namespaces)
@@ -211,8 +218,10 @@ class WrappedNode(object):
     def __getattr__(self, attr):
         return getattr(self.xml, attr)
 
-    def __nonzero__(self):
+    def __bool__(self):
         return self.xml is not None
+
+    __nonzero__ = __bool__
 
     def __len__(self):
         return len(self.xml) if self.exists() else 0
@@ -286,7 +295,7 @@ class ItextOutput(object):
         return context.get(self.ref)
 
 
-class ItextValue(unicode):
+class ItextValue(six.text_type):
 
     def __new__(cls, parts):
         return super(ItextValue, cls).__new__(cls, cls._render(parts))
@@ -559,7 +568,7 @@ def autoset_owner_id_for_advanced_action(action):
 
 
 def validate_xform(domain, source):
-    if isinstance(source, unicode):
+    if isinstance(source, six.text_type):
         source = source.encode("utf-8")
     # normalize and strip comments
     source = ET.tostring(parse_xml(source))
@@ -851,7 +860,7 @@ class XForm(WrappedNode):
         if not node_group:
             return None
 
-        lang = lang or self.translations().keys()[0]
+        lang = lang or list(self.translations().keys())[0]
         text_node = node_group.nodes.get(lang)
         if not text_node:
             return None
@@ -927,7 +936,7 @@ class XForm(WrappedNode):
         if not self.exists():
             return []
 
-        return self.translations().keys()
+        return list(self.translations().keys())
 
     def get_questions(self, langs, include_triggers=False,
                       include_groups=False, include_translations=False, form=None):
@@ -1003,7 +1012,8 @@ class XForm(WrappedNode):
 
         repeat_contexts = sorted(repeat_contexts, reverse=True)
 
-        for path, data_node in leaf_data_nodes.iteritems():
+        save_to_case_nodes = {}
+        for path, data_node in six.iteritems(leaf_data_nodes):
             if path not in excluded_paths:
                 bind = self.get_bind(path)
                 try:
@@ -1028,15 +1038,18 @@ class XForm(WrappedNode):
                 if data_node.tag_name == 'entry':
                     parent = next(data_node.xml.iterancestors())
                     if len(parent):
-                        is_stock_element = any(map(
-                            lambda namespace: namespace == COMMTRACK_REPORT_XMLNS,
-                            parent.nsmap.values()
-                        ))
+                        is_stock_element = any([namespace == COMMTRACK_REPORT_XMLNS for namespace in parent.nsmap.values()])
                         if is_stock_element:
                             question.update({
                                 "stock_entry_attributes": dict(data_node.xml.attrib),
                                 "stock_type_attributes": dict(parent.attrib),
                             })
+                if '/case/' in path:
+                    path_to_case = path.split('/case/')[0] + '/case'
+                    save_to_case_nodes[path_to_case] = {
+                        'data_node': data_node,
+                        'repeat': matching_repeat_context,
+                    }
 
                 hashtag_path = self.hashtag_path(path)
                 question.update({
@@ -1048,6 +1061,52 @@ class XForm(WrappedNode):
                     question["translations"] = {}
 
                 questions.append(question)
+
+        for path, node_info in six.iteritems(save_to_case_nodes):
+            data_node = node_info['data_node']
+            try:
+                case_node = next(data_node.iterancestors('{cx2}case'))
+                for attrib in ('case_id', 'user_id', 'date_modified'):
+                    if attrib not in case_node.attrib:
+                        continue
+
+                    bind = self.get_bind(path + '/@' + attrib)
+                    question = {
+                        "tag": "hidden",
+                        "value": '{}/@{}'.format(path, attrib),
+                        "repeat": node_info['repeat'],
+                        "group": node_info['repeat'],
+                        "type": "DataBindOnly",
+                        "calculate": None,
+                        "relevant": None,
+                        "constraint": None,
+                        "comment": None,
+                    }
+                    if bind.exists():
+                        question.update({
+                            "calculate": bind.attrib.get('calculate') if hasattr(bind, 'attrib') else None,
+                            "relevant": bind.attrib.get('relevant') if hasattr(bind, 'attrib') else None,
+                            "constraint": bind.attrib.get('constraint') if hasattr(bind, 'attrib') else None,
+                        })
+                    else:
+                        ref = self.model_node.find('{f}setvalue[@ref="%s"]' % path)
+                        if ref.exists():
+                            question.update({
+                                'calculate': ref.attrib.get('value'),
+                            })
+
+                    hashtag_path = '{}/@{}'.format(self.hashtag_path(path), attrib)
+                    question.update({
+                        "label": hashtag_path,
+                        "hashtagValue": hashtag_path,
+                    })
+
+                    if include_translations:
+                        question["translations"] = {}
+
+                    questions.append(question)
+            except StopIteration:
+                pass
 
         return questions
 
@@ -1133,7 +1192,6 @@ class XForm(WrappedNode):
             return None
 
     def get_path(self, node):
-        # TODO: add safety tests so that when something fails it fails with a good error
         path = None
         if 'nodeset' in node.attrib:
             path = node.attrib['nodeset']
@@ -2029,7 +2087,7 @@ def _index_on_fields(dicts, fields):
 
 
 VELLUM_TYPE_INDEX = _index_on_fields(
-    [{field: value for field, value in (dct.items() + [('name', key)])}
+    [{field: value for field, value in (list(dct.items()) + [('name', key)])}
      for key, dct in VELLUM_TYPES.items()],
     ('tag', 'type', 'media', 'appearance')
 )

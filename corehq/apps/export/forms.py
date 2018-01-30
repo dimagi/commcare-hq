@@ -23,7 +23,7 @@ from corehq.apps.export.models.new import (
     CaseExportInstanceFilters,
 )
 from corehq.apps.reports.filters.case_list import CaseListFilter, CaseListFilterUtils
-from corehq.apps.reports.filters.users import LocationRestrictedMobileWorkerFilter, EmwfUtils
+from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter, EmwfUtils
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.util import (
@@ -118,7 +118,7 @@ class CreateExportTagForm(forms.Form):
         ]
     )
     app_type = forms.CharField()
-    application = forms.CharField(required=False)
+    application = forms.CharField()
 
     # Form export fields
     module = forms.CharField(required=False)
@@ -161,24 +161,24 @@ class CreateExportTagForm(forms.Form):
                 ng_show="!staticModelType"
             ),
             crispy.Div(
-                crispy.Div(  # Form export fields
-                    crispy.Div(
-                        crispy.Field(
-                            'app_type',
-                            placeholder=_("Select Application Type"),
-                            ng_model="formData.app_type",
-                            ng_change="updateAppChoices()",
-                            ng_required="true",
-                        ),
-                        ng_show="hasSpecialAppTypes && formData.model_type === 'form'",
-                    ),
+                crispy.Div(
                     crispy.Field(
-                        'application',
-                        placeholder=_("Select Application"),
-                        ng_model="formData.application",
-                        ng_change="updateModuleChoices()",
-                        ng_required="formData.model_type === 'form'",
+                        'app_type',
+                        placeholder=_("Select Application Type"),
+                        ng_model="formData.app_type",
+                        ng_change="updateAppChoices()",
+                        ng_required="true",
                     ),
+                    ng_show="hasSpecialAppTypes || formData.model_type === 'case'",
+                ),
+                crispy.Field(
+                    'application',
+                    placeholder=_("Select Application"),
+                    ng_model="formData.application",
+                    ng_change="formData.model_type === 'case' ? updateCaseTypeChoices() : updateModuleChoices()",
+                    ng_required="true",
+                ),
+                crispy.Div(  # Form export fields
                     crispy.Field(
                         'module',
                         placeholder=_("Select Menu"),
@@ -201,6 +201,7 @@ class CreateExportTagForm(forms.Form):
                         'case_type',
                         placeholder=_("Select Case Type"),
                         ng_model="formData.case_type",
+                        ng_disabled="!formData.application",
                         ng_required="formData.model_type === 'case'",
                     ),
                     ng_show="formData.model_type === 'case'",
@@ -230,10 +231,8 @@ class CreateExportTagForm(forms.Form):
         model_type = cleaned_data.get("model_type")
 
         if model_type == "form":
-            # Require application, module and form fields if model_type is form
+            # Require module and form fields if model_type is form
             errors = []
-            if not cleaned_data.get("application"):
-                errors.append(forms.ValidationError(_("Application is required")))
             if not cleaned_data.get("module"):
                 errors.append(forms.ValidationError(_("Menu is required")))
             if not cleaned_data.get("form"):
@@ -295,10 +294,7 @@ class BaseFilterExportDownloadForm(forms.Form):
         self.domain_object = domain_object
         super(BaseFilterExportDownloadForm, self).__init__(*args, **kwargs)
 
-        self.fields['group'].choices = [("", "")] + map(
-            lambda g: (g._id, g.name),
-            Group.get_reporting_groups(self.domain_object.name)
-        )
+        self.fields['group'].choices = [("", "")] + [(g._id, g.name) for g in Group.get_reporting_groups(self.domain_object.name)]
 
         if not self.domain_object.uses_locations:
             # don't use CommCare Supply as a user_types choice if the domain
@@ -480,7 +476,7 @@ class DashboardFeedFilterForm(forms.Form):
             reverse(CaseListFilter.options_url, args=(self.domain_object.name,))
         )
         self.fields['emwf_form_filter'].widget.set_url(
-            reverse(LocationRestrictedMobileWorkerFilter.options_url, args=(self.domain_object.name,))
+            reverse(ExpandedMobileWorkerFilter.options_url, args=(self.domain_object.name,))
         )
 
         self.helper = FormHelper()
@@ -615,10 +611,10 @@ class DashboardFeedFilterForm(forms.Form):
                 begin=self.cleaned_data['start_date'],
                 end=self.cleaned_data['end_date'],
             ),
-            users=LocationRestrictedMobileWorkerFilter.selected_user_ids(emwf_selections),
-            reporting_groups=LocationRestrictedMobileWorkerFilter.selected_reporting_group_ids(emwf_selections),
-            locations=LocationRestrictedMobileWorkerFilter.selected_location_ids(emwf_selections),
-            user_types=LocationRestrictedMobileWorkerFilter.selected_user_types(emwf_selections),
+            users=ExpandedMobileWorkerFilter.selected_user_ids(emwf_selections),
+            reporting_groups=ExpandedMobileWorkerFilter.selected_reporting_group_ids(emwf_selections),
+            locations=ExpandedMobileWorkerFilter.selected_location_ids(emwf_selections),
+            user_types=ExpandedMobileWorkerFilter.selected_user_types(emwf_selections),
             can_access_all_locations=can_access_all_locations,
             accessible_location_ids=accessible_location_ids,
         )
@@ -647,8 +643,11 @@ class DashboardFeedFilterForm(forms.Form):
                 )
 
             emwf_utils_class = CaseListFilterUtils if export_type is CaseExportInstance else EmwfUtils
-            emwf_data = [emwf_utils_class(domain).id_to_choice_tuple(str(x)) for x in selected_items]
-            emwf_data = [{"id": x[0], "text": x[1]} for x in emwf_data]
+            emwf_data = []
+            for item in selected_items:
+                choice_tuple = emwf_utils_class(domain).id_to_choice_tuple(str(item))
+                if choice_tuple:
+                    emwf_data.append({"id": choice_tuple[0], "text": choice_tuple[1]})
 
             return {
                 "date_range": date_period.period_type if date_period else None,
@@ -771,7 +770,7 @@ class EmwfFilterExportMixin(object):
     export_user_filter = FormSubmittedByFilter
 
     # filter class for including dynamic fields in the context of the view as dynamic_filters
-    dynamic_filter_class = LocationRestrictedMobileWorkerFilter
+    dynamic_filter_class = ExpandedMobileWorkerFilter
 
     def _get_user_ids(self, mobile_user_and_group_slugs):
         """
@@ -917,15 +916,15 @@ class FormExportFilterBuilder(AbstractExportFilterBuilder):
         """
         form_filters = []
         if can_access_all_locations:
-            form_filters += filter(None, [
+            form_filters += [_f for _f in [
                 self._get_group_filter(group_ids),
                 self._get_user_type_filter(user_types),
-            ])
+            ] if _f]
 
-        form_filters += filter(None, [
+        form_filters += [_f for _f in [
             self._get_users_filter(user_ids),
             self._get_locations_filter(location_ids)
-        ])
+        ] if _f]
 
         form_filters = flatten_non_iterable_list(form_filters)
         if form_filters:
@@ -1046,7 +1045,7 @@ class CaseExportFilterBuilder(AbstractExportFilterBuilder):
 
         default_filters.append(self._get_users_filter(list(user_ids)))
         default_filters.append(LastModifiedByFilter(list(user_ids)))
-        return filter(None, default_filters)
+        return [_f for _f in default_filters if _f]
 
     def _get_selected_locations_and_descendants_ids(self, location_ids):
         return SQLLocation.objects.get_locations_and_children_ids(location_ids)
@@ -1069,11 +1068,11 @@ class SmsExportFilterBuilder(AbstractExportFilterBuilder):
 
 class EmwfFilterFormExport(EmwfFilterExportMixin, GenericFilterFormExportDownloadForm):
     """
-    Generic Filter form including dynamic filters using LocationRestrictedMobileWorkerFilter
+    Generic Filter form including dynamic filters using ExpandedMobileWorkerFilter
     overrides few methods from GenericFilterFormExportDownloadForm for dynamic fields over form fields
     """
     export_user_filter = FormSubmittedByFilter
-    dynamic_filter_class = LocationRestrictedMobileWorkerFilter
+    dynamic_filter_class = ExpandedMobileWorkerFilter
 
     def __init__(self, domain_object, *args, **kwargs):
         self.domain_object = domain_object

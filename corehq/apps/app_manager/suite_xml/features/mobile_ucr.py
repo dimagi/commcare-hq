@@ -8,6 +8,7 @@ from corehq.apps.app_manager.suite_xml.xml_models import Locale, Text, Command, 
 from corehq.apps.reports_core.filters import DynamicChoiceListFilter, ChoiceListFilter
 from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
 from corehq.util.quickcache import quickcache
+import six
 
 
 COLUMN_XPATH_TEMPLATE = "column[@id='{}']"
@@ -324,7 +325,7 @@ def _get_data_detail(config, domain, new_mobile_ucr_restore):
                     default_val = "column[@id='{column_id}']"
                 xpath_function = default_val
                 for word, translations in transform['translations'].items():
-                    if isinstance(translations, basestring):
+                    if isinstance(translations, six.string_types):
                         # This is a flat mapping, not per-language translations
                         word_eval = "'{}'".format(translations)
                     else:

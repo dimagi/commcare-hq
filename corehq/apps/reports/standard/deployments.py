@@ -1,17 +1,19 @@
 # coding=utf-8
-from __future__ import absolute_import
+from __future__ import absolute_import, division
+from collections import namedtuple
 from datetime import date, datetime, timedelta
 
 from django.contrib.humanize.templatetags.humanize import naturaltime
+from django.http import HttpResponseRedirect
 from django.urls import reverse
-from django.utils.translation import ugettext_noop, ugettext as _
+from django.utils.translation import ugettext_noop, ugettext as _, ugettext_lazy
 
-from casexml.apps.phone.analytics import get_sync_logs_for_user
-from casexml.apps.phone.models import SyncLog, SyncLogAssertionError
 from couchdbkit import ResourceNotFound
+from corehq.apps.es.aggregations import DateHistogram
+from corehq.apps.hqwebapp.decorators import use_nvd3
 from couchexport.export import SCALAR_NEVER_WAS
 
-from corehq.apps.reports.filters.users import LocationRestrictedMobileWorkerFilter, ExpandedMobileWorkerFilter
+from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 from corehq.apps.es import filters
 from dimagi.utils.dates import safe_strftime
 from dimagi.utils.decorators.memoized import memoized
@@ -21,20 +23,17 @@ from phonelog.models import UserErrorEntry
 from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_app, get_brief_apps_in_domain
 from corehq.apps.es import UserES
-from corehq.apps.receiverwrapper.util import get_meta_appversion_text, BuildVersionSource, get_app_version_info, \
-    get_version_from_build_id, AppVersionInfo
-from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import user_display_string
 from corehq.const import USER_DATE_FORMAT
-from corehq.util.couch import get_document_or_404
 
 from corehq.apps.locations.permissions import location_safe
-from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType
+from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.filters.select import SelectApplicationFilter
 from corehq.apps.reports.generic import GenericTabularReport, GetParamsMixin, PaginatedReportMixin
 from corehq.apps.reports.standard import ProjectReportParametersMixin, ProjectReport
 from corehq.apps.reports.util import format_datatables_data
 from corehq.util.quickcache import quickcache
+from six.moves import range
 
 
 class DeploymentsReport(GenericTabularReport, ProjectReport, ProjectReportParametersMixin):
@@ -52,7 +51,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
     exportable_all = True
     ajax_pagination = True
     fields = [
-        'corehq.apps.reports.filters.users.LocationRestrictedMobileWorkerFilter',
+        'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
         'corehq.apps.reports.filters.select.SelectApplicationFilter'
     ]
     primary_sort_prop = None
@@ -68,15 +67,14 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
                              prop_name='reporting_metadata.last_syncs.sync_date',
                              alt_prop_name='reporting_metadata.last_sync_for_user.sync_date'),
             DataTablesColumn(_("Application"),
-                             help_text=_("Displays application of last submitted form"),
+                             help_text=_("The name of the application from the user's last request."),
                              sortable=False),
             DataTablesColumn(_("Application Version"),
-                             help_text=_("Displays application version of the user's last sync."),
+                             help_text=_("The application version from the user's last request."),
                              prop_name='reporting_metadata.last_builds.build_version',
                              alt_prop_name='reporting_metadata.last_build_for_user.build_version'),
             DataTablesColumn(_("CommCare Version"),
-                             help_text=_("""Displays CommCare version the user last submitted with;
-                                         The currently deployed version may be different."""),
+                             help_text=_("""The CommCare version from the user's last request"""),
                              prop_name='reporting_metadata.last_submissions.commcare_version',
                              alt_prop_name='reporting_metadata.last_submission_for_user.commcare_version'),
         )
@@ -166,12 +164,14 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
     @memoized
     def user_query(self, pagination=True):
         mobile_user_and_group_slugs = set(
-            self.request.GET.getlist(LocationRestrictedMobileWorkerFilter.slug) +
-            self.request.GET.getlist(ExpandedMobileWorkerFilter.slug)  # Cater for old ReportConfigs
+            # Cater for old ReportConfigs
+            self.request.GET.getlist('location_restricted_mobile_worker') +
+            self.request.GET.getlist(ExpandedMobileWorkerFilter.slug)
         )
-        user_query = LocationRestrictedMobileWorkerFilter.user_es_query(
+        user_query = ExpandedMobileWorkerFilter.user_es_query(
             self.domain,
             mobile_user_and_group_slugs,
+            self.request.couch_user,
         )
         user_query = (user_query
                       .set_sorting_block(self.get_sorting_block()))
@@ -210,6 +210,12 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
                 last_build = reporting_metadata.get('last_build_for_user', {})
             if last_sub and last_sub.get('commcare_version'):
                 commcare_version = _get_commcare_version(last_sub.get('commcare_version'))
+            else:
+                devices = user.get('devices', None)
+                if devices:
+                    device = max(devices, key=lambda dev: dev['last_used'])
+                    if device.get('commcare_version', None):
+                        commcare_version = _get_commcare_version(device['commcare_version'])
             if last_sub and last_sub.get('submission_date'):
                 last_seen = string_to_utc_datetime(last_sub['submission_date'])
             if last_sync and last_sync.get('sync_date'):
@@ -276,129 +282,35 @@ def _choose_latest_version(*app_versions):
     Chooses the latest version from a list of AppVersion objects - choosing the first one passed
     in with the highest version number.
     """
-    usable_versions = filter(None, app_versions)
+    usable_versions = [_f for _f in app_versions if _f]
     if usable_versions:
         return sorted(usable_versions, key=lambda v: v.build_version)[-1]
 
 
 class SyncHistoryReport(DeploymentsReport):
-    DEFAULT_LIMIT = 10
-    MAX_LIMIT = 1000
+    # To be removed. Link deactivated on 6th Dec 2017.
     name = ugettext_noop("User Sync History")
     slug = "sync_history"
-    emailable = True
-    fields = ['corehq.apps.reports.filters.users.AltPlaceholderMobileWorkerFilter']
+    is_deprecated = True
+    deprecation_email_message = ugettext_lazy(
+        "The Sync History report has been deprecated. You can use the Application Status report to identify "
+        "the last time a user synced. This saved email will stop working within the next two months. "
+        "Please update your saved reports email settings if needed.")
+    deprecation_message = ugettext_lazy(
+        "The Sync History report has been deprecated. "
+        "You can use the Application Status report to identify the last time a user synced."
+    )
 
     @property
-    def report_subtitles(self):
-        return [_('Shows the last (up to) {} times a user has synced.').format(self.limit)]
-
-    @property
-    def disable_pagination(self):
-        return self.limit == self.DEFAULT_LIMIT
-
-    @property
-    def headers(self):
-        headers = DataTablesHeader(
-            DataTablesColumn(_("Sync Date"), sort_type=DTSortType.NUMERIC),
-            DataTablesColumn(_("# of Cases"), sort_type=DTSortType.NUMERIC),
-            DataTablesColumn(_("Sync Duration"), sort_type=DTSortType.NUMERIC)
+    def deprecate_response(self):
+        from django.contrib import messages
+        messages.warning(
+            self.request,
+            self.deprecation_message
         )
-        if self.show_extra_columns:
-            headers.add_column(DataTablesColumn(_("Sync Log")))
-            headers.add_column(DataTablesColumn(_("Sync Log Type")))
-            headers.add_column(DataTablesColumn(_("Previous Sync Log")))
-            headers.add_column(DataTablesColumn(_("Error Info")))
-            headers.add_column(DataTablesColumn(_("State Hash")))
-            headers.add_column(DataTablesColumn(_("Last Submitted")))
-            headers.add_column(DataTablesColumn(_("Last Cached")))
-
-        headers.custom_sort = [[0, 'desc']]
-        return headers
-
-    @property
-    def rows(self):
-        base_link_url = '{}?id={{id}}'.format(reverse('raw_couch'))
-
-        user_id = self.request.GET.get('individual')
-        if not user_id:
-            return []
-
-        # security check
-        get_document_or_404(CommCareUser, self.domain, user_id)
-
-        def _sync_log_to_row(sync_log):
-            def _fmt_duration(duration):
-                if isinstance(duration, int):
-                    return format_datatables_data(
-                        '<span class="{cls}">{text}</span>'.format(
-                            cls=_bootstrap_class(duration or 0, 60, 20),
-                            text=_('{} seconds').format(duration),
-                        ),
-                        duration
-                    )
-                else:
-                    return format_datatables_data(
-                        '<span class="label label-default">{text}</span>'.format(
-                            text=_("Unknown"),
-                        ),
-                        -1,
-                    )
-
-            def _fmt_id(sync_log_id):
-                href = base_link_url.format(id=sync_log_id)
-                return '<a href="{href}" target="_blank">{id:.5}...</a>'.format(
-                    href=href,
-                    id=sync_log_id
-                )
-
-            def _fmt_error_info(sync_log):
-                if not sync_log.had_state_error:
-                    return u'<span class="label label-success">&#10003;</span>'
-                else:
-                    return (u'<span class="label label-danger">X</span>'
-                            u'State error {}<br>Expected hash: {:.10}...').format(
-                        _naturaltime_with_hover(sync_log.error_date),
-                        sync_log.error_hash,
-                    )
-
-            def _get_state_hash_display(sync_log):
-                try:
-                    return u'{:.10}...'.format(sync_log.get_state_hash())
-                except SyncLogAssertionError as e:
-                    return _(u'Error computing hash! {}').format(e)
-
-            num_cases = sync_log.case_count()
-            columns = [
-                _fmt_date(sync_log.date),
-                format_datatables_data(num_cases, num_cases),
-                _fmt_duration(sync_log.duration),
-            ]
-            if self.show_extra_columns:
-                columns.append(_fmt_id(sync_log.get_id))
-                columns.append(sync_log.log_format)
-                columns.append(_fmt_id(sync_log.previous_log_id) if sync_log.previous_log_id else '---')
-                columns.append(_fmt_error_info(sync_log))
-                columns.append(_get_state_hash_display(sync_log))
-                columns.append(_naturaltime_with_hover(sync_log.last_submitted))
-                columns.append(u'{}<br>{:.10}'.format(_naturaltime_with_hover(sync_log.last_cached),
-                                                      sync_log.hash_at_last_cached))
-
-            return columns
-
-        return [_sync_log_to_row(sync_log)
-                for sync_log in get_sync_logs_for_user(user_id, self.limit)]
-
-    @property
-    def show_extra_columns(self):
-        return self.request.user and toggles.SUPPORT.enabled(self.request.user.username)
-
-    @property
-    def limit(self):
-        try:
-            return min(self.MAX_LIMIT, int(self.request.GET.get('limit', self.DEFAULT_LIMIT)))
-        except ValueError:
-            return self.DEFAULT_LIMIT
+        return HttpResponseRedirect(
+            reverse(ApplicationStatusReport.dispatcher.name(), args=[],
+                    kwargs={'domain': self.domain, 'report_slug': ApplicationStatusReport.slug}))
 
 
 def _get_sort_key(date):
@@ -533,3 +445,184 @@ class ApplicationErrorReport(GenericTabularReport, ProjectReport):
                 error.version_number,
                 str(error.date),
             ]
+
+
+@location_safe
+class AggregateUserStatusReport(ProjectReport, ProjectReportParametersMixin):
+    slug = 'aggregate_user_status'
+
+    report_template_path = "reports/async/aggregate_user_status.html"
+    name = ugettext_lazy("Aggregate User Status")
+    description = ugettext_lazy("See the last activity of your project's users in aggregate.")
+
+    fields = [
+        'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
+    ]
+    exportable = False
+    emailable = False
+    js_scripts = ['reports/js/aggregate_user_status.js']
+
+    @classmethod
+    def show_in_navigation(cls, domain=None, project=None, user=None):
+        return domain and toggles.AGGREGATE_USER_STATUS_REPORT.enabled(domain)
+
+    @use_nvd3
+    def decorator_dispatcher(self, request, *args, **kwargs):
+        super(AggregateUserStatusReport, self).decorator_dispatcher(request, *args, **kwargs)
+
+    @memoized
+    def user_query(self):
+        # partially inspired by ApplicationStatusReport.user_query
+        mobile_user_and_group_slugs = set(
+            self.request.GET.getlist(ExpandedMobileWorkerFilter.slug)
+        ) or set(['t__0'])  # default to all mobile workers on initial load
+        user_query = ExpandedMobileWorkerFilter.user_es_query(
+            self.domain,
+            mobile_user_and_group_slugs,
+            self.request.couch_user,
+        )
+        user_query = user_query.size(0)
+        user_query = user_query.aggregations([
+            DateHistogram('last_submission', 'reporting_metadata.last_submission_for_user.submission_date', '1d'),
+            DateHistogram('last_sync', 'reporting_metadata.last_sync_for_user.sync_date', '1d')
+        ])
+        return user_query
+
+    @property
+    def template_context(self):
+
+        class SeriesData(namedtuple('SeriesData', 'id title chart_color bucket_series')):
+            """
+            Utility class containing everything needed to render the chart in a template.
+            """
+
+            def get_chart_data_series(self):
+                return {
+                    'key': _('Count of Users'),
+                    'values': self.bucket_series.data_series,
+                    'color': self.chart_color,
+                }
+
+            def get_chart_percent_series(self):
+                return {
+                    'key': _('Percent of Users'),
+                    'values': self.bucket_series.percent_series,
+                    'color': self.chart_color,
+                }
+
+            def get_buckets(self):
+                return self.bucket_series.get_summary_data()
+
+        class BucketSeries(namedtuple('Bucket', 'data_series total_series total user_count')):
+            @property
+            @memoized
+            def percent_series(self):
+                return [
+                    {
+                        'series': 0,
+                        'x': row['x'],
+                        'y': self._pct(row['y'], self.user_count)
+                    }
+                    for row in self.total_series
+                ]
+
+            def get_summary_data(self):
+                def _readable_pct_from_total(total_series, index):
+                    return '{0:.0f}%'.format(total_series[index - 1]['y'])
+
+                return [
+                    [_readable_pct_from_total(self.percent_series, 3), _('in the last 3 days')],
+                    [_readable_pct_from_total(self.percent_series, 7), _('in the last week')],
+                    [_readable_pct_from_total(self.percent_series, 30), _('in the last 30 days')],
+                    [_readable_pct_from_total(self.percent_series, 60), _('in the last 60 days')],
+                ]
+
+            @property
+            def total_percent(self):
+                return '{0:.0f}%'.format(self._pct(self.total, self.user_count))
+
+            @staticmethod
+            def _pct(val, total):
+                return (100. * float(val) / float(total)) if total else 0
+
+        query = self.user_query().run()
+
+        aggregations = query.aggregations
+        last_submission_buckets = aggregations[0].raw_buckets
+        last_sync_buckets = aggregations[1].raw_buckets
+        total_users = query.total
+
+        def _buckets_to_series(buckets, user_count):
+            # start with N days of empty data
+            # add bucket info to the data series
+            # add last bucket
+            days_of_history = 60
+            vals = {
+                i: 0 for i in range(days_of_history)
+            }
+            extra = total = running_total = 0
+            today = datetime.today().date()
+            for bucket_val in buckets:
+                bucket_date = datetime.fromtimestamp(bucket_val['key'] / 1000.0).date()
+                delta_days = (today - bucket_date).days
+                val = bucket_val['doc_count']
+                if delta_days in vals:
+                    vals[delta_days] += val
+                else:
+                    extra += val
+                total += val
+
+            daily_series = []
+            running_total_series = []
+
+            for i in range(days_of_history):
+                running_total += vals[i]
+                daily_series.append(
+                    {
+                        'series': 0,
+                        'x': '{}'.format(today - timedelta(days=i)),
+                        'y': vals[i]
+                    }
+                )
+                running_total_series.append(
+                    {
+                        'series': 0,
+                        'x': '{}'.format(today - timedelta(days=i)),
+                        'y': running_total
+                    }
+                )
+
+            # catchall / last row
+            daily_series.append(
+                {
+                    'series': 0,
+                    'x': 'more than {} days ago'.format(days_of_history),
+                    'y': extra,
+                }
+            )
+            running_total_series.append(
+                {
+                    'series': 0,
+                    'x': 'more than {} days ago'.format(days_of_history),
+                    'y': running_total + extra,
+                }
+            )
+            return BucketSeries(daily_series, running_total_series, total, user_count)
+
+        submission_series = SeriesData(
+            id='submission',
+            title=_('Users who have Submitted'),
+            chart_color='#004abf',
+            bucket_series=_buckets_to_series(last_submission_buckets, total_users)
+        )
+        sync_series = SeriesData(
+            id='sync',
+            title=_('Users who have Synced'),
+            chart_color='#f58220',
+            bucket_series=_buckets_to_series(last_sync_buckets, total_users),
+        )
+        return {
+            'submission_series': submission_series,
+            'sync_series': sync_series,
+            'total_users': total_users,
+        }

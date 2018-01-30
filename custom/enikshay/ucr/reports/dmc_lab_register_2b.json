@@ -4,10 +4,9 @@
         "enikshay-reports-qa"
     ],
     "server_environment": [
-        "enikshay",
-        "softlayer"
+        "enikshay"
     ],
-    "data_source_table": "test_2b_v3",
+    "data_source_table": "test_2b_v4",
     "report_id": "dmc_lab_register_2b",
     "config": {
         "description": "",
@@ -74,15 +73,6 @@
                 "field": "is_microscopy",
                 "type": "pre",
                 "slug": "is_microscopy"
-            },
-            {
-                "pre_value": "pmdt_excel",
-                "datatype": "string",
-                "pre_operator": "distinct from",
-                "display": null,
-                "field": "migration_type",
-                "type": "pre",
-                "slug": "migration_type"
             }
         ],
         "columns": [
@@ -217,7 +207,8 @@
                 "description": null,
                 "format": "default",
                 "transform": {
-                    "type": "translation",
+                    "type": "multiple_value_string_translation",
+                    "delimiter": ", ",
                     "translations": {
                         "known_patient_contact": "Contact of known TB patient",
                         "refugee": "Refugee",
@@ -486,20 +477,14 @@
                 "display": "Diabetic status (Diabetic / Non Diabetic / Unknown)"
             },
             {
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {
-                    "type": "translation",
-                    "translations": {
-                        "R Sensitive": "Sensitive"
-                    }
+                "type": "expression",
+                "expression": {
+                    "type": "constant",
+                    "constant": ""
                 },
-                "aggregation": "simple",
-                "field": "rif_resistance_result",
-                "calculate_total": false,
-                "type": "field",
-                "display": "DST result"
+                "display": "DST result",
+                "sortable": false,
+                "column_id": "DST result"
             },
             {
                 "sortable": false,
@@ -521,7 +506,7 @@
                 "field": "treatment_initiation_details",
                 "calculate_total": false,
                 "type": "field",
-                "display": "Treatment Initiation details/Referral for treatment"
+                "display": "Treatment initiation details (TB No. & TU details) / Referral for Treatment"
             }
         ]
     }

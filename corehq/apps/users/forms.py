@@ -47,6 +47,7 @@ import re
 # required to translate inside of a mark_safe tag
 from django.utils.functional import lazy
 import six  # Python 3 compatibility
+from six.moves import range
 mark_safe_lazy = lazy(mark_safe, six.text_type)
 
 UNALLOWED_MOBILE_WORKER_NAMES = ('admin', 'demo_user')
@@ -284,9 +285,9 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
             hqcrispy.Field('first_name'),
             hqcrispy.Field('last_name'),
             hqcrispy.Field('email'),
-            twbscrispy.PrependedText('analytics_enabled', ''),
         ]
-
+        if self.set_analytics_enabled:
+            basic_fields.append(twbscrispy.PrependedText('analytics_enabled', ''),)
         if self.set_email_opt_out:
             basic_fields.append(twbscrispy.PrependedText('email_opt_out', ''))
 
@@ -310,8 +311,12 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
         )
 
     @property
+    def set_analytics_enabled(self):
+        return not settings.ENTERPRISE_MODE
+
+    @property
     def set_email_opt_out(self):
-        return self.user.is_web_user()
+        return self.user.is_web_user() and not settings.ENTERPRISE_MODE
 
     @property
     def collapse_other_options(self):
@@ -319,13 +324,15 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
 
     @property
     def direct_properties(self):
-        result = self.fields.keys()
+        result = list(self.fields)
+        if not self.set_analytics_enabled:
+            result.remove('analytics_enabled')
         if not self.set_email_opt_out:
             result.remove('email_opt_out')
         return result
 
     def update_user(self, save=True, **kwargs):
-        if save:
+        if save and self.set_analytics_enabled:
             analytics_enabled = self.cleaned_data['analytics_enabled']
             if self.user.analytics_enabled != analytics_enabled:
                 set_analytics_opt_out(self.user, analytics_enabled)
@@ -341,13 +348,6 @@ class UpdateCommCareUserInfoForm(BaseUserInfoForm, UpdateUserRoleForm):
         ),
         widget=forms.HiddenInput())
 
-    mobile_ucr_sync_interval = forms.IntegerField(
-        label=ugettext_lazy("Mobile report sync delay"),
-        required=False,
-        help_text=ugettext_lazy("Time to wait between sending updated mobile report data to users (hours)."),
-        widget=forms.HiddenInput()
-    )
-
     def __init__(self, *args, **kwargs):
         super(UpdateCommCareUserInfoForm, self).__init__(*args, **kwargs)
         self.fields['role'].help_text = _(mark_safe(
@@ -359,19 +359,16 @@ class UpdateCommCareUserInfoForm(BaseUserInfoForm, UpdateUserRoleForm):
         if toggles.ENABLE_LOADTEST_USERS.enabled(self.domain):
             self.fields['loadtest_factor'].widget = forms.TextInput()
 
-        if toggles.MOBILE_UCR.enabled(self.domain):
-            self.fields['mobile_ucr_sync_interval'].widget = forms.NumberInput()
-
     @property
     def direct_properties(self):
         indirect_props = ['role']
-        return [k for k in self.fields.keys() if k not in indirect_props]
+        return [k for k in self.fields if k not in indirect_props]
 
 
 class RoleForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
-        if kwargs.has_key('role_choices'):
+        if 'role_choices' in kwargs:
             role_choices = kwargs.pop('role_choices')
         else:
             role_choices = ()
@@ -984,7 +981,7 @@ class CommtrackUserForm(forms.Form):
         from corehq.apps.locations.util import get_locations_from_ids
 
         value = self.cleaned_data.get('assigned_locations')
-        if not isinstance(value, basestring) or value.strip() == '':
+        if not isinstance(value, six.string_types) or value.strip() == '':
             return []
 
         location_ids = [location_id.strip() for location_id in value.split(',')]

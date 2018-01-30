@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import division
 import datetime
 from xml.etree.cElementTree import Element
 from django.utils.translation import ugettext as _
@@ -36,7 +37,7 @@ class CalendarFixtureProvider(FixtureProvider):
                 current_year_element.append(current_month_element)
 
             current_day_element = Element('day', {
-                'date': str(int(current_day.strftime('%s')) / (60 * 60 * 24)),  # mobile uses days since epoch
+                'date': str(int(current_day.strftime('%s')) // (60 * 60 * 24)),  # mobile uses days since epoch
                 'number': str(current_day.day),
                 'name': _(current_day.strftime('%A')),
                 'week': str(current_day.isocalendar()[1]),

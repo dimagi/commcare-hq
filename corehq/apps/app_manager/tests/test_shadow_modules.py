@@ -381,3 +381,45 @@ class ShadowModuleFormSelectionSuiteTest(SimpleTestCase, TestXmlMixin):
             self.factory.app.create_suite(),
             "./entry/form"
         )
+
+    def test_parent_selection_first(self):
+        '''
+           setUp creates an app with three modules: basic, shadow, and child, all using parrot cases.
+           This test adds an additional module that uses child cases (baby_parrot) and uses it as the
+           source for the shadow module. The test verifies that when the shadow module uses parent child
+           selection, it fetches both parrot and baby_parrot datums, using the correct details.
+
+        '''
+        self.factory.form_requires_case(self.form0)
+        self.child_case_module, self.form3 = self.factory.new_basic_module('child_case_module', 'baby_parrot')
+        self.factory.form_requires_case(self.form3, parent_case_type='parrot')
+
+        self.shadow_module.source_module_id = self.child_case_module.unique_id
+        self.shadow_module.parent_select.active = True
+        self.shadow_module.parent_select.module_id = self.basic_module.unique_id
+
+        # Test the entry for the shadow module's single form
+        expected_entry = """
+            <partial>
+              <entry>
+                <command id="m1-f0">
+                  <text>
+                    <locale id="forms.m3f0"/>
+                  </text>
+                </command>
+                <instance id="casedb" src="jr://instance/casedb"/>
+                <instance id="commcaresession" src="jr://instance/session"/>
+                <session>
+                  <datum id="parent_id" nodeset="instance('casedb')/casedb/case[@case_type='parrot'][@status='open']"
+                         value="./@case_id" detail-select="m0_case_short"/>
+                  <datum id="case_id" nodeset="instance('casedb')/casedb/case[@case_type='baby_parrot'][@status='open'][index/parent=instance('commcaresession')/session/data/parent_id]"
+                         value="./@case_id" detail-select="m1_case_short" detail-confirm="m1_case_long"/>
+                </session>
+              </entry>
+            </partial>
+        """
+        self.assertXmlPartialEqual(
+            expected_entry,
+            self.factory.app.create_suite(),
+            './entry[3]'
+        )

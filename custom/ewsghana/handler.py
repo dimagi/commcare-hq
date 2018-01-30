@@ -14,6 +14,7 @@ from custom.ewsghana.models import EWSGhanaConfig
 from custom.ilsgateway.tanzania.handlers.language import LanguageHandler
 from custom.ilsgateway.tanzania.handlers.notdelivered import NotDeliveredHandler
 from custom.ilsgateway.tanzania.handlers.notsubmitted import NotSubmittedHandler
+import six
 
 VERIFICATION_KEYWORDS = ['yes']
 
@@ -40,7 +41,7 @@ def handle(verified_contact, text, msg):
 
     args = text.split()
     if not args:
-        send_sms_to_verified_number(verified_contact, unicode(INVALID_MESSAGE))
+        send_sms_to_verified_number(verified_contact, six.text_type(INVALID_MESSAGE))
         return True
     keyword = args[0]
     args = args[1:]
@@ -71,7 +72,7 @@ def handle(verified_contact, text, msg):
     }
 
     def choose_handler(keyword):
-        for k, v in handlers.iteritems():
+        for k, v in six.iteritems(handlers):
             if keyword.lower() in k:
                 return v
         return None

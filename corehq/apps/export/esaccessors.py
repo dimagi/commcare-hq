@@ -7,6 +7,7 @@ from corehq.apps.es.sms import SMSES
 from corehq.apps.es.aggregations import AggregationTerm, NestedTermAggregationsHelper
 from corehq.elastic import get_es_new, ES_EXPORT_INSTANCE
 from corehq.toggles import EXPORT_NO_SORT
+import six
 
 
 def get_form_export_base_query(domain, app_id, xmlns, include_errors):
@@ -50,7 +51,7 @@ def get_groups_user_ids(group_ids):
 
     results = []
     for user_list in q.values_list("users", flat=True):
-        if isinstance(user_list, basestring):
+        if isinstance(user_list, six.string_types):
             results.append(user_list)
         else:
             results.extend(user_list)

@@ -1,6 +1,6 @@
 from __future__ import absolute_import
+import io
 import json
-from StringIO import StringIO
 
 from django.http import HttpResponse
 
@@ -11,6 +11,7 @@ from openpyxl.utils import get_column_letter
 
 from corehq.apps.userreports.reports.view import CustomConfigurableReport
 from corehq.util.soft_assert import soft_assert
+from six.moves import range
 
 # Copied from custom/abt/reports/data_sources/supervisory.json
 MAX_LOCATION_COLUMNS = 350
@@ -106,7 +107,7 @@ class FormattedSupervisoryReport(CustomConfigurableReport):
         # body
         percentile_fill('C', 2, max_column, max_row - 1, 0.90, red)
 
-        f = StringIO()
+        f = io.BytesIO()
         workbook.save(f)
         return f
 

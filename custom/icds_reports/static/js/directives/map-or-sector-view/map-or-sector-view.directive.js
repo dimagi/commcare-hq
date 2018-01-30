@@ -4,15 +4,17 @@ function MapOrSectorController($location, storageService, locationsService) {
     var vm = this;
     var location_id = $location.search().location_id;
 
+    vm.showChart = parseInt($location.search().selectedLocationLevel) === 1;
+
     vm.chartOptions = {
 
         chart: {
             type: 'multiBarHorizontalChart',
-            width: 1000,
+            width: 1400,
             height: 550,
             margin: {
                 bottom: 40,
-                left: 220,
+                left: 350,
             },
             x: function (d) {
                 return d[0];
@@ -37,7 +39,10 @@ function MapOrSectorController($location, storageService, locationsService) {
                     if (vm.data.mapData.format === "number") {
                         return d3.format("d")(d);
                     }
-                    return d3.format("%")(d);
+                    var max = d3.max(vm.data.mapData.chart_data[0].values, function(value) {
+                        return value[1];
+                    });
+                    return max < 0.1 ? d3.format(".2%")(d) : d3.format("%")(d);
                 },
                 axisLabelDistance: 20,
             },

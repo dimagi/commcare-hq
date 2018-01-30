@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+from __future__ import absolute_import, division
 import logging
 from collections import namedtuple
 from django.conf import settings
@@ -53,10 +53,7 @@ def get_task_progress(task):
         else:
             current = info.get('current')
             total = info.get('total')
-            percent = int(
-                current * 100. / total if total and current is not None
-                else 0
-            )
+            percent = current * 100 // total if total and current is not None else 0
     return TaskProgress(
         current=current,
         total=total,
@@ -127,6 +124,8 @@ def get_task_status(task, is_multiple_download_task=False):
 
     if failed:
         state = STATES.failed
+        if isinstance(task.result, Exception) and not context_error:
+            context_error = "%s: %s" % (type(task.result).__name__, task.result)
     elif is_ready:
         state = STATES.success
     elif _is_task_pending(task):
@@ -146,7 +145,7 @@ def get_task_status(task, is_multiple_download_task=False):
 
 def _is_task_pending(task):
     if isinstance(task, GroupResult):
-        return any(map(lambda async_task: async_task.state == 'PENDING', task.children))
+        return any([async_task.state == 'PENDING' for async_task in task.children])
     else:
         return task.state == 'PENDING'
 

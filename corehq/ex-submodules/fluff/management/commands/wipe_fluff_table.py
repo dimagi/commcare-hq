@@ -5,6 +5,7 @@ from django.core.management.base import BaseCommand
 
 from fluff.pillow import FluffPillowProcessor
 from pillowtop.utils import get_pillow_by_name
+from six.moves import input
 
 
 class Command(BaseCommand):
@@ -24,7 +25,7 @@ class Command(BaseCommand):
     def handle(self, pillow_name, **options):
         pillow = get_pillow_by_name(pillow_name)
         if not options['noinput']:
-            confirm = raw_input(
+            confirm = input(
                 """
                 You have requested to wipe %s table
 

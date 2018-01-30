@@ -4,6 +4,7 @@ from django.core.management.base import BaseCommand
 import sys
 from corehq.apps.domain.models import Domain
 from corehq.util.couch import get_db_by_doc_type
+from six.moves import input
 
 
 class Command(BaseCommand):
@@ -11,17 +12,17 @@ class Command(BaseCommand):
 
     def handle(self, doc_types, *args, **options):
 
-        input = raw_input('\n'.join([
+        user_input = input('\n'.join([
             '\n\nReally delete documents of the following types: {}?',
             'This operation is not reversible. Enter a number N to delete the first '
             'N found, or type "delete all" to delete everything.',
             '',
         ]).format(doc_types))
-        if input == 'delete all':
+        if user_input == 'delete all':
             remaining = None
         else:
             try:
-                remaining = int(input)
+                remaining = int(user_input)
             except ValueError:
                 print('aborting')
                 sys.exit()

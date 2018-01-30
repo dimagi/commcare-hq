@@ -4,6 +4,7 @@ from __future__ import print_function
 from __future__ import absolute_import
 import sys
 import os
+from six.moves import zip
 
 
 def get_stats(path, build_slug):
@@ -69,7 +70,7 @@ def compare_stats(stats1, stats2):
 
     all_mem = get_all_diffs('mem')
     all_time = get_all_diffs('time')
-    for slug, mem, time in zip(stats1.keys(), all_mem, all_time):
+    for slug, mem, time in zip(stats1, all_mem, all_time):
         print(row_template.format(
             slug,
             mem_cell_template.format(**mem),

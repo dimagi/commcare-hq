@@ -2,6 +2,8 @@ from __future__ import print_function
 
 from __future__ import absolute_import
 from gevent import monkey
+import six
+from six.moves import map
 monkey.patch_all()
 
 from corehq.apps.hqcase.management.commands.ptop_reindexer_v2 import FACTORIES_BY_SLUG
@@ -49,7 +51,7 @@ def do_reindex(alias_name, reset):
     print("Starting pillow preindex %s" % alias_name)
     reindex_commands = get_reindex_commands(alias_name)
     for reindex_command in reindex_commands:
-        if isinstance(reindex_command, basestring):
+        if isinstance(reindex_command, six.string_types):
             kwargs = {"reset": True} if reset else {}
             FACTORIES_BY_SLUG[reindex_command](**kwargs).build().reindex()
         else:
@@ -81,7 +83,7 @@ class Command(BaseCommand):
             return
 
         print("Reindexing:\n\t", end=' ')
-        print('\n\t'.join(map(unicode, indices_needing_reindex)))
+        print('\n\t'.join(map(six.text_type, indices_needing_reindex)))
 
         preindex_message = """
         Heads up!
@@ -92,7 +94,7 @@ class Command(BaseCommand):
         This may take a while, so don't deploy until all these have reported finishing.
             """ % (
                 settings.EMAIL_SUBJECT_PREFIX,
-                '\n\t'.join(map(unicode, indices_needing_reindex))
+                '\n\t'.join(map(six.text_type, indices_needing_reindex))
             )
 
         mail_admins("Pillow preindexing starting", preindex_message)
@@ -127,7 +129,7 @@ class Command(BaseCommand):
                 mail_admins(
                     "Pillow preindexing completed",
                     "Reindexing %s took %s seconds" % (
-                        ', '.join(map(unicode, indices_needing_reindex)),
+                        ', '.join(map(six.text_type, indices_needing_reindex)),
                         (datetime.utcnow() - start).seconds
                     )
                 )

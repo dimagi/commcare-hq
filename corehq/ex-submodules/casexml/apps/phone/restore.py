@@ -4,8 +4,7 @@ import logging
 import os
 import shutil
 import tempfile
-from io import FileIO
-from cStringIO import StringIO
+from io import BytesIO
 from uuid import uuid4
 from distutils.version import LooseVersion
 from datetime import datetime, timedelta
@@ -212,7 +211,7 @@ class AsyncRestoreResponse(object):
     def get_http_response(self):
         headers = {"Retry-After": self.progress['retry_after']}
         response = stream_response(
-            StringIO(self.compile_response()),
+            BytesIO(self.compile_response()),
             status=202,
             headers=headers,
         )
@@ -236,11 +235,13 @@ class CachedResponse(object):
         get_blob_db().put(NoClose(fileobj), name, timeout=max(timeout // 60, 60))
         return cls(name)
 
-    def __nonzero__(self):
+    def __bool__(self):
         try:
             return bool(self.as_file())
         except NotFound:
             return False
+
+    __nonzero__ = __bool__
 
     def as_string(self):
         with self.as_file() as fileobj:
@@ -287,7 +288,7 @@ class RestoreParams(object):
         self.app = app
         self.device_id = device_id
         self.openrosa_version = (LooseVersion(openrosa_version)
-            if isinstance(openrosa_version, basestring) else openrosa_version)
+            if isinstance(openrosa_version, six.string_types) else openrosa_version)
 
     @property
     def app_id(self):

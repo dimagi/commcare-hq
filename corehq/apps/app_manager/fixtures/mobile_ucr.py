@@ -30,6 +30,8 @@ from corehq.apps.userreports.tasks import compare_ucr_dbs
 from corehq.apps.app_manager.dbaccessors import (
     get_apps_in_domain, get_brief_apps_in_domain, get_apps_by_id, get_brief_app
 )
+from six.moves import zip
+from six.moves import map
 
 MOBILE_UCR_RANDOM_THRESHOLD = 1000
 
@@ -39,20 +41,7 @@ def _should_sync(restore_state):
     if not last_sync_log or restore_state.overwrite_cache:
         return True
 
-    sync_interval = restore_state.restore_user.get_mobile_ucr_sync_interval()
-    if sync_interval is None and restore_state.params.app:
-        app = restore_state.params.app
-        if restore_state.params.app.copy_of:
-            # get sync interval from latest app version so that we don't have to deploy a new version
-            # to make changes to the sync interval
-            try:
-                app = get_brief_app(restore_state.domain, restore_state.params.app.copy_of)
-            except NoResultFound:
-                pass
-        sync_interval = app.mobile_ucr_sync_interval
-    if sync_interval is None:
-        sync_interval = restore_state.project.default_mobile_ucr_sync_interval
-
+    sync_interval = restore_state.project.default_mobile_ucr_sync_interval
     sync_interval = sync_interval and sync_interval * 3600  # convert to seconds
     return (
         not last_sync_log or
@@ -71,11 +60,7 @@ class BaseReportFixturesProvider(FixtureProvider):
             return False
 
         apps = self._get_apps(restore_state, restore_user)
-        report_configs = self._get_report_configs(apps).values()
-        if not report_configs:
-            return False
-
-        return True
+        return bool(self._get_report_configs(apps))
 
     def _get_apps(self, restore_state, restore_user):
         app_aware_sync_app = restore_state.params.app
@@ -142,7 +127,7 @@ class ReportFixturesProvider(BaseReportFixturesProvider):
         """
         Generates a report fixture for mobile that can be used by a report module
         """
-        if not self.uses_reports:
+        if not self.uses_reports(restore_state):
             return []
 
         restore_user = restore_state.restore_user
@@ -155,7 +140,7 @@ class ReportFixturesProvider(BaseReportFixturesProvider):
         }
 
         if needed_versions.intersection({MOBILE_UCR_VERSION_1, MOBILE_UCR_MIGRATING_TO_2}):
-            fixtures.extend(self._v1_fixture(restore_user, self._get_report_configs(apps).values()))
+            fixtures.extend(self._v1_fixture(restore_user, list(self._get_report_configs(apps).values())))
         else:
             fixtures.extend(self._empty_v1_fixture(restore_user))
 
@@ -190,7 +175,6 @@ class ReportFixturesProvider(BaseReportFixturesProvider):
             report_config.report_id, domain
         )
 
-        # TODO: Convert to be compatible with restore_user
         # apply filters specified in report module
         all_filter_values = {
             filter_slug: restore_user.get_ucr_filter_value(filter, report.get_ui_filter(filter_slug))
@@ -250,8 +234,8 @@ class ReportFixturesProvider(BaseReportFixturesProvider):
             rows_elem.append(_row_to_row_elem(
                 dict(
                     zip(
-                        map(lambda column_config: column_config.column_id, data_source.top_level_columns),
-                        map(str, total_row)
+                        [column_config.column_id for column_config in data_source.top_level_columns],
+                        list(map(str, total_row))
                     )
                 ),
                 data_source.get_total_records(),
@@ -267,7 +251,7 @@ class ReportFixturesProviderV2(BaseReportFixturesProvider):
         """
         Generates a report fixture for mobile that can be used by a report module
         """
-        if not self.uses_reports:
+        if not self.uses_reports(restore_state):
             return []
 
         restore_user = restore_state.restore_user
@@ -280,7 +264,7 @@ class ReportFixturesProviderV2(BaseReportFixturesProvider):
         }
 
         if needed_versions.intersection({MOBILE_UCR_MIGRATING_TO_2, MOBILE_UCR_VERSION_2}):
-            report_configs = self._get_report_configs(apps).values()
+            report_configs = list(self._get_report_configs(apps).values())
             synced_fixtures, purged_fixture_ids = self._relevant_report_configs(restore_state, report_configs)
             fixtures.extend(self._v2_fixtures(restore_user, synced_fixtures))
             for report_uuid in purged_fixture_ids:
@@ -364,7 +348,6 @@ class ReportFixturesProviderV2(BaseReportFixturesProvider):
         report, data_source = BaseReportFixturesProvider._get_report_and_data_source(
             report_config.report_id, domain)
 
-        # TODO: Convert to be compatible with restore_user
         # apply filters specified in report module
         all_filter_values = {
             filter_slug: restore_user.get_ucr_filter_value(filter, report.get_ui_filter(filter_slug))
@@ -429,8 +412,8 @@ class ReportFixturesProviderV2(BaseReportFixturesProvider):
             rows_elem.append(_row_to_row_elem(
                 dict(
                     zip(
-                        map(lambda column_config: column_config.column_id, data_source.top_level_columns),
-                        map(str, total_row)
+                        [column_config.column_id for column_config in data_source.top_level_columns],
+                        list(map(str, total_row))
                     )
                 ),
                 data_source.get_total_records(),

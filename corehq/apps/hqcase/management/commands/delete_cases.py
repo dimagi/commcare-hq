@@ -10,6 +10,7 @@ from corehq.form_processor.utils import should_use_sql_backend
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.couch.database import iter_bulk_delete
 from corehq.apps.users.models import CouchUser, CommCareUser
+from six.moves import input
 
 
 class Command(BaseCommand):
@@ -63,7 +64,7 @@ class Command(BaseCommand):
             msg = "Delete all cases owned by {}? (y/n)\n".format(
                 self.user.username,
             )
-            if not raw_input(msg) == 'y':
+            if not input(msg) == 'y':
                 print("cancelling")
                 return
 

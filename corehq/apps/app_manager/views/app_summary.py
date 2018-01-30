@@ -1,6 +1,6 @@
 from __future__ import absolute_import
+import io
 from copy import copy
-from StringIO import StringIO
 from collections import namedtuple
 
 from django.urls import reverse
@@ -22,6 +22,8 @@ from corehq.apps.hqwebapp.decorators import use_angular_js
 from couchexport.export import export_raw
 from couchexport.models import Format
 from couchexport.shortcuts import export_response
+import six
+from six.moves import range
 
 
 class AppSummaryView(HQJSONResponseMixin, LoginAndDomainMixin, BasePageView, ApplicationViewMixin):
@@ -142,7 +144,7 @@ def _translate_name(names, language):
     try:
         return names[language]
     except KeyError:
-        first_name = names.iteritems().next()
+        first_name = next(six.iteritems(names))
         return u"{} [{}]".format(first_name[1], first_name[0])
 
 
@@ -241,7 +243,7 @@ class DownloadAppSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
                     ])
                 ]
 
-        export_string = StringIO()
+        export_string = io.BytesIO()
         export_raw(tuple(headers), data, export_string, Format.XLS_2007),
         return export_response(
             export_string,
@@ -310,7 +312,7 @@ class DownloadFormSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
             (self._get_form_sheet_name(module, form, language), self._get_form_row(form, language))
             for module in modules for form in module.get_forms()
         )
-        export_string = StringIO()
+        export_string = io.BytesIO()
         export_raw(tuple(headers), data, export_string, Format.XLS_2007),
         return export_response(
             export_string,
@@ -406,7 +408,7 @@ class DownloadCaseSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
             self.get_case_questions_rows(case_type, language)
         ) for case_type in case_metadata.case_types)
 
-        export_string = StringIO()
+        export_string = io.BytesIO()
         export_raw(tuple(headers), data, export_string, Format.XLS_2007),
         return export_response(
             export_string,
@@ -429,7 +431,7 @@ class DownloadCaseSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
                 form_names[f.unique_id] = _get_translated_form_name(self.app, f.unique_id, language)
                 form_case_types[f.unique_id] = m.case_type
 
-        case_types = [case_type.name] + case_type.relationships.values()
+        case_types = [case_type.name] + list(case_type.relationships.values())
         opened_by = {}
         closed_by = {}
         for t in case_types:
@@ -439,7 +441,7 @@ class DownloadCaseSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
         rows = []
         relationships = case_type.relationships
         relationships.update({'': case_type.name})
-        for relationship, type in relationships.iteritems():
+        for relationship, type in six.iteritems(relationships):
             if relationship and not opened_by[type] and not closed_by[type]:
                 rows.append((case_type.name, "[{}] {}".format(relationship, type)))
             for i in range(max(len(opened_by[type]), len(closed_by[type]))):

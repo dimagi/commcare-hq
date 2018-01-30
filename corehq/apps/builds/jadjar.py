@@ -2,7 +2,7 @@ from __future__ import absolute_import
 import itertools
 import os
 import shlex
-from StringIO import StringIO
+from io import BytesIO
 from subprocess import PIPE
 from tempfile import NamedTemporaryFile
 from zipfile import ZipFile, ZIP_DEFLATED
@@ -70,7 +70,7 @@ def sign_jar(jad, jar, use_j2me_endpoint=False):
     key_alias   = settings.JAR_SIGN['key_alias']
     store_pass  = settings.JAR_SIGN['store_pass']
     key_pass    = settings.JAR_SIGN['key_pass']
-    jad_tool    = os.path.join(os.path.abspath(os.path.dirname(__file__)),'JadTool.jar')
+    jad_tool    = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'JadTool.jar')
     # remove traces of former jar signings, if any
     jad.update({
         "MIDlet-Certificate-1-1" : None,
@@ -178,7 +178,7 @@ class JadJar(object):
         jad_properties = jad_properties or {}
 
         # pack files into jar
-        buffer = StringIO(self.jar)
+        buffer = BytesIO(self.jar)
         with ZipFile(buffer, 'a', ZIP_DEFLATED) as zipper:
             for path, f in files.items():
                 zipper.writestr(path, convert_XML_To_J2ME(f, path, self.use_j2me_endpoint))

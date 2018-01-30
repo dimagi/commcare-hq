@@ -6,6 +6,7 @@ from __future__ import absolute_import
 from collections import namedtuple
 from getpass import getpass
 import requests
+from six.moves import input
 
 Auth = namedtuple('Auth', 'username password')
 
@@ -120,7 +121,7 @@ def get_cloudant_password(username):
 
 
 def ask_user(statement):
-    y = raw_input('{}. Ok? (y/n)'.format(statement))
+    y = input('{}. Ok? (y/n)'.format(statement))
     if y != 'y':
         print('Aborting')
         exit(0)

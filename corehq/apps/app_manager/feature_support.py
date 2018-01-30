@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from distutils.version import LooseVersion, Version
 from django.conf import settings
+import six
 
 
 class CommCareFeatureSupportMixin(object):
@@ -11,7 +12,7 @@ class CommCareFeatureSupportMixin(object):
         if settings.UNIT_TESTING and self.build_version is None:
             return False
         assert isinstance(self.build_version, Version)
-        assert isinstance(minimum_version, (basestring, Version))
+        assert isinstance(minimum_version, six.string_types + (Version,))
         return self.build_version >= minimum_version
 
     @property

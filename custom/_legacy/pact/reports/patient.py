@@ -85,7 +85,7 @@ class PactPatientInfoReport(PactDrilldownReportMixin, PactElasticTabularReportMi
         elif view_mode == 'schedule':
             the_form = ScheduleForm()
             ret['schedule_form'] = the_form
-            ret['schedule_fields'] = json.dumps(the_form.fields.keys())
+            ret['schedule_fields'] = json.dumps(list(the_form.fields.keys()))
             self.report_template_path = "pact/patient/pactpatient_schedule.html"
         elif view_mode == 'edit':
             the_form = PactPatientForm(self.request, patient_doc)
@@ -157,7 +157,7 @@ class PactPatientInfoReport(PactDrilldownReportMixin, PactElasticTabularReportMi
                 yield row_field_dict.get("form.meta.username", "")
 
             res = self.es_results
-            if res.has_key('error'):
+            if 'error' in res:
                 pass
             else:
                 for result in res['hits']['hits']:

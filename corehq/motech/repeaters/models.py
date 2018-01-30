@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 from datetime import datetime, timedelta
-import urllib
+import six.moves.urllib.request, six.moves.urllib.parse, six.moves.urllib.error
 import urlparse
 import warnings
 
@@ -46,6 +46,7 @@ from .const import (
 )
 from .exceptions import RequestConnectionError
 from .utils import get_all_repeater_types
+import six
 
 
 def log_repeater_timeout_in_datadog(domain):
@@ -89,6 +90,7 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
     username = StringProperty()
     password = StringProperty()
     friendly_name = _("Data")
+    paused = BooleanProperty(default=False)
 
     payload_generator_classes = ()
 
@@ -162,6 +164,11 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
 
     def clear_caches(self):
         super(Repeater, self).clear_caches()
+        # Also expire for cases repeater is fetched using Repeater class.
+        # The quick cache called in clear_cache also check on relies of doc class
+        # so in case the class is set as Repeater it is not expired like in edit forms.
+        # So expire it explicitly here with Repeater class as well.
+        Repeater.get.clear(Repeater, self._id)
         if self.__class__ == Repeater:
             cls = self.get_class_from_doc_type(self.doc_type)
         else:
@@ -223,6 +230,14 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
             self['doc_type'] += DELETED
         if DELETED not in self['base_doc']:
             self['base_doc'] += DELETED
+        self.save()
+
+    def pause(self):
+        self.paused = True
+        self.save()
+
+    def resume(self):
+        self.paused = False
         self.save()
 
     def get_url(self, repeat_record):
@@ -288,6 +303,16 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
             self.generator.handle_failure(result, self.payload_doc(repeat_record), repeat_record)
         return attempt
 
+    @property
+    def is_form_repeater(self):
+        # check if any of parent class is FormRepeater
+        return isinstance(self, FormRepeater)
+
+    @property
+    def is_case_repeater(self):
+        # check if any of parent class is CaseRepeater
+        return isinstance(self, CaseRepeater)
+
 
 class FormRepeater(Repeater):
     """
@@ -323,7 +348,7 @@ class FormRepeater(Repeater):
                 query.append(("app_id", self.payload_doc(repeat_record).app_id))
             except (XFormNotFound, ResourceNotFound):
                 return None
-            url_parts[4] = urllib.urlencode(query)
+            url_parts[4] = six.moves.urllib.parse.urlencode(query)
             return urlparse.urlunparse(url_parts)
 
     def get_headers(self, repeat_record):
@@ -509,6 +534,10 @@ class RepeatRecord(Document):
     next_check = DateTimeProperty()
     succeeded = BooleanProperty(default=False)
 
+    @property
+    def record_id(self):
+        return self._id
+
     @classmethod
     def wrap(cls, data):
         should_bootstrap_attempts = ('attempts' not in data)
@@ -530,12 +559,16 @@ class RepeatRecord(Document):
     @property
     @memoized
     def repeater(self):
-        return Repeater.get(self.repeater_id)
+        try:
+            return Repeater.get(self.repeater_id)
+        except ResourceNotFound:
+            return None
 
     @property
     def url(self):
         warnings.warn("RepeatRecord.url is deprecated. Use Repeater.get_url instead", DeprecationWarning)
-        return self.repeater.get_url(self)
+        if self.repeater:
+            return self.repeater.get_url(self)
 
     @property
     def state(self):
@@ -581,6 +614,11 @@ class RepeatRecord(Document):
         for i, attempt in enumerate(self.attempts):
             yield i + 1, attempt
 
+    def postpone_by(self, duration):
+        self.last_checked = datetime.utcnow()
+        self.next_check = self.last_checked + duration
+        self.save()
+
     def make_set_next_try_attempt(self, failure_reason):
         # we use an exponential back-off to avoid submitting to bad urls
         # too frequently.
@@ -621,7 +659,7 @@ class RepeatRecord(Document):
         return RepeatRecordAttempt(
             cancelled=True,
             datetime=now,
-            failure_reason=unicode(exception),
+            failure_reason=six.text_type(exception),
             success_response=None,
             next_check=None,
             succeeded=False,
@@ -676,7 +714,7 @@ class RepeatRecord(Document):
     def handle_exception(self, exception):
         """handle internal exceptions
         """
-        return self._make_failure_attempt(unicode(exception), None)
+        return self._make_failure_attempt(six.text_type(exception), None)
 
     def _make_failure_attempt(self, reason, response):
         log_repeater_error_in_datadog(self.domain, response.status_code if response else None,

@@ -92,7 +92,7 @@ class OdmExportReport(ProjectReport, CaseListMixin, GenericReportView):
         return [
             [
                 'study',  # The first "sheet" is the study details. It has only one row.
-                [study_details.keys(), study_details.values()]
+                [list(study_details.keys()), list(study_details.values())]
             ],
             [
                 'subjects',

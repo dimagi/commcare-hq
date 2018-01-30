@@ -1,5 +1,5 @@
 from __future__ import absolute_import
-from StringIO import StringIO
+import io
 
 from django.contrib import messages
 
@@ -23,6 +23,7 @@ from couchexport.models import Format
 from couchexport.shortcuts import export_response
 from dimagi.utils.decorators.view import get_file
 from dimagi.utils.logging import notify_exception
+import six
 
 
 @no_conflict_require_POST
@@ -81,8 +82,8 @@ def download_bulk_app_translations(request, domain, app_id):
     app = get_app(domain, app_id)
     headers = expected_bulk_app_sheet_headers(app)
     rows = expected_bulk_app_sheet_rows(app)
-    temp = StringIO()
-    data = [(k, v) for k, v in rows.iteritems()]
+    temp = io.BytesIO()
+    data = [(k, v) for k, v in six.iteritems(rows)]
     export_raw(headers, data, temp)
     return export_response(temp, Format.XLS_2007, "bulk_app_translations")
 

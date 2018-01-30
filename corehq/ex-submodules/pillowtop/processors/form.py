@@ -2,15 +2,17 @@ from __future__ import absolute_import
 from datetime import timedelta
 from django.http import Http404
 
+from corehq.apps.users.util import update_device_meta, update_latest_builds, filter_by_app
 from dimagi.utils.parsing import string_to_utc_datetime
 
 from corehq.apps.app_manager.dbaccessors import get_app
-from corehq.apps.users.models import CouchUser, LastSubmission
-from corehq.pillows.utils import format_form_meta_for_es, update_latest_builds, filter_by_app
+from corehq.apps.users.models import CouchUser, LastSubmission, DeviceAppMeta
+from corehq.pillows.utils import format_form_meta_for_es
 from corehq.util.quickcache import quickcache
 from corehq.apps.receiverwrapper.util import get_app_version_info
 
 from .interface import PillowProcessor
+import six
 
 
 class FormSubmissionMetadataTrackerProcessor(PillowProcessor):
@@ -96,7 +98,7 @@ def mark_latest_submission(domain, user_id, app_id, build_id, version, metadata,
 
     last_submission = filter_by_app(user.reporting_metadata.last_submissions, app_id)
 
-    if metadata and metadata.get('appVersion') and not isinstance(metadata['appVersion'], basestring):
+    if metadata and metadata.get('appVersion') and not isinstance(metadata['appVersion'], six.string_types):
         metadata = format_form_meta_for_es(metadata)
 
     app_version_info = get_app_version_info(
@@ -116,7 +118,8 @@ def mark_latest_submission(domain, user_id, app_id, build_id, version, metadata,
             user.reporting_metadata.last_submissions.append(last_submission)
 
         last_submission.submission_date = received_on_datetime
-        last_submission.device_id = metadata.get('deviceID')
+        device_id = metadata.get('deviceID')
+        last_submission.device_id = device_id
         last_submission.app_id = app_id
         last_submission.build_id = build_id
         last_submission.build_version = app_version_info.build_version
@@ -132,5 +135,12 @@ def mark_latest_submission(domain, user_id, app_id, build_id, version, metadata,
                                          False):
 
             user.reporting_metadata.last_submission_for_user = last_submission
+
+        app_meta = DeviceAppMeta(
+            app_id=app_id,
+            build_id=build_id,
+            last_submission=received_on_datetime,
+        )
+        update_device_meta(user, device_id, app_version_info.commcare_version, app_meta, save=False)
 
         user.save()

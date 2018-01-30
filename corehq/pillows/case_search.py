@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 import traceback
 from collections import OrderedDict
+from datetime import datetime
 from cStringIO import StringIO
 
 from django.db import ProgrammingError
@@ -20,6 +21,7 @@ from corehq.pillows.mappings.case_mapping import CASE_ES_TYPE
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX, \
     CASE_SEARCH_MAPPING, CASE_SEARCH_INDEX_INFO
 from corehq.util.doc_processor.sql import SqlDocumentProvider
+from dimagi.utils.parsing import json_format_datetime
 from pillowtop.checkpoints.manager import get_checkpoint_for_elasticsearch_pillow
 from pillowtop.es_utils import initialize_index_and_mapping
 from pillowtop.feed.interface import Change
@@ -28,15 +30,18 @@ from pillowtop.processors.elastic import ElasticProcessor
 from pillowtop.reindexer.change_providers.case import get_domain_case_change_provider
 from pillowtop.reindexer.reindexer import PillowChangeProviderReindexer, ReindexerFactory, \
     ResumableBulkElasticPillowReindexer
+import six
 
 
 def transform_case_for_elasticsearch(doc_dict):
+    system_properties = ['case_properties', '_indexed_on']
     doc = {
         desired_property: doc_dict.get(desired_property)
         for desired_property in CASE_SEARCH_MAPPING['properties'].keys()
-        if desired_property != 'case_properties'
+        if desired_property not in system_properties
     }
     doc['_id'] = doc_dict.get('_id')
+    doc['_indexed_on'] = json_format_datetime(datetime.utcnow())
     doc['case_properties'] = _get_case_properties(doc_dict)
     return doc
 
@@ -55,7 +60,7 @@ def _get_case_properties(doc_dict):
 
     return base_case_properties + [
         {'key': key, 'value': value}
-        for key, value in dynamic_case_properties.iteritems()
+        for key, value in six.iteritems(dynamic_case_properties)
     ]
 
 

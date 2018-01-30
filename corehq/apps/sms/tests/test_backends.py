@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 import json
+import uuid
 from corehq.apps.accounting.models import SoftwarePlanEdition
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.api.models import ApiUser, PERMISSION_POST_SMS
@@ -11,7 +12,7 @@ from corehq.apps.sms.mixin import BadSMSConfigException
 from corehq.apps.sms.models import (SMS, QueuedSMS,
     SQLMobileBackendMapping, SQLMobileBackend, MobileBackendInvitation,
     PhoneLoadBalancingMixin, BackendMap)
-from corehq.apps.sms.tasks import handle_outgoing
+from corehq.apps.sms.tasks import handle_outgoing, get_connection_slot_from_phone_number, get_connection_slot_lock
 from corehq.apps.sms.tests.util import BaseSMSTest, delete_domain_phone_numbers
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.tests.utils import run_with_all_backends
@@ -19,6 +20,7 @@ from corehq.messaging.smsbackends.apposit.models import SQLAppositBackend
 from corehq.messaging.smsbackends.grapevine.models import SQLGrapevineBackend
 from corehq.messaging.smsbackends.http.models import SQLHttpBackend
 from corehq.messaging.smsbackends.icds_nic.models import SQLICDSBackend
+from corehq.messaging.smsbackends.ivory_coast_mtn.models import IvoryCoastMTNBackend
 from corehq.messaging.smsbackends.mach.models import SQLMachBackend
 from corehq.messaging.smsbackends.megamobile.models import SQLMegamobileBackend
 from corehq.messaging.smsbackends.push.models import PushBackend
@@ -39,7 +41,8 @@ from django.test import TestCase
 from django.test.client import Client
 from django.test.utils import override_settings
 from mock import patch
-from urllib import urlencode
+from six.moves.urllib.parse import urlencode
+from six.moves import range
 
 
 class AllBackendTest(DomainSubscriptionMixin, TestCase):
@@ -174,6 +177,13 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
         )
         cls.start_enterprise_backend.save()
 
+        cls.ivory_coast_mtn_backend = IvoryCoastMTNBackend(
+            name="IVORY_COAST_MTN",
+            is_global=True,
+            hq_api_id=IvoryCoastMTNBackend.get_api_id()
+        )
+        cls.ivory_coast_mtn_backend.save()
+
     @classmethod
     def tearDownClass(cls):
         cls.teardown_subscription()
@@ -195,6 +205,7 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
         cls.icds_backend.delete()
         cls.vertext_backend.delete()
         cls.start_enterprise_backend.delete()
+        cls.ivory_coast_mtn_backend.delete()
         super(AllBackendTest, cls).tearDownClass()
 
     def tearDown(self):
@@ -285,8 +296,10 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
     @patch('corehq.messaging.smsbackends.icds_nic.models.SQLICDSBackend.send')
     @patch('corehq.messaging.smsbackends.vertex.models.VertexBackend.send')
     @patch('corehq.messaging.smsbackends.start_enterprise.models.StartEnterpriseBackend.send')
+    @patch('corehq.messaging.smsbackends.ivory_coast_mtn.models.IvoryCoastMTNBackend.send')
     def test_outbound_sms(
             self,
+            ivory_coast_mtn_send,
             start_ent_send,
             vertex_send,
             icds_send,
@@ -321,6 +334,7 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
         self._test_outbound_backend(self.icds_backend, 'icds test', icds_send)
         self._test_outbound_backend(self.vertext_backend, 'vertex_test', vertex_send)
         self._test_outbound_backend(self.start_enterprise_backend, 'start_ent_test', start_ent_send)
+        self._test_outbound_backend(self.ivory_coast_mtn_backend, 'ivory_coast_mtn_test', ivory_coast_mtn_send)
 
     @run_with_all_backends
     def test_unicel_inbound_sms(self):
@@ -804,6 +818,29 @@ class OutgoingFrameworkTestCase(DomainSubscriptionMixin, TestCase):
             self.__test_send_sms_with_backend_name()
             SQLMobileBackendMapping.unset_default_domain_backend(self.domain)
 
+    def test_reserving_connection_slots(self):
+        random_slot = get_connection_slot_from_phone_number(uuid.uuid4().hex, 4)
+        self.assertGreaterEqual(random_slot, 0)
+        self.assertLessEqual(random_slot, 3)
+
+        self.assertEqual(get_connection_slot_from_phone_number('999000001', 4), 0)
+        self.assertEqual(get_connection_slot_from_phone_number('999000002', 4), 1)
+        self.assertEqual(get_connection_slot_from_phone_number('999000003', 4), 0)
+
+        lock_999000001 = get_connection_slot_lock('999000001', self.backend1, 4)
+        lock_999000002 = get_connection_slot_lock('999000002', self.backend1, 4)
+        lock_999000003 = get_connection_slot_lock('999000003', self.backend1, 4)
+
+        self.assertTrue(lock_999000001.acquire(blocking=False))
+        self.assertFalse(lock_999000003.acquire(blocking=False))
+        self.assertTrue(lock_999000002.acquire(blocking=False))
+
+        lock_999000001.release()
+        self.assertTrue(lock_999000003.acquire(blocking=False))
+
+        lock_999000002.release()
+        lock_999000003.release()
+
 
 class SQLMobileBackendTestCase(TestCase):
 
@@ -1185,7 +1222,7 @@ class LoadBalanceAndRateLimitBackend(SQLTestSMSBackend, PhoneLoadBalancingMixin)
         return 'LOAD_BALANCE_RATE_LIMIT'
 
 
-def mock_get_backend_classes():
+def mock_get_sms_backend_classes():
     return {
         LoadBalanceBackend.get_api_id(): LoadBalanceBackend,
         RateLimitBackend.get_api_id(): RateLimitBackend,
@@ -1193,7 +1230,7 @@ def mock_get_backend_classes():
     }
 
 
-@patch('corehq.apps.sms.util.get_backend_classes', new=mock_get_backend_classes)
+@patch('corehq.apps.sms.util.get_sms_backend_classes', new=mock_get_sms_backend_classes)
 class LoadBalancingAndRateLimitingTestCase(BaseSMSTest):
 
     def setUp(self):

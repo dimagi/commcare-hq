@@ -145,7 +145,7 @@
                 $scope.resetForm();
             });
             $(formModalSelector).on('show.bs.modal', function () {
-                window.analytics.workflow("Clicked New Export");
+                hqImport('analytix/js/kissmetrix').track.event("Clicked New Export");
             });
         }
 
@@ -178,10 +178,7 @@
                             util.setApps(data.apps_by_type[$scope.formData.app_type]);
                             util.setModules();
                             util.setForms();
-
-                            var all_case_types = _.uniq(_.flatten(_.values(self._case_types_by_app))).sort();
-                            util.setCaseTypes(all_case_types);
-                            $scope.hasNoCaseTypes = _.isEmpty(all_case_types);
+                            util.setCaseTypes();
                         }
                     } else {
                         $scope.formLoadError = data.error;
@@ -215,6 +212,12 @@
                 var form_choices = self._forms_by_app_by_module[$scope.formData.application][$scope.formData.module];
                 util.setForms(form_choices);
             }
+        };
+
+        $scope.updateCaseTypeChoices = function () {
+            var case_type_choices = self._case_types_by_app[$scope.formData.application];
+            util.setCaseTypes(case_type_choices);
+            $scope.hasNoCaseTypes = _.isEmpty(case_type_choices);
         };
 
         $scope.handleSubmitForm = function () {

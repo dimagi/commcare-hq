@@ -1,24 +1,19 @@
-from __future__ import absolute_import
+from __future__ import absolute_import, division
+
 from collections import OrderedDict, defaultdict
 from datetime import datetime
 
+import six
 from dateutil.relativedelta import relativedelta
 from dateutil.rrule import rrule, MONTHLY
-
 from django.db.models.aggregates import Sum
 from django.utils.translation import ugettext as _
 
-from corehq.apps.locations.models import SQLLocation
 from corehq.util.quickcache import quickcache
-from custom.icds_reports.const import LocationTypes, ChartColors
+from custom.icds_reports.const import LocationTypes, ChartColors, MapColors
 from custom.icds_reports.models import AggAwcMonthly
-from custom.icds_reports.utils import apply_exclude
-
-RED = '#de2d26'
-ORANGE = '#fc9272'
-BLUE = '#006fdf'
-PINK = '#fee0d2'
-GREY = '#9D9D9D'
+from custom.icds_reports.utils import apply_exclude, generate_data_for_map, indian_formatted_number, \
+    get_child_locations
 
 
 @quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
@@ -29,64 +24,57 @@ def get_adult_weight_scale_data_map(domain, config, loc_level, show_test=False):
         queryset = AggAwcMonthly.objects.filter(
             **filters
         ).values(
-            '%s_name' % loc_level
+            '%s_name' % loc_level, '%s_map_location_name' % loc_level
         ).annotate(
             in_month=Sum('infra_adult_weighing_scale'),
-            all=Sum('num_awcs'),
-        )
+            all=Sum('num_awc_infra_last_update'),
+        ).order_by('%s_name' % loc_level, '%s_map_location_name' % loc_level)
+
         if not show_test:
             queryset = apply_exclude(domain, queryset)
         return queryset
 
-    map_data = {}
-
-    in_month_total = 0
-    valid_total = 0
-
-    for row in get_data_for(config):
-        valid = row['all']
-        name = row['%s_name' % loc_level]
-
-        in_month = row['in_month']
-
-        in_month_total += (in_month or 0)
-        valid_total += (valid or 0)
-
-        value = (in_month or 0) * 100 / float(valid or 1)
-
-        row_values = {
-            'in_month': in_month or 0,
-            'all': float(valid or 0)
-        }
-        if value < 25:
-            row_values.update({'fillKey': '0%-25%'})
-        elif 25 <= value < 75:
-            row_values.update({'fillKey': '25%-75%'})
-        elif value >= 75:
-            row_values.update({'fillKey': '75%-100%'})
-
-        map_data.update({name: row_values})
+    data_for_map, valid_total, in_month_total, average = generate_data_for_map(
+        get_data_for(config),
+        loc_level,
+        'in_month',
+        'all',
+        25,
+        75
+    )
 
     fills = OrderedDict()
-    fills.update({'0%-25%': RED})
-    fills.update({'25%-75%': ORANGE})
-    fills.update({'75%-100%': PINK})
-    fills.update({'defaultFill': GREY})
+    fills.update({'0%-25%': MapColors.RED})
+    fills.update({'25%-75%': MapColors.ORANGE})
+    fills.update({'75%-100%': MapColors.PINK})
+    fills.update({'defaultFill': MapColors.GREY})
 
-    return [
-        {
-            "slug": "adult_weight_scale",
-            "label": "Percent AWCs with Weighing Scale: Mother and Child",
-            "fills": fills,
-            "rightLegend": {
-                "average": (in_month_total * 100) / float(valid_total or 1),
-                "info": _((
-                    "Percentage of AWCs with weighing scale for mother and child"
-                ))
-            },
-            "data": map_data,
-        }
-    ]
+    return {
+        "slug": "adult_weight_scale",
+        "label": "Percentage of AWCs that reported having a weighing scale for mother and child",
+        "fills": fills,
+        "rightLegend": {
+            "average": average,
+            "info": _((
+                "Percentage of AWCs that reported having a weighing scale for mother and child"
+            )),
+            "extended_info": [
+                {
+                    'indicator': (
+                        'Total number of AWCs with a weighing scale for mother and child:'
+                    ),
+                    'value': indian_formatted_number(in_month_total)
+                },
+                {
+                    'indicator': (
+                        '% of AWCs with a weighing scale for mother and child:'
+                    ),
+                    'value': '%.2f%%' % (in_month_total * 100 / float(valid_total or 1))
+                }
+            ]
+        },
+        "data": dict(data_for_map),
+    }
 
 
 @quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
@@ -103,7 +91,7 @@ def get_adult_weight_scale_data_chart(domain, config, loc_level, show_test=False
         'month', '%s_name' % loc_level
     ).annotate(
         in_month=Sum('infra_adult_weighing_scale'),
-        all=Sum('num_awcs'),
+        all=Sum('num_awc_infra_last_update'),
     ).order_by('month')
 
     if not show_test:
@@ -142,7 +130,7 @@ def get_adult_weight_scale_data_chart(domain, config, loc_level, show_test=False
             dict(
                 loc_name=key,
                 percent=(value['in_month'] * 100) / float(value['all'] or 1)
-            ) for key, value in best_worst.iteritems()
+            ) for key, value in six.iteritems(best_worst)
         ],
         key=lambda x: x['percent'],
         reverse=True
@@ -156,9 +144,9 @@ def get_adult_weight_scale_data_chart(domain, config, loc_level, show_test=False
                         'x': key,
                         'y': value['in_month'] / float(value['all'] or 1),
                         'in_month': value['in_month']
-                    } for key, value in data['blue'].iteritems()
+                    } for key, value in six.iteritems(data['blue'])
                 ],
-                "key": "% of AWCs with a weighing scale for mother and child",
+                "key": "Percentage of AWCs that reported having a weighing scale for mother and child",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": ChartColors.BLUE
@@ -182,7 +170,7 @@ def get_adult_weight_scale_sector_data(domain, config, loc_level, location_id, s
         *group_by
     ).annotate(
         in_month=Sum('infra_adult_weighing_scale'),
-        all=Sum('num_awcs'),
+        all=Sum('num_awc_infra_last_update'),
     ).order_by('%s_name' % loc_level)
     if not show_test:
         data = apply_exclude(domain, data)
@@ -196,7 +184,7 @@ def get_adult_weight_scale_sector_data(domain, config, loc_level, location_id, s
         'all': 0
     })
 
-    loc_children = SQLLocation.objects.get(location_id=location_id).get_children()
+    loc_children = get_child_locations(domain, location_id, show_test)
     result_set = set()
 
     for row in data:
@@ -210,7 +198,7 @@ def get_adult_weight_scale_sector_data(domain, config, loc_level, location_id, s
             'all': valid or 0
         }
 
-        for prop, value in row_values.iteritems():
+        for prop, value in six.iteritems(row_values):
             tooltips_data[name][prop] += value
 
         value = (in_month or 0) / float(valid or 1)
@@ -228,7 +216,7 @@ def get_adult_weight_scale_sector_data(domain, config, loc_level, location_id, s
     return {
         "tooltips_data": dict(tooltips_data),
         "info": _((
-            "Percentage of AWCs with weighing scale for mother and child"
+            "Percentage of AWCs that reported having a weighing scale for mother and child"
         )),
         "chart_data": [
             {
@@ -236,7 +224,7 @@ def get_adult_weight_scale_sector_data(domain, config, loc_level, location_id, s
                 "key": "",
                 "strokeWidth": 2,
                 "classed": "dashed",
-                "color": BLUE
+                "color": MapColors.BLUE
             }
         ]
     }

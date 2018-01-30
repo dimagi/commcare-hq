@@ -6,7 +6,8 @@ from casexml.apps.phone.checksum import EMPTY_HASH, CaseStateHash
 from casexml.apps.case.xml import V1
 from casexml.apps.case.tests.util import delete_all_sync_logs, delete_all_xforms, delete_all_cases
 from casexml.apps.phone.exceptions import BadStateException
-from casexml.apps.phone.tests.utils import create_restore_user, MockDevice
+from casexml.apps.phone.tests.utils import create_restore_user
+from casexml.apps.phone.utils import MockDevice
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.form_processor.tests.utils import use_sql_backend

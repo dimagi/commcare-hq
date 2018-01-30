@@ -7,6 +7,7 @@ from django.core.management.base import BaseCommand, CommandError
 
 from corehq.elastic import get_es_new
 from corehq.pillows.utils import get_all_expected_es_indices
+from six.moves import input
 
 
 class Command(BaseCommand):
@@ -17,8 +18,16 @@ class Command(BaseCommand):
             'index_name',
             help='INDEX NAME or ALIAS',
         )
+        parser.add_argument(
+            '--noinput',
+            action='store_true',
+            dest='noinput',
+            default=False,
+            help='Skip important confirmation warnings.'
+        )
 
     def handle(self, index_name, **options):
+        noinput = options.pop('noinput')
         es_indices = list(get_all_expected_es_indices())
         indexes = [index for index in es_indices if index_name == index.alias or index_name == index.index]
 
@@ -26,7 +35,7 @@ class Command(BaseCommand):
             raise CommandError("No matching index found: {}".format(index_name))
         index_info = indexes[0]
         es = get_es_new()
-        if _confirm("Confirm that you want to update the mapping for '{}'".format(index_info.index)):
+        if (noinput or _confirm("Confirm that you want to update the mapping for '{}'".format(index_info.index))):
             mapping = copy(index_info.mapping)
             mapping['_meta']['created'] = datetime.utcnow().isoformat()
             mapping_res = es.indices.put_mapping(index_info.type, {index_info.type: mapping}, index=index_info.index)
@@ -37,7 +46,7 @@ class Command(BaseCommand):
 
 
 def _confirm(message):
-    if raw_input(
+    if input(
             '{} [y/n]'.format(message)
     ).lower() == 'y':
         return True

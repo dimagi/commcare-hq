@@ -61,6 +61,7 @@ from corehq.elastic import (
 from corehq.apps.sms.models import SQLMobileBackend
 from casexml.apps.stock.models import StockReport, StockTransaction
 from corehq.util.dates import get_timestamp_millis, iso_string_to_date
+import six
 
 CASE_COUNT_UPPER_BOUND = 1000 * 1000 * 10
 COUNTRY_COUNT_UPPER_BOUND = 1000 * 1000 * 10
@@ -110,7 +111,7 @@ def get_timestep(interval):
         return relativedelta(months=1)
     elif interval == 'year':
         return relativedelta(years=1)
-    raise IntervalNotFoundException(unicode(interval))
+    raise IntervalNotFoundException(six.text_type(interval))
 
 
 def daterange(interval, start_date, end_date):
@@ -200,7 +201,7 @@ def get_active_countries_stats_data(domains, datespan, interval,
 
 
 def domains_matching_plan(software_plan_edition, start, end):
-    matching_subscriptions = Subscription.objects.filter(
+    matching_subscriptions = Subscription.visible_objects.filter(
         Q(date_start__lte=end) & Q(date_end__gte=start),
         plan_version__plan__edition=software_plan_edition,
     )
@@ -212,7 +213,7 @@ def domains_matching_plan(software_plan_edition, start, end):
 
 
 def plans_on_date(software_plan_edition, date):
-    matching_subscriptions = Subscription.objects.filter(
+    matching_subscriptions = Subscription.visible_objects.filter(
         Q(date_start__lte=date) & Q(date_end__gte=date),
         plan_version__plan__edition=software_plan_edition,
     )
@@ -987,8 +988,8 @@ def _sql_to_json_data(domains, sql_data, datespan, individual_domain_limit=16):
             else:
                 histo_data[domain][tstamp] += 1
 
-    for k, v in histo_data.iteritems():
-        for l, w in v.iteritems():
+    for k, v in six.iteritems(histo_data):
+        for l, w in six.iteritems(v):
             ret[k].append({'count': w, 'time': l})
 
     return init_ret, ret

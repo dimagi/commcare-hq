@@ -7,6 +7,7 @@ from django.core.management.base import BaseCommand, CommandError
 
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from dimagi.ext.jsonobject import JsonObject
+import six
 
 
 class FormMetadata(JsonObject):
@@ -14,7 +15,7 @@ class FormMetadata(JsonObject):
     received_on = jsonobject.DateTimeProperty()
     app_id = jsonobject.StringProperty()
     build_id = jsonobject.StringProperty()
-    attachments = jsonobject.ListProperty(unicode)
+    attachments = jsonobject.ListProperty(six.text_type)
     auth_context = jsonobject.DictProperty()
 
 
@@ -45,7 +46,7 @@ class Command(BaseCommand):
                 received_on=form.received_on,
                 app_id=form.app_id,
                 build_id=form.build_id,
-                attachments=form.attachments.keys(),
+                attachments=list(form.attachments.keys()),
                 auth_context=form.auth_context,
             )
 

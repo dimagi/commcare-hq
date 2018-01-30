@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import datetime
 from dateutil.relativedelta import relativedelta
 from decimal import Decimal
@@ -774,6 +775,7 @@ class ChangeSubscriptionForm(forms.Form):
             web_user=self.web_user,
             service_type=self.cleaned_data['service_type'],
             pro_bono_status=self.cleaned_data['pro_bono_status'],
+            funding_source=self.cleaned_data['funding_source'],
             internal_change=True,
         )
 
@@ -1643,7 +1645,7 @@ class EnterprisePlanContactForm(forms.Form):
             'domain': self.domain,
             'email': self.web_user.email
         }
-        html_content = render_to_string('accounting/enterprise_request_email.html', context)
+        html_content = render_to_string('accounting/email/enterprise_request.html', context)
         text_content = """
         Email: %(email)s
         Name: %(name)s
@@ -1986,7 +1988,7 @@ class InvoiceInfoForm(forms.Form):
         if not invoice.is_wire:
             subscription_link = mark_safe(make_anchor_tag(
                 reverse(EditSubscriptionView.urlname, args=(subscription.id,)),
-                u'{plan_name} ({start_date} - {end_date})'.format(
+                '{plan_name} ({start_date} - {end_date})'.format(
                     plan_name=subscription.plan_version,
                     start_date=subscription.date_start,
                     end_date=subscription.date_end,

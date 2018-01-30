@@ -1,8 +1,8 @@
 from __future__ import absolute_import
 from datetime import datetime
-from itertools import imap
 import time
 import uuid
+from six.moves import map
 
 from couchdbkit import PreconditionFailed
 
@@ -49,6 +49,7 @@ from .exceptions import InactiveTransferDomainException, NameUnavailableExceptio
 from corehq.apps.app_manager.const import AMPLIFIES_NO, AMPLIFIES_NOT_SET, AMPLIFIES_YES
 
 from .project_access.models import SuperuserProjectEntryRecord  # noqa
+from functools import reduce
 
 lang_lookup = defaultdict(str)
 
@@ -321,6 +322,9 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
     enable_registration_welcome_sms_for_case = BooleanProperty(default=False)
     enable_registration_welcome_sms_for_mobile_worker = BooleanProperty(default=False)
     sms_survey_date_format = StringProperty()
+
+    # Allowed outbound SMS per day
+    daily_outbound_sms_limit = IntegerProperty(default=5000)
 
     # exchange/domain copying stuff
     is_snapshot = BooleanProperty(default=False)
@@ -635,7 +639,7 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
         if not include_docs:
             return domains
         else:
-            return imap(cls.wrap, iter_docs(cls.get_db(), [d['id'] for d in domains]))
+            return map(cls.wrap, iter_docs(cls.get_db(), [d['id'] for d in domains]))
 
     @classmethod
     def get_all_names(cls):
@@ -1068,19 +1072,6 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
         return (self.has_privilege(privileges.LOCATIONS)
                 and (self.commtrack_enabled
                      or LocationType.objects.filter(domain=self.name).exists()))
-
-    @property
-    def is_onboarding_domain(self):
-        # flag used for case management onboarding analytics
-        if not settings.ONBOARDING_DOMAIN_TEST_DATE:
-            return False
-        onboarding_date = datetime(
-            settings.ONBOARDING_DOMAIN_TEST_DATE[0],
-            settings.ONBOARDING_DOMAIN_TEST_DATE[1],
-            settings.ONBOARDING_DOMAIN_TEST_DATE[2],
-        )
-        return self.first_domain_for_user and self.date_created > onboarding_date
-
 
     def convert_to_commtrack(self):
         """

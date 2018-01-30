@@ -6,6 +6,7 @@ from casexml.apps.case.xform import extract_case_blocks
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.motech.openmrs.logger import logger
 from corehq.motech.openmrs.openmrs_config import IdMatcher
+from six.moves import zip
 
 
 Should = namedtuple('Should', ['method', 'url', 'parser'])
@@ -343,8 +344,8 @@ def get_relevant_case_updates_from_form_json(domain, form_json, case_types, extr
             result.append(CaseTriggerInfo(
                 case_id=case_block['@case_id'],
                 updates=dict(
-                    case_block.get('create', {}).items() +
-                    case_block.get('update', {}).items()
+                    list(case_block.get('create', {}).items()) +
+                    list(case_block.get('update', {}).items())
                 ),
                 created='create' in case_block,
                 closed='close' in case_block,

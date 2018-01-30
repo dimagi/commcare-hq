@@ -29,6 +29,7 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from corehq.apps.casegroups.models import CommCareCaseGroup
 from dimagi.utils.django.fields import TrimmedCharField
+import six
 
 
 def true_or_false(value):
@@ -41,32 +42,48 @@ def true_or_false(value):
 
 
 def remove_quotes(value):
-    if isinstance(value, basestring) and len(value) >= 2:
+    if isinstance(value, six.string_types) and len(value) >= 2:
         for q in ("'", '"'):
             if value.startswith(q) and value.endswith(q):
                 return value[1:-1]
     return value
 
 
-def validate_case_property_name(value):
-    if not isinstance(value, basestring):
-        raise ValidationError(_("Please specify a case property name."))
-
-    value = value.strip()
-    property_name = re.sub('^(parent/|host/)+', '', value)
-    if not property_name:
-        raise ValidationError(_("Please specify a case property name."))
-
-    if '/' in property_name:
-        raise ValidationError(
-            _("Case property reference cannot contain '/' unless referencing the parent "
-              "or host case with 'parent/' or 'host/'")
-        )
-
-    if not re.match('^[a-zA-Z0-9_-]+$', property_name):
+def validate_case_property_characters(value):
+    if not re.match('^[a-zA-Z0-9_-]+$', value):
         raise ValidationError(
             _("Property names should only contain alphanumeric characters, underscore, or hyphen.")
         )
+
+
+def validate_case_property_name(value, allow_parent_case_references=True):
+    if not isinstance(value, six.string_types):
+        raise ValidationError(_("Please specify a case property name."))
+
+    value = value.strip()
+
+    if not value:
+        raise ValidationError(_("Please specify a case property name."))
+
+    if not allow_parent_case_references:
+        if '/' in value:
+            raise ValidationError(
+                _("Invalid character '/' in case property name: '{}'. "
+                  "Parent or host case references are not allowed.").format(value)
+            )
+        validate_case_property_characters(value)
+    else:
+        property_name = re.sub('^(parent/|host/)+', '', value)
+        if not property_name:
+            raise ValidationError(_("Please specify a case property name."))
+
+        if '/' in property_name:
+            raise ValidationError(
+                _("Case property reference cannot contain '/' unless referencing the parent "
+                  "or host case with 'parent/' or 'host/'")
+            )
+
+        validate_case_property_characters(property_name)
 
     return value
 
@@ -80,7 +97,7 @@ def hidden_bound_field(field_name):
 
 
 def validate_case_property_value(value):
-    if not isinstance(value, basestring):
+    if not isinstance(value, six.string_types):
         raise ValidationError(_("Please specify a case property value."))
 
     value = remove_quotes(value.strip()).strip()
@@ -239,7 +256,7 @@ class AddAutomaticCaseUpdateRuleForm(forms.Form):
     )
 
     def remove_quotes(self, value):
-        if isinstance(value, basestring) and len(value) >= 2:
+        if isinstance(value, six.string_types) and len(value) >= 2:
             for q in ("'", '"'):
                 if value.startswith(q) and value.endswith(q):
                     return value[1:-1]
@@ -308,7 +325,7 @@ class AddAutomaticCaseUpdateRuleForm(forms.Form):
         if self.enhancements_enabled:
             self.allow_updates_without_closing()
 
-        _update_property_fields = filter(None, [
+        _update_property_fields = [_f for _f in [
             Field(
                 'update_property_name',
                 ng_model='update_property_name',
@@ -322,9 +339,9 @@ class AddAutomaticCaseUpdateRuleForm(forms.Form):
                 'update_property_value',
                 ng_model='update_property_value',
             )
-        ])
+        ] if _f]
 
-        _basic_info_fields = filter(None, [
+        _basic_info_fields = [_f for _f in [
             Field(
                 'name',
                 ng_model='name',
@@ -368,7 +385,7 @@ class AddAutomaticCaseUpdateRuleForm(forms.Form):
                 *_update_property_fields,
                 ng_show='showUpdateProperty()'
             )
-        ])
+        ] if _f]
 
         self.set_case_type_choices(self.initial.get('case_type'))
         self.helper.layout = Layout(
@@ -410,7 +427,7 @@ class AddAutomaticCaseUpdateRuleForm(forms.Form):
         return value
 
     def _clean_case_property_name(self, value):
-        if not isinstance(value, basestring):
+        if not isinstance(value, six.string_types):
             raise ValidationError(_("Please specify a case property name."))
 
         value = value.strip()
@@ -442,7 +459,7 @@ class AddAutomaticCaseUpdateRuleForm(forms.Form):
             property_value = None
             if property_match_type != AutomaticUpdateRuleCriteria.MATCH_HAS_VALUE:
                 property_value = obj.get('property_value')
-                if not isinstance(property_value, basestring):
+                if not isinstance(property_value, six.string_types):
                     raise ValidationError(_("Please specify a property value."))
 
                 property_value = property_value.strip()
@@ -614,15 +631,39 @@ class CaseRuleCriteriaForm(forms.Form):
         initial['property_match_definitions'] = json.dumps(property_match_definitions)
         return initial
 
+    @property
+    def show_fieldset_title(self):
+        return True
+
+    @property
+    def fieldset_help_text(self):
+        return _("The Actions will be performed for all open cases that match all filter criteria below.")
+
+    @property
+    def allow_parent_case_references(self):
+        return True
+
+    @property
+    def allow_case_modified_filter(self):
+        return True
+
+    @property
+    def allow_case_property_filter(self):
+        return True
+
+    @property
+    def allow_date_case_property_filter(self):
+        return True
+
     def __init__(self, domain, *args, **kwargs):
         if 'initial' in kwargs:
             raise ValueError("Initial values are set by the form")
 
         self.is_system_admin = kwargs.pop('is_system_admin', False)
 
-        rule = kwargs.pop('rule', None)
-        if rule:
-            kwargs['initial'] = self.compute_initial(rule)
+        self.initial_rule = kwargs.pop('rule', None)
+        if self.initial_rule:
+            kwargs['initial'] = self.compute_initial(self.initial_rule)
 
         super(CaseRuleCriteriaForm, self).__init__(*args, **kwargs)
 
@@ -635,10 +676,9 @@ class CaseRuleCriteriaForm(forms.Form):
         self.helper.form_tag = False
         self.helper.layout = Layout(
             Fieldset(
-                _("Case Filters"),
+                _("Case Filters") if self.show_fieldset_title else "",
                 HTML(
-                    '<p class="help-block"><i class="fa fa-info-circle"></i> %s</p>' %
-                    _("The Actions will be performed for all open cases that match all filter criteria below.")
+                    '<p class="help-block"><i class="fa fa-info-circle"></i> %s</p>' % self.fieldset_help_text
                 ),
                 hidden_bound_field('filter_on_server_modified'),
                 hidden_bound_field('server_modified_boundary'),
@@ -747,7 +787,8 @@ class CaseRuleCriteriaForm(forms.Form):
             ):
                 self._json_fail_hard()
 
-            property_name = validate_case_property_name(obj['property_name'])
+            property_name = validate_case_property_name(obj['property_name'],
+                allow_parent_case_references=self.allow_parent_case_references)
             match_type = obj['match_type']
             if match_type not in MatchPropertyDefinition.MATCH_CHOICES:
                 self._json_fail_hard()

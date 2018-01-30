@@ -31,7 +31,7 @@ We welcome contributions, see our [CONTRIBUTING.rst](CONTRIBUTING.rst) document 
 Setting up CommCare HQ for developers
 -------------------------------------
 
-Please note that these instructions are targeted toward UNIX-based systems.
+Please note that these instructions are targeted toward UNIX-based systems. For Windows, consider using Cygwin or WUBI. Common issues and their solutions can be found at the end of this document.
 
 ### Downloading and configuring CommCare HQ
 
@@ -44,7 +44,9 @@ Please note that these instructions are targeted toward UNIX-based systems.
 
 #### Setup virtualenv
 
-`mkvirtualenv --no-site-packages commcare-hq -p python2.7`
+Run the following command:
+
+    $ mkvirtualenv --no-site-packages commcare-hq -p python2.7
 
 #### Clone and setup repo / requirements
 
@@ -74,13 +76,16 @@ First create your `localsettings.py` file:
 
 
 Enter `localsettings.py` and do the following:
-    - Find the `LOG_FILE` and `DJANGO_LOG_FILE` entries. Ensure that the directories for both exist
-and are writeable. If they do not exist, create them.
-    - You may also want to add the line `from dev_settings import *` at the top of the file, which
-      includes some useful default settings.
+- Find the `LOG_FILE` and `DJANGO_LOG_FILE` entries. Ensure that the directories for both exist and are writeable. If they do not exist, create them.
+- Find the `LOCAL_APPS` section and un-comment the line that starts with `'kombu.transport.django'`
+- You may also want to add the line `from dev_settings import *` at the top of the file, which includes some useful default settings.
 
 Once you have completed the above steps, you can use Docker to build and run all of the service containers.
 The steps for setting up Docker can be found in the [docker folder](docker/README.md).
+Note that if you want to run everything except for riakcs (which you often do not need for a development environment),
+the command to run is
+
+    $ ./scripts/docker up -d postgres couch redis elasticsearch kafka
 
 ### Set up your django environment
 
@@ -90,6 +95,7 @@ The easiest way to do this is using the docker instructions below.
 Populate your database:
 
     $ ./manage.py sync_couch_views
+    $ ./manage.py create_kafka_topics
     $ env CCHQ_IS_FRESH_INSTALL=1 ./manage.py migrate --noinput
     $ ./manage.py compilejsi18n
 
@@ -97,11 +103,10 @@ You should run `./manage.py migrate` frequently, but only use the environment
 variable CCHQ_IS_FRESH_INSTALL during your initial setup.  It is used to skip a
 few tricky migrations that aren't necessary for new installs.
 
-Create a project. The following command will do some basic setup, create a superuser, and create a project. The
-project-name, email, and password given here are specific to your local development environment. Ignore warnings
-related to Raven for the following three commands.
+Create a superuser for your local environment. (Ignore warnings
+related to Raven for the following three commands.)
 
-    $ ./manage.py bootstrap <project-name> <email> <password>
+    $ ./manage.py make_superuser <email>
 
 To set up elasticsearch indexes run the following:
 
@@ -120,15 +125,19 @@ names to the aliases.
 We use bower to manage our javascript dependencies. In order to download the required javascript packages,
 you'll need to run `./manage.py bower install` and install `bower`. Follow these steps to install:
 
-1. If you do not already have it, install [npm](https://www.npmjs.com/). In Ubuntu this is now bundled
-with NodeJS. An up-to-date version is available on the NodeSource repository.
+1. If you do not already have npm:
+
+    For Ubuntu: In Ubuntu this is now bundled with NodeJS. An up-to-date version is available on the NodeSource
+    repository. Run the following commands:
 
         $ curl -sL https://deb.nodesource.com/setup_5.x | sudo -E bash -
         $ sudo apt-get install -y nodejs
 
+    For non-Ubuntu: install [npm](https://www.npmjs.com/)
+
 2. Install bower:
 
-        $ `sudo npm -g install bower`
+        $ sudo npm -g install bower
 
 3. Run bower with:
 
@@ -184,9 +193,9 @@ For all STATICFILES changes (primarily LESS and JavaScript), run:
     $ manage.py compress
 
 
-#### CloudCare
+#### FormPlayer
 
-To enable CloudCare, ensure that `TOUCHFORMS_API_USER` and
+To enable FormPlayer, ensure that `TOUCHFORMS_API_USER` and
 `TOUCHFORMS_API_PASSWORD` in `localsettings.py` are the credentials of the
 django admin user you created above (with manage.py bootstrap) and then create
 the file `submodules/touchforms-src/touchforms/backend/localsettings.py` with
@@ -195,10 +204,7 @@ the following contents:
 URL_ROOT = 'http://localhost:8000/a/{{DOMAIN}}'
 ```
 
-#### New CloudCare
-
-A new version of CloudCare has been released. To use this new version, please
-refer to the install instructions [here](https://github.com/dimagi/formplayer).
+Please refer to FormPlayer's install instructions under "[Running in Docker](https://github.com/dimagi/formplayer#running-in-docker)".
 
 Running CommCare HQ
 -------------------
@@ -549,7 +555,16 @@ that you have a 32bit version of Python installed.
   time, open `pg_hba.conf` (`/etc/postgresql/9.1/main/pg_hba.conf` on Ubuntu)
   and change the line "local all all peer" to "local all all md5".
   
-+ If you encounter an error stemming from any Python modules when running `./manage.py sync_couch_views` for the first time, the issue may be that your virtualenv is relying on the `site-packages` directory of your local Python installation for some of its requirements. (Creating your virtualenv with the `--no-site-packages` flag should prevent this, but it seems that it does not always work). You can check if this is the case by running `pip show {name-of-module-that-is-erroring}`. This will show the location that your virtualenv is pulling that module from; if the location is somewhere other than the path to your virtualenv, then something is wrong. The easiest solution to this is to remove any conflicting modules from the location that your virtualenv is pulling them from (as long as you use virtualenvs for all of your Python projects, this won't cause you any issues).
++ When running `./manage.py sync_couch_views`:
+    + If you encounter an error stemming from any Python modules when running `./manage.py sync_couch_views` for the first time, the issue may be that your virtualenv is relying on the `site-packages` directory of your local Python installation for some of its requirements. (Creating your virtualenv with the `--no-site-packages` flag should prevent this, but it seems that it does not always work). You can check if this is the case by running `pip show {name-of-module-that-is-erroring}`. This will show the location that your virtualenv is pulling that module from; if the location is somewhere other than the path to your virtualenv, then something is wrong. The easiest solution to this is to remove any conflicting modules from the location that your virtualenv is pulling them from (as long as you use virtualenvs for all of your Python projects, this won't cause you any issues).
+    + If you encounter an error stemming from an Incompatible Library Version of libxml2.2.dylib on Mac OS X, try running the following commands:
+        
+            $ brew install libxml2
+	        $ brew install libxslt
+	        $ brew link libxml2 --force
+	        $ brew link libxslt --force
+	
+	+ If you encounter an authorization error related to CouchDB, try going to your `localsettings.py` file and change `COUCH_PASSWORD` to an empty string.
 
 + On Windows, to get python-magic to work you will need to install the following dependencies.
   Once they are installed make sure the install folder is on the path.

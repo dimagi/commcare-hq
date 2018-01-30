@@ -17,6 +17,7 @@ from pillowtop.feed.interface import Change, ChangeMeta
 from pillowtop.feed.mock import RandomChangeFeed
 from pillowtop.processors import PillowProcessor
 from pillowtop.tests.utils import make_fake_constructed_pillow, FakeConstructedPillow
+from six.moves import range
 
 
 def get_ex_tb(message, ex_class=None):
@@ -130,42 +131,6 @@ class PillowRetryTestCase(TestCase):
             date.replace(day=5),
         ).all()
         self.assertEqual(len(errors), 3)
-
-    def test_get_errors_to_process_queued(self):
-        date = datetime.utcnow()
-        error = create_error(_change(id=1), attempts=0)
-        error.date_next_attempt = date
-        error.save()
-
-        queued_error = create_error(_change(id=2), attempts=0)
-        queued_error.date_next_attempt = date
-        queued_error.queued = True
-        queued_error.save()
-
-        errors = PillowError.get_errors_to_process(
-            date,
-        ).all()
-        self.assertEqual(len(errors), 1)
-        self.assertEqual(error.id, errors[0]['id'])
-
-    def test_get_errors_to_process_queued_update(self):
-        date = datetime.utcnow()
-        error = create_error(_change(id=1), attempts=0)
-        error.date_next_attempt = date
-        error.save()
-
-        errors = PillowError.get_errors_to_process(
-            date,
-        ).all()
-        self.assertEqual(len(errors), 1)
-
-        # check that calling update on the return value has the desired effect
-        errors.update(queued=True)
-
-        errors = PillowError.get_errors_to_process(
-            date,
-        ).all()
-        self.assertEqual(len(errors), 0)
 
     def test_get_errors_to_process_max_limit(self):
         # see settings.PILLOW_RETRY_MULTI_ATTEMPTS_CUTOFF

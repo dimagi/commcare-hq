@@ -6,15 +6,16 @@ from corehq.apps.commtrack.models import StockState
 from corehq.util.translation import localize
 from custom.ilsgateway.tanzania.reminders import SOH_CONFIRM, STOCKOUT_CONFIRM, STOCKOUT_HELP
 from custom.ilsgateway.tests.handlers.utils import ILSTestScript
+import six
 
 
 class TestStockout(ILSTestScript):
 
     def test_stockout(self):
         with localize('sw'):
-            response1 = unicode(SOH_CONFIRM)
-            response2 = unicode(STOCKOUT_CONFIRM)
-            response3 = unicode(STOCKOUT_HELP)
+            response1 = six.text_type(SOH_CONFIRM)
+            response2 = six.text_type(STOCKOUT_CONFIRM)
+            response3 = six.text_type(STOCKOUT_HELP)
 
         supply_point_id = self.loc1.sql_location.supply_point_id
 

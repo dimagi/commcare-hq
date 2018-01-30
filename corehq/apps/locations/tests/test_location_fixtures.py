@@ -32,6 +32,7 @@ from ..fixtures import _location_to_fixture, LocationSet, should_sync_locations,
     flat_location_fixture_generator, should_sync_flat_fixture, should_sync_hierarchical_fixture, \
     _get_location_data_fields, get_location_fixture_queryset
 from ..models import SQLLocation, LocationType, make_location, LocationFixtureConfiguration
+import six
 
 EMPTY_LOCATION_FIXTURE_TEMPLATE = """
 <fixture id='commtrack:locations' user_id='{}'>
@@ -142,7 +143,7 @@ class LocationFixturesTest(LocationHierarchyTestCase, FixtureHasLocationsMixin):
         location_data = {
             e.tag: e.text for e in fixture.find('location_data')
         }
-        self.assertEquals(location_data, {k: unicode(v) for k, v in location.metadata.items()})
+        self.assertEquals(location_data, {k: six.text_type(v) for k, v in location.metadata.items()})
 
     def test_simple_location_fixture(self):
         self.user._couch_user.set_location(self.locations['Suffolk'])

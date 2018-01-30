@@ -28,6 +28,7 @@ from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext_noop, ugettext_lazy
+import six
 
 
 INCOMING = "I"
@@ -267,6 +268,27 @@ class SMS(SMSBase):
     def publish_change(self):
         from corehq.apps.sms.tasks import publish_sms_change
         publish_sms_change.delay(self)
+
+    def requeue(self):
+        if self.processed or self.direction != OUTGOING:
+            raise ValueError("Should only requeue outgoing messages that haven't yet been proccessed")
+
+        with transaction.atomic():
+            queued_sms = QueuedSMS()
+            for field in self._meta.fields:
+                if field.name != 'id':
+                    setattr(queued_sms, field.name, getattr(self, field.name))
+
+            queued_sms.processed = False
+            queued_sms.error = False
+            queued_sms.system_error_message = None
+            queued_sms.num_processing_attempts = 0
+            queued_sms.date = datetime.utcnow()
+            queued_sms.datetime_to_process = datetime.utcnow()
+            queued_sms.queued_timestamp = datetime.utcnow()
+            queued_sms.processed_timestamp = None
+            self.delete()
+            queued_sms.save()
 
 
 class QueuedSMS(SMSBase):
@@ -543,7 +565,7 @@ class PhoneNumber(UUIDGeneratorMixin, models.Model):
     @property
     def backend(self):
         from corehq.apps.sms.util import clean_phone_number
-        backend_id = self.backend_id.strip() if isinstance(self.backend_id, basestring) else None
+        backend_id = self.backend_id.strip() if isinstance(self.backend_id, six.string_types) else None
         if backend_id:
             return SQLMobileBackend.load_by_name(
                 SQLMobileBackend.SMS,
@@ -689,6 +711,16 @@ class PhoneNumber(UUIDGeneratorMixin, models.Model):
         """
         with CriticalSection(['PhoneNumber-CacheAccessor-by_owner_id-%s' % owner_id]):
             return list(cls.objects.filter(owner_id=owner_id))
+
+    @classmethod
+    def get_phone_number_for_owner(cls, owner_id, phone_number):
+        try:
+            return cls.objects.get(
+                owner_id=owner_id,
+                phone_number=phone_number
+            )
+        except cls.DoesNotExist:
+            return None
 
     @classmethod
     def _clear_quickcaches(cls, owner_id, phone_number, old_owner_id=None, old_phone_number=None):
@@ -1961,7 +1993,7 @@ class SQLMobileBackend(UUIDGeneratorMixin, models.Model):
                    we have to support both for a little while until all
                    foreign keys are migrated over
         """
-        backend_classes = smsutil.get_backend_classes()
+        backend_classes = smsutil.get_sms_backend_classes()
         api_id = api_id or cls.get_backend_api_id(backend_id, is_couch_id=is_couch_id)
 
         if api_id not in backend_classes:
@@ -2095,7 +2127,7 @@ class SQLMobileBackend(UUIDGeneratorMixin, models.Model):
         the rest untouched.
         """
         result = self.get_extra_fields()
-        for k, v in kwargs.iteritems():
+        for k, v in six.iteritems(kwargs):
             if k not in self.get_available_extra_fields():
                 raise Exception("Field %s is not an available extra field for %s"
                     % (k, self.__class__.__name__))
@@ -2158,6 +2190,15 @@ class SQLSMSBackend(SQLMobileBackend):
     class Meta:
         proxy = True
         app_label = 'sms'
+
+    def get_max_simultaneous_connections(self):
+        """
+        Return None to ignore.
+        Otherwise, return the maximum number of simultaneous connections
+        that should be allowed when making requests to the gateway API
+        for sending outbound SMS.
+        """
+        return None
 
     def get_sms_rate_limit(self):
         """
@@ -2222,7 +2263,7 @@ class PhoneLoadBalancingMixin(object):
             return self.load_balancing_numbers[0]
 
         hashed_destination_phone_number = hashlib.sha1(destination_phone_number).hexdigest()
-        index = long(hashed_destination_phone_number, base=16) % len(self.load_balancing_numbers)
+        index = int(hashed_destination_phone_number, base=16) % len(self.load_balancing_numbers)
         return self.load_balancing_numbers[index]
 
 
@@ -2239,7 +2280,7 @@ class BackendMap(object):
         """
         self.catchall_backend_id = catchall_backend_id
         self.backend_map_dict = backend_map
-        self.backend_map_tuples = backend_map.items()
+        self.backend_map_tuples = list(backend_map.items())
         # Sort by length of prefix descending
         self.backend_map_tuples.sort(key=lambda x: len(x[0]), reverse=True)
 

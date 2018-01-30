@@ -1,6 +1,6 @@
 hqDefine('accounting/js/subscriptions', function () {
     $(function () {
-        var AsyncSelect2Handler = hqImport('accounting/js/accounting.billing_info_handler').AsyncSelect2Handler;
+        var AsyncSelect2Handler = hqImport('accounting/js/billing_info_handler').AsyncSelect2Handler;
         var new_plan_version = new AsyncSelect2Handler('new_plan_version');
         new_plan_version.init();
         new_plan_version.getAdditionalData = function () {

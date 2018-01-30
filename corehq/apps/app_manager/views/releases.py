@@ -9,7 +9,6 @@ from django.views.generic import View
 from django.utils.decorators import method_decorator
 
 from corehq.apps.app_manager.forms import PromptUpdateSettingsForm
-from corehq.apps.analytics import ab_tests
 from corehq.apps.app_manager.tasks import create_build_files_for_all_app_profiles
 from corehq.apps.app_manager.util import get_and_assert_practice_user_in_domain
 from django_prbac.decorators import requires_privilege
@@ -53,6 +52,7 @@ from corehq.apps.app_manager.views.download import source_files
 from corehq.apps.app_manager.views.settings import PromptSettingsUpdateView
 from corehq.apps.app_manager.views.utils import (back_to_main, encode_if_unicode, get_langs)
 from corehq.apps.builds.models import CommCareBuildConfig
+import six
 
 
 def _get_error_counts(domain, app_id, version_numbers):
@@ -136,12 +136,6 @@ def get_releases_context(request, domain, app_id):
         context.update({
             'enable_update_prompts': app.enable_update_prompts,
         })
-        if not toggles.USER_TESTING_SIMPLIFY.enabled_for_request(request):
-            ab = ab_tests.ABTest(ab_tests.APP_BUILDER_VIDEO, request)
-            context.update({
-                'ab_test': ab.context,
-                'show_video': ab.version == ab_tests.APP_BUILDER_VIDEO_ON,
-            })
         if len(app.modules) == 0:
             context.update({'intro_only': True})
 
@@ -390,7 +384,7 @@ def _get_app_diffs(first_app, second_app):
     """
     file_pairs = _get_file_pairs(first_app, second_app)
     diffs = []
-    for name, files in file_pairs.iteritems():
+    for name, files in six.iteritems(file_pairs):
         diff_html = ghdiff.diff(files[0], files[1], n=4, css=False)
         additions, deletions = _get_change_counts(diff_html)
         if additions == 0 and deletions == 0:

@@ -1,0 +1,23 @@
+{% load i18n %}
+
+<div class="controls translation-controls">
+    <div class="checkbox">
+        <label>
+            <input type="checkbox" data-bind="checked: translate" class="checkboxinput" />
+            {% trans "Translate this message" %}
+        </label>
+    </div>
+</div>
+
+<div class="controls translation-controls" data-bind="visible: !translate()">
+    <textarea data-bind="value: nonTranslatedMessage" rows="10" cols="40" class="textarea form-control">
+    </textarea>
+</div>
+
+<div data-bind="visible: translate(), foreach: translatedMessages"> 
+    <div class="controls translation-controls">
+        <label>{% trans "Translation" %} (<span data-bind="text: language_code"></span>):</label>
+        <textarea data-bind="value: message" rows="10" cols="40" class="textarea form-control">
+        </textarea>
+    </div>
+</div>

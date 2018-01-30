@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 import random
 from contextlib import contextmanager
-from urllib import urlencode
+from six.moves.urllib.parse import urlencode
 
 from django.conf import settings
 import sqlalchemy
@@ -13,6 +13,13 @@ DEFAULT_ENGINE_ID = 'default'
 UCR_ENGINE_ID = 'ucr'
 ICDS_UCR_ENGINE_ID = 'icds-ucr'
 ICDS_TEST_UCR_ENGINE_ID = 'icds-test-ucr'
+
+
+def get_icds_ucr_db_alias():
+    try:
+        return connection_manager.get_django_db_alias(ICDS_UCR_ENGINE_ID)
+    except KeyError:
+        return None
 
 
 def create_engine(connection_string):
@@ -60,12 +67,16 @@ class ConnectionManager(object):
         self._session_helpers = {}
         self.db_connection_map = {}
         self.read_database_mapping = {}
+        self.engine_id_django_db_map = {}
         self._populate_connection_map()
 
     def _get_or_create_helper(self, engine_id):
         if engine_id not in self._session_helpers:
             self._session_helpers[engine_id] = SessionHelper(self.get_connection_string(engine_id))
         return self._session_helpers[engine_id]
+
+    def get_django_db_alias(self, engine_id):
+        return self.engine_id_django_db_map[engine_id]
 
     def get_session_helper(self, engine_id=DEFAULT_ENGINE_ID):
         """
@@ -163,8 +174,9 @@ class ConnectionManager(object):
             self._add_django_db(engine_id, db_alias)
 
     def _add_django_db(self, engine_id, db_alias):
-            connection_string = self._connection_string_from_django(db_alias)
-            self.db_connection_map[engine_id] = connection_string
+        self.engine_id_django_db_map[engine_id] = db_alias
+        connection_string = self._connection_string_from_django(db_alias)
+        self.db_connection_map[engine_id] = connection_string
 
     def _connection_string_from_django(self, django_alias):
         db_settings = settings.DATABASES[django_alias].copy()

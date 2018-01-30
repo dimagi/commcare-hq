@@ -12,6 +12,7 @@ from custom.m4change.constants import M4CHANGE_DOMAINS, NUMBER_OF_MONTHS_FOR_FIX
 from custom.m4change.models import FixtureReportResult
 from custom.m4change.reports.reports import M4ChangeReportDataSource
 from dimagi.utils.parsing import json_format_date
+from six.moves import range
 
 
 def get_last_n_months(months):
@@ -92,7 +93,7 @@ class ReportFixtureProvider(FixtureProvider):
                 columns_element = ElementTree.Element('columns')
                 rows_element = ElementTree.Element('rows')
 
-                report_rows = sorted(report_data.rows.items(), key=lambda t: t[1]["hmis_code"]
+                report_rows = sorted(list(report_data.rows.items()), key=lambda t: t[1]["hmis_code"]
                                      if t[1].get("hmis_code", None) is not None else t[1].get("s/n"))
                 for row in report_rows:
                     row_data = row[1]

@@ -8,6 +8,8 @@ from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.filters.select import YearFilter, MonthFilter
 from corehq.util.translation import localize
 from django.utils.translation import ugettext as _
+from six.moves import range
+from six.moves import filter
 
 
 class LocationFilter(AsyncLocationFilter):
@@ -27,9 +29,9 @@ class LocationFilter(AsyncLocationFilter):
 
         if self.required != 2:
             f = lambda y: 'children' in y
-            districts = filter(f, locations)
+            districts = list(filter(f, locations))
             if districts:
-                PPS = filter(f, districts[0]['children'])
+                PPS = list(filter(f, districts[0]['children']))
                 if PPS:
                     del PPS[0]['children']
         return {

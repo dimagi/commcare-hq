@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 import datetime
 import dateutil
+from couchdbkit import ResourceNotFound
 from django.core import cache
 from django.urls import NoReverseMatch
 from django.template.defaultfilters import yesno
@@ -135,7 +136,7 @@ class CaseInfo(object):
         mc = cache.caches['default']
         cache_key = "%s.%s" % (Group.__class__.__name__, self.owner_id)
         try:
-            if mc.has_key(cache_key):
+            if cache_key in mc:
                 cached_obj = json.loads(mc.get(cache_key))
                 wrapped = Group.wrap(cached_obj)
                 return wrapped
@@ -143,7 +144,7 @@ class CaseInfo(object):
                 group_obj = Group.get(self.owner_id)
                 mc.set(cache_key, json.dumps(group_obj.to_json()))
                 return group_obj
-        except Exception:
+        except ResourceNotFound:
             return None
 
     def _get_username(self, user_id):

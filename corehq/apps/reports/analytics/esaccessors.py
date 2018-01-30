@@ -20,9 +20,11 @@ from corehq.apps.es.cases import (
     closed_range as closed_range_filter,
     case_type as case_type_filter,
 )
-from corehq.apps.hqcase.utils import SYSTEM_FORM_XMLNS
+from corehq.apps.hqcase.utils import SYSTEM_FORM_XMLNS_MAP
 from corehq.util.quickcache import quickcache
 from dimagi.utils.parsing import string_to_datetime
+import six
+from six.moves import map
 
 PagedResult = namedtuple('PagedResult', 'total hits')
 
@@ -53,7 +55,7 @@ def get_last_submission_time_for_users(domain, user_ids, datespan):
 
     buckets_dict = aggregations.user_id.buckets_dict
     result = {}
-    for user_id, bucket in buckets_dict.iteritems():
+    for user_id, bucket in six.iteritems(buckets_dict):
         result[user_id] = convert_to_date(bucket.top_hits_last_form_submissions.hits[0]['form']['meta']['timeEnd'])
 
     return result
@@ -133,7 +135,7 @@ def get_paged_forms_by_type(domain, doc_types, start=0, size=10):
         .domain(domain)
         .remove_default_filter('is_xform_instance')
         .remove_default_filter('has_user')
-        .doc_type(map(lambda doc_type: doc_type.lower(), doc_types))
+        .doc_type([doc_type.lower() for doc_type in doc_types])
         .sort("received_on", desc=True)
         .start(start)
         .size(size)
@@ -207,7 +209,7 @@ def get_last_form_submissions_by_user(domain, user_ids, app_id=None, xmlns=None)
         result[MISSING_KEY] = aggregations.missing_user_id.bucket.top_hits_last_form_submissions.hits
 
     buckets_dict = aggregations.user_id.buckets_dict
-    for user_id, bucket in buckets_dict.iteritems():
+    for user_id, bucket in six.iteritems(buckets_dict):
         result[user_id] = bucket.top_hits_last_form_submissions.hits
 
     return result
@@ -238,7 +240,7 @@ def get_last_forms_by_app(user_id):
 
     buckets_dict = aggregations.app_id.buckets_dict
     result = []
-    for app_id, bucket in buckets_dict.iteritems():
+    for app_id, bucket in six.iteritems(buckets_dict):
         result.append(bucket.top_hits_last_form_submissions.hits[0])
 
     return result
@@ -253,7 +255,9 @@ def get_completed_counts_by_user(domain, datespan, user_ids=None):
 
 
 def _get_form_counts_by_user(domain, datespan, is_submission_time, user_ids=None):
-    form_query = FormES().domain(domain).filter(filters.NOT(xmlns_filter(SYSTEM_FORM_XMLNS)))
+    form_query = FormES().domain(domain)
+    for xmlns in SYSTEM_FORM_XMLNS_MAP.keys():
+        form_query = form_query.filter(filters.NOT(xmlns_filter(xmlns)))
 
     if is_submission_time:
         form_query = (form_query
@@ -284,8 +288,9 @@ def get_completed_counts_by_date(domain, user_ids, datespan, timezone):
 def _get_form_counts_by_date(domain, user_ids, datespan, timezone, is_submission_time):
     form_query = (FormES()
                   .domain(domain)
-                  .user_id(user_ids)
-                  .filter(filters.NOT(xmlns_filter(SYSTEM_FORM_XMLNS))))
+                  .user_id(user_ids))
+    for xmlns in SYSTEM_FORM_XMLNS_MAP.keys():
+        form_query = form_query.filter(filters.NOT(xmlns_filter(xmlns)))
 
     if is_submission_time:
         form_query = (form_query
@@ -305,11 +310,11 @@ def _get_form_counts_by_date(domain, user_ids, datespan, timezone, is_submission
 
     # Convert timestamp into timezone aware dateime. Must divide timestamp by 1000 since python's
     # fromtimestamp takes a timestamp in seconds, whereas elasticsearch's timestamp is in milliseconds
-    results = map(
+    results = list(map(
         lambda result:
             (datetime.fromtimestamp(result.key / 1000).date().isoformat(), result.doc_count),
         results,
-    )
+    ))
     return dict(results)
 
 
@@ -453,7 +458,7 @@ def get_form_duration_stats_by_user(
         result[MISSING_KEY] = aggregations.missing_user_id.bucket.duration_stats.result
 
     buckets_dict = aggregations.user_id.buckets_dict
-    for user_id, bucket in buckets_dict.iteritems():
+    for user_id, bucket in six.iteritems(buckets_dict):
         result[user_id] = bucket.duration_stats.result
     return result
 
@@ -538,7 +543,7 @@ def get_all_user_ids_submitted(domain, app_ids=None):
     if app_ids:
         query = query.app(app_ids)
 
-    return query.run().aggregations.user_id.buckets_dict.keys()
+    return list(query.run().aggregations.user_id.buckets_dict)
 
 
 def get_username_in_last_form_user_id_submitted(domain, user_id):
@@ -618,7 +623,7 @@ def scroll_case_names(domain, case_ids):
 
 def _get_attachment_dicts_from_form(form):
     if 'external_blobs' in form:
-        return form['external_blobs'].values()
+        return list(form['external_blobs'].values())
     return []
 
 

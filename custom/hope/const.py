@@ -44,7 +44,7 @@ MOTHER_EVENTS_ATTRIBUTES = [
     ('DLYT', 'registration_date', '_HOPE_mother_registration_date'),
     ('DLYT', 'existing_child_count', '_HOPE_mother_existing_child_count'),
     ('DLYT', 'age_of_beneficiary', '_HOPE_mother_age'),
-    ('DLYT', 'bpl_indicator','_HOPE_mother_bpl_indicator'),
+    ('DLYT', 'bpl_indicator', '_HOPE_mother_bpl_indicator'),
     ('DLYT', 'delivery_date', '_HOPE_mother_delivery_date'),
     ('DLYT', 'time_of_birth', '_HOPE_mother_time_of_birth'),
     ('DLYT', 'tubal_ligation', '_HOPE_mother_tubal_ligation'),

@@ -16,6 +16,7 @@ from corehq.warehouse.models import (
     LocationTypeStagingTable,
     Batch,
 )
+import six
 
 DEFAULT_BATCH_ID = '222617b9-8cf0-40a2-8462-7f872e1f1344'
 
@@ -157,7 +158,7 @@ def _create_location_types_from_tree(domain, tree, location_types):
     if not tree:
         return
 
-    for location_tuple, next_tree in tree.iteritems():
+    for location_tuple, next_tree in six.iteritems(tree):
         location_name, location_type = location_tuple
 
         if location_type not in location_types:
@@ -178,7 +179,7 @@ def _create_locations_from_tree(domain, tree, parent_id, location_types, next_id
     if not next_id:
         next_id['id'] = 0
 
-    for index, item in enumerate(tree.iteritems()):
+    for index, item in enumerate(six.iteritems(tree)):
         location_name, location_type = item[0]
         next_tree = item[1]
 

@@ -104,7 +104,6 @@ class DBAccessorsTest(TestCase, DocTestMixin):
         self.assert_docs_equal(normal_app, brief_normal_app)
 
     def test_get_brief_app(self):
-        self.apps[0].mobile_ucr_sync_interval = 7
         self.apps[0].save()
         brief_app = get_brief_app(self.domain, self.apps[0]._id)
         self.assertIsNotNone(brief_app)
@@ -113,7 +112,6 @@ class DBAccessorsTest(TestCase, DocTestMixin):
         exepcted_app = self._make_app_brief(self.apps[0])
         exepcted_app.anonymous_cloudcare_hash = None
         self.assert_docs_equal(brief_app, exepcted_app)
-        self.assertEqual(brief_app.mobile_ucr_sync_interval, 7)
 
     def test_get_brief_app_not_found(self):
         with self.assertRaises(NoResultFound):
@@ -202,15 +200,15 @@ class DBAccessorsTest(TestCase, DocTestMixin):
         app_build_versions = get_all_built_app_ids_and_versions(self.domain)
 
         self.assertEqual(len(app_build_versions), 3)
-        self.assertEqual(len(filter(lambda abv: abv.app_id == '1234', app_build_versions)), 1)
-        self.assertEqual(len(filter(lambda abv: abv.app_id == self.apps[0]._id, app_build_versions)), 2)
+        self.assertEqual(len([abv for abv in app_build_versions if abv.app_id == '1234']), 1)
+        self.assertEqual(len([abv for abv in app_build_versions if abv.app_id == self.apps[0]._id]), 2)
 
     def test_get_all_built_app_ids_and_versions_by_app(self):
         app_build_versions = get_all_built_app_ids_and_versions(self.domain, app_id='1234')
 
         self.assertEqual(len(app_build_versions), 1)
-        self.assertEqual(len(filter(lambda abv: abv.app_id == '1234', app_build_versions)), 1)
-        self.assertEqual(len(filter(lambda abv: abv.app_id != '1234', app_build_versions)), 0)
+        self.assertEqual(len([abv for abv in app_build_versions if abv.app_id == '1234']), 1)
+        self.assertEqual(len([abv for abv in app_build_versions if abv.app_id != '1234']), 0)
 
 
 class TestAppGetters(TestCase):

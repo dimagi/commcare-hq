@@ -2,7 +2,7 @@ from __future__ import absolute_import
 from datetime import datetime
 from lxml import etree
 
-from casexml.apps.phone.tests.utils import MockDevice
+from casexml.apps.phone.utils import MockDevice
 from casexml.apps.stock.const import SECTION_TYPE_STOCK
 from dimagi.utils.couch.database import get_safe_write_kwargs
 from dimagi.utils.parsing import json_format_datetime

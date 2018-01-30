@@ -3,7 +3,7 @@ from collections import OrderedDict
 from datetime import datetime, timedelta
 
 from dateutil.relativedelta import relativedelta
-from dateutil.rrule import MONTHLY, rrule, DAILY
+from dateutil.rrule import MONTHLY, rrule, DAILY, WEEKLY, MO
 
 from django.db.models.aggregates import Sum, Avg
 from django.utils.translation import ugettext as _
@@ -14,13 +14,10 @@ from custom.icds_reports.models import ChildHealthMonthlyView, AggAwcMonthly, Da
     AggChildHealthMonthly, AggAwcDailyView, AggCcsRecordMonthly
 from custom.icds_reports.utils import apply_exclude, percent_diff, get_value, percent_increase, \
     match_age, get_status, \
-    current_age, exclude_records_by_age_for_column
-
-RED = '#de2d26'
-ORANGE = '#fc9272'
-BLUE = '#006fdf'
-PINK = '#fee0d2'
-GREY = '#9D9D9D'
+    current_age, exclude_records_by_age_for_column, calculate_date_for_age, \
+    person_has_aadhaar_column, person_is_beneficiary_column
+from custom.icds_reports.const import MapColors
+import six
 
 
 @quickcache(['domain', 'config', 'month', 'prev_month', 'two_before', 'loc_level', 'show_test'], timeout=30 * 60)
@@ -174,6 +171,15 @@ def get_awc_reports_pse(config, month, domain, show_test=False):
         }
 
     open_count_chart = {}
+
+    open_count_dates = [
+        dt for dt in rrule(WEEKLY, dtstart=selected_month, until=last_day_of_selected_month, byweekday=MO)
+    ]
+    for date in open_count_dates:
+        first_day_of_week = date - timedelta(days=date.isoweekday() - 1)
+        milliseconds = int(first_day_of_week.strftime("%s")) * 1000
+        open_count_chart[milliseconds] = 0
+
     for chart_row in open_count_data:
         first_day_of_week = chart_row['pse_date'] - timedelta(days=chart_row['pse_date'].isoweekday() - 1)
         pse_week = int(first_day_of_week.strftime("%s")) * 1000
@@ -197,17 +203,17 @@ def get_awc_reports_pse(config, month, domain, show_test=False):
 
     for map_row in map_image_data:
         lat = map_row['form_location_lat']
-        long = map_row['form_location_long']
+        longitude = map_row['form_location_long']
         awc_name = map_row['awc_name']
         image_name = map_row['image_name']
         doc_id = map_row['doc_id']
         pse_date = map_row['pse_date']
-        if lat and long:
+        if lat and longitude:
             key = doc_id.replace('-', '')
             map_data.update({
                 key: {
                     'lat': float(lat),
-                    'lng': float(long),
+                    'lng': float(longitude),
                     'focus': 'true',
                     'message': awc_name,
                 }
@@ -282,11 +288,11 @@ def get_awc_reports_pse(config, month, domain, show_test=False):
                         dict(
                             x=x_val,
                             y=y_val
-                        ) for x_val, y_val in open_count_chart.iteritems()
+                        ) for x_val, y_val in six.iteritems(open_count_chart)
                     ], key=lambda d: d['x']),
                     "strokeWidth": 2,
                     "classed": "dashed",
-                    "color": BLUE
+                    "color": MapColors.BLUE
                 }
             ],
             [
@@ -298,11 +304,11 @@ def get_awc_reports_pse(config, month, domain, show_test=False):
                             y=y_val['avg_percent'],
                             attended=y_val['attended'],
                             eligible=y_val['eligible']
-                        ) for x_val, y_val in attended_children_chart.iteritems()
+                        ) for x_val, y_val in six.iteritems(attended_children_chart)
                     ], key=lambda d: d['x']),
                     "strokeWidth": 2,
                     "classed": "dashed",
-                    "color": BLUE
+                    "color": MapColors.BLUE
                 },
             ]
         ],
@@ -341,13 +347,17 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
             {'age_tranche__in': [0, 6, 72]},
             'stunting_severe'
         )
-        wer_eligible = exclude_records_by_age_for_column(
-            {'age_tranche__in': [0, 6, 72]},
-            'wer_eligible'
+        nutrition_status_weighed = exclude_records_by_age_for_column(
+            {'age_tranche': 72},
+            'nutrition_status_weighed'
         )
-        height_eligible = exclude_records_by_age_for_column(
+        height_measured_in_month = exclude_records_by_age_for_column(
             {'age_tranche__in': [0, 6, 72]},
-            'height_eligible'
+            'height_measured_in_month'
+        )
+        weighed_and_height_measured_in_month = exclude_records_by_age_for_column(
+            {'age_tranche__in': [0, 6, 72]},
+            'weighed_and_height_measured_in_month'
         )
 
         queryset = AggChildHealthMonthly.objects.filter(
@@ -358,17 +368,19 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
             underweight=(
                 Sum(moderately_underweight) + Sum(severely_underweight)
             ),
-            valid_wer_eligible=Sum(wer_eligible),
+            valid_weighed=Sum(nutrition_status_weighed),
             immunized=(
                 Sum('fully_immunized_on_time') + Sum('fully_immunized_late')
             ),
             eligible=Sum('fully_immunized_eligible'),
             wasting=Sum(wasting_moderate) + Sum(wasting_severe),
-            height_eli=Sum(height_eligible),
+            height_measured_in_month=Sum(height_measured_in_month),
+            weighed_and_height_measured_in_month=Sum(weighed_and_height_measured_in_month),
             stunting=Sum(stunting_moderate) + Sum(stunting_severe),
             low_birth=Sum('low_birth_weight_in_month'),
             birth=Sum('bf_at_birth'),
             born=Sum('born_in_month'),
+            weighed_and_born_in_month=Sum('weighed_and_born_in_month'),
             month_ebf=Sum('ebf_in_month'),
             ebf=Sum('ebf_eligible'),
             month_cf=Sum('cf_initiation_in_month'),
@@ -429,16 +441,16 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
                         'underweight',
                         this_month_data,
                         prev_month_data,
-                        'valid_wer_eligible'
+                        'valid_weighed'
                     ),
                     'color': 'red' if percent_diff(
                         'underweight',
                         this_month_data,
                         prev_month_data,
-                        'valid_wer_eligible'
+                        'valid_weighed'
                     ) > 0 else 'green',
                     'value': get_value(this_month_data, 'underweight'),
-                    'all': get_value(this_month_data, 'valid_wer_eligible'),
+                    'all': get_value(this_month_data, 'valid_weighed'),
                     'format': 'percent_and_div',
                     'frequency': 'month'
                 },
@@ -459,16 +471,16 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
                         'wasting',
                         this_month_data,
                         prev_month_data,
-                        'height_eli'
+                        'weighed_and_height_measured_in_month'
                     ),
                     'color': 'red' if percent_diff(
                         'wasting',
                         this_month_data,
                         prev_month_data,
-                        'height_eli'
+                        'weighed_and_height_measured_in_month'
                     ) > 0 else 'green',
                     'value': get_value(this_month_data, 'wasting'),
-                    'all': get_value(this_month_data, 'height_eli'),
+                    'all': get_value(this_month_data, 'weighed_and_height_measured_in_month'),
                     'format': 'percent_and_div',
                     'frequency': 'month'
                 },
@@ -488,16 +500,16 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
                         'stunting',
                         this_month_data,
                         prev_month_data,
-                        'height_eli'
+                        'height_measured_in_month'
                     ),
                     'color': 'red' if percent_diff(
                         'stunting',
                         this_month_data,
                         prev_month_data,
-                        'height_eli'
+                        'height_measured_in_month'
                     ) > 0 else 'green',
                     'value': get_value(this_month_data, 'stunting'),
-                    'all': get_value(this_month_data, 'height_eli'),
+                    'all': get_value(this_month_data, 'height_measured_in_month'),
                     'format': 'percent_and_div',
                     'frequency': 'month'
                 },
@@ -543,16 +555,16 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
                         'low_birth',
                         this_month_data,
                         prev_month_data,
-                        'born'
+                        'weighed_and_born_in_month'
                     ),
                     'color': 'red' if percent_diff(
                         'low_birth',
                         this_month_data,
                         prev_month_data,
-                        'born'
+                        'weighed_and_born_in_month'
                     ) > 0 else 'green',
                     'value': get_value(this_month_data, 'low_birth'),
-                    'all': get_value(this_month_data, 'born'),
+                    'all': get_value(this_month_data, 'weighed_and_born_in_month'),
                     'format': 'percent_and_div',
                     'frequency': 'month'
                 },
@@ -695,7 +707,7 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
                         this_month_institutional_delivery_data,
                         'institutional_delivery_in_month_sum'
                     ),
-                    'all': get_value(prev_month_institutional_delivery_data, 'delivered_in_month_sum'),
+                    'all': get_value(this_month_institutional_delivery_data, 'delivered_in_month_sum'),
                     'format': 'percent_and_div',
                     'frequency': 'month'
                 },
@@ -704,10 +716,10 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
     }
 
 
-@quickcache(['domain', 'config', 'month', 'show_test'], timeout=30 * 60)
-def get_awc_report_demographics(domain, config, month, show_test=False):
+@quickcache(['domain', 'config', 'now_date', 'month', 'show_test', 'beta'], timeout=30 * 60)
+def get_awc_report_demographics(domain, config, now_date, month, show_test=False, beta=False):
     selected_month = datetime(*month)
-
+    now_date = datetime(*now_date)
     chart = AggChildHealthMonthly.objects.filter(
         month=selected_month, **config
     ).values(
@@ -753,23 +765,26 @@ def get_awc_report_demographics(domain, config, month, show_test=False):
                 Sum('cases_person_adolescent_girls_11_14_all') +
                 Sum('cases_person_adolescent_girls_15_18_all')
             ),
-            person_aadhaar=Sum('cases_person_has_aadhaar'),
-            all_persons=Sum('cases_person_beneficiary')
+            person_aadhaar=Sum(person_has_aadhaar_column(beta)),
+            all_persons=Sum(person_is_beneficiary_column(beta))
         )
 
         if not show_test:
             queryset = apply_exclude(domain, queryset)
         return queryset
 
-    yesterday = datetime.now() - relativedelta(days=1)
+    yesterday = now_date - relativedelta(days=1)
     two_days_ago = yesterday - relativedelta(days=1)
-    now = datetime.utcnow()
     previous_month = selected_month - relativedelta(months=1)
-    if selected_month.month == now.month and selected_month.year == now.year:
+    if selected_month.month == now_date.month and selected_month.year == now_date.year:
         config['date'] = yesterday
         data = get_data_for(AggAwcDailyView, config)
         config['date'] = two_days_ago
         prev_data = get_data_for(AggAwcDailyView, config)
+        if not data:
+            data = prev_data
+            config['date'] = (two_days_ago - relativedelta(days=1)).date()
+            prev_data = get_data_for(AggAwcDailyView, config)
         frequency = 'day'
     else:
         config['month'] = selected_month
@@ -782,7 +797,7 @@ def get_awc_report_demographics(domain, config, month, show_test=False):
         'chart': [
             {
                 'key': 'Children (0-6 years)',
-                'values': [[key, value] for key, value in chart_data.iteritems()],
+                'values': [[key, value] for key, value in six.iteritems(chart_data)],
                 "classed": "dashed",
             }
         ],
@@ -806,9 +821,9 @@ def get_awc_report_demographics(domain, config, month, show_test=False):
                     'frequency': frequency
                 },
                 {
-                    'label': _('Percent Adhaar-seeded Beneficiaries'),
+                    'label': _('Percent Aadhaar-seeded Beneficiaries'),
                     'help_text': _(
-                        'Percentage of ICDS beneficiaries whose Adhaar identification has been captured'
+                        'Percentage of ICDS beneficiaries whose Aadhaar identification has been captured'
                     ),
                     'percent': percent_diff(
                         'person_aadhaar',
@@ -824,135 +839,73 @@ def get_awc_report_demographics(domain, config, month, show_test=False):
             ],
             [
                 {
-                    'label': _('Children (0-6 years)'),
-                    'help_text': _('Total number of children registered between the age of 0 - 6 years'),
-                    'percent': percent_increase('child_health_all', data, prev_data),
-                    'color': 'green' if percent_increase(
+                    'label': _('Percent children (0-6 years) enrolled for ICDS services'),
+                    'help_text': _('Percentage of children registered between '
+                                   '0-6 years old who are enrolled for ICDS services'),
+                    'percent': percent_diff('child_health', data, prev_data, 'child_health_all'),
+                    'color': 'green' if percent_diff(
                         'child_health_all',
                         data,
-                        prev_data) > 0 else 'red',
-                    'value': get_value(data, 'child_health_all'),
-                    'all': None,
-                    'format': 'number',
+                        prev_data, 'child_health_all') > 0 else 'red',
+                    'value': get_value(data, 'child_health'),
+                    'all': get_value(data, 'child_health_all'),
+                    'format': 'percent_and_div',
                     'frequency': frequency,
                 },
                 {
-                    'label': _('Children (0-6 years) enrolled for ICDS services'),
-                    'help_text': _((
-                        "Total number of children registered between the age of 0 - 6 years "
-                        "and enrolled for ICDS services"
-                    )),
-                    'percent': percent_increase('child_health', data, prev_data),
-                    'color': 'green' if percent_increase(
-                        'child_health',
+                    'label': _('Percent pregnant women enrolled for ICDS services'),
+                    'help_text': _('Percentage of pregnant women registered who are enrolled for ICDS services'),
+                    'percent': percent_diff('ccs_pregnant', data, prev_data, 'ccs_pregnant_all'),
+                    'color': 'green' if percent_diff(
+                        'ccs_pregnant',
                         data,
-                        prev_data) > 0 else 'red',
-                    'value': get_value(data, 'child_health'),
-                    'all': None,
-                    'format': 'number',
+                        prev_data,
+                        'ccs_pregnant_all'
+                    ) > 0 else 'red',
+                    'value': get_value(data, 'ccs_pregnant'),
+                    'all': get_value(data, 'ccs_pregnant_all'),
+                    'format': 'percent_and_div',
                     'frequency': frequency
                 }
             ],
             [
+
                 {
-                    'label': _('Pregnant Women'),
-                    'help_text': _("Total number of pregnant women registered"),
-                    'percent': percent_increase(
-                        'ccs_pregnant_all',
-                        data,
-                        prev_data,
-                    ),
-                    'color': 'green' if percent_increase(
-                        'ccs_pregnant_all',
-                        data,
-                        prev_data) > 0 else 'red',
-                    'value': get_value(data, 'ccs_pregnant_all'),
-                    'all': '',
-                    'format': 'number',
-                    'frequency': frequency
-                },
-                {
-                    'label': _('Pregnant Women enrolled for ICDS services'),
-                    'help_text': _('Total number of pregnant women registered and enrolled for ICDS services'),
-                    'percent': percent_increase('ccs_pregnant', data, prev_data),
-                    'color': 'green' if percent_increase(
-                        'ccs_pregnant',
-                        data,
-                        prev_data) > 0 else 'red',
-                    'value': get_value(data, 'ccs_pregnant'),
-                    'all': None,
-                    'format': 'number',
-                    'frequency': frequency
-                },
-            ],
-            [
-                {
-                    'label': _('Lactating Mothers'),
-                    'help_text': _('Total number of lactating women registered'),
-                    'percent': percent_increase(
-                        'css_lactating_all',
-                        data,
-                        prev_data
-                    ),
-                    'color': 'green' if percent_increase(
-                        'css_lactating_all',
-                        data,
-                        prev_data) > 0 else 'red',
-                    'value': get_value(data, 'css_lactating_all'),
-                    'all': '',
-                    'format': 'number',
-                    'frequency': frequency
-                },
-                {
-                    'label': _('Lactating Women enrolled for ICDS services'),
-                    'help_text': _('Total number of lactating women registered and enrolled for ICDS services'),
-                    'percent': percent_increase('css_lactating', data, prev_data),
-                    'color': 'green' if percent_increase(
+                    'label': _('Percent lactating women enrolled for ICDS services'),
+                    'help_text': _('Percentage of lactating women registered who are enrolled for ICDS services'),
+                    'percent': percent_diff('css_lactating', data, prev_data, 'css_lactating_all'),
+                    'color': 'green' if percent_diff(
                         'css_lactating',
                         data,
-                        prev_data) > 0 else 'red',
+                        prev_data,
+                        'css_lactating_all'
+                    ) > 0 else 'red',
                     'value': get_value(data, 'css_lactating'),
-                    'all': None,
-                    'format': 'number',
+                    'all': get_value(data, 'css_lactating_all'),
+                    'format': 'percent_and_div',
                     'frequency': frequency
                 },
-            ],
-            [
                 {
-                    'label': _('Adolescent Girls (11-18 years)'),
-                    'help_text': _('Total number of adolescent girls (11 - 18 years) who are registered'),
-                    'percent': percent_increase(
-                        'person_adolescent_all',
+                    'label': _('Percent adolescent girls (11-18 years) enrolled for ICDS services'),
+                    'help_text': _((
+                        "Percentage of adolescent girls registered between 11-18 years"
+                        " old who are enrolled for ICDS services"
+                    )),
+                    'percent': percent_diff(
+                        'person_adolescent',
                         data,
                         prev_data,
+                        'person_adolescent_all'
                     ),
-                    'color': 'green' if percent_increase(
-                        'person_adolescent_all',
-                        data,
-                        prev_data) > 0 else 'red',
-                    'value': get_value(data, 'person_adolescent_all'),
-                    'all': '',
-                    'format': 'number',
-                    'frequency': frequency
-                },
-                {
-                    'label': _('Adolescent Girls (11-18 years) enrolled for ICDS services'),
-                    'help_text': _((
-                        "Total number of adolescent girls (11 - 18 years) "
-                        "who are registered and enrolled for ICDS services"
-                    )),
-                    'percent': percent_increase(
+                    'color': 'green' if percent_diff(
                         'person_adolescent',
                         data,
-                        prev_data
-                    ),
-                    'color': 'green' if percent_increase(
-                        'person_adolescent',
-                        data,
-                        prev_data) > 0 else 'red',
+                        prev_data,
+                        'person_adolescent_all'
+                    ) > 0 else 'red',
                     'value': get_value(data, 'person_adolescent'),
-                    'all': None,
-                    'format': 'number',
+                    'all': get_value(data, 'person_adolescent_all'),
+                    'format': 'percent_and_div',
                     'frequency': frequency
                 }
             ]
@@ -970,7 +923,6 @@ def get_awc_report_infrastructure(domain, config, month, show_test=False):
         ).values(
             'aggregation_level'
         ).annotate(
-            awcs=Sum('num_awcs'),
             clean_water=Sum('infra_clean_water'),
             functional_toilet=Sum('infra_functional_toilet'),
             medicine_kits=Sum('infra_medicine_kits'),
@@ -1058,10 +1010,32 @@ def get_awc_report_beneficiary(start, length, draw, order, awc_id, month, two_be
         awc_id=awc_id,
         open_in_month=1,
         valid_in_month=1,
-        age_in_months__lte=72
-    ).order_by('-month', order)
+        age_in_months__lte=60
+    )
 
-    data_count = data.count()
+    if 'current_month_nutrition_status' in order:
+        sort_order = {
+            'Severely underweight': 1,
+            'Moderately underweight': 2,
+            'Normal weight for age': 3,
+            'Data Not Entered': 4
+        }
+        reverse = '-' in order
+        data = sorted(
+            data,
+            key=lambda val: (sort_order[
+                get_status(
+                    val.current_month_nutrition_status,
+                    'underweight',
+                    'Normal weight for age'
+                )['value']
+            ]),
+            reverse=reverse
+        )
+    else:
+        data = data.order_by('-month', order)
+
+    data_count = len(data)
     data = data[start:(start + length)]
 
     config = {
@@ -1082,7 +1056,7 @@ def get_awc_report_beneficiary(start, length, draw, order, awc_id, month, two_be
             person_name=row_data.person_name,
             dob=row_data.dob,
             sex=row_data.sex,
-            age=current_age(row_data.dob, datetime(*month).date()),
+            age=calculate_date_for_age(row_data.dob, datetime(*month).date()),
             fully_immunized='Yes' if row_data.fully_immunized else 'No',
             mother_name=row_data.mother_name,
             age_in_months=row_data.age_in_months,
@@ -1096,12 +1070,12 @@ def get_awc_report_beneficiary(start, length, draw, order, awc_id, month, two_be
             current_month_stunting=get_status(
                 row_data.current_month_stunting,
                 'stunted',
-                'Normal weight for height'
+                'Normal height for age'
             ),
             current_month_wasting=get_status(
                 row_data.current_month_wasting,
                 'wasted',
-                'Normal height for age'
+                'Normal weight for height'
             ),
             pse_days_attended=row_data.pse_days_attended
         )
@@ -1116,46 +1090,44 @@ def get_awc_report_beneficiary(start, length, draw, order, awc_id, month, two_be
     return config
 
 
-@quickcache(['case_id', 'month'], timeout=30 * 60)
-def get_beneficiary_details(case_id, month):
+@quickcache(['case_id'], timeout=30 * 60)
+def get_beneficiary_details(case_id):
     data = ChildHealthMonthlyView.objects.filter(
-        case_id=case_id, month__lte=datetime(*month)
+        case_id=case_id
     ).order_by('month')
 
     min_height = 45
-    wfl = []
-
     max_height = 120.0
 
-    i = min_height
-
-    while i <= max_height:
-        wfl.append({'x': i, 'y': 0})
-        i += 0.5
-
     beneficiary = {
-        'weight': [{'x': x, 'y': 0} for x in range(0, 61)],
-        'height': [{'x': x, 'y': 0} for x in range(0, 61)],
-        'wfl': wfl
+        'weight': [],
+        'height': [],
+        'wfl': []
     }
     for row in data:
         beneficiary.update({
             'person_name': row.person_name,
             'mother_name': row.mother_name,
             'dob': row.dob,
-            'age': current_age(row.dob, datetime(*month).date()),
+            'age': current_age(row.dob, datetime.now().date()),
             'sex': row.sex,
             'age_in_months': row.age_in_months,
         })
         if row.age_in_months <= 60:
-            beneficiary['weight'][row.age_in_months] = {
-                'x': int(row.age_in_months),
-                'y': float(row.recorded_weight or 0)
-            }
-            beneficiary['height'][row.age_in_months] = {
-                'x': int(row.age_in_months),
-                'y': float(row.recorded_height or 0)
-            }
+            if row.recorded_weight:
+                beneficiary['weight'].append({
+                    'x': int(row.age_in_months),
+                    'y': float(row.recorded_weight)
+                })
+            if row.recorded_height:
+                beneficiary['height'].append({
+                    'x': int(row.age_in_months),
+                    'y': float(row.recorded_height)
+                })
         if row.recorded_height and min_height <= row.recorded_height <= max_height:
-            beneficiary['wfl'][int((row.recorded_height - min_height) * 2)]['y'] = float(row.recorded_weight or 0)
+            if row.recorded_height:
+                beneficiary['wfl'].append({
+                    'x': float(row.recorded_height),
+                    'y': float(row.recorded_weight) if row.recorded_height else 0
+                })
     return beneficiary

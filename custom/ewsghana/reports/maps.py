@@ -11,6 +11,7 @@ from corehq.apps.reports.standard import CustomProjectReport
 from corehq.apps.hqwebapp.decorators import maps_prefer_canvas, use_maps
 from custom.ewsghana.utils import get_country_id, filter_slugs_by_role
 from dimagi.utils.decorators.memoized import memoized
+import six
 
 
 class EWSStockStatusBySupplyPointDataSource(StockStatusBySupplyPointDataSource):
@@ -39,7 +40,7 @@ class EWSStockStatusBySupplyPointDataSource(StockStatusBySupplyPointDataSource):
             include_self=True
         ).filter(location_type__administrative=False).exclude(is_archived=True)
         if 'loc_type' in self.config and self.config['loc_type']:
-            if isinstance(self.config['loc_type'], basestring):
+            if isinstance(self.config['loc_type'], six.string_types):
                 self.config['loc_type'] = [self.config['loc_type']]
             locations = locations.filter(location_type__pk__in=self.config['loc_type'])
         return locations
@@ -147,7 +148,7 @@ class EWSMapReport(CustomProjectReport, StockStatusMapReport):
         except AttributeError:
             raise RuntimeError('unknown adapter [%s]' % adapter)
         config = dict(self.request.GET.iterlists())
-        for k, v in config.iteritems():
+        for k, v in six.iteritems(config):
             if len(v) == 1:
                 config[k] = v[0]
         data = loader(self.data_source, config)

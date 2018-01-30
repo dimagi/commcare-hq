@@ -53,6 +53,7 @@ from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import CommCareCaseSQL
 from django.core.exceptions import ObjectDoesNotExist
+import six
 
 
 class MessagesReport(ProjectReport, ProjectReportParametersMixin, GenericTabularReport, DatespanMixin):
@@ -506,7 +507,7 @@ class BaseMessagingEventReport(BaseCommConnectLogReport):
                 content_type=MessagingEvent.CONTENT_SMS_SURVEY,
                 # without this line, django does a left join which is not what we want
                 xforms_session_id__isnull=False,
-                xforms_session__end_time__isnull=True
+                xforms_session__session_is_open=True
             ).count() > 0
         ):
             status = MessagingEvent.STATUS_IN_PROGRESS
@@ -658,7 +659,7 @@ class MessagingEventsReport(BaseMessagingEventReport):
     @memoized
     def phone_number_filter(self):
         value = PhoneNumberFilter.get_value(self.request, self.domain)
-        if isinstance(value, basestring):
+        if isinstance(value, six.string_types):
             return value.strip()
 
         return None
@@ -700,19 +701,19 @@ class MessagingEventsReport(BaseMessagingEventReport):
             # We need to check for id__isnull=False below because the
             # query we make in this report has to do a left join, and
             # in this particular filter we can only validly check
-            # end_time__isnull=True if there actually are
+            # session_is_open=True if there actually are
             # subevent and xforms session records
             event_status_filter = (
                 Q(status=event_status) |
                 Q(messagingsubevent__status=event_status) |
                 (Q(messagingsubevent__xforms_session__id__isnull=False) &
-                 Q(messagingsubevent__xforms_session__end_time__isnull=True))
+                 Q(messagingsubevent__xforms_session__session_is_open=True))
             )
         elif event_status == MessagingEvent.STATUS_NOT_COMPLETED:
             event_status_filter = (
                 Q(status=event_status) |
                 Q(messagingsubevent__status=event_status) |
-                (Q(messagingsubevent__xforms_session__end_time__isnull=False) &
+                (Q(messagingsubevent__xforms_session__session_is_open=False) &
                  Q(messagingsubevent__xforms_session__submission_id__isnull=True))
             )
 
@@ -1120,7 +1121,7 @@ class PhoneNumberReport(BaseCommConnectLogReport):
     @memoized
     def phone_number_filter(self):
         value = self._filter['phone_number_filter']
-        if isinstance(value, basestring):
+        if isinstance(value, six.string_types):
             return apply_leniency(value.strip())
 
         return None
@@ -1242,12 +1243,12 @@ class PhoneNumberReport(BaseCommConnectLogReport):
                 id: {'_id': id, 'doc_type': 'CommCareUser'}
                 for id in self.user_ids_in_selected_group
             }
-            query.filter(owner_id__in=users_by_id.keys())
+            query.filter(owner_id__in=list(users_by_id))
         else:
             users_by_id = {u['id']: u for u in get_user_id_and_doc_type_by_domain(self.domain)}
 
         user_ids_with_phone_numbers = set(query.values_list('owner_id', flat=True).distinct())
-        user_ids = set(users_by_id.keys()) - user_ids_with_phone_numbers
+        user_ids = set(users_by_id) - user_ids_with_phone_numbers
         user_types_with_id = sorted([(id, users_by_id[id]['doc_type']) for id in user_ids])
 
         FakePhoneNumber = namedtuple('FakePhoneNumber', ['domain', 'owner_id', 'owner_doc_type'])

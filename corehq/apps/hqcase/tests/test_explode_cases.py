@@ -1,112 +1,23 @@
 from __future__ import absolute_import
-import datetime
+
 import uuid
-from contextlib import contextmanager
+from datetime import datetime
 
-from couchdbkit import ResourceNotFound
-from django.test import SimpleTestCase, TestCase
-from mock import patch
-from corehq.util.test_utils import flag_enabled
+import six
+from django.test import TestCase, override_settings
 
-from casexml.apps.case.mock import CaseBlock
-from casexml.apps.case.models import CommCareCase
-from casexml.apps.case.sharedmodels import CommCareCaseAttachment
-from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
-from corehq.apps.app_manager.tests.util import TestXmlMixin
-from corehq.apps.hqcase.tasks import explode_cases
-from corehq.apps.hqcase.utils import make_creating_casexml, submit_case_blocks
-from corehq.apps.users.models import CommCareUser
+from casexml.apps.case.mock import CaseBlock, CaseIndex, CaseStructure
+from casexml.apps.case.tests.util import delete_all_cases, delete_all_ledgers, delete_all_xforms
+from casexml.apps.phone.tests.test_sync_mode import BaseSyncTest
+from casexml.apps.stock.mock import Balance, Entry
 from corehq.apps.domain.models import Domain
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.apps.hqcase.tasks import explode_cases, topological_sort_cases
+from corehq.apps.hqcase.utils import submit_case_blocks
+from corehq.apps.users.models import CommCareUser
+from corehq.form_processor.interfaces.dbaccessors import (CaseAccessors,
+                                                          LedgerAccessors)
 from corehq.form_processor.tests.utils import run_with_all_backends
-
-
-TESTS = (
-    (
-        CommCareCase(
-            _id='case-abc123',
-            domain='foo',
-            type='my_case',
-            closed=False,
-            user_id='user-abc123',
-            modified_on=datetime.datetime(2011, 12, 20, 0, 11, 2),
-            owner_id='group-abc123',
-            name='Jessica',
-            version='2.0',
-            indices=[],
-            case_attachments={
-                'fruity_file': CommCareCaseAttachment(
-                    attachment_from=u'local',
-                    attachment_name=None,
-                    attachment_properties={'width': 240, 'height': 164},
-                    attachment_size=22731,
-                    attachment_src=u'./corehq/ex-submodules/casexml/apps/case/tests/data/attachments/fruity.jpg',
-                    doc_type=u'CommCareCaseAttachment',
-                    identifier=u'fruity_file',
-                    server_md5=None,
-                    server_mime=u'image/jpeg',
-                )
-            },
-
-            age='25',
-        ),
-        {u'fruity_file': u'./corehq/ex-submodules/casexml/apps/case/tests/data/attachments/fruity.jpg'},
-        """
-        <case case_id="new-case-abc123" date_modified="2011-12-20T00:11:02.000000Z"
-                user_id="user-abc123"
-                xmlns="http://commcarehq.org/case/transaction/v2">
-            <create>
-                <case_type>my_case</case_type>
-                <case_name>Jessica</case_name>
-                <owner_id>group-abc123</owner_id>
-            </create>
-            <update>
-                <age>25</age>
-            </update>
-            <attachment>
-                <fruity_file from="local" src="./corehq/ex-submodules/casexml/apps/case/tests/data/attachments/fruity.jpg"/>
-            </attachment>
-        </case>
-        """
-    ),
-)
-
-
-@contextmanager
-def mock_fetch_case_attachment(case_id, attachments):
-
-    class MockCachedObject(object):
-
-        def __init__(self, attachment_file):
-            self.attachment_file = attachment_file
-
-        def get(self, **kwargs):
-            return None, open(self.attachment_file)
-
-    def get_cached_case_attachment(domain, _case_id, attachment_id):
-        if case_id == _case_id and attachment_id in attachments:
-            return MockCachedObject(attachments[attachment_id])
-        else:
-            raise ResourceNotFound()
-
-    with patch('corehq.apps.hqcase.utils.get_cached_case_attachment', get_cached_case_attachment):
-        yield
-
-
-class ExplodeCasesTest(SimpleTestCase, TestXmlMixin):
-    maxDiff = 1000000
-
-    @flag_enabled('MM_CASE_PROPERTIES')
-    def test_make_creating_casexml(self):
-        for input, files, output in TESTS:
-            with mock_fetch_case_attachment(input.case_id, files):
-                case_block, attachments = make_creating_casexml(
-                    'mock-domain', input, 'new-case-abc123')
-                self.assertXmlEqual(case_block, output)
-                self.assertDictEqual(
-                    {key: value.read() for key, value in attachments.items()},
-                    {value: open(value).read() for key, value in files.items()}
-                )
+from corehq.util.test_utils import flag_enabled
 
 
 class ExplodeCasesDbTest(TestCase):
@@ -146,7 +57,7 @@ class ExplodeCasesDbTest(TestCase):
         ).as_string()
         submit_case_blocks([caseblock], self.domain.name)
         self.assertEqual(1, len(self.accessor.get_case_ids_in_domain()))
-        explode_cases(self.user_id, self.domain.name, 10)
+        explode_cases(self.domain.name, self.user_id, 10)
 
         case_ids = self.accessor.get_case_ids_in_domain()
         cases_back = list(self.accessor.iter_cases(case_ids))
@@ -165,7 +76,7 @@ class ExplodeCasesDbTest(TestCase):
         ).as_string()
         submit_case_blocks([caseblock], self.domain.name)
         self.assertEqual(1, len(self.accessor.get_case_ids_in_domain()))
-        explode_cases(self.user_id, self.domain.name, 10)
+        explode_cases(self.domain.name, self.user_id, 10)
 
         case_ids = self.accessor.get_case_ids_in_domain()
         cases_back = list(self.accessor.iter_cases(case_ids))
@@ -198,13 +109,13 @@ class ExplodeCasesDbTest(TestCase):
         submit_case_blocks([parent_block, child_block], self.domain.name)
         self.assertEqual(2, len(self.accessor.get_case_ids_in_domain()))
 
-        explode_cases(self.user_id, self.domain.name, 5)
+        explode_cases(self.domain.name, self.user_id, 5)
         case_ids = self.accessor.get_case_ids_in_domain()
         cases_back = list(self.accessor.iter_cases(case_ids))
         self.assertEqual(10, len(cases_back))
-        parent_cases = {p.case_id: p for p in filter(lambda case: case.type == parent_type, cases_back)}
+        parent_cases = {p.case_id: p for p in [case for case in cases_back if case.type == parent_type]}
         self.assertEqual(5, len(parent_cases))
-        child_cases = filter(lambda case: case.type == 'exploder-child-type', cases_back)
+        child_cases = [case for case in cases_back if case.type == 'exploder-child-type']
         self.assertEqual(5, len(child_cases))
         child_indices = [child.indices[0].referenced_id for child in child_cases]
         # make sure they're different
@@ -212,3 +123,145 @@ class ExplodeCasesDbTest(TestCase):
         for child in child_cases:
             self.assertEqual(1, len(child.indices))
             self.assertTrue(child.indices[0].referenced_id in parent_cases)
+
+
+class ExplodeExtensionsDBTest(BaseSyncTest):
+
+    def setUp(self):
+        super(ExplodeExtensionsDBTest, self).setUp()
+        self.accessor = CaseAccessors(self.project.name)
+        self._create_case_structure()
+
+    def tearDown(self):
+        delete_all_cases()
+        delete_all_xforms()
+        super(ExplodeExtensionsDBTest, self).tearDown()
+
+    def _create_case_structure(self):
+        """
+                  +----+
+                  | H  |
+                  +--^-+
+                     |e
+        +---+     +--+-+
+        |C  +--c->| PH |
+        +---+     +--^-+
+       (owned)       |e
+                  +--+-+
+                  | E  |
+                  +----+
+        """
+        case_type = 'case'
+
+        H = CaseStructure(
+            case_id='host',
+            attrs={'create': True, 'owner_id': '-'},
+        )  # No outgoing indices, so this is the root
+
+        PH = CaseStructure(
+            case_id='parent_host',
+            attrs={'create': True, 'owner_id': '-'},
+            indices=[CaseIndex(
+                H,
+                identifier='host',
+                relationship='extension',
+                related_type=case_type,
+            )]
+        )  # This case is in the middle
+
+        C = CaseStructure(
+            case_id='child',
+            attrs={'create': True},
+            indices=[CaseIndex(
+                PH,
+                identifier='parent',
+                relationship='child',
+                related_type=case_type,
+            )]
+        )
+        # C and E are interchangable in their position in the hierarchy since
+        # they point at the same case
+
+        E = CaseStructure(
+            case_id='extension',
+            attrs={'create': True, 'owner_id': '-'},
+            indices=[CaseIndex(
+                PH,
+                identifier='host',
+                relationship='extension',
+                related_type=case_type,
+            )]
+        )
+        self.device.post_changes([C, E])
+
+    def test_case_graph(self):
+        cases = self.device.restore().cases
+        self.assertEqual(
+            ['host', 'parent_host', 'extension', 'child'],
+            topological_sort_cases(cases)
+        )
+
+    def test_child_extensions(self):
+        self.assertEqual(4, len(self.accessor.get_case_ids_in_domain()))
+
+        explode_cases(self.project.name, self.user_id, 5)
+        case_ids = self.accessor.get_case_ids_in_domain()
+        self.assertEqual(20, len(case_ids))
+
+
+@flag_enabled('NON_COMMTRACK_LEDGERS')
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+class ExplodeLedgersTest(BaseSyncTest):
+    def setUp(self):
+        super(ExplodeLedgersTest, self).setUp()
+        self.case_accessor = CaseAccessors(self.project.name)
+        self.ledger_accessor = LedgerAccessors(self.project.name)
+        self._create_ledgers()
+
+    def tearDown(self):
+        delete_all_ledgers()
+        delete_all_cases()
+        delete_all_xforms()
+        super(ExplodeLedgersTest, self).tearDown()
+
+    def _create_ledgers(self):
+        case_type = 'case'
+
+        case1 = CaseStructure(
+            case_id='case1',
+            attrs={'create': True, 'case_type': case_type},
+        )
+        case2 = CaseStructure(
+            case_id='case2',
+            attrs={'create': True, 'case_type': case_type},
+        )  # case2 will have no ledgers
+        self.ledgers = {
+            'icecream': Balance(
+                entity_id=case1.case_id,
+                date=datetime(2017, 11, 21, 0, 0, 0, 0),
+                section_id='test',
+                entry=Entry(id='icecream', quantity=4),
+            ),
+            'blondie': Balance(
+                entity_id=case1.case_id,
+                date=datetime(2017, 11, 21, 0, 0, 0, 0),
+                section_id='test',
+                entry=Entry(id='blondie', quantity=5),
+            )
+        }
+        self.device.post_changes([case1, case2])
+        self.device.post_changes(list(self.ledgers.values()))
+
+    def test_explode_ledgers(self):
+        explode_cases(self.project.name, self.user_id, 5)
+        cases = self.case_accessor.iter_cases(self.case_accessor.get_case_ids_in_domain())
+        for case in cases:
+            ledger_values = {l.entry_id: l for l in self.ledger_accessor.get_ledger_values_for_case(case.case_id)}
+
+            if case.case_id == 'case2' or case.get_case_property('cc_exploded_from') == 'case2':
+                self.assertEqual(len(ledger_values), 0)
+            else:
+                self.assertEqual(len(ledger_values), len(self.ledgers))
+                for id, balance in six.iteritems(self.ledgers):
+                    self.assertEqual(ledger_values[id].balance, balance.entry.quantity)
+                    self.assertEqual(ledger_values[id].entry_id, balance.entry.id)

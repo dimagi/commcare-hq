@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+
 import copy
 import json
 import os
@@ -7,64 +8,36 @@ import zipfile
 from collections import defaultdict
 from wsgiref.util import FileWrapper
 
+from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
+from django.contrib import messages
+from django.http import HttpResponse, Http404, HttpResponseBadRequest, HttpResponseRedirect
 from django.http.request import QueryDict
+from django.shortcuts import render
+from django.urls import reverse
 from django.utils.decorators import method_decorator
+from django.utils.http import urlencode as django_urlencode
 from django.utils.text import slugify
 from django.utils.translation import ugettext as _
-from django.utils.http import urlencode as django_urlencode
-from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
-from django.http import HttpResponse, Http404, HttpResponseBadRequest, HttpResponseRedirect
-from django.urls import reverse
-from django.shortcuts import render
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET
-from django.contrib import messages
+from django_prbac.utils import has_privilege
 
-from corehq.apps.app_manager.commcare_settings import get_commcare_settings_layout
-from corehq.apps.app_manager.exceptions import IncompatibleFormTypeException, RearrangeError, AppEditingError, \
-    ActionNotPermitted, RemoteRequestError, RemoteAuthError
-from corehq.apps.app_manager.remote_link_accessors import pull_missing_multimedia_from_remote
-from corehq.apps.app_manager.views.utils import back_to_main, get_langs, \
-    validate_langs, overwrite_app
 from corehq import toggles, privileges
-from corehq.apps.userreports.exceptions import BadSpecError
-from corehq.elastic import ESError
-from corehq.util.couch import DocumentNotFound
-from dimagi.utils.logging import notify_exception
-from toggle.shortcuts import set_toggle
-from corehq.apps.app_manager.forms import CopyApplicationForm
+from corehq.apps.analytics.tasks import HUBSPOT_APP_TEMPLATE_FORM_ID, send_hubspot_form
 from corehq.apps.app_manager import id_strings, add_ons
-from corehq.apps.dashboard.views import DomainDashboardView
-from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
-from corehq.apps.hqwebapp.utils import get_bulk_upload_form
-from corehq.apps.users.dbaccessors.all_commcare_users import get_practice_mode_mobile_workers
-from corehq.apps.translations.models import Translation
+from corehq.apps.app_manager.commcare_settings import get_commcare_settings_layout
 from corehq.apps.app_manager.const import (
     MAJOR_RELEASE_TO_VERSION,
     AUTO_SELECT_USERCASE,
     DEFAULT_FETCH_LIMIT,
 )
-from corehq.apps.app_manager.util import (
-    get_settings_values,
-    app_doc_types,
-    get_and_assert_practice_user_in_domain,
-)
-from corehq.apps.domain.models import Domain
-from corehq.apps.userreports.util import get_static_report_mapping
-from corehq.tabs.tabclasses import ApplicationsTab
-from corehq.util.compression import decompress
-from corehq.apps.app_manager.xform import (
-    XFormException)
-from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
-from corehq.util.view_utils import set_file_download
-from dimagi.utils.web import json_response, json_request
-from corehq.util.timezones.utils import get_timezone_for_user
-from corehq.apps.domain.decorators import (
-    login_and_domain_required,
-    login_or_digest,
-    api_key_auth)
-from corehq.apps.app_manager.dbaccessors import get_app, get_current_app
+from corehq.apps.app_manager.dbaccessors import get_app, get_current_app, get_latest_released_app_version
+from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
+    require_can_edit_apps, require_deploy_apps, no_conflict
+from corehq.apps.app_manager.exceptions import IncompatibleFormTypeException, RearrangeError, RemoteRequestError, \
+    AppLinkError
+from corehq.apps.app_manager.forms import CopyApplicationForm
 from corehq.apps.app_manager.models import (
     Application,
     ApplicationBase,
@@ -73,15 +46,38 @@ from corehq.apps.app_manager.models import (
     FormNotFoundException,
     Module,
     ModuleNotFoundException,
-    load_app_template,
-    ReportModule)
+    ReportModule, LinkedApplication)
 from corehq.apps.app_manager.models import import_app as import_app_util
-from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
-    require_can_edit_apps, require_deploy_apps, no_conflict
-from django_prbac.utils import has_privilege
-from corehq.apps.analytics.tasks import track_app_from_template_on_hubspot
-from corehq.apps.analytics.utils import get_meta
+from corehq.apps.app_manager.util import (
+    get_settings_values,
+    app_doc_types,
+    get_and_assert_practice_user_in_domain,
+)
+from corehq.apps.app_manager.views.utils import back_to_main, get_langs, \
+    validate_langs, update_linked_app
+from corehq.apps.app_manager.xform import (
+    XFormException)
+from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
+from corehq.apps.dashboard.views import DomainDashboardView
+from corehq.apps.domain.decorators import (
+    login_and_domain_required,
+    login_or_digest,
+    api_key_auth)
+from corehq.apps.domain.models import Domain
+from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
+from corehq.apps.hqwebapp.utils import get_bulk_upload_form
+from corehq.apps.translations.models import Translation
+from corehq.apps.users.dbaccessors.all_commcare_users import get_practice_mode_mobile_workers
+from corehq.elastic import ESError
+from corehq.tabs.tabclasses import ApplicationsTab
+from corehq.util.compression import decompress
+from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.util.view_utils import reverse as reverse_util
+from corehq.util.view_utils import set_file_download
+from dimagi.utils.logging import notify_exception
+from dimagi.utils.web import json_response, json_request
+from toggle.shortcuts import set_toggle
+import six
 
 
 @no_conflict_require_POST
@@ -124,8 +120,7 @@ def default_new_app(request, domain):
     instead of creating a form and posting to the above link, which was getting
     annoying for the Dashboard.
     """
-    meta = get_meta(request)
-    track_app_from_template_on_hubspot.delay(request.couch_user, request.COOKIES, meta)
+    send_hubspot_form(HUBSPOT_APP_TEMPLATE_FORM_ID, request)
 
     lang = 'en'
     app = Application.new_app(domain, _("Untitled Application"), lang=lang)
@@ -180,8 +175,7 @@ def get_app_view_context(request, app):
         'warning': _("This is not an allowed value for this field"),
     }
     if toggles.CUSTOM_PROPERTIES.enabled(request.domain) and 'custom_properties' in getattr(app, 'profile', {}):
-        custom_properties_array = map(lambda p: {'key': p[0], 'value': p[1]},
-                                      app.profile.get('custom_properties').items())
+        custom_properties_array = [{'key': p[0], 'value': p[1]} for p in app.profile.get('custom_properties').items()]
         app_view_options.update({'customProperties': custom_properties_array})
     context.update({
         'app_view_options': app_view_options,
@@ -204,13 +198,10 @@ def get_app_view_context(request, app):
         # get setting dict from settings_layout
         if not settings_layout:
             return None
-        matched = filter(
-            lambda x: x['type'] == setting_type and x['id'] == setting_id,
-            [
+        matched = [x for x in [
                 setting for section in settings_layout
                 for setting in section['settings']
-            ]
-        )
+            ] if x['type'] == setting_type and x['id'] == setting_id]
         if matched:
             return matched[0]
         else:
@@ -347,28 +338,50 @@ def copy_app(request, domain):
         else:
             app_id_or_source = app_id
 
-        def _inner(request, domain, data):
-            clear_app_cache(request, domain)
+        def _inner(request, link_domain, data, master_domain=domain):
+            clear_app_cache(request, link_domain)
             if data['toggles']:
                 for slug in data['toggles'].split(","):
-                    set_toggle(slug, domain, True, namespace=toggles.NAMESPACE_DOMAIN)
-            extra_properties = {'name': data['name']}
+                    set_toggle(slug, link_domain, True, namespace=toggles.NAMESPACE_DOMAIN)
             linked = data.get('linked')
             if linked:
-                extra_properties['master'] = app_id
-                extra_properties['doc_type'] = 'LinkedApplication'
-                if domain not in app.linked_whitelist:
-                    app.linked_whitelist.append(domain)
-                    app.save()
-            app_copy = import_app_util(app_id_or_source, domain, extra_properties)
-            if linked:
-                for module in app_copy.modules:
+                for module in app.modules:
                     if isinstance(module, ReportModule):
                         messages.error(request, _('This linked application uses mobile UCRs which '
                                                   'are currently not supported. For this application to '
                                                   'function correctly, you will need to remove those modules.'))
-                        break
-            return back_to_main(request, app_copy.domain, app_id=app_copy._id)
+                        return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[domain, app_id]))
+
+                master_version = get_latest_released_app_version(app.domain, app_id)
+                if not master_version:
+                    messages.error(request, _("Creating linked app failed."
+                                              " Unable to get latest released version of your app."
+                                              " Make sure you have at least one released build."))
+                    return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[domain, app_id]))
+
+                if link_domain not in app.linked_whitelist:
+                    app.linked_whitelist.append(link_domain)
+                    app.save()
+
+                linked_app = LinkedApplication(
+                    name=data['name'],
+                    domain=link_domain,
+                    master=app_id,
+                    master_domain=master_domain,
+                )
+                linked_app.save()
+                try:
+                    update_linked_app(linked_app)
+                except AppLinkError as e:
+                    messages.error(request, str(e))
+                    return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[domain, app_id]))
+
+                messages.success(request, _('Application successfully copied and linked.'))
+                return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[master_domain, linked_app.get_id]))
+            else:
+                extra_properties = {'name': data['name']}
+                app_copy = import_app_util(app_id_or_source, link_domain, extra_properties)
+                return back_to_main(request, app_copy.domain, app_id=app_copy._id)
 
         # having login_and_domain_required validates that the user
         # has access to the domain we're copying the app to
@@ -376,24 +389,6 @@ def copy_app(request, domain):
     else:
         from corehq.apps.app_manager.views.view_generic import view_generic
         return view_generic(request, domain, app_id=app_id, copy_app_form=form)
-
-
-@require_can_edit_apps
-def app_from_template(request, domain, slug):
-    meta = get_meta(request)
-    track_app_from_template_on_hubspot.delay(request.couch_user, request.COOKIES, meta)
-    clear_app_cache(request, domain)
-    template = load_app_template(slug)
-    app = import_app_util(template, domain, {
-        'created_from_template': '%s' % slug,
-    })
-    module_id = 0
-    form_id = 0
-    try:
-        app.get_module(module_id).get_form(form_id)
-    except (ModuleNotFoundException, FormNotFoundException):
-        return HttpResponseRedirect(reverse('view_app', args=[domain, app._id]))
-    return HttpResponseRedirect(reverse('view_form_legacy', args=[domain, app._id, module_id, form_id]))
 
 
 @require_can_edit_apps
@@ -409,7 +404,7 @@ def export_gzip(req, domain, app_id):
     response['Content-Length'] = os.path.getsize(fpath)
     app = Application.get(app_id)
     set_file_download(response, '{domain}-{app_name}-{app_version}.zip'.format(
-        app_name=slugify(app.name), app_version=slugify(unicode(app.version)), domain=domain
+        app_name=slugify(app.name), app_version=slugify(six.text_type(app.version)), domain=domain
     ))
     return response
 
@@ -433,7 +428,7 @@ def import_app(request, domain):
         if not valid_request:
             return render(request, template, {'domain': domain})
 
-        source = decompress([chr(int(x)) if int(x) < 256 else int(x) for x in compressed.split(',')])
+        source = decompress([six.unichr(int(x)) if int(x) < 256 else int(x) for x in compressed.split(',')])
         source = json.loads(source)
         assert(source is not None)
         app = import_app_util(source, domain, {'name': name})
@@ -525,7 +520,7 @@ def rename_language(request, domain, form_unique_id):
         app.save()
         return HttpResponse(json.dumps({"status": "ok"}))
     except XFormException as e:
-        response = HttpResponse(json.dumps({'status': 'error', 'message': unicode(e)}), status=409)
+        response = HttpResponse(json.dumps({'status': 'error', 'message': six.text_type(e)}), status=409)
         return response
 
 
@@ -657,7 +652,6 @@ def edit_app_attr(request, domain, app_id, attr):
         # RemoteApp only
         'profile_url',
         'manage_urls',
-        'mobile_ucr_sync_interval',
         'mobile_ucr_restore_version',
     ]
     if attr not in attributes:
@@ -694,7 +688,6 @@ def edit_app_attr(request, domain, app_id, attr):
         ('comment', None),
         ('custom_base_url', None),
         ('use_j2me_endpoint', None),
-        ('mobile_ucr_sync_interval', parse_sync_interval),
         ('mobile_ucr_restore_version', None),
     )
     for attribute, transformation in easy_attrs:
@@ -764,7 +757,7 @@ def edit_app_attr(request, domain, app_id, attr):
 def edit_add_ons(request, domain, app_id):
     app = get_app(domain, app_id)
     current = add_ons.get_dict(request, app)
-    for slug, value in request.POST.iteritems():
+    for slug, value in six.iteritems(request.POST):
         if slug in current:
             app.add_ons[slug] = value == 'on'
     app.save()
@@ -840,65 +833,14 @@ def drop_user_case(request, domain, app_id):
     return back_to_main(request, domain, app_id=app_id)
 
 
-@require_GET
 @require_can_edit_apps
 def pull_master_app(request, domain, app_id):
     app = get_current_app(domain, app_id)
     try:
-        master_version = app.get_master_version()
-    except RemoteRequestError:
-        messages.error(request, _(
-            'Unable to pull latest master from remote CommCare HQ. Please try again later.'
-        ))
+        update_linked_app(app)
+    except AppLinkError as e:
+        messages.error(request, str(e))
         return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[domain, app_id]))
-
-    if master_version > app.version:
-        exception_message = None
-        try:
-            latest_master_build = app.get_latest_master_release()
-        except ActionNotPermitted:
-            exception_message = _(
-                'This project is not authorized to update from the master application. '
-                'Please contact the maintainer of the master app if you believe this is a mistake. '
-            )
-        except RemoteAuthError:
-            exception_message = _(
-                'Authentication failure attempting to pull latest master from remote CommCare HQ.'
-                'Please verify your authentication details for the remote link are correct.'
-            )
-        except RemoteRequestError:
-            exception_message = _(
-                'Unable to pull latest master from remote CommCare HQ. Please try again later.'
-            )
-
-        if exception_message:
-            messages.error(request, exception_message)
-            return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[domain, app_id]))
-
-        try:
-            report_map = get_static_report_mapping(latest_master_build.domain, app['domain'], {})
-        except (BadSpecError, DocumentNotFound) as e:
-            messages.error(request, _('This linked application uses mobile UCRs '
-                                      'which are available in this domain: %(message)s') % {'message': e})
-            return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[domain, app_id]))
-
-        try:
-            app = overwrite_app(app, latest_master_build, report_map)
-        except AppEditingError:
-            messages.error(request, _('This linked application uses dynamic mobile UCRs '
-                                      'which are currently not supported. For this application '
-                                      'to function correctly, you will need to remove those modules '
-                                      'or revert to a previous version that did not include them.'))
-            return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[domain, app_id]))
-
-    if app.master_is_remote:
-        try:
-            pull_missing_multimedia_from_remote(app)
-        except RemoteRequestError:
-            messages.error(request, _(
-                'Error fetching multimedia from remote server. Please try again later.'
-            ))
-            return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[domain, app_id]))
 
     messages.success(request, _('Your linked application was successfully updated to the latest version.'))
     return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[domain, app_id]))

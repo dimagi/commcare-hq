@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import division
 from collections import namedtuple
 from functools import wraps
 import hashlib
@@ -12,7 +13,9 @@ from django.utils.safestring import mark_safe
 
 from couchdbkit import ResourceNotFound
 from corehq.util.quickcache import quickcache
+from toggle.models import Toggle
 from toggle.shortcuts import toggle_enabled, set_toggle
+import six
 
 Tag = namedtuple('Tag', 'name css_class description')
 TAG_CUSTOM = Tag(
@@ -149,7 +152,6 @@ class StaticToggle(object):
         return decorator
 
     def get_enabled_domains(self):
-        from toggle.models import Toggle
         try:
             toggle = Toggle.get(self.slug)
         except ResourceNotFound:
@@ -199,7 +201,7 @@ def deterministic_random(input_string):
     Returns a deterministically random number between 0 and 1 based on the
     value of the string. The same input should always produce the same output.
     """
-    if isinstance(input_string, unicode):
+    if isinstance(input_string, six.text_type):
         input_string = input_string.encode('utf-8')
     return float.fromhex(hashlib.md5(input_string).hexdigest()) / math.pow(2, 128)
 
@@ -227,8 +229,8 @@ class PredictablyRandomToggle(StaticToggle):
         super(PredictablyRandomToggle, self).__init__(slug, label, tag, list(namespaces),
                                                       help_link=help_link, description=description,
                                                       always_disabled=always_disabled)
-        assert namespaces, 'namespaces must be defined!'
-        assert 0 <= randomness <= 1, 'randomness must be between 0 and 1!'
+        _ensure_valid_namespaces(namespaces)
+        _ensure_valid_randomness(randomness)
         self.randomness = randomness
 
     @property
@@ -253,7 +255,7 @@ class PredictablyRandomToggle(StaticToggle):
                 )
             )
 
-        if settings.UNIT_TESTING:
+        if settings.DISABLE_RANDOM_TOGGLES:
             return False
         elif item in self.always_disabled:
             return False
@@ -264,9 +266,51 @@ class PredictablyRandomToggle(StaticToggle):
             or super(PredictablyRandomToggle, self).enabled(item, namespace)
         )
 
+
+class DynamicallyPredictablyRandomToggle(PredictablyRandomToggle):
+    """
+    A PredictablyRandomToggle whose randomness can be configured via the database/UI.
+    """
+    RANDOMNESS_KEY = 'hq_dynamic_randomness'
+
+    def __init__(
+        self,
+        slug,
+        label,
+        tag,
+        namespaces,
+        default_randomness=0,
+        help_link=None,
+        description=None,
+        always_disabled=None
+    ):
+        super(PredictablyRandomToggle, self).__init__(slug, label, tag, list(namespaces),
+                                                      help_link=help_link, description=description,
+                                                      always_disabled=always_disabled)
+        _ensure_valid_namespaces(namespaces)
+        _ensure_valid_randomness(default_randomness)
+        self.default_randomness = default_randomness
+
+    @property
+    @quickcache(vary_on=['self.slug'])
+    def randomness(self):
+        # a bit hacky: leverage couch's dynamic properties to just tack this onto the couch toggle doc
+        try:
+            toggle = Toggle.get(self.slug)
+        except ResourceNotFound:
+            return self.default_randomness
+        dynamic_randomness = getattr(toggle, self.RANDOMNESS_KEY, self.default_randomness)
+        try:
+            dynamic_randomness = float(dynamic_randomness)
+            return dynamic_randomness
+        except ValueError:
+            return self.default_randomness
+
+
 # if no namespaces are specified the user namespace is assumed
 NAMESPACE_USER = 'user'
 NAMESPACE_DOMAIN = 'domain'
+NAMESPACE_OTHER = 'other'
 ALL_NAMESPACES = [NAMESPACE_USER, NAMESPACE_DOMAIN]
 
 
@@ -296,7 +340,7 @@ def all_toggles():
     """
     Loads all toggles
     """
-    return all_toggles_by_name_in_scope(globals()).values()
+    return list(all_toggles_by_name_in_scope(globals()).values())
 
 
 def all_toggles_by_name():
@@ -335,6 +379,16 @@ def toggle_values_by_name(username=None, domain=None):
             for toggle_name, toggle in all_toggles_by_name().items()}
 
 
+def _ensure_valid_namespaces(namespaces):
+    if not namespaces:
+        raise Exception('namespaces must be defined!')
+
+
+def _ensure_valid_randomness(randomness):
+    if not 0 <= randomness <= 1:
+        raise Exception('randomness must be between 0 and 1!')
+
+
 APP_BUILDER_CUSTOM_PARENT_REF = StaticToggle(
     'custom-parent-ref',
     'ICDS: Custom case parent reference',
@@ -362,7 +416,7 @@ APP_BUILDER_SHADOW_MODULES = StaticToggle(
 
 CASE_LIST_CUSTOM_XML = StaticToggle(
     'case_list_custom_xml',
-    'Show text area for entering custom case list xml',
+    'Allow custom XML to define case lists (ex. for case tiles)',
     TAG_SOLUTIONS,
     [NAMESPACE_DOMAIN],
     help_link='https://confluence.dimagi.com/display/public/Custom+Case+XML+Overview',
@@ -378,9 +432,9 @@ CASE_LIST_CUSTOM_VARIABLES = StaticToggle(
 
 CASE_LIST_TILE = StaticToggle(
     'case_list_tile',
-    'Allow configuration of case list tiles',
-    TAG_SOLUTIONS,
-    [NAMESPACE_DOMAIN, NAMESPACE_USER]
+    'REC: Allow configuration of the REC case list tile',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN]
 )
 
 SHOW_PERSIST_CASE_CONTEXT_SETTING = StaticToggle(
@@ -394,7 +448,7 @@ CASE_LIST_LOOKUP = StaticToggle(
     'case_list_lookup',
     'Allow external android callouts to search the caselist',
     TAG_SOLUTIONS,
-    [NAMESPACE_DOMAIN, NAMESPACE_USER]
+    [NAMESPACE_DOMAIN]
 )
 
 ADD_USERS_FROM_LOCATION = StaticToggle(
@@ -455,7 +509,7 @@ MM_CASE_PROPERTIES = StaticToggle(
     'Multimedia Case Properties',
     TAG_DEPRECATED,
     help_link='https://confluence.dimagi.com/display/ccinternal/Multimedia+Case+Properties+Feature+Flag',
-    namespaces=[NAMESPACE_DOMAIN, NAMESPACE_USER]
+    namespaces=[NAMESPACE_DOMAIN]
 )
 
 NEW_MULTIMEDIA_UPLOADER = StaticToggle(
@@ -503,16 +557,6 @@ REPORT_BUILDER = StaticToggle(
     'Activate Report Builder for a project without setting up a subscription.',
     TAG_DEPRECATED,
     [NAMESPACE_DOMAIN],
-)
-
-REPORT_BUILDER_V1 = StaticToggle(
-    "report_builder_v1",
-    "Report builder V1",
-    TAG_PRODUCT,
-    [NAMESPACE_DOMAIN],
-    description=(
-        'Enables the old report builder. Note that the project must already have access to report builder.'
-    )
 )
 
 ASYNC_RESTORE = StaticToggle(
@@ -618,7 +662,7 @@ STOCK_AND_RECEIPT_SMS_HANDLER = StaticToggle(
 MOBILE_PRIVILEGES_FLAG = StaticToggle(
     'mobile_privileges_flag',
     'Offer "Enable Privileges on Mobile" flag.',
-    TAG_SOLUTIONS,
+    TAG_INTERNAL,
     [NAMESPACE_USER]
 )
 
@@ -710,6 +754,13 @@ CUSTOM_PROPERTIES = StaticToggle(
     help_link='https://confluence.dimagi.com/display/internal/CommCare+Android+Developer+Options+--+Internal#'
               'CommCareAndroidDeveloperOptions--Internal-SettingtheValueofaDeveloperOptionfromHQ',
     namespaces=[NAMESPACE_DOMAIN]
+)
+
+WEBAPPS_CASE_MIGRATION = StaticToggle(
+    'webapps_case_migration',
+    "Work-in-progress to support user-written migrations",
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_USER]
 )
 
 ENABLE_LOADTEST_USERS = StaticToggle(
@@ -818,6 +869,13 @@ APPLICATION_ERROR_REPORT = StaticToggle(
     namespaces=[NAMESPACE_USER],
 )
 
+AGGREGATE_USER_STATUS_REPORT = StaticToggle(
+    'aggregate_user_status_report',
+    'Show Aggregate User Status',
+    TAG_PRODUCT,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
 OPENCLINICA = StaticToggle(
     'openclinica',
     'KEMRI: Offer OpenClinica settings and CDISC ODM export',
@@ -845,6 +903,13 @@ DASHBOARD_ICDS_REPORT = StaticToggle(
     'ICDS: Enable access to the dashboard reports for ICDS',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN]
+)
+
+ICDS_DASHBOARD_REPORT_FEATURES = StaticToggle(
+    'features_in_dashboard_icds_reports',
+    'ICDS: Enable access to the features in the ICDS Dashboard reports',
+    TAG_CUSTOM,
+    [NAMESPACE_USER]
 )
 
 NINETYNINE_DOTS = StaticToggle(
@@ -875,6 +940,14 @@ BETS_INTEGRATION = StaticToggle(
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
     always_enabled={"enikshay"},
+)
+
+RETRY_SMS_INDEFINITELY = StaticToggle(
+    'retry_sms_indefinitely',
+    'Enikshay: Retry SMS indefinitely',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
+    description='Leaves on the queue an SMS that has reached the maximum number of unsuccessful attempts.',
 )
 
 OPENMRS_INTEGRATION = StaticToggle(
@@ -925,6 +998,13 @@ SUPPORT = StaticToggle(
     help_link='https://confluence.dimagi.com/display/ccinternal/Support+Flag',
 )
 
+CASE_PROPERTY_HISTORY = StaticToggle(
+    'case_property_history',
+    'Shows a modal on the case property page allowing you to see the history of various case properties',
+    TAG_PRODUCT,
+    [NAMESPACE_DOMAIN],
+)
+
 BASIC_CHILD_MODULE = StaticToggle(
     'child_module',
     'Basic modules can be child modules',
@@ -963,8 +1043,8 @@ BROADCAST_TO_LOCATIONS = StaticToggle(
 
 MOBILE_WORKER_SELF_REGISTRATION = StaticToggle(
     'mobile_worker_self_registration',
-    'Allow mobile workers to self register',
-    TAG_SOLUTIONS,
+    'UW: Allow mobile workers to self register',
+    TAG_CUSTOM,
     help_link='https://confluence.dimagi.com/display/commcarepublic/SMS+Self+Registration',
     namespaces=[NAMESPACE_DOMAIN],
 )
@@ -1007,7 +1087,7 @@ EWS_BROADCAST_BY_ROLE = StaticToggle(
 SMS_PERFORMANCE_FEEDBACK = StaticToggle(
     'sms_performance_feedback',
     'Enable SMS-based performance feedback',
-    TAG_SOLUTIONS,
+    TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
     help_link='https://docs.google.com/document/d/1YvbYLV4auuf8gVdYZ6jFZTsOLfJdxm49XhvWkska4GE/edit#',
 )
@@ -1113,7 +1193,7 @@ EMG_AND_REC_SMS_HANDLERS = StaticToggle(
 
 ALLOW_USER_DEFINED_EXPORT_COLUMNS = StaticToggle(
     'allow_user_defined_export_columns',
-    'UPDATE: HQ will not automatically determine the case properties available for an export',
+    'Add user defined columns to exports',
     TAG_DEPRECATED,
     [NAMESPACE_DOMAIN],
 )
@@ -1128,7 +1208,7 @@ CUSTOM_CALENDAR_FIXTURE = StaticToggle(
 
 DISABLE_COLUMN_LIMIT_IN_UCR = StaticToggle(
     'disable_column_limit_in_ucr',
-    'Disable column limit in UCR',
+    'Enikshay: Disable column limit in UCR',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN]
 )
@@ -1157,7 +1237,7 @@ DATA_MIGRATION = StaticToggle(
 
 EMWF_WORKER_ACTIVITY_REPORT = StaticToggle(
     'emwf_worker_activity_report',
-    'Make the Worker Activity Report use the Groups or Users or Locations (LocationRestrictedEMWF) filter',
+    'Make the Worker Activity Report use the Groups or Users or Locations filter',
     TAG_SOLUTIONS,
     namespaces=[NAMESPACE_DOMAIN],
     description=(
@@ -1174,6 +1254,21 @@ ENIKSHAY = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
     always_enabled={'enikshay'},
     relevant_environments={'enikshay'},
+)
+
+ICDS = StaticToggle(
+    'icds',
+    "ICDS: Enable ICDS features (necessary since features are on Softlayer and ICDS envs)",
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    relevant_environments={'icds', 'icds-new', 'softlayer'},
+    always_enabled={
+        "icds-dashboard-qa",
+        "icds-sql",
+        "icds-test",
+        "icds-cas",
+        "icds-cas-sandbox"
+    },
 )
 
 DATA_DICTIONARY = StaticToggle(
@@ -1212,8 +1307,8 @@ SORT_CALCULATION_IN_CASE_LIST = StaticToggle(
 
 ANONYMOUS_WEB_APPS_USAGE = StaticToggle(
     'anonymous_web_apps_usage',
-    'Allow anonymous users to access Web Apps applications',
-    TAG_SOLUTIONS,
+    'Infomap: Allow anonymous users to access Web Apps applications',
+    TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
     always_disabled={'icds-cas'},
     description='Users are automatically logged into Web Apps as a designated mobile worker.'
@@ -1272,13 +1367,6 @@ SHOW_DEV_TOGGLE_INFO = StaticToggle(
     [NAMESPACE_USER]
 )
 
-DASHBOARD_GRAPHS = StaticToggle(
-    'dashboard_graphs',
-    'Show submission graph on dashboard',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN, NAMESPACE_USER]
-)
-
 PUBLISH_CUSTOM_REPORTS = StaticToggle(
     'publish_custom_reports',
     "Publish custom reports (No needed Authorization)",
@@ -1331,6 +1419,13 @@ FILTERED_BULK_USER_DOWNLOAD = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+BULK_UPLOAD_DATE_OPENED = StaticToggle(
+    'bulk_upload_date_opened',
+    "Allow updating of the date_opened field with the bulk uploader",
+    TAG_INTERNAL,
+    [NAMESPACE_DOMAIN],
+)
+
 ICDS_LIVEQUERY = PredictablyRandomToggle(
     'icds_livequery',
     'ICDS: Enable livequery case sync for a random subset of ICDS users',
@@ -1351,4 +1446,47 @@ TWO_FACTOR_SUPERUSER_ROLLOUT = StaticToggle(
     'Users in this list will be forced to have Two-Factor Auth enabled',
     TAG_INTERNAL,
     [NAMESPACE_USER]
+)
+
+CUSTOM_ICON_BADGES = StaticToggle(
+    'custom_icon_badges',
+    'eNikshay: Custom Icon Badges for modules and forms',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
+ICDS_UCR_ELASTICSEARCH_DOC_LOADING = DynamicallyPredictablyRandomToggle(
+    'icds_ucr_elasticsearch_doc_loading',
+    'ICDS: Load related form docs from ElasticSearch instead of Riak',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_OTHER],
+)
+
+MOBILE_LOGIN_LOCKOUT = StaticToggle(
+    'mobile_user_login_lockout',
+    "On too many wrong password attempts, lock out mobile users",
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN]
+)
+
+EMAIL_EXPORT_WHEN_DONE_BUTTON = StaticToggle(
+    'email_export_when_done_button',
+    "Show button that emails when export is done",
+    TAG_PRODUCT,
+    [NAMESPACE_DOMAIN],
+)
+
+LOCATION_SEARCH = StaticToggle(
+    'location_search',
+    "Allow search for location in organization structure",
+    TAG_PRODUCT,
+    [NAMESPACE_DOMAIN],
+)
+
+SHOW_ALL_SCHEDULED_REPORT_EMAILS = StaticToggle(
+    'show_all_scheduled_report_emails',
+    "In the 'My Scheduled Reports' tab, show all reports the user is part of (if the user is an "
+    "admin, show all in the current project)",
+    TAG_PRODUCT,
+    [NAMESPACE_USER],
 )

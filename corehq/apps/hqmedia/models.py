@@ -3,7 +3,7 @@ import hashlib
 import logging
 import mimetypes
 from datetime import datetime
-from StringIO import StringIO
+from io import BytesIO
 
 import magic
 from couchdbkit.exceptions import ResourceConflict
@@ -22,6 +22,7 @@ from corehq.apps.app_manager.exceptions import XFormException
 from corehq.apps.app_manager.xform import XFormValidationError
 from corehq.apps.domain.models import LICENSES, LICENSE_LINKS
 from corehq.blobs.mixin import BlobMixin
+import six
 
 MULTIMEDIA_PREFIX = "jr://file/"
 LOGO_ARCHIVE_KEY = 'logos'
@@ -349,13 +350,13 @@ class CommCareImage(CommCareMultimedia):
 
     @classmethod
     def get_image_object(cls, data):
-        return Image.open(StringIO(data))
+        return Image.open(BytesIO(data))
 
     @classmethod
     def _get_resized_image(cls, image, size):
         if image.mode not in ["RGB", "RGBA"]:
             image = image.convert("RGB")
-        o = StringIO()
+        o = BytesIO()
         try:
             image.thumbnail(size, Image.ANTIALIAS)
         except IndexError:
@@ -443,7 +444,7 @@ class ApplicationMediaReference(object):
                  form_id=None, form_name=None, form_order=None,
                  media_class=None, is_menu_media=False, app_lang=None):
 
-        if not isinstance(path, basestring):
+        if not isinstance(path, six.string_types):
             path = ''
         self.path = path.strip()
 
@@ -499,7 +500,7 @@ class ApplicationMediaReference(object):
             return raw_name
         if lang is None:
             lang = self.app_lang
-        return raw_name.get(lang, raw_name.values()[0])
+        return raw_name.get(lang, list(raw_name.values())[0])
 
     def get_module_name(self, lang=None):
         return self._get_name(self.module_name, lang=lang)
@@ -557,7 +558,7 @@ class HQMediaMixin(Document):
                           for audio in item.all_audio_paths()
                           if audio])
 
-        for m, module in enumerate(filter(lambda m: m.uses_media(), self.get_modules())):
+        for m, module in enumerate([m for m in self.get_modules() if m.uses_media()]):
             media_kwargs = {
                 'module_name': module.name,
                 'module_id': m,
@@ -577,7 +578,7 @@ class HQMediaMixin(Document):
                     if column.format == 'enum-image':
                         for map_item in column.enum:
                             # iterate over icons of each lang
-                            icons = map_item.value.values()
+                            icons = list(map_item.value.values())
                             media.extend([ApplicationMediaReference(
                                 icon,
                                 media_class=CommCareImage,
@@ -724,7 +725,7 @@ class HQMediaMixin(Document):
         map_changed = False
         if self.check_media_state()['has_form_errors']:
             return
-        paths = self.multimedia_map.keys() if self.multimedia_map else []
+        paths = list(self.multimedia_map) if self.multimedia_map else []
         permitted_paths = self.all_media_paths | self.logo_paths
         for path in paths:
             if path not in permitted_paths:

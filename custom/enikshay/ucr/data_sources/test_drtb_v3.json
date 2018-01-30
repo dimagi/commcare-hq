@@ -6,8 +6,7 @@
         "enikshay-performance-test"
     ],
     "server_environment": [
-        "enikshay",
-        "softlayer"
+        "enikshay"
     ],
     "config": {
         "referenced_doc_type": "CommCareCase",
@@ -1149,7 +1148,7 @@
                                 }
                             },
                             "expression_if_true": {
-                                "constant": "e_sen",
+                                "constant": "e_Sen",
                                 "type": "constant"
                             },
                             "type": "conditional",

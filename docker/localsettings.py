@@ -3,9 +3,6 @@
 from __future__ import absolute_import
 import os
 
-ICDS_UCR_DATABASE_ALIAS = 'default'
-ICDS_UCR_TEST_DATABASE_ALIAS = 'default'
-
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
@@ -103,8 +100,8 @@ COUCH_DATABASES = {
         # for production this ought to be set to true on your configured couch instance
         'COUCH_HTTPS': False,
         'COUCH_SERVER_ROOT': 'couch:5984',  # 6984 for https couch
-        'COUCH_USERNAME': 'commcarehq',
-        'COUCH_PASSWORD': 'commcarehq',
+        'COUCH_USERNAME': '',
+        'COUCH_PASSWORD': '',
         'COUCH_DATABASE_NAME': 'commcarehq'
     }
 }
@@ -243,6 +240,8 @@ if os.environ.get("COMMCAREHQ_BOOTSTRAP") == "yes":
 
     TOUCHFORMS_API_USER = 'admin@example.com'
     TOUCHFORMS_API_PASSWORD = 'password'
+
+    FORMPLAYER_URL = 'http://formplayer:8010'
 
     CCHQ_API_THROTTLE_REQUESTS = 200
     CCHQ_API_THROTTLE_TIMEFRAME = 10

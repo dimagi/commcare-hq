@@ -116,9 +116,6 @@ class OTARestoreUser(object):
     def get_ucr_filter_value(self, ucr_filter, ui_filter):
         return ucr_filter.get_filter_value(self._couch_user, ui_filter)
 
-    def get_mobile_ucr_sync_interval(self):
-        return None
-
     @memoized
     def get_locations_to_sync(self):
         from corehq.apps.locations.fixtures import get_location_fixture_queryset
@@ -209,9 +206,6 @@ class OTARestoreCommCareUser(OTARestoreUser):
         from corehq.apps.fixtures.models import UserFixtureType
 
         return self._couch_user.fixture_status(UserFixtureType.LOCATION)
-
-    def get_mobile_ucr_sync_interval(self):
-        return self._couch_user.mobile_ucr_sync_interval
 
 
 class CaseState(LooselyEqualDocumentSchema, IndexHoldingMixIn):
@@ -383,7 +377,7 @@ class SyncLog(AbstractSyncLog):
     def wrap(cls, data):
         # last_seq used to be int, but is now string for cloudant compatibility
         if isinstance(data.get('last_seq'), six.integer_types):
-            data['last_seq'] = unicode(data['last_seq'])
+            data['last_seq'] = six.text_type(data['last_seq'])
         return super(SyncLog, cls).wrap(data)
 
     @classmethod
@@ -718,14 +712,14 @@ class SimplifiedSyncLog(AbstractSyncLog):
     lists from the SyncLog class.
     """
     log_format = StringProperty(default=LOG_FORMAT_SIMPLIFIED)
-    case_ids_on_phone = SetProperty(unicode)
+    case_ids_on_phone = SetProperty(six.text_type)
     # this is a subset of case_ids_on_phone used to flag that a case is only around because it has dependencies
     # this allows us to purge it if possible from other actions
-    dependent_case_ids_on_phone = SetProperty(unicode)
-    owner_ids_on_phone = SetProperty(unicode)
+    dependent_case_ids_on_phone = SetProperty(six.text_type)
+    owner_ids_on_phone = SetProperty(six.text_type)
     index_tree = SchemaProperty(IndexTree)  # index tree of subcases / children
     extension_index_tree = SchemaProperty(IndexTree)  # index tree of extensions
-    closed_cases = SetProperty(unicode)
+    closed_cases = SetProperty(six.text_type)
     extensions_checked = BooleanProperty(default=False)
 
     _purged_cases = None

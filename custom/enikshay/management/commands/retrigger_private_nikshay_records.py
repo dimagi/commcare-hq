@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import print_function
 import csv
 
 from datetime import datetime
@@ -8,6 +9,7 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.motech.repeaters.models import Repeater, RepeatRecord
 from corehq.motech.repeaters.dbaccessors import iter_repeat_records_by_domain, get_repeat_record_count
 from custom.enikshay.integrations.utils import is_valid_episode_submission
+from six.moves import input
 
 domain = 'enikshay'
 
@@ -53,7 +55,7 @@ class Command(BaseCommand):
 
         if source_repeater_id and not dest_repeater_id:
             self.fire_in_place = True
-            proceed = raw_input("""
+            proceed = input("""
                    Confirm to retrigger repeat records for repeater id: {repeater_id} for {state}.
                    This would be a retrigger in place and not async. Result will be stored in a csv file for
                    reference later (enter "yes" to proceed).
@@ -62,7 +64,7 @@ class Command(BaseCommand):
                 state=state if state else 'ALL states'
             ))
         elif source_repeater_id and dest_repeater_id:
-            proceed = raw_input("""
+            proceed = input("""
                    Confirm to retrigger repeat records for repeater id: {repeater_id} for {state}.
                    This would add new repeat records for {dest_repeater_id} with payload id from the former repeat
                    record. Result will be stored in a csv file for reference later (enter "yes" to proceed).

@@ -1,17 +1,17 @@
-{% extends "hqwebapp/base_section.html" %}
-{% load hq_shared_tags %}
+{% extends "scheduling/create_schedule_base.html" %}
 {% load crispy_forms_tags %}
-{% load i18n %}
+{% load hq_shared_tags %}
 
 
 {% block js %}{{ block.super }}
-    <script src="{% static 'hqwebapp/js/select2_handler.js' %}"></script>
-    <script src="{% static 'scheduling/js/create_schedule.ko.js' %}"></script>
+    <script src="{% static 'data_interfaces/js/make_read_only.js' %}"></script>
 {% endblock %}
 
-{% block page_content %}
-    {% initial_page_data 'current_values' form.current_values %}
-    <div id="create-schedule-form">
-        {% crispy form %}
-    </div>
+{% block page_content %}{{ block.super }}
+    {% initial_page_data 'read_only_mode' read_only_mode %}
+    <form class="form form-horizontal main-form" method="POST" action="#">
+        <div id="create-schedule-form">
+            {% crispy schedule_form %}
+        </div>
+    </form>
 {% endblock %}

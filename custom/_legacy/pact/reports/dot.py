@@ -65,7 +65,7 @@ class PactDOTReport(GenericTabularReport, CustomProjectReport, ProjectReportPara
     @property
     def report_context(self):
         ret = {}
-        if not self.request.GET.has_key('dot_patient') or self.request.GET.get('dot_patient') == "":
+        if 'dot_patient' not in self.request.GET or self.request.GET.get('dot_patient') == "":
             self.report_template_path = "pact/dots/dots_report_nopatient.html"
             return ret
         submit_id = self.request.GET.get('submit_id', None)
@@ -98,8 +98,7 @@ class PactDOTReport(GenericTabularReport, CustomProjectReport, ProjectReportPara
 
         #ugh, not storing all form data by default - need to get?
         ret['sorted_visits'] = [DOTSubmission.wrap(x['_source']) for x in
-                                filter(lambda x: x['_source']['xmlns'] == XMLNS_DOTS_FORM,
-                                       res['hits']['hits'])]
+                                [x for x in res['hits']['hits'] if x['_source']['xmlns'] == XMLNS_DOTS_FORM]]
         return ret
 
 

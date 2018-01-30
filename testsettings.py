@@ -90,6 +90,9 @@ _set_logging_levels({
     'restkit.client': 'INFO',
     's3transfer': 'INFO',
     'urllib3': 'WARNING',
+    'kafka.conn': 'WARNING',
+    'kafka.client': 'WARNING',
+    'kafka.consumer.kafka': 'WARNING',
 })
 
 # use empty LOGGING dict with --debug=nose,nose.plugins to debug test discovery
@@ -100,4 +103,9 @@ LOGGING = {
     'loggers': {},
 }
 
-ICDS_UCR_DATABASE_ALIAS = 'default'
+REPORTING_DATABASES = {
+    'default': 'default',
+    'ucr': 'default',
+    'icds-ucr': 'default',
+    'icds-test-ucr': 'default',
+}

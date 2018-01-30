@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import print_function
 import csv
 import datetime
 import re
@@ -10,6 +11,8 @@ from django.core.management.base import BaseCommand
 from corehq.motech.repeaters.const import RECORD_CANCELLED_STATE
 from corehq.motech.repeaters.dbaccessors import iter_repeat_records_by_domain
 from corehq.motech.repeaters.models import Repeater, RepeatRecordAttempt
+from six.moves import input
+from six.moves import filter
 
 
 class Command(BaseCommand):
@@ -78,7 +81,7 @@ class Command(BaseCommand):
         response_status = options.get('response_status')
 
         repeater = Repeater.get(repeater_id)
-        print "Looking up repeat records for '{}'".format(repeater.friendly_name)
+        print("Looking up repeat records for '{}'".format(repeater.friendly_name))
 
         def meets_filter(record):
             if exclude_regexps:  # Match none of the exclude expressions
@@ -94,19 +97,19 @@ class Command(BaseCommand):
                            for include_regex in include_regexps)
             return True  # No filter applied
 
-        records = filter(
+        records = list(filter(
             meets_filter,
             iter_repeat_records_by_domain(domain, repeater_id=repeater_id, state=RECORD_CANCELLED_STATE)
-        )
+        ))
 
         if verbose:
             for record in records:
-                print record.payload_id, record.failure_reason
+                print(record.payload_id, record.failure_reason)
 
         total_records = len(records)
-        print "Found {} matching records.  {} them?".format(total_records, action)
-        if not raw_input("(y/n)") == 'y':
-            print "Aborting"
+        print("Found {} matching records.  {} them?".format(total_records, action))
+        if not input("(y/n)") == 'y':
+            print("Aborting")
             return
 
         filename = "{}_{}_records-{}.csv".format(
@@ -126,15 +129,15 @@ class Command(BaseCommand):
                     elif action == 'succeed':
                         self._succeed_record(record, success_message, response_status)
                 except Exception as e:
-                    print "{}/{}: {} {}".format(i + 1, total_records, 'EXCEPTION', repr(e))
+                    print("{}/{}: {} {}".format(i + 1, total_records, 'EXCEPTION', repr(e)))
                     writer.writerow((record._id, record.payload_id, record.state, repr(e)))
                 else:
-                    print "{}/{}: {}, {}".format(i + 1, total_records, record.state, record.attempts[-1].message)
+                    print("{}/{}: {}, {}".format(i + 1, total_records, record.state, record.attempts[-1].message))
                     writer.writerow((record._id, record.payload_id, record.state, record.attempts[-1].message))
                 if sleep_time:
                     time.sleep(float(sleep_time))
 
-        print "Wrote log of changes to {}".format(filename)
+        print("Wrote log of changes to {}".format(filename))
 
     def _succeed_record(self, record, success_message, response_status):
         success_attempt = RepeatRecordAttempt(

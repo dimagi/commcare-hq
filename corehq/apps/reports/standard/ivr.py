@@ -25,6 +25,17 @@ from corehq.apps.users.models import CouchUser
 from casexml.apps.case.models import CommCareCase
 from django.conf import settings
 from corehq.apps.reminders.util import get_form_name
+from corehq.util.quickcache import quickcache
+
+
+@quickcache(['domain'], timeout=60 * 60)
+def domain_has_any_calls(domain):
+    return Call.objects.filter(domain=domain).count() > 0
+
+
+@quickcache(['domain'], timeout=60 * 60)
+def domain_has_any_expected_callbacks(domain):
+    return ExpectedCallback.objects.filter(domain=domain).count() > 0
 
 
 class CallReport(BaseCommConnectLogReport):
@@ -36,7 +47,11 @@ class CallReport(BaseCommConnectLogReport):
     fields = ['corehq.apps.reports.filters.dates.DatespanFilter']
     exportable = True
     emailable = True
-    
+
+    @classmethod
+    def show_in_navigation(cls, domain=None, project=None, user=None):
+        return domain_has_any_calls(domain)
+
     @property
     def headers(self):
         header_list = [
@@ -116,7 +131,7 @@ class CallReport(BaseCommConnectLogReport):
                 self._fmt_timestamp(timestamp),
                 self._fmt_contact_link(call.couch_recipient, doc_info),
                 self._fmt(phone_number),
-                self._fmt(direction_map.get(call.direction,"-")),
+                self._fmt(direction_map.get(call.direction, "-")),
                 self._fmt(form_name),
                 self._fmt("-"),
                 self._fmt(answered),
@@ -130,7 +145,7 @@ class CallReport(BaseCommConnectLogReport):
             
             result.append(row)
 
-        all_session_ids = xforms_sessions.keys()
+        all_session_ids = list(xforms_sessions)
         session_submission_map = dict(
             SQLXFormsSession.objects.filter(session_id__in=all_session_ids).values_list(
                 'session_id', 'submission_id'
@@ -170,6 +185,10 @@ class ExpectedCallbackReport(ProjectReport, ProjectReportParametersMixin, Generi
     exportable = True
     default_datespan_end_date_to_today = True
 
+    @classmethod
+    def show_in_navigation(cls, domain=None, project=None, user=None):
+        return domain_has_any_expected_callbacks(domain)
+
     @property
     def headers(self):
         header_list = [
@@ -190,9 +209,9 @@ class ExpectedCallbackReport(ProjectReport, ProjectReportParametersMixin, Generi
         result = []
         
         status_descriptions = {
-            CALLBACK_PENDING : _("Pending"),
-            CALLBACK_RECEIVED : _("Received"),
-            CALLBACK_MISSED : _("Missed"),
+            CALLBACK_PENDING: _("Pending"),
+            CALLBACK_RECEIVED: _("Received"),
+            CALLBACK_MISSED: _("Missed"),
         }
         
         # Store the results of lookups for faster loading

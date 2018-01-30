@@ -1,5 +1,5 @@
 {% load i18n %}
-<div class="modal fade remote-modal" id="eulaModal" data-url="{% url "eula_basic" %}">
+<div class="modal fade remote-modal" id="eulaModal" data-url="{% url "eula_basic" %}" data-show-on-page-load="{% if needs_agreement %}1{% endif %}">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
@@ -31,10 +31,3 @@
             </div>
     </div>
 </div>
-{% if needs_agreement %}
-    <script>
-        $(function(){
-            $('#eulaModal').modal('show');
-        });
-    </script>
-{% endif %}

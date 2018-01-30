@@ -1,4 +1,4 @@
-<div class="property-table-row" id="{{ id }}">
+<div class="property-table-row">
     {% for table in tables %}
     <div class="property-table-container">
     
@@ -15,7 +15,13 @@
                     {% for cell in row %}
                     {% if not cell.colspan %}
                     <th title="{{ cell.expr }}">
-                        {{ cell.name }}
+                        {% if cell.info_url %}
+                            <a href="#" data-bind="openRemoteModal: '{{ cell.info_url }}'">
+                                {{ cell.name }}
+                            </a>
+                        {% else %}
+                            {{ cell.name }}
+                        {% endif %}
                     </th>
                     <td>
                         {{ cell.value }}

@@ -27,7 +27,8 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy
 from .models import DeviceReportEntry
 from .utils import device_users_by_xform
-from urllib import urlencode
+from six.moves.urllib.parse import urlencode
+import six
 
 logger = logging.getLogger(__name__)
 
@@ -95,17 +96,17 @@ class BaseDeviceLogReport(GetParamsMixin, DatespanMixin, PaginatedReportMixin):
     @property
     @memoized
     def device_log_users(self):
-        return DeviceLogUsersFilter.get_value(self.request, self.domain)
+        return set([_f for _f in DeviceLogUsersFilter.get_value(self.request, self.domain)])
 
     @property
     @memoized
     def selected_tags(self):
-        return filter(None, self.request.GET.getlist(DeviceLogTagFilter.slug))
+        return [_f for _f in self.request.GET.getlist(DeviceLogTagFilter.slug) if _f]
 
     @property
     @memoized
     def selected_devices(self):
-        return set(filter(None, self.request.GET.getlist(DeviceLogDevicesFilter.slug)))
+        return set([_f for _f in self.request.GET.getlist(DeviceLogDevicesFilter.slug) if _f])
 
     @property
     @memoized
@@ -185,7 +186,7 @@ class BaseDeviceLogReport(GetParamsMixin, DatespanMixin, PaginatedReportMixin):
 
     @property
     def ordering(self):
-        by, direction = self.get_sorting_block()[0].items()[0]
+        by, direction = list(self.get_sorting_block()[0].items())[0]
         return '-' + by if direction == 'desc' else by
 
     @property
@@ -301,7 +302,7 @@ class BaseDeviceLogReport(GetParamsMixin, DatespanMixin, PaginatedReportMixin):
         return logs
 
     def _filter_query_by_slug(self, slug):
-        return urlencode({k: v for (k, v) in self.request.GET.iteritems() if not k.startswith(slug)})
+        return urlencode({k: v for (k, v) in six.iteritems(self.request.GET) if not k.startswith(slug)})
 
 
 class DeviceLogDetailsReport(BaseDeviceLogReport, DeploymentsReport):

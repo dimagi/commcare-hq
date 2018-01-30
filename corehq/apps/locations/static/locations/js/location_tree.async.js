@@ -1,3 +1,4 @@
+/* globals django */
 
 function api_get_children(loc_uuid, callback) {
     var params = (loc_uuid ? {parent_id: loc_uuid} : {});
@@ -45,8 +46,27 @@ function LocationTreeViewModel(hierarchy) {
     };
 }
 
+function LocationSearchViewModel() { // eslint-disable-line no-unused-vars
+    var model = this;
+    this.selected_location = ko.observable();
+    this.l__selected_location_id = ko.observable();
+
+    this.selected_location_id = ko.computed(function () {
+        if (!model.l__selected_location_id()) {
+            return;
+        }
+        return (model.l__selected_location_id().split("l__")[1]);
+    });
+
+    this.selected_location = ko.computed(function() {
+        return new LocationModel({uuid: model.selected_location_id(), can_edit: can_edit_root, is_archived: show_inactive}, this); // eslint-disable-line no-undef
+    });
+
+}
+
 function LocationModel(data, root, depth) {
     var loc = this;
+    var alert_user = hqImport("hqwebapp/js/alert_user").alert_user;
 
     this.name = ko.observable();
     this.type = ko.observable();
@@ -143,7 +163,146 @@ function LocationModel(data, root, depth) {
     this.load(data);
 
     this.new_location_tracking = function() {
-        ga_track_event('Organization Structure', '+ New _______');
+        hqImport('analytix/js/google').track.event('Organization Structure', '+ New _______');
         return true;
+    };
+
+    this.remove_elements_after_action = function(button) {
+        $(button).closest('.loc_section').remove();
+    };
+
+    this.archive_success_message = _.template(django.gettext("You have successfully archived the location <%=name%>"));
+
+    this.delete_success_message = _.template(django.gettext(
+        "You have successfully deleted the location <%=name%> and all of its child locations"
+        )
+    );
+
+    this.delete_error_message = django.gettext("An error occurred while deleting your location. If the problem persists, please report an issue");
+
+    this.loc_archive_url = function(loc_id) {
+        var initial_page_data = hqImport('hqwebapp/js/initial_page_data');
+        var template = initial_page_data.reverse('archive_location');
+        return template.replace('-locid-', loc_id);
+    };
+
+    this.loc_unarchive_url = function(loc_id) {
+        var initial_page_data = hqImport('hqwebapp/js/initial_page_data');
+        var template = initial_page_data.reverse('unarchive_location');
+        return template.replace('-locid-', loc_id);
+    };
+
+    this.loc_delete_url = function(loc_id) {
+        var initial_page_data = hqImport('hqwebapp/js/initial_page_data');
+        var template = initial_page_data.reverse('delete_location');
+        return template.replace('-locid-', loc_id);
+    };
+
+    this.loc_descendant_url = function(loc_id) {
+        var initial_page_data = hqImport('hqwebapp/js/initial_page_data');
+        var template = initial_page_data.reverse('location_descendants_count');
+        return template.replace('-locid-', loc_id);
+    };
+
+    this.archive_loc = function(button, name, loc_id) {
+        var archive_location_modal = $('#archive-location-modal')[0];
+
+        function archive_fn() {
+            $(button).disableButton();
+            $.ajax({
+                type: 'POST',
+                url: loc.loc_archive_url(loc_id),
+                dataType: 'json',
+                error: 'error',
+                success: function () {
+                    alert_user(loc.archive_success_message({"name": name}), "success");
+                    loc.remove_elements_after_action(button);
+                    if (hqImport('hqwebapp/js/toggles').toggleEnabled('LOCATION_SEARCH')) {
+                        reloadLocationSearchSelect(); // eslint-disable-line no-undef
+                    }
+                },
+            });
+            $(archive_location_modal).modal('hide');
+            hqImport('analytix/js/google').track.event('Organization Structure', 'Archive');
+        }
+
+        var modal_context = {
+            "name": name,
+            "loc_id": loc_id,
+            "archive_fn": archive_fn,
+        };
+        ko.cleanNode(archive_location_modal);
+        $(archive_location_modal).koApplyBindings(modal_context);
+        $(archive_location_modal).modal('show');
+    };
+
+    this.unarchive_loc = function(button, loc_id) {
+        $(button).disableButton();
+        $.ajax({
+            type: 'POST',
+            url: loc.loc_unarchive_url(loc_id),
+            dataType: 'json',
+            error: 'error',
+            success: function () {
+                loc.remove_elements_after_action(button);
+                if (hqImport('hqwebapp/js/toggles').toggleEnabled('LOCATION_SEARCH')) {
+                    reloadLocationSearchSelect(); // eslint-disable-line no-undef
+                }
+            },
+        });
+    };
+
+    this.delete_loc = function(button, name, loc_id) {
+        var delete_location_modal = $('#delete-location-modal')[0];
+        var modal_context;
+
+        function delete_fn() {
+            if (modal_context.count === parseInt(modal_context.signOff())) {
+                $(button).disableButton();
+
+                $.ajax({
+                    type: 'DELETE',
+                    url: loc.loc_delete_url(loc_id),
+                    dataType: 'json',
+                    error: function () {
+                        alert_user(loc.delete_error_message, "warning");
+                        $(button).enableButton();
+                    },
+                    success: function (response) {
+                        if (response.success){
+                            alert_user(loc.delete_success_message({"name": name}), "success");
+                            loc.remove_elements_after_action(button);
+                            if (hqImport('hqwebapp/js/toggles').toggleEnabled('LOCATION_SEARCH')) {
+                                reloadLocationSearchSelect(); // eslint-disable-line no-undef
+                            }
+                        }
+                        else {
+                            alert_user(response.message, "warning");
+
+                        }
+                    },
+                });
+                $(delete_location_modal).modal('hide');
+                hqImport('analytix/js/google').track.event('Organization Structure', 'Delete');
+            }
+        }
+
+        $.ajax({
+            type: 'GET',
+            url: this.loc_descendant_url(loc_id),
+            dataType: 'json',
+            success: function (response) {
+                modal_context = {
+                    "name": name,
+                    "loc_id": loc_id,
+                    "delete_fn": delete_fn,
+                    "count": response.count,
+                    "signOff": ko.observable(''),
+                };
+                ko.cleanNode(delete_location_modal);
+                ko.applyBindings(modal_context, delete_location_modal);
+                $(delete_location_modal).modal('show');
+            },
+        });
     };
 }

@@ -1,25 +1,19 @@
-from __future__ import absolute_import
-from datetime import datetime
+from __future__ import absolute_import, division
 
 from collections import defaultdict, OrderedDict
+from datetime import datetime
 
+import six
 from dateutil.relativedelta import relativedelta
 from dateutil.rrule import rrule, MONTHLY
-
 from django.db.models.aggregates import Sum
 from django.utils.translation import ugettext as _
 
-from corehq.apps.locations.models import SQLLocation
 from corehq.util.quickcache import quickcache
-from custom.icds_reports.const import LocationTypes, ChartColors
+from custom.icds_reports.const import LocationTypes, ChartColors, MapColors
 from custom.icds_reports.models import AggChildHealthMonthly
-from custom.icds_reports.utils import apply_exclude
-
-RED = '#de2d26'
-ORANGE = '#fc9272'
-BLUE = '#006fdf'
-PINK = '#fee0d2'
-GREY = '#9D9D9D'
+from custom.icds_reports.utils import apply_exclude, generate_data_for_map, chosen_filters_to_labels, \
+    indian_formatted_number, get_child_locations
 
 
 @quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
@@ -30,66 +24,66 @@ def get_exclusive_breastfeeding_data_map(domain, config, loc_level, show_test=Fa
         queryset = AggChildHealthMonthly.objects.filter(
             **filters
         ).values(
-            '%s_name' % loc_level
+            '%s_name' % loc_level, '%s_map_location_name' % loc_level
         ).annotate(
-            in_month=Sum('ebf_in_month'),
-            eligible=Sum('ebf_eligible'),
-        )
+            children=Sum('ebf_in_month'),
+            all=Sum('ebf_eligible'),
+        ).order_by('%s_name' % loc_level, '%s_map_location_name' % loc_level)
         if not show_test:
             queryset = apply_exclude(domain, queryset)
         return queryset
 
-    map_data = {}
-
-    valid_total = 0
-    in_month_total = 0
-
-    for row in get_data_for(config):
-        valid = row['eligible']
-        name = row['%s_name' % loc_level]
-
-        in_month = row['in_month']
-
-        in_month_total += (in_month or 0)
-        valid_total += (valid or 0)
-
-        value = (in_month or 0) * 100 / (valid or 1)
-        row_values = {
-            'children': in_month or 0,
-            'all': valid or 0
-        }
-        if value < 20:
-            row_values.update({'fillKey': '0%-20%'})
-        elif 20 <= value < 60:
-            row_values.update({'fillKey': '20%-60%'})
-        elif value >= 60:
-            row_values.update({'fillKey': '60%-100%'})
-
-        map_data.update({name: row_values})
+    data_for_map, valid_total, in_month_total, average = generate_data_for_map(
+        get_data_for(config),
+        loc_level,
+        'children',
+        'all',
+        20,
+        60
+    )
 
     fills = OrderedDict()
-    fills.update({'0%-20%': RED})
-    fills.update({'20%-60%': ORANGE})
-    fills.update({'60%-100%': PINK})
-    fills.update({'defaultFill': GREY})
+    fills.update({'0%-20%': MapColors.RED})
+    fills.update({'20%-60%': MapColors.ORANGE})
+    fills.update({'60%-100%': MapColors.PINK})
+    fills.update({'defaultFill': MapColors.GREY})
 
-    return [
-        {
-            "slug": "severe",
-            "label": "Percent Exclusive Breastfeeding",
-            "fills": fills,
-            "rightLegend": {
-                "average": (in_month_total * 100) / (float(valid_total) or 1),
-                "info": _((
-                    "Percentage of infants 0-6 months of age who are fed exclusively with breast milk. "
-                    "<br/><br/>"
-                    "An infant is exclusively breastfed if they recieve only breastmilk with no additional food, "
-                    "liquids (even water) ensuring optimal nutrition and growth between 0 - 6 months"
-                ))
-            },
-            "data": map_data,
-        }
-    ]
+    gender_ignored, age_ignored, chosen_filters = chosen_filters_to_labels(config)
+
+    return {
+        "slug": "severe",
+        "label": "Percent Exclusive Breastfeeding{}".format(chosen_filters),
+        "fills": fills,
+        "rightLegend": {
+            "average": average,
+            "info": _((
+                "Percentage of infants 0-6 months of age who are fed exclusively with breast milk. "
+                "<br/><br/>"
+                "An infant is exclusively breastfed if they recieve only breastmilk with no additional food, "
+                "liquids (even water) ensuring optimal nutrition and growth between 0 - 6 months"
+            )),
+            "extended_info": [
+                {
+                    'indicator': 'Total number of children between ages 0 - 6 months{}:'
+                    .format(chosen_filters),
+                    'value': indian_formatted_number(valid_total)
+                },
+                {
+                    'indicator': (
+                        'Total number of children (0-6 months) exclusively breastfed in the given month{}:'
+                        .format(chosen_filters)
+                    ),
+                    'value': indian_formatted_number(in_month_total)
+                },
+                {
+                    'indicator': '% children (0-6 months) exclusively breastfed in the '
+                                 'given month{}:'.format(chosen_filters),
+                    'value': '%.2f%%' % (in_month_total * 100 / float(valid_total or 1))
+                }
+            ]
+        },
+        "data": dict(data_for_map),
+    }
 
 
 @quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
@@ -139,7 +133,7 @@ def get_exclusive_breastfeeding_data_chart(domain, config, loc_level, show_test=
         data_for_month['y'] = data_for_month['in_month'] / float(data_for_month['all'] or 1)
 
     top_locations = sorted(
-        [dict(loc_name=key, percent=value) for key, value in best_worst.iteritems()],
+        [dict(loc_name=key, percent=value) for key, value in six.iteritems(best_worst)],
         key=lambda x: x['percent'],
         reverse=True
     )
@@ -153,7 +147,7 @@ def get_exclusive_breastfeeding_data_chart(domain, config, loc_level, show_test=
                         'y': value['y'],
                         'all': value['all'],
                         'in_month': value['in_month']
-                    } for key, value in data['blue'].iteritems()
+                    } for key, value in six.iteritems(data['blue'])
                 ],
                 "key": "% children exclusively breastfed",
                 "strokeWidth": 2,
@@ -194,7 +188,7 @@ def get_exclusive_breastfeeding_sector_data(domain, config, loc_level, location_
         'all': 0
     })
 
-    loc_children = SQLLocation.objects.get(location_id=location_id).get_children()
+    loc_children = get_child_locations(domain, location_id, show_test)
     result_set = set()
 
     for row in data:
@@ -209,7 +203,7 @@ def get_exclusive_breastfeeding_sector_data(domain, config, loc_level, location_
             'all': valid or 0
         }
 
-        for prop, value in row_values.iteritems():
+        for prop, value in six.iteritems(row_values):
             tooltips_data[name][prop] += value
 
         in_month = row['in_month']
@@ -239,7 +233,7 @@ def get_exclusive_breastfeeding_sector_data(domain, config, loc_level, location_
                 "key": "",
                 "strokeWidth": 2,
                 "classed": "dashed",
-                "color": BLUE
+                "color": MapColors.BLUE
             },
         ]
     }

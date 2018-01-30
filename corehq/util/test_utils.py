@@ -4,7 +4,7 @@ import uuid
 import functools
 import json
 import logging
-from StringIO import StringIO
+from io import BytesIO
 
 import mock
 import os
@@ -247,8 +247,7 @@ class RunWithMultipleConfigs(object):
 
 
 def call_with_settings(fn, settings_dict, args, kwargs):
-    keys = settings_dict.keys()
-    original_settings = {key: getattr(settings, key, None) for key in keys}
+    original_settings = {key: getattr(settings, key, None) for key in settings_dict}
     try:
         # set settings to new values
         for key, value in settings_dict.items():
@@ -284,7 +283,7 @@ class capture_log_output(ContextDecorator):
         self.original_handlers = self.logger.handlers
         for handler in self.original_handlers:
             self.logger.removeHandler(handler)
-        self.output = StringIO()
+        self.output = BytesIO()
         self.logger.addHandler(logging.StreamHandler(self.output))
 
     def __enter__(self):

@@ -1,6 +1,8 @@
 from __future__ import absolute_import
 import random
 import string
+import six
+from six.moves import range
 
 
 def random_string(n=6):
@@ -9,7 +11,7 @@ def random_string(n=6):
 
 
 def ensure_unicode(s):
-    if not s or isinstance(s, unicode):
+    if not s or isinstance(s, six.text_type):
         return s
     else:
         return s.decode('utf-8')

@@ -24,6 +24,14 @@ web:
     - ..:/mnt/commcare-hq-ro${RO}
     - ${VOLUME_PREFIX}lib:/mnt/lib
 
+formplayer:
+  image: dimagi/formplayer
+  environment:
+    DEPENDENT_SERVICES: "COUCH:5984 POSTGRES:5432 REDIS:6379"
+    WEB_HOST: "dockerhost"
+  expose:
+    - "8010"
+
 postgres:
   image: dimagi/docker-postgresql
   environment:
@@ -36,7 +44,7 @@ postgres:
 
 couch:
   image: klaemo/couchdb:2.0-dev
-  command: ["--with-haproxy", "--admin=commcarehq:commcarehq", "-n", "1"]
+  command: ["--with-haproxy", "--with-admin-party-please", "-n", "1"]
   expose:
     - "5984"
   volumes:

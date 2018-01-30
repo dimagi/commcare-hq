@@ -7,7 +7,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 
-from custom.enikshay.case_utils import get_parent_of_case, CASE_TYPE_DRTB_HIV_REFERRAL
+from custom.enikshay.case_utils import get_first_parent_of_case, CASE_TYPE_DRTB_HIV_REFERRAL
 from custom.enikshay.const import ENROLLED_IN_PRIVATE
 from custom.enikshay.tests.utils import (
     setup_enikshay_locations,
@@ -256,11 +256,11 @@ class TestCreateEnikshayCases(TestCase):
             'referral_closed_date': 'acceptance_refusal_date',
             'accepted_by_name': 'phi',
         }, new_referral.dynamic_case_properties())
-        parent = get_parent_of_case(self.domain, new_referral, 'occurrence')
+        parent = get_first_parent_of_case(self.domain, new_referral, 'occurrence')
         self.assertEqual(new_occurrence.case_id, parent.case_id)
 
         new_trail = accessor.get_case(person.trails[0].case_id)
-        parent = get_parent_of_case(self.domain, new_trail, 'occurrence')
+        parent = get_first_parent_of_case(self.domain, new_trail, 'occurrence')
         self.assertEqual(new_occurrence.case_id, parent.case_id)
 
         new_drtb_hiv = accessor.get_case(person.drtb_hiv[0].case_id)
@@ -273,5 +273,5 @@ class TestCreateEnikshayCases(TestCase):
             'secondary_owner_type': 'drtb-hiv',
         }, new_secondary_owner.dynamic_case_properties())
         self.assertEqual("drtb_hiv_referral_owner", new_secondary_owner.owner_id)
-        parent = get_parent_of_case(self.domain, new_secondary_owner, 'occurrence')
+        parent = get_first_parent_of_case(self.domain, new_secondary_owner, 'occurrence')
         self.assertEqual(new_occurrence.case_id, parent.case_id)

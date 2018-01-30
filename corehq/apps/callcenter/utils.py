@@ -90,7 +90,7 @@ class _UserCaseHelper(object):
         self._user_case_changed(fields)
 
     def _user_case_changed(self, fields):
-        field_names = fields.keys()
+        field_names = list(fields)
         if _domain_has_new_fields(self.domain.name, field_names):
             add_inferred_export_properties.delay(
                 'UserSave',
@@ -295,7 +295,7 @@ def get_call_center_domains():
                 cc_case_type=case_type,
                 use_fixtures=config.get('use_fixtures', True)
             )
-    return filter(None, [to_domain_lite(hit) for hit in result.hits])
+    return [_f for _f in [to_domain_lite(hit) for hit in result.hits] if _f]
 
 
 def get_call_center_cases(domain_name, case_type, user=None):

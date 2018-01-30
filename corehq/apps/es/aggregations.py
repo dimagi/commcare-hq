@@ -42,6 +42,7 @@ from collections import namedtuple, defaultdict
 import datetime
 
 from corehq.elastic import SIZE_LIMIT
+import six
 
 MISSING_KEY = None
 
@@ -73,7 +74,11 @@ class Aggregation(object):
         return self
 
     def assemble(self):
-        assembled = {self.type: self.body}
+        if self.type == "case_property":
+            assembled = self.body
+        else:
+            assembled = {self.type: self.body}
+
         if self.aggregations:
             assembled['aggs'] = {}
             for agg in self.aggregations:
@@ -368,6 +373,11 @@ class TopHitsAggregation(Aggregation):
 
 class FilterResult(AggregationResult):
 
+    def __getattr__(self, attr):
+        sub_aggregation = list([a for a in self._aggregations if a.name == attr])[0]
+        if sub_aggregation:
+            return sub_aggregation.parse_result(self.result)
+
     @property
     def doc_count(self):
         return self.result['doc_count']
@@ -431,8 +441,8 @@ class AggregationRange(namedtuple('AggregationRange', 'start end key')):
             if value:
                 if isinstance(value, datetime.date):
                     value = value.isoformat()
-                elif not isinstance(value, basestring):
-                    value = unicode(value)
+                elif not isinstance(value, six.string_types):
+                    value = six.text_type(value)
                 range_[key] = value
         return range_
 
@@ -572,6 +582,10 @@ class NestedTermAggregationsHelper(object):
         ],
         inner_most_aggregation=SumAggregation('balance', 'balance'),
     ).get_data()
+
+    This works by bucketing docs first by one terms aggregation, then within
+    that bucket, bucketing further by the next term, and so on. This is then
+    flattened out to appear like a group-by-multiple.
     """
 
     def __init__(self, base_query, terms, inner_most_aggregation=None):

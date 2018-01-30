@@ -15,6 +15,7 @@ from .models import (
     ReportConfig,
     ReportNotification,
 )
+from six.moves import range
 
 
 class LanguageSelect(forms.Select):
@@ -125,7 +126,7 @@ class ScheduledReportForm(forms.Form):
         choices=ReportNotification.hour_choices())
 
     send_to_owner = forms.BooleanField(
-        label='Send to me',
+        label='Send to owner',
         required=False)
 
     attach_excel = forms.BooleanField(

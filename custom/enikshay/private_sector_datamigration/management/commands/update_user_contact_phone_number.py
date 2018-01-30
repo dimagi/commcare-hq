@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import print_function
 from django.core.management import BaseCommand
 
 from corehq.apps.locations.models import SQLLocation
@@ -46,7 +47,7 @@ class Command(BaseCommand):
             if not contact_phone_number and len(user_detail.mobileNumber) == 10:
                 location_user.user_data['contact_phone_number'] = '91' + user_detail.mobileNumber
                 location_user.save()
-                print 'Updated %s' % location_user.user_id
+                print('Updated %s' % location_user.user_id)
                 count += 1
 
-        print '%d users updated.' % count
+        print('%d users updated.' % count)

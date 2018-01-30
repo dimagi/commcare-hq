@@ -9,26 +9,41 @@ function AWCSCoveredController($scope, $routeParams, $location, $filter, icdsCas
     } else {
         storageService.setKey('search', $location.search());
     }
+    vm.userLocationId = userLocationId;
     vm.filtersData = $location.search();
-    vm.label = "AWC Covered";
+    vm.label = "AWCs Launched";
     vm.step = $routeParams.step;
     vm.steps = {
         'map': {route: '/awcs_covered/map', label: 'Map View'},
         'chart': {route: '/awcs_covered/chart', label: 'Chart View'},
     };
     vm.data = {
-        legendTitle: 'Total AWCs that have launched ICDS CAS',
+        legendTitle: 'Total AWCs that have launched ICDS-CAS. ' +
+        'AWCs are considered launched after submitting at least one Household Registration form.',
+    };
+    vm.rightLegend = {
+        info: 'Total AWCs that have launched ICDS-CAS. ' +
+        'AWCs are considered launched after submitting at least one Household Registration form.',
     };
     vm.chartData = null;
     vm.top_five = [];
     vm.bottom_five = [];
+    vm.selectedLocations = [];
+    vm.all_locations = [];
     vm.location_type = null;
     vm.loaded = false;
     vm.filters = ['age', 'gender'];
-    vm.rightLegend = {
-        info: 'Total AWCs that have launched ICDS CAS',
-    };
     vm.message = storageService.getKey('message') || false;
+
+    vm.prevDay = moment().subtract(1, 'days').format('Do MMMM, YYYY');
+    vm.currentMonth = moment().format("MMMM");
+    vm.showInfoMessage = function () {
+        var selected_month = parseInt($location.search()['month']) ||new Date().getMonth() + 1;
+        var selected_year =  parseInt($location.search()['year']) || new Date().getFullYear();
+        var current_month = new Date().getMonth() + 1;
+        var current_year = new Date().getFullYear();
+        return selected_month === current_month && selected_year === current_year && new Date().getDate() === 1;
+    };
 
     $scope.$watch(function() {
         return vm.selectedLocations;
@@ -96,13 +111,16 @@ function AWCSCoveredController($scope, $routeParams, $location, $filter, icdsCas
                     });
                 }));
                 var range = max - min;
-                vm.chartOptions.chart.forceY = [(min - range/10).toFixed(2), (max + range/10).toFixed(2)];
+                vm.chartOptions.chart.forceY = [
+                    (min - range/10).toFixed(2) < 0 ? 0 : (min - range/10).toFixed(2),
+                    (max + range/10).toFixed(2),
+                ];
             }
         });
     };
 
-    var init = function() {
-        var locationId = vm.filtersData.location_id || userLocationId;
+    vm.init = function() {
+        var locationId = vm.filtersData.location_id || vm.userLocationId;
         if (!locationId || locationId === 'all' || locationId === 'null') {
             vm.loadData();
             vm.loaded = true;
@@ -115,7 +133,7 @@ function AWCSCoveredController($scope, $routeParams, $location, $filter, icdsCas
         });
     };
 
-    init();
+    vm.init();
 
     $scope.$on('filtersChange', function() {
         vm.loadData();
@@ -124,7 +142,7 @@ function AWCSCoveredController($scope, $routeParams, $location, $filter, icdsCas
     vm.getDisableIndex = function () {
         var i = -1;
         window.angular.forEach(vm.selectedLocations, function (key, value) {
-            if (key !== null && key.location_id === userLocationId) {
+            if (key !== null && key.location_id === vm.userLocationId) {
                 i = value;
             }
         });
@@ -193,23 +211,27 @@ function AWCSCoveredController($scope, $routeParams, $location, $filter, icdsCas
                         return d3.format(",")(day['y']);
                     };
 
-                    var tooltip_content = "<p><strong>" + d.value + "</strong></p><br/>";
-                    tooltip_content += "<p>Number of AWCs Launched: <strong>" + findValue(vm.chartData[0].values, d.value) + "</strong></p>";
-
-                    return tooltip_content;
+                    var tooltipContent = vm.tooltipContent(d.value, findValue(vm.chartData[0].values, d.value));
+                    return tooltipContent;
                 });
                 return chart;
             },
         },
         caption: {
             enable: true,
-            html: '<i class="fa fa-info-circle"></i> Number of AWCs Launched',
+            html: '<i class="fa fa-info-circle"></i> ' + vm.data.legendTitle,
             css: {
                 'text-align': 'center',
                 'margin': '0 auto',
                 'width': '900px',
             },
         },
+    };
+
+    vm.tooltipContent = function(monthName, value) {
+        return "<p><strong>" + monthName + "</strong></p><br/>"
+            + vm.data.legendTitle
+            + "<p>Number of AWCs Launched: <strong>" + value + "</strong></p>";
     };
 
     vm.showAllLocations = function () {

@@ -50,6 +50,7 @@ class GenericRepeaterForm(forms.Form):
         self.domain = kwargs.pop('domain')
         self.repeater_class = kwargs.pop('repeater_class')
         self.formats = RegisterGenerator.all_formats_by_repeater(self.repeater_class, for_domain=self.domain)
+        self.submit_btn_text = kwargs.pop('submit_btn_text', _("Start Forwarding"))
         super(GenericRepeaterForm, self).__init__(*args, **kwargs)
 
         self.set_extra_django_form_fields()
@@ -80,7 +81,7 @@ class GenericRepeaterForm(forms.Form):
             ),
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(
-                    _("Start Forwarding"),
+                    self.submit_btn_text,
                     type="submit",
                     css_class='btn-primary',
                 )
@@ -188,8 +189,8 @@ class CaseRepeaterForm(GenericRepeaterForm):
 
     def clean(self):
         cleaned_data = super(CaseRepeaterForm, self).clean()
-        white_listed_case_types = cleaned_data['white_listed_case_types']
-        black_listed_users = cleaned_data['black_listed_users']
+        white_listed_case_types = cleaned_data.get('white_listed_case_types', [])
+        black_listed_users = cleaned_data.get('black_listed_users', [])
         if not set(white_listed_case_types).issubset([t[0] for t in self.case_type_choices]):
             raise ValidationError(_('Unknown case-type'))
         if not set(black_listed_users).issubset([t[0] for t in self.user_choices]):

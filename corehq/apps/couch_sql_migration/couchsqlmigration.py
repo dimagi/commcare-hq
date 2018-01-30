@@ -33,6 +33,7 @@ from couchforms.models import XFormInstance, doc_types as form_doc_types, all_kn
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from pillowtop.reindexer.change_providers.couch import CouchDomainDocTypeChangeProvider
+import six
 
 CASE_DOC_TYPES = ['CommCareCase', 'CommCareCase-Deleted', ]
 
@@ -314,6 +315,7 @@ def _copy_form_properties(domain, sql_form, couch_form):
 
     sql_form.openrosa_headers = couch_form.openrosa_headers
     sql_form.last_sync_token = couch_form.last_sync_token
+    sql_form.server_modified_on = couch_form.server_modified_on
     sql_form.received_on = couch_form.received_on
     sql_form.date_header = couch_form.date_header
     sql_form.app_id = couch_form.app_id
@@ -354,7 +356,7 @@ def _copy_form_properties(domain, sql_form, couch_form):
 def _migrate_form_attachments(sql_form, couch_form):
     """Copy over attachement meta - includes form.xml"""
     attachments = []
-    for name, blob in couch_form.blobs.iteritems():
+    for name, blob in six.iteritems(couch_form.blobs):
         attachments.append(XFormAttachmentSQL(
             name=name,
             form=sql_form,
@@ -447,7 +449,7 @@ def _get_case_and_ledger_updates(domain, sql_form):
 
     with interface.casedb_cache(domain=domain, lock=False, deleted_ok=True, xforms=xforms) as case_db:
         touched_cases = FormProcessorInterface(domain).get_cases_from_forms(case_db, xforms)
-        extensions_to_close = get_all_extensions_to_close(domain, touched_cases.values())
+        extensions_to_close = get_all_extensions_to_close(domain, list(touched_cases.values()))
         case_result = CaseProcessingResult(
             domain,
             [update.case for update in touched_cases.values()],

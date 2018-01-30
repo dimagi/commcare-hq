@@ -1,10 +1,10 @@
 SELECT
-  name,
+  convert_to(name, 'UTF8'),
   dob,
-  awc_location.awc_name,
-  awc_location.block_name,
-  awc_location.district_name,
-  awc_location.state_name
+  convert_to(awc_location.awc_name, 'UTF8'),
+  convert_to(awc_location.block_name, 'UTF8'),
+  convert_to(awc_location.district_name, 'UTF8'),
+  convert_to(awc_location.state_name, 'UTF8')
 FROM "%(person_table_name)s" AS person_cases
   JOIN "%(awc_location_table_name)s" AS awc_location
     ON person_cases.awc_id = awc_location.doc_id

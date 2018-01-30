@@ -3,6 +3,7 @@ import datetime
 from calendar import month_name
 from django.utils.translation import ugettext_lazy as _
 import logging
+import six
 
 try:
     # < 3.0
@@ -24,7 +25,7 @@ def force_to_date(val):
         return val.date()
     elif isinstance(val, datetime.date):
         return val
-    elif isinstance(val, basestring):
+    elif isinstance(val, six.string_types):
         return string_to_datetime(val).date()
     else:
         raise ValueError("object must be date or datetime!")
@@ -38,7 +39,7 @@ def force_to_datetime(val):
         return val
     elif isinstance(val, datetime.date):
         return datetime.datetime.combine(val, datetime.time())
-    elif isinstance(val, basestring):
+    elif isinstance(val, six.string_types):
         return string_to_datetime(val)
     else:
         raise ValueError("object must be date or datetime!")
@@ -208,7 +209,6 @@ class DateSpan(object):
         This is used for couch queries to get the adjusted date as a string
         that can be easily used in a couch view.
         """
-        # todo: should we get rid of this?
         return self.startdate_display
 
     @property
@@ -398,7 +398,7 @@ def get_day_of_month(year, month, count):
     just creating the date object is to support negative numbers
     e.g. pass in -1 for "last"
     """
-    r = rrule(MONTHLY, dtstart=datetime.datetime(year,month, 1),
+    r = rrule(MONTHLY, dtstart=datetime.datetime(year, month, 1),
               byweekday=(MO, TU, WE, TH, FR, SA, SU),
               bysetpos=count)
     res = r[0]
@@ -412,7 +412,7 @@ def get_business_day_of_month(year, month, count):
     Count can also be negative, e.g. pass in -1 for "last"
     """
     r = rrule(MONTHLY, byweekday=(MO, TU, WE, TH, FR), 
-              dtstart=datetime.datetime(year,month, 1),
+              dtstart=datetime.datetime(year, month, 1),
               bysetpos=count)
     res = r[0]
     if (res == None or res.month != month or res.year != year):
@@ -436,7 +436,7 @@ def get_business_day_of_month_before(year, month, day):
             except ValueError:
                 adate = datetime.datetime(year, month, 28)
     r = rrule(MONTHLY, byweekday=(MO, TU, WE, TH, FR), 
-              dtstart=datetime.datetime(year,month,1))
+              dtstart=datetime.datetime(year, month, 1))
     res = r.before(adate, inc=True)
     if (res == None or res.month != month or res.year != year):
         raise ValueError("No dates found in range. is there a flaw in your logic?")

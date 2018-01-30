@@ -14,6 +14,7 @@ from corehq.apps.receiverwrapper.exceptions import DuplicateFormatException
 from casexml.apps.case.xml import V2
 
 from dimagi.utils.parsing import json_format_datetime
+import six
 
 
 def _get_test_form(domain):
@@ -136,7 +137,7 @@ class GeneratorCollection(object):
 
     def get_all_formats(self, for_domain=None):
         """returns all the formats added to this repeater collection"""
-        return [(name, format.label) for name, format in self.format_generator_map.iteritems()
+        return [(name, format.label) for name, format in six.iteritems(self.format_generator_map)
                 if not for_domain or format.generator_class.enabled_for_domain(for_domain)]
 
     def get_generator_by_format(self, format):
@@ -308,7 +309,7 @@ class FormRepeaterJsonPayloadGenerator(BasePayloadGenerator):
         from corehq.apps.api.resources.v0_4 import XFormInstanceResource
         from corehq.apps.api.util import form_to_es_form
         res = XFormInstanceResource()
-        bundle = res.build_bundle(obj=form_to_es_form(form))
+        bundle = res.build_bundle(obj=form_to_es_form(form, include_attachments=True))
         return res.serialize(None, res.full_dehydrate(bundle), 'application/json')
 
     @property

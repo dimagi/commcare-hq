@@ -5,10 +5,9 @@
         "enikshay-reports-qa"
     ],
     "server_environment": [
-        "enikshay",
-        "softlayer"
+        "enikshay"
     ],
-    "data_source_table": "test_drtb_v2",
+    "data_source_table": "test_drtb_v3",
     "report_id": "lab_register_for_culture",
     "config": {
         "description": "",
@@ -67,15 +66,6 @@
                 },
                 "type": "multi_field_dynamic_choice_list",
                 "slug": "village"
-            },
-            {
-                "pre_value": "pmdt_excel",
-                "datatype": "string",
-                "pre_operator": "distinct from",
-                "display": null,
-                "field": "migration_type",
-                "type": "pre",
-                "slug": "migration_type"
             }
         ],
         "columns": [
@@ -140,6 +130,17 @@
                 "format": "default",
                 "transform": {},
                 "aggregation": "simple",
+                "field": "person_person_id",
+                "calculate_total": false,
+                "type": "field",
+                "display": "eNikshay ID"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
                 "field": "person_name",
                 "calculate_total": false,
                 "type": "field",
@@ -185,18 +186,19 @@
                 "description": null,
                 "format": "default",
                 "transform": {
+                    "type": "multiple_value_string_translation",
+                    "delimiter": ", ",
                     "translations": {
                         "known_patient_contact": "Contact of known TB patient",
                         "refugee": "Refugee",
-                        "tribal_population": "Tribal Population",
                         "miner": "Miner",
                         "migrant": "Migrant",
                         "other": "Other",
-                        "slum_dweller": "Slum Dweller",
-                        "health_care_worker": "Health Care Worker",
-                        "prison_inmate": "Prison Inmate"
-                    },
-                    "type": "translation"
+                        "health_care_worker": "Health care worker",
+                        "tribal_population": "Tribal population",
+                        "slum_dweller": "Slum dweller",
+                        "prison_inmate": "Prison inmate"
+                    }
                 },
                 "aggregation": "simple",
                 "field": "key_populations_from_occurrence",

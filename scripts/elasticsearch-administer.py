@@ -13,6 +13,7 @@ import sys
 
 from elasticsearch import Elasticsearch
 from elasticsearch.client import ClusterClient, NodesClient, CatClient, IndicesClient
+from six.moves import input
 
 
 def pprint(data):
@@ -20,7 +21,7 @@ def pprint(data):
 
 
 def confirm(msg):
-    if raw_input(msg + "\n(y/n)") != 'y':
+    if input(msg + "\n(y/n)") != 'y':
         sys.exit()
 
 
@@ -90,7 +91,7 @@ def decommission_node(es):
     for node in nodes:
         print(node.name, node.docs)
     confirm("Are you sure you want to decommission a node?")
-    node_name = raw_input("Which one would you like to decommission?\nname:")
+    node_name = input("Which one would you like to decommission?\nname:")
     names = [node.name for node in nodes]
     if node_name not in names:
         print("You must enter one of {}".format(", ".join(names)))
@@ -106,7 +107,7 @@ def force_zone_awareness(es):
     print("NODE SETTINGS:")
     for node in get_nodes_info(es):
         pprint(node.settings)
-    zones = raw_input("\nEnter the zone names, separated by a comma\n")
+    zones = input("\nEnter the zone names, separated by a comma\n")
     confirm("Are you sure these zones exist?")
     cmd = {"persistent": {"cluster.routing.allocation.awareness.force.zone.values": zones,
                           "cluster.routing.allocation.awareness.attributes": "zone"}}
@@ -150,7 +151,7 @@ commands = {
 def main():
     parser = ArgumentParser(description=__doc__, formatter_class=RawDescriptionHelpFormatter)
     parser.add_argument('host_url')
-    parser.add_argument('command', choices=commands.keys())
+    parser.add_argument('command', choices=list(commands))
     args = parser.parse_args()
     es = Elasticsearch([{'host': args.host_url, 'port': 9200}])
     commands[args.command](es)

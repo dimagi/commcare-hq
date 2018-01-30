@@ -2,14 +2,16 @@ from __future__ import print_function
 from __future__ import absolute_import
 import re
 from collections import defaultdict
-from github3 import GitHub
+from github import Github
 from django.template.loader import render_to_string
 import requests
 from gevent.pool import Pool
 
 LABELS_TO_EXPAND = [
+    "product/all-users-all-environments",
+    "product/prod-india-all-users",
+    "product/feature-flag",
     "product/all-users",
-    "product/feature-flag"
 ]
 
 
@@ -24,7 +26,7 @@ def get_deploy_email_message_body(environment, user, compare_url):
     else:
         pr_numbers = _get_pr_numbers(last_deploy, current_deploy)
         pool = Pool(5)
-        pr_infos = filter(None, pool.map(_get_pr_info, pr_numbers))
+        pr_infos = [_f for _f in pool.map(_get_pr_info, pr_numbers) if _f]
 
     prs_by_label = _get_prs_by_label(pr_infos)
 
@@ -39,17 +41,16 @@ def get_deploy_email_message_body(environment, user, compare_url):
 
 
 def _get_pr_numbers(last_deploy, current_deploy):
-    repo = GitHub().repository('dimagi', 'commcare-hq')
-    comparison = repo.compare_commits(last_deploy, current_deploy)
+    repo = Github().get_organization('dimagi').get_repo('commcare-hq')
+    last_deploy_sha = repo.get_commit(last_deploy).sha
+    current_deploy_sha = repo.get_commit(current_deploy).sha
+    comparison = repo.compare(last_deploy_sha, current_deploy_sha)
 
-    pr_numbers = map(
-        lambda repo_commit: int(re.search(r'Merge pull request #(\d+)', repo_commit.commit.message).group(1)),
-        filter(
-            lambda repo_commit: repo_commit.commit.message.startswith('Merge pull request'),
-            comparison.commits
-        )
-    )
-    return pr_numbers
+    return [
+        int(re.search(r'Merge pull request #(\d+)', repo_commit.commit.message).group(1))
+        for repo_commit in comparison.commits
+        if repo_commit.commit.message.startswith('Merge pull request')
+    ]
 
 
 def _get_pr_info(pr_number):

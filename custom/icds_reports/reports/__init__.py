@@ -134,6 +134,6 @@ CUSTOM_REPORTS = (
     )),
     ('CUSTOM REPORTS', (
         TableauReport,
-        DashboardReport
+        DashboardReport,
     )),
 )

@@ -22,13 +22,3 @@ Expect the following structure and components.
 ## Command Reference
  * `ptop_preindex` will call all the registered ptop_fast_reindexers
  * `ptop_es_manage` when called in our deployment workflow (see command flags for reference) - it can flip the index aliases to what's considered master to turn on preindexed indices.
-
-
-
-## Indicator Pillows
-
-TODO
-
-## Fluff Pillows
-
-TODO

@@ -34,6 +34,8 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, D
 from phonelog.reports import BaseDeviceLogReport
 from phonelog.models import DeviceReportEntry
 from corehq.apps.es.domains import DomainES
+import six
+from six.moves import range
 
 INDICATOR_DATA = {
     "active_domain_count": {
@@ -809,7 +811,7 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
             return _('No info')
 
         for dom in domains:
-            if dom.has_key('name'):  # for some reason when using the statistical facet, ES adds an empty dict to hits
+            if 'name' in dom:  # for some reason when using the statistical facet, ES adds an empty dict to hits
                 first_form_default_message = _("No Forms")
                 if dom.get("cp_last_form", None):
                     first_form_default_message = _("Unable to parse date")
@@ -1048,12 +1050,12 @@ class AdminAppReport(AdminFacetedReport):
 
     @property
     def properties(self):
-        return filter(lambda p: p and p not in self.excluded_properties, Application.properties().keys())
+        return [p for p in Application.properties().keys() if p and p not in self.excluded_properties]
 
     @property
     def es_facet_list(self):
         props = self.properties + self.profile_list + ["cp_is_active"]
-        return filter(lambda p: p not in self.excluded_properties, props)
+        return [p for p in props if p not in self.excluded_properties]
 
     @property
     def es_facet_mapping(self):
@@ -1294,13 +1296,13 @@ class CommCareVersionReport(AdminFacetedReport):
             domain_name = domain['fields']['name']
             rows.update({domain_name: [domain_name] + [0] * len(versions)})
 
-        for data in get_data(rows.keys()):
+        for data in get_data(list(rows.keys())):
             row = rows.get(data.domain, None)
             if row and data.commcare_version in versions:
                 version_index = versions.index(data.commcare_version)
                 row[version_index + 1] = data.doc_count
 
-        return rows.values()
+        return list(rows.values())
 
 
 class AdminPhoneNumberReport(PhoneNumberReport):
@@ -1327,7 +1329,7 @@ class AdminPhoneNumberReport(PhoneNumberReport):
     @memoized
     def phone_number_filter(self):
         value = RequiredPhoneNumberFilter.get_value(self.request, domain=None)
-        if isinstance(value, basestring):
+        if isinstance(value, six.string_types):
             return apply_leniency(value.strip())
 
         return None

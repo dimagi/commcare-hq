@@ -119,7 +119,12 @@ class FormattedDetailColumn(object):
         )
         return header
 
-    variables = None
+    @property
+    def variables(self):
+        variables = {}
+        if re.search(r'\$lang', self.column.field):
+            variables['lang'] = self.id_strings.current_language()
+        return variables
 
     @property
     def template(self):
@@ -146,9 +151,14 @@ class FormattedDetailColumn(object):
         sort = None
 
         if self.sort_xpath_function:
+            if self.sort_element and self.sort_element.type == 'index':
+                sort_type = self.sort_element.type
+            else:
+                sort_type = self.SORT_TYPE
+
             sort = sx.Sort(
                 text=sx.Text(xpath_function=self.sort_xpath_function),
-                type=self.SORT_TYPE,
+                type=sort_type,
             )
 
         if self.sort_element:
@@ -351,7 +361,7 @@ class Enum(FormattedDetailColumn):
 
     @property
     def variables(self):
-        variables = {}
+        variables = super(Enum, self).variables
         for item in self.column.enum:
             v_key = item.key_as_variable
             v_val = self.id_strings.detail_column_enum_variable(
@@ -476,19 +486,13 @@ class Filter(HideShortColumn):
         return []
 
 
-@register_format_type('calculate')
-class Calculate(FormattedDetailColumn):
+@register_format_type('markdown')
+class Markdown(FormattedDetailColumn):
 
     @property
-    def variables(self):
-        variables = {}
-        if re.search(r'\$lang', self.column.calc_xpath):
-            variables['lang'] = self.id_strings.current_language()
-        return variables
-
-    @property
-    def xpath_function(self):
-        return dot_interpolate(self.column.calc_xpath, self.xpath)
+    def template_form(self):
+        if self.detail.display == 'long':
+            return 'markdown'
 
 
 @register_format_type('address')

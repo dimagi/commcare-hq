@@ -26,6 +26,7 @@ from corehq.apps.hqwebapp.templatetags.proptable_tags import (
     get_tables_as_columns, get_default_definition)
 from dimagi.utils.parsing import json_format_datetime
 from django_prbac.utils import has_privilege
+import six
 
 
 register = template.Library()
@@ -34,7 +35,7 @@ register = template.Library()
 @register.simple_tag
 def render_form_xml(form):
     xml = form.get_xml()
-    if isinstance(xml, unicode):
+    if isinstance(xml, six.text_type):
         xml = xml.encode('utf-8', errors='replace')
     formatted_xml = indent_xml(xml) if xml else ''
     return format_html(u'<pre class="prettyprint linenums"><code class="no-border language-xml">{}</code></pre>',
@@ -88,10 +89,6 @@ def render_form(form, domain, options):
         "domain": domain,
         'question_list_not_found': question_list_not_found,
         "form_data": form_data,
-        "form_table_options": {
-            # todo: wells if display config has more than one column
-            "put_loners_in_wells": False
-        },
         "side_pane": side_pane,
     }
 
@@ -149,10 +146,11 @@ def _get_display_options(request, domain, user, form, support_enabled):
 def _get_form_metadata_context(domain, form, support_enabled=False):
     meta = _top_level_tags(form).get('meta', None) or {}
     meta['received_on'] = json_format_datetime(form.received_on)
+    meta['server_modified_on'] = json_format_datetime(form.server_modified_on) if form.server_modified_on else ''
     if support_enabled:
         meta['last_sync_token'] = form.last_sync_token
 
-    definition = get_default_definition(sorted_form_metadata_keys(meta.keys()))
+    definition = get_default_definition(sorted_form_metadata_keys(list(meta)))
     form_meta_data = get_tables_as_columns(meta, definition, timezone=get_timezone_for_request())
     if getattr(form, 'auth_context', None):
         auth_context = AuthContext(form.auth_context)
@@ -210,7 +208,7 @@ def _get_cases_changed_context(domain, form, case_id=None):
             url = "#"
 
         definition = get_default_definition(
-            sorted_case_update_keys(b.keys()),
+            sorted_case_update_keys(list(b)),
             assume_phonetimes=(not form.metadata or
                                (form.metadata.deviceID != CLOUDCARE_DEVICE_ID)),
         )

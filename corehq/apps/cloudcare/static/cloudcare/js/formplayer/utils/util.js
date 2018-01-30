@@ -137,7 +137,6 @@ Util.CloudcareUrl = function (options) {
     this.search = options.search;
     this.queryDict = options.queryDict;
     this.singleApp = options.singleApp;
-    this.previewCommand = options.previewCommand;
     this.installReference = options.installReference;
     this.sortIndex = options.sortIndex;
 
@@ -171,14 +170,6 @@ Util.CloudcareUrl = function (options) {
         this.sortIndex = null;
     };
 
-    this.setSessionId = function (sessionId) {
-        this.sessionId = sessionId;
-        this.steps = null;
-        this.page = null;
-        this.search = null;
-        this.sortIndex = null;
-    };
-
     this.setQuery = function (queryDict) {
         this.queryDict = queryDict;
     };
@@ -190,16 +181,13 @@ Util.CloudcareUrl = function (options) {
         this.sortIndex = null;
         this.search = null;
         this.queryDict = null;
-        this.previewCommand = null;
     };
 
     this.onSubmit = function () {
-        this.steps = null;
         this.page = null;
         this.sortIndex = null;
         this.search = null;
         this.queryDict = null;
-        this.previewCommand = null;
     };
 
     this.spliceSteps = function (index) {
@@ -228,7 +216,6 @@ Util.CloudcareUrl.prototype.toJson = function () {
         search: self.search,
         queryDict: self.queryDict,
         singleApp: self.singleApp,
-        previewCommand: self.previewCommand,
         installReference: self.installReference,
         sortIndex: self.sortIndex,
     };
@@ -245,7 +232,6 @@ Util.CloudcareUrl.fromJson = function (json) {
         'search': data.search,
         'queryDict': data.queryDict,
         'singleApp': data.singleApp,
-        'previewCommand': data.previewCommand,
         'installReference': data.installReference,
         'sortIndex': data.sortIndex,
     };

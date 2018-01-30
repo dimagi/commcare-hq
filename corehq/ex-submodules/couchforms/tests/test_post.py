@@ -21,12 +21,14 @@ class PostTestMixin(TestFileMixin):
 
     def _process_sql_json(self, expected, xform_json, any_id_ok):
         expected['received_on'] = xform_json['received_on']
+        expected['server_modified_on'] = xform_json['server_modified_on']
         if any_id_ok:
             expected['_id'] = xform_json['_id']
         return expected, xform_json
 
     def _process_couch_json(self, expected, xform_json, any_id_ok):
         expected['received_on'] = xform_json['received_on']
+        expected['server_modified_on'] = xform_json['server_modified_on']
         expected['_rev'] = xform_json['_rev']
         for key in ['_attachments', 'external_blobs']:
             expected.pop(key, None)

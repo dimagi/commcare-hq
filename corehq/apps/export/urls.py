@@ -40,6 +40,7 @@ from corehq.apps.export.views import (
     CopyExportView,
     DataFileDownloadList,
     DataFileDownloadDetail,
+    add_export_email_request
 )
 
 urlpatterns = [
@@ -152,6 +153,9 @@ urlpatterns = [
     url(r"^custom/copy/(?P<export_id>[\w\-]+)/$",
         CopyExportView.as_view(),
         name=CopyExportView.urlname),
+    url(r'^add_export_email_request/$',
+        add_export_email_request,
+        name='add_export_email_request'),
 
     # Delete export views
     url(r"^custom/delete/(?P<export_id>[\w\-]+)/$",
@@ -169,9 +173,6 @@ urlpatterns = [
         DailySavedExportPaywall.as_view(),
         name=DailySavedExportPaywall.urlname),
 
-    url(r"^custom/dailysaved/download/(?P<export_instance_id>[\w\-]+)/$",
-        download_daily_saved_export,
-        name="download_daily_saved_export"),
     url(r"^build_full_schema/$",
         GenerateSchemaFromAllBuildsView.as_view(),
         name=GenerateSchemaFromAllBuildsView.urlname),
