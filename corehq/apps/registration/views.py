@@ -15,7 +15,6 @@ import sys
 from django.views.generic.base import TemplateView, View
 from djangular.views.mixins import allow_remote_invocation, JSONResponseMixin
 
-from corehq import toggles
 from corehq.apps.analytics import ab_tests
 from corehq.apps.analytics.tasks import (
     track_workflow,
@@ -269,44 +268,44 @@ class RegisterDomainView(TemplateView):
         nextpage = request.POST.get('next')
         form = DomainRegistrationForm(request.POST)
         context = self.get_context_data(form=form)
-        if form.is_valid():
-            reqs_today = RegistrationRequest.get_requests_today()
-            max_req = settings.DOMAIN_MAX_REGISTRATION_REQUESTS_PER_DAY
-            if reqs_today >= max_req:
-                context.update({
-                    'current_page': {'page_name': _('Oops!')},
-                    'error_msg': _(
-                        'Number of domains requested today exceeds limit (%d) - contact Dimagi'
-                    ) % max_req,
-                    'show_homepage_link': 1
-                })
-                return render(request, 'error.html', context)
+        if not form.is_valid():
+            return self.render_to_response(context)
 
-            try:
-                domain_name = request_new_domain(request, form, is_new_user=self.is_new_user)
-            except NameUnavailableException:
-                context.update({
-                    'current_page': {'page_name': _('Oops!')},
-                    'error_msg': _('Project name already taken - please try another'),
-                    'show_homepage_link': 1
-                })
-                return render(request, 'error.html', context)
+        reqs_today = RegistrationRequest.get_requests_today()
+        max_req = settings.DOMAIN_MAX_REGISTRATION_REQUESTS_PER_DAY
+        if reqs_today >= max_req:
+            context.update({
+                'current_page': {'page_name': _('Oops!')},
+                'error_msg': _(
+                    'Number of domains requested today exceeds limit (%d) - contact Dimagi'
+                ) % max_req,
+                'show_homepage_link': 1
+            })
+            return render(request, 'error.html', context)
 
-            if self.is_new_user:
-                context.update({
-                    'requested_domain': domain_name,
-                    'current_page': {'page_name': _('Confirm Account')},
-                })
-                track_workflow(self.request.user.email, "Created new project")
-                return render(request, 'registration/confirmation_sent.html', context)
-            else:
-                if nextpage:
-                    return HttpResponseRedirect(nextpage)
-                if referer_url:
-                    return redirect(referer_url)
-                return HttpResponseRedirect(reverse("domain_homepage", args=[domain_name]))
+        try:
+            domain_name = request_new_domain(request, form, is_new_user=self.is_new_user)
+        except NameUnavailableException:
+            context.update({
+                'current_page': {'page_name': _('Oops!')},
+                'error_msg': _('Project name already taken - please try another'),
+                'show_homepage_link': 1
+            })
+            return render(request, 'error.html', context)
 
-        return self.render_to_response(context)
+        if self.is_new_user:
+            context.update({
+                'requested_domain': domain_name,
+                'current_page': {'page_name': _('Confirm Account')},
+            })
+            track_workflow(self.request.user.email, "Created new project")
+            return render(request, 'registration/confirmation_sent.html', context)
+
+        if nextpage:
+            return HttpResponseRedirect(nextpage)
+        if referer_url:
+            return redirect(referer_url)
+        return HttpResponseRedirect(reverse("domain_homepage", args=[domain_name]))
 
     def get_context_data(self, **kwargs):
         request = self.request
