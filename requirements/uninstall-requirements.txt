@@ -2,4 +2,4 @@ djtables
 xlutils
 github3.py
 mocker
-ethiopian_date
+ethiopian-date
