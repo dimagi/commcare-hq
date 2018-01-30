@@ -77,27 +77,27 @@ function LocationSearchViewModel(tree_model) { // eslint-disable-line no-unused-
                     for (var lineage_idx=0; lineage_idx<response.lineage.length; lineage_idx ++) {
                         var location = response.lineage[lineage_idx];
                         var data = {name: location.name,
-                        location_type: location.location_type,
-                        uuid: location.location_id,
-                        is_archived: location.is_archived,
-                        can_edit: can_edit_root,
-                        children: child,
-                        expanded: child ? 'semi' : false,
-                        children_status: 'semi_loaded',
+                            location_type: location.location_type,
+                            uuid: location.location_id,
+                            is_archived: location.is_archived,
+                            can_edit: can_edit_root, // eslint-disable-line no-undef
+                            children: child,
+                            expanded: child ? 'semi' : false,
+                            children_status: 'semi_loaded',
                         };
                         var level = new LocationModel(data, model.selected_location_tree, response.lineage.length - lineage_idx - 1);
                         child = Array.of(Object.assign({}, data));
                     }
-                    var root_children = []
-                    for (var child_idx=0; child_idx<locs.length; child_idx++) {
-                        if (locs[child_idx].name === child[0].name) {
+                    var root_children = [];
+                    for (var child_idx=0; child_idx<locs.length; child_idx++) { // eslint-disable-line no-undef
+                        if (locs[child_idx].name === child[0].name) { // eslint-disable-line no-undef
                             root_children.push(child[0]);
                         }
                         else {
-                            root_children.push(locs[child_idx]);
+                            root_children.push(locs[child_idx]); // eslint-disable-line no-undef
                         }
                     }
-                    level = new LocationModel({name: '_root', children: root_children, can_edit: can_edit_root, expanded: 'semi'}, model.selected_location_tree);
+                    level = new LocationModel({name: '_root', children: root_children, can_edit: can_edit_root, expanded: 'semi'}, model.selected_location_tree); // eslint-disable-line no-undef
                     return level;
                 };
 
@@ -123,10 +123,10 @@ function LocationModel(data, root, depth) {
     this.expanded = ko.observable(false);
 
     this.expanded.subscribe(function(val) {
-            if (val == true && (this.children_status() == 'not_loaded' || this.children_status() === 'semi_loaded')) {
-                this.load_children_async();
-            }
-        }, this);
+        if (val == true && (this.children_status() === 'not_loaded' || this.children_status() === 'semi_loaded')) {
+            this.load_children_async();
+        }
+    }, this);
 
     this.toggle = function() {
         if (this.expanded() === 'semi') {
@@ -144,7 +144,7 @@ function LocationModel(data, root, depth) {
         this.is_archived(data.is_archived);
         this.can_edit(data.can_edit);
         this.expanded(data.expanded);
-        if (data.children_status != null) {
+        if (data.children_status !== null && data.children_status !== undefined) {
             this.children_status(data.children_status);
         }
         if (data.children != null) {
@@ -158,7 +158,7 @@ function LocationModel(data, root, depth) {
             children = _.sortBy(data, function(e) { return e.name; });
         }
 
-        if (loc.children().length > 0 && loc.name() != "_root") {
+        if (loc.children().length > 0 && loc.name() !== "_root") {
             for (var child_idx = 0; child_idx < children.length; child_idx++) {
                 if (children[child_idx].name === loc.children()[0].name()) {
                     children.splice(child_idx, 1);
@@ -178,10 +178,10 @@ function LocationModel(data, root, depth) {
             }));
         }
 
-        if (this.expanded() == true) {
+        if (this.expanded() === true) {
             this.children_status('loaded');
         }
-        else if (this.expanded() == 'semi') {
+        else if (this.expanded() === 'semi') {
             this.children_status('semi_loaded');
         }
     }

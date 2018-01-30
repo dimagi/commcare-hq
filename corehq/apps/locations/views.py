@@ -600,6 +600,7 @@ def delete_location(request, domain, loc_id):
         )
     })
 
+
 @location_safe
 def location_lineage(request, domain, loc_id):
     lineage = SQLLocation.objects.get_locations([loc_id])[0].lineage
