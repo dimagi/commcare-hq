@@ -487,7 +487,7 @@ class AwcReportsView(BaseReportView):
         step, now, month, year, include_test, domain, current_month, prev_month, location, selected_month = \
             self.get_settings(request, *args, **kwargs)
 
-        two_before = month - relativedelta(months=2)
+        two_before = current_month - relativedelta(months=2)
         location = request.GET.get('location_id', None)
         aggregation_level = 5
 
@@ -1016,15 +1016,19 @@ class ImmunizationCoverageView(BaseReportView):
 
 
 @method_decorator([login_and_domain_required], name='dispatch')
-class AWCDailyStatusView(BaseReportView):
+class AWCDailyStatusView(View):
     def get(self, request, *args, **kwargs):
-        step, now, month, year, include_test, domain, current_month, prev_month, location, selected_month = \
-            self.get_settings(request, *args, **kwargs)
+        include_test = request.GET.get('include_test', False)
+        step = kwargs.get('step')
+        now = datetime.utcnow() - relativedelta(days=1)
+
+        domain = self.kwargs['domain']
 
         config = {
             'month': tuple(now.timetuple())[:3],
             'aggregation_level': 1,
         }
+        location = request.GET.get('location_id', '')
         config.update(get_location_filter(location, self.kwargs['domain']))
         loc_level = get_location_level(config.get('aggregation_level'))
 
