@@ -956,7 +956,7 @@ def new_module(request, domain, app_id):
                 # one followup form
                 msg = _("This is your follow up form. "
                         "Delete this label and add questions for any follow up visits.")
-                attachment = get_default_followup_form_xml("", context={'lang': lang, 'default_label': msg})
+                attachment = get_default_followup_form_xml(context={'lang': lang, 'default_label': msg})
                 followup = app.new_form(module_id, _("Followup Form"), lang, attachment=attachment)
                 followup.requires = "case"
                 followup.actions.update_case = UpdateCaseAction(condition=FormActionCondition(type='always'))
