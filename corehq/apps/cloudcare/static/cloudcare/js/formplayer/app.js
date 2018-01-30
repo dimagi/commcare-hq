@@ -154,9 +154,10 @@ FormplayerFrontend.on('startForm', function (data) {
     };
     data.onsubmit = function (resp) {
         if (resp.status === "success") {
-            var inTest = hqImport('analytix/js/kissmetrix').getAbTest('Data Feedback Loop') === 'data_feedback_loop_on',
-                message = inTest ? resp.submitResponseMessage : getext("Form successfully saved");
-            showSuccess(message, $("#cloudcare-notifications"), 50000);
+            var markdowner = window.markdownit();
+                inTest = hqImport('analytix/js/kissmetrix').getAbTest('Data Feedback Loop') === 'data_feedback_loop_on',
+                message = inTest ? resp.submitResponseMessage : gettext("Form successfully saved!");
+            showSuccess(markdowner.render(message), $("#cloudcare-notifications"), 50000, true);
             if (user.environment === FormplayerFrontend.Constants.PREVIEW_APP_ENVIRONMENT) {
                 hqImport('analytix/js/kissmetrix').track.event("[app-preview] User submitted a form");
                 hqImport('analytix/js/google').track.event("App Preview", "User submitted a form");

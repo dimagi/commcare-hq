@@ -238,20 +238,16 @@ class SubmissionPost(object):
                         if cases:
                             case_link = reverse(CaseDetailsView.urlname, args=[instance.domain, cases[0]._id])
                             case_export_link = reverse(CaseExportListView.urlname, args=[instance.domain])
-                            messages.append(_('''
-                                You just submitted <a href="{}">this form</a>, which affected <a href="{}">this case</a>.
-                            ''').format(form_link, case_link))
-                            messages.append(_('''
-                                Click to export your <a href="{}">case</a> or <a href="{}">form</a> data.
-                            ''').format(case_export_link, form_export_link))
+                            messages.append(
+                                _("You just submitted [this form]({}), which affected [this case]({}).")
+                                .format(form_link, case_link))
+                            messages.append(
+                                _("Click to export your [case]({}) or [form]({}) data.")
+                                .format(case_export_link, form_export_link))
                         else:
-                            messages.append(_('''
-                                You just submitted <a href="{}">this form</a>.
-                            ''').format(form_link))
-                            messages.append(_('''
-                                Click to export your <a href="{}">form</a> data.
-                            ''').format(form_export_link))
-                        openrosa_kwargs['success_message'] = "<br><br>".join(messages)
+                            messages.append(_("You just submitted [this form]({}).").format(form_link))
+                            messages.append(_("Click to export your [form]({}) data.").format(form_export_link))
+                        openrosa_kwargs['success_message'] = "\n\n".join(messages)
                 elif instance.is_error:
                     submission_type = 'error'
 
