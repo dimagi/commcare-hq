@@ -64,10 +64,6 @@ from custom.enikshay.integrations.nikshay.field_mappings import (
     key_population,
     area,
 )
-from custom.enikshay.integrations.nikshay.codes import (
-    state_codes,
-    district_codes,
-)
 from custom.enikshay.case_utils import update_case
 from dimagi.utils.post import parse_SOAP_response
 
@@ -711,15 +707,11 @@ def _get_person_age(person_case_properties):
     return person_age
 
 
-def _get_location_nikshay_id(location_id, codes):
+def _get_location_nikshay_code(location_id):
     if location_id:
         location = SQLLocation.active_objects.get_or_None(location_id=location_id)
         if location:
-            nikshay_code = location.metadata.get('nikshay_code')
-            if nikshay_code:
-                state_details = codes.get(nikshay_code)
-                if state_details:
-                    return state_details[0]
+            return location.metadata.get('nikshay_code')
 
 
 def _get_person_case_properties(episode_case, person_case, person_case_properties):
@@ -760,11 +752,8 @@ def property_value_or_backup(property_value, backup_value):
 
 
 def _get_person_case_properties_v2(episode_case, person_case, person_case_properties):
-    state_id = _get_location_nikshay_id(person_case_properties.get('current_address_state_choice'),
-                                        state_codes)
-
-    district_id = _get_location_nikshay_id(person_case_properties.get('current_address_district_choice'),
-                                           district_codes)
+    state_nikshay_code = _get_location_nikshay_code(person_case_properties.get('current_address_state_choice'))
+    district_nikshay_code = _get_location_nikshay_code(person_case_properties.get('current_address_district_choice'))
 
     person_properties = {
         "patient_name": person_case.name,
@@ -789,8 +778,8 @@ def _get_person_case_properties_v2(episode_case, person_case, person_case_proper
         "p_landmark": person_case_properties.get('current_address_landmark', ''),
         "p_pincode": property_value_or_backup(person_case_properties.get('current_address_postal_code'),
                                               '888888'),
-        "p_state": state_id,
-        "p_district": district_id,
+        "p_state": state_nikshay_code,
+        "p_district": district_nikshay_code,
         "socio_economic_status": property_value_or_backup(person_case_properties.get('socioeconomic_status'),
                                                           'NA').upper(),
         "hiv_status": hiv_status.get(person_case_properties.get('hiv_status'), hiv_status.get('unknown')),
