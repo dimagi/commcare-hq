@@ -770,14 +770,14 @@ def _get_person_case_properties_v2(episode_case, person_case, person_case_proper
         "p_house_no": person_case_properties.get('current_address', ''),
         # send 0 since that is accepted by Nikshay for this mandatory field
         "contact_no": (person_case_properties.get(PRIMARY_PHONE_NUMBER) or '0'),
-        "contact_person_name": person_case_properties.get('secondary_contact_name_address', ''),
-        "contact_person_address": person_case_properties.get('secondary_contact_name_address', ''),
-        "contact_person_mobile_no": person_case_properties.get(BACKUP_PHONE_NUMBER, ''),
+        "contact_person_name": person_case_properties.get('secondary_contact_name_address', DUMMY_VALUES['null']),
+        "contact_person_address": person_case_properties.get('secondary_contact_name_address', DUMMY_VALUES['null']),
+        "contact_person_mobile_no": person_case_properties.get(BACKUP_PHONE_NUMBER, DUMMY_VALUES['phone_number']),
         "area": area.get(
             person_case_properties.get('area'),
             area.get('not_known')),
         "p_town": person_case_properties.get('current_address_village_town_city', ''),
-        "p_taluka": person_case_properties.get('current_address_block_taluka_mandal', ''),
+        "p_taluka": person_case_properties.get('current_address_block_taluka_mandal', DUMMY_VALUES['null']),
         "p_landmark": person_case_properties.get('current_address_landmark', ''),
         "p_pincode": person_case_properties.get('current_address_postal_code', '888888'),
         "p_state": state_id,
