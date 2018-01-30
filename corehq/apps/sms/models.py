@@ -14,6 +14,7 @@ from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.models import Form
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.mixin import UUIDGeneratorMixin
+from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CouchUser
 from corehq.apps.sms.mixin import (CommCareMobileContactMixin,
     InvalidFormatException, PhoneNumberInUseException, apply_leniency,
@@ -851,6 +852,9 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
     SOURCE_UNRECOGNIZED = 'UNR'
     SOURCE_FORWARDED = 'FWD'
     SOURCE_OTHER = 'OTH'
+    SOURCE_SCHEDULED_BROADCAST = 'SBR'
+    SOURCE_IMMEDIATE_BROADCAST = 'IBR'
+    SOURCE_CASE_RULE = 'CRL'
 
     SOURCE_CHOICES = (
         (SOURCE_BROADCAST, ugettext_noop('Broadcast')),
@@ -1223,6 +1227,119 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
 
         return cls.objects.create(
             domain=reminder_definition.domain,
+            date=datetime.utcnow(),
+            source=source,
+            source_id=source_id,
+            content_type=content_type,
+            form_unique_id=form_unique_id,
+            form_name=form_name,
+            status=cls.STATUS_IN_PROGRESS,
+            recipient_type=recipient_type,
+            recipient_id=recipient_id
+        )
+
+    @classmethod
+    def get_source_and_id_from_schedule_instance(cls, schedule_instance):
+        from corehq.apps.data_interfaces.models import AutomaticUpdateRule
+        from corehq.messaging.scheduling.models import (
+            ImmediateBroadcast,
+            ScheduledBroadcast,
+        )
+        from corehq.messaging.scheduling.scheduling_partitioned.models import (
+            AlertScheduleInstance,
+            TimedScheduleInstance,
+            CaseAlertScheduleInstance,
+            CaseTimedScheduleInstance,
+        )
+
+        if isinstance(schedule_instance, AlertScheduleInstance):
+            source_id = (
+                ImmediateBroadcast
+                .objects
+                .filter(schedule_id=schedule_instance.alert_schedule_id)
+                .values_list('id', flat=True)
+                .first()
+            )
+            return cls.SOURCE_IMMEIDATE_BROADCAST, source_id
+        elif isinstance(schedule_instance, TimedScheduleInstance):
+            source_id = (
+                ScheduledBroadcast
+                .objects
+                .filter(schedule_id=schedule_instance.timed_schedule_id)
+                .values_list('id', flat=True)
+                .first()
+            )
+            return cls.SOURCE_SCHEDULED_BROADCAST, source_id
+        elif isinstance(schedule_instance, (CaseAlertScheduleInstance, CaseTimedScheduleInstance)):
+            return cls.SOURCE_CASE_RULE, schedule_instance.rule_id
+        else:
+            return cls.SOURCE_UNRECOGNIZED, None
+
+    @classmethod
+    def get_content_info_from_content_object(cls, domain, content):
+        from corehq.messaging.scheduling.models import (
+            SMSContent,
+            SMSSurveyContent,
+            EmailContent,
+            CustomContent
+        )
+
+        if isinstance(content, (SMSContent, CustomContent)):
+            return cls.CONTENT_SMS, None, None
+        elif isinstance(content, SMSSurveyContent):
+            app, module, form = content.get_memoized_app_module_form(domain)
+            form_name = form.full_path_name if form else None
+            return cls.CONTENT_SMS_SURVEY, content.form_unique_id, form_name
+        elif isinstance(content, EmailContent):
+            return cls.CONTENT_EMAIL, None, None
+        else:
+            return cls.CONTENT_NONE, None, None
+
+    @classmethod
+    def get_recipient_type_and_id_from_schedule_instance(cls, schedule_instance):
+        if isinstance(schedule_instance.recipient, list):
+            recipient_type = cls.RECIPIENT_VARIOUS
+            recipient_id = None
+        elif isinstance(schedule_instance.recipient, SQLLocation):
+            # schedule_instance.recipient can be a SQLLocation in a number of special
+            # cases, for example if a case owner is a location, or if a custom recipient
+            # is a location. We only count the include_descendant_locations flag when
+            # the recipient_type is RECIPIENT_TYPE_LOCATION.
+            if (
+                schedule_instance.recipient_type == ScheduleInstance.RECIPIENT_TYPE_LOCATION and
+                schedule_instance.memoized_schedule.include_descendant_locations
+            ):
+                recipient_type = cls.RECIPIENT_LOCATION_PLUS_DESCENDANTS
+            else:
+                recipient_type = cls.RECIPIENT_LOCATION
+
+            recipient_id = schedule_instance.recipient.location_id
+        elif schedule_instance.recipient is None:
+            recipient_type = cls.RECIPIENT_UNKNOWN
+            recipient_id = None
+        else:
+            recipient_type = cls.get_recipient_type(schedule_instance.recipient)
+            recipient_id = schedule_instance.recipient.get_id if recipient_type else None
+
+        return recipient_type, recipient_id
+
+    @classmethod
+    def create_from_schedule_instance(cls, schedule_instance, content):
+        from corehq.messaging.scheduling.scheduling_partitioned.models import (
+            ScheduleInstance,
+        )
+
+        source, source_id = cls.get_source_and_id_from_schedule_instance(schedule_instance)
+        content_type, form_unique_id, form_name = (
+            cls.get_content_info_from_content_object(schedule_instance.domain, content)
+        )
+
+        recipient_type, recipient_id = (
+            cls.get_recipient_type_and_id_from_schedule_instance(schedule_instance)
+        )
+
+        return cls.objects.create(
+            domain=schedule_instance.domain,
             date=datetime.utcnow(),
             source=source,
             source_id=source_id,

@@ -1,12 +1,16 @@
 from __future__ import absolute_import
 from __future__ import print_function
 import jsonfield as old_jsonfield
+from corehq.apps.app_manager.exceptions import XFormIdNotUnique
+from corehq.apps.app_manager.models import Form
 from corehq.apps.sms.api import send_sms_with_backend_name, send_sms
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.messaging.scheduling.models.abstract import Content
 from corehq.apps.reminders.event_handlers import get_message_template_params
 from corehq.apps.reminders.models import Message
 from corehq.apps.sms.api import MessageMetadata
+from couchdbkit.resource import ResourceNotFound
+from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.modules import to_function
 from django.conf import settings
@@ -107,6 +111,20 @@ class SMSSurveyContent(Content):
     reminder_intervals = JSONField(default=list)
     submit_partially_completed_forms = models.BooleanField(default=False)
     include_case_updates_in_partial_submissions = models.BooleanField(default=False)
+
+    @memoized
+    def get_memoized_app_module_form(self, domain):
+        try:
+            form = Form.get_form(self.form_unique_id)
+            app = form.get_app()
+            module = form.get_module()
+        except (ResourceNotFound, XFormIdNotUnique):
+            return None, None, None
+
+        if app.domain != domain:
+            return None, None, None
+
+        return app, module, form
 
     def send(self, recipient, schedule_instance):
         print('*******************************')
