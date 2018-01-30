@@ -764,6 +764,10 @@ def _get_person_case_properties_v2(episode_case, person_case, person_case_proper
     # use other instead of unknown for v2
     if person_hiv_status == 'unknown':
         person_hiv_status = 'other'
+
+    person_socio_economic_status = person_case_properties.get('socioeconomic_status')
+    if person_socio_economic_status == 'unknown':
+        person_socio_economic_status = NOT_AVAILABLE_VALUE
     person_properties = {
         "patient_name": person_case.name,
         "gender": gender_mapping.get(person_case_properties.get('sex', ''), ''),
@@ -771,7 +775,8 @@ def _get_person_case_properties_v2(episode_case, person_case, person_case_proper
         "age": _get_person_age(person_case_properties),
         "p_house_no": house,
         # send 0 since that is accepted by Nikshay for this mandatory field
-        "contact_no": property_value_or_backup(person_case_properties.get(PRIMARY_PHONE_NUMBER), '0'),
+        "contact_no": property_value_or_backup(person_case_properties.get(PRIMARY_PHONE_NUMBER),
+                                               DUMMY_VALUES['phone_number']),
         "contact_person_name": property_value_or_backup(person_case_properties.get('secondary_contact_name_address'),
                                                         DUMMY_VALUES['null']),
         "contact_person_address": property_value_or_backup(person_case_properties.get('secondary_contact_name_address'),
@@ -789,8 +794,8 @@ def _get_person_case_properties_v2(episode_case, person_case, person_case_proper
                                               DUMMY_VALUES['pincode']),
         "p_state": state_nikshay_code,
         "p_district": district_nikshay_code,
-        "socio_economic_status": property_value_or_backup(person_case_properties.get('socioeconomic_status'),
-                                                          'NA').upper(),
+        "socio_economic_status": property_value_or_backup(person_socio_economic_status,
+                                                          NOT_AVAILABLE_VALUE).upper(),
         "hiv_status": hiv_status.get(person_hiv_status, hiv_status.get('other')),
         "maritial_status": marital_status.get(
             person_case_properties.get('marital_status'),
