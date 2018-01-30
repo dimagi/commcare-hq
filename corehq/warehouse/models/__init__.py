@@ -18,6 +18,7 @@ from corehq.warehouse.models.meta import (
 from corehq.warehouse.models.facts import (
     ApplicationStatusFact,
     FormFact,
+    SyncLogFact,
 )
 
 from corehq.warehouse.models.staging import (
@@ -54,4 +55,5 @@ def get_cls_by_slug(slug):
 
         ApplicationStatusFact.slug: ApplicationStatusFact,
         FormFact.slug: FormFact,
+        SyncLogFact.slug: SyncLogFact,
     }[slug]
