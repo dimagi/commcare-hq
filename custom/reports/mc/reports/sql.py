@@ -131,6 +131,10 @@ class BaseReport(McMixin, SqlTabularReport, DatespanMixin, CustomProjectReport, 
     section = None
     use_datatables = False
 
+    @classmethod
+    def show_in_navigation(cls, domain=None, project=None, user=None):
+        return False
+
     @property
     def engine_id(self):
         return 'ucr'
