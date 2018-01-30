@@ -491,7 +491,7 @@ class AggregateUserStatusReport(ProjectReport, ProjectReportParametersMixin):
     @property
     def template_context(self):
 
-        class SeriesData(namedtuple('SeriesData', 'id title chart_color bucket_series verb')):
+        class SeriesData(namedtuple('SeriesData', 'id title chart_color bucket_series help')):
             """
             Utility class containing everything needed to render the chart in a template.
             """
@@ -513,14 +513,6 @@ class AggregateUserStatusReport(ProjectReport, ProjectReportParametersMixin):
             def get_buckets(self):
                 return self.bucket_series.get_summary_data()
 
-            @property
-            def help(self):
-                return _(
-                    "<strong>Aggregate Percents</strong> shows the percent of users who have {0} "
-                    "<em>since</em> a certain date.<br><br>"
-                    "<strong>Daily Counts</strong> shows the count of users who <em>last {0} on</em> "
-                    "that particular day."
-                ).format(self.verb)
 
         class BucketSeries(namedtuple('Bucket', 'data_series total_series total user_count')):
             @property
@@ -619,19 +611,30 @@ class AggregateUserStatusReport(ProjectReport, ProjectReportParametersMixin):
             return BucketSeries(daily_series, running_total_series, total, user_count)
 
 
+
         submission_series = SeriesData(
             id='submission',
             title=_('Users who have Submitted'),
             chart_color='#004abf',
             bucket_series=_buckets_to_series(last_submission_buckets, total_users),
-            verb=_('submitted')
+            help=_(
+                "<strong>Aggregate Percents</strong> shows the percent of users who have submitted "
+                "<em>since</em> a certain date.<br><br>"
+                "<strong>Daily Counts</strong> shows the count of users whose <em>last submission was on</em> "
+                "that particular day."
+            )
         )
         sync_series = SeriesData(
             id='sync',
             title=_('Users who have Synced'),
             chart_color='#f58220',
             bucket_series=_buckets_to_series(last_sync_buckets, total_users),
-            verb=_('synced')
+            help=_(
+                "<strong>Aggregate Percents</strong> shows the percent of users who have synced "
+                "<em>since</em> a certain date.<br><br>"
+                "<strong>Daily Counts</strong> shows the count of users whose <em>last sync was on</em> "
+                "that particular day."
+            )
         )
         return {
             'submission_series': submission_series,
