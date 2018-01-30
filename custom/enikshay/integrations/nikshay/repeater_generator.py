@@ -786,10 +786,10 @@ def _get_person_case_properties_v2(episode_case, person_case, person_case_proper
         "area": area.get(
             person_case_properties.get('area'),
             area.get('not_known')),
-        "p_town": person_case_properties.get('current_address_village_town_city', ''),
+        "p_town": person_case_properties.get('current_address_village_town_city', DUMMY_VALUES['null']),
         "p_taluka": property_value_or_backup(person_case_properties.get('current_address_block_taluka_mandal'),
                                              DUMMY_VALUES['null']),
-        "p_landmark": person_case_properties.get('current_address_landmark', ''),
+        "p_landmark": person_case_properties.get('current_address_landmark', '')[0:50],
         "p_pincode": property_value_or_backup(person_case_properties.get('current_address_postal_code'),
                                               DUMMY_VALUES['pincode']),
         "p_state": state_nikshay_code,
