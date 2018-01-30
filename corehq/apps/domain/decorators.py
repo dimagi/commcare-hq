@@ -91,7 +91,7 @@ def login_and_domain_required(view_func):
                     return HttpResponseRedirect(reverse("domain_select"))
                 couch_user = _ensure_request_couch_user(req)
                 if couch_user.is_member_of(domain):
-                    if domain.two_factor_auth and not user.is_verified() and not couch_user.two_factor_disabled:
+                    if (_two_factor_required(domain, couch_user) and not user.is_verified()):
                         return TemplateResponse(
                             request=req,
                             template='two_factor/core/otp_required.html',
@@ -274,7 +274,8 @@ def two_factor_check(api_key):
         @wraps(fn)
         def _inner(request, domain, *args, **kwargs):
             dom = Domain.get_by_name(domain)
-            if not api_key and dom and dom.two_factor_auth:
+            couch_user = _ensure_request_couch_user(request)
+            if not api_key and dom and _two_factor_required(dom, couch_user):
                 token = request.META.get('HTTP_X_COMMCAREHQ_OTP')
                 if token and match_token(request.user, token):
                     return fn(request, *args, **kwargs)
@@ -283,6 +284,10 @@ def two_factor_check(api_key):
             return fn(request, domain, *args, **kwargs)
         return _inner
     return _outer
+
+
+def _two_factor_required(domain, couch_user):
+    return domain.two_factor_auth and couch_user.is_web_user() and not couch_user.two_factor_disabled
 
 
 def cls_to_view(additional_decorator=None):
