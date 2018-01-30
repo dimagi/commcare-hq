@@ -217,6 +217,11 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
         return self.__original_form_id != self.form_id
 
     @property
+    def original_form_id(self):
+        """Form ID before it was updated"""
+        return self.__original_form_id
+
+    @property
     @memoized
     def original_attachments(self):
         """
