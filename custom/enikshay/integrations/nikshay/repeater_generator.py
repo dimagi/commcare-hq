@@ -751,6 +751,12 @@ def property_value_or_backup(property_value, backup_value):
     return property_value if property_value else backup_value
 
 
+def phone_number_or_backup(phone_number):
+    if not phone_number or len(phone_number) != 10:
+        return DUMMY_VALUES['phone_number']
+    return phone_number
+
+
 def _get_person_case_properties_v2(episode_case, person_case, person_case_properties):
     state_nikshay_code = _get_location_nikshay_code(person_case_properties.get('current_address_state_choice'))
     district_nikshay_code = _get_location_nikshay_code(person_case_properties.get('current_address_district_choice'))
@@ -775,20 +781,22 @@ def _get_person_case_properties_v2(episode_case, person_case, person_case_proper
         "age": _get_person_age(person_case_properties),
         "p_house_no": house,
         # send 0 since that is accepted by Nikshay for this mandatory field
-        "contact_no": property_value_or_backup(person_case_properties.get(PRIMARY_PHONE_NUMBER),
-                                               DUMMY_VALUES['phone_number']),
-        "contact_person_name": property_value_or_backup(person_case_properties.get('secondary_contact_name_address'),
-                                                        DUMMY_VALUES['null']),
+        "contact_no": phone_number_or_backup(person_case_properties.get(PRIMARY_PHONE_NUMBER)),
+        "contact_person_name": property_value_or_backup(
+            person_case_properties.get('secondary_contact_name_address', '')[0:50],
+            DUMMY_VALUES['null']),
         "contact_person_address": property_value_or_backup(person_case_properties.get('secondary_contact_name_address'),
                                                            DUMMY_VALUES['null']),
-        "contact_person_mobile_no": property_value_or_backup(person_case_properties.get(BACKUP_PHONE_NUMBER),
-                                                             DUMMY_VALUES['phone_number']),
+        "contact_person_mobile_no": phone_number_or_backup(person_case_properties.get(BACKUP_PHONE_NUMBER)),
         "area": area.get(
             person_case_properties.get('area'),
             area.get('not_known')),
-        "p_town": person_case_properties.get('current_address_village_town_city', DUMMY_VALUES['null']),
-        "p_taluka": property_value_or_backup(person_case_properties.get('current_address_block_taluka_mandal'),
-                                             DUMMY_VALUES['null']),
+        "p_town": property_value_or_backup(
+            person_case_properties.get('current_address_village_town_city', '')[0:50],
+            DUMMY_VALUES['null']),
+        "p_taluka": property_value_or_backup(
+            person_case_properties.get('current_address_block_taluka_mandal', '')[0:50],
+            DUMMY_VALUES['null']),
         "p_landmark": person_case_properties.get('current_address_landmark', '')[0:50],
         "p_pincode": property_value_or_backup(person_case_properties.get('current_address_postal_code'),
                                               DUMMY_VALUES['pincode']),
@@ -816,6 +824,11 @@ def _get_person_case_properties_v2(episode_case, person_case, person_case_proper
             'reg_phi_code': person_locations.phi,
         }
     )
+
+    if not person_properties['p_state']:
+        person_properties['p_state'] = person_properties['reg_sto_code']
+    if not person_properties['p_district']:
+        person_properties['p_district'] = person_properties['reg_dto_code']
 
     return person_properties
 
