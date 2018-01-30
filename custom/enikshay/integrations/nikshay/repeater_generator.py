@@ -800,9 +800,9 @@ def _get_person_case_properties_v2(episode_case, person_case, person_case_proper
         "id_dates": str(datetime.date.today()),
         "p_street": "",
         "p_ward": "",
-        "ifsc_code": "",
-        "account_no": "",
-        "bank_name": "NA"
+        "ifsc_code": DUMMY_VALUES['null'],
+        "account_no": DUMMY_VALUES['null'],
+        "bank_name": DUMMY_VALUES['null']
     }
     person_locations = get_person_locations(person_case, episode_case, v2=True)
     person_properties.update(
