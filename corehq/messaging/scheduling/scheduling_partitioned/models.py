@@ -127,25 +127,21 @@ class ScheduleInstance(PartitionedModel):
 
         return obj
 
-    def expand_recipients(self):
-        """
-        Can be used as a generator to iterate over all individual contacts who
-        are the recipients of this ScheduleInstance.
-        """
-        if self.recipient is None:
+    def _expand_recipient(self, recipient):
+        if recipient is None:
             return
-        elif self.recipient_is_an_individual_contact(self.recipient):
-            yield self.recipient
-        elif isinstance(self.recipient, CommCareCaseGroup):
-            case_group = self.recipient
+        elif self.recipient_is_an_individual_contact(recipient):
+            yield recipient
+        elif isinstance(recipient, CommCareCaseGroup):
+            case_group = recipient
             for case in case_group.get_cases():
                 yield case
-        elif isinstance(self.recipient, Group):
-            group = self.recipient
+        elif isinstance(recipient, Group):
+            group = recipient
             for user in group.get_users(is_active=True, only_commcare=False):
                 yield user
-        elif isinstance(self.recipient, SQLLocation):
-            location = self.recipient
+        elif isinstance(recipient, SQLLocation):
+            location = recipient
             if (
                 self.recipient_type == self.RECIPIENT_TYPE_LOCATION and
                 self.memoized_schedule.include_descendant_locations
@@ -166,7 +162,20 @@ class ScheduleInstance(PartitionedModel):
                         user_ids.add(user.get_id)
                         yield user
         else:
-            raise UnknownRecipientType(self.recipient.__class__.__name__)
+            raise UnknownRecipientType(recipient.__class__.__name__)
+
+    def expand_recipients(self):
+        """
+        Can be used as a generator to iterate over all individual contacts who
+        are the recipients of this ScheduleInstance.
+        """
+        recipient_list = self.recipient
+        if not isinstance(recipient_list, list):
+            recipient_list = [recipient_list]
+
+        for member in recipient_list:
+            for contact in self._expand_recipient(member):
+                yield contact
 
     def handle_current_event(self):
         content = self.memoized_schedule.get_current_event_content(self)
