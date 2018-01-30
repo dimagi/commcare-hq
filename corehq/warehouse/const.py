@@ -18,6 +18,7 @@ DOMAIN_DIM_SLUG = 'domain_dim'
 USER_LOCATION_DIM_SLUG = 'user_location_dim'
 USER_GROUP_DIM_SLUG = 'user_group_dim'
 APPLICATION_DIM_SLUG = 'application_dim'
+DOMAIN_MEMBERSHIP_DIM_SLUG = 'domain_membership_dim'
 
 APP_STATUS_FACT_SLUG = 'app_status_fact'
 FORM_FACT_SLUG = 'form_fact'
