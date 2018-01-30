@@ -59,12 +59,18 @@ function LocationSearchViewModel(tree_model) { // eslint-disable-line no-unused-
     });
 
     this.selected_location = ko.computed(function() {
+        if (!model.selected_location_id()) {
+            return;
+        }
         return new LocationModel({uuid: model.selected_location_id(), can_edit: can_edit_root, is_archived: show_inactive}, this); // eslint-disable-line no-undef
     });
 
     this.selected_location_tree = tree_model;
 
     this.lineage = ko.computed(function() {
+        if (!model.selected_location()) {
+            return;
+        }
         $.ajax({
             type: 'GET',
             url: model.selected_location().loc_lineage_url(model.selected_location().uuid()),
