@@ -925,6 +925,7 @@ def validate_module_for_build(request, domain, app_id, module_unique_id, ajax=Tr
 @no_conflict_require_POST
 @require_can_edit_apps
 def new_module(request, domain, app_id):
+    from corehq.apps.app_manager.views.utils import get_default_followup_form_xml
     "Adds a module to an app"
     app = get_app(domain, app_id)
     lang = request.COOKIES.get('lang', app.langs[0])
@@ -953,7 +954,9 @@ def new_module(request, domain, app_id):
                     condition=FormActionCondition(type='always'))
 
                 # one followup form
-                followup = app.new_form(module_id, _("Followup Form"), lang, attachment="default_followup_form")
+                msg = "This is your follow up form. Delete this label and add questions for any follow up visits."
+                attachment = get_default_followup_form_xml("", context={'lang': lang, 'default_label': msg})
+                followup = app.new_form(module_id, _("Followup Form"), lang, attachment=attachment)
                 followup.requires = "case"
                 followup.actions.update_case = UpdateCaseAction(condition=FormActionCondition(type='always'))
 

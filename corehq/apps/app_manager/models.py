@@ -2695,7 +2695,7 @@ class Module(ModuleBase, ModuleDetailsMixin):
         return module
 
     def new_form(self, name, lang, attachment=Ellipsis):
-        from corehq.apps.app_manager.views.utils import get_blank_form_xml, get_default_followup_form_xml
+        from corehq.apps.app_manager.views.utils import get_blank_form_xml
         lang = lang if lang else "en"
         name = name if name else _("Untitled Form")
         form = Form(
@@ -2705,13 +2705,6 @@ class Module(ModuleBase, ModuleDetailsMixin):
         form = self.get_form(-1)
         if attachment == Ellipsis:
             attachment = get_blank_form_xml(name)
-        elif attachment == "default_followup_form":
-            msg = "This is your follow up form. Delete this label and add questions for any follow up visits."
-            context = {
-                'lang': lang,
-                'default_label': msg
-            }
-            attachment = get_default_followup_form_xml(name, context)
         form.source = attachment
         return form
 
