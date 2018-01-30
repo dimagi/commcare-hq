@@ -73,12 +73,11 @@ class ScheduleInstance(PartitionedModel):
         else:
             raise UnknownRecipientType(self.recipient_type)
 
-    @property
-    @memoized
-    def recipient_is_an_individual_contact(self):
+    @staticmethod
+    def recipient_is_an_individual_contact(recipient):
         return (
-            isinstance(self.recipient, (CommCareUser, WebUser)) or
-            is_commcarecase(self.recipient)
+            isinstance(recipient, (CommCareUser, WebUser)) or
+            is_commcarecase(recipient)
         )
 
     @property
@@ -86,7 +85,7 @@ class ScheduleInstance(PartitionedModel):
     def timezone(self):
         timezone = None
 
-        if self.recipient_is_an_individual_contact:
+        if self.recipient_is_an_individual_contact(self.recipient):
             try:
                 timezone = self.recipient.get_time_zone()
             except ValidationError:
@@ -135,7 +134,7 @@ class ScheduleInstance(PartitionedModel):
         """
         if self.recipient is None:
             return
-        elif self.recipient_is_an_individual_contact:
+        elif self.recipient_is_an_individual_contact(self.recipient):
             yield self.recipient
         elif isinstance(self.recipient, CommCareCaseGroup):
             case_group = self.recipient
