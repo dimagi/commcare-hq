@@ -41,8 +41,7 @@ function LocationTreeViewModel(hierarchy) {
 
     // load location hierarchy
     this.load = function(locs) {
-        this.root(new LocationModel({name: '_root', children: locs, can_edit: can_edit_root}, this));
-        this.root().expanded(true);
+        this.root(new LocationModel({name: '_root', children: locs, can_edit: can_edit_root, expanded: true}, this));
     };
 }
 
