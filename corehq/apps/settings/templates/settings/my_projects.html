@@ -73,7 +73,7 @@
         </table>
     </div>
     <p>
-        {% if web_user %}
+        {% if web_user and not restrict_domain_creation %}
             <a class="btn btn-success" href="{% url "registration_domain" %}?referer={{ request.path }}"><i class="fa fa-plus"></i> {% trans 'Create a New Project' %}</a>
         {% endif %}
     </p>

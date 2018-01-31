@@ -10,7 +10,7 @@
     {% endif %}
     {% endif %}
 
-    {% if not enterprise_mode %}
+    {% if not enterprise_mode and not restrict_domain_creation %}
     <li>
         <a href="{% url 'registration_domain' %}">
             <i class="fa fa-plus icon-plus dropdown-icon"></i> {% trans 'Add Project' %}
