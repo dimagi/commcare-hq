@@ -163,6 +163,7 @@ class UserStagingTable(StagingTable, CouchToDjangoETLMixin):
     base_doc = models.CharField(max_length=100)
     domain = models.CharField(max_length=100, null=True, blank=True)
 
+    assigned_location_ids = ArrayField(models.CharField(max_length=255), null=True)
     domain_memberships = JSONField(null=True)
     is_active = models.BooleanField()
     is_staff = models.BooleanField()
@@ -195,6 +196,7 @@ class UserStagingTable(StagingTable, CouchToDjangoETLMixin):
             ('date_joined', 'date_joined'),
             ('last_modified', 'user_last_modified'),
             ('domain_memberships', 'domain_memberships'),
+            ('assigned_location_ids', 'assigned_location_ids')
         ]
 
     @classmethod

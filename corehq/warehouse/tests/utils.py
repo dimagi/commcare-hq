@@ -138,28 +138,7 @@ def create_location_records_from_tree(domain, tree, batch_id):
     }
     '''
 
-#    location_types = {}
-#    _create_location_types_from_tree(domain, tree, location_types, batch_id)
     _create_locations_from_tree(domain, tree, None, {}, batch_id)
-
-
-# def _create_location_types_from_tree(domain, tree, location_types, batch_id):
-#     if not tree:
-#         return
-
-#     for location_tuple, next_tree in six.iteritems(tree):
-#         location_name, location_type = location_tuple
-
-#         if location_type not in location_types:
-#             location_types[location_type] = create_location_type_staging_record(
-#                 domain=domain,
-#                 name=location_type,
-#                 code=location_type,
-#                 location_type_id=len(location_types),
-#                 batch_id=batch_id
-#             )
-
-#         _create_location_types_from_tree(domain, next_tree, location_types, batch_id)
 
 
 def _create_locations_from_tree(domain, tree, parent_id, next_id, batch_id):
