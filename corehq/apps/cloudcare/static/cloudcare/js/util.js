@@ -39,11 +39,11 @@ hqDefine('cloudcare/js/util', function () {
         _show(message, $el, autoHideTime, "", true);
     };
 
-    var showSuccess = function (message, $el, autoHideTime) {
+    var showSuccess = function (message, $el, autoHideTime, isHTML) {
         if (message === undefined) {
             message = "Success";
         }
-        _show(message, $el, autoHideTime, "alert alert-success");
+        _show(message, $el, autoHideTime, "alert alert-success", isHTML);
     };
 
     var _show = function (message, $el, autoHideTime, classes, isHTML) {
