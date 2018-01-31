@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from collections import OrderedDict
 
 from corehq.apps.userreports.models import DataSourceConfiguration, get_datasource_config
