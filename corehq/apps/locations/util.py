@@ -287,9 +287,9 @@ class LocationExporter(object):
         for loc_type in self.location_types:
             additional_headers = []
             additional_headers.extend(self._prefix_headers('data', (f.slug for f in self.data_model.fields)))
-            additional_headers.append('uncategorized_data')
             if self.include_consumption_flag and loc_type.name not in self.administrative_types:
                 additional_headers.extend(self._prefix_headers('consumption', self.product_codes))
+            additional_headers.append('uncategorized_data')
 
             headers[loc_type.code] = [LOCATION_SHEET_HEADERS.keys()[:-2] + additional_headers]
 
@@ -323,11 +323,12 @@ class LocationExporter(object):
                 for field in self.data_model.fields:
                     row.append(model_data[field.slug])
 
-                row.append(', '.join('{}: {}'.format(*d) for d in uncategorized_data.items()))
-
                 if include_consumption:
                     consumption_data = self.get_consumption(loc)
                     row.extend([consumption_data[code] for code in self.product_codes])
+
+                row.append(', '.join('{}: {}'.format(*d) for d in uncategorized_data.items()))
+
                 yield row
                 self._increment_progress()
 
