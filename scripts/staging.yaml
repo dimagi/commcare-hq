@@ -50,7 +50,6 @@ branches:
   - xbryanc:dlemailbutton_updates  # Bryan 1/29
   - sophiamcg:organization-structure-search-tree-interaction  # Sophia 1/29
   - jls/data-feedback-loop-test # Jenny 1/30
-  - np/py3/gevent # NP 1/31
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
