@@ -152,7 +152,7 @@ def get_blank_form_xml(form_name):
 
 def get_default_followup_form_xml(context):
     """Update context and apply in XML file default_followup_form"""
-    context.update({'xmlns': str(uuid.uuid4()).upper()})
+    context.update({'xmlns_uuid': str(uuid.uuid4()).upper()})
     return render_to_string("app_manager/default_followup_form.xml", context=context)
 
 

@@ -4,7 +4,7 @@
 		<h:title>{{ name }}</h:title>
 		<model>
 			<instance>
-				<data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://openrosa.org/formdesigner/6E2725BB-7A7B-4CFD-A27D-BA7CD4D790DB" uiVersion="1" version="1" name="Followup Form">
+				<data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://openrosa.org/formdesigner/{{ xmlns_uuid }}" uiVersion="1" version="1" name="Followup Form">
 					<default_label />
 				</data>
 			</instance>
