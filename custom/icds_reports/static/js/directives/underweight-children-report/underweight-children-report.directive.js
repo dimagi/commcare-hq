@@ -90,7 +90,7 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
         var severely_underweight = row ? d3.format(".2%")(row.severely_underweight / (row.total || 1)) : 'N/A';
         var moderately_underweight = row ? d3.format(".2%")(row.moderately_underweight / (row.total || 1)) : 'N/A';
         var normal = row ? d3.format(".2%")(row.normal / (row.total || 1)) : 'N/A';
-        return '<div class="hoverinfo" style="max-width: 200px !important;">' +
+        return '<div class="hoverinfo">' +
             '<p>' + loc.properties.name + '</p>' +
             '<div>Total Children '+ chosenFilters +' weighed in given month: <strong>' + total + '</strong></div>' +
             '<div>% Unweighed '+ chosenFilters +': <strong>' + underweight + '</strong></div>' +

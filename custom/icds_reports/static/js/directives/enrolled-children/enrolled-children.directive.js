@@ -95,7 +95,7 @@ function EnrolledChildrenController($scope, $routeParams, $location, $filter, de
         var valid = $filter('indiaNumbers')(row ? row.valid : 0);
         var all = $filter('indiaNumbers')(row ? row.all : 0);
         var percent = row ? d3.format('.2%')(row.valid / (row.all || 1)) : "N/A";
-        return '<div class="hoverinfo" style="max-width: 200px !important;">' +
+        return '<div class="hoverinfo">' +
             '<p>' + loc.properties.name + '</p>' +
             '<div>Number of children ' + chosenFilters + ' who are enrolled for ICDS services: <strong>' + valid + '</strong>' +
             '<div>Total number of children ' + chosenFilters + ' who are registered: <strong>' + all + '</strong>' +

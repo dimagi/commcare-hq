@@ -68,7 +68,7 @@ function AWCDailyStatusController($scope, $routeParams, $location, $filter, icds
         var total = row ? $filter('indiaNumbers')(row.all) : 'N/A';
         var in_day = row ? $filter('indiaNumbers')(row.in_day) : 'N/A';
         var percent = row ? d3.format('.2%')(row.in_day / (row.all || 1)) : 'N/A';
-        return '<div class="hoverinfo" style="max-width: 200px !important;">' +
+        return '<div class="hoverinfo">' +
             '<p>' + loc.properties.name + '</p>' +
             '<div>Total number of AWCs that were open yesterday: <strong>' + in_day + '</strong></div>' +
             '<div>Total number of AWCs that have been launched: <strong>' + total + '</strong></div>' +
