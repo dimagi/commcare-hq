@@ -135,8 +135,9 @@ class LocationStub(object):
         self.do_delete = do_delete
         self.external_id = str(external_id) if isinstance(external_id, int) else external_id
         self.index = index
-        self.custom_data = {key: six.text_type(value) for key, value in custom_data.items()} \
-                           if custom_data != self.NOT_PROVIDED else {}
+        self.custom_data = custom_data
+        if custom_data != self.NOT_PROVIDED:
+            self.custom_data = {key: six.text_type(value) for key, value in custom_data.items()}
         if not self.location_id and not self.site_code:
             raise LocationExcelSheetError(
                 _(u"Location in sheet '{}', at row '{}' doesn't contain either location_id or site_code")
