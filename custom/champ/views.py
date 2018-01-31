@@ -40,6 +40,18 @@ def get_age_ranges(ages):
     return ranges
 
 
+def update_date_property(config, post_data, property, filter_key):
+    value = post_data.get(property, '')
+    if value:
+        start_key = '%s_start' % filter_key
+        end_key = '%s_end' % filter_key
+        start, end = value.split(' - ')
+        config.update({
+            start_key: start,
+            end_key: end
+        })
+
+
 class ChampView(View):
     @property
     def post_data(self):
@@ -76,50 +88,40 @@ class PrevisionVsAchievementsView(ChampView):
             'domain': domain,
             'age': get_age_ranges(self.get_list_property('kp_prev_age')),
             'district': self.get_list_property('kp_prev_district'),
-
             'activity_type': self.post_data.get('kp_prev_activity_type', None),
             'type_visit': self.post_data.get('kp_prev_visit_type', None),
             'client_type': self.get_list_property('kp_prev_client_type'),
             'user_id': get_user_ids_for_group(self.get_list_property('kp_prev_user_group')),
             'want_hiv_test': self.post_data.get('kp_prev_want_hiv_test', None),
         }
-        visit_date = self.post_data.get('kp_prev_visit_date', '')
-        if visit_date:
-            start, end = visit_date.split(' - ')
-            config.update({
-                'visit_date_start': start,
-                'visit_date_end': end
-            })
+        update_date_property(config, self.post_data, 'kp_prev_visit_date', 'visit_date')
+
         achievement = UICFromEPMDataSource(config=config).data
         return achievement.get(PREVENTION_XMLNS, {}).get('uic', 0)
 
     def get_htc_tst_achievement(self, domain):
         config = {
             'domain': domain,
-            'posttest_date_start': self.post_data.get('htc_tst_post_date_start', None),
-            'posttest_date_end': self.post_data.get('htc_tst_post_date_end', None),
-            'hiv_test_date_start': self.post_data.get('htc_tst_hiv_test_date_start', None),
-            'hiv_test_date_end': self.post_data.get('htc_tst_hiv_test_date_end', None),
             'age_range': self.get_list_property('htc_tst_age_range'),
             'district': self.get_list_property('htc_tst_district'),
             'client_type': self.get_list_property('htc_tst_client_type'),
             'user_id': get_user_ids_for_group(self.get_list_property('htc_tst_user_group')),
         }
+        update_date_property(config, self.post_data, 'htc_tst_post_date', 'posttest_date')
+        update_date_property(config, self.post_data, 'htc_tst_hiv_test_date', 'hiv_test_date')
         achievement = UICFromCCDataSource(config=config).data
         return achievement.get(POST_TEST_XMLNS, {}).get('uic', 0)
 
     def get_htc_pos_achievement(self, domain):
         config = {
             'domain': domain,
-            'posttest_date_start': self.post_data.get('htc_pos_post_date_start', None),
-            'posttest_date_end': self.post_data.get('htc_pos_post_date_end', None),
-            'hiv_test_date_start': self.post_data.get('htc_pos_hiv_test_date_start', None),
-            'hiv_test_date_end': self.post_data.get('htc_pos_hiv_test_date_end', None),
             'age_range': self.get_list_property('htc_pos_age_range'),
             'district': self.get_list_property('htc_pos_district'),
             'client_type': self.get_list_property('htc_pos_client_type'),
             'user_id': get_user_ids_for_group(self.get_list_property('htc_pos_user_group')),
         }
+        update_date_property(config, self.post_data, 'htc_pos_post_date', 'posttest_date')
+        update_date_property(config, self.post_data, 'htc_pos_hiv_test_date', 'hiv_test_date')
         achievement = HivStatusDataSource(config=config).data
         return achievement.get(POST_TEST_XMLNS, {}).get('uic', 0)
 
@@ -130,10 +132,9 @@ class PrevisionVsAchievementsView(ChampView):
             'client_type': self.get_list_property('care_new_client_type'),
             'age_range': self.get_list_property('care_new_age_range'),
             'district': self.get_list_property('care_new_district'),
-            'date_handshake_start': self.post_data.get('care_new_date_handshake_start', None),
-            'date_handshake_end': self.post_data.get('care_new_date_handshake_end', None),
             'user_id': get_user_ids_for_group(self.get_list_property('care_new_user_group')),
         }
+        update_date_property(config, self.post_data, 'care_new_date_handshake', 'date_handshake')
         achievement = FormCompletionDataSource(config=config).data
         return achievement.get(ACCOMPAGNEMENT_XMLNS, {}).get('uic', 0)
 
@@ -144,10 +145,9 @@ class PrevisionVsAchievementsView(ChampView):
             'client_type': self.get_list_property('tx_new_client_type'),
             'age_range': self.get_list_property('tx_new_age_range'),
             'district': self.get_list_property('tx_new_district'),
-            'first_art_date_start': self.post_data.get('tx_new_first_art_date_start', None),
-            'first_art_date_end': self.post_data.get('tx_new_first_art_date_end', None),
             'user_id': get_user_ids_for_group(self.get_list_property('tx_new_user_group')),
         }
+        update_date_property(config, self.post_data, 'tx_new_first_art_date', 'first_art_date')
         achievement = FirstArtDataSource(config=config).data
         return achievement.get(SUIVI_MEDICAL_XMLNS, {}).get('uic', 0)
 
@@ -158,11 +158,10 @@ class PrevisionVsAchievementsView(ChampView):
             'client_type': self.get_list_property('tx_undetect_client_type'),
             'age_range': self.get_list_property('tx_undetect_age_range'),
             'district': self.get_list_property('tx_undetect_district'),
-            'date_last_vl_test_start': self.post_data.get('tx_undetect_date_last_vl_test_start', None),
-            'date_last_vl_test_end': self.post_data.get('tx_undetect_date_last_vl_test_end', None),
             'undetect_vl': self.post_data.get('tx_undetect_undetect_vl', None),
             'user_id': get_user_ids_for_group(self.get_list_property('tx_undetect_user_group')),
         }
+        update_date_property(config, self.post_data, 'tx_undetect_date_last_vl_test', 'date_last_vl_test')
         achievement = LastVLTestDataSource(config=config).data
         return achievement.get(SUIVI_MEDICAL_XMLNS, {}).get('uic', 0)
 

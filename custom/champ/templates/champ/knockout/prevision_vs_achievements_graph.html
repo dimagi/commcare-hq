@@ -20,7 +20,7 @@
                                            optionsValue: 'id',
                                            selectedOptions: filters.target_district,
                                            event: { change: function(data, e) { districtOnSelect(e) }},
-                                           select2: {}"></select>
+                                           select2: { placeholder: 'District' }"></select>
 
                     </div>
                     <div class="col-md-2">
@@ -32,7 +32,7 @@
                                            optionsValue: 'id',
                                            selectedOptions: filters.target_cbo,
                                            event: { change: function(data, e) { cboOnSelect(e) }},
-                                           select2: {}"></select>
+                                           select2: { placeholder: 'Cbo' }"></select>
                     </div>
                     <div class="col-md-2">
                         <label>Client Type:</label>
@@ -43,7 +43,7 @@
                                            optionsValue: 'id',
                                            selectedOptions: filters.target_clienttype,
                                            event: { change: function(data, e) { clienttypeOnSelect(e) }},
-                                           select2: {}"></select>
+                                           select2: { placeholder: 'Client Type' }"></select>
                     </div>
                     <div class="col-md-2">
                         <label>User PL:</label>
@@ -53,7 +53,7 @@
                                            optionsText: 'text',
                                            optionsValue: 'id',
                                            selectedOptions: filters.target_userpl,
-                                           select2: {}"></select>
+                                           select2: { placeholder: 'User PL' }"></select>
                     </div>
                     <div class="col-md-2">
                         <label>Fiscal year:</label>
@@ -85,7 +85,7 @@
                                                        optionsValue: 'id',
                                                        selectedOptions: filters.kp_prev_age,
                                                        event: { change: function(data, e) { onSelectOption(e, 'kp_prev_age') }},
-                                                       select2: {}"></select>
+                                                       select2: { placeholder: 'Age Range' }"></select>
                                 </div>
                             </div>
                             <div class="form-group">
@@ -98,7 +98,7 @@
                                                        optionsValue: 'id',
                                                        selectedOptions: filters.kp_prev_district,
                                                        event: { change: function(data, e) { onSelectOption(e, 'kp_prev_district') }},
-                                                       select2: {}"></select>
+                                                       select2: { placeholder: 'District' }"></select>
                                 </div>
                             </div>
                             <div class="form-group">
@@ -133,14 +133,14 @@
                                                        optionsValue: 'id',
                                                        selectedOptions: filters.kp_prev_client_type,
                                                        event: { change: function(data, e) { onSelectOption(e, 'kp_prev_client_type') }},
-                                                       select2: {}"></select>
+                                                       select2: { placeholder: 'Client Type' }"></select>
                                 </div>
                             </div>
                             <div class="form-group">
                                 <label class="control-label col-sm-3">Visit Date:</label>
                                 <div class="col-sm-8">
-                                    <input id="dateFilter" class="form-control date-picker" data-bind="value: filters.kp_prev_visit_date"/>
-{#                              </div>
+                                    <input class="form-control date-picker" data-bind="value: filters.kp_prev_visit_date"/>
+                                </div>
                             </div>
                             <div class="form-group">
                                 <label class="control-label col-sm-3">User Group:</label>
@@ -152,7 +152,7 @@
                                                        optionsValue: 'id',
                                                        selectedOptions: filters.kp_prev_user_group,
                                                        event: { change: function(data, e) { onSelectOption(e, 'kp_prev_user_group') }},
-                                                       select2: {}"></select>
+                                                       select2: { placeholder: 'User Group' }"></select>
                                 </div>
                             </div>
                             <div class="form-group">
@@ -176,57 +176,65 @@
                             <div class="form-group">
                                 <label class="control-label col-sm-3">Post Date:</label>
                                 <div class="col-sm-8">
-                                    <input date-range-picker options="mainCtrl.pickerOptions" class="form-control date-picker" type="text" ng-model="mainCtrl.htc_tst_post_date" />
+                                    <input class="form-control date-picker" data-bind="value: filters.htc_tst_post_date"/>
                                 </div>
                             </div>
                             <div class="form-group">
                                 <label class="control-label col-sm-3">HIV Test Date:</label>
                                 <div class="col-sm-8">
-                                    <input date-range-picker options="mainCtrl.pickerOptions" class="form-control date-picker" type="text" ng-model="mainCtrl.htc_tst_hiv_test_date" />
+                                    <input class="form-control date-picker" data-bind="value: filters.htc_tst_hiv_test_date"/>
                                 </div>
                             </div>
                             <div class="form-group">
                                 <label class="control-label col-sm-3">Age Range:</label>
                                 <div class="col-sm-8">
-                                    <ui-select multiple ng-model="mainCtrl.filters.htc_tst_age_range" theme="bootstrap" on-remove="mainCtrl.onSelectOption($item, 'htc_tst_age_range')" on-select="mainCtrl.onSelectOption($item, 'htc_tst_age_range')">
-                                        <ui-select-match placeholder="Age range"><span ng-bind="$item.value"></span></ui-select-match>
-                                        <ui-select-choices repeat="ageRange.id as ageRange in mainCtrl.ageRanges">
-                                            <div ng-bind="ageRange.value"></div>
-                                        </ui-select-choices>
-                                    </ui-select>
+                                    <select class="form-control"
+                                            multiple="multiple"
+                                            data-bind="options: ageRanges,
+                                                       optionsText: 'text',
+                                                       optionsValue: 'id',
+                                                       selectedOptions: filters.htc_tst_age_range,
+                                                       event: { change: function(data, e) { onSelectOption(e, 'htc_tst_age_range') }},
+                                                       select2: { placeholder: 'Age Range' }"></select>
                                 </div>
                             </div>
                             <div class="form-group">
                                 <label class="control-label col-sm-3">District:</label>
                                 <div class="col-sm-8">
-                                    <ui-select multiple ng-model="mainCtrl.filters.htc_tst_district" theme="bootstrap" on-remove="mainCtrl.onSelectOption($item, 'htc_tst_district')" on-select="mainCtrl.onSelectOption($item, 'htc_tst_district')">
-                                        <ui-select-match placeholder="District"><span ng-bind="$item.value"></span></ui-select-match>
-                                        <ui-select-choices repeat="district.id as district in mainCtrl.districts">
-                                            <div ng-bind="district.value"></div>
-                                        </ui-select-choices>
-                                    </ui-select>
+                                    <select class="form-control"
+                                            multiple="multiple"
+                                            data-bind="options: availableDistricts,
+                                                       optionsText: 'text',
+                                                       optionsValue: 'id',
+                                                       selectedOptions: filters.htc_tst_district,
+                                                       event: { change: function(data, e) { onSelectOption(e, 'htc_tst_district') }},
+                                                       select2: { placeholder: 'District' }"></select>
                                 </div>
                             </div>
                             <div class="form-group">
                                 <label class="control-label col-sm-3">Client Type:</label>
                                 <div class="col-sm-8">
-                                    <ui-select multiple ng-model="mainCtrl.filters.htc_tst_client_type" theme="bootstrap" on-remove="mainCtrl.onSelectOption($item, 'htc_tst_client_type')" on-select="mainCtrl.onSelectOption($item, 'htc_tst_client_type')">
-                                        <ui-select-match placeholder="Client Type"><span ng-bind="$item.value"></span></ui-select-match>
-                                        <ui-select-choices repeat="client.id as client in mainCtrl.clientTypes">
-                                            <div ng-bind="client.value"></div>
-                                        </ui-select-choices>
-                                    </ui-select>
+                                    <select class="form-control"
+                                            multiple="multiple"
+                                            data-bind="options: availableClientTypes,
+                                                       optionsText: 'text',
+                                                       optionsValue: 'id',
+                                                       selectedOptions: filters.htc_tst_client_type,
+                                                       event: { change: function(data, e) { onSelectOption(e, 'htc_tst_client_type') }},
+                                                       select2: { placeholder: 'Client Type' }"></select>
                                 </div>
                             </div>
                             <div class="form-group">
                                 <label class="control-label col-sm-3">User Group:</label>
                                 <div class="col-sm-8">
-                                    <ui-select multiple class="col-sm-8" ng-model="mainCtrl.filters.htc_tst_user_group" theme="bootstrap" on-remove="mainCtrl.onSelectOption($item, 'htc_tst_user_group')" on-select="mainCtrl.onSelectOption($item, 'htc_tst_user_group')">
-                                        <ui-select-match placeholder="User Group"><span ng-bind="$item.value"></span></ui-select-match>
-                                        <ui-select-choices repeat="group.id as group in mainCtrl.groups">
-                                            <div ng-bind="group.value"></div>
-                                        </ui-select-choices>
-                                    </ui-select>
+                                    <select class="form-control"
+                                            multiple="multiple"
+                                            data-bind="options: groups,
+                                                       optionsText: 'text',
+                                                       optionsValue: 'id',
+                                                       selectedOptions: filters.htc_tst_user_group,
+                                                       event: { change: function(data, e) { onSelectOption(e, 'htc_tst_user_group') }},
+                                                       select2: { placeholder: 'User Group' }"></select>
                                 </div>
                             </div>
                         </div>
@@ -239,57 +247,65 @@
                             <div class="form-group">
                                 <label class="control-label col-sm-3">Age Range:</label>
                                 <div class="col-sm-8">
-                                    <ui-select multiple ng-model="mainCtrl.filters.htc_pos_age_range" theme="bootstrap" on-remove="mainCtrl.onSelectOption($item, 'htc_pos_age_range')" on-select="mainCtrl.onSelectOption($item, 'htc_pos_age_range')">
-                                        <ui-select-match placeholder="Age range"><span ng-bind="$item.value"></span></ui-select-match>
-                                        <ui-select-choices repeat="ageRange.id as ageRange in mainCtrl.ageRanges">
-                                            <div ng-bind="ageRange.value"></div>
-                                        </ui-select-choices>
-                                    </ui-select>
+                                    <select class="form-control"
+                                            multiple="multiple"
+                                            data-bind="options: ageRanges,
+                                                       optionsText: 'text',
+                                                       optionsValue: 'id',
+                                                       selectedOptions: filters.htc_pos_age_range,
+                                                       event: { change: function(data, e) { onSelectOption(e, 'htc_pos_age_range') }},
+                                                       select2: { placeholder: 'Age Range' }"></select>
                                 </div>
                             </div>
                             <div class="form-group">
                                 <label class="control-label col-sm-3">District:</label>
                                 <div class="col-sm-8">
-                                    <ui-select multiple ng-model="mainCtrl.filters.htc_pos_district" theme="bootstrap" on-remove="mainCtrl.onSelectOption($item, 'htc_pos_district')" on-select="mainCtrl.onSelectOption($item, 'htc_pos_district')">
-                                        <ui-select-match placeholder="District"><span ng-bind="$item.value"></span></ui-select-match>
-                                        <ui-select-choices repeat="district.id as district in mainCtrl.districts">
-                                            <div ng-bind="district.value"></div>
-                                        </ui-select-choices>
-                                    </ui-select>
+                                    <select class="form-control"
+                                            multiple="multiple"
+                                            data-bind="options: availableDistricts,
+                                                       optionsText: 'text',
+                                                       optionsValue: 'id',
+                                                       selectedOptions: filters.htc_pos_district,
+                                                       event: { change: function(data, e) { onSelectOption(e, 'htc_pos_district') }},
+                                                       select2: { placeholder: 'District' }"></select>
                                 </div>
                             </div>
                             <div class="form-group">
                                 <label class="control-label col-sm-3">Client Type:</label>
                                 <div class="col-sm-8">
-                                    <ui-select multiple ng-model="mainCtrl.filters.htc_pos_client_type" theme="bootstrap" on-remove="mainCtrl.onSelectOption($item, 'htc_pos_client_type')" on-select="mainCtrl.onSelectOption($item, 'htc_pos_client_type')">
-                                        <ui-select-match placeholder="Client Type"><span ng-bind="$item.value"></span></ui-select-match>
-                                        <ui-select-choices repeat="client.id as client in mainCtrl.clientTypes">
-                                            <div ng-bind="client.value"></div>
-                                        </ui-select-choices>
-                                    </ui-select>
+                                    <select class="form-control"
+                                            multiple="multiple"
+                                            data-bind="options: availableClientTypes,
+                                                       optionsText: 'text',
+                                                       optionsValue: 'id',
+                                                       selectedOptions: filters.htc_pos_client_type,
+                                                       event: { change: function(data, e) { onSelectOption(e, 'htc_pos_client_type') }},
+                                                       select2: { placeholder: 'Client Type' }"></select>
                                 </div>
                             </div>
                             <div class="form-group">
                                 <label class="control-label col-sm-3">Post Date:</label>
                                 <div class="col-sm-8">
-                                    <input date-range-picker options="mainCtrl.pickerOptions" class="form-control date-picker" type="text" ng-model="mainCtrl.htc_pos_post_date" />
+                                    <input class="form-control date-picker" data-bind="value: filters.htc_pos_post_date"/>
                                 </div>
                             </div>
                             <div class="form-group">
                                 <label class="control-label col-sm-3">HIV Test Date:</label>
                                 <div class="col-sm-8">
-                                    <input date-range-picker options="mainCtrl.pickerOptions" class="form-control date-picker" type="text" ng-model="mainCtrl.htc_pos_hiv_test_date" />
+                                    <input class="form-control date-picker" data-bind="value: filters.htc_pos_hiv_test_date"/>
                                 </div>
                             </div>
                             <div class="form-group">
                                 <label class="control-label col-sm-3">User Group:</label>
-                                <div class="col-sm-8">
-                                    <ui-select multiple ng-model="mainCtrl.filters.htc_pos_user_group" theme="bootstrap" on-remove="mainCtrl.onSelectOption($item, 'htc_pos_user_group')" on-select="mainCtrl.onSelectOption($item, 'htc_pos_user_group')">
-                                        <ui-select-match placeholder="User Group"><span ng-bind="$item.value"></span></ui-select-match>
-                                        <ui-select-choices repeat="group.id as group in mainCtrl.groups">
-                                            <div ng-bind="group.value"></div>
-                                        </ui-select-choices>
-                                    </ui-select>
+                                 <div class="col-sm-8">
+                                    <select class="form-control"
+                                            multiple="multiple"
+                                            data-bind="options: groups,
+                                                       optionsText: 'text',
+                                                       optionsValue: 'id',
+                                                       selectedOptions: filters.htc_pos_user_group,
+                                                       event: { change: function(data, e) { onSelectOption(e, 'htc_pos_user_group') }},
+                                                       select2: { placeholder: 'User Group' }"></select>
                                 </div>
                             </div>
                         </div>
@@ -302,61 +318,73 @@
                             <div class="form-group">
                                 <label class="control-label col-sm-3">Age Range:</label>
                                 <div class="col-sm-8">
-                                    <ui-select multiple ng-model="mainCtrl.filters.care_new_age_range" theme="bootstrap" on-remove="mainCtrl.onSelectOption($item, 'care_new_age_range')" on-select="mainCtrl.onSelectOption($item, 'care_new_age_range')">
-                                        <ui-select-match placeholder="Age range"><span ng-bind="$item.value"></span></ui-select-match>
-                                        <ui-select-choices repeat="ageRange.id as ageRange in mainCtrl.ageRanges">
-                                            <div ng-bind="ageRange.value"></div>
-                                        </ui-select-choices>
-                                    </ui-select>
+                                    <select class="form-control"
+                                            multiple="multiple"
+                                            data-bind="options: ageRanges,
+                                                       optionsText: 'text',
+                                                       optionsValue: 'id',
+                                                       selectedOptions: filters.care_new_age_range,
+                                                       event: { change: function(data, e) { onSelectOption(e, 'care_new_age_range') }},
+                                                       select2: { placeholder: 'Age Range' }"></select>
                                 </div>
                             </div>
                             <div class="form-group">
                                 <label class="control-label col-sm-3">District:</label>
                                 <div class="col-sm-8">
-                                    <ui-select multiple ng-model="mainCtrl.filters.care_new_district" theme="bootstrap" on-remove="mainCtrl.onSelectOption($item, 'care_new_district')" on-select="mainCtrl.onSelectOption($item, 'care_new_district')">
-                                        <ui-select-match placeholder="District"><span ng-bind="$item.value"></span></ui-select-match>
-                                        <ui-select-choices repeat="district.id as district in mainCtrl.districts">
-                                            <div ng-bind="district.value"></div>
-                                        </ui-select-choices>
-                                    </ui-select>
+                                    <select class="form-control"
+                                            multiple="multiple"
+                                            data-bind="options: availableDistricts,
+                                                       optionsText: 'text',
+                                                       optionsValue: 'id',
+                                                       selectedOptions: filters.care_new_district,
+                                                       event: { change: function(data, e) { onSelectOption(e, 'care_new_district') }},
+                                                       select2: { placeholder: 'District' }"></select>
                                 </div>
                             </div>
                             <div class="form-group">
                                 <label class="control-label col-sm-3">Client Type:</label>
                                 <div class="col-sm-8">
-                                    <ui-select multiple ng-model="mainCtrl.filters.care_new_client_type" theme="bootstrap" on-remove="mainCtrl.onSelectOption($item, 'care_new_client_type')" on-select="mainCtrl.onSelectOption($item, 'care_new_client_type')">
-                                        <ui-select-match placeholder="Client Type"><span ng-bind="$item.value"></span></ui-select-match>
-                                        <ui-select-choices repeat="client.id as client in mainCtrl.clientTypes">
-                                            <div ng-bind="client.value"></div>
-                                        </ui-select-choices>
-                                    </ui-select>
+                                    <select class="form-control"
+                                            multiple="multiple"
+                                            data-bind="options: availableClientTypes,
+                                                       optionsText: 'text',
+                                                       optionsValue: 'id',
+                                                       selectedOptions: filters.care_new_client_type,
+                                                       event: { change: function(data, e) { onSelectOption(e, 'kp_prev_client_type') }},
+                                                       select2: { placeholder: 'Client Type' }"></select>
                                 </div>
                             </div>
                             <div class="form-group">
                                 <label class="control-label col-sm-3">HIV status:</label>
                                 <div class="col-sm-8">
-                                    <ui-select multiple ng-model="mainCtrl.filters.care_new_hiv_status" theme="bootstrap" on-remove="mainCtrl.onSelectOption($item, 'care_new_hiv_status')" on-select="mainCtrl.onSelectOption($item, 'care_new_hiv_status')">
-                                        <ui-select-match placeholder="HIV Status"><span ng-bind="$item.value"></span></ui-select-match>
-                                        <ui-select-choices repeat="hiv.id as hiv in mainCtrl.hivStatuses">
-                                            <div ng-bind="hiv.value"></div>
-                                        </ui-select-choices>
-                                    </ui-select>
+                                    <select class="form-control"
+                                            multiple="multiple"
+                                            data-bind="options: hivStatuses,
+                                                       optionsText: 'text',
+                                                       optionsValue: 'id',
+                                                       selectedOptions: filters.care_new_hiv_status,
+                                                       event: { change: function(data, e) { onSelectOption(e, 'care_new_hiv_status') }},
+                                                       select2: { placeholder: 'HIV Status' }"></select>
                                 </div>
                             </div>
                             <div class="form-group">
                                 <label class="control-label col-sm-3">Handshake Date:</label>
                                 <div class="col-sm-8">
-                                    <input date-range-picker options="mainCtrl.pickerOptions" class="form-control date-picker" type="text" ng-model="mainCtrl.care_new_date_handshake" />
+                                    <input class="form-control date-picker" data-bind="value: filters.care_new_date_handshake"/>
                                 </div>
                             </div>
                             <div class="form-group">
                                 <label class="control-label col-sm-3">User Group:</label>
-                                <ui-select class="col-sm-8" ng-model="mainCtrl.filters.care_new_user_group" theme="bootstrap" on-remove="mainCtrl.onSelectOption($item, 'care_new_user_group')" on-select="mainCtrl.onSelectOption($item, 'care_new_user_group')">
-                                    <ui-select-match placeholder="User Group"><span ng-bind="$select.selected.value"></span></ui-select-match>
-                                    <ui-select-choices repeat="group.id as group in mainCtrl.groups">
-                                        <div ng-bind="group.value"></div>
-                                    </ui-select-choices>
-                                </ui-select>
+                                <div class="col-sm-8">
+                                    <select class="form-control"
+                                            multiple="multiple"
+                                            data-bind="options: groups,
+                                                       optionsText: 'text',
+                                                       optionsValue: 'id',
+                                                       selectedOptions: filters.care_new_user_group,
+                                                       event: { change: function(data, e) { onSelectOption(e, 'care_new_user_group') }},
+                                                       select2: { placeholder: 'User Group' }"></select>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -368,62 +396,72 @@
                             <div class="form-group">
                                 <label class="control-label col-sm-3">Age Range:</label>
                                 <div class="col-sm-8">
-                                    <ui-select multiple ng-model="mainCtrl.filters.tx_new_age_range" theme="bootstrap" on-remove="mainCtrl.onSelectOption($item, 'tx_new_age_range')" on-select="mainCtrl.onSelectOption($item, 'tx_new_age_range')">
-                                        <ui-select-match placeholder="Age range"><span ng-bind="$item.value"></span></ui-select-match>
-                                        <ui-select-choices repeat="ageRange.id as ageRange in mainCtrl.ageRanges">
-                                            <div ng-bind="ageRange.value"></div>
-                                        </ui-select-choices>
-                                    </ui-select>
+                                    <select class="form-control"
+                                            multiple="multiple"
+                                            data-bind="options: ageRanges,
+                                                       optionsText: 'text',
+                                                       optionsValue: 'id',
+                                                       selectedOptions: filters.tx_new_age_range,
+                                                       event: { change: function(data, e) { onSelectOption(e, 'tx_new_age_range') }},
+                                                       select2: { placeholder: 'Age Range' }"></select>
                                 </div>
                             </div>
                             <div class="form-group">
                                 <label class="control-label col-sm-3">District:</label>
                                 <div class="col-sm-8">
-                                    <ui-select multiple ng-model="mainCtrl.filters.tx_new_district" theme="bootstrap" on-remove="mainCtrl.onSelectOption($item, 'tx_new_district')" on-select="mainCtrl.onSelectOption($item, 'tx_new_district')">
-                                        <ui-select-match placeholder="District"><span ng-bind="$item.value"></span></ui-select-match>
-                                        <ui-select-choices repeat="district.id as district in mainCtrl.districts">
-                                            <div ng-bind="district.value"></div>
-                                        </ui-select-choices>
-                                    </ui-select>
+                                    <select class="form-control"
+                                            multiple="multiple"
+                                            data-bind="options: availableDistricts,
+                                                       optionsText: 'text',
+                                                       optionsValue: 'id',
+                                                       selectedOptions: filters.tx_new_district,
+                                                       event: { change: function(data, e) { onSelectOption(e, 'tx_new_district') }},
+                                                       select2: { placeholder: 'District' }"></select>
                                 </div>
                             </div>
                             <div class="form-group">
                                 <label class="control-label col-sm-3">Client Type:</label>
                                 <div class="col-sm-8">
-                                    <ui-select multiple ng-model="mainCtrl.filters.tx_new_client_type" theme="bootstrap" on-remove="mainCtrl.onSelectOption($item, 'tx_new_client_type')" on-select="mainCtrl.onSelectOption($item, 'tx_new_client_type')">
-                                        <ui-select-match placeholder="Client Type"><span ng-bind="$item.value"></span></ui-select-match>
-                                        <ui-select-choices repeat="client.id as client in mainCtrl.clientTypes">
-                                            <div ng-bind="client.value"></div>
-                                        </ui-select-choices>
-                                    </ui-select>
+                                    <select class="form-control"
+                                            multiple="multiple"
+                                            data-bind="options: availableClientTypes,
+                                                       optionsText: 'text',
+                                                       optionsValue: 'id',
+                                                       selectedOptions: filters.tx_new_client_type,
+                                                       event: { change: function(data, e) { onSelectOption(e, 'tx_new_client_type') }},
+                                                       select2: { placeholder: 'Client Type' }"></select>
                                 </div>
                             </div>
                             <div class="form-group">
                                 <label class="control-label col-sm-3">First Art Date</label>
                                 <div class="col-sm-8">
-                                    <input date-range-picker options="mainCtrl.pickerOptions" class="form-control date-picker" type="text" ng-model="mainCtrl.tx_new_first_art_date" />
+                                    <input class="form-control date-picker" data-bind="value: filters.tx_new_first_art_date"/>
                                 </div>
                             </div>
                             <div class="form-group">
                                 <label class="control-label col-sm-3">HIV status:</label>
                                 <div class="col-sm-8">
-                                    <ui-select multiple ng-model="mainCtrl.filters.tx_new_hiv_status" theme="bootstrap" on-remove="mainCtrl.onSelectOption($item, 'tx_new_hiv_status')" on-select="mainCtrl.onSelectOption($item, 'tx_new_hiv_status')">
-                                        <ui-select-match placeholder="HIV Status"><span ng-bind="$item.value"></span></ui-select-match>
-                                        <ui-select-choices repeat="hiv.id as hiv in mainCtrl.hivStatuses">
-                                            <div ng-bind="hiv.value"></div>
-                                        </ui-select-choices>
-                                    </ui-select>
+                                    <select class="form-control"
+                                            multiple="multiple"
+                                            data-bind="options: hivStatuses,
+                                                       optionsText: 'text',
+                                                       optionsValue: 'id',
+                                                       selectedOptions: filters.tx_new_hiv_status,
+                                                       event: { change: function(data, e) { onSelectOption(e, 'tx_new_hiv_status') }},
+                                                       select2: { placeholder: 'HIV Status' }"></select>
                                 </div>
                             </div>
                             <div class="form-group">
                                 <label class="control-label col-sm-3">User Group:</label>
                                 <div class="col-sm-8">
-                                    <ui-select multiple ng-model="mainCtrl.filters.tx_new_user_group" theme="bootstrap" on-remove="mainCtrl.onSelectOption($item, 'tx_new_user_group')" on-select="mainCtrl.onSelectOption($item, 'tx_new_user_group')">
-                                        <ui-select-match placeholder="User Group"><span ng-bind="$item.value"></span></ui-select-match>
-                                        <ui-select-choices repeat="group.id as group in mainCtrl.groups">
-                                            <div ng-bind="group.value"></div>
-                                        </ui-select-choices>
-                                    </ui-select>
+                                    <select class="form-control"
+                                            multiple="multiple"
+                                            data-bind="options: groups,
+                                                       optionsText: 'text',
+                                                       optionsValue: 'id',
+                                                       selectedOptions: filters.tx_new_user_group,
+                                                       event: { change: function(data, e) { onSelectOption(e, 'tx_new_user_group') }},
+                                                       select2: { placeholder: 'User Group' }"></select>
                                 </div>
                             </div>
                         </div>
@@ -436,71 +474,83 @@
                             <div class="form-group">
                                 <label class="control-label col-sm-3">Age Range:</label>
                                 <div class="col-sm-8">
-                                    <ui-select multiple ng-model="mainCtrl.filters.tx_undetect_age_range" theme="bootstrap" on-remove="mainCtrl.onSelectOption($item, 'tx_undetect_age_range')" on-select="mainCtrl.onSelectOption($item, 'tx_undetect_age_range')">
-                                        <ui-select-match placeholder="Age range"><span ng-bind="$item.value"></span></ui-select-match>
-                                        <ui-select-choices repeat="ageRange.id as ageRange in mainCtrl.ageRanges">
-                                            <div ng-bind="ageRange.value"></div>
-                                        </ui-select-choices>
-                                    </ui-select>
+                                    <select class="form-control"
+                                            multiple="multiple"
+                                            data-bind="options: ageRanges,
+                                                       optionsText: 'text',
+                                                       optionsValue: 'id',
+                                                       selectedOptions: filters.tx_undetect_age_range,
+                                                       event: { change: function(data, e) { onSelectOption(e, 'tx_undetect_age_range') }},
+                                                       select2: { placeholder: 'Age Range' }"></select>
                                 </div>
                             </div>
                             <div class="form-group">
                                 <label class="control-label col-sm-3">District:</label>
                                 <div class="col-sm-8">
-                                    <ui-select multiple ng-model="mainCtrl.filters.tx_undetect_district" theme="bootstrap" on-remove="mainCtrl.onSelectOption($item, 'tx_undetect_district')" on-select="mainCtrl.onSelectOption($item, 'tx_undetect_district')">
-                                        <ui-select-match placeholder="District"><span ng-bind="$item.value"></span></ui-select-match>
-                                        <ui-select-choices repeat="district.id as district in mainCtrl.districts">
-                                            <div ng-bind="district.value"></div>
-                                        </ui-select-choices>
-                                    </ui-select>
+                                    <select class="form-control"
+                                            multiple="multiple"
+                                            data-bind="options: availableDistricts,
+                                                       optionsText: 'text',
+                                                       optionsValue: 'id',
+                                                       selectedOptions: filters.tx_undetect_district,
+                                                       event: { change: function(data, e) { onSelectOption(e, 'tx_undetect_district') }},
+                                                       select2: { placeholder: 'District' }"></select>
                                 </div>
                             </div>
                             <div class="form-group">
                                 <label class="control-label col-sm-3">Client Type:</label>
                                 <div class="col-sm-8">
-                                    <ui-select multiple ng-model="mainCtrl.filters.tx_undetect_client_type" theme="bootstrap" on-remove="mainCtrl.onSelectOption($item, 'tx_undetect_client_type')" on-select="mainCtrl.onSelectOption($item, 'tx_undetect_client_type')">
-                                        <ui-select-match placeholder="Client Type"><span ng-bind="$item.value"></span></ui-select-match>
-                                        <ui-select-choices repeat="client.id as client in mainCtrl.clientTypes">
-                                            <div ng-bind="client.value"></div>
-                                        </ui-select-choices>
-                                    </ui-select>
+                                    <select class="form-control"
+                                            multiple="multiple"
+                                            data-bind="options: availableClientTypes,
+                                                       optionsText: 'text',
+                                                       optionsValue: 'id',
+                                                       selectedOptions: filters.tx_undetect_client_type,
+                                                       event: { change: function(data, e) { onSelectOption(e, 'tx_undetect_client_type') }},
+                                                       select2: { placeholder: 'Client Type' }"></select>
                                 </div>
                             </div>
                             <div class="form-group">
                                 <label class="control-label col-sm-3">Undetect VL:</label>
-                                <ui-select class="col-sm-8" ng-model="mainCtrl.filters.tx_undetect_vl" theme="bootstrap">
-                                    <ui-select-match placeholder="Undetect VL"><span ng-bind="$select.selected.value"></span></ui-select-match>
-                                    <ui-select-choices repeat="undetected_vl.id as undetected_vl in mainCtrl.undetectvl">
-                                        <div ng-bind="undetected_vl.value"></div>
-                                    </ui-select-choices>
-                                </ui-select>
+                                <div class="col-sm-8">
+                                    <select class="form-control"
+                                            data-bind="options: undetectedVL,
+                                                       optionsText: 'text',
+                                                       optionsValue: 'id',
+                                                       selectedOptions: filters.tx_undetect_vl,
+                                                       select2: {}"></select>
+                                </div>
                             </div>
                             <div class="form-group">
                                 <label class="control-label col-sm-3">HIV status:</label>
                                 <div class="col-sm-8">
-                                    <ui-select multiple ng-model="mainCtrl.filters.tx_undetect_hiv_status" theme="bootstrap" on-remove="mainCtrl.onSelectOption($item, 'tx_undetect_hiv_status')" on-select="mainCtrl.onSelectOption($item, 'tx_undetect_hiv_status')">
-                                        <ui-select-match placeholder="HIV Status"><span ng-bind="$item.value"></span></ui-select-match>
-                                        <ui-select-choices repeat="hiv.id as hiv in mainCtrl.hivStatuses">
-                                            <div ng-bind="hiv.value"></div>
-                                        </ui-select-choices>
-                                    </ui-select>
+                                    <select class="form-control"
+                                            multiple="multiple"
+                                            data-bind="options: hivStatuses,
+                                                       optionsText: 'text',
+                                                       optionsValue: 'id',
+                                                       selectedOptions: filters.tx_undetect_hiv_status,
+                                                       event: { change: function(data, e) { onSelectOption(e, 'tx_undetect_hiv_status') }},
+                                                       select2: { placeholder: 'HIV Status' }"></select>
                                 </div>
                             </div>
                             <div class="form-group">
                                 <label class="control-label col-sm-3">Last VL Test Date</label>
                                 <div class="col-sm-8">
-                                    <input date-range-picker options="mainCtrl.pickerOptions" class="form-control date-picker" type="text" ng-model="mainCtrl.tx_undetect_date_last_vl_test" />
+                                    <input class="form-control date-picker" data-bind="value: filters.tx_undetect_date_last_vl_test"/>
                                 </div>
                             </div>
                             <div class="form-group">
                                 <label class="control-label col-sm-3">User Group:</label>
                                 <div class="col-sm-8">
-                                    <ui-select multiple ng-model="mainCtrl.filters.tx_undetect_user_group" theme="bootstrap" on-remove="mainCtrl.onSelectOption($item, 'tx_undetect_user_group')" on-select="mainCtrl.onSelectOption($item, 'tx_undetect_user_group')">
-                                        <ui-select-match placeholder="User Group"><span ng-bind="$item.value"></span></ui-select-match>
-                                        <ui-select-choices repeat="group.id as group in mainCtrl.groups">
-                                            <div ng-bind="group.value"></div>
-                                        </ui-select-choices>
-                                    </ui-select>
+                                    <select class="form-control"
+                                            multiple="multiple"
+                                            data-bind="options: groups,
+                                                       optionsText: 'text',
+                                                       optionsValue: 'id',
+                                                       selectedOptions: filters.tx_undetect_user_group,
+                                                       event: { change: function(data, e) { onSelectOption(e, 'tx_undetect_user_group') }},
+                                                       select2: { placeholder: 'User Group' }"></select>
                                 </div>
                             </div>
                         </div>

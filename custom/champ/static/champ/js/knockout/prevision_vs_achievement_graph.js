@@ -50,6 +50,37 @@ function PrecisionVsAcievementsGraphModel() {
         kp_prev_client_type: ko.observableArray(),
         kp_prev_visit_date: ko.observable(defaultDate),
         kp_prev_user_group: ko.observableArray(),
+        htc_tst_post_date: ko.observable(defaultDate),
+        htc_tst_hiv_test_date: ko.observable(defaultDate),
+        htc_tst_age_range: ko.observableArray(),
+        htc_tst_district: ko.observableArray(),
+        htc_tst_client_type: ko.observableArray(),
+        htc_tst_user_group: ko.observableArray(),
+        htc_pos_age_range: ko.observableArray(),
+        htc_pos_district: ko.observableArray(),
+        htc_pos_client_type: ko.observableArray(),
+        htc_pos_post_date: ko.observable(defaultDate),
+        htc_pos_hiv_test_date: ko.observable(defaultDate),
+        htc_pos_user_group: ko.observableArray(),
+        care_new_age_range: ko.observableArray(),
+        care_new_district: ko.observableArray(),
+        care_new_client_type: ko.observableArray(),
+        care_new_hiv_status: ko.observableArray(),
+        care_new_date_handshake: ko.observable(defaultDate),
+        care_new_user_group: ko.observableArray(),
+        tx_new_age_range: ko.observableArray(),
+        tx_new_district: ko.observableArray(),
+        tx_new_client_type: ko.observableArray(),
+        tx_new_first_art_date: ko.observable(defaultDate),
+        tx_new_hiv_status: ko.observableArray(),
+        tx_new_user_group: ko.observableArray(),
+        tx_undetect_age_range: ko.observableArray(),
+        tx_undetect_district: ko.observableArray(),
+        tx_undetect_client_type: ko.observableArray(),
+        tx_undetect_vl: ko.observable(),
+        tx_undetect_hiv_status: ko.observableArray(),
+        tx_undetect_date_last_vl_test: ko.observable(defaultDate),
+        tx_undetect_user_group: ko.observableArray(),
     };
 
     self.availableClientTypes = [
@@ -57,6 +88,12 @@ function PrecisionVsAcievementsGraphModel() {
         {id: 'FSW', text: 'FSW'},
         {id: 'MSM', text: 'MSM'},
         {id: 'client_fsw', text: 'Client FSW'},
+    ];
+
+    self.undetectedVL = [
+        {id: '', text: 'All'},
+        {id: 'yes', text: 'Yes'},
+        {id: 'no', text: 'No'},
     ];
 
     self.ageRanges = [
@@ -86,6 +123,14 @@ function PrecisionVsAcievementsGraphModel() {
         {id: 'no', text: 'No'},
     ];
 
+    self.hivStatuses = [
+        {id: '', text: 'All'},
+        {id: 'unknown', text: 'Unknown'},
+        {id: 'negative', text: 'Negative'},
+        {id: 'positive', text: 'Positive'},
+        {id: 'unclear', text: 'Unclear'},
+    ];
+
     self.chart = void(0);
 
     for (var year=2014; year <= (currentYear + 4); year++ ) {
@@ -94,7 +139,6 @@ function PrecisionVsAcievementsGraphModel() {
             id: year,
         });
     }
-
 
     self.getData = function() {
         var hierarchy_url = url('hierarchy');
@@ -277,7 +321,7 @@ function PrecisionVsAcievementsGraphModel() {
         return self.chart
     });
 
-    $('#dateFilter').daterangepicker(
+    $('.date-picker').daterangepicker(
         {
             startDate: defaultStartDate,
             endDate: defaultEndDate,
