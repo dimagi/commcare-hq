@@ -5,6 +5,7 @@ from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.dbaccessors import get_all_users_by_location
 from corehq.apps.locations.models import SQLLocation
+from corehq.apps.sms.models import MessagingEvent
 from corehq.apps.users.cases import get_owner_id, get_wrapped_owner
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.form_processor.exceptions import CaseNotFound
@@ -179,12 +180,27 @@ class ScheduleInstance(PartitionedModel):
 
     def handle_current_event(self):
         content = self.memoized_schedule.get_current_event_content(self)
+        logged_event = MessagingEvent.create_from_schedule_instance(self, content)
+
+        case = None
+        if isinstance(self, CaseScheduleInstanceMixin):
+            case = self.case
+
+        recipient_count = 0
         for recipient in self.expand_recipients():
-            content.send(recipient, self)
+            recipient_count += 1
+            content.send(recipient, self, logged_event, case=case)
+
         # As a precaution, always explicitly move to the next event after processing the current
         # event to prevent ever getting stuck on the current event.
         self.memoized_schedule.move_to_next_event(self)
         self.memoized_schedule.move_to_next_event_not_in_the_past(self)
+
+        # Update the MessagingEvent for reporting
+        if recipient_count == 0:
+            logged_event.error(MessagingEvent.ERROR_NO_RECIPIENT)
+        else:
+            logged_event.completed()
 
     @property
     def schedule(self):

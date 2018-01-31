@@ -9,6 +9,7 @@ from corehq.messaging.scheduling.models.abstract import Content
 from corehq.apps.reminders.event_handlers import get_message_template_params
 from corehq.apps.reminders.models import Message
 from corehq.apps.sms.api import MessageMetadata
+from corehq.apps.sms.models import MessagingEvent
 from couchdbkit.resource import ResourceNotFound
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.logging import notify_exception
@@ -35,12 +36,13 @@ def get_sms_custom_metadata(schedule_instance):
     return custom_metadata
 
 
-def send_sms_for_schedule_instance(schedule_instance, recipient, phone_number, message):
+def send_sms_for_schedule_instance(schedule_instance, recipient, phone_number, message, logged_subevent):
     if not message:
         return
 
     metadata = MessageMetadata(
         custom_metadata=get_sms_custom_metadata(schedule_instance),
+        messaging_subevent_id=logged_subevent.pk,
     )
 
     if schedule_instance.memoized_schedule.is_test:
@@ -52,32 +54,31 @@ def send_sms_for_schedule_instance(schedule_instance, recipient, phone_number, m
 class SMSContent(Content):
     message = old_jsonfield.JSONField(default=dict)
 
-    def render_message(self, message, schedule_instance):
-        from corehq.messaging.scheduling.scheduling_partitioned.models import (
-            CaseAlertScheduleInstance,
-            CaseTimedScheduleInstance,
-        )
-
+    def render_message(self, message, logged_subevent, case=None):
         if not message:
+            logged_subevent.error(MessagingEvent.ERROR_NO_MESSAGE)
             return None
 
-        if isinstance(schedule_instance, (CaseAlertScheduleInstance, CaseTimedScheduleInstance)):
-            case = CaseAccessors(schedule_instance.domain).get_case(schedule_instance.case_id)
+        if case:
             template_params = get_message_template_params(case)
             try:
                 return Message.render(message, **template_params)
             except:
-                subject = "[Scheduling] Could not render message"
-                notify_exception(None, message=subject, details={
-                    'schedule_instance_id': schedule_instance.schedule_instance_id,
-                })
+                logged_subevent.error(MessagingEvent.ERROR_CANNOT_RENDER_MESSAGE)
                 return None
 
         return message
 
-    def send(self, recipient, schedule_instance):
+    def send(self, recipient, schedule_instance, logged_event, case=None):
+        logged_subevent = logged_event.create_subevent_from_contact_and_content(
+            recipient,
+            self,
+            case_id=case.case_id if case else None,
+        )
+
         phone_number = self.get_one_way_phone_number(recipient)
         if not phone_number:
+            logged_subevent.error(MessagingEvent.ERROR_NO_PHONE_NUMBER)
             return
 
         message = self.get_translation_from_message_dict(
@@ -85,16 +86,17 @@ class SMSContent(Content):
             schedule_instance.memoized_schedule,
             recipient.get_language_code()
         )
-        message = self.render_message(message, schedule_instance)
+        message = self.render_message(message, logged_subevent, case=case)
 
-        send_sms_for_schedule_instance(schedule_instance, recipient, phone_number, message)
+        send_sms_for_schedule_instance(schedule_instance, recipient, phone_number, message, logged_subevent)
+        logged_subevent.completed()
 
 
 class EmailContent(Content):
     subject = old_jsonfield.JSONField(default=dict)
     message = old_jsonfield.JSONField(default=dict)
 
-    def send(self, recipient, schedule_instance):
+    def send(self, recipient, schedule_instance, logged_event, case=None):
         print('*******************************')
         print('To:', recipient)
         print('Subject: ', self.subject)
@@ -126,7 +128,7 @@ class SMSSurveyContent(Content):
 
         return app, module, form
 
-    def send(self, recipient, schedule_instance):
+    def send(self, recipient, schedule_instance, logged_event, case=None):
         print('*******************************')
         print('To:', recipient)
         print('SMS Survey: ', self.form_unique_id)
@@ -136,7 +138,7 @@ class SMSSurveyContent(Content):
 class IVRSurveyContent(Content):
     form_unique_id = models.CharField(max_length=126)
 
-    def send(self, recipient, schedule_instance):
+    def send(self, recipient, schedule_instance, logged_event, case=None):
         print('*******************************')
         print('To:', recipient)
         print('IVR Survey: ', self.form_unique_id)
@@ -163,11 +165,21 @@ class CustomContent(Content):
 
         return messages
 
-    def send(self, recipient, schedule_instance):
+    def send(self, recipient, schedule_instance, logged_event, case=None):
+        logged_subevent = logged_event.create_subevent_from_contact_and_content(
+            recipient,
+            self,
+            case_id=case.case_id if case else None,
+        )
+
         phone_number = self.get_one_way_phone_number(recipient)
         if not phone_number:
+            logged_subevent.error(MessagingEvent.ERROR_NO_PHONE_NUMBER)
             return
 
-        # Empty list is ok, we just won't send anything
+        # An empty list of messages returned from a custom content handler means
+        # we shouldn't send anything, so we don't log an error for that.
         for message in self.get_list_of_messages(recipient, schedule_instance):
-            send_sms_for_schedule_instance(schedule_instance, recipient, phone_number, message)
+            send_sms_for_schedule_instance(schedule_instance, recipient, phone_number, message, logged_subevent)
+
+        logged_subevent.completed()

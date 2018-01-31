@@ -918,6 +918,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
     )
 
     ERROR_NO_RECIPIENT = 'NO_RECIPIENT'
+    ERROR_NO_MESSAGE = 'NO_MESSAGE'
     ERROR_CANNOT_RENDER_MESSAGE = 'CANNOT_RENDER_MESSAGE'
     ERROR_UNSUPPORTED_COUNTRY = 'UNSUPPORTED_COUNTRY'
     ERROR_NO_PHONE_NUMBER = 'NO_PHONE_NUMBER'
@@ -944,6 +945,8 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
     ERROR_MESSAGES = {
         ERROR_NO_RECIPIENT:
             ugettext_noop('No recipient'),
+        ERROR_NO_MESSAGE:
+            ugettext_noop('No message available for the given language settings.'),
         ERROR_CANNOT_RENDER_MESSAGE:
             ugettext_noop('Error rendering message; please check syntax.'),
         ERROR_UNSUPPORTED_COUNTRY:
@@ -1349,6 +1352,31 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
             status=cls.STATUS_IN_PROGRESS,
             recipient_type=recipient_type,
             recipient_id=recipient_id
+        )
+
+    def create_subevent_from_contact_and_content(self, contact, content, case_id=None):
+        """
+        In the subevent context, the contact is always going to either be
+        a user or a case.
+
+        content is an instance of a subclass of corehq.messaging.scheduling.models.Content
+        """
+        recipient_type = self.get_recipient_type(contact)
+
+        content_type, form_unique_id, form_name = (
+            self.get_content_info_from_content_object(self.domain, content)
+        )
+
+        return MessagingSubEvent.objects.create(
+            parent=self,
+            date=datetime.utcnow(),
+            recipient_type=recipient_type,
+            recipient_id=contact.get_id if recipient_type else None,
+            content_type=content_type,
+            form_unique_id=form_unique_id,
+            form_name=form_name,
+            case_id=case_id,
+            status=self.STATUS_IN_PROGRESS,
         )
 
     @classmethod
