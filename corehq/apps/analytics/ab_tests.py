@@ -62,3 +62,14 @@ NEW_USER_PERSONA_FIELD = ABTestConfig(
     'new_user_persona_field_nov2017',
     (NEW_USER_PERSONA_OPTION_SHOW, NEW_USER_PERSONA_OPTION_HIDE)
 )
+
+
+DATA_FEEDBACK_LOOP_OPTION_ON = 'data_feedback_loop_on'
+DATA_FEEDBACK_LOOP_OPTION_OFF = 'data_feedback_loop_off'
+
+
+DATA_FEEDBACK_LOOP = ABTestConfig(
+    'Data Feedback Loop',
+    'data_feedback_loop_feb2018',
+    (DATA_FEEDBACK_LOOP_OPTION_ON, DATA_FEEDBACK_LOOP_OPTION_OFF)
+)

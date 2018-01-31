@@ -154,7 +154,32 @@ FormplayerFrontend.on('startForm', function (data) {
     };
     data.onsubmit = function (resp) {
         if (resp.status === "success") {
-            showSuccess(gettext("Form successfully saved"), $("#cloudcare-notifications"), 10000);
+            var markdowner = window.markdownit(),
+                reverse = hqImport("hqwebapp/js/initial_page_data").reverse,
+                analyticsLinks = [
+                    { url: reverse('list_case_exports'), text: '[Data Feedback Loop Test] Clicked on Export Cases Link' },
+                    { url: reverse('list_form_exports'), text: '[Data Feedback Loop Test] Clicked on Export Forms Link' },
+                    { url: reverse('case_details', '.*'), text: '[Data Feedback Loop Test] Clicked on Case Data Link' },
+                    { url: reverse('render_form_data', '.*'), text: '[Data Feedback Loop Test] Clicked on Form Data Link' },
+                ],
+                inTest = hqImport('analytix/js/kissmetrix').getAbTest('Data Feedback Loop') === 'data_feedback_loop_on',
+                message = (inTest ? resp.submitResponseMessage : gettext("Form successfully saved!")),
+                dataFeedbackLoopAnalytics = function(e) {
+                    var $target = $(e.target);
+                    if ($target.is("a")) {
+                        var reverse = hqImport("hqwebapp/js/initial_page_data").reverse,
+                            href = $target.attr("href");
+                        _.each(analyticsLinks, function(link) {
+                            if (href.match(RegExp(link.url))) {
+                                $target.attr("target", "_blank");
+                                hqImport('analytix/js/kissmetrix').track.event(link.text);
+                            }
+                        });
+                    }
+                };
+            showSuccess(markdowner.render(message), $("#cloudcare-notifications"), 50000, true);
+            $("#cloudcare-notifications").off('click').on('click', dataFeedbackLoopAnalytics);
+
             if (user.environment === FormplayerFrontend.Constants.PREVIEW_APP_ENVIRONMENT) {
                 hqImport('analytix/js/kissmetrix').track.event("[app-preview] User submitted a form");
                 hqImport('analytix/js/google').track.event("App Preview", "User submitted a form");
