@@ -200,7 +200,7 @@ class LocationExporter(object):
 
     def get_headers(self):
         headers = OrderedDict([
-            ('types', [LOCATION_TYPE_SHEET_HEADERS.keys()])
+            ('types', [list(LOCATION_TYPE_SHEET_HEADERS.values())])
         ])
         for loc_type in self.location_types:
             additional_headers = []
@@ -209,7 +209,7 @@ class LocationExporter(object):
                 additional_headers.extend(self._prefix_headers('consumption', self.product_codes))
             additional_headers.append('uncategorized_data')
 
-            headers[loc_type.code] = [LOCATION_SHEET_HEADERS.keys()[:-2] + additional_headers]
+            headers[loc_type.code] = [LOCATION_SHEET_HEADERS.values()[:-2] + additional_headers]
 
         return list(headers.items())
 
