@@ -240,7 +240,7 @@ class LocationExporter(object):
                     '',  # do delete
                 ]
                 for field in self.data_model.fields:
-                    row.append(model_data[field.slug])
+                    row.append(model_data.get(field.slug, ''))
 
                 if include_consumption:
                     consumption_data = self.get_consumption(loc)
