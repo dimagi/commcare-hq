@@ -2,7 +2,7 @@ from collections import OrderedDict
 
 ROOT_LOCATION_TYPE = "TOP"
 
-LOCATION_SHEET_HEADERS = OrderedDict([
+LOCATION_SHEET_HEADERS_BASE = OrderedDict([
     ('location_id', 'location_id'),
     ('site_code', 'site_code'),
     ('name', 'name'),
@@ -11,10 +11,18 @@ LOCATION_SHEET_HEADERS = OrderedDict([
     ('latitude', 'latitude'),
     ('longitude', 'longitude'),
     ('do_delete', 'Delete(Y/N)'),
+])
+
+
+LOCATION_SHEET_HEADERS_OPTIONAL = OrderedDict([
     ('custom_data', 'data'),
     ('uncategorized_data', 'uncategorized_data'),
     ('delete_uncategorized_data', 'Delete Uncategorized Data(Y/N)'),
 ])
+
+LOCATION_SHEET_HEADERS = OrderedDict(
+    LOCATION_SHEET_HEADERS_BASE.items() + LOCATION_SHEET_HEADERS_OPTIONAL.items()
+)
 
 LOCATION_TYPE_SHEET_HEADERS = OrderedDict([
     ('code', 'code'),

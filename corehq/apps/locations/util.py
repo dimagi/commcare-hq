@@ -8,7 +8,8 @@ import six
 from corehq.apps.commtrack.dbaccessors import get_supply_point_ids_in_domain_by_location
 from corehq.apps.consumption.shortcuts import get_loaded_default_monthly_consumption, build_consumption_dict
 from corehq.apps.domain.models import Domain
-from corehq.apps.locations.const import LOCATION_TYPE_SHEET_HEADERS, LOCATION_SHEET_HEADERS
+from corehq.apps.locations.const import LOCATION_TYPE_SHEET_HEADERS, \
+    LOCATION_SHEET_HEADERS_BASE, LOCATION_SHEET_HEADERS_OPTIONAL
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.products.models import Product
 from corehq.blobs import get_blob_db
@@ -207,10 +208,10 @@ class LocationExporter(object):
             additional_headers.extend(self._prefix_headers('data', (f.slug for f in self.data_model.fields)))
             if self.include_consumption_flag and loc_type.name not in self.administrative_types:
                 additional_headers.extend(self._prefix_headers('consumption', self.product_codes))
-            additional_headers.append(LOCATION_SHEET_HEADERS['uncategorized_data'])
-            additional_headers.append(LOCATION_SHEET_HEADERS['delete_uncategorized_data'])
+            additional_headers.append(LOCATION_SHEET_HEADERS_OPTIONAL['uncategorized_data'])
+            additional_headers.append(LOCATION_SHEET_HEADERS_OPTIONAL['delete_uncategorized_data'])
 
-            headers[loc_type.code] = [LOCATION_SHEET_HEADERS.values()[:-3] + additional_headers]
+            headers[loc_type.code] = [LOCATION_SHEET_HEADERS_BASE.values() + additional_headers]
 
         return list(headers.items())
 

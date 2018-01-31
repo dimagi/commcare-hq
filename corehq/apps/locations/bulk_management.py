@@ -9,20 +9,19 @@ from __future__ import absolute_import
 import copy
 from collections import Counter, defaultdict
 
-from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils.translation import string_concat, ugettext as _, ugettext_lazy
 
 from corehq.apps.locations.util import get_location_data_model
-from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.chunked import chunked
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import SQLLocation, LocationType
 from .tree_utils import BadParentError, CycleError, assert_no_cycles
-from .const import LOCATION_SHEET_HEADERS, LOCATION_TYPE_SHEET_HEADERS, ROOT_LOCATION_TYPE
+from .const import LOCATION_SHEET_HEADERS, LOCATION_TYPE_SHEET_HEADERS, ROOT_LOCATION_TYPE, \
+    LOCATION_SHEET_HEADERS_OPTIONAL, LOCATION_SHEET_HEADERS_BASE
 import six
 
 
@@ -357,11 +356,11 @@ class LocationExcelValidator(object):
 
         # all locations sheets should have correct headers
         location_stubs = []
-        optional_headers = LOCATION_SHEET_HEADERS.values()[-3:]
+        optional_headers = LOCATION_SHEET_HEADERS_OPTIONAL.values()
         for sheet_name, sheet_reader in sheets_by_title.items():
             if sheet_name != self.types_sheet_title:
                 actual = set(sheet_reader.fieldnames) - set(optional_headers)
-                expected = set(LOCATION_SHEET_HEADERS.values()) - set(optional_headers)
+                expected = set(LOCATION_SHEET_HEADERS_BASE.values())
                 if actual != expected:
                     raise LocationExcelSheetError(
                         _(u"Locations sheet with title '{name}' should contain exactly '{expected}' "
