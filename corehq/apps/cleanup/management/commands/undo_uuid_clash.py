@@ -3,6 +3,7 @@ from __future__ import absolute_import, print_function
 from collections import defaultdict
 from datetime import datetime
 
+import six
 from django.core.management.base import BaseCommand
 
 from casexml.apps.case.xform import get_case_updates
@@ -220,10 +221,10 @@ def check_and_process_forms(form_ids, logger):
     print('  Found %s forms to reprocess' % len(forms_to_process) * 2)
     cases_to_rebuild, ledgers_to_rebuild = undo_form_edits(forms_to_process, logger)
 
-    ncases = sum(len(cases) for cases in cases_to_rebuild.itervalues())
+    ncases = sum(len(cases) for cases in six.itervalues(cases_to_rebuild))
     print('  Rebuilding %s cases' % ncases)
     rebuild_cases(cases_to_rebuild, logger)
 
-    nledgers = sum(len(ledgers) for ledgers in ledgers_to_rebuild.itervalues())
+    nledgers = sum(len(ledgers) for ledgers in six.itervalues(ledgers_to_rebuild))
     print('  Rebuilding %s ledgers' % nledgers)
     rebuild_cases(cases_to_rebuild, logger)
