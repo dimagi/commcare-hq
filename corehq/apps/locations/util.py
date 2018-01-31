@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 
 import tempfile
+from collections import OrderedDict
 
 import six
 
@@ -198,9 +199,9 @@ class LocationExporter(object):
         }
 
     def get_headers(self):
-        headers = {
-            'types': [LOCATION_TYPE_SHEET_HEADERS.keys()],
-        }
+        headers = OrderedDict([
+            ('types', [LOCATION_TYPE_SHEET_HEADERS.keys()])
+        ])
         for loc_type in self.location_types:
             additional_headers = []
             additional_headers.extend(self._prefix_headers('data', (f.slug for f in self.data_model.fields)))
