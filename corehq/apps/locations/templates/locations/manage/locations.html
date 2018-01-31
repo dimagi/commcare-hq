@@ -33,36 +33,36 @@
             $('#location_search_select').select2({
                 ajax: {
                     url: '{% url 'location_search' domain %}',
-                        dataType: 'json',
-                        data: function (params) {
-                            return {
-                                q: params.term,
-                                page_limit: 10,
-                                page: params.page,
-                                show_inactive: show_inactive,
-                            };
-                        },
-                        processResults: function (data, params) {
-                            var more = data.more || (params.page * 10) < data.total;
-                            return {results: data.results, more: more};
-                        }
+                    dataType: 'json',
+                    data: function (params) {
+                        return {
+                            q: params.term,
+                            page_limit: 10,
+                            page: params.page,
+                            show_inactive: show_inactive,
+                        };
                     },
-                });
-            };
+                    processResults: function (data, params) {
+                        var more = data.more || (params.page * 10) < data.total;
+                        return {results: data.results, more: more};
+                    }
+                },
+            });
+        };
 
-            var tree_model = new LocationTreeViewModel(hierarchy);
+        var tree_model = new LocationTreeViewModel(hierarchy);
 
-            var reloadLocationSearchSelect = function() {
-                $('#location_search_select').select2('val', null);
-                enableLocationSearchSelect();
-            };
-
-            var clearLocationSelection = function() {
-                reloadLocationSearchSelect();
-                tree_model.load(locs);
-            };
-
+        var reloadLocationSearchSelect = function() {
+            $('#location_search_select').select2('val', null);
             enableLocationSearchSelect();
+        };
+
+        var clearLocationSelection = function() {
+            reloadLocationSearchSelect();
+            tree_model.load(locs);
+        };
+
+        enableLocationSearchSelect();
 
         $(function() {
             $('#location_tree').koApplyBindings(tree_model);
@@ -165,7 +165,6 @@
 
     <div class="col-xs-7 col-md-7 col-lg-8">
 
-        <div>
         <select type="text"
             id="location_search_select"
             data-bind="value: l__selected_location_id"
@@ -174,10 +173,9 @@
             name="location_search"
             style="max-width:80%;"></select>
 
-            <div style="display:inline; cursor:pointer;" data-bind="if: selected_location_id(), click: clearLocationSelection">
-            <button type="button" class="btn btn-secondary"><i class="fa fa-times" aria-hidden="true"></i></button>
-            </div>
-        </div>
+        <button type="button" class="btn btn-secondary" style="display:inline; cursor:pointer;" data-bind="visible: selected_location_id(), click: clearLocationSelection">
+            <i class="fa fa-times" aria-hidden="true"></i>
+        </button>
 
         <span class="help-block">
             <i class="fa fa-info-circle"></i>
