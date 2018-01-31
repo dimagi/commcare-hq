@@ -747,7 +747,7 @@ class AddSavedReportConfigView(View):
             errors = self.saved_report_config_form.errors.get('__all__', [])
             return HttpResponseBadRequest(', '.join(errors))
 
-        update_config_data = copy(self.saved_report_config_form.cleaned_data)
+        update_config_data = copy.copy(self.saved_report_config_form.cleaned_data)
         del update_config_data['_id']
         update_config_data.update({
             'filters': self.filters,
@@ -808,7 +808,7 @@ class AddSavedReportConfigView(View):
 
     @property
     def filters(self):
-        filters = copy(self.post_data.get('filters', {}))
+        filters = copy.copy(self.post_data.get('filters', {}))
         for field in ['startdate', 'enddate']:
             if field in filters:
                 del filters[field]
