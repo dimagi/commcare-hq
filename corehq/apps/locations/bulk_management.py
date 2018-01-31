@@ -215,7 +215,7 @@ class LocationStub(object):
         else:
             metadata = db_meta
 
-        if data_provided and not self.delete_uncategorized_data:
+        if data_provided and not self.delete_uncategorized_data and self.data_model:
             known, unknown = self.data_model.get_model_and_uncategorized(db_meta)
             metadata.update(unknown)  # add back uncategorized data
         return metadata
