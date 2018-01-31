@@ -47,7 +47,7 @@ CYCLIC_LOCATION_TYPES = [
 
 
 # external_id, latitude, longitude, custom_data, uncategorized_data, index
-extra_stub_args = ('', '', '', {}, {}, 0)
+extra_stub_args = ('', '', '', {}, 0)
 
 BASIC_LOCATION_TREE = [
     # (name, site_code, location_type, parent_code, location_id,
@@ -395,7 +395,7 @@ class TestBulkManagement(TestCase):
 
     def create_locations(self, locations, lt_by_code):
         def _make_loc(name, site_code, location_type, parent_code, location_id,
-                      do_delete, external_id, latitude, longitude, custom_data, uncategorized_data,
+                      do_delete, external_id, latitude, longitude, custom_data,
                       index, parent=None):
             _type = lt_by_code.get(location_type)
             loc = SQLLocation(
@@ -505,8 +505,8 @@ class TestBulkManagement(TestCase):
 
     def test_int_datatype(self):
         data = [
-            ('S1', 1, 'state', '', '', False, '12', '', '2345', {}, {}, 0),
-            ('S2', 2, 'state', '', '', False, '12', '', '2345', {}, {}, 0),
+            ('S1', 1, 'state', '', '', False, '12', '', '2345', {}, 0),
+            ('S2', 2, 'state', '', '', False, '12', '', '2345', {}, 0),
         ]
 
         result = self.bulk_update_locations(
@@ -519,8 +519,8 @@ class TestBulkManagement(TestCase):
 
     def test_data_format(self):
         data = [
-            ('S1', '1', 'state', '', '', False, '12', 'not-lat', '2345', {}, {}, 0),
-            ('S2', '2', 'state', '', '', False, '12', '3434', '2345', {}, {}, 0),
+            ('S1', '1', 'state', '', '', False, '12', 'not-lat', '2345', {}, 0),
+            ('S2', '2', 'state', '', '', False, '12', '3434', '2345', {}, 0),
         ]
         result = self.bulk_update_locations(
             FLAT_LOCATION_TYPES,
@@ -858,8 +858,8 @@ class TestBulkManagement(TestCase):
 
     def test_custom_data(self):
         tree = [
-            ('State 1', 's1', 'state', '', '', False, '', '', '', {u'a': 1}, {}, 0),
-            ('County 11', 'c1', 'county', 's1', '', False, '', '', '', {u'b': u'test'}, {}, 0),
+            ('State 1', 's1', 'state', '', '', False, '', '', '', {u'a': 1}, 0),
+            ('County 11', 'c1', 'county', 's1', '', False, '', '', '', {u'b': u'test'}, 0),
         ]
         result = self.bulk_update_locations(
             FLAT_LOCATION_TYPES,
