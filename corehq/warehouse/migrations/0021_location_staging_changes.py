@@ -8,7 +8,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('warehouse', '0019_add_domainmembership_dim'),
+        ('warehouse', '0020_synclogfact'),
     ]
 
     operations = [
