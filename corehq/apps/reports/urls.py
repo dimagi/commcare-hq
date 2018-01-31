@@ -169,9 +169,6 @@ urlpatterns = [
         send_test_scheduled_report, name='send_test_scheduled_report'),
     url(r'^view_scheduled_report/(?P<scheduled_report_id>[\w_]+)/$',
         view_scheduled_report, name='view_scheduled_report'),
-    url(r'^unsubscribe_report/(?P<scheduled_report_id>[\w-]+)/'
-        r'(?P<user_email>[\w.%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,4})/',
-        ReportNotificationUnsubscribeView.as_view(), name=ReportNotificationUnsubscribeView.urlname),
 
     # Internal Use
     url(r"^export/forms/all/$", export_all_form_metadata, name="export_all_form_metadata"),

@@ -365,6 +365,14 @@ class MySavedReportsView(BaseProjectReportSectionView):
             num_unlisted_scheduled_reports = max(0, cur_len - self.default_scheduled_report_length)
             others_scheduled_reports = others_scheduled_reports[:min(self.default_scheduled_report_length,
                                                                      cur_len)]
+
+        class OthersScheduledReportWrapper(ReportNotification):
+            @property
+            def contextualized_secret(self):
+                return self.get_secret(user.get_email)
+
+        for other_report in others_scheduled_reports:
+            other_report.__class__ = OthersScheduledReportWrapper
         return {
             'couch_user': user,
             'user_email': user.get_email(),
@@ -1140,6 +1148,9 @@ class ReportNotificationUnsubscribeView(TemplateView):
             try:
                 self.report = ReportNotification.get(kwargs.pop('scheduled_report_id'))
                 email = kwargs.pop('user_email')
+
+                if kwargs.pop('scheduled_report_secret') != self.report.get_secret(email):
+                    raise ValidationError(self.broken_link_error)
                 if email not in self.report.all_recipient_emails:
                     raise ValidationError(ugettext_noop('This email address has already been unsubscribed.'))
             except ResourceNotFound:
@@ -1163,6 +1174,9 @@ class ReportNotificationUnsubscribeView(TemplateView):
         try:
             self.report = ReportNotification.get(kwargs.pop('scheduled_report_id'))
             email = kwargs.pop('user_email')
+
+            if kwargs.pop('scheduled_report_secret') != self.report.get_secret(email):
+                raise ValidationError(self.broken_link_error)
 
             self.report.remove_recipient(email)
 

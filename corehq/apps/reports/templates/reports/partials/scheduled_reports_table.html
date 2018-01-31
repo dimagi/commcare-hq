@@ -106,7 +106,7 @@
                     </div>
                     {% if not is_owner and not is_admin %}
                     <div class="btn-group">
-                        <a class="btn btn-info" href="{% url "notification_unsubscribe" domain report.get_id user_email %}">
+                        <a class="btn btn-info" href="{% url "notification_unsubscribe" report.get_id user_email report.contextualized_secret %}">
                             <i class="fa fa-ban"></i> {% trans "Unsubscribe me" %}
                         </a>
                     </div>
