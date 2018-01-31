@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 import re
 
+from django.conf import settings
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.utils.translation import ugettext_lazy as _
@@ -387,16 +388,19 @@ def related_dates_changed(case):
 
 @receiver(post_save, sender=SQLLocation, dispatch_uid="create_nikshay_he_repeat_records")
 def create_location_repeat_records(sender, raw=False, **kwargs):
-    if raw:
+    if raw or settings.SERVER_ENVIRONMENT != "enikshay":
         return
     create_repeat_records(NikshayHealthEstablishmentRepeater, kwargs['instance'])
 
 
 def create_nikshay_case_repeat_records(sender, case, **kwargs):
+    if settings.SERVER_ENVIRONMENT != "enikshay":
+        return
     create_repeat_records(NikshayRegisterPatientRepeater, case)
     create_repeat_records(NikshayTreatmentOutcomeRepeater, case)
     create_repeat_records(NikshayFollowupRepeater, case)
     create_repeat_records(NikshayRegisterPrivatePatientRepeater, case)
     create_repeat_records(NikshayHIVTestRepeater, case)
+
 
 case_post_save.connect(create_nikshay_case_repeat_records, CommCareCaseSQL)
