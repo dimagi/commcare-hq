@@ -1,4 +1,4 @@
-/* global d3, _ */
+/* global d3, _, moment */
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function UnderweightChildrenReportController($scope, $routeParams, $location, $filter, maternalChildService,

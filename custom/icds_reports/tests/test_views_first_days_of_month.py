@@ -49,6 +49,7 @@ class Base(TestCase):
         self.user = None
         self.view = None
         self.url = None
+        self.run_july_third_test = False
 
     def test_map_first_day_of_month(self):
         if self.factory is None:
@@ -131,6 +132,8 @@ class Base(TestCase):
     def test_map_third_day_of_month(self):
         if self.factory is None:
             return
+        if not self.run_july_third_test:
+            return
         working_reverse = reverse(self.url, kwargs={'domain': 'icds-test', 'step': 'map'})
         request = self.factory.get(working_reverse)
         request.user = self.user
@@ -139,13 +142,12 @@ class Base(TestCase):
         with mock.patch('custom.icds_reports.views.datetime', ThirdDayOfJuly):
             response_first_of_july = self.view(request, step=u'map', domain=u'icds-test')
 
-        june_data = json.loads(response_june.content)
-        july_data = json.loads(response_first_of_july.content)
-        if june_data != {} and july_data != {}:
-            self.assertNotEqual(june_data, july_data)
+        self.assertNotEqual(response_june.content, response_first_of_july.content)
 
     def test_chart_third_day_of_month(self):
         if self.factory is None:
+            return
+        if not self.run_july_third_test:
             return
         working_reverse = reverse(self.url, kwargs={'domain': 'icds-test', 'step': 'map'})
         request = self.factory.get(working_reverse)
@@ -155,13 +157,12 @@ class Base(TestCase):
         with mock.patch('custom.icds_reports.views.datetime', ThirdDayOfJuly):
             response_first_of_july = self.view(request, step=u'chart', domain=u'icds-test')
 
-        june_data = json.loads(response_june.content)
-        july_data = json.loads(response_first_of_july.content)
-        if june_data != {} and july_data != {}:
-            self.assertNotEqual(june_data, july_data)
+        self.assertNotEqual(response_june.content, response_first_of_july.content)
 
     def test_sector_third_day_of_month(self):
         if self.factory is None:
+            return
+        if not self.run_july_third_test:
             return
         working_reverse = reverse(self.url, kwargs={'domain': 'icds-test', 'step': 'map'})
         request = self.factory.get(working_reverse)
@@ -171,15 +172,17 @@ class Base(TestCase):
         with mock.patch('custom.icds_reports.views.datetime', ThirdDayOfJuly):
             response_first_of_july = self.view(request, step=u'chart', domain=u'icds-test', location_id=u'b1')
 
-        june_data = json.loads(response_june.content)
-        july_data = json.loads(response_first_of_july.content)
-        if june_data != {} and july_data != {}:
-            self.assertNotEqual(june_data, july_data)
+        self.assertNotEqual(response_june.content, response_first_of_july.content)
+
+    def tearDown(self):
+        if self.user:
+            self.user.delete()
 
 
 class TestPrevalenceOfUndernutritionView(Base):
 
     def setUp(self):
+        self.run_july_third_test = True
         self.factory = RequestFactory()
         domain = Domain.get_or_create_with_name('icds-test')
         domain.is_active = True
@@ -199,6 +202,7 @@ class TestPrevalenceOfUndernutritionView(Base):
 class TestAwcReportsView(Base):
 
     def setUp(self):
+        self.run_july_third_test = False
         self.factory = RequestFactory()
         domain = Domain.get_or_create_with_name('icds-test')
         domain.is_active = True
@@ -218,6 +222,7 @@ class TestAwcReportsView(Base):
 class TestPrevalenceOfSevereView(Base):
 
     def setUp(self):
+        self.run_july_third_test = True
         self.factory = RequestFactory()
         domain = Domain.get_or_create_with_name('icds-test')
         domain.is_active = True
@@ -237,6 +242,7 @@ class TestPrevalenceOfSevereView(Base):
 class TestPrevalenceOfStuntingView(Base):
 
     def setUp(self):
+        self.run_july_third_test = True
         self.factory = RequestFactory()
         domain = Domain.get_or_create_with_name('icds-test')
         domain.is_active = True
@@ -256,6 +262,7 @@ class TestPrevalenceOfStuntingView(Base):
 class TestNewbornsWithLowBirthWeightView(Base):
 
     def setUp(self):
+        self.run_july_third_test = True
         self.factory = RequestFactory()
         domain = Domain.get_or_create_with_name('icds-test')
         domain.is_active = True
@@ -275,6 +282,7 @@ class TestNewbornsWithLowBirthWeightView(Base):
 class TestEarlyInitiationBreastfeeding(Base):
 
     def setUp(self):
+        self.run_july_third_test = True
         self.factory = RequestFactory()
         domain = Domain.get_or_create_with_name('icds-test')
         domain.is_active = True
@@ -294,6 +302,7 @@ class TestEarlyInitiationBreastfeeding(Base):
 class TestExclusiveBreastfeedingView(Base):
 
     def setUp(self):
+        self.run_july_third_test = True
         self.factory = RequestFactory()
         domain = Domain.get_or_create_with_name('icds-test')
         domain.is_active = True
@@ -313,6 +322,7 @@ class TestExclusiveBreastfeedingView(Base):
 class TestChildrenInitiatedView(Base):
 
     def setUp(self):
+        self.run_july_third_test = True
         self.factory = RequestFactory()
         domain = Domain.get_or_create_with_name('icds-test')
         domain.is_active = True
@@ -332,6 +342,7 @@ class TestChildrenInitiatedView(Base):
 class TestInstitutionalDeliveriesView(Base):
 
     def setUp(self):
+        self.run_july_third_test = True
         self.factory = RequestFactory()
         domain = Domain.get_or_create_with_name('icds-test')
         domain.is_active = True
@@ -351,6 +362,7 @@ class TestInstitutionalDeliveriesView(Base):
 class TestImmunizationCoverageView(Base):
 
     def setUp(self):
+        self.run_july_third_test = True
         self.factory = RequestFactory()
         domain = Domain.get_or_create_with_name('icds-test')
         domain.is_active = True
@@ -370,6 +382,7 @@ class TestImmunizationCoverageView(Base):
 class TestAWCsCoveredView(Base):
 
     def setUp(self):
+        self.run_july_third_test = True
         self.factory = RequestFactory()
         domain = Domain.get_or_create_with_name('icds-test')
         domain.is_active = True
@@ -389,6 +402,7 @@ class TestAWCsCoveredView(Base):
 class TestRegisteredHouseholdView(Base):
 
     def setUp(self):
+        self.run_july_third_test = True
         self.factory = RequestFactory()
         domain = Domain.get_or_create_with_name('icds-test')
         domain.is_active = True
@@ -408,6 +422,7 @@ class TestRegisteredHouseholdView(Base):
 class TestEnrolledChildrenView(Base):
 
     def setUp(self):
+        self.run_july_third_test = True
         self.factory = RequestFactory()
         domain = Domain.get_or_create_with_name('icds-test')
         domain.is_active = True
@@ -427,6 +442,7 @@ class TestEnrolledChildrenView(Base):
 class TestEnrolledWomenView(Base):
 
     def setUp(self):
+        self.run_july_third_test = True
         self.factory = RequestFactory()
         domain = Domain.get_or_create_with_name('icds-test')
         domain.is_active = True
@@ -446,6 +462,7 @@ class TestEnrolledWomenView(Base):
 class TestLactatingEnrolledWomenView(Base):
 
     def setUp(self):
+        self.run_july_third_test = True
         self.factory = RequestFactory()
         domain = Domain.get_or_create_with_name('icds-test')
         domain.is_active = True
@@ -465,6 +482,7 @@ class TestLactatingEnrolledWomenView(Base):
 class TestAdolescentGirlsView(Base):
 
     def setUp(self):
+        self.run_july_third_test = True
         self.factory = RequestFactory()
         domain = Domain.get_or_create_with_name('icds-test')
         domain.is_active = True
@@ -484,6 +502,7 @@ class TestAdolescentGirlsView(Base):
 class TestAdhaarBeneficiariesView(Base):
 
     def setUp(self):
+        self.run_july_third_test = True
         self.factory = RequestFactory()
         domain = Domain.get_or_create_with_name('icds-test')
         domain.is_active = True
@@ -503,6 +522,7 @@ class TestAdhaarBeneficiariesView(Base):
 class TestCleanWaterView(Base):
 
     def setUp(self):
+        self.run_july_third_test = True
         self.factory = RequestFactory()
         domain = Domain.get_or_create_with_name('icds-test')
         domain.is_active = True
@@ -522,6 +542,7 @@ class TestCleanWaterView(Base):
 class TestFunctionalToiletView(Base):
 
     def setUp(self):
+        self.run_july_third_test = True
         self.factory = RequestFactory()
         domain = Domain.get_or_create_with_name('icds-test')
         domain.is_active = True
@@ -541,6 +562,7 @@ class TestFunctionalToiletView(Base):
 class TestMedicineKitView(Base):
 
     def setUp(self):
+        self.run_july_third_test = True
         self.factory = RequestFactory()
         domain = Domain.get_or_create_with_name('icds-test')
         domain.is_active = True
@@ -560,6 +582,7 @@ class TestMedicineKitView(Base):
 class TestInfantsWeightScaleView(Base):
 
     def setUp(self):
+        self.run_july_third_test = True
         self.factory = RequestFactory()
         domain = Domain.get_or_create_with_name('icds-test')
         domain.is_active = True
@@ -579,6 +602,7 @@ class TestInfantsWeightScaleView(Base):
 class TestAdultWeightScaleView(Base):
 
     def setUp(self):
+        self.run_july_third_test = True
         self.factory = RequestFactory()
         domain = Domain.get_or_create_with_name('icds-test')
         domain.is_active = True

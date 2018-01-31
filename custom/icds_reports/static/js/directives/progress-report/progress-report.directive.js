@@ -1,4 +1,4 @@
-/* global _ */
+/* global _, moment */
 
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
