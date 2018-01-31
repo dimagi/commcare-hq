@@ -37,17 +37,10 @@ hqDefine('registration/js/new_user.ko', function () {
 
     // Can't set up analytics until the values for the A/B tests are ready
     _kissmetrics.whenReadyAlways(function() {
-        _private.isAbPersona = _kissmetrics.getAbTest('New User Persona Field') === 'show_persona';
         _private.isAbPhoneNumber = _kissmetrics.getAbTest('New User Phone Number') === 'show_number';
 
         _private.submitSuccessAnalytics = function (data) {
             _kissmetrics.track.event("Account Creation was Successful");
-            if (_private.isAbPersona) {
-                _kissmetrics.track.event("Persona Field Filled Out", {
-                    personaChoice: data.persona,
-                    personaOther: data.persona_other,
-                });
-            }
             if (_private.isAbPhoneNumber) {
                 _kissmetrics.track.event("Phone Number Field Filled Out");
             }
@@ -188,14 +181,14 @@ hqDefine('registration/js/new_user.ko', function () {
             }
         });
 
-        // For New User Persona Field A/B Test
+        // For User Persona Field
         self.personaChoice = ko.observable();
         self.personaOther = ko.observable();
         self.isPersonaChoiceOther = ko.computed(function () {
             return self.personaChoice() === 'Other';
         });
         self.isPersonaChoiceChosen = ko.computed(function () {
-            return (!_.isEmpty(self.personaChoice()) && _private.isAbPersona) || !_private.isAbPersona;
+            return !_.isEmpty(self.personaChoice());
         });
         self.isPersonaChoiceNeeded = ko.computed(function () {
             return self.eulaConfirmed() && !self.isPersonaChoiceChosen();
