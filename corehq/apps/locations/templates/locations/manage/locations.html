@@ -26,11 +26,6 @@
     }
 
 
-    $(function() {
-        var model = new LocationTreeViewModel(hierarchy);
-        $('#location_tree').koApplyBindings(model);
-        model.load(locs);
-    });
     {% if request|toggle_enabled:'LOCATION_SEARCH' %}
 
         var enableLocationSearchSelect = function() {
@@ -40,7 +35,6 @@
                     url: '{% url 'location_search' domain %}',
                         dataType: 'json',
                         data: function (params) {
-                            console.log(params);
                             return {
                                 q: params.term,
                                 page_limit: 10,
@@ -64,11 +58,21 @@
             enableLocationSearchSelect();
 
         $(function() {
-            var model = new LocationSearchViewModel();
+            var tree_model = new LocationTreeViewModel(hierarchy);
+            $('#location_tree').koApplyBindings(tree_model);
+            tree_model.load(locs);
+            var model = new LocationSearchViewModel(tree_model);
             $('#location_search').koApplyBindings(model);
         });
 
-        {% endif %}
+    {% else %}
+        $(function() {
+            var model = new LocationTreeViewModel(hierarchy);
+            $('#location_tree').koApplyBindings(model);
+            model.load(locs);
+        });
+
+    {% endif %}
 </script>
 {% endblock %}
 
@@ -76,6 +80,7 @@
     {% registerurl 'archive_location' domain '-locid-' %}
     {% registerurl 'unarchive_location' domain '-locid-' %}
     {% registerurl 'delete_location' domain '-locid-' %}
+    {% registerurl 'location_lineage' domain '-locid-' %}
     {% registerurl 'location_descendants_count' domain '-locid-'%}
 
 <header>
@@ -214,7 +219,7 @@
                 <!-- want to make entire row clickable, but overrides click on 'edit' button -->
                 <span data-bind="click: toggle, style: { cursor: (can_have_children() ? 'pointer' : 'default') }">
                     <span data-bind="if: can_have_children">
-                        <i class="fa" data-bind="css: { 'fa-plus-square': !expanded(), 'fa-minus-square': expanded() }"></i>
+                        <i class="fa" data-bind="css: { 'fa-plus-square': !expanded(), 'fa-minus-square': expanded()==true, 'fa-plus-square-o': expanded()=='semi' }"></i>
                     </span>
                     <span class="loc_name" data-bind="text: name"></span>
                     <span class="loc_type">(<span data-bind="text: type"></span>)</span>
@@ -232,7 +237,7 @@
                 </div>
 
                 <!-- ajax content -->
-                <div data-bind="fadeVisible: children_status() == 'loaded'">
+                <div data-bind="fadeVisible: children_status() == 'loaded' || children_status() == 'semi_loaded'">
 
                     <!-- child entries -->
                     <div data-bind="foreach: children">

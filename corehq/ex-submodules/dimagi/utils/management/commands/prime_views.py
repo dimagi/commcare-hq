@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from couchdbkit.exceptions import ResourceNotFound
+# http://www.gevent.org/gevent.monkey.html#module-gevent.monkey
 from gevent import monkey; monkey.patch_all()
 import sys
 import gevent
