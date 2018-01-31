@@ -15,8 +15,6 @@ from corehq.form_processor.backends.sql.processor import FormProcessorSQL
 from corehq.form_processor.backends.sql.update_strategy import SqlCaseUpdateStrategy
 from corehq.form_processor.models import XFormInstanceSQL, XFormOperationSQL, RebuildWithReason, CaseTransaction, \
     LedgerTransaction
-from corehq.form_processor.parsers.ledgers.form import get_all_stock_report_helpers_from_form
-from corehq.form_processor.parsers.ledgers.helpers import UniqueLedgerReference
 from corehq.sql_db.util import (
     split_list_by_db_partition, new_id_in_same_dbalias, get_db_aliases_for_partitioned_query
 )
@@ -56,7 +54,9 @@ def undo_form_edits(form_tuples, logger):
         case_cache = CaseDbCacheSQL(live_form.domain)
         live_case_updates = get_case_updates(live_form)
         deprecated_case_updates = get_case_updates(deprecated_form)
-        case_cache.populate(set(cu.id for cu in live_case_updates) | set(cu.id for cu in deprecated_case_updates))
+        case_cache.populate(
+            set(cu.id for cu in live_case_updates) | set(cu.id for cu in deprecated_case_updates)
+        )
 
         deprecated_form.form_id = new_id_in_same_dbalias(deprecated_form.form_id)
         deprecated_form.state = XFormInstanceSQL.NORMAL
@@ -90,13 +90,16 @@ def undo_form_edits(form_tuples, logger):
     return cases_to_rebuild, ledgers_to_rebuild
 
 
-def update_case_transactions_for_form(case_cache, live_case_updates, deprecated_case_updates, live_form, deprecated_form):
+def update_case_transactions_for_form(case_cache, live_case_updates, deprecated_case_updates,
+                                      live_form, deprecated_form):
     for case_update in live_case_updates + deprecated_case_updates:
         case_id = case_update.id
         count, _ = CaseTransaction.objects.partitioned_query(case_id)\
             .filter(case_id=case_id, form_id=live_form.form_id).delete()
 
-        rebuild_transactions = CaseTransaction.objects.partitioned_query(case_id).filter(case_id=case_id, type=CaseTransaction.TYPE_REBUILD_FORM_EDIT)
+        rebuild_transactions = CaseTransaction.objects.partitioned_query(case_id).filter(
+            case_id=case_id, type=CaseTransaction.TYPE_REBUILD_FORM_EDIT
+        )
         for transaction in rebuild_transactions:
             if transaction.details.get('deprecated_form_id') == deprecated_form.original_form_id:
                 transaction.delete()
