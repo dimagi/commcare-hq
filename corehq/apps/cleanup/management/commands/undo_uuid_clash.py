@@ -6,12 +6,17 @@ from datetime import datetime
 from django.core.management.base import BaseCommand
 
 from casexml.apps.case.xform import get_case_updates
+from corehq.apps.commtrack.processing import process_stock
 from corehq.apps.domain.dbaccessors import iter_domains
 from corehq.form_processor.backends.sql.casedb import CaseDbCacheSQL
-from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL, FormAccessorSQL
+from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL, FormAccessorSQL, LedgerAccessorSQL
+from corehq.form_processor.backends.sql.ledger import LedgerProcessorSQL
 from corehq.form_processor.backends.sql.processor import FormProcessorSQL
 from corehq.form_processor.backends.sql.update_strategy import SqlCaseUpdateStrategy
-from corehq.form_processor.models import XFormInstanceSQL, XFormOperationSQL, RebuildWithReason, CaseTransaction
+from corehq.form_processor.models import XFormInstanceSQL, XFormOperationSQL, RebuildWithReason, CaseTransaction, \
+    LedgerTransaction
+from corehq.form_processor.parsers.ledgers.form import get_all_stock_report_helpers_from_form
+from corehq.form_processor.parsers.ledgers.helpers import UniqueLedgerReference
 from corehq.sql_db.util import (
     split_list_by_db_partition, new_id_in_same_dbalias, get_db_aliases_for_partitioned_query
 )
@@ -44,10 +49,11 @@ def get_forms_to_reprocess(form_ids):
 
 def undo_form_edits(form_tuples, logger):
     cases_to_rebuild = defaultdict(set)
+    ledgers_to_rebuild = defaultdict(set)
     operation_date = datetime.utcnow()
     for live_form, deprecated_form in form_tuples:
         # undo corehq.form_processor.parsers.form.apply_deprecation
-        case_cache = CaseDbCacheSQL()
+        case_cache = CaseDbCacheSQL(live_form.domain)
         live_case_updates = get_case_updates(live_form)
         deprecated_case_updates = get_case_updates(deprecated_form)
         case_cache.populate(set(cu.id for cu in live_case_updates) | set(cu.id for cu in deprecated_case_updates))
@@ -61,7 +67,9 @@ def undo_form_edits(form_tuples, logger):
         live_form.received_on = live_form.edited_on
         live_form.edited_on = None
 
-        update_case_transactions_for_form(case_cache, live_case_updates, deprecated_case_updates, live_form, deprecated_form)
+        affected_cases, affected_ledgers = update_case_transactions_for_form(
+            case_cache, live_case_updates, deprecated_case_updates, live_form, deprecated_form
+        )
 
         for form in (live_form, deprecated_form):
             form.track_create(XFormOperationSQL(
@@ -74,13 +82,12 @@ def undo_form_edits(form_tuples, logger):
         logger.log('Form edit undone: {}, {}({})'.format(
             live_form.form_id, deprecated_form.form_id, deprecated_form.original_form_id
         ))
-        new_case_ids = []
-        for case in case_cache.cache.values():
-            cases_to_rebuild[case.domain].add(case.case_id)
-            new_case_ids.append(case.case_id)
-        logger.log('Cases to rebuild: {}'.format(','.join(new_case_ids)))
+        cases_to_rebuild[live_form.domain].update(affected_cases)
+        ledgers_to_rebuild[live_form.domain].update(affected_ledgers)
+        logger.log('Cases to rebuild: {}'.format(','.join(affected_cases)))
+        logger.log('Ledgers to rebuild: {}'.format(','.join(affected_ledgers)))
 
-    return cases_to_rebuild
+    return cases_to_rebuild, ledgers_to_rebuild
 
 
 def update_case_transactions_for_form(case_cache, live_case_updates, deprecated_case_updates, live_form, deprecated_form):
@@ -104,18 +111,46 @@ def update_case_transactions_for_form(case_cache, live_case_updates, deprecated_
         case = case_cache.get(case_id)
         SqlCaseUpdateStrategy.add_transaction_for_form(case, case_update, deprecated_form)
 
+    stock_result = process_stock([live_form, deprecated_form], case_cache)
+    stock_result.populate_models()
+    affected_ledgers = set()
+    affected_cases = set()
+    ledger_transactions = []
+    for ledger_value in stock_result.models_to_save:
+        affected_ledgers.add(ledger_value.ledger_reference)
+        affected_cases.add(ledger_value.case_id)
+        for transaction in ledger_value.get_tracked_models_to_create(LedgerTransaction):
+            ledger_transactions.append(transaction)
+
+    if affected_cases:
+        LedgerAccessorSQL.delete_ledger_transactions_for_form(affected_cases, live_form.form_id)
+
+    for transaction in ledger_transactions:
+        transaction.save()
+
     for case in case_cache.cache.values():
+        affected_cases.add(case.case_id)
         transactions = case.get_tracked_models_to_create(CaseTransaction)
         for transaction in transactions:
             transaction.case = case
             transaction.save()
 
+    return affected_cases, affected_ledgers
 
-def rebuild_cases(cases_to_rebuild_by_domain):
+
+def rebuild_cases(cases_to_rebuild_by_domain, logger):
         detail = RebuildWithReason(reason='undo UUID clash')
         for domain, case_ids in cases_to_rebuild_by_domain.iteritems():
             for case_id in case_ids:
                 FormProcessorSQL.hard_rebuild_case(domain, case_id, detail)
+                logger.log('Case %s rebuilt' % case_id)
+
+
+def rebuild_ledgers(ledgers_to_rebuild_by_domain, logger):
+    for domain, ledger_ids in ledgers_to_rebuild_by_domain.iteritems():
+        for ledger_id in ledger_ids:
+            LedgerProcessorSQL.hard_rebuild_ledgers(domain, **ledger_ids._asdict())
+            logger.log('Ledger %s rebuilt' % ledger_id.as_id())
 
 
 class Command(BaseCommand):
@@ -180,8 +215,12 @@ def check_and_process_forms(form_ids, logger):
     forms_to_process = get_forms_to_reprocess(form_ids)
 
     print('  Found %s forms to reprocess' % len(forms_to_process) * 2)
-    cases_to_rebuild = undo_form_edits(forms_to_process, logger)
+    cases_to_rebuild, ledgers_to_rebuild = undo_form_edits(forms_to_process, logger)
 
     ncases = sum(len(cases) for cases in cases_to_rebuild.itervalues())
     print('  Rebuilding %s cases' % ncases)
+    rebuild_cases(cases_to_rebuild, logger)
+
+    nledgers = sum(len(ledgers) for ledgers in ledgers_to_rebuild.itervalues())
+    print('  Rebuilding %s ledgers' % nledgers)
     rebuild_cases(cases_to_rebuild, logger)
