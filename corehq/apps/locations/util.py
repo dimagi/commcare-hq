@@ -207,9 +207,10 @@ class LocationExporter(object):
             additional_headers.extend(self._prefix_headers('data', (f.slug for f in self.data_model.fields)))
             if self.include_consumption_flag and loc_type.name not in self.administrative_types:
                 additional_headers.extend(self._prefix_headers('consumption', self.product_codes))
-            additional_headers.append('uncategorized_data')
+            additional_headers.append(LOCATION_SHEET_HEADERS['uncategorized_data'])
+            additional_headers.append(LOCATION_SHEET_HEADERS['delete_uncategorized_data'])
 
-            headers[loc_type.code] = [LOCATION_SHEET_HEADERS.values()[:-2] + additional_headers]
+            headers[loc_type.code] = [LOCATION_SHEET_HEADERS.values()[:-3] + additional_headers]
 
         return list(headers.items())
 

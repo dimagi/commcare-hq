@@ -13,6 +13,7 @@ LOCATION_SHEET_HEADERS = OrderedDict([
     ('do_delete', 'Delete(Y/N)'),
     ('custom_data', 'data'),
     ('uncategorized_data', 'uncategorized_data'),
+    ('delete_uncategorized_data', 'Delete Uncategorized Data(Y/N)'),
 ])
 
 LOCATION_TYPE_SHEET_HEADERS = OrderedDict([
