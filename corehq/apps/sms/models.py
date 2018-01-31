@@ -1246,7 +1246,6 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
 
     @classmethod
     def get_source_and_id_from_schedule_instance(cls, schedule_instance):
-        from corehq.apps.data_interfaces.models import AutomaticUpdateRule
         from corehq.messaging.scheduling.models import (
             ImmediateBroadcast,
             ScheduledBroadcast,
@@ -1303,6 +1302,8 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
 
     @classmethod
     def get_recipient_type_and_id_from_schedule_instance(cls, schedule_instance):
+        from corehq.messaging.scheduling.scheduling_partitioned.models import ScheduleInstance
+
         if isinstance(schedule_instance.recipient, list):
             recipient_type = cls.RECIPIENT_VARIOUS
             recipient_id = None
@@ -1331,10 +1332,6 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
 
     @classmethod
     def create_from_schedule_instance(cls, schedule_instance, content):
-        from corehq.messaging.scheduling.scheduling_partitioned.models import (
-            ScheduleInstance,
-        )
-
         source, source_id = cls.get_source_and_id_from_schedule_instance(schedule_instance)
         content_type, form_unique_id, form_name = (
             cls.get_content_info_from_content_object(schedule_instance.domain, content)
