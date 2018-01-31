@@ -2406,8 +2406,6 @@ class InvoicePdf(BlobMixin, SafeSaveDocument):
     date_created = DateTimeProperty()
     is_wire = BooleanProperty(default=False)
 
-    _migrating_blobs_from_couch = True
-
     def generate_pdf(self, invoice):
         self.save()
         pdf_data = NamedTemporaryFile()
