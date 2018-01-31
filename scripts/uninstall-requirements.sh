@@ -1,8 +1,8 @@
 #!/bin/bash
 set -ev
 
-uninstall=requirements/uninstall-requirements.txt
-tmp=requirements/uninstall-tmp.txt
+uninstall=/Users/preethivaidyanathan/commcare-hq/requirements/uninstall-requirements.txt
+tmp=/Users/preethivaidyanathan/commcare-hq/requirements/uninstall-tmp.txt
 
 join <(sort -n $uninstall) <(pip freeze | grep -v '^-' | cut -d'=' -f1 | sort -n) > $tmp
 join <(sort -n $uninstall) <(pip freeze | grep -v '^-' | sort -n) >> $tmp

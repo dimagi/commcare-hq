@@ -2,7 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import calendar
 from datetime import datetime
-from ethiopian_date import EthiopianDateConverter
+from ethiopian_date_converter.ethiopian_date import EthiopianDateConverter
 from dimagi.utils.dates import force_to_datetime
 
 
