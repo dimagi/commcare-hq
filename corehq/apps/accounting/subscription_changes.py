@@ -92,7 +92,6 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
             privileges.COMMCARE_LOGO_UPLOADER: cls.response_commcare_logo_uploader,
             privileges.ADVANCED_DOMAIN_SECURITY: cls.response_domain_security,
             privileges.PRACTICE_MOBILE_WORKERS: cls.response_practice_mobile_workers,
-            privileges.MOBILE_WORKER_CREATION: cls.response_mobile_worker_creation,
         }
         privs_to_responses.update({
             p: cls.response_report_builder
