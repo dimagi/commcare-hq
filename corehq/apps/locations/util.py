@@ -1,22 +1,27 @@
 from __future__ import absolute_import
-from django.conf import settings
+
+import tempfile
+
+import six
 
 from corehq.apps.commtrack.dbaccessors import get_supply_point_ids_in_domain_by_location
-from corehq.apps.products.models import Product
-from corehq.apps.locations.models import SQLLocation
-from corehq.apps.locations.const import LOCATION_TYPE_SHEET_HEADERS, LOCATION_SHEET_HEADERS
-from corehq.apps.domain.models import Domain
-from corehq.form_processor.interfaces.supply import SupplyInterface
-from corehq.util.quickcache import quickcache
-from corehq.util.workbook_json.excel import flatten_json, json_to_headers
-from dimagi.utils.decorators.memoized import memoized
-from dimagi.utils.couch.loosechange import map_reduce
-from couchexport.writers import Excel2007ExportWriter
 from corehq.apps.consumption.shortcuts import get_loaded_default_monthly_consumption, build_consumption_dict
+from corehq.apps.domain.models import Domain
+from corehq.apps.locations.const import LOCATION_TYPE_SHEET_HEADERS, LOCATION_SHEET_HEADERS
+from corehq.apps.locations.models import SQLLocation
+from corehq.apps.products.models import Product
+from corehq.blobs import get_blob_db
+from corehq.form_processor.interfaces.supply import SupplyInterface
+from corehq.util.files import safe_filename_header
+from corehq.util.quickcache import quickcache
+from corehq.util.workbook_json.excel import json_to_headers
+from couchexport.models import Format
+from couchexport.writers import Excel2007ExportWriter
+from dimagi.utils.couch.loosechange import map_reduce
+from dimagi.utils.decorators.memoized import memoized
 from soil import DownloadBase
+from soil.util import expose_blob_download
 
-from soil.util import get_download_file_path, expose_download
-import six
 
 def load_locs_json(domain, selected_loc_id=None, include_archived=False,
         user=None, only_administrative=False):
@@ -281,16 +286,24 @@ class LocationExporter(object):
 
 def dump_locations(domain, download_id, include_consumption=False, task=None):
     exporter = LocationExporter(domain, include_consumption=include_consumption, async_task=task)
-    use_transfer = settings.SHARED_DRIVE_CONF.transfer_enabled
-    filename = '{}_locations.xlsx'.format(domain)
 
-    outfile = get_download_file_path(use_transfer, filename)
+    fd, path = tempfile.mkstemp()
     writer = Excel2007ExportWriter()
-    writer.open(header_table=exporter.get_headers(), file=outfile)
+    writer.open(header_table=exporter.get_headers(), file=path)
     exporter.write_data(writer)
     writer.close()
 
-    expose_download(use_transfer, outfile, filename, download_id, 'xlsx')
+    with open(path, 'rb') as file_:
+        db = get_blob_db()
+        db.put(file_, download_id, timeout=60 * 60)
+
+        file_format = Format.from_format(Excel2007ExportWriter.format)
+        expose_blob_download(
+            download_id,
+            mimetype=file_format.mimetype,
+            content_disposition=safe_filename_header('{}_locations'.format(domain), file_format.extension),
+            download_id=download_id,
+        )
 
 
 def get_locations_from_ids(location_ids, domain, base_queryset=None):
