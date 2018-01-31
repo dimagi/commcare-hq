@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import division
 import datetime
 from calendar import month_name
 from django.utils.translation import ugettext_lazy as _
@@ -71,7 +72,7 @@ def add_months(year, months, offset):
     months = months - 1  # 0 index months coming in
     nextmonths = months + offset
     months_offset = nextmonths % 12 + 1  # 1 index it going out
-    years_offset = nextmonths / 12
+    years_offset = nextmonths // 12
     return (year + years_offset, months_offset)
 
 

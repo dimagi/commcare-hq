@@ -1,5 +1,6 @@
 from __future__ import absolute_import, print_function
 
+from __future__ import division
 import os
 
 from django.core.management.base import BaseCommand
@@ -20,6 +21,6 @@ class Command(BaseCommand):
         size = os.path.getsize(file_path)
 
         def progress_callback(bytes_uploaded, size=size):
-            print('Progress: %s' % int(100 * float(bytes_uploaded) / size))
+            print('Progress: %s' % int(100 * float(bytes_uploaded) // size))
 
         upload_to_dropbox(token, dropbox_path, file_path, progress_callback)
