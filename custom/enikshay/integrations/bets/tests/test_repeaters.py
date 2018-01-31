@@ -133,7 +133,7 @@ class TestBetsResponseHandling(ENikshayLocationStructureMixin, ENikshayRepeaterT
 
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True, SERVER_ENVIRONMENT='enikshay')
-class   TestVoucherRepeater(ENikshayLocationStructureMixin, ENikshayRepeaterTestBase):
+class TestVoucherRepeater(ENikshayLocationStructureMixin, ENikshayRepeaterTestBase):
 
     def setUp(self):
         super(TestVoucherRepeater, self).setUp()
