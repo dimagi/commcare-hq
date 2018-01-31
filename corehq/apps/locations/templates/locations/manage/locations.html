@@ -33,32 +33,38 @@
             $('#location_search_select').select2({
                 ajax: {
                     url: '{% url 'location_search' domain %}',
-                        dataType: 'json',
-                        data: function (params) {
-                            return {
-                                q: params.term,
-                                page_limit: 10,
-                                page: params.page,
-                                show_inactive: show_inactive,
-                            };
-                        },
-                        processResults: function (data, params) {
-                            var more = data.more || (params.page * 10) < data.total;
-                            return {results: data.results, more: more};
-                        }
+                    dataType: 'json',
+                    data: function (params) {
+                        return {
+                            q: params.term,
+                            page_limit: 10,
+                            page: params.page,
+                            show_inactive: show_inactive,
+                        };
                     },
-                });
-            };
+                    processResults: function (data, params) {
+                        var more = data.more || (params.page * 10) < data.total;
+                        return {results: data.results, more: more};
+                    }
+                },
+            });
+        };
 
-            var reloadLocationSearchSelect = function() {
-                $('#location_search_select').select2('val', null);
-                enableLocationSearchSelect();
-            };
+        var tree_model = new LocationTreeViewModel(hierarchy);
 
+        var reloadLocationSearchSelect = function() {
+            $('#location_search_select').select2('val', null);
             enableLocationSearchSelect();
+        };
+
+        var clearLocationSelection = function() {
+            reloadLocationSearchSelect();
+            tree_model.load(locs);
+        };
+
+        enableLocationSearchSelect();
 
         $(function() {
-            var tree_model = new LocationTreeViewModel(hierarchy);
             $('#location_tree').koApplyBindings(tree_model);
             tree_model.load(locs);
             var model = new LocationSearchViewModel(tree_model);
@@ -167,6 +173,10 @@
             name="location_search"
             style="max-width:80%;"></select>
 
+        <button type="button" class="btn btn-secondary" style="display:inline; cursor:pointer;" data-bind="visible: selected_location_id(), click: clearLocationSelection">
+            <i class="fa fa-times" aria-hidden="true"></i>
+        </button>
+
         <span class="help-block">
             <i class="fa fa-info-circle"></i>
             To quick search for a location, write your query as "parent"/descendant. For more info, see the <a href="https://confluence.dimagi.com/display/commcarepublic/Exact+Search+for+Locations" target="_blank">Location Search</a> help page.
@@ -174,9 +184,6 @@
 
     </div>
 
-    <div class="button_section">
-        <div data-bind="template: { name: 'button-template', if: selected_location_id(), data: selected_location}"></div>
-    </div>
 </div>
 
 
