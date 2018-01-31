@@ -76,6 +76,7 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
         for trans in case.get_tracked_models_to_create(CaseTransaction):
             if transaction == trans:
                 trans.type |= transaction.type
+                break
         else:
             case.track_create(transaction)
 
