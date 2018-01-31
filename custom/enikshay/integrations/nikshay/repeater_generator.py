@@ -767,9 +767,6 @@ def _get_person_case_properties_v2(episode_case, person_case, person_case_proper
         street = current_address[50:100]
         ward = current_address[100:150]
     person_hiv_status = person_case_properties.get('hiv_status')
-    # use other instead of unknown for v2
-    if person_hiv_status == 'unknown':
-        person_hiv_status = 'other'
 
     person_socio_economic_status = person_case_properties.get('socioeconomic_status')
     if person_socio_economic_status == 'unknown':
@@ -804,7 +801,7 @@ def _get_person_case_properties_v2(episode_case, person_case, person_case_proper
         "p_district": district_nikshay_code,
         "socio_economic_status": property_value_or_backup(person_socio_economic_status,
                                                           NOT_AVAILABLE_VALUE).upper(),
-        "hiv_status": hiv_status.get(person_hiv_status, hiv_status.get('other')),
+        "hiv_status": hiv_status.get(person_hiv_status, hiv_status.get('unknown')),
         "maritial_status": marital_status.get(
             person_case_properties.get('marital_status'),
             marital_status.get('unmarried')),
