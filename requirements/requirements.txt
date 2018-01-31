@@ -45,7 +45,7 @@ Unidecode==0.04.20
 xlrd==1.0.0
 simplejson==3.11.1
 sh==1.09
-gevent==1.0.2
+gevent==1.2.2
 greenlet==0.4.12
 numpy==1.7.1
 six==1.11.0
