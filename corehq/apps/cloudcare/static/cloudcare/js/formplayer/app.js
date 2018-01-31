@@ -167,8 +167,7 @@ FormplayerFrontend.on('startForm', function (data) {
                 dataFeedbackLoopAnalytics = function(e) {
                     var $target = $(e.target);
                     if ($target.is("a")) {
-                        var reverse = hqImport("hqwebapp/js/initial_page_data").reverse,
-                            href = $target.attr("href");
+                        var href = $target.attr("href");
                         _.each(analyticsLinks, function(link) {
                             if (href.match(RegExp(link.url))) {
                                 $target.attr("target", "_blank");
