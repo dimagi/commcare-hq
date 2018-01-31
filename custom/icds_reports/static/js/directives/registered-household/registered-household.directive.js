@@ -64,7 +64,7 @@ function RegisteredHouseholdController($scope, $routeParams, $location, $filter,
 
     vm.templatePopup = function(loc, row) {
         var household = row ? $filter('indiaNumbers')(row.household) : 'N/A';
-        return '<div class="hoverinfo" style="max-width: 200px !important;">' +
+        return '<div class="hoverinfo">' +
             '<p>' + loc.properties.name + '</p>' +
             '<div>Total number of household registered: <strong>' + household + '</strong></div>';
     };

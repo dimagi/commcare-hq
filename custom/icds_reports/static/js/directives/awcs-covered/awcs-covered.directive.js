@@ -66,7 +66,7 @@ function AWCSCoveredController($scope, $routeParams, $location, $filter, icdsCas
 
     vm.templatePopup = function(loc, row) {
         var awcs = row ? $filter('indiaNumbers')(row.awcs) : 'N/A';
-        return '<div class="hoverinfo" style="max-width: 200px !important;">' +
+        return '<div class="hoverinfo">' +
             '<p>' + loc.properties.name + '</p>' +
             '<p>' + vm.rightLegend.info + '</p>' +
             '<div>Number of AWCs Launched: <strong>' + awcs + '</strong></div>';
