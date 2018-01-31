@@ -55,7 +55,7 @@
                         </button>
                         {% if request|toggle_enabled:"EMAIL_EXPORT_WHEN_DONE_BUTTON" %}
                         <button type="button"
-                                title="For exports that may take a while to prepare"
+                                title="{% trans 'For exports that may take a while to prepare' %}"
                                 ng-show="!isDownloadReady"
                                 ng-init="sendEmailFlag = false;"
                                 ng-class="'btn btn-' + (sendEmailFlag ? 'default' : 'primary') + ' btn-full-width'"
