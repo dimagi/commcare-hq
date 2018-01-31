@@ -124,8 +124,7 @@ class LocationStub(object):
     meta_data_attrs = ['name', 'site_code', 'latitude', 'longitude', 'external_id']
 
     def __init__(self, name, site_code, location_type, parent_code, location_id,
-                 do_delete, external_id, latitude, longitude, custom_data, uncategorized_data,
-                 index):
+                 do_delete, external_id, latitude, longitude, custom_data, index):
         self.name = name
         self.site_code = (str(site_code) if isinstance(site_code, int) else site_code).lower()
         self.location_type = location_type
@@ -138,7 +137,6 @@ class LocationStub(object):
         self.index = index
         self.custom_data = {key: six.text_type(value) for key, value in custom_data.items()} \
                            if custom_data != self.NOT_PROVIDED else {}
-        self.uncategorized_data = uncategorized_data or {}
         if not self.location_id and not self.site_code:
             raise LocationExcelSheetError(
                 _(u"Location in sheet '{}', at row '{}' doesn't contain either location_id or site_code")
@@ -177,11 +175,9 @@ class LocationStub(object):
                 return cls.NOT_PROVIDED
 
         custom_data = _optional_attr('custom_data')
-        uncategorized_data = _optional_attr('uncategorized_data')
         index = index
         return cls(name, site_code, location_type, parent_code, location_id,
-                   do_delete, external_id, latitude, longitude, custom_data, uncategorized_data,
-                   index)
+                   do_delete, external_id, latitude, longitude, custom_data, index)
 
     def lookup_old_collection_data(self, old_collection):
         # Lookup whether the location already exists in old_collection or is new.
@@ -198,24 +194,15 @@ class LocationStub(object):
 
         for attr in self.meta_data_attrs:
             setattr(self.db_object, attr, getattr(self, attr, None))
-        if self.custom_data != self.NOT_PROVIDED or self.uncategorized_data != self.NOT_PROVIDED:
-            self.db_object.metadata = self.custom_location_data
+        self.db_object.metadata = self.custom_location_data
 
     @property
     @memoized
     def custom_location_data(self):
         # This just compiles the custom location data, the validation is done in _custom_data_errors()
-        if self.custom_data is self.NOT_PROVIDED or self.uncategorized_data is self.NOT_PROVIDED:
-            # if either of these are not provided, then existing data should be updated, not overridden
-            metadata = copy.copy(self.db_object.metadata)
-        else:
-            # if both of these are provided, then existing data should be overridden
-            metadata = {}
         if self.custom_data != self.NOT_PROVIDED:
-            metadata.update(self.custom_data)
-        if self.uncategorized_data != self.NOT_PROVIDED:
-            metadata.update(self.uncategorized_data)
-        return metadata
+            return self.custom_data
+        return copy.copy(self.db_object.metadata)
 
     def autoset_location_id_or_site_code(self, old_collection):
         # if one of location_id/site_code are missing, lookup for the other in
