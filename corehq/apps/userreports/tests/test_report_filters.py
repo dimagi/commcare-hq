@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from datetime import datetime, date
 
 from django.http import HttpRequest, QueryDict
@@ -666,9 +667,9 @@ class DynamicChoiceListFilterTestCase(SimpleTestCase):
         self.filter_spec["datatype"] = "string"
         filter = ReportFilterFactory.from_spec(self.filter_spec)
         test_strings = (
-            u'apple',
-            u'apple{s}banana'.format(s=CHOICE_DELIMITER),
-            u'apple{s}banana{s}carrot'.format(s=CHOICE_DELIMITER)
+            'apple',
+            'apple{s}banana'.format(s=CHOICE_DELIMITER),
+            'apple{s}banana{s}carrot'.format(s=CHOICE_DELIMITER)
         )
         choices = [
             Choice('apple', 'apple'),
@@ -683,9 +684,9 @@ class DateFilterOffsetTest(SimpleTestCase):
     def _computed_dates(self, actual_startdate, actual_enddate):
         filter = ReportFilter(
             compare_as_string=False,
-            field=u'submission_date',
-            slug=u'submitted_on',
-            type=u'date',
+            field='submission_date',
+            slug='submitted_on',
+            type='date',
             required=False
         )
         value = DateSpan(actual_startdate, actual_enddate)
@@ -799,10 +800,10 @@ class QueryDictUtilTest(SimpleTestCase):
             request_dict,
             {
                 # keys marked as string should not be casted to bool
-                'apple': u'orange',
-                'my_string_key': u'true',
-                'another_string': u'false',
-                'string_int': u'1',
+                'apple': 'orange',
+                'my_string_key': 'true',
+                'another_string': 'false',
+                'string_int': '1',
                 # keys not marked as string are casted to bool
                 'non_string': True,
                 'non_string_2': False,
