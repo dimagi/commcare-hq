@@ -368,8 +368,8 @@ class MySavedReportsView(BaseProjectReportSectionView):
 
         class OthersScheduledReportWrapper(ReportNotification):
             @property
-            def contextualized_secret(self):
-                return self.get_secret(user.get_email)
+            def context_secret(self):
+                return self.get_secret(user.get_email())
 
         for other_report in others_scheduled_reports:
             other_report.__class__ = OthersScheduledReportWrapper
