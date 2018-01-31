@@ -569,27 +569,10 @@ CELERY_ANNOTATIONS = {
 }
 
 CELERY_MAIN_QUEUE = 'celery'
-
-# this is the default celery queue
-# for periodic tasks on a separate queue override this to something else
 CELERY_PERIODIC_QUEUE = 'celery_periodic'
-
-# This is the celery queue to use for running reminder rules.
-# It's set to the main queue here and can be overridden to put it
-# on its own queue.
 CELERY_REMINDER_RULE_QUEUE = 'reminder_rule_queue'
-
-# This is the celery queue to use for running reminder case updates.
-# It's set to the main queue here and can be overridden to put it
-# on its own queue.
 CELERY_REMINDER_CASE_UPDATE_QUEUE = 'reminder_case_update_queue'
-
-
-# This is the celery queue to use for sending repeat records.
-# It's set to the main queue here and can be overridden to put it
-# on its own queue.
 CELERY_REPEAT_RECORD_QUEUE = 'repeat_record_queue'
-
 ENIKSHAY_QUEUE = 'enikshay_queue'
 
 # Will cause a celery task to raise a SoftTimeLimitExceeded exception if
