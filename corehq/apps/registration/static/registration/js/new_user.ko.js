@@ -193,6 +193,12 @@ hqDefine('registration/js/new_user.ko', function () {
         self.isPersonaChoiceNeeded = ko.computed(function () {
             return self.eulaConfirmed() && !self.isPersonaChoiceChosen();
         });
+        self.isPersonaChoiceOtherPresent = ko.computed(function () {
+            return self.isPersonaChoiceOther() && self.personaOther();
+        });
+        self.isPersonaChoiceOtherNeeded = ko.computed(function () {
+            return self.eulaConfirmed() && self.isPersonaChoiceOther() && !self.personaOther();
+        });
 
         // ---------------------------------------------------------------------
         // Form Functionality
@@ -242,6 +248,7 @@ hqDefine('registration/js/new_user.ko', function () {
             return self.projectName() !== undefined
                 && self.projectName.isValid()
                 && self.isPersonaChoiceChosen()
+                && (!self.isPersonaChoiceOther() || self.isPersonaChoiceOtherPresent())
                 && self.eulaConfirmed();
         });
 

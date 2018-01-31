@@ -98,11 +98,17 @@ class RegisterWebUserForm(forms.Form):
                           " 'has-error': isPersonaChoiceNeeded"
                           "}",
             ),
-            hqcrispy.InlineField(
-                'persona_other',
-                css_class="input-lg",
-                data_bind="value: personaOther, "
-                          "visible: isPersonaChoiceOther",
+            crispy.Div(
+                hqcrispy.InlineField(
+                    'persona_other',
+                    css_class="input-lg",
+                    data_bind="value: personaOther, "
+                          "visible: isPersonaChoiceOther, "
+                ),
+                data_bind="css: {"
+                          " 'has-success': isPersonaChoiceOtherPresent, "
+                          " 'has-error': isPersonaChoiceOtherNeeded"
+                          "}",
             ),
         ]
 
