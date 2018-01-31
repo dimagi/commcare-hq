@@ -858,8 +858,11 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
 
     SOURCE_CHOICES = (
         (SOURCE_BROADCAST, ugettext_noop('Broadcast')),
+        (SOURCE_SCHEDULED_BROADCAST, ugettext_noop('Scheduled Broadcast')),
+        (SOURCE_IMMEDIATE_BROADCAST, ugettext_noop('Immediate Broadcast')),
         (SOURCE_KEYWORD, ugettext_noop('Keyword')),
         (SOURCE_REMINDER, ugettext_noop('Reminder')),
+        (SOURCE_CASE_RULE, ugettext_noop('Conditional Alert')),
         (SOURCE_UNRECOGNIZED, ugettext_noop('Unrecognized')),
         (SOURCE_FORWARDED, ugettext_noop('Forwarded Message')),
         (SOURCE_OTHER, ugettext_noop('Other')),
@@ -998,7 +1001,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
 
     domain = models.CharField(max_length=126, null=False, db_index=True)
     date = models.DateTimeField(null=False, db_index=True)
-    source = models.CharField(max_length=3, choices=SOURCE_CHOICES, null=False)
+    source = models.CharField(max_length=3, null=False)
     source_id = models.CharField(max_length=126, null=True)
     content_type = models.CharField(max_length=3, choices=CONTENT_CHOICES, null=False)
 
