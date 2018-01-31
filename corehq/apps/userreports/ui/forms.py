@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django import forms
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -118,7 +119,7 @@ class ConfigurableReportEditForm(DocumentFormBase):
             config = self.populate_instance(self.instance, cleaned_data)
             config.validate()
         except Exception as e:
-            raise ValidationError(_(u'Problem with report spec: {}').format(e))
+            raise ValidationError(_('Problem with report spec: {}').format(e))
         return cleaned_data
 
     def save(self, commit=False):
@@ -248,7 +249,7 @@ class ConfigurableDataSourceEditForm(DocumentFormBase):
         except Exception as e:
             if settings.DEBUG:
                 raise
-            raise ValidationError(_(u'Problem with data source spec: {}').format(e))
+            raise ValidationError(_('Problem with data source spec: {}').format(e))
         return cleaned_data
 
     def save(self, commit=False):
