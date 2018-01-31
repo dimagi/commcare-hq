@@ -29,6 +29,7 @@ from corehq.warehouse.models import (
     LocationDim,
     LocationStagingTable,
     LocationTypeStagingTable,
+    DomainMembershipDim
 )
 
 
@@ -110,6 +111,90 @@ class TestUserDim(BaseWarehouseTestCase):
         self.assertEqual(
             UserDim.objects.filter(user_type=WEB_USER_TYPE).first().user_id,
             'beeboobop',
+        )
+
+
+class TestDomainMembershipDim(BaseWarehouseTestCase):
+    slug = DomainMembershipDim.slug
+
+    @classmethod
+    def setUpClass(cls):
+        super(TestDomainMembershipDim, cls).setUpClass()
+        cls.batch = create_batch(cls.slug)
+        cls.bootstrap_user_staging()
+
+    @classmethod
+    def bootstrap_user_staging(cls):
+        create_user_staging_record(
+            domain='test1',
+            user_id='u1',
+            username='mobile1',
+            doc_type='CommCareUser',
+            batch_id=cls.batch.id,
+        )
+        create_user_staging_record(
+            domain='test1',
+            user_id='u2',
+            username='mobile2',
+            doc_type='CommCareUser',
+            batch_id=cls.batch.id,
+        )
+        create_user_staging_record(
+            domain=None,
+            username='mobile1',
+            user_id='u3',
+            doc_type='WebUser',
+            batch_id=cls.batch.id,
+            domain_memberships=[
+                {'domain': 'test1', 'is_admin': True},
+                {'domain': 'test2', 'is_admin': False},
+            ]
+        )
+        UserDim.commit(cls.batch)
+
+    @classmethod
+    def tearDownClass(cls):
+        DomainMembershipDim.clear_records()
+        UserDim.clear_records()
+        UserStagingTable.clear_records()
+        super(TestDomainMembershipDim, cls).tearDownClass()
+
+    def test_insert_and_update(self):
+        DomainMembershipDim.commit(self.batch)
+        # should create 4 domain membership columns
+        self.assertEqual(
+            DomainMembershipDim.objects.count(), 4
+        )
+        # 'u3' user should have 2 membership columns for each of the domain
+        dim_id_of_user3 = UserDim.objects.filter(user_id='u3')[0].id
+        self.assertEqual(
+            DomainMembershipDim.objects.filter(user_dim_id=dim_id_of_user3).count(),
+            2
+        )
+
+        ## test removing a domain membership
+        # clear and add new staging record to remove a membership of 2
+        UserStagingTable.clear_records()
+        create_user_staging_record(
+            domain=None,
+            username='mobile1',
+            user_id='u3',
+            doc_type='WebUser',
+            batch_id=self.batch.id,
+            domain_memberships=[
+                {'domain': 'test1', 'is_admin': True},
+            ]
+        )
+        DomainMembershipDim.commit(self.batch)
+        # should create 3 domain membership columns instead of 4
+        self.assertEqual(
+            DomainMembershipDim.objects.count(), 3
+        )
+        # u3 user should have only 1 domain-membership
+        dim_id_of_user3 = UserDim.objects.filter(user_id='u3')[0].id
+        self.assertEqual(
+            DomainMembershipDim.objects.filter(user_dim_id=dim_id_of_user3).count(),
+            1
         )
 
 

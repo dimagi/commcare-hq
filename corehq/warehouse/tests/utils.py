@@ -41,7 +41,8 @@ def create_user_staging_record(
         username=None,
         doc_type=None,
         base_doc=None,
-        batch_id=None):
+        batch_id=None,
+        domain_memberships=None):
     record = UserStagingTable(
         user_id=user_id or uuid.uuid4().hex,
         username=username or 'user-staging',
@@ -52,7 +53,8 @@ def create_user_staging_record(
         is_staff=False,
         is_superuser=False,
         date_joined=datetime.utcnow(),
-        batch_id=batch_id
+        batch_id=batch_id,
+        domain_memberships=domain_memberships,
     )
     record.save()
     return record
