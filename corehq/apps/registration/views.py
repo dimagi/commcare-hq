@@ -273,9 +273,9 @@ class RegisterDomainView(TemplateView):
 
         if settings.RESTRICT_DOMAIN_CREATION and not request.user.is_superuser:
             context.update({
-                'current_page': {'page_name': ('Oops!')},
-                'error_msg': ('Your organization has requested that domain creation should be restricted. '
-                              'For more information, please speak to your administrator.'),
+                'current_page': {'page_name': _('Oops!')},
+                'error_msg': _('Your organization has requested that project creation be restricted. '
+                               'For more information, please speak to your administrator.'),
             })
             return render(request, 'error.html', context)
 
@@ -285,7 +285,7 @@ class RegisterDomainView(TemplateView):
             context.update({
                 'current_page': {'page_name': _('Oops!')},
                 'error_msg': _(
-                    'Number of domains requested today exceeds limit (%d) - contact Dimagi'
+                    'Number of projects requested today exceeds limit (%d) - contact Dimagi'
                 ) % max_req,
                 'show_homepage_link': 1
             })
