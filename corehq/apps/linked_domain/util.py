@@ -10,7 +10,7 @@ def _clean_json(doc):
         if isinstance(val, dict):
             _clean_json(val)
         if isinstance(val, list):
-            map(_clean_json, val)
+            [_clean_json(doc) for doc in val]
     return doc
 
 
