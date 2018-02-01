@@ -1448,8 +1448,6 @@ COUCHDB_APPS = [
 
     # applications
     ('app_manager', APPS_DB),
-
-    ('linked_domain', META_DB)
 ]
 
 COUCHDB_APPS += LOCAL_COUCHDB_APPS
