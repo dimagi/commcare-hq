@@ -50,4 +50,8 @@ class DomainLink(models.Model):
             link.remote_username = remote_details.username
             link.remote_api_key = remote_details.api_key
         link.save()
+
+        from corehq.apps.linked_domain.dbaccessors import get_domain_master_link, get_linked_domains
+        get_domain_master_link.clear(linked_domain)
+        get_linked_domains.clear(master_domain)
         return link
