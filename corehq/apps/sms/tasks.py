@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+from __future__ import division
 import hashlib
 import math
 from datetime import datetime, timedelta
@@ -315,7 +316,7 @@ def store_billable(self, msg):
         try:
             SmsBillable.create(
                 msg,
-                multipart_count=int(math.ceil(float(len(msg.text)) / msg_length)),
+                multipart_count=int(math.ceil(len(msg.text) / msg_length)),
             )
         except RetryBillableTaskException as e:
             self.retry(exc=e)

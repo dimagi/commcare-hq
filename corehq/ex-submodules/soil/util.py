@@ -93,7 +93,7 @@ def get_download_context(download_id, message=None, require_result=False):
     }
 
 
-def process_email_request(download_id, email_address):
+def process_email_request(domain, download_id, email_address):
     dropbox_url = absolute_reverse('dropbox_upload', args=(download_id,))
     download_url = "{}?get_file".format(absolute_reverse('retrieve_download', args=(download_id,)))
     try:
@@ -102,10 +102,10 @@ def process_email_request(download_id, email_address):
         allow_dropbox_sync = False
     dropbox_message = ''
     if allow_dropbox_sync:
-        dropbox_message = _('\n\nYou can also upload your data to Dropbox with the link below:\n'
+        dropbox_message = _('<br/><br/>You can also upload your data to Dropbox with the link below:<br/>'
                             '{}').format(dropbox_url)
-    email_body = _('Your CommCare export is ready! Click on the link below to download your requested data:\n'
-                   '{}{}').format(download_url, dropbox_message)
+    email_body = _('Your CommCare export for {} is ready! Click on the link below to download your requested data:'
+                   '<br/>{}{}').format(domain, download_url, dropbox_message)
     send_HTML_email(_('CommCare Export Complete'), email_address, email_body)
 
 

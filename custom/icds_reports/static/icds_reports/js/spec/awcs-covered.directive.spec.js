@@ -46,6 +46,7 @@ describe('AWCs Covered Directive', function () {
 
     it('tests supervisor location', function () {
         controller.filtersData.location_id = 'test-id';
+        controller.userLocationId = 'test-id';
 
         $httpBackend.expectGET('icds_locations?location_id=test-id').respond(200, {location_type: 'supervisor'});
         $httpBackend.expectGET('awcs_covered?location_id=test-id').respond(200, {
@@ -60,6 +61,7 @@ describe('AWCs Covered Directive', function () {
 
     it('tests non supervisor location', function () {
         controller.filtersData.location_id = 'test-id';
+        controller.userLocationId = 'test-id';
 
         $httpBackend.expectGET('icds_locations?location_id=test-id').respond(200, {location_type: 'non supervisor'});
         $httpBackend.expectGET('awcs_covered?location_id=test-id').respond(200, {
@@ -74,7 +76,7 @@ describe('AWCs Covered Directive', function () {
 
     it('tests template popup', function () {
         var result = controller.templatePopup({properties: {name: 'test'}}, {awcs: 15});
-        var expected = '<div class="hoverinfo" style="max-width: 200px !important;">'
+        var expected = '<div class="hoverinfo">'
             + '<p>test</p>'
             + '<p>Total AWCs that have launched ICDS-CAS. '
             + 'AWCs are considered launched after submitting at least one Household Registration form.</p>'

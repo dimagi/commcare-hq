@@ -51,6 +51,7 @@ describe('Newborn Low Weight Directive', function () {
 
     it('tests supervisor location', function () {
         controller.filtersData.location_id = 'test-id';
+        controller.userLocationId = 'test-id';
 
         $httpBackend.expectGET('icds_locations?location_id=test-id').respond(200, {location_type: 'supervisor'});
         $httpBackend.expectGET('low_birth?location_id=test-id').respond(200, {
@@ -65,6 +66,7 @@ describe('Newborn Low Weight Directive', function () {
 
     it('tests non supervisor location', function () {
         controller.filtersData.location_id = 'test-id';
+        controller.userLocationId = 'test-id';
 
         $httpBackend.expectGET('icds_locations?location_id=test-id').respond(200, {location_type: 'non supervisor'});
         $httpBackend.expectGET('low_birth?location_id=test-id').respond(200, {
@@ -79,7 +81,7 @@ describe('Newborn Low Weight Directive', function () {
 
     it('tests template popup', function () {
         var result = controller.templatePopup({properties: {name: 'test'}}, {low_birth: 5, in_month: 10});
-        assert.equal(result, '<div class="hoverinfo" style="max-width: 200px !important;">' +
+        assert.equal(result, '<div class="hoverinfo">' +
             '<p>test</p>'
             + '<div>Total Number of Newborns born in given month: <strong>10</strong></div>'
             + '<div>Number of Newborns with LBW in given month: <strong>5</strong></div>'

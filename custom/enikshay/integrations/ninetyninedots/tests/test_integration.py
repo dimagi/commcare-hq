@@ -29,7 +29,7 @@ def property_setter(param, val, sector):
     return {'property_set_with_setter': val}
 
 
-@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True, SERVER_ENVIRONMENT='enikshay')
 class Receiver99DotsTests(ENikshayCaseStructureMixin, TestCase):
     def setUp(self):
         super(Receiver99DotsTests, self).setUp()
@@ -162,7 +162,7 @@ class Receiver99DotsTests(ENikshayCaseStructureMixin, TestCase):
             self.assertEqual(e.message, "Adherences invalid")
 
 
-@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True, SERVER_ENVIRONMENT='enikshay')
 class NinetyNineDotsCaseTests(ENikshayCaseStructureMixin, TestCase):
     @classmethod
     def setUpClass(cls):

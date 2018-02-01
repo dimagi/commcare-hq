@@ -654,8 +654,10 @@ hqDefine('app_manager/js/details/screen_config', function () {
                     column.on('change', that.fireChange);
 
                     column.field.on('change', function () {
-                        column.header.val(getPropertyTitle(this.val()));
-                        column.header.fire("change");
+                        if(!column.useXpathExpression()) {
+                            column.header.val(getPropertyTitle(this.val()));
+                            column.header.fire("change");
+                        }
                     });
                     if (column.original.hasAutocomplete || (
                         column.original.useXpathExpression && !column.useXpathExpression()

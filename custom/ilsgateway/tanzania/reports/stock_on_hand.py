@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import division
 from collections import defaultdict
 from casexml.apps.stock.models import StockTransaction
 from datetime import timedelta, datetime

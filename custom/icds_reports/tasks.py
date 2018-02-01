@@ -33,6 +33,7 @@ from custom.icds_reports.models import AggChildHealthMonthly
 from custom.icds_reports.reports.issnip_monthly_register import ISSNIPMonthlyReport
 from custom.icds_reports.utils import zip_folder, create_pdf_file
 from dimagi.utils.chunked import chunked
+from dimagi.utils.dates import force_to_date
 from dimagi.utils.logging import notify_exception
 from six.moves import range
 
@@ -300,7 +301,7 @@ def icds_data_validation(day):
     """
 
     # agg tables store the month like YYYY-MM-01
-    month = day
+    month = force_to_date(day)
     month.replace(day=1)
     return_values = ('state_name', 'district_name', 'block_name', 'supervisor_name', 'awc_name')
 

@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from datetime import date, datetime, time
 from decimal import Decimal, InvalidOperation
 from six import string_types

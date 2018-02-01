@@ -898,6 +898,8 @@ COMMCARE_NAME = "CommCare"
 
 ENTERPRISE_MODE = False
 
+RESTRICT_DOMAIN_CREATION = False
+
 CUSTOM_LANDING_PAGE = False
 
 TABLEAU_URL_ROOT = "https://icds.commcarehq.org/"

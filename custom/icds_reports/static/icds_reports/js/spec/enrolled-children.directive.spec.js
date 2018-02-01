@@ -61,6 +61,7 @@ describe('Enrolled Children Directive', function () {
 
     it('tests supervisor location', function () {
         controller.filtersData.location_id = 'test-id';
+        controller.userLocationId = 'test-id';
 
         $httpBackend.expectGET('icds_locations?location_id=test-id').respond(200, {location_type: 'supervisor'});
         $httpBackend.expectGET('enrolled_children?location_id=test-id').respond(200, {
@@ -75,6 +76,7 @@ describe('Enrolled Children Directive', function () {
 
     it('tests non supervisor location', function () {
         controller.filtersData.location_id = 'test-id';
+        controller.userLocationId = 'test-id';
 
         $httpBackend.expectGET('icds_locations?location_id=test-id').respond(200, {location_type: 'non supervisor'});
         $httpBackend.expectGET('enrolled_children?location_id=test-id').respond(200, {
@@ -89,7 +91,7 @@ describe('Enrolled Children Directive', function () {
 
     it('tests template popup', function () {
         var result = controller.templatePopup({properties: {name: 'test'}}, {valid: 2, all: 4});
-        var expected = '<div class="hoverinfo" style="max-width: 200px !important;">' +
+        var expected = '<div class="hoverinfo">' +
             '<p>test</p>' +
             '<div>Number of children (0 - 6 years) who are enrolled for ICDS services: <strong>2</strong>' +
             '<div>Total number of children (0 - 6 years) who are registered: <strong>4</strong>' +

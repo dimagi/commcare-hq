@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.test import SimpleTestCase
 from corehq.apps.userreports.sql import get_column_name
 from corehq.apps.userreports.util import get_table_name, truncate_value
@@ -17,12 +18,12 @@ class UtilitiesTestCase(SimpleTestCase):
         self.assertEqual(truncated, 'string t_849f01fd')
 
     def test_truncate_value_unicode_left(self):
-        value = u'\u00e8 string to truncate\u00e8'
+        value = '\u00e8 string to truncate\u00e8'
         truncated = truncate_value(value, max_length=len(value) - 1)
         self.assertEqual(truncated, 'runcate\\xe8_6be7bea3')
 
     def test_truncate_value_unicode_right(self):
-        value = u'\u00e8 string to truncate\u00e8'
+        value = '\u00e8 string to truncate\u00e8'
         truncated = truncate_value(value, max_length=len(value) - 1, from_left=False)
         self.assertEqual(truncated, '\\xe8 string_6be7bea3')
 
@@ -31,8 +32,8 @@ class UtilitiesTestCase(SimpleTestCase):
 
     def test_table_name_unicode(self):
         self.assertEqual(
-            u"config_report_domain_unicode\\\\xe8_8aece1af",
-            get_table_name('domain', u'unicode\u00e8')
+            "config_report_domain_unicode\\\\xe8_8aece1af",
+            get_table_name('domain', 'unicode\u00e8')
         )
 
     def test_table_trickery(self):
@@ -46,8 +47,8 @@ class UtilitiesTestCase(SimpleTestCase):
         self.assertEqual(name, name_expected)
 
     def test_column_unicode(self):
-        name = get_column_name(u"Zouti_pou_travay_t\u00e8")
-        name_expected = u'Zouti_pou_travay_t\xe8_488e6086'
+        name = get_column_name("Zouti_pou_travay_t\u00e8")
+        name_expected = 'Zouti_pou_travay_t\xe8_488e6086'
         self.assertEqual(name, name_expected)
 
     def test_column_trickery(self):

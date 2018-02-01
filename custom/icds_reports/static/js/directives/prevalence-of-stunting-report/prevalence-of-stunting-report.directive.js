@@ -1,4 +1,4 @@
-/* global d3, _ */
+/* global d3, _, moment */
 
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
@@ -52,13 +52,15 @@ function PrevalenceOfStuntingReportController($scope, $routeParams, $location, $
     vm.message = storageService.getKey('message') || false;
 
     vm.prevDay = moment().subtract(1, 'days').format('Do MMMM, YYYY');
+    vm.lastDayOfPreviousMonth = moment().set('date', 1).subtract(1, 'days').format('Do MMMM, YYYY');
     vm.currentMonth = moment().format("MMMM");
     vm.showInfoMessage = function () {
-        var selected_month = parseInt($location.search()['month']) ||new Date().getMonth() + 1;
-        var selected_year =  parseInt($location.search()['year']) || new Date().getFullYear();
+        var selected_month = parseInt($location.search()['month']) || new Date().getMonth() + 1;
+        var selected_year = parseInt($location.search()['year']) || new Date().getFullYear();
         var current_month = new Date().getMonth() + 1;
         var current_year = new Date().getFullYear();
-        return selected_month === current_month && selected_year === current_year && new Date().getDate() === 1;
+        return selected_month === current_month && selected_year === current_year &&
+            (new Date().getDate() === 1 || new Date().getDate() === 2);
     };
 
     $scope.$watch(function() {
@@ -91,7 +93,7 @@ function PrevalenceOfStuntingReportController($scope, $routeParams, $location, $
         var moderate = row ? d3.format(".2%")(row.moderate / (row.total || 1)) : 'N/A';
         var normal = row ? d3.format(".2%")(row.normal / (row.total || 1)) : 'N/A';
         var unmeasured = row ? d3.format(".2%")((row.total - (row.normal + row.severe + row.moderate)) / (row.total || 1)) : 'N/A';
-        return '<div class="hoverinfo" style="max-width: 200px !important;">' +
+        return '<div class="hoverinfo">' +
             '<p>' + loc.properties.name + '</p>' +
             '<div>Total Children ' + chosenFilters + ' weighed in given month: <strong>' + total + '</strong></div>' +
             '<div>Total Children ' + chosenFilters + ' with height measured in given month: <strong>' + measured + '</strong></div>' +
@@ -150,7 +152,7 @@ function PrevalenceOfStuntingReportController($scope, $routeParams, $location, $
 
     vm.init = function() {
         var locationId = vm.filtersData.location_id || vm.userLocationId;
-        if (!locationId || locationId === 'all') {
+        if (!vm.userLocationId || !locationId || locationId === 'all') {
             vm.loadData();
             vm.loaded = true;
             return;

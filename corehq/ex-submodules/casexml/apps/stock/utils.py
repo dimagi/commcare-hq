@@ -1,11 +1,12 @@
 from __future__ import absolute_import
+from __future__ import division
 from decimal import Decimal
 from casexml.apps.stock.models import StockTransaction
 
 
 def months_of_stock_remaining(stock, daily_consumption):
     if daily_consumption:
-        return stock / Decimal((daily_consumption * 30))
+        return stock / Decimal(daily_consumption * 30)
     else:
         return None
 

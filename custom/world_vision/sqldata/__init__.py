@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import division
 from sqlagg.columns import SimpleColumn
 from sqlagg.filters import IN, AND, GTE, OR
 from sqlagg.filters import EQ, BETWEEN, LTE
