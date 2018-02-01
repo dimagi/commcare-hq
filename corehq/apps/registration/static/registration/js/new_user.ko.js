@@ -196,7 +196,7 @@ hqDefine('registration/js/new_user.ko', function () {
                     message: django.gettext("Please specify."),
                     params: true,
                 },
-            })
+            });
         self.isPersonaChoiceOther = ko.computed(function () {
             return self.personaChoice() === 'Other';
         });
@@ -245,7 +245,7 @@ hqDefine('registration/js/new_user.ko', function () {
                     persona: self.personaChoice(),
                     persona_other: self.isPersonaChoiceOther() ? self.personaOther() : '',
                 });
-            };
+            }
             return data;
         };
 
