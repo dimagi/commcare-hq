@@ -122,7 +122,7 @@ function InfantsWeightScaleController($scope, $routeParams, $location, $filter, 
 
     vm.init = function() {
         var locationId = vm.filtersData.location_id || vm.userLocationId;
-        if (!locationId || locationId === 'all' || locationId === 'null') {
+        if (!vm.userLocationId || !locationId || locationId === 'all' || locationId === 'null') {
             vm.loadData();
             vm.loaded = true;
             return;

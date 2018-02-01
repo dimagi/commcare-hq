@@ -129,7 +129,7 @@ function AdolescentWomenController($scope, $routeParams, $location, $filter, dem
 
     vm.init = function() {
         var locationId = vm.filtersData.location_id || vm.userLocationId;
-        if (!locationId || locationId === 'all') {
+        if (!vm.userLocationId || !locationId || locationId === 'all') {
             vm.loadData();
             vm.loaded = true;
             return;
