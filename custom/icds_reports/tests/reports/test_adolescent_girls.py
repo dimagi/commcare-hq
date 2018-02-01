@@ -22,13 +22,13 @@ class TestAdolescentGirls(TestCase):
             ),
             {
                 "rightLegend": {
-                    "info": "Total number of adolescent girls who are enrolled for ICDS services",
+                    "info": "Total number of adolescent girls who are enrolled for Anganwadi Services",
                     "average": 23.5,
                     "average_format": "number",
                     'extended_info': [
                         {
                             'indicator': (
-                                'Number of adolescent girls (11 - 18 years) who are enrolled for ICDS services:'
+                                'Number of adolescent girls (11 - 18 years) who are enrolled for Anganwadi Services:'
                             ),
                             'value': "47"
                         },
@@ -39,7 +39,7 @@ class TestAdolescentGirls(TestCase):
                         {
                             'indicator': (
                                 'Percentage of registered adolescent girls (11 - 18 years) '
-                                'who are enrolled for ICDS services:'
+                                'who are enrolled for Anganwadi Services:'
                             ),
                             'value': '100.00%'
                         }
@@ -82,13 +82,13 @@ class TestAdolescentGirls(TestCase):
             ),
             {
                 "rightLegend": {
-                    "info": "Total number of adolescent girls who are enrolled for ICDS services",
+                    "info": "Total number of adolescent girls who are enrolled for Anganwadi Services",
                     "average": 11.0,
                     "average_format": "number",
                     'extended_info': [
                         {
                             'indicator': (
-                                'Number of adolescent girls (11 - 18 years) who are enrolled for ICDS services:'
+                                'Number of adolescent girls (11 - 18 years) who are enrolled for Anganwadi Services:'
                             ),
                             'value': "22"
                         },
@@ -99,7 +99,7 @@ class TestAdolescentGirls(TestCase):
                         {
                             'indicator': (
                                 'Percentage of registered adolescent girls (11 - 18 years) '
-                                'who are enrolled for ICDS services:'
+                                'who are enrolled for Anganwadi Services:'
                             ),
                             'value': '100.00%'
                         }
@@ -180,7 +180,7 @@ class TestAdolescentGirls(TestCase):
                                 "all": 47
                             }
                         ],
-                        "key": "Total number of adolescent girls who are enrolled for ICDS services"
+                        "key": "Total number of adolescent girls who are enrolled for Anganwadi Services"
                     }
                 ],
                 "all_locations": [
@@ -211,7 +211,7 @@ class TestAdolescentGirls(TestCase):
                 loc_level='supervisor'
             ),
             {
-                "info": "Total number of adolescent girls who are enrolled for ICDS services",
+                "info": "Total number of adolescent girls who are enrolled for Anganwadi Services",
                 "tooltips_data": {
                     "s2": {
                         "all": 6,

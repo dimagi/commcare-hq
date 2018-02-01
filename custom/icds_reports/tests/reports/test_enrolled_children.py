@@ -23,12 +23,12 @@ class TestEnrolledChildren(TestCase):
             {
                 "rightLegend": {
                     "info": "Total number of children between the age "
-                            "of (0 - 6 years) who are enrolled for ICDS services",
+                            "of (0 - 6 years) who are enrolled for Anganwadi Services",
                     "average": 643.5,
                     "average_format": "number",
                     'extended_info': [
                         {
-                            'indicator': 'Number of children (0 - 6 years) who are enrolled for ICDS services:',
+                            'indicator': 'Number of children (0 - 6 years) who are enrolled for Anganwadi Services:',
                             'value': "1,287"
                         },
                         {
@@ -38,7 +38,7 @@ class TestEnrolledChildren(TestCase):
                         {
                             'indicator': (
                                 'Percentage of registered children (0 - 6 years) '
-                                'who are enrolled for ICDS services:'
+                                'who are enrolled for Anganwadi Services:'
                             ),
                             'value': '100.00%'
                         }
@@ -82,12 +82,12 @@ class TestEnrolledChildren(TestCase):
             {
                 "rightLegend": {
                     "info": "Total number of children between the age "
-                            "of (0 - 6 years) who are enrolled for ICDS services",
+                            "of (0 - 6 years) who are enrolled for Anganwadi Services",
                     "average": 309.0,
                     "average_format": "number",
                     'extended_info': [
                         {
-                            'indicator': 'Number of children (0 - 6 years) who are enrolled for ICDS services:',
+                            'indicator': 'Number of children (0 - 6 years) who are enrolled for Anganwadi Services:',
                             'value': "618"
                         },
                         {
@@ -97,7 +97,7 @@ class TestEnrolledChildren(TestCase):
                         {
                             'indicator': (
                                 'Percentage of registered children (0 - 6 years) '
-                                'who are enrolled for ICDS services:'
+                                'who are enrolled for Anganwadi Services:'
                             ),
                             'value': '100.00%'
                         }
@@ -186,7 +186,7 @@ class TestEnrolledChildren(TestCase):
             ),
             {
                 "info": "Total number of children between the age"
-                        " of 0 - 6 years who are enrolled for ICDS services",
+                        " of 0 - 6 years who are enrolled for Anganwadi Services",
                 "tooltips_data": {
                     "s2": {
                         'all': 214,

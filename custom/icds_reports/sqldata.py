@@ -2468,41 +2468,41 @@ class FactSheetsReport(object):
                             },
                             {
                                 'data_source': 'AggAWCMonthlyDataSource',
-                                'header': 'Total chldren (0-6 years) enrolled for ICDS services',
+                                'header': 'Total chldren (0-6 years) enrolled for Anganwadi Services',
                                 'slug': 'cases_child_health',
                                 'average': [],
 
                             },
                             {
                                 'data_source': 'AggChildHealthMonthlyDataSource',
-                                'header': 'Children (0-28 days)  enrolled for ICDS services',
+                                'header': 'Children (0-28 days)  enrolled for Anganwadi Services',
                                 'slug': 'zero',
                                 'average': [],
                             },
                             {
                                 'data_source': 'AggChildHealthMonthlyDataSource',
-                                'header': 'Children (28 days - 6 months)  enrolled for ICDS services',
+                                'header': 'Children (28 days - 6 months)  enrolled for Anganwadi Services',
                                 'slug': 'one',
                                 'average': [],
 
                             },
                             {
                                 'data_source': 'AggChildHealthMonthlyDataSource',
-                                'header': 'Children (6 months - 1 year)  enrolled for ICDS services',
+                                'header': 'Children (6 months - 1 year)  enrolled for Anganwadi Services',
                                 'slug': 'two',
                                 'average': [],
 
                             },
                             {
                                 'data_source': 'AggChildHealthMonthlyDataSource',
-                                'header': 'Children (1 year - 3 years)  enrolled for ICDS services',
+                                'header': 'Children (1 year - 3 years)  enrolled for Anganwadi Services',
                                 'slug': 'three',
                                 'average': [],
 
                             },
                             {
                                 'data_source': 'AggChildHealthMonthlyDataSource',
-                                'header': 'Children (3 years - 6 years)  enrolled for ICDS services',
+                                'header': 'Children (3 years - 6 years)  enrolled for Anganwadi Services',
                                 'slug': 'four',
                                 'average': [],
 
@@ -2523,14 +2523,14 @@ class FactSheetsReport(object):
                             },
                             {
                                 'data_source': 'AggAWCMonthlyDataSource',
-                                'header': 'Adolescent girls (11-14 years)  enrolled for ICDS services',
+                                'header': 'Adolescent girls (11-14 years)  enrolled for Anganwadi Services',
                                 'slug': 'cases_person_adolescent_girls_11_14',
                                 'average': [],
 
                             },
                             {
                                 'data_source': 'AggAWCMonthlyDataSource',
-                                'header': 'Adolescent girls (15-18 years)  enrolled for ICDS services',
+                                'header': 'Adolescent girls (15-18 years)  enrolled for Anganwadi Services',
                                 'slug': 'cases_person_adolescent_girls_15_18',
                                 'average': [],
 

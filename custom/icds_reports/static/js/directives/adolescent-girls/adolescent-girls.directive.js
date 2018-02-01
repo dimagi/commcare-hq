@@ -30,7 +30,7 @@ function AdolescentWomenController($scope, $routeParams, $location, $filter, dem
     vm.filters = ['age', 'gender'];
 
     vm.rightLegend = {
-        info: 'Total number of adolescent girls who are enrolled for ICDS services',
+        info: 'Total number of adolescent girls who are enrolled for Anganwadi Services',
     };
 
     vm.message = storageService.getKey('message') || false;
@@ -74,9 +74,9 @@ function AdolescentWomenController($scope, $routeParams, $location, $filter, dem
         var percent = row ? d3.format('.2%')(row.valid / (row.all || 1)) : "N/A";
         return '<div class="hoverinfo">' +
             '<p>' + loc.properties.name + '</p>' +
-            '<div>Number of adolescent girls (11 - 18 years) who are enrolled for ICDS services: <strong>' + valid + '</strong>' +
+            '<div>Number of adolescent girls (11 - 18 years) who are enrolled for Anganwadi Services: <strong>' + valid + '</strong>' +
             '<div>Total number of adolescent girls (11 - 18 years) who are registered: <strong>' + all + '</strong>' +
-            '<div>Percentage of registered adolescent girls (11 - 18 years) who are enrolled for ICDS services: <strong>' + percent + '</strong>' +
+            '<div>Percentage of registered adolescent girls (11 - 18 years) who are enrolled for Anganwadi Services: <strong>' + percent + '</strong>' +
             '</div>';
     };
 
@@ -212,7 +212,7 @@ function AdolescentWomenController($scope, $routeParams, $location, $filter, dem
         },
         caption: {
             enable: true,
-            html: '<i class="fa fa-info-circle"></i> Total number of adolescent girls who are enrolled for ICDS services',
+            html: '<i class="fa fa-info-circle"></i> Total number of adolescent girls who are enrolled for Anganwadi Services',
             css: {
                 'text-align': 'center',
                 'margin': '0 auto',
@@ -223,9 +223,9 @@ function AdolescentWomenController($scope, $routeParams, $location, $filter, dem
 
     vm.tooltipContent = function (monthName, day) {
         return "<p><strong>" + monthName + "</strong></p><br/>"
-            + "<p>Number of adolescent girls (11 - 18 years) who are enrolled for ICDS services: <strong>" + $filter('indiaNumbers')(day.y) + "</strong></p>"
+            + "<p>Number of adolescent girls (11 - 18 years) who are enrolled for Anganwadi Services: <strong>" + $filter('indiaNumbers')(day.y) + "</strong></p>"
             + "<p>Total number of adolescent girls (11 - 18 years) who are registered: <strong>" + $filter('indiaNumbers')(day.all) + "</strong></p>"
-            + "<p>Percentage of registered adolescent girls (11 - 18 years) who are enrolled for ICDS services: <strong>" + d3.format('.2%')(day.y / (day.all || 1)) + "</strong></p>";
+            + "<p>Percentage of registered adolescent girls (11 - 18 years) who are enrolled for Anganwadi Services: <strong>" + d3.format('.2%')(day.y / (day.all || 1)) + "</strong></p>";
     };
 
     vm.showAllLocations = function () {

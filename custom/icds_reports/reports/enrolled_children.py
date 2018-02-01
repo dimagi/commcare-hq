@@ -67,13 +67,13 @@ def get_enrolled_children_data_map(domain, config, loc_level, show_test=False):
             "average": sum(average) / float(len(average) or 1),
             "average_format": 'number',
             "info": _((
-                "Total number of children between the age of ({}) who are enrolled for ICDS services"
+                "Total number of children between the age of ({}) who are enrolled for Anganwadi Services"
                 .format(age_label)
             )),
             "extended_info": [
                 {
                     'indicator':
-                        'Number of children{} who are enrolled for ICDS services:'
+                        'Number of children{} who are enrolled for Anganwadi Services:'
                         .format(chosen_filters),
                     'value': indian_formatted_number(total_valid)
                 },
@@ -86,7 +86,7 @@ def get_enrolled_children_data_map(domain, config, loc_level, show_test=False):
                 },
                 {
                     'indicator': (
-                        'Percentage of registered children{} who are enrolled for ICDS services:'
+                        'Percentage of registered children{} who are enrolled for Anganwadi Services:'
                         .format(chosen_filters)
                     ),
                     'value': '%.2f%%' % (total_valid * 100 / float(total or 1))
@@ -214,7 +214,7 @@ def get_enrolled_children_sector_data(domain, config, loc_level, location_id, sh
         "tooltips_data": dict(tooltips_data),
         "format": "number",
         "info": _((
-            "Total number of children between the age of 0 - 6 years who are enrolled for ICDS services"
+            "Total number of children between the age of 0 - 6 years who are enrolled for Anganwadi Services"
         )),
         "chart_data": [
             {
