@@ -247,6 +247,12 @@ class ExportWriter(object):
     def _close(self):
         raise NotImplementedError
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self._close()
+
 
 class OnDiskExportWriter(ExportWriter):
     """

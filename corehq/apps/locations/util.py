@@ -293,8 +293,8 @@ def dump_locations(domain, download_id, include_consumption=False, task=None):
     fd, path = tempfile.mkstemp()
     writer = Excel2007ExportWriter()
     writer.open(header_table=exporter.get_headers(), file=path)
-    exporter.write_data(writer)
-    writer.close()
+    with writer:
+        exporter.write_data(writer)
 
     with open(path, 'rb') as file_:
         db = get_blob_db()
