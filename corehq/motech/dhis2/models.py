@@ -167,17 +167,20 @@ class JsonApiLog(models.Model):
     response_body = models.TextField(blank=True, null=True)
 
     @staticmethod
-    def log(log_level, json_api_request, request_error, response_status, response_body, method_func, request_url,
-            data=None, **params):
+    def log(log_level, domain_name, request_error, response_status, response_body, request_headers, method_func,
+            request_url, data=None, **params):
+        # The order of params is important: `method_func`, `request_url` and `data` are the requests function and
+        # its args respectively. Having these params at the end allows us to call `log` with `*args, **kwargs`
+
         # Don't log credentials
         if 'auth' in params:
             params['auth'] = '******'
         JsonApiLog.objects.create(
-            domain=json_api_request.domain_name,
+            domain=domain_name,
             log_level=log_level,
             request_method=method_func.__name__.upper(),
             request_url=request_url,
-            request_headers=json_api_request.headers,
+            request_headers=request_headers,
             request_params=params,
             request_body=data,
             request_error=request_error,
