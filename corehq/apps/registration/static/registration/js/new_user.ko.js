@@ -41,6 +41,12 @@ hqDefine('registration/js/new_user.ko', function () {
 
         _private.submitSuccessAnalytics = function (data) {
             _kissmetrics.track.event("Account Creation was Successful");
+            if (data.persona) {
+                _kissmetrics.track.event("Persona Field Filled Out", {
+                    personaChoice: data.persona,
+                    personaOther: data.persona_other,
+                });
+            }
             if (_private.isAbPhoneNumber) {
                 _kissmetrics.track.event("Phone Number Field Filled Out");
             }
@@ -182,8 +188,15 @@ hqDefine('registration/js/new_user.ko', function () {
         });
 
         // For User Persona Field
+        self.hasPersonaFields = $(containerSelector).find("[name='persona']").length;
         self.personaChoice = ko.observable();
-        self.personaOther = ko.observable();
+        self.personaOther = ko.observable()
+            .extend({
+                required: {
+                    message: django.gettext("Please specify."),
+                    params: true,
+                },
+            })
         self.isPersonaChoiceOther = ko.computed(function () {
             return self.personaChoice() === 'Other';
         });
@@ -199,6 +212,13 @@ hqDefine('registration/js/new_user.ko', function () {
         self.isPersonaChoiceOtherNeeded = ko.computed(function () {
             return self.eulaConfirmed() && self.isPersonaChoiceOther() && !self.personaOther();
         });
+        self.isPersonaValid = ko.computed(function() {
+            if (!self.hasPersonaFields) {
+                return true;
+            }
+            return self.isPersonaChoiceChosen()
+                   && (!self.isPersonaChoiceOther() || self.isPersonaChoiceOtherPresent());
+        });
 
         // ---------------------------------------------------------------------
         // Form Functionality
@@ -208,10 +228,10 @@ hqDefine('registration/js/new_user.ko', function () {
 
         var _getDataForSubmission = function () {
             var password = self.password();
-            if(typeof(hex_parser) !== 'undefined') {
+            if (typeof(hex_parser) !== 'undefined') {
                 password = (new hex_parser()).encode(self.password());
             }
-            return {
+            var data = {
                 full_name: self.fullName(),
                 email: self.email(),
                 password: password,
@@ -219,9 +239,14 @@ hqDefine('registration/js/new_user.ko', function () {
                 eula_confirmed: self.eulaConfirmed(),
                 phone_number: _private.getPhoneNumberFn() || self.phoneNumber(),
                 atypical_user: defaults.atypical_user,
-                persona: self.personaChoice(),
-                persona_other: self.personaOther(),
             };
+            if (self.hasPersonaFields) {
+                _.extend(data, {
+                    persona: self.personaChoice(),
+                    persona_other: self.isPersonaChoiceOther() ? self.personaOther() : '',
+                });
+            };
+            return data;
         };
 
         var _getFormStepUi = function (stepNum) {
@@ -247,8 +272,7 @@ hqDefine('registration/js/new_user.ko', function () {
         self.isStepTwoValid = ko.computed(function () {
             return self.projectName() !== undefined
                 && self.projectName.isValid()
-                && self.isPersonaChoiceChosen()
-                && (!self.isPersonaChoiceOther() || self.isPersonaChoiceOtherPresent())
+                && self.isPersonaValid()
                 && self.eulaConfirmed();
         });
 
