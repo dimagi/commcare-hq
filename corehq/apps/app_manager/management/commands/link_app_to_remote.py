@@ -37,7 +37,7 @@ class Command(BaseCommand):
         )
 
         linked_app = LinkedApplication.get(linked_id)
-        whilelist_app_on_remote(remote_app_details, linked_app.domain)
+        whilelist_app_on_remote(domain, master_id, linked_app.domain, remote_app_details)
 
         linked_app.master = master_id
         linked_app.remote_url_base = url_base

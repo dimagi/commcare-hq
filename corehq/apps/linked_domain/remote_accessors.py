@@ -12,23 +12,23 @@ from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.logging import notify_exception
 
 
-def get_released_app_version(remote_app_details):
-    url = reverse('current_app_version', args=[remote_app_details.domain, remote_app_details.app_id])
-    response = _do_request_to_remote_hq(url, remote_app_details)
+def get_released_app_version(domain, app_id, remote_details):
+    url = reverse('current_app_version', args=[domain, app_id])
+    response = _do_request_to_remote_hq(url, remote_details)
     return response.json().get('latestReleasedBuild')
 
 
-def get_released_app(remote_app_details, linked_domain):
-    url = reverse('latest_released_app_source', args=[remote_app_details.domain, remote_app_details.app_id])
+def get_released_app(domain, app_id, linked_domain, remote_details):
+    url = reverse('latest_released_app_source', args=[domain, app_id])
     params = {'requester': absolute_reverse('domain_homepage', args=[linked_domain])}
-    response = _do_request_to_remote_hq(url, remote_app_details, params)
+    response = _do_request_to_remote_hq(url, remote_details, params)
     return _convert_app_from_remote_linking_source(response.json())
 
 
-def whilelist_app_on_remote(remote_app_details, linked_domain):
-    url = reverse('patch_linked_app_whitelist', args=[remote_app_details.domain, remote_app_details.app_id])
+def whilelist_app_on_remote(domain, app_id, linked_domain, remote_details):
+    url = reverse('patch_linked_app_whitelist', args=[domain, app_id])
     params = {'whitelist_item': absolute_reverse('domain_homepage', args=[linked_domain])}
-    _do_request_to_remote_hq(url, remote_app_details, params, method='patch')
+    _do_request_to_remote_hq(url, remote_details, params, method='patch')
 
 
 def _convert_app_from_remote_linking_source(app_json):
@@ -77,8 +77,8 @@ def _fetch_remote_media_content(media_item, remote_app_details):
     return response.content
 
 
-def _do_request_to_remote_hq(relative_url, remote_app_details, params=None, method='get'):
-    url_base, domain, username, api_key, app_id = remote_app_details
+def _do_request_to_remote_hq(relative_url, remote_details, params=None, method='get'):
+    url_base, domain, username, api_key, app_id = remote_details
     full_url = u'%s%s' % (url_base, relative_url)
     try:
         response = requests.request(method, full_url, params=params, auth=ApiKeyAuth(username, api_key))
