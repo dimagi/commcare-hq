@@ -36,7 +36,8 @@ def log_request(func):
             return response
         finally:
             if log_level >= domain_log_level:
-                JsonApiLog.log(log_level, self, request_error, response_status, response_body, *args, **kwargs)
+                JsonApiLog.log(log_level, self.domain_name, request_error, response_status, response_body,
+                               self.headers, *args, **kwargs)
 
     return request_wrapper
 

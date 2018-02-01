@@ -60,10 +60,11 @@ def send_datasets(domain_name, send_now=False, send_date=None):
                 if log_level >= domain_log_level:
                     JsonApiLog.log(
                         log_level,
-                        api,
+                        api.domain_name,
                         str(err),
                         response_status=None,
                         response_body=None,
+                        request_headers=api.headers,
                         method_func=api.post,
                         request_url=api.get_request_url(endpoint),
                     )
@@ -72,10 +73,11 @@ def send_datasets(domain_name, send_now=False, send_date=None):
                 if log_level >= domain_log_level:
                     JsonApiLog.log(
                         log_level,
-                        api,
+                        api.domain_name,
                         None,
                         response_status=response.status_code,
                         response_body=response.content,
+                        request_headers=api.headers,
                         method_func=api.post,
                         request_url=api.get_request_url(endpoint),
                     )
