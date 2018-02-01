@@ -7,11 +7,14 @@ class ApiKeyAuth(AuthBase):
         self.username = username
         self.apikey = apikey
 
+    def _key(self):
+        return (self.username, self.apikey)
+
     def __eq__(self, other):
-        return all([
-            self.username == getattr(other, 'username', None),
-            self.apikey == getattr(other, 'apikey', None)
-        ])
+        return self._key() == other.key()
+
+    def __hash__(self):
+        return hash(self._key())
 
     def __ne__(self, other):
         return not self == other
