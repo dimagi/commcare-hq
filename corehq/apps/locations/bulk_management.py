@@ -410,7 +410,8 @@ class NewLocationImporter(object):
 
     @classmethod
     def from_excel_importer(cls, domain, excel_importer):
-        type_rows, location_rows = LocationExcelValidator(domain, excel_importer).validate_and_parse_stubs_from_excel()
+        validator = LocationExcelValidator(domain, excel_importer)
+        type_rows, location_rows = validator.validate_and_parse_stubs_from_excel()
         return cls(domain, type_rows, location_rows, excel_importer)
 
     def run(self):
