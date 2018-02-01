@@ -116,14 +116,28 @@
                                         </span>
                                     </th>
                                     <th class="col-sm-3">
-                                        {% trans "Validation" %}
-                                        <span class="hq-help-template"
-                                              data-title="{% trans "Validation" %}"
-                                              data-content="{% blocktrans %}
-                                                  Provides a drop-down list of choices for this field
-                                                  instead of free text entry.
-                                              {% endblocktrans %}">
-                                        </span>
+                                        {% if request|toggle_enabled:"REGEX_FIELD_VALIDATION" %}
+                                            {% trans "Validation" %}
+                                            <span class="hq-help-template"
+                                                data-title="{% trans "Validation" %}"
+                                                data-content="{% blocktrans %}
+                                                    Specify a means of validating user input to this field.
+                                                    You can provide a drop-down list of choices or specify
+                                                    a regular expression to be applied to the input. For
+                                                    example, ^[1-9]{10}$ will match only 10 character
+                                                    numeric input.
+                                                {% endblocktrans %}">
+                                            </span>
+                                        {% else %}
+                                            {% trans "Choices" %}
+                                            <span class="hq-help-template"
+                                                data-title="{% trans "Choices" %}"
+                                                data-content="{% blocktrans %}
+                                                    Provides a drop-down list of choices for this field
+                                                    instead of free text entry.
+                                                {% endblocktrans %}">
+                                            </span>
+                                        {% endif %}
                                     </th>
                                     {% if show_index_in_fixture %}
                                     <th class="col-sm-1">
