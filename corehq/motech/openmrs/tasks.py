@@ -193,7 +193,7 @@ def import_patients_to_domain(domain_name, force=False):
         # TODO: ^^^ Make those configurable
 
         password = b64_aes_decrypt(importer.password)
-        requests = Requests(importer.server_url, importer.username, password)
+        requests = Requests(domain_name, importer.server_url, importer.username, password)
         if importer.location_type_name:
             try:
                 location_type = LocationType.objects.get(domain=domain_name, name=importer.location_type_name)
