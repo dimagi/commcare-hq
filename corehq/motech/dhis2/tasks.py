@@ -2,15 +2,13 @@ from __future__ import absolute_import
 from base64 import b64decode
 import bz2
 from datetime import datetime
-import logging
 
 from celery.schedules import crontab
 from celery.task import periodic_task, task
 
 from corehq import toggles
 from corehq.motech.dhis2.dbaccessors import get_dhis2_connection, get_dataset_maps
-from corehq.motech.dhis2.api import JsonApiRequest
-from corehq.motech.dhis2.models import JsonApiLog
+from corehq.motech.dhis2.api import JsonApiRequest, JsonApiError
 from toggle.shortcuts import find_domains_with_toggle_enabled
 
 
@@ -50,34 +48,12 @@ def send_datasets(domain_name, send_now=False, send_date=None):
     endpoint = 'dataValueSets'
     for dataset_map in dataset_maps:
         if send_now or dataset_map.should_send_on_date(send_date):
-            domain_log_level = getattr(dhis2_conn, 'log_level', logging.INFO)
+            dataset = dataset_map.get_dataset(send_date)
             try:
-                dataset = dataset_map.get_dataset(send_date)
-                response = api.post(endpoint, dataset)
-            except Exception as err:
-                log_level = logging.ERROR
-                if log_level >= domain_log_level:
-                    JsonApiLog.log(
-                        log_level,
-                        api,
-                        str(err),
-                        response_status=None,
-                        response_body=None,
-                        method_func=api.post,
-                        request_url=api.get_request_url(endpoint),
-                    )
-            else:
-                log_level = logging.INFO
-                if log_level >= domain_log_level:
-                    JsonApiLog.log(
-                        log_level,
-                        api,
-                        None,
-                        response_status=response.status_code,
-                        response_body=response.content,
-                        method_func=api.post,
-                        request_url=api.get_request_url(endpoint),
-                    )
+                api.post(endpoint, dataset)
+            except JsonApiError:
+                # api.post has already logged this
+                continue
 
 
 @periodic_task(
