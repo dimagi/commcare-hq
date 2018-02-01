@@ -1,7 +1,7 @@
 --- Delete all records that appear in the user staging table
 DELETE FROM {{ user_location_dim }} as ul_dim
 USING {{ user_staging }} as user_staging
-INNER_JOIN {{ user_dim }} as ud
+INNER JOIN {{ user_dim }} as ud
 ON ud.user_id = user_staging.user_id
 
 WHERE ul_dim.user_dim = ud.id;
@@ -34,9 +34,9 @@ FROM
 		json_array_elements(user_staging.domain_memberships::JSON) ->> 'domain' as domain
 		location_dim.id as location_dim_id
 	FROM {{ user_staging }} as user_staging
-	INNER JOIN {{ user_dim }} as user_dim
+	LEFT JOIN {{ user_dim }} as user_dim
 	ON user_staging.user_id = user_dim.user_id
-	INNER JOIN {{ location_dim }} as location_dim
+	LEFT JOIN {{ location_dim }} as location_dim
 	ON location_id = location_dim.location_id
 	WHERE user_staging.doc_type = 'WebUser' AND NOT user_staging.deleted
 )
@@ -58,9 +58,9 @@ FROM
 		UNNEST(user_staging.assigned_location_ids) AS location_id
 		location_dim.id as location_dim_id
 FROM {{ user_staging }} AS user_staging
-INNER JOIN {{ user_dim }} AS user_dim
+LEFT JOIN {{ user_dim }} AS user_dim
 ON user_staging.user_id = user_dim.user_id
-INNER JOIN {{ location_dim }} AS location_dim
+LEFT JOIN {{ location_dim }} AS location_dim
 ON location_id = location_dim.location_id
 WHERE user_staging.doc_type = 'CommCareUser' AND NOT user_staging.deleted
 );
