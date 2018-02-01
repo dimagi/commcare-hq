@@ -6,16 +6,17 @@ from couchdbkit.exceptions import ResourceNotFound
 from django.test.testcases import TestCase
 from mock import patch
 
-from corehq.apps.app_manager.exceptions import AppEditingError, ActionNotPermitted
+from corehq.apps.app_manager.exceptions import AppEditingError
 from corehq.apps.app_manager.models import (
     Application,
     ReportModule, ReportAppConfig, Module, RemoteAppDetails, LinkedApplication)
+from corehq.apps.linked_domain.exceptions import ActionNotPermitted
 from corehq.apps.linked_domain.remote_accessors import _convert_app_from_remote_linking_source, \
     _get_missing_multimedia, _fetch_remote_media
 from corehq.apps.app_manager.tests.util import TestXmlMixin
-from corehq.apps.app_manager.views.remote_linked_apps import _convert_app_for_remote_linking
 from corehq.apps.app_manager.views.utils import overwrite_app, _get_form_id_map
 from corehq.apps.hqmedia.models import CommCareImage, CommCareMultimedia
+from corehq.apps.linked_domain.util import convert_app_for_remote_linking
 
 
 class BaseLinkedAppsTest(TestCase, TestXmlMixin):
@@ -231,7 +232,7 @@ class TestRemoteLinkedApps(BaseLinkedAppsTest):
 
 
 def _mock_pull_remote_master(master_app, linked_app, report_map=None):
-    master_source = _convert_app_for_remote_linking(master_app)
+    master_source = convert_app_for_remote_linking(master_app)
     master_app = _convert_app_from_remote_linking_source(master_source)
     overwrite_app(linked_app, master_app, report_map or {})
     return Application.get(linked_app._id)

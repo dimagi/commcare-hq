@@ -35,8 +35,7 @@ from corehq.apps.app_manager.const import (
 from corehq.apps.app_manager.dbaccessors import get_app, get_current_app, get_latest_released_app_version
 from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
     require_can_edit_apps, require_deploy_apps, no_conflict
-from corehq.apps.app_manager.exceptions import IncompatibleFormTypeException, RearrangeError, RemoteRequestError, \
-    AppLinkError
+from corehq.apps.app_manager.exceptions import IncompatibleFormTypeException, RearrangeError, AppLinkError
 from corehq.apps.app_manager.forms import CopyApplicationForm
 from corehq.apps.app_manager.models import (
     Application,
@@ -66,6 +65,7 @@ from corehq.apps.domain.decorators import (
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
+from corehq.apps.linked_domain.exceptions import RemoteRequestError
 from corehq.apps.translations.models import Translation
 from corehq.apps.users.dbaccessors.all_commcare_users import get_practice_mode_mobile_workers
 from corehq.elastic import ESError

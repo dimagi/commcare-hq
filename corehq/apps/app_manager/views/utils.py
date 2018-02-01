@@ -13,9 +13,9 @@ from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_app, wrap_app, get_apps_in_domain
 from corehq.apps.app_manager.decorators import require_deploy_apps
 from corehq.apps.app_manager.exceptions import AppEditingError, \
-    ModuleNotFoundException, FormNotFoundException, RemoteRequestError, AppLinkError, ActionNotPermitted, \
-    RemoteAuthError
+    ModuleNotFoundException, FormNotFoundException, AppLinkError, ActionNotPermitted
 from corehq.apps.app_manager.models import Application, ReportModule, enable_usercase_if_necessary, CustomIcon
+from corehq.apps.linked_domain.exceptions import RemoteRequestError, RemoteAuthError
 from corehq.apps.linked_domain.remote_accessors import pull_missing_multimedia_for_app
 
 from corehq.apps.app_manager.util import update_form_unique_ids

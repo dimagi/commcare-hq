@@ -5,9 +5,9 @@ from django.urls.base import reverse
 from requests import ConnectionError
 
 from corehq.apps.app_manager.dbaccessors import wrap_app
-from corehq.apps.app_manager.exceptions import RemoteRequestError, RemoteAuthError, ActionNotPermitted
 from corehq.apps.hqmedia.models import CommCareMultimedia
 from corehq.apps.linked_domain.auth import ApiKeyAuth
+from corehq.apps.linked_domain.exceptions import RemoteRequestError, RemoteAuthError, ActionNotPermitted
 from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.logging import notify_exception
 
