@@ -102,7 +102,7 @@ def _do_request_to_remote_hq_json(relative_url, remote_details, params=None, met
 
 
 def _do_request_to_remote_hq(relative_url, remote_details, params=None, method='get'):
-    url_base = remote_details.urlbase
+    url_base = remote_details.url_base
     username = remote_details.username
     api_key = remote_details.api_key
     full_url = u'%s%s' % (url_base, relative_url)
