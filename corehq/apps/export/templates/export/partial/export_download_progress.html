@@ -46,7 +46,7 @@
                                 <span ng-show="isMultimediaDownload">{% trans "Download Multimedia" %}</span>
                         </a>
                         <button type="button"
-                                class="btn btn-primary btn-disabled btn-full-width"
+                                class="btn btn-default btn-disabled btn-full-width"
                                 ng-show="!isDownloadReady"
                                 disabled="disabled">
                                 <i class="fa-spin fa fa-spinner"></i>
@@ -55,12 +55,14 @@
                         </button>
                         {% if request|toggle_enabled:"EMAIL_EXPORT_WHEN_DONE_BUTTON" %}
                         <button type="button"
-                                class="btn btn-default btn-full-width"
+                                title="{% trans 'For exports that may take a while to prepare' %}"
                                 ng-show="!isDownloadReady"
-                                ng-init="sendEmailFlag = false"
+                                ng-init="sendEmailFlag = false;"
+                                ng-class="'btn btn-' + (sendEmailFlag ? 'default' : 'primary') + ' btn-full-width'"
                                 ng-disabled="sendEmailFlag"
                                 ng-click="sendEmailUponCompletion(); sendEmailFlag = true;">
-                                {% trans "Email me when this is done" %}
+                                <i class="fa fa-envelope"></i>
+                                {% trans "Email me the download link when ready" %}
                                 <i class="fa fa-check" ng-show="sendEmailFlag"></i>
                         </button>
                         {% endif %}

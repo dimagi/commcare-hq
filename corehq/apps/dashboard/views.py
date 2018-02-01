@@ -49,6 +49,7 @@ def default_dashboard_url(request, domain):
     return reverse(DomainDashboardView.urlname, args=[domain])
 
 
+@login_and_domain_required
 def dashboard_tile(request, domain, slug):
     try:
         tile = [t for t in _get_default_tiles(request) if t.slug == slug][0]

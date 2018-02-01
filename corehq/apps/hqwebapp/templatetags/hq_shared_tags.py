@@ -147,7 +147,7 @@ def domains_for_user(context, request, selected_domain=None):
              request.couch_user.is_superuser)
         ),
     }
-    return mark_safe(render_to_string('hqwebapp/includes/domain_list_dropdown.html', ctxt))
+    return mark_safe(render_to_string('hqwebapp/includes/domain_list_dropdown.html', ctxt, request))
 
 
 @register.simple_tag

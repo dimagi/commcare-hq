@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import division
 import datetime
 import io
 from dimagi.utils.csv import UnicodeWriter
@@ -523,7 +524,7 @@ class EpisodeAdherenceUpdate(object):
         # (i.e. the earlier of (30 days ago, latest_adherence_date))
         # this property should actually have been called "aggregated_score_count_expected"
         num_days = (update['aggregated_score_date_calculated'] - adherence_schedule_date_start).days + 1
-        update['expected_doses_taken'] = int(doses_per_week * num_days / 7.0)
+        update['expected_doses_taken'] = int(doses_per_week * num_days / 7)
 
         return update
 

@@ -79,7 +79,6 @@ class Command(BaseCommand):
         if options['show_diffs']:
             self.show_diffs()
         if options['play']:
-            from corehq.apps.tzmigration.planning import *
             session = self.planning_db.Session()  # noqa
             try:
                 import ipdb as pdb

@@ -276,7 +276,7 @@
 {% block js-inline %}{% endblock js-inline %}
 <script>
     angular.module('icdsApp').constant('locationHierarchy', {{ location_hierarchy | JSON }});
-    angular.module('icdsApp').constant('userLocationId', {{ user_location_id | JSON }});
+    angular.module('icdsApp').constant('userLocationId', {% if user_location_id %}{{ user_location_id | JSON }}{% endif %});
     angular.module('icdsApp').constant('reportAnIssueUrl', {{ report_an_issue_url | JSON }});
     angular.module('icdsApp').constant('isWebUser', {{ is_web_user | JSON }});
     angular.module('icdsApp').constant('haveAccessToFeatures', {{ have_access | JSON }});

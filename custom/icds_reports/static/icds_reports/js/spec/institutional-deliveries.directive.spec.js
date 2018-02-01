@@ -74,7 +74,7 @@ describe('Institutional Deliveries Directive', function () {
 
     it('tests template popup', function () {
         var result = controller.templatePopup({properties: {name: 'test'}}, {all: 10, children: 5});
-        assert.equal(result, '<div class="hoverinfo" style="max-width: 200px !important;">' +
+        assert.equal(result, '<div class="hoverinfo">' +
             '<p>test</p>'
             + '<div>Total number of pregnant women who delivered in the last month: <strong>10</strong></div>'
             + '<div>Total number of pregnant women who delivered in a public/private medical facilitiy in the last month: <strong>5</strong></div>'

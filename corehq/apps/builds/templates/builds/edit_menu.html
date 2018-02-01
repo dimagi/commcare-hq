@@ -3,7 +3,11 @@
 {% load compress %}
 {% load i18n %}
 
-{% requirejs_main "builds/js/edit-builds" %}
+{% block js %}{{ block.super }}
+    {% compress js %}
+        <script src="{% static 'builds/js/edit-builds.js' %}"></script>
+    {% endcompress %}
+{% endblock %}
 
 {% block stylesheets %}
     <style type="text/css">

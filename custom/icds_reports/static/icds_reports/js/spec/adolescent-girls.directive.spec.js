@@ -90,7 +90,7 @@ describe('Adolescent Girls Directive', function () {
 
     it('tests template popup', function () {
         var result = controller.templatePopup({properties: {name: 'test'}}, {valid: 14, all: 28});
-        var expected = '<div class="hoverinfo" style="max-width: 200px !important;">' +
+        var expected = '<div class="hoverinfo">' +
             '<p>test</p>' +
             '<div>Number of adolescent girls (11 - 18 years) who are enrolled for ICDS services: <strong>14</strong>' +
             '<div>Total number of adolescent girls (11 - 18 years) who are registered: <strong>28</strong>' +

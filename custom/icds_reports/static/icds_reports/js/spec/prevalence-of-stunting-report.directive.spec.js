@@ -89,7 +89,7 @@ describe('Prevalence Of Stunting Directive', function () {
 
     it('tests template popup', function () {
         var result = controller.templatePopup({properties: {name: 'test'}}, {total: 20, total_measured: 15, severe: 5, moderate: 5, normal: 5});
-        assert.equal(result, '<div class="hoverinfo" style="max-width: 200px !important;">'
+        assert.equal(result, '<div class="hoverinfo">'
             + '<p>test</p>'
             + '<div>Total Children (6 - 60 months) weighed in given month: <strong>20</strong></div>'
             + '<div>Total Children (6 - 60 months) with height measured in given month: <strong>15</strong></div>'

@@ -1,4 +1,4 @@
-/* global d3, _ */
+/* global d3, _, moment */
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function ChildrenInitiatedController($scope, $routeParams, $location, $filter, maternalChildService,
@@ -41,13 +41,15 @@ function ChildrenInitiatedController($scope, $routeParams, $location, $filter, m
     vm.message = storageService.getKey('message') || false;
 
     vm.prevDay = moment().subtract(1, 'days').format('Do MMMM, YYYY');
+    vm.lastDayOfPreviousMonth = moment().set('date', 1).subtract(1, 'days').format('Do MMMM, YYYY');
     vm.currentMonth = moment().format("MMMM");
     vm.showInfoMessage = function () {
-        var selected_month = parseInt($location.search()['month']) ||new Date().getMonth() + 1;
-        var selected_year =  parseInt($location.search()['year']) || new Date().getFullYear();
+        var selected_month = parseInt($location.search()['month']) || new Date().getMonth() + 1;
+        var selected_year = parseInt($location.search()['year']) || new Date().getFullYear();
         var current_month = new Date().getMonth() + 1;
         var current_year = new Date().getFullYear();
-        return selected_month === current_month && selected_year === current_year && new Date().getDate() === 1;
+        return selected_month === current_month && selected_year === current_year &&
+            (new Date().getDate() === 1 || new Date().getDate() === 2);
     };
 
     $scope.$watch(function() {
@@ -75,7 +77,7 @@ function ChildrenInitiatedController($scope, $routeParams, $location, $filter, m
         var total = row ? $filter('indiaNumbers')(row.all) : 'N/A';
         var children = row ? $filter('indiaNumbers')(row.children) : 'N/A';
         var percent = row ? d3.format('.2%')(row.children / (row.all || 1)) : 'N/A';
-        return '<div class="hoverinfo" style="max-width: 200px !important;">' +
+        return '<div class="hoverinfo">' +
             '<p>' + loc.properties.name + '</p>' +
             '<div>Total number of children between age 6 - 8 months' + chosenFilters + ': <strong>' + total + '</strong></div>' +
             '<div>Total number of children (6-8 months) given timely introduction to sold or semi-solid food in the given month' + chosenFilters + ': <strong>' + children + '</strong></div>' +
