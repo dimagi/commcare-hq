@@ -46,6 +46,7 @@ describe('Lactating Enrolled Women Directive', function () {
 
     it('tests supervisor location', function () {
         controller.filtersData.location_id = 'test-id';
+        controller.userLocationId = 'test-id';
 
         $httpBackend.expectGET('icds_locations?location_id=test-id').respond(200, {location_type: 'supervisor'});
         $httpBackend.expectGET('lactating_enrolled_women?location_id=test-id').respond(200, {
@@ -60,6 +61,7 @@ describe('Lactating Enrolled Women Directive', function () {
 
     it('tests non supervisor location', function () {
         controller.filtersData.location_id = 'test-id';
+        controller.userLocationId = 'test-id';
 
         $httpBackend.expectGET('icds_locations?location_id=test-id').respond(200, {location_type: 'non supervisor'});
         $httpBackend.expectGET('lactating_enrolled_women?location_id=test-id').respond(200, {

@@ -134,7 +134,7 @@ function ExclusiveBreasfeedingController($scope, $routeParams, $location, $filte
 
     vm.init = function() {
         var locationId = vm.filtersData.location_id || vm.userLocationId;
-        if (!locationId || locationId === 'all' || locationId === 'null') {
+        if (!vm.userLocationId || !locationId || locationId === 'all' || locationId === 'null') {
             vm.loadData();
             vm.loaded = true;
             return;

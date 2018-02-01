@@ -149,7 +149,7 @@ function EnrolledChildrenController($scope, $routeParams, $location, $filter, de
 
     vm.init = function() {
         var locationId = vm.filtersData.location_id || vm.userLocationId;
-        if (!locationId || locationId === 'all') {
+        if (!vm.userLocationId || !locationId || locationId === 'all') {
             vm.loadData();
             vm.loaded = true;
             return;
