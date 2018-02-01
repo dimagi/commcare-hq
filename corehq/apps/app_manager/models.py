@@ -54,7 +54,7 @@ from couchdbkit.exceptions import BadValueError
 
 from corehq.apps.app_manager.app_schemas.case_properties import ParentCasePropertyBuilder
 from corehq.apps.app_manager.detail_screen import PropertyXpathGenerator
-from corehq.apps.app_manager.remote_link_accessors import get_remote_version, get_remote_master_release
+from corehq.apps.linked_domain.remote_accessors import get_remote_version, get_remote_master_release
 from corehq.apps.app_manager.suite_xml.utils import get_select_chain
 from corehq.apps.app_manager.suite_xml.generator import SuiteGenerator, MediaSuiteGenerator
 from corehq.apps.app_manager.xpath_validator import validate_xpath

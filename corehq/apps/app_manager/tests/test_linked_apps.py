@@ -10,7 +10,7 @@ from corehq.apps.app_manager.exceptions import AppEditingError, ActionNotPermitt
 from corehq.apps.app_manager.models import (
     Application,
     ReportModule, ReportAppConfig, Module, RemoteAppDetails, LinkedApplication)
-from corehq.apps.app_manager.remote_link_accessors import _convert_app_from_remote_linking_source, \
+from corehq.apps.linked_domain.remote_accessors import _convert_app_from_remote_linking_source, \
     _get_missing_multimedia, _fetch_remote_media
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.app_manager.views.remote_linked_apps import _convert_app_for_remote_linking

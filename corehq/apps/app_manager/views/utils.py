@@ -10,14 +10,13 @@ from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
 
 from corehq import toggles
-from corehq.apps.app_manager import add_ons
 from corehq.apps.app_manager.dbaccessors import get_app, wrap_app, get_apps_in_domain
 from corehq.apps.app_manager.decorators import require_deploy_apps
 from corehq.apps.app_manager.exceptions import AppEditingError, \
     ModuleNotFoundException, FormNotFoundException, RemoteRequestError, AppLinkError, ActionNotPermitted, \
     RemoteAuthError
 from corehq.apps.app_manager.models import Application, ReportModule, enable_usercase_if_necessary, CustomIcon
-from corehq.apps.app_manager.remote_link_accessors import pull_missing_multimedia_from_remote
+from corehq.apps.linked_domain.remote_accessors import pull_missing_multimedia_from_remote
 
 from corehq.apps.app_manager.util import update_form_unique_ids
 from corehq.apps.userreports.exceptions import BadSpecError
