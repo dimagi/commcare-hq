@@ -44,13 +44,9 @@ class TestContent(TestCase):
             CaseAlertScheduleInstance,
             CaseTimedScheduleInstance,
         ):
-            with patch('corehq.messaging.scheduling.models.content.send_sms_for_schedule_instance') as patched:
-                schedule_instance = cls()
-                CustomContent(custom_content_id='TEST').send(self.user, schedule_instance)
-                patched.assert_has_calls([
-                    call(schedule_instance, self.user, '9990000000000', 'Message 1'),
-                    call(schedule_instance, self.user, '9990000000000', 'Message 2'),
-                ])
+            schedule_instance = cls()
+            result = CustomContent(custom_content_id='TEST').get_list_of_messages(self.user, schedule_instance)
+            self.assertEqual(result, ['Message 1', 'Message 2'])
 
     def test_get_translation_empty_message(self):
         message_dict = {}
