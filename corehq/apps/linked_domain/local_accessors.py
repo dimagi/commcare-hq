@@ -26,4 +26,4 @@ def get_user_roles(domain):
     def _to_json(role):
         return _clean_json(role.to_json())
 
-    roles = map(_to_json, UserRole.by_domain(domain))
+    return map(_to_json, UserRole.by_domain(domain))
