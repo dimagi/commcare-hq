@@ -1,3 +1,6 @@
+class DomainLinkError(Exception):
+    pass
+
 
 class RemoteRequestError(Exception):
     pass
