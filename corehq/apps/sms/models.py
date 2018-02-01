@@ -1265,7 +1265,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
                 .values_list('id', flat=True)
                 .first()
             )
-            return cls.SOURCE_IMMEIDATE_BROADCAST, source_id
+            return cls.SOURCE_IMMEDIATE_BROADCAST, source_id
         elif isinstance(schedule_instance, TimedScheduleInstance):
             source_id = (
                 ScheduledBroadcast
