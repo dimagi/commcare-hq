@@ -44,6 +44,7 @@
     "multiselect": "0.9.12",
     "quicksearch": "2.2.1",
     "knockout": "3.3.0",
+    "knockout-mapping": "2.3.5",
     "knockout-validation": "2.0.3",
     "underscore": "1.8.3",
     "leaflet": "0.7.7",
