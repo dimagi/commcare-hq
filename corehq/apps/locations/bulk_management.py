@@ -125,7 +125,7 @@ class LocationStub(object):
 
     def __init__(self, name, site_code, location_type, parent_code, location_id,
                  do_delete, external_id, latitude, longitude, custom_data, index,
-                 delete_uncategorized_data=False):
+                 location_data_model, delete_uncategorized_data=False):
         self.name = name
         self.site_code = (str(site_code) if isinstance(site_code, int) else site_code).lower()
         self.location_type = location_type
@@ -154,7 +154,7 @@ class LocationStub(object):
         #   are changed
         self.needs_save = False
         self.moved_to_root = False
-        self.data_model = None
+        self.data_model = location_data_model
 
     @classmethod
     def from_excel_row(cls, row, index, location_type, data_model):
@@ -183,8 +183,7 @@ class LocationStub(object):
         index = index
         stub = cls(name, site_code, location_type, parent_code, location_id,
                    do_delete, external_id, latitude, longitude, custom_data, index,
-                   delete_uncategorized_data)
-        stub.data_model = data_model
+                   data_model, delete_uncategorized_data)
         return stub
 
     def lookup_old_collection_data(self, old_collection):
