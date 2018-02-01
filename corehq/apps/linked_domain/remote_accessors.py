@@ -78,7 +78,9 @@ def _fetch_remote_media_content(media_item, remote_app_details):
 
 
 def _do_request_to_remote_hq(relative_url, remote_details, params=None, method='get'):
-    url_base, domain, username, api_key, app_id = remote_details
+    url_base = remote_details.urlbase
+    username = remote_details.username
+    api_key = remote_details.api_key
     full_url = u'%s%s' % (url_base, relative_url)
     try:
         response = requests.request(method, full_url, params=params, auth=ApiKeyAuth(username, api_key))
