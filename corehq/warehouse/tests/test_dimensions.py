@@ -28,7 +28,6 @@ from corehq.warehouse.models import (
     UserGroupDim,
     LocationDim,
     LocationStagingTable,
-    LocationTypeStagingTable,
     DomainMembershipDim
 )
 
@@ -273,7 +272,6 @@ class TestLocationDim(BaseWarehouseTestCase):
 
     def tearDown(self):
         LocationStagingTable.clear_records()
-        LocationTypeStagingTable.clear_records()
         LocationDim.clear_records()
         super(TestLocationDim, self).tearDown()
 
@@ -289,7 +287,6 @@ class TestLocationDim(BaseWarehouseTestCase):
         create_location_records_from_tree(self.domain, tree, self.batch.id)
 
         self.assertEqual(LocationStagingTable.objects.count(), 4)
-        self.assertEqual(LocationTypeStagingTable.objects.count(), 3)
 
         LocationDim.commit(self.batch)
         self.assertEqual(LocationDim.objects.count(), 4)

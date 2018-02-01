@@ -33,7 +33,7 @@ FROM
         user_dim.id,
         json_array_elements(user_staging.domain_memberships::JSON) as memberships
     FROM {{ user_staging }} AS user_staging
-    INNER JOIN {{ user_dim }} AS user_dim
+    LEFT JOIN {{ user_dim }} AS user_dim
     ON user_staging.user_id = user_dim.user_id
     WHERE user_staging.doc_type = 'WebUser'
 ) ddm    
@@ -48,6 +48,6 @@ SELECT
     user_dim.deleted,
     {{ batch_id }}
 FROM {{ user_staging }} AS user_staging
-INNER JOIN {{ user_dim }} AS user_dim
+LEFT JOIN {{ user_dim }} AS user_dim
 ON user_staging.user_id = user_dim.user_id
 WHERE user_staging.doc_type = 'CommCareUser';

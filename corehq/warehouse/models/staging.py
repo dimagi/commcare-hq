@@ -29,7 +29,6 @@ from corehq.warehouse.const import (
     FORM_STAGING_SLUG,
     SYNCLOG_STAGING_SLUG,
     LOCATION_STAGING_SLUG,
-    LOCATION_TYPE_STAGING_SLUG,
     APPLICATION_STAGING_SLUG
 )
 
@@ -86,29 +85,8 @@ class LocationStagingTable(StagingTable, CustomSQLETLMixin):
     latitude = models.DecimalField(max_digits=20, decimal_places=10, null=True)
     longitude = models.DecimalField(max_digits=20, decimal_places=10, null=True)
 
-    @classmethod
-    def dependencies(cls):
-        return []
-
-    @classmethod
-    def additional_sql_context(cls):
-        return {
-            'sqllocation_table': SQLLocation._meta.db_table
-        }
-
-
-class LocationTypeStagingTable(StagingTable, CustomSQLETLMixin):
-    '''
-    Represents the staging table to dump data before loading into the LocationDim
-
-    Grain: location_type_id
-    '''
-    slug = LOCATION_TYPE_STAGING_SLUG
-
-    domain = models.CharField(max_length=100)
-    name = models.CharField(max_length=255)
-    code = models.SlugField(db_index=False, null=True)
-    location_type_id = models.IntegerField()
+    location_type_name = models.CharField(max_length=255)
+    location_type_code = models.SlugField(db_index=False, null=True)
 
     location_type_last_modified = models.DateTimeField(null=True)
 
@@ -119,7 +97,7 @@ class LocationTypeStagingTable(StagingTable, CustomSQLETLMixin):
     @classmethod
     def additional_sql_context(cls):
         return {
-            'locationtype_table': LocationType._meta.db_table
+            'sqllocation_table': SQLLocation._meta.db_table
         }
 
 
@@ -185,6 +163,7 @@ class UserStagingTable(StagingTable, CouchToDjangoETLMixin):
     base_doc = models.CharField(max_length=100)
     domain = models.CharField(max_length=100, null=True, blank=True)
 
+    assigned_location_ids = ArrayField(models.CharField(max_length=255), null=True)
     domain_memberships = JSONField(null=True)
     is_active = models.BooleanField()
     is_staff = models.BooleanField()
@@ -217,6 +196,7 @@ class UserStagingTable(StagingTable, CouchToDjangoETLMixin):
             ('date_joined', 'date_joined'),
             ('last_modified', 'user_last_modified'),
             ('domain_memberships', 'domain_memberships'),
+            ('assigned_location_ids', 'assigned_location_ids')
         ]
 
     @classmethod

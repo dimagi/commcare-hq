@@ -19,5 +19,5 @@ SELECT
     '{{ batch_id }}'
 FROM
     {{ synclog_staging }} AS synclog_table
-JOIN {{ domain_dim }} AS domain_table ON synclog_table.domain = domain_table.domain
-JOIN {{ user_dim }} AS user_table ON synclog_table.user_id = user_table.user_id
+LEFT JOIN {{ domain_dim }} AS domain_table ON synclog_table.domain = domain_table.domain
+LEFT JOIN {{ user_dim }} AS user_table ON synclog_table.user_id = user_table.user_id

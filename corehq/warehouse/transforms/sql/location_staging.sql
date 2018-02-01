@@ -14,7 +14,10 @@ INSERT INTO {{ location_staging }} (
     is_archived,
     latitude,
     longitude,
-    batch_id
+    batch_id,
+    location_type_name,
+    location_type_code,
+    location_type_last_modified
 )
 SELECT
     domain,
@@ -32,9 +35,16 @@ SELECT
     is_archived,
     latitude,
     longitude,
+    lt.name,
+    lt.code,
+    lt.last_modified,
     '{{ batch_id }}'
 FROM
-    {{ sqllocation_table }}
+    {{ sqllocation_table }} as location
+INNER JOIN {{ location_type_table }} as lt
+ON location.location_type_id = lt.id
 WHERE
-    last_modified > '{{ start_datetime }}' AND
-    last_modified <= '{{ end_datetime }}'
+    (last_modified > '{{ start_datetime }}' AND
+    last_modified <= '{{ end_datetime }}') OR
+    (lt.last_modified > '{{ start_datetime }}' AND
+    lt.last_modified <= '{{ end_datetime }}')
