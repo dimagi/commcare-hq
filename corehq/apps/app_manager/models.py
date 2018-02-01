@@ -6269,7 +6269,11 @@ class RemoteApp(ApplicationBase):
         return questions
 
 
-RemoteAppDetails = namedtuple('RemoteAppDetails', 'url_base domain username api_key app_id')
+class RemoteAppDetails(namedtuple('RemoteAppDetails', 'url_base domain username api_key app_id')):
+    def __bool__(self):
+        return bool(self.url_base)
+
+    __nonzero__ = __bool__
 
 
 class RemoteLinkedAppAuth(DocumentSchema):

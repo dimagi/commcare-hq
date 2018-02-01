@@ -6,9 +6,13 @@ from collections import namedtuple
 from django.db import models
 
 from corehq.apps.linked_domain.exceptions import DomainLinkError
-from corehq.util.view_utils import absolute_reverse
 
-RemoteLinkDetails = namedtuple('RemoteLinkDetails', 'url_base username api_key')
+
+class RemoteLinkDetails(namedtuple('RemoteLinkDetails', 'url_base username api_key')):
+    def __bool__(self):
+        return bool(self.url_base)
+
+    __nonzero__ = __bool__
 
 
 class DomainLink(models.Model):
