@@ -86,31 +86,33 @@ class RegisterWebUserForm(forms.Form):
                 ),
             ]
 
-        persona_fields = [
-            crispy.Div(
-                hqcrispy.RadioSelect(
-                    'persona',
-                    css_class="input-lg",
-                    data_bind="checked: personaChoice, "
+        persona_fields = []
+        if settings.IS_SAAS_ENVIRONMENT:
+            persona_fields = [
+                crispy.Div(
+                    hqcrispy.RadioSelect(
+                        'persona',
+                        css_class="input-lg",
+                        data_bind="checked: personaChoice, "
+                    ),
+                    data_bind="css: {"
+                              " 'has-success': isPersonaChoiceChosen, "
+                              " 'has-error': isPersonaChoiceNeeded"
+                              "}",
                 ),
-                data_bind="css: {"
-                          " 'has-success': isPersonaChoiceChosen, "
-                          " 'has-error': isPersonaChoiceNeeded"
-                          "}",
-            ),
-            crispy.Div(
-                hqcrispy.InlineField(
-                    'persona_other',
-                    css_class="input-lg",
-                    data_bind="value: personaOther, "
-                          "visible: isPersonaChoiceOther, "
+                crispy.Div(
+                    hqcrispy.InlineField(
+                        'persona_other',
+                        css_class="input-lg",
+                        data_bind="value: personaOther, "
+                                  "visible: isPersonaChoiceOther, "
+                    ),
+                    data_bind="css: {"
+                              " 'has-success': isPersonaChoiceOtherPresent, "
+                              " 'has-error': isPersonaChoiceOtherNeeded"
+                              "}",
                 ),
-                data_bind="css: {"
-                          " 'has-success': isPersonaChoiceOtherPresent, "
-                          " 'has-error': isPersonaChoiceOtherNeeded"
-                          "}",
-            ),
-        ]
+            ]
 
         self.helper = FormHelper()
         self.helper.form_tag = False
