@@ -224,7 +224,7 @@ class LocationExporter(object):
         include_consumption = self.include_consumption_flag and location_type.name not in self.administrative_types
         query = SQLLocation.active_objects.filter(
             domain=self.domain,
-            location_type__name=location_type.name
+            location_type=location_type
         )
 
         def _row_generator(include_consumption=include_consumption):
