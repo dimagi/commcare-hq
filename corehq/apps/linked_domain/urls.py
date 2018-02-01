@@ -9,9 +9,9 @@ from corehq.apps.linked_domain.views import (
 )
 
 urlpatterns = [
-    url(r'^toggles/$', toggles_and_previews),
-    url(r'^custom_data_models/$', custom_data_models),
-    url(r'^user_roles/$', user_roles),
+    url(r'^toggles/$', toggles_and_previews, name='toggles'),
+    url(r'^custom_data_models/$', custom_data_models, name='custom_data_models'),
+    url(r'^user_roles/$', user_roles, name='user_roles'),
     url(r'^release_source/(?P<app_id>[\w-]+)/$', get_latest_released_app_source,
         name='latest_released_app_source'),
 ]
