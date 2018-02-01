@@ -22,12 +22,12 @@ class TestEnrolledWomen(TestCase):
             ),
             {
                 "rightLegend": {
-                    "info": "Total number of pregnant women who are enrolled for ICDS services.",
+                    "info": "Total number of pregnant women who are enrolled for Anganwadi Services.",
                     "average": 77.5,
                     "average_format": "number",
                     'extended_info': [
                         {
-                            'indicator': 'Number of pregnant women who are enrolled for ICDS services:',
+                            'indicator': 'Number of pregnant women who are enrolled for Anganwadi Services:',
                             'value': "155"
                         },
                         {
@@ -36,7 +36,7 @@ class TestEnrolledWomen(TestCase):
                         },
                         {
                             'indicator': (
-                                'Percentage of registered pregnant women who are enrolled for ICDS services:'
+                                'Percentage of registered pregnant women who are enrolled for Anganwadi Services:'
                             ),
                             'value': '100.00%'
                         }
@@ -79,12 +79,12 @@ class TestEnrolledWomen(TestCase):
             ),
             {
                 "rightLegend": {
-                    "info": "Total number of pregnant women who are enrolled for ICDS services.",
+                    "info": "Total number of pregnant women who are enrolled for Anganwadi Services.",
                     "average": 35.0,
                     "average_format": "number",
                     'extended_info': [
                         {
-                            'indicator': 'Number of pregnant women who are enrolled for ICDS services:',
+                            'indicator': 'Number of pregnant women who are enrolled for Anganwadi Services:',
                             'value': "70"
                         },
                         {
@@ -93,7 +93,7 @@ class TestEnrolledWomen(TestCase):
                         },
                         {
                             'indicator': (
-                                'Percentage of registered pregnant women who are enrolled for ICDS services:'
+                                'Percentage of registered pregnant women who are enrolled for Anganwadi Services:'
                             ),
                             'value': '100.00%'
                         }
@@ -175,7 +175,7 @@ class TestEnrolledWomen(TestCase):
                                 "all": 155
                             }
                         ],
-                        "key": "Total number of pregnant women who are enrolled for ICDS services"
+                        "key": "Total number of pregnant women who are enrolled for Anganwadi Services"
                     }
                 ],
                 "all_locations": [
@@ -206,7 +206,7 @@ class TestEnrolledWomen(TestCase):
                 loc_level='supervisor'
             ),
             {
-                "info": "Total number of pregnant women who are enrolled for ICDS services.",
+                "info": "Total number of pregnant women who are enrolled for Anganwadi Services.",
                 "tooltips_data": {
                     "s2": {
                         "valid": 24,

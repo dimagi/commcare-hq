@@ -109,7 +109,7 @@ def get_prevalence_of_undernutrition_data_map(domain, config, loc_level, show_te
         "rightLegend": {
             "average": average,
             "info": _((
-                "Percentage of children between {} enrolled for ICDS services with weight-for-age "
+                "Percentage of children between {} enrolled for Anganwadi Services with weight-for-age "
                 "less than -2 standard deviations of the WHO Child Growth Standards median. "
                 "<br/><br/>"
                 "Children who are moderately or severely underweight have a higher risk of mortality"
@@ -321,7 +321,7 @@ def get_prevalence_of_undernutrition_sector_data(domain, config, loc_level, loca
     return {
         "tooltips_data": dict(tooltips_data),
         "info": _((
-            "Percentage of children between 0-5 years enrolled for ICDS services with weight-for-age "
+            "Percentage of children between 0-5 years enrolled for Anganwadi Services with weight-for-age "
             "less than -2 standard deviations of the WHO Child Growth Standards median. "
             "<br/><br/>"
             "Children who are moderately or severely underweight have a higher risk of mortality"

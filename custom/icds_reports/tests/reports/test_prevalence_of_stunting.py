@@ -84,7 +84,7 @@ class TestPrevalenceOfStunting(TestCase):
             loc_level='state'
         )
         expected = (
-            "Percentage of children (6 - 60 months) enrolled for ICDS services with "
+            "Percentage of children (6 - 60 months) enrolled for Anganwadi Services with "
             "height-for-age below -2Z standard deviations of "
             "the WHO Child Growth Standards median.<br/><br/>Stunting "
             "is a sign of chronic undernutrition and has long "
@@ -351,8 +351,8 @@ class TestPrevalenceOfStunting(TestCase):
                 loc_level='supervisor'
             ),
             {
-                "info": "Percentage of children (6-60 months) enrolled for ICDS services with height-for-age below"
-                        " -2Z standard deviations of the WHO Child Growth Standards median."
+                "info": "Percentage of children (6-60 months) enrolled for Anganwadi Services with height-for-age "
+                        "below -2Z standard deviations of the WHO Child Growth Standards median."
                         "<br/><br/>Stunting is a sign of chronic undernutrition "
                         "and has long lasting harmful consequences on the growth of a child",
                 "tooltips_data": {
