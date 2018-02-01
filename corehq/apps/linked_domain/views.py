@@ -20,10 +20,10 @@ def toggles_and_previews(request, domain):
 @api_key_auth
 @require_linked_domain
 def custom_data_models(request, domain):
-    custom_data_models = {}
+    fields = {}
     for field_view in (LocationFieldsView, ProductFieldsView, LocationFieldsView):
         model = get_by_domain_and_type(domain, field_view.field_type)
         if model:
-            custom_data_models[field_view.field_type] = model.to_json()['fields']
+            fields[field_view.field_type] = model.to_json()['fields']
 
-    return JsonResponse(custom_data_models)
+    return JsonResponse(fields)
