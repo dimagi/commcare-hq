@@ -1426,6 +1426,13 @@ BULK_UPLOAD_DATE_OPENED = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
+REGEX_FIELD_VALIDATION = StaticToggle(
+    'regex_field_validation',
+    'Enable regex validation for custom data fields',
+    TAG_SOLUTIONS,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
 ICDS_LIVEQUERY = PredictablyRandomToggle(
     'icds_livequery',
     'ICDS: Enable livequery case sync for a random subset of ICDS users',
