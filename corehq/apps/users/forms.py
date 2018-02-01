@@ -514,6 +514,10 @@ _username_help = """
     <i class="fa fa-check"></i>
     {{ usernameStatusMessage }}
 </span>
+<span ng-if="usernameAvailabilityStatus === 'warning'">
+    <i class="fa fa-exclamation-triangle"></i>
+    {{ usernameStatusMessage }}
+</span>
 <span ng-if="usernameAvailabilityStatus === 'error'">
     <i class="fa fa-exclamation-triangle"></i>
     %(server_error)s

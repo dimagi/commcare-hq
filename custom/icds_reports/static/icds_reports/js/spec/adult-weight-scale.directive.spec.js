@@ -47,6 +47,7 @@ describe('Adult Weight Scale Directive', function () {
 
     it('tests supervisor location', function () {
         controller.filtersData.location_id = 'test-id';
+        controller.userLocationId = 'test-id';
 
         $httpBackend.expectGET('icds_locations?location_id=test-id').respond(200, {location_type: 'supervisor'});
         $httpBackend.expectGET('adult_weight_scale?location_id=test-id').respond(200, {
@@ -61,6 +62,7 @@ describe('Adult Weight Scale Directive', function () {
 
     it('tests non supervisor location', function () {
         controller.filtersData.location_id = 'test-id';
+        controller.userLocationId = 'test-id';
 
         $httpBackend.expectGET('icds_locations?location_id=test-id').respond(200, {location_type: 'non supervisor'});
         $httpBackend.expectGET('adult_weight_scale?location_id=test-id').respond(200, {
@@ -75,7 +77,7 @@ describe('Adult Weight Scale Directive', function () {
 
     it('tests template popup', function () {
         var result = controller.templatePopup({properties: {name: 'test'}}, {in_month: 5, all: 10});
-        assert.equal(result, '<div class="hoverinfo" style="max-width: 200px !important;"><p>test</p>' +
+        assert.equal(result, '<div class="hoverinfo"><p>test</p>' +
             '<div>Total number of AWCs that reported having a weighing scale for mother and child: <strong>5</strong>' +
             '</div><div>% of AWCs that reported having a weighing scale for mother and child: <strong>50.00%</strong></div>');
     });

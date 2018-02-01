@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import division
+from __future__ import unicode_literals
 from collections import defaultdict
 from datetime import date, datetime, timedelta
 import logging
@@ -362,7 +363,7 @@ def save_document(doc_ids):
     datadog_histogram(
         'commcare.async_indicator.processing_time', timer.duration,
         tags=[
-            u'config_ids:{}'.format(indicator_config_ids)
+            'config_ids:{}'.format(indicator_config_ids)
         ]
     )
 
@@ -488,7 +489,7 @@ def _indicator_metrics(date_created=None):
 @task
 def export_ucr_async(export_table, download_id, title, user):
     use_transfer = settings.SHARED_DRIVE_CONF.transfer_enabled
-    filename = u'{}.xlsx'.format(title.replace(u'/', u'?'))
+    filename = '{}.xlsx'.format(title.replace('/', '?'))
     file_path = get_download_file_path(use_transfer, filename)
     export_from_tables(export_table, file_path, Format.XLS_2007)
     expose_download(use_transfer, file_path, filename, download_id, 'xlsx')

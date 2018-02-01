@@ -1,4 +1,7 @@
 from __future__ import absolute_import
+
+from django.conf import settings
+
 from corehq.toggles import NINETYNINE_DOTS
 from django.urls import reverse
 from django.utils.translation import ugettext_lazy as _
@@ -221,6 +224,8 @@ def episode_registered_with_99dots(episode):
 
 
 def create_99DOTS_case_repeat_records(sender, case, **kwargs):
+    if settings.SERVER_ENVIRONMENT != "enikshay":
+        return
     create_repeat_records(NinetyNineDotsRegisterPatientRepeater, case)
     create_repeat_records(NinetyNineDotsUpdatePatientRepeater, case)
     create_repeat_records(NinetyNineDotsAdherenceRepeater, case)

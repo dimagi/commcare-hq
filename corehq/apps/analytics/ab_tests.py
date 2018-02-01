@@ -53,17 +53,6 @@ NEW_USER_NUMBER = ABTestConfig(
 )
 
 
-NEW_USER_PERSONA_OPTION_SHOW = 'show_persona'
-NEW_USER_PERSONA_OPTION_HIDE = 'hide_persona'
-
-
-NEW_USER_PERSONA_FIELD = ABTestConfig(
-    'New User Persona Field',
-    'new_user_persona_field_nov2017',
-    (NEW_USER_PERSONA_OPTION_SHOW, NEW_USER_PERSONA_OPTION_HIDE)
-)
-
-
 DATA_FEEDBACK_LOOP_OPTION_ON = 'data_feedback_loop_on'
 DATA_FEEDBACK_LOOP_OPTION_OFF = 'data_feedback_loop_off'
 

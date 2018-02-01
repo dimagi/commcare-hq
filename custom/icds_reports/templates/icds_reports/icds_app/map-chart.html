@@ -29,7 +29,7 @@
     </div>
     <div class="report-content" cg-busy="$ctrl.myPromise">
         <div class="alert alert-info" ng-if="$ctrl.showInfoMessage()">
-            <strong>Info!</strong> Data shown is for {$ $ctrl.prevDay $}. Data for {$ $ctrl.currentMonth $} will be displayed beginning tomorrow.
+            <strong>Info!</strong> Data shown is for {$ $ctrl.lastDayOfPreviousMonth $}. Data for {$ $ctrl.currentMonth $} will be displayed beginning 3rd {$ $ctrl.currentMonth $}.
         </div>
         <div ng-if="$ctrl.message" class="alert alert-info">
             <strong>Info!</strong> Data for this report is shown at the sector level. For AWC-level information, please use the AWC Report.

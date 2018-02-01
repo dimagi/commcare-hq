@@ -107,7 +107,7 @@ class ENikshayRepeaterTestBase(ENikshayCaseStructureMixin, TestCase):
         )
 
 
-@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True, SERVER_ENVIRONMENT='enikshay')
 class TestRegisterPatientRepeater(ENikshayLocationStructureMixin, ENikshayRepeaterTestBase):
 
     def setUp(self):
@@ -139,7 +139,7 @@ class TestRegisterPatientRepeater(ENikshayLocationStructureMixin, ENikshayRepeat
         self.assertEqual(1, len(self.repeat_records().all()))
 
 
-@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True, SERVER_ENVIRONMENT='enikshay')
 class TestUpdatePatientRepeater(ENikshayLocationStructureMixin, ENikshayRepeaterTestBase):
 
     def setUp(self):
@@ -224,7 +224,7 @@ class TestUpdatePatientRepeater(ENikshayLocationStructureMixin, ENikshayRepeater
         self.assertEqual(0, len(self.repeat_records().all()))
 
 
-@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True, SERVER_ENVIRONMENT='enikshay')
 class TestAdherenceRepeater(ENikshayLocationStructureMixin, ENikshayRepeaterTestBase):
 
     def setUp(self):
@@ -257,7 +257,7 @@ class TestAdherenceRepeater(ENikshayLocationStructureMixin, ENikshayRepeaterTest
         self.assertEqual(2, len(self.repeat_records().all()))
 
 
-@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True, SERVER_ENVIRONMENT='enikshay')
 class TestTreatmentOutcomeRepeater(ENikshayLocationStructureMixin, ENikshayRepeaterTestBase):
 
     def setUp(self):
@@ -347,7 +347,7 @@ class TestPayloadGeneratorBase(ENikshayCaseStructureMixin, ENikshayLocationStruc
         return actual_payload
 
 
-@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True, SERVER_ENVIRONMENT='enikshay')
 class TestRegisterPatientPayloadGenerator(TestPayloadGeneratorBase):
 
     def _get_actual_payload(self, casedb):
@@ -438,7 +438,7 @@ class TestRegisterPatientPayloadGenerator(TestPayloadGeneratorBase):
         )
 
 
-@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True, SERVER_ENVIRONMENT='enikshay')
 class TestUpdatePatientPayloadGenerator(TestPayloadGeneratorBase):
 
     def _get_actual_payload(self, casedb):
@@ -487,7 +487,7 @@ class TestUpdatePatientPayloadGenerator(TestPayloadGeneratorBase):
         )
 
 
-@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True, SERVER_ENVIRONMENT='enikshay')
 class TestAdherencePayloadGenerator(TestPayloadGeneratorBase):
     def _get_actual_payload(self, casedb):
         return AdherencePayloadGenerator(None).get_payload(None, casedb['adherence'])
@@ -546,7 +546,7 @@ class TestAdherencePayloadGenerator(TestPayloadGeneratorBase):
         )
 
 
-@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True, SERVER_ENVIRONMENT='enikshay')
 class TestTreatmentOutcomePayloadGenerator(TestPayloadGeneratorBase):
     def _get_actual_payload(self, casedb):
         return TreatmentOutcomePayloadGenerator(None).get_payload(None, casedb[self.episode_id])

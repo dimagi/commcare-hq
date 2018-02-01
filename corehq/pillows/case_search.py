@@ -1,8 +1,6 @@
 from __future__ import absolute_import
-import traceback
 from collections import OrderedDict
 from datetime import datetime
-from cStringIO import StringIO
 
 from django.db import ProgrammingError
 from django.core.mail import mail_admins
@@ -21,6 +19,7 @@ from corehq.pillows.mappings.case_mapping import CASE_ES_TYPE
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX, \
     CASE_SEARCH_MAPPING, CASE_SEARCH_INDEX_INFO
 from corehq.util.doc_processor.sql import SqlDocumentProvider
+from corehq.util.log import get_traceback_string
 from dimagi.utils.parsing import json_format_datetime
 from pillowtop.checkpoints.manager import get_checkpoint_for_elasticsearch_pillow
 from pillowtop.es_utils import initialize_index_and_mapping
@@ -102,11 +101,9 @@ def get_case_search_to_elasticsearch_pillow(pillow_id='CaseSearchToElasticsearch
 
 
 def _fail_gracefully_and_tell_admins():
-    f = StringIO()
-    traceback.print_exc(file=f)
     mail_admins("IMPORTANT: Preindexing case_search failed because the case_search table hasn't been initialized",
                 ("***Run ./manage.py migrate first then run ./manage.py ptop_preindex again***\n\n {}"
-                 .format(f.getvalue())))
+                 .format(get_traceback_string())))
 
     class FakeReindexer(object):
         """Used so that the ptop_preindex command completes successfully

@@ -68,7 +68,7 @@ from corehq.apps.users.bulkupload import (
     check_headers,
     UserUploadError,
 )
-from corehq.apps.users.dbaccessors.all_commcare_users import get_mobile_user_ids
+from corehq.apps.users.dbaccessors.all_commcare_users import get_mobile_user_ids, user_exists
 from corehq.apps.users.decorators import require_can_edit_commcare_users
 from corehq.apps.users.forms import (
     CommCareAccountForm, CommCareUserFormSet, CommtrackUserForm,
@@ -744,8 +744,13 @@ class MobileWorkerListView(HQJSONResponseMixin, BaseUserSettingsView):
                            'spaces.').format(username)
             }
         full_username = format_username(username, self.domain)
-        if CommCareUser.get_by_username(full_username, strict=True):
-            result = {'error': _(u'Username {} is already taken').format(username)}
+        exists = user_exists(full_username)
+        if exists.exists:
+            if exists.is_deleted:
+                result = {'warning': _(u'Username {} belonged to a user that was deleted.'
+                                       u' Reusing it may have unexpected consequences.').format(username)}
+            else:
+                result = {'error': _(u'Username {} is already taken').format(username)}
         else:
             result = {'success': _(u'Username {} is available').format(username)}
         return result

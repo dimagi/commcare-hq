@@ -46,6 +46,7 @@ describe('Lactating Enrolled Women Directive', function () {
 
     it('tests supervisor location', function () {
         controller.filtersData.location_id = 'test-id';
+        controller.userLocationId = 'test-id';
 
         $httpBackend.expectGET('icds_locations?location_id=test-id').respond(200, {location_type: 'supervisor'});
         $httpBackend.expectGET('lactating_enrolled_women?location_id=test-id').respond(200, {
@@ -60,6 +61,7 @@ describe('Lactating Enrolled Women Directive', function () {
 
     it('tests non supervisor location', function () {
         controller.filtersData.location_id = 'test-id';
+        controller.userLocationId = 'test-id';
 
         $httpBackend.expectGET('icds_locations?location_id=test-id').respond(200, {location_type: 'non supervisor'});
         $httpBackend.expectGET('lactating_enrolled_women?location_id=test-id').respond(200, {
@@ -74,7 +76,7 @@ describe('Lactating Enrolled Women Directive', function () {
 
     it('tests template popup', function () {
         var result = controller.templatePopup({properties: {name: 'test'}}, {valid: 5, all: 10});
-        var expected = '<div class="hoverinfo" style="max-width: 200px !important;">' +
+        var expected = '<div class="hoverinfo">' +
             '<p>test</p>' +
             '<div>Number of lactating women who are enrolled for ICDS services: <strong>5</strong>' +
             '<div>Total number of lactating women who are registered: <strong>10</strong>' +

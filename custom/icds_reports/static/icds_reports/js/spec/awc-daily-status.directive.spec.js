@@ -47,6 +47,7 @@ describe('AWC Daily Status Directive', function () {
 
     it('tests supervisor location', function () {
         controller.filtersData.location_id = 'test-id';
+        controller.userLocationId = 'test-id';
 
         $httpBackend.expectGET('icds_locations?location_id=test-id').respond(200, {location_type: 'supervisor'});
         $httpBackend.expectGET('awc_daily_status?location_id=test-id').respond(200, {
@@ -61,6 +62,7 @@ describe('AWC Daily Status Directive', function () {
 
     it('tests non supervisor location', function () {
         controller.filtersData.location_id = 'test-id';
+        controller.userLocationId = 'test-id';
 
         $httpBackend.expectGET('icds_locations?location_id=test-id').respond(200, {location_type: 'non supervisor'});
         $httpBackend.expectGET('awc_daily_status?location_id=test-id').respond(200, {
@@ -75,7 +77,7 @@ describe('AWC Daily Status Directive', function () {
 
     it('tests template popup', function () {
         var result = controller.templatePopup({properties: {name: 'test'}}, {in_day: 5, all: 10});
-        var expected = '<div class="hoverinfo" style="max-width: 200px !important;">' +
+        var expected = '<div class="hoverinfo">' +
             '<p>test</p>' +
             '<div>Total number of AWCs that were open yesterday: <strong>5</strong></div>' +
             '<div>Total number of AWCs that have been launched: <strong>10</strong></div>' +

@@ -47,6 +47,7 @@ describe('Clean Water Directive', function () {
 
     it('tests supervisor location', function () {
         controller.filtersData.location_id = 'test-id';
+        controller.userLocationId = 'test-id';
 
         $httpBackend.expectGET('icds_locations?location_id=test-id').respond(200, {location_type: 'supervisor'});
         $httpBackend.expectGET('clean_water?location_id=test-id').respond(200, {
@@ -61,6 +62,7 @@ describe('Clean Water Directive', function () {
 
     it('tests non supervisor location', function () {
         controller.filtersData.location_id = 'test-id';
+        controller.userLocationId = 'test-id';
 
         $httpBackend.expectGET('icds_locations?location_id=test-id').respond(200, {location_type: 'non supervisor'});
         $httpBackend.expectGET('clean_water?location_id=test-id').respond(200, {
@@ -75,7 +77,7 @@ describe('Clean Water Directive', function () {
 
     it('tests template popup', function () {
         var result = controller.templatePopup({properties: {name: 'test'}}, {in_month: 10, all: 100});
-        var expected = '<div class="hoverinfo" style="max-width: 200px !important;"><p>test</p>' +
+        var expected = '<div class="hoverinfo"><p>test</p>' +
             '<div>Number of AWCs that reported having a source of clean drinking water: <strong>10</strong></div>' +
             '<div>% of AWCs that reported having a source of clean drinking water: <strong>10.00%</strong></div>';
 

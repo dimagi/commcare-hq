@@ -61,6 +61,7 @@ describe('Underweight Children Directive', function () {
 
     it('tests supervisor location', function () {
         controller.filtersData.location_id = 'test-id';
+        controller.userLocationId = 'test-id';
 
         $httpBackend.expectGET('icds_locations?location_id=test-id').respond(200, {location_type: 'supervisor'});
         $httpBackend.expectGET('underweight_children?location_id=test-id').respond(200, {
@@ -75,6 +76,7 @@ describe('Underweight Children Directive', function () {
 
     it('tests non supervisor location', function () {
         controller.filtersData.location_id = 'test-id';
+        controller.userLocationId = 'test-id';
 
         $httpBackend.expectGET('icds_locations?location_id=test-id').respond(200, {location_type: 'non supervisor'});
         $httpBackend.expectGET('underweight_children?location_id=test-id').respond(200, {
@@ -89,7 +91,7 @@ describe('Underweight Children Directive', function () {
 
     it('tests template popup', function () {
         var result = controller.templatePopup({properties: {name: 'test'}}, {total: 20, severely_underweight: 5, moderately_underweight: 5, normal: 5});
-        assert.equal(result, '<div class="hoverinfo" style="max-width: 200px !important;">'
+        assert.equal(result, '<div class="hoverinfo">'
             + '<p>test</p>'
             + '<div>Total Children (0 - 5 years) weighed in given month: <strong>20</strong></div>'
             + '<div>% Unweighed (0 - 5 years): <strong>25.00%</strong></div>'

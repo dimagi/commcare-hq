@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from corehq.apps.userreports.reports.builder import (
     make_form_meta_block_indicator,
     make_case_property_indicator,

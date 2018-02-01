@@ -386,10 +386,19 @@ h4 {
     text-align: center;
 }
 
+@media (min-width: 992px) {
+    .see-more-content {
+        min-height: 145px;
+    }
+}
+
+.see-more-content {
+    padding-left: 0;
+}
+
 .see-more {
-    margin-right: 20px;
-    flex: 0 1 auto;
-    margin-left: auto;
+    position: absolute;
+    bottom: 0;
 }
 
 .see-more > a {
@@ -485,7 +494,7 @@ h4 {
 }
 
 .kpi {
-    height: 170px;
+    min-height: 170px;
 }
 
 .kpi-content {
@@ -510,7 +519,6 @@ h4 {
 
 .kpi-percents-text {
     display: flex;
-    position: absolute;
     align-items: center;
 }
 
@@ -590,7 +598,6 @@ h4 {
 }
 
 .nvtooltip {
-    max-width: 300px !important;
 }
 
 .carousel-control.left {

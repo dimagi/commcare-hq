@@ -768,8 +768,11 @@ def restore_logos(self, domain_name):
         raise e
 
 
-@periodic_task(run_every=crontab(day_of_month=1, hour=5), queue='background_queue', acks_late=True)
+@periodic_task(run_every=crontab(day_of_month=2, hour=5), queue='background_queue', acks_late=True)
 def send_prepaid_credits_export():
+    if settings.ENTERPRISE_MODE:
+        return
+
     headers = [
         'Account Name', 'Project Space', 'Edition', 'Start Date', 'End Date',
         '# General Credits', '# Product Credits', '# User Credits', '# SMS Credits', 'Last Date Modified'
@@ -829,8 +832,10 @@ def send_prepaid_credits_export():
         ])
 
     date_string = datetime.datetime.utcnow().strftime(SERVER_DATE_FORMAT)
-    filename = datetime.datetime.utcnow().strftime('prepaid-credits-export_%s.csv' % date_string)
+    filename = 'prepaid-credits-export_%s_%s.csv' % (settings.HQ_INSTANCE, date_string)
     send_HTML_email(
-        'Prepaid Credits Export - %s' % date_string, settings.ACCOUNTS_EMAIL, 'See attached file.',
+        '[%s] Prepaid Credits Export - %s' % (settings.HQ_INSTANCE, date_string),
+        settings.ACCOUNTS_EMAIL,
+        'See attached file.',
         file_attachments=[{'file_obj': file_obj, 'title': filename, 'mimetype': 'text/csv'}],
     )
