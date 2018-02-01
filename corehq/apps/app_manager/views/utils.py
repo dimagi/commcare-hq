@@ -16,7 +16,7 @@ from corehq.apps.app_manager.exceptions import AppEditingError, \
     ModuleNotFoundException, FormNotFoundException, RemoteRequestError, AppLinkError, ActionNotPermitted, \
     RemoteAuthError
 from corehq.apps.app_manager.models import Application, ReportModule, enable_usercase_if_necessary, CustomIcon
-from corehq.apps.linked_domain.remote_accessors import pull_missing_multimedia_from_remote
+from corehq.apps.linked_domain.remote_accessors import pull_missing_multimedia_for_app
 
 from corehq.apps.app_manager.util import update_form_unique_ids
 from corehq.apps.userreports.exceptions import BadSpecError
@@ -322,7 +322,7 @@ def update_linked_app(app):
 
     if app.master_is_remote:
         try:
-            pull_missing_multimedia_from_remote(app)
+            pull_missing_multimedia_for_app(app)
         except RemoteRequestError:
             raise AppLinkError(_(
                 'Error fetching multimedia from remote server. Please try again later.'

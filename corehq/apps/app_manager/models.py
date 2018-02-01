@@ -54,7 +54,7 @@ from couchdbkit.exceptions import BadValueError
 
 from corehq.apps.app_manager.app_schemas.case_properties import ParentCasePropertyBuilder
 from corehq.apps.app_manager.detail_screen import PropertyXpathGenerator
-from corehq.apps.linked_domain.remote_accessors import get_remote_version, get_remote_master_release
+from corehq.apps.linked_domain.remote_accessors import get_released_app_version, get_released_app
 from corehq.apps.app_manager.suite_xml.utils import get_select_chain
 from corehq.apps.app_manager.suite_xml.generator import SuiteGenerator, MediaSuiteGenerator
 from corehq.apps.app_manager.xpath_validator import validate_xpath
@@ -6301,7 +6301,7 @@ class LinkedApplication(Application):
 
     def get_master_version(self):
         if self.master_is_remote:
-            return get_remote_version(self.remote_app_details)
+            return get_released_app_version(self.remote_app_details)
         else:
             return get_latest_released_app_version(self.master_domain, self.master)
 
@@ -6311,7 +6311,7 @@ class LinkedApplication(Application):
 
     def get_latest_master_release(self):
         if self.master_is_remote:
-            return get_remote_master_release(self.remote_app_details, self.domain)
+            return get_released_app(self.remote_app_details, self.domain)
         else:
             master_app = get_app(None, self.master)
             if self.domain not in master_app.linked_whitelist:

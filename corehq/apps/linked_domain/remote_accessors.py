@@ -12,13 +12,13 @@ from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.logging import notify_exception
 
 
-def get_remote_version(remote_app_details):
+def get_released_app_version(remote_app_details):
     url = reverse('current_app_version', args=[remote_app_details.domain, remote_app_details.app_id])
     response = _do_request_to_remote_hq(url, remote_app_details)
     return response.json().get('latestReleasedBuild')
 
 
-def get_remote_master_release(remote_app_details, linked_domain):
+def get_released_app(remote_app_details, linked_domain):
     url = reverse('latest_released_app_source', args=[remote_app_details.domain, remote_app_details.app_id])
     params = {'requester': absolute_reverse('domain_homepage', args=[linked_domain])}
     response = _do_request_to_remote_hq(url, remote_app_details, params)
@@ -38,7 +38,7 @@ def _convert_app_from_remote_linking_source(app_json):
     return app
 
 
-def pull_missing_multimedia_from_remote(app):
+def pull_missing_multimedia_for_app(app):
     missing_media = _get_missing_multimedia(app)
     _fetch_remote_media(app.domain, missing_media, app.remote_app_details)
 
