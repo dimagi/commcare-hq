@@ -1,13 +1,10 @@
 from django.http import JsonResponse, Http404, HttpResponseForbidden
 
 from corehq.apps.app_manager.dbaccessors import get_latest_released_app, get_app
-from corehq.apps.custom_data_fields.dbaccessors import get_by_domain_and_type
 from corehq.apps.domain.decorators import api_key_auth
 from corehq.apps.linked_domain.decorators import require_linked_domain
-from corehq.apps.linked_domain.local_accessors import get_toggles_previews
+from corehq.apps.linked_domain.local_accessors import get_toggles_previews, get_custom_data_models
 from corehq.apps.linked_domain.util import _clean_json, convert_app_for_remote_linking
-from corehq.apps.locations.views import LocationFieldsView
-from corehq.apps.products.views import ProductFieldsView
 from corehq.apps.users.models import UserRole
 
 
@@ -20,13 +17,7 @@ def toggles_and_previews(request, domain):
 @api_key_auth
 @require_linked_domain
 def custom_data_models(request, domain):
-    fields = {}
-    for field_view in (LocationFieldsView, ProductFieldsView, LocationFieldsView):
-        model = get_by_domain_and_type(domain, field_view.field_type)
-        if model:
-            fields[field_view.field_type] = model.to_json()['fields']
-
-    return JsonResponse(fields)
+    return JsonResponse(get_custom_data_models(domain))
 
 
 @api_key_auth
