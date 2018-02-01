@@ -834,6 +834,8 @@ def send_prepaid_credits_export():
     date_string = datetime.datetime.utcnow().strftime(SERVER_DATE_FORMAT)
     filename = 'prepaid-credits-export_%s.csv' % date_string
     send_HTML_email(
-        'Prepaid Credits Export - %s' % date_string, settings.ACCOUNTS_EMAIL, 'See attached file.',
+        '[%s] Prepaid Credits Export - %s' % (settings.HQ_INSTANCE, date_string),
+        settings.ACCOUNTS_EMAIL,
+        'See attached file.',
         file_attachments=[{'file_obj': file_obj, 'title': filename, 'mimetype': 'text/csv'}],
     )
