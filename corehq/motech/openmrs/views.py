@@ -83,7 +83,7 @@ class OpenmrsModelListViewHelper(object):
     @property
     @memoized
     def requests(self):
-        return Requests(self.repeater.url, self.repeater.username, self.repeater.password)
+        return Requests(self.domain, self.repeater.url, self.repeater.username, self.repeater.password)
 
 
 def _filter_out_links(json):
@@ -115,7 +115,7 @@ def openmrs_raw_api(request, domain, repeater_id, rest_uri):
     no_links = get_params.pop('links', None) is None
     repeater = OpenmrsRepeater.get(repeater_id)
     assert repeater.domain == domain
-    requests = Requests(repeater.url, repeater.username, repeater.password)
+    requests = Requests(repeater.domain, repeater.url, repeater.username, repeater.password)
     raw_json = requests.get('/ws/rest/v1' + rest_uri, get_params).json()
     if no_links:
         return JsonResponse(_filter_out_links(raw_json))
