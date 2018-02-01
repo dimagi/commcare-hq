@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import division
 from collections import OrderedDict
 import re
 import os
@@ -182,7 +183,7 @@ class TableCardDataGroupsFormatter(DataFormatter):
 
         for group in range_groups:
             for idx, row in enumerate(group[1:], 1):
-                percent = 100 * float(group[idx]) / float(len(data))
+                percent = 100 * float(group[idx]) / len(data)
                 group[idx] = "%.2f%%" % percent
         return range_groups
 
