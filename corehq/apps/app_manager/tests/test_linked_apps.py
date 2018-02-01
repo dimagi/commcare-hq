@@ -221,7 +221,7 @@ class TestRemoteLinkedApps(BaseLinkedAppsTest):
         media_details = list(self.master_app_with_report_modules.multimedia_map.values())[0]
         media_details['multimedia_id'] = uuid.uuid4().hex
         media_details['media_type'] = 'CommCareMultimedia'
-        with patch('corehq.apps.app_manager.remote_link_accessors._fetch_remote_media_content') as mock:
+        with patch('corehq.apps.linked_domain.remote_accessors._fetch_remote_media_content') as mock:
             mock.return_value = data
             _fetch_remote_media('domain', [('case_list_image.jpg', media_details)], remote_app_details)
 
