@@ -27,13 +27,7 @@
         </a>
     </td>
     <td>
-        {% if repeater.is_case_repeater %}
-        <a class="btn btn-default" href="{% url 'edit_case_repeater' domain repeater.get_id %}">
-        {% elif repeater.is_form_repeater %}
-        <a class="btn btn-default" href="{% url 'edit_form_repeater' domain repeater.get_id %}">
-        {% else %}
-        <a class="btn btn-default" href="{% url 'edit_repeater' domain repeater.get_id %}?repeater_type={{ cls }}">
-        {% endif %}
+        <a class="btn btn-default" href="{% url 'edit_repeater' domain cls repeater.get_id %}">
         {% trans "Edit"%}
         </a>
         <a

@@ -79,6 +79,14 @@ class EditRepeaterView(BaseRepeaterView):
     template_name = 'domain/admin/add_form_repeater.html'
 
     @property
+    def repeater_id(self):
+        return self.kwargs['repeater_id']
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=[self.domain, self.repeater_type, self.repeater_id])
+
+    @property
     @memoized
     def add_repeater_form(self):
         if self.request.method == 'POST':
