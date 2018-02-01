@@ -126,7 +126,8 @@ def get_demographics_data(domain, now_date, config, show_test=False, beta=False)
                 },
                 {
                     'label': _('Percent pregnant women enrolled for Anganwadi Services'),
-                    'help_text': _('Percentage of pregnant women registered who are enrolled for Anganwadi Services'),
+                    'help_text': _('Percentage of pregnant women registered who are enrolled for Anganwadi '
+                                   'Services'),
                     'percent': percent_diff('ccs_pregnant', data, prev_data, 'ccs_pregnant_all'),
                     'color': 'green' if percent_diff(
                         'ccs_pregnant',
@@ -145,7 +146,8 @@ def get_demographics_data(domain, now_date, config, show_test=False, beta=False)
 
                 {
                     'label': _('Percent lactating women enrolled for Anganwadi Services'),
-                    'help_text': _('Percentage of lactating women registered who are enrolled for Anganwadi Services'),
+                    'help_text': _('Percentage of lactating women registered who are enrolled for Anganwadi '
+                                   'Services'),
                     'percent': percent_diff('css_lactating', data, prev_data, 'css_lactating_all'),
                     'color': 'green' if percent_diff(
                         'css_lactating',

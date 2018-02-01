@@ -28,7 +28,8 @@ class TestAdolescentGirls(TestCase):
                     'extended_info': [
                         {
                             'indicator': (
-                                'Number of adolescent girls (11 - 18 years) who are enrolled for Anganwadi Services:'
+                                'Number of adolescent girls (11 - 18 years) who are enrolled for Anganwadi '
+                                'Services:'
                             ),
                             'value': "47"
                         },
@@ -88,7 +89,8 @@ class TestAdolescentGirls(TestCase):
                     'extended_info': [
                         {
                             'indicator': (
-                                'Number of adolescent girls (11 - 18 years) who are enrolled for Anganwadi Services:'
+                                'Number of adolescent girls (11 - 18 years) who are enrolled for Anganwadi '
+                                'Services:'
                             ),
                             'value': "22"
                         },

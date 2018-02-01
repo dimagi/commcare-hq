@@ -107,9 +107,10 @@ def get_maternal_child_data(domain, config, show_test=False):
                 {
                     'label': _('Underweight (Weight-for-Age)'),
                     'help_text': _((
-                        "Percentage of children between 0-5 years enrolled for Anganwadi Services with weight-for-age "
-                        "less than -2 standard deviations of the WHO Child Growth Standards median. Children who "
-                        "are moderately or severely underweight have a higher risk of mortality."
+                        "Percentage of children between 0-5 years enrolled for Anganwadi Services with "
+                        "weight-for-age less than -2 standard deviations of the WHO Child Growth Standards "
+                        "median. Children who are moderately or severely underweight have a higher risk of "
+                        "mortality."
                     )),
                     'percent': percent_diff(
                         'underweight',

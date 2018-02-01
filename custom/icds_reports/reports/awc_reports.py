@@ -432,8 +432,8 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
                     'label': _('Underweight (Weight-for-Age)'),
                     'help_text': _((
                         """
-                        Percentage of children between 0-5 years enrolled for Anganwadi Services with weight-for-age
-                        less than -2 standard deviations of the WHO Child Growth Standards median.
+                        Percentage of children between 0-5 years enrolled for Anganwadi Services with
+                        weight-for-age less than -2 standard deviations of the WHO Child Growth Standards median.
                         Children who are moderately or severely underweight have a higher risk of mortality.
                         """
                     )),
@@ -854,7 +854,8 @@ def get_awc_report_demographics(domain, config, now_date, month, show_test=False
                 },
                 {
                     'label': _('Percent pregnant women enrolled for Anganwadi Services'),
-                    'help_text': _('Percentage of pregnant women registered who are enrolled for Anganwadi Services'),
+                    'help_text': _('Percentage of pregnant women registered who are enrolled for Anganwadi '
+                                   'Services'),
                     'percent': percent_diff('ccs_pregnant', data, prev_data, 'ccs_pregnant_all'),
                     'color': 'green' if percent_diff(
                         'ccs_pregnant',
@@ -872,7 +873,8 @@ def get_awc_report_demographics(domain, config, now_date, month, show_test=False
 
                 {
                     'label': _('Percent lactating women enrolled for Anganwadi Services'),
-                    'help_text': _('Percentage of lactating women registered who are enrolled for Anganwadi Services'),
+                    'help_text': _('Percentage of lactating women registered who are enrolled for Anganwadi '
+                                   'Services'),
                     'percent': percent_diff('css_lactating', data, prev_data, 'css_lactating_all'),
                     'color': 'green' if percent_diff(
                         'css_lactating',

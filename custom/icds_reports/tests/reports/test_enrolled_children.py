@@ -28,7 +28,8 @@ class TestEnrolledChildren(TestCase):
                     "average_format": "number",
                     'extended_info': [
                         {
-                            'indicator': 'Number of children (0 - 6 years) who are enrolled for Anganwadi Services:',
+                            'indicator': 'Number of children (0 - 6 years) who are enrolled for Anganwadi '
+                                         'Services:',
                             'value': "1,287"
                         },
                         {
@@ -87,7 +88,8 @@ class TestEnrolledChildren(TestCase):
                     "average_format": "number",
                     'extended_info': [
                         {
-                            'indicator': 'Number of children (0 - 6 years) who are enrolled for Anganwadi Services:',
+                            'indicator': 'Number of children (0 - 6 years) who are enrolled for Anganwadi '
+                                         'Services:',
                             'value': "618"
                         },
                         {

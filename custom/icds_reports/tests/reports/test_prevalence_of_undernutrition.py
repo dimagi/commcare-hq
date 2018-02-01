@@ -337,8 +337,8 @@ class TestPrevalenceOfUndernutrition(TestCase):
                 loc_level='supervisor'
             ),
             {
-                "info": "Percentage of children between 0-5 years enrolled for Anganwadi Services with weight-for-age"
-                        " less than -2 standard deviations of the WHO Child Growth Standards median."
+                "info": "Percentage of children between 0-5 years enrolled for Anganwadi Services with "
+                        "weight-for-age less than -2 standard deviations of the WHO Child Growth Standards median."
                         " <br/><br/>Children who are moderately "
                         "or severely underweight have a higher risk of mortality",
                 "tooltips_data": {
