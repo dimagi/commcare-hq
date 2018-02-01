@@ -214,9 +214,14 @@ class LocationStub(object):
         else:
             metadata = db_meta
 
-        if data_provided and not self.delete_uncategorized_data and self.data_model:
-            known, unknown = self.data_model.get_model_and_uncategorized(db_meta)
-            metadata.update(unknown)  # add back uncategorized data
+        if self.delete_uncategorized_data:
+            metadata, unknown = self.data_model.get_model_and_uncategorized(metadata)
+        else:
+            if data_provided:
+                # add back uncategorized data to new metadata
+                known, unknown = self.data_model.get_model_and_uncategorized(db_meta)
+                metadata.update(unknown)
+
         return metadata
 
     def autoset_location_id_or_site_code(self, old_collection):
