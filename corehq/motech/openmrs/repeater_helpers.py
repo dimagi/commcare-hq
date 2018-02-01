@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 from collections import namedtuple, defaultdict
 from datetime import timedelta
 from itertools import chain
+import logging
 import re
 import six
 
@@ -15,6 +16,7 @@ from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.cases import get_wrapped_owner, get_owner_id
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.motech.dhis2.models import JsonApiLog
 from corehq.motech.openmrs.const import (
     ADDRESS_PROPERTIES,
     LOCATION_OPENMRS_UUID,
@@ -33,6 +35,34 @@ from corehq.motech.utils import pformat_json
 OpenmrsResponse = namedtuple('OpenmrsResponse', 'status_code reason content')
 
 
+def log_request(func):
+
+    def request_wrapper(self, *args, **kwargs):
+        log_level = logging.INFO
+        request_error = ''
+        response_status = None
+        response_body = ''
+        try:
+            response = func(self, *args, **kwargs)
+            response_status = response.status_code
+            response_body = response.content
+        except Exception as err:
+            log_level = logging.ERROR
+            request_error = str(err)
+            raise err
+        else:
+            return response
+        finally:
+            request_headers = kwargs.pop('headers') or {}
+            # TODO: Differentiate OpenMRS logs from DHIS2 logs
+            # TODO: Associate with payload
+            # TODO: Associate with repeater, if applicable
+            JsonApiLog.log(log_level, self.domain_name, request_error, response_status, response_body,
+                           request_headers, func, *args, **kwargs)
+
+    return request_wrapper
+
+
 class Requests(object):
     def __init__(self, domain_name, base_url, username, password):
         import requests
@@ -42,6 +72,7 @@ class Requests(object):
         self.username = username
         self.password = password
 
+    @log_request
     def send_request(self, method_func, *args, **kwargs):
         raise_for_status = kwargs.pop('raise_for_status', False)
         try:
