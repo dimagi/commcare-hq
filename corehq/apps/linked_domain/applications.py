@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.apps.app_manager.dbaccessors import get_latest_released_app_version, get_app, get_latest_released_app
 from corehq.apps.linked_domain.exceptions import ActionNotPermitted
 from corehq.apps.linked_domain.remote_accessors import get_released_app_version, get_released_app
