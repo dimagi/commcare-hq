@@ -3,9 +3,8 @@ from django.http import JsonResponse, Http404, HttpResponseForbidden
 from corehq.apps.app_manager.dbaccessors import get_latest_released_app, get_app
 from corehq.apps.domain.decorators import api_key_auth
 from corehq.apps.linked_domain.decorators import require_linked_domain
-from corehq.apps.linked_domain.local_accessors import get_toggles_previews, get_custom_data_models
-from corehq.apps.linked_domain.util import _clean_json, convert_app_for_remote_linking
-from corehq.apps.users.models import UserRole
+from corehq.apps.linked_domain.local_accessors import get_toggles_previews, get_custom_data_models, get_user_roles
+from corehq.apps.linked_domain.util import convert_app_for_remote_linking
 
 
 @api_key_auth
@@ -23,11 +22,7 @@ def custom_data_models(request, domain):
 @api_key_auth
 @require_linked_domain
 def user_roles(request, domain):
-    def _to_json(role):
-        return _clean_json(role.to_json())
-
-    roles = map(_to_json, UserRole.by_domain(domain))
-    return JsonResponse({'user_roles': roles})
+    return JsonResponse({'user_roles': get_user_roles(domain)})
 
 
 @api_key_auth

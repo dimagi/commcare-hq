@@ -3,11 +3,14 @@ from corehq.apps.custom_data_fields.models import CustomDataField
 from corehq.apps.linked_domain.local_accessors import (
     get_toggles_previews as local_toggles_previews,
     get_custom_data_models as local_custom_data_models,
+    get_user_roles as local_get_user_roles,
 )
 from corehq.apps.linked_domain.remote_accessors import (
     get_toggles_previews as remote_toggles_previews,
     get_custom_data_models as remote_custom_data_models,
+    get_user_roles as remote_get_user_roles,
 )
+from corehq.apps.users.models import UserRole
 from corehq.toggles import NAMESPACE_DOMAIN
 from toggle.shortcuts import set_toggle
 
@@ -43,3 +46,28 @@ def update_custom_data_models(domain_link):
         model = CustomDataFieldsDefinition.get_or_create(domain_link.linked_domain, field_type)
         model.fields = [CustomDataField.wrap(field_def) for field_def in field_definitions]
         model.save()
+
+
+def update_user_roles(domain_link):
+    if domain_link.is_remote:
+        master_results = remote_get_user_roles(domain_link)
+    else:
+        master_results = local_get_user_roles(domain_link.master_domain)
+
+    local_roles = UserRole.view(
+        'users/roles_by_domain',
+        startkey=[domain_link.linked_domain],
+        endkey=[domain_link.linked_domain, {}],
+        include_docs=True,
+        reduce=False,
+    )
+    local_roles_by_name = {role.name: role for role in local_roles}
+    for role_def in master_results:
+        role = local_roles_by_name.get(role_def['name'])
+        if role:
+            role_json = role.to_json()
+        else:
+            role_json = {'domain': domain_link.linked_domain}
+
+        role_json.update(role_def)
+        UserRole.wrap(role_json).save()

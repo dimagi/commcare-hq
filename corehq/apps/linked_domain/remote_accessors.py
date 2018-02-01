@@ -21,7 +21,7 @@ def get_custom_data_models(domain_link):
 
 
 def get_user_roles(domain_link):
-    return _do_simple_request('remote:user_roles', domain_link)
+    return _do_simple_request('remote:user_roles', domain_link)['user_roles']
 
 
 def get_released_app_version(domain, app_id, remote_details):
