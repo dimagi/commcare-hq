@@ -12,16 +12,16 @@ from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.logging import notify_exception
 
 
-def get_toggles(domain, linked_domain, remote_details):
-    return _do_simple_request('remote:toggles', domain, linked_domain, remote_details)
+def get_toggles_previews(domain_link):
+    return _do_simple_request('remote:toggles', domain_link)
 
 
-def get_custom_data_models(domain, linked_domain, remote_details):
-    return _do_simple_request('remote:custom_data_models', domain, linked_domain, remote_details)
+def get_custom_data_models(domain_link):
+    return _do_simple_request('remote:custom_data_models', domain_link)
 
 
-def get_user_roles(domain, linked_domain, remote_details):
-    return _do_simple_request('remote:user_roles', domain, linked_domain, remote_details)
+def get_user_roles(domain_link):
+    return _do_simple_request('remote:user_roles', domain_link)
 
 
 def get_released_app_version(domain, app_id, remote_details):
@@ -92,9 +92,11 @@ def _fetch_remote_media_content(media_item, remote_app_details):
     return response.content
 
 
-def _do_simple_request(url_name, domain, linked_domain, remote_details):
-    url = reverse(url_name, args=[domain])
-    return _do_request_to_remote_hq_json(url, remote_details, _get_requester_param(linked_domain))
+def _do_simple_request(url_name, domain_link):
+    url = reverse(url_name, args=[domain_link.master_domain])
+    return _do_request_to_remote_hq_json(
+        url, domain_link.remote_details, _get_requester_param(domain_link.linked_domain)
+    )
 
 
 def _do_request_to_remote_hq_json(relative_url, remote_details, params=None, method='get'):

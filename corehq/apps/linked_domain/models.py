@@ -29,6 +29,10 @@ class DomainLink(models.Model):
     def remote_details(self):
         return RemoteLinkDetails(self.remote_base_url, self.remote_username, self.remote_api_key)
 
+    @property
+    def is_remote(self):
+        return bool(self.remote_base_url)
+
     @classmethod
     def link_domains(cls, linked_domain, master_domain, remote_details=None):
         try:

@@ -1,10 +1,10 @@
 from django.http import JsonResponse, Http404, HttpResponseForbidden
 
-from corehq import toggles, feature_previews
 from corehq.apps.app_manager.dbaccessors import get_latest_released_app, get_app
 from corehq.apps.custom_data_fields.dbaccessors import get_by_domain_and_type
 from corehq.apps.domain.decorators import api_key_auth
 from corehq.apps.linked_domain.decorators import require_linked_domain
+from corehq.apps.linked_domain.local_accessors import get_toggles_previews
 from corehq.apps.linked_domain.util import _clean_json, convert_app_for_remote_linking
 from corehq.apps.locations.views import LocationFieldsView
 from corehq.apps.products.views import ProductFieldsView
@@ -14,10 +14,7 @@ from corehq.apps.users.models import UserRole
 @api_key_auth
 @require_linked_domain
 def toggles_and_previews(request, domain):
-    return JsonResponse({
-        'toggles': list(toggles.toggles_dict(domain=domain)),
-        'previews': list(feature_previews.previews_dict(domain=domain))
-    })
+    return JsonResponse(get_toggles_previews(domain))
 
 
 @api_key_auth
