@@ -349,6 +349,23 @@ class AggChildHealthMonthlyDataSource(ProgressReportSqlData):
                 ],
                 slug='status_weighed'
             ),
+            AggregateColumn(
+                '% Height measurement efficiency (Children <5 measured)',
+                percent_num,
+                [
+                    SumColumn('height_measured_in_month', filters=self.filters + [
+                        NOT(EQ('age_tranche', 'age_72'))
+                    ]),
+                    SumColumn('height_eligible', alias='height_eligible', filters=self.filters + [
+                        AND([
+                            NOT(EQ('age_tranche', 'age_0')),
+                            NOT(EQ('age_tranche', 'age_6')),
+                            NOT(EQ('age_tranche', 'age_72'))
+                        ])
+                    ])
+                ],
+                slug='status_height_efficiency'
+            ),
             DatabaseColumn(
                 'Total number Unweighed',
                 SumColumn('nutrition_status_unweighed', filters=self.filters + [
@@ -405,13 +422,7 @@ class AggChildHealthMonthlyDataSource(ProgressReportSqlData):
                             NOT(EQ('age_tranche', 'age_72'))
                         ])
                     ]),
-                    SumColumn('height_eligible', alias='height_eligible', filters=self.filters + [
-                        AND([
-                            NOT(EQ('age_tranche', 'age_0')),
-                            NOT(EQ('age_tranche', 'age_6')),
-                            NOT(EQ('age_tranche', 'age_72'))
-                        ])
-                    ])
+                    AliasColumn('height_eligible')
                 ],
                 slug='wasting_severe'
             ),
@@ -2070,6 +2081,13 @@ class FactSheetsReport(object):
                                 'data_source': 'AggChildHealthMonthlyDataSource',
                                 'header': 'Weighing Efficiency (Children <5 weighed)',
                                 'slug': 'status_weighed',
+                                'average': [],
+                                'format': 'percent',
+                            },
+                            {
+                                'data_source': 'AggChildHealthMonthlyDataSource',
+                                'header': 'Height measurement efficiency (Children <5 measured)',
+                                'slug': 'status_height_efficiency',
                                 'average': [],
                                 'format': 'percent',
                             },

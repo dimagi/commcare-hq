@@ -24,7 +24,7 @@ class TestFactSheetReportMaternalAndChildNutrition(TestCase):
         self.assertEqual(len(self.get_data()['config']['sections']), 1)
 
     def test_nutrition_status_of_children_amount_of_config_rows(self):
-        self.assertEqual(len(self.get_data()['config']['sections'][0]['rows_config']), 12)
+        self.assertEqual(len(self.get_data()['config']['sections'][0]['rows_config']), 13)
 
     def test_status_weighed(self):
         self.assertDictEqual(
@@ -47,9 +47,30 @@ class TestFactSheetReportMaternalAndChildNutrition(TestCase):
             }
         )
 
-    def test_nutrition_status_unweighed(self):
+    def test_status_height_efficiency(self):
         self.assertDictEqual(
             self.get_data()['config']['sections'][0]['rows_config'][1],
+            {
+                'average': {
+                    'html': 2.2595901208617972,
+                    'sort_key': 2.2595901208617972
+                },
+                'data': [
+                    {'html': 'Height measurement efficiency (Children <5 measured)'},
+                    {'html': 1.1410788381742738, 'sort_key': 1.1410788381742738},
+                    {'html': 3.407880724174654, 'sort_key': 3.407880724174654},
+                    {'html': 0}
+                ],
+                'data_source': 'AggChildHealthMonthlyDataSource',
+                'format': 'percent',
+                'header': 'Height measurement efficiency (Children <5 measured)',
+                'slug': 'status_height_efficiency'
+            }
+        )
+
+    def test_nutrition_status_unweighed(self):
+        self.assertDictEqual(
+            self.get_data()['config']['sections'][0]['rows_config'][2],
             {
                 'data': [
                     {'html': 'Total number of unweighed children (0-5 Years)'},
@@ -65,7 +86,7 @@ class TestFactSheetReportMaternalAndChildNutrition(TestCase):
 
     def test_severely_underweight(self):
         self.assertDictEqual(
-            self.get_data()['config']['sections'][0]['rows_config'][2],
+            self.get_data()['config']['sections'][0]['rows_config'][3],
             {
                 'average': {
                     'html': 2.523431867339582,
@@ -87,7 +108,7 @@ class TestFactSheetReportMaternalAndChildNutrition(TestCase):
 
     def test_moderately_underweight(self):
         self.assertDictEqual(
-            self.get_data()['config']['sections'][0]['rows_config'][3],
+            self.get_data()['config']['sections'][0]['rows_config'][4],
             {
                 'average': {
                     'html': 20.90843547224225,
@@ -109,7 +130,7 @@ class TestFactSheetReportMaternalAndChildNutrition(TestCase):
 
     def test_status_normal(self):
         self.assertDictEqual(
-            self.get_data()['config']['sections'][0]['rows_config'][4],
+            self.get_data()['config']['sections'][0]['rows_config'][5],
             {
                 'average': {
                     'html': 76.56813266041817,
@@ -130,7 +151,7 @@ class TestFactSheetReportMaternalAndChildNutrition(TestCase):
 
     def test_wasting_severe(self):
         self.assertDictEqual(
-            self.get_data()['config']['sections'][0]['rows_config'][5],
+            self.get_data()['config']['sections'][0]['rows_config'][6],
             {
                 'average': {
                     'html': 0.05254860746190226,
@@ -152,7 +173,7 @@ class TestFactSheetReportMaternalAndChildNutrition(TestCase):
 
     def test_wasting_moderate(self):
         self.assertDictEqual(
-            self.get_data()['config']['sections'][0]['rows_config'][6],
+            self.get_data()['config']['sections'][0]['rows_config'][7],
             {
                 'average': {
                     'html': 0.4729374671571203,
@@ -174,7 +195,7 @@ class TestFactSheetReportMaternalAndChildNutrition(TestCase):
 
     def test_wasting_normal(self):
         self.assertDictEqual(
-            self.get_data()['config']['sections'][0]['rows_config'][7],
+            self.get_data()['config']['sections'][0]['rows_config'][8],
             {
                 'average': {
                     'html': 1.3137151865475565,
@@ -195,7 +216,7 @@ class TestFactSheetReportMaternalAndChildNutrition(TestCase):
 
     def test_stunting_severe(self):
         self.assertDictEqual(
-            self.get_data()['config']['sections'][0]['rows_config'][8],
+            self.get_data()['config']['sections'][0]['rows_config'][9],
             {
                 'average': {
                     'html': 0.8407777193904361,
@@ -217,7 +238,7 @@ class TestFactSheetReportMaternalAndChildNutrition(TestCase):
 
     def test_stunting_moderate(self):
         self.assertDictEqual(
-            self.get_data()['config']['sections'][0]['rows_config'][9],
+            self.get_data()['config']['sections'][0]['rows_config'][10],
             {
                 'average': {
                     'html': 0.6305832895428272,
@@ -239,7 +260,7 @@ class TestFactSheetReportMaternalAndChildNutrition(TestCase):
 
     def test_stunting_normal(self):
         self.assertDictEqual(
-            self.get_data()['config']['sections'][0]['rows_config'][10],
+            self.get_data()['config']['sections'][0]['rows_config'][11],
             {
                 'average': {
                     'html': 0.7882291119285338,
@@ -260,7 +281,7 @@ class TestFactSheetReportMaternalAndChildNutrition(TestCase):
 
     def test_low_birth_weight(self):
         self.assertDictEqual(
-            self.get_data()['config']['sections'][0]['rows_config'][11],
+            self.get_data()['config']['sections'][0]['rows_config'][12],
             {
                 'average': {
                     'html': 50.0,
