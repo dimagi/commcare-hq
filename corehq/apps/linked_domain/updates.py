@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.apps.custom_data_fields import CustomDataFieldsDefinition
 from corehq.apps.custom_data_fields.models import CustomDataField
 from corehq.apps.linked_domain.local_accessors import (

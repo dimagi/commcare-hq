@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.http import JsonResponse, Http404, HttpResponseForbidden
 
 from corehq.apps.app_manager.dbaccessors import get_latest_released_app, get_app
