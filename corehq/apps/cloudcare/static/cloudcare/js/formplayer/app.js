@@ -154,8 +154,7 @@ FormplayerFrontend.on('startForm', function (data) {
     };
     data.onsubmit = function (resp) {
         if (resp.status === "success") {
-            //var inTest = hqImport('analytix/js/kissmetrix').getAbTest('Data Feedback Loop') === 'data_feedback_loop_on';
-            var inTest = true;
+            var inTest = hqImport('analytix/js/kissmetrix').getAbTest('Data Feedback Loop') === 'data_feedback_loop_on';
             if (inTest && resp.submitResponseMessage && user.environment === FormplayerFrontend.Constants.PREVIEW_APP_ENVIRONMENT) {
                 var markdowner = window.markdownit(),
                     reverse = hqImport("hqwebapp/js/initial_page_data").reverse,
@@ -168,7 +167,7 @@ FormplayerFrontend.on('startForm', function (data) {
                     dataFeedbackLoopAnalytics = function(e) {
                         var $target = $(e.target);
                         if ($target.is("a")) {
-                            var href = $target.attr("href");
+                            var href = $target.attr("href") || '';
                             _.each(analyticsLinks, function(link) {
                                 if (href.match(RegExp(link.url))) {
                                     $target.attr("target", "_blank");
@@ -177,13 +176,8 @@ FormplayerFrontend.on('startForm', function (data) {
                             });
                         }
                     };
-                Util.confirmationModal({
-                    title: '',
-                    message: "<div class='submit-response'>" + markdowner.render(resp.submitResponseMessage) + "</div>",
-                    confirmText: gettext('OK'),
-                    cancelText: '',
-                });
-                $("#js-confirmation-modal .submit-response").on('click', dataFeedbackLoopAnalytics);
+                $("#cloudcare-notifications").off('click').on('click', dataFeedbackLoopAnalytics);
+                showSuccess(markdowner.render(resp.submitResponseMessage), $("#cloudcare-notifications"), 50000, true);
             } else {
                 showSuccess(gettext("Form successfully saved!"), $("#cloudcare-notifications"), 10000);
             }
