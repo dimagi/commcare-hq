@@ -9,7 +9,7 @@
 
 {% block js-inline %}{{ block.super }}
     <script>
-        var paginatedListModel = new CRUDPaginatedListModel(
+        var paginatedListModel = hqImport("hqwebapp/js/crud_paginated_list").CRUDPaginatedListModel(
             {{ pagination.total }},
             {{ pagination.limit }},
             {{ pagination.page }},
