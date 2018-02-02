@@ -4,6 +4,7 @@ import calendar
 from datetime import datetime
 from ethiopian_date import EthiopianDateConverter
 from dimagi.utils.dates import force_to_datetime
+import sys
 
 
 def get_month_display(month_index):
@@ -69,6 +70,7 @@ def get_gregorian_to_ethiopian(date_string):
         return ''
 
     try:
+        sys.stderr.write("about to run date converter")
         ethiopian_year, ethiopian_month, ethiopian_day = EthiopianDateConverter.to_ethiopian(year, month, day)
         return '{:02d}-{:02d}-{:02d}'.format(ethiopian_year, ethiopian_month, ethiopian_day)
     except Exception:
