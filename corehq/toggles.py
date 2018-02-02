@@ -869,13 +869,6 @@ APPLICATION_ERROR_REPORT = StaticToggle(
     namespaces=[NAMESPACE_USER],
 )
 
-AGGREGATE_USER_STATUS_REPORT = StaticToggle(
-    'aggregate_user_status_report',
-    'Show Aggregate User Status',
-    TAG_PRODUCT,
-    namespaces=[NAMESPACE_DOMAIN],
-)
-
 OPENCLINICA = StaticToggle(
     'openclinica',
     'KEMRI: Offer OpenClinica settings and CDISC ODM export',
