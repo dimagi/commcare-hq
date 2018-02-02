@@ -97,7 +97,8 @@ class LocationStagingTable(StagingTable, CustomSQLETLMixin):
     @classmethod
     def additional_sql_context(cls):
         return {
-            'sqllocation_table': SQLLocation._meta.db_table
+            'sqllocation_table': SQLLocation._meta.db_table,
+            'location_type_table': LocationType._meta.db_table
         }
 
 
