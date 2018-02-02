@@ -1178,7 +1178,7 @@ class FilterCaseESExportDownloadForm(EmwfFilterExportMixin, GenericFilterCaseExp
     date_range = DateSpanField(
         label=ugettext_lazy("Date Range"),
         required=True,
-        help_text="Export cases modified in this date range",
+        help_text=ugettext_lazy("Export cases modified in this date range"),
     )
 
     def __init__(self, domain_object, timezone, *args, **kwargs):
