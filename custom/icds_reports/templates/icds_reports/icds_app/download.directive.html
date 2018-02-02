@@ -223,10 +223,10 @@
                     </form>
                 </div>
             </div>
-            <div class="issnip-spinner-container" ng-if="$ctrl.showProgressBar() || $ctrl.readyToDownload()">
+            <div class="issnip-spinner-container" ng-if="($ctrl.showProgressBar() || $ctrl.readyToDownload()) && !$ctrl.downloaded">
                 <i ng-if="$ctrl.showProgressBar()" class="fa fa-circle-o-notch fa-spin"></i>
                 <span ng-if="$ctrl.showProgressBar()">Preparing your ISSNIP report...</span>
-                <span ng-if="$ctrl.readyToDownload() && !$ctrl.downloaded">Your ISSNIP report is ready to be downloaded</span>
+                <span ng-if="$ctrl.readyToDownload()">Your ISSNIP report is ready to be downloaded</span>
                 <a class="btn btn-primary" ng-click="$ctrl.goToLink()"
                    ng-disabled="!$ctrl.readyToDownload()"><span>Download</span></a>
             </div>
