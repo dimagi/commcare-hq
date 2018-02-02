@@ -176,10 +176,10 @@ class SubmissionPost(object):
             # Add link to form/case if possible
             if form_link and case_link:
                 messages.append(
-                    _("You just submitted [this form]({}), which affected [this case]({}).")
+                    _("You submitted [this form]({}), which affected [this case]({}).")
                     .format(form_link, case_link))
             elif form_link:
-                messages.append(_("You just submitted [this form]({}).").format(form_link))
+                messages.append(_("You submitted [this form]({}).").format(form_link))
             elif case_link:
                 messages.append(_("Your form affected [this case]({}).").format(case_link))
 
@@ -189,9 +189,9 @@ class SubmissionPost(object):
                     _("Click to export your [case]({}) or [form]({}) data.")
                     .format(case_export_link, form_export_link))
             elif form_export_link:
-                messages.append(_("Click to export your [form]({}) data.").format(form_export_link))
+                messages.append(_("Click to export your [form data]({}).").format(form_export_link))
             elif case_export_link:
-                messages.append(_("Click to export your [case]({}) data.").format(case_export_link))
+                messages.append(_("Click to export your [case data]({}).").format(case_export_link))
 
         return "\n\n".join(messages)
 
