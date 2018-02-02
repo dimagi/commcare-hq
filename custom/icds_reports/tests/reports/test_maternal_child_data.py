@@ -26,7 +26,7 @@ class TestMaternalChildData(TestCase):
                             "all": 696,
                             "frequency": "month",
                             "format": "percent_and_div",
-                            "help_text": "Percentage of children between 0-5 years enrolled for ICDS services"
+                            "help_text": "Percentage of children between 0-5 years enrolled for Anganwadi Services"
                                          " with weight-for-age less than -2 standard deviations"
                                          " of the WHO Child Growth Standards median. "
                                          "Children who are moderately or severely underweight"

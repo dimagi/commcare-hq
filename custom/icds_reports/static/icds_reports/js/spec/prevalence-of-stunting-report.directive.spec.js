@@ -192,7 +192,7 @@ describe('Prevalence Of Stunting Directive', function () {
         });
         assert.equal(controller.chartOptions.caption.html,
             '<i class="fa fa-info-circle"></i> ' +
-            'Percentage of children (6-60 months) enrolled for ICDS services with height-for-age below -2Z standard deviations of the WHO Child Growth Standards median. \n' +
+            'Percentage of children (6-60 months) enrolled for Anganwadi Services with height-for-age below -2Z standard deviations of the WHO Child Growth Standards median. \n' +
             '\n' +
             'Stunting is a sign of chronic undernutrition and has long lasting harmful consequences on the growth of a child'
         );

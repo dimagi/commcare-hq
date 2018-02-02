@@ -84,7 +84,7 @@ class TestPrevalenceOfSevere(TestCase):
             loc_level='state'
         )
         expected = (
-            "Percentage of children between 6 - 60 months enrolled for ICDS services with "
+            "Percentage of children between 6 - 60 months enrolled for Anganwadi Services with "
             "weight-for-height below -2 standard deviations of the WHO Child Growth Standards "
             "median. <br/><br/>Wasting in children is a symptom of acute undernutrition "
             "usually as a consequence of insufficient food intake or a high incidence "
@@ -354,7 +354,7 @@ class TestPrevalenceOfSevere(TestCase):
                 loc_level='supervisor'
             ),
             {
-                "info": "Percentage of children between 6 - 60 months enrolled for ICDS services with "
+                "info": "Percentage of children between 6 - 60 months enrolled for Anganwadi Services with "
                         "weight-for-height below -3 standard deviations of the WHO Child Growth Standards"
                         " median.<br/><br/>Severe Acute Malnutrition (SAM) or wasting in"
                         " children is a symptom of acute undernutrition usually as "

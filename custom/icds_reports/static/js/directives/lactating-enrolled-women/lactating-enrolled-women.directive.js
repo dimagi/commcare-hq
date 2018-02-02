@@ -11,7 +11,7 @@ function LactatingEnrolledWomenController($scope, $routeParams, $location, $filt
     }
     vm.userLocationId = userLocationId;
     vm.filtersData = $location.search();
-    vm.label = "Lactating Mothers enrolled for ICDS services";
+    vm.label = "Lactating Mothers enrolled for Anganwadi Services";
     vm.step = $routeParams.step;
     vm.steps = {
         'map': {route: '/lactating_enrolled_women/map', label: 'Map View'},
@@ -30,7 +30,7 @@ function LactatingEnrolledWomenController($scope, $routeParams, $location, $filt
     vm.filters = ['age', 'gender'];
 
     vm.rightLegend = {
-        info: 'Total number of lactating women who are enrolled for ICDS services',
+        info: 'Total number of lactating women who are enrolled for Anganwadi Services',
     };
 
     vm.message = storageService.getKey('message') || false;
@@ -72,9 +72,9 @@ function LactatingEnrolledWomenController($scope, $routeParams, $location, $filt
         var percent = row ? d3.format('.2%')(row.valid / (row.all || 1)) : "N/A";
         return '<div class="hoverinfo">' +
             '<p>' + loc.properties.name + '</p>' +
-            '<div>Number of lactating women who are enrolled for ICDS services: <strong>' + valid + '</strong>' +
+            '<div>Number of lactating women who are enrolled for Anganwadi Services: <strong>' + valid + '</strong>' +
             '<div>Total number of lactating women who are registered: <strong>' + all + '</strong>' +
-            '<div>Percentage of registered lactating women who are enrolled for ICDS services: <strong>' + percent + '</strong>' +
+            '<div>Percentage of registered lactating women who are enrolled for Anganwadi Services: <strong>' + percent + '</strong>' +
             '</div>';
     };
 
@@ -209,7 +209,7 @@ function LactatingEnrolledWomenController($scope, $routeParams, $location, $filt
         },
         caption: {
             enable: true,
-            html: '<i class="fa fa-info-circle"></i> Total number of lactating women who are enrolled for ICDS services',
+            html: '<i class="fa fa-info-circle"></i> Total number of lactating women who are enrolled for Anganwadi Services',
             css: {
                 'text-align': 'center',
                 'margin': '0 auto',
@@ -220,9 +220,9 @@ function LactatingEnrolledWomenController($scope, $routeParams, $location, $filt
 
     vm.tooltipContent = function(monthName, day) {
         return "<p><strong>" + monthName + "</strong></p><br/>"
-            + "<p>Number of lactating women who are enrolled for ICDS services: <strong>" + $filter('indiaNumbers')(day.y) + "</strong></p>"
+            + "<p>Number of lactating women who are enrolled for Anganwadi Services: <strong>" + $filter('indiaNumbers')(day.y) + "</strong></p>"
             + "<p>Total number of lactating women who are registered: <strong>" +$filter('indiaNumbers')(day.all) + "</strong></p>"
-            + "<p>Percentage of registered lactating women who are enrolled for ICDS services: <strong>" + d3.format('.2%')(day.y / (day.all || 1)) + "</strong></p>";
+            + "<p>Percentage of registered lactating women who are enrolled for Anganwadi Services: <strong>" + d3.format('.2%')(day.y / (day.all || 1)) + "</strong></p>";
     };
 
     vm.showAllLocations = function () {

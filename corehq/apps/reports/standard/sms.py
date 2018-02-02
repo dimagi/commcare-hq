@@ -8,6 +8,7 @@ from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _
 from couchdbkit.resource import ResourceNotFound
 from corehq import toggles
+from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.filters.dates import DatespanFilter
@@ -52,6 +53,8 @@ from corehq.apps.reminders.models import CaseReminderHandler
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import CommCareCaseSQL
+from corehq.messaging.scheduling.models import ScheduledBroadcast, ImmediateBroadcast
+from corehq.messaging.scheduling.views import EditScheduleView, EditConditionalAlertView
 from django.core.exceptions import ObjectDoesNotExist
 import six
 
@@ -592,11 +595,83 @@ class BaseMessagingEventReport(BaseCommConnectLogReport):
         content_cache[handler_id] = display
         return display
 
+    def get_scheduled_broadcast_display(self, broadcast_id, content_cache):
+        cache_key = 'scheduled-broadcast-%s' % broadcast_id
+        if cache_key in content_cache:
+            return content_cache[cache_key]
+
+        try:
+            broadcast = ScheduledBroadcast.objects.get(domain=self.domain, pk=broadcast_id)
+        except ScheduledBroadcast.DoesNotExist:
+            result = '-'
+        else:
+            if broadcast.deleted:
+                result = _("(Deleted Broadcast)")
+            else:
+                result = '<a target="_blank" href="%s">%s</a>' % (
+                    reverse(EditScheduleView.urlname,
+                            args=[self.domain, EditScheduleView.SCHEDULED_BROADCAST, broadcast_id]),
+                    broadcast.name,
+                )
+
+        content_cache[cache_key] = result
+        return result
+
+    def get_immediate_broadcast_display(self, broadcast_id, content_cache):
+        cache_key = 'immediate-broadcast-%s' % broadcast_id
+        if cache_key in content_cache:
+            return content_cache[cache_key]
+
+        try:
+            broadcast = ImmediateBroadcast.objects.get(domain=self.domain, pk=broadcast_id)
+        except ImmediateBroadcast.DoesNotExist:
+            result = '-'
+        else:
+            if broadcast.deleted:
+                result = _("(Deleted Broadcast)")
+            else:
+                result = '<a target="_blank" href="%s">%s</a>' % (
+                    reverse(EditScheduleView.urlname,
+                            args=[self.domain, EditScheduleView.IMMEDIATE_BROADCAST, broadcast_id]),
+                    broadcast.name,
+                )
+
+        content_cache[cache_key] = result
+        return result
+
+    def get_case_rule_display(self, rule_id, content_cache):
+        cache_key = 'case-rule-%s' % rule_id
+        if cache_key in content_cache:
+            return content_cache[cache_key]
+
+        try:
+            rule = AutomaticUpdateRule.objects.get(domain=self.domain, pk=rule_id)
+        except AutomaticUpdateRule.DoesNotExist:
+            result = '-'
+        else:
+            if rule.deleted:
+                result = _("(Deleted Conditional Alert)")
+            else:
+                result = '<a target="_blank" href="%s">%s</a>' % (
+                    reverse(EditConditionalAlertView.urlname,
+                            args=[self.domain, rule_id]),
+                    rule.name,
+                )
+
+        content_cache[cache_key] = result
+        return result
+
     def get_content_display(self, event, content_cache):
         if event.source == MessagingEvent.SOURCE_KEYWORD and event.source_id:
             return self.get_keyword_display(event.source_id, content_cache)
         elif event.source == MessagingEvent.SOURCE_REMINDER and event.source_id:
             return self.get_reminder_display(event.source_id, content_cache)
+        elif event.source == MessagingEvent.SOURCE_SCHEDULED_BROADCAST and event.source_id:
+            return self.get_scheduled_broadcast_display(event.source_id, content_cache)
+        elif event.source == MessagingEvent.SOURCE_IMMEDIATE_BROADCAST and event.source_id:
+            return self.get_immediate_broadcast_display(event.source_id, content_cache)
+        elif event.source == MessagingEvent.SOURCE_CASE_RULE and event.source_id:
+            return self.get_case_rule_display(event.source_id, content_cache)
         elif event.content_type in (
             MessagingEvent.CONTENT_SMS_SURVEY,
             MessagingEvent.CONTENT_IVR_SURVEY,
@@ -676,6 +751,17 @@ class MessagingEventsReport(BaseMessagingEventReport):
                     source_filter.extend([
                         MessagingEvent.SOURCE_OTHER,
                         MessagingEvent.SOURCE_FORWARDED,
+                    ])
+                elif source_type == MessagingEvent.SOURCE_BROADCAST:
+                    source_filter.extend([
+                        MessagingEvent.SOURCE_BROADCAST,
+                        MessagingEvent.SOURCE_SCHEDULED_BROADCAST,
+                        MessagingEvent.SOURCE_IMMEDIATE_BROADCAST,
+                    ])
+                elif source_type == MessagingEvent.SOURCE_REMINDER:
+                    source_filter.extend([
+                        MessagingEvent.SOURCE_REMINDER,
+                        MessagingEvent.SOURCE_CASE_RULE,
                     ])
                 else:
                     source_filter.append(source_type)

@@ -112,7 +112,7 @@ def get_prevalence_of_severe_data_map(domain, config, loc_level, show_test=False
             "average": "%.2f" % ((sum(values_to_calculate_average)) /
                                  float(len(values_to_calculate_average) or 1)),
             "info": _((
-                "Percentage of children between {} enrolled for ICDS services with "
+                "Percentage of children between {} enrolled for Anganwadi Services with "
                 "weight-for-height below -2 standard deviations of the WHO Child Growth Standards median. "
                 "<br/><br/>"
                 "Wasting in children is a symptom of acute undernutrition usually as a consequence "
@@ -335,7 +335,7 @@ def get_prevalence_of_severe_sector_data(domain, config, loc_level, location_id,
     return {
         "tooltips_data": dict(tooltips_data),
         "info": _((
-            "Percentage of children between 6 - 60 months enrolled for ICDS services with "
+            "Percentage of children between 6 - 60 months enrolled for Anganwadi Services with "
             "weight-for-height below -3 standard deviations of the WHO Child Growth Standards median."
             "<br/><br/>"
             "Severe Acute Malnutrition (SAM) or wasting in children is a symptom of acute "

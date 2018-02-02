@@ -26,7 +26,7 @@ function EnrolledChildrenController($scope, $routeParams, $location, $filter, de
         vm.genderLabel = genders[genderIndex].name;
     }
 
-    vm.label = "Children (0-6 years) who are enrolled for ICDS services";
+    vm.label = "Children (0-6 years) who are enrolled for Anganwadi Services";
     vm.step = $routeParams.step;
     vm.steps = {
         'map': {route: '/enrolled_children/map', label: 'Map View'},
@@ -49,7 +49,7 @@ function EnrolledChildrenController($scope, $routeParams, $location, $filter, de
     }
 
     vm.rightLegend = {
-        info: 'Total number of children between the age of 0 - 6 years who are enrolled for ICDS services',
+        info: 'Total number of children between the age of 0 - 6 years who are enrolled for Anganwadi Services',
     };
 
     vm.message = storageService.getKey('message') || false;
@@ -97,9 +97,9 @@ function EnrolledChildrenController($scope, $routeParams, $location, $filter, de
         var percent = row ? d3.format('.2%')(row.valid / (row.all || 1)) : "N/A";
         return '<div class="hoverinfo">' +
             '<p>' + loc.properties.name + '</p>' +
-            '<div>Number of children ' + chosenFilters + ' who are enrolled for ICDS services: <strong>' + valid + '</strong>' +
+            '<div>Number of children ' + chosenFilters + ' who are enrolled for Anganwadi Services: <strong>' + valid + '</strong>' +
             '<div>Total number of children ' + chosenFilters + ' who are registered: <strong>' + all + '</strong>' +
-            '<div>Percentage of registered children ' + chosenFilters + ' who are enrolled for ICDS services: <strong>' + percent + '</strong>' +
+            '<div>Percentage of registered children ' + chosenFilters + ' who are enrolled for Anganwadi Services: <strong>' + percent + '</strong>' +
             '</div>';
     };
 
@@ -207,7 +207,7 @@ function EnrolledChildrenController($scope, $routeParams, $location, $filter, de
         },
         caption: {
             enable: true,
-            html: '<i class="fa fa-info-circle"></i> Total number of children between the age of 0 - 6 years who are enrolled for ICDS services',
+            html: '<i class="fa fa-info-circle"></i> Total number of children between the age of 0 - 6 years who are enrolled for Anganwadi Services',
             css: {
                 'text-align': 'center',
                 'margin': '0 auto',
@@ -218,7 +218,7 @@ function EnrolledChildrenController($scope, $routeParams, $location, $filter, de
 
     vm.tooltipContent = function (dataInMonth, x) {
         var average = (dataInMonth.all !== 0) ? d3.format(".2%")(dataInMonth.y / dataInMonth.all) : 0;
-        return "<p>Total number of children between the age of 0 - 6 years who are enrolled for ICDS services: <strong>"
+        return "<p>Total number of children between the age of 0 - 6 years who are enrolled for Anganwadi Services: <strong>"
             + $filter('indiaNumbers')(dataInMonth.all) + "</strong></p>"
             + "<p>% of children " + x + ": <strong>" + average + "</strong></p>";
     };

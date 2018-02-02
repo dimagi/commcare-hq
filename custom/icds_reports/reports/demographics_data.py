@@ -110,9 +110,9 @@ def get_demographics_data(domain, now_date, config, show_test=False, beta=False)
             ],
             [
                 {
-                    'label': _('Percent children (0-6 years) enrolled for ICDS services'),
+                    'label': _('Percent children (0-6 years) enrolled for Anganwadi Services'),
                     'help_text': _('Percentage of children registered between '
-                                   '0-6 years old who are enrolled for ICDS services'),
+                                   '0-6 years old who are enrolled for Anganwadi Services'),
                     'percent': percent_diff('child_health', data, prev_data, 'child_health_all'),
                     'color': 'green' if percent_diff(
                         'child_health_all',
@@ -125,8 +125,9 @@ def get_demographics_data(domain, now_date, config, show_test=False, beta=False)
                     'redirect': 'enrolled_children'
                 },
                 {
-                    'label': _('Percent pregnant women enrolled for ICDS services'),
-                    'help_text': _('Percentage of pregnant women registered who are enrolled for ICDS services'),
+                    'label': _('Percent pregnant women enrolled for Anganwadi Services'),
+                    'help_text': _('Percentage of pregnant women registered who are enrolled for Anganwadi '
+                                   'Services'),
                     'percent': percent_diff('ccs_pregnant', data, prev_data, 'ccs_pregnant_all'),
                     'color': 'green' if percent_diff(
                         'ccs_pregnant',
@@ -144,8 +145,9 @@ def get_demographics_data(domain, now_date, config, show_test=False, beta=False)
             [
 
                 {
-                    'label': _('Percent lactating women enrolled for ICDS services'),
-                    'help_text': _('Percentage of lactating women registered who are enrolled for ICDS services'),
+                    'label': _('Percent lactating women enrolled for Anganwadi Services'),
+                    'help_text': _('Percentage of lactating women registered who are enrolled for Anganwadi '
+                                   'Services'),
                     'percent': percent_diff('css_lactating', data, prev_data, 'css_lactating_all'),
                     'color': 'green' if percent_diff(
                         'css_lactating',
@@ -160,10 +162,10 @@ def get_demographics_data(domain, now_date, config, show_test=False, beta=False)
                     'redirect': 'lactating_enrolled_women'
                 },
                 {
-                    'label': _('Percent adolescent girls (11-18 years) enrolled for ICDS services'),
+                    'label': _('Percent adolescent girls (11-18 years) enrolled for Anganwadi Services'),
                     'help_text': _((
                         "Percentage of adolescent girls registered between 11-18 years"
-                        " old who are enrolled for ICDS services"
+                        " old who are enrolled for Anganwadi Services"
                     )),
                     'percent': percent_diff(
                         'person_adolescent',

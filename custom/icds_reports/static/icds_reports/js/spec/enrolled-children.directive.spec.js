@@ -93,9 +93,9 @@ describe('Enrolled Children Directive', function () {
         var result = controller.templatePopup({properties: {name: 'test'}}, {valid: 2, all: 4});
         var expected = '<div class="hoverinfo">' +
             '<p>test</p>' +
-            '<div>Number of children (0 - 6 years) who are enrolled for ICDS services: <strong>2</strong>' +
+            '<div>Number of children (0 - 6 years) who are enrolled for Anganwadi Services: <strong>2</strong>' +
             '<div>Total number of children (0 - 6 years) who are registered: <strong>4</strong>' +
-            '<div>Percentage of registered children (0 - 6 years) who are enrolled for ICDS services: <strong>50.00%</strong>' +
+            '<div>Percentage of registered children (0 - 6 years) who are enrolled for Anganwadi Services: <strong>50.00%</strong>' +
             '</div>';
         assert.equal(result, expected);
     });
@@ -189,14 +189,14 @@ describe('Enrolled Children Directive', function () {
         });
         assert.equal(controller.chartOptions.caption.html,
             '<i class="fa fa-info-circle"></i> ' +
-            'Total number of children between the age of 0 - 6 years who are enrolled for ICDS services'
+            'Total number of children between the age of 0 - 6 years who are enrolled for Anganwadi Services'
         );
     });
 
     it('tests chart tooltip content', function () {
         var data = {y: 0.5, all: 2};
         var x = 'test age';
-        var expected = "<p>Total number of children between the age of 0 - 6 years who are enrolled for ICDS services: <strong>2</strong></p>"
+        var expected = "<p>Total number of children between the age of 0 - 6 years who are enrolled for Anganwadi Services: <strong>2</strong></p>"
             + "<p>% of children test age: <strong>25.00%</strong></p>";
 
         var result = controller.tooltipContent(data, x);
