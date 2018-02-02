@@ -121,10 +121,12 @@
   {% if request|can_use_restore_as %}
     <% if (restoreAs) { %>
     <div class="restore-as-banner module-banner">
-        <span>
-        Working as <b><%= restoreAs %></b>.
-        <a class="js-clear-user">Use <%= username %>.</a>
-        </span>
+        {% blocktrans %}
+            <span>
+                Working as <b><%= restoreAs %></b>.
+                <a class="js-clear-user">Use <%= username %>.</a>
+            </span>
+        {% endblocktrans %}
     </div>
     <% } %>
   {% endif %}
