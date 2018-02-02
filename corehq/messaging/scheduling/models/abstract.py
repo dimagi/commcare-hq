@@ -232,7 +232,7 @@ class Content(models.Model):
             Content.get_cleaned_message(message_dict, '*')
         )
 
-    def send(self, recipient, schedule_instance):
+    def send(self, recipient, schedule_instance, logged_event, case=None):
         """
         :param recipient: a CommCareUser, WebUser, or CommCareCase/SQL
         representing the contact who should receive the content.

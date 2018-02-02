@@ -5,6 +5,7 @@ from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.dbaccessors import get_all_users_by_location
 from corehq.apps.locations.models import SQLLocation
+from corehq.apps.sms.models import MessagingEvent
 from corehq.apps.users.cases import get_owner_id, get_wrapped_owner
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.form_processor.exceptions import CaseNotFound
@@ -73,12 +74,11 @@ class ScheduleInstance(PartitionedModel):
         else:
             raise UnknownRecipientType(self.recipient_type)
 
-    @property
-    @memoized
-    def recipient_is_an_individual_contact(self):
+    @staticmethod
+    def recipient_is_an_individual_contact(recipient):
         return (
-            isinstance(self.recipient, (CommCareUser, WebUser)) or
-            is_commcarecase(self.recipient)
+            isinstance(recipient, (CommCareUser, WebUser)) or
+            is_commcarecase(recipient)
         )
 
     @property
@@ -86,7 +86,7 @@ class ScheduleInstance(PartitionedModel):
     def timezone(self):
         timezone = None
 
-        if self.recipient_is_an_individual_contact:
+        if self.recipient_is_an_individual_contact(self.recipient):
             try:
                 timezone = self.recipient.get_time_zone()
             except ValidationError:
@@ -128,26 +128,30 @@ class ScheduleInstance(PartitionedModel):
 
         return obj
 
-    def expand_recipients(self):
-        """
-        Can be used as a generator to iterate over all individual contacts who
-        are the recipients of this ScheduleInstance.
-        """
-        if self.recipient is None:
+    def _expand_recipient(self, recipient):
+        if recipient is None:
             return
-        elif self.recipient_is_an_individual_contact:
-            yield self.recipient
-        elif isinstance(self.recipient, CommCareCaseGroup):
-            case_group = self.recipient
+        elif self.recipient_is_an_individual_contact(recipient):
+            yield recipient
+        elif isinstance(recipient, CommCareCaseGroup):
+            case_group = recipient
             for case in case_group.get_cases():
                 yield case
-        elif isinstance(self.recipient, Group):
-            group = self.recipient
+        elif isinstance(recipient, Group):
+            group = recipient
             for user in group.get_users(is_active=True, only_commcare=False):
                 yield user
-        elif isinstance(self.recipient, SQLLocation):
-            location = self.recipient
-            if self.memoized_schedule.include_descendant_locations:
+        elif isinstance(recipient, SQLLocation):
+            location = recipient
+            if (
+                self.recipient_type == self.RECIPIENT_TYPE_LOCATION and
+                self.memoized_schedule.include_descendant_locations
+            ):
+                # Only include descendant locations when the recipient_type
+                # is RECIPIENT_TYPE_LOCATION. This is because we only do this
+                # for locations the user selected in the UI, and not for
+                # locations that happen to get here because they are a case
+                # owner, for example.
                 location_ids = location.get_descendants(include_self=True).filter(is_archived=False).location_ids()
             else:
                 location_ids = [location.location_id]
@@ -159,16 +163,44 @@ class ScheduleInstance(PartitionedModel):
                         user_ids.add(user.get_id)
                         yield user
         else:
-            raise UnknownRecipientType(self.recipient.__class__.__name__)
+            raise UnknownRecipientType(recipient.__class__.__name__)
+
+    def expand_recipients(self):
+        """
+        Can be used as a generator to iterate over all individual contacts who
+        are the recipients of this ScheduleInstance.
+        """
+        recipient_list = self.recipient
+        if not isinstance(recipient_list, list):
+            recipient_list = [recipient_list]
+
+        for member in recipient_list:
+            for contact in self._expand_recipient(member):
+                yield contact
 
     def handle_current_event(self):
         content = self.memoized_schedule.get_current_event_content(self)
+        logged_event = MessagingEvent.create_from_schedule_instance(self, content)
+
+        case = None
+        if isinstance(self, CaseScheduleInstanceMixin):
+            case = self.case
+
+        recipient_count = 0
         for recipient in self.expand_recipients():
-            content.send(recipient, self)
+            recipient_count += 1
+            content.send(recipient, self, logged_event, case=case)
+
         # As a precaution, always explicitly move to the next event after processing the current
         # event to prevent ever getting stuck on the current event.
         self.memoized_schedule.move_to_next_event(self)
         self.memoized_schedule.move_to_next_event_not_in_the_past(self)
+
+        # Update the MessagingEvent for reporting
+        if recipient_count == 0:
+            logged_event.error(MessagingEvent.ERROR_NO_RECIPIENT)
+        else:
+            logged_event.completed()
 
     @property
     def schedule(self):
