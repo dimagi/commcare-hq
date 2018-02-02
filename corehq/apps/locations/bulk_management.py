@@ -9,19 +9,19 @@ from __future__ import absolute_import
 import copy
 from collections import Counter, defaultdict
 
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils.translation import string_concat, ugettext as _, ugettext_lazy
 
-from corehq.apps.locations.util import get_location_data_model
+from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.chunked import chunked
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import SQLLocation, LocationType
 from .tree_utils import BadParentError, CycleError, assert_no_cycles
-from .const import LOCATION_SHEET_HEADERS, LOCATION_TYPE_SHEET_HEADERS, ROOT_LOCATION_TYPE, \
-    LOCATION_SHEET_HEADERS_OPTIONAL, LOCATION_SHEET_HEADERS_BASE
+from .const import LOCATION_SHEET_HEADERS, LOCATION_TYPE_SHEET_HEADERS, ROOT_LOCATION_TYPE
 import six
 
 
@@ -124,8 +124,8 @@ class LocationStub(object):
     meta_data_attrs = ['name', 'site_code', 'latitude', 'longitude', 'external_id']
 
     def __init__(self, name, site_code, location_type, parent_code, location_id,
-                 do_delete, external_id, latitude, longitude, custom_data, index,
-                 location_data_model, delete_uncategorized_data=False):
+                 do_delete, external_id, latitude, longitude, custom_data, uncategorized_data,
+                 index):
         self.name = name
         self.site_code = (str(site_code) if isinstance(site_code, int) else site_code).lower()
         self.location_type = location_type
@@ -136,10 +136,9 @@ class LocationStub(object):
         self.do_delete = do_delete
         self.external_id = str(external_id) if isinstance(external_id, int) else external_id
         self.index = index
-        self.custom_data = custom_data
-        if custom_data != self.NOT_PROVIDED:
-            self.custom_data = {key: six.text_type(value) for key, value in custom_data.items()}
-        self.delete_uncategorized_data = delete_uncategorized_data
+        self.custom_data = {key: six.text_type(value) for key, value in custom_data.items()} \
+                           if custom_data != self.NOT_PROVIDED else {}
+        self.uncategorized_data = uncategorized_data or {}
         if not self.location_id and not self.site_code:
             raise LocationExcelSheetError(
                 _(u"Location in sheet '{}', at row '{}' doesn't contain either location_id or site_code")
@@ -154,10 +153,9 @@ class LocationStub(object):
         #   are changed
         self.needs_save = False
         self.moved_to_root = False
-        self.data_model = location_data_model
 
     @classmethod
-    def from_excel_row(cls, row, index, location_type, data_model):
+    def from_excel_row(cls, row, index, location_type):
         name = row.get(cls.titles['name'])
         site_code = row.get(cls.titles['site_code'])
         location_type = location_type
@@ -179,12 +177,11 @@ class LocationStub(object):
                 return cls.NOT_PROVIDED
 
         custom_data = _optional_attr('custom_data')
-        delete_uncategorized_data = row.get(cls.titles['delete_uncategorized_data'], 'N').lower() in ['y', 'yes']
+        uncategorized_data = _optional_attr('uncategorized_data')
         index = index
-        stub = cls(name, site_code, location_type, parent_code, location_id,
-                   do_delete, external_id, latitude, longitude, custom_data, index,
-                   data_model, delete_uncategorized_data)
-        return stub
+        return cls(name, site_code, location_type, parent_code, location_id,
+                   do_delete, external_id, latitude, longitude, custom_data, uncategorized_data,
+                   index)
 
     def lookup_old_collection_data(self, old_collection):
         # Lookup whether the location already exists in old_collection or is new.
@@ -201,27 +198,23 @@ class LocationStub(object):
 
         for attr in self.meta_data_attrs:
             setattr(self.db_object, attr, getattr(self, attr, None))
-        self.db_object.metadata = self.custom_location_data
+        if self.custom_data != self.NOT_PROVIDED or self.uncategorized_data != self.NOT_PROVIDED:
+            self.db_object.metadata = self.custom_location_data
 
     @property
     @memoized
     def custom_location_data(self):
         # This just compiles the custom location data, the validation is done in _custom_data_errors()
-        db_meta = copy.copy(self.db_object.metadata)
-        data_provided = self.custom_data != self.NOT_PROVIDED
-        if data_provided:
-            metadata = self.custom_data
+        if self.custom_data is self.NOT_PROVIDED or self.uncategorized_data is self.NOT_PROVIDED:
+            # if either of these are not provided, then existing data should be updated, not overridden
+            metadata = copy.copy(self.db_object.metadata)
         else:
-            metadata = db_meta
-
-        if self.delete_uncategorized_data:
-            metadata, unknown = self.data_model.get_model_and_uncategorized(metadata)
-        else:
-            if data_provided:
-                # add back uncategorized data to new metadata
-                known, unknown = self.data_model.get_model_and_uncategorized(db_meta)
-                metadata.update(unknown)
-
+            # if both of these are provided, then existing data should be overridden
+            metadata = {}
+        if self.custom_data != self.NOT_PROVIDED:
+            metadata.update(self.custom_data)
+        if self.uncategorized_data != self.NOT_PROVIDED:
+            metadata.update(self.uncategorized_data)
         return metadata
 
     def autoset_location_id_or_site_code(self, old_collection):
@@ -328,10 +321,8 @@ class LocationCollection(object):
 class LocationExcelValidator(object):
     types_sheet_title = "types"
 
-    def __init__(self, domain, excel_importer):
-        self.domain = domain
+    def __init__(self, excel_importer):
         self.excel_importer = excel_importer
-        self.data_model = get_location_data_model(self.domain)
 
     def validate_and_parse_stubs_from_excel(self):
         # This validates format of the uploaded excel file and coverts excel rows into stubs
@@ -360,11 +351,11 @@ class LocationExcelValidator(object):
 
         # all locations sheets should have correct headers
         location_stubs = []
-        optional_headers = LOCATION_SHEET_HEADERS_OPTIONAL.values()
+        optional_headers = [LOCATION_SHEET_HEADERS['custom_data'], LOCATION_SHEET_HEADERS['uncategorized_data']]
         for sheet_name, sheet_reader in sheets_by_title.items():
             if sheet_name != self.types_sheet_title:
                 actual = set(sheet_reader.fieldnames) - set(optional_headers)
-                expected = set(LOCATION_SHEET_HEADERS_BASE.values())
+                expected = set(LOCATION_SHEET_HEADERS.values()) - set(optional_headers)
                 if actual != expected:
                     raise LocationExcelSheetError(
                         _(u"Locations sheet with title '{name}' should contain exactly '{expected}' "
@@ -387,7 +378,7 @@ class LocationExcelValidator(object):
     def _get_locations(self, rows, location_type):
         # takes raw excel row dicts and converts them to list of LocationStub objects
         return [
-            LocationStub.from_excel_row(row, index, location_type, self.data_model)
+            LocationStub.from_excel_row(row, index, location_type)
             for index, row in enumerate(rows)
         ]
 
@@ -410,8 +401,7 @@ class NewLocationImporter(object):
 
     @classmethod
     def from_excel_importer(cls, domain, excel_importer):
-        validator = LocationExcelValidator(domain, excel_importer)
-        type_rows, location_rows = validator.validate_and_parse_stubs_from_excel()
+        type_rows, location_rows = LocationExcelValidator(excel_importer).validate_and_parse_stubs_from_excel()
         return cls(domain, type_rows, location_rows, excel_importer)
 
     def run(self):

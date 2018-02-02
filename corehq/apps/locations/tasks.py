@@ -147,7 +147,7 @@ def _archive_users(location_type):
 @task
 def download_locations_async(domain, download_id, include_consumption=False):
     DownloadBase.set_progress(download_locations_async, 0, 100)
-    dump_locations(domain, download_id, include_consumption=include_consumption, task=download_locations_async)
+    dump_locations(domain, download_id, include_consumption=include_consumption)
     DownloadBase.set_progress(download_locations_async, 100, 100)
 
 
