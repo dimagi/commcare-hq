@@ -13,7 +13,7 @@ from mock import patch, call
 
 
 AVAILABLE_CUSTOM_SCHEDULING_CONTENT = {
-    'TEST': 'corehq.messaging.scheduling.tests.test_content.custom_content_handler',
+    'TEST': ['corehq.messaging.scheduling.tests.test_content.custom_content_handler', "Test"]
 }
 
 
