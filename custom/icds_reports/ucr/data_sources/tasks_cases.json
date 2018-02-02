@@ -314,8 +314,7 @@
 			  "type": "related_doc", 
 			  "related_doc_type": "CommCareCase", 
 			  "doc_id_expression": {
-				"type": "named", 
-				"name": "parent_id"
+				"type": "icds_parent_parent_id"
 			  }
 			}, 
 			"property_value": "not_registered"
