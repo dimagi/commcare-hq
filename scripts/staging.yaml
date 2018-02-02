@@ -41,6 +41,9 @@
 #
 # If you are unsure of how to resolve a conflict, notify the branch owner.
 
+# FORMPLAYER
+# From the formplayer, repo, call `./scripts/rebuildstaging`
+# This rebuilds the `autostaging` branch of formplayer and runs the formplayer-staging job on jenkins
 
 trunk: master
 name: autostaging
@@ -53,10 +56,6 @@ branches:
   - sophiamcg:organization-structure-collapse-button  # Sophia 1/31
   - jls/data-feedback-loop-test # Jenny 2/1
 submodules:
-  submodules/touchforms-src:
-    # let's leave this here even when empty
-    # just so we always get latest master
-    branches: []
   submodules/django-digest-src:
     branches: []
   corehq/apps/prelogin:
