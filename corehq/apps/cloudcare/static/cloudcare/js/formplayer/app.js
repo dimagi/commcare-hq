@@ -177,7 +177,7 @@ FormplayerFrontend.on('startForm', function (data) {
                         }
                     };
                 $("#cloudcare-notifications").off('click').on('click', dataFeedbackLoopAnalytics);
-                showSuccess(markdowner.render(resp.submitResponseMessage), $("#cloudcare-notifications"), 50000, true);
+                showSuccess(markdowner.render(resp.submitResponseMessage), $("#cloudcare-notifications"), 10000, true);
             } else {
                 showSuccess(gettext("Form successfully saved!"), $("#cloudcare-notifications"), 10000);
             }
