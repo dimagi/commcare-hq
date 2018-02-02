@@ -23,8 +23,11 @@ from casexml.apps.case.exceptions import PhoneDateValueError, IllegalCaseId, Use
 from corehq.const import OPENROSA_VERSION_3
 from corehq.middleware import OPENROSA_VERSION_HEADER
 from corehq.toggles import ASYNC_RESTORE
+from corehq.apps.cloudcare.const import DEVICE_ID as FORMPLAYER_DEVICE_ID
 from corehq.apps.commtrack.exceptions import MissingProductId
 from corehq.apps.domain_migration_flags.api import any_migrations_in_progress
+from corehq.apps.users.models import WebUser
+from corehq.apps.users.permissions import can_view_case_exports, can_view_form_exports
 from corehq.form_processor.exceptions import CouchSaveAborted, PostSaveError
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
@@ -231,23 +234,41 @@ class SubmissionPost(object):
                         cases = case_stock_result.case_models
                         ledgers = case_stock_result.stock_result.models_to_save
 
-                        from corehq.apps.export.views import CaseExportListView, FormExportListView
-                        from corehq.apps.reports.views import CaseDetailsView, FormDataView
-                        messages = [_('Form successfully saved!')]
-                        form_link = reverse(FormDataView.urlname, args=[instance.domain, instance._id])
-                        form_export_link = reverse(FormExportListView.urlname, args=[instance.domain])
-                        if cases:
-                            case_link = reverse(CaseDetailsView.urlname, args=[instance.domain, cases[0]._id])
-                            case_export_link = reverse(CaseExportListView.urlname, args=[instance.domain])
-                            messages.append(
-                                _("You just submitted [this form]({}), which affected [this case]({}).")
-                                .format(form_link, case_link))
-                            messages.append(
-                                _("Click to export your [case]({}) or [form]({}) data.")
-                                .format(case_export_link, form_export_link))
+                        messages = []
+                        user = WebUser.get(instance.user_id)
+                        if instance.metadata.deviceID == FORMPLAYER_DEVICE_ID and user:
+                            from corehq.apps.export.views import CaseExportListView, FormExportListView
+                            from corehq.apps.reports.views import CaseDetailsView, FormDataView
+                            form_link = case_link = form_export_link = case_export_link = None
+                            if has_permission_to_view_report(user, instance.domain, 'corehq.apps.reports.standard.inspect.SubmitHistory'):
+                                form_link = reverse(FormDataView.urlname, args=[instance.domain, instance._id])
+                            if cases and has_permission_to_view_report(user, instance.domain, 'corehq.apps.reports.standard.cases.basic.CaseListReport'):
+                                case_link = reverse(CaseDetailsView.urlname, args=[instance.domain, cases[0]._id])
+                            if can_view_form_exports(user, instance.domain):
+                                form_export_link = reverse(FormExportListView.urlname, args=[instance.domain])
+                            if cases and can_view_case_exports(user, instance.domain):
+                                case_export_link = reverse(CaseExportListView.urlname, args=[instance.domain])
+
+                            messages.append(_('Form successfully saved!'))
+                            if form_link and case_link:
+                                messages.append(
+                                    _("You just submitted [this form]({}), which affected [this case]({}).")
+                                    .format(form_link, case_link))
+                            elif form_link:
+                                messages.append(_("You just submitted [this form]({}).").format(form_link))
+                            elif case_link:
+                                messages.append(_("Your form affected [this case]({}).").format(case_link))
+
+                            if form_export_link and case_export_link:
+                                messages.append(
+                                    _("Click to export your [case]({}) or [form]({}) data.")
+                                    .format(case_export_link, form_export_link))
+                            elif form_export_link:
+                                messages.append(_("Click to export your [form]({}) data.").format(form_export_link))
+                            elif case_export_link:
+                                messages.append(_("Click to export your [case]({}) data.").format(case_export_link))
                         else:
-                            messages.append(_("You just submitted [this form]({}).").format(form_link))
-                            messages.append(_("Click to export your [form]({}) data.").format(form_export_link))
+                            messages.append(u'   √   ')
                         openrosa_kwargs['success_message'] = "\n\n".join(messages)
                 elif instance.is_error:
                     submission_type = 'error'
