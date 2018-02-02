@@ -9,27 +9,32 @@
 
 {% block js-inline %}{{ block.super }}
     <script>
-        var paginatedListModel = hqImport("hqwebapp/js/crud_paginated_list").CRUDPaginatedListModel(
-            {{ pagination.total }},
-            {{ pagination.limit }},
-            {{ pagination.page }},
-            {
-                statusCodeText: {{ pagination.status_codes|JSON }},
-                allowItemCreation: {{ pagination.create.is_allowed|BOOL }},
-                createItemForm: '{% filter escapejs %}{{ pagination.create_item_form }}{% endfilter %}'
-            }
-        );
+        var initial_page_data = hqImport("hqwebapp/js/initial_page_data").get,
+            paginatedListModel = hqImport("hqwebapp/js/crud_paginated_list").CRUDPaginatedListModel(
+                initial_page_data('total'),
+                initial_page_data('limit'),
+                initial_page_data('page'),
+                {
+                    statusCodeText: initial_page_data('status_codes'),
+                    allowItemCreation: initial_page_data('allow_item_creation'),
+                    createItemForm: initial_page_data('create_item_form'),
+                }
+            );
         $(function () {
             ko.applyBindings(paginatedListModel, $('#editable-paginated-list').get(0));
+            paginatedListModel.init();
         });
-    </script>
-    {% block js-paginated %}{% endblock %}
-    <script>
-        paginatedListModel.init();
     </script>
 {% endblock %}
 
 {% block page_content %}
+    {% initial_page_data 'total' pagination.total %}
+    {% initial_page_data 'limit' pagination.limit %}
+    {% initial_page_data 'page' pagination.page %}
+    {% initial_page_data 'status_codes' pagination.status_codes %}
+    {% initial_page_data 'allow_item_creation' pagination.create.is_allowed %}
+    {% initial_page_data 'create_item_form' pagination.create_item_form %}
+
     {% block pagination_header %}{% endblock %}
     {% block pagination_structure %}
         <div id="editable-paginated-list">
