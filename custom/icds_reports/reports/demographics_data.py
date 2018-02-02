@@ -115,7 +115,7 @@ def get_demographics_data(domain, now_date, config, show_test=False, beta=False)
                                    '0-6 years old who are enrolled for Anganwadi Services'),
                     'percent': percent_diff('child_health', data, prev_data, 'child_health_all'),
                     'color': 'green' if percent_diff(
-                        'child_health_all',
+                        'child_health',
                         data,
                         prev_data, 'child_health_all') > 0 else 'red',
                     'value': get_value(data, 'child_health'),
