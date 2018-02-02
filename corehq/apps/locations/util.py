@@ -1,29 +1,21 @@
 from __future__ import absolute_import
-
-import tempfile
-from collections import OrderedDict
-
-import six
+from django.conf import settings
 
 from corehq.apps.commtrack.dbaccessors import get_supply_point_ids_in_domain_by_location
-from corehq.apps.consumption.shortcuts import get_loaded_default_monthly_consumption, build_consumption_dict
-from corehq.apps.domain.models import Domain
-from corehq.apps.locations.const import LOCATION_TYPE_SHEET_HEADERS, \
-    LOCATION_SHEET_HEADERS_BASE, LOCATION_SHEET_HEADERS_OPTIONAL
-from corehq.apps.locations.models import SQLLocation
 from corehq.apps.products.models import Product
-from corehq.blobs import get_blob_db
+from corehq.apps.locations.models import SQLLocation
+from corehq.apps.locations.const import LOCATION_TYPE_SHEET_HEADERS, LOCATION_SHEET_HEADERS
+from corehq.apps.domain.models import Domain
 from corehq.form_processor.interfaces.supply import SupplyInterface
-from corehq.util.files import safe_filename_header
 from corehq.util.quickcache import quickcache
-from corehq.util.workbook_json.excel import json_to_headers
-from couchexport.models import Format
-from couchexport.writers import Excel2007ExportWriter
-from dimagi.utils.couch.loosechange import map_reduce
+from corehq.util.workbook_json.excel import flatten_json, json_to_headers
 from dimagi.utils.decorators.memoized import memoized
-from soil import DownloadBase
-from soil.util import expose_blob_download
+from dimagi.utils.couch.loosechange import map_reduce
+from couchexport.writers import Excel2007ExportWriter
+from corehq.apps.consumption.shortcuts import get_loaded_default_monthly_consumption, build_consumption_dict
 
+from soil.util import get_download_file_path, expose_download
+import six
 
 def load_locs_json(domain, selected_loc_id=None, include_archived=False,
         user=None, only_administrative=False):
@@ -131,29 +123,17 @@ def get_location_data_model(domain):
 
 class LocationExporter(object):
 
-    def __init__(self, domain, include_consumption=False, async_task=None):
+    def __init__(self, domain, include_consumption=False):
         self.domain = domain
         self.domain_obj = Domain.get_by_name(domain)
         self.include_consumption_flag = include_consumption
         self.data_model = get_location_data_model(domain)
         self.administrative_types = {}
-        self.location_types = self.domain_obj.location_types
-        self.async_task = async_task
-        self._location_count = None
-        self._locations_exported = 0
 
     @property
     @memoized
     def consumption_dict(self):
         return build_consumption_dict(self.domain)
-
-    def _increment_progress(self):
-        if self._location_count is None:
-            self._location_count = SQLLocation.active_objects.filter(domain=self.domain).count()
-            self._progress_update_chunksize = max(10, self._location_count // 100)
-        self._locations_exported += 1
-        if self._locations_exported % self._progress_update_chunksize == 0:
-            DownloadBase.set_progress(self.async_task, self._locations_exported, self._location_count)
 
     @property
     @memoized
@@ -168,7 +148,7 @@ class LocationExporter(object):
             self.supply_point_map = get_supply_point_ids_in_domain_by_location(
                 self.domain)
             self.administrative_types = {
-                lt.name for lt in self.location_types
+                lt.name for lt in self.domain_obj.location_types
                 if lt.administrative
 
             }
@@ -199,68 +179,55 @@ class LocationExporter(object):
             for p in self.products
         }
 
-    def get_headers(self):
-        headers = OrderedDict([
-            ('types', [list(LOCATION_TYPE_SHEET_HEADERS.values())])
-        ])
-        for loc_type in self.location_types:
-            additional_headers = []
-            additional_headers.extend(self._prefix_headers('data', (f.slug for f in self.data_model.fields)))
-            if self.include_consumption_flag and loc_type.name not in self.administrative_types:
-                additional_headers.extend(self._prefix_headers('consumption', self.product_codes))
-            additional_headers.append(LOCATION_SHEET_HEADERS_OPTIONAL['uncategorized_data'])
-            additional_headers.append(LOCATION_SHEET_HEADERS_OPTIONAL['delete_uncategorized_data'])
+    def _loc_type_dict(self, loc_type):
 
-            headers[loc_type.code] = [LOCATION_SHEET_HEADERS_BASE.values() + additional_headers]
+        uncategorized_keys = set()
+        tab_rows = []
+        for loc in SQLLocation.active_objects.filter(domain=self.domain,
+                                                     location_type__name=loc_type.name):
+            model_data, uncategorized_data = \
+                self.data_model.get_model_and_uncategorized(loc.metadata)
 
-        return list(headers.items())
+            uncategorized_keys.update(uncategorized_data)
 
-    def write_data(self, writer):
-        self._write_type_sheet(writer)
-        for location_type in self.location_types:
-            self._write_locations(writer, location_type)
+            loc_dict = {
+                'location_id': loc.location_id,
+                'site_code': loc.site_code,
+                'name': loc.name,
+                'parent_site_code': loc.parent.site_code if loc.parent else '',
+                'latitude': loc.latitude or '',
+                'longitude': loc.longitude or '',
+                'data': model_data,
+                'uncategorized_data': uncategorized_data,
+                'consumption': self.get_consumption(loc),
+                LOCATION_SHEET_HEADERS['external_id']: loc.external_id,
+                LOCATION_SHEET_HEADERS['do_delete']: ''
+            }
+            tab_rows.append(dict(flatten_json(loc_dict)))
 
-    def _write_locations(self, writer, location_type):
-        include_consumption = self.include_consumption_flag and location_type.name not in self.administrative_types
-        query = SQLLocation.active_objects.filter(
-            domain=self.domain,
-            location_type=location_type
-        )
+        header_keys = ['location_id', 'site_code', 'name', 'parent_code',
+                       'latitude', 'longitude', 'external_id', 'do_delete']
+        tab_headers = [LOCATION_SHEET_HEADERS[h] for h in header_keys]
 
-        def _row_generator(include_consumption=include_consumption):
-            for loc in query:
-                model_data, uncategorized_data = self.data_model.get_model_and_uncategorized(loc.metadata)
-                row = [
-                    loc.location_id,
-                    loc.site_code,
-                    loc.name,
-                    loc.parent.site_code if loc.parent else '',
-                    loc.latitude or '',
-                    loc.longitude or '',
-                    loc.external_id,
-                    '',  # do delete
-                ]
-                for field in self.data_model.fields:
-                    row.append(model_data.get(field.slug, ''))
+        def _extend_headers(prefix, headers):
+            tab_headers.extend(json_to_headers(
+                {prefix: {header: None for header in headers}}
+            ))
+        _extend_headers('data', (f.slug for f in self.data_model.fields))
+        _extend_headers('uncategorized_data', uncategorized_keys)
+        if self.include_consumption_flag and loc_type.name not in self.administrative_types:
+            _extend_headers('consumption', self.product_codes)
 
-                if include_consumption:
-                    consumption_data = self.get_consumption(loc)
-                    row.extend([consumption_data[code] for code in self.product_codes])
+        sheet_title = loc_type.code
 
-                row.append(', '.join('{}: {}'.format(*d) for d in uncategorized_data.items()))
+        return (sheet_title, {
+            'headers': tab_headers,
+            'rows': tab_rows,
+        })
 
-                yield row
-                self._increment_progress()
+    def type_sheet(self, location_types):
+        headers = LOCATION_TYPE_SHEET_HEADERS
 
-        writer.write([(location_type.code, _row_generator())])
-
-    @staticmethod
-    def _prefix_headers(prefix, headers):
-        return json_to_headers(
-            {prefix: {header: None for header in headers}}
-        )
-
-    def _write_type_sheet(self, writer):
         def foreign_code(lt, attr):
             val = getattr(lt, attr, None)
             if val:
@@ -274,39 +241,68 @@ class LocationExporter(object):
             return value
 
         rows = []
-        for lt in self.location_types:
-            rows.append([
-                lt.code,
-                lt.name,
-                foreign_code(lt, 'parent_type'),
-                '',  # do_delete
-                coax_boolean(lt.shares_cases),
-                coax_boolean(lt.view_descendants),
-            ])
+        for lt in location_types:
+            type_row = {
+                headers['code']: lt.code,
+                headers['name']: lt.name,
+                headers['parent_code']: foreign_code(lt, 'parent_type'),
+                headers['do_delete']: '',
+                headers['shares_cases']: coax_boolean(lt.shares_cases),
+                headers['view_descendants']: coax_boolean(lt.view_descendants),
+            }
+            rows.append(dict(type_row))
 
-        writer.write([('types', rows)])
+        return ('types', {
+            'headers': [headers[header] for header in ['code', 'name', 'parent_code', 'do_delete',
+                        'shares_cases', 'view_descendants']],
+            'rows': rows
+        })
+
+    def get_export_dict(self):
+        location_types = self.domain_obj.location_types
+        sheets = [self.type_sheet(location_types)]
+        sheets.extend([
+            self._loc_type_dict(loc_type)
+            for loc_type in location_types
+        ])
+        return sheets
 
 
-def dump_locations(domain, download_id, include_consumption=False, task=None):
-    exporter = LocationExporter(domain, include_consumption=include_consumption, async_task=task)
+def dump_locations(domain, download_id, include_consumption=False):
+    exporter = LocationExporter(domain, include_consumption=include_consumption)
+    use_transfer = settings.SHARED_DRIVE_CONF.transfer_enabled
+    filename = '{}_locations.xlsx'.format(domain)
+    file_path = write_to_file(exporter.get_export_dict(), filename, use_transfer)
 
-    fd, path = tempfile.mkstemp()
+    expose_download(use_transfer, file_path, filename, download_id, 'xlsx')
+
+
+def write_to_file(locations, filename, use_transfer):
+    """
+    locations = [
+        ('loc_type1', {
+             'headers': ['header1', 'header2', ...]
+             'rows': [
+                 {
+                     'header1': val1
+                     'header2': val2
+                 },
+                 {...},
+             ]
+        })
+    ]
+    """
+    outfile = get_download_file_path(use_transfer, filename)
     writer = Excel2007ExportWriter()
-    writer.open(header_table=exporter.get_headers(), file=path)
-    with writer:
-        exporter.write_data(writer)
-
-    with open(path, 'rb') as file_:
-        db = get_blob_db()
-        db.put(file_, download_id, timeout=60 * 60)
-
-        file_format = Format.from_format(Excel2007ExportWriter.format)
-        expose_blob_download(
-            download_id,
-            mimetype=file_format.mimetype,
-            content_disposition=safe_filename_header('{}_locations'.format(domain), file_format.extension),
-            download_id=download_id,
-        )
+    header_table = [(tab_name, [tab['headers']]) for tab_name, tab in locations]
+    writer.open(header_table=header_table, file=outfile)
+    for tab_name, tab in locations:
+        headers = tab['headers']
+        tab_rows = [[row.get(header, '') for header in headers]
+                    for row in tab['rows']]
+        writer.write([(tab_name, tab_rows)])
+    writer.close()
+    return outfile
 
 
 def get_locations_from_ids(location_ids, domain, base_queryset=None):
