@@ -22,7 +22,8 @@ if 'y' == input('Do you want instructions for how to migrate? [y/N]'):
         if ansible_repo_exists:
             break
     else:
-        if 'y' != input('Do you have a local commcare-cloud (formerly called commcarehq-ansible) repository already? [y/N]'):
+        if 'y' != input('Do you have a local commcare-cloud '
+                        '(formerly called commcarehq-ansible) repository already? [y/N]'):
             print("""
     Set up commcare-cloud
     =========================
