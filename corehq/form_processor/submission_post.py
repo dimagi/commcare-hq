@@ -149,7 +149,7 @@ class SubmissionPost(object):
         '''
         default_message = u'   √   '
 
-        if instance.metadata.deviceID != FORMPLAYER_DEVICE_ID:
+        if instance.metadata and instance.metadata.deviceID != FORMPLAYER_DEVICE_ID:
             return default_message
 
         user = WebUser.get(instance.user_id)
