@@ -80,7 +80,7 @@ function NewbornWithLowBirthController($scope, $routeParams, $location, $filter,
         var low_birth = row ? $filter('indiaNumbers')(row.low_birth) : 'N/A';
         var percent = row ? d3.format('.2%')(row.low_birth / (row.in_month || 1)) : 'N/A';
         var unweighed_percent = row ? d3.format('.2%')((row.in_month - row.low_birth) / (row.in_month || 1)) : 'N/A';
-        return '<div class="hoverinfo">' +
+        return '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
             '<p>' + loc.properties.name + '</p>' +
             '<div>' + chosenFilters + 'Total Number of Newborns born in given month: <strong>' + total + '</strong></div>' +
             '<div>' + chosenFilters + 'Number of Newborns with LBW in given month: <strong>' + low_birth + '</strong></div>' +

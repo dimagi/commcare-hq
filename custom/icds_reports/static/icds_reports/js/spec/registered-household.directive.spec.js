@@ -76,7 +76,7 @@ describe('Registered Household Directive', function () {
 
     it('tests template popup', function () {
         var result = controller.templatePopup({properties: {name: 'test'}}, {household: 5});
-        assert.equal(result, '<div class="hoverinfo">'
+        assert.equal(result, '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">'
             + '<p>test</p>'
             + '<div>Total number of household registered: <strong>5</strong></div>');
     });

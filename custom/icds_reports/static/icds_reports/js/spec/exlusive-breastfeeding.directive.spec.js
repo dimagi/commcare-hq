@@ -81,7 +81,7 @@ describe('Exclusive Breastfeeding Directive', function () {
 
     it('tests template popup', function () {
         var result = controller.templatePopup({properties: {name: 'test'}}, {all: 10, children: 5});
-        assert.equal(result, '<div class="hoverinfo">' +
+        assert.equal(result, '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
             '<p>test</p>'
             + '<div>Total number of children between ages 0 - 6 months: <strong>10</strong></div>'
             + '<div>Total number of children (0-6 months) exclusively breastfed in the given month:  <strong>5</strong></div>'

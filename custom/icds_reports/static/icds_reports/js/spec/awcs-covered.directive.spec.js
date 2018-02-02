@@ -76,7 +76,7 @@ describe('AWCs Covered Directive', function () {
 
     it('tests template popup', function () {
         var result = controller.templatePopup({properties: {name: 'test'}}, {awcs: 15});
-        var expected = '<div class="hoverinfo">'
+        var expected = '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">'
             + '<p>test</p>'
             + '<p>Total AWCs that have launched ICDS-CAS. '
             + 'AWCs are considered launched after submitting at least one Household Registration form.</p>'

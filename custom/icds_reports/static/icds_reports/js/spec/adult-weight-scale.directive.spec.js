@@ -77,7 +77,7 @@ describe('Adult Weight Scale Directive', function () {
 
     it('tests template popup', function () {
         var result = controller.templatePopup({properties: {name: 'test'}}, {in_month: 5, all: 10});
-        assert.equal(result, '<div class="hoverinfo"><p>test</p>' +
+        assert.equal(result, '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;"><p>test</p>' +
             '<div>Total number of AWCs that reported having a weighing scale for mother and child: <strong>5</strong>' +
             '</div><div>% of AWCs that reported having a weighing scale for mother and child: <strong>50.00%</strong></div>');
     });

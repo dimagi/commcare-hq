@@ -91,7 +91,7 @@ describe('Underweight Children Directive', function () {
 
     it('tests template popup', function () {
         var result = controller.templatePopup({properties: {name: 'test'}}, {total: 20, severely_underweight: 5, moderately_underweight: 5, normal: 5});
-        assert.equal(result, '<div class="hoverinfo">'
+        assert.equal(result, '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">'
             + '<p>test</p>'
             + '<div>Total Children (0 - 5 years) weighed in given month: <strong>20</strong></div>'
             + '<div>% Unweighed (0 - 5 years): <strong>25.00%</strong></div>'

@@ -81,7 +81,7 @@ describe('Early Initiation Breastfeeding Directive', function () {
 
     it('tests template popup', function () {
         var result = controller.templatePopup({properties: {name: 'test'}}, {in_month: 10, birth: 5});
-        assert.equal(result, '<div class="hoverinfo">'
+        assert.equal(result, '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">'
             + '<p>test</p>'
             + '<div>Total Number of Children born in the given month: <strong>10</strong></div>'
             + '<div>Total Number of Children who were put to the breast within one hour of birth: <strong>5</strong></div>'

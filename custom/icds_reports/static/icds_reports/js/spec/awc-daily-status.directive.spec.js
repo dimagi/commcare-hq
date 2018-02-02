@@ -77,7 +77,7 @@ describe('AWC Daily Status Directive', function () {
 
     it('tests template popup', function () {
         var result = controller.templatePopup({properties: {name: 'test'}}, {in_day: 5, all: 10});
-        var expected = '<div class="hoverinfo">' +
+        var expected = '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
             '<p>test</p>' +
             '<div>Total number of AWCs that were open yesterday: <strong>5</strong></div>' +
             '<div>Total number of AWCs that have been launched: <strong>10</strong></div>' +
