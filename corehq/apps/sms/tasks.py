@@ -19,7 +19,7 @@ from corehq.apps.sms.change_publishers import publish_sms_saved
 from corehq.apps.sms.mixin import (InvalidFormatException,
     PhoneNumberInUseException, apply_leniency)
 from corehq.apps.sms.models import (INCOMING, MigrationStatus, OUTGOING,
-    PhoneLoadBalancingMixin, PhoneNumber, QueuedSMS, SMS)
+    PhoneLoadBalancingMixin, PhoneNumber, QueuedSMS, SMS, DailyOutboundSMSLimitReached)
 from corehq.apps.sms.util import is_contact_active
 from corehq.apps.smsbillables.exceptions import RetryBillableTaskException
 from corehq.apps.smsbillables.models import SmsBillable
@@ -225,9 +225,10 @@ class OutboundDailyCounter(object):
 
     def __init__(self, domain_object=None):
         self.domain_object = domain_object
+        self.utc_date = datetime.utcnow().date()
         self.key = 'outbound-daily-count-for-%s-%s' % (
             domain_object.name if domain_object else '',
-            datetime.utcnow().strftime('%Y-%m-%d')
+            self.utc_date.strftime('%Y-%m-%d')
         )
 
         # We need access to the raw redis client because calling incr on
@@ -270,6 +271,12 @@ class OutboundDailyCounter(object):
             # processing the backlog right away.
             self.decrement()
             delay_processing(queued_sms, 60)
+
+            # Log the fact that we reached this limit
+            DailyOutboundSMSLimitReached.create_for_domain_and_date(
+                self.domain_object.name if self.domain_object else '',
+                self.utc_date
+            )
             return False
 
         return True
@@ -309,7 +316,7 @@ def process_sms(queued_sms_pk):
                 return
 
             outbound_counter = OutboundDailyCounter(domain_object)
-            if not outbound_counter.can_send_outbound_sms(msg)
+            if not outbound_counter.can_send_outbound_sms(msg):
                 release_lock(message_lock, True)
                 return
 
