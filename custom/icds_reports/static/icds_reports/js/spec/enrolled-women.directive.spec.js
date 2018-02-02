@@ -76,7 +76,7 @@ describe('Enrolled Women Directive', function () {
 
     it('tests template popup', function () {
         var result = controller.templatePopup({properties: {name: 'test'}}, {valid: 2, all: 4});
-        var expected = '<div class="hoverinfo">' +
+        var expected = '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
             '<p>test</p>' +
             '<div>Number of pregnant women who are enrolled for Anganwadi Services: <strong>2</strong>' +
             '<div>Total number of pregnant women who are registered: <strong>4</strong>' +

@@ -72,7 +72,7 @@ function AdolescentWomenController($scope, $routeParams, $location, $filter, dem
         var valid = $filter('indiaNumbers')(row ? row.valid : 0);
         var all = $filter('indiaNumbers')(row ? row.all : 0);
         var percent = row ? d3.format('.2%')(row.valid / (row.all || 1)) : "N/A";
-        return '<div class="hoverinfo">' +
+        return '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
             '<p>' + loc.properties.name + '</p>' +
             '<div>Number of adolescent girls (11 - 18 years) who are enrolled for Anganwadi Services: <strong>' + valid + '</strong>' +
             '<div>Total number of adolescent girls (11 - 18 years) who are registered: <strong>' + all + '</strong>' +

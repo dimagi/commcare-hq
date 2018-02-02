@@ -67,7 +67,7 @@ function MedicineKitController($scope, $routeParams, $location, $filter, infrast
     vm.templatePopup = function(loc, row) {
         var in_month = row ? $filter('indiaNumbers')(row.in_month) : 'N/A';
         var percent = row ? d3.format('.2%')(row.in_month / (row.all || 1)) : "N/A";
-        return '<div class="hoverinfo">' +
+        return '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
             '<p>' + loc.properties.name + '</p>' +
             '<div>Total number of AWCs that reported having a Medicine Kit: <strong>' + in_month + '</strong></div>' +
             '<div>Percentage of AWCs that reported having a Medicine Kit: <strong>' + percent + '</strong></div>';

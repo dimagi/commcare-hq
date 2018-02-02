@@ -93,7 +93,7 @@ function PrevalenceOfStuntingReportController($scope, $routeParams, $location, $
         var moderate = row ? d3.format(".2%")(row.moderate / (row.total || 1)) : 'N/A';
         var normal = row ? d3.format(".2%")(row.normal / (row.total || 1)) : 'N/A';
         var unmeasured = row ? d3.format(".2%")((row.total - (row.normal + row.severe + row.moderate)) / (row.total || 1)) : 'N/A';
-        return '<div class="hoverinfo">' +
+        return '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
             '<p>' + loc.properties.name + '</p>' +
             '<div>Total Children ' + chosenFilters + ' weighed in given month: <strong>' + total + '</strong></div>' +
             '<div>Total Children ' + chosenFilters + ' with height measured in given month: <strong>' + measured + '</strong></div>' +

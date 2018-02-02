@@ -76,7 +76,7 @@ describe('Medicine Kit Directive', function () {
 
     it('tests template popup', function () {
         var result = controller.templatePopup({properties: {name: 'test'}}, {all: 10, in_month: 5});
-        assert.equal(result, '<div class="hoverinfo"><p>test</p>' +
+        assert.equal(result, '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;"><p>test</p>' +
             '<div>Total number of AWCs that reported having a Medicine Kit: <strong>5</strong></div>' +
             '<div>Percentage of AWCs that reported having a Medicine Kit: <strong>50.00%</strong></div>');
     });

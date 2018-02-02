@@ -511,7 +511,7 @@ class AwcReportsView(BaseReportView):
             data = get_awc_reports_system_usage(
                 domain,
                 config,
-                tuple(month.timetuple())[:3],
+                tuple(current_month.timetuple())[:3],
                 tuple(prev_month.timetuple())[:3],
                 tuple(two_before.timetuple())[:3],
                 'aggregation_level',
@@ -520,7 +520,7 @@ class AwcReportsView(BaseReportView):
         elif step == 'pse':
             data = get_awc_reports_pse(
                 config,
-                tuple(month.timetuple())[:3],
+                tuple(current_month.timetuple())[:3],
                 self.kwargs.get('domain'),
                 include_test
             )
@@ -528,7 +528,7 @@ class AwcReportsView(BaseReportView):
             data = get_awc_reports_maternal_child(
                 domain,
                 config,
-                tuple(month.timetuple())[:3],
+                tuple(current_month.timetuple())[:3],
                 tuple(prev_month.timetuple())[:3],
                 include_test
             )
@@ -537,7 +537,7 @@ class AwcReportsView(BaseReportView):
                 domain,
                 config,
                 tuple(now.date().timetuple())[:3],
-                tuple(month.timetuple())[:3],
+                tuple(current_month.timetuple())[:3],
                 include_test,
                 beta=icds_pre_release_features(request.couch_user)
             )
@@ -545,7 +545,7 @@ class AwcReportsView(BaseReportView):
             data = get_awc_report_infrastructure(
                 domain,
                 config,
-                tuple(month.timetuple())[:3],
+                tuple(current_month.timetuple())[:3],
                 include_test
             )
         elif step == 'beneficiary':
@@ -567,7 +567,7 @@ class AwcReportsView(BaseReportView):
                     draw,
                     order,
                     config['awc_id'],
-                    tuple(month.timetuple())[:3],
+                    tuple(current_month.timetuple())[:3],
                     tuple(two_before.timetuple())[:3],
                 )
         elif step == 'beneficiary_details':
