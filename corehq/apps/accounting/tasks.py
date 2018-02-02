@@ -768,7 +768,7 @@ def restore_logos(self, domain_name):
         raise e
 
 
-@periodic_task(run_every=crontab(day_of_month=2, hour=5), queue='background_queue', acks_late=True)
+@periodic_task(run_every=crontab(hour=5), queue='background_queue', acks_late=True)
 def send_prepaid_credits_export():
     if settings.ENTERPRISE_MODE:
         return
