@@ -26,7 +26,7 @@ from corehq.toggles import ASYNC_RESTORE
 from corehq.apps.cloudcare.const import DEVICE_ID as FORMPLAYER_DEVICE_ID
 from corehq.apps.commtrack.exceptions import MissingProductId
 from corehq.apps.domain_migration_flags.api import any_migrations_in_progress
-from corehq.apps.users.models import CouchUser
+from corehq.apps.users.models import CouchUser, WebUser
 from corehq.apps.users.permissions import can_view_case_exports, can_view_form_exports, \
     has_permission_to_view_report
 from corehq.form_processor.exceptions import CouchSaveAborted, PostSaveError
@@ -156,6 +156,7 @@ class SubmissionPost(object):
             user = CouchUser.get(instance.user_id)
             if not user or not user.is_web_user():
                 return _('Form successfully saved!')
+            user = WebUser.get(instance.user_id)
 
             from corehq.apps.export.views import CaseExportListView, FormExportListView
             from corehq.apps.reports.views import CaseDetailsView, FormDataView
