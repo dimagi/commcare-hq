@@ -25,11 +25,29 @@ Util.confirmationModal = function(options) {
         cancelText: gettext('Cancel'),
         onConfirm: function() {},
     });
-    var $modal = $('#js-confirmation-modal');
-    $modal.find('.js-modal-title').text(options.title);
+    var $modal = $('#js-confirmation-modal'),
+        $header = $modal.find('.js-modal-title'),
+        $headerDismiss = $modal.find(".modal-header .close");
+
+    $header.text(options.title);
+    if (options.title) {
+        $headerDismiss.removeClass("hide");
+    } else {
+        $headerDismiss.addClass("hide");
+    }
+
     $modal.find('.js-modal-body').html(DOMPurify.sanitize(options.message));
-    $modal.find('#js-confirmation-confirm').text(options.confirmText);
-    $modal.find('#js-confirmation-cancel').text(options.cancelText);
+
+    var $confirmButton = $modal.find('#js-confirmation-confirm'),
+        $cancelButton = $modal.find('#js-confirmation-cancel');
+    $confirmButton.text(options.confirmText);
+    if (options.cancelText) {
+        $cancelButton.removeClass("hide").text(options.cancelText);
+        $confirmButton.removeClass("btn-full-width");
+    } else {
+        $cancelButton.addClass("hide");
+        $confirmButton.addClass("btn-full-width");
+    }
 
     $modal.find('#js-confirmation-confirm').click(function(e) {
         options.onConfirm(e);
