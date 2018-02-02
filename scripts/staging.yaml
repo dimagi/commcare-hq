@@ -65,3 +65,5 @@ submodules:
     branches: []
   submodules/commcare-translations:
     branches: []
+  submodules/formplayer:
+    branches: []
