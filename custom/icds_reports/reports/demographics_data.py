@@ -36,14 +36,8 @@ def get_demographics_data(domain, now_date, config, show_test=False, beta=False)
             ccs_pregnant_all=Sum('cases_ccs_pregnant_all'),
             css_lactating=Sum('cases_ccs_lactating'),
             css_lactating_all=Sum('cases_ccs_lactating_all'),
-            person_adolescent=(
-                Sum('cases_person_adolescent_girls_11_14') +
-                Sum('cases_person_adolescent_girls_15_18')
-            ),
-            person_adolescent_all=(
-                Sum('cases_person_adolescent_girls_11_14_all') +
-                Sum('cases_person_adolescent_girls_15_18_all')
-            ),
+            person_adolescent=Sum('cases_person_adolescent_girls_11_14'),
+            person_adolescent_all=Sum('cases_person_adolescent_girls_11_14_all'),
             person_aadhaar=Sum(person_has_aadhaar_column(beta)),
             all_persons=Sum(person_is_beneficiary_column(beta))
         )
@@ -162,9 +156,9 @@ def get_demographics_data(domain, now_date, config, show_test=False, beta=False)
                     'redirect': 'lactating_enrolled_women'
                 },
                 {
-                    'label': _('Percent adolescent girls (11-18 years) enrolled for Anganwadi Services'),
+                    'label': _('Percent adolescent girls (11-14 years) enrolled for Anganwadi Services'),
                     'help_text': _((
-                        "Percentage of adolescent girls registered between 11-18 years"
+                        "Percentage of adolescent girls registered between 11-14 years"
                         " old who are enrolled for Anganwadi Services"
                     )),
                     'percent': percent_diff(

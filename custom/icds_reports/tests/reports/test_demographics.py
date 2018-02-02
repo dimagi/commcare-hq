@@ -86,15 +86,15 @@ class TestDemographics(TestCase):
                         },
                         {
                             "redirect": "adolescent_girls",
-                            "all": 47,
+                            "all": 34,
                             "format": "percent_and_div",
                             "color": "red",
                             "percent": 0.0,
-                            "value": 47,
-                            "label": "Percent adolescent girls (11-18 years) enrolled for Anganwadi Services",
+                            "value": 34,
+                            "label": "Percent adolescent girls (11-14 years) enrolled for Anganwadi Services",
                             "frequency": "month",
                             "help_text": "Percentage of adolescent girls registered"
-                                         " between 11-18 years old who are enrolled for Anganwadi Services"
+                                         " between 11-14 years old who are enrolled for Anganwadi Services"
                         }
                     ]
                 ]
@@ -185,15 +185,15 @@ class TestDemographics(TestCase):
                         },
                         {
                             "redirect": "adolescent_girls",
-                            "all": 47,
+                            "all": 34,
                             "format": "percent_and_div",
                             "color": "green",
                             "percent": "Data in the previous reporting period was 0",
-                            "value": 47,
-                            "label": "Percent adolescent girls (11-18 years) enrolled for Anganwadi Services",
+                            "value": 34,
+                            "label": "Percent adolescent girls (11-14 years) enrolled for Anganwadi Services",
                             "frequency": "day",
                             "help_text": (
-                                "Percentage of adolescent girls registered between 11-18 years old who "
+                                "Percentage of adolescent girls registered between 11-14 years old who "
                                 "are enrolled for Anganwadi Services"
                             )
                         }
@@ -286,15 +286,15 @@ class TestDemographics(TestCase):
                         },
                         {
                             "redirect": "adolescent_girls",
-                            "all": 47,
+                            "all": 34,
                             "format": "percent_and_div",
                             "color": "green",
                             "percent": "Data in the previous reporting period was 0",
-                            "value": 47,
-                            "label": "Percent adolescent girls (11-18 years) enrolled for Anganwadi Services",
+                            "value": 34,
+                            "label": "Percent adolescent girls (11-14 years) enrolled for Anganwadi Services",
                             "frequency": "day",
                             "help_text": (
-                                "Percentage of adolescent girls registered between 11-18 years old who "
+                                "Percentage of adolescent girls registered between 11-14 years old who "
                                 "are enrolled for Anganwadi Services"
                             )
                         }
