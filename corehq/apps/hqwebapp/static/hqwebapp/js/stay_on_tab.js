@@ -1,4 +1,8 @@
-hqDefine("hqwebapp/js/stay_on_tab", function() {
+hqDefine("hqwebapp/js/stay_on_tab", [
+    "jquery",
+], function(
+    $
+) {
     // Modified from
     // http://stackoverflow.com/questions/10523433/how-do-i-keep-the-current-tab-active-with-twitter-bootstrap-after-a-page-reload
     $(function() {

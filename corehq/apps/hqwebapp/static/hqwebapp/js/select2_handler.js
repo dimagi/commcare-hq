@@ -1,4 +1,10 @@
-hqDefine("hqwebapp/js/select2_handler", function() {
+hqDefine("hqwebapp/js/select2_handler", [
+    "jquery",
+    "knockout",
+], function(
+    $,
+    ko
+) {
     var BaseSelect2Handler = function (options) {
         // For use with BaseAsyncHandler
         // todo: documentation (biyeun)
@@ -7,49 +13,49 @@ hqDefine("hqwebapp/js/select2_handler", function() {
         self.fieldName = options.fieldName;
         self.multiple = options.multiple || false;
         self.value = ko.observable();
-    
+
         self.clear = function () {
             var fieldInput = self.utils.getField();
             fieldInput.select2('val', '');
         };
-    
+
         self.getHandlerSlug = function () {
             // This is the slug for the AsyncHandler you'll be using on the server side
             throw new Error('getHandlerSlug must be implemented');
         };
-    
+
         self.getExtraData = function () {
             return {};
         };
-    
+
         self.processResults = function (response) {
             // override this if you want to do something special with the response.
             return response;
         };
-    
+
         self.createNewChoice = function (term, selectedData) {
             // override this if you want the search to return the option of creating whatever
             // the user entered.
         };
-    
+
         self.formatResult = function (result) {
             return result.text;
         };
-    
+
         self.formatSelection = function (result) {
             return result.text;
         };
-    
+
         self.getInitialData = function (element) {
             // override this if you want to format the value that is initially stored in the field for this widget.
         };
-    
+
         self.utils = {
             getField: function () {
                 return $('[name="' + self.fieldName + '"]');
             },
         };
-    
+
         self.init = function () {
             var fieldInput = self.utils.getField();
             fieldInput.select2({
