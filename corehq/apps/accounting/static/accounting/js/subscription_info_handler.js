@@ -1,8 +1,19 @@
-hqDefine('accounting/js/subscription_info_handler', function () {
+hqDefine('accounting/js/subscription_info_handler', [
+    'jquery',
+    'knockout',
+    'accounting/js/widgets',
+    'hqwebapp/js/stay_on_tab',
+    'accounting/js/credits_tab',
+    'jquery-ui/ui/datepicker',
+], function (
+    $,
+    ko,
+    widgets
+) {
     var SubscriptionInfoHandler = function () {
         'use strict';
         var self = this;
-        var AsyncSelect2Handler = hqImport('accounting/js/widgets').AsyncSelect2Handler;
+        var AsyncSelect2Handler = widgets.AsyncSelect2Handler;
         self.domain = new AsyncSelect2Handler('domain');
         self.account = new AsyncSelect2Handler('account');
         self.plan_version = new AsyncSelect2Handler('plan_version');
