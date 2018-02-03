@@ -166,7 +166,12 @@ class SubmissionPost(object):
                 form_link = reverse(FormDataView.urlname, args=[instance.domain, instance.form_id])
             case_view = 'corehq.apps.reports.standard.cases.basic.CaseListReport'
             if cases and has_permission_to_view_report(user, instance.domain, case_view):
-                case_link = reverse(CaseDetailsView.urlname, args=[instance.domain, cases[0].case_id])
+                if len(cases) == 1:
+                    case_link = reverse(CaseDetailsView.urlname, args=[instance.domain, cases[0].case_id])
+                else:
+                    case_link = ", ".join(["[{}]({})".format(
+                        c.name, reverse(CaseDetailsView.urlname, args=[instance.domain, c.case_id])
+                    ) for c in cases])
             if can_view_form_exports(user, instance.domain):
                 form_export_link = reverse(FormExportListView.urlname, args=[instance.domain])
             if cases and can_view_case_exports(user, instance.domain):
@@ -177,13 +182,21 @@ class SubmissionPost(object):
 
             # Add link to form/case if possible
             if form_link and case_link:
-                messages.append(
-                    _("You submitted [this form]({}), which affected [this case]({}).")
-                    .format(form_link, case_link))
+                if len(cases) == 1:
+                    messages.append(
+                        _("You submitted [this form]({}), which affected [this case]({}).")
+                        .format(form_link, case_link))
+                else:
+                    messages.append(
+                        _("You submitted [this form]({}), which affected these cases: {}.")
+                        .format(form_link, case_link))
             elif form_link:
                 messages.append(_("You submitted [this form]({}).").format(form_link))
             elif case_link:
-                messages.append(_("Your form affected [this case]({}).").format(case_link))
+                if len(cases) == 1:
+                    messages.append(_("Your form affected [this case]({}).").format(case_link))
+                else:
+                    messages.append(_("Your form affected these cases: {}.").format(case_link))
 
             # Add link to all form/case exports
             if form_export_link and case_export_link:
