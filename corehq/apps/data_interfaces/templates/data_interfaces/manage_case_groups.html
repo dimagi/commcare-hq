@@ -3,10 +3,7 @@
 {% load hq_shared_tags %}
 {% load crispy_forms_tags %}
 
-{% block js %}{{ block.super }}
-    <script src="{% static 'hqwebapp/js/bulk_upload_file.js' %}"></script>
-    <script src="{% static 'data_interfaces/js/manage_case_groups.js' %}"></script>
-{% endblock %}
+{% requirejs_main "data_interfaces/js/manage_case_groups" %}
 
 {% block pagination_header %}
     <h3>
