@@ -198,7 +198,7 @@ class UserLocationDim(BaseDim, CustomSQLETLMixin):
 
     @classmethod
     def dependencies(cls):
-        return [USER_DIM_SLUG, LOCATION_DIM_SLUG]
+        return [USER_DIM_SLUG, LOCATION_DIM_SLUG, USER_STAGING_SLUG]
 
 
 class UserGroupDim(BaseDim, CustomSQLETLMixin):
