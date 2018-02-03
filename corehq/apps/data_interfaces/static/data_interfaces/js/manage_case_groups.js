@@ -30,7 +30,7 @@ hqDefine("data_interfaces/js/manage_case_groups", [
                             action: 'bulk',
                             upload_id: bulkUploadId,
                         },
-                        error: function (data) {
+                        error: function() {
                             retry();
                         },
                         success: function (data) {
@@ -42,7 +42,7 @@ hqDefine("data_interfaces/js/manage_case_groups", [
                             } else {
                                 retry();
                             }
-                        }
+                        },
                     });
                 } else {
                     if (attempts >= 10) {
