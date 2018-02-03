@@ -4,8 +4,9 @@
 {% load crispy_forms_tags %}
 
 {% block js-inline %}{{ block.super }}
-    {% if bulk_upload_id %}
-        <script>
+    <script>
+        var bulkUploadId = hqImport("hqwebapp/js/initial_page_data").get("bulk_upload_id");
+        if (bulkUploadId) {
             var isPollingActive = true,
                 attempts = 0;
 
@@ -22,7 +23,7 @@
                         dataType: 'json',
                         data: {
                             action: 'bulk',
-                            upload_id: '{{ bulk_upload_id }}'
+                            upload_id: bulkUploadId,
                         },
                         error: function (data) {
                             retry();
@@ -40,7 +41,7 @@
                     });
                 } else {
                     if (attempts >= 10) {
-                        $('#upload-notice').text("{% trans 'Sorry, it looks like the upload failed.' %}");
+                        $('#upload-notice').text(gettext("Sorry, it looks like the upload failed."));
                     }
                     isPollingActive = false;
                 }
@@ -48,8 +49,8 @@
             $(function () {
                 pollStatus();
             });
-        </script>
-    {% endif %}
+        }
+    </script>
     <script>
         $(function () {
             var $editGroupName = $('#edit-group-name');
@@ -108,6 +109,8 @@
 {% endblock %}
 
 {% block pagination_templates %}
+    {% initial_page_data 'bulk_upload_id' bulk_upload_id %}
+
     <script type="text/html" id="existing-case-template">
         <td class="col-sm-5">
             <a data-bind="attr: { href: detailsUrl }, text: name" target="_blank"></a>
