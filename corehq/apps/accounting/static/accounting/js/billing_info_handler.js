@@ -1,4 +1,4 @@
-hqDefine('accounting/js/billing_info_handler', [
+hqDefine('accounting/js/widgets', [
     'jquery',
     'underscore',
     'select2-3.5.2-legacy/select2',
