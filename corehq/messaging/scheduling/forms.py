@@ -44,6 +44,7 @@ from corehq.messaging.scheduling.models import (
     ScheduledBroadcast,
     SMSContent,
     SMSSurveyContent,
+    CustomContent,
 )
 from corehq.messaging.scheduling.scheduling_partitioned.models import ScheduleInstance, CaseScheduleInstanceMixin
 from couchdbkit.resource import ResourceNotFound
@@ -104,6 +105,7 @@ class ScheduleForm(Form):
     CONTENT_EMAIL = 'email'
     CONTENT_SMS_SURVEY = 'sms_survey'
     CONTENT_IVR_SURVEY = 'ivr_survey'
+    CONTENT_CUSTOM_SMS = 'custom_sms'
 
     LANGUAGE_PROJECT_DEFAULT = 'PROJECT_DEFAULT'
 
@@ -1385,6 +1387,12 @@ class ConditionalAlertScheduleForm(ScheduleForm):
         )
     )
 
+    custom_sms_content_id = ChoiceField(
+        required=False,
+        label=ugettext_lazy("Custom SMS Content"),
+        choices=((k, v[1]) for k, v in settings.AVAILABLE_CUSTOM_SCHEDULING_CONTENT.items()),
+    )
+
     reset_case_property_enabled = ChoiceField(
         required=True,
         choices=(
@@ -1421,6 +1429,25 @@ class ConditionalAlertScheduleForm(ScheduleForm):
             ),
         ]
 
+    def add_initial_for_content(self, result):
+        content = self.initial_schedule.memoized_events[0].content
+        if isinstance(content, CustomContent):
+            result['content'] = self.CONTENT_CUSTOM_SMS
+            result['custom_sms_content_id'] = content.custom_content_id
+        else:
+            return super(ConditionalAlertScheduleForm, self).add_initial_for_content(result)
+
+    def add_additional_content_types(self):
+        super(ConditionalAlertScheduleForm, self).add_additional_content_types()
+
+        if (
+            self.criteria_form.is_system_admin or
+            self.initial.get('content') == self.CONTENT_CUSTOM_SMS
+        ):
+            self.fields['content'].choices += [
+                (self.CONTENT_CUSTOM_SMS, _("Custom SMS")),
+            ]
+
     @property
     def scheduling_fieldset_legend(self):
         return ''
@@ -1437,11 +1464,17 @@ class ConditionalAlertScheduleForm(ScheduleForm):
 
     @cached_property
     def requires_system_admin_to_edit(self):
-        return CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM in self.initial.get('recipient_types', [])
+        return (
+            CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM in self.initial.get('recipient_types', []) or
+            self.initial.get('content') == self.CONTENT_CUSTOM_SMS
+        )
 
     @cached_property
     def requires_system_admin_to_save(self):
-        return CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM in self.cleaned_data['recipient_types']
+        return (
+            CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM in self.cleaned_data['recipient_types'] or
+            self.cleaned_data['content'] == self.CONTENT_CUSTOM_SMS
+        )
 
     def update_send_time_type_choices(self):
         self.fields['send_time_type'].choices += [
@@ -1457,7 +1490,7 @@ class ConditionalAlertScheduleForm(ScheduleForm):
 
         if (
             self.criteria_form.is_system_admin or
-            CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM in self.initial['recipient_types']
+            CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM in self.initial.get('recipient_types', [])
         ):
             new_choices.extend([
                 (CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM, _("Custom Recipient")),
@@ -1572,6 +1605,18 @@ class ConditionalAlertScheduleForm(ScheduleForm):
         ])
         return result
 
+    def get_content_layout_fields(self):
+        result = super(ConditionalAlertScheduleForm, self).get_content_layout_fields()
+        result.extend([
+            hqcrispy.B3MultiField(
+                _("Custom SMS Content"),
+                twbscrispy.InlineField('custom_sms_content_id'),
+                self.get_system_admin_label(),
+                data_bind="visible: content() === '%s'" % self.CONTENT_CUSTOM_SMS,
+            ),
+        ])
+        return result
+
     def get_advanced_layout_fields(self):
         result = super(ConditionalAlertScheduleForm, self).get_advanced_layout_fields()
         result.extend([
@@ -1638,7 +1683,7 @@ class ConditionalAlertScheduleForm(ScheduleForm):
         return value
 
     def clean_custom_recipient(self):
-        recipient_types = self.cleaned_data.get('recipient_types')
+        recipient_types = self.cleaned_data.get('recipient_types', [])
         custom_recipient = self.cleaned_data.get('custom_recipient')
 
         if CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM not in recipient_types:
@@ -1648,6 +1693,16 @@ class ConditionalAlertScheduleForm(ScheduleForm):
             raise ValidationError(_("This field is required"))
 
         return custom_recipient
+
+    def clean_custom_sms_content_id(self):
+        if self.cleaned_data['content'] != self.CONTENT_CUSTOM_SMS:
+            return None
+
+        value = self.cleaned_data['custom_sms_content_id']
+        if not value:
+            raise ValidationError(_("This field is required"))
+
+        return value
 
     def clean_reset_case_property_enabled(self):
         value = self.cleaned_data['reset_case_property_enabled']
@@ -1738,6 +1793,14 @@ class ConditionalAlertScheduleForm(ScheduleForm):
             result.append((CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM, custom_recipient_id))
 
         return result
+
+    def distill_content(self):
+        if self.cleaned_data['content'] == self.CONTENT_CUSTOM_SMS:
+            return CustomContent(
+                custom_content_id=self.cleaned_data['custom_sms_content_id']
+            )
+        else:
+            return super(ConditionalAlertScheduleForm, self).distill_content()
 
     def distill_model_timed_event(self):
         event_type = self.cleaned_data['send_time_type']
