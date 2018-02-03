@@ -1,4 +1,4 @@
-hqDefine('accounting/js/subscription_info_handler', [
+hqDefine('accounting/js/base_subscriptions_main', [
     'jquery',
     'knockout',
     'accounting/js/widgets',
