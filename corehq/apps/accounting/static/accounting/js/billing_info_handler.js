@@ -108,18 +108,18 @@ hqDefine('accounting/js/billing_info_handler', [
     };
 
     $(function() {
-        _.each($(".ko-email-select2"), function(input) {
+        _.each($(".accounting-email-select2"), function(input) {
             var handler = new EmailSelect2Handler($(input).attr("name"));
             handler.init();
         });
-        $(".ko-email-select2").removeAttr('required');
+        $(".accounting-email-select2").removeAttr('required');
 
-        _.each($(".ko-async-select2"), function(input) {
+        _.each($(".accounting-async-select2"), function(input) {
             var handler = new AsyncSelect2Handler($(input).attr("name"));
             handler.init();
         });
 
-        _.each($(".ko-country-select2"), function(form) {
+        _.each($(".accounting-country-select2"), function(form) {
             var country = new AsyncSelect2Handler('country');
             country.initSelection = function (element, callback) {
                 var data = {
