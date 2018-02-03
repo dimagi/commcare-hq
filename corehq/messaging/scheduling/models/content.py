@@ -156,7 +156,7 @@ class CustomContent(Content):
             raise ValueError("Encountered unexpected custom content id %s" % self.custom_content_id)
 
         custom_function = to_function(
-            settings.AVAILABLE_CUSTOM_SCHEDULING_CONTENT[self.custom_content_id]
+            settings.AVAILABLE_CUSTOM_SCHEDULING_CONTENT[self.custom_content_id][0]
         )
         messages = custom_function(recipient, schedule_instance)
 

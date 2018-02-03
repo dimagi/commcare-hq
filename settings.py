@@ -1579,21 +1579,29 @@ ALLOWED_CUSTOM_CONTENT_HANDLERS = {
 # Used by the new reminders framework
 AVAILABLE_CUSTOM_SCHEDULING_CONTENT = {
     "ICDS_STATIC_NEGATIVE_GROWTH_MESSAGE":
-        "custom.icds.messaging.custom_content.static_negative_growth_indicator",
+        ["custom.icds.messaging.custom_content.static_negative_growth_indicator",
+         "ICDS: Static/Negative Growth Indicator"],
     "ICDS_MISSED_CF_VISIT_TO_AWW":
-        "custom.icds.messaging.custom_content.missed_cf_visit_to_aww",
+        ["custom.icds.messaging.custom_content.missed_cf_visit_to_aww",
+         "ICDS: Missed CF Visit for AWW recipient"],
     "ICDS_MISSED_CF_VISIT_TO_LS":
-        "custom.icds.messaging.custom_content.missed_cf_visit_to_ls",
+        ["custom.icds.messaging.custom_content.missed_cf_visit_to_ls",
+         "ICDS: Missed CF Visit for LS recipient"],
     "ICDS_MISSED_PNC_VISIT_TO_LS":
-        "custom.icds.messaging.custom_content.missed_pnc_visit_to_ls",
+        ["custom.icds.messaging.custom_content.missed_pnc_visit_to_ls",
+         "ICDS: Missed PNC Visit for LS recipient"],
     "ICDS_CHILD_ILLNESS_REPORTED":
-        "custom.icds.messaging.custom_content.child_illness_reported",
+        ["custom.icds.messaging.custom_content.child_illness_reported",
+         "ICDS: Child Illness Reported"],
     "ICDS_CF_VISITS_COMPLETE":
-        "custom.icds.messaging.custom_content.cf_visits_complete",
+        ["custom.icds.messaging.custom_content.cf_visits_complete",
+         "ICDS: CF Visits Complete"],
     "ICDS_DPT3_AND_MEASLES_ARE_DUE":
-        "custom.icds.messaging.custom_content.dpt3_and_measles_are_due",
+        ["custom.icds.messaging.custom_content.dpt3_and_measles_are_due",
+         "ICDS: DPT3 and Measles Due"],
     "ICDS_CHILD_VACCINATIONS_COMPLETE":
-        "custom.icds.messaging.custom_content.child_vaccinations_complete",
+        ["custom.icds.messaging.custom_content.child_vaccinations_complete",
+         "ICDS: Child vaccinations complete"],
 }
 
 # Used by the old reminders framework
