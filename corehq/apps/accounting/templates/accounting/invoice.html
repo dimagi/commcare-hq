@@ -3,10 +3,7 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-{% block js %}{{ block.super }}
-    <script src="{% static 'accounting/js/widgets.js' %}"></script>
-    <script src="{% static 'hqwebapp/js/stay_on_tab.js' %}"></script>
-{% endblock %}
+{% requirejs_main "accounting/js/invoice_main" %}
 
 {% block page_content %}
     {% if adjust_balance_form %}
