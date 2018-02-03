@@ -14,33 +14,6 @@ class JsonApiError(Exception):
     pass
 
 
-def log_request(func):
-
-    def request_wrapper(self, *args, **kwargs):
-        dhis2_conn = get_dhis2_connection(self.domain_name)
-        domain_log_level = getattr(dhis2_conn, 'log_level', logging.INFO)
-        log_level = logging.INFO
-        request_error = ''
-        response_status = None
-        response_body = ''
-        try:
-            response = func(self, *args, **kwargs)
-            response_status = response.status_code
-            response_body = response.content
-        except Exception as err:
-            log_level = logging.ERROR
-            request_error = str(err)
-            raise err
-        else:
-            return response
-        finally:
-            if log_level >= domain_log_level:
-                JsonApiLog.log(log_level, self, request_error, response_status, response_body, func,
-                               *args, **kwargs)
-
-    return request_wrapper
-
-
 class JsonApiRequest(object):
     """
     Wrap requests with URL, header and authentication for DHIS2 API
@@ -72,13 +45,31 @@ class JsonApiRequest(object):
     def get_request_url(self, path):
         return self.server_url + path.lstrip('/')
 
-    @log_request
     def send_request(self, method_func, *args, **kwargs):
+        dhis2_conn = get_dhis2_connection(self.domain_name)
+        domain_log_level = getattr(dhis2_conn, 'log_level', logging.INFO)
+        log_level = logging.INFO
+        request_error = ''
+        response_status = None
+        response_body = ''
         try:
             response = method_func(*args, **kwargs)
+            response_status = response.status_code
+            response_body = response.content
         except requests.RequestException as err:
+            log_level = logging.ERROR
+            request_error = str(err)
             raise JsonApiError(str(err))
-        return self.json_or_error(response)
+        except Exception as err:
+            log_level = logging.ERROR
+            request_error = str(err)
+            raise err
+        else:
+            return self.json_or_error(response)
+        finally:
+            if log_level >= domain_log_level:
+                JsonApiLog.log(log_level, self, request_error, response_status, response_body, method_func,
+                               *args, **kwargs)
 
     def get(self, path, **kwargs):
         return self.send_request(
