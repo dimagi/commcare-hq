@@ -1,14 +1,23 @@
-hqDefine("hqwebapp/js/crud_paginated_list_init", function() {
+hqDefine("hqwebapp/js/crud_paginated_list_init", [
+    "jquery",
+    "knockout",
+    "hqwebapp/js/initial_page_data",
+    "hqwebapp/js/crud_paginated_list",
+], function(
+    $,
+    ko,
+    initialPageData,
+    CRUDPaginatedList
+) {
     $(function () {
-        var initial_page_data = hqImport("hqwebapp/js/initial_page_data").get,
-            paginatedListModel = hqImport("hqwebapp/js/crud_paginated_list").CRUDPaginatedListModel(
-                initial_page_data('total'),
-                initial_page_data('limit'),
-                initial_page_data('page'),
+        var paginatedListModel = CRUDPaginatedList.CRUDPaginatedListModel(
+                initialPageData.get('total'),
+                initialPageData.get('limit'),
+                initialPageData.get('page'),
                 {
-                    statusCodeText: initial_page_data('status_codes'),
-                    allowItemCreation: initial_page_data('allow_item_creation'),
-                    createItemForm: initial_page_data('create_item_form'),
+                    statusCodeText: initialPageData.get('status_codes'),
+                    allowItemCreation: initialPageData.get('allow_item_creation'),
+                    createItemForm: initialPageData.get('create_item_form'),
                 }
             );
 
