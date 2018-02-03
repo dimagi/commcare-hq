@@ -1,9 +1,11 @@
 hqDefine('accounting/js/widgets', [
     'jquery',
+    'knockout',
     'underscore',
     'select2-3.5.2-legacy/select2',
 ], function (
     $,
+    ko,
     _
 ) {
     var AsyncSelect2Handler = function (field, multiple) {
@@ -107,6 +109,14 @@ hqDefine('accounting/js/widgets', [
         },
     };
 
+    var AdjustBalanceFormModel = function () {
+        var self = this;
+        self.adjustmentType = ko.observable("current");
+        self.showCustomAmount = ko.computed(function() {
+            return self.adjustmentType() === 'credit';
+        }, self);
+    };
+
     $(function() {
         _.each($(".accounting-email-select2"), function(input) {
             var handler = new EmailSelect2Handler($(input).attr("name"));
@@ -129,6 +139,10 @@ hqDefine('accounting/js/widgets', [
                 callback(data);
             };
             country.init();
+        });
+
+        _.each($('.ko-adjust-balance-form'), function(form) {
+            $(form).koApplyBindings(new AdjustBalanceFormModel());
         });
     });
 
