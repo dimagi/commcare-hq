@@ -13,6 +13,8 @@ from django.http import (
     HttpResponseForbidden,
 )
 from django.conf import settings
+from django.urls import reverse
+from django.utils.translation import ugettext as _
 import sys
 from casexml.apps.phone.restore_caching import AsyncRestoreTaskIdCache, RestorePayloadPathCache
 import couchforms
@@ -21,8 +23,12 @@ from casexml.apps.case.exceptions import PhoneDateValueError, IllegalCaseId, Use
 from corehq.const import OPENROSA_VERSION_3
 from corehq.middleware import OPENROSA_VERSION_HEADER
 from corehq.toggles import ASYNC_RESTORE
+from corehq.apps.cloudcare.const import DEVICE_ID as FORMPLAYER_DEVICE_ID
 from corehq.apps.commtrack.exceptions import MissingProductId
 from corehq.apps.domain_migration_flags.api import any_migrations_in_progress
+from corehq.apps.users.models import CouchUser, WebUser
+from corehq.apps.users.permissions import can_view_case_exports, can_view_form_exports, \
+    has_permission_to_view_report
 from corehq.form_processor.exceptions import CouchSaveAborted, PostSaveError
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
@@ -134,6 +140,77 @@ class SubmissionPost(object):
         found_old = scrub_meta(xform)
         legacy_notification_assert(not found_old, 'Form with old metadata submitted', xform.form_id)
 
+    def _get_success_message(self, instance, cases=None):
+        '''
+        Formplayer requests get a detailed success message pointing to the form/case affected.
+        All other requests get a generic message.
+
+        Message is formatted with markdown.
+        '''
+
+        if not instance.metadata or instance.metadata.deviceID != FORMPLAYER_DEVICE_ID:
+            return u'   √   '
+
+        messages = []
+        if instance.metadata.deviceID == FORMPLAYER_DEVICE_ID:
+            user = CouchUser.get(instance.user_id)
+            if not user or not user.is_web_user():
+                return _('Form successfully saved!')
+            user = WebUser.get(instance.user_id)
+
+            from corehq.apps.export.views import CaseExportListView, FormExportListView
+            from corehq.apps.reports.views import CaseDetailsView, FormDataView
+            form_link = case_link = form_export_link = case_export_link = None
+            form_view = 'corehq.apps.reports.standard.inspect.SubmitHistory'
+            if has_permission_to_view_report(user, instance.domain, form_view):
+                form_link = reverse(FormDataView.urlname, args=[instance.domain, instance.form_id])
+            case_view = 'corehq.apps.reports.standard.cases.basic.CaseListReport'
+            if cases and has_permission_to_view_report(user, instance.domain, case_view):
+                if len(cases) == 1:
+                    case_link = reverse(CaseDetailsView.urlname, args=[instance.domain, cases[0].case_id])
+                else:
+                    case_link = ", ".join(["[{}]({})".format(
+                        c.name, reverse(CaseDetailsView.urlname, args=[instance.domain, c.case_id])
+                    ) for c in cases])
+            if can_view_form_exports(user, instance.domain):
+                form_export_link = reverse(FormExportListView.urlname, args=[instance.domain])
+            if cases and can_view_case_exports(user, instance.domain):
+                case_export_link = reverse(CaseExportListView.urlname, args=[instance.domain])
+
+            # Start with generic message
+            messages.append(_('Form successfully saved!'))
+
+            # Add link to form/case if possible
+            if form_link and case_link:
+                if len(cases) == 1:
+                    messages.append(
+                        _("You submitted [this form]({}), which affected [this case]({}).")
+                        .format(form_link, case_link))
+                else:
+                    messages.append(
+                        _("You submitted [this form]({}), which affected these cases: {}.")
+                        .format(form_link, case_link))
+            elif form_link:
+                messages.append(_("You submitted [this form]({}).").format(form_link))
+            elif case_link:
+                if len(cases) == 1:
+                    messages.append(_("Your form affected [this case]({}).").format(case_link))
+                else:
+                    messages.append(_("Your form affected these cases: {}.").format(case_link))
+
+            # Add link to all form/case exports
+            if form_export_link and case_export_link:
+                messages.append(
+                    _("Click to export your [case]({}) or [form]({}) data.")
+                    .format(case_export_link, form_export_link))
+            elif form_export_link:
+                messages.append(_("Click to export your [form data]({}).").format(form_export_link))
+            elif case_export_link:
+                messages.append(_("Click to export your [case data]({}).").format(case_export_link))
+
+        return "\n\n".join(messages)
+
+
     def run(self):
         failure_response = self._handle_basic_failure_modes()
         if failure_response:
@@ -154,7 +231,7 @@ class SubmissionPost(object):
         cases = []
         ledgers = []
         submission_type = 'unknown'
-        response_nature = error_message = None
+        openrosa_kwargs = {}
         with result.get_locked_forms() as xforms:
             from casexml.apps.case.xform import get_and_check_xform_domain
             domain = get_and_check_xform_domain(xforms[0])
@@ -197,11 +274,11 @@ class SubmissionPost(object):
                         result = reprocess_form(existing_form, lock_form=False)
                     if result and result.error:
                         submission_type = 'error'
-                        error_message = result.error
+                        openrosa_kwargs['error_message'] = result.error
                         if existing_form.is_error:
-                            response_nature = ResponseNature.PROCESSING_FAILURE
+                            openrosa_kwargs['error_nature'] = ResponseNature.PROCESSING_FAILURE
                         else:
-                            response_nature = ResponseNature.POST_PROCESSING_FAILURE
+                            openrosa_kwargs['error_nature'] = ResponseNature.POST_PROCESSING_FAILURE
                     else:
                         self.interface.save_processed_models([instance])
                 elif not instance.is_error:
@@ -212,7 +289,7 @@ class SubmissionPost(object):
                             PhoneDateValueError, InvalidCaseIndex, CaseValueError) as e:
                         self._handle_known_error(e, instance, xforms)
                         submission_type = 'error'
-                        response_nature = ResponseNature.PROCESSING_FAILURE
+                        openrosa_kwargs['error_nature'] = ResponseNature.PROCESSING_FAILURE
                     except Exception as e:
                         # handle / log the error and reraise so the phone knows to resubmit
                         # note that in the case of edit submissions this won't flag the previous
@@ -222,15 +299,18 @@ class SubmissionPost(object):
                         raise
                     else:
                         instance.initial_processing_complete = True
-                        error_message = self.save_processed_models(case_db, xforms, case_stock_result)
-                        if error_message:
-                            response_nature = ResponseNature.POST_PROCESSING_FAILURE
+                        openrosa_kwargs['error_message'] = self.save_processed_models(case_db, xforms,
+                                                                                      case_stock_result)
+                        if openrosa_kwargs['error_message']:
+                            openrosa_kwargs['error_nature'] = ResponseNature.POST_PROCESSING_FAILURE
                         cases = case_stock_result.case_models
                         ledgers = case_stock_result.stock_result.models_to_save
+
+                        openrosa_kwargs['success_message'] = self._get_success_message(instance, cases=cases)
                 elif instance.is_error:
                     submission_type = 'error'
 
-            response = self._get_open_rosa_response(instance, error_message, response_nature)
+            response = self._get_open_rosa_response(instance, **openrosa_kwargs)
             return FormProcessingResult(response, instance, cases, ledgers, submission_type)
 
     def _invalidate_caches(self, xform):
@@ -342,18 +422,18 @@ class SubmissionPost(object):
         if has_errors:
             raise PostSaveError
 
-    def _get_open_rosa_response(self, instance, error_message=None, error_nature=None):
+    def _get_open_rosa_response(self, instance, success_message=None, error_message=None, error_nature=None):
         if self.is_openrosa_version3:
             instance_ok = instance.is_normal or instance.is_duplicate
             has_error = error_message or error_nature
             if instance_ok and not has_error:
-                response = openrosa_response.SUCCESS_RESPONSE
+                response = openrosa_response.get_openarosa_success_response(message=success_message)
             else:
                 error_message = error_message or instance.problem
                 response = self.get_retry_response(error_message, error_nature)
         else:
             if instance.is_normal:
-                response = openrosa_response.SUCCESS_RESPONSE
+                response = openrosa_response.get_openarosa_success_response()
             else:
                 response = self.get_v2_submit_error_response(instance)
 
