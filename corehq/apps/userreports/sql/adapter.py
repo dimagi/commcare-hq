@@ -2,10 +2,13 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import hashlib
 
+from architect import install
 from django.utils.translation import ugettext as _
 import sqlalchemy
 from sqlalchemy.exc import IntegrityError, ProgrammingError
+from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.schema import Index
+
 from corehq.apps.userreports.adapter import IndicatorAdapter
 from corehq.apps.userreports.exceptions import (
     ColumnNotFoundError, TableRebuildError, TableNotFoundWarning,
@@ -34,10 +37,34 @@ class IndicatorSqlAdapter(IndicatorAdapter):
     def get_table(self):
         return get_indicator_table(self.config)
 
+    @memoized
+    def get_sqlalchemy_mapping(self):
+        table = self.get_table()
+        Base = declarative_base(metadata=metadata)
+        properties = dict(table.columns)
+        properties['__tablename__'] = table.name
+        properties['__table_args__'] = ({'extend_existing': True},)
+
+        type_ = type(b"TemporaryTableDef", (Base,), properties)
+        return type_
+
+    def _install_partition(self):
+        if self.config.sql_settings.partition_config:
+            config = self.config.sql_settings.partition_config[0]
+            partition = install(
+                'partition', type='range', subtype=config.subtype,
+                constraint=config.constraint, column=config.column, db=self.engine.url,
+                orm='sqlalchemy'
+            )
+            mapping = self.get_sqlalchemy_mapping()
+            partition(mapping)
+            mapping.architect.partition.get_partition().prepare()
+
     def rebuild_table(self):
         self.session_helper.Session.remove()
         try:
             rebuild_table(self.engine, self.get_table())
+            self._install_partition()
         except ProgrammingError as e:
             raise TableRebuildError('problem rebuilding UCR table {}: {}'.format(self.config, e))
         finally:
@@ -47,6 +74,7 @@ class IndicatorSqlAdapter(IndicatorAdapter):
         self.session_helper.Session.remove()
         try:
             build_table(self.engine, self.get_table())
+            self._install_partition()
         except ProgrammingError as e:
             raise TableRebuildError('problem building UCR table {}: {}'.format(self.config, e))
         finally:
