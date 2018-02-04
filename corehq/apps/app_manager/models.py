@@ -54,7 +54,7 @@ from couchdbkit.exceptions import BadValueError
 
 from corehq.apps.app_manager.app_schemas.case_properties import ParentCasePropertyBuilder
 from corehq.apps.app_manager.detail_screen import PropertyXpathGenerator
-from corehq.apps.app_manager.remote_link_accessors import get_remote_version, get_remote_master_release
+from corehq.apps.linked_domain.applications import get_master_app_version, get_latest_master_app_release
 from corehq.apps.app_manager.suite_xml.utils import get_select_chain
 from corehq.apps.app_manager.suite_xml.generator import SuiteGenerator, MediaSuiteGenerator
 from corehq.apps.app_manager.xpath_validator import validate_xpath
@@ -111,7 +111,7 @@ from corehq.apps.app_manager.dbaccessors import (
     get_latest_build_doc,
     get_latest_released_app_doc,
     domain_has_apps,
-    get_latest_released_app, get_latest_released_app_version)
+)
 from corehq.apps.app_manager.util import (
     split_path,
     save_xform,
@@ -148,8 +148,7 @@ from corehq.apps.app_manager.exceptions import (
     CaseXPathValidationError,
     UserCaseXPathValidationError,
     XFormValidationFailed,
-    PracticeUserException,
-    ActionNotPermitted)
+    PracticeUserException)
 from corehq.apps.reports.daterange import get_daterange_start_end_dates, get_simple_dateranges
 from jsonpath_rw import jsonpath, parse
 import six
@@ -6269,7 +6268,11 @@ class RemoteApp(ApplicationBase):
         return questions
 
 
-RemoteAppDetails = namedtuple('RemoteAppDetails', 'url_base domain username api_key app_id')
+class RemoteAppDetails(namedtuple('RemoteAppDetails', 'url_base domain username api_key app_id')):
+    def __bool__(self):
+        return bool(self.url_base)
+
+    __nonzero__ = __bool__
 
 
 class RemoteLinkedAppAuth(DocumentSchema):
@@ -6300,23 +6303,16 @@ class LinkedApplication(Application):
         )
 
     def get_master_version(self):
-        if self.master_is_remote:
-            return get_remote_version(self.remote_app_details)
-        else:
-            return get_latest_released_app_version(self.master_domain, self.master)
+        return get_master_app_version(self.master_domain, self.master, self.remote_app_details)
 
     @property
     def master_is_remote(self):
         return bool(self.remote_url_base)
 
     def get_latest_master_release(self):
-        if self.master_is_remote:
-            return get_remote_master_release(self.remote_app_details, self.domain)
-        else:
-            master_app = get_app(None, self.master)
-            if self.domain not in master_app.linked_whitelist:
-                raise ActionNotPermitted
-            return get_latest_released_app(master_app.domain, self.master)
+        return get_latest_master_app_release(
+            self.master_domain, self.master, self.domain, self.remote_app_details
+        )
 
 
 def import_app(app_id_or_source, domain, source_properties=None, validate_source_domain=None):

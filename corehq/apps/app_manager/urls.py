@@ -28,7 +28,6 @@ from corehq.apps.app_manager.views import (
     direct_ccz, download_index, download_file, get_form_questions, pull_master_app, edit_add_ons,
     update_linked_whitelist, overwrite_module_case_list, app_settings, PatchLinkedAppWhitelist
 )
-from corehq.apps.app_manager.views.remote_linked_apps import get_latest_released_app_source
 from corehq.apps.hqmedia.urls import application_urls as hqmedia_urls
 from corehq.apps.hqmedia.urls import download_urls as media_download_urls
 
@@ -81,8 +80,6 @@ urlpatterns = [
         get_xform_source, name='get_xform_source'),
     url(r'^casexml/(?P<form_unique_id>[\w-]+)/$', form_casexml, name='form_casexml'),
     url(r'^source/(?P<app_id>[\w-]+)/$', app_source, name='app_source'),
-    url(r'^release_source/(?P<app_id>[\w-]+)/$', get_latest_released_app_source,
-        name='latest_released_app_source'),
     url(r'^import_app/$', import_app, name='import_app'),
     url(r'^copy_app/$', copy_app, name='copy_app'),
     url(r'^view/(?P<app_id>[\w-]+)/', include(app_urls)),

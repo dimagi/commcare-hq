@@ -3,51 +3,43 @@ import requests
 from couchdbkit.exceptions import ResourceNotFound
 from django.urls.base import reverse
 from requests import ConnectionError
-from requests.auth import AuthBase
 
 from corehq.apps.app_manager.dbaccessors import wrap_app
-from corehq.apps.app_manager.exceptions import RemoteRequestError, RemoteAuthError, ActionNotPermitted
 from corehq.apps.hqmedia.models import CommCareMultimedia
+from corehq.apps.linked_domain.auth import ApiKeyAuth
+from corehq.apps.linked_domain.exceptions import RemoteRequestError, RemoteAuthError, ActionNotPermitted
 from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.logging import notify_exception
 
 
-class ApiKeyAuth(AuthBase):
-    def __init__(self, username, apikey):
-        self.username = username
-        self.apikey = apikey
-
-    def __eq__(self, other):
-        return all([
-            self.username == getattr(other, 'username', None),
-            self.apikey == getattr(other, 'apikey', None)
-        ])
-
-    def __ne__(self, other):
-        return not self == other
-
-    def __call__(self, r):
-        r.headers['Authorization'] = 'apikey %s:%s' % (self.username, self.apikey)
-        return r
+def get_toggles_previews(domain_link):
+    return _do_simple_request('remote:toggles', domain_link)
 
 
-def get_remote_version(remote_app_details):
-    url = reverse('current_app_version', args=[remote_app_details.domain, remote_app_details.app_id])
-    response = _do_request_to_remote_hq(url, remote_app_details)
-    return response.json().get('latestReleasedBuild')
+def get_custom_data_models(domain_link):
+    return _do_simple_request('remote:custom_data_models', domain_link)
 
 
-def get_remote_master_release(remote_app_details, linked_domain):
-    url = reverse('latest_released_app_source', args=[remote_app_details.domain, remote_app_details.app_id])
-    params = {'requester': absolute_reverse('domain_homepage', args=[linked_domain])}
-    response = _do_request_to_remote_hq(url, remote_app_details, params)
-    return _convert_app_from_remote_linking_source(response.json())
+def get_user_roles(domain_link):
+    return _do_simple_request('remote:user_roles', domain_link)['user_roles']
 
 
-def whilelist_app_on_remote(remote_app_details, linked_domain):
-    url = reverse('patch_linked_app_whitelist', args=[remote_app_details.domain, remote_app_details.app_id])
-    params = {'whitelist_item': absolute_reverse('domain_homepage', args=[linked_domain])}
-    _do_request_to_remote_hq(url, remote_app_details, params, method='patch')
+def get_released_app_version(domain, app_id, remote_details):
+    url = reverse('current_app_version', args=[domain, app_id])
+    response = _do_request_to_remote_hq_json(url, remote_details)
+    return response.get('latestReleasedBuild')
+
+
+def get_released_app(domain, app_id, linked_domain, remote_details):
+    url = reverse('remote:latest_released_app_source', args=[domain, app_id])
+    response = _do_request_to_remote_hq_json(url, remote_details, _get_requester_param(linked_domain))
+    return _convert_app_from_remote_linking_source(response)
+
+
+def whilelist_app_on_remote(domain, app_id, linked_domain, remote_details):
+    url = reverse('patch_linked_app_whitelist', args=[domain, app_id])
+    params = _get_requester_param(linked_domain, 'whitelist_item')
+    _do_request_to_remote_hq(url, remote_details, params, method='patch')
 
 
 def _convert_app_from_remote_linking_source(app_json):
@@ -57,9 +49,13 @@ def _convert_app_from_remote_linking_source(app_json):
     return app
 
 
-def pull_missing_multimedia_from_remote(app):
+def pull_missing_multimedia_for_app(app):
     missing_media = _get_missing_multimedia(app)
     _fetch_remote_media(app.domain, missing_media, app.remote_app_details)
+
+
+def _get_requester_param(linked_domain, key='requester'):
+    return {key: absolute_reverse('domain_homepage', args=[linked_domain])}
 
 
 def _get_missing_multimedia(app):
@@ -96,8 +92,21 @@ def _fetch_remote_media_content(media_item, remote_app_details):
     return response.content
 
 
-def _do_request_to_remote_hq(relative_url, remote_app_details, params=None, method='get'):
-    url_base, domain, username, api_key, app_id = remote_app_details
+def _do_simple_request(url_name, domain_link):
+    url = reverse(url_name, args=[domain_link.master_domain])
+    return _do_request_to_remote_hq_json(
+        url, domain_link.remote_details, _get_requester_param(domain_link.linked_domain)
+    )
+
+
+def _do_request_to_remote_hq_json(relative_url, remote_details, params=None, method='get'):
+    return _do_request_to_remote_hq(relative_url, remote_details, params, method).json()
+
+
+def _do_request_to_remote_hq(relative_url, remote_details, params=None, method='get'):
+    url_base = remote_details.url_base
+    username = remote_details.username
+    api_key = remote_details.api_key
     full_url = u'%s%s' % (url_base, relative_url)
     try:
         response = requests.request(method, full_url, params=params, auth=ApiKeyAuth(username, api_key))
