@@ -9,6 +9,7 @@ import csv
 from couchdbkit import ResourceNotFound
 from django.conf import settings
 from django.core.mail import EmailMessage
+from celery.task import task
 
 from corehq import toggles
 from corehq.apps.domain.models import Domain
@@ -117,7 +118,8 @@ def guess_domain_language(domain_name):
     return counter.most_common(1)[0][0] if counter else 'en'
 
 
-def send_mock_repeater_payloads(repeater_id, payload_ids, email_id):
+@task(queue='background_queue')
+def send_repeater_payloads(repeater_id, payload_ids, email_id):
     from corehq.motech.repeaters.models import Repeater, RepeatRecord
     repeater = Repeater.get(repeater_id)
     repeater_type = repeater.doc_type
@@ -134,7 +136,7 @@ def send_mock_repeater_payloads(repeater_id, payload_ids, email_id):
             payload_id=payload_id,
         )
         payload_doc = repeater.payload_doc(dummy_repeat_record)
-        payload = Repeater(None).get_payload(dummy_repeat_record, payload_doc)
+        payload = repeater.get_payload(dummy_repeat_record, payload_doc)
         if isinstance(payload, dict):
             return payload
         else:

@@ -195,7 +195,7 @@
                     <span aria-hidden="true">&times;</span></button>
                 <form id="bulk-payload-form" class="form-horizontal"
                     enctype="multipart/form-data" method="post"
-                    action="{% url "send_mock_repeater_report" domain %}">
+                    action="{% url "generate_repeater_payloads" domain %}">
                     {% crispy email_bulk_payload_form %}
                 </form>
             </div>
