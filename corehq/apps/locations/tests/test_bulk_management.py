@@ -20,6 +20,8 @@ import six
 # These example types and trees mirror the information available in the upload files
 from corehq.apps.locations.util import get_location_data_model
 
+NOT_PROVIDED = LocationStub.NOT_PROVIDED
+
 FLAT_LOCATION_TYPES = [
     # name, code, parent_code, do_delete, shares_cases, view_descendants, index
     # ('name', 'code', 'parent_code', 'shares_cases', 'view_descendants'),
@@ -48,7 +50,7 @@ CYCLIC_LOCATION_TYPES = [
 
 
 # external_id, latitude, longitude, custom_data, index, location_data_model
-extra_stub_args = ('', '', '', {}, 0, None)
+extra_stub_args = ('', '', '', NOT_PROVIDED, 0, None)
 
 BASIC_LOCATION_TREE = [
     # (name, site_code, location_type, parent_code, location_id,
@@ -506,8 +508,8 @@ class TestBulkManagement(TestCase):
 
     def test_int_datatype(self):
         data = [
-            ('S1', 1, 'state', '', '', False, '12', '', '2345', {}, 0, None),
-            ('S2', 2, 'state', '', '', False, '12', '', '2345', {}, 0, None),
+            ('S1', 1, 'state', '', '', False, '12', '', '2345', NOT_PROVIDED, 0, None),
+            ('S2', 2, 'state', '', '', False, '12', '', '2345', NOT_PROVIDED, 0, None),
         ]
 
         result = self.bulk_update_locations(
@@ -520,8 +522,8 @@ class TestBulkManagement(TestCase):
 
     def test_data_format(self):
         data = [
-            ('S1', '1', 'state', '', '', False, '12', 'not-lat', '2345', {}, 0, None),
-            ('S2', '2', 'state', '', '', False, '12', '3434', '2345', {}, 0, None),
+            ('S1', '1', 'state', '', '', False, '12', 'not-lat', '2345', NOT_PROVIDED, 0, None),
+            ('S2', '2', 'state', '', '', False, '12', '3434', '2345', NOT_PROVIDED, 0, None),
         ]
         result = self.bulk_update_locations(
             FLAT_LOCATION_TYPES,
