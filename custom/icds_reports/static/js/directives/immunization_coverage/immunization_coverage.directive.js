@@ -238,9 +238,9 @@ function ImmunizationCoverageController($scope, $routeParams, $location, $filter
 
     vm.tooltipContent = function (monthName, dataInMonth) {
         return "<p><strong>" + monthName + "</strong></p><br/>"
-            + "<p>Total number of ICDS Child beneficiaries older than 1 year: <strong>" + $filter('indiaNumbers')(dataInMonth.all) + "</strong></p>"
-            + "<p>Total number of children who have recieved complete immunizations required by age 1: <strong>" + $filter('indiaNumbers')(dataInMonth.in_month) + "</strong></p>"
-            + "<p>% of children who have recieved complete immunizations required by age 1: <strong>" + d3.format('.2%')(dataInMonth.y) + "</strong></p>";
+            + "<div>Total number of ICDS Child beneficiaries older than 1 year: <strong>" + $filter('indiaNumbers')(dataInMonth.all) + "</strong></div>"
+            + "<div>Total number of children who have recieved complete immunizations required by age 1: <strong>" + $filter('indiaNumbers')(dataInMonth.in_month) + "</strong></div>"
+            + "<div>% of children who have recieved complete immunizations required by age 1: <strong>" + d3.format('.2%')(dataInMonth.y) + "</strong></div>";
     };
 
     vm.showAllLocations = function () {

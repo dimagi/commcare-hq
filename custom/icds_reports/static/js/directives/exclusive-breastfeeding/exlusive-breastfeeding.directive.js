@@ -235,9 +235,9 @@ function ExclusiveBreasfeedingController($scope, $routeParams, $location, $filte
 
     vm.tooltipContent = function (monthName, dataInMonth) {
         return "<p><strong>" + monthName + "</strong></p><br/>"
-            + "<p>Total number of children between ages 0 - 6 months: <strong>" + $filter('indiaNumbers')(dataInMonth.all) + "</strong></p>"
-            + "<p>Total number of children (0-6 months) exclusively breastfed in the given month: <strong>" + $filter('indiaNumbers')(dataInMonth.in_month) + "</strong></p>"
-            + "<p>% children (0-6 months) exclusively breastfed in the given month: <strong>" + d3.format('.2%')(dataInMonth.y) + "</strong></p>";
+            + "<div>Total number of children between ages 0 - 6 months: <strong>" + $filter('indiaNumbers')(dataInMonth.all) + "</strong></div>"
+            + "<div>Total number of children (0-6 months) exclusively breastfed in the given month: <strong>" + $filter('indiaNumbers')(dataInMonth.in_month) + "</strong></div>"
+            + "<div>% children (0-6 months) exclusively breastfed in the given month: <strong>" + d3.format('.2%')(dataInMonth.y) + "</strong></div>";
     };
 
     vm.resetAdditionalFilter = function() {

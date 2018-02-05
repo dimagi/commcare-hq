@@ -222,8 +222,8 @@ function MedicineKitController($scope, $routeParams, $location, $filter, infrast
 
     vm.tooltipContent = function (monthName, dataInMonth) {
         var tooltip_content = "<p><strong>" + monthName + "</strong></p><br/>";
-        tooltip_content += "<p>Number of AWCs that reported having a Medicine Kit: <strong>" + $filter('indiaNumbers')(dataInMonth.in_month) + "</strong></p>";
-        tooltip_content += "<p>Percentage of AWCs that reported having a Medicine Kit: <strong>" + d3.format('.2%')(dataInMonth.y) + "</strong></p>";
+        tooltip_content += "<div>Number of AWCs that reported having a Medicine Kit: <strong>" + $filter('indiaNumbers')(dataInMonth.in_month) + "</strong></div>";
+        tooltip_content += "<div>Percentage of AWCs that reported having a Medicine Kit: <strong>" + d3.format('.2%')(dataInMonth.y) + "</strong></div>";
 
         return tooltip_content;
     };

@@ -239,9 +239,9 @@ function ChildrenInitiatedController($scope, $routeParams, $location, $filter, m
 
     vm.tooltipContent = function (monthName, dataInMonth) {
         return "<p><strong>" + monthName + "</strong></p><br/>"
-            + "<p>Total number of children between age 6 - 8 months: <strong>" + dataInMonth.all + "</strong></p>"
-            + "<p>Total number of children (6-8 months) given timely introduction to sold or semi-solid food in the given month: <strong>" + dataInMonth.in_month + "</strong></p>"
-            + "<p>% children (6-8 months) given timely introduction to solid or semi-solid food in the given month: <strong>" + d3.format('.2%')(dataInMonth.y) + "</strong></p>";
+            + "<div>Total number of children between age 6 - 8 months: <strong>" + dataInMonth.all + "</strong></div>"
+            + "<div>Total number of children (6-8 months) given timely introduction to sold or semi-solid food in the given month: <strong>" + dataInMonth.in_month + "</strong></div>"
+            + "<div>% children (6-8 months) given timely introduction to solid or semi-solid food in the given month: <strong>" + d3.format('.2%')(dataInMonth.y) + "</strong></div>";
     };
 
     vm.showAllLocations = function () {

@@ -227,7 +227,7 @@ function RegisteredHouseholdController($scope, $routeParams, $location, $filter,
 
     vm.tooltipContent = function (monthName, value) {
         return "<p><strong>" + monthName + "</strong></p><br/>"
-            + "<p>Total number of household registered: <strong>" + value + "</strong></p>";
+            + "<div>Total number of household registered: <strong>" + value + "</strong></div>";
     };
 
     vm.showAllLocations = function () {

@@ -226,8 +226,8 @@ function AWCDailyStatusController($scope, $routeParams, $location, $filter, icds
 
     vm.tooltipContent = function(monthName, value, total) {
         return "<p>Total number of AWCs that were open on <strong>" + monthName + "</strong>: <strong>" + $filter('indiaNumbers')(value) + "</strong></p>"
-        + "<p>Total number of AWCs that have been launched: <strong>" + $filter('indiaNumbers')(total) + "</strong></p>"
-        + "<p>% of AWCs open on <strong>" + monthName + "</strong>: <strong>" + d3.format('.2%')(value / (total || 1)) + "</strong></p>";
+        + "<div>Total number of AWCs that have been launched: <strong>" + $filter('indiaNumbers')(total) + "</strong></div>"
+        + "<div>% of AWCs open on <strong>" + monthName + "</strong>: <strong>" + d3.format('.2%')(value / (total || 1)) + "</strong></div>";
     };
 
     vm.showAllLocations = function () {

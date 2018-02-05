@@ -219,10 +219,10 @@ function NewbornWithLowBirthController($scope, $routeParams, $location, $filter,
 
     vm.tooltipContent = function (monthName, dataInMonth) {
         return "<p><strong>" + monthName + "</strong></p><br/>"
-            + "<p>Total Number of Newborns born in given month: <strong>" + $filter('indiaNumbers')(dataInMonth.all) + "</strong></p>"
-            + "<p>Number of Newborns with LBW in given month: <strong>" + $filter('indiaNumbers')(dataInMonth.low_birth) + "</strong></p>"
-            + "<p>% newborns with LBW in given month: <strong>" + d3.format('.2%')(dataInMonth.y) + "</strong></p>"
-            + "<p>% Unweighed: <strong>" + d3.format('.2%')(1 - dataInMonth.y) + "</strong></p>";
+            + "<div>Total Number of Newborns born in given month: <strong>" + $filter('indiaNumbers')(dataInMonth.all) + "</strong></div>"
+            + "<div>Number of Newborns with LBW in given month: <strong>" + $filter('indiaNumbers')(dataInMonth.low_birth) + "</strong></div>"
+            + "<div>% newborns with LBW in given month: <strong>" + d3.format('.2%')(dataInMonth.y) + "</strong></div>"
+            + "<div>% Unweighed: <strong>" + d3.format('.2%')(1 - dataInMonth.y) + "</strong></div>";
     };
 
     vm.getDisableIndex = function () {

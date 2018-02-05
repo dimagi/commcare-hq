@@ -221,8 +221,8 @@ function CleanWaterController($scope, $routeParams, $location, $filter, infrastr
 
     vm.tooltipContent = function (monthName, dataInMonth) {
         var tooltip_content = "<p><strong>" + monthName + "</strong></p><br/>";
-        tooltip_content += "<p>Number of AWCs that reported having a source of clean drinking water: <strong>" + $filter('indiaNumbers')(dataInMonth.in_month) + "</strong></p>";
-        tooltip_content += "<p>% of AWCs that reported having a source of clean drinking water: <strong>" + d3.format('.2%')(dataInMonth.y) + "</strong></p>";
+        tooltip_content += "<div>Number of AWCs that reported having a source of clean drinking water: <strong>" + $filter('indiaNumbers')(dataInMonth.in_month) + "</strong></div>";
+        tooltip_content += "<div>% of AWCs that reported having a source of clean drinking water: <strong>" + d3.format('.2%')(dataInMonth.y) + "</strong></div>";
 
         return tooltip_content;
     };
