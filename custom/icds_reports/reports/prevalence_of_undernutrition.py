@@ -142,7 +142,7 @@ def get_prevalence_of_undernutrition_data_map(domain, config, loc_level, show_te
     }
 
 
-# @quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
+@quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
 def get_prevalence_of_undernutrition_data_chart(domain, config, loc_level, show_test=False):
     month = datetime(*config['month'])
     three_before = datetime(*config['month']) - relativedelta(months=3)
@@ -199,13 +199,13 @@ def get_prevalence_of_undernutrition_data_chart(domain, config, loc_level, show_
         date_in_miliseconds = int(date.strftime("%s")) * 1000
 
         data['peach'][date_in_miliseconds]['y'] += normal
-        data['peach'][date_in_miliseconds]['unweighed'] = (eligible - valid)
+        data['peach'][date_in_miliseconds]['unweighed'] += (eligible - valid)
         data['peach'][date_in_miliseconds]['all'] += valid
         data['orange'][date_in_miliseconds]['y'] += moderately_underweight
-        data['orange'][date_in_miliseconds]['unweighed'] = (eligible - valid)
+        data['orange'][date_in_miliseconds]['unweighed'] += (eligible - valid)
         data['orange'][date_in_miliseconds]['all'] += valid
         data['red'][date_in_miliseconds]['y'] += severely_underweight
-        data['red'][date_in_miliseconds]['unweighed'] = (eligible - valid)
+        data['red'][date_in_miliseconds]['unweighed'] += (eligible - valid)
         data['red'][date_in_miliseconds]['all'] += valid
 
     top_locations = sorted(
