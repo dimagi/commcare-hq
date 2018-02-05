@@ -7,7 +7,6 @@ hqDefine("reminders/js/reminders.keywords.ko", [
     ko,
     initialPageData
 ) {
-console.log("until");
     var KeywordActionsViewModel = function (initial_values) {
         'use strict';
         var self = this;
