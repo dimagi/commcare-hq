@@ -1,5 +1,13 @@
-/* globals django */
-hqDefine('accounting/js/billing_info_handler', function () {
+hqDefine('accounting/js/widgets', [
+    'jquery',
+    'knockout',
+    'underscore',
+    'select2-3.5.2-legacy/select2',
+], function (
+    $,
+    ko,
+    _
+) {
     var AsyncSelect2Handler = function (field, multiple) {
         'use strict';
         var self = this;
@@ -101,19 +109,27 @@ hqDefine('accounting/js/billing_info_handler', function () {
         },
     };
 
+    var AdjustBalanceFormModel = function () {
+        var self = this;
+        self.adjustmentType = ko.observable("current");
+        self.showCustomAmount = ko.computed(function() {
+            return self.adjustmentType() === 'credit';
+        }, self);
+    };
+
     $(function() {
-        _.each($(".ko-email-select2"), function(input) {
+        _.each($(".accounting-email-select2"), function(input) {
             var handler = new EmailSelect2Handler($(input).attr("name"));
             handler.init();
         });
-        $(".ko-email-select2").removeAttr('required');
+        $(".accounting-email-select2").removeAttr('required');
 
-        _.each($(".ko-async-select2"), function(input) {
+        _.each($(".accounting-async-select2"), function(input) {
             var handler = new AsyncSelect2Handler($(input).attr("name"));
             handler.init();
         });
 
-        _.each($(".ko-country-select2"), function(form) {
+        _.each($(".accounting-country-select2"), function(form) {
             var country = new AsyncSelect2Handler('country');
             country.initSelection = function (element, callback) {
                 var data = {
@@ -123,6 +139,10 @@ hqDefine('accounting/js/billing_info_handler', function () {
                 callback(data);
             };
             country.init();
+        });
+
+        _.each($('.ko-adjust-balance-form'), function(form) {
+            $(form).koApplyBindings(new AdjustBalanceFormModel());
         });
     });
 
