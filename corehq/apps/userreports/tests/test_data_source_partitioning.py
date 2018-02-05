@@ -125,11 +125,11 @@ class DataSourcePartitionByOwner(DataSourceConfigurationPartitionTest):
 
         # ensure docs are in separate databases
         result = self.adapter.engine.execute(
-            'SELECT COUNT(*) FROM """config_report_user-reports_sample_7554612a_abcdefghij""";')
+            'SELECT COUNT(*) FROM "config_report_user-reports_sample_7554612a_abcdefghij";')
         result = result.fetchone()[0]
 
         self.assertEqual(2, result)
         result = self.adapter.engine.execute(
-            'SELECT COUNT(*) FROM """config_report_user-reports_sample_7554612a_abcdefhijk""";')
+            'SELECT COUNT(*) FROM "config_report_user-reports_sample_7554612a_abcdefhijk";')
         result = result.fetchone()[0]
         self.assertEqual(1, result)
