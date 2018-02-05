@@ -3,136 +3,17 @@
 {% load hq_shared_tags %}
 
 {% block js %}{{ block.super }}
-    <script src="{% static 'accounting/js/payment_method_handler.js' %}"></script>
     <script src="https://js.stripe.com/v2/"></script>
-{% endblock %}
-
-{% block js-inline %}
-    <script>
-    (function () {
-        Stripe.setPublishableKey('{{ stripe_public_key }}');
-        var WireInvoiceHandler = hqImport('accounting/js/payment_method_handler').WireInvoiceHandler;
-        var PaymentMethodHandler = hqImport('accounting/js/payment_method_handler').PaymentMethodHandler;
-        var Invoice = hqImport('accounting/js/payment_method_handler').Invoice;
-        var TotalCostItem = hqImport('accounting/js/payment_method_handler').TotalCostItem;
-        var paginatedListModel = new CRUDPaginatedListModel(
-            {{ pagination.total }},
-            {{ pagination.limit }},
-            {{ pagination.page }},
-            {
-                statusCodeText: {{ pagination.status_codes|JSON }},
-                allowItemCreation: {{ pagination.create.is_allowed|BOOL }},
-                createItemForm: '{% filter escapejs %}{{ pagination.create_item_form }}{% endfilter %}'
-            }
-        );
-        $(function () {
-            ko.applyBindings(paginatedListModel, $('#editable-paginated-list').get(0));
-        });
-
-        var bulkPaymentHandler = new PaymentMethodHandler(
-            "bulk-payment-form",
-            {
-                submitBtnText: "{% trans "Submit Payment" %}",
-                errorMessages: {{ payment_error_messages|JSON }},
-                submitURL: "{{ process_bulk_payment_url }}",
-            }
-        );
-
-        var bulkWirePaymentHandler = new WireInvoiceHandler(
-            "bulk-wire-payment-form",
-            {
-                submitBtnText: "{% trans "Submit Invoice Request" %}",
-                isWire: true,
-                errorMessages: {{ payment_error_messages|JSON }},
-                submitURL: "{{ process_wire_invoice_url }}",
-            }
-        );
-
-        var paymentHandler = new PaymentMethodHandler(
-            "payment-form",
-            {
-                submitBtnText: "{% trans "Submit Payment" %}",
-                errorMessages: {{ payment_error_messages|JSON }},
-                submitURL: "{{ process_invoice_payment_url }}",
-            }
-        );
-
-        // A sign that the data model isn't exactly right - credit cards are shared data.
-        // Consider refactoring at some point.
-        var handlers = [bulkPaymentHandler, paymentHandler];
-        for (var i = 0; i < handlers.length; i++) {
-            handlers[i].handlers = handlers;
-        }
-
-        {% if stripe_cards %}
-            var stripe_cards = {{ stripe_cards|JSON }};
-            bulkPaymentHandler.loadCards(stripe_cards);
-            paymentHandler.loadCards(stripe_cards);
-        {% endif %}
-
-        $(function () {
-            $('#bulkPaymentModal').koApplyBindings(bulkPaymentHandler);
-            $('#bulkWirePaymentModal').koApplyBindings(bulkWirePaymentHandler);
-            $('#paymentModal').koApplyBindings(paymentHandler);
-        });
-
-        $('#bulkPaymentBtn').click(function () {
-            bulkPaymentHandler.costItem(new TotalCostItem({
-                totalBalance: paginatedListModel.totalDue(),
-                paginatedListModel: paginatedListModel,
-            }));
-            bulkPaymentHandler.reset();
-        });
-        $('#bulkWirePaymentBtn').click(function () {
-            bulkWirePaymentHandler.costItem(new TotalCostItem({
-                totalBalance: paginatedListModel.totalDue(),
-                paginatedListModel: paginatedListModel,
-            }));
-        });
-
-     	paginatedListModel.totalDue = ko.observable(parseFloat("{{total_balance}}"));
-
-        paginatedListModel.displayTotalDue = ko.computed(function() {
-            return "$" + paginatedListModel.totalDue().toFixed(2);
-        });
-        paginatedListModel.showUnpaidBills = ko.observable(true);
-        paginatedListModel.showAllBills = ko.computed(function () {
-            return ! paginatedListModel.showUnpaidBills();
-        });
-        paginatedListModel.toggleUnpaidBills = function () {
-            paginatedListModel.showUnpaidBills(!paginatedListModel.showUnpaidBills());
-            paginatedListModel.currentPage(1);
-            paginatedListModel.refreshList();
-        };
-
-        paginatedListModel.getAdditionalData = function () {
-            var additional_data = {
-                'show_unpaid': paginatedListModel.showUnpaidBills()
-            };
-            if (window.location.href.split('?').length > 2) {
-                additional_data['show_hidden'] = _(window.location.href.split('?')[1].split('&')).contains('show_hidden=true');
-            }
-            return additional_data;
-        };
-        paginatedListModel.initRow = function (rowElems, paginatedItem) {
-            var paymentButton = $(rowElems).find('.payment-button');
-            if (paymentButton) {
-                paymentButton.click(function (e) {
-                    paymentHandler.costItem(new Invoice({
-                        paginatedItem: paginatedItem,
-                        paginatedList: paginatedListModel
-                    }));
-                    paymentHandler.reset();
-                    e.preventDefault();
-                });
-            }
-        };
-        paginatedListModel.init();
-    }());
-    </script>
+    <script src="{% static 'accounting/js/payment_method_handler.js' %}"></script>
+    <script src="{% static 'domain/js/billing_statements.js' %}"></script>
 {% endblock %}
 
 {% block paginated_list_top %}
+    {% initial_page_data 'pagination' pagination %}
+    {% initial_page_data 'stripe_options' stripe_options %}
+    {% initial_page_data 'payment_urls' payment_urls %}
+    {% initial_page_data 'payment_error_messages' payment_error_messages}
+
     <div id="currentBalanceSection">
         <h2>{% trans 'Total Due:' %}
             <span data-bind="text: displayTotalDue, visible: hasInitialLoadFinished"></span>
