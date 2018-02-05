@@ -12,7 +12,7 @@ hqDefine('accounting/js/billing_account_form', function () {
     $(function () {
         var baForm = new BillingAccountForm(hqImport('hqwebapp/js/initial_page_data').get('account_form_is_active'));
         $('#account-form').koApplyBindings(baForm);
-    
+
         $("#show_emails").click(function() {
             $('#emails-text').show();
             $(this).parent().hide();
