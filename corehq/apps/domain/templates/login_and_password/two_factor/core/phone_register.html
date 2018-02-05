@@ -6,9 +6,9 @@
   <h1>{% block title %}{% trans "Add Backup Phone" %}{% endblock %}</h1>
 
   {% if wizard.steps.current == 'setup' %}
-      <p>{% blocktrans %}You'll be adding a backup phone number to your
-        account. This number will be used if your primary method of
-        registration is not available.{% endblocktrans %}</p>
+      <p>{% blocktrans %}Your backup phone number will be used if your primary method of
+        registration is not available. Enter your backup phone number, including your country
+          code starting with + or 00.{% endblocktrans %}</p>
   {% elif wizard.steps.current == 'validation' %}
       <p>{% blocktrans %}We've sent a token to your phone number. Please
         enter the token you've received.{% endblocktrans %}</p>
