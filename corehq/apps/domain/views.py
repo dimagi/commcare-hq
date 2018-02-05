@@ -980,21 +980,25 @@ class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMix
     def page_context(self):
         pagination_context = self.pagination_context
         pagination_context.update({
-            'stripe_public_key': settings.STRIPE_PUBLIC_KEY,
+            'stripe_options': {
+                'stripe_public_key': settings.STRIPE_PUBLIC_KEY,
+                'stripe_cards': self.stripe_cards,
+            },
             'payment_error_messages': PAYMENT_ERROR_MESSAGES,
-            'process_invoice_payment_url': reverse(
-                InvoiceStripePaymentView.urlname,
-                args=[self.domain],
-            ),
-            'process_bulk_payment_url': reverse(
-                BulkStripePaymentView.urlname,
-                args=[self.domain],
-            ),
-            'process_wire_invoice_url': reverse(
-                WireInvoiceView.urlname,
-                args=[self.domain],
-            ),
-            'stripe_cards': self.stripe_cards,
+            'payment_urls': {
+                'process_invoice_payment_url': reverse(
+                    InvoiceStripePaymentView.urlname,
+                    args=[self.domain],
+                ),
+                'process_bulk_payment_url': reverse(
+                    BulkStripePaymentView.urlname,
+                    args=[self.domain],
+                ),
+                'process_wire_invoice_url': reverse(
+                    WireInvoiceView.urlname,
+                    args=[self.domain],
+                ),
+            },
             'total_balance': self.total_balance,
         })
         return pagination_context
