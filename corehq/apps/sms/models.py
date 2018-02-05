@@ -7,7 +7,7 @@ import uuid
 from dimagi.ext.couchdbkit import *
 
 from datetime import datetime, timedelta
-from django.db import models, transaction
+from django.db import models, transaction, IntegrityError
 from django.http import Http404
 from collections import namedtuple
 from corehq.apps.app_manager.dbaccessors import get_app
@@ -2755,3 +2755,33 @@ class KeywordAction(models.Model):
             raise self.InvalidModelStateException("Expected a value for form_unique_id")
 
         super(KeywordAction, self).save(*args, **kwargs)
+
+
+class DailyOutboundSMSLimitReached(models.Model):
+    """
+    Represents an instance of a domain reaching its daily outbound
+    SMS limit on a specific date.
+    """
+
+    # The domain name that reached its daily outbound SMS limit as defined
+    # on Domain.daily_outbound_sms_limit. This can be empty string if
+    # we reached the limit for outbound SMS not tied to a domain.
+    domain = models.CharField(max_length=126)
+
+    # The UTC date representing the 24-hour window in which the limit was reached
+    date = models.DateField()
+
+    class Meta:
+        unique_together = (
+            ('domain', 'date')
+        )
+
+    @classmethod
+    def create_for_domain_and_date(cls, domain, date):
+        # Using get_or_create here would be less efficient since
+        # it would require two queries to be issued, and still would
+        # require use of a CriticalSection to prevent IntegrityErrors.
+        try:
+            cls.objects.create(domain=domain, date=date)
+        except IntegrityError:
+            pass

@@ -3,33 +3,22 @@
 {% load hq_shared_tags %}
 {% load crispy_forms_tags %}
 
-{% block js %}{{ block.super }}
-    <script src="{% static 'hqwebapp/js/crud_paginated_list.js' %}"></script>
-{% endblock %}
-
-{% block js-inline %}{{ block.super }}
-    <script>
-        var paginatedListModel = new CRUDPaginatedListModel(
-            {{ pagination.total }},
-            {{ pagination.limit }},
-            {{ pagination.page }},
-            {
-                statusCodeText: {{ pagination.status_codes|JSON }},
-                allowItemCreation: {{ pagination.create.is_allowed|BOOL }},
-                createItemForm: '{% filter escapejs %}{{ pagination.create_item_form }}{% endfilter %}'
-            }
-        );
-        $(function () {
-            ko.applyBindings(paginatedListModel, $('#editable-paginated-list').get(0));
-        });
-    </script>
-    {% block js-paginated %}{% endblock %}
-    <script>
-        paginatedListModel.init();
-    </script>
+{% block js %}
+    {% if not requirejs_main %}
+        {{ block.super }}
+        <script src="{% static 'hqwebapp/js/crud_paginated_list.js' %}"></script>
+        <script src="{% static 'hqwebapp/js/crud_paginated_list_init.js' %}"></script>
+    {% endif %}
 {% endblock %}
 
 {% block page_content %}
+    {% initial_page_data 'total' pagination.total %}
+    {% initial_page_data 'limit' pagination.limit %}
+    {% initial_page_data 'page' pagination.page %}
+    {% initial_page_data 'status_codes' pagination.status_codes %}
+    {% initial_page_data 'allow_item_creation' pagination.create.is_allowed %}
+    {% initial_page_data 'create_item_form' pagination.create_item_form %}
+
     {% block pagination_header %}{% endblock %}
     {% block pagination_structure %}
         <div id="editable-paginated-list">

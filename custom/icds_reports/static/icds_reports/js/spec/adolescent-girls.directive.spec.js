@@ -94,9 +94,9 @@ describe('Adolescent Girls Directive', function () {
         var result = controller.templatePopup({properties: {name: 'test'}}, {valid: 14, all: 28});
         var expected = '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
             '<p>test</p>' +
-            '<div>Number of adolescent girls (11 - 18 years) who are enrolled for Anganwadi Services: <strong>14</strong>' +
-            '<div>Total number of adolescent girls (11 - 18 years) who are registered: <strong>28</strong>' +
-            '<div>Percentage of registered adolescent girls (11 - 18 years) who are enrolled for Anganwadi Services: <strong>50.00%</strong>' +
+            '<div>Number of adolescent girls (11 - 14 years) who are enrolled for Anganwadi Services: <strong>14</strong>' +
+            '<div>Total number of adolescent girls (11 - 14 years) who are registered: <strong>28</strong>' +
+            '<div>Percentage of registered adolescent girls (11 - 14 years) who are enrolled for Anganwadi Services: <strong>50.00%</strong>' +
             '</div>';
         assert.equal(result, expected);
     });
@@ -181,9 +181,9 @@ describe('Adolescent Girls Directive', function () {
         var month = {value: "Jul 2017", series: []};
 
         var expected = "<p><strong>Jul 2017</strong></p><br/>"
-            + "<p>Number of adolescent girls (11 - 18 years) who are enrolled for Anganwadi Services: <strong>60</strong></p>"
-            + "<p>Total number of adolescent girls (11 - 18 years) who are registered: <strong>120</strong></p>"
-            + "<p>Percentage of registered adolescent girls (11 - 18 years) who are enrolled for Anganwadi Services: <strong>50.00%</strong></p>";
+            + "<p>Number of adolescent girls (11 - 14 years) who are enrolled for Anganwadi Services: <strong>60</strong></p>"
+            + "<p>Total number of adolescent girls (11 - 14 years) who are registered: <strong>120</strong></p>"
+            + "<p>Percentage of registered adolescent girls (11 - 14 years) who are enrolled for Anganwadi Services: <strong>50.00%</strong></p>";
 
         var result = controller.tooltipContent(month.value, {y: 60, all: 120});
         assert.equal(expected, result);

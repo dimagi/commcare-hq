@@ -832,10 +832,10 @@ class TestAWCReport(TestCase):
                             "color": "red",
                             "percent": -100.0,
                             "value": 0,
-                            "label": "Percent adolescent girls (11-18 years) enrolled for Anganwadi Services",
+                            "label": "Percent adolescent girls (11-14 years) enrolled for Anganwadi Services",
                             "frequency": "month",
                             "help_text": "Percentage of adolescent girls registered between"
-                                         " 11-18 years old who are enrolled for Anganwadi Services"
+                                         " 11-14 years old who are enrolled for Anganwadi Services"
                         }
                     ]
                 ],
@@ -956,11 +956,11 @@ class TestAWCReport(TestCase):
                             "percent": "Data in the previous reporting period was 0",
                             "value": 0,
                             "label": (
-                                "Percent adolescent girls (11-18 years) enrolled for Anganwadi Services"
+                                "Percent adolescent girls (11-14 years) enrolled for Anganwadi Services"
                             ),
                             "frequency": "day",
                             "help_text": (
-                                "Percentage of adolescent girls registered between 11-18 years old who "
+                                "Percentage of adolescent girls registered between 11-14 years old who "
                                 "are enrolled for Anganwadi Services"
                             )
                         }
@@ -1067,11 +1067,11 @@ class TestAWCReport(TestCase):
                             "percent": "Data in the previous reporting period was 0",
                             "value": 0,
                             "label": (
-                                "Percent adolescent girls (11-18 years) enrolled for Anganwadi Services"
+                                "Percent adolescent girls (11-14 years) enrolled for Anganwadi Services"
                             ),
                             "frequency": "day",
                             "help_text": (
-                                "Percentage of adolescent girls registered between 11-18 years old who "
+                                "Percentage of adolescent girls registered between 11-14 years old who "
                                 "are enrolled for Anganwadi Services"
                             )
                         }
