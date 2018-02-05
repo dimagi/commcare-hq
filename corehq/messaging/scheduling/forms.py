@@ -109,6 +109,14 @@ class ScheduleForm(Form):
 
     LANGUAGE_PROJECT_DEFAULT = 'PROJECT_DEFAULT'
 
+    active = ChoiceField(
+        required=True,
+        label='',
+        choices=(
+            ('Y', ugettext_lazy("Active")),
+            ('N', ugettext_lazy("Inactive")),
+        ),
+    )
     send_frequency = ChoiceField(
         required=True,
         label=ugettext_lazy('Send'),
@@ -357,6 +365,7 @@ class ScheduleForm(Form):
         result = {}
         schedule = self.initial_schedule
         if schedule:
+            result['active'] = 'Y' if schedule.active else 'N'
             result['default_language_code'] = (
                 schedule.default_language_code
                 if schedule.default_language_code
@@ -440,6 +449,16 @@ class ScheduleForm(Form):
 
     def get_layout_fields(self):
         return [
+            crispy.Fieldset(
+                '',
+                hqcrispy.B3MultiField(
+                    '',
+                    crispy.Div(
+                        twbscrispy.InlineField('active'),
+                        css_class='col-sm-3',
+                    ),
+                ),
+            ),
             crispy.Fieldset(
                 self.scheduling_fieldset_legend,
                 *self.get_scheduling_layout_fields()
@@ -762,6 +781,9 @@ class ScheduleForm(Form):
     def uses_sms_survey(self):
         return self.cleaned_data.get('content') == self.CONTENT_SMS_SURVEY
 
+    def clean_active(self):
+        return self.cleaned_data.get('active') == 'Y'
+
     def clean_user_recipients(self):
         if ScheduleInstance.RECIPIENT_TYPE_MOBILE_WORKER not in self.cleaned_data.get('recipient_types', []):
             return []
@@ -1052,6 +1074,7 @@ class ScheduleForm(Form):
     def distill_extra_scheduling_options(self):
         form_data = self.cleaned_data
         return {
+            'active': form_data['active'],
             'default_language_code': self.distill_default_language_code(),
             'include_descendant_locations': (
                 ScheduleInstance.RECIPIENT_TYPE_LOCATION in form_data['recipient_types'] and
