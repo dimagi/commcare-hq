@@ -11,7 +11,7 @@ function AdolescentWomenController($scope, $routeParams, $location, $filter, dem
     }
     vm.userLocationId = userLocationId;
     vm.filtersData = $location.search();
-    vm.label = "Adolescent Girls (11-18 years)";
+    vm.label = "Adolescent Girls (11-14 years)";
     vm.step = $routeParams.step;
     vm.steps = {
         'map': {route: '/adolescent_girls/map', label: 'Map View'},
@@ -74,9 +74,9 @@ function AdolescentWomenController($scope, $routeParams, $location, $filter, dem
         var percent = row ? d3.format('.2%')(row.valid / (row.all || 1)) : "N/A";
         return '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
             '<p>' + loc.properties.name + '</p>' +
-            '<div>Number of adolescent girls (11 - 18 years) who are enrolled for Anganwadi Services: <strong>' + valid + '</strong>' +
-            '<div>Total number of adolescent girls (11 - 18 years) who are registered: <strong>' + all + '</strong>' +
-            '<div>Percentage of registered adolescent girls (11 - 18 years) who are enrolled for Anganwadi Services: <strong>' + percent + '</strong>' +
+            '<div>Number of adolescent girls (11 - 14 years) who are enrolled for Anganwadi Services: <strong>' + valid + '</strong>' +
+            '<div>Total number of adolescent girls (11 - 14 years) who are registered: <strong>' + all + '</strong>' +
+            '<div>Percentage of registered adolescent girls (11 - 14 years) who are enrolled for Anganwadi Services: <strong>' + percent + '</strong>' +
             '</div>';
     };
 
@@ -223,9 +223,9 @@ function AdolescentWomenController($scope, $routeParams, $location, $filter, dem
 
     vm.tooltipContent = function (monthName, day) {
         return "<p><strong>" + monthName + "</strong></p><br/>"
-            + "<p>Number of adolescent girls (11 - 18 years) who are enrolled for Anganwadi Services: <strong>" + $filter('indiaNumbers')(day.y) + "</strong></p>"
-            + "<p>Total number of adolescent girls (11 - 18 years) who are registered: <strong>" + $filter('indiaNumbers')(day.all) + "</strong></p>"
-            + "<p>Percentage of registered adolescent girls (11 - 18 years) who are enrolled for Anganwadi Services: <strong>" + d3.format('.2%')(day.y / (day.all || 1)) + "</strong></p>";
+            + "<p>Number of adolescent girls (11 - 14 years) who are enrolled for Anganwadi Services: <strong>" + $filter('indiaNumbers')(day.y) + "</strong></p>"
+            + "<p>Total number of adolescent girls (11 - 14 years) who are registered: <strong>" + $filter('indiaNumbers')(day.all) + "</strong></p>"
+            + "<p>Percentage of registered adolescent girls (11 - 14 years) who are enrolled for Anganwadi Services: <strong>" + d3.format('.2%')(day.y / (day.all || 1)) + "</strong></p>";
     };
 
     vm.showAllLocations = function () {

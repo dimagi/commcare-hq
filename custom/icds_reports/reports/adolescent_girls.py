@@ -25,8 +25,8 @@ def get_adolescent_girls_data_map(domain, config, loc_level, show_test=False):
         ).values(
             '%s_name' % loc_level, '%s_map_location_name' % loc_level
         ).annotate(
-            valid=Sum('cases_person_adolescent_girls_11_14') + Sum('cases_person_adolescent_girls_15_18'),
-            all=Sum('cases_person_adolescent_girls_11_14_all') + Sum('cases_person_adolescent_girls_15_18_all'),
+            valid=Sum('cases_person_adolescent_girls_11_14'),
+            all=Sum('cases_person_adolescent_girls_11_14_all'),
         ).order_by('%s_name' % loc_level, '%s_map_location_name' % loc_level)
         if not show_test:
             queryset = apply_exclude(domain, queryset)
@@ -73,19 +73,19 @@ def get_adolescent_girls_data_map(domain, config, loc_level, show_test=False):
             "extended_info": [
                 {
                     'indicator': (
-                        'Number of adolescent girls (11 - 18 years) who are enrolled for Anganwadi Services:'
+                        'Number of adolescent girls (11 - 14 years) who are enrolled for Anganwadi Services:'
                     ),
                     'value': indian_formatted_number(total_valid)
                 },
                 {
                     'indicator': (
-                        'Total number of adolescent girls (11 - 18 years) who are registered:'
+                        'Total number of adolescent girls (11 - 14 years) who are registered:'
                     ),
                     'value': indian_formatted_number(total)
                 },
                 {
                     'indicator': (
-                        'Percentage of registered adolescent girls (11 - 18 years) '
+                        'Percentage of registered adolescent girls (11 - 14 years) '
                         'who are enrolled for Anganwadi Services:'
                     ),
                     'value': '%.2f%%' % (total_valid * 100 / float(total or 1))
@@ -106,8 +106,8 @@ def get_adolescent_girls_sector_data(domain, config, loc_level, location_id, sho
     ).values(
         *group_by
     ).annotate(
-        valid=Sum('cases_person_adolescent_girls_11_14') + Sum('cases_person_adolescent_girls_15_18'),
-        all=Sum('cases_person_adolescent_girls_11_14_all') + Sum('cases_person_adolescent_girls_15_18_all'),
+        valid=Sum('cases_person_adolescent_girls_11_14'),
+        all=Sum('cases_person_adolescent_girls_11_14_all'),
     ).order_by('%s_name' % loc_level)
 
     if not show_test:
@@ -180,8 +180,8 @@ def get_adolescent_girls_data_chart(domain, config, loc_level, show_test=False):
     ).values(
         'month', '%s_name' % loc_level
     ).annotate(
-        valid=Sum('cases_person_adolescent_girls_11_14') + Sum('cases_person_adolescent_girls_15_18'),
-        all=Sum('cases_person_adolescent_girls_11_14_all') + Sum('cases_person_adolescent_girls_15_18_all'),
+        valid=Sum('cases_person_adolescent_girls_11_14'),
+        all=Sum('cases_person_adolescent_girls_11_14_all'),
     ).order_by('month')
 
     if not show_test:
