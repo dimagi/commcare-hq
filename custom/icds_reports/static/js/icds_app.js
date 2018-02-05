@@ -1,4 +1,4 @@
-/* global d3 */
+/* global d3, moment */
 
 function MainController($scope, $route, $routeParams, $location, $uibModal, $window, reportAnIssueUrl, isWebUser) {
     $scope.$route = $route;
@@ -7,6 +7,17 @@ function MainController($scope, $route, $routeParams, $location, $uibModal, $win
     $scope.systemUsageCollapsed = true;
     $scope.healthCollapsed = true;
     $scope.isWebUser = isWebUser;
+    var selected_month = parseInt($location.search()['month']) || new Date().getMonth() + 1;
+    var selected_year = parseInt($location.search()['year']) || new Date().getFullYear();
+    var current_month = new Date().getMonth() + 1;
+    var current_year = new Date().getFullYear();
+
+    if (selected_month === current_month && selected_year === current_year &&
+        (new Date().getDate() === 1 || new Date().getDate() === 2)) {
+        $scope.showInfoMessage = true;
+        $scope.lastDayOfPreviousMonth = moment().set('date', 1).subtract(1, 'days').format('Do MMMM, YYYY');
+        $scope.currentMonth = moment().format("MMMM");
+    }
 
     $scope.reportAnIssue = function() {
         if (reportAnIssueUrl) {
