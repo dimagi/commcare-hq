@@ -3,9 +3,12 @@
 {% load hq_shared_tags %}
 {% load crispy_forms_tags %}
 
-{% block js %}{{ block.super }}
-    <script src="{% static 'hqwebapp/js/crud_paginated_list.js' %}"></script>
-    <script src="{% static 'hqwebapp/js/crud_paginated_list_init.js' %}"></script>
+{% block js %}
+    {% if not requirejs_main %}
+        {{ block.super }}
+        <script src="{% static 'hqwebapp/js/crud_paginated_list.js' %}"></script>
+        <script src="{% static 'hqwebapp/js/crud_paginated_list_init.js' %}"></script>
+    {% endif %}
 {% endblock %}
 
 {% block page_content %}
