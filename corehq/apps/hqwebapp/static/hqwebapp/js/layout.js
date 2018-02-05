@@ -117,6 +117,7 @@ hqDefine("hqwebapp/js/layout", ['jquery'], function($) {
 
         },
         balancePreview: function () {
+console.log("balancePreview hasn't been initialized yet");
             // set with setBalancePreviewFn in utils.
         },
         showPublishStatus: function() {
@@ -128,6 +129,7 @@ hqDefine("hqwebapp/js/layout", ['jquery'], function($) {
     };
 
     $(window).on('load', function () {
+console.log("window loaded, time to balance things");
         self.actions.initialize();
         if (self.values.isAppbuilderResizing) {
             self.actions.balanceWidths();
