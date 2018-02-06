@@ -53,7 +53,7 @@
     "less": "1.7.3",
     "xpath": "dimagi/js-xpath#f4f0c78",
     "blazy": "1.6.2",
-    "datatables": "1.10.9",
+    "datatables": "1.10.16",
     "datatables-bootstrap3": "*",
     "datatables-fixedcolumns": "3.2.0",
     "datatables-fixedheader": "^3.1.3",
