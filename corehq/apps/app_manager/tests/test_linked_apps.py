@@ -81,7 +81,6 @@ class TestLinkedApps(BaseLinkedAppsTest):
 
     def test_get_master_version(self):
         self.linked_app.master = self.plain_master_app.get_id
-        self.linked_app.master_domain = self.plain_master_app.domain
 
         self.assertIsNone(self.linked_app.get_master_version())
 
@@ -101,7 +100,6 @@ class TestLinkedApps(BaseLinkedAppsTest):
 
     def test_get_latest_master_release(self):
         self.linked_app.master = self.plain_master_app.get_id
-        self.linked_app.master_domain = self.plain_master_app.domain
 
         self.assertIsNone(self.linked_app.get_latest_master_release())
 
@@ -123,7 +121,6 @@ class TestLinkedApps(BaseLinkedAppsTest):
 
     def test_get_latest_master_release_not_permitted(self):
         self.linked_app.master = self.plain_master_app.get_id
-        self.linked_app.master_domain = self.plain_master_app.domain
 
         release = self.plain_master_app.make_build()
         release.is_released = True

@@ -1,6 +1,8 @@
 from __future__ import absolute_import
+
 from corehq.apps.app_manager.dbaccessors import get_latest_released_app_version, get_app, get_latest_released_app
 from corehq.apps.linked_domain.exceptions import ActionNotPermitted
+from corehq.apps.linked_domain.models import DomainLink
 from corehq.apps.linked_domain.remote_accessors import get_released_app_version, get_released_app
 
 
@@ -21,3 +23,21 @@ def get_latest_master_app_release(domain_link, app_id):
         if linked_domain not in master_app.linked_whitelist:
             raise ActionNotPermitted()
         return get_latest_released_app(master_domain, app_id)
+
+
+def create_linked_app(master_domain, master_id, target_domain, target_name, remote_details=None):
+    from corehq.apps.app_manager.models import LinkedApplication
+    linked_app = LinkedApplication(
+        name=target_name,
+        domain=target_domain,
+    )
+    link_app(linked_app, master_domain, master_id, remote_details)
+
+
+def link_app(linked_app, master_domain, master_id, remote_details=None):
+    DomainLink.link_domains(master_domain, linked_app.domain, remote_details)
+
+    linked_app.master = master_id
+    linked_app.doc_type = 'LinkedApplication'
+    linked_app.save()
+    return linked_app

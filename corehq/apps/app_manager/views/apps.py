@@ -65,6 +65,7 @@ from corehq.apps.domain.decorators import (
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
+from corehq.apps.linked_domain.applications import create_linked_app
 from corehq.apps.linked_domain.exceptions import RemoteRequestError
 from corehq.apps.translations.models import Translation
 from corehq.apps.users.dbaccessors.all_commcare_users import get_practice_mode_mobile_workers
@@ -359,17 +360,7 @@ def copy_app(request, domain):
                                               " Make sure you have at least one released build."))
                     return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[domain, app_id]))
 
-                if link_domain not in app.linked_whitelist:
-                    app.linked_whitelist.append(link_domain)
-                    app.save()
-
-                linked_app = LinkedApplication(
-                    name=data['name'],
-                    domain=link_domain,
-                    master=app_id,
-                    master_domain=master_domain,
-                )
-                linked_app.save()
+                linked_app = create_linked_app(master_domain, app_id, link_domain, data['name'])
                 try:
                     update_linked_app(linked_app)
                 except AppLinkError as e:

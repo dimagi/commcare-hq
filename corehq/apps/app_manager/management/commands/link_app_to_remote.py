@@ -4,6 +4,8 @@ from __future__ import absolute_import
 from django.core.management import BaseCommand
 
 from corehq.apps.app_manager.models import LinkedApplication, RemoteAppDetails
+from corehq.apps.linked_domain.applications import link_app
+from corehq.apps.linked_domain.models import RemoteLinkDetails
 from corehq.apps.linked_domain.remote_accessors import whilelist_app_on_remote
 
 
@@ -28,22 +30,11 @@ class Command(BaseCommand):
                             help="ApiKey for remote authentication")
 
     def handle(self, master_id, linked_id, url_base, domain, username, api_key, **options):
-        remote_app_details = RemoteAppDetails(
+        remote_details = RemoteLinkDetails(
             url_base,
-            domain,
             username,
             api_key,
-            master_id
         )
 
         linked_app = LinkedApplication.get(linked_id)
-        whilelist_app_on_remote(domain, master_id, linked_app.domain, remote_app_details)
-
-        linked_app.master = master_id
-        linked_app.remote_url_base = url_base
-        linked_app.master_domain = domain
-        linked_app.remote_auth.username = username
-        linked_app.remote_auth.api_key = api_key
-        linked_app.version = 0
-        linked_app.doc_type = 'LinkedApplication'
-        linked_app.save()
+        link_app(linked_app, domain, master_id, remote_details)
