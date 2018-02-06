@@ -7,6 +7,7 @@ from corehq.apps.reports.standard.deployments import DeploymentsReport
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.standard.forms.filters import SubmissionTypeFilter, SubmissionErrorType
 from corehq.apps.reports.analytics.esaccessors import get_paged_forms_by_type
+from corehq.apps.users.models import CouchUser
 from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.form_processor.reprocess import ReprocessingError
 from corehq.util.timezones.conversions import ServerTime
@@ -132,15 +133,17 @@ class SubmissionErrorReport(DeploymentsReport):
                 form_name = EMPTY_FORM
                 form_username = EMPTY_USER
 
+            error_type = SubmissionErrorType.display_name_by_doc_type(xform_dict['doc_type'])
             if xform_dict['doc_type'] == "XFormArchived":
-                archive_dates = [operation['date'] for operation in xform_dict['history']
-                                 if operation['operation'] == 'archive']
-                error_type = "{} ({})".format(
-                    SubmissionErrorType.display_name_by_doc_type(xform_dict['doc_type']),
-                    _fmt_date(string_to_utc_datetime(archive_dates[0])),
-                )
-            else:
-                error_type = SubmissionErrorType.display_name_by_doc_type(xform_dict['doc_type'])
+                archive_operations = [operation for operation in xform_dict.get('history')
+                                      if operation.get('operation') == 'archive']
+                if archive_operations:
+                    user = CouchUser.get_by_user_id(archive_operations[-1].get('user'))
+                    error_type = "{} {} on {}".format(
+                        user.username if user else "",
+                        SubmissionErrorType.display_name_by_doc_type(xform_dict['doc_type']),
+                        _fmt_date(string_to_utc_datetime(archive_operations[-1].get('date'))),
+                    )
             return [
                 _fmt_url(xform_dict['_id']),
                 form_username,
