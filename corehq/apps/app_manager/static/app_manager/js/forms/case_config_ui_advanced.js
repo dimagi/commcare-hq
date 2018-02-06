@@ -563,6 +563,7 @@ hqDefine('app_manager/js/forms/case_config_ui_advanced', function () {
             }
         },
         header: function (action) {
+console.log(action.load_case_from_fixture);
             var nameSnip = "<i class=\"fa fa-tag\"></i> <%= action.case_tag() %> (<%= action.case_type() %>)";
             var closeSnip = "<% if (action.close_case()) { %> : close<% }%>";
             var spanSnip = '<span class="text-muted" style="font-weight: normal;">';
@@ -575,6 +576,9 @@ hqDefine('app_manager/js/forms/case_config_ui_advanced', function () {
             } else {
                 if (action.auto_select) {
                     nameSnip = "<i class=\"fa fa-tag\"></i> <%= action.case_tag() %> (autoselect mode: <%= action.auto_select.mode() %>)";
+                }
+                if (action.load_case_from_fixture) {
+                    nameSnip += " (from fixture)";
                 }
                 return _.template(nameSnip + spanSnip +
                     "<% if (action.hasPreload()) { %> : load<% } %>" +
