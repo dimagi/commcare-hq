@@ -41,8 +41,8 @@ class DomainLink(models.Model):
             link = DomainLink(linked_domain=linked_domain, master_domain=master_domain)
 
         if link.master_domain != master_domain:
-            raise DomainLinkError('Domain "{}" is already linked to a different domain.'.format(
-                linked_domain
+            raise DomainLinkError('Domain "{}" is already linked to a different domain ({}).'.format(
+                linked_domain, link.master_domain
             ))
 
         if remote_details:
