@@ -1,14 +1,64 @@
 from __future__ import absolute_import
 from collections import defaultdict
-from corehq.apps.reminders.event_handlers import _get_case_template_info, _get_obj_template_info
+from corehq.form_processor.utils import is_commcarecase
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.cases import get_owner_id, get_wrapped_owner
-from corehq.apps.users.models import CouchUser
+from corehq.apps.users.models import CouchUser, CommCareUser, WebUser
 from string import Formatter
 import six
 
 UNKNOWN_VALUE = '(?)'
+
+
+def _get_case_template_info(case):
+    return case.to_json()
+
+
+def _get_web_user_template_info(user):
+    return {
+        'name': user.username,
+        'first_name': user.first_name,
+        'last_name': user.last_name,
+        'phone_number': user.default_phone_number or '',
+    }
+
+
+def _get_mobile_user_template_info(user):
+    return {
+        'name': user.raw_username,
+        'first_name': user.first_name,
+        'last_name': user.last_name,
+        'phone_number': user.default_phone_number or '',
+    }
+
+
+def _get_group_template_info(group):
+    return {
+        'name': group.name,
+    }
+
+
+def _get_location_template_info(location):
+    return {
+        'name': location.name,
+        'site_code': location.site_code,
+    }
+
+
+def _get_obj_template_info(obj):
+    if is_commcarecase(obj):
+        return _get_case_template_info(obj)
+    elif isinstance(obj, WebUser):
+        return _get_web_user_template_info(obj)
+    elif isinstance(obj, CommCareUser):
+        return _get_mobile_user_template_info(obj)
+    elif isinstance(obj, Group):
+        return _get_group_template_info(obj)
+    elif isinstance(obj, SQLLocation):
+        return _get_location_template_info(obj)
+
+    return {}
 
 
 class MessagingTemplateRenderer(object):
