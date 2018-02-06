@@ -90,7 +90,7 @@ domain_specific = [
     )),
     url(r'^zapier/', include('corehq.apps.zapier.urls')),
     url(r'^zipline/', include('custom.zipline.urls')),
-    url(r'^remote_link/', include('corehq.apps.linked_domain.urls', namespace='remote'))
+    url(r'^remote_link/', include('corehq.apps.linked_domain.urls'))
 ]
 
 urlpatterns = [

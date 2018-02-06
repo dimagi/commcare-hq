@@ -8,6 +8,9 @@ from corehq.apps.linked_domain.views import (
     get_latest_released_app_source,
 )
 
+app_name = 'linked_domain'
+
+
 urlpatterns = [
     url(r'^toggles/$', toggles_and_previews, name='toggles'),
     url(r'^custom_data_models/$', custom_data_models, name='custom_data_models'),
