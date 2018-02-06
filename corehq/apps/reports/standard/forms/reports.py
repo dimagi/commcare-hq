@@ -7,7 +7,7 @@ from corehq.apps.reports.standard.deployments import DeploymentsReport
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.standard.forms.filters import SubmissionTypeFilter, SubmissionErrorType
 from corehq.apps.reports.analytics.esaccessors import get_paged_forms_by_type
-from corehq.apps.users.models import CouchUser
+from corehq.apps.users.util import cached_user_id_to_username
 from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.form_processor.reprocess import ReprocessingError
 from corehq.util.timezones.conversions import ServerTime
@@ -138,11 +138,10 @@ class SubmissionErrorReport(DeploymentsReport):
                 archive_operations = [operation for operation in xform_dict.get('history')
                                       if operation.get('operation') == 'archive']
                 if archive_operations:
-                    user = CouchUser.get_by_user_id(archive_operations[-1].get('user'))
-                    error_type = "{} {} on {}".format(
-                        user.username if user else "",
-                        SubmissionErrorType.display_name_by_doc_type(xform_dict['doc_type']),
-                        _fmt_date(string_to_utc_datetime(archive_operations[-1].get('date'))),
+                    error_type = _("{username} {archived_form} on {date}").format(
+                        username=cached_user_id_to_username(archive_operations[-1].get('user')) or "",
+                        archived_form=SubmissionErrorType.display_name_by_doc_type(xform_dict['doc_type']),
+                        date=_fmt_date(string_to_utc_datetime(archive_operations[-1].get('date'))),
                     )
             return [
                 _fmt_url(xform_dict['_id']),
