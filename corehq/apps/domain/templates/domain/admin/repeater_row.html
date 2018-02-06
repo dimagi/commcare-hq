@@ -27,7 +27,7 @@
         </a>
     </td>
     <td>
-        <a class="btn btn-default" href="{% url 'edit_repeater' domain cls repeater.get_id %}">
+        <a class="btn btn-default" href="{% url 'edit_repeater' domain repeater.form_class_name repeater.get_id %}">
         {% trans "Edit"%}
         </a>
         <a

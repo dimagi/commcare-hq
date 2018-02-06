@@ -37,6 +37,13 @@ class OpenmrsRepeater(CaseRepeater):
     def payload_doc(self, repeat_record):
         return FormAccessors(repeat_record.domain).get_form(repeat_record.payload_id)
 
+    @property
+    def form_class_name(self):
+        """
+        The class name used to determine which edit form to use
+        """
+        return self.__class__.__name__
+
     @classmethod
     def available_for_domain(cls, domain):
         return OPENMRS_INTEGRATION.enabled(domain)
