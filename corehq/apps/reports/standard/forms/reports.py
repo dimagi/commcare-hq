@@ -131,12 +131,22 @@ class SubmissionErrorReport(DeploymentsReport):
             else:
                 form_name = EMPTY_FORM
                 form_username = EMPTY_USER
+
+            if xform_dict['doc_type'] == "XFormArchived":
+                archive_dates = [operation['date'] for operation in xform_dict['history']
+                                 if operation['operation'] == 'archive']
+                error_type = "{} ({})".format(
+                    SubmissionErrorType.display_name_by_doc_type(xform_dict['doc_type']),
+                    _fmt_date(string_to_utc_datetime(archive_dates[0])),
+                )
+            else:
+                error_type = SubmissionErrorType.display_name_by_doc_type(xform_dict['doc_type'])
             return [
                 _fmt_url(xform_dict['_id']),
                 form_username,
                 _fmt_date(string_to_utc_datetime(xform_dict['received_on'])),
                 form_name,
-                SubmissionErrorType.display_name_by_doc_type(xform_dict['doc_type']),
+                error_type,
                 xform_dict.get('problem', EMPTY_ERROR),
                 self._make_reproces_button(xform_dict) if self.support_toggle_enabled else '',
             ]
