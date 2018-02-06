@@ -183,9 +183,9 @@ describe('Adhaar Beneficiary Directive', function () {
         var day = {y: 0.24561403508771928, all: 171, series: 0};
         var val = {value: "Jul 2017", series: []};
 
-        var expected = '<p><strong>Jul 2017</strong></p><br/><p>'
-            + 'Total number of ICDS beneficiaries whose Aadhaar has been captured: <strong>0</strong></p>'
-            + '<p>% of ICDS beneficiaries whose Aadhaar has been captured: <strong>24.56%</strong></p>';
+        var expected = '<p><strong>Jul 2017</strong></p><br/>' +
+            '<div>Total number of ICDS beneficiaries whose Aadhaar has been captured: <strong>0</strong></div>' +
+            '<div>% of ICDS beneficiaries whose Aadhaar has been captured: <strong>24.56%</strong></div>';
 
         var result = controller.getTooltipContent(val, day);
         assert.equal(expected, result);

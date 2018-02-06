@@ -102,7 +102,7 @@ function PrevalenceOfSevereReportController($scope, $routeParams, $location, $fi
             '<div>Number of Children ' + vm.chosenFilters() + ' unmeasured: <strong>' + unmeasured + '</strong></div>' +
             '<div>% Severely Acute Malnutrition ' + vm.chosenFilters() + ': <strong>' + sever + '</strong></div>' +
             '<div>% Moderately Acute Malnutrition ' + vm.chosenFilters() + ': <strong>' + moderate +'</strong></div>' +
-            '<div>% Normal ' + vm.chosenFilters() + ': <strong>' + normal + '</strong></div></ul>';
+            '<div>% Normal ' + vm.chosenFilters() + ': <strong>' + normal + '</strong></div>';
     };
 
     vm.loadData = function () {

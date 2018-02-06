@@ -186,9 +186,9 @@ describe('AWC Daily Status Directive', function () {
         var total = 10;
         var value = 5;
         var month = {value: "Jul 2017"};
-        var expected = "<p>Total number of AWCs that were open on <strong>Jul 2017</strong>: <strong>5</strong></p>"
-            + "<p>Total number of AWCs that have been launched: <strong>10</strong></p>"
-            + "<p>% of AWCs open on <strong>Jul 2017</strong>: <strong>50.00%</strong></p>";
+        var expected = "<div>Total number of AWCs that were open on <strong>Jul 2017</strong>: <strong>5</strong></div>"
+            + "<div>Total number of AWCs that have been launched: <strong>10</strong></div>"
+            + "<div>% of AWCs open on <strong>Jul 2017</strong>: <strong>50.00%</strong></div>";
 
         var result = controller.tooltipContent(month.value, value, total);
         assert.equal(expected, result);

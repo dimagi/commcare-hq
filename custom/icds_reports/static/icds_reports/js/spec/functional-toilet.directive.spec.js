@@ -180,7 +180,9 @@ describe('Functional Toilet Directive', function () {
         var data = {in_month: 5, y: 0.72};
         var month = {value: "Jul 2017", series: []};
 
-        var expected = '<p><strong>Jul 2017</strong></p><br/><p>Number of AWCs that reported having a functional toilet: <strong>5</strong></p><p>% of AWCs that reported having a functional toilet: <strong>72.00%</strong></p>';
+        var expected = '<p><strong>Jul 2017</strong></p><br/>' +
+            '<div>Number of AWCs that reported having a functional toilet: <strong>5</strong></div>' +
+            '<div>% of AWCs that reported having a functional toilet: <strong>72.00%</strong></div>';
 
         var result = controller.tooltipContent(month.value, data);
         assert.equal(expected, result);
