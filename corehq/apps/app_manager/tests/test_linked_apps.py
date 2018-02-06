@@ -9,9 +9,9 @@ from mock import patch
 from corehq.apps.app_manager.exceptions import AppEditingError
 from corehq.apps.app_manager.models import (
     Application,
-    ReportModule, ReportAppConfig, Module, RemoteAppDetails, LinkedApplication)
+    ReportModule, ReportAppConfig, Module, LinkedApplication)
 from corehq.apps.linked_domain.exceptions import ActionNotPermitted
-from corehq.apps.linked_domain.models import DomainLink
+from corehq.apps.linked_domain.models import DomainLink, RemoteLinkDetails
 from corehq.apps.linked_domain.remote_accessors import _convert_app_from_remote_linking_source, \
     _get_missing_multimedia, _fetch_remote_media
 from corehq.apps.app_manager.tests.util import TestXmlMixin
@@ -215,8 +215,8 @@ class TestRemoteLinkedApps(BaseLinkedAppsTest):
         self.master_app_with_report_modules.get_module(0).set_icon('en', image_path)
         self.master_app_with_report_modules.create_mapping(self.image, image_path, save=False)
 
-        remote_app_details = RemoteAppDetails(
-            'http://localhost:8000', 'test_domain', 'user', 'key', self.master_app_with_report_modules._id
+        remote_details = RemoteLinkDetails(
+            'http://localhost:8000', 'user', 'key'
         )
         data = 'this is a test'
         media_details = list(self.master_app_with_report_modules.multimedia_map.values())[0]
@@ -224,7 +224,7 @@ class TestRemoteLinkedApps(BaseLinkedAppsTest):
         media_details['media_type'] = 'CommCareMultimedia'
         with patch('corehq.apps.linked_domain.remote_accessors._fetch_remote_media_content') as mock:
             mock.return_value = data
-            _fetch_remote_media('domain', [('case_list_image.jpg', media_details)], remote_app_details)
+            _fetch_remote_media('domain', [('case_list_image.jpg', media_details)], remote_details)
 
         media = CommCareMultimedia.get(media_details['multimedia_id'])
         self.addCleanup(media.delete)

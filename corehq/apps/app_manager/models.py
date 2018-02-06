@@ -6268,18 +6268,6 @@ class RemoteApp(ApplicationBase):
         return questions
 
 
-class RemoteAppDetails(namedtuple('RemoteAppDetails', 'url_base domain username api_key app_id')):
-    def __bool__(self):
-        return bool(self.url_base)
-
-    __nonzero__ = __bool__
-
-
-class RemoteLinkedAppAuth(DocumentSchema):
-    username = StringProperty()
-    api_key = StringProperty()
-
-
 class LinkedApplication(Application):
     """
     An app that can pull changes from an app in a different domain.
