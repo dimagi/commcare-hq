@@ -224,6 +224,27 @@ class XFormInstance(DeferredBlobMixin, SafeSaveDocument, UnicodeMixIn,
 
         return None
 
+    def set_meta_properties(self):
+        # noop - applicable for only SQL model
+        pass
+
+    @property
+    def time_start(self):
+        return self.metadata.timeStart
+
+    @property
+    def time_end(self):
+        return self.metadata.timeEnd
+
+    @property
+    def commcare_version(self):
+        return self.metadata.commcare_version
+
+    @property
+    def build_version(self):
+        from corehq.apps.receiverwrapper.util import get_version_from_build_id
+        return get_version_from_build_id(self.domain, self.build_id)
+
     def __unicode__(self):
         return "%s (%s)" % (self.type, self.xmlns)
 

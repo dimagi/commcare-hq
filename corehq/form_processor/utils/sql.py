@@ -61,6 +61,10 @@ def form_adapter(form):
         form.deleted_on,
         form.deletion_id,
         form.server_modified_on,
+        form.time_start,
+        form.time_end,
+        form.commcare_version,
+        form.build_version
     ]
     return ObjectAdapter(fields, XFormInstanceSQL_DB_TABLE)
 

@@ -208,6 +208,12 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
     # for compatability with corehq.blobs.mixin.DeferredBlobMixin interface
     persistent_blobs = None
 
+    # form meta properties
+    time_end = models.DateTimeField(null=True, blank=True)
+    time_start = models.DateTimeField(null=True, blank=True)
+    commcare_version = models.CharField(max_length=8, blank=True, null=True)
+    build_version = models.IntegerField(null=True, blank=True)
+
     def __init__(self, *args, **kwargs):
         super(XFormInstanceSQL, self).__init__(*args, **kwargs)
         # keep track to avoid refetching to check whether value is updated
@@ -339,6 +345,15 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
         from .utils import clean_metadata
         if const.TAG_META in self.form_data:
             return XFormPhoneMetadata.wrap(clean_metadata(self.form_data[const.TAG_META]))
+
+    def set_meta_properties(self):
+        from corehq.apps.receiverwrapper.util import get_app_version_info
+        self.time_end = self.metadata.timeEnd
+        self.time_start = self.metadata.timeStart
+        app_version_info = get_app_version_info(self.domain, self.build_id, None, self.metadata)
+
+        self.commcare_version = app_version_info.commcare_version
+        self.build_version = app_version_info.build_version
 
     def soft_delete(self):
         from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
