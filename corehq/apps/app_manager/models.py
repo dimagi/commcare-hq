@@ -6286,32 +6286,23 @@ class LinkedApplication(Application):
     """
     # This is the id of the master application
     master = StringProperty()
-    master_domain = StringProperty()
-    remote_url_base = StringProperty()
-    remote_auth = SchemaProperty(RemoteLinkedAppAuth)
-
-    _meta_fields = Application._meta_fields + ['remote_auth']
-
-    @property
-    def remote_app_details(self):
-        return RemoteAppDetails(
-            self.remote_url_base,
-            self.master_domain,
-            self.remote_auth.username,
-            self.remote_auth.api_key,
-            self.master
-        )
 
     def get_master_version(self):
-        return get_master_app_version(self.master_domain, self.master, self.remote_app_details)
+        from corehq.apps.linked_domain.dbaccessors import get_domain_master_link
+        domain_link = get_domain_master_link(self.domain)
+        return get_master_app_version(domain_link.master_domain, self.master, domain_link.remote_details)
 
     @property
     def master_is_remote(self):
-        return bool(self.remote_url_base)
+        from corehq.apps.linked_domain.dbaccessors import get_domain_master_link
+        domain_link = get_domain_master_link(self.domain)
+        return domain_link.is_remote
 
     def get_latest_master_release(self):
+        from corehq.apps.linked_domain.dbaccessors import get_domain_master_link
+        domain_link = get_domain_master_link(self.domain)
         return get_latest_master_app_release(
-            self.master_domain, self.master, self.domain, self.remote_app_details
+            domain_link.master_domain, self.master, self.domain, domain_link.remote_details
         )
 
 

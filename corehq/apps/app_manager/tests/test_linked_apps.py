@@ -11,6 +11,7 @@ from corehq.apps.app_manager.models import (
     Application,
     ReportModule, ReportAppConfig, Module, RemoteAppDetails, LinkedApplication)
 from corehq.apps.linked_domain.exceptions import ActionNotPermitted
+from corehq.apps.linked_domain.models import DomainLink
 from corehq.apps.linked_domain.remote_accessors import _convert_app_from_remote_linking_source, \
     _get_missing_multimedia, _fetch_remote_media
 from corehq.apps.app_manager.tests.util import TestXmlMixin
@@ -38,10 +39,13 @@ class BaseLinkedAppsTest(TestCase, TestXmlMixin):
         cls.linked_app = LinkedApplication.new_app('domain-2', "Linked Application")
         cls.linked_app.save()
 
+        cls.domain_link = DomainLink.link_domains('domain-2', 'domain')
+
     @classmethod
     def tearDownClass(cls):
         cls.linked_app.delete()
         cls.plain_master_app.delete()
+        cls.domain_link.delete()
         super(BaseLinkedAppsTest, cls).tearDownClass()
 
     def setUp(self):

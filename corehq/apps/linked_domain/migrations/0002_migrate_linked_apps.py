@@ -13,27 +13,31 @@ from corehq.util.soft_assert import soft_assert
 
 
 def _migrate_linked_apps(apps, schema_editor):
+    app_db = LinkedApplication.get_db()
     linked_apps = get_all_docs_with_doc_types(
-        LinkedApplication.get_db(), ['LinkedApplication', 'LinkedApplication-Deleted']
+        app_db, ['LinkedApplication', 'LinkedApplication-Deleted']
     )
+    errors = []
     for app_doc in linked_apps:
         remote_details = None
-        remote_url = app_doc.get('remote_url_base')
+        remote_url = app_doc.pop('remote_url_base', None)
         if remote_url:
+            auth = app_doc.pop('remote_auth', {})
             remote_details = RemoteLinkDetails(
-                app_doc['remote_url_base'],
-                app_doc['remote_auth']['username'],
-                app_doc['remote_auth']['api_key'],
+                remote_url,
+                auth.get('username'),
+                auth.get('api_key'),
             )
 
-        master_domain = app_doc.get('master_domain', None)
+        master_domain = app_doc.pop('master_domain', None)
         if not master_domain and not remote_url:
             master_domain = get_app(None, app_doc['master']).domain
-        errors = []
         try:
             DomainLink.link_domains(app_doc['domain'], master_domain, remote_details)
         except DomainLinkError as e:
             errors.append(str(e))
+        else:
+            app_db.save_doc(app_doc)
 
     _assert = soft_assert('{}@dimagi.com'.format('skelly'), exponential_backoff=False)
     _assert(not errors, 'Errors migrating linked apps to linked domain', {
