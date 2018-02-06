@@ -204,7 +204,7 @@ class TestPrevalenceOfStunting(TestCase):
             loc_level='block',
         )
         self.assertEquals(data['rightLegend']['average'], "1.11")
-    
+
     def test_chart_data_keys_length(self):
         data = get_prevalence_of_stunting_data_chart(
             'icds-cas',

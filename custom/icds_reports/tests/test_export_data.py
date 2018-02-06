@@ -31,10 +31,10 @@ class TestExportData(TestCase):
 
     def test_children_export(self):
         data = ChildrenExport(
-                config={
-                    'domain': 'icds-cas'
-                },
-            ).get_excel_data('b1')[0][0]
+            config={
+                'domain': 'icds-cas'
+            },
+        ).get_excel_data('b1')[0][0]
         self.assertEqual(data, "Children")
 
     def test_children_export_info(self):
@@ -58,7 +58,7 @@ class TestExportData(TestCase):
                     ]
                 ]
             ]
-         )
+        )
 
     def test_children_export_data_length(self):
         data = ChildrenExport(

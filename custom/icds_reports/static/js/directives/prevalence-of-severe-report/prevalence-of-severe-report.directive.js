@@ -249,9 +249,9 @@ function PrevalenceOfSevereReportController($scope, $routeParams, $location, $fi
             + '<div>Total Children ' + vm.chosenFilters() + ' weighed in given month: <strong>' + $filter('indiaNumbers')(all) + '</strong></div>'
             + '<div>Total Children ' + vm.chosenFilters() + ' with height measured in given month: <strong>' + $filter('indiaNumbers')(measured) + '</strong></div>'
             + '<div>Number of Children ' + vm.chosenFilters() + ' unmeasured: <strong>' + $filter('indiaNumbers')(all - measured) + '</strong></div>'
-            + "<div>% children " + vm.chosenFilters() + "  with Normal Acute Malnutrition: <strong>" + d3.format(".2%")(normal) + "</strong></div>"
-            + "<div>% children " + vm.chosenFilters() + "  with Moderate Acute Malnutrition (MAM): <strong>" + d3.format(".2%")(moderate) + "</strong></div>"
-            + "<div>% children " + vm.chosenFilters() + "  with Severe Acute Malnutrition (SAM): <strong>" + d3.format(".2%")(severe) + "</strong></div>"
+            + '<div>% children ' + vm.chosenFilters() + '  with Normal Acute Malnutrition: <strong>' + d3.format('.2%')(normal) + '</strong></div>'
+            + '<div>% children ' + vm.chosenFilters() + '  with Moderate Acute Malnutrition (MAM): <strong>' + d3.format('.2%')(moderate) + '</strong></div>'
+            + '<div>% children ' + vm.chosenFilters() + '  with Severe Acute Malnutrition (SAM): <strong>' + d3.format('.2%')(severe) + '</strong></div>';
     };
 
     vm.getDisableIndex = function () {
