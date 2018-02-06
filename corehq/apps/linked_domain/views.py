@@ -33,7 +33,7 @@ def get_latest_released_app_source(request, domain, app_id):
     if master_app.domain != domain:
         raise Http404
 
-    requester = request.GET.get('requester')
+    requester = request.META.get('HTTP_HQ_REMOTE_REQUESTER', None)
     if requester not in master_app.linked_whitelist:
         return HttpResponseForbidden()
 
