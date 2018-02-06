@@ -6,7 +6,6 @@ from corehq.apps.app_manager.models import Form
 from corehq.apps.sms.api import send_sms_with_backend_name, send_sms
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.messaging.scheduling.models.abstract import Content
-from corehq.apps.reminders.event_handlers import get_message_template_params
 from corehq.apps.reminders.models import Message
 from corehq.apps.sms.api import MessageMetadata
 from corehq.apps.sms.models import MessagingEvent
@@ -54,26 +53,23 @@ def send_sms_for_schedule_instance(schedule_instance, recipient, phone_number, m
 class SMSContent(Content):
     message = old_jsonfield.JSONField(default=dict)
 
-    def render_message(self, message, logged_subevent, case=None):
+    def render_message(self, message, recipient, logged_subevent):
         if not message:
             logged_subevent.error(MessagingEvent.ERROR_NO_MESSAGE)
             return None
 
-        if case:
-            template_params = get_message_template_params(case)
-            try:
-                return Message.render(message, **template_params)
-            except:
-                logged_subevent.error(MessagingEvent.ERROR_CANNOT_RENDER_MESSAGE)
-                return None
+        renderer = self.get_template_renderer(recipient)
+        try:
+            return renderer.render(message)
+        except:
+            logged_subevent.error(MessagingEvent.ERROR_CANNOT_RENDER_MESSAGE)
+            return None
 
-        return message
-
-    def send(self, recipient, schedule_instance, logged_event, case=None):
+    def send(self, recipient, schedule_instance, logged_event):
         logged_subevent = logged_event.create_subevent_from_contact_and_content(
             recipient,
             self,
-            case_id=case.case_id if case else None,
+            case_id=self.case.case_id if self.case else None,
         )
 
         phone_number = self.get_one_way_phone_number(recipient)
@@ -86,7 +82,7 @@ class SMSContent(Content):
             schedule_instance.memoized_schedule,
             recipient.get_language_code()
         )
-        message = self.render_message(message, logged_subevent, case=case)
+        message = self.render_message(message, recipient, logged_subevent)
 
         send_sms_for_schedule_instance(schedule_instance, recipient, phone_number, message, logged_subevent)
         logged_subevent.completed()
@@ -96,7 +92,7 @@ class EmailContent(Content):
     subject = old_jsonfield.JSONField(default=dict)
     message = old_jsonfield.JSONField(default=dict)
 
-    def send(self, recipient, schedule_instance, logged_event, case=None):
+    def send(self, recipient, schedule_instance, logged_event):
         print('*******************************')
         print('To:', recipient)
         print('Subject: ', self.subject)
@@ -128,7 +124,7 @@ class SMSSurveyContent(Content):
 
         return app, module, form
 
-    def send(self, recipient, schedule_instance, logged_event, case=None):
+    def send(self, recipient, schedule_instance, logged_event):
         print('*******************************')
         print('To:', recipient)
         print('SMS Survey: ', self.form_unique_id)
@@ -138,7 +134,7 @@ class SMSSurveyContent(Content):
 class IVRSurveyContent(Content):
     form_unique_id = models.CharField(max_length=126)
 
-    def send(self, recipient, schedule_instance, logged_event, case=None):
+    def send(self, recipient, schedule_instance, logged_event):
         print('*******************************')
         print('To:', recipient)
         print('IVR Survey: ', self.form_unique_id)
@@ -165,11 +161,11 @@ class CustomContent(Content):
 
         return messages
 
-    def send(self, recipient, schedule_instance, logged_event, case=None):
+    def send(self, recipient, schedule_instance, logged_event):
         logged_subevent = logged_event.create_subevent_from_contact_and_content(
             recipient,
             self,
-            case_id=case.case_id if case else None,
+            case_id=self.case.case_id if self.case else None,
         )
 
         phone_number = self.get_one_way_phone_number(recipient)

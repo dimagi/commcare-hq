@@ -11,6 +11,12 @@ from corehq.messaging.scheduling.exceptions import (
     UnknownContentType,
 )
 from corehq.messaging.scheduling import util
+from corehq.messaging.templating import (
+    _get_obj_template_info,
+    MessagingTemplateRenderer,
+    SimpleDictTemplateParam,
+    CaseMessagingTemplateParam,
+)
 from django.utils.functional import cached_property
 
 
@@ -195,8 +201,37 @@ class Event(ContentForeignKeyMixin):
 
 
 class Content(models.Model):
+    # If this this content is being invoked in the context of a case,
+    # for example when a case triggers an alert, this is the case.
+    case = None
+
     class Meta:
         abstract = True
+
+    def set_case_context(self, case):
+        self.case = case
+
+    @cached_property:
+    def case_rendering_context(self):
+        """
+        This is a cached property because many of the lookups done
+        within a CaseMessagingTemplateParam are memoized, so by
+        caching this return value we're able to reuse those lookups
+        when looping over all expanded recipients of a ScheduleInstance.
+        """
+        if self.case:
+            return CaseMessagingTemplateParam(self.case)
+
+        return None
+
+    def get_template_renderer(self, recipient):
+        r = MessagingTemplateRenderer()
+        r.set_context_param('recipient', SimpleDictTemplateParam(_get_obj_template_info(recipient)))
+
+        if self.case_rendering_context:
+            r.set_context_param('case', self.case_rendering_context)
+
+        return r
 
     @classmethod
     def get_one_way_phone_number(cls, recipient):
