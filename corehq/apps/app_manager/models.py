@@ -6287,23 +6287,21 @@ class LinkedApplication(Application):
     # This is the id of the master application
     master = StringProperty()
 
-    def get_master_version(self):
+    @property
+    @memoized
+    def domain_link(self):
         from corehq.apps.linked_domain.dbaccessors import get_domain_master_link
-        domain_link = get_domain_master_link(self.domain)
-        return get_master_app_version(domain_link.master_domain, self.master, domain_link.remote_details)
+        return get_domain_master_link(self.domain)
+
+    def get_master_version(self):
+        return get_master_app_version(self.domain_link, self.master)
 
     @property
     def master_is_remote(self):
-        from corehq.apps.linked_domain.dbaccessors import get_domain_master_link
-        domain_link = get_domain_master_link(self.domain)
-        return domain_link.is_remote
+        return self.domain_link.is_remote
 
     def get_latest_master_release(self):
-        from corehq.apps.linked_domain.dbaccessors import get_domain_master_link
-        domain_link = get_domain_master_link(self.domain)
-        return get_latest_master_app_release(
-            domain_link.master_domain, self.master, self.domain, domain_link.remote_details
-        )
+        return get_latest_master_app_release(self.domain_link, self.master)
 
 
 def import_app(app_id_or_source, domain, source_properties=None, validate_source_domain=None):
