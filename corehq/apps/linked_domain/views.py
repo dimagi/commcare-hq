@@ -17,7 +17,8 @@ def toggles_and_previews(request, domain):
 @api_key_auth
 @require_linked_domain
 def custom_data_models(request, domain):
-    return JsonResponse(get_custom_data_models(domain))
+    limit_types = request.GET.getlist('type')
+    return JsonResponse(get_custom_data_models(domain, limit_types))
 
 
 @api_key_auth
