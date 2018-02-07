@@ -212,11 +212,24 @@ def login_or_basic_ex(allow_cc_users=False, allow_sessions=True):
     return _login_or_challenge(basicauth(), allow_cc_users=allow_cc_users, allow_sessions=allow_sessions)
 
 
+def login_or_digest_ex(allow_cc_users=False, allow_sessions=True):
+    return _login_or_challenge(httpdigest, allow_cc_users=allow_cc_users, allow_sessions=allow_sessions)
+
+
 def login_or_token_ex(allow_cc_users=False, allow_sessions=True):
     return _login_or_challenge(tokenauth, allow_cc_users=allow_cc_users, allow_sessions=allow_sessions)
 
 
-def _get_multi_auth_decorator(default, allow_token=False):
+def login_or_api_key_ex(allow_cc_users=False, allow_sessions=True):
+    return _login_or_challenge(
+        api_key(),
+        allow_cc_users=allow_cc_users,
+        api_key=True,
+        allow_sessions=allow_sessions
+    )
+
+
+def _get_multi_auth_decorator(default, allow_token=False, allow_two_factor=True):
     def decorator(fn):
         @wraps(fn)
         def _inner(request, *args, **kwargs):
@@ -232,19 +245,6 @@ def _get_multi_auth_decorator(default, allow_token=False):
             return function_wrapper(fn)(request, *args, **kwargs)
         return _inner
     return decorator
-
-
-def login_or_api_key_ex(allow_cc_users=False, allow_sessions=True):
-    return _login_or_challenge(
-        api_key(),
-        allow_cc_users=allow_cc_users,
-        api_key=True,
-        allow_sessions=allow_sessions
-    )
-
-
-def login_or_digest_ex(allow_cc_users=False, allow_sessions=True):
-    return _login_or_challenge(httpdigest, allow_cc_users=allow_cc_users, allow_sessions=allow_sessions)
 
 
 # This decorator should be used for any endpoints used by CommCare mobile
