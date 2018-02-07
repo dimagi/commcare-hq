@@ -80,51 +80,52 @@ def login_and_domain_required(view_func):
     def _inner(req, domain, *args, **kwargs):
         user = req.user
         domain_name, domain = load_domain(req, domain)
-        if domain:
-            if user.is_authenticated and user.is_active:
-                if not domain.is_active:
-                    msg = _((
-                        'The domain "{domain}" has not yet been activated. '
-                        'Please report an issue if you think this is a mistake.'
-                    ).format(domain=domain_name))
-                    messages.info(req, msg)
-                    return HttpResponseRedirect(reverse("domain_select"))
-                couch_user = _ensure_request_couch_user(req)
-                if couch_user.is_member_of(domain):
-                    if (_two_factor_required(domain, couch_user) and not user.is_verified()):
-                        return TemplateResponse(
-                            request=req,
-                            template='two_factor/core/otp_required.html',
-                            status=403,
-                        )
-                    else:
-                        return view_func(req, domain_name, *args, **kwargs)
-
-                elif (
-                    _page_is_whitelist(req.path, domain_name) or
-                    not domain.restrict_superusers
-                ) and user.is_superuser:
-                    # superusers can circumvent domain permissions.
-                    return view_func(req, domain_name, *args, **kwargs)
-                elif domain.is_snapshot:
-                    # snapshots are publicly viewable
-                    return require_previewer(view_func)(req, domain_name, *args, **kwargs)
-                elif domain.allow_domain_requests:
-                    from corehq.apps.users.views import DomainRequestView
-                    return DomainRequestView.as_view()(req, *args, **kwargs)
-                else:
-                    raise Http404
-            elif (
-                req.path.startswith(u'/a/{}/reports/custom'.format(domain_name)) and
-                PUBLISH_CUSTOM_REPORTS.enabled(domain_name)
-            ):
-                return view_func(req, domain_name, *args, **kwargs)
-            else:
-                login_url = reverse('domain_login', kwargs={'domain': domain})
-                return _redirect_for_login_or_domain(req, REDIRECT_FIELD_NAME, login_url)
-        else:
+        if not domain:
             msg = _(('The domain "{domain}" was not found.').format(domain=domain_name))
             raise Http404(msg)
+
+        if user.is_authenticated and user.is_active:
+            if not domain.is_active:
+                msg = _((
+                    'The domain "{domain}" has not yet been activated. '
+                    'Please report an issue if you think this is a mistake.'
+                ).format(domain=domain_name))
+                messages.info(req, msg)
+                return HttpResponseRedirect(reverse("domain_select"))
+            couch_user = _ensure_request_couch_user(req)
+            if couch_user.is_member_of(domain):
+                if (_two_factor_required(domain, couch_user) and not user.is_verified()):
+                    return TemplateResponse(
+                        request=req,
+                        template='two_factor/core/otp_required.html',
+                        status=403,
+                    )
+                else:
+                    return view_func(req, domain_name, *args, **kwargs)
+
+            elif (
+                _page_is_whitelist(req.path, domain_name) or
+                not domain.restrict_superusers
+            ) and user.is_superuser:
+                # superusers can circumvent domain permissions.
+                return view_func(req, domain_name, *args, **kwargs)
+            elif domain.is_snapshot:
+                # snapshots are publicly viewable
+                return require_previewer(view_func)(req, domain_name, *args, **kwargs)
+            elif domain.allow_domain_requests:
+                from corehq.apps.users.views import DomainRequestView
+                return DomainRequestView.as_view()(req, *args, **kwargs)
+            else:
+                raise Http404
+        elif (
+            req.path.startswith(u'/a/{}/reports/custom'.format(domain_name)) and
+            PUBLISH_CUSTOM_REPORTS.enabled(domain_name)
+        ):
+            return view_func(req, domain_name, *args, **kwargs)
+        else:
+            login_url = reverse('domain_login', kwargs={'domain': domain})
+            return _redirect_for_login_or_domain(req, REDIRECT_FIELD_NAME, login_url)
+
 
     return _inner
 
