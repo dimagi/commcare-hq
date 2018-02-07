@@ -2,7 +2,8 @@
 hqDefine("domain/js/billing_statements", function() {
 
     var initialPageData = hqImport("hqwebapp/js/initial_page_data"),
-        paymentMethodHandlers = hqImport("accounting/js/payment_method_handler");
+        paymentMethodHandlers = hqImport("accounting/js/payment_method_handler"),
+        CRUDPaginatedList = hqImport("hqwebapp/js/crud_paginated_list");
 
     $(function () {
         Stripe.setPublishableKey(initialPageData.get("stripe_options").stripe_public_key);
@@ -11,15 +12,17 @@ hqDefine("domain/js/billing_statements", function() {
         var Invoice = paymentMethodHandlers.Invoice;
         var TotalCostItem = paymentMethodHandlers.TotalCostItem;
         var pagination = initialPageData.get("pagination");
-        var paginatedListModel = new window.CRUDPaginatedListModel(
+        var paginatedListModel = new CRUDPaginatedList.CRUDPaginatedListModel(
             pagination.total,
             pagination.limit,
             pagination.page,
             {
                 statusCodeText: pagination.status_codes,
+                allowItemCreation: initialPageData.get('item_creation_allowed'),
                 createItemForm: pagination.create_item_form,
             }
         );
+
         $(function () {
             ko.applyBindings(paginatedListModel, $('#editable-paginated-list').get(0));
         });
@@ -84,7 +87,7 @@ hqDefine("domain/js/billing_statements", function() {
             }));
         });
 
-        paginatedListModel.totalDue = ko.observable(parseFloat("{{total_balance}}"));
+        paginatedListModel.totalDue = ko.observable(parseFloat(initialPageData.get("total_balance")));
 
         paginatedListModel.displayTotalDue = ko.computed(function () {
             return "$" + paginatedListModel.totalDue().toFixed(2);
