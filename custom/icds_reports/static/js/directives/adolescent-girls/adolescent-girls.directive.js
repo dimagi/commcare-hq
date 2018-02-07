@@ -225,7 +225,7 @@ function AdolescentWomenController($scope, $routeParams, $location, $filter, dem
         return "<p><strong>" + monthName + "</strong></p><br/>"
             + "<div>Number of adolescent girls (11 - 18 years) who are enrolled for Anganwadi Services: <strong>" + $filter('indiaNumbers')(day.y) + "</strong></div>"
             + "<div>Total number of adolescent girls (11 - 18 years) who are registered: <strong>" + $filter('indiaNumbers')(day.all) + "</strong></div>"
-            + "<div>Percentage of registered adolescent girls (11 - 18 years) who are enrolled Anganwadi Services: <strong>" + d3.format('.2%')(day.y / (day.all || 1)) + "</strong></div>";
+            + "<div>Percentage of registered adolescent girls (11 - 18 years) who are enrolled for Anganwadi Services: <strong>" + d3.format('.2%')(day.y / (day.all || 1)) + "</strong></div>";
     };
 
     vm.showAllLocations = function () {
