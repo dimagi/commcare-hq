@@ -293,16 +293,13 @@ class Content(models.Model):
         raise NotImplementedError()
 
     def get_sms_message_metadata(self, logged_subevent):
-        from corehq.messaging.scheduling.scheduling_partitioned.models import CaseScheduleInstanceMixin
-
         custom_metadata = {}
 
-        if self.schedule_instance:
-            if isinstance(self.schedule_instance, CaseScheduleInstanceMixin):
-                custom_metadata['case_id'] = self.schedule_instance.case_id
+        if self.case:
+            custom_metadata['case_id'] = self.case.case_id
 
-            if schedule_instance.memoized_schedule.custom_metadata:
-                custom_metadata.update(self.schedule_instance.memoized_schedule.custom_metadata)
+        if self.schedule_instance and self.schedule_instance.memoized_schedule.custom_metadata:
+            custom_metadata.update(self.schedule_instance.memoized_schedule.custom_metadata)
 
         return MessageMetadata(
             custom_metadata=custom_metadata,
