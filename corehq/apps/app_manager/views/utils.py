@@ -333,3 +333,5 @@ def update_linked_app(app):
             raise AppLinkError(_(
                 'Error fetching multimedia from remote server. Please try again later.'
             ))
+
+    app.domain_link.update_last_pull()

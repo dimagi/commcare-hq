@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 
 from collections import namedtuple
 
+from datetime import datetime
 from django.db import models
 
 from corehq.apps.linked_domain.exceptions import DomainLinkError
@@ -18,7 +19,7 @@ class RemoteLinkDetails(namedtuple('RemoteLinkDetails', 'url_base username api_k
 class DomainLink(models.Model):
     linked_domain = models.CharField(max_length=126, null=False, unique=True)
     master_domain = models.CharField(max_length=126, null=False)
-    last_pull = models.DateTimeField(auto_now_add=True)
+    last_pull = models.DateTimeField(null=True)
 
     # used for linking across remote instances of HQ
     remote_base_url = models.CharField(max_length=255, null=True)
@@ -32,6 +33,10 @@ class DomainLink(models.Model):
     @property
     def is_remote(self):
         return bool(self.remote_base_url)
+
+    def update_last_pull(self, date=None):
+        self.last_pull = date or datetime.utcnow()
+        self.save()
 
     @classmethod
     def link_domains(cls, linked_domain, master_domain, remote_details=None):

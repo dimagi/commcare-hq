@@ -23,3 +23,5 @@ class Command(BaseCommand):
         update_toggles_previews(link)
         update_custom_data_models(link)
         update_user_roles(link)
+
+        link.update_last_pull()
