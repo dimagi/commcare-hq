@@ -111,8 +111,8 @@ function RegisteredHouseholdController($scope, $routeParams, $location, $filter,
                 }));
                 var range = max - min;
                 vm.chartOptions.chart.forceY = [
-                    (min - range/10).toFixed(2) < 0 ? 0 : (min - range/10).toFixed(2),
-                    (max + range/10).toFixed(2),
+                    parseInt((min - range/10).toFixed(0)) < 0 ? 0 : parseInt((min - range/10).toFixed(0)),
+                    parseInt((max + range/10).toFixed(0)),
                 ];
             }
         });

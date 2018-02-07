@@ -142,7 +142,7 @@ function EnrolledChildrenController($scope, $routeParams, $location, $filter, de
                     });
                 }));
                 var range = max - min;
-                vm.chartOptions.chart.forceY = [0, (max + range/10).toFixed(2)];
+                vm.chartOptions.chart.forceY = [0, parseInt((max + range/10).toFixed(0))];
             }
         });
     };
