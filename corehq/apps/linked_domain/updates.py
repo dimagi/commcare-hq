@@ -34,7 +34,6 @@ def update_model_type(domain_link, model_type, model_detail=None):
         MODEL_LOCATION_DATA: partial(update_custom_data_models, limit_types=[LocationFieldsView.field_type]),
         MODEL_PRODUCT_DATA: partial(update_custom_data_models, limit_types=[ProductFieldsView.field_type]),
         MODEL_USER_DATA: partial(update_custom_data_models, limit_types=[UserFieldsView.field_type]),
-        MODEL_APP: update_linked_app,
     }.get(model_type)
 
     kwargs = model_detail or {}

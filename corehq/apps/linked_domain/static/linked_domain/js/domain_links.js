@@ -19,6 +19,11 @@ hqDefine("linked_domain/js/domain_links", [
         self.last_update = ko.observable(data.last_update);
         self.detail = data.detail;
         self.can_update = data.can_update;
+        self.update_url = null;
+
+        if (self.type === 'app' && self.detail && self.detail.app_id){
+            self.update_url = initialPageData.reverse('app_settings', self.detail.app_id)
+        }
         self.hasError = ko.observable(false);
 
         self.update = function() {

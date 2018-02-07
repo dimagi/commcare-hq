@@ -7,6 +7,7 @@
 {% block page_content %}
 {% initial_page_data 'view_data' view_data %}
 {% registerurl 'linked_domain:domain_link_rmi' domain %}
+{% registerurl 'app_settings' domain '---' %}
 
 <div id="domain_links">
     <h2>{% trans "Project Links" %}</h2>
@@ -26,9 +27,10 @@
                     <td data-bind="text: name"></td>
                     <td data-bind="text: last_update"></td>
                     <td>
-                        <button class="btn" data-bind="visible: can_update, click: update">
+                        <button class="btn" data-bind="visible: can_update && !update_url, click: update">
                             {% trans "Update" %}
                         </button>
+                        <a data-bind="visible: can_update && update_url, attr: {href: update_url}">{% trans "Go to update page" %}</a>
                     </td>
                 </tr>
             </tbody>

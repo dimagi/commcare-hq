@@ -96,7 +96,7 @@ class DomainLinkView(BaseAdminProjectSettingsView):
                     app_name = 'Unknown App'
                     if action['model_detail']:
                         detail = AppLinkDetail(action['model_detail'])
-                        app = linked_apps.get(detail.app_id)
+                        app = linked_apps.pop(detail.app_id, None)
                         app_name = app.name if app else detail.app_id
                         if app:
                             update['detail'] = action['model_detail']
@@ -107,6 +107,17 @@ class DomainLinkView(BaseAdminProjectSettingsView):
                     update['name'] = '{} ({})'.format(linked_models[model], app_name)
 
                 model_status.append(update)
+
+            if linked_apps:
+                for app in linked_apps.values():
+                    update = {
+                        'type': 'app',
+                        'name': '{} ({})'.format(linked_models['app'], app.name),
+                        'last_update': None,
+                        'detail': AppLinkDetail(app_id=app._id).to_json(),
+                        'can_update': True
+                    }
+                    model_status.append(update)
 
         return {
             'domain': self.domain,
