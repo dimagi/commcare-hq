@@ -285,7 +285,9 @@ class BaseReportView(View):
         domain = self.kwargs['domain']
         current_month = datetime(year, month, 1)
         prev_month = current_month - relativedelta(months=1)
-        location = request.GET.get('location_id', '')
+        location = request.GET.get('location_id')
+        if location == 'null' or location == 'undefined':
+            location = None
         selected_month = current_month
 
         return step, now, month, year, include_test, domain, current_month, prev_month, location, selected_month
@@ -375,8 +377,10 @@ class PrevalenceOfUndernutritionView(BaseReportView):
 class LocationView(View):
 
     def get(self, request, *args, **kwargs):
-        if 'location_id' in request.GET and request.GET['location_id'] and request.GET['location_id'] != 'null':
-            location_id = request.GET['location_id']
+        location_id = request.GET.get('location_id')
+        if location_id == 'null' or location_id == 'undefined':
+            location_id = None
+        if location_id:
             if not user_can_access_location_id(self.kwargs['domain'], request.couch_user, location_id):
                 return JsonResponse({})
             location = get_object_or_404(
@@ -429,6 +433,8 @@ class LocationView(View):
 class LocationAncestorsView(View):
     def get(self, request, *args, **kwargs):
         location_id = request.GET.get('location_id')
+        if location_id == 'null' or location_id == 'undefined':
+            location_id = None
         show_test = request.GET.get('include_test', False)
         selected_location = get_object_or_404(SQLLocation, location_id=location_id, domain=self.kwargs['domain'])
         parents = list(SQLLocation.objects.get_queryset_ancestors(
@@ -465,6 +471,8 @@ class LocationAncestorsView(View):
 class AWCLocationView(View):
     def get(self, request, *args, **kwargs):
         location_id = request.GET.get('location_id')
+        if location_id == 'null' or location_id == 'undefined':
+            location_id = None
         selected_location = get_object_or_404(SQLLocation, location_id=location_id, domain=self.kwargs['domain'])
         awcs = selected_location.get_descendants().filter(
             location_type__code=AWC_LOCATION_TYPE_CODE
@@ -488,7 +496,9 @@ class AwcReportsView(BaseReportView):
             self.get_settings(request, *args, **kwargs)
 
         two_before = current_month - relativedelta(months=2)
-        location = request.GET.get('location_id', None)
+        location = request.GET.get('location_id')
+        if location == 'null' or location == 'undefined':
+            location = None
         aggregation_level = 5
 
         config = {
@@ -1029,6 +1039,8 @@ class AWCDailyStatusView(View):
             'aggregation_level': 1,
         }
         location = request.GET.get('location_id', '')
+        if location == 'null' or location == 'undefined':
+            location = None
         config.update(get_location_filter(location, self.kwargs['domain']))
         loc_level = get_location_level(config.get('aggregation_level'))
 
