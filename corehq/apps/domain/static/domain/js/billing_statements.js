@@ -104,7 +104,7 @@ hqDefine("domain/js/billing_statements", function() {
 
         paginatedListModel.getAdditionalData = function () {
             var additional_data = {
-                'show_unpaid': paginatedListModel.showUnpaidBills()
+                'show_unpaid': paginatedListModel.showUnpaidBills(),
             };
             if (window.location.href.split('?').length > 2) {
                 additional_data['show_hidden'] = _(window.location.href.split('?')[1].split('&')).contains('show_hidden=true');
