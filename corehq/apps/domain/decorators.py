@@ -94,7 +94,7 @@ def login_and_domain_required(view_func):
                 return HttpResponseRedirect(reverse("domain_select"))
             couch_user = _ensure_request_couch_user(req)
             if couch_user.is_member_of(domain):
-                if (_two_factor_required(domain, couch_user) and not user.is_verified()):
+                if (_two_factor_required(view_func, domain, couch_user) and not user.is_verified()):
                     return TemplateResponse(
                         request=req,
                         template='two_factor/core/otp_required.html',
@@ -231,6 +231,8 @@ def login_or_api_key_ex(allow_cc_users=False, allow_sessions=True):
 
 def _get_multi_auth_decorator(default, allow_token=False, allow_two_factor=True):
     def decorator(fn):
+        fn.allow_two_factor = allow_two_factor
+
         @wraps(fn)
         def _inner(request, *args, **kwargs):
             authtype = determine_authtype_from_request(request, default=default)
@@ -249,11 +251,11 @@ def _get_multi_auth_decorator(default, allow_token=False, allow_two_factor=True)
 
 # This decorator should be used for any endpoints used by CommCare mobile
 # It supports basic, session, and apikey auth, but not digest
-mobile_auth = _get_multi_auth_decorator(default=BASIC)
+mobile_auth = _get_multi_auth_decorator(default=BASIC, allow_two_factor=False)
 
 # This decorator is deprecated, it's used only for anonymous web apps
 mobile_auth_or_token = _get_multi_auth_decorator(
-    default=BASIC, allow_token=True)
+    default=BASIC, allow_token=True, allow_two_factor=False)
 
 # Use this decorator to allow any auth type -
 # basic, digest, session, or apikey
@@ -276,7 +278,7 @@ def two_factor_check(api_key):
         def _inner(request, domain, *args, **kwargs):
             dom = Domain.get_by_name(domain)
             couch_user = _ensure_request_couch_user(request)
-            if not api_key and dom and _two_factor_required(dom, couch_user):
+            if not api_key and dom and _two_factor_required(fn, dom, couch_user):
                 token = request.META.get('HTTP_X_COMMCAREHQ_OTP')
                 if token and match_token(request.user, token):
                     return fn(request, *args, **kwargs)
@@ -287,8 +289,8 @@ def two_factor_check(api_key):
     return _outer
 
 
-def _two_factor_required(domain, couch_user):
-    return domain.two_factor_auth and couch_user.is_web_user() and not couch_user.two_factor_disabled
+def _two_factor_required(view_func, domain, couch_user):
+    return getattr(view_func, 'allow_two_factor', True) and domain.two_factor_auth and not couch_user.two_factor_disabled
 
 
 def cls_to_view(additional_decorator=None):
