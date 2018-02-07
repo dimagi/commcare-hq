@@ -80,7 +80,6 @@ def login_and_domain_required(view_func):
     def _inner(req, domain, *args, **kwargs):
         user = req.user
         domain_name, domain = load_domain(req, domain)
-        allow_two_factor = kwargs.pop('allow_two_factor')
         if not domain:
             msg = _(('The domain "{domain}" was not found.').format(domain=domain_name))
             raise Http404(msg)
@@ -95,7 +94,7 @@ def login_and_domain_required(view_func):
                 return HttpResponseRedirect(reverse("domain_select"))
             couch_user = _ensure_request_couch_user(req)
             if couch_user.is_member_of(domain):
-                if (_two_factor_required(allow_two_factor, domain, couch_user) and not user.is_verified()):
+                if (_two_factor_required(domain, couch_user) and not user.is_verified()):
                     return TemplateResponse(
                         request=req,
                         template='two_factor/core/otp_required.html',
@@ -174,7 +173,7 @@ def api_key():
     return real_decorator
 
 
-def _login_or_challenge(challenge_fn, allow_cc_users=False, api_key=False, allow_sessions=True, allow_two_factor=True):
+def _login_or_challenge(challenge_fn, allow_cc_users=False, api_key=False, allow_sessions=True):
     """
     kwargs:
         allow_cc_users: authorize non-WebUser users
@@ -186,13 +185,12 @@ def _login_or_challenge(challenge_fn, allow_cc_users=False, api_key=False, allow
         @wraps(fn)
         def safe_fn(request, domain, *args, **kwargs):
             if request.user.is_authenticated and allow_sessions:
-                kwargs['allow_two_factor'] = allow_two_factor
                 return login_and_domain_required(fn)(request, domain, *args, **kwargs)
             else:
                 # if sessions are blocked or user is not already authenticated, check for authentication
                 @check_lockout
                 @challenge_fn
-                @two_factor_check(allow_two_factor, api_key)
+                @two_factor_check(api_key)
                 def _inner(request, domain, *args, **kwargs):
                     couch_user = _ensure_request_couch_user(request)
                     if (
@@ -210,28 +208,24 @@ def _login_or_challenge(challenge_fn, allow_cc_users=False, api_key=False, allow
     return _outer
 
 
-def login_or_basic_ex(allow_cc_users=False, allow_sessions=True, allow_two_factor=True):
-    return _login_or_challenge(basicauth(), allow_cc_users=allow_cc_users, allow_sessions=allow_sessions,
-                               allow_two_factor=allow_two_factor)
+def login_or_basic_ex(allow_cc_users=False, allow_sessions=True):
+    return _login_or_challenge(basicauth(), allow_cc_users=allow_cc_users, allow_sessions=allow_sessions)
 
 
-def login_or_digest_ex(allow_cc_users=False, allow_sessions=True, allow_two_factor=True):
-    return _login_or_challenge(httpdigest, allow_cc_users=allow_cc_users, allow_sessions=allow_sessions,
-                               allow_two_factor=allow_two_factor)
+def login_or_digest_ex(allow_cc_users=False, allow_sessions=True):
+    return _login_or_challenge(httpdigest, allow_cc_users=allow_cc_users, allow_sessions=allow_sessions)
 
 
-def login_or_token_ex(allow_cc_users=False, allow_sessions=True, allow_two_factor=True):
-    return _login_or_challenge(tokenauth, allow_cc_users=allow_cc_users, allow_sessions=allow_sessions,
-                               allow_two_factor=allow_two_factor)
+def login_or_token_ex(allow_cc_users=False, allow_sessions=True):
+    return _login_or_challenge(tokenauth, allow_cc_users=allow_cc_users, allow_sessions=allow_sessions)
 
 
-def login_or_api_key_ex(allow_cc_users=False, allow_sessions=True, allow_two_factor=True):
+def login_or_api_key_ex(allow_cc_users=False, allow_sessions=True):
     return _login_or_challenge(
         api_key(),
         allow_cc_users=allow_cc_users,
         api_key=True,
-        allow_sessions=allow_sessions,
-        allow_two_factor=allow_two_factor,
+        allow_sessions=allow_sessions
     )
 
 
@@ -243,10 +237,10 @@ def _get_multi_auth_decorator(default, allow_token=False, allow_two_factor=True)
             if authtype == TOKEN and not allow_token:
                 return HttpResponseForbidden()
             function_wrapper = {
-                BASIC: login_or_basic_ex(allow_cc_users=True, allow_two_factor=allow_two_factor),
-                DIGEST: login_or_digest_ex(allow_cc_users=True, allow_two_factor=allow_two_factor),
-                API_KEY: login_or_api_key_ex(allow_cc_users=True, allow_two_factor=allow_two_factor),
-                TOKEN: login_or_token_ex(allow_cc_users=True, allow_two_factor=allow_two_factor),
+                BASIC: login_or_basic_ex(allow_cc_users=True),
+                DIGEST: login_or_digest_ex(allow_cc_users=True),
+                API_KEY: login_or_api_key_ex(allow_cc_users=True),
+                TOKEN: login_or_token_ex(allow_cc_users=True),
             }[authtype]
             return function_wrapper(fn)(request, *args, **kwargs)
         return _inner
@@ -255,11 +249,11 @@ def _get_multi_auth_decorator(default, allow_token=False, allow_two_factor=True)
 
 # This decorator should be used for any endpoints used by CommCare mobile
 # It supports basic, session, and apikey auth, but not digest
-mobile_auth = _get_multi_auth_decorator(default=BASIC, allow_two_factor=False)
+mobile_auth = _get_multi_auth_decorator(default=BASIC)
 
 # This decorator is deprecated, it's used only for anonymous web apps
 mobile_auth_or_token = _get_multi_auth_decorator(
-    default=BASIC, allow_token=True, allow_two_factor=False)
+    default=BASIC, allow_token=True)
 
 # Use this decorator to allow any auth type -
 # basic, digest, session, or apikey
@@ -276,13 +270,13 @@ basic_auth = login_or_basic_ex(allow_sessions=False)
 api_key_auth = login_or_api_key_ex(allow_sessions=False)
 
 
-def two_factor_check(allow_two_factor, api_key):
+def two_factor_check(api_key):
     def _outer(fn):
         @wraps(fn)
         def _inner(request, domain, *args, **kwargs):
             dom = Domain.get_by_name(domain)
             couch_user = _ensure_request_couch_user(request)
-            if not api_key and dom and _two_factor_required(allow_two_factor, dom, couch_user):
+            if not api_key and dom and _two_factor_required(dom, couch_user):
                 token = request.META.get('HTTP_X_COMMCAREHQ_OTP')
                 if token and match_token(request.user, token):
                     return fn(request, *args, **kwargs)
@@ -293,8 +287,8 @@ def two_factor_check(allow_two_factor, api_key):
     return _outer
 
 
-def _two_factor_required(allow_two_factor, domain, couch_user):
-    return allow_two_factor and domain.two_factor_auth and not couch_user.two_factor_disabled
+def _two_factor_required(domain, couch_user):
+    return domain.two_factor_auth and couch_user.is_web_user() and not couch_user.two_factor_disabled
 
 
 def cls_to_view(additional_decorator=None):
