@@ -1272,14 +1272,6 @@ DATA_DICTIONARY = StaticToggle(
     description='Available in the Data section, shows the names of all properties of each case type.',
 )
 
-LINKED_APPS = StaticToggle(
-    'linked_apps',
-    'Allows master and linked apps',
-    TAG_SOLUTIONS,
-    [NAMESPACE_DOMAIN],
-    help_link='https://confluence.dimagi.com/display/ccinternal/Linked+Applications',
-)
-
 LOCATION_USERS = StaticToggle(
     'location_users',
     'Enikshay: Autogenerate users for each location',
@@ -1489,4 +1481,15 @@ SHOW_ALL_SCHEDULED_REPORT_EMAILS = StaticToggle(
     "admin, show all in the current project)",
     TAG_PRODUCT,
     [NAMESPACE_DOMAIN],
+)
+
+LINKED_DOMAINS = StaticToggle(
+    'linked_domains',
+    'Allow linking domains (successor to linked apps)',
+    TAG_INTERNAL,
+    [NAMESPACE_DOMAIN],
+    description=(
+        "Link project spaces to allow syncing apps, lookup tables, organizations etc."
+    ),
+    help_link='https://confluence.dimagi.com/display/ccinternal/Linked+Applications'
 )
