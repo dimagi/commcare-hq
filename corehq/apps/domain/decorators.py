@@ -262,11 +262,13 @@ def two_factor_exempt(view_func):
 
 # This decorator should be used for any endpoints used by CommCare mobile
 # It supports basic, session, and apikey auth, but not digest
+# Endpoints with this decorator will not enforce two factor authentication
 def mobile_auth(view_func):
     return _get_multi_auth_decorator(default=BASIC)(two_factor_exempt(view_func))
 
 
 # This decorator is deprecated, it's used only for anonymous web apps
+# Endpoints with this decorator will not enforce two factor authentication
 def mobile_auth_or_token(view_func):
     return _get_multi_auth_decorator(default=BASIC, allow_token=True)(two_factor_exempt(view_func))
 
