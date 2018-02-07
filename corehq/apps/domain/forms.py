@@ -783,8 +783,7 @@ class PrivacySecurityForm(forms.Form):
     two_factor_auth = BooleanField(
         label=ugettext_lazy("Two Factor Authentication"),
         required=False,
-        help_text=ugettext_lazy("All web users on this project will be required to enable two factor "
-                                "authentication")
+        help_text=ugettext_lazy("All users on this project will be required to enable two factor authentication")
     )
     strong_mobile_passwords = BooleanField(
         label=ugettext_lazy("Require Strong Passwords for Mobile Workers"),
