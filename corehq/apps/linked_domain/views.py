@@ -28,15 +28,11 @@ def user_roles(request, domain):
 
 
 @login_or_api_key
-# @require_linked_domain  # need to migrate whitelist before we can put this here
+@require_linked_domain
 def get_latest_released_app_source(request, domain, app_id):
     master_app = get_app(None, app_id)
     if master_app.domain != domain:
         raise Http404
-
-    requester = request.META.get('HTTP_HQ_REMOTE_REQUESTER', None)
-    if requester not in master_app.linked_whitelist:
-        return HttpResponseForbidden()
 
     latest_master_build = get_latest_released_app(domain, app_id)
     if not latest_master_build:
