@@ -994,10 +994,9 @@ class ScheduleForm(Form):
         cleaned_value = {k: v.strip() for k, v in value.items()}
 
         if '*' in cleaned_value:
+            if not cleaned_value['*']:
+                raise ValidationError(_("This field is required"))
             return cleaned_value
-
-        if len(cleaned_value) == 0:
-            raise ValidationError(_("This field is required"))
 
         for expected_language_code in self.language_list:
             if not cleaned_value.get(expected_language_code):
