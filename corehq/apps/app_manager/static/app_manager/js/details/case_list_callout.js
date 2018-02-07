@@ -95,16 +95,16 @@ hqDefine("app_manager/js/details/case_list_callout", function() {
 
         var _validate_extras = function(errors){
             errors = errors || [];
-            var $extra = $el.find("#" + detail_type + "-extras"),
-                $extra_help = $extra.find(".help-block");
+            var $extras = $el.find("." + detail_type + "-extras"),
+                $extra_help = $extras.find(".help-block");
 
             if (!_trimmed_extras().length){
-                $extra.addClass('has-error');
+                $extras.addClass('has-error');
                 $extra_help.show();
                 errors.push($extra_help.text());
             }
-            else {
-                $extra.removeClass('has-error');
+        else {
+            $extras.removeClass('has-error');
                 $extra_help.hide();
             }
             return errors;
@@ -112,16 +112,16 @@ hqDefine("app_manager/js/details/case_list_callout", function() {
 
         var _validate_responses = function(errors){
             errors = errors || [];
-            var $response = $el.find("#" + detail_type + "-responses"),
-                $response_help = $response.find(".help-block");
+            var $responses = $el.find("." + detail_type + "-responses"),
+                $response_help = $responses.find(".help-block");
 
             if (!_trimmed_responses().length){
-                $response.addClass('has-error');
+                $responses.addClass('has-error');
                 $response_help.show();
                 errors.push($response_help.text());
             }
             else {
-                $response.removeClass('has-error');
+                $responses.removeClass('has-error');
                 $response_help.hide();
             }
             return errors;
