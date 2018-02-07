@@ -1,11 +1,13 @@
 from __future__ import absolute_import
 from __future__ import print_function
 import jsonfield as old_jsonfield
+from corehq.apps.accounting.utils import domain_is_on_trial
 from corehq.apps.app_manager.exceptions import XFormIdNotUnique
 from corehq.apps.app_manager.models import Form
+from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.messaging.scheduling.models.abstract import Content
-from corehq.apps.reminders.models import Message
+from corehq.apps.reminders.models import EmailUsage
 from corehq.apps.sms.models import MessagingEvent
 from couchdbkit.resource import ResourceNotFound
 from dimagi.utils.decorators.memoized import memoized
@@ -58,12 +60,57 @@ class EmailContent(Content):
     subject = old_jsonfield.JSONField(default=dict)
     message = old_jsonfield.JSONField(default=dict)
 
+    TRIAL_MAX_EMAILS = 50
+
+    def render_subject_and_message(self, subject, message, recipient):
+        renderer = self.get_template_renderer(recipient)
+        return renderer.render(subject), renderer.render(message)
+
     def send(self, recipient, logged_event):
-        print('*******************************')
-        print('To:', recipient)
-        print('Subject: ', self.subject)
-        print('Message: ', self.message)
-        print('*******************************')
+        email_usage = EmailUsage.get_or_create_usage_record(logged_event.domain)
+        is_trial = domain_is_on_trial(logged_event.domain)
+
+        logged_subevent = logged_event.create_subevent_from_contact_and_content(
+            recipient,
+            self,
+            case_id=self.case.case_id if self.case else None,
+        )
+
+        subject = self.get_translation_from_message_dict(
+            logged_event.domain,
+            self.subject,
+            recipient.get_language_code()
+        )
+
+        message = self.get_translation_from_message_dict(
+            logged_event.domain,
+            self.message,
+            recipient.get_language_code()
+        )
+
+        try:
+            subject, message = self.render_subject_and_message(subject, message, recipient)
+        except:
+            logged_subevent.error(MessagingEvent.ERROR_CANNOT_RENDER_MESSAGE)
+            return
+
+        subject = subject or '(No Subject)'
+        if not message:
+            logged_subevent.error(MessagingEvent.ERROR_NO_MESSAGE)
+            return
+
+        email_address = recipient.get_email()
+        if not email_address:
+            logged_subevent.error(MessagingEvent.ERROR_NO_EMAIL_ADDRESS)
+            return
+
+        if is_trial and EmailUsage.get_total_count(logged_event.domain) >= self.TRIAL_MAX_EMAILS:
+            logged_subevent.error(MessagingEvent.ERROR_TRIAL_EMAIL_LIMIT_REACHED)
+            return
+
+        send_mail_async.delay(subject, message, settings.DEFAULT_FROM_EMAIL, [email_address])
+        email_usage.update_count()
+        logged_subevent.completed()
 
 
 class SMSSurveyContent(Content):
