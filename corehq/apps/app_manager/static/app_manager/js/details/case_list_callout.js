@@ -103,8 +103,8 @@ hqDefine("app_manager/js/details/case_list_callout", function() {
                 $extra_help.show();
                 errors.push($extra_help.text());
             }
-        else {
-            $extras.removeClass('has-error');
+            else {
+                $extras.removeClass('has-error');
                 $extra_help.hide();
             }
             return errors;
