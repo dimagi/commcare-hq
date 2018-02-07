@@ -9,7 +9,7 @@ from corehq.messaging.scheduling.scheduling_partitioned.models import (
     CaseTimedScheduleInstance,
 )
 from django.test import TestCase, override_settings
-from mock import patch, call, Mock
+from mock import Mock
 
 
 AVAILABLE_CUSTOM_SCHEDULING_CONTENT = {

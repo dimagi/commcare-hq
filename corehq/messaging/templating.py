@@ -5,7 +5,6 @@ from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.cases import get_owner_id, get_wrapped_owner
 from corehq.apps.users.models import CouchUser, CommCareUser, WebUser
-from string import Formatter
 import six
 import string
 
