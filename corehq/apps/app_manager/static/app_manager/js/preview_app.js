@@ -139,6 +139,7 @@ hqDefine('app_manager/js/preview_app', function() {
     };
 
     module.initPreviewWindow = function () {
+console.log("initPreviewWindow");
 
         var layoutController = hqImport("hqwebapp/js/layout"),
             $appPreview = $(module.SELECTORS.PREVIEW_WINDOW),
@@ -153,8 +154,10 @@ hqDefine('app_manager/js/preview_app', function() {
         $appPreview.data(module.DATA.POSITION, module.POSITION.FIXED);
 
         if (localStorage.getItem(module.DATA.OPEN)) {
+console.log("showAppPreview");
             _private.showAppPreview();
         } else {
+console.log("hideAppPreview");
             _private.hideAppPreview();
         }
 
