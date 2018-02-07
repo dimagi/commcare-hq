@@ -9,28 +9,6 @@
     <script src="{% static 'accounting/js/stripe_card_manager.js' %}"></script>
 {% endblock %}
 
-
-{% block js-inline %}{{ block.super }}
-    <script>
-        $('a.breadcrumb-2').click(function (e) {
-            e.preventDefault();
-            var url = $(this).attr('href');
-            var $navigateForm = $('<form method="post" style="display: none;" />').attr('action', url + 'confirm/');
-            $(this).after($navigateForm);
-            $navigateForm.append($('<input type="hidden" name="plan_edition" />').val('{{ plan.edition }}'));
-            $navigateForm.submit();
-        });
-    </script>
-    <script>
-        Stripe.setPublishableKey('{{ stripe_public_key }}');
-        var cardManager = new hqImport("accounting/js/stripe_card_manager").StripeCardManager({
-            cards: {{ cards|JSON }},
-            url: "{% url 'cards_view' domain %}"
-        });
-        $("#card-manager").koApplyBindings(cardManager);
-    </script>
-{% endblock %}
-
 {% block form_content %}
     <p class="lead">
         {% blocktrans with plan.name as p%}
