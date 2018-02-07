@@ -76,7 +76,7 @@ hqDefine('app_manager/js/forms/case_config_ui', function() {
                         self.setPropertiesMap(data.propertiesMap);
 
                         hqImport('analytix/js/kissmetrix').track.event("Saved question as a Case Property", {
-                            questionsSaved: data.propertiesMap.case.length
+                            questionsSaved: data.propertiesMap.case.length,
                         });
                     },
                 });
