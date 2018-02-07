@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime
+import datetime
 
 from bulk_update.helper import bulk_update as bulk_update_helper
 from django.core.management.base import BaseCommand
@@ -16,16 +16,16 @@ logger.setLevel('DEBUG')
 META_FIELDS = ("time_end", "time_start", "commcare_version", "build_version")
 
 
-def iter_form_ids_by_domain_received_on(domain, before_date):
+def iter_form_ids_by_domain_received_on(domain, from_date, to_date):
     from corehq.sql_db.util import run_query_across_partitioned_databases
-    q_expr = Q(domain=domain, received_on__lt=before_date)
+    q_expr = Q(domain=domain, received_on__gt=from_date, received_on__lt=to_date)
     for form_id in run_query_across_partitioned_databases(
             XFormInstanceSQL, q_expr, values=['form_id']):
         yield form_id
 
 
-def set_meta_fields(domain, before_date, failfast):
-    all_form_ids = iter_form_ids_by_domain_received_on(domain, before_date)
+def set_meta_fields(domain, from_date, to_date, failfast):
+    all_form_ids = iter_form_ids_by_domain_received_on(domain, from_date, to_date)
     for form_ids in chunked(all_form_ids, 100):
         forms_to_update = []
         for form in FormAccessors(domain).iter_forms(form_ids):
@@ -52,7 +52,10 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('--domain', help='Domain to update xforms in.')
         parser.add_argument(
-            '--before_date',
+            '--from_date',
+            help='Date after which to update xforms.')
+        parser.add_argument(
+            '--to_date',
             help='Date before which to update xforms.')
         parser.add_argument(
             '--failfast',
@@ -64,8 +67,12 @@ class Command(BaseCommand):
 
     def handle(self, **options):
         domain = options.get('domain')
-        if options.get('before_date'):
-            before_date = datetime.strptime(options.get('before_date'), "%d/%m/%y")
+        if options.get('to_date'):
+            to_date = datetime.datetime.strptime(options.get('to_date'), "%d/%m/%y")
         else:
-            before_date = datetime.today()
-        set_meta_fields(domain, before_date, options.get('failfast'))
+            to_date = datetime.datetime.combine(datetime.datetime.now(), datetime.time.max)
+        if options.get('from_date'):
+            from_date = datetime.datetime.strptime(options.get('from_date'), "%d/%m/%y")
+        else:
+            from_date = datetime.datetime.combine(datetime.datetime.now(), datetime.time.min)
+        set_meta_fields(domain, from_date, to_date, options.get('failfast'))
