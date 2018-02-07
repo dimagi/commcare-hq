@@ -9,7 +9,7 @@ from corehq.messaging.scheduling.scheduling_partitioned.models import (
     CaseTimedScheduleInstance,
 )
 from django.test import TestCase, override_settings
-from mock import patch, call
+from mock import patch, call, Mock
 
 
 AVAILABLE_CUSTOM_SCHEDULING_CONTENT = {
@@ -44,18 +44,19 @@ class TestContent(TestCase):
             CaseAlertScheduleInstance,
             CaseTimedScheduleInstance,
         ):
-            schedule_instance = cls()
-            result = CustomContent(custom_content_id='TEST').get_list_of_messages(self.user, schedule_instance)
-            self.assertEqual(result, ['Message 1', 'Message 2'])
+            content = CustomContent(custom_content_id='TEST')
+            content.set_context(schedule_instance=cls())
+            self.assertEqual(content.get_list_of_messages(self.user), ['Message 1', 'Message 2'])
 
     def test_get_translation_empty_message(self):
         message_dict = {}
-        schedule = Schedule(domain=self.domain)
+        content = Content()
+        content.set_context(schedule_instance=Mock(memoized_schedule=Schedule(domain=self.domain)))
 
         self.assertEqual(
-            Content.get_translation_from_message_dict(
+            content.get_translation_from_message_dict(
+                self.domain,
                 message_dict,
-                schedule,
                 self.user.get_language_code()
             ),
             ''
@@ -65,12 +66,13 @@ class TestContent(TestCase):
         message_dict = {
             '*': 'non-translated message',
         }
-        schedule = Schedule(domain=self.domain)
+        content = Content()
+        content.set_context(schedule_instance=Mock(memoized_schedule=Schedule(domain=self.domain)))
 
         self.assertEqual(
-            Content.get_translation_from_message_dict(
+            content.get_translation_from_message_dict(
+                self.domain,
                 message_dict,
-                schedule,
                 self.user.get_language_code()
             ),
             message_dict['*']
@@ -81,12 +83,13 @@ class TestContent(TestCase):
             '*': 'non-translated message',
             'en': 'english message',
         }
-        schedule = Schedule(domain=self.domain)
+        content = Content()
+        content.set_context(schedule_instance=Mock(memoized_schedule=Schedule(domain=self.domain)))
 
         self.assertEqual(
-            Content.get_translation_from_message_dict(
+            content.get_translation_from_message_dict(
+                self.domain,
                 message_dict,
-                schedule,
                 self.user.get_language_code()
             ),
             message_dict['en']
@@ -98,12 +101,15 @@ class TestContent(TestCase):
             'en': 'english message',
             'hin': 'hindi message',
         }
-        schedule = Schedule(domain=self.domain, default_language_code='hin')
+        content = Content()
+        content.set_context(
+            schedule_instance=Mock(memoized_schedule=Schedule(domain=self.domain, default_language_code='hin'))
+        )
 
         self.assertEqual(
-            Content.get_translation_from_message_dict(
+            content.get_translation_from_message_dict(
+                self.domain,
                 message_dict,
-                schedule,
                 self.user.get_language_code()
             ),
             message_dict['hin']
@@ -116,12 +122,15 @@ class TestContent(TestCase):
             'hin': 'hindi message',
             'es': 'spanish message',
         }
-        schedule = Schedule(domain=self.domain, default_language_code='hin')
+        content = Content()
+        content.set_context(
+            schedule_instance=Mock(memoized_schedule=Schedule(domain=self.domain, default_language_code='hin'))
+        )
 
         self.assertEqual(
-            Content.get_translation_from_message_dict(
+            content.get_translation_from_message_dict(
+                self.domain,
                 message_dict,
-                schedule,
                 self.user.get_language_code()
             ),
             message_dict['es']

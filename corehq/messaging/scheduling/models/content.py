@@ -3,11 +3,9 @@ from __future__ import print_function
 import jsonfield as old_jsonfield
 from corehq.apps.app_manager.exceptions import XFormIdNotUnique
 from corehq.apps.app_manager.models import Form
-from corehq.apps.sms.api import send_sms_with_backend_name, send_sms
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.messaging.scheduling.models.abstract import Content
 from corehq.apps.reminders.models import Message
-from corehq.apps.sms.api import MessageMetadata
 from corehq.apps.sms.models import MessagingEvent
 from couchdbkit.resource import ResourceNotFound
 from dimagi.utils.decorators.memoized import memoized
@@ -16,38 +14,6 @@ from dimagi.utils.modules import to_function
 from django.conf import settings
 from django.contrib.postgres.fields import JSONField
 from django.db import models
-
-
-def get_sms_custom_metadata(schedule_instance):
-    from corehq.messaging.scheduling.scheduling_partitioned.models import (
-        CaseAlertScheduleInstance,
-        CaseTimedScheduleInstance,
-    )
-
-    custom_metadata = {}
-
-    if isinstance(schedule_instance, (CaseAlertScheduleInstance, CaseTimedScheduleInstance)):
-        custom_metadata['case_id'] = schedule_instance.case_id
-
-    if schedule_instance.memoized_schedule.custom_metadata:
-        custom_metadata.update(schedule_instance.memoized_schedule.custom_metadata)
-
-    return custom_metadata
-
-
-def send_sms_for_schedule_instance(schedule_instance, recipient, phone_number, message, logged_subevent):
-    if not message:
-        return
-
-    metadata = MessageMetadata(
-        custom_metadata=get_sms_custom_metadata(schedule_instance),
-        messaging_subevent_id=logged_subevent.pk,
-    )
-
-    if schedule_instance.memoized_schedule.is_test:
-        send_sms_with_backend_name(schedule_instance.domain, phone_number, message, 'TEST', metadata=metadata)
-    else:
-        send_sms(schedule_instance.domain, recipient, phone_number, message, metadata=metadata)
 
 
 class SMSContent(Content):
@@ -65,7 +31,7 @@ class SMSContent(Content):
             logged_subevent.error(MessagingEvent.ERROR_CANNOT_RENDER_MESSAGE)
             return None
 
-    def send(self, recipient, schedule_instance, logged_event):
+    def send(self, recipient, logged_event):
         logged_subevent = logged_event.create_subevent_from_contact_and_content(
             recipient,
             self,
@@ -78,13 +44,13 @@ class SMSContent(Content):
             return
 
         message = self.get_translation_from_message_dict(
+            logged_event.domain,
             self.message,
-            schedule_instance.memoized_schedule,
             recipient.get_language_code()
         )
         message = self.render_message(message, recipient, logged_subevent)
 
-        send_sms_for_schedule_instance(schedule_instance, recipient, phone_number, message, logged_subevent)
+        self.send_sms_message(logged_event.domain, recipient, phone_number, message, logged_subevent)
         logged_subevent.completed()
 
 
@@ -92,7 +58,7 @@ class EmailContent(Content):
     subject = old_jsonfield.JSONField(default=dict)
     message = old_jsonfield.JSONField(default=dict)
 
-    def send(self, recipient, schedule_instance, logged_event):
+    def send(self, recipient, logged_event):
         print('*******************************')
         print('To:', recipient)
         print('Subject: ', self.subject)
@@ -124,7 +90,7 @@ class SMSSurveyContent(Content):
 
         return app, module, form
 
-    def send(self, recipient, schedule_instance, logged_event):
+    def send(self, recipient, logged_event):
         print('*******************************')
         print('To:', recipient)
         print('SMS Survey: ', self.form_unique_id)
@@ -134,7 +100,7 @@ class SMSSurveyContent(Content):
 class IVRSurveyContent(Content):
     form_unique_id = models.CharField(max_length=126)
 
-    def send(self, recipient, schedule_instance, logged_event):
+    def send(self, recipient, logged_event):
         print('*******************************')
         print('To:', recipient)
         print('IVR Survey: ', self.form_unique_id)
@@ -147,21 +113,27 @@ class CustomContent(Content):
     # messsages to send to the recipient.
     custom_content_id = models.CharField(max_length=126)
 
-    def get_list_of_messages(self, recipient, schedule_instance):
+    def get_list_of_messages(self, recipient):
+        if not self.schedule_instance:
+            raise ValueError(
+                "Expected CustomContent to be invoked in the context of a "
+                "ScheduleInstance. Please pass ScheduleInstance to .set_context()"
+            )
+
         if self.custom_content_id not in settings.AVAILABLE_CUSTOM_SCHEDULING_CONTENT:
             raise ValueError("Encountered unexpected custom content id %s" % self.custom_content_id)
 
         custom_function = to_function(
             settings.AVAILABLE_CUSTOM_SCHEDULING_CONTENT[self.custom_content_id][0]
         )
-        messages = custom_function(recipient, schedule_instance)
+        messages = custom_function(recipient, self.schedule_instance)
 
         if not isinstance(messages, list):
             raise TypeError("Expected content to be a list of messages")
 
         return messages
 
-    def send(self, recipient, schedule_instance, logged_event):
+    def send(self, recipient, logged_event):
         logged_subevent = logged_event.create_subevent_from_contact_and_content(
             recipient,
             self,
@@ -175,7 +147,7 @@ class CustomContent(Content):
 
         # An empty list of messages returned from a custom content handler means
         # we shouldn't send anything, so we don't log an error for that.
-        for message in self.get_list_of_messages(recipient, schedule_instance):
-            send_sms_for_schedule_instance(schedule_instance, recipient, phone_number, message, logged_subevent)
+        for message in self.get_list_of_messages(recipient):
+            self.send_sms_message(logged_event.domain, recipient, phone_number, message, logged_subevent)
 
         logged_subevent.completed()

@@ -180,15 +180,18 @@ class ScheduleInstance(PartitionedModel):
 
     def handle_current_event(self):
         content = self.memoized_schedule.get_current_event_content(self)
-        logged_event = MessagingEvent.create_from_schedule_instance(self, content)
 
         if isinstance(self, CaseScheduleInstanceMixin):
-            content.set_case_context(self.case)
+            content.set_context(case=self.case, schedule_instance=self)
+        else:
+            content.set_context(schedule_instance=self)
+
+        logged_event = MessagingEvent.create_from_schedule_instance(self, content)
 
         recipient_count = 0
         for recipient in self.expand_recipients():
             recipient_count += 1
-            content.send(recipient, self, logged_event)
+            content.send(recipient, logged_event)
 
         # As a precaution, always explicitly move to the next event after processing the current
         # event to prevent ever getting stuck on the current event.
