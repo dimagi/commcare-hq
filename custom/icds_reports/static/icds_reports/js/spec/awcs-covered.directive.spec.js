@@ -191,7 +191,7 @@ describe('AWCs Covered Directive', function () {
             + 'Total AWCs that have launched ICDS-CAS. '
             + 'AWCs are considered launched after submitting at least'
             + ' one Household Registration form.'
-            + '<p>Number of AWCs Launched: <strong>72</strong></p>';
+            + '<div>Number of AWCs Launched: <strong>72</strong></div>';
 
         var result = controller.tooltipContent(month.value, data.y);
         assert.equal(expected, result);

@@ -233,7 +233,7 @@ function AWCSCoveredController($scope, $routeParams, $location, $filter, icdsCas
     vm.tooltipContent = function(monthName, value) {
         return "<p><strong>" + monthName + "</strong></p><br/>"
             + vm.data.legendTitle
-            + "<p>Number of AWCs Launched: <strong>" + value + "</strong></p>";
+            + "<div>Number of AWCs Launched: <strong>" + value + "</strong></div>";
     };
 
     vm.showAllLocations = function () {

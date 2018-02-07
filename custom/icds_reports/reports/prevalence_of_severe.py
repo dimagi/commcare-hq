@@ -82,7 +82,7 @@ def get_prevalence_of_severe_data_map(domain, config, loc_level, show_test=False
 
     for data_for_location in six.itervalues(data_for_map):
         numerator = data_for_location['moderate'] + data_for_location['severe']
-        value = numerator * 100 / (data_for_location['total'] or 1)
+        value = numerator * 100 / (data_for_location['total_measured'] or 1)
         if value < 5:
             data_for_location.update({'fillKey': '0%-5%'})
         elif 5 <= value <= 7:
@@ -97,7 +97,7 @@ def get_prevalence_of_severe_data_map(domain, config, loc_level, show_test=False
     fills.update({'defaultFill': MapColors.GREY})
 
     sum_of_indicators = moderate_total + severe_total + normal_total
-    percent_unmeasured = (valid_total - sum_of_indicators) * 100 / float(valid_total or 1)
+    percent_unmeasured = valid_total - sum_of_indicators
 
     gender_label, age_label, chosen_filters = chosen_filters_to_labels(config, default_interval='6 - 60 months')
 
@@ -133,8 +133,8 @@ def get_prevalence_of_severe_data_map(domain, config, loc_level, show_test=False
                     'value': indian_formatted_number(measured_total)
                 },
                 {
-                    'indicator': '% Unmeasured{}:'.format(chosen_filters),
-                    'value': '%.2f%%' % percent_unmeasured
+                    'indicator': 'Number of children{} unmeasured:'.format(chosen_filters),
+                    'value': indian_formatted_number(percent_unmeasured)
                 },
                 {
                     'indicator': '% Severely Acute Malnutrition{}:'.format(chosen_filters),
@@ -170,7 +170,8 @@ def get_prevalence_of_severe_data_chart(domain, config, loc_level, show_test=Fal
         moderate=Sum('wasting_moderate'),
         severe=Sum('wasting_severe'),
         normal=Sum('wasting_normal'),
-        valid=Sum('weighed_and_height_measured_in_month'),
+        measured=Sum('weighed_and_height_measured_in_month'),
+        valid=Sum('height_eligible')
     ).order_by('month')
 
     if not show_test:
@@ -188,14 +189,15 @@ def get_prevalence_of_severe_data_chart(domain, config, loc_level, show_test=Fal
 
     for date in dates:
         miliseconds = int(date.strftime("%s")) * 1000
-        data['red'][miliseconds] = {'y': 0, 'all': 0}
-        data['orange'][miliseconds] = {'y': 0, 'all': 0}
-        data['peach'][miliseconds] = {'y': 0, 'all': 0}
+        data['red'][miliseconds] = {'y': 0, 'all': 0, 'measured': 0}
+        data['orange'][miliseconds] = {'y': 0, 'all': 0, 'measured': 0}
+        data['peach'][miliseconds] = {'y': 0, 'all': 0, 'measured': 0}
 
     best_worst = {}
     for row in chart_data:
         date = row['month']
         valid = row['valid']
+        measured = row['measured']
         location = row['%s_name' % loc_level]
         severe = row['severe']
         moderate = row['moderate']
@@ -203,16 +205,19 @@ def get_prevalence_of_severe_data_chart(domain, config, loc_level, show_test=Fal
 
         underweight = (moderate or 0) + (severe or 0)
 
-        best_worst[location] = underweight * 100 / float(valid or 1)
+        best_worst[location] = underweight * 100 / float(measured or 1)
 
         date_in_miliseconds = int(date.strftime("%s")) * 1000
 
         data['peach'][date_in_miliseconds]['y'] += normal
         data['peach'][date_in_miliseconds]['all'] += valid
+        data['peach'][date_in_miliseconds]['measured'] += measured
         data['orange'][date_in_miliseconds]['y'] += moderate
         data['orange'][date_in_miliseconds]['all'] += valid
+        data['orange'][date_in_miliseconds]['measured'] += measured
         data['red'][date_in_miliseconds]['y'] += severe
         data['red'][date_in_miliseconds]['all'] += valid
+        data['red'][date_in_miliseconds]['measured'] += measured
 
     top_locations = sorted(
         [dict(loc_name=key, percent=value) for key, value in six.iteritems(best_worst)],
@@ -225,8 +230,9 @@ def get_prevalence_of_severe_data_chart(domain, config, loc_level, show_test=Fal
                 "values": [
                     {
                         'x': key,
-                        'y': value['y'] / float(value['all'] or 1),
-                        'all': value['all']
+                        'y': value['y'] / float(value['measured'] or 1),
+                        'all': value['all'],
+                        'measured': value['measured']
                     } for key, value in six.iteritems(data['peach'])
                 ],
                 "key": "% normal",
@@ -238,8 +244,9 @@ def get_prevalence_of_severe_data_chart(domain, config, loc_level, show_test=Fal
                 "values": [
                     {
                         'x': key,
-                        'y': value['y'] / float(value['all'] or 1),
-                        'all': value['all']
+                        'y': value['y'] / float(value['measured'] or 1),
+                        'all': value['all'],
+                        'measured': value['measured']
                     } for key, value in six.iteritems(data['orange'])
                 ],
                 "key": "% moderately wasted (moderate acute malnutrition)",
@@ -251,8 +258,9 @@ def get_prevalence_of_severe_data_chart(domain, config, loc_level, show_test=Fal
                 "values": [
                     {
                         'x': key,
-                        'y': value['y'] / float(value['all'] or 1),
-                        'all': value['all']
+                        'y': value['y'] / float(value['measured'] or 1),
+                        'all': value['all'],
+                        'measured': value['measured']
                     } for key, value in six.iteritems(data['red'])
                 ],
                 "key": "% severely wasted (severe acute malnutrition)",

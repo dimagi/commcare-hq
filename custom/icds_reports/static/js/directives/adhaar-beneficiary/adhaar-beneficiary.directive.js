@@ -221,8 +221,8 @@ function AdhaarController($scope, $routeParams, $location, $filter, demographics
 
     vm.getTooltipContent = function(val, day) {
         var content = "<p><strong>" + val.value + "</strong></p><br/>";
-        content += "<p>Total number of ICDS beneficiaries whose Aadhaar has been captured: <strong>" + $filter('indiaNumbers')(day.in_month) + "</strong></p>";
-        content += "<p>% of ICDS beneficiaries whose Aadhaar has been captured: <strong>" + d3.format('.2%')(day.y) + "</strong></p>";
+        content += "<div>Total number of ICDS beneficiaries whose Aadhaar has been captured: <strong>" + $filter('indiaNumbers')(day.in_month) + "</strong></div>";
+        content += "<div>% of ICDS beneficiaries whose Aadhaar has been captured: <strong>" + d3.format('.2%')(day.y) + "</strong></div>";
         return content;
     };
 

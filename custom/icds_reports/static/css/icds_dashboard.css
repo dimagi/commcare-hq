@@ -603,6 +603,7 @@ h4 {
 .nvtooltip {
     max-width: 300px !important;
     white-space: normal;
+    padding: 5px;
 }
 
 .carousel-control.left {

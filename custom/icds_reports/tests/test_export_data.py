@@ -30,286 +30,405 @@ class TestExportData(TestCase):
         super(TestExportData, cls).tearDownClass()
 
     def test_children_export(self):
-        self.assertListEqual(
-            ChildrenExport(
-                config={
-                    'domain': 'icds-cas'
-                },
-            ).get_excel_data('b1'),
-            [
-                [
-                    "Children",
-                    [
-                        [
-                            "State",
-                            "Weighing efficiency (in month)",
-                            "Height measurement efficiency (in month)",
-                            "Total number of unweighed children (0-5 Years)",
-                            "Percentage of severely underweight children",
-                            "Percentage of moderately underweight children",
-                            "Percentage of normal weight-for-age children",
-                            "Percentage of children with severe wasting",
-                            "Percentage of children with moderate wasting",
-                            "Percentage of children with normal weight-for-height",
-                            "Percentage of children with severe stunting",
-                            "Percentage of children with moderate stunting",
-                            "Percentage of children with normal height-for-age",
-                            "Percentage of children with completed 1 year immunizations",
-                            "Percentage of children breastfed at birth",
-                            "Percentage of children exclusively breastfeeding",
-                            "Percentage of children initiated complementary feeding (in the past 30 days)",
-                            "Percentage of children initiated appropriate complementary feeding",
-                            "Percentage of children receiving complementary feeding with adequate diet diversity",
-                            "Percentage of children receiving complementary feeding with adequate diet quanity",
-                            "Percentage of children receiving complementary feeding with appropriate "
-                            "handwashing before feeding"
-                        ],
-                        [
-                            "st1",
-                            "67.39 %",
-                            "1.42 %",
-                            317,
-                            "2.60 %",
-                            "23.21 %",
-                            "74.20 %",
-                            "0.00 %",
-                            "0.55 %",
-                            "0.00 %",
-                            "0.55 %",
-                            "0.66 %",
-                            "0.22 %",
-                            "14.77%",
-                            "37.50 %",
-                            "50.00 %",
-                            "65.62 %",
-                            "53.52 %",
-                            "34.51 %",
-                            "39.44 %",
-                            "47.89 %"
-                        ],
-                        [
-                            "st1",
-                            "67.39 %",
-                            "1.42 %",
-                            317,
-                            "2.60 %",
-                            "23.21 %",
-                            "74.20 %",
-                            "0.00 %",
-                            "0.55 %",
-                            "0.00 %",
-                            "0.55 %",
-                            "0.66 %",
-                            "0.22 %",
-                            "14.77%",
-                            "37.50 %",
-                            "50.00 %",
-                            "65.62 %",
-                            "53.52 %",
-                            "34.51 %",
-                            "39.44 %",
-                            "47.89 %"
-                        ],
-                        [
-                            "st1",
-                            "67.39 %",
-                            "1.42 %",
-                            317,
-                            "2.60 %",
-                            "23.21 %",
-                            "74.20 %",
-                            "0.00 %",
-                            "0.55 %",
-                            "0.00 %",
-                            "0.55 %",
-                            "0.66 %",
-                            "0.22 %",
-                            "14.77%",
-                            "37.50 %",
-                            "50.00 %",
-                            "65.62 %",
-                            "53.52 %",
-                            "34.51 %",
-                            "39.44 %",
-                            "47.89 %"
-                        ],
-                        [
-                            "st1",
-                            "67.39 %",
-                            "1.42 %",
-                            317,
-                            "2.60 %",
-                            "23.21 %",
-                            "74.20 %",
-                            "0.00 %",
-                            "0.55 %",
-                            "0.00 %",
-                            "0.55 %",
-                            "0.66 %",
-                            "0.22 %",
-                            "14.77%",
-                            "37.50 %",
-                            "50.00 %",
-                            "65.62 %",
-                            "53.52 %",
-                            "34.51 %",
-                            "39.44 %",
-                            "47.89 %"
-                        ],
-                        [
-                            "st1",
-                            "67.39 %",
-                            "1.42 %",
-                            317,
-                            "2.60 %",
-                            "23.21 %",
-                            "74.20 %",
-                            "0.00 %",
-                            "0.55 %",
-                            "0.00 %",
-                            "0.55 %",
-                            "0.66 %",
-                            "0.22 %",
-                            "14.77%",
-                            "37.50 %",
-                            "50.00 %",
-                            "65.62 %",
-                            "53.52 %",
-                            "34.51 %",
-                            "39.44 %",
-                            "47.89 %"
-                        ],
-                        [
-                            "st2",
-                            "70.45 %",
-                            "3.04 %",
-                            307,
-                            "2.46 %",
-                            "18.85 %",
-                            "78.69 %",
-                            "0.10 %",
-                            "0.41 %",
-                            "0.00 %",
-                            "1.11 %",
-                            "0.61 %",
-                            "1.32 %",
-                            "7.19%",
-                            "42.86 %",
-                            "25.00 %",
-                            "60.00 %",
-                            "50.81 %",
-                            "47.03 %",
-                            "33.51 %",
-                            "47.57 %"
-                        ],
-                        [
-                            "st2",
-                            "70.45 %",
-                            "3.04 %",
-                            307,
-                            "2.46 %",
-                            "18.85 %",
-                            "78.69 %",
-                            "0.10 %",
-                            "0.41 %",
-                            "0.00 %",
-                            "1.11 %",
-                            "0.61 %",
-                            "1.32 %",
-                            "7.19%",
-                            "42.86 %",
-                            "25.00 %",
-                            "60.00 %",
-                            "50.81 %",
-                            "47.03 %",
-                            "33.51 %",
-                            "47.57 %"
-                        ],
-                        [
-                            "st2",
-                            "70.45 %",
-                            "3.04 %",
-                            307,
-                            "2.46 %",
-                            "18.85 %",
-                            "78.69 %",
-                            "0.10 %",
-                            "0.41 %",
-                            "0.00 %",
-                            "1.11 %",
-                            "0.61 %",
-                            "1.32 %",
-                            "7.19%",
-                            "42.86 %",
-                            "25.00 %",
-                            "60.00 %",
-                            "50.81 %",
-                            "47.03 %",
-                            "33.51 %",
-                            "47.57 %"
-                        ],
-                        [
-                            "st2",
-                            "70.45 %",
-                            "3.04 %",
-                            307,
-                            "2.46 %",
-                            "18.85 %",
-                            "78.69 %",
-                            "0.10 %",
-                            "0.41 %",
-                            "0.00 %",
-                            "1.11 %",
-                            "0.61 %",
-                            "1.32 %",
-                            "7.19%",
-                            "42.86 %",
-                            "25.00 %",
-                            "60.00 %",
-                            "50.81 %",
-                            "47.03 %",
-                            "33.51 %",
-                            "47.57 %"
-                        ],
-                        [
-                            "st2",
-                            "70.45 %",
-                            "3.04 %",
-                            307,
-                            "2.46 %",
-                            "18.85 %",
-                            "78.69 %",
-                            "0.10 %",
-                            "0.41 %",
-                            "0.00 %",
-                            "1.11 %",
-                            "0.61 %",
-                            "1.32 %",
-                            "7.19%",
-                            "42.86 %",
-                            "25.00 %",
-                            "60.00 %",
-                            "50.81 %",
-                            "47.03 %",
-                            "33.51 %",
-                            "47.57 %"
+        data = ChildrenExport(
+            config={
+                'domain': 'icds-cas'
+            },
+        ).get_excel_data('b1')[0][0]
+        self.assertEqual(data, "Children")
 
-                        ]
-                    ]
-                ],
+    def test_children_export_info(self):
+        data = ChildrenExport(
+            config={
+                'domain': 'icds-cas'
+            },
+        ).get_excel_data('b1')[1]
+        self.assertListEqual(
+            data,
+            [
+                "Export Info",
                 [
-                    "Export Info",
                     [
-                        [
-                            "Generated at",
-                            "16:21:11 15 November 2017"
-                        ],
-                        [
-                            "Block",
-                            "b1"
-                        ]
+                        "Generated at",
+                        "16:21:11 15 November 2017"
+                    ],
+                    [
+                        "Block",
+                        "b1"
                     ]
                 ]
+            ]
+        )
+
+    def test_children_export_data_length(self):
+        data = ChildrenExport(
+            config={
+                'domain': 'icds-cas'
+            },
+        ).get_excel_data('b1')[0][1]
+        self.assertEqual(len(data), 11)
+
+    def test_children_export_headers(self):
+        data = ChildrenExport(
+            config={
+                'domain': 'icds-cas'
+            },
+        ).get_excel_data('b1')[0][1][0]
+        self.assertListEqual(
+            data,
+            [
+                "State",
+                "Weighing efficiency (in month)",
+                "Height measurement efficiency (in month)",
+                "Total number of unweighed children (0-5 Years)",
+                "Percentage of severely underweight children",
+                "Percentage of moderately underweight children",
+                "Percentage of normal weight-for-age children",
+                "Percentage of children with severe wasting",
+                "Percentage of children with moderate wasting",
+                "Percentage of children with normal weight-for-height",
+                "Percentage of children with severe stunting",
+                "Percentage of children with moderate stunting",
+                "Percentage of children with normal height-for-age",
+                "Percentage of children with completed 1 year immunizations",
+                "Percentage of children breastfed at birth",
+                "Percentage of children exclusively breastfeeding",
+                "Percentage of children initiated complementary feeding (in the past 30 days)",
+                "Percentage of children initiated appropriate complementary feeding",
+                "Percentage of children receiving complementary feeding with adequate diet diversity",
+                "Percentage of children receiving complementary feeding with adequate diet quanity",
+                "Percentage of children receiving complementary feeding with appropriate "
+                "handwashing before feeding"
+            ]
+        )
+
+    def test_children_export_child_one(self):
+        data = ChildrenExport(
+            config={
+                'domain': 'icds-cas'
+            },
+        ).get_excel_data('b1')[0][1][1]
+        self.assertListEqual(
+            data,
+            [
+                "st1",
+                "67.39 %",
+                "1.42 %",
+                317,
+                "2.60 %",
+                "23.21 %",
+                "74.20 %",
+                "0.00 %",
+                "38.46 %",
+                "0.00 %",
+                "38.46 %",
+                "46.15 %",
+                "15.38 %",
+                "14.77%",
+                "37.50 %",
+                "50.00 %",
+                "65.62 %",
+                "53.52 %",
+                "34.51 %",
+                "39.44 %",
+                "47.89 %"
+            ]
+        )
+
+    def test_children_export_child_two(self):
+        data = ChildrenExport(
+            config={
+                'domain': 'icds-cas'
+            },
+        ).get_excel_data('b1')[0][1][2]
+        self.assertListEqual(
+            data,
+            [
+                'st1',
+                '67.39 %',
+                '1.42 %',
+                317,
+                '2.60 %',
+                '23.21 %',
+                '74.20 %',
+                '0.00 %',
+                '38.46 %',
+                '0.00 %',
+                '38.46 %',
+                '46.15 %',
+                '15.38 %',
+                '14.77%',
+                '37.50 %',
+                '50.00 %',
+                '65.62 %',
+                '53.52 %',
+                '34.51 %',
+                '39.44 %',
+                '47.89 %'
+            ]
+        )
+
+    def test_children_export_child_three(self):
+        data = ChildrenExport(
+            config={
+                'domain': 'icds-cas'
+            },
+        ).get_excel_data('b1')[0][1][3]
+        self.assertListEqual(
+            data,
+            [
+                "st1",
+                "67.39 %",
+                "1.42 %",
+                317,
+                "2.60 %",
+                "23.21 %",
+                "74.20 %",
+                "0.00 %",
+                "38.46 %",
+                "0.00 %",
+                "38.46 %",
+                "46.15 %",
+                "15.38 %",
+                "14.77%",
+                "37.50 %",
+                "50.00 %",
+                "65.62 %",
+                "53.52 %",
+                "34.51 %",
+                "39.44 %",
+                "47.89 %"
+            ]
+        )
+
+    def test_children_export_child_four(self):
+        data = ChildrenExport(
+            config={
+                'domain': 'icds-cas'
+            },
+        ).get_excel_data('b1')[0][1][4]
+        self.assertListEqual(
+            data,
+            [
+                "st1",
+                "67.39 %",
+                "1.42 %",
+                317,
+                "2.60 %",
+                "23.21 %",
+                "74.20 %",
+                "0.00 %",
+                "38.46 %",
+                "0.00 %",
+                "38.46 %",
+                "46.15 %",
+                "15.38 %",
+                "14.77%",
+                "37.50 %",
+                "50.00 %",
+                "65.62 %",
+                "53.52 %",
+                "34.51 %",
+                "39.44 %",
+                "47.89 %"
+            ]
+        )
+
+    def test_children_export_child_five(self):
+        data = ChildrenExport(
+            config={
+                'domain': 'icds-cas'
+            },
+        ).get_excel_data('b1')[0][1][5]
+        self.assertListEqual(
+            data,
+            [
+                "st1",
+                "67.39 %",
+                "1.42 %",
+                317,
+                "2.60 %",
+                "23.21 %",
+                "74.20 %",
+                "0.00 %",
+                "38.46 %",
+                "0.00 %",
+                "38.46 %",
+                "46.15 %",
+                "15.38 %",
+                "14.77%",
+                "37.50 %",
+                "50.00 %",
+                "65.62 %",
+                "53.52 %",
+                "34.51 %",
+                "39.44 %",
+                "47.89 %"
+            ]
+        )
+
+    def test_children_export_child_six(self):
+        data = ChildrenExport(
+            config={
+                'domain': 'icds-cas'
+            },
+        ).get_excel_data('b1')[0][1][6]
+        self.assertListEqual(
+            data,
+            [
+                "st2",
+                "70.45 %",
+                "3.04 %",
+                307,
+                "2.46 %",
+                "18.85 %",
+                "78.69 %",
+                "3.45 %",
+                "13.79 %",
+                "0.00 %",
+                "36.67 %",
+                "20.00 %",
+                "43.33 %",
+                "7.19%",
+                "42.86 %",
+                "25.00 %",
+                "60.00 %",
+                "50.81 %",
+                "47.03 %",
+                "33.51 %",
+                "47.57 %"
+            ]
+        )
+
+    def test_children_export_child_seven(self):
+        data = ChildrenExport(
+            config={
+                'domain': 'icds-cas'
+            },
+        ).get_excel_data('b1')[0][1][7]
+        self.assertListEqual(
+            data,
+            [
+                "st2",
+                "70.45 %",
+                "3.04 %",
+                307,
+                "2.46 %",
+                "18.85 %",
+                "78.69 %",
+                "3.45 %",
+                "13.79 %",
+                "0.00 %",
+                "36.67 %",
+                "20.00 %",
+                "43.33 %",
+                "7.19%",
+                "42.86 %",
+                "25.00 %",
+                "60.00 %",
+                "50.81 %",
+                "47.03 %",
+                "33.51 %",
+                "47.57 %"
+            ]
+        )
+
+    def test_children_export_child_eight(self):
+        data = ChildrenExport(
+            config={
+                'domain': 'icds-cas'
+            },
+        ).get_excel_data('b1')[0][1][8]
+        self.assertListEqual(
+            data,
+            [
+                "st2",
+                "70.45 %",
+                "3.04 %",
+                307,
+                "2.46 %",
+                "18.85 %",
+                "78.69 %",
+                "3.45 %",
+                "13.79 %",
+                "0.00 %",
+                "36.67 %",
+                "20.00 %",
+                "43.33 %",
+                "7.19%",
+                "42.86 %",
+                "25.00 %",
+                "60.00 %",
+                "50.81 %",
+                "47.03 %",
+                "33.51 %",
+                "47.57 %"
+            ]
+        )
+
+    def test_children_export_child_nine(self):
+        data = ChildrenExport(
+            config={
+                'domain': 'icds-cas'
+            },
+        ).get_excel_data('b1')[0][1][9]
+        self.assertListEqual(
+            data,
+            [
+                "st2",
+                "70.45 %",
+                "3.04 %",
+                307,
+                "2.46 %",
+                "18.85 %",
+                "78.69 %",
+                "3.45 %",
+                "13.79 %",
+                "0.00 %",
+                "36.67 %",
+                "20.00 %",
+                "43.33 %",
+                "7.19%",
+                "42.86 %",
+                "25.00 %",
+                "60.00 %",
+                "50.81 %",
+                "47.03 %",
+                "33.51 %",
+                "47.57 %"
+            ]
+        )
+
+    def test_children_export_child_ten(self):
+        data = ChildrenExport(
+            config={
+                'domain': 'icds-cas'
+            },
+        ).get_excel_data('b1')[0][1][10]
+        self.assertListEqual(
+            data,
+            [
+                "st2",
+                "70.45 %",
+                "3.04 %",
+                307,
+                "2.46 %",
+                "18.85 %",
+                "78.69 %",
+                "3.45 %",
+                "13.79 %",
+                "0.00 %",
+                "36.67 %",
+                "20.00 %",
+                "43.33 %",
+                "7.19%",
+                "42.86 %",
+                "25.00 %",
+                "60.00 %",
+                "50.81 %",
+                "47.03 %",
+                "33.51 %",
+                "47.57 %"
             ]
         )
 

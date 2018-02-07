@@ -423,7 +423,17 @@ class AggChildHealthMonthlyDataSource(ProgressReportSqlData):
                             NOT(EQ('age_tranche', 'age_72'))
                         ])
                     ]),
-                    AliasColumn('height_eligible')
+                    SumColumn(
+                        'weighed_and_height_measured_in_month',
+                        alias='weighed_and_height_measured_in_month',
+                        filters=self.filters + [
+                            AND([
+                                NOT(EQ('age_tranche', 'age_0')),
+                                NOT(EQ('age_tranche', 'age_6')),
+                                NOT(EQ('age_tranche', 'age_72'))
+                            ])
+                        ]
+                    )
                 ],
                 slug='wasting_severe'
             ),
@@ -438,7 +448,7 @@ class AggChildHealthMonthlyDataSource(ProgressReportSqlData):
                             NOT(EQ('age_tranche', 'age_72'))
                         ])
                     ]),
-                    AliasColumn('height_eligible')
+                    AliasColumn('weighed_and_height_measured_in_month')
                 ],
                 slug='wasting_moderate'
             ),
@@ -453,7 +463,7 @@ class AggChildHealthMonthlyDataSource(ProgressReportSqlData):
                             NOT(EQ('age_tranche', 'age_72'))
                         ])
                     ]),
-                    AliasColumn('height_eligible')
+                    AliasColumn('weighed_and_height_measured_in_month')
                 ],
                 slug='wasting_normal'
             ),
@@ -468,7 +478,17 @@ class AggChildHealthMonthlyDataSource(ProgressReportSqlData):
                             NOT(EQ('age_tranche', 'age_72'))
                         ])
                     ]),
-                    AliasColumn('height_eligible')
+                    SumColumn(
+                        'height_measured_in_month',
+                        alias='height_measured_in_month',
+                        filters=self.filters + [
+                            AND([
+                                NOT(EQ('age_tranche', 'age_0')),
+                                NOT(EQ('age_tranche', 'age_6')),
+                                NOT(EQ('age_tranche', 'age_72'))
+                            ])
+                        ]
+                    )
                 ],
                 slug='stunting_severe'
             ),
@@ -483,7 +503,7 @@ class AggChildHealthMonthlyDataSource(ProgressReportSqlData):
                             NOT(EQ('age_tranche', 'age_72'))
                         ])
                     ]),
-                    AliasColumn('height_eligible')
+                    AliasColumn('height_measured_in_month')
                 ],
                 slug='stunting_moderate'
             ),
@@ -498,7 +518,7 @@ class AggChildHealthMonthlyDataSource(ProgressReportSqlData):
                             NOT(EQ('age_tranche', 'age_72'))
                         ])
                     ]),
-                    AliasColumn('height_eligible')
+                    AliasColumn('height_measured_in_month')
                 ],
                 slug='stunting_normal'
             ),
@@ -1098,7 +1118,17 @@ class ChildrenExport(ExportableMixin, SqlData):
                             NOT(EQ('age_tranche', 'age_72'))
                         ])
                     ]),
-                    AliasColumn('height_eligible')
+                    SumColumn(
+                        'weighed_and_height_measured_in_month',
+                        alias='weighed_and_height_measured_in_month',
+                        filters=self.filters + [
+                            AND([
+                                NOT(EQ('age_tranche', 'age_0')),
+                                NOT(EQ('age_tranche', 'age_6')),
+                                NOT(EQ('age_tranche', 'age_72'))
+                            ])
+                        ]
+                    )
                 ],
                 slug='percent_severe_wasting'
             ),
@@ -1113,7 +1143,7 @@ class ChildrenExport(ExportableMixin, SqlData):
                             NOT(EQ('age_tranche', 'age_72'))
                         ])
                     ]),
-                    AliasColumn('height_eligible')
+                    AliasColumn('weighed_and_height_measured_in_month')
                 ],
                 slug='percent_moderate_wasting'
             ),
@@ -1128,7 +1158,7 @@ class ChildrenExport(ExportableMixin, SqlData):
                             RawFilter("age_tranche = '72'")
                         ])
                     ]),
-                    AliasColumn('height_eligible')
+                    AliasColumn('weighed_and_height_measured_in_month')
                 ],
                 slug='percent_normal_wasting'
             ),
@@ -1143,7 +1173,17 @@ class ChildrenExport(ExportableMixin, SqlData):
                             NOT(EQ('age_tranche', 'age_72'))
                         ])
                     ]),
-                    AliasColumn('height_eligible')
+                    SumColumn(
+                        'height_measured_in_month',
+                        alias='height_measured_in_month',
+                        filters=self.filters + [
+                            AND([
+                                NOT(EQ('age_tranche', 'age_0')),
+                                NOT(EQ('age_tranche', 'age_6')),
+                                NOT(EQ('age_tranche', 'age_72'))
+                            ])
+                        ]
+                    )
                 ],
                 slug='percent_severe_stunting'
             ),
@@ -1158,7 +1198,7 @@ class ChildrenExport(ExportableMixin, SqlData):
                             NOT(EQ('age_tranche', 'age_72'))
                         ])
                     ]),
-                    AliasColumn('height_eligible')
+                    AliasColumn('height_measured_in_month')
                 ],
                 slug='percent_moderate_stunting'
             ),
@@ -1173,7 +1213,7 @@ class ChildrenExport(ExportableMixin, SqlData):
                             NOT(EQ('age_tranche', 'age_72'))
                         ])
                     ]),
-                    AliasColumn('height_eligible')
+                    AliasColumn('height_measured_in_month')
                 ],
                 slug='percent_normal_stunting'
             ),

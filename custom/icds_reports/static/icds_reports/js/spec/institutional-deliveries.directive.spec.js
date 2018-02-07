@@ -186,9 +186,9 @@ describe('Institutional Deliveries Directive', function () {
         var month = {value: "Jul 2017", series: []};
 
         var expected = '<p><strong>Jul 2017</strong></p><br/>'
-            + '<p>Total number of pregnant women who delivered in the last month: <strong>10</strong></p>'
-            + '<p>Total number of pregnant women who delivered in a public/private medical facilitiy in the last month: <strong>5</strong></p>'
-            + '<p>% pregnant women who delivered in a public or private medical facility in the last month: <strong>72.00%</strong></p>';
+            + '<div>Total number of pregnant women who delivered in the last month: <strong>10</strong></div>'
+            + '<div>Total number of pregnant women who delivered in a public/private medical facilitiy in the last month: <strong>5</strong></div>'
+            + '<div>% pregnant women who delivered in a public or private medical facility in the last month: <strong>72.00%</strong></div>';
 
         var result = controller.tooltipContent(month.value, data);
         assert.equal(expected, result);

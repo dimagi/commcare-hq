@@ -181,9 +181,9 @@ describe('Adolescent Girls Directive', function () {
         var month = {value: "Jul 2017", series: []};
 
         var expected = "<p><strong>Jul 2017</strong></p><br/>"
-            + "<p>Number of adolescent girls (11 - 14 years) who are enrolled for Anganwadi Services: <strong>60</strong></p>"
-            + "<p>Total number of adolescent girls (11 - 14 years) who are registered: <strong>120</strong></p>"
-            + "<p>Percentage of registered adolescent girls (11 - 14 years) who are enrolled for Anganwadi Services: <strong>50.00%</strong></p>";
+            + "<div>Number of adolescent girls (11 - 18 years) who are enrolled for Anganwadi Services: <strong>60</strong></div>"
+            + "<div>Total number of adolescent girls (11 - 18 years) who are registered: <strong>120</strong></div>"
+            + "<div>Percentage of registered adolescent girls (11 - 18 years) who are enrolled for Anganwadi Services: <strong>50.00%</strong></div>";
 
         var result = controller.tooltipContent(month.value, {y: 60, all: 120});
         assert.equal(expected, result);

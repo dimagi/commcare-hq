@@ -181,8 +181,9 @@ describe('Adult Weight Scale Directive', function () {
         var data = {y: 0.24561403508771928, all: 171, in_month: 42};
         var month = {value: "Jul 2017", series: []};
 
-        var expected = '<p><strong>Jul 2017</strong></p><br/><p>Number of AWCs that reported having a weighing scale for mother and child:' +
-            ' <strong>42</strong></p><p>% of AWCs that reported having a weighing scale for mother and child: <strong>24.56%</strong></p>';
+        var expected = '<p><strong>Jul 2017</strong></p><br/>' +
+            '<div>Number of AWCs that reported having a weighing scale for mother and child: <strong>42</strong></div>' +
+            '<div>% of AWCs that reported having a weighing scale for mother and child: <strong>24.56%</strong></div>';
 
         var result = controller.tooltipContent(month.value, data);
         assert.equal(expected, result);

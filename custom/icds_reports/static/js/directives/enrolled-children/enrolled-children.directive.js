@@ -218,9 +218,9 @@ function EnrolledChildrenController($scope, $routeParams, $location, $filter, de
 
     vm.tooltipContent = function (dataInMonth, x) {
         var average = (dataInMonth.all !== 0) ? d3.format(".2%")(dataInMonth.y / dataInMonth.all) : 0;
-        return "<p>Total number of children between the age of 0 - 6 years who are enrolled for Anganwadi Services: <strong>"
-            + $filter('indiaNumbers')(dataInMonth.all) + "</strong></p>"
-            + "<p>% of children " + x + ": <strong>" + average + "</strong></p>";
+        return "<div>Total number of children between the age of 0 - 6 years who are enrolled for Anganwadi Services: <strong>"
+            + $filter('indiaNumbers')(dataInMonth.all) + "</strong></div>"
+            + "<div>% of children " + x + ": <strong>" + average + "</strong></div>";
     };
 
     vm.moveToLocation = function(loc, index) {
