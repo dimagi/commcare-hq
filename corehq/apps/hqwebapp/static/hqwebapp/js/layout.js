@@ -18,6 +18,7 @@ hqDefine("hqwebapp/js/layout", ['jquery'], function($) {
         isAppbuilderResizing: false,
     };
 
+    self.balancePreviewPromise = $.Deferred();
     self.utils = {
         getCurrentScrollPosition: function () {
             return $(window).scrollTop() + $(window).height();
@@ -60,8 +61,8 @@ hqDefine("hqwebapp/js/layout", ['jquery'], function($) {
             self.values.isAppbuilderResizing = isOn;
         },
         setBalancePreviewFn: function (fn) {
-            self.actions.balancePreview = fn;
-        }
+            self.balancePreviewPromise.resolve(fn);
+        },
     };
 
     self.actions = {
@@ -117,8 +118,12 @@ hqDefine("hqwebapp/js/layout", ['jquery'], function($) {
 
         },
         balancePreview: function () {
-console.log("balancePreview hasn't been initialized yet");
             // set with setBalancePreviewFn in utils.
+            self.balancePreviewPromise.done(function(callback) {
+                if (_.isFunction(callback)) {
+                    callback();
+                }
+            });
         },
         showPublishStatus: function() {
             $(self.selector.publishStatus).fadeIn();
@@ -129,7 +134,6 @@ console.log("balancePreview hasn't been initialized yet");
     };
 
     $(window).on('load', function () {
-console.log("window loaded, time to balance things");
         self.actions.initialize();
         if (self.values.isAppbuilderResizing) {
             self.actions.balanceWidths();
