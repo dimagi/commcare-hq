@@ -569,7 +569,7 @@ hqDefine('app_manager/js/forms/case_config_ui_advanced', function () {
                 return _.template(
                     nameSnip + spanSnip +
                     '<% if (action.parent_tags()) { %> : ' +
-                    gettext('subcase of') + <span style="font-weight: bold;"><%= action.parent_tags() %></span>' +
+                    gettext('subcase of') + '<span style="font-weight: bold;"><%= action.parent_tags() %></span>' +
                     '<% } %>' + closeSnip + "</span>")({action: action});
             } else {
                 if (action.auto_select) {
