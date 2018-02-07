@@ -9,8 +9,11 @@ import jsonobject
 from django.contrib.postgres.fields import JSONField
 from django.db import models
 from django.db.transaction import atomic
+from django.urls import reverse
 
+from corehq.apps.linked_domain.const import LINKED_MODELS
 from corehq.apps.linked_domain.exceptions import DomainLinkError
+from corehq.util.view_utils import absolute_reverse
 
 
 class RemoteLinkDetails(namedtuple('RemoteLinkDetails', 'url_base username api_key')):
@@ -29,6 +32,16 @@ class DomainLink(models.Model):
     remote_base_url = models.CharField(max_length=255, null=True)
     remote_username = models.CharField(max_length=255, null=True)
     remote_api_key = models.CharField(max_length=255, null=True)
+
+    @property
+    def qualified_master(self):
+        if self.is_remote:
+            return '{}{}'.format(
+                self.remote_base_url,
+                reverse('domain_homepage', args=[self.master_domain])
+            )
+        else:
+            return self.master_domain
 
     @property
     def remote_details(self):
@@ -72,21 +85,21 @@ class DomainLink(models.Model):
 
 
 class DomainLinkHistory(models.Model):
-    MODEL_CHOICES = [
-        ('app', 'Application'),
-        ('custom_user_data', 'Custom User Data Fields'),
-        ('custom_product_data', 'Custom Product Data Fields'),
-        ('custom_location_data', 'Custom Location Data Fields'),
-        ('roles', 'User Roles'),
-        ('toggles', 'Feature Flags and Previews'),
-    ]
-
     link = models.ForeignKey(DomainLink, on_delete=models.CASCADE, related_name='history')
     date = models.DateTimeField(null=False)
-    model = models.CharField(max_length=128, choices=MODEL_CHOICES, null=False)
+    model = models.CharField(max_length=128, choices=LINKED_MODELS, null=False)
     model_detail = JSONField(null=True)
     user_id = models.CharField(max_length=255, null=False)
+
+    class Meta:
+        ordering = ("-date",)
 
 
 class AppLinkDetail(jsonobject.JsonObject):
     app_id = jsonobject.StringProperty()
+
+
+def wrap_detail(model, detail_json):
+    return {
+        'app': AppLinkDetail
+    }[model].wrap(detail_json)

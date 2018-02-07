@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+
 from django.conf.urls import url
 
 from corehq.apps.linked_domain.views import (
@@ -6,7 +7,7 @@ from corehq.apps.linked_domain.views import (
     custom_data_models,
     user_roles,
     get_latest_released_app_source,
-)
+    DomainLinkView, DomainLinkRMIView)
 
 app_name = 'linked_domain'
 
@@ -17,4 +18,6 @@ urlpatterns = [
     url(r'^user_roles/$', user_roles, name='user_roles'),
     url(r'^release_source/(?P<app_id>[\w-]+)/$', get_latest_released_app_source,
         name='latest_released_app_source'),
+    url(r'^links/$', DomainLinkView.as_view(), name=DomainLinkView.urlname_plain),
+    url(r'^service/$', DomainLinkRMIView.as_view(), name=DomainLinkRMIView.urlname),
 ]

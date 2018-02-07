@@ -1,3 +1,5 @@
+from corehq.util.timezones.conversions import ServerTime
+
 
 def _clean_json(doc):
     if not isinstance(doc, dict):
@@ -23,3 +25,8 @@ def convert_app_for_remote_linking(latest_master_build):
     }
     source.pop("external_blobs", None)
     return source
+
+
+def server_to_user_time(server_time, timezone):
+    user_time = ServerTime(server_time).user_time(timezone).done()
+    return user_time.strftime("%Y-%m-%d %H:%M")
