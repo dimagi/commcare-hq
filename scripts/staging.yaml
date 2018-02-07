@@ -49,7 +49,7 @@ trunk: master
 name: autostaging
 branches:
   - vellum-staging # J$ 11/13
-  - je/cythonized-jsonobject # j$ 1/8
+  # - je/cythonized-jsonobject # j$ 1/8
   - xbryanc:dlemailbutton_updates  # Bryan 1/29
   - sophiamcg:organization-structure-search-tree-interaction  # Sophia 1/29
   - xbryanc:show_scheduled_reports_updates  # Bryan 1/31
