@@ -43,6 +43,7 @@ from corehq.messaging.scheduling.models import (
     ImmediateBroadcast,
     ScheduledBroadcast,
     SMSContent,
+    EmailContent,
     SMSSurveyContent,
     CustomContent,
 )
@@ -212,8 +213,12 @@ class ScheduleForm(Form):
         label=ugettext_lazy("What to send"),
         choices=(
             (CONTENT_SMS, ugettext_lazy('SMS')),
-            # (CONTENT_EMAIL, ugettext_lazy('Email')),
+            (CONTENT_EMAIL, ugettext_lazy('Email')),
         )
+    )
+    subject = CharField(
+        required=False,
+        widget=HiddenInput,
     )
     message = CharField(
         required=False,
@@ -344,6 +349,10 @@ class ScheduleForm(Form):
         content = self.initial_schedule.memoized_events[0].content
         if isinstance(content, SMSContent):
             result['content'] = self.CONTENT_SMS
+            result['message'] = content.message
+        elif isinstance(content, EmailContent):
+            result['content'] = self.CONTENT_EMAIL
+            result['subject'] = content.subject
             result['message'] = content.message
         elif isinstance(content, SMSSurveyContent):
             result['content'] = self.CONTENT_SMS_SURVEY
@@ -621,6 +630,18 @@ class ScheduleForm(Form):
         return [
             crispy.Field('content', data_bind='value: content'),
             hqcrispy.B3MultiField(
+                _("Subject"),
+                crispy.Field(
+                    'subject',
+                    data_bind='value: subject.messagesJSONString',
+                ),
+                crispy.Div(
+                    crispy.Div(template='scheduling/partial/message_configuration.html'),
+                    data_bind='with: subject',
+                ),
+                data_bind="visible: content() === '%s'" % self.CONTENT_EMAIL,
+            ),
+            hqcrispy.B3MultiField(
                 _("Message"),
                 crispy.Field(
                     'message',
@@ -630,7 +651,9 @@ class ScheduleForm(Form):
                     crispy.Div(template='scheduling/partial/message_configuration.html'),
                     data_bind='with: message',
                 ),
-                data_bind="visible: content() === '%s'" % self.CONTENT_SMS,
+                data_bind=(
+                    "visible: content() === '%s' || content() === '%s'" % (self.CONTENT_SMS, self.CONTENT_EMAIL)
+                ),
             ),
             crispy.Div(
                 crispy.Field('form_unique_id'),
@@ -954,11 +977,20 @@ class ScheduleForm(Form):
 
         return occurrences
 
-    def clean_message(self):
-        if self.cleaned_data.get('content') != self.CONTENT_SMS:
+    def clean_subject(self):
+        if self.cleaned_data.get('content') != self.CONTENT_EMAIL:
             return None
 
-        value = json.loads(self.cleaned_data['message'])
+        return self._clean_message_field('subject')
+
+    def clean_message(self):
+        if self.cleaned_data.get('content') not in (self.CONTENT_SMS, self.CONTENT_EMAIL):
+            return None
+
+        return self._clean_message_field('message')
+
+    def _clean_message_field(self, field_name):
+        value = json.loads(self.cleaned_data[field_name])
         cleaned_value = {k: v.strip() for k, v in value.items()}
 
         if '*' in cleaned_value:
@@ -1031,6 +1063,11 @@ class ScheduleForm(Form):
         if self.cleaned_data['content'] == self.CONTENT_SMS:
             return SMSContent(
                 message=self.cleaned_data['message']
+            )
+        elif self.cleaned_data['content'] == self.CONTENT_EMAIL:
+            return EmailContent(
+                subject=self.cleaned_data['subject'],
+                message=self.cleaned_data['message'],
             )
         elif self.cleaned_data['content'] == self.CONTENT_SMS_SURVEY:
             return SMSSurveyContent(

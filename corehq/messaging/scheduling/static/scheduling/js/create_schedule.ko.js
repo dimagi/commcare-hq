@@ -87,6 +87,10 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
         self.is_trial_project = initial_values.is_trial_project;
         self.displayed_email_trial_message = false;
         self.content = ko.observable(initial_values.content);
+        self.subject = new TranslationViewModel(
+            hqImport("hqwebapp/js/initial_page_data").get("language_list"),
+            initial_values.subject
+        );
         self.message = new TranslationViewModel(
             hqImport("hqwebapp/js/initial_page_data").get("language_list"),
             initial_values.message

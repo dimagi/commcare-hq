@@ -320,6 +320,7 @@ class Content(models.Model):
         else:
             send_sms(domain, recipient, phone_number, message, metadata=metadata)
 
+
 class Broadcast(models.Model):
     domain = models.CharField(max_length=126, db_index=True)
     name = models.CharField(max_length=1000)
