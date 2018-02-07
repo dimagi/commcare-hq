@@ -12,7 +12,9 @@
     {% initial_page_data 'pagination' pagination %}
     {% initial_page_data 'stripe_options' stripe_options %}
     {% initial_page_data 'payment_urls' payment_urls %}
-    {% initial_page_data 'payment_error_messages' payment_error_messages}
+    {% initial_page_data 'payment_error_messages' payment_error_messages %}
+    {% initial_page_data 'item_creation_allowed' pagination.create.is_allowed %}
+    {% initial_page_data 'total_balance' total_balance %}
 
     <div id="currentBalanceSection">
         <h2>{% trans 'Total Due:' %}
