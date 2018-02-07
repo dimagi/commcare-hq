@@ -36,7 +36,7 @@ def get_released_app_version(domain, app_id, remote_details):
 
 
 def get_released_app(domain, app_id, linked_domain, remote_details):
-    url = reverse('remote:latest_released_app_source', args=[domain, app_id])
+    url = reverse('linked_domain:latest_released_app_source', args=[domain, app_id])
     response = _do_request_to_remote_hq_json(url, remote_details, linked_domain)
     return _convert_app_from_remote_linking_source(response)
 

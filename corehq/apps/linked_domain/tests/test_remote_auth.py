@@ -39,7 +39,7 @@ class RemoteAuthTest(TestCase):
         super(RemoteAuthTest, cls).tearDownClass()
 
     def test_remote_auth(self):
-        url = reverse('remote:toggles', args=[self.master_domain])
+        url = reverse('linked_domain:toggles', args=[self.master_domain])
         resp = self.client.get(url)
         self.assertEqual(resp.status_code, 401)
 
