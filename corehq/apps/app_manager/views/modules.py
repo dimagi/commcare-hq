@@ -301,11 +301,13 @@ def _get_valid_parent_modules(app, module):
 
     # Modules that already have a parent may not themselves be parents
     invalid_ids = [m.unique_id for m in app.modules if getattr(m, 'root_module_id', None)]
+    current_parent_id = getattr(module, 'root_module_id', None)
+    if current_parent_id in invalid_ids:
+        invalid_ids.remove(current_parent_id)
 
     # The current module is not allowed, but its parent is
     # Shadow modules are not allowed
-    return [parent_module for parent_module in app.modules
-            if (parent_module.unique_id not in invalid_ids or parent_module.unique_id == getattr(module, 'root_module_id', None))
+    return [parent_module for parent_module in app.modules if (parent_module.unique_id not in invalid_ids)
             and not parent_module == module and parent_module.doc_type != "ShadowModule"]
 
 
