@@ -7,52 +7,75 @@
 {% block page_content %}
 {% initial_page_data 'view_data' view_data %}
 {% registerurl 'linked_domain:domain_link_rmi' domain %}
+{% registerurl 'linked_domain:domain_links' '---' %}
 {% registerurl 'app_settings' domain '---' %}
 
 <div id="domain_links">
-    <h2>{% trans "Project Links" %}</h2>
-    <!-- ko if: master_link -->
-    <p>This project is linked to <b data-bind="text: master_link.master_domain"></b></p>
-    <div>
-         <table class="table table-striped table-hover">
+    <div data-bind="visible: !master_link && !linked_domains().length">
+        <p>
+            {% trans "This project has no links to other projects." %}
+        </p>
+    </div>
+    <div data-bind="if: master_link">
+        <h2>{% trans "Project Link" %}</h2>
+
+        <p>{% trans "This project is linked to " %}<a data-bind="attr: {'href': master_href}, text: master_link.master_domain"></a></p>
+        <div>
+             <table class="table table-striped table-hover">
+                <thead>
+                <tr>
+                    <th>{% trans "Linked Model" %}</th>
+                    <th>{% trans "Last Updated" %} ({{ timezone }})</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody data-bind="foreach: model_status">
+                    <tr>
+                        <td data-bind="text: name"></td>
+                        <td data-bind="text: last_update"></td>
+                        <td>
+                            <button class="btn" data-bind="visible: showUpdate() && !update_url, click: update">
+                                {% trans "Update" %}
+                            </button>
+                            <button class="btn btn-info disabled" data-bind="visible: showSpinner">
+                                <i class="fa fa-spinner"></i>
+                            </button>
+                            <button class="btn btn-success disabled" data-bind="visible: hasSuccess">
+                                <i class="fa fa-check"></i> {% trans "Success" %}
+                            </button>
+                            <button class="btn btn-danger disabled" data-bind="visible: hasError">
+                                <i class="fa fa-times"></i> {% trans "Error" %}
+                            </button>
+                            <a data-bind="visible: showUpdate && update_url, attr: {href: update_url}">{% trans "Go to update page" %}</a>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div data-bind="if: linked_domains().length">
+        <h2>{% trans "Projects Linked to this one" %}</h2>
+        <table class="table table-striped table-hover">
             <thead>
             <tr>
-                <th>{% trans "Linked Model" %}</th>
+                <th>{% trans "Project Name" %}</th>
                 <th>{% trans "Last Updated" %} ({{ timezone }})</th>
                 <th></th>
             </tr>
             </thead>
-            <tbody data-bind="foreach: model_status">
+            <tbody data-bind="foreach: linked_domains">
                 <tr>
-                    <td data-bind="text: name"></td>
+                    <td><a data-bind="attr: {'href': domain_link}, text: linked_domain"></a></td>
                     <td data-bind="text: last_update"></td>
                     <td>
-                        <button class="btn" data-bind="visible: can_update && !update_url, click: update">
-                            {% trans "Update" %}
+                        <button type="button" class="btn btn-danger" data-bind="click: $root.deleteLink.bind($data)">
+                            <i class="fa fa-trash"></i>
+                            {% trans 'Delete' %}
                         </button>
-                        <a data-bind="visible: can_update && update_url, attr: {href: update_url}">{% trans "Go to update page" %}</a>
                     </td>
                 </tr>
             </tbody>
         </table>
     </div>
-    <!-- /ko -->
-    <!-- ko if: linked_domains-->
-    <h2>{% trans "Projects Linked to this one" %}</h2>
-    <table class="table table-striped table-hover">
-        <thead>
-        <tr>
-            <th>{% trans "Project Name" %}</th>
-            <th>{% trans "Last Updated" %} ({{ timezone }})</th>
-        </tr>
-        </thead>
-        <tbody data-bind="foreach: linked_domains">
-            <tr>
-                <td data-bind="text: linked_domain"></td>
-                <td data-bind="text: last_update"></td>
-            </tr>
-        </tbody>
-    </table>
-    <!-- /ko -->
 </div>
 {% endblock %}

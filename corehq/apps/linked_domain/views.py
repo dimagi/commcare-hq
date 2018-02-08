@@ -16,7 +16,7 @@ from corehq.apps.linked_domain.const import LINKED_MODELS
 from corehq.apps.linked_domain.dbaccessors import get_domain_master_link, get_linked_domains
 from corehq.apps.linked_domain.decorators import require_linked_domain
 from corehq.apps.linked_domain.local_accessors import get_toggles_previews, get_custom_data_models, get_user_roles
-from corehq.apps.linked_domain.models import AppLinkDetail, wrap_detail, DomainLinkHistory
+from corehq.apps.linked_domain.models import AppLinkDetail, wrap_detail, DomainLinkHistory, DomainLink
 from corehq.apps.linked_domain.updates import update_model_type
 from corehq.apps.linked_domain.util import convert_app_for_remote_linking, server_to_user_time
 from corehq.util.timezones.utils import get_timezone_for_request
@@ -69,7 +69,10 @@ class DomainLinkView(BaseAdminProjectSettingsView):
         def _link_context(link):
             return {
                 'linked_domain': link.linked_domain,
-                'master_domain': link.qualified_master,
+                'master_domain': link.master_domain,
+                'remote_base_url': link.remote_base_url,
+                'remote_username': link.remote_username,
+                'remote_api_key': link.remote_api_key,
                 'is_remote': link.is_remote,
                 'last_update': server_to_user_time(link.last_pull, timezone),
             }
@@ -88,7 +91,6 @@ class DomainLinkView(BaseAdminProjectSettingsView):
                 []
             ))
             for action in history:
-                print(action.model, action.date, action.row_number)
                 models_seen.add(action.model)
                 if action.row_number != 1:
                     # first row is the most recent
@@ -143,7 +145,7 @@ class DomainLinkView(BaseAdminProjectSettingsView):
             'domain': self.domain,
             'timezone': timezone.localize(datetime.utcnow()).tzname(),
             'view_data': {
-                'master_link': _link_context(master_link),
+                'master_link': _link_context(master_link) if master_link else None,
                 'model_status': sorted(model_status, key=lambda m: m['name']),
                 'linked_domains': [
                     _link_context(link) for link in get_linked_domains(self.domain)
@@ -152,7 +154,7 @@ class DomainLinkView(BaseAdminProjectSettingsView):
                     {'slug': model[0], 'name': model[1]}
                     for model in LINKED_MODELS
                 ]
-            }
+            },
         }
 
 
@@ -175,4 +177,12 @@ class DomainLinkRMIView(JSONResponseMixin, View, DomainViewMixin):
         return {
             'success': True,
             'last_update': server_to_user_time(master_link.last_pull, timezone)
+        }
+
+    @allow_remote_invocation
+    def delete_domain_link(self, in_data):
+        linked_domain = in_data['linked_domain']
+        DomainLink.objects.filter(linked_domain=linked_domain, master_domain=self.domain).delete()
+        return {
+            'success': True,
         }
