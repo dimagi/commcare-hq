@@ -33,6 +33,7 @@ from corehq.messaging.smsbackends.tropo.models import SQLTropoBackend
 from corehq.messaging.smsbackends.twilio.models import SQLTwilioBackend
 from corehq.messaging.smsbackends.unicel.models import SQLUnicelBackend, InboundParams
 from corehq.messaging.smsbackends.vertex.models import VertexBackend
+from corehq.messaging.smsbackends.whatsapp.models import SQLWhatsAppBackend
 from corehq.messaging.smsbackends.yo.models import SQLYoBackend
 from corehq.util.test_utils import create_test_case
 from datetime import datetime
@@ -170,6 +171,16 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
         )
         cls.vertext_backend.save()
 
+        cls.whatsapp_backend = SQLWhatsAppBackend(
+            name="WHATSAPP",
+            is_global=False,
+            domain=cls.domain_obj.name,
+            hq_api_id=SQLWhatsAppBackend.get_api_id(),
+            phone_number=27837596738,
+            password='secret',
+        )
+        cls.whatsapp_backend.save()
+
         cls.start_enterprise_backend = StartEnterpriseBackend(
             name="START_ENT",
             is_global=True,
@@ -204,6 +215,7 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
         cls.push_backend.delete()
         cls.icds_backend.delete()
         cls.vertext_backend.delete()
+        cls.whatsapp_backend.delete()
         cls.start_enterprise_backend.delete()
         cls.ivory_coast_mtn_backend.delete()
         super(AllBackendTest, cls).tearDownClass()
@@ -295,12 +307,14 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
     @patch('corehq.messaging.smsbackends.push.models.PushBackend.send')
     @patch('corehq.messaging.smsbackends.icds_nic.models.SQLICDSBackend.send')
     @patch('corehq.messaging.smsbackends.vertex.models.VertexBackend.send')
+    @patch('corehq.messaging.smsbackends.whatsapp.models.SQLWhatsAppBackend.send')
     @patch('corehq.messaging.smsbackends.start_enterprise.models.StartEnterpriseBackend.send')
     @patch('corehq.messaging.smsbackends.ivory_coast_mtn.models.IvoryCoastMTNBackend.send')
     def test_outbound_sms(
             self,
             ivory_coast_mtn_send,
             start_ent_send,
+            whatsapp_send,
             vertex_send,
             icds_send,
             push_send,
@@ -333,6 +347,7 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
         self._test_outbound_backend(self.push_backend, 'push test', push_send)
         self._test_outbound_backend(self.icds_backend, 'icds test', icds_send)
         self._test_outbound_backend(self.vertext_backend, 'vertex_test', vertex_send)
+        self._test_outbound_backend(self.whatsapp_backend, 'whatsapp_test', whatsapp_send)
         self._test_outbound_backend(self.start_enterprise_backend, 'start_ent_test', start_ent_send)
         self._test_outbound_backend(self.ivory_coast_mtn_backend, 'ivory_coast_mtn_test', ivory_coast_mtn_send)
 
