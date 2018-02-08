@@ -15,10 +15,13 @@ def _migrate_linked_apps_toggle(apps, schema_editor):
     except ResourceNotFound:
         pass
     else:
-        linked_domains_toggle = Toggle(
-            slug=LINKED_DOMAINS.slug, enabled_users=linked_apps_toggle.enabled_users
-        )
-        linked_domains_toggle.save()
+        try:
+            Toggle.get(LINKED_DOMAINS.slug)
+        except ResourceNotFound:
+            linked_domains_toggle = Toggle(
+                slug=LINKED_DOMAINS.slug, enabled_users=linked_apps_toggle.enabled_users
+            )
+            linked_domains_toggle.save()
 
 
 def noop(*args, **kwargs):
