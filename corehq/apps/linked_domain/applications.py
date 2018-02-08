@@ -17,5 +17,5 @@ def get_latest_master_app_release(master_domain, app_id, linked_domain, remote_d
     else:
         master_app = get_app(master_domain, app_id)
         if linked_domain not in master_app.linked_whitelist:
-            raise ActionNotPermitted
+            raise ActionNotPermitted()
         return get_latest_released_app(master_domain, app_id)
