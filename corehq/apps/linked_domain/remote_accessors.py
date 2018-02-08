@@ -13,20 +13,20 @@ from dimagi.utils.logging import notify_exception
 
 
 def get_toggles_previews(domain_link):
-    return _do_simple_request('remote:toggles', domain_link)
+    return _do_simple_request('linked_domain:toggles', domain_link)
 
 
 def get_custom_data_models(domain_link, limit_types=None):
-    url = reverse('remote:custom_data_models', args=[domain_link.linked_domain])
+    url = reverse('linked_domain:custom_data_models', args=[domain_link.linked_domain])
     params = None
     if limit_types:
         params = [('type', type_) for type_ in limit_types]
     _do_request_to_remote_hq(url, domain_link.remote_details, domain_link.linked_domain, params)
-    return _do_simple_request('remote:custom_data_models', domain_link)
+    return _do_simple_request('linked_domain:custom_data_models', domain_link)
 
 
 def get_user_roles(domain_link):
-    return _do_simple_request('remote:user_roles', domain_link)['user_roles']
+    return _do_simple_request('linked_domain:user_roles', domain_link)['user_roles']
 
 
 def get_released_app_version(domain, app_id, remote_details):
