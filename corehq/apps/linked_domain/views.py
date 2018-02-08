@@ -180,7 +180,9 @@ class DomainLinkRMIView(JSONResponseMixin, View, DomainViewMixin):
     @allow_remote_invocation
     def delete_domain_link(self, in_data):
         linked_domain = in_data['linked_domain']
-        DomainLink.objects.filter(linked_domain=linked_domain, master_domain=self.domain).delete()
+        link = DomainLink.objects.filter(linked_domain=linked_domain, master_domain=self.domain).first()
+        link.deleted = True
+        link.save()
         return {
             'success': True,
         }

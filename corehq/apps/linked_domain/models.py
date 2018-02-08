@@ -26,6 +26,7 @@ class DomainLink(models.Model):
     linked_domain = models.CharField(max_length=126, null=False, unique=True)
     master_domain = models.CharField(max_length=126, null=False)
     last_pull = models.DateTimeField(null=True, blank=True)
+    deleted = models.BooleanField(default=False)
 
     # used for linking across remote instances of HQ
     remote_base_url = models.CharField(max_length=255, null=True, blank=True)
@@ -72,7 +73,7 @@ class DomainLink(models.Model):
         except cls.DoesNotExist:
             link = DomainLink(linked_domain=linked_domain, master_domain=master_domain)
 
-        if link.master_domain != master_domain:
+        if link.master_domain != master_domain and not link.deleted:
             raise DomainLinkError('Domain "{}" is already linked to a different domain ({}).'.format(
                 linked_domain, link.master_domain
             ))
@@ -81,11 +82,9 @@ class DomainLink(models.Model):
             link.remote_base_url = remote_details.url_base
             link.remote_username = remote_details.username
             link.remote_api_key = remote_details.api_key
-        link.save()
 
-        from corehq.apps.linked_domain.dbaccessors import get_domain_master_link, get_linked_domains
-        get_domain_master_link.clear(linked_domain)
-        get_linked_domains.clear(master_domain)
+        link.deleted = False
+        link.save()
         return link
 
 
