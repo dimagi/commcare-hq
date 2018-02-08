@@ -288,6 +288,11 @@ def handle_custom_icon_edits(request, form_or_module, lang):
 
 
 def update_linked_app(app, user_id):
+    if not app.domain_link:
+        raise AppLinkError(_(
+            'This project is not authorized to update from the master application. '
+            'Please contact the maintainer of the master app if you believe this is a mistake. '
+        ))
     try:
         master_version = app.get_master_version()
     except RemoteRequestError:

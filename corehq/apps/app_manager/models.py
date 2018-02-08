@@ -6282,14 +6282,17 @@ class LinkedApplication(Application):
         return get_domain_master_link(self.domain)
 
     def get_master_version(self):
-        return get_master_app_version(self.domain_link, self.master)
+        if self.domain_link:
+            return get_master_app_version(self.domain_link, self.master)
 
     @property
     def master_is_remote(self):
-        return self.domain_link.is_remote
+        if self.domain_link:
+            return self.domain_link.is_remote
 
     def get_latest_master_release(self):
-        return get_latest_master_app_release(self.domain_link, self.master)
+        if self.domain_link:
+            return get_latest_master_app_release(self.domain_link, self.master)
 
 
 def import_app(app_id_or_source, domain, source_properties=None, validate_source_domain=None):
