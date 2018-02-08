@@ -29,8 +29,8 @@ def get_prevalence_of_undernutrition_data_map(domain, config, loc_level, show_te
             moderately_underweight=Sum('nutrition_status_moderately_underweight'),
             severely_underweight=Sum('nutrition_status_severely_underweight'),
             normal=Sum('nutrition_status_normal'),
-            valid=Sum('nutrition_status_weighed'),
-            wer_eligible=Sum('wer_eligible'),
+            weighed=Sum('nutrition_status_weighed'),
+            total=Sum('wer_eligible'),
         ).order_by('%s_name' % loc_level, '%s_map_location_name' % loc_level)
         if not show_test:
             queryset = apply_exclude(domain, queryset)
@@ -42,21 +42,21 @@ def get_prevalence_of_undernutrition_data_map(domain, config, loc_level, show_te
         'moderately_underweight': 0,
         'severely_underweight': 0,
         'normal': 0,
+        'weighed': 0,
         'total': 0,
-        'eligible': 0,
         'original_name': []
     })
 
     moderately_underweight_total = 0
     severely_underweight_total = 0
     normal_total = 0
-    valid_total = 0
-    eligible_total = 0
+    all_total = 0
+    weighed_total = 0
 
     values_to_calculate_average = []
     for row in get_data_for(config):
-        valid = row['valid'] or 0
-        eligible = row['wer_eligible'] or 0
+        weighed = row['weighed'] or 0
+        total = row['total'] or 0
         name = row['%s_name' % loc_level]
         on_map_name = row['%s_map_location_name' % loc_level] or name
         severely_underweight = row['severely_underweight'] or 0
@@ -64,24 +64,24 @@ def get_prevalence_of_undernutrition_data_map(domain, config, loc_level, show_te
         normal = row['normal'] or 0
 
         numerator = moderately_underweight + severely_underweight
-        values_to_calculate_average.append(numerator * 100 / (valid or 1))
+        values_to_calculate_average.append(numerator * 100 / (weighed or 1))
 
         moderately_underweight_total += moderately_underweight
         severely_underweight_total += severely_underweight
         normal_total += normal
-        valid_total += valid
-        eligible_total += eligible
+        all_total += total
+        weighed_total += weighed
 
         data_for_map[on_map_name]['severely_underweight'] += severely_underweight
         data_for_map[on_map_name]['moderately_underweight'] += moderately_underweight
         data_for_map[on_map_name]['normal'] += normal
-        data_for_map[on_map_name]['total'] += valid
-        data_for_map[on_map_name]['eligible'] += eligible
+        data_for_map[on_map_name]['total'] += total
+        data_for_map[on_map_name]['weighed'] += weighed
         data_for_map[on_map_name]['original_name'].append(name)
 
     for data_for_location in six.itervalues(data_for_map):
         numerator = data_for_location['moderately_underweight'] + data_for_location['severely_underweight']
-        value = numerator * 100 / (data_for_location['total'] or 1)
+        value = numerator * 100 / (data_for_location['weighed'] or 1)
         if value < 20:
             data_for_location.update({'fillKey': '0%-20%'})
         elif 20 <= value < 35:
@@ -118,23 +118,23 @@ def get_prevalence_of_undernutrition_data_map(domain, config, loc_level, show_te
             "extended_info": [
                 {
                     'indicator': 'Total Children{} weighed in given month:'.format(chosen_filters),
-                    'value': indian_formatted_number(valid_total)
+                    'value': indian_formatted_number(weighed_total)
                 },
                 {
                     'indicator': 'Number of children unweighed{}:'.format(chosen_filters),
-                    'value': indian_formatted_number(eligible_total - valid_total)
+                    'value': indian_formatted_number(all_total - weighed_total)
                 },
                 {
                     'indicator': '% Severely Underweight{}:'.format(chosen_filters),
-                    'value': '%.2f%%' % (severely_underweight_total * 100 / float(valid_total or 1))
+                    'value': '%.2f%%' % (severely_underweight_total * 100 / float(weighed_total or 1))
                 },
                 {
                     'indicator': '% Moderately Underweight{}:'.format(chosen_filters),
-                    'value': '%.2f%%' % (moderately_underweight_total * 100 / float(valid_total or 1))
+                    'value': '%.2f%%' % (moderately_underweight_total * 100 / float(weighed_total or 1))
                 },
                 {
                     'indicator': '% Normal{}:'.format(chosen_filters),
-                    'value': '%.2f%%' % (normal_total * 100 / float(valid_total or 1))
+                    'value': '%.2f%%' % (normal_total * 100 / float(weighed_total or 1))
                 }
             ]
         },
@@ -158,8 +158,8 @@ def get_prevalence_of_undernutrition_data_chart(domain, config, loc_level, show_
         moderately_underweight=Sum('nutrition_status_moderately_underweight'),
         normal=Sum('nutrition_status_normal'),
         severely_underweight=Sum('nutrition_status_severely_underweight'),
-        valid=Sum('nutrition_status_weighed'),
-        eligible=Sum('wer_eligible'),
+        weighed=Sum('nutrition_status_weighed'),
+        total=Sum('wer_eligible'),
     ).order_by('month')
 
     if not show_test:
@@ -178,35 +178,35 @@ def get_prevalence_of_undernutrition_data_chart(domain, config, loc_level, show_
 
     for date in dates:
         miliseconds = int(date.strftime("%s")) * 1000
-        data['peach'][miliseconds] = {'y': 0, 'all': 0, 'unweighed': 0}
-        data['orange'][miliseconds] = {'y': 0, 'all': 0, 'unweighed': 0}
-        data['red'][miliseconds] = {'y': 0, 'all': 0, 'unweighed': 0}
+        data['peach'][miliseconds] = {'y': 0, 'weighed': 0, 'unweighed': 0}
+        data['orange'][miliseconds] = {'y': 0, 'weighed': 0, 'unweighed': 0}
+        data['red'][miliseconds] = {'y': 0, 'weighed': 0, 'unweighed': 0}
 
     best_worst = {}
     for row in chart_data:
         date = row['month']
-        valid = row['valid']
+        weighed = row['weighed'] or 0
         location = row['%s_name' % loc_level]
-        severely_underweight = row['severely_underweight']
-        moderately_underweight = row['moderately_underweight']
-        eligible = row['eligible']
-        normal = row['normal']
+        severely_underweight = row['severely_underweight'] or 0
+        moderately_underweight = row['moderately_underweight'] or 0
+        total = row['total'] or 0
+        normal = row['normal'] or 0
 
-        underweight = ((moderately_underweight or 0) + (severely_underweight or 0)) * 100 / float(valid or 1)
+        underweight = (moderately_underweight + severely_underweight) * 100 / float(weighed or 1)
 
         best_worst[location] = underweight
 
         date_in_miliseconds = int(date.strftime("%s")) * 1000
 
         data['peach'][date_in_miliseconds]['y'] += normal
-        data['peach'][date_in_miliseconds]['unweighed'] += (eligible - valid)
-        data['peach'][date_in_miliseconds]['all'] += valid
+        data['peach'][date_in_miliseconds]['unweighed'] += (total - weighed)
+        data['peach'][date_in_miliseconds]['weighed'] += weighed
         data['orange'][date_in_miliseconds]['y'] += moderately_underweight
-        data['orange'][date_in_miliseconds]['unweighed'] += (eligible - valid)
-        data['orange'][date_in_miliseconds]['all'] += valid
+        data['orange'][date_in_miliseconds]['unweighed'] += (total - weighed)
+        data['orange'][date_in_miliseconds]['weighed'] += weighed
         data['red'][date_in_miliseconds]['y'] += severely_underweight
-        data['red'][date_in_miliseconds]['unweighed'] += (eligible - valid)
-        data['red'][date_in_miliseconds]['all'] += valid
+        data['red'][date_in_miliseconds]['unweighed'] += (total - weighed)
+        data['red'][date_in_miliseconds]['weighed'] += weighed
 
     top_locations = sorted(
         [dict(loc_name=key, percent=value) for key, value in six.iteritems(best_worst)],
@@ -219,8 +219,8 @@ def get_prevalence_of_undernutrition_data_chart(domain, config, loc_level, show_
                 "values": [
                     {
                         'x': key,
-                        'y': value['y'] / float(value['all'] or 1),
-                        'all': value['all'],
+                        'y': value['y'] / float(value['weighed'] or 1),
+                        'weighed': value['weighed'],
                         'unweighed': value['unweighed'],
                     } for key, value in six.iteritems(data['peach'])
                 ],
@@ -233,8 +233,8 @@ def get_prevalence_of_undernutrition_data_chart(domain, config, loc_level, show_
                 "values": [
                     {
                         'x': key,
-                        'y': value['y'] / float(value['all'] or 1),
-                        'all': value['all'],
+                        'y': value['y'] / float(value['weighed'] or 1),
+                        'weighed': value['weighed'],
                         'unweighed': value['unweighed'],
                     } for key, value in six.iteritems(data['orange'])
                 ],
@@ -247,8 +247,8 @@ def get_prevalence_of_undernutrition_data_chart(domain, config, loc_level, show_
                 "values": [
                     {
                         'x': key,
-                        'y': value['y'] / float(value['all'] or 1),
-                        'all': value['all'],
+                        'y': value['y'] / float(value['weighed'] or 1),
+                        'weighed': value['weighed'],
                         'unweighed': value['unweighed'],
                     } for key, value in six.iteritems(data['red'])
                 ],
@@ -277,9 +277,9 @@ def get_prevalence_of_undernutrition_sector_data(domain, config, loc_level, loca
     ).annotate(
         moderately_underweight=Sum('nutrition_status_moderately_underweight'),
         severely_underweight=Sum('nutrition_status_severely_underweight'),
-        valid=Sum('nutrition_status_weighed'),
+        weighed=Sum('nutrition_status_weighed'),
         normal=Sum('nutrition_status_normal'),
-        eligible=Sum('wer_eligible'),
+        total=Sum('wer_eligible'),
     ).order_by('%s_name' % loc_level)
 
     if not show_test:
@@ -295,17 +295,17 @@ def get_prevalence_of_undernutrition_sector_data(domain, config, loc_level, loca
     tooltips_data = defaultdict(lambda: {
         'severely_underweight': 0,
         'moderately_underweight': 0,
-        'total': 0,
+        'weighed': 0,
         'normal': 0,
-        'eligible': 0
+        'total': 0
     })
 
     loc_children = get_child_locations(domain, location_id, show_test)
     result_set = set()
 
     for row in data:
-        valid = row['valid']
-        eligible = row['eligible']
+        weighed = row['weighed']
+        total = row['total']
         name = row['%s_name' % loc_level]
         result_set.add(name)
 
@@ -315,13 +315,13 @@ def get_prevalence_of_undernutrition_sector_data(domain, config, loc_level, loca
 
         tooltips_data[name]['severely_underweight'] += severely_underweight
         tooltips_data[name]['moderately_underweight'] += moderately_underweight
-        tooltips_data[name]['total'] += (valid or 0)
+        tooltips_data[name]['weighed'] += (weighed or 0)
         tooltips_data[name]['normal'] += normal
-        tooltips_data[name]['eligible'] += (eligible or 0)
+        tooltips_data[name]['total'] += (total or 0)
 
         chart_data['blue'].append([
             name,
-            ((moderately_underweight or 0) + (severely_underweight or 0)) / float(valid or 1)
+            ((moderately_underweight or 0) + (severely_underweight or 0)) / float(weighed or 1)
         ])
 
     for sql_location in loc_children:
