@@ -1601,7 +1601,7 @@ def _get_feature_flag_items(domain):
     if toggles.LINKED_DOMAINS.enabled(domain):
         feature_flag_items.append({
             'title': _('Linked Projects'),
-            'url': reverse('linked_domain:domain_links', args=[domain])
+            'url': reverse('domain_links', args=[domain])
         })
     return feature_flag_items
 

@@ -57,7 +57,7 @@ hqDefine("linked_domain/js/domain_links", [
             if (self.master_link.is_remote) {
                 self.master_href = self.master_link.master_domain;
             } else {
-                self.master_href = initialPageData.reverse('linked_domain:domain_links', self.master_link.master_domain);
+                self.master_href = initialPageData.reverse('domain_links', self.master_link.master_domain);
             }
         }
 
@@ -97,7 +97,7 @@ hqDefine("linked_domain/js/domain_links", [
         if (self.is_remote){
             self.domain_link = self.linked_domain
         } else{
-            self.domain_link = initialPageData.reverse('linked_domain:domain_links', self.linked_domain()   )
+            self.domain_link = initialPageData.reverse('domain_links', self.linked_domain()   )
         }
     };
 

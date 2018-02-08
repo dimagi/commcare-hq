@@ -55,10 +55,8 @@ def get_latest_released_app_source(request, domain, app_id):
     return JsonResponse(convert_app_for_remote_linking(latest_master_build))
 
 
-@method_decorator(domain_admin_required, name='dispatch')
 class DomainLinkView(BaseAdminProjectSettingsView):
-    urlname = 'linked_domain:domain_links'
-    urlname_plain = 'domain_links'
+    urlname = 'domain_links'
     page_title = ugettext_lazy("Domain Links")
     template_name = 'linked_domain/domain_links.html'
 
