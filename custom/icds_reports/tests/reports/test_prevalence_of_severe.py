@@ -121,7 +121,7 @@ class TestPrevalenceOfSevere(TestCase):
                 {'indicator': 'Total Children (6 - 60 months) weighed in given month:', 'value': '939'},
                 {'indicator': 'Total Children (6 - 60 months) with height measured in given month:',
                  'value': '31'},
-                {'indicator': 'Number of children (6 - 60 months) unmeasured:', 'value': '912'},
+                {'indicator': 'Number of children (6 - 60 months) unmeasured:', 'value': '908'},
                 {'indicator': '% Severely Acute Malnutrition (6 - 60 months):', 'value': '0.00%'},
                 {'indicator': '% Moderately Acute Malnutrition (6 - 60 months):', 'value': '25.81%'},
                 {'indicator': '% Normal (6 - 60 months):', 'value': '61.29%'}

@@ -90,7 +90,7 @@ describe('Underweight Children Directive', function () {
     });
 
     it('tests template popup', function () {
-        var result = controller.templatePopup({properties: {name: 'test'}}, {total: 20, severely_underweight: 5, moderately_underweight: 5, normal: 5, eligible: 30});
+        var result = controller.templatePopup({properties: {name: 'test'}}, {weighed: 20, severely_underweight: 5, moderately_underweight: 5, normal: 5, total: 30});
         assert.equal(result, '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
             '<p>test</p>' +
             '<div>Total Children (0 - 5 years) weighed in given month: <strong>20</strong></div>' +
