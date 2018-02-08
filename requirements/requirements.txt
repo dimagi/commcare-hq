@@ -95,6 +95,7 @@ email_validator==1.0.2
 dnspython==1.15.0
 raven==6.1.0
 quickcache==0.1.0
+yowsup2==2.5.7
 zeep==1.6.0
 git+git://github.com/dimagi/ethiopian-date-converter@v0.1.2#egg=ethiopian-date-converter
 architect==0.5.6
