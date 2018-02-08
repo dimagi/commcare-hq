@@ -2,10 +2,10 @@ from __future__ import absolute_import
 
 from datetime import datetime
 
-from django.db.models import Max
+from django.db.models.expressions import RawSQL
 from django.http import JsonResponse, Http404
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import ugettext_lazy, ugettext
 from django.views import View
 from djangular.views.mixins import allow_remote_invocation, JSONResponseMixin
 
@@ -16,7 +16,7 @@ from corehq.apps.linked_domain.const import LINKED_MODELS
 from corehq.apps.linked_domain.dbaccessors import get_domain_master_link, get_linked_domains
 from corehq.apps.linked_domain.decorators import require_linked_domain
 from corehq.apps.linked_domain.local_accessors import get_toggles_previews, get_custom_data_models, get_user_roles
-from corehq.apps.linked_domain.models import AppLinkDetail, wrap_detail
+from corehq.apps.linked_domain.models import AppLinkDetail, wrap_detail, DomainLinkHistory
 from corehq.apps.linked_domain.updates import update_model_type
 from corehq.apps.linked_domain.util import convert_app_for_remote_linking, server_to_user_time
 from corehq.util.timezones.utils import get_timezone_for_request
@@ -82,32 +82,52 @@ class DomainLinkView(BaseAdminProjectSettingsView):
                 app._id: app for app in get_brief_apps_in_domain(self.domain)
                 if app.doc_type == 'LinkedApplication'
             }
-            query = master_link.history.values('model', 'model_detail')
-            for action in query.annotate(last_update=Max('date')).order_by():
-                model = action['model']
+            models_seen = set()
+            history = DomainLinkHistory.objects.filter(link=master_link).annotate(row_number=RawSQL(
+                'row_number() OVER (PARTITION BY model, model_detail ORDER BY date DESC)',
+                []
+            ))
+            for action in history:
+                print(action.model, action.date, action.row_number)
+                models_seen.add(action.model)
+                if action.row_number != 1:
+                    # first row is the most recent
+                    continue
+                name = linked_models[action.model]
                 update = {
-                    'type': model,
-                    'name': linked_models[model],
-                    'last_update': server_to_user_time(action['last_update'], timezone),
-                    'detail': None,
+                    'type': action.model,
+                    'name': name,
+                    'last_update': server_to_user_time(action.date, timezone),
+                    'detail': action.model_detail,
                     'can_update': True
                 }
-                if model == 'app':
+                if action.model == 'app':
                     app_name = 'Unknown App'
-                    if action['model_detail']:
-                        detail = AppLinkDetail(action['model_detail'])
+                    if action.model_detail:
+                        detail = action.wrapped_detail
                         app = linked_apps.pop(detail.app_id, None)
                         app_name = app.name if app else detail.app_id
                         if app:
-                            update['detail'] = action['model_detail']
+                            update['detail'] = action.model_detail
                         else:
                             update['can_update'] = False
                     else:
                         update['can_update'] = False
-                    update['name'] = '{} ({})'.format(linked_models[model], app_name)
-
+                    update['name'] = '{} ({})'.format(name, app_name)
                 model_status.append(update)
 
+            # Add in models that have never been synced
+            for model, name in LINKED_MODELS:
+                if model not in models_seen and model != 'app':
+                    model_status.append({
+                        'type': model,
+                        'name': name,
+                        'last_update': ugettext('Never'),
+                        'detail': None,
+                        'can_update': True
+                    })
+
+            # Add in apps that have never been synced
             if linked_apps:
                 for app in linked_apps.values():
                     update = {

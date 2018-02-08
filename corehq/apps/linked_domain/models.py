@@ -91,6 +91,11 @@ class DomainLinkHistory(models.Model):
     model_detail = JSONField(null=True)
     user_id = models.CharField(max_length=255, null=False)
 
+    @property
+    def wrapped_detail(self):
+        if self.model_detail:
+            return wrap_detail(self.model, self.model_detail)
+
     class Meta:
         ordering = ("-date",)
 
