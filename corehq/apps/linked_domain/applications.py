@@ -28,7 +28,7 @@ def create_linked_app(master_domain, master_id, target_domain, target_name, remo
         name=target_name,
         domain=target_domain,
     )
-    link_app(linked_app, master_domain, master_id, remote_details)
+    return link_app(linked_app, master_domain, master_id, remote_details)
 
 
 def link_app(linked_app, master_domain, master_id, remote_details=None):
