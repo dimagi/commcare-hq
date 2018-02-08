@@ -11,7 +11,7 @@ quickcache_soft_assert = soft_assert(
     skip_frames=5,
 )
 
-quickcache = get_django_quickcache(timeout=5 * 60, memoize_timeout=10,
+quickcache = get_django_quickcache(timeout=5 * 60, memoize_timeout=0,
                                    assert_function=quickcache_soft_assert)
 
 
