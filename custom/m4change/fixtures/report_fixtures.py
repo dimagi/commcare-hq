@@ -93,7 +93,7 @@ class ReportFixtureProvider(FixtureProvider):
                 columns_element = ElementTree.Element('columns')
                 rows_element = ElementTree.Element('rows')
 
-                report_rows = sorted(report_data.rows.items(), key=lambda t: t[1]["hmis_code"]
+                report_rows = sorted(list(report_data.rows.items()), key=lambda t: t[1]["hmis_code"]
                                      if t[1].get("hmis_code", None) is not None else t[1].get("s/n"))
                 for row in report_rows:
                     row_data = row[1]

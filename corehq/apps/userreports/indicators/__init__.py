@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from collections import defaultdict
 
 from corehq.apps.userreports.util import truncate_value
@@ -47,14 +48,15 @@ class ConfigurableIndicatorMixIn(object):
 
 class ConfigurableIndicator(ConfigurableIndicatorMixIn):
 
-    def __init__(self, display_name):
+    def __init__(self, display_name, wrapped_spec):
         self.display_name = display_name
+        self.wrapped_spec = wrapped_spec
 
 
 class SingleColumnIndicator(ConfigurableIndicator):
 
-    def __init__(self, display_name, column):
-        super(SingleColumnIndicator, self).__init__(display_name)
+    def __init__(self, display_name, column, wrapped_spec):
+        super(SingleColumnIndicator, self).__init__(display_name, wrapped_spec)
         self.column = column
 
     def get_columns(self):
@@ -67,8 +69,10 @@ class BooleanIndicator(SingleColumnIndicator):
     the filter is true, or "0" if it is false.
     """
 
-    def __init__(self, display_name, column_id, filter):
-        super(BooleanIndicator, self).__init__(display_name, Column(column_id, datatype=TYPE_INTEGER))
+    def __init__(self, display_name, column_id, filter, wrapped_spec):
+        super(BooleanIndicator, self).__init__(display_name,
+                                               Column(column_id, datatype=TYPE_INTEGER),
+                                               wrapped_spec)
         self.filter = filter
 
     def get_values(self, item, context=None):
@@ -81,8 +85,8 @@ class RawIndicator(SingleColumnIndicator):
     Pass whatever's in the column through to the database
     """
 
-    def __init__(self, display_name, column, getter):
-        super(RawIndicator, self).__init__(display_name, column)
+    def __init__(self, display_name, column, getter, wrapped_spec):
+        super(RawIndicator, self).__init__(display_name, column, wrapped_spec)
         self.getter = getter
 
     def get_values(self, item, context=None):
@@ -94,8 +98,8 @@ class CompoundIndicator(ConfigurableIndicator):
     An indicator that wraps other indicators.
     """
 
-    def __init__(self, display_name, indicators):
-        super(CompoundIndicator, self).__init__(display_name)
+    def __init__(self, display_name, indicators, wrapped_spec):
+        super(CompoundIndicator, self).__init__(display_name, wrapped_spec)
         self.indicators = indicators
 
     def get_columns(self):
@@ -112,7 +116,7 @@ class LedgerBalancesIndicator(ConfigurableIndicator):
         self.column_id = spec.column_id
         self.ledger_section = spec.ledger_section
         self.case_id_expression = spec.get_case_id_expression()
-        super(LedgerBalancesIndicator, self).__init__(spec.display_name)
+        super(LedgerBalancesIndicator, self).__init__(spec.display_name, spec)
 
     def _make_column(self, product_code):
         column_id = '{}_{}'.format(self.column_id, product_code)

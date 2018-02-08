@@ -83,13 +83,18 @@ nvd3 > svg {
     margin: 0 auto !important;
 }
 
+nvd3#sectorChart > div.title.h4 {
+    text-align: center !important;
+}
+
 @media print {
     .white, .fa, .fa-info-circle:before, .number, .second_number {
       color: white !important;
     }
 
     table {
-        page-break-after: always;
+        page-break-after: avoid;
+        width: 100% !important;
     }
 
     .break {
@@ -100,16 +105,44 @@ nvd3 > svg {
         width: 1152px !important;
     }
 
-    .fa-arrow-down:before {
+    .red.fa.fa-arrow-down:before {
         color: #c61400 !important;
     }
 
-    .fa-arrow-up:before {
+    .green.fa.fa-arrow-down:before {
         color: #07c600 !important;
+    }
+
+    .red.fa.fa-arrow-up:before {
+        color: #c61400 !important;
+    }
+
+    .green.fa.fa-arrow-up:before {
+        color: #07c600 !important;
+    }
+
+    .black {
+        color: #0a0a0a !important;
+    }
+
+    .red {
+        color: #d60000 !important;
+    }
+
+    .green {
+        color: #009811 !important;
     }
 
     .report-cell {
         height: 200px;
+    }
+
+    .dataTables_scrollHeadInner {
+        width: 100% !important;
+    }
+
+    .row {
+        width: 100%;
     }
 
     .col-md-1, .col-md-2, .col-md-3, .col-md-4, .col-md-5, .col-md-6,
@@ -220,6 +253,7 @@ nvd3 > svg {
     font-size: 14px;
     padding-right: 0;
     padding-left: 0;
+    z-index: 1;
 }
 
 .navbar-default {
@@ -237,6 +271,10 @@ nvd3 > svg {
     right: 0;
 }
 
+.alert-container {
+    margin-top: 130px;
+}
+
 .crop {
     overflow:hidden;
     white-space:nowrap;
@@ -246,7 +284,6 @@ nvd3 > svg {
 
 .report-content {
     color: #ffffff !important;
-    margin-top: 110px;
     padding: 20px 20px 80px;
 }
 
@@ -352,9 +389,19 @@ h4 {
     text-align: center;
 }
 
+@media (min-width: 992px) {
+    .see-more-content {
+        min-height: 145px;
+    }
+}
+
+.see-more-content {
+    padding-left: 0;
+}
+
 .see-more {
-    float: right;
-    margin-right: 40px;
+    position: absolute;
+    bottom: 0;
 }
 
 .see-more > a {
@@ -450,26 +497,39 @@ h4 {
 }
 
 .kpi {
-    height: 170px;
+    min-height: 170px;
 }
 
 .kpi-content {
-    position: relative;
     height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-content: center;
+}
+
+.kpi-justify-center {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    flex-grow: 1;
 }
 
 .kpi-percents {
-    bottom: -10px;
-    width: 100%;
-    position: absolute;
+    position: relative;
+    align-items: center;
 }
 
-.kpi-numbers {
-    position: absolute;
-    width: 100%;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%,-50%);
+.kpi-percents-text {
+    display: flex;
+    align-items: center;
+}
+
+.kpi-numbers-format {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
 }
 
 .small-table > .small-table-record {
@@ -542,6 +602,8 @@ h4 {
 
 .nvtooltip {
     max-width: 300px !important;
+    white-space: normal;
+    padding: 5px;
 }
 
 .carousel-control.left {
@@ -676,9 +738,11 @@ table.no-footer {
 }
 
 #beneficiariesTable_processing {
-    left: 80%;
+    position: fixed;
+    left: 85%;
     width: 40%;
     height: 40px;
+    top: 25%;
 }
 
 #beneficiariesTable {
@@ -705,7 +769,6 @@ table.dataTable.fixedHeader-locked {
 
 table.dataTable.fixedHeader-floating {
     position: fixed !important;
-    width: 80.3% !important;
 }
 
 table.dataTable.fixedHeader-locked {
@@ -718,10 +781,64 @@ table.dataTable.fixedHeader-locked {
   }
 }
 
-.medium-col {
-    width: 12% !important;
+.locPopup {
+    position: absolute;
+    display:none;
+    z-index: 90000;
+    background-color: white;
+    border: 1px solid #a9a9a9;
+    padding: 5px;
+    border-radius: 5px;
 }
 
-.big-col {
-    width: 16% !important;
+.locPopup > .row {
+    width: 100%;
+}
+
+.locPopup > .modal-header {
+    padding: 5px;
+}
+
+.locPopup > .modal-body {
+    display: grid;
+}
+
+.locPopup > .modal-body > button {
+    margin: 2px;
+}
+
+table.dataTable,
+table.dataTable th,
+table.dataTable td {
+  -webkit-box-sizing: content-box;
+  -moz-box-sizing: content-box;
+  box-sizing: content-box;
+}
+
+.ui-select-multiple.ui-select-bootstrap {
+    padding: 7px;
+    margin-left: 2px;
+    min-height: 34px;
+}
+
+hr {
+    border-top: 2px solid #eee;
+}
+
+.issnip-spinner-container {
+    display: flex;
+    align-items: center;
+    border: 2px solid #aad1f9;
+    transition: opacity  0.1s linear;
+    padding: 10px;
+    margin-top: 10px;
+    border-radius: 4px;
+}
+
+.issnip-spinner-container a {
+    margin-left: 10px;
+}
+
+.issnip-spinner-container span {
+    margin-left: 5px;
 }

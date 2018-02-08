@@ -82,10 +82,6 @@
           model.orig_parent_id = model.selected_locid();
 
           $("#loc_form :button[type='submit']").click(function(e) {
-              if (loc_id != null && model.selected_locid() != model.orig_parent_id) {
-                  e.preventDefault();
-                  $('#reparenting').modal();
-              }
               if (this.name === 'update-loc') {
                   hqImport('analytix/js/google').track.event('Organization Structure', 'Edit', 'Update Location');
               } else {
@@ -94,11 +90,6 @@
           });
 
           hqImport('analytix/js/google').track.click($("#edit_users :button[type='submit']"), 'Organization Structure', 'Edit', 'Update Users at this Location')
-
-          $('#move_confirm').click(function(e) {
-              e.preventDefault();
-              document.forms['loc_form'].submit();
-          });
 
           $('#loc_form').koApplyBindings(model);
 
@@ -251,30 +242,6 @@
     {% endblock %}
 
     {% block modals %}{{ block.super }}
-
-    <div id="reparenting" class="modal fade">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span></button>
-                    <h3 class="modal-title">{% trans 'Move Location?' %}</h3>
-                </div>
-                <form class="form form-horizontal hq-form" name="verify_move_location" action="" method="post">
-                    {% csrf_token %}
-                    <div class="modal-body">
-                        <p>{% blocktrans %}You've changed this location's parent.{% endblocktrans %}</p>
-                        <p>{% blocktrans %}If you move this location, all the data submitted for this location must be updated as well.
-                        This will take some time. Reports will not show the correct figures for this location until
-                        this process is complete.{% endblocktrans %}</p>
-                    </div>
-                    <div class="modal-footer">
-                        <a href="#" data-dismiss="modal" class="btn btn-default">{% trans 'Cancel' %}</a>
-                        <button id="move_confirm" type="submit" class="btn btn-primary">{% trans 'Move' %}</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
 
     <div id="new_user" class="modal fade">
         <div class="modal-dialog">

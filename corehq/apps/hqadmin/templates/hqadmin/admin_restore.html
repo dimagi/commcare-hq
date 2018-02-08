@@ -7,11 +7,9 @@
         <link type="text/css" rel="stylesheet" media="all" href="{% static 'bootstrap/dist/css/bootstrap.min.css' %}"/>
         <link type="text/css" rel="stylesheet" href="{% static 'jquery-treetable/css/jquery.treetable.css' %}"/>
 
+        {% javascript_libraries %}
         {% compress js %}
-            <script src="{% static 'jquery/dist/jquery.min.js' %}"></script>
-            <script src="{% static 'bootstrap/dist/js/bootstrap.min.js' %}"></script>
             <script src="{% static 'jquery-treetable/jquery.treetable.js' %}"></script>
-            <script src="{% static 'hqwebapp/js/hqModules.js' %}"></script>
             <script src="{% static 'hqadmin/js/admin_restore.js' %}"></script>
         {% endcompress %}
 
@@ -72,6 +70,9 @@
                             </ul>
                         </div>
                     {% endif %}
+                    <div>
+                        Number of ledger entries in this restore: <strong>{{ num_ledger_entries }}</strong>
+                    </div>
 
                     <div>
                         <ul class="nav nav-tabs" role="tablist">

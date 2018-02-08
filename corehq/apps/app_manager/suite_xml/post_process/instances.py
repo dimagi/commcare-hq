@@ -123,7 +123,7 @@ INSTANCE_KWARGS_BY_ID = {
 }
 
 
-@register_factory(*INSTANCE_KWARGS_BY_ID.keys())
+@register_factory(*list(INSTANCE_KWARGS_BY_ID.keys()))
 def preset_instances(domain, instance_name):
     kwargs = INSTANCE_KWARGS_BY_ID.get(instance_name, None)
     if kwargs:

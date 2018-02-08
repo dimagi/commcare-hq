@@ -158,6 +158,9 @@ class EntriesHelper(object):
             }[form.form_type]
             config_entry(module, e, form)
 
+            if form.uses_usercase():
+                EntriesHelper.add_usercase_id_assertion(e)
+
             if (
                 self.app.commtrack_enabled and
                 session_var('supply_point_id') in getattr(form, 'source', "")
@@ -254,6 +257,13 @@ class EntriesHelper(object):
                 'case_autoload.{0}.case_missing'.format(mode),
             )
         ]
+
+    @staticmethod
+    def add_usercase_id_assertion(entry):
+        assertion = EntriesHelper.get_assertion("count(instance('casedb')/casedb/case[@case_type='commcare-user']"
+                                                "[hq_user_id=instance('commcaresession')/session/context/userid])"
+                                                " = 1", "case_autoload.usercase.case_missing")
+        entry.assertions.append(assertion)
 
     @staticmethod
     def get_extra_case_id_datums(form):
@@ -358,7 +368,10 @@ class EntriesHelper(object):
             else:
                 parent_filter = ''
 
-            detail_module = module if module.module_type == 'shadow' else datum['module']
+            detail_module = datum['module']
+            # For shadow modules, replace the source module's case list/detail with the shadow's
+            if module.module_type == 'shadow' and module.source_module_id == datum['module'].unique_id:
+                detail_module = module
             detail_persistent = self.get_detail_persistent_attr(datum['module'], detail_module, "case_short")
             detail_inline = self.get_detail_inline_attr(datum['module'], detail_module, "case_short")
 

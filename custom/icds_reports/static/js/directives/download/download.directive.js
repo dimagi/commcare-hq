@@ -1,10 +1,29 @@
 /* global moment */
 
-function DownloadController($location, locationHierarchy, locationsService, userLocationId) {
+function DownloadController($rootScope, $location, locationHierarchy, locationsService, userLocationId, haveAccessToFeatures,
+                            issnipStatusService) {
     var vm = this;
 
     vm.months = [];
     vm.years = [];
+    vm.task_id = $location.search()['task_id'] || '';
+    $rootScope.issnip_report_link = '';
+
+    var getISSNIPStatus = function () {
+        issnipStatusService.getStatus(vm.task_id).then(function (resp) {
+            if (resp.task_ready) {
+                clearInterval(statusCheck);
+                $rootScope.issnip_task_id = '';
+                $rootScope.issnip_report_link = resp.task_result.link;
+            }
+        });
+    };
+
+    if (vm.task_id) {
+        $rootScope.issnip_task_id = vm.task_id;
+        $location.search('task_id', null);
+        var statusCheck = setInterval(getISSNIPStatus, 5 * 1000);
+    }
 
     vm.filterOptions = [
         {label: 'Data not Entered for weight (Unweighed)', id: 'unweighed'},
@@ -39,6 +58,7 @@ function DownloadController($location, locationHierarchy, locationsService, user
     vm.selectedYear = new Date().getFullYear();
     vm.selectedIndicator = 1;
     vm.selectedFormat = 'xls';
+    vm.selectedPDFFormat = 'many';
     vm.selectedLocationId = userLocationId;
     vm.selectedLevel = 1;
     vm.now = new Date().getMonth() + 1;
@@ -57,6 +77,15 @@ function DownloadController($location, locationHierarchy, locationsService, user
         {id: 'xls', name: 'Excel'},
     ];
 
+    vm.pdfFormats = [
+        {id: 'many', name: 'One PDF per AWC'},
+        {id: 'one', name: 'One Combined PDF for all AWCs'},
+    ];
+    vm.downloaded = false;
+
+    vm.awcLocations = [];
+    vm.selectedAWCs = [];
+
     vm.indicators = [
         {id: 1, name: 'Child'},
         {id: 2, name: 'Pregnant Women'},
@@ -64,7 +93,12 @@ function DownloadController($location, locationHierarchy, locationsService, user
         {id: 4, name: 'System Usage'},
         {id: 5, name: 'AWC Infrastructure'},
         {id: 6, name: 'Child Beneficiary List'},
+
     ];
+
+    if (haveAccessToFeatures) {
+        vm.indicators.push({id: 7, name: 'ISSNIP Monthly Register'});
+    }
 
     var ALL_OPTION = {name: 'All', location_id: 'all'};
     var NATIONAL_OPTION = {name: 'National', location_id: 'all'};
@@ -217,6 +251,15 @@ function DownloadController($location, locationHierarchy, locationsService, user
         return selectedLocationIndex() !== -1 && i >= level;
     };
 
+    vm.onSelectForISSNIP = function ($item, level) {
+        var selectedLocationId = vm.selectedLocations[selectedLocationIndex()];
+        locationsService.getAwcLocations(selectedLocationId).then(function (data) {
+            vm.awcLocations = [ALL_OPTION].concat(data);
+        });
+        vm.selectedAWCs = [];
+        vm.onSelect($item, level);
+    };
+
     vm.onSelect = function($item, level) {
         resetLevelsBelow(level);
 
@@ -234,6 +277,18 @@ function DownloadController($location, locationHierarchy, locationsService, user
 
         vm.selectedLocations[level + 1] = ALL_OPTION.location_id;
         vm.selectedLocationId = vm.selectedLocations[selectedLocationIndex()];
+    };
+
+    vm.onSelectAWCs = function($item) {
+        if ($item.location_id === 'all') {
+            vm.selectedAWCs = [$item.location_id];
+        } else if (vm.selectedAWCs.indexOf('all') !== -1) {
+            vm.selectedAWCs = [$item.location_id];
+        }
+    };
+
+    vm.getAwcs = function () {
+        locationsService.getAncestors();
     };
 
     vm.getFormats = function() {
@@ -257,6 +312,10 @@ function DownloadController($location, locationHierarchy, locationsService, user
         return vm.isChildBeneficiaryListSelected() && (vm.selectedFilterOptions().length === 0 || !vm.isDistrictOrBelowSelected());
     };
 
+    vm.hasErrorsISSNIPExport = function() {
+        return vm.isISSNIPMonthlyRegisterSelected() && (!vm.isDistrictOrBelowSelected() || !vm.isAWCsSelected());
+    };
+
     vm.isVisible = function(level) {
         return level === 0 || (vm.selectedLocations[level - 1] && vm.selectedLocations[level - 1] !== 'all');
     };
@@ -271,12 +330,35 @@ function DownloadController($location, locationHierarchy, locationsService, user
         return vm.selectedIndicator === 6;
     };
 
+    vm.isISSNIPMonthlyRegisterSelected = function () {
+        return vm.selectedIndicator === 7;
+    };
+
     vm.isDistrictOrBelowSelected = function() {
         return vm.selectedLocations[1] && vm.selectedLocations[1] !== ALL_OPTION.location_id;
     };
+
+    vm.isAWCsSelected = function() {
+        return vm.selectedAWCs.length > 0;
+    };
+
+    vm.showProgressBar = function () {
+        return $rootScope.issnip_task_id;
+    };
+
+    vm.readyToDownload = function () {
+        return $rootScope.issnip_report_link;
+    };
+
+    vm.goToLink = function () {
+        window.open($rootScope.issnip_report_link);
+        vm.downloaded = true;
+    };
+
 }
 
-DownloadController.$inject = ['$location', 'locationHierarchy', 'locationsService', 'userLocationId'];
+DownloadController.$inject = ['$rootScope', '$location', 'locationHierarchy', 'locationsService', 'userLocationId',
+    'haveAccessToFeatures', 'issnipStatusService'];
 
 window.angular.module('icdsApp').directive("download", function() {
     var url = hqImport('hqwebapp/js/initial_page_data').reverse;

@@ -230,6 +230,7 @@
             if (!_.isEmpty(data)) {
                 $scope.progress = data.progress;
                 self._updateProgressBar(data);
+                $scope.download_id = data.download_id;
                 $scope.showProgress = true;
             }
         });
@@ -285,6 +286,22 @@
                 "Download Export",
                             hqImport('export/js/utils').capitalize(exportDownloadService.exportType), "Saved");
             hqImport('analytix/js/kissmetrix').track.event("Clicked Download button");
+        };
+
+        $scope.sendEmailUponCompletion = function () {
+            setTimeout(function () {  // function must wait until download_id is available in the scope
+                if ($scope.download_id !== undefined) {
+                    var initial_page_data = hqImport('hqwebapp/js/initial_page_data');
+                    $.ajax({
+                        method: 'POST',
+                        dataType: 'json',
+                        url: initial_page_data.reverse('add_export_email_request'),
+                        data: { download_id: $scope.download_id },
+                    });
+                } else {
+                    $scope.sendEmailUponCompletion();
+                }
+            });
         };
     };
     download_export.controller(exportsControllers);

@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import division
 from sqlagg.columns import SimpleColumn
 from sqlagg.filters import IN, AND, GTE, OR
 from sqlagg.filters import EQ, BETWEEN, LTE
@@ -6,6 +7,7 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn, DataFormatter, TableDataFormat, calculate_total_row
 from corehq.apps.reports.util import get_INFilter_bindparams
 from custom.utils.utils import clean_IN_filter_value
+import six
 
 LOCATION_HIERARCHY = {
     "lvl_1": {
@@ -60,7 +62,7 @@ class BaseSqlData(SqlData):
             self.config['strsd'] = '0001-01-01'
             filters = [LTE("date", "enddate")]
 
-        for k, v in LOCATION_HIERARCHY.iteritems():
+        for k, v in six.iteritems(LOCATION_HIERARCHY):
             if v['prop'] in self.config and self.config[v['prop']]:
                 filters.append(IN(k, get_INFilter_bindparams(k, self.config[v['prop']])))
         return filters
@@ -69,7 +71,7 @@ class BaseSqlData(SqlData):
     def filter_values(self):
         filter_values = super(BaseSqlData, self).filter_values
 
-        for k, v in LOCATION_HIERARCHY.iteritems():
+        for k, v in six.iteritems(LOCATION_HIERARCHY):
             clean_IN_filter_value(filter_values, v['prop'])
 
         return filter_values
@@ -95,7 +97,7 @@ class BaseSqlData(SqlData):
         total_row = calculate_total_row(rows)
         total = total_row[-1] if total_row else 0
         result = []
-        for (k, v) in dict.iteritems():
+        for (k, v) in six.iteritems(dict):
             number = [row[1]['html'] for row in rows if row[0] == k]
             number = number[0] if number else 0
             result.append([{'sort_key':v, 'html': v}, {'sort_key':number, 'html': number},

@@ -1,29 +1,35 @@
 from __future__ import absolute_import
+
+from __future__ import division
+import hashlib
 import math
 from datetime import datetime, timedelta
-from celery.task import task
-from corehq.apps.sms.mixin import (InvalidFormatException,
-    PhoneNumberInUseException, PhoneNumberException, CommCareMobileContactMixin,
-    apply_leniency)
-from corehq.apps.sms.models import (OUTGOING, INCOMING, SMS,
-    PhoneLoadBalancingMixin, QueuedSMS, PhoneNumber, MigrationStatus)
-from corehq.apps.sms.api import (send_message_via_backend, process_incoming,
-    log_sms_exception, create_billable_for_sms, get_utcnow)
-from django.db import transaction, DataError
+
+from celery.schedules import crontab
+from corehq.util.datadog.gauges import datadog_counter, datadog_gauge_task
 from django.conf import settings
+from django.db import DataError, transaction
+
 from corehq import privileges
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.domain.models import Domain
+from corehq.apps.sms.api import (create_billable_for_sms, get_utcnow,
+    log_sms_exception, process_incoming, send_message_via_backend)
+from corehq.apps.sms.change_publishers import publish_sms_saved
+from corehq.apps.sms.mixin import (InvalidFormatException,
+    PhoneNumberInUseException, apply_leniency)
+from corehq.apps.sms.models import (INCOMING, MigrationStatus, OUTGOING,
+    PhoneLoadBalancingMixin, PhoneNumber, QueuedSMS, SMS, DailyOutboundSMSLimitReached)
+from corehq.apps.sms.util import is_contact_active
 from corehq.apps.smsbillables.exceptions import RetryBillableTaskException
 from corehq.apps.smsbillables.models import SmsBillable
-from corehq.apps.sms.change_publishers import publish_sms_saved
-from corehq.apps.sms.util import is_contact_active
-from corehq.apps.users.models import CouchUser, CommCareUser
+from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.toggles import RETRY_SMS_INDEFINITELY
 from corehq.util.celery_utils import no_result_task
 from corehq.util.timezones.conversions import ServerTime
+from dimagi.utils.couch import CriticalSection, release_lock
 from dimagi.utils.couch.cache.cache_core import get_redis_client
-from dimagi.utils.couch import release_lock, CriticalSection
 from dimagi.utils.rate_limit import rate_limit
 
 
@@ -40,6 +46,9 @@ def remove_from_queue(queued_sms):
 
     if sms.direction == OUTGOING and sms.processed and not sms.error:
         create_billable_for_sms(sms)
+        datadog_counter('commcare.sms.outbound_succeeded')
+    elif sms.direction == OUTGOING:
+        datadog_counter('commcare.sms.outbound_failed')
     elif sms.direction == INCOMING and sms.domain and domain_has_privilege(sms.domain, privileges.INBOUND_SMS):
         create_billable_for_sms(sms)
 
@@ -48,6 +57,8 @@ def handle_unsuccessful_processing_attempt(msg):
     msg.num_processing_attempts += 1
     if msg.num_processing_attempts < settings.SMS_QUEUE_MAX_PROCESSING_ATTEMPTS:
         delay_processing(msg, settings.SMS_QUEUE_REPROCESS_INTERVAL)
+    elif msg.direction == OUTGOING and RETRY_SMS_INDEFINITELY.enabled(msg.domain):
+        delay_processing(msg, settings.SMS_QUEUE_REPROCESS_INDEFINITELY_INTERVAL)
     else:
         msg.set_system_error(SMS.ERROR_TOO_MANY_UNSUCCESSFUL_ATTEMPTS)
         remove_from_queue(msg)
@@ -126,6 +137,28 @@ def message_is_stale(msg, utcnow):
         return True
 
 
+def get_connection_slot_from_phone_number(phone_number, max_simultaneous_connections):
+    """
+    Converts phone_number to a number between 0 and max_simultaneous_connections - 1.
+    This is the connection slot number that will need be reserved in order to send
+    the message.
+    """
+    hashed_phone_number = hashlib.sha1(phone_number).hexdigest()
+    return int(hashed_phone_number, base=16) % max_simultaneous_connections
+
+
+def get_connection_slot_lock(phone_number, backend, max_simultaneous_connections):
+    """
+    There is one redis lock per connection slot, numbered from 0 to
+    max_simultaneous_connections - 1.
+    A slot is taken if the lock can't be acquired.
+    """
+    slot = get_connection_slot_from_phone_number(phone_number, max_simultaneous_connections)
+    key = 'backend-%s-connection-slot-%s' % (backend.couch_id, slot)
+    client = get_redis_client()
+    return client.lock(key, timeout=60)
+
+
 def handle_outgoing(msg):
     """
     Should return a requeue flag, so if it returns True, the message will be
@@ -136,6 +169,7 @@ def handle_outgoing(msg):
     sms_rate_limit = backend.get_sms_rate_limit()
     use_rate_limit = sms_rate_limit is not None
     use_load_balancing = isinstance(backend, PhoneLoadBalancingMixin)
+    max_simultaneous_connections = backend.get_max_simultaneous_connections()
     orig_phone_number = None
 
     if use_load_balancing:
@@ -151,11 +185,20 @@ def handle_outgoing(msg):
             # Requeue the message and try it again shortly
             return True
 
+    if max_simultaneous_connections:
+        connection_slot_lock = get_connection_slot_lock(msg.phone_number, backend, max_simultaneous_connections)
+        if not connection_slot_lock.acquire(blocking=False):
+            # Requeue the message and try it again shortly
+            return True
+
     result = send_message_via_backend(
         msg,
         backend=backend,
         orig_phone_number=orig_phone_number
     )
+
+    if max_simultaneous_connections:
+        release_lock(connection_slot_lock, True)
 
     if msg.error:
         remove_from_queue(msg)
@@ -176,6 +219,67 @@ def handle_incoming(msg):
     except:
         log_sms_exception(msg)
         handle_unsuccessful_processing_attempt(msg)
+
+
+class OutboundDailyCounter(object):
+
+    def __init__(self, domain_object=None):
+        self.domain_object = domain_object
+        self.utc_date = datetime.utcnow().date()
+        self.key = 'outbound-daily-count-for-%s-%s' % (
+            domain_object.name if domain_object else '',
+            self.utc_date.strftime('%Y-%m-%d')
+        )
+
+        # We need access to the raw redis client because calling incr on
+        # a django_redis RedisCache object raises an error if the key
+        # doesn't exist.
+        self.client = get_redis_client().client.get_client()
+
+    def increment(self):
+        # If the key doesn't exist, redis will set it to 0 and then increment.
+        value = self.client.incr(self.key)
+
+        # If it's the first time we're calling incr, set the key's expiration
+        if value == 1:
+            self.client.expire(self.key, 24 * 60 * 60)
+
+        return value
+
+    def decrement(self):
+        return self.client.decr(self.key)
+
+    @property
+    def daily_limit(self):
+        if self.domain_object:
+            return self.domain_object.daily_outbound_sms_limit
+        else:
+            # If the message isn't tied to a domain, still impose a limit.
+            # Outbound messages not tied to a domain can happen when unregistered
+            # contacts opt in or out from a gateway.
+            return 10000
+
+    def can_send_outbound_sms(self, queued_sms):
+        """
+        Returns False if the outbound daily limit has been exceeded.
+        """
+        value = self.increment()
+
+        if value > self.daily_limit:
+            # Delay processing by an hour so that in case the
+            # limit gets increased within the same day, we start
+            # processing the backlog right away.
+            self.decrement()
+            delay_processing(queued_sms, 60)
+
+            # Log the fact that we reached this limit
+            DailyOutboundSMSLimitReached.create_for_domain_and_date(
+                self.domain_object.name if self.domain_object else '',
+                self.utc_date
+            )
+            return False
+
+        return True
 
 
 @no_result_task(queue="sms_queue", acks_late=True)
@@ -203,12 +307,16 @@ def process_sms(queued_sms_pk):
             release_lock(message_lock, True)
             return
 
+        outbound_counter = None
         if msg.direction == OUTGOING:
-            if msg.domain:
-                domain_object = Domain.get_by_name(msg.domain)
-            else:
-                domain_object = None
+            domain_object = Domain.get_by_name(msg.domain) if msg.domain else None
+
             if domain_object and handle_domain_specific_delays(msg, domain_object, utcnow):
+                release_lock(message_lock, True)
+                return
+
+            outbound_counter = OutboundDailyCounter(domain_object)
+            if not outbound_counter.can_send_outbound_sms(msg):
                 release_lock(message_lock, True)
                 return
 
@@ -246,7 +354,17 @@ def process_sms(queued_sms_pk):
 
         release_lock(message_lock, True)
         if requeue:
-            process_sms.delay(queued_sms_pk)
+            if outbound_counter:
+                outbound_counter.decrement()
+            send_to_sms_queue(msg)
+
+
+def send_to_sms_queue(queued_sms):
+    options = {}
+    if queued_sms.direction == OUTGOING and queued_sms.domain in settings.CUSTOM_PROJECT_SMS_QUEUES:
+        options['queue'] = settings.CUSTOM_PROJECT_SMS_QUEUES[queued_sms.domain]
+
+    process_sms.apply_async([queued_sms.pk], **options)
 
 
 @no_result_task(default_retry_delay=10 * 60, max_retries=10, bind=True)
@@ -265,7 +383,7 @@ def store_billable(self, msg):
         try:
             SmsBillable.create(
                 msg,
-                multipart_count=int(math.ceil(float(len(msg.text)) / msg_length)),
+                multipart_count=int(math.ceil(len(msg.text) / msg_length)),
             )
         except RetryBillableTaskException as e:
             self.retry(exc=e)
@@ -307,7 +425,7 @@ def _sync_case_phone_number(contact_case):
         if len(phone_numbers) == 0:
             phone_number = None
         elif len(phone_numbers) == 1:
-            phone_number = phone_numbers.values()[0]
+            phone_number = list(phone_numbers.values())[0]
         else:
             # We use locks to make sure this scenario doesn't happen, but if it
             # does, just clear the phone number entries and the right one will
@@ -417,3 +535,10 @@ def sync_phone_numbers_for_domain(domain):
         _sync_case_phone_number(case)
 
     MigrationStatus.set_migration_completed('phone_sync_domain_%s' % domain)
+
+
+def queued_sms():
+    return QueuedSMS.objects.count()
+
+
+datadog_gauge_task('commcare.sms.queued', queued_sms, run_every=crontab())

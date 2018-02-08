@@ -25,4 +25,6 @@
 // Hiding scrollbars for the different browsers, generally only works on windows.
 .scrollable-container::-webkit-scrollbar { width: 0 !important }
 .scrollable-container { -ms-overflow-style: none; }
-.scrollable-container { overflow: -moz-scrollbars-none; }
+@-moz-document url-prefix() {
+    .scrollable-container { overflow-y: auto; }
+}

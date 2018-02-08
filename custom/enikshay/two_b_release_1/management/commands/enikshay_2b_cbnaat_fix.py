@@ -7,6 +7,7 @@ from django.core.management import BaseCommand
 from casexml.apps.case.mock import CaseStructure, CaseFactory
 from casexml.apps.case.xform import get_case_updates
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from six.moves import filter
 
 logger = logging.getLogger('enikshay_2b_cbnaat_fix')
 

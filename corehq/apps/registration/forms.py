@@ -42,6 +42,22 @@ class RegisterWebUserForm(forms.Form):
         label=_("Include area code or any other prefix"),
         required=False,
     )
+    persona = forms.ChoiceField(
+        label=_("I will primarily be using CommCare to..."),
+        required=False,
+        widget=forms.RadioSelect,
+        choices=(
+            (u"M&E", _("Monitor and evaluate a program")),
+            (u"Improve Delivery", _("Improve delivery of services")),
+            (u"Research", _("Collect data for a research project")),
+            (u"IT", _("Build a technology solution for my team/clients")),
+            (u"Other", _("Other")),
+        )
+    )
+    persona_other = forms.CharField(
+        required=False,
+        label=_("Please Specify"),
+    )
     project_name = forms.CharField(label=_("Project Name"))
     eula_confirmed = forms.BooleanField(
         required=False,
@@ -67,6 +83,34 @@ class RegisterWebUserForm(forms.Form):
                     css_class="input-lg",
                     data_bind="value: phoneNumber, "
                               "valueUpdate: 'keyup'"
+                ),
+            ]
+
+        persona_fields = []
+        if settings.IS_SAAS_ENVIRONMENT:
+            persona_fields = [
+                crispy.Div(
+                    hqcrispy.RadioSelect(
+                        'persona',
+                        css_class="input-lg",
+                        data_bind="checked: personaChoice, "
+                    ),
+                    data_bind="css: {"
+                              " 'has-success': isPersonaChoiceChosen, "
+                              " 'has-error': isPersonaChoiceNeeded"
+                              "}",
+                ),
+                crispy.Div(
+                    hqcrispy.InlineField(
+                        'persona_other',
+                        css_class="input-lg",
+                        data_bind="value: personaOther, "
+                                  "visible: isPersonaChoiceOther, "
+                    ),
+                    data_bind="css: {"
+                              " 'has-success': isPersonaChoiceOtherPresent, "
+                              " 'has-error': isPersonaChoiceOtherNeeded"
+                              "}",
                 ),
             ]
 
@@ -138,6 +182,7 @@ class RegisterWebUserForm(forms.Form):
                                   "   validator: projectName "
                                   "}",
                     ),
+                    crispy.Div(*persona_fields),
                     hqcrispy.InlineField(
                         'eula_confirmed',
                         css_class="input-lg",

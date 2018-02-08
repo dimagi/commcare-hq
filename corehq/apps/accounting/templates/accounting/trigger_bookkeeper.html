@@ -2,9 +2,7 @@
 {% load crispy_forms_tags %}
 {% load hq_shared_tags %}
 
-{% block js %}{{ block.super }}
-    <script src="{% static 'accounting/js/accounting.billing_info_handler.js' %}"></script>
-{% endblock %}
+{% requirejs_main "accounting/js/widgets" %}
 
 {% block page_content %}
     {% crispy trigger_email_form %}

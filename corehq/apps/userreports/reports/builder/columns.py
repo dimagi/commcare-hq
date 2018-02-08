@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from corehq.apps.userreports.reports.builder import (
     make_form_meta_block_indicator,
     make_case_property_indicator,
@@ -119,9 +120,7 @@ class QuestionColumnOption(ColumnOption):
         else:
             data_type = None  # use the default
 
-        column_id = get_column_name(self._property.strip("/"))
-        if data_type:
-            column_id += ("_" + data_type)
+        column_id = get_column_name(self._property.strip("/"), suffix=data_type)
         return make_form_question_indicator(
             self._question_source, column_id, data_type, root_doc=is_multiselect_chart_report
         )
@@ -236,7 +235,7 @@ class CasePropertyColumnOption(ColumnOption):
         return map[self._get_aggregation_config(aggregation)]
 
     def get_indicator(self, aggregation, is_multiselect_chart_report=False):
-        column_id = get_column_name(self._property) + "_" + self._get_datatype(aggregation)
+        column_id = get_column_name(self._property, suffix=self._get_datatype(aggregation))
         return make_case_property_indicator(self._property, column_id, datatype=self._get_datatype(aggregation))
 
 
@@ -311,9 +310,18 @@ class CountColumn(ColumnOption):
 
     def get_indicator(self, aggregation, is_multiselect_chart_report=False):
         return {
+            "column_id": "count",
             "display_name": "Count",
-            "type": "count",
-            "column_id": "count"
+            "type": "boolean",
+            "filter": {
+                "type": "boolean_expression",
+                "operator": "eq",
+                "expression": {
+                    "type": "constant",
+                    "constant": 1
+                },
+                "property_value": 1
+            }
         }
 
     def to_column_dicts(self, index, display_text, aggregation, is_aggregated_on=False):

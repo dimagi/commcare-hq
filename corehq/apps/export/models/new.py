@@ -101,12 +101,9 @@ from corehq.apps.export.utils import (
 )
 import six
 from six.moves import range
+from six.moves import map
 
 DAILY_SAVED_EXPORT_ATTACHMENT_NAME = "payload"
-
-
-class PossibleHeterogenousDataException(AttributeError):
-    pass
 
 
 class PathNode(DocumentSchema):
@@ -221,7 +218,7 @@ class ExportItem(DocumentSchema):
 
     @property
     def readable_path(self):
-        return '.'.join(map(lambda node: node.name, self.path))
+        return '.'.join([node.name for node in self.path])
 
 
 class ExportColumn(DocumentSchema):
@@ -312,6 +309,7 @@ class ExportColumn(DocumentSchema):
         :returns: An ExportColumn instance
         """
         is_case_update = item.tag == PROPERTY_TAG_CASE and not isinstance(item, CaseIndexItem)
+        is_case_id = is_case_update and item.path[-1].name == '@case_id'
         is_case_history_update = item.tag == PROPERTY_TAG_UPDATE
         is_label_question = isinstance(item, LabelItem)
 
@@ -319,7 +317,7 @@ class ExportColumn(DocumentSchema):
         constructor_args = {
             "item": item,
             "label": item.readable_path if not is_case_history_update else item.label,
-            "is_advanced": is_case_update or is_label_question,
+            "is_advanced": not is_case_id and (is_case_update or is_label_question),
         }
 
         if isinstance(item, GeopointItem):
@@ -463,15 +461,7 @@ class TableConfiguration(DocumentSchema):
         """
         document_id = document.get('_id')
 
-        try:
-            sub_documents = self._get_sub_documents(document, row_number)
-        except PossibleHeterogenousDataException as e:
-            doc = e.args[0]
-            path_name = e.args[1]
-            _soft_assert = soft_assert(to='{}@{}'.format('jemord', 'dimagi.com'))
-            _soft_assert(False, "doc {} - is actually string {} - expected path {}".format(
-                document_id, doc, path_name))
-            raise
+        sub_documents = self._get_sub_documents(document, row_number, document_id=document_id)
 
         domain = document.get('domain')
 
@@ -523,11 +513,12 @@ class TableConfiguration(DocumentSchema):
                 return index, column
         return None, None
 
-    def _get_sub_documents(self, document, row_number):
-        return self._get_sub_documents_helper(self.path, [DocRow(row=(row_number,), doc=document)])
+    def _get_sub_documents(self, document, row_number, document_id=None):
+        return self._get_sub_documents_helper(document_id, self.path,
+                                              [DocRow(row=(row_number,), doc=document)])
 
     @staticmethod
-    def _get_sub_documents_helper(path, row_docs):
+    def _get_sub_documents_helper(document_id, path, row_docs):
         """
         Return each instance of a repeat group at the path from the given docs.
         If path is [], just return the docs
@@ -546,11 +537,16 @@ class TableConfiguration(DocumentSchema):
         for row_doc in row_docs:
             doc = row_doc.doc
             row_index = row_doc.row
+            path_name = path[0].name
 
-            try:
-                next_doc = doc.get(path[0].name, {})
-            except AttributeError:
-                raise PossibleHeterogenousDataException(doc, path[0].name)
+            if isinstance(doc, dict):
+                next_doc = doc.get(path_name, {})
+            else:
+                # https://manage.dimagi.com/default.asp?264884
+                _soft_assert = soft_assert(to='{}@{}'.format('jemord', 'dimagi.com'))
+                _soft_assert(False, "doc {} - is actually string {} - expected path {}".format(
+                    document_id, doc, path_name))
+                next_doc = {}
             if path[0].is_repeat:
                 if type(next_doc) != list:
                     # This happens when a repeat group has a single repeat iteration
@@ -561,7 +557,7 @@ class TableConfiguration(DocumentSchema):
                 ])
             elif next_doc:
                 new_docs.append(DocRow(row=row_index, doc=next_doc))
-        return TableConfiguration._get_sub_documents_helper(path[1:], new_docs)
+        return TableConfiguration._get_sub_documents_helper(document_id, path[1:], new_docs)
 
 
 class DatePeriod(DocumentSchema):
@@ -692,7 +688,7 @@ class ExportInstance(BlobMixin, Document):
 
     @property
     def selected_tables(self):
-        return filter(lambda t: t.selected, self.tables)
+        return [t for t in self.tables if t.selected]
 
     def get_table(self, path):
         for table in self.tables:
@@ -845,7 +841,7 @@ class ExportInstance(BlobMixin, Document):
         :param top: When True inserts the columns at the top, when false at the bottom
         :param column_initialization_data: Extra data to be passed to the column if needed on initialization
         """
-        properties = map(copy, properties)
+        properties = list(map(copy, properties))
         if top:
             properties = reversed(properties)
 
@@ -1005,8 +1001,8 @@ class CaseExportInstance(ExportInstance):
         case_history_table = [table for table in self.tables if table.label == 'Case History']
         return any(
             column.selected
-            for column in table.columns
             for table in case_history_table
+            for column in table.columns
         )
 
 
@@ -1289,7 +1285,7 @@ class InferredExportGroupSchema(ExportGroupSchema):
 
         item = item_cls(
             path=path,
-            label='.'.join(map(lambda node: node.name, path)),
+            label='.'.join([node.name for node in path]),
             inferred=True,
             inferred_from=set([inferred_from or UNKNOWN_INFERRED_FROM])
         )
@@ -1516,7 +1512,7 @@ class ExportDataSchema(Document):
                     ordered_items[orders[item]] = item
                 else:
                     unordered_items.append(item)
-            group_schema.items = filter(None, ordered_items) + unordered_items
+            group_schema.items = [_f for _f in ordered_items if _f] + unordered_items
         return current_schema
 
     @classmethod
@@ -1996,7 +1992,7 @@ class CaseExportDataSchema(ExportDataSchema):
             app.master_id,  # If not copy, must be current app
             app.version,
         ))
-        if any(map(lambda relationship_tuple: relationship_tuple[1] in ['parent', 'host'], parent_types)):
+        if any([relationship_tuple[1] in ['parent', 'host'] for relationship_tuple in parent_types]):
             case_schemas.append(cls._generate_schema_for_parent_case(
                 app.master_id,
                 app.version,
@@ -2178,7 +2174,7 @@ def _merge_lists(one, two, keyfn, resolvefn):
         merged.append(new_obj)
 
     # Get the rest of the objects in the second list
-    merged.extend(two_keys.values())
+    merged.extend(list(two_keys.values()))
     return merged
 
 
@@ -2195,13 +2191,13 @@ def _merge_dicts(one, two, resolvefn):
     # keys either in one or two, but not both
     merged = {
         key: one.get(key, two.get(key))
-        for key in one.viewkeys() ^ two.viewkeys()
+        for key in six.viewkeys(one) ^ six.viewkeys(two)
     }
 
     # merge keys that exist in both
     merged.update({
         key: resolvefn(one[key], two[key])
-        for key in one.viewkeys() & two.viewkeys()
+        for key in six.viewkeys(one) & six.viewkeys(two)
     })
     return merged
 
@@ -2313,7 +2309,7 @@ class SplitGPSExportColumn(ExportColumn):
             _(u'{}: altitude (meters)'),
             _(u'{}: accuracy (meters)'),
         ]
-        return map(lambda header_template: header_template.format(header), header_templates)
+        return [header_template.format(header) for header_template in header_templates]
 
     def get_value(self, domain, doc_id, doc, base_path, split_column=False, **kwargs):
         value = super(SplitGPSExportColumn, self).get_value(
@@ -2449,10 +2445,7 @@ class CaseIndexExportColumn(ExportColumn):
         case_type = self.item.case_type
 
         indices = NestedDictGetter(path)(doc) or []
-        case_ids = map(
-            lambda index: index.get('referenced_id'),
-            filter(lambda index: index.get('referenced_type') == case_type, indices)
-        )
+        case_ids = [index.get('referenced_id') for index in [index for index in indices if index.get('referenced_type') == case_type]]
         return ' '.join(case_ids)
 
 
@@ -2483,10 +2476,7 @@ class StockFormExportColumn(ExportColumn):
         # In order to mitigate this, we encode the question id into the path so we do not
         # have to create a new TableConfiguration for the edge case mentioned above.
         for idx, path_name in enumerate(path):
-            is_stock_question_element = any(map(
-                lambda tag_name: path_name.startswith('{}:'.format(tag_name)),
-                STOCK_QUESTION_TAG_NAMES
-            ))
+            is_stock_question_element = any([path_name.startswith('{}:'.format(tag_name)) for tag_name in STOCK_QUESTION_TAG_NAMES])
             if is_stock_question_element:
                 question_path, question_id = path_name.split(':')
                 path[idx] = question_path
@@ -2539,7 +2529,7 @@ class StockExportColumn(ExportColumn):
     @memoized
     def _column_tuples(self):
         combos = get_ledger_section_entry_combinations(self.domain)
-        section_and_product_ids = sorted(set(map(lambda combo: (combo.entry_id, combo.section_id), combos)))
+        section_and_product_ids = sorted(set([(combo.entry_id, combo.section_id) for combo in combos]))
         return section_and_product_ids
 
     def _get_product_name(self, product_id):
@@ -2684,6 +2674,12 @@ class DataFile(models.Model):
     def delete(self, using=None, keep_parents=False):
         self._delete_blob()
         return super(DataFile, self).delete(using, keep_parents)
+
+
+class EmailExportWhenDoneRequest(models.Model):
+    domain = models.CharField(max_length=255)
+    download_id = models.CharField(max_length=255)
+    user_id = models.CharField(max_length=255)
 
 
 # These must match the constants in corehq/apps/export/static/export/js/const.js

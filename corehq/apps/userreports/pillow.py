@@ -1,5 +1,7 @@
 from __future__ import absolute_import
 
+from __future__ import division
+from __future__ import unicode_literals
 import hashlib
 from collections import defaultdict, Counter
 from datetime import datetime, timedelta
@@ -55,7 +57,7 @@ def time_ucr_process_change(method):
         if seconds > LONG_UCR_LOGGING_THRESHOLD:
             table = args[2]
             doc = args[3]
-            log_message = u"UCR data source {} on doc_id {} took {} seconds to process".format(
+            log_message = "UCR data source {} on doc_id {} took {} seconds to process".format(
                 table.config._id, doc['_id'], seconds
             )
             pillow_logging.warning(log_message)
@@ -267,7 +269,7 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Pil
         for domain, duration in self.domain_timing_context.most_common():
             top_half_domains[domain] = duration
             duration_seen += duration
-            if duration_seen >= total_duration / 2:
+            if duration_seen >= total_duration // 2:
                 break
 
         for domain, duration in top_half_domains.items():

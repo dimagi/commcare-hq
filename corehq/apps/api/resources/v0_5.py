@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.http import Http404
 from django.forms import ValidationError
 from tastypie import http
@@ -48,6 +49,7 @@ from . import v0_1, v0_4, CouchResourceMixin
 from . import HqBaseResource, DomainSpecificResourceMixin
 from phonelog.models import DeviceReportEntry
 from itertools import chain
+from six.moves import map
 
 
 MOCK_BULK_USER_ES = None
@@ -134,7 +136,7 @@ class BulkUserResource(HqBaseResource, DomainSpecificResourceMixin):
             size=param('limit'),
             start_at=param('offset'),
         )
-        return map(self.to_obj, users)
+        return list(map(self.to_obj, users))
 
     def detail_uri_kwargs(self, bundle_or_obj):
         return {
@@ -859,7 +861,7 @@ class DomainForms(Resource):
         for form_object in forms_objects:
             form = form_object['form']
             module = form_object['module']
-            form_name = u'{} > {} > {}'.format(application.name, module.default_name(), form.default_name())
+            form_name = '{} > {} > {}'.format(application.name, module.default_name(), form.default_name())
             results.append(Form(form_xmlns=form.xmlns, form_name=form_name))
         return results
 

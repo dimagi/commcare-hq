@@ -1,10 +1,10 @@
-/* global module, inject */
+/* global module, inject, chai */
 "use strict";
 
 var pageData = hqImport('hqwebapp/js/initial_page_data');
 
 
-describe('AWCDailyStatusDirective', function () {
+describe('AWC Daily Status Directive', function () {
 
     var $scope, $httpBackend, $location, controller;
 
@@ -35,6 +35,9 @@ describe('AWCDailyStatusDirective', function () {
         controller.step = 'map';
     }));
 
+    it('tests instantiate the controller properly', function () {
+        chai.expect(controller).not.to.be.a('undefined');
+    });
 
     it('tests initial state', function () {
         assert.equal(controller.mode, 'map');
@@ -44,6 +47,7 @@ describe('AWCDailyStatusDirective', function () {
 
     it('tests supervisor location', function () {
         controller.filtersData.location_id = 'test-id';
+        controller.userLocationId = 'test-id';
 
         $httpBackend.expectGET('icds_locations?location_id=test-id').respond(200, {location_type: 'supervisor'});
         $httpBackend.expectGET('awc_daily_status?location_id=test-id').respond(200, {
@@ -58,6 +62,7 @@ describe('AWCDailyStatusDirective', function () {
 
     it('tests non supervisor location', function () {
         controller.filtersData.location_id = 'test-id';
+        controller.userLocationId = 'test-id';
 
         $httpBackend.expectGET('icds_locations?location_id=test-id').respond(200, {location_type: 'non supervisor'});
         $httpBackend.expectGET('awc_daily_status?location_id=test-id').respond(200, {
@@ -72,7 +77,7 @@ describe('AWCDailyStatusDirective', function () {
 
     it('tests template popup', function () {
         var result = controller.templatePopup({properties: {name: 'test'}}, {in_day: 5, all: 10});
-        var expected = '<div class="hoverinfo" style="max-width: 200px !important;">' +
+        var expected = '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
             '<p>test</p>' +
             '<div>Total number of AWCs that were open yesterday: <strong>5</strong></div>' +
             '<div>Total number of AWCs that have been launched: <strong>10</strong></div>' +
@@ -181,9 +186,9 @@ describe('AWCDailyStatusDirective', function () {
         var total = 10;
         var value = 5;
         var month = {value: "Jul 2017"};
-        var expected = "<p>Total number of AWCs that were open on <strong>Jul 2017</strong>: <strong>5</strong></p>"
-            + "<p>Total number of AWCs that have been launched: <strong>10</strong></p>"
-            + "<p>% of AWCs open on <strong>Jul 2017</strong>: <strong>50.00%</strong></p>";
+        var expected = "<div>Total number of AWCs that were open on <strong>Jul 2017</strong>: <strong>5</strong></div>"
+            + "<div>Total number of AWCs that have been launched: <strong>10</strong></div>"
+            + "<div>% of AWCs open on <strong>Jul 2017</strong>: <strong>50.00%</strong></div>";
 
         var result = controller.tooltipContent(month.value, value, total);
         assert.equal(expected, result);

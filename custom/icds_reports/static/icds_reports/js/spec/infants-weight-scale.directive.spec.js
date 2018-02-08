@@ -1,10 +1,10 @@
-/* global module, inject */
+/* global module, inject, chai */
 "use strict";
 
 var pageData = hqImport('hqwebapp/js/initial_page_data');
 
 
-describe('InfantsWeightScaleDirective', function () {
+describe('Infants Weight Scale Directive', function () {
 
     var $scope, $httpBackend, $location, controller;
 
@@ -34,6 +34,9 @@ describe('InfantsWeightScaleDirective', function () {
         controller.step = 'map';
     }));
 
+    it('tests instantiate the controller properly', function () {
+        chai.expect(controller).not.to.be.a('undefined');
+    });
 
     it('tests initial state', function () {
         assert.equal(controller.mode, 'map');
@@ -43,6 +46,7 @@ describe('InfantsWeightScaleDirective', function () {
 
     it('tests supervisor location', function () {
         controller.filtersData.location_id = 'test-id';
+        controller.userLocationId = 'test-id';
 
         $httpBackend.expectGET('icds_locations?location_id=test-id').respond(200, {location_type: 'supervisor'});
         $httpBackend.expectGET('infants_weight_scale?location_id=test-id').respond(200, {
@@ -57,6 +61,7 @@ describe('InfantsWeightScaleDirective', function () {
 
     it('tests non supervisor location', function () {
         controller.filtersData.location_id = 'test-id';
+        controller.userLocationId = 'test-id';
 
         $httpBackend.expectGET('icds_locations?location_id=test-id').respond(200, {location_type: 'non supervisor'});
         $httpBackend.expectGET('infants_weight_scale?location_id=test-id').respond(200, {
@@ -71,10 +76,9 @@ describe('InfantsWeightScaleDirective', function () {
 
     it('tests template popup', function () {
         var result = controller.templatePopup({properties: {name: 'test'}}, {all: 10, in_month: 5});
-        assert.equal(result, '<div class="hoverinfo" style="max-width: 200px !important;">' +
-            '<p>test</p>'
-            + '<div>Total number of AWCs with a weighing scale for infants: <strong>5</strong></div>'
-            + '<div>% of AWCs with a weighing scale for infants: <strong>50.00%</strong></div>');
+        assert.equal(result, '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
+            '<p>test</p><div>Total of AWCs that reported having a weighing scale for infants: <strong>5</strong></div>' +
+            '<div>Percentage of AWCs that reported having a weighing scale for infants: <strong>50.00%</strong></div>');
     });
 
     it('tests location change', function () {
@@ -168,8 +172,7 @@ describe('InfantsWeightScaleDirective', function () {
             'width': '900px',
         });
         assert.equal(controller.chartOptions.caption.html,
-            '<i class="fa fa-info-circle"></i> ' +
-            'Percentage of AWCs with weighing scale for infants'
+            '<i class="fa fa-info-circle"></i> Percentage of AWCs that reported having a weighing scale for infants'
         );
     });
 
@@ -177,9 +180,9 @@ describe('InfantsWeightScaleDirective', function () {
         var data = {in_month: 5, y: 0.72};
         var month = {value: "Jul 2017", series: []};
 
-        var expected = '<p><strong>Jul 2017</strong></p><br/>'
-            + '<p>Number of AWCs with a weighing scale for infants: <strong>5</strong></p>'
-            + '<p>% of AWCs with a weighing scale for infants: <strong>72.00%</strong></p>';
+        var expected = '<p><strong>Jul 2017</strong></p><br/>' +
+            '<div>Number of AWCs that reported having a weighing scale for infants: <strong>5</strong></div>' +
+            '<div>Percentage of AWCs that reported having a weighing scale for infants: <strong>72.00%</strong></div>';
 
         var result = controller.tooltipContent(month.value, data);
         assert.equal(expected, result);

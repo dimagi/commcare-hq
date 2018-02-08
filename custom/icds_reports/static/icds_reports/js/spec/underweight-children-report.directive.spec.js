@@ -1,10 +1,10 @@
-/* global module, inject, _ */
+/* global module, inject, _, chai */
 "use strict";
 
 var pageData = hqImport('hqwebapp/js/initial_page_data');
 
 
-describe('UnderweightChildrenDirective', function () {
+describe('Underweight Children Directive', function () {
 
     var $scope, $httpBackend, $location, controller;
 
@@ -49,6 +49,9 @@ describe('UnderweightChildrenDirective', function () {
         controller.step = 'map';
     }));
 
+    it('tests instantiate the controller properly', function () {
+        chai.expect(controller).not.to.be.a('undefined');
+    });
 
     it('tests initial state', function () {
         assert.equal(controller.mode, 'map');
@@ -58,6 +61,7 @@ describe('UnderweightChildrenDirective', function () {
 
     it('tests supervisor location', function () {
         controller.filtersData.location_id = 'test-id';
+        controller.userLocationId = 'test-id';
 
         $httpBackend.expectGET('icds_locations?location_id=test-id').respond(200, {location_type: 'supervisor'});
         $httpBackend.expectGET('underweight_children?location_id=test-id').respond(200, {
@@ -72,6 +76,7 @@ describe('UnderweightChildrenDirective', function () {
 
     it('tests non supervisor location', function () {
         controller.filtersData.location_id = 'test-id';
+        controller.userLocationId = 'test-id';
 
         $httpBackend.expectGET('icds_locations?location_id=test-id').respond(200, {location_type: 'non supervisor'});
         $httpBackend.expectGET('underweight_children?location_id=test-id').respond(200, {
@@ -85,14 +90,15 @@ describe('UnderweightChildrenDirective', function () {
     });
 
     it('tests template popup', function () {
-        var result = controller.templatePopup({properties: {name: 'test'}}, {total: 20, severely_underweight: 5, moderately_underweight: 5, normal: 5});
-        assert.equal(result, '<div class="hoverinfo" style="max-width: 200px !important;">'
-            + '<p>test</p>'
-            + '<div>Total Children weighed in given month: <strong>20</strong></div>'
-            + '<div>% Unweighed: <strong>25.00%</strong></div>'
-            + '<div>% Severely Underweight: <strong>25.00%</strong></div>'
-            + '<div>% Moderately Underweight: <strong>25.00%</strong></div>'
-            + '<div>% Normal: <strong>25.00%</strong></div>');
+        var result = controller.templatePopup({properties: {name: 'test'}}, {total: 20, severely_underweight: 5, moderately_underweight: 5, normal: 5, eligible: 30});
+        assert.equal(result, '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
+            '<p>test</p>' +
+            '<div>Total Children (0 - 5 years) weighed in given month: <strong>20</strong></div>' +
+            '<div>Number of children unweighed (0 - 5 years): <strong>10</strong></div>' +
+            '<div>% Severely Underweight (0 - 5 years): <strong>25.00%</strong></div>' +
+            '<div>% Moderately Underweight (0 - 5 years): <strong>25.00%</strong></div>' +
+            '<div>% Normal (0 - 5 years): <strong>25.00%</strong></div>'
+        );
     });
 
     it('tests location change', function () {
@@ -186,7 +192,7 @@ describe('UnderweightChildrenDirective', function () {
         });
         assert.equal(controller.chartOptions.caption.html,
             '<i class="fa fa-info-circle"></i> ' +
-            'Percentage of children between 0-5 years enrolled for ICDS services with weight-for-age less than -2 standard deviations of the WHO Child Growth Standards median.'
+            'Percentage of children between (0 - 5 years) enrolled for Anganwadi Services with weight-for-age less than -2 standard deviations of the WHO Child Growth Standards median.'
             + 'Children who are moderately or severely underweight have a higher risk of mortality.'
         );
     });
@@ -194,13 +200,14 @@ describe('UnderweightChildrenDirective', function () {
     it('tests chart tooltip content', function () {
         var month = {value: "Jul 2017", series: []};
 
-        var expected = '<p><strong>Jul 2017</strong></p><br/>'
-            + '<p>% children normal: <strong>10.00%</strong></p>'
-            + '<p>% children moderately underweight: <strong>15.00%</strong></p>'
-            + '<p>% children severely underweight: <strong>20.00%</strong></p>'
-            + '<p>% unweighed: <strong>55.00%</strong></p>';
+        var expected = '<p><strong>Jul 2017</strong></p><br/>' +
+            '<div>Total Children (0 - 5 years) weighed in given month: <strong>20</strong></div>' +
+            '<div>Number of children unweighed (0 - 5 years): <strong>10</strong></div>' +
+            '<div>% children normal (0 - 5 years): <strong>10.00%</strong></div>' +
+            '<div>% children moderately underweight (0 - 5 years): <strong>15.00%</strong></div>' +
+            '<div>% children severely underweight (0 - 5 years): <strong>20.00%</strong></div>';
 
-        var result = controller.tooltipContent(month.value, 0.1, 0.15, 0.2);
+        var result = controller.tooltipContent(month.value, 0.1, 0.15, 0.2, 10, 20);
         assert.equal(expected, result);
     });
 

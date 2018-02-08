@@ -1,4 +1,6 @@
 from __future__ import absolute_import
+
+import inspect
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 import logging
@@ -19,6 +21,7 @@ from corehq.apps.users.permissions import EXPORT_PERMISSIONS
 from corehq.apps.users.const import ANONYMOUS_USERNAME
 from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
+from corehq.util.global_request import get_request
 from corehq.util.soft_assert import soft_assert
 from dimagi.ext.couchdbkit import (
     StringProperty,
@@ -76,10 +79,34 @@ from couchdbkit.exceptions import ResourceConflict, NoResultFound, BadValueError
 from dimagi.utils.web import get_site_domain
 import six
 from six.moves import range
+from six.moves import map
+
+debug_save_logger = logging.getLogger('debug_user_save')
 
 COUCH_USER_AUTOCREATED_STATUS = 'autocreated'
 
 MAX_LOGIN_ATTEMPTS = 5
+
+
+def log_user_save(type_, doc):
+    """function to log a user save event for debugging purposes"""
+    if debug_save_logger.isEnabledFor(logging.INFO):
+        try:
+            caller = None
+            for tb in inspect.stack():
+                frame, filename, lineno, function, context, index = tb
+                if filename != __file__:
+                    caller = '%s:%s:%s' % (filename, lineno, function)
+                    break
+            req_path = ''
+            request = get_request()
+            if request:
+                req_path = request.path
+            debug_save_logger.info(
+                "%s,%s,%s,%s,%s", type_, doc['_id'], doc['_rev'], caller, req_path
+            )
+        except Exception:
+            debug_save_logger.exception('Error attempting to log user save')
 
 
 def _add_to_list(list, obj, default):
@@ -234,7 +261,7 @@ class UserRolePresets(object):
     @classmethod
     def get_permissions(cls, preset):
         preset_map = cls.get_preset_map()
-        if preset not in preset_map.keys():
+        if preset not in preset_map:
             return None
         return preset_map[preset]()
 
@@ -262,7 +289,7 @@ class UserRole(QuickCachedDocumentMixin, Document):
             include_docs=True,
             reduce=False,
         )
-        return filter(lambda x: x.is_archived == is_archived, all_roles)
+        return [x for x in all_roles if x.is_archived == is_archived]
 
     @classmethod
     def by_domain_and_name(cls, domain, name, is_archived=False):
@@ -273,7 +300,7 @@ class UserRole(QuickCachedDocumentMixin, Document):
             include_docs=True,
             reduce=False,
         )
-        return filter(lambda x: x.is_archived == is_archived, all_roles)
+        return [x for x in all_roles if x.is_archived == is_archived]
 
     @classmethod
     def get_or_create_with_permissions(cls, domain, permissions, name=None):
@@ -289,10 +316,7 @@ class UserRole(QuickCachedDocumentMixin, Document):
         def get_name():
             if name:
                 return name
-            preset_match = filter(
-                lambda x: x[1]() == permissions,
-                UserRolePresets.get_preset_map().items()
-            )
+            preset_match = [x for x in UserRolePresets.get_preset_map().items() if x[1]() == permissions]
             if preset_match:
                 return preset_match[0][0]
         role = cls(domain=domain, permissions=permissions, name=get_name())
@@ -310,17 +334,11 @@ class UserRole(QuickCachedDocumentMixin, Document):
 
     @classmethod
     def get_custom_roles_by_domain(cls, domain):
-        return filter(
-            lambda x: x.name not in UserRolePresets.INITIAL_ROLES,
-            cls.by_domain(domain)
-        )
+        return [x for x in cls.by_domain(domain) if x.name not in UserRolePresets.INITIAL_ROLES]
 
     @classmethod
     def reset_initial_roles_for_domain(cls, domain):
-        initial_roles = filter(
-            lambda x: x.name in UserRolePresets.INITIAL_ROLES,
-            cls.by_domain(domain)
-        )
+        initial_roles = [x for x in cls.by_domain(domain) if x.name in UserRolePresets.INITIAL_ROLES]
         for role in initial_roles:
             role.permissions = UserRolePresets.get_permissions(role.name)
             role.save()
@@ -949,6 +967,8 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
     analytics_enabled = BooleanProperty(default=True)
 
     two_factor_auth_disabled_until = DateTimeProperty()
+    login_attempts = IntegerProperty(default=0)
+    attempt_date = DateProperty()
 
     reporting_metadata = SchemaProperty(ReportingMetadata)
 
@@ -983,11 +1003,10 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
     def __repr__(self):
         # copied from jsonobject/base.py
         name = self.__class__.__name__
-        predefined_properties = set(self._properties_by_attr.keys())
+        predefined_properties = set(self._properties_by_attr)
         predefined_property_keys = set(self._properties_by_attr[p].name
                                        for p in predefined_properties)
-        dynamic_properties = (set(self._wrapped.keys())
-                              - predefined_property_keys)
+        dynamic_properties = set(self._wrapped) - predefined_property_keys
 
         # redact hashed password
         properties = sorted(predefined_properties - {'password'}) + sorted(dynamic_properties - {'password'})
@@ -1010,6 +1029,9 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
     @property
     def is_dimagi(self):
         return self.username.endswith('@dimagi.com')
+
+    def is_locked_out(self):
+        return self.login_attempts >= MAX_LOGIN_ATTEMPTS
 
     @property
     def raw_username(self):
@@ -1061,7 +1083,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
 
     @property
     def projects(self):
-        return map(Domain.get_by_name, self.get_domains())
+        return list(map(Domain.get_by_name, self.get_domains()))
 
     @property
     def full_name(self):
@@ -1453,6 +1475,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         utcnow = datetime.utcnow()
         for doc in docs:
             doc['last_modified'] = utcnow
+            log_user_save('bulk', doc)
         super(CouchUser, cls).save_docs(docs, **kwargs)
 
     bulk_save = save_docs
@@ -1460,6 +1483,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
     def save(self, fire_signals=True, **params):
         self.last_modified = datetime.utcnow()
         self.clear_quickcache_for_user()
+        log_user_save('single', self)
         with CriticalSection(['username-check-%s' % self.username], timeout=120):
             # test no username conflict
             by_username = self.get_db().view('users/by_username', key=self.username, reduce=False).first()
@@ -1508,7 +1532,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
 
         models = self._get_viewable_report_slugs(domain)
         if slug or name:
-            return filter(None, [slug_name(m) for m in models])
+            return [_f for _f in [slug_name(m) for m in models] if _f]
 
         return models
 
@@ -1840,19 +1864,19 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         Group.bulk_save(touched)
 
     def get_time_zone(self):
-        try:
-            time_zone = self.user_data["time_zone"]
-        except Exception as e:
-            # Gracefully handle when user_data is None, or does not have a "time_zone" entry
-            time_zone = None
-        return time_zone
+        if self.memoized_usercase:
+            return self.memoized_usercase.get_time_zone()
+
+        return None
 
     def get_language_code(self):
-        if self.user_data and "language_code" in self.user_data:
-            # Old way
-            return self.user_data["language_code"]
-        else:
+        if self.language:
             return self.language
+
+        if self.memoized_usercase:
+            return self.memoized_usercase.get_language_code()
+
+        return None
 
     @property
     @memoized
@@ -2231,8 +2255,6 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
     program_id = StringProperty()
     last_password_set = DateTimeProperty(default=datetime(year=1900, month=1, day=1))
 
-    login_attempts = IntegerProperty(default=0)
-    attempt_date = DateProperty()
     fcm_device_token = StringProperty()
     # this property is used to mark users who signed up from internal invitations
     # such as those going through the recruiting pipeline
@@ -2411,9 +2433,6 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
     def get_location(self, domain):
         return self.get_sql_location(domain)
 
-    def is_locked_out(self):
-        return self.login_attempts >= MAX_LOGIN_ATTEMPTS
-
 
 class FakeUser(WebUser):
     """
@@ -2541,10 +2560,7 @@ class Invitation(QuickCachedDocumentMixin, Document):
 
     @classmethod
     def by_domain(cls, domain, is_active=True):
-        return filter(
-            lambda domain_invitation: not domain_invitation.is_accepted,
-            get_docs_in_domain_by_class(domain, cls)
-        )
+        return [domain_invitation for domain_invitation in get_docs_in_domain_by_class(domain, cls) if not domain_invitation.is_accepted]
 
     @classmethod
     def by_email(cls, email, is_active=True):

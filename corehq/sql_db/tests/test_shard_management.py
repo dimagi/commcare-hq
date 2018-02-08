@@ -20,8 +20,7 @@ from corehq.sql_db.tests.utils import DefaultShardingTestConfigMixIn
 
 
 @use_sql_backend
-# @skipUnless(settings.USE_PARTITIONED_DATABASE, 'Only applicable if sharding is setup')
-@skipUnless(False, 'Test not running until SQL migrations are sorted out')
+@skipUnless(settings.USE_PARTITIONED_DATABASE, 'Only applicable if sharding is setup')
 class ShardManagementTest(DefaultShardingTestConfigMixIn, TestCase):
     domain = 'shard-management-test'
 

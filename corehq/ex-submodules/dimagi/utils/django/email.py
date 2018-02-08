@@ -1,18 +1,18 @@
 from __future__ import absolute_import
+import logging
+import re
+import requests
 from smtplib import SMTPSenderRefused
 import uuid
-import requests
-import re
-from urllib import urlencode
+
 from django.conf import settings
 from django.core.mail import get_connection
 from django.core.mail.message import EmailMultiAlternatives
 from django.utils.translation import ugettext as _
 from requests.exceptions import SSLError
 
-from dimagi.utils.logging import notify_error
-import logging
 import six
+from six.moves.urllib.parse import urlencode
 
 
 NO_HTML_EMAIL_MESSAGE = """

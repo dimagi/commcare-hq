@@ -89,7 +89,7 @@ def REPORTS(project):
     )
     deployments_reports = (
         deployments.ApplicationStatusReport,
-        deployments.AggregateAppStatusReport,
+        deployments.AggregateUserStatusReport,
         receiverwrapper.SubmissionErrorReport,
         phonelog.DeviceLogDetailsReport,
         deployments.SyncHistoryReport,
@@ -164,8 +164,7 @@ def _get_dynamic_reports(project):
     """include any reports that can be configured/customized with static parameters for this domain"""
     for reportset in project.dynamic_reports:
         yield (reportset.section_title,
-               filter(None,
-                      (_make_dynamic_report(report, [reportset.section_title]) for report in reportset.reports)))
+               [_f for _f in (_make_dynamic_report(report, [reportset.section_title]) for report in reportset.reports) if _f])
 
 
 def _make_dynamic_report(report_config, keyprefix):

@@ -156,16 +156,8 @@ hqDefine('app_manager/js/app_manager', function () {
         setInterval(_checkPublishStatus, 20000);
 
         // sniff ajax calls to other urls that make app changes
-        $(document).ajaxComplete(function(e, xhr, options) {
-            if (/edit_form_attr/.test(options.url) ||
-                /edit_module_attr/.test(options.url) ||
-                /edit_module_detail_screens/.test(options.url) ||
-                /edit_app_attr/.test(options.url) ||
-                /edit_form_actions/.test(options.url) ||
-                /edit_commcare_settings/.test(options.url) ||
-                /patch_xform/.test(options.url)) {
-                module.setPublishStatus(true);
-            }
+        hqImport("app_manager/js/app_manager_utils").handleAjaxAppChange(function() {
+            module.setPublishStatus(true);
         });
     };
 

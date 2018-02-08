@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import division
 import json
 import logging
 import os
@@ -76,6 +77,7 @@ from corehq.util.datadog.const import DATADOG_UNKNOWN
 from corehq.util.datadog.metrics import JSERROR_COUNT
 from corehq.util.datadog.utils import create_datadog_event, sanitize_url
 from corehq.util.datadog.gauges import datadog_counter
+from corehq.util.soft_assert import soft_assert
 from corehq.util.view_utils import reverse
 import six
 from six.moves import range
@@ -270,7 +272,11 @@ def server_up(req):
         },
         "formplayer": {
             "always_check": True,
-            "check_func": checks.check_formplayer
+            "check_func": checks.check_formplayer,
+        },
+        "elasticsearch": {
+            "always_check": True,
+            "check_func": checks.check_elasticsearch,
         },
     }
 
@@ -379,7 +385,7 @@ def login(req):
     # we need to set the base template to use somewhere
     # somewhere that the login page can access it.
 
-    if settings.SERVER_ENVIRONMENT == 'icds':
+    if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:
         login_url = reverse('domain_login', kwargs={'domain': 'icds-cas'})
         return HttpResponseRedirect(login_url)
 
@@ -501,10 +507,21 @@ def dropbox_upload(request, download_id):
     return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
 
 
+# TODO jschweers: Remove this in Q2 2018 if it hasn't been triggered,
+# change initial_page_data.js to throw an error
+@require_GET
+def assert_initial_page_data(request):
+    _assert = soft_assert(['jschweers' + '@' + 'dimagi.com'])
+    _assert(False, 'Initial page data called before page load complete', {
+        'page': request.META['HTTP_REFERER'],
+    })
+    return json_response({'success': True})
+
+
 @require_superuser
 def debug_notify(request):
     try:
-        0 / 0
+        0 // 0
     except ZeroDivisionError:
         notify_exception(request,
             "If you want to achieve a 500-style email-out but don't want the user to see a 500, use notify_exception(request[, message])")
@@ -605,7 +622,7 @@ class BugReportView(View):
                 domain_object.project_description = new_project_description
                 domain_object.save()
 
-            matching_subscriptions = Subscription.objects.filter(
+            matching_subscriptions = Subscription.visible_objects.filter(
                 is_active=True,
                 subscriber__domain=domain,
             )
@@ -627,8 +644,8 @@ class BugReportView(View):
             ).format(
                 software_plan=software_plan,
                 self_started=domain_object.internal.self_started,
-                feature_flags=toggles.toggles_dict(username=report['username'], domain=domain).keys(),
-                feature_previews=feature_previews.previews_dict(domain).keys(),
+                feature_flags=list(toggles.toggles_dict(username=report['username'], domain=domain)),
+                feature_previews=list(feature_previews.previews_dict(domain)),
                 scale_backend=should_use_sql_backend(domain),
                 has_handoff_info=bool(domain_object.internal.partner_contact),
                 internal_info_link=reverse('domain_internal_settings', args=[domain], absolute=True),

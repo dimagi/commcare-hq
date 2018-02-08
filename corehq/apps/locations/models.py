@@ -348,6 +348,16 @@ class OnlyUnarchivedLocationManager(LocationManager):
         return list(self.accessible_to_user(domain, user).location_ids())
 
 
+class OnlyArchivedLocationManager(LocationManager):
+
+    def get_queryset(self):
+        return (super(OnlyArchivedLocationManager, self).get_queryset()
+                .filter(is_archived=True))
+
+    def accessible_location_ids(self, domain, user):
+        return list(self.accessible_to_user(domain, user).location_ids())
+
+
 class SQLLocation(MPTTModel):
     domain = models.CharField(max_length=255, db_index=True)
     name = models.CharField(max_length=255, null=True)
@@ -378,6 +388,7 @@ class SQLLocation(MPTTModel):
     objects = _tree_manager = LocationManager()
     # This should really be the default location manager
     active_objects = OnlyUnarchivedLocationManager()
+    inactive_objects = OnlyArchivedLocationManager()
 
     @classmethod
     def get_sync_fields(cls):
@@ -628,16 +639,6 @@ class SQLLocation(MPTTModel):
     def sql_location(self):
         # For backwards compatability
         return self
-
-    def parents(self):
-        # get locations in path except the last one which is self
-        return SQLLocation.objects.get_locations(self.path[:-1])
-
-    def get_parent_of_type(self, parent_type):
-        parents = self.parents().filter(location_type__name=parent_type)
-        if len(parents) > 1:
-            raise ValueError("More than one parents for the same type")
-        return parents
 
 
 def filter_for_archived(locations, include_archive_ancestors):

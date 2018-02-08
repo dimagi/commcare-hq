@@ -323,6 +323,9 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
     enable_registration_welcome_sms_for_mobile_worker = BooleanProperty(default=False)
     sms_survey_date_format = StringProperty()
 
+    # Allowed outbound SMS per day
+    daily_outbound_sms_limit = IntegerProperty(default=5000)
+
     # exchange/domain copying stuff
     is_snapshot = BooleanProperty(default=False)
     is_approved = BooleanProperty(default=False)

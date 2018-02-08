@@ -14,6 +14,7 @@ from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import StrictButton
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
+from six.moves import map
 
 
 class OpenmrsConfigForm(forms.Form):
@@ -55,11 +56,18 @@ class OpenmrsConfigForm(forms.Form):
         return self.cleaned_data['case_config']
 
 
+_owner_id_label = _('Owner ID')
+_location_type_name_label = _('Organization Level')
+
+
 class OpenmrsImporterForm(forms.Form):
     server_url = forms.CharField(label=_('OpenMRS URL'), required=True,
                                  help_text=_('e.g. "http://www.example.com/openmrs"'))
     username = forms.CharField(label=_('Username'), required=True)
     password = forms.CharField(label=_('Password'), widget=forms.PasswordInput, required=False)
+    location_id = forms.CharField(label=_('Location ID'), required=False,
+                                  help_text='If a project space has multiple OpenMRS servers to import from, for '
+                                            'which CommCare location is this OpenMRS server authoritative?')
     import_frequency = forms.ChoiceField(label=_('Import Frequency'), choices=IMPORT_FREQUENCY_CHOICES,
                                          help_text=_('How often should cases be imported?'), required=False)
     log_level = forms.TypedChoiceField(label=_('Log Level'), required=False, choices=LOG_LEVEL_CHOICES, coerce=int)
@@ -68,56 +76,29 @@ class OpenmrsImporterForm(forms.Form):
                                   help_text=_('The OpenMRS UUID of the report of patients to be imported'))
     report_params = JsonField(label=_('Report Parameters'), required=False, expected_type=dict)
     case_type = forms.CharField(label=_('Case Type'), required=True)
-    owner_id = forms.CharField(label=_('Owner ID'), required=False,
+    owner_id = forms.CharField(label=_owner_id_label, required=False,
                                help_text=_('The ID of the mobile worker or location who will own new cases'))
-    location_type_name = forms.CharField(label=_('Organization Level'), required=False,
-                                         help_text=_('The Organization Level whose owners will own new cases'))
+    location_type_name = forms.CharField(label=_location_type_name_label, required=False,
+                                         help_text=_('The Organization Level whose mobile worker will own new '
+                                                     'cases'))
     external_id_column = forms.CharField(label=_('External ID Column'), required=True,
-                                         help_text=_("The column that stores the case's external ID"))
+                                         help_text=_("The column that contains the OpenMRS UUID of the patient"))
     name_columns = forms.CharField(label=_('Name Columns'), required=True,
                                    help_text=_('Space-separated column(s) to be concatenated to create the case '
                                                'name (e.g. "givenName familyName")'))
     column_map = JsonField(label=_('Map columns to properties'), required=True, expected_type=list,
                            help_text=_('e.g. [{"column": "givenName", "property": "first_name"}, ...]'))
 
-    def __init__(self, *args, **kwargs):
-        super(OpenmrsImporterForm, self).__init__(*args, **kwargs)
-        self.helper = FormHelper()
-        self.helper.form_class = 'form-horizontal'
-        self.helper.label_class = 'col-sm-3 col-md-2'
-        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
-        self.helper.layout = crispy.Layout(
-            crispy.Fieldset(
-                _('Edit OpenMRS Importer'),
-                crispy.Field('server_url'),
-                crispy.Field('username'),
-                crispy.Field('password'),
-                crispy.Field('import_frequency'),
-                crispy.Field('log_level'),
-
-                crispy.Field('report_uuid'),
-                crispy.Field('report_params'),
-                crispy.Field('case_type'),
-                crispy.Field('owner_id'),
-                crispy.Field('location_type_name'),
-                crispy.Field('external_id_column'),
-                crispy.Field('name_columns'),
-                crispy.Field('column_map'),
-            ),
-            hqcrispy.FormActions(
-                StrictButton(
-                    _("Update OpenMRS Importer"),
-                    type="submit",
-                    css_class='btn-primary',
-                ),
-                StrictButton(
-                    _('Import Now'),
-                    type='button',
-                    id='btn-import-now',
-                    css_class='btn-default',
-                ),
-            ),
-        )
+    def clean(self):
+        cleaned_data = super(OpenmrsImporterForm, self).clean()
+        if bool(cleaned_data.get('owner_id')) == bool(cleaned_data.get('location_type_name')):
+            message = _(
+                'The owner of imported patient cases is determined using either "{owner_id}" or '
+                '"{location_type_name}". Please specify either one or the other.').format(
+                owner_id=_owner_id_label, location_type_name=_location_type_name_label)
+            self.add_error('owner_id', message)
+            self.add_error('location_type_name', message)
+        return self.cleaned_data
 
     def save(self, domain_name):
         try:
@@ -130,6 +111,7 @@ class OpenmrsImporterForm(forms.Form):
             if self.cleaned_data['password']:
                 # Don't save it if it hasn't been changed.
                 importer.password = b64_aes_encrypt(self.cleaned_data['password'])
+            importer.location_id = self.cleaned_data['location_id']
             importer.import_frequency = self.cleaned_data['import_frequency']
             importer.log_level = self.cleaned_data['log_level']
 
@@ -140,7 +122,7 @@ class OpenmrsImporterForm(forms.Form):
             importer.location_type_name = self.cleaned_data['location_type_name']
             importer.external_id_column = self.cleaned_data['external_id_column']
             importer.name_columns = self.cleaned_data['name_columns']
-            importer.column_map = map(ColumnMapping.wrap, self.cleaned_data['column_map'])
+            importer.column_map = list(map(ColumnMapping.wrap, self.cleaned_data['column_map']))
             importer.save()
             return True
         except Exception as err:

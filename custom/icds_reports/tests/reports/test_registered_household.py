@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from django.test.utils import override_settings
 
-from custom.icds_reports.const import ChartColors
+from custom.icds_reports.const import ChartColors, MapColors
 from custom.icds_reports.reports.registered_household import get_registered_household_data_map, \
     get_registered_household_data_chart, get_registered_household_sector_data
 from django.test import TestCase
@@ -19,25 +19,62 @@ class TestRegisteredHousehold(TestCase):
                     'aggregation_level': 1
                 },
                 loc_level='state'
-            )[0],
+            ),
             {
                 "rightLegend": {
-                    "info": "Total number of households registered",
+                    "info": "Total number of households registered: 6,964",
                     "average": 3482.0,
                     "average_format": "number"
                 },
                 "fills": {
-                    "Household": "#006fdf",
-                    "defaultFill": "#9D9D9D"
+                    "Household": MapColors.BLUE,
+                    "defaultFill": MapColors.GREY
                 },
                 "data": {
                     "st1": {
                         "household": 3633,
+                        'original_name': ["st1"],
                         "fillKey": "Household"
                     },
                     "st2": {
                         "household": 3331,
+                        'original_name': ["st2"],
                         "fillKey": "Household"
+                    }
+                },
+                "slug": "registered_household",
+                "label": ""
+            }
+        )
+
+    def test_map_name_is_different_data(self):
+        self.maxDiff = None
+        self.assertDictEqual(
+            get_registered_household_data_map(
+                'icds-cas',
+                config={
+                    'month': (2017, 5, 1),
+                    'state_id': 'st1',
+                    'district_id': 'd1',
+                    'aggregation_level': 3
+                },
+                loc_level='block',
+            ),
+            {
+                "rightLegend": {
+                    "info": "Total number of households registered: 3,633",
+                    "average": 1816.5,
+                    "average_format": "number"
+                },
+                "fills": {
+                    "Household": MapColors.BLUE,
+                    "defaultFill": MapColors.GREY
+                },
+                "data": {
+                    'block_map': {
+                        'household': 3633,
+                        'original_name': ['b1', 'b2'],
+                        'fillKey': 'Household'
                     }
                 },
                 "slug": "registered_household",
@@ -146,7 +183,7 @@ class TestRegisteredHousehold(TestCase):
                 },
                 "chart_data": [
                     {
-                        "color": "#006fdf",
+                        "color": MapColors.BLUE,
                         "classed": "dashed",
                         "strokeWidth": 2,
                         "values": [

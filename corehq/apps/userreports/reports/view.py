@@ -1,6 +1,7 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import json
-from StringIO import StringIO
+from io import BytesIO
 from contextlib import contextmanager, closing
 from datetime import datetime
 
@@ -568,7 +569,7 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
     @property
     @memoized
     def email_response(self):
-        with closing(StringIO()) as temp:
+        with closing(BytesIO()) as temp:
             export_from_tables(self.export_table, temp, Format.HTML)
             return HttpResponse(json.dumps({
                 'report': temp.getvalue(),
@@ -577,7 +578,7 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
     @property
     @memoized
     def excel_response(self):
-        file = StringIO()
+        file = BytesIO()
         export_from_tables(self.export_table, file, Format.XLS_2007)
         return file
 

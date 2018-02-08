@@ -2,7 +2,7 @@ from __future__ import absolute_import
 import json
 import uuid
 from functools import partial
-from urllib import urlencode
+from six.moves.urllib.parse import urlencode
 from django.contrib import messages
 from django.urls import reverse
 from django.http import HttpResponseRedirect, Http404
@@ -10,14 +10,13 @@ from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
 
 from corehq import toggles
-from corehq.apps.app_manager import add_ons
 from corehq.apps.app_manager.dbaccessors import get_app, wrap_app, get_apps_in_domain
 from corehq.apps.app_manager.decorators import require_deploy_apps
 from corehq.apps.app_manager.exceptions import AppEditingError, \
-    ModuleNotFoundException, FormNotFoundException, RemoteRequestError, AppLinkError, ActionNotPermitted, \
-    RemoteAuthError
+    ModuleNotFoundException, FormNotFoundException, AppLinkError
 from corehq.apps.app_manager.models import Application, ReportModule, enable_usercase_if_necessary, CustomIcon
-from corehq.apps.app_manager.remote_link_accessors import pull_missing_multimedia_from_remote
+from corehq.apps.linked_domain.exceptions import RemoteRequestError, RemoteAuthError, ActionNotPermitted
+from corehq.apps.linked_domain.remote_accessors import pull_missing_multimedia_for_app
 
 from corehq.apps.app_manager.util import update_form_unique_ids
 from corehq.apps.userreports.exceptions import BadSpecError
@@ -134,7 +133,7 @@ def validate_langs(request, existing_langs):
     assert set(rename.keys()).issubset(existing_langs)
     assert set(rename.values()).issubset(langs)
     # assert that there are no repeats in the values of rename
-    assert len(set(rename.values())) == len(rename.values())
+    assert len(set(rename.values())) == len(list(rename.values()))
     # assert that no lang is renamed to an already existing lang
     for old, new in rename.items():
         if old != new:
@@ -148,6 +147,12 @@ def get_blank_form_xml(form_name):
         'xmlns': str(uuid.uuid4()).upper(),
         'name': form_name,
     })
+
+
+def get_default_followup_form_xml(context):
+    """Update context and apply in XML file default_followup_form"""
+    context.update({'xmlns_uuid': str(uuid.uuid4()).upper()})
+    return render_to_string("app_manager/default_followup_form.xml", context=context)
 
 
 def overwrite_app(app, master_build, report_map=None):
@@ -199,7 +204,7 @@ def _update_form_ids(app, master_app, id_map):
     updated_source = update_form_unique_ids(app_source, id_map)
 
     attachments = app_source.pop('_attachments')
-    new_wrapped_app = Application.wrap(updated_source)
+    new_wrapped_app = wrap_app(updated_source)
     save = partial(new_wrapped_app.save, increment_version=False)
     return new_wrapped_app.save_attachments(attachments, save)
 
@@ -256,7 +261,7 @@ def unset_practice_mode_configured_apps(domain, mobile_worker_id=None):
 
 
 def handle_custom_icon_edits(request, form_or_module, lang):
-    if add_ons.show("custom_icon_badges", request, form_or_module.get_app()):
+    if toggles.CUSTOM_ICON_BADGES.enabled(request.domain):
         icon_text_body = request.POST.get("custom_icon_text_body")
         icon_xpath = request.POST.get("custom_icon_xpath")
         icon_form = request.POST.get("custom_icon_form")
@@ -323,7 +328,7 @@ def update_linked_app(app):
 
     if app.master_is_remote:
         try:
-            pull_missing_multimedia_from_remote(app)
+            pull_missing_multimedia_for_app(app)
         except RemoteRequestError:
             raise AppLinkError(_(
                 'Error fetching multimedia from remote server. Please try again later.'

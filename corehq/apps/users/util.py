@@ -29,7 +29,7 @@ WEIRD_USER_IDS = [
 
 
 def cc_user_domain(domain):
-    sitewide_domain = settings.HQ_ACCOUNT_ROOT 
+    sitewide_domain = settings.HQ_ACCOUNT_ROOT
     return ("%s.%s" % (domain, sitewide_domain)).lower()
 
 
@@ -61,7 +61,7 @@ def raw_username(username):
     """
     Strips the @domain.commcarehq.org from the username if it's there
     """
-    sitewide_domain = settings.HQ_ACCOUNT_ROOT 
+    sitewide_domain = settings.HQ_ACCOUNT_ROOT
     username = username.lower()
     try:
         u, d = username.split("@")

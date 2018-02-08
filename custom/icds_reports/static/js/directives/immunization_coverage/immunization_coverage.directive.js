@@ -1,4 +1,4 @@
-/* global d3, _ */
+/* global d3, _, moment */
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function ImmunizationCoverageController($scope, $routeParams, $location, $filter, maternalChildService,
@@ -40,6 +40,18 @@ function ImmunizationCoverageController($scope, $routeParams, $location, $filter
     };
     vm.message = storageService.getKey('message') || false;
 
+    vm.prevDay = moment().subtract(1, 'days').format('Do MMMM, YYYY');
+    vm.lastDayOfPreviousMonth = moment().set('date', 1).subtract(1, 'days').format('Do MMMM, YYYY');
+    vm.currentMonth = moment().format("MMMM");
+    vm.showInfoMessage = function () {
+        var selected_month = parseInt($location.search()['month']) || new Date().getMonth() + 1;
+        var selected_year = parseInt($location.search()['year']) || new Date().getFullYear();
+        var current_month = new Date().getMonth() + 1;
+        var current_year = new Date().getFullYear();
+        return selected_month === current_month && selected_year === current_year &&
+            (new Date().getDate() === 1 || new Date().getDate() === 2);
+    };
+
     $scope.$watch(function() {
         return vm.selectedLocations;
     }, function (newValue, oldValue) {
@@ -60,14 +72,16 @@ function ImmunizationCoverageController($scope, $routeParams, $location, $filter
     }, true);
 
     vm.templatePopup = function(loc, row) {
+        var gender = genderIndex > 0 ? genders[genderIndex].name : '';
+        var chosenFilters = gender ? ' (' + gender + ') ' : '';
         var total = row ? $filter('indiaNumbers')(row.all) : 'N/A';
         var children = row ? $filter('indiaNumbers')(row.children) : 'N/A';
         var percent = row ? d3.format('.2%')(row.children / (row.all || 1)) : 'N/A';
-        return '<div class="hoverinfo" style="max-width: 200px !important;">' +
+        return '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
             '<p>' + loc.properties.name + '</p>' +
-            '<div>Total number of ICDS Child beneficiaries older than 1 year: <strong>' + total + '</strong></div>' +
-            '<div>Total number of children who have recieved complete immunizations required by age 1: <strong>' + children + '</strong></div>' +
-            '<div>% of children who have recieved complete immunizations required by age 1: <strong>' + percent + '</strong></div>';
+            '<div>Total number of ICDS Child beneficiaries older than 1 year' + chosenFilters + ': <strong>' + total + '</strong></div>' +
+            '<div>Total number of children who have recieved complete immunizations required by age 1' + chosenFilters + ': <strong>' + children + '</strong></div>' +
+            '<div>% of children who have recieved complete immunizations required by age 1' + chosenFilters + ': <strong>' + percent + '</strong></div>';
     };
 
     vm.loadData = function () {
@@ -110,14 +124,18 @@ function ImmunizationCoverageController($scope, $routeParams, $location, $filter
                     });
                 }) * 100);
                 var range = max - min;
-                vm.chartOptions.chart.forceY = [((min - range/10)/100).toFixed(2), ((max + range/10)/100).toFixed(2)];
+                vm.chartOptions.chart.forceY = [
+                    parseInt(((min - range/10)/100).toFixed(2)) < 0 ?
+                        0 : parseInt(((min - range/10)/100).toFixed(2)),
+                    parseInt(((max + range/10)/100).toFixed(2)),
+                ];
             }
         });
     };
 
     vm.init = function() {
         var locationId = vm.filtersData.location_id || vm.userLocationId;
-        if (!locationId || locationId === 'all' || locationId === 'null') {
+        if (!vm.userLocationId || !locationId || locationId === 'all' || locationId === 'null') {
             vm.loadData();
             vm.loaded = true;
             return;
@@ -221,9 +239,9 @@ function ImmunizationCoverageController($scope, $routeParams, $location, $filter
 
     vm.tooltipContent = function (monthName, dataInMonth) {
         return "<p><strong>" + monthName + "</strong></p><br/>"
-            + "<p>Total number of ICDS Child beneficiaries older than 1 year: <strong>" + $filter('indiaNumbers')(dataInMonth.all) + "</strong></p>"
-            + "<p>Total number of children who have recieved complete immunizations required by age 1: <strong>" + $filter('indiaNumbers')(dataInMonth.in_month) + "</strong></p>"
-            + "<p>% of children who have recieved complete immunizations required by age 1: <strong>" + d3.format('.2%')(dataInMonth.y) + "</strong></p>";
+            + "<div>Total number of ICDS Child beneficiaries older than 1 year: <strong>" + $filter('indiaNumbers')(dataInMonth.all) + "</strong></div>"
+            + "<div>Total number of children who have recieved complete immunizations required by age 1: <strong>" + $filter('indiaNumbers')(dataInMonth.in_month) + "</strong></div>"
+            + "<div>% of children who have recieved complete immunizations required by age 1: <strong>" + d3.format('.2%')(dataInMonth.y) + "</strong></div>";
     };
 
     vm.showAllLocations = function () {

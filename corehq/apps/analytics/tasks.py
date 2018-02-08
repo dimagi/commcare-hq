@@ -14,7 +14,7 @@ from datetime import datetime, date, timedelta
 import time
 import json
 import requests
-import urllib
+import six.moves.urllib.request, six.moves.urllib.parse, six.moves.urllib.error
 import KISSmetrics
 import logging
 
@@ -39,6 +39,8 @@ from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.analytics.utils import analytics_enabled_for_email
 
 _hubspot_failure_soft_assert = soft_assert(to=['{}@{}'.format('cellowitz', 'dimagi.com'),
+                                               '{}@{}'.format('biyeun', 'dimagi.com'),
+                                               '{}@{}'.format('jschweers', 'dimagi.com'),
                                                '{}@{}'.format('aphilippot', 'dimagi.com'),
                                                '{}@{}'.format('colaughlin', 'dimagi.com')],
                                            send_to_ops=False)
@@ -85,7 +87,7 @@ def _track_on_hubspot(webuser, properties):
         # Note: Hubspot recommends OAuth instead of api key
         _hubspot_post(
             url=u"https://api.hubapi.com/contacts/v1/contact/createOrUpdate/email/{}".format(
-                urllib.quote(webuser.get_email())
+                six.moves.urllib.parse.quote(webuser.get_email())
             ),
             data=json.dumps(
                 {'properties': [
@@ -99,7 +101,7 @@ def _track_on_hubspot_by_email(email, properties):
     # Note: Hubspot recommends OAuth instead of api key
     _hubspot_post(
         url=u"https://api.hubapi.com/contacts/v1/contact/createOrUpdate/email/{}".format(
-            urllib.quote(email)
+            six.moves.urllib.parse.quote(email)
         ),
         data=json.dumps(
             {'properties': [
@@ -117,7 +119,7 @@ def set_analytics_opt_out(webuser, analytics_enabled):
     """
     _hubspot_post(
         url=u"https://api.hubapi.com/contacts/v1/contact/createOrUpdate/email/{}".format(
-            urllib.quote(webuser.get_email())
+            six.moves.urllib.parse.quote(webuser.get_email())
         ),
         data=json.dumps(
             {'properties': [
@@ -176,7 +178,7 @@ def _get_user_hubspot_id(webuser):
     if api_key and webuser.analytics_enabled:
         req = requests.get(
             u"https://api.hubapi.com/contacts/v1/contact/email/{}/profile".format(
-                urllib.quote(webuser.username)
+                six.moves.urllib.parse.quote(webuser.username)
             ),
             params={'hapikey': api_key},
         )
@@ -288,15 +290,16 @@ def track_confirmed_account_on_hubspot(webuser):
         })
 
 
-def send_hubspot_form(form_id, request):
+def send_hubspot_form(form_id, request, user=None):
     """
     pulls out relevant info from request object before sending to celery since
     requests cannot be pickled
     """
-    user = getattr(request, 'couch_user', None)
+    if user is None:
+        user = getattr(request, 'couch_user', None)
     if request and user and user.is_web_user():
         meta = get_meta(request)
-        send_hubspot_form_task.delay(form_id, request.couch_user, request.COOKIES, meta)
+        send_hubspot_form_task.delay(form_id, user, request.COOKIES, meta)
 
 
 @analytics_task()

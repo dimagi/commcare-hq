@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from django.test.utils import override_settings
 
-from custom.icds_reports.const import ChartColors
+from custom.icds_reports.const import ChartColors, MapColors
 from custom.icds_reports.reports.enrolled_children import get_enrolled_children_data_map, \
     get_enrolled_children_data_chart, get_enrolled_children_sector_data
 from django.test import TestCase
@@ -19,26 +19,102 @@ class TestEnrolledChildren(TestCase):
                     'aggregation_level': 1
                 },
                 loc_level='state'
-            )[0],
+            ),
             {
                 "rightLegend": {
                     "info": "Total number of children between the age "
-                            "of 0 - 6 years who are enrolled for ICDS services",
+                            "of (0 - 6 years) who are enrolled for Anganwadi Services",
                     "average": 643.5,
-                    "average_format": "number"
+                    "average_format": "number",
+                    'extended_info': [
+                        {
+                            'indicator': 'Number of children (0 - 6 years) who are enrolled for Anganwadi '
+                                         'Services:',
+                            'value': "1,287"
+                        },
+                        {
+                            'indicator': 'Total number of children (0 - 6 years) who are registered: ',
+                            'value': "1,287"
+                        },
+                        {
+                            'indicator': (
+                                'Percentage of registered children (0 - 6 years) '
+                                'who are enrolled for Anganwadi Services:'
+                            ),
+                            'value': '100.00%'
+                        }
+                    ]
                 },
                 "fills": {
-                    "Children": "#006fdf",
-                    "defaultFill": "#9D9D9D"
+                    "Children": MapColors.BLUE,
+                    "defaultFill": MapColors.GREY
                 },
                 "data": {
                     "st1": {
                         "valid": 618,
+                        "all": 618,
+                        'original_name': ["st1"],
                         "fillKey": "Children"
                     },
                     "st2": {
                         "valid": 669,
+                        "all": 669,
+                        'original_name': ["st2"],
                         "fillKey": "Children"
+                    }
+                },
+                "slug": "enrolled_children",
+                "label": ""
+            }
+        )
+
+    def test_map_name_is_different_data(self):
+        self.assertDictEqual(
+            get_enrolled_children_data_map(
+                'icds-cas',
+                config={
+                    'month': (2017, 5, 1),
+                    'state_id': 'st1',
+                    'district_id': 'd1',
+                    'aggregation_level': 3
+                },
+                loc_level='block',
+            ),
+            {
+                "rightLegend": {
+                    "info": "Total number of children between the age "
+                            "of (0 - 6 years) who are enrolled for Anganwadi Services",
+                    "average": 309.0,
+                    "average_format": "number",
+                    'extended_info': [
+                        {
+                            'indicator': 'Number of children (0 - 6 years) who are enrolled for Anganwadi '
+                                         'Services:',
+                            'value': "618"
+                        },
+                        {
+                            'indicator': 'Total number of children (0 - 6 years) who are registered: ',
+                            'value': "618"
+                        },
+                        {
+                            'indicator': (
+                                'Percentage of registered children (0 - 6 years) '
+                                'who are enrolled for Anganwadi Services:'
+                            ),
+                            'value': '100.00%'
+                        }
+                    ]
+                },
+                "fills": {
+                    "Children": MapColors.BLUE,
+                    "defaultFill": MapColors.GREY
+                },
+                "data": {
+                    'block_map': {
+                        'all': 618,
+                        'valid': 618,
+                        'original_name': ['b1', 'b2'],
+                        'fillKey': 'Children'
                     }
                 },
                 "slug": "enrolled_children",
@@ -112,18 +188,20 @@ class TestEnrolledChildren(TestCase):
             ),
             {
                 "info": "Total number of children between the age"
-                        " of 0 - 6 years who are enrolled for ICDS services",
+                        " of 0 - 6 years who are enrolled for Anganwadi Services",
                 "tooltips_data": {
                     "s2": {
+                        'all': 214,
                         "valid": 214
                     },
                     "s1": {
+                        'all': 103,
                         "valid": 103
                     }
                 },
                 "chart_data": [
                     {
-                        "color": "#006fdf",
+                        "color": MapColors.BLUE,
                         "classed": "dashed",
                         "strokeWidth": 2,
                         "values": [

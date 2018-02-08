@@ -28,6 +28,7 @@ from custom.ewsghana.alerts.alerts import SOHAlerts
 from custom.ilsgateway.tanzania.reminders import SOH_HELP_MESSAGE
 from dimagi.utils.couch.database import iter_docs
 import six
+from six.moves import map
 
 
 def get_transactions_by_product(transactions):
@@ -44,7 +45,7 @@ class SOHHandler(KeywordHandler):
     def get_valid_reports(self, data):
         filtered_transactions = []
         excluded_products = []
-        for product_id, transactions in get_transactions_by_product(data['transactions']).iteritems():
+        for product_id, transactions in six.iteritems(get_transactions_by_product(data['transactions'])):
             begin_soh = None
             end_soh = None
             receipt = 0
@@ -136,10 +137,10 @@ class SOHHandler(KeywordHandler):
                         send_sms(self.domain, user, phone_number, message)
 
     def send_message_to_admins(self, message):
-        in_charge_users = map(CommCareUser.wrap, iter_docs(
+        in_charge_users = list(map(CommCareUser.wrap, iter_docs(
             CommCareUser.get_db(),
             [in_charge.user_id for in_charge in self.sql_location.facilityincharge_set.all()]
-        ))
+        )))
         for in_charge_user in in_charge_users:
             phone_number = get_preferred_phone_number_for_recipient(in_charge_user)
             if not phone_number:

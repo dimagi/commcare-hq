@@ -3,6 +3,7 @@ import re
 import uuid
 import datetime
 from couchdbkit.resource import ResourceNotFound
+from corehq.apps.translations.models import StandaloneTranslationDoc
 from corehq.apps.users.models import CouchUser
 from django.conf import settings
 from corehq.apps.hqcase.utils import submit_case_block_from_template
@@ -160,19 +161,6 @@ def get_sms_backend_classes():
     return _get_backend_classes(settings.SMS_LOADED_SQL_BACKENDS)
 
 
-@memoized
-def get_ivr_backend_classes():
-    return _get_backend_classes(settings.IVR_LOADED_SQL_BACKENDS)
-
-
-@memoized
-def get_backend_classes():
-    return _get_backend_classes(
-        settings.SMS_LOADED_SQL_BACKENDS +
-        settings.IVR_LOADED_SQL_BACKENDS
-    )
-
-
 CLEAN_TEXT_REPLACEMENTS = (
     # Common emoticon replacements
     (":o", ": o"),
@@ -307,3 +295,13 @@ def is_contact_active(domain, contact_doc_type, contact_id):
         # We can't tie the contact to a document so since we can't say whether
         # it's inactive, we count it as active
         return True
+
+
+def get_or_create_translation_doc(domain):
+    with StandaloneTranslationDoc.get_locked_obj(domain, 'sms', create=True) as tdoc:
+        if len(tdoc.langs) == 0:
+            tdoc.langs = ['en']
+            tdoc.translations['en'] = {}
+            tdoc.save()
+
+        return tdoc

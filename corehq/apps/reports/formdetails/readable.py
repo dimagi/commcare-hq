@@ -14,6 +14,7 @@ from corehq.apps.app_manager.xform import VELLUM_TYPES
 from corehq.apps.reports.formdetails.exceptions import QuestionListNotFound
 from django.utils.translation import ugettext_lazy as _
 import six
+from six.moves import map
 
 
 class CaseMetaException(Exception):
@@ -29,7 +30,7 @@ class FormQuestion(JsonObject):
     label = StringProperty()
     translations = DictProperty(exclude_if_none=True)
     tag = StringProperty()
-    type = StringProperty(choices=VELLUM_TYPES.keys())
+    type = StringProperty(choices=list(VELLUM_TYPES))
     value = StringProperty()
     repeat = StringProperty()
     group = StringProperty()

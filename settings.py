@@ -1,10 +1,9 @@
 #!/usr/bin/env python
 from __future__ import absolute_import
-import importlib
 from collections import defaultdict
+import importlib
 import os
 
-from celery.schedules import crontab
 from django.contrib import messages
 import settingshelper as helper
 
@@ -30,6 +29,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 # gets set to False for unit tests that run without the database
 DB_ENABLED = True
 UNIT_TESTING = helper.is_testing()
+DISABLE_RANDOM_TOGGLES = UNIT_TESTING
 
 ADMINS = ()
 MANAGERS = ADMINS
@@ -114,6 +114,7 @@ UCR_EXCEPTION_FILE = "%s/%s" % (FILEPATH, "ucr.exception.log")
 NIKSHAY_DATAMIGRATION = "%s/%s" % (FILEPATH, "nikshay_datamigration.log")
 PRIVATE_SECTOR_DATAMIGRATION = "%s/%s" % (FILEPATH, "private_sector_datamigration.log")
 SOFT_ASSERTS_LOG_FILE = "%s/%s" % (FILEPATH, "soft_asserts.log")
+DEBUG_USER_SAVE_LOG_FILE = "%s/%s" % (FILEPATH, "debug_user_save.log")
 
 LOCAL_LOGGING_HANDLERS = {}
 LOCAL_LOGGING_LOGGERS = {}
@@ -143,6 +144,7 @@ MIDDLEWARE = [
     'corehq.middleware.SentryContextMiddleware',
     'corehq.apps.domain.middleware.DomainMigrationMiddleware',
     'corehq.middleware.TimeoutMiddleware',
+    'corehq.middleware.LogLongRequestMiddleware',
     'corehq.apps.domain.middleware.CCHQPRBACMiddleware',
     'corehq.apps.domain.middleware.DomainHistoryMiddleware',
     'corehq.apps.domain.project_access.middleware.ProjectAccessMiddleware',
@@ -210,9 +212,9 @@ CRISPY_ALLOWED_TEMPLATE_PACKS = (
 HQ_APPS = (
     'django_digest',
     'auditcare',
-    'hqscripts',
     'casexml.apps.case',
     'corehq.apps.casegroups',
+    'corehq.apps.case_migrations',
     'casexml.apps.phone',
     'casexml.apps.stock',
     'corehq.apps.cleanup',
@@ -231,6 +233,7 @@ HQ_APPS = (
     'corehq.apps.hqcase',
     'corehq.apps.hqwebapp',
     'corehq.apps.hqmedia',
+    'corehq.apps.linked_domain',
     'corehq.apps.locations',
     'corehq.apps.products',
     'corehq.apps.prelogin',
@@ -416,7 +419,8 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'custom.m4change',
 )
 
-INSTALLED_APPS = DEFAULT_APPS + HQ_APPS + ENIKSHAY_APPS
+# any built-in management commands we want to override should go in hqscripts
+INSTALLED_APPS = ('hqscripts',) + DEFAULT_APPS + HQ_APPS + ENIKSHAY_APPS
 
 # after login, django redirects to this URL
 # rather than the default 'accounts/profile'
@@ -490,6 +494,7 @@ SUBSCRIPTION_CHANGE_EMAIL = 'accounts+subchange@example.com'
 INTERNAL_SUBSCRIPTION_CHANGE_EMAIL = 'accounts+subchange+internal@example.com'
 BILLING_EMAIL = 'billing-comm@example.com'
 INVOICING_CONTACT_EMAIL = 'billing-support@example.com'
+GROWTH_EMAIL = 'growth@example.com'
 MASTER_LIST_EMAIL = 'master-list@example.com'
 REPORT_BUILDER_ADD_ON_EMAIL = 'sales@example.com'
 EULA_CHANGE_EMAIL = 'eula-notifications@example.com'
@@ -500,6 +505,7 @@ DAILY_DEPLOY_EMAIL = None
 EMAIL_SUBJECT_PREFIX = '[commcarehq] '
 
 SERVER_ENVIRONMENT = 'localdev'
+ICDS_ENVS = ('icds', 'icds-new')
 BASE_ADDRESS = 'localhost:8000'
 J2ME_ADDRESS = ''
 
@@ -591,6 +597,10 @@ ENIKSHAY_QUEUE = CELERY_MAIN_QUEUE
 # time limit is exceeded.
 CELERYD_TASK_SOFT_TIME_LIMIT = 86400 * 2  # 2 days in seconds
 
+# http://docs.celeryproject.org/en/3.1/configuration.html#celery-event-queue-ttl
+# Keep messages in the events queue only for 2 hours
+CELERY_EVENT_QUEUE_TTL = 2 * 60 * 60
+
 # websockets config
 WEBSOCKET_URL = '/ws/'
 WS4REDIS_PREFIX = 'ws'
@@ -607,13 +617,15 @@ FORMPLAYER_URL = 'http://localhost:8080'
 
 ####### SMS Queue Settings #######
 
+CUSTOM_PROJECT_SMS_QUEUES = {
+    'ils-gateway': 'ils_gateway_sms_queue',
+    'ils-gateway-train': 'ils_gateway_sms_queue',
+    'ils-gateway-training': 'ils_gateway_sms_queue',
+}
+
 # Setting this to False will make the system process outgoing and incoming SMS
 # immediately rather than use the queue.
 SMS_QUEUE_ENABLED = False
-
-# If an SMS still has not been processed in this number of minutes, enqueue it
-# again.
-SMS_QUEUE_ENQUEUING_TIMEOUT = 60
 
 # Number of minutes a celery task will alot for itself (via lock timeout)
 SMS_QUEUE_PROCESSING_LOCK_TIMEOUT = 5
@@ -621,6 +633,10 @@ SMS_QUEUE_PROCESSING_LOCK_TIMEOUT = 5
 # Number of minutes to wait before retrying an unsuccessful processing attempt
 # for a single SMS
 SMS_QUEUE_REPROCESS_INTERVAL = 5
+
+# Number of minutes to wait before retrying an SMS that has reached
+# the default maximum number of processing attempts
+SMS_QUEUE_REPROCESS_INDEFINITELY_INTERVAL = 60 * 6
 
 # Max number of processing attempts before giving up on processing the SMS
 SMS_QUEUE_MAX_PROCESSING_ATTEMPTS = 3
@@ -672,7 +688,7 @@ PILLOW_RETRY_QUEUE_ENABLED = False
 
 # If an error still has not been processed in this number of minutes, enqueue it
 # again.
-PILLOW_RETRY_QUEUE_ENQUEUING_TIMEOUT = 60
+PILLOW_RETRY_QUEUE_ENQUEUING_TIMEOUT = 60 * 24
 
 # Number of minutes to wait before retrying an unsuccessful processing attempt
 PILLOW_RETRY_REPROCESS_INTERVAL = 5
@@ -718,11 +734,14 @@ ANALYTICS_IDS = {
     'KISSMETRICS_KEY': '',
     'HUBSPOT_API_KEY': '',
     'HUBSPOT_API_ID': '',
-    'GTM_ID': ''
+    'GTM_ID': '',
+    'DRIFT_ID': '',
 }
 
 ANALYTICS_CONFIG = {
     "HQ_INSTANCE": '',  # e.g. "www" or "staging"
+    "DEBUG": False,
+    "LOG_LEVEL": "warning",     # "warning", "debug", "verbose", or "" for no logging
 }
 
 GREENHOUSE_API_KEY = ''
@@ -773,9 +792,6 @@ COUCH_STALE_QUERY = 'update_after'  # 'ok' for cloudant
 MESSAGE_LOG_OPTIONS = {
     "abbreviated_phone_number_domains": ["mustmgh", "mgh-cgh-uganda"],
 }
-
-IVR_OUTBOUND_RETRIES = 3
-IVR_OUTBOUND_RETRY_INTERVAL = 10
 
 PREVIEWER_RE = '^$'
 
@@ -881,6 +897,8 @@ COMMCARE_NAME = "CommCare"
 
 ENTERPRISE_MODE = False
 
+RESTRICT_DOMAIN_CREATION = False
+
 CUSTOM_LANDING_PAGE = False
 
 TABLEAU_URL_ROOT = "https://icds.commcarehq.org/"
@@ -906,10 +924,14 @@ ENIKSHAY_PRIVATE_API_PASSWORD = None
 # number of docs for UCR to queue asynchronously at once
 # ideally # of documents it takes to process in ~30 min
 ASYNC_INDICATORS_TO_QUEUE = 10000
-ASYNC_INDICATOR_QUEUE_CRONTAB = crontab(minute="*/5")
+ASYNC_INDICATOR_QUEUE_TIMES = None
 DAYS_TO_KEEP_DEVICE_LOGS = 60
 
 MAX_RULE_UPDATES_IN_ONE_RUN = 10000
+
+# Allow overriding the synclog DB
+# This allows us to periodically rotate the synclog DB to remove deleted docs
+CUSTOM_SYNCLOGS_DB = None
 
 from env_settings import *
 
@@ -1163,7 +1185,15 @@ LOGGING = {
             'filename': SOFT_ASSERTS_LOG_FILE,
             'maxBytes': 10 * 1024 * 1024,  # 10 MB
             'backupCount': 200  # Backup 2000 MB of logs
-        }
+        },
+        'debug_user_save': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'formatter': 'simple',
+            'filename': DEBUG_USER_SAVE_LOG_FILE,
+            'maxBytes': 10 * 1024 * 1024,  # 10 MB
+            'backupCount': 5  # Backup 50 MB of logs
+        },
     },
     'root': {
         'level': 'INFO',
@@ -1270,6 +1300,11 @@ LOGGING = {
             'level': 'DEBUG',
             'propagate': False,
         },
+        'debug_user_save': {
+            'handlers': ['debug_user_save'],
+            'level': 'INFO' if SERVER_ENVIRONMENT == 'localdev' else 'ERROR',
+            'propagate': False,
+        }
     }
 }
 
@@ -1320,7 +1355,7 @@ DOMAINS_DB = NEW_DOMAINS_DB
 NEW_APPS_DB = 'apps'
 APPS_DB = NEW_APPS_DB
 
-SYNCLOGS_DB = 'synclogs'
+SYNCLOGS_DB = CUSTOM_SYNCLOGS_DB or 'synclogs'
 
 META_DB = 'meta'
 
@@ -1523,17 +1558,8 @@ SMS_LOADED_SQL_BACKENDS = [
     'corehq.messaging.smsbackends.ivory_coast_mtn.models.IvoryCoastMTNBackend',
 ]
 
-IVR_LOADED_SQL_BACKENDS = [
-    'corehq.messaging.ivrbackends.kookoo.models.SQLKooKooBackend',
-]
-
-IVR_BACKEND_MAP = {
-    "91": "MOBILE_BACKEND_KOOKOO",
-}
-
 # The number of seconds to use as a timeout when making gateway requests
-SMS_GATEWAY_TIMEOUT = 30
-IVR_GATEWAY_TIMEOUT = 60
+SMS_GATEWAY_TIMEOUT = 5
 
 # These are functions that can be called
 # to retrieve custom content in a reminder event.
@@ -1554,21 +1580,29 @@ ALLOWED_CUSTOM_CONTENT_HANDLERS = {
 # Used by the new reminders framework
 AVAILABLE_CUSTOM_SCHEDULING_CONTENT = {
     "ICDS_STATIC_NEGATIVE_GROWTH_MESSAGE":
-        "custom.icds.messaging.custom_content.static_negative_growth_indicator",
+        ["custom.icds.messaging.custom_content.static_negative_growth_indicator",
+         "ICDS: Static/Negative Growth Indicator"],
     "ICDS_MISSED_CF_VISIT_TO_AWW":
-        "custom.icds.messaging.custom_content.missed_cf_visit_to_aww",
+        ["custom.icds.messaging.custom_content.missed_cf_visit_to_aww",
+         "ICDS: Missed CF Visit for AWW recipient"],
     "ICDS_MISSED_CF_VISIT_TO_LS":
-        "custom.icds.messaging.custom_content.missed_cf_visit_to_ls",
+        ["custom.icds.messaging.custom_content.missed_cf_visit_to_ls",
+         "ICDS: Missed CF Visit for LS recipient"],
     "ICDS_MISSED_PNC_VISIT_TO_LS":
-        "custom.icds.messaging.custom_content.missed_pnc_visit_to_ls",
+        ["custom.icds.messaging.custom_content.missed_pnc_visit_to_ls",
+         "ICDS: Missed PNC Visit for LS recipient"],
     "ICDS_CHILD_ILLNESS_REPORTED":
-        "custom.icds.messaging.custom_content.child_illness_reported",
+        ["custom.icds.messaging.custom_content.child_illness_reported",
+         "ICDS: Child Illness Reported"],
     "ICDS_CF_VISITS_COMPLETE":
-        "custom.icds.messaging.custom_content.cf_visits_complete",
+        ["custom.icds.messaging.custom_content.cf_visits_complete",
+         "ICDS: CF Visits Complete"],
     "ICDS_DPT3_AND_MEASLES_ARE_DUE":
-        "custom.icds.messaging.custom_content.dpt3_and_measles_are_due",
+        ["custom.icds.messaging.custom_content.dpt3_and_measles_are_due",
+         "ICDS: DPT3 and Measles Due"],
     "ICDS_CHILD_VACCINATIONS_COMPLETE":
-        "custom.icds.messaging.custom_content.child_vaccinations_complete",
+        ["custom.icds.messaging.custom_content.child_vaccinations_complete",
+         "ICDS: Child vaccinations complete"],
 }
 
 # Used by the old reminders framework
@@ -1588,6 +1622,12 @@ AVAILABLE_CUSTOM_REMINDER_RECIPIENTS = {
     'TB_AGENCY_USER_CASE_FROM_VOUCHER_FULFILLED_BY_ID':
         ['custom.enikshay.messaging.custom_recipients.agency_user_case_from_voucher_fulfilled_by_id',
          "TB: Agency user case from voucher_fulfilled_by_id"],
+    'TB_BENEFICIARY_REGISTRATION_RECIPIENTS':
+        ['custom.enikshay.messaging.custom_recipients.beneficiary_registration_recipients',
+         "TB: Beneficiary Registration Recipients"],
+    'TB_PRESCRIPTION_VOUCHER_ALERT_RECIPIENTS':
+        ['custom.enikshay.messaging.custom_recipients.prescription_voucher_alert_recipients',
+         "TB: Prescription Voucher Alert Recipients"],
 }
 
 # Used by the new reminders framework
@@ -1817,6 +1857,7 @@ STATIC_UCR_REPORTS = [
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'hardware_district.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'hardware_individual.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'it_individual_issues.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'it_issues_activity.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'it_issues_block.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'it_issues_by_ticket_level.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'it_issues_by_type.json'),
@@ -1874,47 +1915,29 @@ STATIC_UCR_REPORTS = [
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'tb_notification_register.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'tb_notification_register_2b.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'tb_notification_register_private.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'sputum_conversion.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'tb_hiv.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'lab_monthly_summary.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'tb_lab_register.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'dmc_lab_register_2b.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'new_patient_summary_dmc.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'summary_of_patients.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'mdr_suspects.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'patient_overview_mobile.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'patients_due_to_follow_up.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'summary_of_treatment_outcome_mobile.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'case_finding_mobile.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'monitoring_indicators_treatment_outcome.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'monitoring_indicators_general.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'monitoring_indicators_tb_hiv.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'cc_outbound_call_list.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'payment_register.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'beneficiary_register.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'lab_register_for_culture.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'rntcp_pmdt_treatment_register.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'referral_report.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'referral_report_v2.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'drug_voucher.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'follow_up_notification_report.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'hiv_status_notification_2b.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'dmc_lab_summary.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'diagnostic_register.json'),
 
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'qa', 'tb_notification_register.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'qa', 'sputum_conversion.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'qa', 'tb_hiv.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'qa', 'lab_monthly_summary.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'qa', 'tb_lab_register.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'qa', 'new_patient_summary_dmc.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'qa', 'summary_of_patients.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'qa', 'mdr_suspects.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'qa', 'patient_overview_mobile.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'qa', 'patients_due_to_follow_up.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'qa', 'summary_of_treatment_outcome_mobile.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'qa', 'case_finding_mobile.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'qa', 'monitoring_indicators_treatment_outcome.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'qa', 'monitoring_indicators_general.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'qa', 'monitoring_indicators_tb_hiv.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'qa', 'cc_outbound_call_list.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'qa', 'payment_register.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'qa', 'beneficiary_register.json'),
@@ -1936,10 +1959,8 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'awc_locations.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'awc_mgt_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'ccs_record_cases.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'ccs_record_cases_monthly.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'ccs_record_cases_monthly_v2.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'ccs_record_cases_monthly_tableau2.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'child_cases_monthly.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'child_cases_monthly_v2.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'child_delivery_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'child_health_cases.json'),
@@ -1950,6 +1971,7 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'home_visit_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'household_cases.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'infrastructure_form.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'it_report_follow_issue.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'ls_home_visit_forms_filled.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'person_cases_v2.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'tasks_cases.json'),
@@ -1963,27 +1985,26 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_for_cc_outbound.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_for_cc_outbound_v2.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_v3.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_2b.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_v4.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_2b_v2.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_2b_v3.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_2b_v4.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_2b_v5.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_drtb_v2.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_tasklist_v2.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_tasklist_v3.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'referral_tasklist.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'person_2b.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test_2b_v2.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test_2b_v3.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test_2b_v4.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test_2b_v5.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test_drtb.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test_drtb_v2.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test_drtb_v3.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test_tasklist_v4.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'voucher_v2.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'voucher_v3.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'person_for_referral_report.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'voucher_v4.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'voucher_v5.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'person_for_referral_report_v2.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'person_for_referral_report_v3.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_for_adherence_report.json'),
 
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'qa', 'episode.json'),
@@ -2065,12 +2086,14 @@ CUSTOM_UCR_EXPRESSIONS = [
     ('enikshay_date_of_acceptance', 'custom.enikshay.expressions.date_of_acceptance_expression'),
     ('enikshay_episode_from_person', 'custom.enikshay.expressions.episode_from_person_expression'),
     ('enikshay_key_populations', 'custom.enikshay.expressions.key_populations_expression'),
+    ('enikshay_most_recent_referral_from_person', 'custom.enikshay.expressions.most_recent_referral_expression'),
+    ('enikshay_most_recent_episode_from_person', 'custom.enikshay.expressions.most_recent_episode_expression'),
 ]
 
 CUSTOM_UCR_EXPRESSION_LISTS = [
     ('mvp.ucr.reports.expressions.CUSTOM_UCR_EXPRESSIONS'),
     ('custom.icds_reports.ucr.expressions.CUSTOM_UCR_EXPRESSIONS'),
-    ('custom.ucr_ext.expressions.CUSTOM_UCR_EXPRESSIONS'),
+    ('corehq.apps.userreports.expressions.extension_expressions.CUSTOM_UCR_EXPRESSIONS'),
 ]
 
 CUSTOM_UCR_REPORT_FILTERS = [

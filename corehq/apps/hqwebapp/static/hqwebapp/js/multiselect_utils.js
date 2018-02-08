@@ -1,6 +1,12 @@
-/* global django:false _:false */
-
-hqDefine('hqwebapp/js/multiselect_utils', function () {
+hqDefine('hqwebapp/js/multiselect_utils', [
+    "jquery",
+    "underscore",
+    "multiselect/js/jquery.multi-select",
+    "quicksearch/dist/jquery.quicksearch.min",
+], function (
+    $,
+    _
+) {
     var multiselect_utils = {};
 
     var _renderHeader = function (title, action, search) {

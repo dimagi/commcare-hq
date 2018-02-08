@@ -17,5 +17,4 @@ class Migration(migrations.Migration):
 
     operations = [
         migrator.get_migration('update_tables11.sql'),
-        migrator.get_migration('create_datasource_views.sql'),
     ]

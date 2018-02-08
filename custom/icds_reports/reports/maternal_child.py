@@ -38,13 +38,17 @@ def get_maternal_child_data(domain, config, show_test=False):
             {'age_tranche__in': [0, 6, 72]},
             'stunting_severe'
         )
-        wer_eligible = exclude_records_by_age_for_column(
+        nutrition_status_weighed = exclude_records_by_age_for_column(
             {'age_tranche': 72},
-            'wer_eligible'
+            'nutrition_status_weighed'
         )
-        height_eligible = exclude_records_by_age_for_column(
+        height_measured_in_month = exclude_records_by_age_for_column(
             {'age_tranche__in': [0, 6, 72]},
-            'height_eligible'
+            'height_measured_in_month'
+        )
+        weighed_and_height_measured_in_month = exclude_records_by_age_for_column(
+            {'age_tranche__in': [0, 6, 72]},
+            'weighed_and_height_measured_in_month'
         )
 
         queryset = AggChildHealthMonthly.objects.filter(
@@ -55,13 +59,15 @@ def get_maternal_child_data(domain, config, show_test=False):
             underweight=(
                 Sum(moderately_underweight) + Sum(severely_underweight)
             ),
-            valid=Sum(wer_eligible),
+            valid=Sum(nutrition_status_weighed),
             wasting=Sum(wasting_moderate) + Sum(wasting_severe),
             stunting=Sum(stunting_moderate) + Sum(stunting_severe),
-            height_eli=Sum(height_eligible),
+            height_measured_in_month=Sum(height_measured_in_month),
+            weighed_and_height_measured_in_month=Sum(weighed_and_height_measured_in_month),
             low_birth_weight=Sum('low_birth_weight_in_month'),
             bf_birth=Sum('bf_at_birth'),
             born=Sum('born_in_month'),
+            weighed_and_born_in_month=Sum('weighed_and_born_in_month'),
             ebf=Sum('ebf_in_month'),
             ebf_eli=Sum('ebf_eligible'),
             cf_initiation=Sum('cf_initiation_in_month'),
@@ -101,9 +107,10 @@ def get_maternal_child_data(domain, config, show_test=False):
                 {
                     'label': _('Underweight (Weight-for-Age)'),
                     'help_text': _((
-                        "Percentage of children between 0-5 years enrolled for ICDS services with weight-for-age "
-                        "less than -2 standard deviations of the WHO Child Growth Standards median. Children who "
-                        "are moderately or severely underweight have a higher risk of mortality."
+                        "Percentage of children between 0-5 years enrolled for Anganwadi Services with "
+                        "weight-for-age less than -2 standard deviations of the WHO Child Growth Standards "
+                        "median. Children who are moderately or severely underweight have a higher risk of "
+                        "mortality."
                     )),
                     'percent': percent_diff(
                         'underweight',
@@ -136,16 +143,16 @@ def get_maternal_child_data(domain, config, show_test=False):
                         'wasting',
                         this_month_data,
                         prev_month_data,
-                        'height_eli'
+                        'weighed_and_height_measured_in_month'
                     ),
                     'color': 'red' if percent_diff(
                         'wasting',
                         this_month_data,
                         prev_month_data,
-                        'height_eli'
+                        'weighed_and_height_measured_in_month'
                     ) > 0 else 'green',
                     'value': get_value(this_month_data, 'wasting'),
-                    'all': get_value(this_month_data, 'height_eli'),
+                    'all': get_value(this_month_data, 'weighed_and_height_measured_in_month'),
                     'format': 'percent_and_div',
                     'frequency': 'month',
                     'redirect': 'wasting'
@@ -163,16 +170,16 @@ def get_maternal_child_data(domain, config, show_test=False):
                         'stunting',
                         this_month_data,
                         prev_month_data,
-                        'height_eli'
+                        'height_measured_in_month'
                     ),
                     'color': 'red' if percent_diff(
                         'stunting',
                         this_month_data,
                         prev_month_data,
-                        'height_eli'
+                        'height_measured_in_month'
                     ) > 0 else 'green',
                     'value': get_value(this_month_data, 'stunting'),
-                    'all': get_value(this_month_data, 'height_eli'),
+                    'all': get_value(this_month_data, 'height_measured_in_month'),
                     'format': 'percent_and_div',
                     'frequency': 'month',
                     'redirect': 'stunting'
@@ -188,16 +195,16 @@ def get_maternal_child_data(domain, config, show_test=False):
                         'low_birth_weight',
                         this_month_data,
                         prev_month_data,
-                        'born'
+                        'weighed_and_born_in_month'
                     ),
                     'color': 'red' if percent_diff(
                         'low_birth_weight',
                         this_month_data,
                         prev_month_data,
-                        'born'
+                        'weighed_and_born_in_month'
                     ) > 0 else 'green',
                     'value': get_value(this_month_data, 'low_birth_weight'),
-                    'all': get_value(this_month_data, 'born'),
+                    'all': get_value(this_month_data, 'weighed_and_born_in_month'),
                     'format': 'percent_and_div',
                     'frequency': 'month',
                     'redirect': 'low_birth'

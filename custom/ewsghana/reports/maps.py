@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import division
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_noop
 from corehq.apps.commtrack.models import StockState, CommtrackConfig
@@ -148,7 +149,7 @@ class EWSMapReport(CustomProjectReport, StockStatusMapReport):
         except AttributeError:
             raise RuntimeError('unknown adapter [%s]' % adapter)
         config = dict(self.request.GET.iterlists())
-        for k, v in config.iteritems():
+        for k, v in six.iteritems(config):
             if len(v) == 1:
                 config[k] = v[0]
         data = loader(self.data_source, config)

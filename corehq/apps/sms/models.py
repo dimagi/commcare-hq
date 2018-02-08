@@ -7,13 +7,14 @@ import uuid
 from dimagi.ext.couchdbkit import *
 
 from datetime import datetime, timedelta
-from django.db import models, transaction
+from django.db import models, transaction, IntegrityError
 from django.http import Http404
 from collections import namedtuple
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.models import Form
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.mixin import UUIDGeneratorMixin
+from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CouchUser
 from corehq.apps.sms.mixin import (CommCareMobileContactMixin,
     InvalidFormatException, PhoneNumberInUseException, apply_leniency,
@@ -713,6 +714,16 @@ class PhoneNumber(UUIDGeneratorMixin, models.Model):
             return list(cls.objects.filter(owner_id=owner_id))
 
     @classmethod
+    def get_phone_number_for_owner(cls, owner_id, phone_number):
+        try:
+            return cls.objects.get(
+                owner_id=owner_id,
+                phone_number=phone_number
+            )
+        except cls.DoesNotExist:
+            return None
+
+    @classmethod
     def _clear_quickcaches(cls, owner_id, phone_number, old_owner_id=None, old_phone_number=None):
         cls.by_owner_id.clear(cls, owner_id)
         if old_owner_id and old_owner_id != owner_id:
@@ -841,11 +852,17 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
     SOURCE_UNRECOGNIZED = 'UNR'
     SOURCE_FORWARDED = 'FWD'
     SOURCE_OTHER = 'OTH'
+    SOURCE_SCHEDULED_BROADCAST = 'SBR'
+    SOURCE_IMMEDIATE_BROADCAST = 'IBR'
+    SOURCE_CASE_RULE = 'CRL'
 
     SOURCE_CHOICES = (
         (SOURCE_BROADCAST, ugettext_noop('Broadcast')),
+        (SOURCE_SCHEDULED_BROADCAST, ugettext_noop('Scheduled Broadcast')),
+        (SOURCE_IMMEDIATE_BROADCAST, ugettext_noop('Immediate Broadcast')),
         (SOURCE_KEYWORD, ugettext_noop('Keyword')),
         (SOURCE_REMINDER, ugettext_noop('Reminder')),
+        (SOURCE_CASE_RULE, ugettext_noop('Conditional Alert')),
         (SOURCE_UNRECOGNIZED, ugettext_noop('Unrecognized')),
         (SOURCE_FORWARDED, ugettext_noop('Forwarded Message')),
         (SOURCE_OTHER, ugettext_noop('Other')),
@@ -904,6 +921,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
     )
 
     ERROR_NO_RECIPIENT = 'NO_RECIPIENT'
+    ERROR_NO_MESSAGE = 'NO_MESSAGE'
     ERROR_CANNOT_RENDER_MESSAGE = 'CANNOT_RENDER_MESSAGE'
     ERROR_UNSUPPORTED_COUNTRY = 'UNSUPPORTED_COUNTRY'
     ERROR_NO_PHONE_NUMBER = 'NO_PHONE_NUMBER'
@@ -930,6 +948,8 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
     ERROR_MESSAGES = {
         ERROR_NO_RECIPIENT:
             ugettext_noop('No recipient'),
+        ERROR_NO_MESSAGE:
+            ugettext_noop('No message available for the given language settings.'),
         ERROR_CANNOT_RENDER_MESSAGE:
             ugettext_noop('Error rendering message; please check syntax.'),
         ERROR_UNSUPPORTED_COUNTRY:
@@ -981,7 +1001,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
 
     domain = models.CharField(max_length=126, null=False, db_index=True)
     date = models.DateTimeField(null=False, db_index=True)
-    source = models.CharField(max_length=3, choices=SOURCE_CHOICES, null=False)
+    source = models.CharField(max_length=3, null=False)
     source_id = models.CharField(max_length=126, null=True)
     content_type = models.CharField(max_length=3, choices=CONTENT_CHOICES, null=False)
 
@@ -1222,6 +1242,141 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
             status=cls.STATUS_IN_PROGRESS,
             recipient_type=recipient_type,
             recipient_id=recipient_id
+        )
+
+    @classmethod
+    def get_source_and_id_from_schedule_instance(cls, schedule_instance):
+        from corehq.messaging.scheduling.models import (
+            ImmediateBroadcast,
+            ScheduledBroadcast,
+        )
+        from corehq.messaging.scheduling.scheduling_partitioned.models import (
+            AlertScheduleInstance,
+            TimedScheduleInstance,
+            CaseAlertScheduleInstance,
+            CaseTimedScheduleInstance,
+        )
+
+        if isinstance(schedule_instance, AlertScheduleInstance):
+            source_id = (
+                ImmediateBroadcast
+                .objects
+                .filter(schedule_id=schedule_instance.alert_schedule_id)
+                .values_list('id', flat=True)
+                .first()
+            )
+            return cls.SOURCE_IMMEDIATE_BROADCAST, source_id
+        elif isinstance(schedule_instance, TimedScheduleInstance):
+            source_id = (
+                ScheduledBroadcast
+                .objects
+                .filter(schedule_id=schedule_instance.timed_schedule_id)
+                .values_list('id', flat=True)
+                .first()
+            )
+            return cls.SOURCE_SCHEDULED_BROADCAST, source_id
+        elif isinstance(schedule_instance, (CaseAlertScheduleInstance, CaseTimedScheduleInstance)):
+            return cls.SOURCE_CASE_RULE, schedule_instance.rule_id
+        else:
+            return cls.SOURCE_UNRECOGNIZED, None
+
+    @classmethod
+    def get_content_info_from_content_object(cls, domain, content):
+        from corehq.messaging.scheduling.models import (
+            SMSContent,
+            SMSSurveyContent,
+            EmailContent,
+            CustomContent
+        )
+
+        if isinstance(content, (SMSContent, CustomContent)):
+            return cls.CONTENT_SMS, None, None
+        elif isinstance(content, SMSSurveyContent):
+            app, module, form = content.get_memoized_app_module_form(domain)
+            form_name = form.full_path_name if form else None
+            return cls.CONTENT_SMS_SURVEY, content.form_unique_id, form_name
+        elif isinstance(content, EmailContent):
+            return cls.CONTENT_EMAIL, None, None
+        else:
+            return cls.CONTENT_NONE, None, None
+
+    @classmethod
+    def get_recipient_type_and_id_from_schedule_instance(cls, schedule_instance):
+        from corehq.messaging.scheduling.scheduling_partitioned.models import ScheduleInstance
+
+        if isinstance(schedule_instance.recipient, list):
+            recipient_type = cls.RECIPIENT_VARIOUS
+            recipient_id = None
+        elif isinstance(schedule_instance.recipient, SQLLocation):
+            # schedule_instance.recipient can be a SQLLocation in a number of special
+            # cases, for example if a case owner is a location, or if a custom recipient
+            # is a location. We only count the include_descendant_locations flag when
+            # the recipient_type is RECIPIENT_TYPE_LOCATION.
+            if (
+                schedule_instance.recipient_type == ScheduleInstance.RECIPIENT_TYPE_LOCATION and
+                schedule_instance.memoized_schedule.include_descendant_locations
+            ):
+                recipient_type = cls.RECIPIENT_LOCATION_PLUS_DESCENDANTS
+            else:
+                recipient_type = cls.RECIPIENT_LOCATION
+
+            recipient_id = schedule_instance.recipient.location_id
+        elif schedule_instance.recipient is None:
+            recipient_type = cls.RECIPIENT_UNKNOWN
+            recipient_id = None
+        else:
+            recipient_type = cls.get_recipient_type(schedule_instance.recipient)
+            recipient_id = schedule_instance.recipient.get_id if recipient_type else None
+
+        return recipient_type, recipient_id
+
+    @classmethod
+    def create_from_schedule_instance(cls, schedule_instance, content):
+        source, source_id = cls.get_source_and_id_from_schedule_instance(schedule_instance)
+        content_type, form_unique_id, form_name = (
+            cls.get_content_info_from_content_object(schedule_instance.domain, content)
+        )
+
+        recipient_type, recipient_id = (
+            cls.get_recipient_type_and_id_from_schedule_instance(schedule_instance)
+        )
+
+        return cls.objects.create(
+            domain=schedule_instance.domain,
+            date=datetime.utcnow(),
+            source=source,
+            source_id=source_id,
+            content_type=content_type,
+            form_unique_id=form_unique_id,
+            form_name=form_name,
+            status=cls.STATUS_IN_PROGRESS,
+            recipient_type=recipient_type,
+            recipient_id=recipient_id
+        )
+
+    def create_subevent_from_contact_and_content(self, contact, content, case_id=None):
+        """
+        In the subevent context, the contact is always going to either be
+        a user or a case.
+
+        content is an instance of a subclass of corehq.messaging.scheduling.models.Content
+        """
+        recipient_type = self.get_recipient_type(contact)
+
+        content_type, form_unique_id, form_name = (
+            self.get_content_info_from_content_object(self.domain, content)
+        )
+
+        return MessagingSubEvent.objects.create(
+            parent=self,
+            date=datetime.utcnow(),
+            recipient_type=recipient_type,
+            recipient_id=contact.get_id if recipient_type else None,
+            content_type=content_type,
+            form_unique_id=form_unique_id,
+            form_name=form_name,
+            case_id=case_id,
+            status=self.STATUS_IN_PROGRESS,
         )
 
     @classmethod
@@ -1983,7 +2138,7 @@ class SQLMobileBackend(UUIDGeneratorMixin, models.Model):
                    we have to support both for a little while until all
                    foreign keys are migrated over
         """
-        backend_classes = smsutil.get_backend_classes()
+        backend_classes = smsutil.get_sms_backend_classes()
         api_id = api_id or cls.get_backend_api_id(backend_id, is_couch_id=is_couch_id)
 
         if api_id not in backend_classes:
@@ -2181,6 +2336,15 @@ class SQLSMSBackend(SQLMobileBackend):
         proxy = True
         app_label = 'sms'
 
+    def get_max_simultaneous_connections(self):
+        """
+        Return None to ignore.
+        Otherwise, return the maximum number of simultaneous connections
+        that should be allowed when making requests to the gateway API
+        for sending outbound SMS.
+        """
+        return None
+
     def get_sms_rate_limit(self):
         """
         Override to use rate limiting. Return None to not use rate limiting,
@@ -2261,7 +2425,7 @@ class BackendMap(object):
         """
         self.catchall_backend_id = catchall_backend_id
         self.backend_map_dict = backend_map
-        self.backend_map_tuples = backend_map.items()
+        self.backend_map_tuples = list(backend_map.items())
         # Sort by length of prefix descending
         self.backend_map_tuples.sort(key=lambda x: len(x[0]), reverse=True)
 
@@ -2591,3 +2755,33 @@ class KeywordAction(models.Model):
             raise self.InvalidModelStateException("Expected a value for form_unique_id")
 
         super(KeywordAction, self).save(*args, **kwargs)
+
+
+class DailyOutboundSMSLimitReached(models.Model):
+    """
+    Represents an instance of a domain reaching its daily outbound
+    SMS limit on a specific date.
+    """
+
+    # The domain name that reached its daily outbound SMS limit as defined
+    # on Domain.daily_outbound_sms_limit. This can be empty string if
+    # we reached the limit for outbound SMS not tied to a domain.
+    domain = models.CharField(max_length=126)
+
+    # The UTC date representing the 24-hour window in which the limit was reached
+    date = models.DateField()
+
+    class Meta:
+        unique_together = (
+            ('domain', 'date')
+        )
+
+    @classmethod
+    def create_for_domain_and_date(cls, domain, date):
+        # Using get_or_create here would be less efficient since
+        # it would require two queries to be issued, and still would
+        # require use of a CriticalSection to prevent IntegrityErrors.
+        try:
+            cls.objects.create(domain=domain, date=date)
+        except IntegrityError:
+            pass

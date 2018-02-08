@@ -1,10 +1,10 @@
-/* global module, inject */
+/* global module, inject, chai */
 "use strict";
 
 var pageData = hqImport('hqwebapp/js/initial_page_data');
 
 
-describe('EnrolledWomenDirective', function () {
+describe('Enrolled Women Directive', function () {
 
     var $scope, $httpBackend, $location, controller;
 
@@ -34,6 +34,9 @@ describe('EnrolledWomenDirective', function () {
         controller.step = 'map';
     }));
 
+    it('tests instantiate the controller properly', function () {
+        chai.expect(controller).not.to.be.a('undefined');
+    });
 
     it('tests initial state', function () {
         assert.equal(controller.mode, 'map');
@@ -43,6 +46,7 @@ describe('EnrolledWomenDirective', function () {
 
     it('tests supervisor location', function () {
         controller.filtersData.location_id = 'test-id';
+        controller.userLocationId = 'test-id';
 
         $httpBackend.expectGET('icds_locations?location_id=test-id').respond(200, {location_type: 'supervisor'});
         $httpBackend.expectGET('enrolled_women?location_id=test-id').respond(200, {
@@ -57,6 +61,7 @@ describe('EnrolledWomenDirective', function () {
 
     it('tests non supervisor location', function () {
         controller.filtersData.location_id = 'test-id';
+        controller.userLocationId = 'test-id';
 
         $httpBackend.expectGET('icds_locations?location_id=test-id').respond(200, {location_type: 'non supervisor'});
         $httpBackend.expectGET('enrolled_women?location_id=test-id').respond(200, {
@@ -70,10 +75,13 @@ describe('EnrolledWomenDirective', function () {
     });
 
     it('tests template popup', function () {
-        var result = controller.templatePopup({properties: {name: 'test'}}, {valid: 2});
-        var expected = '<div class="hoverinfo" style="max-width: 200px !important;">'
-            + '<p>test</p>'
-            + '<div>Total number of pregnant women who are enrolled for ICDS services: <strong>2</strong></div>';
+        var result = controller.templatePopup({properties: {name: 'test'}}, {valid: 2, all: 4});
+        var expected = '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
+            '<p>test</p>' +
+            '<div>Number of pregnant women who are enrolled for Anganwadi Services: <strong>2</strong>' +
+            '<div>Total number of pregnant women who are registered: <strong>4</strong>' +
+            '<div>Percentage of registered pregnant women who are enrolled for Anganwadi Services: <strong>50.00%</strong>' +
+            '</div>';
 
         assert.equal(result, expected);
     });
@@ -170,18 +178,20 @@ describe('EnrolledWomenDirective', function () {
         });
         assert.equal(controller.chartOptions.caption.html,
             '<i class="fa fa-info-circle"></i> ' +
-            'Total number of pregnant women who are enrolled for ICDS services'
+            'Total number of pregnant women who are enrolled for Anganwadi Services'
         );
     });
 
     it('tests chart tooltip content', function () {
-        var data = {all: 0, series: 0, x: 1501545600000, y: 72};
+        var data = {all: 72, series: 0, x: 1501545600000, y: 72};
         var month = {value: "Jul 2017", series: []};
 
-        var expected = '<p><strong>Jul 2017</strong></p><br/>'
-            + '<p>Total number of pregnant women who are enrolled for ICDS services: <strong>72</strong></p>';
+        var expected = "<p><strong>Jul 2017</strong></p><br/>"
+            + "<div>Number of pregnant women who are enrolled for Anganwadi Services: <strong>72</strong></div>"
+            + "<div>Total number of pregnant women who are registered: <strong>72</strong></div>"
+            + "<div>Percentage of registered pregnant women who are enrolled for Anganwadi Services: <strong>100.00%</strong></div>";
 
-        var result = controller.tooltipContent(month.value, data.y);
+        var result = controller.tooltipContent(month.value, data);
         assert.equal(expected, result);
     });
 });

@@ -89,14 +89,18 @@ def iter_all_rows(reindex_accessor):
 
 
 def iter_all_ids(reindex_accessor):
-    for db_alias in reindex_accessor.sql_db_aliases:
-        docs = reindex_accessor.get_doc_ids(db_alias)
-        while docs:
-            for doc in docs:
-                yield doc.doc_id
+    for doc_id in iter_all_ids_chunked(reindex_accessor):
+        yield doc_id
 
-            last_id = doc.primary_key
-            docs = reindex_accessor.get_doc_ids(db_alias, last_doc_pk=last_id)
+
+def iter_all_ids_chunked(reindex_accessor):
+    for db_alias in reindex_accessor.sql_db_aliases:
+        docs = list(reindex_accessor.get_doc_ids(db_alias))
+        while docs:
+            yield [d.doc_id for d in docs]
+
+            last_id = docs[-1].primary_key
+            docs = list(reindex_accessor.get_doc_ids(db_alias, last_doc_pk=last_id))
 
 
 class ShardAccessor(object):
@@ -279,7 +283,7 @@ class ReindexAccessor(six.with_metaclass(ABCMeta)):
         field = self.id_field
         if isinstance(field, dict):
             query = query.annotate(**field)
-            field = field.keys()[0]
+            field = list(field)[0]
         query = query.values(self.primary_key_field_name, field)
         for row in query.order_by(self.primary_key_field_name)[:limit]:
             yield DocIds(row[field], row[self.primary_key_field_name])
@@ -660,8 +664,12 @@ class FormAccessorSQL(AbstractFormAccessor):
         assert form.is_saved(), "this method doesn't support creating unsaved forms"
         assert getattr(form, 'unsaved_attachments', None) is None, \
             'Adding attachments to saved form not supported'
-        assert not form.has_tracked_models(), 'Adding other models to saved form not supported by this method'
+        assert not form.has_tracked_models_to_delete(), 'Deleting other models not supported by this method'
+        assert not form.has_tracked_models_to_update(), 'Updating other models not supported by this method'
+        assert not form.has_tracked_models_to_create(XFormAttachmentSQL), \
+            'Adding new attachments not supported by this method'
 
+        new_operations = form.get_tracked_models_to_create(XFormOperationSQL)
         db_name = form.db
         if form.orig_id:
             old_db_name = get_db_alias_for_partitioned_doc(form.orig_id)
@@ -670,7 +678,7 @@ class FormAccessorSQL(AbstractFormAccessor):
         with transaction.atomic(using=db_name):
             if form.form_id_updated():
                 attachments = form.original_attachments
-                operations = form.original_operations
+                operations = form.original_operations + new_operations
                 with transaction.atomic(db_name):
                     form.save()
                     for model in itertools.chain(attachments, operations):
@@ -863,19 +871,20 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             return [result.referenced_id for result in results]
 
     @staticmethod
-    def get_reverse_indexed_cases(domain, case_ids):
+    def get_reverse_indexed_cases(domain, case_ids, case_types=None, is_closed=None):
         assert isinstance(case_ids, list)
+        assert case_types is None or isinstance(case_types, list)
         if not case_ids:
             return []
 
         cases = list(CommCareCaseSQL.objects.raw(
-            'SELECT * FROM get_reverse_indexed_cases(%s, %s)',
-            [domain, case_ids])
+            'SELECT * FROM get_reverse_indexed_cases_3(%s, %s, %s, %s)',
+            [domain, case_ids, case_types, is_closed])
         )
         cases_by_id = {case.case_id: case for case in cases}
         indices = list(CommCareCaseIndexSQL.objects.raw(
             'SELECT * FROM get_multiple_cases_indices(%s, %s)',
-            [domain, cases_by_id.keys()])
+            [domain, list(cases_by_id)])
         )
         _attach_prefetch_models(cases_by_id, indices, 'case_id', 'cached_indices')
         return cases

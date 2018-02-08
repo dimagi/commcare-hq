@@ -1,10 +1,10 @@
-/* global module, inject, _ */
+/* global module, inject, _, chai */
 "use strict";
 
 var pageData = hqImport('hqwebapp/js/initial_page_data');
 
 
-describe('NewbornLowWeightDirective', function () {
+describe('Newborn Low Weight Directive', function () {
 
     var $scope, $httpBackend, $location, controller;
 
@@ -39,6 +39,9 @@ describe('NewbornLowWeightDirective', function () {
         controller.step = 'map';
     }));
 
+    it('tests instantiate the controller properly', function () {
+        chai.expect(controller).not.to.be.a('undefined');
+    });
 
     it('tests initial state', function () {
         assert.equal(controller.mode, 'map');
@@ -48,6 +51,7 @@ describe('NewbornLowWeightDirective', function () {
 
     it('tests supervisor location', function () {
         controller.filtersData.location_id = 'test-id';
+        controller.userLocationId = 'test-id';
 
         $httpBackend.expectGET('icds_locations?location_id=test-id').respond(200, {location_type: 'supervisor'});
         $httpBackend.expectGET('low_birth?location_id=test-id').respond(200, {
@@ -62,6 +66,7 @@ describe('NewbornLowWeightDirective', function () {
 
     it('tests non supervisor location', function () {
         controller.filtersData.location_id = 'test-id';
+        controller.userLocationId = 'test-id';
 
         $httpBackend.expectGET('icds_locations?location_id=test-id').respond(200, {location_type: 'non supervisor'});
         $httpBackend.expectGET('low_birth?location_id=test-id').respond(200, {
@@ -76,7 +81,7 @@ describe('NewbornLowWeightDirective', function () {
 
     it('tests template popup', function () {
         var result = controller.templatePopup({properties: {name: 'test'}}, {low_birth: 5, in_month: 10});
-        assert.equal(result, '<div class="hoverinfo" style="max-width: 200px !important;">' +
+        assert.equal(result, '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
             '<p>test</p>'
             + '<div>Total Number of Newborns born in given month: <strong>10</strong></div>'
             + '<div>Number of Newborns with LBW in given month: <strong>5</strong></div>'
@@ -186,10 +191,10 @@ describe('NewbornLowWeightDirective', function () {
         var month = {value: "Jul 2017", series: []};
 
         var expected = '<p><strong>Jul 2017</strong></p><br/>'
-            + '<p>Total Number of Newborns born in given month: <strong>10</strong></p>'
-            + '<p>Number of Newborns with LBW in given month: <strong>5</strong></p>'
-            + '<p>% newborns with LBW in given month: <strong>72.00%</strong></p>'
-            + '<p>% Unweighed: <strong>28.00%</strong></p>';
+            + '<div>Total Number of Newborns born in given month: <strong>10</strong></div>'
+            + '<div>Number of Newborns with LBW in given month: <strong>5</strong></div>'
+            + '<div>% newborns with LBW in given month: <strong>72.00%</strong></div>'
+            + '<div>% Unweighed: <strong>28.00%</strong></div>';
 
         var result = controller.tooltipContent(month.value, data);
         assert.equal(expected, result);

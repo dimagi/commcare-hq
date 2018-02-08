@@ -14,6 +14,7 @@ from couchexport.util import get_schema_index_view_keys, default_cleanup
 from datetime import datetime
 import six
 from six.moves import range
+from six.moves import map
 
 
 class ExportConfiguration(object):
@@ -460,11 +461,11 @@ def _format_tables(tables, id_label='id', separator='.', include_headers=True,
 
     for table_name, table in sorted(tables.items()):
         new_table = []
-        keys = sorted(table.items()[0][1].keys()) # the keys for every row are the same
+        keys = sorted(list(table.items())[0][1])  # the keys for every row are the same
 
         if include_headers:
             id_key = [id_label]
-            id_len = len(table.keys()[0]) # this is a proxy for the complexity of the ID
+            id_len = len(list(table)[0])  # this is a proxy for the complexity of the ID
             if id_len > 1:
                 id_key += ["{id}__{count}".format(id=id_label, count=i) \
                            for i in range(id_len)]

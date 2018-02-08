@@ -103,8 +103,8 @@ To scale UCR Pillows horizontally do the following:
    you should attempt scaling in small increments. Also attempt to make sure
    pillows are able to split partitions easily. It's easiest to use powers of 2
 4. Run `./manage.py add_kafka_partition <topic> <number partitions to have>`
-5. In the commcare-hq-deploy repo change num_processes to the pillows you want
-   to scale. Merge this PR and update the submodule in hq
+5. In the commcare-cloud repo environments/<env>/app-processes.yml file
+   change num_processes to the pillows you want to scale.
 6. On the next deploy multiple processes will be used when starting pillows
 
 The UCR pillows also have options to split the pillow into multiple. They

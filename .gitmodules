@@ -34,6 +34,3 @@
 [submodule "corehq/apps/prelogin"]
 	path = corehq/apps/prelogin
 	url = https://github.com/dimagi/commcarehq-prelogin.git
-[submodule "deployment/commcare-hq-deploy"]
-	path = deployment/commcare-hq-deploy
-	url = https://github.com/dimagi/commcare-hq-deploy.git

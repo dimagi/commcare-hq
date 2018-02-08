@@ -3031,46 +3031,7 @@
             },
             {
                 "type": "boolean",
-                "column_id": "drtb_patients_on_treatment",
-                "filter": {
-                    "type": "and",
-                    "filters": [
-                        {
-                            "type": "boolean_expression",
-                            "expression": {
-                                "type": "property_name",
-                                "property_name": "episode_type"
-                            },
-                            "operator": "eq",
-                            "property_value": "confirmed_drtb"
-                        },
-                        {
-                            "type": "not",
-                            "filter": {
-                                "type": "boolean_expression",
-                                "expression": {
-                                    "type": "property_name",
-                                    "property_name": "treatment_initiation_date"
-                                },
-                                "operator": "in",
-                                "property_value": [null, ""]
-                            }
-                        },
-                        {
-                            "type": "boolean_expression",
-                            "expression": {
-                                "type": "property_name",
-                                "property_name": "treatment_outcome"
-                            },
-                            "operator": "in",
-                            "property_value": [null, ""]
-                        }
-                    ]
-                }
-            },
-            {
-                "type": "boolean",
-                "column_id": "patients_on_ip",
+                "column_id": "dstb_patients_on_ip",
                 "filter": {
                     "type": "and",
                     "filters": [
@@ -3118,10 +3079,19 @@
             },
             {
                 "type": "boolean",
-                "column_id": "patients_on_cp",
+                "column_id": "dstb_patients_on_cp",
                 "filter": {
                     "type": "and",
                     "filters": [
+                        {
+                            "type": "boolean_expression",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "episode_type"
+                            },
+                            "operator": "eq",
+                            "property_value": "confirmed_tb"
+                        },
                         {
                             "type": "boolean_expression",
                             "expression": {
@@ -3130,6 +3100,168 @@
                             },
                             "operator": "eq",
                             "property_value": "yes"
+                        },
+                        {
+                            "type": "boolean_expression",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "treatment_outcome"
+                            },
+                            "operator": "in",
+                            "property_value": [null, ""]
+                        }
+                    ]
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "dstb_patients_on_treatment",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "boolean_expression",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "episode_type"
+                            },
+                            "operator": "eq",
+                            "property_value": "confirmed_tb"
+                        },
+                        {
+                            "type": "not",
+                            "filter": {
+                                "type": "boolean_expression",
+                                "expression": {
+                                    "type": "property_name",
+                                    "property_name": "treatment_initiation_date"
+                                },
+                                "operator": "in",
+                                "property_value": [null, ""]
+                            }
+                        },
+                        {
+                            "type": "boolean_expression",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "treatment_outcome"
+                            },
+                            "operator": "in",
+                            "property_value": [null, ""]
+                        }
+                    ]
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "drtb_patients_on_ip",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "boolean_expression",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "episode_type"
+                            },
+                            "operator": "eq",
+                            "property_value": "confirmed_drtb"
+                        },
+                        {
+                            "type": "not",
+                            "filter": {
+                                "type": "boolean_expression",
+                                "expression": {
+                                    "type": "property_name",
+                                    "property_name": "treatment_initiation_date"
+                                },
+                                "operator": "in",
+                                "property_value": [null, ""]
+                            }
+                        },
+                        {
+                            "type": "boolean_expression",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "cp_initiated"
+                            },
+                            "operator": "not_eq",
+                            "property_value": "yes"
+                        },
+                        {
+                            "type": "boolean_expression",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "treatment_outcome"
+                            },
+                            "operator": "in",
+                            "property_value": [null, ""]
+                        }
+                    ]
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "drtb_patients_on_cp",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "boolean_expression",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "episode_type"
+                            },
+                            "operator": "eq",
+                            "property_value": "confirmed_drtb"
+                        },
+                        {
+                            "type": "boolean_expression",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "cp_initiated"
+                            },
+                            "operator": "eq",
+                            "property_value": "yes"
+                        },
+                        {
+                            "type": "boolean_expression",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "treatment_outcome"
+                            },
+                            "operator": "in",
+                            "property_value": [null, ""]
+                        }
+                    ]
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "drtb_patients_on_treatment",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "boolean_expression",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "episode_type"
+                            },
+                            "operator": "eq",
+                            "property_value": "confirmed_drtb"
+                        },
+                        {
+                            "type": "not",
+                            "filter": {
+                                "type": "boolean_expression",
+                                "expression": {
+                                    "type": "property_name",
+                                    "property_name": "treatment_initiation_date"
+                                },
+                                "operator": "in",
+                                "property_value": [null, ""]
+                            }
                         },
                         {
                             "type": "boolean_expression",
@@ -3401,6 +3533,58 @@
                         }
                     ]
                 }
+            },
+            {
+                "type": "boolean",
+                "column_id": "weight_band_above_60",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "boolean_expression",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "weight_band"
+                            },
+                            "operator": "eq",
+                            "property_value": "above_60"
+                        },
+                        {
+                            "type": "boolean_expression",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "treatment_outcome"
+                            },
+                            "operator": "in",
+                            "property_value": [null, ""]
+                        }
+                    ]
+                }
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": "name",
+                "datatype": "date",
+                "expression": {
+                    "value_expression": {
+                        "datatype": "string",
+                        "type": "property_name",
+                        "property_name": "dob"
+                    },
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareCase",
+                    "doc_id_expression": {
+                        "datatype": null,
+                        "type": "named",
+                        "name": "person_id"
+                    }
+                },
+                "is_primary_key": false,
+                "transform": {},
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "person_dob"
             }
         ],
         "named_filters": {

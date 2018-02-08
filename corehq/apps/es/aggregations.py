@@ -374,7 +374,7 @@ class TopHitsAggregation(Aggregation):
 class FilterResult(AggregationResult):
 
     def __getattr__(self, attr):
-        sub_aggregation = list(filter(lambda a: a.name == attr, self._aggregations))[0]
+        sub_aggregation = list([a for a in self._aggregations if a.name == attr])[0]
         if sub_aggregation:
             return sub_aggregation.parse_result(self.result)
 
@@ -582,6 +582,10 @@ class NestedTermAggregationsHelper(object):
         ],
         inner_most_aggregation=SumAggregation('balance', 'balance'),
     ).get_data()
+
+    This works by bucketing docs first by one terms aggregation, then within
+    that bucket, bucketing further by the next term, and so on. This is then
+    flattened out to appear like a group-by-multiple.
     """
 
     def __init__(self, base_query, terms, inner_most_aggregation=None):

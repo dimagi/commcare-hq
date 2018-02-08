@@ -14,12 +14,19 @@ from casexml.apps.case.models import CommCareCase
 from casexml.apps.phone.xml import get_case_xml
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.users.util import SYSTEM_USER_ID
+from corehq.form_processor.utils import should_use_sql_backend
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import get_cached_case_attachment, CaseAccessors
 from dimagi.utils.parsing import json_format_datetime
 import six
 
 SYSTEM_FORM_XMLNS = 'http://commcarehq.org/case'
+EDIT_FORM_XMLNS = 'http://commcarehq.org/case/edit'
+
+SYSTEM_FORM_XMLNS_MAP = {
+    SYSTEM_FORM_XMLNS: 'System Form',
+    EDIT_FORM_XMLNS: 'Data Correction Form',
+}
 
 ALLOWED_CASE_IDENTIFIER_TYPES = [
     "contact_phone_number",
@@ -240,7 +247,7 @@ def bulk_update_cases(domain, case_changes, device_id):
     """
     Updates or closes a list of cases (or both) by submitting a form.
     domain - the cases' domain
-    cases - a tuple in the form (case_id, case_properties, close)
+    case_changes - a tuple in the form (case_id, case_properties, close)
         case_id - id of the case to update
         case_properties - to update the case, pass in a dictionary of {name1: value1, ...}
                           to ignore case updates, leave this argument out
@@ -255,3 +262,14 @@ def bulk_update_cases(domain, case_changes, device_id):
         case_block = ElementTree.tostring(case_block.as_xml())
         case_blocks.append(case_block)
     return submit_case_blocks(case_blocks, domain, device_id=device_id)
+
+
+def resave_case(domain, case, send_post_save_signal=True):
+    from corehq.form_processor.change_publishers import publish_case_saved
+    if should_use_sql_backend(domain):
+        publish_case_saved(case, send_post_save_signal)
+    else:
+        if send_post_save_signal:
+            case.save()
+        else:
+            CommCareCase.get_db().save_doc(case._doc)  # don't just call save to avoid signals

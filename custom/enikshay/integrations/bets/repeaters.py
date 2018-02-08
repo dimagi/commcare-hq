@@ -1,5 +1,7 @@
 from __future__ import absolute_import
 import json
+
+from django.conf import settings
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.utils.translation import ugettext_lazy as _
@@ -274,7 +276,7 @@ class BETSDrugRefillRepeater(BaseBETSRepeater):
             )
             trigger_by_threshold[n] = trigger_for_n
 
-        trigger_dates_unique = self._list_items_unique(filter(None, list(threshold_prop_values_by_threshold.values())))
+        trigger_dates_unique = self._list_items_unique([_f for _f in list(threshold_prop_values_by_threshold.values()) if _f])
         if not trigger_dates_unique:
             self._flag_program_team()
 
@@ -496,6 +498,8 @@ class BETSBeneficiaryRepeater(BaseBETSRepeater):
 
 @receiver(case_post_save, sender=CommCareCaseSQL, dispatch_uid="create_BETS_case_repeat_records")
 def create_BETS_repeat_records(sender, case, **kwargs):
+    if settings.SERVER_ENVIRONMENT != "enikshay":
+        return
     create_repeat_records(ChemistBETSVoucherRepeater, case)
     create_repeat_records(LabBETSVoucherRepeater, case)
     create_repeat_records(BETS180TreatmentRepeater, case)
@@ -508,11 +512,12 @@ def create_BETS_repeat_records(sender, case, **kwargs):
 
 @receiver(post_save, sender=SQLLocation, dispatch_uid="create_BETS_location_repeat_records")
 def create_BETS_location_repeat_records(sender, raw=False, **kwargs):
-    if raw:
+    if raw or settings.SERVER_ENVIRONMENT != "enikshay":
         return
     create_repeat_records(BETSLocationRepeater, kwargs['instance'])
 
 
 @receiver(commcare_user_post_save, dispatch_uid="create_BETS_user_repeat_records")
 def create_BETS_user_repeat_records(sender, couch_user, **kwargs):
-    create_repeat_records(BETSUserRepeater, couch_user)
+    if settings.SERVER_ENVIRONMENT == "enikshay":
+        create_repeat_records(BETSUserRepeater, couch_user)

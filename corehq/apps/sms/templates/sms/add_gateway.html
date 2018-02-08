@@ -3,10 +3,6 @@
 {% load hq_shared_tags %}
 {% load crispy_forms_tags %}
 
-{% block stylesheets %} {{ block.super }}
-    <link rel="stylesheet" href="{% static 'hqwebapp/js/lib/jquery-ui-datepicker/datepicker-theme/jquery-ui-1.8.17.custom.css' %}" />
-{% endblock %}
-
 {% block js %}{{ block.super }}
     <script src="{% static 'sms/js/add_gateway_form_handler.ko.js' %}"></script>
 {% endblock %}

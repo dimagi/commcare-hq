@@ -77,6 +77,7 @@ def js_api_keys(request):
         return {}  # disable js analytics
     return {
         'ANALYTICS_IDS': settings.ANALYTICS_IDS,
+        'ANALYTICS_CONFIG': settings.ANALYTICS_CONFIG,
         'MAPBOX_ACCESS_TOKEN': settings.MAPBOX_ACCESS_TOKEN,
     }
 
@@ -98,8 +99,10 @@ def websockets_override(request):
 def enterprise_mode(request):
     return {
         'enterprise_mode': settings.ENTERPRISE_MODE,
-        'is_saas_environment': settings.IS_SAAS_ENVIRONMENT
+        'is_saas_environment': settings.IS_SAAS_ENVIRONMENT,
+        'restrict_domain_creation': settings.RESTRICT_DOMAIN_CREATION,
     }
+
 
 def commcare_hq_names(request):
     return {

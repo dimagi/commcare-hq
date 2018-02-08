@@ -1,10 +1,10 @@
-/* global module, inject */
+/* global module, inject, chai */
 "use strict";
 
 var pageData = hqImport('hqwebapp/js/initial_page_data');
 
 
-describe('InstitutionalDeliveriesDirective', function () {
+describe('Institutional Deliveries Directive', function () {
 
     var $scope, $httpBackend, $location, controller;
 
@@ -34,6 +34,9 @@ describe('InstitutionalDeliveriesDirective', function () {
         controller.step = 'map';
     }));
 
+    it('tests instantiate the controller properly', function () {
+        chai.expect(controller).not.to.be.a('undefined');
+    });
 
     it('tests initial state', function () {
         assert.equal(controller.mode, 'map');
@@ -43,6 +46,7 @@ describe('InstitutionalDeliveriesDirective', function () {
 
     it('tests supervisor location', function () {
         controller.filtersData.location_id = 'test-id';
+        controller.userLocationId = 'test-id';
 
         $httpBackend.expectGET('icds_locations?location_id=test-id').respond(200, {location_type: 'supervisor'});
         $httpBackend.expectGET('institutional_deliveries?location_id=test-id').respond(200, {
@@ -57,6 +61,7 @@ describe('InstitutionalDeliveriesDirective', function () {
 
     it('tests non supervisor location', function () {
         controller.filtersData.location_id = 'test-id';
+        controller.userLocationId = 'test-id';
 
         $httpBackend.expectGET('icds_locations?location_id=test-id').respond(200, {location_type: 'non supervisor'});
         $httpBackend.expectGET('institutional_deliveries?location_id=test-id').respond(200, {
@@ -71,7 +76,7 @@ describe('InstitutionalDeliveriesDirective', function () {
 
     it('tests template popup', function () {
         var result = controller.templatePopup({properties: {name: 'test'}}, {all: 10, children: 5});
-        assert.equal(result, '<div class="hoverinfo" style="max-width: 200px !important;">' +
+        assert.equal(result, '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
             '<p>test</p>'
             + '<div>Total number of pregnant women who delivered in the last month: <strong>10</strong></div>'
             + '<div>Total number of pregnant women who delivered in a public/private medical facilitiy in the last month: <strong>5</strong></div>'
@@ -181,9 +186,9 @@ describe('InstitutionalDeliveriesDirective', function () {
         var month = {value: "Jul 2017", series: []};
 
         var expected = '<p><strong>Jul 2017</strong></p><br/>'
-            + '<p>Total number of pregnant women who delivered in the last month: <strong>10</strong></p>'
-            + '<p>Total number of pregnant women who delivered in a public/private medical facilitiy in the last month: <strong>5</strong></p>'
-            + '<p>% pregnant women who delivered in a public or private medical facility in the last month: <strong>72.00%</strong></p>';
+            + '<div>Total number of pregnant women who delivered in the last month: <strong>10</strong></div>'
+            + '<div>Total number of pregnant women who delivered in a public/private medical facilitiy in the last month: <strong>5</strong></div>'
+            + '<div>% pregnant women who delivered in a public or private medical facility in the last month: <strong>72.00%</strong></div>';
 
         var result = controller.tooltipContent(month.value, data);
         assert.equal(expected, result);

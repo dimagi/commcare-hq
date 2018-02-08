@@ -1,7 +1,10 @@
-hqDefine("hqwebapp/js/hq-bug-report", function() {
+hqDefine('hqwebapp/js/hq-bug-report', [
+    "jquery", "jquery-form/dist/jquery.form.min", "hqwebapp/js/hq.helpers",
+], function($) {
     $(function () {
         var $hqwebappBugReportModal = $('#modalReportIssue'),
             $hqwebappBugReportForm = $('#hqwebapp-bugReportForm'),
+            $hqwebappBugReportSubmit = $('#bug-report-submit'),
             $hqwebappBugReportCancel = $('#bug-report-cancel'),
             $ccFormGroup = $("#bug-report-cc-form-group"),
             $emailFormGroup = $("#bug-report-email-form-group"),
@@ -11,7 +14,7 @@ hqDefine("hqwebapp/js/hq-bug-report", function() {
         var resetForm = function () {
             $hqwebappBugReportForm.find("button[type='submit']").button('reset');
             $hqwebappBugReportForm.resetForm();
-            $hqwebappBugReportCancel.button('reset');
+            $hqwebappBugReportSubmit.button('reset');
             $ccFormGroup.removeClass('has-error has-feedback');
             $ccFormGroup.find(".label-danger").addClass('hide');
             $emailFormGroup.removeClass('has-error has-feedback');
@@ -46,12 +49,12 @@ hqDefine("hqwebapp/js/hq-bug-report", function() {
             if (isDescriptionEmpty) {
                 return false;
             }
-            var $submitButton = $(this).find("button[type='submit']");
-            if(!isBugReportSubmitting && $submitButton.text() === $submitButton.data("success-text")) {
+
+            if (!isBugReportSubmitting && $hqwebappBugReportSubmit.text() === $hqwebappBugReportSubmit.data("success-text")) {
                 $hqwebappBugReportModal.modal("hide");
-            } else if(!isBugReportSubmitting) {
-                $submitButton.button('loading');
-                $hqwebappBugReportCancel.button('loading');
+            } else if (!isBugReportSubmitting) {
+                $hqwebappBugReportCancel.disableButtonNoSpinner();
+                $hqwebappBugReportSubmit.button('loading');
                 $(this).ajaxSubmit({
                     type: "POST",
                     url: $(this).attr('action'),
@@ -73,7 +76,7 @@ hqDefine("hqwebapp/js/hq-bug-report", function() {
             $form.find("#bug-report-url").val(location.href);
         }
 
-        function hqwebappBugReportBeforeSubmit(arr) {
+        function hqwebappBugReportBeforeSubmit() {
             isBugReportSubmitting = true;
         }
 
@@ -88,6 +91,7 @@ hqDefine("hqwebapp/js/hq-bug-report", function() {
         function hqwebappBugReportError() {
             isBugReportSubmitting = false;
             $hqwebappBugReportForm.find("button[type='submit']").button('error').removeClass('btn-primary btn-success').addClass('btn-danger');
+            $hqwebappBugReportCancel.enableButton();
         }
 
         function highlightInvalidField($element) {

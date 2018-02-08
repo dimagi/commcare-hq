@@ -1,14 +1,11 @@
-/* globals _, JSON */
-/**
- * To Use this library, enable the feature flag ANALYTICS_NEW.
- *
- * To enable logging, enable the following INTERNAL feature flags to see each level:
- * DEBUG: ANALYTICS_DEBUG
- * VERBOSE: ANALYTICS_VERBOSE
- * WARNING, DEPRECATED: ANALYTICS_DEPRECATED
- *
- */
-hqDefine('analytix/js/logging', function () {
+/* globals JSON */
+hqDefine('analytix/js/logging', [
+    'underscore',
+    'analytix/js/initial',
+], function (
+    _,
+    initialAnalytics
+) {
     'use strict';
 
     var _makeLevel = function (name, style) {
@@ -22,7 +19,6 @@ hqDefine('analytix/js/logging', function () {
         warning: _makeLevel('WARNING', 'color: #994f00;'),
         verbose: _makeLevel('VERBOSE', 'color: #685c53;'),
         debug: _makeLevel('DEBUG', 'color: #004ebc;'),
-        deprecated: _makeLevel('DEPRECATED', 'color: #e53e30;'),
     };
 
     var _printPretty = function (message) {
@@ -128,12 +124,14 @@ hqDefine('analytix/js/logging', function () {
         };
     };
 
+    var levels = ['warning', 'debug', 'verbose'];
     var Level = function (_levelSlug, _levelPrefix, _logger) {
-        var _get = hqImport('analytix/js/initial').getFn('logging'),
+        var globalLevel = initialAnalytics.getFn('global')('logLevel'),
+            isVisible = levels.indexOf(_levelSlug) <= levels.indexOf(globalLevel),
             _levelData = {
                 slug: _levelSlug,
                 prefix: _levelPrefix,
-                isVisible: _get(_levelSlug),
+                isVisible: isVisible,
             },
             level = {};
         level.addCategory = function (slug, category) {

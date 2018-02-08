@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 import json
+from io import BytesIO
 from django.http.response import HttpResponseServerError
 from corehq.apps.commtrack.exceptions import DuplicateProductCodeException
 from corehq.util.files import file_extention_from_filename
@@ -15,7 +16,6 @@ from django.utils.translation import ugettext as _, ugettext_noop
 from django.contrib import messages
 from soil.exceptions import TaskFailedError
 from soil.util import expose_cached_download, get_download_context
-from StringIO import StringIO
 from dimagi.utils.web import json_response
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
@@ -35,6 +35,7 @@ from corehq.apps.domain.decorators import (
 )
 import six
 from six.moves import range
+from six.moves import map
 
 
 @require_POST
@@ -141,7 +142,7 @@ class FetchProductListView(ProductListView):
     def product_data(self):
         start = (self.page - 1) * self.limit
         end = start + self.limit
-        return map(self.make_product_dict, self.product_queryset[start:end])
+        return list(map(self.make_product_dict, self.product_queryset[start:end]))
 
     def make_product_dict(self, product):
         archive_config = self.get_archive_config()
@@ -383,7 +384,7 @@ def download_products(request, domain):
 
         return row
 
-    file = StringIO()
+    file = BytesIO()
     writer = Excel2007ExportWriter()
 
     product_keys = [
@@ -406,8 +407,8 @@ def download_products(request, domain):
 
         product_model, product_uncategorized = _parse_custom_properties(product)
 
-        model_data.update(product_model.keys())
-        uncategorized_data.update(product_uncategorized.keys())
+        model_data.update(product_model)
+        uncategorized_data.update(product_uncategorized)
 
         product_dict.update(product_model)
         product_dict.update(product_uncategorized)

@@ -1,10 +1,10 @@
-/* global d3, module, inject */
+/* global module, inject, chai */
 "use strict";
 
 var pageData = hqImport('hqwebapp/js/initial_page_data');
 
 
-describe('AdhaarBeneficiaryDirective', function () {
+describe('Adhaar Beneficiary Directive', function () {
 
     var $scope, $httpBackend, $location, controller;
 
@@ -35,6 +35,9 @@ describe('AdhaarBeneficiaryDirective', function () {
         controller.step = 'map';
     }));
 
+    it('tests instantiate the controller properly', function () {
+        chai.expect(controller).not.to.be.a('undefined');
+    });
 
     it('tests initial state', function () {
         assert.equal(controller.mode, 'map');
@@ -44,6 +47,7 @@ describe('AdhaarBeneficiaryDirective', function () {
 
     it('tests supervisor location', function () {
         controller.filtersData.location_id = 'test-id';
+        controller.userLocationId = 'test-id';
 
         $httpBackend.expectGET('icds_locations?location_id=test-id').respond(200, {location_type: 'supervisor'});
         $httpBackend.expectGET('adhaar?location_id=test-id').respond(200, {
@@ -58,6 +62,7 @@ describe('AdhaarBeneficiaryDirective', function () {
 
     it('tests non supervisor location', function () {
         controller.filtersData.location_id = 'test-id';
+        controller.userLocationId = 'test-id';
 
         $httpBackend.expectGET('icds_locations?location_id=test-id').respond(200, {location_type: 'non supervisor'});
         $httpBackend.expectGET('adhaar?location_id=test-id').respond(200, {
@@ -72,7 +77,7 @@ describe('AdhaarBeneficiaryDirective', function () {
 
     it('tests template popup', function () {
         var result = controller.templatePopup({properties: {name: 'test'}}, {in_month: 5, all: 10});
-        assert.equal(result, '<div class="hoverinfo" style="max-width: 200px !important;">' +
+        assert.equal(result, '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
             '<p>test</p>' +
             '<div>Total number of ICDS beneficiaries whose Aadhaar has been captured: <strong>5</strong></div>' +
             '<div>% of ICDS beneficiaries whose Aadhaar has been captured: <strong>50.00%</strong></div>');
@@ -178,9 +183,9 @@ describe('AdhaarBeneficiaryDirective', function () {
         var day = {y: 0.24561403508771928, all: 171, series: 0};
         var val = {value: "Jul 2017", series: []};
 
-        var expected = '<p><strong>Jul 2017</strong></p><br/><p>'
-            + 'Total number of ICDS beneficiaries whose Aadhaar has been captured: <strong>0</strong></p>'
-            + '<p>% of ICDS beneficiaries whose Aadhaar has been captured: <strong>24.56%</strong></p>';
+        var expected = '<p><strong>Jul 2017</strong></p><br/>' +
+            '<div>Total number of ICDS beneficiaries whose Aadhaar has been captured: <strong>0</strong></div>' +
+            '<div>% of ICDS beneficiaries whose Aadhaar has been captured: <strong>24.56%</strong></div>';
 
         var result = controller.getTooltipContent(val, day);
         assert.equal(expected, result);

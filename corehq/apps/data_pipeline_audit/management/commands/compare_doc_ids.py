@@ -25,13 +25,13 @@ class Command(BaseCommand):
         csv = options.get('csv')
 
         handlers = {
-            'CommCareCase': _compare_cases,
-            'CommCareCase-Deleted': _compare_cases,
+            'CommCareCase': compare_cases,
+            'CommCareCase-Deleted': compare_cases,
             'CommCareUser': _compare_users,
             'CommCareUser-Deleted': _compare_users,
             'WebUser': _compare_users,
         }
-        handlers.update({doc_type: _compare_xforms for doc_type in doc_types()})
+        handlers.update({doc_type: compare_xforms for doc_type in doc_types()})
         try:
             primary_only, es_only = handlers[doc_type](domain, doc_type)
         except KeyError:
@@ -49,14 +49,14 @@ class Command(BaseCommand):
         )
 
 
-def _compare_cases(domain, doc_type):
+def compare_cases(domain, doc_type):
     return _get_diffs(
         get_primary_db_case_ids(domain, doc_type),
         get_es_case_ids(domain, doc_type)
     )
 
 
-def _compare_xforms(domain, doc_type):
+def compare_xforms(domain, doc_type):
     return _get_diffs(
         get_primary_db_form_ids(domain, doc_type),
         get_es_form_ids(domain, doc_type)

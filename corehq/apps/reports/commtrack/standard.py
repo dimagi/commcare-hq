@@ -443,7 +443,7 @@ class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
 
         locs = (SQLLocation.objects
                 .filter(is_archived=False,
-                        location_id__in=status_counts.keys())
+                        location_id__in=list(status_counts))
                 .order_by('name'))
 
         def fmt(pct):

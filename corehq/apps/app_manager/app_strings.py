@@ -237,6 +237,11 @@ class AppStringsBase(object):
                 (u'The lookup table settings for your user are incorrect. '
                     u'This user must have access to exactly one lookup table row for the table: ${0}')
 
+        if 'case_autoload.usercase.case_missing' not in messages:
+            messages['usercase.missing_id'] = \
+                (u'This form affects the user case, but no user case id was found. '
+                    u'Please contact your supervisor.')
+
         from corehq.apps.app_manager.models import (
             AUTO_SELECT_CASE, AUTO_SELECT_FIXTURE, AUTO_SELECT_USER,
             AUTO_SELECT_LOCATION, AUTO_SELECT_USERCASE, AUTO_SELECT_RAW

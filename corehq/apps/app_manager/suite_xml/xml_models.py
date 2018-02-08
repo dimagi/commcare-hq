@@ -728,23 +728,35 @@ class Detail(OrderedXmlObject, IdNode):
         if self._variables is None:
             self._variables = DetailVariableList()
 
-    def get_variables(self):
+    def _get_variables_node(self):
         self._init_variables()
         return self._variables.variables
 
-    def set_variables(self, value):
+    def _set_variables_node(self, value):
         self._init_variables()
         self._variables.variables = value
 
-    variables = property(get_variables, set_variables)
+    variables = property(_get_variables_node, _set_variables_node)
+
+    def has_variables(self):
+        # can't check len(self.variables) directly since NodeList uses an
+        # xpath to find its children which doesn't work here since
+        # each node has a custom name
+        return self._variables is not None and len(self.variables.node.getchildren()) > 0
+
+    def get_variables(self):
+        """
+        :returns: List of DetailVariable objects
+        """
+        return [self.variables.mapper.to_python(node) for node in self.variables.node.getchildren()]
 
     def get_all_xpaths(self):
         result = set()
 
         if self.nodeset:
             result.add(self.nodeset)
-        if self._variables:
-            for variable in self.variables:
+        if self.has_variables():
+            for variable in self.get_variables():
                 result.add(variable.function)
 
         if self.actions:

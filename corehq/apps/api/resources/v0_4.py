@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.http import HttpResponseForbidden, HttpResponse, HttpResponseBadRequest
 from django.urls import reverse
 from tastypie import fields
@@ -109,10 +110,10 @@ class XFormInstanceResource(SimpleSortableResourceMixin, HqBaseResource, DomainS
     is_phone_submission = fields.BooleanField(readonly=True)
 
     def dehydrate_is_phone_submission(self, bundle):
-        return (
-            getattr(bundle.obj, 'openrosa_headers', None)
-            and bundle.obj.openrosa_headers.get('HTTP_X_OPENROSA_VERSION')
-        )
+        headers = getattr(bundle.obj, 'openrosa_headers', None)
+        if not headers:
+            return False
+        return headers.get('HTTP_X_OPENROSA_VERSION') is not None
 
     edited_by_user_id = fields.CharField(readonly=True, null=True)
 
@@ -394,7 +395,7 @@ class ApplicationResource(BaseApplicationResource):
     build_comment = fields.CharField(attribute='build_comment', null=True)
     built_from_app_id = fields.CharField(attribute='copy_of', null=True)
     modules = fields.ListField()
-    versions = fields.ListField(use_in='detail')
+    versions = fields.ListField()
 
     @staticmethod
     def dehydrate_versions(bundle):
@@ -439,7 +440,11 @@ class ApplicationResource(BaseApplicationResource):
                 form_jvalue = {
                     'xmlns': form.xmlns,
                     'name': form.name,
-                    'questions': form.get_questions(langs, include_translations=True),
+                    'questions': form.get_questions(
+                        langs,
+                        include_triggers=True,
+                        include_groups=True,
+                        include_translations=True),
                     'unique_id': form_unique_id,
                 }
                 dehydrated['forms'].append(form_jvalue)
@@ -513,8 +518,8 @@ class HOPECaseResource(CommCareCaseResource):
             bundle.data['case_properties'] = bundle.data['properties']
             del bundle.data['properties']
 
-        mother_lists = filter(lambda x: x.obj.type == CC_BIHAR_PREGNANCY, data['objects'])
-        child_lists = filter(lambda x: x.obj.type == CC_BIHAR_NEWBORN, data['objects'])
+        mother_lists = [x for x in data['objects'] if x.obj.type == CC_BIHAR_PREGNANCY]
+        child_lists = [x for x in data['objects'] if x.obj.type == CC_BIHAR_NEWBORN]
 
         return {'objects': {
             'mother_lists': mother_lists,

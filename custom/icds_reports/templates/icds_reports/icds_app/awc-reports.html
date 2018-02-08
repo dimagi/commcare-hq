@@ -20,6 +20,9 @@
     </div>
     <div class="report-content" cg-busy="$ctrl.myPromise">
         <div ng-if="$ctrl.data">
+            <div class="alert alert-info" ng-if="$ctrl.showInfoMessage()">
+                <strong>Info!</strong> Data shown is for {$ $ctrl.lastDayOfPreviousMonth $}. Data for {$ $ctrl.currentMonth $} will be displayed beginning 3rd {$ $ctrl.currentMonth $}.
+            </div>
             <div class="row" ng-if="$ctrl.step === 'pse'">
                 <div class="row no-margin">
                     <kpi data="$ctrl.data.kpi"></kpi>

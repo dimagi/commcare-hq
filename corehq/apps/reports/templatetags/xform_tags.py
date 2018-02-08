@@ -2,11 +2,14 @@ from __future__ import absolute_import
 from collections import OrderedDict
 from functools import partial
 
+from datetime import datetime
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django import template
 from django.utils.html import format_html
 from couchdbkit.exceptions import ResourceNotFound
+from django.utils.translation import ugettext_lazy
+
 from corehq import privileges
 from corehq.apps.cloudcare import CLOUDCARE_DEVICE_ID
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
@@ -17,6 +20,7 @@ from corehq.apps.locations.permissions import can_edit_form_location
 from corehq.apps.reports.formdetails.readable import get_readable_data_for_submission
 from corehq import toggles
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_request
 from corehq.util.xml_utils import indent_xml
 from casexml.apps.case.xform import extract_case_blocks
@@ -30,6 +34,13 @@ import six
 
 
 register = template.Library()
+
+FORM_OPERATIONS = {
+    'archive': ugettext_lazy('Archive'),
+    'unarchive': ugettext_lazy('Un-Archive'),
+    'edit': ugettext_lazy('Edit'),
+    'uuid_data_fix': ugettext_lazy('Duplicate ID fix')
+}
 
 
 @register.simple_tag
@@ -81,6 +92,8 @@ def render_form(form, domain, options):
 
     form_data, question_list_not_found = get_readable_data_for_submission(form)
 
+    timezone = get_timezone_for_request()
+
     context = {
         "context_case_id": case_id,
         "instance": form,
@@ -89,17 +102,20 @@ def render_form(form, domain, options):
         "domain": domain,
         'question_list_not_found': question_list_not_found,
         "form_data": form_data,
-        "form_table_options": {
-            # todo: wells if display config has more than one column
-            "put_loners_in_wells": False
-        },
         "side_pane": side_pane,
+        "tz_abbrev": timezone.localize(datetime.utcnow()).tzname(),
     }
 
     context.update(_get_cases_changed_context(domain, form, case_id))
-    context.update(_get_form_metadata_context(domain, form, support_enabled))
+    context.update(_get_form_metadata_context(domain, form, timezone, support_enabled))
     context.update(_get_display_options(request, domain, user, form, support_enabled))
     context.update(_get_edit_info(form))
+    if form.history:
+        for operation in form.history:
+            user_date = ServerTime(operation.date).user_time(timezone).done()
+            operation.readable_date = user_date.strftime("%Y-%m-%d %H:%M")
+            operation.readable_action = FORM_OPERATIONS.get(operation.operation, operation.operation)
+            operation.user_info = get_doc_info_by_id(domain, operation.user)
     return render_to_string("reports/form/partials/single_form.html", context, request=request)
 
 
@@ -147,15 +163,15 @@ def _get_display_options(request, domain, user, form, support_enabled):
     }
 
 
-def _get_form_metadata_context(domain, form, support_enabled=False):
+def _get_form_metadata_context(domain, form, timezone, support_enabled=False):
     meta = _top_level_tags(form).get('meta', None) or {}
     meta['received_on'] = json_format_datetime(form.received_on)
     meta['server_modified_on'] = json_format_datetime(form.server_modified_on) if form.server_modified_on else ''
     if support_enabled:
         meta['last_sync_token'] = form.last_sync_token
 
-    definition = get_default_definition(sorted_form_metadata_keys(meta.keys()))
-    form_meta_data = get_tables_as_columns(meta, definition, timezone=get_timezone_for_request())
+    definition = get_default_definition(sorted_form_metadata_keys(list(meta)))
+    form_meta_data = get_tables_as_columns(meta, definition, timezone=timezone)
     if getattr(form, 'auth_context', None):
         auth_context = AuthContext(form.auth_context)
         auth_context_user_id = auth_context.user_id
@@ -212,7 +228,7 @@ def _get_cases_changed_context(domain, form, case_id=None):
             url = "#"
 
         definition = get_default_definition(
-            sorted_case_update_keys(b.keys()),
+            sorted_case_update_keys(list(b)),
             assume_phonetimes=(not form.metadata or
                                (form.metadata.deviceID != CLOUDCARE_DEVICE_ID)),
         )

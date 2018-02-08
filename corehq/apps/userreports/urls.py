@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.conf.urls import url
 
 from corehq.apps.userreports.reports.view import DownloadUCRStatusView, ucr_download_job_poll
@@ -11,6 +12,7 @@ from corehq.apps.userreports.views import (
     EditDataSourceView,
     PreviewDataSourceView,
     CreateDataSourceFromAppView,
+    DataSourceSummaryView,
     report_source_json,
     delete_report,
     data_source_json,
@@ -57,6 +59,9 @@ urlpatterns = [
     url(r'^data_sources/preview/(?P<config_id>[\w-]+)/$',
         PreviewDataSourceView.as_view(),
         name=PreviewDataSourceView.urlname),
+    url(r'^data_sources/summary/(?P<config_id>[\w-]+)/$',
+        DataSourceSummaryView.as_view(),
+        name=DataSourceSummaryView.urlname),
     url(r'^data_sources/export/(?P<config_id>[\w-]+)/$', export_data_source,
         name='export_configurable_data_source'),
     url(r'^data_sources/status/(?P<config_id>[\w-]+)/$', data_source_status,

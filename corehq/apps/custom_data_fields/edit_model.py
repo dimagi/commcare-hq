@@ -1,13 +1,15 @@
 from __future__ import absolute_import
 import json
+import re
 
 from django.contrib import messages
 from django.core.exceptions import ValidationError
-from django.core.validators import validate_slug
+from django.core.validators import RegexValidator, validate_slug
+from django.shortcuts import redirect
 from django.utils.translation import ugettext as _, ugettext_lazy
 from django import forms
 from corehq.apps.hqwebapp.decorators import use_jquery_ui
-from corehq.toggles import MULTIPLE_CHOICE_CUSTOM_FIELD
+from corehq.toggles import MULTIPLE_CHOICE_CUSTOM_FIELD, REGEX_FIELD_VALIDATION
 
 from dimagi.utils.decorators.memoized import memoized
 
@@ -57,6 +59,7 @@ class XmlSlugField(forms.SlugField):
     default_validators = [
         validate_slug,
         validate_reserved_words,
+        RegexValidator(r'^[a-zA-Z]', ''),
     ]
 
 
@@ -72,23 +75,34 @@ class CustomDataFieldForm(forms.Form):
         required=True,
         error_messages={
             'required': ugettext_lazy('All fields are required'),
-            'invalid': ugettext_lazy('Key fields must consist only of letters, numbers, '
-                         'underscores or hyphens.'),
+            'invalid': ugettext_lazy('Properties must start with a letter and '
+                         'consist only of letters, numbers, underscores or hyphens.'),
         }
     )
     is_required = forms.BooleanField(required=False)
     choices = forms.CharField(widget=forms.HiddenInput, required=False)
     is_multiple_choice = forms.BooleanField(required=False)
+    regex = forms.CharField(required=False)
+    regex_msg = forms.CharField(required=False)
     index_in_fixture = forms.BooleanField(required=False)
 
     def __init__(self, raw, *args, **kwargs):
         # Pull the raw_choices out here, because Django incorrectly
         # serializes the list and you can't get it
-        self._raw_choices = filter(None, raw.get('choices', []))
+        self._raw_choices = [_f for _f in raw.get('choices', []) if _f]
         super(CustomDataFieldForm, self).__init__(raw, *args, **kwargs)
 
     def clean_choices(self):
         return self._raw_choices
+
+    def clean_regex(self):
+        regex = self.cleaned_data.get('regex')
+        if regex:
+            try:
+                re.compile(regex)
+            except Exception:
+                raise ValidationError(_("Not a valid regular expression"))
+        return regex
 
 
 class CustomDataModelMixin(object):
@@ -139,14 +153,26 @@ class CustomDataModelMixin(object):
         definition.save()
 
     def get_field(self, field):
-        multiple_choice_enabled = MULTIPLE_CHOICE_CUSTOM_FIELD.enabled(self.domain)
+        if REGEX_FIELD_VALIDATION.enabled(self.domain) and field.get('regex'):
+            choices = []
+            is_multiple_choice = False
+            regex = field.get('regex')
+            regex_msg = field.get('regex_msg')
+        else:
+            choices = field.get('choices')
+            is_multiple_choice = (field.get('is_multiple_choice')
+                                  if MULTIPLE_CHOICE_CUSTOM_FIELD.enabled(self.domain)
+                                  else False)
+            regex = None
+            regex_msg = None
         return CustomDataField(
             slug=field.get('slug'),
             is_required=field.get('is_required'),
             label=field.get('label'),
-            choices=field.get('choices'),
-            is_multiple_choice=(field.get('is_multiple_choice')
-                                if multiple_choice_enabled else False),
+            choices=choices,
+            is_multiple_choice=is_multiple_choice,
+            regex=regex,
+            regex_msg=regex_msg,
             index_in_fixture=field.get('index_in_fixture'),
         )
 
@@ -178,7 +204,7 @@ class CustomDataModelMixin(object):
                 six.text_type(self.entity_string)
             )
             messages.success(request, msg)
-            return self.get(request, success=True, *args, **kwargs)
+            return redirect(self.urlname, self.domain)
         else:
             return self.get(request, *args, **kwargs)
 

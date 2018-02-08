@@ -67,6 +67,7 @@ domain_specific = [
     url(r'^', include(hqwebapp_domain_specific)),
     url(r'^case/', include('corehq.apps.hqcase.urls')),
     url(r'^case/', include('corehq.apps.case_search.urls')),
+    url(r'^case_migrations/', include('corehq.apps.case_migrations.urls')),
     url(r'^cloudcare/', include('corehq.apps.cloudcare.urls')),
     url(r'^fixtures/', include('corehq.apps.fixtures.urls')),
     url(r'^importer/', include('corehq.apps.case_importer.urls')),
@@ -88,7 +89,8 @@ domain_specific = [
         lambda request, domain: render(request, 'hqwebapp/base.html', {'domain': domain})
     )),
     url(r'^zapier/', include('corehq.apps.zapier.urls')),
-    url(r'^zipline/', include('custom.zipline.urls'))
+    url(r'^zipline/', include('custom.zipline.urls')),
+    url(r'^remote_link/', include('corehq.apps.linked_domain.urls', namespace='remote'))
 ]
 
 urlpatterns = [

@@ -261,7 +261,7 @@ class SqlData(ReportDataSource):
         formatted_data = formatter.format(data, keys=self.keys, group_by=self.group_by)
 
         if self.group_by:
-            return formatted_data.values()
+            return list(formatted_data.values())
         else:
             return [formatted_data]
 

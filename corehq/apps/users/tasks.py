@@ -24,6 +24,7 @@ from dimagi.utils.couch.bulk import BulkFetchException
 from dimagi.utils.logging import notify_exception
 from soil import DownloadBase
 from casexml.apps.case.xform import get_case_ids_from_form
+from six.moves import map
 
 logger = get_task_logger(__name__)
 
@@ -157,7 +158,7 @@ def _get_forms_to_modify(domain, modified_forms, modified_cases, is_deletion):
         all_forms = FormAccessors(domain).iter_forms(form_ids_to_modify)
     else:
         # accessor.iter_forms doesn't include deleted forms on the couch backend
-        all_forms = map(FormAccessors(domain).get_form, form_ids_to_modify)
+        all_forms = list(map(FormAccessors(domain).get_form, form_ids_to_modify))
     return [form.form_id for form in all_forms if _is_safe_to_modify(form)]
 
 
@@ -288,3 +289,14 @@ def reset_demo_user_restore_task(commcare_user_id, domain):
 def remove_unused_custom_fields_from_users_task(domain):
     from corehq.apps.users.custom_data import remove_unused_custom_fields_from_users
     remove_unused_custom_fields_from_users(domain)
+
+
+@task
+def bulk_deactivate_users(domain):
+    from corehq.apps.users.dbaccessors import get_all_commcare_users_by_domain
+    users = get_all_commcare_users_by_domain(domain.name)
+    for user in users:
+        if not user.is_active:
+            continue
+        user.is_active = False
+        user.save()

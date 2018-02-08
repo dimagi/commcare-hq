@@ -8,6 +8,7 @@
   ],
   "server_environment": [
     "softlayer",
+    "icds-new",
     "icds"
   ],
   "config": {
@@ -191,6 +192,7 @@
           "owner_id"
         ]
       }
-    ]
+    ],
+    "disable_destructive_rebuild": true
   }
 }

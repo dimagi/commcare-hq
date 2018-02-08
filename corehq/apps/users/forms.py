@@ -324,7 +324,7 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
 
     @property
     def direct_properties(self):
-        result = self.fields.keys()
+        result = list(self.fields)
         if not self.set_analytics_enabled:
             result.remove('analytics_enabled')
         if not self.set_email_opt_out:
@@ -362,7 +362,7 @@ class UpdateCommCareUserInfoForm(BaseUserInfoForm, UpdateUserRoleForm):
     @property
     def direct_properties(self):
         indirect_props = ['role']
-        return [k for k in self.fields.keys() if k not in indirect_props]
+        return [k for k in self.fields if k not in indirect_props]
 
 
 class RoleForm(forms.Form):
@@ -512,6 +512,10 @@ _username_help = """
 <span ng-if="usernameAvailabilityStatus === 'available'"
       style="word-wrap:break-word;">
     <i class="fa fa-check"></i>
+    {{ usernameStatusMessage }}
+</span>
+<span ng-if="usernameAvailabilityStatus === 'warning'">
+    <i class="fa fa-exclamation-triangle"></i>
     {{ usernameStatusMessage }}
 </span>
 <span ng-if="usernameAvailabilityStatus === 'error'">
@@ -1069,7 +1073,7 @@ class ConfirmExtraUserChargesForm(EditBillingAccountInfoForm):
                 'company_name',
                 'first_name',
                 'last_name',
-                crispy.Field('email_list', css_class='input-xxlarge ko-email-select2'),
+                crispy.Field('email_list', css_class='input-xxlarge accounting-email-select2'),
                 'phone_number',
             ),
             crispy.Fieldset(
@@ -1079,7 +1083,7 @@ class ConfirmExtraUserChargesForm(EditBillingAccountInfoForm):
                 'city',
                 'state_province_region',
                 'postal_code',
-                crispy.Field('country', css_class="input-large ko-country-select2",
+                crispy.Field('country', css_class="input-large accounting-country-select2",
                              data_countryname=COUNTRIES.get(self.current_country, '')),
             ),
             hqcrispy.B3MultiField(

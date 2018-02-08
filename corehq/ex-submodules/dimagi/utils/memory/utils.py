@@ -3,6 +3,7 @@ from __future__ import absolute_import
 from sys import getsizeof, stderr
 from itertools import chain
 from collections import deque
+from six.moves import map
 try:
     from reprlib import repr
 except ImportError:
@@ -27,7 +28,7 @@ def total_size(o, handlers={}, verbose=False):
         print(total_size(d, verbose=True))
 
     """
-    dict_handler = lambda d: chain.from_iterable(d.items())
+    dict_handler = lambda d: chain.from_iterable(list(d.items()))
     all_handlers = {
         tuple: iter,
         list: iter,

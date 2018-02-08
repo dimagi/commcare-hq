@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from abc import ABCMeta, abstractmethod
 
 from django.utils.translation import ugettext
@@ -173,7 +174,7 @@ class DataSourceColumnChoiceProvider(ChoiceProvider):
     def get_values_for_query(self, query_context):
         query = self._adapter.session_helper.Session.query(self._sql_column)
         if query_context.query:
-            query = query.filter(self._sql_column.ilike(u"%{}%".format(query_context.query)))
+            query = query.filter(self._sql_column.ilike("%{}%".format(query_context.query)))
 
         query = query.distinct().order_by(self._sql_column).limit(query_context.limit).offset(query_context.offset)
         try:
@@ -200,7 +201,7 @@ class MultiFieldDataSourceColumnChoiceProvider(DataSourceColumnChoiceProvider):
             query = query.filter(
                 or_(
                     *[
-                        sql_column.ilike(u"%{}%".format(query_context.query))
+                        sql_column.ilike("%{}%".format(query_context.query))
                         for sql_column in self._sql_columns
                     ]
                 )

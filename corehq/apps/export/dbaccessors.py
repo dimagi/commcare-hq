@@ -87,7 +87,7 @@ def _get_saved_exports(domain, has_deid_permissions, old_exports_getter, new_exp
         from corehq.apps.export.utils import revert_new_exports
         exports += revert_new_exports(new_exports)
     if not has_deid_permissions:
-        exports = [e for e in exports if e.is_safe]
+        exports = [e for e in exports if not e.is_safe]
     return sorted(exports, key=lambda x: x.name)
 
 

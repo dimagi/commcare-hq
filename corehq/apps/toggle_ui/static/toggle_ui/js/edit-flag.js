@@ -1,9 +1,22 @@
-/* globals hqDefine */
-hqDefine('toggle_ui/js/edit-flag', function () {
+hqDefine('toggle_ui/js/edit-flag', [
+    'jquery',
+    'knockout',
+    'underscore',
+    'hqwebapp/js/initial_page_data',
+    'hqwebapp/js/main',
+    'hqwebapp/js/knockout_bindings.ko',     // save button
+], function (
+    $,
+    ko,
+    _,
+    initialPageData,
+    hqMain
+) {
     var PAD_CHAR = '&nbsp;';
     function ToggleView() {
         var self = this;
         self.items = ko.observableArray();
+        self.randomness = ko.observable();
 
         self.init = function (config) {
             self.padded_ns = {};
@@ -15,6 +28,7 @@ hqDefine('toggle_ui/js/edit-flag', function () {
             });
             self.init_items(config);
             self.latest_use = ko.observable(config.last_used._latest || '');
+            self.randomness(config.randomness);
         };
 
         self.init_items = function (config) {
@@ -51,7 +65,7 @@ hqDefine('toggle_ui/js/edit-flag', function () {
             self.saveButton.fire('change');
         };
 
-        self.saveButton = hqImport("hqwebapp/js/main").initSaveButton({
+        self.saveButton = hqMain.initSaveButton({
             unsavedMessage: "You have unsaved changes",
             save: function () {
                 var items = _.map(self.items(), function (item) {
@@ -62,9 +76,10 @@ hqDefine('toggle_ui/js/edit-flag', function () {
                 });
                 self.saveButton.ajax({
                     type: 'post',
-                    url: hqImport('hqwebapp/js/initial_page_data').reverse('edit_toggle') + location.search,
+                    url: initialPageData.reverse('edit_toggle') + location.search,
                     data: {
-                        item_list: JSON.stringify(items)
+                        item_list: JSON.stringify(items),
+                        randomness: self.randomness(),
                     },
                     dataType: 'json',
                     success: function (data) {
@@ -74,7 +89,7 @@ hqDefine('toggle_ui/js/edit-flag', function () {
             }
         });
 
-        var projectInfoUrl = '<a href="' + hqImport('hqwebapp/js/initial_page_data').reverse('domain_internal_settings') + '">domain</a>';
+        var projectInfoUrl = '<a href="' + initialPageData.reverse('domain_internal_settings') + '">domain</a>';
         self.getNamespaceHtml = function(namespace, value) {
             if (namespace === 'domain') {
                 return projectInfoUrl.replace('___', value);
@@ -87,12 +102,13 @@ hqDefine('toggle_ui/js/edit-flag', function () {
 
     $(function(){
         var $home = $('#toggle_editing_ko');
-        var initial_page_data = hqImport('hqwebapp/js/initial_page_data').get,
-            view = new ToggleView();
+        var view = new ToggleView();
         view.init({
-            items: initial_page_data('items'),
-            namespaces: initial_page_data('namespaces'),
-            last_used: initial_page_data('last_used'),
+            items: initialPageData.get('items'),
+            namespaces: initialPageData.get('namespaces'),
+            last_used: initialPageData.get('last_used'),
+            is_random_editable: initialPageData.get('is_random_editable'),
+            randomness: initialPageData.get('randomness'),
         });
         $home.koApplyBindings(view);
         $home.on('change', 'input', view.change);

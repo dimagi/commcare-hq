@@ -1,9 +1,9 @@
-/* global module, inject */
+/* global module, inject, chai */
 "use strict";
 
 var pageData = hqImport('hqwebapp/js/initial_page_data');
 
-describe('SystemUsageDirective', function () {
+describe('System Usage Directive', function () {
 
     var $scope, $httpBackend, $location, controller;
 
@@ -33,6 +33,9 @@ describe('SystemUsageDirective', function () {
         controller.step = 'maternal_child';
     }));
 
+    it('tests instantiate the controller properly', function () {
+        chai.expect(controller).not.to.be.a('undefined');
+    });
 
     it('tests initial state', function () {
         assert.equal(controller.step, 'maternal_child');

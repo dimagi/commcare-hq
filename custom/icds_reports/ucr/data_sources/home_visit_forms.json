@@ -8,6 +8,7 @@
   ],
   "server_environment": [
     "softlayer",
+    "icds-new",
     "icds"
   ],
   "config": {
@@ -181,6 +182,7 @@
     "engine_id": "icds-ucr",
     "sql_column_indexes": [
       {"column_ids": ["supervisor_id", "submitted_on"]}
-    ]
+    ],
+    "disable_destructive_rebuild": true
   }
 }

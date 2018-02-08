@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from functools import wraps
 
 from corehq.apps.userreports.exceptions import BadSpecError
@@ -50,6 +51,19 @@ OPERATORS = {
     'lte': less_than_equal,
     'gt': greater_than,
     'gte': greater_than_equal,
+}
+
+
+OPERATOR_DISPLAY = {
+    'equal': '=',
+    'not_equal': '!=',
+    'in_': 'in',
+    'in_multiselect': 'in_multiselect',
+    'any_in_multiselect': 'any_in_multiselect',
+    'less_than': '<',
+    'less_than_equal': '<=',
+    'greater_than': '>',
+    'greater_than_equal': '>=',
 }
 
 

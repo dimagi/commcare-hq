@@ -7,6 +7,7 @@ from corehq.apps.reports.standard.deployments import DeploymentsReport
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.standard.forms.filters import SubmissionTypeFilter, SubmissionErrorType
 from corehq.apps.reports.analytics.esaccessors import get_paged_forms_by_type
+from corehq.apps.users.util import cached_user_id_to_username
 from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.form_processor.reprocess import ReprocessingError
 from corehq.util.timezones.conversions import ServerTime
@@ -57,10 +58,7 @@ class SubmissionErrorReport(DeploymentsReport):
     @property
     @memoized
     def paged_result(self):
-        doc_types = map(
-            lambda filter_: filter_.doc_type,
-            filter(lambda filter_: filter_.show, self.submitfilter)
-        )
+        doc_types = [filter_.doc_type for filter_ in [filter_ for filter_ in self.submitfilter if filter_.show]]
         return get_paged_forms_by_type(
             self.domain,
             doc_types,
@@ -134,12 +132,23 @@ class SubmissionErrorReport(DeploymentsReport):
             else:
                 form_name = EMPTY_FORM
                 form_username = EMPTY_USER
+
+            error_type = SubmissionErrorType.display_name_by_doc_type(xform_dict['doc_type'])
+            if xform_dict['doc_type'] == "XFormArchived":
+                archive_operations = [operation for operation in xform_dict.get('history')
+                                      if operation.get('operation') == 'archive']
+                if archive_operations:
+                    error_type = _("{username} {archived_form} on {date}").format(
+                        username=cached_user_id_to_username(archive_operations[-1].get('user')) or "",
+                        archived_form=SubmissionErrorType.display_name_by_doc_type(xform_dict['doc_type']),
+                        date=_fmt_date(string_to_utc_datetime(archive_operations[-1].get('date'))),
+                    )
             return [
                 _fmt_url(xform_dict['_id']),
                 form_username,
                 _fmt_date(string_to_utc_datetime(xform_dict['received_on'])),
                 form_name,
-                SubmissionErrorType.display_name_by_doc_type(xform_dict['doc_type']),
+                error_type,
                 xform_dict.get('problem', EMPTY_ERROR),
                 self._make_reproces_button(xform_dict) if self.support_toggle_enabled else '',
             ]

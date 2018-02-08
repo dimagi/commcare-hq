@@ -5,12 +5,10 @@ import traceback
 import gevent
 from django.core.management.base import BaseCommand, CommandError
 from django.db import connections
-
-from corehq.form_processor.backends.sql.dbaccessors import FormReindexAccessor, iter_all_ids
-from corehq.sql_db.util import get_db_aliases_for_partitioned_query
-from corehq.util.log import with_progress_bar
-from dimagi.utils.chunked import chunked
 from six.moves import input
+
+from corehq.form_processor.backends.sql.dbaccessors import FormReindexAccessor, iter_all_ids_chunked
+from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 
 
 class Command(BaseCommand):
@@ -29,7 +27,7 @@ class Command(BaseCommand):
 
             greenlets = []
             for db_name in db_names:
-                g = gevent.spawn(_update_forms_in_db, db_name, False)
+                g = gevent.spawn(_update_forms_in_db, db_name)
                 greenlets.append(g)
 
             gevent.joinall(greenlets)
@@ -40,13 +38,19 @@ class Command(BaseCommand):
                 traceback.print_exc()
 
 
-def _update_forms_in_db(db_name, online=True):
+def _update_forms_in_db(db_name):
     reindex_accessor = FormReindexAccessor(limit_db_aliases=[db_name])
     doc_count = reindex_accessor.get_approximate_doc_count(db_name)
-    doc_iterator = iter_all_ids(reindex_accessor)
-    with_progress = with_progress_bar(doc_iterator, length=doc_count, oneline=online)
-    for form_ids in chunked(with_progress, 1000):
-        _update_forms(db_name, form_ids)
+    chunks = iter_all_ids_chunked(reindex_accessor)
+    processed = 0
+    for form_ids in chunks:
+        processed += len(form_ids)
+        _update_forms(db_name, tuple(form_ids))
+
+        if processed % 5000 == 0:
+            print('[progress] [%s] %s of %s' % (db_name, processed, doc_count))
+
+    print('[progress] [%s] Complete' % db_name)
 
 
 def _update_forms(db_name, form_ids):
@@ -59,15 +63,17 @@ def _update_forms(db_name, form_ids):
                         WHEN edited_on is not NULL AND edited_on > received_on THEN edited_on
                         ELSE received_on END as modified_on
                         FROM form_processor_xforminstancesql
+                        WHERE form_processor_xforminstancesql.form_id in %(form_ids)s
                 union
-                select form_id, max(date) as modified_on from form_processor_xformoperationsql group by form_id
+                select form_id, max(date) as modified_on from form_processor_xformoperationsql
+                where form_processor_xformoperationsql.form_id in %(form_ids)s
+                group by form_id
                 ) as d group by form_id
         )
-        UPDATE form_processor_xforminstancesql SET modified_on = max_dates.modified_on
+        UPDATE form_processor_xforminstancesql SET server_modified_on = max_dates.modified_on
         FROM max_dates
         WHERE form_processor_xforminstancesql.form_id = max_dates.form_id
-          AND form_processor_xforminstancesql.form_id in %s
-        """, [form_ids])
+        """, {'form_ids': form_ids})
 
 
 def confirm(msg):

@@ -5,6 +5,7 @@ from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.dbaccessors import get_all_users_by_location
 from corehq.apps.locations.models import SQLLocation
+from corehq.apps.sms.models import MessagingEvent
 from corehq.apps.users.cases import get_owner_id, get_wrapped_owner
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.form_processor.exceptions import CaseNotFound
@@ -36,6 +37,13 @@ class ScheduleInstance(PartitionedModel):
     next_event_due = models.DateTimeField()
     active = models.BooleanField()
 
+    RECIPIENT_TYPE_CASE = 'CommCareCase'
+    RECIPIENT_TYPE_MOBILE_WORKER = 'CommCareUser'
+    RECIPIENT_TYPE_WEB_USER = 'WebUser'
+    RECIPIENT_TYPE_CASE_GROUP = 'CommCareCaseGroup'
+    RECIPIENT_TYPE_USER_GROUP = 'Group'
+    RECIPIENT_TYPE_LOCATION = 'Location'
+
     class Meta:
         abstract = True
         index_together = (
@@ -51,27 +59,26 @@ class ScheduleInstance(PartitionedModel):
     @property
     @memoized
     def recipient(self):
-        if self.recipient_type == 'CommCareCase':
+        if self.recipient_type == self.RECIPIENT_TYPE_CASE:
             return CaseAccessors(self.domain).get_case(self.recipient_id)
-        elif self.recipient_type == 'CommCareUser':
+        elif self.recipient_type == self.RECIPIENT_TYPE_MOBILE_WORKER:
             return CommCareUser.get(self.recipient_id)
-        elif self.recipient_type == 'WebUser':
+        elif self.recipient_type == self.RECIPIENT_TYPE_WEB_USER:
             return WebUser.get(self.recipient_id)
-        elif self.recipient_type == 'CommCareCaseGroup':
+        elif self.recipient_type == self.RECIPIENT_TYPE_CASE_GROUP:
             return CommCareCaseGroup.get(self.recipient_id)
-        elif self.recipient_type == 'Group':
+        elif self.recipient_type == self.RECIPIENT_TYPE_USER_GROUP:
             return Group.get(self.recipient_id)
-        elif self.recipient_type == 'Location':
+        elif self.recipient_type == self.RECIPIENT_TYPE_LOCATION:
             return SQLLocation.by_location_id(self.recipient_id)
         else:
             raise UnknownRecipientType(self.recipient_type)
 
-    @property
-    @memoized
-    def recipient_is_an_individual_contact(self):
+    @staticmethod
+    def recipient_is_an_individual_contact(recipient):
         return (
-            isinstance(self.recipient, (CommCareUser, WebUser)) or
-            is_commcarecase(self.recipient)
+            isinstance(recipient, (CommCareUser, WebUser)) or
+            is_commcarecase(recipient)
         )
 
     @property
@@ -79,7 +86,7 @@ class ScheduleInstance(PartitionedModel):
     def timezone(self):
         timezone = None
 
-        if self.recipient_is_an_individual_contact:
+        if self.recipient_is_an_individual_contact(self.recipient):
             try:
                 timezone = self.recipient.get_time_zone()
             except ValidationError:
@@ -121,26 +128,30 @@ class ScheduleInstance(PartitionedModel):
 
         return obj
 
-    def expand_recipients(self):
-        """
-        Can be used as a generator to iterate over all individual contacts who
-        are the recipients of this ScheduleInstance.
-        """
-        if self.recipient is None:
+    def _expand_recipient(self, recipient):
+        if recipient is None:
             return
-        elif self.recipient_is_an_individual_contact:
-            yield self.recipient
-        elif isinstance(self.recipient, CommCareCaseGroup):
-            case_group = self.recipient
+        elif self.recipient_is_an_individual_contact(recipient):
+            yield recipient
+        elif isinstance(recipient, CommCareCaseGroup):
+            case_group = recipient
             for case in case_group.get_cases():
                 yield case
-        elif isinstance(self.recipient, Group):
-            group = self.recipient
+        elif isinstance(recipient, Group):
+            group = recipient
             for user in group.get_users(is_active=True, only_commcare=False):
                 yield user
-        elif isinstance(self.recipient, SQLLocation):
-            location = self.recipient
-            if self.memoized_schedule.include_descendant_locations:
+        elif isinstance(recipient, SQLLocation):
+            location = recipient
+            if (
+                self.recipient_type == self.RECIPIENT_TYPE_LOCATION and
+                self.memoized_schedule.include_descendant_locations
+            ):
+                # Only include descendant locations when the recipient_type
+                # is RECIPIENT_TYPE_LOCATION. This is because we only do this
+                # for locations the user selected in the UI, and not for
+                # locations that happen to get here because they are a case
+                # owner, for example.
                 location_ids = location.get_descendants(include_self=True).filter(is_archived=False).location_ids()
             else:
                 location_ids = [location.location_id]
@@ -152,16 +163,44 @@ class ScheduleInstance(PartitionedModel):
                         user_ids.add(user.get_id)
                         yield user
         else:
-            raise UnknownRecipientType(self.recipient.__class__.__name__)
+            raise UnknownRecipientType(recipient.__class__.__name__)
+
+    def expand_recipients(self):
+        """
+        Can be used as a generator to iterate over all individual contacts who
+        are the recipients of this ScheduleInstance.
+        """
+        recipient_list = self.recipient
+        if not isinstance(recipient_list, list):
+            recipient_list = [recipient_list]
+
+        for member in recipient_list:
+            for contact in self._expand_recipient(member):
+                yield contact
 
     def handle_current_event(self):
         content = self.memoized_schedule.get_current_event_content(self)
+        logged_event = MessagingEvent.create_from_schedule_instance(self, content)
+
+        case = None
+        if isinstance(self, CaseScheduleInstanceMixin):
+            case = self.case
+
+        recipient_count = 0
         for recipient in self.expand_recipients():
-            content.send(recipient, self)
+            recipient_count += 1
+            content.send(recipient, self, logged_event, case=case)
+
         # As a precaution, always explicitly move to the next event after processing the current
         # event to prevent ever getting stuck on the current event.
         self.memoized_schedule.move_to_next_event(self)
         self.memoized_schedule.move_to_next_event_not_in_the_past(self)
+
+        # Update the MessagingEvent for reporting
+        if recipient_count == 0:
+            logged_event.error(MessagingEvent.ERROR_NO_RECIPIENT)
+        else:
+            logged_event.completed()
 
     @property
     def schedule(self):
@@ -180,6 +219,25 @@ class ScheduleInstance(PartitionedModel):
         """
         return self.schedule
 
+    def check_active_flag_against_schedule(self):
+        """
+        Returns True if the active flag was changed and the schedule instance should be saved.
+        Returns False if nothing changed.
+        """
+        if self.active and not self.memoized_schedule.active:
+            self.active = False
+            return True
+
+        if not self.active and self.memoized_schedule.active:
+            if self.memoized_schedule.total_iterations_complete(self):
+                return False
+
+            self.active = True
+            self.memoized_schedule.move_to_next_event_not_in_the_past(self)
+            return True
+
+        return False
+
 
 class AbstractAlertScheduleInstance(ScheduleInstance):
     alert_schedule_id = models.UUIDField()
@@ -197,6 +255,38 @@ class AbstractAlertScheduleInstance(ScheduleInstance):
             raise ValueError("Expected an instance of AlertSchedule")
 
         self.alert_schedule_id = value.schedule_id
+
+    @staticmethod
+    def copy_for_recipient(instance, recipient_type, recipient_id):
+        """
+        We can copy alert schedule instances for any recipient because the
+        recipient's time zone doesn't factor into the calculation of the
+        next event due timestamp as it does for timed schedule instances.
+        """
+        if not isinstance(instance, AbstractAlertScheduleInstance):
+            raise TypeError("Expected an alert schedule instance")
+
+        new_instance = type(instance)()
+
+        for field in instance._meta.fields:
+            if field.name not in ['schedule_instance_id', 'recipient_type', 'recipient_id']:
+                setattr(new_instance, field.name, getattr(instance, field.name))
+
+        new_instance.recipient_type = recipient_type
+        new_instance.recipient_id = recipient_id
+
+        return new_instance
+
+    def reset_schedule(self, schedule=None):
+        """
+        Resets this alert schedule instance and puts it into a state which
+        is the same as if it had just spawned now.
+        """
+        schedule = schedule or self.memoized_schedule
+        self.current_event_num = 0
+        self.schedule_iteration_num = 1
+        self.active = True
+        schedule.set_first_event_due_timestamp(self)
 
 
 class AbstractTimedScheduleInstance(ScheduleInstance):
@@ -234,7 +324,7 @@ class AbstractTimedScheduleInstance(ScheduleInstance):
         self.active = True
         schedule.set_first_event_due_timestamp(self, start_date=new_start_date)
         schedule.move_to_next_event_not_in_the_past(self)
-        self.schedule_revision = schedule.memoized_schedule_revision
+        self.schedule_revision = schedule.get_schedule_revision(case=schedule.get_case_or_none(self))
 
 
 class AlertScheduleInstance(AbstractAlertScheduleInstance):
@@ -252,6 +342,13 @@ class TimedScheduleInstance(AbstractTimedScheduleInstance):
 
 
 class CaseScheduleInstanceMixin(object):
+
+    RECIPIENT_TYPE_SELF = 'Self'
+    RECIPIENT_TYPE_CASE_OWNER = 'Owner'
+    RECIPIENT_TYPE_LAST_SUBMTTING_USER = 'LastSubmittingUser'
+    RECIPIENT_TYPE_PARENT_CASE = 'ParentCase'
+    RECIPIENT_TYPE_CHILD_CASE = 'SubCase'
+    RECIPIENT_TYPE_CUSTOM = 'CustomRecipient'
 
     @property
     @memoized
@@ -272,17 +369,17 @@ class CaseScheduleInstanceMixin(object):
     @property
     @memoized
     def recipient(self):
-        if self.recipient_type == 'Self':
+        if self.recipient_type == self.RECIPIENT_TYPE_SELF:
             return self.case
-        elif self.recipient_type == 'Owner':
+        elif self.recipient_type == self.RECIPIENT_TYPE_CASE_OWNER:
             return self.case_owner
-        if self.recipient_type == 'LastSubmittingUser':
+        if self.recipient_type == self.RECIPIENT_TYPE_LAST_SUBMTTING_USER:
             return None
-        elif self.recipient_type == 'ParentCase':
+        elif self.recipient_type == self.RECIPIENT_TYPE_PARENT_CASE:
             return None
-        elif self.recipient_type == 'SubCase':
+        elif self.recipient_type == self.RECIPIENT_TYPE_CHILD_CASE:
             return None
-        elif self.recipient_type == 'CustomRecipient':
+        elif self.recipient_type == self.RECIPIENT_TYPE_CUSTOM:
             custom_function = to_function(
                 settings.AVAILABLE_CUSTOM_SCHEDULING_RECIPIENTS[self.recipient_id][0]
             )

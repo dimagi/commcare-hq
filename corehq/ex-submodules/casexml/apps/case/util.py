@@ -170,8 +170,7 @@ def get_indexed_cases(domain, case_ids):
 
 
 def primary_actions(case):
-    return filter(lambda a: not a.is_case_rebuild,
-                  case.actions)
+    return [a for a in case.actions if not a.is_case_rebuild]
 
 
 def iter_cases(case_ids, strip_history=False, wrap=True):
@@ -187,16 +186,25 @@ def iter_cases(case_ids, strip_history=False, wrap=True):
 def property_changed_in_action(case_transaction, case_id, case_property_name):
     from casexml.apps.case.xform import get_case_updates
     PropertyChangedInfo = namedtuple("PropertyChangedInfo", 'transaction new_value modified_on')
-    update_actions = [
-        (update.modified_on_str, update.get_update_action(), case_transaction)
-        for update in get_case_updates(case_transaction.form)
-        if update.id == case_id
-    ]
-    for (modified_on, update_action, case_transaction) in update_actions:
-        if update_action:
-            property_changed = update_action.dynamic_properties.get(case_property_name)
+    include_create_fields = case_property_name in ['owner_id', 'name', 'external_id']
+    case_updates = get_case_updates(case_transaction.form)
+
+    actions = []
+    for update in case_updates:
+        if update.id == case_id:
+            actions.append((update.modified_on_str, update.get_update_action(), case_transaction))
+            if include_create_fields and case_transaction.is_case_create:
+                actions.append((update.modified_on_str, update.get_create_action(), case_transaction))
+
+    for (modified_on, action, case_transaction) in actions:
+        if action:
+            property_changed = action.dynamic_properties.get(case_property_name)
+            if include_create_fields:
+                property_changed = getattr(action, case_property_name, None)
+
             if property_changed:
                 return PropertyChangedInfo(case_transaction, property_changed, modified_on)
+
     return False
 
 

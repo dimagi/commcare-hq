@@ -1,10 +1,10 @@
-/* global module, inject, _ */
+/* global module, inject, _, chai */
 "use strict";
 
 var pageData = hqImport('hqwebapp/js/initial_page_data');
 
 
-describe('PrevalenceOfStuntingDirective', function () {
+describe('Prevalence Of Stunting Directive', function () {
 
     var $scope, $httpBackend, $location, controller;
 
@@ -49,6 +49,9 @@ describe('PrevalenceOfStuntingDirective', function () {
         controller.step = 'map';
     }));
 
+    it('tests instantiate the controller properly', function () {
+        chai.expect(controller).not.to.be.a('undefined');
+    });
 
     it('tests initial state', function () {
         assert.equal(controller.mode, 'map');
@@ -58,6 +61,7 @@ describe('PrevalenceOfStuntingDirective', function () {
 
     it('tests supervisor location', function () {
         controller.filtersData.location_id = 'test-id';
+        controller.userLocationId = 'test-id';
 
         $httpBackend.expectGET('icds_locations?location_id=test-id').respond(200, {location_type: 'supervisor'});
         $httpBackend.expectGET('prevalence_of_stunting?location_id=test-id').respond(200, {
@@ -72,6 +76,7 @@ describe('PrevalenceOfStuntingDirective', function () {
 
     it('tests non supervisor location', function () {
         controller.filtersData.location_id = 'test-id';
+        controller.userLocationId = 'test-id';
 
         $httpBackend.expectGET('icds_locations?location_id=test-id').respond(200, {location_type: 'non supervisor'});
         $httpBackend.expectGET('prevalence_of_stunting?location_id=test-id').respond(200, {
@@ -86,14 +91,14 @@ describe('PrevalenceOfStuntingDirective', function () {
 
     it('tests template popup', function () {
         var result = controller.templatePopup({properties: {name: 'test'}}, {total: 20, total_measured: 15, severe: 5, moderate: 5, normal: 5});
-        assert.equal(result, '<div class="hoverinfo" style="max-width: 200px !important;">'
-            + '<p>test</p>'
-            + '<div>Total Children weighed in given month: <strong>20</strong></div>'
-            + '<div>Total Children with height measured in given month: <strong>15</strong></div>'
-            + '<div>% Unmeasured: <strong>25.00%</strong></div>'
-            + '<div>% Severely stunted: <strong>25.00%</strong></div>'
-            + '<div>% Moderately stunted: <strong>25.00%</strong></div>'
-            + '<div>% Normal: <strong>25.00%</strong></div>');
+        assert.equal(result, '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
+            '<p>test</p>' +
+            '<div>Total Children (6 - 60 months) weighed in given month: <strong>20</strong></div>' +
+            '<div>Total Children (6 - 60 months) with height measured in given month: <strong>15</strong></div>' +
+            '<div>Number of children (6 - 60 months) unmeasured: <strong>5</strong></div>' +
+            '<div>% children (6 - 60 months) with severely stunted growth: <strong>33.33%</strong></div>' +
+            '<div>% children (6 - 60 months) with moderate stunted growth: <strong>33.33%</strong></div>' +
+            '<div>% children (6 - 60 months) with normal stunted growth: <strong>33.33%</strong></div>');
     });
 
     it('tests location change', function () {
@@ -187,7 +192,7 @@ describe('PrevalenceOfStuntingDirective', function () {
         });
         assert.equal(controller.chartOptions.caption.html,
             '<i class="fa fa-info-circle"></i> ' +
-            'Percentage of children (6-60 months) enrolled for ICDS services with height-for-age below -2Z standard deviations of the WHO Child Growth Standards median. \n' +
+            'Percentage of children (6 - 60 months) enrolled for Anganwadi Services with height-for-age below -2Z standard deviations of the WHO Child Growth Standards median. \n' +
             '\n' +
             'Stunting is a sign of chronic undernutrition and has long lasting harmful consequences on the growth of a child'
         );
@@ -196,13 +201,15 @@ describe('PrevalenceOfStuntingDirective', function () {
     it('tests chart tooltip content', function () {
         var month = {value: "Jul 2017", series: []};
 
-        var expected = '<p><strong>Jul 2017</strong></p><br/>'
-            + '<p>% children with normal stunted growth: <strong>10.00%</strong></p>'
-            + '<p>% children with moderate stunted growth: <strong>15.00%</strong></p>'
-            + '<p>% children with severely stunted growth: <strong>20.00%</strong></p>'
-            + '<p>% Unmeasured: <strong>55.00%</strong></p>';
+        var expected = '<p><strong>Jul 2017</strong></p><br/>' +
+            '<div>Total Children (6 - 60 months) weighed in given month: <strong>20</strong></div>' +
+            '<div>Total Children (6 - 60 months) with height measured in given month: <strong>10</strong></div>' +
+            '<div>Number of children (6 - 60 months) unmeasured: <strong>10</strong></div>' +
+            '<div>% children (6 - 60 months) with severely stunted growth: <strong>20.00%</strong></div>' +
+            '<div>% children (6 - 60 months) with moderate stunted growth: <strong>15.00%</strong></div>' +
+            '<div>% children (6 - 60 months) with normal stunted growth: <strong>10.00%</strong></div>';
 
-        var result = controller.tooltipContent(month.value, 0.1, 0.15, 0.2);
+        var result = controller.tooltipContent(month.value, 0.1, 0.15, 0.2, 10, 20);
         assert.equal(expected, result);
     });
 

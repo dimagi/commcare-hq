@@ -151,14 +151,14 @@ class dotsSubmissionTests(TestCase):
             art_nonart.add(obs.is_art)
             self.assertEquals(obs.doc_id, bundle['xform_id'])
 
-        art = filter(lambda x: x.is_art, observations)
+        art = [x for x in observations if x.is_art]
         self.assertEquals(2, len(art))
-        art_answered = filter(lambda x: x.adherence != "unchecked", art)
+        art_answered = [x for x in art if x.adherence != "unchecked"]
         self.assertEquals(1, len(art_answered))
 
-        nonart = filter(lambda x: not x.is_art, observations)
+        nonart = [x for x in observations if not x.is_art]
         self.assertEquals(3, len(nonart))
-        nonart_answered = filter(lambda x: x.adherence != "unchecked", nonart)
+        nonart_answered = [x for x in nonart if x.adherence != "unchecked"]
         self.assertEquals(1, len(nonart_answered))
 
         #this only does SINGLE observations for art and non art
@@ -335,7 +335,7 @@ class dotsSubmissionTests(TestCase):
                 check_obs_props(non_art_first_2, non_art_first_2_props)
 
             if this_day.date() == (ANCHOR_DATE - timedelta(days=1)).date():
-                self.assertEquals(len(day_data.art.dose_dict.keys()),
+                self.assertEquals(len(list(day_data.art.dose_dict.keys())),
                                   2) # two doses, one for the answered, another for unchecked
                 art_slast = day_data.art.dose_dict[0][0]
                 art_slast_props = {

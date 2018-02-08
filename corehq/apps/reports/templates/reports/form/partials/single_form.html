@@ -4,7 +4,7 @@
 {% load hq_shared_tags %}
 {% load humanize %}
 {% comment %}
-requires imports/proptable.html to be included in the main template
+requires proptable.css to be included in the main template
 {% endcomment %}
 <style media="print">
     header {
@@ -190,6 +190,14 @@ requires imports/proptable.html to be included in the main template
     </li>
     {% endif %}
 
+    {% if instance.history %}
+    <li>
+        <a href="#form-history" data-toggle="tab">
+            {% trans "Form History" %}
+        </a>
+    </li>
+    {% endif %}
+
     {% if form_meta_data %}
     <li>
         <a href="#form-metadata" data-toggle="tab">
@@ -321,7 +329,7 @@ requires imports/proptable.html to be included in the main template
                     {% if cases|length == 1 %}in{% endif %}" 
                     id="form-case-acc-{{ forloop.counter }}">
                     <div class="accordion-inner">
-                        {% render_tables case_data.table form_table_options %}
+                        {% include "hqwebapp/proptable/dl_property_table.html" with tables=case_data.table %}
                     </div>
                 </div>
             </div>
@@ -330,9 +338,32 @@ requires imports/proptable.html to be included in the main template
     </div>
     {% endif %}
 
+    {% if instance.history %}
+    <div class="tab-pane" id="form-history">
+    <table class="table table-striped table-hover">
+        <thead>
+        <tr>
+            <th>{% trans "Date" %} ({{ tz_abbrev }})</th>
+            <th>{% trans "User" %}</th>
+            <th>{% trans "Action" %}</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for operation in instance.history %}
+        <tr>
+            <td>{{ operation.readable_date }}</td>
+            <td>{{ operation.user_info|pretty_doc_info }}</td>
+            <td>{{ operation.readable_action }}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    </div>
+    {% endif %}
+
     {% if form_meta_data %}
     <div class="tab-pane" id="form-metadata">
-        {% render_tables form_meta_data form_table_options %}
+        {% include "hqwebapp/proptable/dl_property_table.html" with tables=form_meta_data %}
     </div>
     {% endif %}
 

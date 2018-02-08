@@ -10,7 +10,7 @@ class PasswordLockoutTest(TestCase):
 
     def setUp(self):
         self.domain = Domain.get_or_create_with_name('qwerty', is_active=True)
-        self.username = 'auser@qwerty.commcarehq.org'
+        self.username = 'auser@qwerty.com'
         self.password = 'apassword'
         self.user = WebUser.create(self.domain.name, self.username, self.password)
 

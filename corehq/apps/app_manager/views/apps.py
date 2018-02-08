@@ -35,8 +35,7 @@ from corehq.apps.app_manager.const import (
 from corehq.apps.app_manager.dbaccessors import get_app, get_current_app, get_latest_released_app_version
 from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
     require_can_edit_apps, require_deploy_apps, no_conflict
-from corehq.apps.app_manager.exceptions import IncompatibleFormTypeException, RearrangeError, RemoteRequestError, \
-    AppLinkError
+from corehq.apps.app_manager.exceptions import IncompatibleFormTypeException, RearrangeError, AppLinkError
 from corehq.apps.app_manager.forms import CopyApplicationForm
 from corehq.apps.app_manager.models import (
     Application,
@@ -46,7 +45,6 @@ from corehq.apps.app_manager.models import (
     FormNotFoundException,
     Module,
     ModuleNotFoundException,
-    load_app_template,
     ReportModule, LinkedApplication)
 from corehq.apps.app_manager.models import import_app as import_app_util
 from corehq.apps.app_manager.util import (
@@ -67,6 +65,7 @@ from corehq.apps.domain.decorators import (
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
+from corehq.apps.linked_domain.exceptions import RemoteRequestError
 from corehq.apps.translations.models import Translation
 from corehq.apps.users.dbaccessors.all_commcare_users import get_practice_mode_mobile_workers
 from corehq.elastic import ESError
@@ -176,8 +175,7 @@ def get_app_view_context(request, app):
         'warning': _("This is not an allowed value for this field"),
     }
     if toggles.CUSTOM_PROPERTIES.enabled(request.domain) and 'custom_properties' in getattr(app, 'profile', {}):
-        custom_properties_array = map(lambda p: {'key': p[0], 'value': p[1]},
-                                      app.profile.get('custom_properties').items())
+        custom_properties_array = [{'key': p[0], 'value': p[1]} for p in app.profile.get('custom_properties').items()]
         app_view_options.update({'customProperties': custom_properties_array})
     context.update({
         'app_view_options': app_view_options,
@@ -200,13 +198,10 @@ def get_app_view_context(request, app):
         # get setting dict from settings_layout
         if not settings_layout:
             return None
-        matched = filter(
-            lambda x: x['type'] == setting_type and x['id'] == setting_id,
-            [
+        matched = [x for x in [
                 setting for section in settings_layout
                 for setting in section['settings']
-            ]
-        )
+            ] if x['type'] == setting_type and x['id'] == setting_id]
         if matched:
             return matched[0]
         else:
@@ -376,7 +371,7 @@ def copy_app(request, domain):
                 )
                 linked_app.save()
                 try:
-                    update_linked_app(app)
+                    update_linked_app(linked_app)
                 except AppLinkError as e:
                     messages.error(request, str(e))
                     return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[domain, app_id]))
@@ -394,23 +389,6 @@ def copy_app(request, domain):
     else:
         from corehq.apps.app_manager.views.view_generic import view_generic
         return view_generic(request, domain, app_id=app_id, copy_app_form=form)
-
-
-@require_can_edit_apps
-def app_from_template(request, domain, slug):
-    send_hubspot_form(HUBSPOT_APP_TEMPLATE_FORM_ID, request)
-    clear_app_cache(request, domain)
-    template = load_app_template(slug)
-    app = import_app_util(template, domain, {
-        'created_from_template': '%s' % slug,
-    })
-    module_id = 0
-    form_id = 0
-    try:
-        app.get_module(module_id).get_form(form_id)
-    except (ModuleNotFoundException, FormNotFoundException):
-        return HttpResponseRedirect(reverse('view_app', args=[domain, app._id]))
-    return HttpResponseRedirect(reverse('view_form_legacy', args=[domain, app._id, module_id, form_id]))
 
 
 @require_can_edit_apps
@@ -450,7 +428,7 @@ def import_app(request, domain):
         if not valid_request:
             return render(request, template, {'domain': domain})
 
-        source = decompress([chr(int(x)) if int(x) < 256 else int(x) for x in compressed.split(',')])
+        source = decompress([six.unichr(int(x)) if int(x) < 256 else int(x) for x in compressed.split(',')])
         source = json.loads(source)
         assert(source is not None)
         app = import_app_util(source, domain, {'name': name})

@@ -113,9 +113,9 @@ class ExplodeCasesDbTest(TestCase):
         case_ids = self.accessor.get_case_ids_in_domain()
         cases_back = list(self.accessor.iter_cases(case_ids))
         self.assertEqual(10, len(cases_back))
-        parent_cases = {p.case_id: p for p in filter(lambda case: case.type == parent_type, cases_back)}
+        parent_cases = {p.case_id: p for p in [case for case in cases_back if case.type == parent_type]}
         self.assertEqual(5, len(parent_cases))
-        child_cases = filter(lambda case: case.type == 'exploder-child-type', cases_back)
+        child_cases = [case for case in cases_back if case.type == 'exploder-child-type']
         self.assertEqual(5, len(child_cases))
         child_indices = [child.indices[0].referenced_id for child in child_cases]
         # make sure they're different
@@ -250,7 +250,7 @@ class ExplodeLedgersTest(BaseSyncTest):
             )
         }
         self.device.post_changes([case1, case2])
-        self.device.post_changes(self.ledgers.values())
+        self.device.post_changes(list(self.ledgers.values()))
 
     def test_explode_ledgers(self):
         explode_cases(self.project.name, self.user_id, 5)

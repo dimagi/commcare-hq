@@ -5,7 +5,6 @@ import re
 from couchdbkit import ResourceNotFound
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.models import ApplicationBase
-from corehq.apps.domain.auth import determine_authtype_from_request
 from corehq.apps.receiverwrapper.exceptions import LocalSubmissionError
 from corehq.form_processor.submission_post import SubmissionPost
 from corehq.form_processor.utils import convert_xform_to_json
@@ -205,13 +204,6 @@ def get_app_and_build_ids(domain, build_or_app_id):
             if copy_of:
                 return copy_of, build_or_app_id
     return build_or_app_id, None
-
-
-def determine_authtype(request):
-    if request.GET.get('authtype'):
-        return request.GET['authtype']
-
-    return determine_authtype_from_request(request)
 
 
 def from_demo_user(form_json):

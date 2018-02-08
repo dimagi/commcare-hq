@@ -1,10 +1,10 @@
-/* global module, inject */
+/* global module, inject, chai */
 "use strict";
 
 var pageData = hqImport('hqwebapp/js/initial_page_data');
 
 
-describe('LactatingEnrolledWomenDirective', function () {
+describe('Lactating Enrolled Women Directive', function () {
 
     var $scope, $httpBackend, $location, controller;
 
@@ -34,6 +34,9 @@ describe('LactatingEnrolledWomenDirective', function () {
         controller.step = 'map';
     }));
 
+    it('tests instantiate the controller properly', function () {
+        chai.expect(controller).not.to.be.a('undefined');
+    });
 
     it('tests initial state', function () {
         assert.equal(controller.mode, 'map');
@@ -43,6 +46,7 @@ describe('LactatingEnrolledWomenDirective', function () {
 
     it('tests supervisor location', function () {
         controller.filtersData.location_id = 'test-id';
+        controller.userLocationId = 'test-id';
 
         $httpBackend.expectGET('icds_locations?location_id=test-id').respond(200, {location_type: 'supervisor'});
         $httpBackend.expectGET('lactating_enrolled_women?location_id=test-id').respond(200, {
@@ -57,6 +61,7 @@ describe('LactatingEnrolledWomenDirective', function () {
 
     it('tests non supervisor location', function () {
         controller.filtersData.location_id = 'test-id';
+        controller.userLocationId = 'test-id';
 
         $httpBackend.expectGET('icds_locations?location_id=test-id').respond(200, {location_type: 'non supervisor'});
         $httpBackend.expectGET('lactating_enrolled_women?location_id=test-id').respond(200, {
@@ -70,10 +75,14 @@ describe('LactatingEnrolledWomenDirective', function () {
     });
 
     it('tests template popup', function () {
-        var result = controller.templatePopup({properties: {name: 'test'}}, {valid: 5});
-        assert.equal(result, '<div class="hoverinfo" style="max-width: 200px !important;">' +
-            '<p>test</p>'
-            + '<div>Total number of lactating women who are enrolled for ICDS services: <strong>5</strong></div></ul>');
+        var result = controller.templatePopup({properties: {name: 'test'}}, {valid: 5, all: 10});
+        var expected = '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
+            '<p>test</p>' +
+            '<div>Number of lactating women who are enrolled for Anganwadi Services: <strong>5</strong>' +
+            '<div>Total number of lactating women who are registered: <strong>10</strong>' +
+            '<div>Percentage of registered lactating women who are enrolled for Anganwadi Services: <strong>50.00%</strong>' +
+            '</div>';
+        assert.equal(result, expected);
     });
 
     it('tests location change', function () {
@@ -168,16 +177,18 @@ describe('LactatingEnrolledWomenDirective', function () {
         });
         assert.equal(controller.chartOptions.caption.html,
             '<i class="fa fa-info-circle"></i> ' +
-            'Total number of lactating women who are enrolled for ICDS services'
+            'Total number of lactating women who are enrolled for Anganwadi Services'
         );
     });
 
     it('tests chart tooltip content', function () {
-        var data = 42;
+        var data = {y: 42, all: 84};
         var month = {value: "Jul 2017", series: []};
 
-        var expected = '<p><strong>Jul 2017</strong></p><br/>'
-            + '<p>Total number of lactating women who are enrolled for ICDS services: <strong>42</strong></p>';
+        var expected = "<p><strong>Jul 2017</strong></p><br/>"
+            + "<div>Number of lactating women who are enrolled for Anganwadi Services: <strong>42</strong></div>"
+            + "<div>Total number of lactating women who are registered: <strong>84</strong></div>"
+            + "<div>Percentage of registered lactating women who are enrolled for Anganwadi Services: <strong>50.00%</strong></div>";
 
         var result = controller.tooltipContent(month.value, data);
         assert.equal(expected, result);

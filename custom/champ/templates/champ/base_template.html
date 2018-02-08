@@ -40,7 +40,7 @@
 {% block stylesheets %}
     {{ block.super }}
 
-    <link type="text/css" rel="stylesheet" media="all" href="{% static 'hqwebapp/js/lib/nvd3/nv.d3.css' %}">
+    <link type="text/css" rel="stylesheet" media="all" href="{% static 'nvd3/src/nv.d3.css' %}">
     <link type="text/css" rel="stylesheet" media="all" href="{% static 'ui-select/dist/select.css' %}"/>
     <link type="text/css" rel="stylesheet" media="all" href="{% static 'bootstrap-daterangepicker/daterangepicker.css' %}"/>
     <style>
@@ -53,6 +53,9 @@
         }
         .ui-select-match > .btn-default {
             background-color: #ffffff;
+        }
+        .ui-select-multiple > div {
+            margin: 0 12px;
         }
     </style>
 {% endblock %}

@@ -10,8 +10,10 @@ module.exports = {
     // http://eslint.org/docs/user-guide/configuring#specifying-globals
     "globals": {
         // false means it shouldn't be overwritten
+        "define": false,
         "hqDefine": false,
         "hqImport": false,
+        "requirejs": false,
         "gettext": false,
         "assert": false,
         "sinon": false,
@@ -30,7 +32,7 @@ module.exports = {
         // First option can be off, warn, or error
         "comma-dangle": ["warn", "always-multiline"],
         "eqeqeq": ["error"],
-        "indent": ["warn", 4],
+        "indent": ["warn", 4, {"SwitchCase":1}],
         "linebreak-style": ["error", "unix"],
         "semi": ["error", "always"],
     }

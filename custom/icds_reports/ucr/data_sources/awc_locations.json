@@ -8,6 +8,7 @@
   ],
   "server_environment": [
     "softlayer",
+    "icds-new",
     "icds"
   ],
   "config": {
@@ -522,6 +523,7 @@
       }
     },
     "referenced_doc_type": "Location",
-    "table_id": "static-awc_location"
+    "table_id": "static-awc_location",
+    "disable_destructive_rebuild": true
   }
 }

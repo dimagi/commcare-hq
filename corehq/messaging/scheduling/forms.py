@@ -1,12 +1,17 @@
 from __future__ import absolute_import
+import json
 import re
+from corehq.apps.data_interfaces.forms import CaseRuleCriteriaForm, validate_case_property_name
+from corehq.apps.data_interfaces.models import CreateScheduleInstanceActionDefinition
 from corehq.apps.groups.models import Group
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from crispy_forms import layout as crispy
 from crispy_forms import bootstrap as twbscrispy
 from crispy_forms.helper import FormHelper
 from dateutil import parser
+from django.conf import settings
 from django.core.exceptions import ValidationError
+from django.db import transaction
 from django.forms.fields import (
     BooleanField,
     CharField,
@@ -15,15 +20,35 @@ from django.forms.fields import (
     IntegerField,
 )
 from django.forms.forms import Form
-from django.forms.widgets import Textarea, CheckboxSelectMultiple
+from django.forms.widgets import CheckboxSelectMultiple, HiddenInput
 from django.utils.functional import cached_property
-from django.utils.translation import ugettext_lazy as _, ugettext
+from dimagi.utils.django.fields import TrimmedCharField
+from django.utils.translation import ugettext as _, ugettext_lazy
 from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.locations.models import SQLLocation
-from corehq.apps.translations.models import StandaloneTranslationDoc
+from corehq.apps.reminders.forms import validate_form_unique_id
+from corehq.apps.reminders.util import get_form_list
+from corehq.apps.sms.util import get_or_create_translation_doc
+from corehq.apps.smsforms.models import SQLXFormsSession
 from corehq.apps.users.models import CommCareUser
+from corehq.messaging.scheduling.exceptions import ImmediateMessageEditAttempt, UnsupportedScheduleError
+from corehq.messaging.scheduling.models import (
+    Schedule,
+    AlertSchedule,
+    TimedSchedule,
+    TimedEvent,
+    RandomTimedEvent,
+    CasePropertyTimedEvent,
+    ImmediateBroadcast,
+    ScheduledBroadcast,
+    SMSContent,
+    SMSSurveyContent,
+    CustomContent,
+)
+from corehq.messaging.scheduling.scheduling_partitioned.models import ScheduleInstance, CaseScheduleInstanceMixin
 from couchdbkit.resource import ResourceNotFound
+from langcodes import get_name as get_language_name
 import six
 from six.moves import range
 
@@ -64,6 +89,10 @@ class RecipientField(CharField):
 
 
 class ScheduleForm(Form):
+    # Prefix to avoid name collisions; this means all input
+    # names in the HTML are prefixed with "schedule-"
+    prefix = "schedule"
+
     SEND_DAILY = 'daily'
     SEND_WEEKLY = 'weekly'
     SEND_MONTHLY = 'monthly'
@@ -72,60 +101,67 @@ class ScheduleForm(Form):
     STOP_AFTER_OCCURRENCES = 'after_occurrences'
     STOP_NEVER = 'never'
 
-    RECIPIENT_TYPE_USER = 'USER'
-    RECIPIENT_TYPE_USER_GROUP = 'USER_GROUP'
-    RECIPIENT_TYPE_LOCATION = 'LOCATION'
-    RECIPIENT_TYPE_CASE_GROUP = 'CASE_GROUP'
+    CONTENT_SMS = 'sms'
+    CONTENT_EMAIL = 'email'
+    CONTENT_SMS_SURVEY = 'sms_survey'
+    CONTENT_IVR_SURVEY = 'ivr_survey'
+    CONTENT_CUSTOM_SMS = 'custom_sms'
 
-    schedule_name = CharField(
-        required=True,
-        label=_('Schedule Name'),
-        max_length=1000,
-    )
+    LANGUAGE_PROJECT_DEFAULT = 'PROJECT_DEFAULT'
+
     send_frequency = ChoiceField(
         required=True,
-        label=_('Send'),
+        label=ugettext_lazy('Send'),
         choices=(
-            (SEND_IMMEDIATELY, _('Immediately')),
-            (SEND_DAILY, _('Daily')),
-            (SEND_WEEKLY, _('Weekly')),
-            (SEND_MONTHLY, _('Monthly')),
+            (SEND_IMMEDIATELY, ugettext_lazy('Immediately')),
+            (SEND_DAILY, ugettext_lazy('Daily')),
+            (SEND_WEEKLY, ugettext_lazy('Weekly')),
+            (SEND_MONTHLY, ugettext_lazy('Monthly')),
         )
     )
     weekdays = MultipleChoiceField(
         required=False,
-        label=_('On'),
+        label=ugettext_lazy('On'),
         choices=(
-            ('6', _('Sunday')),
-            ('0', _('Monday')),
-            ('1', _('Tuesday')),
-            ('2', _('Wednesday')),
-            ('3', _('Thursday')),
-            ('4', _('Friday')),
-            ('5', _('Saturday')),
+            ('6', ugettext_lazy('Sunday')),
+            ('0', ugettext_lazy('Monday')),
+            ('1', ugettext_lazy('Tuesday')),
+            ('2', ugettext_lazy('Wednesday')),
+            ('3', ugettext_lazy('Thursday')),
+            ('4', ugettext_lazy('Friday')),
+            ('5', ugettext_lazy('Saturday')),
         ),
         widget=CheckboxSelectMultiple()
     )
     days_of_month = MultipleChoiceField(
         required=False,
-        label=_('On Days'),
+        label=ugettext_lazy('On Days'),
         choices=(
             # The actual choices are rendered by a template
             tuple((str(x), '') for x in range(-3, 0)) +
             tuple((str(x), '') for x in range(1, 29))
         )
     )
+    send_time_type = ChoiceField(
+        required=True,
+        choices=(
+            (TimedSchedule.EVENT_SPECIFIC_TIME, ugettext_lazy("A specific time")),
+            (TimedSchedule.EVENT_RANDOM_TIME, ugettext_lazy("A random time")),
+        )
+    )
     send_time = CharField(required=False)
-    start_date = CharField(
+    window_length = IntegerField(
+        required=False,
+        min_value=1,
+        max_value=1439,
         label='',
-        required=False
     )
     stop_type = ChoiceField(
         required=False,
         choices=(
             # The text for STOP_AFTER_OCCURRENCES gets set dynamically
             (STOP_AFTER_OCCURRENCES, ''),
-            (STOP_NEVER, _('Never')),
+            (STOP_NEVER, ugettext_lazy('Never')),
         )
     )
     occurrences = IntegerField(
@@ -135,53 +171,82 @@ class ScheduleForm(Form):
     )
     recipient_types = MultipleChoiceField(
         required=True,
-        label=_('Recipient(s)'),
+        label=ugettext_lazy('Recipient(s)'),
         choices=(
-            (RECIPIENT_TYPE_USER, _("Users")),
-            (RECIPIENT_TYPE_USER_GROUP, _("User Groups")),
-            (RECIPIENT_TYPE_LOCATION, _("User Organizations")),
-            (RECIPIENT_TYPE_CASE_GROUP, _("Case Groups")),
+            (ScheduleInstance.RECIPIENT_TYPE_MOBILE_WORKER, ugettext_lazy("Users")),
+            (ScheduleInstance.RECIPIENT_TYPE_USER_GROUP, ugettext_lazy("User Groups")),
+            (ScheduleInstance.RECIPIENT_TYPE_LOCATION, ugettext_lazy("User Organizations")),
+            (ScheduleInstance.RECIPIENT_TYPE_CASE_GROUP, ugettext_lazy("Case Groups")),
         )
     )
     user_recipients = RecipientField(
         required=False,
-        label=_("User Recipient(s)"),
+        label=ugettext_lazy("User Recipient(s)"),
     )
     user_group_recipients = RecipientField(
         required=False,
-        label=_("User Group Recipient(s)"),
+        label=ugettext_lazy("User Group Recipient(s)"),
     )
     user_organization_recipients = RecipientField(
         required=False,
-        label=_("User Organization Recipient(s)"),
+        label=ugettext_lazy("User Organization Recipient(s)"),
     )
     include_descendant_locations = BooleanField(
         required=False,
-        label=_("Also send to users at child locations"),
+        label=ugettext_lazy("Also send to users at child locations"),
     )
     case_group_recipients = RecipientField(
         required=False,
-        label=_("Case Group Recipient(s)"),
+        label=ugettext_lazy("Case Group Recipient(s)"),
     )
     content = ChoiceField(
         required=True,
-        label=_("What to send"),
+        label=ugettext_lazy("What to send"),
         choices=(
-            ('sms', _('SMS')),
-            # ('email', _('Email')),
-            # ('sms_survey', _('SMS Survey')),
-            # ('ivr_survey', _('IVR Survey')),
+            (CONTENT_SMS, ugettext_lazy('SMS')),
+            # (CONTENT_EMAIL, ugettext_lazy('Email')),
         )
     )
-    translate = BooleanField(
-        label=_("Translate this message"),
-        required=False
+    message = CharField(
+        required=False,
+        widget=HiddenInput,
+    )
+    form_unique_id = ChoiceField(
+        required=False,
+        label=ugettext_lazy("Form"),
+    )
+    survey_expiration_in_hours = IntegerField(
+        required=False,
+        min_value=1,
+        max_value=SQLXFormsSession.MAX_SESSION_LENGTH // 60,
+        label='',
+    )
+    default_language_code = ChoiceField(
+        required=True,
+        label=ugettext_lazy("Default Language"),
+    )
+    survey_reminder_intervals_enabled = ChoiceField(
+        required=False,
+        choices=(
+            ('N', ugettext_lazy("Disabled")),
+            ('Y', ugettext_lazy("Enabled")),
+        ),
+    )
+    survey_reminder_intervals = CharField(
+        required=False,
+        label='',
+    )
+    submit_partially_completed_forms = BooleanField(
+        required=False,
+        label=ugettext_lazy("When the survey session expires, submit a partially "
+                            "completed form if the survey is not completed"),
+    )
+    include_case_updates_in_partial_submissions = BooleanField(
+        required=False,
+        label=ugettext_lazy("Include case updates in partially completed submissions"),
     )
 
     def update_send_frequency_choices(self, initial_value):
-        if not initial_value:
-            return
-
         def filter_function(two_tuple):
             if initial_value == self.SEND_IMMEDIATELY:
                 return two_tuple[0] == self.SEND_IMMEDIATELY
@@ -192,61 +257,220 @@ class ScheduleForm(Form):
             c for c in self.fields['send_frequency'].choices if filter_function(c)
         ]
 
-    def __init__(self, *args, **kwargs):
-        self.domain = kwargs.pop('domain')
-        initial = kwargs.get('initial')
-        readonly = False
-        if initial:
-            readonly = (initial.get('send_frequency') == self.SEND_IMMEDIATELY)
-            message = initial.get('message', {})
-            kwargs['initial']['translate'] = '*' not in message
-            kwargs['initial']['non_translated_message'] = message.get('*', '')
-            for lang in self.project_languages:
-                kwargs['initial']['message_%s' % lang] = message.get(lang, '')
+    def set_default_language_code_choices(self):
+        choices = [
+            (self.LANGUAGE_PROJECT_DEFAULT, _("Project Default")),
+        ]
+
+        choices.extend([
+            (language_code, _(get_language_name(language_code)))
+            for language_code in self.language_list
+        ])
+
+        self.fields['default_language_code'].choices = choices
+
+    def add_intial_for_immediate_schedule(self, initial):
+        initial['send_frequency'] = self.SEND_IMMEDIATELY
+
+    def add_intial_for_daily_schedule(self, initial):
+        initial['send_frequency'] = self.SEND_DAILY
+
+    def add_intial_for_weekly_schedule(self, initial):
+        weekdays = [(self.initial_schedule.start_day_of_week + e.day) % 7
+                    for e in self.initial_schedule.memoized_events]
+        initial['send_frequency'] = self.SEND_WEEKLY
+        initial['weekdays'] = [str(day) for day in weekdays]
+
+    def add_intial_for_monthly_schedule(self, initial):
+        initial['send_frequency'] = self.SEND_MONTHLY
+        initial['days_of_month'] = [str(e.day) for e in self.initial_schedule.memoized_events]
+
+    def add_initial_for_send_time(self, initial):
+        if self.initial_schedule.event_type == TimedSchedule.EVENT_SPECIFIC_TIME:
+            initial['send_time'] = self.initial_schedule.memoized_events[0].time.strftime('%H:%M')
+        elif self.initial_schedule.event_type == TimedSchedule.EVENT_RANDOM_TIME:
+            initial['send_time'] = self.initial_schedule.memoized_events[0].time.strftime('%H:%M')
+            initial['window_length'] = self.initial_schedule.memoized_events[0].window_length
+        else:
+            raise ValueError("Unexpected event_type: %s" % self.initial_schedule.event_type)
+
+    def add_initial_for_timed_schedule(self, initial):
+        initial['send_time_type'] = self.initial_schedule.event_type
+
+        self.add_initial_for_send_time(initial)
+
+        if self.initial_schedule.total_iterations == TimedSchedule.REPEAT_INDEFINITELY:
+            initial['stop_type'] = self.STOP_NEVER
+        else:
+            initial['stop_type'] = self.STOP_AFTER_OCCURRENCES
+            initial['occurrences'] = self.initial_schedule.total_iterations
+
+    def add_initial_recipients(self, recipients, initial):
+        recipient_types = set()
+        user_recipients = []
+        user_group_recipients = []
+        user_organization_recipients = []
+        case_group_recipients = []
+
+        for recipient_type, recipient_id in recipients:
+            recipient_types.add(recipient_type)
+            if recipient_type == ScheduleInstance.RECIPIENT_TYPE_MOBILE_WORKER:
+                user_recipients.append(recipient_id)
+            elif recipient_type == ScheduleInstance.RECIPIENT_TYPE_USER_GROUP:
+                user_group_recipients.append(recipient_id)
+            elif recipient_type == ScheduleInstance.RECIPIENT_TYPE_LOCATION:
+                user_organization_recipients.append(recipient_id)
+            elif recipient_type == ScheduleInstance.RECIPIENT_TYPE_CASE_GROUP:
+                case_group_recipients.append(recipient_id)
+
+        initial.update({
+            'recipient_types': list(recipient_types),
+            'user_recipients': ','.join(user_recipients),
+            'user_group_recipients': ','.join(user_group_recipients),
+            'user_organization_recipients': ','.join(user_organization_recipients),
+            'case_group_recipients': ','.join(case_group_recipients),
+            'include_descendant_locations': self.initial_schedule.include_descendant_locations,
+        })
+
+    def add_initial_for_content(self, result):
+        content = self.initial_schedule.memoized_events[0].content
+        if isinstance(content, SMSContent):
+            result['content'] = self.CONTENT_SMS
+            result['message'] = content.message
+        elif isinstance(content, SMSSurveyContent):
+            result['content'] = self.CONTENT_SMS_SURVEY
+            result['form_unique_id'] = content.form_unique_id
+            result['survey_expiration_in_hours'] = content.expire_after // 60
+            result['submit_partially_completed_forms'] = content.submit_partially_completed_forms
+            result['include_case_updates_in_partial_submissions'] = \
+                content.include_case_updates_in_partial_submissions
+
+            if content.reminder_intervals:
+                result['survey_reminder_intervals_enabled'] = 'Y'
+                result['survey_reminder_intervals'] = ', '.join([str(i) for i in content.reminder_intervals])
+            else:
+                result['survey_reminder_intervals_enabled'] = 'N'
+        else:
+            raise TypeError("Unexpected content type: %s" % type(content))
+
+    def compute_initial(self):
+        result = {}
+        schedule = self.initial_schedule
+        if schedule:
+            result['default_language_code'] = (
+                schedule.default_language_code
+                if schedule.default_language_code
+                else self.LANGUAGE_PROJECT_DEFAULT
+            )
+            if isinstance(schedule, AlertSchedule):
+                if schedule.ui_type == Schedule.UI_TYPE_IMMEDIATE:
+                    self.add_intial_for_immediate_schedule(result)
+                else:
+                    raise UnsupportedScheduleError(
+                        "Unexpected Schedule ui_type '%s' for AlertSchedule '%s'" %
+                        (schedule.ui_type, schedule.schedule_id)
+                    )
+            elif isinstance(schedule, TimedSchedule):
+                if schedule.ui_type == Schedule.UI_TYPE_DAILY:
+                    self.add_intial_for_daily_schedule(result)
+                elif schedule.ui_type == Schedule.UI_TYPE_WEEKLY:
+                    self.add_intial_for_weekly_schedule(result)
+                elif schedule.ui_type == Schedule.UI_TYPE_MONTHLY:
+                    self.add_intial_for_monthly_schedule(result)
+                else:
+                    raise UnsupportedScheduleError(
+                        "Unexpected Schedule ui_type '%s' for TimedSchedule '%s'" %
+                        (schedule.ui_type, schedule.schedule_id)
+                    )
+
+                self.add_initial_for_timed_schedule(result)
+
+            self.add_initial_for_content(result)
+
+        return result
+
+    def __init__(self, domain, schedule, can_use_sms_surveys, *args, **kwargs):
+        self.domain = domain
+        self.initial_schedule = schedule
+        self.can_use_sms_surveys = can_use_sms_surveys
+
+        if kwargs.get('initial'):
+            raise ValueError("Initial values are set by the form")
+
+        initial = {}
+        if schedule:
+            initial = self.compute_initial()
+            kwargs['initial'] = initial
 
         super(ScheduleForm, self).__init__(*args, **kwargs)
-        self.update_send_frequency_choices(initial.get('send_frequency') if initial else None)
+
+        self.add_additional_content_types()
+        self.set_form_unique_id_choices()
+        self.set_default_language_code_choices()
+        if initial.get('send_frequency'):
+            self.update_send_frequency_choices(initial.get('send_frequency'))
+
         self.helper = FormHelper()
+        self.helper.form_tag = False
         self.helper.form_class = 'form form-horizontal'
         self.helper.label_class = 'col-sm-2 col-md-2 col-lg-2'
         self.helper.field_class = 'col-sm-10 col-md-7 col-lg-5'
-        self.add_content_fields()
 
-        if readonly:
-            for field_name, field in self.fields.items():
-                field.disabled = True
+        self.helper.layout = crispy.Layout(*self.get_layout_fields())
 
-        layout_fields = [
+    @cached_property
+    def form_choices(self):
+        return [(form['code'], form['name']) for form in get_form_list(self.domain)]
+
+    def add_additional_content_types(self):
+        if (
+            self.can_use_sms_surveys or
+            (self.initial_schedule and self.initial_schedule.memoized_uses_sms_survey)
+        ):
+            self.fields['content'].choices += [
+                (self.CONTENT_SMS_SURVEY, _("SMS Survey")),
+            ]
+
+    def set_form_unique_id_choices(self):
+        self.fields['form_unique_id'].choices = self.form_choices
+
+    @property
+    def scheduling_fieldset_legend(self):
+        return _("Scheduling")
+
+    def get_layout_fields(self):
+        return [
             crispy.Fieldset(
-                ugettext("Scheduling"),
+                self.scheduling_fieldset_legend,
                 *self.get_scheduling_layout_fields()
             ),
             crispy.Fieldset(
-                ugettext("Recipients"),
+                _("Recipients"),
                 *self.get_recipients_layout_fields()
             ),
             crispy.Fieldset(
-                ugettext("Content"),
+                _("Content"),
                 *self.get_content_layout_fields()
-            )
+            ),
+            crispy.Fieldset(
+                _("Advanced Survey Options"),
+                *self.get_advanced_survey_layout_fields(),
+                data_bind="visible: content() === '%s'" % self.CONTENT_SMS_SURVEY
+            ),
+            crispy.Fieldset(
+                _("Advanced"),
+                *self.get_advanced_layout_fields()
+            ),
         ]
 
-        if not readonly:
-            layout_fields += [
-                hqcrispy.FormActions(
-                    twbscrispy.StrictButton(
-                        _("Save"),
-                        css_class='btn-primary',
-                        type='submit',
-                    ),
-                ),
-            ]
+    def get_start_date_layout_fields(self):
+        raise NotImplementedError()
 
-        self.helper.layout = crispy.Layout(*layout_fields)
+    def get_extra_timing_fields(self):
+        return []
 
     def get_scheduling_layout_fields(self):
-        return [
-            crispy.Field('schedule_name'),
+        result = [
             crispy.Field(
                 'send_frequency',
                 data_bind='value: send_frequency',
@@ -259,7 +483,7 @@ class ScheduleForm(Form):
                 data_bind='visible: showWeekdaysInput',
             ),
             hqcrispy.B3MultiField(
-                ugettext("On Days"),
+                _("On Days"),
                 crispy.Field(
                     'days_of_month',
                     template='scheduling/partial/days_of_month_picker.html',
@@ -267,26 +491,40 @@ class ScheduleForm(Form):
                 data_bind='visible: showDaysOfMonthInput',
             ),
             hqcrispy.B3MultiField(
-                ugettext("At"),
-                crispy.Field(
-                    'send_time',
-                    template='scheduling/partial/time_picker.html',
-                ),
-                data_bind='visible: showTimeInput',
-            ),
-            hqcrispy.B3MultiField(
-                ugettext("Start"),
+                _("At"),
                 crispy.Div(
                     twbscrispy.InlineField(
-                        'start_date',
-                        data_bind='value: start_date',
+                        'send_time_type',
+                        data_bind='value: send_time_type',
                     ),
-                    css_class='col-sm-6',
+                    css_class='col-sm-4',
                 ),
-                data_bind='visible: showStartDateInput',
+                crispy.Div(
+                    twbscrispy.InlineField(
+                        'send_time',
+                        template='scheduling/partial/time_picker.html',
+                    ),
+                    data_bind=("visible: send_time_type() === '%s' || send_time_type() === '%s'"
+                               % (TimedSchedule.EVENT_SPECIFIC_TIME, TimedSchedule.EVENT_RANDOM_TIME)),
+                ),
+                *self.get_extra_timing_fields(),
+                data_bind="visible: showTimeInput"
             ),
             hqcrispy.B3MultiField(
-                ugettext("Stop"),
+                _("Random Window Length (minutes)"),
+                crispy.Div(
+                    crispy.Field('window_length'),
+                ),
+                data_bind=("visible: showTimeInput() && send_time_type() === '%s'"
+                           % TimedSchedule.EVENT_RANDOM_TIME),
+            ),
+        ]
+
+        result.extend(self.get_start_date_layout_fields())
+
+        result.extend([
+            hqcrispy.B3MultiField(
+                _("Stop"),
                 crispy.Div(
                     twbscrispy.InlineField(
                         'stop_type',
@@ -308,16 +546,18 @@ class ScheduleForm(Form):
                 "",
                 crispy.HTML(
                     '<span>%s</span> <span data-bind="text: computedEndDate"></span>'
-                    % ugettext("Date of final occurrence:"),
+                    % _("Date of final occurrence:"),
                 ),
                 data_bind="visible: computedEndDate() !== ''",
             ),
-        ]
+        ])
+
+        return result
 
     def get_recipients_layout_fields(self):
         return [
             hqcrispy.B3MultiField(
-                ugettext("Recipient(s)"),
+                _("Recipient(s)"),
                 crispy.Field(
                     'recipient_types',
                     template='scheduling/partial/recipient_types_picker.html',
@@ -329,7 +569,7 @@ class ScheduleForm(Form):
                     data_bind='value: user_recipients.value',
                     placeholder=_("Select mobile worker(s)")
                 ),
-                data_bind="visible: recipientTypeSelected('%s')" % self.RECIPIENT_TYPE_USER,
+                data_bind="visible: recipientTypeSelected('%s')" % ScheduleInstance.RECIPIENT_TYPE_MOBILE_WORKER,
             ),
             crispy.Div(
                 crispy.Field(
@@ -337,7 +577,7 @@ class ScheduleForm(Form):
                     data_bind='value: user_group_recipients.value',
                     placeholder=_("Select user group(s)")
                 ),
-                data_bind="visible: recipientTypeSelected('%s')" % self.RECIPIENT_TYPE_USER_GROUP,
+                data_bind="visible: recipientTypeSelected('%s')" % ScheduleInstance.RECIPIENT_TYPE_USER_GROUP,
             ),
             crispy.Div(
                 crispy.Field(
@@ -346,7 +586,7 @@ class ScheduleForm(Form):
                     placeholder=_("Select user organization(s)")
                 ),
                 crispy.Field('include_descendant_locations'),
-                data_bind="visible: recipientTypeSelected('%s')" % self.RECIPIENT_TYPE_LOCATION,
+                data_bind="visible: recipientTypeSelected('%s')" % ScheduleInstance.RECIPIENT_TYPE_LOCATION,
             ),
             crispy.Div(
                 crispy.Field(
@@ -354,40 +594,97 @@ class ScheduleForm(Form):
                     data_bind='value: case_group_recipients.value',
                     placeholder=_("Select case group(s)")
                 ),
-                data_bind="visible: recipientTypeSelected('%s')" % self.RECIPIENT_TYPE_CASE_GROUP,
+                data_bind="visible: recipientTypeSelected('%s')" % ScheduleInstance.RECIPIENT_TYPE_CASE_GROUP,
             ),
         ]
 
     def get_content_layout_fields(self):
-        result = [
-            crispy.Field('content'),
-            crispy.Field('translate', data_bind='checked: translate'),
+        return [
+            crispy.Field('content', data_bind='value: content'),
+            hqcrispy.B3MultiField(
+                _("Message"),
+                crispy.Field(
+                    'message',
+                    data_bind='value: message.messagesJSONString',
+                ),
+                crispy.Div(
+                    crispy.Div(template='scheduling/partial/message_configuration.html'),
+                    data_bind='with: message',
+                ),
+                data_bind="visible: content() === '%s'" % self.CONTENT_SMS,
+            ),
             crispy.Div(
-                crispy.Field('non_translated_message'),
-                data_bind='visible: !translate()',
+                crispy.Field('form_unique_id'),
+                hqcrispy.B3MultiField(
+                    _("Expire After"),
+                    crispy.Div(
+                        twbscrispy.InlineField('survey_expiration_in_hours'),
+                        css_class='col-sm-4',
+                    ),
+                    crispy.HTML("<span>%s</span>" % _("hour(s)")),
+                ),
+                hqcrispy.B3MultiField(
+                    _("Reminder Intervals"),
+                    crispy.Div(
+                        twbscrispy.InlineField(
+                            'survey_reminder_intervals_enabled',
+                            data_bind='value: survey_reminder_intervals_enabled',
+                        ),
+                        css_class='col-sm-4',
+                    ),
+                    crispy.Div(
+                        twbscrispy.InlineField(
+                            'survey_reminder_intervals',
+                            placeholder=_("e.g., 30, 60"),
+                        ),
+                        data_bind="visible: survey_reminder_intervals_enabled() === 'Y'",
+                        css_class='col-sm-4',
+                    ),
+                ),
+                hqcrispy.B3MultiField(
+                    '',
+                    crispy.HTML(
+                        '<p class="help-block"><i class="fa fa-info-circle"></i> %s</p>' %
+                        _("Specify a list of comma-separated intervals in minutes. At each interval, if "
+                          "the survey session is still open, the system will resend the current question in the "
+                          "open survey.")
+                    ),
+                    data_bind="visible: survey_reminder_intervals_enabled() === 'Y'",
+                ),
+                data_bind="visible: content() === '%s'" % self.CONTENT_SMS_SURVEY,
             ),
         ]
 
-        translated_fields = [crispy.Field('message_%s' % lang) for lang in self.project_languages]
-        result.append(
-            crispy.Div(*translated_fields, data_bind='visible: translate()')
-        )
+    def get_advanced_layout_fields(self):
+        return [
+            crispy.Field('default_language_code'),
+        ]
 
-        return result
+    def get_advanced_survey_layout_fields(self):
+        return [
+            crispy.Field(
+                'submit_partially_completed_forms',
+                data_bind='checked: submit_partially_completed_forms',
+            ),
+            crispy.Div(
+                crispy.Field(
+                    'include_case_updates_in_partial_submissions',
+                ),
+                data_bind='visible: submit_partially_completed_forms()',
+            )
+        ]
 
     @cached_property
-    def project_languages(self):
-        doc = StandaloneTranslationDoc.get_obj(self.domain, 'sms')
-        return getattr(doc, 'langs', ['en'])
+    def language_list(self):
+        tdoc = get_or_create_translation_doc(self.domain)
+        result = set(tdoc.langs)
 
-    def add_content_fields(self):
-        self.fields['non_translated_message'] = CharField(label=_("Message"), required=False, widget=Textarea)
+        if self.initial_schedule:
+            result |= self.initial_schedule.memoized_language_set
 
-        for lang in self.project_languages:
-            # TODO support RTL languages
-            self.fields['message_%s' % lang] = CharField(
-                label="{} ({})".format(_("Message"), lang), required=False, widget=Textarea
-            )
+        result.discard('*')
+
+        return list(result)
 
     @property
     def current_values(self):
@@ -461,8 +758,12 @@ class ScheduleForm(Form):
 
         return result
 
+    @property
+    def uses_sms_survey(self):
+        return self.cleaned_data.get('content') == self.CONTENT_SMS_SURVEY
+
     def clean_user_recipients(self):
-        if self.RECIPIENT_TYPE_USER not in self.cleaned_data.get('recipient_types', []):
+        if ScheduleInstance.RECIPIENT_TYPE_MOBILE_WORKER not in self.cleaned_data.get('recipient_types', []):
             return []
 
         data = self.cleaned_data['user_recipients']
@@ -480,7 +781,7 @@ class ScheduleForm(Form):
         return data
 
     def clean_user_group_recipients(self):
-        if self.RECIPIENT_TYPE_USER_GROUP not in self.cleaned_data.get('recipient_types', []):
+        if ScheduleInstance.RECIPIENT_TYPE_USER_GROUP not in self.cleaned_data.get('recipient_types', []):
             return []
 
         data = self.cleaned_data['user_group_recipients']
@@ -507,7 +808,7 @@ class ScheduleForm(Form):
         return data
 
     def clean_user_organization_recipients(self):
-        if self.RECIPIENT_TYPE_LOCATION not in self.cleaned_data.get('recipient_types', []):
+        if ScheduleInstance.RECIPIENT_TYPE_LOCATION not in self.cleaned_data.get('recipient_types', []):
             return []
 
         data = self.cleaned_data['user_organization_recipients']
@@ -529,7 +830,7 @@ class ScheduleForm(Form):
         return data
 
     def clean_case_group_recipients(self):
-        if self.RECIPIENT_TYPE_CASE_GROUP not in self.cleaned_data.get('recipient_types', []):
+        if ScheduleInstance.RECIPIENT_TYPE_CASE_GROUP not in self.cleaned_data.get('recipient_types', []):
             return []
 
         data = self.cleaned_data['case_group_recipients']
@@ -578,16 +879,28 @@ class ScheduleForm(Form):
         return [int(i) for i in days_of_month]
 
     def clean_send_time(self):
-        if self.cleaned_data.get('send_frequency') == self.SEND_IMMEDIATELY:
+        if (
+            self.cleaned_data.get('send_frequency') == self.SEND_IMMEDIATELY or
+            self.cleaned_data.get('send_time_type') not in [
+                TimedSchedule.EVENT_SPECIFIC_TIME, TimedSchedule.EVENT_RANDOM_TIME
+            ]
+        ):
             return None
 
         return validate_time(self.cleaned_data.get('send_time'))
 
-    def clean_start_date(self):
-        if self.cleaned_data.get('send_frequency') == self.SEND_IMMEDIATELY:
+    def clean_window_length(self):
+        if (
+            self.cleaned_data.get('send_frequency') == self.SEND_IMMEDIATELY or
+            self.cleaned_data.get('send_time_type') != TimedSchedule.EVENT_RANDOM_TIME
+        ):
             return None
 
-        return validate_date(self.cleaned_data.get('start_date'))
+        value = self.cleaned_data.get('window_length')
+        if value is None:
+            raise ValidationError(_("This field is required."))
+
+        return value
 
     def clean_stop_type(self):
         if self.cleaned_data.get('send_frequency') == self.SEND_IMMEDIATELY:
@@ -618,3 +931,1018 @@ class ScheduleForm(Form):
             raise error
 
         return occurrences
+
+    def clean_message(self):
+        if self.cleaned_data.get('content') != self.CONTENT_SMS:
+            return None
+
+        value = json.loads(self.cleaned_data['message'])
+        cleaned_value = {k: v.strip() for k, v in value.items()}
+
+        if '*' in cleaned_value:
+            return cleaned_value
+
+        if len(cleaned_value) == 0:
+            raise ValidationError(_("This field is required"))
+
+        for expected_language_code in self.language_list:
+            if not cleaned_value.get(expected_language_code):
+                raise ValidationError(_("Please fill out all translations"))
+
+        return cleaned_value
+
+    def clean_form_unique_id(self):
+        if self.cleaned_data.get('content') != self.CONTENT_SMS_SURVEY:
+            return None
+
+        value = self.cleaned_data.get('form_unique_id')
+        if not value:
+            raise ValidationError(_("This field is required"))
+
+        return validate_form_unique_id(value, self.domain)
+
+    def clean_survey_expiration_in_hours(self):
+        if self.cleaned_data.get('content') != self.CONTENT_SMS_SURVEY:
+            return None
+
+        value = self.cleaned_data.get('survey_expiration_in_hours')
+        if not value:
+            raise ValidationError(_("This field is required"))
+
+        return value
+
+    def clean_survey_reminder_intervals(self):
+        if self.cleaned_data.get('content') != self.CONTENT_SMS_SURVEY:
+            return None
+
+        if self.cleaned_data.get('survey_reminder_intervals_enabled') != 'Y':
+            return []
+
+        value = self.cleaned_data.get('survey_reminder_intervals')
+        if not value:
+            raise ValidationError(_("Please specify the reminder intervals or disable them"))
+
+        intervals = []
+        for interval in value.split(','):
+            try:
+                interval = int(interval)
+            except (ValueError, TypeError):
+                raise ValidationError(_("Intervals must be positive numbers"))
+
+            if interval <= 0:
+                raise ValidationError(_("Intervals must be positive numbers"))
+
+            intervals.append(interval)
+
+        survey_expiration_in_hours = self.cleaned_data.get('survey_expiration_in_hours')
+        if survey_expiration_in_hours:
+            survey_expiration_in_minutes = survey_expiration_in_hours * 60
+            if sum(intervals) >= survey_expiration_in_minutes:
+                raise ValidationError(
+                    _("Reminder intervals must add up to less than {} based "
+                      "on the current survey expiration").format(survey_expiration_in_minutes)
+                )
+
+        return intervals
+
+    def distill_content(self):
+        if self.cleaned_data['content'] == self.CONTENT_SMS:
+            return SMSContent(
+                message=self.cleaned_data['message']
+            )
+        elif self.cleaned_data['content'] == self.CONTENT_SMS_SURVEY:
+            return SMSSurveyContent(
+                form_unique_id=self.cleaned_data['form_unique_id'],
+                expire_after=self.cleaned_data['survey_expiration_in_hours'] * 60,
+                reminder_intervals=self.cleaned_data['survey_reminder_intervals'],
+                submit_partially_completed_forms=self.cleaned_data['submit_partially_completed_forms'],
+                include_case_updates_in_partial_submissions=
+                    self.cleaned_data['include_case_updates_in_partial_submissions']
+            )
+        else:
+            raise ValueError("Unexpected value for content: '%s'" % self.cleaned_data['content'])
+
+    def distill_recipients(self):
+        form_data = self.cleaned_data
+        return (
+            [(ScheduleInstance.RECIPIENT_TYPE_MOBILE_WORKER, user_id)
+             for user_id in form_data['user_recipients']] +
+            [(ScheduleInstance.RECIPIENT_TYPE_USER_GROUP, group_id)
+             for group_id in form_data['user_group_recipients']] +
+            [(ScheduleInstance.RECIPIENT_TYPE_LOCATION, location_id)
+             for location_id in form_data['user_organization_recipients']] +
+            [(ScheduleInstance.RECIPIENT_TYPE_CASE_GROUP, case_group_id)
+             for case_group_id in form_data['case_group_recipients']]
+        )
+
+    def distill_total_iterations(self):
+        form_data = self.cleaned_data
+        if form_data['stop_type'] == self.STOP_NEVER:
+            return TimedSchedule.REPEAT_INDEFINITELY
+
+        return form_data['occurrences']
+
+    def distill_default_language_code(self):
+        value = self.cleaned_data['default_language_code']
+        if value == self.LANGUAGE_PROJECT_DEFAULT:
+            return None
+        else:
+            return value
+
+    def distill_extra_scheduling_options(self):
+        form_data = self.cleaned_data
+        return {
+            'default_language_code': self.distill_default_language_code(),
+            'include_descendant_locations': (
+                ScheduleInstance.RECIPIENT_TYPE_LOCATION in form_data['recipient_types'] and
+                form_data['include_descendant_locations']
+            ),
+        }
+
+    def distill_start_offset(self):
+        raise NotImplementedError()
+
+    def distill_start_day_of_week(self):
+        raise NotImplementedError()
+
+    def distill_model_timed_event(self):
+        event_type = self.cleaned_data['send_time_type']
+        if event_type == TimedSchedule.EVENT_SPECIFIC_TIME:
+            return TimedEvent(
+                time=self.cleaned_data['send_time'],
+            )
+        elif event_type == TimedSchedule.EVENT_RANDOM_TIME:
+            return RandomTimedEvent(
+                time=self.cleaned_data['send_time'],
+                window_length=self.cleaned_data['window_length'],
+            )
+        else:
+            raise ValueError("Unexpected send_time_type: %s" % event_type)
+
+    def assert_alert_schedule(self, schedule):
+        if not isinstance(schedule, AlertSchedule):
+            raise TypeError("Expected AlertSchedule")
+
+    def assert_timed_schedule(self, schedule):
+        if not isinstance(schedule, TimedSchedule):
+            raise TypeError("Expected TimedSchedule")
+
+    def save_immediate_schedule(self):
+        content = self.distill_content()
+        extra_scheduling_options = self.distill_extra_scheduling_options()
+
+        if self.initial_schedule:
+            schedule = self.initial_schedule
+            self.assert_alert_schedule(schedule)
+            schedule.set_simple_alert(content, extra_options=extra_scheduling_options)
+        else:
+            schedule = AlertSchedule.create_simple_alert(self.domain, content,
+                extra_options=extra_scheduling_options)
+
+        return schedule
+
+    def save_daily_schedule(self):
+        form_data = self.cleaned_data
+        total_iterations = self.distill_total_iterations()
+        content = self.distill_content()
+        extra_scheduling_options = self.distill_extra_scheduling_options()
+
+        if self.initial_schedule:
+            schedule = self.initial_schedule
+            self.assert_timed_schedule(schedule)
+            schedule.set_simple_daily_schedule(
+                self.distill_model_timed_event(),
+                content,
+                total_iterations=total_iterations,
+                start_offset=self.distill_start_offset(),
+                extra_options=extra_scheduling_options,
+            )
+        else:
+            schedule = TimedSchedule.create_simple_daily_schedule(
+                self.domain,
+                self.distill_model_timed_event(),
+                content,
+                total_iterations=total_iterations,
+                start_offset=self.distill_start_offset(),
+                extra_options=extra_scheduling_options,
+            )
+
+        return schedule
+
+    def save_weekly_schedule(self):
+        form_data = self.cleaned_data
+        total_iterations = self.distill_total_iterations()
+        content = self.distill_content()
+        extra_scheduling_options = self.distill_extra_scheduling_options()
+
+        if self.initial_schedule:
+            schedule = self.initial_schedule
+            self.assert_timed_schedule(schedule)
+            schedule.set_simple_weekly_schedule(
+                self.distill_model_timed_event(),
+                content,
+                form_data['weekdays'],
+                self.distill_start_day_of_week(),
+                total_iterations=total_iterations,
+                extra_options=extra_scheduling_options,
+            )
+        else:
+            schedule = TimedSchedule.create_simple_weekly_schedule(
+                self.domain,
+                self.distill_model_timed_event(),
+                content,
+                form_data['weekdays'],
+                self.distill_start_day_of_week(),
+                total_iterations=total_iterations,
+                extra_options=extra_scheduling_options,
+            )
+
+        return schedule
+
+    def save_monthly_schedule(self):
+        form_data = self.cleaned_data
+        total_iterations = self.distill_total_iterations()
+        content = self.distill_content()
+        extra_scheduling_options = self.distill_extra_scheduling_options()
+
+        positive_days = [day for day in form_data['days_of_month'] if day > 0]
+        negative_days = [day for day in form_data['days_of_month'] if day < 0]
+        sorted_days_of_month = sorted(positive_days) + sorted(negative_days)
+
+        if self.initial_schedule:
+            schedule = self.initial_schedule
+            self.assert_timed_schedule(schedule)
+            schedule.set_simple_monthly_schedule(
+                self.distill_model_timed_event(),
+                sorted_days_of_month,
+                content,
+                total_iterations=total_iterations,
+                extra_options=extra_scheduling_options,
+            )
+        else:
+            schedule = TimedSchedule.create_simple_monthly_schedule(
+                self.domain,
+                self.distill_model_timed_event(),
+                sorted_days_of_month,
+                content,
+                total_iterations=total_iterations,
+                extra_options=extra_scheduling_options,
+            )
+
+        return schedule
+
+    def save_schedule(self):
+        send_frequency = self.cleaned_data['send_frequency']
+        return {
+            self.SEND_IMMEDIATELY: self.save_immediate_schedule,
+            self.SEND_DAILY: self.save_daily_schedule,
+            self.SEND_WEEKLY: self.save_weekly_schedule,
+            self.SEND_MONTHLY: self.save_monthly_schedule,
+        }[send_frequency]()
+
+
+class BroadcastForm(ScheduleForm):
+
+    schedule_name = CharField(
+        required=True,
+        label=ugettext_lazy('Schedule Name'),
+        max_length=1000,
+    )
+
+    start_date = CharField(
+        label='',
+        required=False
+    )
+
+    def __init__(self, domain, schedule, can_use_sms_surveys, broadcast, *args, **kwargs):
+        self.initial_broadcast = broadcast
+        super(BroadcastForm, self).__init__(domain, schedule, can_use_sms_surveys, *args, **kwargs)
+
+    def get_layout_fields(self):
+        result = super(BroadcastForm, self).get_layout_fields()
+        result.append(
+            hqcrispy.FormActions(
+                twbscrispy.StrictButton(
+                    _("Save"),
+                    css_class='btn-primary',
+                    type='submit',
+                ),
+            )
+        )
+        return result
+
+    def get_start_date_layout_fields(self):
+        return [
+            hqcrispy.B3MultiField(
+                _("Start"),
+                crispy.Div(
+                    twbscrispy.InlineField(
+                        'start_date',
+                        data_bind='value: start_date',
+                    ),
+                    css_class='col-sm-6',
+                ),
+                data_bind='visible: showStartDateInput',
+            ),
+        ]
+
+    def get_scheduling_layout_fields(self):
+        result = [
+            crispy.Field('schedule_name'),
+        ]
+        result.extend(super(BroadcastForm, self).get_scheduling_layout_fields())
+        return result
+
+    def compute_initial(self):
+        result = super(BroadcastForm, self).compute_initial()
+        if self.initial_broadcast:
+            result['schedule_name'] = self.initial_broadcast.name
+            self.add_initial_recipients(self.initial_broadcast.recipients, result)
+            if isinstance(self.initial_broadcast, ScheduledBroadcast):
+                result['start_date'] = self.initial_broadcast.start_date.strftime('%Y-%m-%d')
+
+        return result
+
+    def clean_start_date(self):
+        if self.cleaned_data.get('send_frequency') == self.SEND_IMMEDIATELY:
+            return None
+
+        return validate_date(self.cleaned_data.get('start_date'))
+
+    def distill_start_offset(self):
+        return 0
+
+    def distill_start_day_of_week(self):
+        if self.cleaned_data['send_frequency'] != self.SEND_WEEKLY:
+            return TimedSchedule.ANY_DAY
+
+        return self.cleaned_data['start_date'].weekday()
+
+    def save_immediate_broadcast(self, schedule):
+        form_data = self.cleaned_data
+        recipients = self.distill_recipients()
+
+        if self.initial_broadcast:
+            raise ImmediateMessageEditAttempt("Cannot edit an ImmediateBroadcast")
+
+        return ImmediateBroadcast.objects.create(
+            domain=self.domain,
+            name=form_data['schedule_name'],
+            schedule=schedule,
+            recipients=recipients,
+        )
+
+    def save_scheduled_broadcast(self, schedule):
+        form_data = self.cleaned_data
+        recipients = self.distill_recipients()
+
+        if self.initial_broadcast:
+            broadcast = self.initial_broadcast
+            if not isinstance(broadcast, ScheduledBroadcast):
+                raise TypeError("Expected ScheduledBroadcast")
+        else:
+            broadcast = ScheduledBroadcast(
+                domain=self.domain,
+                schedule=schedule,
+            )
+
+        broadcast.name = form_data['schedule_name']
+        broadcast.start_date = form_data['start_date']
+        broadcast.recipients = recipients
+        broadcast.save()
+        return broadcast
+
+    def save_broadcast_and_schedule(self):
+        with transaction.atomic():
+            schedule = self.save_schedule()
+
+            send_frequency = self.cleaned_data['send_frequency']
+            broadcast = {
+                self.SEND_IMMEDIATELY: self.save_immediate_broadcast,
+                self.SEND_DAILY: self.save_scheduled_broadcast,
+                self.SEND_WEEKLY: self.save_scheduled_broadcast,
+                self.SEND_MONTHLY: self.save_scheduled_broadcast,
+            }[send_frequency](schedule)
+
+        return (broadcast, schedule)
+
+
+class ConditionalAlertScheduleForm(ScheduleForm):
+    START_DATE_RULE_TRIGGER = 'RULE_TRIGGER'
+    START_DATE_CASE_PROPERTY = 'CASE_PROPERTY'
+
+    START_OFFSET_ZERO = 'ZERO'
+    START_OFFSET_NEGATIVE = 'NEGATIVE'
+    START_OFFSET_POSITIVE = 'POSITIVE'
+
+    YES = 'Y'
+    NO = 'N'
+
+    start_date_type = ChoiceField(
+        required=True,
+        choices=(
+            (START_DATE_RULE_TRIGGER, ugettext_lazy("The first available time after the rule is satisfied")),
+            (START_DATE_CASE_PROPERTY, ugettext_lazy("The date from case property: ")),
+        )
+    )
+
+    start_date_case_property = TrimmedCharField(
+        label='',
+        required=False,
+    )
+
+    start_offset_type = ChoiceField(
+        required=False,
+        choices=(
+            (START_OFFSET_ZERO, ugettext_lazy("Exactly on the start date")),
+            (START_OFFSET_NEGATIVE, ugettext_lazy("Before the start date by")),
+            (START_OFFSET_POSITIVE, ugettext_lazy("After the start date by")),
+        )
+    )
+
+    start_offset = IntegerField(
+        label='',
+        required=False,
+        min_value=1,
+    )
+
+    start_day_of_week = ChoiceField(
+        required=False,
+        choices=(
+            ('6', ugettext_lazy('The first Sunday that occurs on or after the start date')),
+            ('0', ugettext_lazy('The first Monday that occurs on or after the start date')),
+            ('1', ugettext_lazy('The first Tuesday that occurs on or after the start date')),
+            ('2', ugettext_lazy('The first Wednesday that occurs on or after the start date')),
+            ('3', ugettext_lazy('The first Thursday that occurs on or after the start date')),
+            ('4', ugettext_lazy('The first Friday that occurs on or after the start date')),
+            ('5', ugettext_lazy('The first Saturday that occurs on or after the start date')),
+        ),
+    )
+
+    custom_recipient = ChoiceField(
+        required=False,
+        choices=(
+            (k, v[1])
+            for k, v in settings.AVAILABLE_CUSTOM_SCHEDULING_RECIPIENTS.items()
+        )
+    )
+
+    custom_sms_content_id = ChoiceField(
+        required=False,
+        label=ugettext_lazy("Custom SMS Content"),
+        choices=((k, v[1]) for k, v in settings.AVAILABLE_CUSTOM_SCHEDULING_CONTENT.items()),
+    )
+
+    reset_case_property_enabled = ChoiceField(
+        required=True,
+        choices=(
+            (NO, ugettext_lazy("Disabled")),
+            (YES, ugettext_lazy("Restart schedule when this case property takes any new value: ")),
+        ),
+    )
+
+    reset_case_property_name = TrimmedCharField(
+        label='',
+        required=False,
+    )
+
+    send_time_case_property_name = TrimmedCharField(
+        label='',
+        required=False,
+    )
+
+    def __init__(self, domain, schedule, can_use_sms_surveys, rule, criteria_form, *args, **kwargs):
+        self.initial_rule = rule
+        self.criteria_form = criteria_form
+        super(ConditionalAlertScheduleForm, self).__init__(domain, schedule, can_use_sms_surveys, *args, **kwargs)
+        if self.initial_rule:
+            self.set_read_only_fields_during_editing()
+        self.update_recipient_types_choices()
+        self.update_send_time_type_choices()
+
+    def get_extra_timing_fields(self):
+        return [
+            crispy.Div(
+                twbscrispy.InlineField('send_time_case_property_name'),
+                data_bind="visible: send_time_type() === '%s'" % TimedSchedule.EVENT_CASE_PROPERTY_TIME,
+                css_class='col-sm-6',
+            ),
+        ]
+
+    def add_initial_for_content(self, result):
+        content = self.initial_schedule.memoized_events[0].content
+        if isinstance(content, CustomContent):
+            result['content'] = self.CONTENT_CUSTOM_SMS
+            result['custom_sms_content_id'] = content.custom_content_id
+        else:
+            return super(ConditionalAlertScheduleForm, self).add_initial_for_content(result)
+
+    def add_additional_content_types(self):
+        super(ConditionalAlertScheduleForm, self).add_additional_content_types()
+
+        if (
+            self.criteria_form.is_system_admin or
+            self.initial.get('content') == self.CONTENT_CUSTOM_SMS
+        ):
+            self.fields['content'].choices += [
+                (self.CONTENT_CUSTOM_SMS, _("Custom SMS")),
+            ]
+
+    @property
+    def scheduling_fieldset_legend(self):
+        return ''
+
+    def set_read_only_fields_during_editing(self):
+        # Django also handles keeping the field's value to its initial value no matter what is posted
+        # https://docs.djangoproject.com/en/1.11/ref/forms/fields/#disabled
+
+        # Don't allow the reset_case_property_name to change values after being initially set.
+        # The framework doesn't account for this option being enabled, disabled, or changing
+        # after being initially set.
+        self.fields['reset_case_property_enabled'].disabled = True
+        self.fields['reset_case_property_name'].disabled = True
+
+    @cached_property
+    def requires_system_admin_to_edit(self):
+        return (
+            CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM in self.initial.get('recipient_types', []) or
+            self.initial.get('content') == self.CONTENT_CUSTOM_SMS
+        )
+
+    @cached_property
+    def requires_system_admin_to_save(self):
+        return (
+            CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM in self.cleaned_data['recipient_types'] or
+            self.cleaned_data['content'] == self.CONTENT_CUSTOM_SMS
+        )
+
+    def update_send_time_type_choices(self):
+        self.fields['send_time_type'].choices += [
+            (TimedSchedule.EVENT_CASE_PROPERTY_TIME, _("The time from case property:")),
+        ]
+
+    def update_recipient_types_choices(self):
+        new_choices = [
+            (CaseScheduleInstanceMixin.RECIPIENT_TYPE_SELF, _("The Case")),
+            (CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_OWNER, _("The Case's Owner")),
+        ]
+        new_choices.extend(self.fields['recipient_types'].choices)
+
+        if (
+            self.criteria_form.is_system_admin or
+            CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM in self.initial.get('recipient_types', [])
+        ):
+            new_choices.extend([
+                (CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM, _("Custom Recipient")),
+            ])
+
+        self.fields['recipient_types'].choices = new_choices
+
+    def add_initial_for_send_time(self, initial):
+        if self.initial_schedule.event_type == TimedSchedule.EVENT_CASE_PROPERTY_TIME:
+            initial['send_time_case_property_name'] = \
+                self.initial_schedule.memoized_events[0].case_property_name
+        else:
+            super(ConditionalAlertScheduleForm, self).add_initial_for_send_time(initial)
+
+    def add_initial_recipients(self, recipients, initial):
+        super(ConditionalAlertScheduleForm, self).add_initial_recipients(recipients, initial)
+
+        for recipient_type, recipient_id in recipients:
+            if recipient_type == CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM:
+                initial['custom_recipient'] = recipient_id
+
+    def compute_initial(self):
+        result = super(ConditionalAlertScheduleForm, self).compute_initial()
+        if self.initial_schedule:
+            schedule = self.initial_schedule
+            if isinstance(schedule, TimedSchedule):
+                if schedule.start_offset == 0:
+                    result['start_offset_type'] = self.START_OFFSET_ZERO
+                elif schedule.start_offset > 0:
+                    result['start_offset_type'] = self.START_OFFSET_POSITIVE
+                    result['start_offset'] = schedule.start_offset
+                else:
+                    result['start_offset_type'] = self.START_OFFSET_NEGATIVE
+                    result['start_offset'] = abs(schedule.start_offset)
+
+                if schedule.start_day_of_week >= 0:
+                    result['start_day_of_week'] = str(schedule.start_day_of_week)
+
+        if self.initial_rule:
+            action_definition = self.initial_rule.memoized_actions[0].definition
+            self.add_initial_recipients(action_definition.recipients, result)
+            if action_definition.reset_case_property_name:
+                result['reset_case_property_enabled'] = self.YES
+                result['reset_case_property_name'] = action_definition.reset_case_property_name
+            else:
+                result['reset_case_property_enabled'] = self.NO
+
+            if action_definition.start_date_case_property:
+                result['start_date_type'] = self.START_DATE_CASE_PROPERTY
+                result['start_date_case_property'] = action_definition.start_date_case_property
+            else:
+                result['start_date_type'] = self.START_DATE_RULE_TRIGGER
+
+        return result
+
+    def get_start_date_layout_fields(self):
+        return [
+            hqcrispy.B3MultiField(
+                _("Start Date"),
+                crispy.Div(
+                    twbscrispy.InlineField(
+                        'start_date_type',
+                        data_bind='value: start_date_type',
+                    ),
+                    css_class='col-sm-4',
+                ),
+                crispy.Div(
+                    twbscrispy.InlineField(
+                        'start_date_case_property',
+                    ),
+                    data_bind="visible: start_date_type() === '%s'" % self.START_DATE_CASE_PROPERTY,
+                    css_class='col-sm-4',
+                ),
+                data_bind='visible: showStartDateInput',
+            ),
+            hqcrispy.B3MultiField(
+                _("Begin"),
+                crispy.Div(
+                    twbscrispy.InlineField(
+                        'start_offset_type',
+                        data_bind='value: start_offset_type',
+                    ),
+                    css_class='col-sm-4',
+                ),
+                crispy.Div(
+                    twbscrispy.InlineField('start_offset'),
+                    css_class='col-sm-2',
+                    data_bind="visible: start_offset_type() !== '%s'" % self.START_OFFSET_ZERO,
+                ),
+                crispy.Div(
+                    crispy.HTML("<span>%s</span>" % _("day(s)")),
+                    data_bind="visible: start_offset_type() !== '%s'" % self.START_OFFSET_ZERO,
+                ),
+                data_bind="visible: send_frequency() === '%s'" % self.SEND_DAILY,
+            ),
+            hqcrispy.B3MultiField(
+                _("Begin"),
+                twbscrispy.InlineField('start_day_of_week'),
+                data_bind="visible: send_frequency() === '%s'" % self.SEND_WEEKLY,
+            ),
+        ]
+
+    def get_recipients_layout_fields(self):
+        result = super(ConditionalAlertScheduleForm, self).get_recipients_layout_fields()
+        result.extend([
+            hqcrispy.B3MultiField(
+                _("Custom Recipient"),
+                twbscrispy.InlineField('custom_recipient'),
+                self.get_system_admin_label(),
+                data_bind="visible: recipientTypeSelected('%s')" % CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM,
+            ),
+        ])
+        return result
+
+    def get_content_layout_fields(self):
+        result = super(ConditionalAlertScheduleForm, self).get_content_layout_fields()
+        result.extend([
+            hqcrispy.B3MultiField(
+                _("Custom SMS Content"),
+                twbscrispy.InlineField('custom_sms_content_id'),
+                self.get_system_admin_label(),
+                data_bind="visible: content() === '%s'" % self.CONTENT_CUSTOM_SMS,
+            ),
+        ])
+        return result
+
+    def get_advanced_layout_fields(self):
+        result = super(ConditionalAlertScheduleForm, self).get_advanced_layout_fields()
+        result.extend([
+            hqcrispy.B3MultiField(
+                _("Restart Schedule"),
+                crispy.Div(
+                    twbscrispy.InlineField(
+                        'reset_case_property_enabled',
+                        data_bind='value: reset_case_property_enabled',
+                    ),
+                    css_class='col-sm-8',
+                ),
+                crispy.Div(
+                    twbscrispy.InlineField(
+                        'reset_case_property_name',
+                        placeholder=_("case property"),
+                    ),
+                    data_bind="visible: reset_case_property_enabled() === '%s'" % self.YES,
+                    css_class='col-sm-4',
+                ),
+            ),
+        ])
+        return result
+
+    def get_system_admin_label(self):
+        return crispy.HTML("""
+            <label class="col-xs-1 control-label">
+                <span class="label label-primary">%s</span>
+            </label>
+        """ % _("Requires System Admin"))
+
+    def clean_start_offset_type(self):
+        if self.cleaned_data.get('send_frequency') != self.SEND_DAILY:
+            return None
+
+        value = self.cleaned_data.get('start_offset_type')
+
+        if not value:
+            raise ValidationError(_("This field is required"))
+
+        if (
+            value == self.START_OFFSET_NEGATIVE and
+            self.cleaned_data.get('start_date_type') == self.START_DATE_RULE_TRIGGER
+        ):
+            raise ValidationError(_("You may not start sending before the day that the rule triggers."))
+
+        return value
+
+    def clean_start_day_of_week(self):
+        if self.cleaned_data.get('send_frequency') != self.SEND_WEEKLY:
+            return TimedSchedule.ANY_DAY
+
+        value = self.cleaned_data.get('start_day_of_week')
+        error = ValidationError(_("Invalid choice selected"))
+
+        try:
+            value = int(value)
+        except (ValueError, TypeError):
+            raise error
+
+        if value < 0 or value > 6:
+            raise error
+
+        return value
+
+    def clean_custom_recipient(self):
+        recipient_types = self.cleaned_data.get('recipient_types', [])
+        custom_recipient = self.cleaned_data.get('custom_recipient')
+
+        if CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM not in recipient_types:
+            return None
+
+        if not custom_recipient:
+            raise ValidationError(_("This field is required"))
+
+        return custom_recipient
+
+    def clean_custom_sms_content_id(self):
+        if self.cleaned_data['content'] != self.CONTENT_CUSTOM_SMS:
+            return None
+
+        value = self.cleaned_data['custom_sms_content_id']
+        if not value:
+            raise ValidationError(_("This field is required"))
+
+        return value
+
+    def clean_reset_case_property_enabled(self):
+        value = self.cleaned_data['reset_case_property_enabled']
+        if (
+            value == self.YES and
+            self.cleaned_data.get('send_frequency') != self.SEND_IMMEDIATELY and
+            self.cleaned_data.get('start_date_type') != self.START_DATE_RULE_TRIGGER
+        ):
+            raise ValidationError(
+                _("This option can only be enabled when the schedule's start "
+                  "date is the date that the rule triggers.")
+            )
+
+        return value
+
+    def clean_reset_case_property_name(self):
+        if self.cleaned_data.get('reset_case_property_enabled') == self.NO:
+            return None
+
+        return validate_case_property_name(
+            self.cleaned_data.get('reset_case_property_name'),
+            allow_parent_case_references=False,
+        )
+
+    def clean_start_date_case_property(self):
+        if (
+            self.cleaned_data.get('send_frequency') == self.SEND_IMMEDIATELY or
+            self.cleaned_data.get('start_date_type') != self.START_DATE_CASE_PROPERTY
+        ):
+            return None
+
+        return validate_case_property_name(
+            self.cleaned_data.get('start_date_case_property'),
+            allow_parent_case_references=False,
+        )
+
+    def clean_send_time_case_property_name(self):
+        if (
+            self.cleaned_data.get('send_frequency') == self.SEND_IMMEDIATELY or
+            self.cleaned_data.get('send_time_type') != TimedSchedule.EVENT_CASE_PROPERTY_TIME
+        ):
+            return None
+
+        return validate_case_property_name(
+            self.cleaned_data.get('send_time_case_property_name'),
+            allow_parent_case_references=False,
+        )
+
+    def distill_start_offset(self):
+        send_frequency = self.cleaned_data.get('send_frequency')
+        start_offset_type = self.cleaned_data.get('start_offset_type')
+
+        if (
+            send_frequency == self.SEND_DAILY and
+            start_offset_type in (self.START_OFFSET_NEGATIVE, self.START_OFFSET_POSITIVE)
+        ):
+
+            start_offset = self.cleaned_data.get('start_offset')
+
+            if start_offset is None:
+                raise ValidationError(_("This field is required"))
+
+            if start_offset_type == self.START_OFFSET_NEGATIVE:
+                return -1 * start_offset
+            else:
+                return start_offset
+
+        return 0
+
+    def distill_start_day_of_week(self):
+        return self.cleaned_data['start_day_of_week']
+
+    def distill_scheduler_module_info(self):
+        return CreateScheduleInstanceActionDefinition.SchedulerModuleInfo(enabled=False)
+
+    def distill_recipients(self):
+        result = super(ConditionalAlertScheduleForm, self).distill_recipients()
+        recipient_types = self.cleaned_data['recipient_types']
+
+        if CaseScheduleInstanceMixin.RECIPIENT_TYPE_SELF in recipient_types:
+            result.append((CaseScheduleInstanceMixin.RECIPIENT_TYPE_SELF, None))
+
+        if CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_OWNER in recipient_types:
+            result.append((CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_OWNER, None))
+
+        if CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM in recipient_types:
+            custom_recipient_id = self.cleaned_data['custom_recipient']
+            result.append((CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM, custom_recipient_id))
+
+        return result
+
+    def distill_content(self):
+        if self.cleaned_data['content'] == self.CONTENT_CUSTOM_SMS:
+            return CustomContent(
+                custom_content_id=self.cleaned_data['custom_sms_content_id']
+            )
+        else:
+            return super(ConditionalAlertScheduleForm, self).distill_content()
+
+    def distill_model_timed_event(self):
+        event_type = self.cleaned_data['send_time_type']
+        if event_type == TimedSchedule.EVENT_CASE_PROPERTY_TIME:
+            return CasePropertyTimedEvent(
+                case_property_name=self.cleaned_data['send_time_case_property_name'],
+            )
+
+        return super(ConditionalAlertScheduleForm, self).distill_model_timed_event()
+
+    def create_rule_action(self, rule, schedule):
+        fields = {
+            'recipients': self.distill_recipients(),
+            'reset_case_property_name': self.cleaned_data['reset_case_property_name'],
+            'scheduler_module_info': self.distill_scheduler_module_info(),
+            'start_date_case_property': self.cleaned_data['start_date_case_property'],
+        }
+
+        if isinstance(schedule, AlertSchedule):
+            fields['alert_schedule'] = schedule
+        elif isinstance(schedule, TimedSchedule):
+            fields['timed_schedule'] = schedule
+        else:
+            raise TypeError("Unexpected Schedule type")
+
+        rule.add_action(CreateScheduleInstanceActionDefinition, **fields)
+
+    def edit_rule_action(self, rule, schedule):
+        action = rule.caseruleaction_set.all()[0]
+        action_definition = action.definition
+        self.validate_existing_action_definition(action_definition, schedule)
+
+        action_definition.recipients = self.distill_recipients()
+        action_definition.reset_case_property_name = self.cleaned_data['reset_case_property_name']
+        action_definition.scheduler_module_info = self.distill_scheduler_module_info()
+        action_definition.start_date_case_property = self.cleaned_data['start_date_case_property']
+        action_definition.save()
+
+    def validate_existing_action_definition(self, action_definition, schedule):
+        if not isinstance(action_definition, CreateScheduleInstanceActionDefinition):
+            raise TypeError("Expected CreateScheduleInstanceActionDefinition")
+
+        if isinstance(schedule, AlertSchedule):
+            if action_definition.alert_schedule_id != schedule.schedule_id:
+                raise ValueError("Schedule mismatch")
+        elif isinstance(schedule, TimedSchedule):
+            if action_definition.timed_schedule_id != schedule.schedule_id:
+                raise ValueError("Schedule mismatch")
+        else:
+            raise TypeError("Unexpected Schedule type")
+
+    def save_rule_action(self, rule, schedule):
+        num_actions = rule.caseruleaction_set.count()
+        if num_actions == 0:
+            self.create_rule_action(rule, schedule)
+        elif num_actions == 1:
+            self.edit_rule_action(rule, schedule)
+        else:
+            raise ValueError("Expected 0 or 1 action")
+
+    def save_rule_action_and_schedule(self, rule):
+        with transaction.atomic():
+            schedule = self.save_schedule()
+            self.save_rule_action(rule, schedule)
+
+
+class ConditionalAlertForm(Form):
+    # Prefix to avoid name collisions; this means all input
+    # names in the HTML are prefixed with "conditional-alert-"
+    prefix = "conditional-alert"
+
+    name = TrimmedCharField(
+        label=ugettext_lazy("Name"),
+        required=True,
+    )
+
+    def __init__(self, domain, rule, *args, **kwargs):
+        self.domain = domain
+        self.initial_rule = rule
+
+        if kwargs.get('initial'):
+            raise ValueError("Initial values are set by the form")
+
+        if self.initial_rule:
+            kwargs['initial'] = self.compute_initial()
+
+        super(ConditionalAlertForm, self).__init__(*args, **kwargs)
+
+        self.helper = FormHelper()
+        self.helper.label_class = 'col-xs-2 col-xs-offset-1'
+        self.helper.field_class = 'col-xs-2'
+        self.helper.form_tag = False
+
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                "",
+                crispy.Field('name'),
+            ),
+        )
+
+    def compute_initial(self):
+        return {
+            'name': self.initial_rule.name,
+        }
+
+
+class ConditionalAlertCriteriaForm(CaseRuleCriteriaForm):
+
+    @property
+    def show_fieldset_title(self):
+        return False
+
+    @property
+    def fieldset_help_text(self):
+        return _("An instance of the schedule will be created for each case matching all filter criteria below.")
+
+    @property
+    def allow_parent_case_references(self):
+        return False
+
+    @property
+    def allow_case_modified_filter(self):
+        return False
+
+    @property
+    def allow_case_property_filter(self):
+        return True
+
+    @property
+    def allow_date_case_property_filter(self):
+        return False
+
+    def set_read_only_fields_during_editing(self):
+        # Django also handles keeping the field's value to its initial value no matter what is posted
+        # https://docs.djangoproject.com/en/1.11/ref/forms/fields/#disabled
+
+        # Prevent case_type from being changed when we are using the form to edit
+        # an existing conditional alert. Being allowed to assume that case_type
+        # doesn't change makes it easier to run the rule for this alert.
+        self.fields['case_type'].disabled = True
+
+    def __init__(self, *args, **kwargs):
+        super(ConditionalAlertCriteriaForm, self).__init__(*args, **kwargs)
+        if self.initial_rule:
+            self.set_read_only_fields_during_editing()

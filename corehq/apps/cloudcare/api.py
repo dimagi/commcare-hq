@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from datetime import datetime
 import json
-import urllib
+import six.moves.urllib.request, six.moves.urllib.parse, six.moves.urllib.error
 
 from django.urls import reverse
 from django.utils.translation import ugettext as _
@@ -21,6 +21,7 @@ from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps
 from corehq.apps.cloudcare.exceptions import RemoteAppError
 from corehq.apps.users.models import CouchUser
 from corehq.elastic import get_es_new, ES_META
+from six.moves import filter
 
 
 CLOUDCARE_API_DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%S'  # todo: add '.%fZ'?
@@ -122,7 +123,7 @@ class CaseAPIHelper(object):
 
         if self.filters and not self.footprint:
             base_results = self._populate_results(case_id_list)
-            return filter(_filter, base_results)
+            return list(filter(_filter, base_results))
 
         if self.footprint:
             initial_case_ids = set(case_id_list)
@@ -315,7 +316,7 @@ def get_filters_from_request_params(request_params, limit_top_level=None):
     """
     def _decode(thing):
         try:
-            return urllib.unquote(thing)
+            return six.moves.urllib.parse.unquote(thing)
         except Exception:
             return thing
     
@@ -350,7 +351,7 @@ def look_up_app_json(domain, app_id):
 
 def get_cloudcare_app(domain, app_name):
     apps = get_cloudcare_apps(domain)
-    app = filter(lambda x: x['name'] == app_name, apps)
+    app = [x for x in apps if x['name'] == app_name]
     if app:
         return look_up_app_json(domain, app[0]['_id'])
     else:

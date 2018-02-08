@@ -3,9 +3,6 @@
 from __future__ import absolute_import
 import os
 
-ICDS_UCR_DATABASE_ALIAS = 'default'
-ICDS_UCR_TEST_DATABASE_ALIAS = 'default'
-
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
@@ -243,6 +240,8 @@ if os.environ.get("COMMCAREHQ_BOOTSTRAP") == "yes":
 
     TOUCHFORMS_API_USER = 'admin@example.com'
     TOUCHFORMS_API_PASSWORD = 'password'
+
+    FORMPLAYER_URL = 'http://formplayer:8010'
 
     CCHQ_API_THROTTLE_REQUESTS = 200
     CCHQ_API_THROTTLE_TIMEFRAME = 10

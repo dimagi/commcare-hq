@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import division
 from corehq.apps.commtrack.models import StockState
 from corehq.apps.locations.dbaccessors import get_user_docs_by_location
 from corehq.apps.locations.models import SQLLocation

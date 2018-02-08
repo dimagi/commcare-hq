@@ -85,13 +85,11 @@ class JsonApiRequest(object):
         )
 
     def delete(self, path, **kwargs):
-        path = path.lstrip('/')
         return self.send_request(
             requests.delete, self.get_request_url(path), headers=self.headers, auth=self.auth, **kwargs
         )
 
     def post(self, path, data, **kwargs):
-        path = path.lstrip('/')
         # Make a copy of self.headers so as not to set content type on requests that don't send content
         headers = dict(self.headers, **{'Content-type': 'application/json'})
         json_data = json.dumps(data, cls=DjangoJSONEncoder)
@@ -100,7 +98,6 @@ class JsonApiRequest(object):
         )
 
     def put(self, path, data, **kwargs):
-        path = path.lstrip('/')
         headers = dict(self.headers, **{'Content-type': 'application/json'})
         json_data = json.dumps(data, cls=DjangoJSONEncoder)
         return self.send_request(

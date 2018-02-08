@@ -6,6 +6,7 @@ from couchforms.analytics import get_form_analytics_metadata
 from dimagi.utils.couch import get_cached_property, IncompatibleDocument
 from dimagi.utils.couch.safe_index import safe_index
 
+from corehq.apps.hqcase.utils import SYSTEM_FORM_XMLNS_MAP
 from corehq.apps.users.models import CouchUser
 from corehq.const import USER_DATETIME_FORMAT_WITH_SEC
 from corehq.util.dates import iso_string_to_datetime
@@ -98,7 +99,7 @@ class _FormType(object):
                     if lang and menu.get(lang):
                         return menu.get(lang)
                     else:
-                        for lang in langs + menu.keys():
+                        for lang in langs + list(menu):
                             menu_name = menu.get(lang)
                             if menu_name is not None:
                                 return menu_name
@@ -113,6 +114,8 @@ class _FormType(object):
             if form.get('duplicate'):
                 title += " [Multiple Forms]"
             name = title
+        elif self.xmlns in SYSTEM_FORM_XMLNS_MAP:
+            name = SYSTEM_FORM_XMLNS_MAP[self.xmlns]
         else:
             name = self.xmlns
         return name

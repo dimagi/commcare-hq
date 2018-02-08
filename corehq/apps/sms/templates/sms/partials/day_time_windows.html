@@ -4,12 +4,12 @@
     <p>
         <i class="fa fa-info-circle"></i> {{ context.explanation_text }}
     </p>
-    <table class="table table-bordered table-striped col-md-10 col-lg-10">
+    <table class="table table-bordered table-striped">
         <thead>
             <tr>
-                <th>{% trans "When the day is..." %}</th>
-                <th>{% trans "And the time is..." %}</th>
-                <th>{% trans "Action" %}</th>
+                <th class="col-sm-1">{% trans "When the day is..." %}</th>
+                <th class="col-sm-10">{% trans "And the time is..." %}</th>
+                <th class="col-sm-1">{% trans "Action" %}</th>
             </tr>
         </thead>
         <tbody data-bind="foreach: {{ context.ko_array_name }}">
@@ -31,18 +31,21 @@
                 </td>
                 <td>
                     <div class="row">
-                        <div class="controls col-lg-3" data-bind="css: { 'col-md-3': time_input_relationship() === 'BETWEEN', 'col-md-4': time_input_relationship() !== 'BETWEEN' }" style="width: auto; max-width: 150px">
+                        <div class="controls col-sm-3">
                             <select class="form-control" data-bind="value: time_input_relationship">
                                 <option value="BEFORE">{% trans "Before" %}</option>
                                 <option value="AFTER">{% trans "After" %}</option>
                                 <option value="BETWEEN">{% trans "Between" %}</option>
                             </select>
                         </div>
-                        {% include "sms/partials/time_picker.html" with div_data_bind="visible: time_input_relationship() !== 'BEFORE'" input_data_bind="value: start_time" only %}
-                        <div class="col-md-1 col-lg-1 text-center" data-bind="visible: time_input_relationship() === 'BETWEEN'"><span>{% trans "and" %}</span></div>
-                        {% include "sms/partials/time_picker.html" with div_data_bind="visible: time_input_relationship() !== 'AFTER'" input_data_bind="value: end_time" only %}
+                        <div class="col-sm-4" data-bind="visible: time_input_relationship() !== 'BEFORE'">
+                            {% include "sms/partials/time_picker.html" with input_data_bind="value: start_time" only %}
+                        </div>
+                        <div class="text-center col-sm-1" data-bind="visible: time_input_relationship() === 'BETWEEN'"><span>{% trans "and" %}</span></div>
+                        <div class="col-sm-4" data-bind="visible: time_input_relationship() !== 'AFTER'">
+                            {% include "sms/partials/time_picker.html" with input_data_bind="value: end_time" only %}
+                        </div>
                     </div>
-
                 </td>
                 <td><button type="button"
                             class="btn btn-danger"

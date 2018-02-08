@@ -68,7 +68,7 @@ class XFormValidationError(XFormException):
     def __str__(self):
         fatal_error_text = self.format_v1(self.fatal_error)
         ret = u"Validation Error%s" % (': %s' % fatal_error_text if fatal_error_text else '')
-        problems = filter(lambda problem: problem['message'] != self.fatal_error, self.validation_problems)
+        problems = [problem for problem in self.validation_problems if problem['message'] != self.fatal_error]
         if problems:
             ret += u"\n\nMore information:"
             for problem in problems:
@@ -158,18 +158,6 @@ class PracticeUserException(AppManagerException):
     def __init__(self, *args, **kwargs):
         self.build_profile_id = kwargs.pop('build_profile_id', None)
         super(PracticeUserException, self).__init__(*args, **kwargs)
-
-
-class ActionNotPermitted(AppManagerException):
-    pass
-
-
-class RemoteRequestError(AppManagerException):
-    pass
-
-
-class RemoteAuthError(RemoteRequestError):
-    pass
 
 
 class AppLinkError(AppManagerException):

@@ -1,10 +1,10 @@
-/* global module, inject */
+/* global module, inject, chai */
 "use strict";
 
 var pageData = hqImport('hqwebapp/js/initial_page_data');
 
 
-describe('AdolescentGirlsDirective', function () {
+describe('Adolescent Girls Directive', function () {
 
     var $scope, $httpBackend, $location, controller;
 
@@ -32,6 +32,10 @@ describe('AdolescentGirlsDirective', function () {
         controller.step = 'map';
     }));
 
+    it('tests instantiate the controller properly', function () {
+        chai.expect(controller).not.to.be.a('undefined');
+    });
+
     it('tests initial state', function () {
         assert.equal(controller.mode, 'map');
         assert.equal(controller.steps['map'].label, 'Map View: National');
@@ -40,6 +44,7 @@ describe('AdolescentGirlsDirective', function () {
 
     it('tests supervisor location', function () {
         controller.filtersData.location_id = 'test-id';
+        controller.userLocationId = 'test-id';
 
         $httpBackend.expectGET('icds_locations?location_id=test-id').respond(200, {location_type: 'supervisor'});
         $httpBackend.expectGET('adolescent_girls?location_id=test-id').respond(200, {
@@ -54,6 +59,7 @@ describe('AdolescentGirlsDirective', function () {
 
     it('tests non supervisor location', function () {
         controller.filtersData.location_id = 'test-id';
+        controller.userLocationId = 'test-id';
 
         $httpBackend.expectGET('icds_locations?location_id=test-id').respond(200, {location_type: 'non supervisor'});
         $httpBackend.expectGET('adolescent_girls?location_id=test-id').respond(200, {
@@ -85,8 +91,14 @@ describe('AdolescentGirlsDirective', function () {
     });
 
     it('tests template popup', function () {
-        var result = controller.templatePopup({properties: {name: 'test'}}, {valid: 14});
-        assert.equal(result, '<div class="hoverinfo" style="max-width: 200px !important;"><p>test</p><div>Total number of adolescent girls who are enrolled for ICDS services: <strong>14</strong></div>');
+        var result = controller.templatePopup({properties: {name: 'test'}}, {valid: 14, all: 28});
+        var expected = '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
+            '<p>test</p>' +
+            '<div>Number of adolescent girls (11 - 14 years) who are enrolled for Anganwadi Services: <strong>14</strong>' +
+            '<div>Total number of adolescent girls (11 - 14 years) who are registered: <strong>28</strong>' +
+            '<div>Percentage of registered adolescent girls (11 - 14 years) who are enrolled for Anganwadi Services: <strong>50.00%</strong>' +
+            '</div>';
+        assert.equal(result, expected);
     });
 
     it('tests moveToLocation national', function () {
@@ -161,17 +173,19 @@ describe('AdolescentGirlsDirective', function () {
         });
         assert.equal(controller.chartOptions.caption.html,
             '<i class="fa fa-info-circle"></i> ' +
-            'Total number of adolescent girls who are enrolled for ICDS services'
+            'Total number of adolescent girls who are enrolled for Anganwadi Services'
         );
     });
 
     it('tests chart tooltip content', function () {
         var month = {value: "Jul 2017", series: []};
 
-        var expected = '<p><strong>Jul 2017</strong></p><br/>'
-            + '<p>Total number of adolescent girls who are enrolled for ICDS services: <strong>60</strong></p>';
+        var expected = "<p><strong>Jul 2017</strong></p><br/>"
+            + "<div>Number of adolescent girls (11 - 18 years) who are enrolled for Anganwadi Services: <strong>60</strong></div>"
+            + "<div>Total number of adolescent girls (11 - 18 years) who are registered: <strong>120</strong></div>"
+            + "<div>Percentage of registered adolescent girls (11 - 18 years) who are enrolled for Anganwadi Services: <strong>50.00%</strong></div>";
 
-        var result = controller.tooltipContent(month.value, 60);
+        var result = controller.tooltipContent(month.value, {y: 60, all: 120});
         assert.equal(expected, result);
     });
 });

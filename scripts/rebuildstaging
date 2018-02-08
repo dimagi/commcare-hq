@@ -46,7 +46,7 @@ do
 done
 
 function rebuildstaging() {
-    python -m scripts.rebuildstaging scripts/rebuildstaging.py < scripts/staging.yaml "$@"
+    python scripts/rebuildstaging.py < scripts/staging.yaml "$@"
 }
 
 args=''
@@ -67,7 +67,11 @@ fi
 
 if [[ $deploy = 'y' && $no_push != 'y' ]]
 then
-    rebuildstaging $args && git checkout autostaging && git submodule update --init --recursive && fab staging awesome_deploy:confirm=no
+    rebuildstaging $args && {
+        which commcare-cloud \
+        && commcare-cloud staging fab deploy:confirm=no \
+        || echo 'Could not auto-deploy for you. Run `commcare-cloud staging fab deploy` to deploy.'
+    }
 else
     rebuildstaging $args
 fi

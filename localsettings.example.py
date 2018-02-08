@@ -141,7 +141,7 @@ _ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 XFORMS_PLAYER_URL = 'http://127.0.0.1:4444'
 
 # email and password for an admin django user, such as one created with
-# ./manage.py bootstrap <project-name> <email> <password>
+# ./manage.py make_superuser <email>
 TOUCHFORMS_API_USER = 'admin@example.com'
 TOUCHFORMS_API_PASSWORD = 'password'
 
@@ -160,10 +160,13 @@ ANALYTICS_IDS = {
     'GOOGLE_ANALYTICS_API_ID': '',
     'KISSMETRICS_KEY': '',
     'HUBSPOT_API_KEY': '',
+    'FULLSTORY_ID': '',
 }
 
 ANALYTICS_CONFIG = {
-    "HQ_INSTANCE": ''  # e.g. "www", or "india", or "staging"
+    "HQ_INSTANCE": '',  # e.g. "www", or "india", or "staging"
+    "DEBUG": DEBUG,
+    "LOG_LEVEL": "debug",   # "warning", "debug", "verbose", or "" for no logging
 }
 
 # Green house api key

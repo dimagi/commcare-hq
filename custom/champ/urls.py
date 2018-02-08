@@ -3,7 +3,7 @@ from django.conf.urls import url
 
 from custom.champ.views import PrevisionVsAchievementsView, DistrictFilterPrevView, \
     CBOFilterView, PrevisionVsAchievementsTableView, ServiceUptakeView, UserGroupsFilter, OrganizationsFilter, \
-    UserPLFilterView
+    UserPLFilterView, HierarchyFilter
 
 urlpatterns = [
     url(r'^champ_pva/', PrevisionVsAchievementsView.as_view(), name='champ_pva'),
@@ -14,4 +14,5 @@ urlpatterns = [
     url(r'^target_userpl_filter/', UserPLFilterView.as_view(), name='target_userpl_filter'),
     url(r'^group_filter/', UserGroupsFilter.as_view(), name='group_filter'),
     url(r'^organization_filter/', OrganizationsFilter.as_view(), name='organization_filter'),
+    url(r'^hierarchy/', HierarchyFilter.as_view(), name='hierarchy'),
 ]

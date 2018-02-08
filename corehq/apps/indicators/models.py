@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import division
 import logging
 import calendar
 import copy
@@ -246,7 +247,7 @@ class IndicatorDefinition(Document, AdminCRUDDocumentMixin):
             else:
                 specific_doc = "couch"
             unique["%s.%s.%s" % (ind.slug, ind.namespace, specific_doc)] = ind
-        return unique.values()
+        return list(unique.values())
 
     @classmethod
     def get_nice_name(cls):
@@ -590,7 +591,7 @@ class MedianCouchIndicatorDef(NoGroupCouchIndicatorDefBase):
     def get_value(self, user_ids, datespan=None, is_debug=False):
         results = self.get_raw_results(user_ids, datespan)
         data = dict([(r['id'], r['value']) for r in results])
-        value = numpy.median(data.values()) if data.values() else None
+        value = numpy.median(list(data.values())) if list(data.values()) else None
         if is_debug:
             return value, data
         return value
@@ -617,7 +618,7 @@ class SumLastEmittedCouchIndicatorDef(NoGroupCouchIndicatorDefBase):
             if item.get('value'):
                 unique_values[item['value']['_id']] = item['value']['value']
         value = sum(unique_values.values())
-        return (value, unique_values.keys()) if is_debug else value
+        return (value, list(unique_values)) if is_debug else value
 
     @classmethod
     def get_nice_name(cls):
@@ -652,7 +653,7 @@ class CombinedCouchViewIndicatorDefinition(DynamicIndicatorDefinition):
             debug_data["numerator"] = numerator[1]
             numerator = numerator[0]
 
-        ratio = float(numerator)/float(denominator) if denominator > 0 else None
+        ratio = float(numerator) / float(denominator) if denominator > 0 else None
         value = {
             'numerator': numerator,
             'denominator': denominator,
@@ -676,7 +677,7 @@ class CombinedCouchViewIndicatorDefinition(DynamicIndicatorDefinition):
             numerator = numerator_retro[i]
             n_val = numerator.get('value', 0)
             d_val = denominator.get('value', 0)
-            ratio = float(n_val)/float(d_val) if d_val else None
+            ratio = float(n_val) / float(d_val) if d_val else None
 
             monthly_combined = {
                 'date': denominator.get('date'),
@@ -951,7 +952,7 @@ class FormDataInCaseIndicatorDefinition(CaseIndicatorDefinition, FormDataIndicat
             if related_forms:
                 try:
                     value_list = computed.get(self.slug, {}).get('value', {})
-                    saved_form_ids = value_list.keys()
+                    saved_form_ids = list(value_list)
                     current_ids = set([f._id for f in related_forms])
                     is_update = len(current_ids.difference(saved_form_ids)) > 0
                     if is_update:

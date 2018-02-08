@@ -1,5 +1,4 @@
 from __future__ import absolute_import
-from StringIO import StringIO
 from mimetypes import guess_all_extensions, guess_type
 import uuid
 import zipfile

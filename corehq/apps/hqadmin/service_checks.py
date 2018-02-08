@@ -3,10 +3,10 @@ A collection of functions which test the most basic operations of various servic
 """
 from __future__ import absolute_import
 from collections import namedtuple
+from io import BytesIO
 import datetime
 import json
 import logging
-from StringIO import StringIO
 import time
 
 from django.core import cache
@@ -78,7 +78,7 @@ def check_kafka():
 
 def check_touchforms():
     if not getattr(settings, 'XFORMS_PLAYER_URL', None):
-        return
+        return ServiceStatus(True, "Touchforms isn't needed for this cluster")
 
     try:
         res = requests.post(settings.XFORMS_PLAYER_URL,
@@ -113,8 +113,8 @@ def check_elasticsearch():
 def check_blobdb():
     """Save something to the blobdb and try reading it back."""
     db = get_blob_db()
-    contents = "It takes Pluto 248 Earth years to complete one orbit!"
-    info = db.put(StringIO(contents), random_url_id(16))
+    contents = b"It takes Pluto 248 Earth years to complete one orbit!"
+    info = db.put(BytesIO(contents), random_url_id(16))
     with db.get(info.identifier) as fh:
         res = fh.read()
     db.delete(info.identifier)
@@ -178,7 +178,7 @@ def check_postgres():
         except OperationalError:
             c_status = 'FAIL'
             connected = False
-        status_str += "%s:%s " % (settings.DATABASES[db]['NAME'], c_status)
+        status_str += "%s:%s:%s " % (db, settings.DATABASES[db]['NAME'], c_status)
 
     a_user = User.objects.first()
     if a_user is None:

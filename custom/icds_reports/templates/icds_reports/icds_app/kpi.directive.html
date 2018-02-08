@@ -2,34 +2,40 @@
     <div class="col-md-6" ng-repeat="cell in section track by $index">
         <div class="report-cell kpi">
             <div class="row">
-                <div class="col-md-1"
+                <div class="col-md-2"
                      uib-popover-html="cell.help_text"
                      popover-placement="right"
                      popover-trigger="'mouseenter'">
                     <i ng-show="cell.help_text !== null" class="fa fa-info-circle fa-2x" ></i>
                 </div>
-                <div class="col-md-11 center kpi-content">
-                    <div class="row crop">
+                <div class="col-md-8 kpi-content">
+                    <div class="kpi-justify-center">
                         <span class="title white" ng-bind="cell.label"></span>
                     </div>
-                    <div class="row kpi-numbers">
+                    <div class="kpi-justify-center">
                         <span class="number white" ng-if="cell.format == 'div'"><span class="white" ng-bind="cell.value | indiaNumbers"></span>/<span class="white" ng-bind="cell.all | indiaNumbers"></span></span>
                         <span class="number white" ng-if="cell.format == 'number'" ng-bind="cell.value | indiaNumbers"></span>
                         <span class="string white" ng-if="cell.format == 'string'" ng-bind="cell.value"></span>
-                        <div ng-if="cell.format == 'percent_and_div'">
+                        <div class="kpi-numbers-format" ng-if="cell.format == 'percent_and_div'">
                             <div class="number white"><span class="white" ng-bind="(cell.value / (cell.all || 1) * 100) | number:2"></span>%</div>
                             <div class="second_number white">(<span class="white" ng-bind="cell.value | indiaNumbers"></span> / <span  class="white" ng-bind="cell.all | indiaNumbers"></span>)</div>
                         </div>
                     </div>
-                    <div class="row kpi-percents" ng-if="cell.show_percent === void(0)">
-                        <p>
-                            <span class="white" ng-show="cell.percent !== null">
-                                <i class="fa" style="font-size: 1.5em" ng-class="{'fa-arrow-down': cell.percent < 0, 'fa-arrow-up': cell.percent > 0, 'green': cell.color === 'green', 'red': cell.color === 'red'}" ></i>&nbsp;
-                                <span class="white" ng-bind="cell.percent | number:2"></span>% from previous {$ cell.frequency $}
-                            </span>
-                            <span ng-show="cell.redirect" class="see-more" aria-hidden="true"><a href="{$ $ctrl.goToStep(cell.redirect) $}" class="fa">See more</a></span>
-                        </p>
+                    <div class="kpi-justify-center" ng-if="cell.show_percent === void(0)"
+                         ng-class="{'kpi-percent': cell.redirect}">
+                        <span class="white" ng-class="{'kpi-percents-text': cell.redirect}"
+                              ng-show="cell.percent !== null && $ctrl.isNumber(cell.percent) && $ctrl.showPercentInfo()">
+                            <i class="fa" style="font-size: 1.5em" ng-class="{'fa-arrow-down': cell.percent < 0, 'fa-arrow-up': cell.percent > 0, 'green': cell.color === 'green', 'red': cell.color === 'red'}" ></i>&nbsp;
+                            <span class="white" ng-bind="cell.percent | number:2"></span>% from previous {$ cell.frequency $}
+                        </span>
+                        <span class="white" ng-class="{'kpi-percents-text': cell.redirect}"
+                              ng-show="cell.percent !== null && !$ctrl.isNumber(cell.percent) && $ctrl.showPercentInfo()">
+                            <span class="white" ng-bind="cell.percent"></span>
+                        </span>
                     </div>
+                </div>
+                <div class="col-md-2 see-more-content">
+                    <span ng-show="cell.redirect" class="see-more" aria-hidden="true"><a href="{$ $ctrl.goToStep(cell.redirect) $}" class="fa">See more</a></span>
                 </div>
             </div>
         </div>

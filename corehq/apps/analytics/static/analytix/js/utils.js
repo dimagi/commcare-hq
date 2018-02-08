@@ -1,5 +1,13 @@
-/* globals _, JSON */
-hqDefine('analytix/js/utils', function () {
+/* globals JSON */
+hqDefine('analytix/js/utils', [
+    'jquery',
+    'underscore',
+    'analytix/js/initial',
+], function (
+    $,
+    _,
+    initialAnalytics
+) {
     'use strict';
 
     /**
@@ -60,34 +68,6 @@ hqDefine('analytix/js/utils', function () {
         }
     };
 
-    /**
-     * Inserts a <script src="srcUrl" type="text/javascript"></script>
-     * tag into the DOM.
-     * @param {string} scriptSrc
-     * @param {function} loggingFn - logs on success or failure of script
-     * @param {object} options - (optional) options added on to the script
-     */
-    var insertScript = function (scriptSrc, loggingFn, options) {
-        setTimeout(function(){
-            var doc = document,
-                firstScriptTag = doc.getElementsByTagName('script')[0],
-                script = doc.createElement('script');
-            script.type = 'text/javascript';
-            script.async = true;
-            script.src = scriptSrc;
-            _.each(options || {}, function(val, key) {
-                script[key] = val;
-            });
-            script.addEventListener('error', function () {
-                loggingFn(scriptSrc, "Failed to Load Script - Check Adblocker");
-            });
-            script.addEventListener('load', function () {
-                loggingFn(scriptSrc, "Loaded Script");
-            });
-            firstScriptTag.parentNode.insertBefore(script, firstScriptTag);
-        }, 1);
-    };
-
     var getDateHash = function () {
         var e = 3e5;
         return Math.ceil(new Date() / e) * e;
@@ -108,10 +88,57 @@ hqDefine('analytix/js/utils', function () {
         return oneTimeCallback;
     };
 
+    /**
+     * Initialize an API.
+     * @param {Deferred} ready The promise to return (see below). Passed as a parameter
+     *  so the calling code can attach callbacks to it before calling this function.
+     * @param {string} apiId
+     * @param {string/array} scriptUrls - Accepts string or array of strings
+     * @param {Logger} logger
+     * @param {function} initCallback - Logic to run once any scripts are loaded but before
+        the promise this function returns is resolved.
+     * @returns {Deferred} A promise that will resolve once the API is fully initialized.
+     *  This promise will be rejected if the API fails to initialize for any reason, most
+     *  likely because analytics is disabled or because a script failed to load.
+     */
+    var initApi = function(ready, apiId, scriptUrls, logger, initCallback) {
+        logger.verbose.log(apiId || "NOT SET", ["DATA", "API ID"]);
+
+        if (_.isString(scriptUrls)) {
+            scriptUrls = [scriptUrls];
+        }
+
+        if (!initialAnalytics.getFn('global')(('isEnabled'))) {
+            logger.debug.log("Failed to initialize because analytics are disabled");
+            ready.reject();
+            return ready;
+        }
+
+        if (!apiId) {
+            logger.debug.log("Failed to initialize because apiId was not provided");
+            ready.reject();
+            return ready;
+        }
+
+        $.when.apply($, _.map(scriptUrls, function(url) { return $.getScript(url); }))
+            .done(function() {
+                if (_.isFunction(initCallback)) {
+                    initCallback();
+                }
+                logger.debug.log('Initialized');
+                ready.resolve();
+            }).fail(function() {
+                logger.debug.log("Failed to Load Script - Check Adblocker");
+                ready.reject();
+            });
+
+        return ready;
+    };
+
     return {
         trackClickHelper: trackClickHelper,
-        insertScript: insertScript,
         createSafeCallback: createSafeCallback,
         getDateHash: getDateHash,
+        initApi: initApi,
     };
 });

@@ -1,9 +1,11 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import itertools
 from django.utils.translation import ugettext as _
 from dimagi.ext.jsonobject import JsonObject, DictProperty, StringProperty
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.specs import TypeProperty
+from corehq.apps.userreports.util import add_tabbed_text
 from jsonobject.base_properties import DefaultProperty
 from .utils import SUPPORTED_UCR_AGGREGATIONS, aggregate_items
 
@@ -35,6 +37,10 @@ class FilterItemsExpressionSpec(JsonObject):
 
         return values
 
+    def __str__(self):
+        return "filter:\n{items}\non:\n{filter}\n".format(items=add_tabbed_text(str(self._items_expression)),
+                                                          filter=add_tabbed_text(str(self._filter_expression)))
+
 
 class MapItemsExpressionSpec(JsonObject):
     type = TypeProperty('map_items')
@@ -49,6 +55,10 @@ class MapItemsExpressionSpec(JsonObject):
         items = _evaluate_items_expression(self._items_expression, doc, context)
 
         return [self._map_expression(i, context) for i in items]
+
+    def __str__(self):
+        return "map:\n{items}\nto:\n{map}\n".format(items=add_tabbed_text(str(self._items_expression)),
+                                                    map=add_tabbed_text(str(self._map_expression)))
 
 
 class ReduceItemsExpressionSpec(JsonObject):
@@ -68,6 +78,10 @@ class ReduceItemsExpressionSpec(JsonObject):
         items = _evaluate_items_expression(self._items_expression, doc, context)
         return aggregate_items(items, self.aggregation_fn)
 
+    def __str__(self):
+        return "{aggregation}:\n{items}\n".format(aggregation=self.aggregation_fn,
+                                                  items=add_tabbed_text(str(self._items_expression)))
+
 
 class FlattenExpressionSpec(JsonObject):
     type = TypeProperty('flatten')
@@ -86,6 +100,9 @@ class FlattenExpressionSpec(JsonObject):
             return(list(itertools.chain(*items)))
         except TypeError:
             return []
+
+    def __str__(self):
+        return "flatten:\n{items}\n".format(items=add_tabbed_text(str(self._items_expression)))
 
 
 class SortItemsExpressionSpec(JsonObject):
@@ -110,3 +127,9 @@ class SortItemsExpressionSpec(JsonObject):
             )
         except TypeError:
             return []
+
+    def __str__(self):
+        return "sort:\n{items}\n{order} on:\n{sort}".format(
+            items=add_tabbed_text(str(self._items_expression)),
+            order=self.order,
+            sort=add_tabbed_text(str(self._sort_expression)))

@@ -66,6 +66,7 @@ from corehq.apps.app_manager.models import (
     DefaultCaseSearchProperty, get_all_mobile_filter_configs, get_auto_filter_configurations, CustomIcon)
 from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
     require_can_edit_apps, require_deploy_apps
+from six.moves import map
 
 logger = logging.getLogger(__name__)
 
@@ -746,7 +747,7 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
 
     lang = request.COOKIES.get('lang', app.langs[0])
     if short is not None:
-        detail.short.columns = map(DetailColumn.from_json, short)
+        detail.short.columns = list(map(DetailColumn.from_json, short))
         if persist_case_context is not None:
             detail.short.persist_case_context = persist_case_context
             detail.short.persistent_case_context_xml = persistent_case_context_xml
@@ -762,9 +763,9 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
             _save_case_list_lookup_params(detail.short, case_list_lookup, lang)
 
     if long_ is not None:
-        detail.long.columns = map(DetailColumn.from_json, long_)
+        detail.long.columns = list(map(DetailColumn.from_json, long_))
         if tabs is not None:
-            detail.long.tabs = map(DetailTab.wrap, tabs)
+            detail.long.tabs = list(map(DetailTab.wrap, tabs))
         if print_template is not None:
             detail.long.print_template = print_template
     if filter != ():
@@ -796,6 +797,10 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
         detail.long.sort_nodeset_columns = sort_nodeset_columns
 
     if sort_elements is not None:
+        # Attempt to map new elements to old so we don't lose translations
+        # Imperfect because the same field may be used multiple times, or user may change field
+        old_elements_by_field = {e['field']: e for e in detail.short.sort_elements}
+
         detail.short.sort_elements = []
         for sort_element in sort_elements:
             item = SortElement()
@@ -803,6 +808,8 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
             item.type = sort_element['type']
             item.direction = sort_element['direction']
             item.blanks = sort_element['blanks']
+            if item.field in old_elements_by_field:
+                item.display = old_elements_by_field[item.field].display
             item.display[lang] = sort_element['display']
             if toggles.SORT_CALCULATION_IN_CASE_LIST.enabled(domain):
                 item.sort_calculation = sort_element['sort_calculation']
@@ -928,6 +935,7 @@ def validate_module_for_build(request, domain, app_id, module_unique_id, ajax=Tr
 def new_module(request, domain, app_id):
     "Adds a module to an app"
     app = get_app(domain, app_id)
+    from corehq.apps.app_manager.views.utils import get_default_followup_form_xml
     lang = request.COOKIES.get('lang', app.langs[0])
     name = request.POST.get('name')
     module_type = request.POST.get('module_type', 'case')
@@ -954,7 +962,10 @@ def new_module(request, domain, app_id):
                     condition=FormActionCondition(type='always'))
 
                 # one followup form
-                followup = app.new_form(module_id, _("Followup Form"), lang)
+                msg = _("This is your follow up form. "
+                        "Delete this label and add questions for any follow up visits.")
+                attachment = get_default_followup_form_xml(context={'lang': lang, 'default_label': msg})
+                followup = app.new_form(module_id, _("Followup Form"), lang, attachment=attachment)
                 followup.requires = "case"
                 followup.actions.update_case = UpdateCaseAction(condition=FormActionCondition(type='always'))
 

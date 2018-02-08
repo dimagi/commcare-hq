@@ -1,17 +1,16 @@
-/* global module, inject, _ */
+/* global module, inject, _, chai */
 "use strict";
 
 var pageData = hqImport('hqwebapp/js/initial_page_data');
 
 
-describe('ChildrenInitiatedDirective', function () {
+describe('Children Initiated Directive', function () {
 
     var $scope, $httpBackend, $location, controller;
 
     pageData.registerUrl('icds-ng-template', 'template');
     pageData.registerUrl('children_initiated', 'children_initiated');
     pageData.registerUrl('icds_locations', 'icds_locations');
-
 
     beforeEach(module('icdsApp', function ($provide) {
         $provide.constant("genders", [
@@ -42,6 +41,9 @@ describe('ChildrenInitiatedDirective', function () {
         controller.step = 'map';
     }));
 
+    it('tests instantiate the controller properly', function () {
+        chai.expect(controller).not.to.be.a('undefined');
+    });
 
     it('tests initial state', function () {
         assert.equal(controller.mode, 'map');
@@ -51,6 +53,7 @@ describe('ChildrenInitiatedDirective', function () {
 
     it('tests supervisor location', function () {
         controller.filtersData.location_id = 'test-id';
+        controller.userLocationId = 'test-id';
 
         $httpBackend.expectGET('icds_locations?location_id=test-id').respond(200, {location_type: 'supervisor'});
         $httpBackend.expectGET('children_initiated?location_id=test-id').respond(200, {
@@ -65,6 +68,7 @@ describe('ChildrenInitiatedDirective', function () {
 
     it('tests non supervisor location', function () {
         controller.filtersData.location_id = 'test-id';
+        controller.userLocationId = 'test-id';
 
         $httpBackend.expectGET('icds_locations?location_id=test-id').respond(200, {location_type: 'non supervisor'});
         $httpBackend.expectGET('children_initiated?location_id=test-id').respond(200, {
@@ -79,7 +83,7 @@ describe('ChildrenInitiatedDirective', function () {
 
     it('tests template popup', function () {
         var result = controller.templatePopup({properties: {name: 'test'}}, {all: 10, children: 5});
-        assert.equal(result, '<div class="hoverinfo" style="max-width: 200px !important;">' +
+        assert.equal(result, '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
             '<p>test</p>'
             + '<div>Total number of children between age 6 - 8 months: <strong>10</strong></div>'
             + '<div>Total number of children (6-8 months) given timely introduction to sold or semi-solid food in the given month: <strong>5</strong></div>'
@@ -189,9 +193,9 @@ describe('ChildrenInitiatedDirective', function () {
         var month = {value: "Jul 2017", series: []};
 
         var expected = '<p><strong>Jul 2017</strong></p><br/>'
-            + '<p>Total number of children between age 6 - 8 months: <strong>171</strong></p>'
-            + '<p>Total number of children (6-8 months) given timely introduction to sold or semi-solid food in the given month: <strong>5</strong></p>'
-            + '<p>% children (6-8 months) given timely introduction to solid or semi-solid food in the given month: <strong>24.34%</strong></p>';
+            + '<div>Total number of children between age 6 - 8 months: <strong>171</strong></div>'
+            + '<div>Total number of children (6-8 months) given timely introduction to sold or semi-solid food in the given month: <strong>5</strong></div>'
+            + '<div>% children (6-8 months) given timely introduction to solid or semi-solid food in the given month: <strong>24.34%</strong></div>';
 
         var result = controller.tooltipContent(month.value, data);
         assert.equal(expected, result);
