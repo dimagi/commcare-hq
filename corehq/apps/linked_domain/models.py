@@ -2,7 +2,6 @@
 from __future__ import unicode_literals
 
 from collections import namedtuple
-
 from datetime import datetime
 
 import jsonobject
@@ -13,7 +12,6 @@ from django.urls import reverse
 
 from corehq.apps.linked_domain.const import LINKED_MODELS
 from corehq.apps.linked_domain.exceptions import DomainLinkError
-from corehq.util.view_utils import absolute_reverse
 
 
 class RemoteLinkDetails(namedtuple('RemoteLinkDetails', 'url_base username api_key')):
@@ -26,12 +24,12 @@ class RemoteLinkDetails(namedtuple('RemoteLinkDetails', 'url_base username api_k
 class DomainLink(models.Model):
     linked_domain = models.CharField(max_length=126, null=False, unique=True)
     master_domain = models.CharField(max_length=126, null=False)
-    last_pull = models.DateTimeField(null=True)
+    last_pull = models.DateTimeField(null=True, blank=True)
 
     # used for linking across remote instances of HQ
-    remote_base_url = models.CharField(max_length=255, null=True)
-    remote_username = models.CharField(max_length=255, null=True)
-    remote_api_key = models.CharField(max_length=255, null=True)
+    remote_base_url = models.CharField(max_length=255, null=True, blank=True)
+    remote_username = models.CharField(max_length=255, null=True, blank=True)
+    remote_api_key = models.CharField(max_length=255, null=True, blank=True)
 
     @property
     def qualified_master(self):
@@ -59,6 +57,12 @@ class DomainLink(models.Model):
         if model_details:
             history.model_detail = model_details.to_json()
         history.save()
+
+    def save(self, *args, **kwargs):
+        super(DomainLink, self).save(*args, **kwargs)
+        from corehq.apps.linked_domain.dbaccessors import get_domain_master_link, get_linked_domains
+        get_domain_master_link.clear(self.linked_domain)
+        get_linked_domains.clear(self.master_domain)
 
     @classmethod
     def link_domains(cls, linked_domain, master_domain, remote_details=None):
@@ -88,7 +92,7 @@ class DomainLinkHistory(models.Model):
     link = models.ForeignKey(DomainLink, on_delete=models.CASCADE, related_name='history')
     date = models.DateTimeField(null=False)
     model = models.CharField(max_length=128, choices=LINKED_MODELS, null=False)
-    model_detail = JSONField(null=True)
+    model_detail = JSONField(null=True, blank=True)
     user_id = models.CharField(max_length=255, null=False)
 
     @property
