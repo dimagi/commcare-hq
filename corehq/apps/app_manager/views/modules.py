@@ -294,15 +294,13 @@ def _get_parent_modules(app, module, case_property_builder, case_type_):
 
 
 def _get_valid_parent_modules(app, module):
-    # Modules that already have a child are invalid
-    invalid_ids = set([getattr(m, 'root_module_id', None) for m in app.modules])
-
     # If this module already has a child, it can't also have a parent
-    if module.unique_id in invalid_ids:
-        return []
+    for m in app.modules:
+        if module.unique_id == getattr(m, 'root_module_id', None):
+            return []
 
-    # Modules that already have a parent are also invalid
-    invalid_ids = invalid_ids.union([m.unique_id for m in app.modules if getattr(m, 'root_module_id', None)])
+    # Modules that already have a parent may not themselves be parents
+    invalid_ids = [m.unique_id for m in app.modules if getattr(m, 'root_module_id', None)]
 
     # The current module is not allowed, but its parent is
     # Shadow modules are not allowed
