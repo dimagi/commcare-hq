@@ -368,7 +368,7 @@ def copy_app(request, domain):
                     return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[domain, app_id]))
 
                 messages.success(request, _('Application successfully copied and linked.'))
-                return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[master_domain, linked_app.get_id]))
+                return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[link_domain, linked_app.get_id]))
             else:
                 extra_properties = {'name': data['name']}
                 app_copy = import_app_util(app_id_or_source, link_domain, extra_properties)
