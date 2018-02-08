@@ -362,7 +362,7 @@ def copy_app(request, domain):
 
                 linked_app = create_linked_app(master_domain, app_id, link_domain, data['name'])
                 try:
-                    update_linked_app(linked_app)
+                    update_linked_app(linked_app, request.couch_user.get_id)
                 except AppLinkError as e:
                     messages.error(request, str(e))
                     return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[domain, app_id]))
@@ -828,7 +828,7 @@ def drop_user_case(request, domain, app_id):
 def pull_master_app(request, domain, app_id):
     app = get_current_app(domain, app_id)
     try:
-        update_linked_app(app)
+        update_linked_app(app, request.couch_user.get_id)
     except AppLinkError as e:
         messages.error(request, str(e))
         return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[domain, app_id]))

@@ -2,12 +2,11 @@ from __future__ import absolute_import
 
 from functools import partial
 
-from corehq.apps.app_manager.views.utils import update_linked_app
 from corehq.apps.custom_data_fields import CustomDataFieldsDefinition
 from corehq.apps.custom_data_fields.models import CustomDataField
 from corehq.apps.linked_domain.const import (
     MODEL_FLAGS, MODELS_ROLES, MODEL_LOCATION_DATA, MODEL_PRODUCT_DATA,
-    MODEL_APP, MODEL_USER_DATA
+    MODEL_USER_DATA
 )
 from corehq.apps.linked_domain.local_accessors import (
     get_toggles_previews as local_toggles_previews,

@@ -16,6 +16,7 @@ from corehq.apps.app_manager.exceptions import AppEditingError, \
     ModuleNotFoundException, FormNotFoundException, AppLinkError
 from corehq.apps.app_manager.models import Application, ReportModule, enable_usercase_if_necessary, CustomIcon
 from corehq.apps.linked_domain.exceptions import RemoteRequestError, RemoteAuthError, ActionNotPermitted
+from corehq.apps.linked_domain.models import AppLinkDetail
 from corehq.apps.linked_domain.remote_accessors import pull_missing_multimedia_for_app
 
 from corehq.apps.app_manager.util import update_form_unique_ids
@@ -286,7 +287,7 @@ def handle_custom_icon_edits(request, form_or_module, lang):
             form_or_module.custom_icons = []
 
 
-def update_linked_app(app):
+def update_linked_app(app, user_id):
     try:
         master_version = app.get_master_version()
     except RemoteRequestError:
@@ -334,4 +335,4 @@ def update_linked_app(app):
                 'Error fetching multimedia from remote server. Please try again later.'
             ))
 
-    app.domain_link.update_last_pull()
+    app.domain_link.update_last_pull('app', user_id, AppLinkDetail(app_id=app._id))
