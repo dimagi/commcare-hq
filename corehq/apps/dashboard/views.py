@@ -49,8 +49,7 @@ def default_dashboard_url(request, domain):
     return reverse(DomainDashboardView.urlname, args=[domain])
 
 
-@login_and_domain_required
-def dashboard_tile(request, domain, slug):
+def _get_tile(request, slug):
     try:
         tile = [t for t in _get_default_tiles(request) if t.slug == slug][0]
     except IndexError:
@@ -58,11 +57,22 @@ def dashboard_tile(request, domain, slug):
             {'message': _("Tile not found: {}").format(slug)},
             status_code=404,
         )
+    return tile
 
+
+@login_and_domain_required
+def dashboard_tile(request, domain, slug):
+    tile = _get_tile(request, slug)
     current_page = int(request.GET.get('currentPage', 1))
     items_per_page = int(request.GET.get('itemsPerPage', 5))
     items = list(tile.paginator.paginated_items(current_page, items_per_page))
     return json_response({'items': items})
+
+
+@login_and_domain_required
+def dashboard_tile_total(request, domain, slug):
+    tile = _get_tile(request, slug)
+    return json_response({'total': tile.paginator.total})
 
 
 @location_safe
@@ -98,10 +108,7 @@ class DomainDashboardView(LoginAndDomainMixin, BasePageView, DomainViewMixin):
                 if tile.paginator_class:
                     items_per_page = 5
                     tile_context.update({
-                        'pagination': {
-                            'items_per_page': items_per_page,
-                            'pages': int(math.ceil(float(tile.paginator.total) / items_per_page)),
-                        },
+                        'has_item_list': True,
                     })
                 tile_contexts.append(tile_context)
         return {'dashboard_tiles': tile_contexts}
