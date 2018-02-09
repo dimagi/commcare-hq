@@ -90,7 +90,7 @@ hqDefine("app_manager/js/forms/form_designer", function() {
                 usage("Form Builder", group, message);
             }
 
-            function event(label, attributes) {
+            function interaction(label, attributes) {
                 hqImport('analytix/js/appcues').track(label, attributes);
             }
 
@@ -98,7 +98,7 @@ hqDefine("app_manager/js/forms/form_designer", function() {
                 fbUsage: fbUsage,
                 usage: usage,
                 workflow: workflow,
-                event: event,
+                interaction: interaction,
             };
         });
 

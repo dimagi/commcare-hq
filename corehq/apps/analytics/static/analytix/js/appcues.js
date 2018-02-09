@@ -16,7 +16,7 @@ hqDefine('analytix/js/appcues', [
 ) {
     'use strict';
     var _get = initialAnalytics.getFn('appcues'),
-        _logger = logging.getLoggerForApi('AppCues'),
+        _logger = logging.getLoggerForApi('Appcues'),
         _ready = $.Deferred();
 
     $(function () {
@@ -43,8 +43,7 @@ hqDefine('analytix/js/appcues', [
             }
         });
     }
-
     return {
-        track: trackEvent,
+        trackEvent: trackEvent,
     };
 });
