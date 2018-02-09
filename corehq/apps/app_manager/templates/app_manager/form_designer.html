@@ -1,7 +1,8 @@
 {% extends 'app_manager/managed_app.html'%}
-{% load xforms_extras %}
+{% load compress %}
 {% load hq_shared_tags %}
 {% load i18n %}
+{% load xforms_extras %}
 
 {% block head %}{{ block.super }}
     {% if include_fullstory %}
@@ -25,11 +26,23 @@
 
 {% block js %}{{ block.super }}
     <script src="{% static 'moment/moment.js' %}"></script>
+    <script>
+        /*
+            When r.js optimizes the bundle.js files, one thing it does is add a call to `define` the module.
+            Since these bundles are used by both requirejs and non-requirejs pages, `define` needs to exist,
+            so it's set up as a no-op in hqModules.js. But if `define` is defined, require.js returns early
+            without doing anything. So, for form builder, where the HQ page doesn't use requirejs but vellum
+            itself does, `define` gets changed from a no-op back to undefined so that require.js will re-define it.
+        */
+        define = undefined;
+    </script>
+    {% compress js %}
     <script src="{% static 'requirejs/require.js' %}"></script>
     <script src="{% static 'app_manager/js/forms/app_notifications.js' %}"></script>
     <script src="{% static 'js/ws4redis.js' %}"></script>
     <script src="{% static 'app_manager/js/forms/edit_form_details.js' %}"></script>
     <script src="{% static 'app_manager/js/forms/form_designer.js' %}"></script>
+    {% endcompress %}
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
@@ -51,7 +64,7 @@
     {% initial_page_data 'vellum_debug' vellum_debug %}
     {% initial_page_data 'vellum_options' vellum_options %}
     {% registerurl 'edit_form_attr' app.domain app.id form.unique_id '---' %}
-    <div id="formdesigner" class="clearfix app-manager-v2 loading"></div>
+    <div id="formdesigner" class="clearfix loading"></div>
 
     <script type="text/html" id="js-fd-manage-case">
       <div class="btn-group pull-right">
@@ -138,7 +151,7 @@
                   </div>
                   <div class="modal-footer">
                       <a href="#" data-dismiss="modal" class="btn btn-default">{% trans "Cancel" %}</a>
-                      <button type="submit disable-on-submit" class="btn btn-primary">{% trans "Save" %}</button>
+                      <button type="submit" class="btn btn-primary disable-on-submit">{% trans "Save" %}</button>
                   </div>
               </form>
           </div>

@@ -1,10 +1,12 @@
 from __future__ import print_function
 
+from __future__ import absolute_import
 from django.core.management.base import BaseCommand
 
 from corehq.privileges import MAX_PRIVILEGES
 from corehq.apps.accounting.utils import ensure_grants
 from corehq.apps.accounting.models import SoftwarePlanVersion
+from six.moves import input
 
 
 class Command(BaseCommand):
@@ -83,7 +85,7 @@ class Command(BaseCommand):
 
 
 def _confirm(msg):
-    confirm_update = raw_input(msg + ' [y/N] ')
+    confirm_update = input(msg + ' [y/N] ')
     if not confirm_update:
         return False
     return confirm_update.lower() == 'y'

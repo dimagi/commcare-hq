@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import uuid
 from datetime import datetime
 
@@ -24,6 +25,7 @@ from corehq.form_processor.utils import get_simple_form_xml, get_simple_wrapped_
 from corehq.form_processor.utils.xform import TestFormMetadata
 from corehq.sql_db.routers import db_for_read_write
 from corehq.util.test_utils import trap_extra_setup
+from six.moves import range
 
 DOMAIN = 'test-form-accessor'
 
@@ -90,6 +92,10 @@ class FormAccessorTestsSQL(TestCase):
 
     def test_get_with_attachments(self):
         form = create_form_for_test(DOMAIN)
+        form = FormAccessorSQL.get_form(form.form_id)  # refetch to clear cached attachments
+        with self.assertNumQueries(1, using=db_for_read_write(XFormAttachmentSQL)):
+            form.get_attachment_meta('form.xml')
+
         with self.assertNumQueries(1, using=db_for_read_write(XFormAttachmentSQL)):
             form.get_attachment_meta('form.xml')
 
@@ -316,7 +322,7 @@ class FormAccessorTestsSQL(TestCase):
     def test_save_form_deprecated(self):
         existing_form, new_form = _simulate_form_edit()
 
-        FormAccessorSQL.save_deprecated_form(existing_form)
+        FormAccessorSQL.update_form(existing_form, publish_changes=False)
         FormAccessorSQL.save_new_form(new_form)
 
         self._validate_deprecation(existing_form, new_form)

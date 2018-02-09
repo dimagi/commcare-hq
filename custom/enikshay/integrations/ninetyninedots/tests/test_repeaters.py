@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import json
 from datetime import datetime, date
 from django.test import TestCase, override_settings
@@ -19,7 +20,6 @@ from custom.enikshay.case_utils import get_person_locations
 from custom.enikshay.const import (
     PRIMARY_PHONE_NUMBER,
     OTHER_NUMBER,
-    MERM_ID,
     ENIKSHAY_ID,
     PERSON_FIRST_NAME,
     PERSON_LAST_NAME,
@@ -33,6 +33,7 @@ from custom.enikshay.const import (
     TREATMENT_SUPPORTER_PHONE,
     ENROLLED_IN_PRIVATE,
 )
+from custom.enikshay.integrations.ninetyninedots.const import MERM_ID
 from custom.enikshay.integrations.ninetyninedots.repeaters import (
     NinetyNineDotsRegisterPatientRepeater,
     NinetyNineDotsUpdatePatientRepeater,
@@ -106,7 +107,7 @@ class ENikshayRepeaterTestBase(ENikshayCaseStructureMixin, TestCase):
         )
 
 
-@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True, SERVER_ENVIRONMENT='enikshay')
 class TestRegisterPatientRepeater(ENikshayLocationStructureMixin, ENikshayRepeaterTestBase):
 
     def setUp(self):
@@ -138,7 +139,7 @@ class TestRegisterPatientRepeater(ENikshayLocationStructureMixin, ENikshayRepeat
         self.assertEqual(1, len(self.repeat_records().all()))
 
 
-@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True, SERVER_ENVIRONMENT='enikshay')
 class TestUpdatePatientRepeater(ENikshayLocationStructureMixin, ENikshayRepeaterTestBase):
 
     def setUp(self):
@@ -223,7 +224,7 @@ class TestUpdatePatientRepeater(ENikshayLocationStructureMixin, ENikshayRepeater
         self.assertEqual(0, len(self.repeat_records().all()))
 
 
-@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True, SERVER_ENVIRONMENT='enikshay')
 class TestAdherenceRepeater(ENikshayLocationStructureMixin, ENikshayRepeaterTestBase):
 
     def setUp(self):
@@ -256,7 +257,7 @@ class TestAdherenceRepeater(ENikshayLocationStructureMixin, ENikshayRepeaterTest
         self.assertEqual(2, len(self.repeat_records().all()))
 
 
-@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True, SERVER_ENVIRONMENT='enikshay')
 class TestTreatmentOutcomeRepeater(ENikshayLocationStructureMixin, ENikshayRepeaterTestBase):
 
     def setUp(self):
@@ -284,6 +285,8 @@ class TestTreatmentOutcomeRepeater(ENikshayLocationStructureMixin, ENikshayRepea
 
 class TestPayloadGeneratorBase(ENikshayCaseStructureMixin, ENikshayLocationStructureMixin, TestCase):
 
+    maxDiff = None
+
     def tearDown(self):
         super(TestPayloadGeneratorBase, self).tearDown()
         delete_all_cases()
@@ -291,7 +294,7 @@ class TestPayloadGeneratorBase(ENikshayCaseStructureMixin, ENikshayLocationStruc
     def _get_actual_payload(self, casedb):
         raise NotImplementedError()
 
-    def _assert_payload_equal(self, casedb, expected_numbers=False, sector=u'public'):
+    def _assert_payload_contains_subset(self, casedb, expected_numbers=False, sector=u'public'):
         person_case = casedb[self.person_id]
         episode_case = casedb[self.episode_id]
         person_case_properties = person_case.dynamic_case_properties()
@@ -340,10 +343,11 @@ class TestPayloadGeneratorBase(ENikshayCaseStructureMixin, ENikshayLocationStruc
             })
         expected_payload.update(locations)
         actual_payload = json.loads(self._get_actual_payload(casedb))
-        self.assertDictEqual(expected_payload, actual_payload)
+        self.assertDictContainsSubset(expected_payload, actual_payload)
+        return actual_payload
 
 
-@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True, SERVER_ENVIRONMENT='enikshay')
 class TestRegisterPatientPayloadGenerator(TestPayloadGeneratorBase):
 
     def _get_actual_payload(self, casedb):
@@ -353,7 +357,7 @@ class TestRegisterPatientPayloadGenerator(TestPayloadGeneratorBase):
         del self.episode.attrs['update']['merm_id']
         cases = self.create_case_structure()
         cases[self.person_id] = self.assign_person_to_location(self.phi.location_id)
-        self._assert_payload_equal(cases)
+        self._assert_payload_contains_subset(cases)
 
     def test_get_payload_no_numbers(self):
         self.primary_phone_number = None
@@ -361,20 +365,20 @@ class TestRegisterPatientPayloadGenerator(TestPayloadGeneratorBase):
         self.other_number = None
         cases = self.create_case_structure()
         cases[self.person_id] = self.assign_person_to_location(self.phi.location_id)
-        self._assert_payload_equal(cases, None)
+        self._assert_payload_contains_subset(cases, None)
 
     def test_get_payload_secondary_number_only(self):
         self.primary_phone_number = None
         self.other_number = None
         cases = self.create_case_structure()
         cases[self.person_id] = self.assign_person_to_location(self.phi.location_id)
-        self._assert_payload_equal(cases, u"+91{}".format(self.secondary_phone_number.replace("0", "")))
+        self._assert_payload_contains_subset(cases, u"+91{}".format(self.secondary_phone_number.replace("0", "")))
 
     def test_get_payload_private_sector(self):
         self.person.attrs['update'][ENROLLED_IN_PRIVATE] = 'true'
         cases = self.create_case_structure()
         cases[self.person_id] = self.assign_person_to_location(self.pcp.location_id)
-        self._assert_payload_equal(cases, sector='private')
+        self._assert_payload_contains_subset(cases, sector='private')
 
     def test_handle_success(self):
         cases = self.create_case_structure()
@@ -390,6 +394,30 @@ class TestRegisterPatientPayloadGenerator(TestPayloadGeneratorBase):
             updated_episode_case.dynamic_case_properties().get('dots_99_error'),
             ''
         )
+
+    def test_get_payload_valid_checkbox(self):
+        self.occurrence.attrs['update']['key_populations'] = 'urban_slum tobacco'  # test checkbox type
+        self._test_checkbox_type()
+
+    def test_get_payload_invalid_checkbox(self):
+        self.occurrence.attrs['update']['key_populations'] = 'foo bar'
+        with self.assertRaises(ValueError):
+            self._test_checkbox_type()
+
+    def _test_checkbox_type(self):
+
+        cases = self.create_case_structure()
+        cases[self.person_id] = self.assign_person_to_location(self.phi.location_id)
+
+        expected_numbers = u"+91{}, +91{}, +91{}".format(
+            self.primary_phone_number.replace("0", ""),
+            self.secondary_phone_number.replace("0", ""),
+            self.other_number.replace("0", "")
+        )
+        payload = self._assert_payload_contains_subset(cases, expected_numbers)
+
+        self.assertTrue('key_populations' in payload)
+        self.assertEqual(payload['key_populations'], 'urban_slum tobacco')
 
     def test_handle_failure(self):
         cases = self.create_case_structure()
@@ -410,13 +438,14 @@ class TestRegisterPatientPayloadGenerator(TestPayloadGeneratorBase):
         )
 
 
-@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True, SERVER_ENVIRONMENT='enikshay')
 class TestUpdatePatientPayloadGenerator(TestPayloadGeneratorBase):
 
     def _get_actual_payload(self, casedb):
         return UpdatePatientPayloadGenerator(None).get_payload(None, casedb[self.person_id])
 
     def test_get_payload(self):
+        self.person.attrs['update']['language_code'] = ''
         cases = self.create_case_structure()
         cases[self.person_id] = self.assign_person_to_location(self.phi.location_id)
         expected_numbers = u"+91{}, +91{}, +91{}".format(
@@ -424,7 +453,8 @@ class TestUpdatePatientPayloadGenerator(TestPayloadGeneratorBase):
             self.secondary_phone_number.replace("0", ""),
             self.other_number.replace("0", "")
         )
-        self._assert_payload_equal(cases, expected_numbers)
+        payload = self._assert_payload_contains_subset(cases, expected_numbers)
+        self.assertFalse('language_code' in payload)
 
     def test_handle_success(self):
         cases = self.create_case_structure()
@@ -457,7 +487,7 @@ class TestUpdatePatientPayloadGenerator(TestPayloadGeneratorBase):
         )
 
 
-@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True, SERVER_ENVIRONMENT='enikshay')
 class TestAdherencePayloadGenerator(TestPayloadGeneratorBase):
     def _get_actual_payload(self, casedb):
         return AdherencePayloadGenerator(None).get_payload(None, casedb['adherence'])
@@ -516,7 +546,7 @@ class TestAdherencePayloadGenerator(TestPayloadGeneratorBase):
         )
 
 
-@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True, SERVER_ENVIRONMENT='enikshay')
 class TestTreatmentOutcomePayloadGenerator(TestPayloadGeneratorBase):
     def _get_actual_payload(self, casedb):
         return TreatmentOutcomePayloadGenerator(None).get_payload(None, casedb[self.episode_id])

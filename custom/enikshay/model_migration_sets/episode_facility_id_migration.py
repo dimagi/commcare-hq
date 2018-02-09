@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.utils.dateparse import parse_datetime
 
 from dimagi.utils.decorators.memoized import memoized
@@ -54,7 +55,9 @@ class EpisodeFacilityIDMigration(object):
         if (diagnosing_facility_id is not None
            and diagnosing_facility_id != u''
            and treatment_initiating_facility_id is not None
-           and treatment_initiating_facility_id != u''):
+           and treatment_initiating_facility_id != u'') or (
+                '_archive_' in [diagnosing_facility_id, treatment_initiating_facility_id]
+        ):
             return False
 
         if self.episode.get_case_property('enrolled_in_private') == 'true':
@@ -117,6 +120,8 @@ class EpisodeFacilityIDMigration(object):
                 return owner_id.new_value
 
     def _property_changed_in_action(self, action, case_property):
+        if action.form is None:
+            return False
         update_actions = [
             (update.modified_on_str, update.get_update_action())
             for update in get_case_updates(action.form)
@@ -129,6 +134,8 @@ class EpisodeFacilityIDMigration(object):
         return False
 
     def _get_owner_id_from_transaction(self, transaction, case_id):
+        if transaction.form is None:
+            return None
         case_updates = get_case_updates(transaction.form)
         update_actions = [
             (update.modified_on_str, update.get_update_action()) for update in case_updates

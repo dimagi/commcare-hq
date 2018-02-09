@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from datetime import date
 import json
 
@@ -70,7 +71,7 @@ from corehq import privileges
 from django_prbac.decorators import requires_privilege_raise404
 from django_prbac.models import Role, Grant
 
-from urllib import urlencode
+from six.moves.urllib.parse import urlencode
 
 
 @requires_privilege_raise404(privileges.ACCOUNTING_ADMIN)
@@ -180,9 +181,14 @@ class ManageBillingAccountView(BillingAccountsSectionView, AsyncHandlerMixin):
             'basic_form': self.basic_account_form,
             'contact_form': self.contact_form,
             'subscription_list': [
-                (sub, Invoice.objects.filter(subscription=sub).latest('date_due').date_due
-                      if Invoice.objects.filter(subscription=sub).count() else 'None on record',
-                ) for sub in Subscription.objects.filter(account=self.account).order_by('subscriber__domain', 'date_end')
+                (
+                    sub,
+                    Invoice.objects.filter(subscription=sub).latest('date_due').date_due
+                    if Invoice.objects.filter(subscription=sub).count() else 'None on record'
+                )
+                for sub in Subscription.visible_objects.filter(account=self.account).order_by(
+                    'subscriber__domain', 'date_end'
+                )
             ],
         }
 
@@ -269,7 +275,7 @@ class NewSubscriptionView(AccountingSectionView, AsyncHandlerMixin):
             try:
                 subscription = self.subscription_form.create_subscription()
                 return HttpResponseRedirect(
-                    reverse(ManageBillingAccountView.urlname, args=(subscription.account.id,))
+                    reverse(EditSubscriptionView.urlname, args=(subscription.id,))
                 )
             except NewSubscriptionError as e:
                 errors = ErrorList()
@@ -312,7 +318,7 @@ class EditSubscriptionView(AccountingSectionView, AsyncHandlerMixin):
     @memoized
     def subscription(self):
         try:
-            return Subscription.objects.get(id=self.subscription_id)
+            return Subscription.visible_objects.get(id=self.subscription_id)
         except Subscription.DoesNotExist:
             raise Http404()
 
@@ -533,17 +539,17 @@ class EditSoftwarePlanView(AccountingSectionView, AsyncHandlerMixin):
     @memoized
     def software_plan_version_form(self):
         plan_version = self.plan.get_version()
+        if self.request.method == 'POST' and 'update_version' in self.request.POST:
+            return SoftwarePlanVersionForm(self.plan, plan_version, self.request.POST)
         initial = {
             'feature_rates': json.dumps([fmt_feature_rate_dict(r.feature, r)
                                          for r in plan_version.feature_rates.all()] if plan_version else []),
             'product_rates': json.dumps(
-                [fmt_product_rate_dict(plan_version.product_rate.product, plan_version.product_rate)]
+                [fmt_product_rate_dict(plan_version.product_rate.name, plan_version.product_rate)]
                 if plan_version else []
             ),
             'role_slug': plan_version.role.slug if plan_version else None,
         }
-        if self.request.method == 'POST' and 'update_version' in self.request.POST:
-            return SoftwarePlanVersionForm(self.plan, plan_version, self.request.POST, initial=initial)
         return SoftwarePlanVersionForm(self.plan, plan_version, initial=initial)
 
     @property
@@ -574,8 +580,8 @@ class EditSoftwarePlanView(AccountingSectionView, AsyncHandlerMixin):
             if self.software_plan_version_form.is_valid():
                 self.software_plan_version_form.save(request)
             else:
-                for errors in self.software_plan_version_form.errors:
-                    for error in errors:
+                for error_list in self.software_plan_version_form.errors.values():
+                    for error in error_list:
                         messages.error(request, error)
         elif self.plan_info_form.is_valid():
             self.plan_info_form.update_plan(request, self.plan)

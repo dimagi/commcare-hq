@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import unicode_literals
 import numbers
 
 from django.utils.decorators import method_decorator
@@ -26,7 +28,7 @@ class ConfigurableReportSqlDataSource(ConfigurableReportDataSourceMixin, SqlData
 
     @property
     def filters(self):
-        return filter(None, [fv.to_sql_filter() for fv in self._filter_values.values()])
+        return [_f for _f in [fv.to_sql_filter() for fv in self._filter_values.values()] if _f]
 
     @property
     def filter_values(self):

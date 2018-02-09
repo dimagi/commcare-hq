@@ -1,4 +1,4 @@
-/* globals hqDefine django hqLayout hqImport */
+/* globals hqDefine django hqImport */
 hqDefine('app_manager/js/app_manager', function () {
     'use strict';
     var module = hqImport("hqwebapp/js/main").eventize({});
@@ -87,10 +87,11 @@ hqDefine('app_manager/js/app_manager', function () {
     };
 
     module.setPublishStatus = function (isOn) {
+        var layout = hqImport("hqwebapp/js/layout");
         if (isOn) {
-            $(hqLayout.selector.publishStatus).fadeIn();
+            layout.showPublishStatus();
         } else {
-            $(hqLayout.selector.publishStatus).fadeOut();
+            layout.hidePublishStatus();
         }
     };
 
@@ -146,7 +147,7 @@ hqDefine('app_manager/js/app_manager', function () {
             $.ajax({
                 url: currentAppVersionUrl,
                 success: function (data) {
-                    module.setPublishStatus((!data.latestRelease && data.currentVersion > 1) || (data.latestRelease !== null && data.latestRelease < data.currentVersion));
+                    module.setPublishStatus((!data.latestBuild && data.currentVersion > 1) || (data.latestBuild !== null && data.latestBuild < data.currentVersion));
                 },
             });
         };
@@ -155,16 +156,8 @@ hqDefine('app_manager/js/app_manager', function () {
         setInterval(_checkPublishStatus, 20000);
 
         // sniff ajax calls to other urls that make app changes
-        $(document).ajaxComplete(function(e, xhr, options) {
-            if (/edit_form_attr/.test(options.url) ||
-                /edit_module_attr/.test(options.url) ||
-                /edit_module_detail_screens/.test(options.url) ||
-                /edit_app_attr/.test(options.url) ||
-                /edit_form_actions/.test(options.url) ||
-                /edit_commcare_settings/.test(options.url) ||
-                /patch_xform/.test(options.url)) {
-                module.setPublishStatus(true);
-            }
+        hqImport("app_manager/js/app_manager_utils").handleAjaxAppChange(function() {
+            module.setPublishStatus(true);
         });
     };
 
@@ -224,11 +217,11 @@ hqDefine('app_manager/js/app_manager', function () {
                             $form.data('clicked', 'true');
                             $('.new-module-icon').removeClass().addClass("fa fa-refresh fa-spin");
                             if (dataType === "case") {
-                                window.analytics.usage("Added Case List Menu");
-                                window.analytics.workflow("Added Case List Menu");
+                                hqImport('analytix/js/google').track.event("Added Case List Menu");
+                                hqImport('analytix/js/kissmetrix').track.event("Added Case List Menu");
                             } else if (dataType === "survey") {
-                                window.analytics.usage("Added Surveys Menu");
-                                window.analytics.workflow("Added Surveys Menu");
+                                hqImport('analytix/js/google').track.event("Added Surveys Menu");
+                                hqImport('analytix/js/kissmetrix').track.event("Added Surveys Menu");
                             }
                             $form.submit();
                         }
@@ -365,7 +358,16 @@ hqDefine('app_manager/js/app_manager', function () {
                                 $fromSortable = $parentSortable.find("[data-index=" + from_module_id + "] .sortable");
                             resetIndexes($fromSortable);
                         }
-                        $.post($form.attr('action'), $form.serialize(), function () {});
+                        $.ajax($form.attr('action'), {
+                            method: 'POST',
+                            data: $form.serialize(),
+                            success: function() {
+                                hqImport('hqwebapp/js/alert_user').alert_user(gettext("Moved successfully."), "success");
+                            },
+                            error: function(xhr) {
+                                hqImport('hqwebapp/js/alert_user').alert_user(xhr.responseJSON.error, "danger");
+                            },
+                        });
                         module.setPublishStatus(true);
                     }
                 }

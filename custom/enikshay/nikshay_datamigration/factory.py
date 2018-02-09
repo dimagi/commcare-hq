@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from collections import namedtuple
 from datetime import date, datetime
 
@@ -290,7 +291,7 @@ class EnikshayCaseFactory(object):
                     'nikshay_id': self.nikshay_id,
                     'occupation': self.patient_detail.occupation,
                     'patient_type_choice': self.patient_detail.patient_type_choice,
-                    'transfer_in': 'yes' if self.patient_detail.patient_type_choice == 'transfer_in' else '',
+                    'transfer_in': 'yes' if self.patient_detail.patient_type_choice == 'transfer_in' else 'no',
                     'treatment_card_completed_date': self.patient_detail.pregdate1,
                     'treatment_initiated': 'yes_phi',
                     'treatment_initiation_date': treatment_initiation_date,

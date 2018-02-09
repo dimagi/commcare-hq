@@ -6,9 +6,9 @@
 {% block js-inline %} {{ block.super }}
     <script>
         $(function() {
-            gaTrackLink($('#download_link'), 'Organization Structure', 'Bulk Import', 'Download');
+            hqImport('analytix/js/google').track.click($('#download_link'), 'Organization Structure', 'Bulk Import', 'Download');
             $("button[type='submit']").click(function() {
-               ga_track_event('Organization Structure', 'Bulk Import', 'Upload');
+               hqImport('analytix/js/google').track.event('Organization Structure', 'Bulk Import', 'Upload');
             });
         });
     </script>

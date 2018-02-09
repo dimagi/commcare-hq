@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import functools
 
 from django.utils.translation import ugettext
@@ -11,6 +12,7 @@ import commcare_translations
 from corehq.apps.app_manager.templatetags.xforms_extras import clean_trans
 from corehq.util.translation import localize
 from langcodes import langs_by_code
+import six
 
 
 def non_empty_only(dct):
@@ -78,10 +80,10 @@ def _create_custom_app_strings(app, lang, for_default=False):
                 elif column.format == "graph":
                     for index, item in enumerate(column.graph_configuration.annotations):
                         yield id_strings.graph_annotation(module, detail_type, column, index), trans(item.values)
-                    for property, values in column.graph_configuration.locale_specific_config.iteritems():
+                    for property, values in six.iteritems(column.graph_configuration.locale_specific_config):
                         yield id_strings.graph_configuration(module, detail_type, column, property), trans(values)
                     for index, item in enumerate(column.graph_configuration.series):
-                        for property, values in item.locale_specific_config.iteritems():
+                        for property, values in six.iteritems(item.locale_specific_config):
                             yield id_strings.graph_series_configuration(
                                 module, detail_type, column, index, property
                             ), trans(values)
@@ -128,13 +130,13 @@ def _create_custom_app_strings(app, lang, for_default=False):
                         id_strings.report_column_header(config.uuid, column.column_id),
                         column.get_header(lang)
                     )
-                for chart_id, graph_config in config.complete_graph_configs.iteritems():
+                for chart_id, graph_config in six.iteritems(config.complete_graph_configs):
                     for index, item in enumerate(graph_config.annotations):
                         yield id_strings.mobile_ucr_annotation(module, config.uuid, index), trans(item.values)
-                    for property, values in graph_config.locale_specific_config.iteritems():
+                    for property, values in six.iteritems(graph_config.locale_specific_config):
                         yield id_strings.mobile_ucr_configuration(module, config.uuid, property), trans(values)
                     for index, item in enumerate(graph_config.series):
-                        for property, values in item.locale_specific_config.iteritems():
+                        for property, values in six.iteritems(item.locale_specific_config):
                             yield id_strings.mobile_ucr_series_configuration(
                                 module, config.uuid, index, property
                             ), trans(values)
@@ -234,6 +236,11 @@ class AppStringsBase(object):
             messages['case_autoload.fixture.exactly_one_fixture'] = \
                 (u'The lookup table settings for your user are incorrect. '
                     u'This user must have access to exactly one lookup table row for the table: ${0}')
+
+        if 'case_autoload.usercase.case_missing' not in messages:
+            messages['usercase.missing_id'] = \
+                (u'This form affects the user case, but no user case id was found. '
+                    u'Please contact your supervisor.')
 
         from corehq.apps.app_manager.models import (
             AUTO_SELECT_CASE, AUTO_SELECT_FIXTURE, AUTO_SELECT_USER,

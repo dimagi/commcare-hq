@@ -19,8 +19,11 @@
         </div>
     </div>
     <div class="report-content" cg-busy="$ctrl.myPromise">
-        <div ng-show="$ctrl.data">
-            <div class="row" ng-show="$ctrl.step === 'pse'">
+        <div ng-if="$ctrl.data">
+            <div class="alert alert-info" ng-if="$ctrl.showInfoMessage()">
+                <strong>Info!</strong> Data shown is for {$ $ctrl.lastDayOfPreviousMonth $}. Data for {$ $ctrl.currentMonth $} will be displayed beginning 3rd {$ $ctrl.currentMonth $}.
+            </div>
+            <div class="row" ng-if="$ctrl.step === 'pse'">
                 <div class="row no-margin">
                     <kpi data="$ctrl.data.kpi"></kpi>
                 </div>
@@ -54,106 +57,72 @@
                     </div>
                 </div>
             </div>
-            <div class="row" ng-show="$ctrl.step === 'maternal_child'">
+            <div class="row" ng-if="$ctrl.step === 'maternal_child'">
                 <kpi data="$ctrl.data.kpi"></kpi>
             </div>
-            <div class="row" ng-show="$ctrl.step === 'demographics'">
+            <div class="row" ng-if="$ctrl.step === 'demographics'">
                 <div class="row no-margin black break">
                     <h2 class="center">{$ $ctrl.data.chart[0].key $}</h2>
                     <nvd3 options="$ctrl.chartOptions" data="$ctrl.data.chart" class="with-3d-shadow with-transitions"></nvd3>
                 </div>
                 <kpi data="$ctrl.data.kpi"></kpi>
             </div>
-            <div class="row black" ng-show="$ctrl.step === 'beneficiary'">
-            <div ng-show="$ctrl.showTable" ng-if="$ctrl.data.months" class="col-md-12">
-                <table datatable="ng" dt-options="$ctrl.dtOptions" class="table table-striped table-bordered">
-                    <thead>
-                        <tr>
-                            <th rowspan="2">Name</th>
-                            <th rowspan="2"> Date of Birth</th>
-                            <th rowspan="2">Current Age (In Years)</th>
-                            <th rowspan="2">1 Year Immunizations Complete</th>
-                            <th colspan="4" ng-repeat="month in $ctrl.data.months">
-                                {$ month $}
-                            </th>
-                        </tr>
-                        <tr>
-                            <th ng-repeat-start="month in $ctrl.data.months">Weight for Age Status</th>
-                            <th>Weight for Height Status</th>
-                            <th>Height for Age status</th>
-                            <th ng-repeat-end="">PSE Attendance</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr ng-class="{'dark_grey': row[$ctrl.data.last_month].stunning === 'severe'}" ng-repeat="row in $ctrl.data.rows">
-                            <td class="pointer link" ng-click="$ctrl.showBeneficiaryDetails(row.case_id)"><span>{$ row.person_name || 'Data not Entered' $}</span></td>
-                            <td>{$ row.dob || 'Data not Entered' $}</td>
-                            <td style="min-width: 80px;">{$ row.age || 'Data not Entered' $}</td>
-                            <td>{$ row.fully_immunized_date || 'Data not Entered' $}</td>
-                            <td ng-repeat-start="month in $ctrl.data.months">
-                                <span ng-class="{'red': row[month].nutrition_status === 'severely underweight', 'green': row[month].nutrition_status === 'normal', 'yellow': row[month].nutrition_status === 'moderately underweight'}" class="pointer" uib-popover-html="$ctrl.getPopoverContent(row[month], 'weight')" popover-placement="right"  popover-trigger="'mouseenter'">
-                                    {$ row[month].nutrition_status || 'Data not Entered' $}
-                                </span>
-                            </td>
-                            <td>
-                                <span ng-class="{'red': row[month].stunning === 'severe', 'green': row[month].stunning === 'normal', 'yellow': row[month].stunning === 'moderate'}" class="pointer" uib-popover-html="$ctrl.getPopoverContent(row[month], 'height')" popover-placement="right" popover-trigger="'mouseenter'">
-                                    {$ row[month].stunning || 'Data not Entered' $}
-                                </span>
-                            </td>
-                            <td>
-                                <span ng-class="{'red': row[month].wasting === 'severe', 'green': row[month].wasting === 'normal', 'yellow': row[month].wasting === 'moderate'}" class="pointer" uib-popover-html="$ctrl.getPopoverContent(row[month], 'both')" popover-placement="right" popover-trigger="'mouseenter'">
-                                    {$ row[month].wasting || 'Data not Entered' $}
-                                </span>
-                            </td>
-                            <td ng-repeat-end="">{$ row[month].pse_days_attended || 'Data not Entered' $}</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-            <div ng-show="$ctrl.showBeneficiary">
-                <h4>Beneficiary Information:</h4>
-                <div><button class="btn btn-info btn-sm right" ng-click="$ctrl.showBeneficiaryTable()">Back</button></div>
-                <div class="form-horizontal">
-                    <div class="form-group">
-                        <label class="control-label col-sm-2" for="name">Name: </label>
-                        <div class="col-sm-9">
-                            <span>{$ $ctrl.beneficiary.person_name $}</span>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label class="control-label col-sm-2" for="mother_name">Mother Name: </label>
-                        <div class="col-sm-9">
-                            <span>{$ $ctrl.beneficiary.mother_name $}</span>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label class="control-label col-sm-2" for="date_of_birth">Date of Birth: </label>
-                        <div class="col-sm-9">
-                            <span>{$ $ctrl.beneficiary.dob $}</span>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label class="control-label col-sm-2" for="age">Age: </label>
-                        <div class="col-sm-9">
-                            <span>{$ $ctrl.beneficiary.age $}</span>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label class="control-label col-sm-2" for="sex">Sex: </label>
-                        <div class="col-sm-9">
-                            <span>{$ $ctrl.beneficiary.sex $}</span>
-                        </div>
-                    </div>
+            <div class="row" ng-if="$ctrl.step === 'awc_infrastructure'">
+                <div class="row no-margin">
+                    <kpi data="$ctrl.data.kpi"></kpi>
                 </div>
-                <h4>Growth Monitoring:</h4>
-                <h4 class="center">Weight For Age:</h4>
-                <nvd3 class="hideLegend" options="$ctrl.beneficiaryChartOptions" data="$ctrl.beneficiaryChartOneData" class="with-3d-shadow with-transitions"></nvd3>
-                <h4 class="center">Height For Age:</h4>
-                <nvd3 class="hideLegend" options="$ctrl.beneficiaryChartOptions" data="$ctrl.beneficiaryChartTwoData" class="with-3d-shadow with-transitions"></nvd3>
-                <h4 class="center">Weight For Height:</h4>
-                <nvd3 class="hideLegend" options="$ctrl.beneficiaryChartOptions" data="$ctrl.beneficiaryChartThreeData" class="with-3d-shadow with-transitions"></nvd3>
             </div>
-        </div>
+            <div class="row black" ng-if="$ctrl.step === 'beneficiary'">
+                <div ng-if="$ctrl.data.months && $ctrl.showTable" class="col-md-12">
+                    <table id="beneficiariesTable" datatable="" dt-options="$ctrl.dtOptions" dt-columns="$ctrl.dtColumns" class="table table-striped table-bordered">
+                    </table>
+                </div>
+            </div>
+            <div class="row black" ng-if="$ctrl.step === 'beneficiary_details'">
+                <div ng-if="$ctrl.showBeneficiary">
+                    <h4>Beneficiary Information:</h4>
+                    <div><button class="btn btn-info btn-sm right" ng-click="$ctrl.goToBeneficiaryTable()">Back</button></div>
+                    <div class="form-horizontal">
+                        <div class="form-group">
+                            <label class="control-label col-sm-2" for="name">Name: </label>
+                            <div class="col-sm-9">
+                                <span class="icds-control">{$ $ctrl.beneficiary.person_name $}</span>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="control-label col-sm-2" for="mother_name">Mother Name: </label>
+                            <div class="col-sm-9">
+                                <span class="icds-control">{$ $ctrl.beneficiary.mother_name $}</span>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="control-label col-sm-2" for="date_of_birth">Date of Birth: </label>
+                            <div class="col-sm-9">
+                                <span class="icds-control">{$ $ctrl.beneficiary.dob $}</span>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="control-label col-sm-2" for="age">Age: </label>
+                            <div class="col-sm-9">
+                                <span class="icds-control">{$ $ctrl.beneficiary.age $}</span>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="control-label col-sm-2" for="sex">Sex: </label>
+                            <div class="col-sm-9">
+                                <span class="icds-control">{$ $ctrl.beneficiary.sex $}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <h4>Growth Monitoring:</h4>
+                    <h4 class="center">Weight For Age:</h4>
+                    <nvd3 class="hideLegend" id="detailsChart" options="$ctrl.beneficiaryChartOptionsWFA" data="$ctrl.beneficiaryChartOneData" class="with-3d-shadow with-transitions"></nvd3>
+                    <h4 class="center">Height For Age:</h4>
+                    <nvd3 class="hideLegend" id="detailsChart" options="$ctrl.beneficiaryChartOptionsHFA" data="$ctrl.beneficiaryChartTwoData" class="with-3d-shadow with-transitions"></nvd3>
+                    <h4 class="center">Weight For Height:</h4>
+                    <nvd3 class="hideLegend" id="detailsChart" options="$ctrl.beneficiaryChartOptionsWFH" data="$ctrl.beneficiaryChartThreeData" class="with-3d-shadow with-transitions"></nvd3>
+                </div>
+            </div>
         </div>
     </div>
     <div class="row fixed-dots">

@@ -31,13 +31,19 @@
 
 {% block js-inline %}{{ block.super }}
     {% if request.guided_tour %}{% include request.guided_tour.template %}{% endif %}
+    {% compress js %}
     <script src="{% static 'app_manager/js/forms/case_knockout_bindings.js' %}"></script>
     <script src="{% static 'app_manager/js/case_config_utils.js' %}"></script>
+    {% endcompress %}
     {% if module.doc_type == 'AdvancedModule' %}
+        {% compress js %}
         <script src="{% static 'app_manager/js/forms/case_config_ui_advanced.js' %}"></script>
         <script src="{% static 'app_manager/js/visit_scheduler.js' %}"></script>
+        {% endcompress %}
     {% else %}
+        {% compress js %}
         <script src="{% static 'app_manager/js/forms/case_config_ui.js' %}"></script>
+        {% endcompress %}
     {% endif %}
     <style>
         #open-referral-action,
@@ -51,18 +57,26 @@
         }
     </style>
 
+    {% compress js %}
     <script src="{% static 'cloudcare/js/formplayer/utils/util.js' %}"></script>
+    {% endcompress %}
 
     {% include "app_manager/partials/xpathValidator.html" %}
     {% include 'hqmedia/partials/multimedia_js.html' %}
+    {% compress js %}
     <script src="{% static 'app_manager/js/nav_menu_media_common.js' %}"></script>
     <script src="{% static 'app_manager/js/app_manager_media.js' %}"></script>
     <script src="{% static 'app_manager/js/nav_menu_media.js' %}"></script>
+    {% endcompress %}
     {% if allow_form_workflow %}
+        {% compress js %}
         <script src="{% static 'app_manager/js/forms/form_workflow.js' %}"></script>
+        {% endcompress %}
     {% endif %}
     {% if request|toggle_enabled:"CUSTOM_INSTANCES"%}
+        {% compress js %}
         <script src="{% static 'app_manager/js/forms/custom_instances.js' %}"></script>
+        {% endcompress %}
     {% endif %}
 {% endblock %}
 
@@ -80,6 +94,8 @@
         {% inline_edit_trans form.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fcc fcc-app-createform' postSave=postSave %}
       {% elif form.requires_case %}
         {% inline_edit_trans form.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fcc fcc-app-updateform' postSave=postSave %}
+      {% elif form.form_type == 'shadow_form' %}
+        {% inline_edit_trans form.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fa fa-moon-o' postSave=postSave %}
       {% else %}
         {% inline_edit_trans form.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fa fa-file-o' postSave=postSave %}
       {% endif %}

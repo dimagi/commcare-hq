@@ -17,8 +17,8 @@
 {% block js-inline %}{{ block.super }}
 <script>
     $(function() {
-        $('#report-content').on('click', '.toggle-next-pre', function (e) {
-            $(this).nextAll('pre').toggle();
+        $('#report-content').on('click', '.toggle-next-attempt', function (e) {
+            $(this).nextAll('.record-attempt').toggle();
             e.preventDefault();
         });
         var codeMirror = null;
@@ -117,7 +117,7 @@
             });
           });
 
-         $('#report-content').on('click', '.requeue-record-payload', function() {
+        $('#report-content').on('click', '.requeue-record-payload', function() {
             var $btn = $(this),
                 recordId = $btn.data().recordId;
             $btn.disableButton();

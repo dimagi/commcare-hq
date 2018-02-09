@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.utils.translation import ugettext as _
 import uuid
 from dateutil.parser import parser
@@ -17,6 +18,8 @@ from pact.enums import (
     REGIMEN_CHOICES,
 )
 from pact.regimen import regimen_string_from_doc
+import six
+from six.moves import range
 
 
 def make_uuid():
@@ -53,9 +56,9 @@ class DOTSubmission(XFormInstance):
     @property
     def drilldown_url(self):
         from pact.reports.dot import PactDOTReport
-        if self.form['case'].has_key('case_id'):
+        if 'case_id' in self.form['case']:
             case_id = self.form['case'].get('case_id', None)
-        elif self.form['case'].has_key('@case_id'):
+        elif '@case_id' in self.form['case']:
             case_id = self.form['case'].get('@case_id', None)
         else:
             case_id = None
@@ -208,7 +211,7 @@ class PactPatientCase(CommCareCase):
     def get_schedules(self, raw_json=False, reversed=False):
         obj = self.to_json()
         computed = obj['computed_']
-        if computed.has_key(PACT_SCHEDULES_NAMESPACE):
+        if PACT_SCHEDULES_NAMESPACE in computed:
             ret = [x for x in computed[PACT_SCHEDULES_NAMESPACE]]
             if not raw_json:
                 ret = [CDotWeeklySchedule.wrap(dict(x)) for x in ret]
@@ -284,12 +287,12 @@ class PactPatientCase(CommCareCase):
         computed = self['computed_']
         ret = {}
 
-        if computed.has_key(PACT_SCHEDULES_NAMESPACE):
+        if PACT_SCHEDULES_NAMESPACE in computed:
             schedule_arr = self.get_schedules()
 
-            past = filter(lambda x: x.ended is not None and x.ended < datetime.utcnow(), schedule_arr)
-            current = filter(lambda x: x.is_current, schedule_arr)
-            future = filter(lambda x: x.deprecated and x.started > datetime.utcnow(), schedule_arr)
+            past = [x for x in schedule_arr if x.ended is not None and x.ended < datetime.utcnow()]
+            current = [x for x in schedule_arr if x.is_current]
+            future = [x for x in schedule_arr if x.deprecated and x.started > datetime.utcnow()]
             past.reverse()
 
             ret['current_schedule'] = current[0]
@@ -307,7 +310,7 @@ class PactPatientCase(CommCareCase):
 
     @property
     def phones(self):
-        for ix in range(1,6):
+        for ix in range(1, 6):
             if hasattr(self, 'Phone%d' % ix) and hasattr(self, 'Phone%dType' % ix):
                 number = getattr(self, "Phone%d" % ix, None)
                 if number is not None and number != "":
@@ -454,7 +457,7 @@ class CObservation(OldDocument):
         ints = ['dose_number', 'total_doses', 'day_index', 'day_slot']
         for prop_name in ints:
             val = obj.get(prop_name)
-            if val and isinstance(val, basestring):
+            if val and isinstance(val, six.string_types):
                 obj[prop_name] = int(val)
         return super(CObservation, cls).wrap(obj)
 

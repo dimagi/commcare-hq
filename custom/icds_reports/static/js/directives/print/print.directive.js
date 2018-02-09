@@ -10,7 +10,7 @@ function PrintReportController() {
 
         var reportNameHtml = '<div>Report Name: ' + $('#reportTitle').text() + '</div>';
         var dateHtml = '<div>Date printed: ' + moment().format('YYYY-MM-DD') + '</div>';
-        var locationNameHtml = '<div>Location name: ' + $('#locationName').text() + '</div>';
+        var locationNameHtml = '<div>Location name: ' + ($('#locationName').text() || 'National') + '</div>';
 
         var reportMetaData = dateHtml + reportNameHtml + locationNameHtml;
 

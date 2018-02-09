@@ -1,7 +1,7 @@
+from __future__ import absolute_import
 import logging
 from couchdbkit import ResourceNotFound
 import redis
-from casexml.apps.case.dbaccessors.related import get_reverse_indexed_cases
 from casexml.apps.case.exceptions import IllegalCaseId
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.util import iter_cases
@@ -67,8 +67,9 @@ class CaseDbCacheCouch(AbstractCaseDbCache):
                 )
             )
 
-    def get_reverse_indexed_cases(self, case_ids):
-        return get_reverse_indexed_cases(self.domain, case_ids)
+    def get_reverse_indexed_cases(self, case_ids, case_types=None, is_closed=None):
+        return CaseAccessorCouch.get_reverse_indexed_cases(self.domain, case_ids,
+                                                           case_types=case_types, is_closed=is_closed)
 
     def filter_closed_extensions(self, extensions_to_close):
         # filter out cases that are closed which we already have cached

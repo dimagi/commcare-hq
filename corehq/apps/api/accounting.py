@@ -1,9 +1,10 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from tastypie.fields import ToManyField
 from tastypie.resources import ModelResource
 from corehq.apps.accounting.models import Feature, FeatureRate, SoftwarePlanVersion, LineItem, PaymentMethod, \
     BillingAccount, BillingContactInfo, Currency, PaymentRecord, SoftwareProductRate, \
-    SoftwareProduct, SoftwarePlan, DefaultProductPlan, CreditAdjustment, Subscription, CreditLine, Subscriber, \
+    SoftwarePlan, DefaultProductPlan, CreditAdjustment, Subscription, CreditLine, Subscriber, \
     SubscriptionAdjustment, BillingRecord, Invoice
 from corehq.apps.api.resources.auth import AdminAuthentication
 from tastypie import fields
@@ -79,14 +80,6 @@ class AccountingCurrencyResource(ModelResource):
         resource_name = 'accounting_currency'
 
 
-class SoftwareProductResource(ModelResource):
-
-    class Meta(AccountingResourceMeta):
-        queryset = SoftwareProduct.objects.all().order_by('pk')
-        fields = ['id', 'name', 'last_modified']
-        resource_name = 'software_product'
-
-
 class SoftwarePlanResource(ModelResource):
 
     class Meta(AccountingResourceMeta):
@@ -100,7 +93,7 @@ class DefaultProductPlanResource(ModelResource):
 
     class Meta(AccountingResourceMeta):
         queryset = DefaultProductPlan.objects.all().order_by('pk')
-        fields = ['id', 'product_type', 'edition', 'is_trial', 'last_modified']
+        fields = ['id', 'edition', 'is_trial', 'last_modified']
         resource_name = 'default_product_plan'
 
 
@@ -109,7 +102,7 @@ class SoftwareProductRateResource(ModelResource):
 
     class Meta(AccountingResourceMeta):
         queryset = SoftwareProductRate.objects.all().order_by('pk')
-        fields = ['id', 'monthly_fee', 'date_created', 'is_active', 'last_modified']
+        fields = ['id', 'name', 'monthly_fee', 'date_created', 'is_active', 'last_modified']
         resource_name = 'software_product_rate'
 
 
@@ -171,7 +164,7 @@ class SubscriptionResource(ModelResource):
     subscriber = fields.IntegerField('subscriber_id', null=True)
 
     class Meta(AccountingResourceMeta):
-        queryset = Subscription.objects.all().order_by('pk')
+        queryset = Subscription.visible_and_suppressed_objects.all().order_by('pk')
         fields = ['id', 'salesforce_contract_id', 'date_start', 'date_end', 'date_delay_invoicing',
                   'date_created', 'is_active', 'do_not_invoice', 'auto_generate_credits', 'is_trial',
                   'service_type', 'pro_bono_status', 'last_modified', 'funding_source', 'is_hidden_to_ops',
@@ -235,7 +228,7 @@ class CreditLineResource(ModelResource):
 
     class Meta(AccountingResourceMeta):
         queryset = CreditLine.objects.all().order_by('pk')
-        fields = ['id', 'product_type', 'feature_type', 'date_created', 'balance', 'is_active', 'last_modified']
+        fields = ['id', 'is_product', 'feature_type', 'date_created', 'balance', 'is_active', 'last_modified']
         resource_name = 'credit_line'
 
 

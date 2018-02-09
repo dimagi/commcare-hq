@@ -1,0 +1,61 @@
+{% extends "reports/base_template.html" %}
+{% load compress %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% block js %}{{ block.super }}
+    <script type="text/javascript" src="{% static 'nvd3/lib/d3.v3.js' %}"></script>
+    <script type="text/javascript" src="{% static 'nvd3/nv.d3.js' %}"></script>
+    <script type="text/javascript" src="{% static 'angular/angular.js' %}"></script>
+    <script type="text/javascript" src="{% static 'angular-nvd3/dist/angular-nvd3.js' %}"></script>
+    <script type="text/javascript" src="{% static 'angular-sanitize/angular-sanitize.js' %}"></script>
+    <script type="text/javascript" src="{% static 'bootstrap-daterangepicker/daterangepicker.js' %}"></script>
+    <script type="text/javascript" src="{% static 'angular-daterangepicker/js/angular-daterangepicker.min.js' %}"></script>
+    <script type="text/javascript" src="{% static 'ui-select/dist/select.js' %}"></script>
+
+    <script type="text/javascript" src="{% static 'champ/js/controlers/prevision_vs_achievements_graph.controller.js' %}"></script>
+    <script type="text/javascript" src="{% static 'champ/js/controlers/prevision_vs_achievements_table.controller.js' %}"></script>
+    <script type="text/javascript" src="{% static 'champ/js/controlers/service_uptake.controller.js' %}"></script>
+    <script>
+        window.angular.module('champApp', ['ngSanitize', 'ui.select', 'nvd3', 'daterangepicker'])
+            .controller('MainController', PrevisionVsAchievementsGraphController)
+            .controller('PrevisionVsAchievementsTableController', PrevisionVsAchievementsTableController)
+            .controller('ServiceUptakeController', ServiceUptakeController)
+            .config(['$httpProvider', function($httpProvider) {
+                $httpProvider.defaults.xsrfCookieName = 'csrftoken';
+                $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
+                $httpProvider.defaults.headers.common["X-CSRFToken"] = $("#csrfTokenContainer").val();
+            }]);
+    </script>
+    <script type="text/javascript" src="{% static 'champ/js/filters/property.filter.js' %}"></script>
+    <script type="text/javascript" src="{% static 'champ/js/angular-services/reports_data.service.js' %}"></script>
+    <script type="text/javascript" src="{% static 'champ/js/angular-services/filters.service.js' %}"></script>
+    <script>
+        $(document).ready(function () {
+            $('#reportFiltersAccordion').css('display', 'none');
+        });
+    </script>
+{% endblock %}
+
+{% block stylesheets %}
+    {{ block.super }}
+
+    <link type="text/css" rel="stylesheet" media="all" href="{% static 'nvd3/src/nv.d3.css' %}">
+    <link type="text/css" rel="stylesheet" media="all" href="{% static 'ui-select/dist/select.css' %}"/>
+    <link type="text/css" rel="stylesheet" media="all" href="{% static 'bootstrap-daterangepicker/daterangepicker.css' %}"/>
+    <style>
+        .bubble {
+            border: 1px solid;
+            border-radius: 10px;
+            padding: 5px;
+            background: #f3f2f2;
+            margin: 0 auto;
+        }
+        .ui-select-match > .btn-default {
+            background-color: #ffffff;
+        }
+        .ui-select-multiple > div {
+            margin: 0 12px;
+        }
+    </style>
+{% endblock %}

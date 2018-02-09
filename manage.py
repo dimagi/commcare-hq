@@ -117,6 +117,7 @@ if __name__ == "__main__":
         GeventCommand('sync_prepare_couchdb_multi', None),
         GeventCommand('sync_couch_views', None),
         GeventCommand('celery', '-P gevent'),
+        GeventCommand('populate_form_date_modified', None),
     )
     if len(sys.argv) > 1 and _should_patch_gevent(sys.argv, GEVENT_COMMANDS):
         from restkit.session import set_session; set_session("gevent")

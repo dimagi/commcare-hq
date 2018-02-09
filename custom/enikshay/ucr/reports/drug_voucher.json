@@ -3,10 +3,9 @@
         "enikshay"
     ],
     "server_environment": [
-        "enikshay",
-        "softlayer"
+        "enikshay"
     ],
-    "data_source_table": "voucher",
+    "data_source_table": "voucher_v5",
     "report_id": "drug_voucher",
     "config": {
         "description": "",
@@ -48,14 +47,6 @@
                 "field": "voucher_type",
                 "type": "pre",
                 "display": null
-            },
-            {
-                "pre_value": 1,
-                "datatype": "integer",
-                "display": null,
-                "field": "has_date_fulfilled",
-                "type": "pre",
-                "slug": "has_date_fulfilled_pre"
             }
         ],
         "columns": [
@@ -140,6 +131,17 @@
                 "calculate_total": false,
                 "type": "field",
                 "display": "Beneficiary Mobile Number"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "treating_provider_name",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Treating Provider Name - ID"
             },
             {
                 "sortable": false,
@@ -266,7 +268,7 @@
                 "field": "validated_amount_as_per_chemist",
                 "calculate_total": false,
                 "type": "field",
-                "display": "Validated Amount"
+                "display": "Validated Amount (as per chemist)"
             },
             {
                 "sortable": false,

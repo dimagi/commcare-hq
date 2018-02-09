@@ -10,6 +10,8 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
 
         queryFormplayer: function (params, route) {
             var user = FormplayerFrontend.request('currentUser'),
+                lastRecordedLocation = FormplayerFrontend.request('lastRecordedLocation'),
+                timezoneOffsetMillis = (new Date()).getTimezoneOffset() * 60 * 1000 * -1,
                 formplayerUrl = user.formplayer_url,
                 displayOptions = user.displayOptions || {},
                 defer = $.Deferred(),
@@ -23,6 +25,7 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
                             menus.fetch($.extend(true, {}, options, { data: newOptionsData }));
                         }, gettext('Waiting for server progress'));
                     } else if (response.hasOwnProperty('exception')){
+                        FormplayerFrontend.trigger('clearProgress');
                         FormplayerFrontend.trigger(
                             'showError',
                             response.exception || FormplayerFrontend.Constants.GENERIC_ERROR,
@@ -32,8 +35,9 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
                     } else {
                         FormplayerFrontend.trigger('clearProgress');
                         defer.resolve(parsedMenus);
-                        if (response.menuSessionId) {
-                            FormplayerFrontend.trigger('configureDebugger', response.menuSessionId);
+                        // Only configure menu debugger if we didn't get a form entry response
+                        if (!(response.session_id)) {
+                            FormplayerFrontend.trigger('configureDebugger');
                         }
                     }
                 },
@@ -53,7 +57,6 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
                     defer.reject();
                 },
             };
-
             options.data = JSON.stringify({
                 "username": user.username,
                 "restoreAs": user.restoreAs,
@@ -65,12 +68,14 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
                 "search_text": params.search,
                 "menu_session_id": params.sessionId,
                 "query_dictionary": params.queryDict,
-                "previewCommand": params.previewCommand,
                 "installReference": params.installReference,
                 "oneQuestionPerScreen": displayOptions.oneQuestionPerScreen,
                 "isPersistent": params.isPersistent,
                 "useLiveQuery": user.useLiveQuery,
                 "sortIndex": params.sortIndex,
+                "preview": params.preview,
+                "geo_location": lastRecordedLocation,
+                "tz_offset_millis": timezoneOffsetMillis,
             });
             options.url = formplayerUrl + '/' + route;
 
@@ -85,7 +90,8 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
     };
 
     FormplayerFrontend.reqres.setHandler("app:select:menus", function (options) {
-        return Menus.API.queryFormplayer(options, 'navigate_menu');
+        var isInitial = options.isInitial;
+        return Menus.API.queryFormplayer(options, isInitial ? 'navigate_menu_start' : 'navigate_menu');
     });
 
     FormplayerFrontend.reqres.setHandler("entity:get:details", function (options, isPersistent) {

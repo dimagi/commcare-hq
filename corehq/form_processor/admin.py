@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.contrib import admin
 from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL, LedgerValue
 

@@ -1,4 +1,7 @@
+{% load compress %}
 {% load hq_shared_tags %}
+
+{% compress js %}
 <script src="{% static 'hqwebapp/js/ui_elements/ui-element-langcode-button.js' %}"></script>
 <script src="{% static 'hqwebapp/js/ui_elements/ui-element-input.js' %}"></script>
 <script src="{% static 'hqwebapp/js/ui_elements/ui-element-checkbox.js' %}"></script>
@@ -7,3 +10,4 @@
 <script src="{% static 'hqwebapp/js/ui_elements/ui-element-key-val-mapping.js' %}"></script>
 <script src="{% static 'hqwebapp/js/ui_elements/ui-element-select.js' %}"></script>
 <script src="{% static 'hqwebapp/js/ui-element.js' %}"></script>
+{% endcompress %}

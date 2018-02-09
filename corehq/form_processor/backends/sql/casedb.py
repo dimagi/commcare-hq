@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import redis
 from casexml.apps.case.exceptions import IllegalCaseId
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
@@ -42,8 +43,9 @@ class CaseDbCacheSQL(AbstractCaseDbCache):
             case.server_modified_on = now
         return cases
 
-    def get_reverse_indexed_cases(self, case_ids):
-        return CaseAccessorSQL.get_reverse_indexed_cases(self.domain, case_ids)
+    def get_reverse_indexed_cases(self, case_ids, case_types=None, is_closed=None):
+        return CaseAccessorSQL.get_reverse_indexed_cases(self.domain, case_ids,
+                                                         case_types=case_types, is_closed=is_closed)
 
     def filter_closed_extensions(self, extensions_to_close):
         # noop for SQL since the filtering already happened when we fetched the IDs

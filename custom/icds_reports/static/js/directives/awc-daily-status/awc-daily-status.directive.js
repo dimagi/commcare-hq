@@ -1,4 +1,4 @@
-/* global d3 */
+/* global d3, moment */
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function AWCDailyStatusController($scope, $routeParams, $location, $filter, icdsCasReachService,
@@ -9,6 +9,7 @@ function AWCDailyStatusController($scope, $routeParams, $location, $filter, icds
     } else {
         storageService.setKey('search', $location.search());
     }
+    vm.userLocationId = userLocationId;
     vm.filtersData = $location.search();
     vm.label = "AWC Daily Status";
     vm.step = $routeParams.step;
@@ -20,8 +21,10 @@ function AWCDailyStatusController($scope, $routeParams, $location, $filter, icds
         legendTitle: 'Percentage AWCs',
     };
     vm.chartData = null;
-    vm.top_three = [];
-    vm.bottom_three = [];
+    vm.top_five = [];
+    vm.bottom_five = [];
+    vm.selectedLocations = [];
+    vm.all_locations = [];
     vm.location_type = null;
     vm.loaded = false;
     vm.filters = ['month', 'age', 'gender'];
@@ -29,6 +32,18 @@ function AWCDailyStatusController($scope, $routeParams, $location, $filter, icds
         info: 'Percentage of Angwanwadi Centers that were open yesterday',
     };
     vm.message = storageService.getKey('message') || false;
+
+    vm.prevDay = moment().subtract(1, 'days').format('Do MMMM, YYYY');
+    vm.lastDayOfPreviousMonth = moment().set('date', 1).subtract(1, 'days').format('Do MMMM, YYYY');
+    vm.currentMonth = moment().format("MMMM");
+    vm.showInfoMessage = function () {
+        var selected_month = parseInt($location.search()['month']) || new Date().getMonth() + 1;
+        var selected_year = parseInt($location.search()['year']) || new Date().getFullYear();
+        var current_month = new Date().getMonth() + 1;
+        var current_year = new Date().getFullYear();
+        return selected_month === current_month && selected_year === current_year &&
+            (new Date().getDate() === 1 || new Date().getDate() === 2);
+    };
 
     $scope.$watch(function() {
         return vm.selectedLocations;
@@ -53,7 +68,7 @@ function AWCDailyStatusController($scope, $routeParams, $location, $filter, icds
         var total = row ? $filter('indiaNumbers')(row.all) : 'N/A';
         var in_day = row ? $filter('indiaNumbers')(row.in_day) : 'N/A';
         var percent = row ? d3.format('.2%')(row.in_day / (row.all || 1)) : 'N/A';
-        return '<div class="hoverinfo" style="max-width: 200px !important;">' +
+        return '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
             '<p>' + loc.properties.name + '</p>' +
             '<div>Total number of AWCs that were open yesterday: <strong>' + in_day + '</strong></div>' +
             '<div>Total number of AWCs that have been launched: <strong>' + total + '</strong></div>' +
@@ -61,14 +76,22 @@ function AWCDailyStatusController($scope, $routeParams, $location, $filter, icds
     };
 
     vm.loadData = function () {
-        if (vm.location && _.contains(['block', 'supervisor', 'awc'], vm.location.location_type)) {
-            vm.mode = 'sector';
-            vm.steps['map'].label = 'Sector View';
-        } else {
-            vm.mode = 'map';
-            vm.steps['map'].label = 'Map View';
+        var loc_type = 'National';
+        if (vm.location) {
+            if (vm.location.location_type === 'supervisor') {
+                loc_type = "Sector";
+            } else {
+                loc_type = vm.location.location_type.charAt(0).toUpperCase() + vm.location.location_type.slice(1);
+            }
         }
 
+        if (vm.location && _.contains(['block', 'supervisor', 'awc'], vm.location.location_type)) {
+            vm.mode = 'sector';
+            vm.steps['map'].label = loc_type + ' View';
+        } else {
+            vm.mode = 'map';
+            vm.steps['map'].label = 'Map View: ' + loc_type;
+        }
 
         vm.myPromise = icdsCasReachService.getAwcDailyStatusData(vm.step, vm.filtersData).then(function(response) {
             if (vm.step === "map") {
@@ -76,17 +99,29 @@ function AWCDailyStatusController($scope, $routeParams, $location, $filter, icds
             } else if (vm.step === "chart") {
                 vm.chartData = response.data.report_data.chart_data;
                 vm.all_locations = response.data.report_data.all_locations;
-                vm.top_three = response.data.report_data.top_three;
-                vm.bottom_three = response.data.report_data.bottom_three;
+                vm.top_five = response.data.report_data.top_five;
+                vm.bottom_five = response.data.report_data.bottom_five;
                 vm.location_type = response.data.report_data.location_type;
                 vm.chartTicks = vm.chartData[0].values.map(function(d) { return d.x; });
+                var max = Math.ceil(d3.max(vm.chartData, function(line) {
+                    return d3.max(line.values, function(d) {
+                        return d.y;
+                    });
+                }));
+                var min = Math.ceil(d3.min(vm.chartData, function(line) {
+                    return d3.min(line.values, function(d) {
+                        return d.y;
+                    });
+                }));
+                var range = max - min;
+                vm.chartOptions.chart.forceY = [0, parseInt((max + range/10).toFixed(0))];
             }
         });
     };
 
-    var init = function() {
-        var locationId = vm.filtersData.location_id || userLocationId;
-        if (!locationId || locationId === 'all' || locationId === 'null') {
+    vm.init = function() {
+        var locationId = vm.filtersData.location_id || vm.userLocationId;
+        if (!locationId || ["all", "null", "undefined"].indexOf(locationId) >= 0) {
             vm.loadData();
             vm.loaded = true;
             return;
@@ -98,7 +133,7 @@ function AWCDailyStatusController($scope, $routeParams, $location, $filter, icds
         });
     };
 
-    init();
+    vm.init();
 
     $scope.$on('filtersChange', function() {
         vm.loadData();
@@ -107,7 +142,7 @@ function AWCDailyStatusController($scope, $routeParams, $location, $filter, icds
     vm.getDisableIndex = function () {
         var i = -1;
         window.angular.forEach(vm.selectedLocations, function (key, value) {
-            if (key !== null && key.location_id === userLocationId) {
+            if (key !== null && key.location_id === vm.userLocationId) {
                 i = value;
             }
         });
@@ -158,28 +193,22 @@ function AWCDailyStatusController($scope, $routeParams, $location, $filter, icds
             yAxis: {
                 axisLabel: '',
                 tickFormat: function(d){
-                    return d3.format(",.2f")(d);
+                    return d3.format(",")(d);
                 },
                 axisLabelDistance: 20,
+                forceY: [0],
             },
             callback: function(chart) {
                 var tooltip = chart.interactiveLayer.tooltip;
                 tooltip.contentGenerator(function (d) {
 
                     var findValue = function (values, date) {
-                        var day = _.find(values, function(num) { return d3.time.format('%m/%d/%y')(new Date(num['x'])) === date;});
-                        return d3.format(",.2f")(day['y']);
+                        var day = _.find(values, function(num) { return d3.time.format('%m/%d/%y')(new Date(num.x)) === date;});
+                        return day.y;
                     };
-
-                    var total = findValue(vm.chartData[1].values, d.value);
-                    var value = findValue(vm.chartData[0].values, d.value);
-
-                    var tooltip_content = "<p><strong>" + d.value + "</strong></p><br/>";
-                    tooltip_content += "<p>Total number of AWCs that were open yesterday: <strong>" + $filter('indiaNumbers')(total) + "</strong></p>";
-                    tooltip_content += "<p>Total number of AWCs that have been launched: <strong>" + $filter('indiaNumbers')(value) + "</strong></p>";
-                    tooltip_content += "<p>% of AWCs open yesterday: <strong>" + d3.format('.2%')(value / (total || 1)) + "</strong></p>";
-
-                    return tooltip_content;
+                    var total = findValue(vm.chartData[0].values, d.value);
+                    var value = findValue(vm.chartData[1].values, d.value);
+                    return vm.tooltipContent(d.value, value, total);
                 });
                 return chart;
             },
@@ -195,8 +224,14 @@ function AWCDailyStatusController($scope, $routeParams, $location, $filter, icds
         },
     };
 
-    vm.showNational = function () {
-        return !isNaN($location.search()['selectedLocationLevel']) && parseInt($location.search()['selectedLocationLevel']) >= 0;
+    vm.tooltipContent = function(monthName, value, total) {
+        return "<div>Total number of AWCs that were open on <strong>" + monthName + "</strong>: <strong>" + $filter('indiaNumbers')(value) + "</strong></div>"
+        + "<div>Total number of AWCs that have been launched: <strong>" + $filter('indiaNumbers')(total) + "</strong></div>"
+        + "<div>% of AWCs open on <strong>" + monthName + "</strong>: <strong>" + d3.format('.2%')(value / (total || 1)) + "</strong></div>";
+    };
+
+    vm.showAllLocations = function () {
+        return vm.all_locations.length < 10;
     };
 }
 

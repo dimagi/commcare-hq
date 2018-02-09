@@ -3,6 +3,7 @@ window.angular.module('icdsApp').factory('storageService', ['userLocationId', fu
         'search': {
             'location_id': userLocationId,
         },
+        'last_page': "",
     };
 
     return {

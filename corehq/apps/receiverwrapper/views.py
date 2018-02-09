@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import logging
 from couchdbkit import ResourceNotFound
 from django.http import (
@@ -5,6 +6,7 @@ from django.http import (
     HttpResponseForbidden,
 )
 from casexml.apps.case.xform import get_case_updates, is_device_report
+from corehq.apps.domain.auth import determine_authtype_from_request, BASIC
 from corehq.apps.domain.decorators import (
     check_domain_migration, login_or_digest_ex, login_or_basic_ex, login_or_token_ex,
 )
@@ -16,7 +18,6 @@ from corehq.apps.receiverwrapper.auth import (
 )
 from corehq.apps.receiverwrapper.util import (
     get_app_and_build_ids,
-    determine_authtype,
     from_demo_user,
     should_ignore_submission,
     DEMO_SUBMIT_MODE,
@@ -24,14 +25,16 @@ from corehq.apps.receiverwrapper.util import (
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.submission_post import SubmissionPost
 from corehq.form_processor.utils import convert_xform_to_json, should_use_sql_backend
-from corehq.util.datadog.gauges import datadog_histogram, datadog_counter
+from corehq.util.datadog.gauges import datadog_counter
 from corehq.util.datadog.metrics import MULTIMEDIA_SUBMISSION_ERROR_COUNT
+from corehq.util.datadog.utils import bucket_value
 from corehq.util.timer import TimingContext
 import couchforms
 from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_exempt
 
 from couchforms.const import MAGIC_PROPERTY
+from couchforms import openrosa_response
 from couchforms.getters import MultimediaBug
 from dimagi.utils.logging import notify_exception
 from corehq.apps.ota.utils import handle_401_response
@@ -46,12 +49,12 @@ def _process_form(request, domain, app_id, user_id, authenticated,
     ]
     if should_ignore_submission(request):
         # silently ignore submission if it meets ignore-criteria
-        response = SubmissionPost.submission_ignored_response()
+        response = openrosa_response.SUBMISSION_IGNORED_RESPONSE
         _record_metrics(metric_tags, 'ignored', response)
         return response
 
     if toggles.FORM_SUBMISSION_BLACKLIST.enabled(domain):
-        response = SubmissionPost.get_blacklisted_response()
+        response = openrosa_response.BLACKLISTED_RESPONSE
         _record_metrics(metric_tags, 'blacklisted', response)
         return response
 
@@ -115,18 +118,20 @@ def _process_form(request, domain, app_id, user_id, authenticated,
     return response
 
 
-def _record_metrics(base_tags, submission_type, response, result=None, timer=None):
-    base_tags += 'submission_type:{}'.format(submission_type),
-    datadog_counter('commcare.xform_submissions.count', tags=base_tags + [
+def _record_metrics(tags, submission_type, response, result=None, timer=None):
+    tags += [
+        'submission_type:{}'.format(submission_type),
         'status_code:{}'.format(response.status_code)
-    ])
+    ]
+
     if response.status_code == 201 and timer and result:
-        datadog_histogram('commcare.xform_submissions.timings', timer.duration, tags=base_tags)
-        # normalize over number of items (form or case) saved
-        normalized_time = timer.duration / (1 + len(result.cases))
-        datadog_histogram('commcare.xform_submissions.normalized_timings', normalized_time, tags=base_tags)
-        datadog_histogram('commcare.xform_submissions.case_count', len(result.cases), tags=base_tags)
-        datadog_histogram('commcare.xform_submissions.ledger_count', len(result.ledgers), tags=base_tags)
+        tags += [
+            'duration:%s' % bucket_value(timer.duration, (5, 10, 20), 's'),
+            'case_count:%s' % bucket_value(len(result.cases), (2, 5, 10)),
+            'ledger_count:%s' % bucket_value(len(result.ledgers), (2, 5, 10)),
+        ]
+
+    datadog_counter('commcare.xform_submissions.count', tags=tags)
 
 
 @csrf_exempt
@@ -267,11 +272,16 @@ def secure_post(request, domain, app_id=None):
     if toggles.ANONYMOUS_WEB_APPS_USAGE.enabled(domain):
         authtype_map['token'] = _secure_post_token
 
+    if request.GET.get('authtype'):
+        authtype = request.GET['authtype']
+    else:
+        authtype = determine_authtype_from_request(request, default=BASIC)
+
     try:
-        decorated_view = authtype_map[determine_authtype(request)]
+        decorated_view = authtype_map[authtype]
     except KeyError:
         return HttpResponseBadRequest(
-            'authtype must be one of: {0}'.format(','.join(authtype_map.keys()))
+            'authtype must be one of: {0}'.format(','.join(authtype_map))
         )
 
     return decorated_view(request, domain, app_id=app_id)

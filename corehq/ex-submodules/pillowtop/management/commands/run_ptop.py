@@ -1,4 +1,5 @@
 from __future__ import print_function
+from __future__ import absolute_import
 import sys
 
 from django.conf import settings
@@ -94,7 +95,7 @@ class Command(BaseCommand):
             # get pillows from key
             if pillow_key not in settings.PILLOWTOPS:
                 print("\n\tError, key %s is not in settings.PILLOWTOPS, legal keys are: %s" % \
-                      (pillow_key, settings.PILLOWTOPS.keys()))
+                      (pillow_key, list(settings.PILLOWTOPS)))
                 sys.exit()
             else:
                 pillows_to_run = [get_pillow_config_from_setting(pillow_key, config)

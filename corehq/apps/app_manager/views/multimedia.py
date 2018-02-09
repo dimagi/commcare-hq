@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.http import Http404, HttpResponse
 from django.shortcuts import render
 from corehq.apps.app_manager.dbaccessors import get_app

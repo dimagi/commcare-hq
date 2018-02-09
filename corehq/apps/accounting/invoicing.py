@@ -1,4 +1,6 @@
 from __future__ import absolute_import
+from __future__ import division
+from __future__ import unicode_literals
 import calendar
 import datetime
 from decimal import Decimal
@@ -22,7 +24,6 @@ from corehq.apps.accounting.models import (
     CreditLine,
     EntryPoint, WireInvoice, WireBillingRecord,
     SMALL_INVOICE_THRESHOLD, UNLIMITED_FEATURE_USAGE,
-    SoftwareProductType
 )
 from corehq.apps.accounting.utils import (
     ensure_domain_instance,
@@ -69,7 +70,7 @@ class DomainInvoiceFactory(object):
                 )
 
     def _get_subscriptions(self):
-        subscriptions = Subscription.objects.filter(
+        subscriptions = Subscription.visible_objects.filter(
             Q(date_end=None) | (
                 Q(date_end__gt=self.date_start)
                 & Q(date_end__gt=F('date_start'))
@@ -469,7 +470,7 @@ class ProductLineItemFactory(LineItemFactory):
         CreditLine.add_credit(
             line_item.subtotal,
             subscription=self.subscription,
-            product_type=SoftwareProductType.ANY,
+            is_product=True,
             permit_inactive=True,
         )
 

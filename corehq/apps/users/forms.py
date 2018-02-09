@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.conf import settings
 from django.contrib.auth.forms import SetPasswordForm
 from crispy_forms.bootstrap import StrictButton
@@ -26,7 +27,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import user_can_access_location_id
 from custom.nic_compliance.forms import EncodedPasswordChangeFormMixin
-from corehq.apps.users.models import CouchUser
+from corehq.apps.users.models import CouchUser, UserRole
 from corehq.apps.users.const import ANONYMOUS_USERNAME
 from corehq.apps.users.util import format_username, cc_user_domain
 from corehq.apps.app_manager.models import validate_lang
@@ -46,6 +47,7 @@ import re
 # required to translate inside of a mark_safe tag
 from django.utils.functional import lazy
 import six  # Python 3 compatibility
+from six.moves import range
 mark_safe_lazy = lazy(mark_safe, six.text_type)
 
 UNALLOWED_MOBILE_WORKER_NAMES = ('admin', 'demo_user')
@@ -283,9 +285,9 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
             hqcrispy.Field('first_name'),
             hqcrispy.Field('last_name'),
             hqcrispy.Field('email'),
-            twbscrispy.PrependedText('analytics_enabled', ''),
         ]
-
+        if self.set_analytics_enabled:
+            basic_fields.append(twbscrispy.PrependedText('analytics_enabled', ''),)
         if self.set_email_opt_out:
             basic_fields.append(twbscrispy.PrependedText('email_opt_out', ''))
 
@@ -309,8 +311,12 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
         )
 
     @property
+    def set_analytics_enabled(self):
+        return not settings.ENTERPRISE_MODE
+
+    @property
     def set_email_opt_out(self):
-        return self.user.is_web_user()
+        return self.user.is_web_user() and not settings.ENTERPRISE_MODE
 
     @property
     def collapse_other_options(self):
@@ -318,13 +324,15 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
 
     @property
     def direct_properties(self):
-        result = self.fields.keys()
+        result = list(self.fields)
+        if not self.set_analytics_enabled:
+            result.remove('analytics_enabled')
         if not self.set_email_opt_out:
             result.remove('email_opt_out')
         return result
 
     def update_user(self, save=True, **kwargs):
-        if save:
+        if save and self.set_analytics_enabled:
             analytics_enabled = self.cleaned_data['analytics_enabled']
             if self.user.analytics_enabled != analytics_enabled:
                 set_analytics_opt_out(self.user, analytics_enabled)
@@ -340,13 +348,6 @@ class UpdateCommCareUserInfoForm(BaseUserInfoForm, UpdateUserRoleForm):
         ),
         widget=forms.HiddenInput())
 
-    mobile_ucr_sync_interval = forms.IntegerField(
-        label=ugettext_lazy("Mobile report sync delay"),
-        required=False,
-        help_text=ugettext_lazy("Time to wait between sending updated mobile report data to users (hours)."),
-        widget=forms.HiddenInput()
-    )
-
     def __init__(self, *args, **kwargs):
         super(UpdateCommCareUserInfoForm, self).__init__(*args, **kwargs)
         self.fields['role'].help_text = _(mark_safe(
@@ -358,19 +359,16 @@ class UpdateCommCareUserInfoForm(BaseUserInfoForm, UpdateUserRoleForm):
         if toggles.ENABLE_LOADTEST_USERS.enabled(self.domain):
             self.fields['loadtest_factor'].widget = forms.TextInput()
 
-        if toggles.MOBILE_UCR.enabled(self.domain):
-            self.fields['mobile_ucr_sync_interval'].widget = forms.NumberInput()
-
     @property
     def direct_properties(self):
         indirect_props = ['role']
-        return [k for k in self.fields.keys() if k not in indirect_props]
+        return [k for k in self.fields if k not in indirect_props]
 
 
 class RoleForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
-        if kwargs.has_key('role_choices'):
+        if 'role_choices' in kwargs:
             role_choices = kwargs.pop('role_choices')
         else:
             role_choices = ()
@@ -514,6 +512,10 @@ _username_help = """
 <span ng-if="usernameAvailabilityStatus === 'available'"
       style="word-wrap:break-word;">
     <i class="fa fa-check"></i>
+    {{ usernameStatusMessage }}
+</span>
+<span ng-if="usernameAvailabilityStatus === 'warning'">
+    <i class="fa fa-exclamation-triangle"></i>
     {{ usernameStatusMessage }}
 </span>
 <span ng-if="usernameAvailabilityStatus === 'error'">
@@ -983,7 +985,7 @@ class CommtrackUserForm(forms.Form):
         from corehq.apps.locations.util import get_locations_from_ids
 
         value = self.cleaned_data.get('assigned_locations')
-        if not isinstance(value, basestring) or value.strip() == '':
+        if not isinstance(value, six.string_types) or value.strip() == '':
             return []
 
         location_ids = [location_id.strip() for location_id in value.split(',')]
@@ -1071,7 +1073,7 @@ class ConfirmExtraUserChargesForm(EditBillingAccountInfoForm):
                 'company_name',
                 'first_name',
                 'last_name',
-                crispy.Field('email_list', css_class='input-xxlarge ko-email-select2'),
+                crispy.Field('email_list', css_class='input-xxlarge accounting-email-select2'),
                 'phone_number',
             ),
             crispy.Fieldset(
@@ -1081,7 +1083,7 @@ class ConfirmExtraUserChargesForm(EditBillingAccountInfoForm):
                 'city',
                 'state_province_region',
                 'postal_code',
-                crispy.Field('country', css_class="input-large ko-country-select2",
+                crispy.Field('country', css_class="input-large accounting-country-select2",
                              data_countryname=COUNTRIES.get(self.current_country, '')),
             ),
             hqcrispy.B3MultiField(
@@ -1247,3 +1249,59 @@ class CommCareUserFormSet(object):
     def update_user(self):
         self.user_form.existing_user.user_data = self.custom_data.get_data_to_save()
         return self.user_form.update_user()
+
+
+class CommCareUserFilterForm(forms.Form):
+    role_id = forms.ChoiceField(label=ugettext_lazy('Role'), choices=(), required=False)
+    search_string = forms.CharField(
+        label=ugettext_lazy('Search by username'),
+        max_length=30,
+        required=False
+    )
+
+    def __init__(self, *args, **kwargs):
+        self.domain = kwargs.pop('domain')
+        super(CommCareUserFilterForm, self).__init__(*args, **kwargs)
+
+        roles = UserRole.by_domain(self.domain)
+        self.fields['role_id'].choices =  [('', _('All Roles'))] + [
+            (role._id, role.name or _('(No Name)')) for role in roles]
+
+        self.helper = FormHelper()
+        self.helper.form_method = 'GET'
+        self.helper.form_id = 'user-filters'
+        self.helper.form_class = 'form-horizontal'
+        self.helper.form_action = reverse('download_commcare_users', args=[self.domain])
+
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        self.helper.form_text_inline = True
+
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                _("Filter and Download Users"),
+                crispy.Field('role_id'),
+                crispy.Field('search_string'),
+            ),
+            hqcrispy.FormActions(
+                twbscrispy.StrictButton(
+                    _("Download All Users"),
+                    type="submit",
+                    css_class="btn btn-success submit_button",
+                )
+            ),
+        )
+
+    def clean_role_id(self):
+        role_id = self.cleaned_data['role_id']
+        if not role_id:
+            return None
+        if not UserRole.get(role_id).domain == self.domain:
+            raise forms.ValidationError(_("Invalid Role"))
+        return role_id
+
+    def clean_search_string(self):
+        search_string = self.cleaned_data['search_string']
+        if "*" in search_string or "?" in search_string:
+            raise forms.ValidationError(_("* and ? are not allowed"))
+        return search_string

@@ -1,8 +1,8 @@
+from __future__ import absolute_import
 from datetime import datetime, date
 import json
 import jsonobject
-import pytz
-from pytz import timezone
+import phonenumbers
 
 from django.core.serializers.json import DjangoJSONEncoder
 from casexml.apps.case.const import ARCHIVED_CASE_OWNER_ID
@@ -28,6 +28,7 @@ from custom.enikshay.const import (
     USERTYPE_DISPLAYS,
     FIRST_PRESCRIPTION_VOUCHER_REDEEMED_DATE,
     BETS_DATE_PRESCRIPTION_THRESHOLD_MET,
+    VOUCHER_ID,
 )
 from custom.enikshay.exceptions import NikshayLocationNotFound
 from custom.enikshay.integrations.utils import string_to_date_or_None
@@ -43,6 +44,11 @@ from .const import (
     TOTAL_DAY_THRESHOLDS
 )
 from .utils import get_bets_location_json
+import six
+
+
+def _get_district_location_id(pcp_location):
+    return _get_district_location(pcp_location).location_id
 
 
 def _get_district_location(pcp_location):
@@ -50,7 +56,7 @@ def _get_district_location(pcp_location):
         district_location = pcp_location.parent
         if district_location.location_type.code != 'dto':
             raise NikshayLocationNotFound("Parent location of {} is not a district".format(pcp_location))
-        return pcp_location.parent.location_id
+        return district_location
     except AttributeError:
         raise NikshayLocationNotFound("Parent location of {} not found".format(pcp_location))
 
@@ -119,7 +125,7 @@ class IncentivePayload(BETSPayload):
             BeneficiaryType="mbbs",
             EpisodeID=episode_case.case_id,
             Location=person_case.owner_id,
-            DTOLocation=_get_district_location(pcp_location),
+            DTOLocation=_get_district_location_id(pcp_location),
             PersonId=person_case.get_case_property('person_id'),
             AgencyId=cls._get_agency_id(episode_case),  # not migrated from UATBC, so we're good
             # Incentives are not yet approved in eNikshay
@@ -149,7 +155,7 @@ class IncentivePayload(BETSPayload):
             BeneficiaryType="patient",
             EpisodeID=episode_case.case_id,
             Location=person_case.owner_id,
-            DTOLocation=_get_district_location(pcp_location),
+            DTOLocation=_get_district_location_id(pcp_location),
             PersonId=person_case.get_case_property('person_id'),
             AgencyId=cls._get_agency_id(episode_case),  # we don't have this for migrated cases
             # Incentives are not yet approved in eNikshay
@@ -178,7 +184,7 @@ class IncentivePayload(BETSPayload):
         # We don't know whether the trigger fired because the threshold was met
         # or because treatment ended.  Just use whichever happened first.
         return string_to_date_or_None(
-            min(filter(None, [completed_date, threshold_met_date])))
+            min([_f for _f in [completed_date, threshold_met_date] if _f]))
 
     @classmethod
     def create_successful_treatment_payload(cls, episode_case):
@@ -208,7 +214,7 @@ class IncentivePayload(BETSPayload):
             BeneficiaryType="patient",
             EpisodeID=episode_case.case_id,
             Location=owner_id,
-            DTOLocation=_get_district_location(location),
+            DTOLocation=_get_district_location_id(location),
             PersonId=person_case.get_case_property('person_id'),
             AgencyId=cls._get_agency_id(episode_case),  # we don't have this for migrated cases
             # Incentives are not yet approved in eNikshay
@@ -236,7 +242,7 @@ class IncentivePayload(BETSPayload):
             BeneficiaryType=LOCATION_TYPE_MAP[location.location_type.code],
             EpisodeID=episode_case.case_id,
             Location=person_case.owner_id,
-            DTOLocation=_get_district_location(location),
+            DTOLocation=_get_district_location_id(location),
             PersonId=person_case.get_case_property('person_id'),
             AgencyId=cls._get_agency_id(episode_case),  # not migrated from UATBC, so we're good
             # Incentives are not yet approved in eNikshay
@@ -268,7 +274,7 @@ class IncentivePayload(BETSPayload):
             BeneficiaryType='ayush_other',
             EpisodeID=episode_case.case_id,
             Location=episode_case_properties.get("registered_by"),
-            DTOLocation=_get_district_location(location),
+            DTOLocation=_get_district_location_id(location),
             PersonId=person_case.get_case_property('person_id'),
             AgencyId=cls._get_agency_id(episode_case),  # not migrated from UATBC, so we're good
             # Incentives are not yet approved in eNikshay
@@ -284,6 +290,7 @@ class IncentivePayload(BETSPayload):
 class VoucherPayload(BETSPayload):
 
     VoucherID = jsonobject.StringProperty(required=False)
+    ReadableVoucherID = jsonobject.StringProperty(required=False)
     Amount = jsonobject.StringProperty(required=False)
 
     @classmethod
@@ -320,12 +327,13 @@ class VoucherPayload(BETSPayload):
             EventOccurDate=string_to_date_or_None(
                 voucher_case_properties.get(DATE_FULFILLED)),
             VoucherID=voucher_case.case_id,
+            ReadableVoucherID=voucher_case.get_case_property(VOUCHER_ID),
             BeneficiaryUUID=fulfilled_by_id,
             BeneficiaryType=LOCATION_TYPE_MAP[location.location_type.code],
             Location=fulfilled_by_location_id,
             # always round to nearest whole number, but send a string...
             Amount=str(int(round(float(voucher_case_properties.get(AMOUNT_APPROVED))))),
-            DTOLocation=_get_district_location(location),
+            DTOLocation=_get_district_location_id(location),
             InvestigationType=voucher_case_properties.get(INVESTIGATION_TYPE),
             PersonId=person_case.get_case_property('person_id'),
             AgencyId=agency_user.raw_username,
@@ -352,7 +360,7 @@ class BETSBasePayloadGenerator(BasePayloadGenerator):
     def handle_exception(self, exception, repeat_record):
         if isinstance(exception, RequestConnectionError):
             update_case(repeat_record.domain, repeat_record.payload_id, {
-                "bets_{}_error".format(self.event_id): u"RequestConnectionError: {}".format(unicode(exception))
+                "bets_{}_error".format(self.event_id): u"RequestConnectionError: {}".format(six.text_type(exception))
             })
 
     def handle_success(self, response, case, repeat_record):
@@ -375,7 +383,7 @@ class BETSBasePayloadGenerator(BasePayloadGenerator):
                     if case.dynamic_case_properties().get(self.event_property_name) != 'sent'
                     else 'sent'
                 ),
-                "bets_{}_error".format(self.event_id): unicode(response.json()),
+                "bets_{}_error".format(self.event_id): six.text_type(response.json()),
             }
         )
 
@@ -484,7 +492,7 @@ class BETSDrugRefillPayloadGenerator(IncentivePayloadGenerator):
                     if case.dynamic_case_properties().get(self.get_event_property_name(case)) != 'sent'
                     else 'sent'
                 ),
-                "bets_{}_error".format(self.event_id): unicode(response.json()),
+                "bets_{}_error".format(self.event_id): six.text_type(response.json()),
             }
         )
 
@@ -537,35 +545,40 @@ class BETSUserPayloadGenerator(UserPayloadGenerator):
     ]
 
     def get_payload(self, repeat_record, user):
-        user_json = self.serialize(repeat_record.domain, user)
+        from .utils import get_bets_user_json
+        user_json = get_bets_user_json(repeat_record.domain, user)
         return json.dumps(user_json, cls=DjangoJSONEncoder)
 
-    @staticmethod
-    def serialize(domain, user):
-        location = user.get_sql_location(domain)
-        user_json = {
-            "username": user.raw_username,
-            "first_name": user.first_name,
-            "last_name": user.last_name,
-            "default_phone_number": user.user_data.get("contact_phone_number"),
-            "id": user._id,
-            "phone_numbers": user.phone_numbers,
-            "email": user.email,
-            "dtoLocation": _get_district_location(location),
-            "privateSectorOrgId": location.metadata.get('private_sector_org_id', ''),
-            "resource_uri": "",
-        }
-        user_json['user_data'] = {
-            field: user.user_data.get(field, "")
-            for field in BETSUserPayloadGenerator.user_data_fields
-        }
-        return user_json
+    def handle_success(self, response, user, repeat_record):
+        # re-fetch the user so we don't get a document update conflict
+        user = CommCareUser.get(user._id)
+        existing_ids = user.user_data.get('BETS_user_repeat_record_ids')
+        if existing_ids:
+            user.user_data['BETS_user_repeat_record_ids'] = "{} {}".format(
+                existing_ids,
+                repeat_record._id
+            )                   # space separated list to follow xform convention
+        else:
+            user.user_data['BETS_user_repeat_record_ids'] = repeat_record._id
+        user.save()
 
 
 class BETSLocationPayloadGenerator(LocationPayloadGenerator):
 
     def get_payload(self, repeat_record, location):
         return json.dumps(get_bets_location_json(location))
+
+    def handle_success(self, response, location, repeat_record):
+        location.refresh_from_db()
+        existing_ids = location.metadata.get('BETS_location_repeat_record_ids')
+        if existing_ids:
+            location.metadata['BETS_location_repeat_record_ids'] = "{} {}".format(
+                existing_ids,
+                repeat_record._id
+            )                   # space separated list to follow xform convention
+        else:
+            location.metadata['BETS_location_repeat_record_ids'] = repeat_record._id
+        location.save()
 
 
 class BETSBeneficiaryPayloadGenerator(BasePayloadGenerator):
@@ -614,5 +627,14 @@ class BETSBeneficiaryPayloadGenerator(BasePayloadGenerator):
         }
         case_json["properties"]["owner_id"] = person_case.owner_id
         # This is the "real" phone number
-        case_json["properties"]["phone_number"] = case_properties.get("contact_phone_number", "")
+        case_json["properties"]["phone_number"] = get_national_number(
+            case_properties.get("contact_phone_number", "")
+        )
         return case_json
+
+
+def get_national_number(phonenumber):
+    try:
+        return str(phonenumbers.parse(str(phonenumber), "IN").national_number)
+    except phonenumbers.NumberParseException:
+        return ""

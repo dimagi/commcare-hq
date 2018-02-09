@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import csv
 from collections import defaultdict
 
@@ -12,6 +13,7 @@ from corehq.apps.users.models import CommCareUser
 from corehq.util.log import with_progress_bar
 
 from dimagi.utils.chunked import chunked
+import six
 
 class Command(BaseCommand):
     """
@@ -52,7 +54,7 @@ class Command(BaseCommand):
                     for form in forms:
                         user_id = form['form']['meta']['userID']
                         user_dict[user_id].append(form)
-                    for user_id, forms in user_dict.iteritems():
+                    for user_id, forms in six.iteritems(user_dict):
                         has_two_forms_submitted = False
                         has_case = False
                         unique_forms = set()

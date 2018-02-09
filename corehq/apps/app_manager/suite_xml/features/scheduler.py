@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.utils.translation import ugettext_lazy as _
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.const import (
@@ -28,8 +29,7 @@ class SchedulerFixtureContributor(SectionContributor):
             schedule = form.schedule
 
             if schedule is None:
-                raise (ScheduleError(_("There is no schedule for form {form_id}")
-                                     .format(form_id=form.unique_id)))
+                raise ScheduleError(_("There is no schedule for form {form_id}").format(form_id=form.unique_id))
 
             visits = [ScheduleFixtureVisit(id=visit.id,
                                            due=visit.due,

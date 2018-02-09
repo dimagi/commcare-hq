@@ -1,5 +1,6 @@
+from __future__ import absolute_import
 from collections import namedtuple
-from itertools import chain, imap
+from itertools import chain
 
 from couchdbkit.exceptions import DocTypeError
 from couchdbkit.resource import ResourceNotFound
@@ -8,6 +9,8 @@ from django.http import Http404
 
 from corehq.apps.es import AppES
 from dimagi.utils.couch.database import iter_docs
+import six
+from six.moves import map
 
 AppBuildVersion = namedtuple('AppBuildVersion', ['app_id', 'build_id', 'version', 'comment'])
 
@@ -45,6 +48,30 @@ def get_latest_released_app(domain, app_id):
         return wrap_app(app)
 
     return None
+
+
+def get_latest_released_build_id(domain, app_id):
+    """Get the latest starred build id for an application"""
+    app = _get_latest_released_build_view_result(domain, app_id)
+    return app['id'] if app else None
+
+
+def get_latest_released_app_version(domain, app_id):
+    app = _get_latest_released_build_view_result(domain, app_id)
+    return app['key'][3] if app else None
+
+
+def _get_latest_released_build_view_result(domain, app_id):
+    from .models import Application
+    key = ['^ReleasedApplications', domain, app_id]
+    return Application.get_db().view(
+        'app_manager/applications',
+        startkey=key + [{}],
+        endkey=key,
+        descending=True,
+        include_docs=False,
+        limit=1,
+    ).first()
 
 
 def _get_latest_build_view(domain, app_id, include_docs):
@@ -205,7 +232,7 @@ def get_app_ids_in_domain(domain):
 def get_apps_by_id(domain, app_ids):
     from .models import Application
     from corehq.apps.app_manager.util import get_correct_app_class
-    if isinstance(app_ids, basestring):
+    if isinstance(app_ids, six.string_types):
         app_ids = [app_ids]
     docs = iter_docs(Application.get_db(), app_ids)
     return [get_correct_app_class(doc).wrap(doc) for doc in docs]
@@ -304,7 +331,7 @@ def get_latest_app_ids_and_versions(domain, app_id=None):
 
     latest_ids_and_versions = {}
     if app_id:
-        results = filter(lambda r: r['value']['_id'] == app_id, results)
+        results = [r for r in results if r['value']['_id'] == app_id]
     for result in results:
         app_id = result['value']['_id']
         version = result['value']['version']
@@ -333,7 +360,7 @@ def get_all_apps(domain):
             wrapper=lambda row: row['id'],
         )
         correct_wrap = lambda app_doc: get_correct_app_class(app_doc).wrap(app_doc)
-        return imap(correct_wrap, iter_docs(Application.get_db(), saved_app_ids))
+        return map(correct_wrap, iter_docs(Application.get_db(), saved_app_ids))
 
     return chain(get_apps_in_domain(domain), _saved_apps())
 
@@ -358,24 +385,30 @@ def get_all_built_app_ids_and_versions(domain, app_id=None):
     [[AppBuildVersion(app_id, build_id, version, comment)], ...]
     If app_id is provided, limit to bulds for that app.
     """
+    return [
+        AppBuildVersion(
+            app_id=result['key'][1],
+            build_id=result['id'],
+            version=result['key'][2],
+            comment=result['value']['build_comment'],
+        )
+        for result in get_all_built_app_results(domain, app_id)
+    ]
+
+
+def get_all_built_app_results(domain, app_id=None):
     from .models import Application
     startkey = [domain]
     endkey = [domain, {}]
     if app_id:
         startkey = [domain, app_id]
         endkey = [domain, app_id, {}]
-    results = Application.get_db().view(
+    return Application.get_db().view(
         'app_manager/saved_app',
         startkey=startkey,
         endkey=endkey,
         include_docs=True,
     ).all()
-    return map(lambda result: AppBuildVersion(
-        app_id=result['key'][1],
-        build_id=result['id'],
-        version=result['key'][2],
-        comment=result['value']['build_comment'],
-    ), results)
 
 
 def get_case_types_from_apps(domain):

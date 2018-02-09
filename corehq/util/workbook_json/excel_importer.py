@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.util.workbook_json.excel import WorkbookJSONReader
 from soil import DownloadBase
 

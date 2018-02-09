@@ -1,8 +1,11 @@
 # coding=utf-8
+from __future__ import absolute_import
 import uuid
 import os
 from django.test import TestCase
-from corehq.form_processor.tests.utils import use_sql_backend, post_xform
+
+from corehq.apps.receiverwrapper.util import submit_form_locally
+from corehq.form_processor.tests.utils import use_sql_backend
 from corehq.util.test_utils import TestFileMixin
 
 
@@ -24,7 +27,7 @@ class XMLElementTest(TestCase, TestFileMixin):
                 form_id=uuid.uuid4().hex,
                 sample_value=value.encode(encoding),
             )
-            xform = post_xform(xml_data)
+            xform = submit_form_locally(xml_data, 'test-domain').xform
             self.assertEqual(value, xform.form_data['test'])
             elem = xform.get_xml_element()
             self.assertEqual(value, elem.find('{http://commcarehq.org/couchforms-tests}test').text)

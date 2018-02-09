@@ -40,6 +40,6 @@ class DjangoDocumentStore(DocumentStore):
     def iter_documents(self, ids):
         from dimagi.utils.chunked import chunked
         for chunk in chunked(ids, 500):
-            chunk = list(filter(None, chunk))
+            chunk = list([_f for _f in chunk if _f])
             for model in self._model_manager.filter(pk__in=chunk):
                 yield self._doc_generator_fn(model)

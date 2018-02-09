@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.apps.es import filters as esfilters
 from corehq.apps.es.cases import (
     owner,
@@ -12,10 +13,11 @@ from corehq.apps.es.forms import app, submitted, user_id, user_type
 from corehq.apps.es.sms import received as sms_received
 from corehq.apps.export.esaccessors import get_groups_user_ids
 from corehq.pillows.utils import USER_TYPES
+import six
 
 
 def _assert_user_types(user_types):
-        if isinstance(user_types, basestring):
+        if isinstance(user_types, six.string_types):
             user_types = [user_types]
 
         for type_ in user_types:
@@ -49,6 +51,16 @@ class NOT(ExportFilter):
 
     def to_es_filter(self):
         return esfilters.NOT(self.operand_filter.to_es_filter())
+
+
+class TermFilter(ExportFilter):
+    def __init__(self, term, value):
+        self.term = term
+        self.value = value
+
+    def to_es_filter(self):
+        return esfilters.term(self.term, self.value)
+
 
 class AppFilter(ExportFilter):
     """
@@ -105,13 +117,11 @@ class IsClosedFilter(ExportFilter):
         return is_closed(self.is_closed)
 
 
-class NameFilter(ExportFilter):
+class NameFilter(TermFilter):
 
     def __init__(self, case_name):
+        super(NameFilter, self).__init__('name', case_name)
         self.case_name = case_name
-
-    def to_es_filter(self):
-        return esfilters.term('name', self.case_name)
 
 
 class OpenedOnRangeFilter(RangeExportFilter):
@@ -150,13 +160,10 @@ class ClosedOnRangeFilter(RangeExportFilter):
         return closed_range(self.gt, self.gte, self.lt, self.lte)
 
 
-class ClosedByFilter(ExportFilter):
+class ClosedByFilter(TermFilter):
 
     def __init__(self, closed_by):
-        self.closed_by = closed_by
-
-    def to_es_filter(self):
-        return esfilters.term("closed_by", self.closed_by)
+        super(ClosedByFilter, self).__init__('closed_by', closed_by)
 
 
 class GroupFilter(ExportFilter):  # Abstract base class

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import json
 from couchdbkit.ext.django.schema import *
 
@@ -12,8 +13,11 @@ from corehq.motech.repeaters.signals import create_repeat_records
 from couchforms.signals import successful_form_received
 from corehq.motech.openmrs.openmrs_config import OpenmrsConfig
 from corehq.motech.openmrs.handler import send_openmrs_data
-from corehq.motech.openmrs.repeater_helpers import get_relevant_case_updates_from_form_json, \
-    Requests
+from corehq.motech.openmrs.repeater_helpers import (
+    Requests,
+    get_form_question_values,
+    get_relevant_case_updates_from_form_json,
+)
 from dimagi.utils.decorators.memoized import memoized
 
 
@@ -48,13 +52,14 @@ class OpenmrsRepeater(CaseRepeater):
     def fire_for_record(self, repeat_record):
         form_json = json.loads(self.get_payload(repeat_record))
 
-        trigger_case_infos = get_relevant_case_updates_from_form_json(
+        case_trigger_infos = get_relevant_case_updates_from_form_json(
             self.domain, form_json, case_types=self.white_listed_case_types,
             extra_fields=[id_matcher.case_property
                           for id_matcher in self.openmrs_config.case_config.id_matchers])
+        form_question_values = get_form_question_values(form_json)
 
-        send_openmrs_data(Requests(self.url, self.username, self.password), form_json,
-                          trigger_case_infos, self.openmrs_config)
+        send_openmrs_data(Requests(self.url, self.username, self.password), form_json, self.openmrs_config,
+                          case_trigger_infos, form_question_values)
 
         return repeat_record.handle_success(None)
 

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import pytz
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule, CustomActionDefinition
 from corehq.apps.data_interfaces.tests.test_auto_case_updates import BaseCaseRuleTest

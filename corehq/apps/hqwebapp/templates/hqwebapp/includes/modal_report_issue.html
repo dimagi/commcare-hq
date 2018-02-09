@@ -130,10 +130,13 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-default" data-dismiss="modal">{% trans 'Cancel' %}</button>
+                    <button type="button"
+                            id="bug-report-cancel"
+                            class="btn btn-default"
+                            data-dismiss="modal">{% trans 'Cancel' %}</button>
                     <button type="submit"
                             class="btn btn-primary"
-                            id="bug-report-cancel"
+                            id="bug-report-submit"
                             data-loading-text="{% trans "Submitting Report..." %}"
                             data-error-text="{% trans "Failed. Retry Issue Submission" %}"
                             data-success-text="{% trans "Success! Back to CommCare HQ" %}">
@@ -144,11 +147,4 @@
             </form>
         </div>
     </div>
-    {% addtoblock js-inline %}
-    <script>
-        $(window).on('load', function(){
-            $('#modalTrial30Day').modal('show');
-        });
-    </script>
-    {% endaddtoblock %}
 {% endif %}

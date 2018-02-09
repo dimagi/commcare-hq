@@ -1,12 +1,12 @@
 {
     "domains": [
         "enikshay",
-        "enikshay-reports-qa"
+        "enikshay-performance-test"
     ],
     "server_environment": [
         "enikshay"
     ],
-    "data_source_table": "episode_2b",
+    "data_source_table": "episode_2b_v2",
     "report_id": "tb_notification_register_private",
     "config": {
         "description": "",
@@ -739,6 +739,17 @@
                 "calculate_total": false,
                 "type": "field",
                 "display": "eNikshay External ID"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "doc_id",
+                "calculate_total": false,
+                "type": "field",
+                "display": "source_doc_id"
             }
         ]
     }

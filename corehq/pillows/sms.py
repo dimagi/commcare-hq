@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
 from corehq.apps.sms.change_publishers import change_meta_from_sms

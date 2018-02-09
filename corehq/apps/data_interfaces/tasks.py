@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from celery.schedules import crontab
 from celery.task import task, periodic_task
 from celery.utils.log import get_task_logger
@@ -7,6 +8,7 @@ from corehq.apps.data_interfaces.models import (
     DomainCaseRuleRun,
     AUTO_UPDATE_XMLNS,
 )
+from corehq.apps.domain_migration_flags.api import any_migrations_in_progress
 from corehq.util.decorators import serial_task
 from datetime import datetime, timedelta
 
@@ -17,12 +19,12 @@ from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
 
 from corehq.apps.data_interfaces.utils import add_cases_to_case_group, archive_forms_old, archive_or_restore_forms
-from corehq.toggles import DATA_MIGRATION
 from .interfaces import FormManagementMode, BulkFormManagementInterface
 from .dispatcher import EditDataInterfaceDispatcher
 from corehq.util.log import send_HTML_email
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.logging import notify_error
+import six
 
 
 logger = get_task_logger('data_interfaces')
@@ -75,7 +77,7 @@ def run_case_update_rules(now=None):
                .distinct()
                .order_by('domain'))
     for domain in domains:
-        if not DATA_MIGRATION.enabled(domain):
+        if not any_migrations_in_progress(domain):
             run_case_update_rules_for_domain.delay(domain, now)
 
 
@@ -102,7 +104,7 @@ def run_rules_for_case(case, rules, now):
 def check_data_migration_in_progress(domain, last_migration_check_time):
     utcnow = datetime.utcnow()
     if last_migration_check_time is None or (utcnow - last_migration_check_time) > timedelta(minutes=1):
-        return DATA_MIGRATION.enabled(domain), utcnow
+        return any_migrations_in_progress(domain), utcnow
 
     return False, last_migration_check_time
 
@@ -128,7 +130,7 @@ def run_case_update_rules_for_domain(domain, now=None):
     all_rules = AutomaticUpdateRule.by_domain(domain, AutomaticUpdateRule.WORKFLOW_CASE_UPDATE)
     rules_by_case_type = AutomaticUpdateRule.organize_rules_by_case_type(all_rules)
 
-    for case_type, rules in rules_by_case_type.iteritems():
+    for case_type, rules in six.iteritems(rules_by_case_type):
         boundary_date = AutomaticUpdateRule.get_boundary_date(rules, now)
         case_ids = list(AutomaticUpdateRule.get_case_ids(domain, case_type, boundary_date))
 

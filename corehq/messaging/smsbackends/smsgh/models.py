@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import division
 import requests
 from corehq.apps.sms.models import SMS, SQLSMSBackend
 from corehq.messaging.smsbackends.smsgh.forms import SMSGHBackendForm
@@ -42,7 +44,7 @@ class SQLSMSGHBackend(SQLSMSBackend):
         return SMSGHBackendForm
 
     def response_is_error(self, response):
-        return (int(response.status_code) / 100) in (4, 5)
+        return (int(response.status_code) // 100) in (4, 5)
 
     def get_additional_data(self, response):
         try:
@@ -73,8 +75,8 @@ class SQLSMSGHBackend(SQLSMSBackend):
             # by the framework.
             pass
         raise SMSGHException("Error with the SMSGH backend. "
-            "Response Code: %s, Subcode: %s. See "
-            "http://developers.smsgh.com/documentations/sendmessage#handlingerrors "
+            "Response Code: %s, Subcode: %s. See 'Handling Errors' on "
+            "https://developers.hubtel.com/documentations/sendmessage "
             "for details. " % (response.status_code, subcode))
 
     def handle_success(self, response, msg):

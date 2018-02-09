@@ -1,11 +1,16 @@
+from __future__ import absolute_import
+from __future__ import division
 import calendar
 import hashlib
 import json
+import random
+import re
 from corehq.messaging.scheduling.exceptions import InvalidMonthlyScheduleConfiguration
 from corehq.messaging.scheduling.models.abstract import Schedule, Event, Broadcast
 from corehq.messaging.scheduling import util
 from corehq.util.timezones.conversions import UserTime
-from datetime import timedelta, datetime, date
+from datetime import timedelta, datetime, date, time
+from dateutil.parser import parse
 from dimagi.utils.decorators.memoized import memoized
 from django.db import models, transaction
 
@@ -23,14 +28,17 @@ class TimedSchedule(Schedule):
     SATURDAY = 5
     SUNDAY = 6
 
+    EVENT_SPECIFIC_TIME = 'SPECIFIC_TIME'
+    EVENT_RANDOM_TIME = 'RANDOM_TIME'
+    EVENT_CASE_PROPERTY_TIME = 'CASE_PROPERTY_TIME'
+
     schedule_length = models.IntegerField()
     total_iterations = models.IntegerField()
     start_offset = models.IntegerField(default=0)
     start_day_of_week = models.IntegerField(default=ANY_DAY)
+    event_type = models.CharField(max_length=50, default=EVENT_SPECIFIC_TIME)
 
-    @property
-    @memoized
-    def memoized_schedule_revision(self):
+    def get_schedule_revision(self, case=None):
         """
         The schedule revision is a hash of all information pertaining to
         scheduling. Information unrelated to scheduling, such as the content
@@ -42,7 +50,7 @@ class TimedSchedule(Schedule):
             self.total_iterations,
             self.start_offset,
             self.start_day_of_week,
-            [[e.day, e.time.strftime('%H:%M:%S')] for e in self.memoized_events],
+            [e.get_scheduling_info(case=case) for e in self.memoized_events],
         ])
         return hashlib.md5(schedule_info).hexdigest()
 
@@ -53,7 +61,18 @@ class TimedSchedule(Schedule):
         This is named with a memoized_ prefix to be clear that it should only be used
         when the event set is not changing.
         """
-        return list(self.timedevent_set.order_by('order'))
+        return list(self.event_set.order_by('order'))
+
+    @property
+    def event_set(self):
+        if self.event_type == self.EVENT_SPECIFIC_TIME:
+            return self.timedevent_set
+        elif self.event_type == self.EVENT_RANDOM_TIME:
+            return self.randomtimedevent_set
+        elif self.event_type == self.EVENT_CASE_PROPERTY_TIME:
+            return self.casepropertytimedevent_set
+        else:
+            raise ValueError("Unexpected value for event_type: %s" % self.event_type)
 
     def set_first_event_due_timestamp(self, instance, start_date=None):
         """
@@ -93,6 +112,14 @@ class TimedSchedule(Schedule):
 
         return start_date_with_start_offsets
 
+    def get_case_or_none(self, instance):
+        from corehq.messaging.scheduling.scheduling_partitioned.models import CaseTimedScheduleInstance
+
+        if isinstance(instance, CaseTimedScheduleInstance):
+            return instance.case
+
+        return None
+
     def get_local_next_event_due_timestamp(self, instance):
         current_event = self.memoized_events[instance.current_event_num]
 
@@ -100,9 +127,11 @@ class TimedSchedule(Schedule):
             ((instance.schedule_iteration_num - 1) * self.schedule_length) + current_event.day
         )
 
+        local_time, additional_day_offset = current_event.get_time(case=self.get_case_or_none(instance))
         return datetime.combine(
-            self.get_start_date_with_start_offsets(instance) + timedelta(days=days_since_start_date),
-            current_event.time
+            self.get_start_date_with_start_offsets(instance) +
+            timedelta(days=days_since_start_date + additional_day_offset),
+            local_time
         )
 
     def get_local_next_event_due_timestamp_for_monthly_schedule(self, instance):
@@ -120,7 +149,7 @@ class TimedSchedule(Schedule):
                 # always schedule a negative day.
                 raise InvalidMonthlyScheduleConfiguration("Day must be between -28 and 31, and not be 0")
 
-            year_offset = (instance.schedule_iteration_num - 1) / 12
+            year_offset = (instance.schedule_iteration_num - 1) // 12
             month_offset = (instance.schedule_iteration_num - 1) % 12
 
             year = start_date_with_offset.year + year_offset
@@ -140,7 +169,8 @@ class TimedSchedule(Schedule):
                 # It's a negative day, which counts back from the last day of the month
                 target_date = date(year, month, days_in_month + current_event.day + 1)
 
-        return datetime.combine(target_date, current_event.time)
+        local_time, additional_day_offset = current_event.get_time(case=self.get_case_or_none(instance))
+        return datetime.combine(target_date + timedelta(days=additional_day_offset), local_time)
 
     def set_next_event_due_timestamp(self, instance):
         if self.schedule_length == self.MONTHLY:
@@ -159,81 +189,172 @@ class TimedSchedule(Schedule):
         current_event = self.memoized_events[instance.current_event_num]
         return current_event.memoized_content
 
-    def move_to_next_event(self, instance):
-        instance.current_event_num += 1
-        if instance.current_event_num >= len(self.memoized_events):
-            instance.schedule_iteration_num += 1
-            instance.current_event_num = 0
-        self.set_next_event_due_timestamp(instance)
-
-        if (
+    def total_iterations_complete(self, instance):
+        return (
             self.total_iterations != self.REPEAT_INDEFINITELY and
             instance.schedule_iteration_num > self.total_iterations
-        ):
-            instance.active = False
+        )
+
+    def delete_related_events(self):
+        for event in self.event_set.all():
+            event.content.delete()
+
+        self.event_set.all().delete()
+
+    def get_event_type_from_model_event(self, model_event):
+        if isinstance(model_event, TimedEvent):
+            return self.EVENT_SPECIFIC_TIME
+        elif isinstance(model_event, RandomTimedEvent):
+            return self.EVENT_RANDOM_TIME
+        elif isinstance(model_event, CasePropertyTimedEvent):
+            return self.EVENT_CASE_PROPERTY_TIME
+        else:
+            raise TypeError("Unexpected type: %s" % type(model_event))
+
+    def create_event_from_model_event(self, model_event):
+        if isinstance(model_event, TimedEvent):
+            return TimedEvent(
+                schedule=self,
+                time=model_event.time,
+            )
+        elif isinstance(model_event, RandomTimedEvent):
+            return RandomTimedEvent(
+                schedule=self,
+                time=model_event.time,
+                window_length=model_event.window_length,
+            )
+        elif isinstance(model_event, CasePropertyTimedEvent):
+            return CasePropertyTimedEvent(
+                schedule=self,
+                case_property_name=model_event.case_property_name,
+            )
+        else:
+            raise TypeError("Unexpected type: %s" % type(model_event))
 
     @classmethod
-    def create_simple_daily_schedule(cls, domain, time, content, total_iterations=REPEAT_INDEFINITELY,
-            start_offset=0, start_day_of_week=ANY_DAY):
+    def create_simple_daily_schedule(cls, domain, model_event, content, total_iterations=REPEAT_INDEFINITELY,
+            start_offset=0, start_day_of_week=ANY_DAY, extra_options=None):
         schedule = cls(domain=domain)
-        schedule.set_simple_daily_schedule(time, content, total_iterations=total_iterations,
-            start_offset=start_offset, start_day_of_week=start_day_of_week)
+        schedule.set_simple_daily_schedule(model_event, content, total_iterations=total_iterations,
+            start_offset=start_offset, start_day_of_week=start_day_of_week, extra_options=extra_options)
         return schedule
 
-    def set_simple_daily_schedule(self, time, content, total_iterations=REPEAT_INDEFINITELY, start_offset=0,
-            start_day_of_week=ANY_DAY):
+    def set_simple_daily_schedule(self, model_event, content, total_iterations=REPEAT_INDEFINITELY, start_offset=0,
+            start_day_of_week=ANY_DAY, extra_options=None):
         with transaction.atomic():
+            self.delete_related_events()
+
+            self.event_type = self.get_event_type_from_model_event(model_event)
             self.start_offset = start_offset
             self.start_day_of_week = start_day_of_week
             self.schedule_length = 1
             self.total_iterations = total_iterations
+            self.ui_type = Schedule.UI_TYPE_DAILY
+            self.set_extra_scheduling_options(extra_options)
             self.save()
-
-            for event in self.timedevent_set.all():
-                event.content.delete()
-
-            self.timedevent_set.all().delete()
 
             if content.pk is None:
                 content.save()
 
-            event = TimedEvent(
-                schedule=self,
-                order=1,
-                day=0,
-                time=time
-            )
+            event = self.create_event_from_model_event(model_event)
+            event.order = 1
+            event.day = 0
             event.content = content
             event.save()
 
+    def validate_day_of_week(self, day):
+        if not isinstance(day, int) or day < 0 or day > 6:
+            raise ValueError("Expected a value between 0 and 6")
+
     @classmethod
-    def create_simple_monthly_schedule(cls, domain, time, days, content, total_iterations=REPEAT_INDEFINITELY):
+    def create_simple_weekly_schedule(cls, domain, model_event, content, days_of_week, start_day_of_week,
+            total_iterations=REPEAT_INDEFINITELY, extra_options=None):
         schedule = cls(domain=domain)
-        schedule.set_simple_monthly_schedule(time, days, content, total_iterations=total_iterations)
+        schedule.set_simple_weekly_schedule(model_event, content, days_of_week, start_day_of_week,
+            total_iterations=total_iterations, extra_options=extra_options)
         return schedule
 
-    def set_simple_monthly_schedule(self, time, days, content, total_iterations=REPEAT_INDEFINITELY):
+    def set_simple_weekly_schedule(self, model_event, content, days_of_week, start_day_of_week,
+            total_iterations=REPEAT_INDEFINITELY, extra_options=None):
+        """
+        Sets this TimedSchedule to be a simple weekly schedule where you can choose
+        the days of the week on which to send.
+
+        :param model_event: An example event from which to pull timing information; should be an instance of
+            a subclass of AbstractTimedEvent
+        :param content: The content (corehq.messaging.scheduling.models.Content object) to send
+        :days_of_week: A list of integers representing the days of the week on which to send, with
+            0 being Monday and 6 being Sunday to match python's datetime.weekday() method
+        :start_day_of_week: The day of the week which will be considered the first day of the week for
+            scheduling purposes
+        :param total_iterations: The total number of weeks to send for
+        """
+        self.validate_day_of_week(start_day_of_week)
+
         with transaction.atomic():
-            self.schedule_length = self.MONTHLY
+            self.delete_related_events()
+
+            self.event_type = self.get_event_type_from_model_event(model_event)
+            self.start_day_of_week = start_day_of_week
+            self.schedule_length = 7
             self.total_iterations = total_iterations
+            self.ui_type = Schedule.UI_TYPE_WEEKLY
+            self.start_offset = 0
+            self.set_extra_scheduling_options(extra_options)
             self.save()
 
-            for event in self.timedevent_set.all():
-                event.content.delete()
+            event_days = []
+            for day in days_of_week:
+                self.validate_day_of_week(day)
+                event_days.append((day - start_day_of_week + 7) % 7)
 
-            self.timedevent_set.all().delete()
+            order = 1
+            for day in sorted(event_days):
+                event = self.create_event_from_model_event(model_event)
+                event.order = order
+                event.day = day
+
+                if order == 1:
+                    if content.pk is None:
+                        content.save()
+                else:
+                    # Create copies of the content on subsequent events
+                    content.pk = None
+                    content.save()
+
+                event.content = content
+                event.save()
+                order += 1
+
+    @classmethod
+    def create_simple_monthly_schedule(cls, domain, model_event, days, content,
+            total_iterations=REPEAT_INDEFINITELY, extra_options=None):
+        schedule = cls(domain=domain)
+        schedule.set_simple_monthly_schedule(model_event, days, content, total_iterations=total_iterations,
+            extra_options=extra_options)
+        return schedule
+
+    def set_simple_monthly_schedule(self, model_event, days, content, total_iterations=REPEAT_INDEFINITELY,
+            extra_options=None):
+        with transaction.atomic():
+            self.delete_related_events()
+
+            self.event_type = self.get_event_type_from_model_event(model_event)
+            self.schedule_length = self.MONTHLY
+            self.total_iterations = total_iterations
+            self.ui_type = Schedule.UI_TYPE_MONTHLY
+            self.start_offset = 0
+            self.set_extra_scheduling_options(extra_options)
+            self.save()
 
             if content.pk is None:
                 content.save()
 
             order = 1
             for day in days:
-                event = TimedEvent(
-                    schedule=self,
-                    order=order,
-                    day=day,
-                    time=time
-                )
+                event = self.create_event_from_model_event(model_event)
+                event.order = order
+                event.day = day
 
                 if order > 1:
                     content.pk = None
@@ -244,12 +365,108 @@ class TimedSchedule(Schedule):
                 order += 1
 
 
-class TimedEvent(Event):
+class AbstractTimedEvent(Event):
+    class Meta:
+        abstract = True
+
     schedule = models.ForeignKey('scheduling.TimedSchedule', on_delete=models.CASCADE)
     day = models.IntegerField()
+
+    def get_time(self, case=None):
+        """
+        Should return (time, additional_day_offset), where:
+
+        time is the local time that the event should take place
+
+        additional_day_offset is the number of days to add to self.day in order to get
+        the day on which the event should take place. Most of the time this will be 0,
+        but it can be 1 for event definitions that span across a day boundary, for example
+        for a RandomTimedEvent whose random time window spans the boundary between two days.
+        """
+        raise NotImplementedError()
+
+    def get_scheduling_info(self, case=None):
+        raise NotImplementedError()
+
+
+class TimedEvent(AbstractTimedEvent):
     time = models.TimeField()
+
+    def get_time(self, case=None):
+        return self.time, 0
+
+    def get_scheduling_info(self, case=None):
+        return [self.day, self.time.strftime('%H:%M:%S')]
+
+
+class RandomTimedEvent(AbstractTimedEvent):
+    """
+    A RandomTimedEvent defines a window of time in which to select
+    a random time to send the content.
+
+    The window starts at self.time and lasts for self.window_length
+    minutes.
+    """
+    time = models.TimeField()
+    window_length = models.PositiveIntegerField()
+
+    def get_time(self, case=None):
+        choices = list(range(self.window_length))
+        minute_offset = random.choice(choices)
+
+        # Create a dummy datetime so that we can use timedelta to add minutes
+        dummy_date = date(2000, 1, 1)
+        dummy_datetime = datetime.combine(dummy_date, self.time) + timedelta(minutes=minute_offset)
+        return dummy_datetime.time(), (dummy_datetime.date() - dummy_date).days
+
+    def get_scheduling_info(self, case=None):
+        return [self.day, self.time.strftime('%H:%M:%S'), 'random-window-length-%s' % self.window_length]
+
+
+class CasePropertyTimedEvent(AbstractTimedEvent):
+    """
+    A CasePropertyTimedEvent defines the time at which to send the
+    content based on the value in a case property.
+    """
+    case_property_name = models.CharField(max_length=126)
+
+    def get_time(self, case=None):
+        if not case:
+            raise ValueError("Expected a case")
+
+        default_time = time(12, 0)
+        event_time = case.dynamic_case_properties().get(self.case_property_name, '').strip()
+
+        if not re.match('^\d?\d:\d\d', event_time):
+            event_time = default_time
+        else:
+            try:
+                event_time = parse(event_time).time()
+            except ValueError:
+                event_time = default_time
+
+        return event_time, 0
+
+    def get_scheduling_info(self, case=None):
+        """
+        Include the actual scheduled time (not just the case property name) in
+        the scheduling info. This makes the actual time become part of the
+        schedule revision so that the framework is responsive to changes
+        in the case property's value.
+        """
+        return [self.day, self.get_time(case=case)[0].strftime('%H:%M:%S')]
 
 
 class ScheduledBroadcast(Broadcast):
     schedule = models.ForeignKey('scheduling.TimedSchedule', on_delete=models.CASCADE)
     start_date = models.DateField()
+
+    def soft_delete(self):
+        from corehq.messaging.scheduling.tasks import delete_timed_schedule_instances
+
+        with transaction.atomic():
+            self.deleted = True
+            self.save()
+            self.schedule.deleted = True
+            self.schedule.save()
+            delete_timed_schedule_instances.delay(self.schedule_id)

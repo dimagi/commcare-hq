@@ -4,3 +4,7 @@ class NikshayAPIError(Exception):
 
 class NikshayResponseException(NikshayAPIError):
     pass
+
+
+class NikshayHealthEstablishmentInvalidUpdate(Exception):
+    pass

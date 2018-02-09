@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from couchdbkit import ResourceNotFound
 from dimagi.utils.couch.database import iter_docs
 from .interface import DocumentStore
@@ -42,7 +43,7 @@ class CouchDocumentStore(DocumentStore):
         if last_id:
             last_doc = self.get_document(last_id)
             start_key = [self.domain, self.doc_type]
-            if self.doc_type in _DATE_MAP.keys():
+            if self.doc_type in list(_DATE_MAP):
                 start_key.append(last_doc[_DATE_MAP[self.doc_type]])
 
         return iterate_doc_ids_in_domain_by_type(

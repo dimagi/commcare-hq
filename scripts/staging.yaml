@@ -41,32 +41,32 @@
 #
 # If you are unsure of how to resolve a conflict, notify the branch owner.
 
+# FORMPLAYER
+# From the formplayer, repo, call `./scripts/rebuildstaging`
+# This rebuilds the `autostaging` branch of formplayer and runs the formplayer-staging job on jenkins
 
 trunk: master
 name: autostaging
 branches:
   - vellum-staging # J$ 11/13
-#  - nh/240812/mw_pwd_reset  # Norman 3/23
-  - nh/new_rb  # Norman 11/22
-  - br/kill-old-cloucare  # Danny 7/21
-  - fixtures-require-js-2017 # Jenny 8/23
-  - np/11.1 # NP 8/24
-  - nh/concept-map # Norman 9/9
+  # - je/cythonized-jsonobject # j$ 1/8
+  - xbryanc:dlemailbutton_updates  # Bryan 1/29
+  - sophiamcg:organization-structure-search-tree-interaction  # Sophia 1/29
+  - xbryanc:show_scheduled_reports_updates  # Bryan 1/31
+  - sophiamcg:organization-structure-collapse-button  # Sophia 1/31
+  - jls/data-feedback-loop-test # Jenny 2/1
+  - jls/debug-app-preview # Jenny 2/5
+  - fr/two-factor-mobile-users  # FR 2/7
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
     # just so we always get latest master
     branches: []
   submodules/django-digest-src:
-    branches:
-      - np/111 # NP 8/24
-  submodules/django-prbac-src:
     branches: []
   corehq/apps/prelogin:
     branches: []
   corehq/apps/hqmedia/static/hqmedia/MediaUploader:
-    branches: []
-  deployment/commcare-hq-deploy:
     branches: []
   submodules/commcare-translations:
     branches: []

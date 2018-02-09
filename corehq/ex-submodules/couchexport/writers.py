@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from base64 import b64decode
 from codecs import BOM_UTF8
 import os
@@ -13,10 +14,13 @@ from django.template.loader import render_to_string, get_template
 import xlwt
 
 from couchexport.models import Format
+import six
+from six.moves import zip
+from six.moves import map
 
 
 def _encode_if_needed(val):
-    return val.encode("utf8") if isinstance(val, unicode) else val
+    return val.encode("utf8") if isinstance(val, six.text_type) else val
 
 
 class UniqueHeaderGenerator(object):
@@ -151,6 +155,9 @@ class ExportWriter(object):
     def open(self, header_table, file, max_column_size=2000, table_titles=None, archive_basepath=''):
         """
         Create any initial files, headings, etc necessary.
+        :param header_table: tuple of one of the following formats
+            tuple(sheet_name, [['col1header', 'col2header', ....]])
+            tuple(sheet_name, [FormattedRow])
         """
         table_titles = table_titles or {}
 
@@ -173,10 +180,10 @@ class ExportWriter(object):
 
     def add_table(self, table_index, headers, table_title=None):
         def _clean_name(name):
-            return re.sub(r"[\n]", '', re.sub(r"[[\\?*/:\]]", "-", unicode(name)))
+            return re.sub(r"[\n]", '', re.sub(r"[[\\?*/:\]]", "-", six.text_type(name)))
 
-        table_title_truncated = _clean_name(
-            self.table_name_generator.next_unique(table_title or table_index)
+        table_title_truncated = self.table_name_generator.next_unique(
+            _clean_name(table_title or table_index)
         )
 
         # make sure we trim the headers
@@ -240,6 +247,12 @@ class ExportWriter(object):
     def _close(self):
         raise NotImplementedError
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self._close()
+
 
 class OnDiskExportWriter(ExportWriter):
     """
@@ -259,10 +272,15 @@ class OnDiskExportWriter(ExportWriter):
 
     def _write_row(self, sheet_index, row):
 
-        def _encode_if_needed(val):
-            return val.encode("utf8") if isinstance(val, unicode) else val
-        row = map(_encode_if_needed, row)
+        def _transform(val):
+            if isinstance(val, six.text_type):
+                return val.encode("utf8")
+            elif val is None:
+                return ''
+            else:
+                return val
 
+        row = list(map(_transform, row))
         self.tables[sheet_index].write_row(row)
 
     def _close(self):
@@ -294,7 +312,7 @@ class ZippedExportWriter(OnDiskExportWriter):
 
         archive = zipfile.ZipFile(self.file, 'w', zipfile.ZIP_DEFLATED)
         for index, name in self.table_names.items():
-            if isinstance(name, unicode):
+            if isinstance(name, six.text_type):
                 name = name.encode('utf-8')
             path = self.tables[index].get_path()
             archive.write(path, self._get_archive_filename(name))
@@ -321,7 +339,7 @@ class UnzippedCsvExportWriter(OnDiskExportWriter):
 
     def _write_final_result(self):
 
-        tablefile = self.tables.values()[0].get_file()
+        tablefile = list(self.tables.values())[0].get_file()
         for line in tablefile:
             self.file.write(line)
         self.file.seek(0)
@@ -358,12 +376,12 @@ class Excel2007ExportWriter(ExportWriter):
         )
 
         def get_write_value(value):
-            if isinstance(value, (int, long, float)):
+            if isinstance(value, six.integer_types + (float,)):
                 return value
             if isinstance(value, str):
-                value = unicode(value, encoding="utf-8")
+                value = six.text_type(value, encoding="utf-8")
             elif value is not None:
-                value = unicode(value)
+                value = six.text_type(value)
             else:
                 value = u''
             return dirty_chars.sub(u'?', value)
@@ -371,7 +389,7 @@ class Excel2007ExportWriter(ExportWriter):
         # NOTE: don't touch this. changing anything like formatting in the
         # row by referencing the cells will cause huge memory issues.
         # see: http://openpyxl.readthedocs.org/en/latest/optimized.html
-        sheet.append(map(get_write_value, row))
+        sheet.append(list(map(get_write_value, row)))
 
     def _close(self):
         """
@@ -399,7 +417,7 @@ class Excel2003ExportWriter(ExportWriter):
         sheet = self.tables[sheet_index]
         # have to deal with primary ids
         for i, val in enumerate(row):
-            sheet.write(row_index,i,unicode(val))
+            sheet.write(row_index, i, six.text_type(val))
         self.table_indices[sheet_index] = row_index + 1
 
     def _close(self):

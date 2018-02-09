@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import functools
 from sqlagg.columns import *
 from sqlagg.base import AliasColumn
@@ -15,9 +16,11 @@ from corehq.const import USER_MONTH_FORMAT
 from corehq.util.dates import iso_string_to_date
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import json_format_date
-from util import get_unique_combinations,  capitalize_fn
+from .util import get_unique_combinations, capitalize_fn
 
 from datetime import timedelta
+from six.moves import zip
+from six.moves import range
 
 
 class StaticColumn(AliasColumn):
@@ -115,8 +118,8 @@ class GSIDSQLReport(SummingSqlTabularReport, CustomProjectReport, DatespanMixin)
         DISEASES = self.diseases["ids"]
         TESTS = self.test_types
 
-        ret.update(zip(DISEASES, DISEASES))
-        ret.update(zip(TESTS, TESTS))
+        ret.update(list(zip(DISEASES, DISEASES)))
+        ret.update(list(zip(TESTS, TESTS)))
 
         return ret
 

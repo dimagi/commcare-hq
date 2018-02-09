@@ -1,12 +1,17 @@
 # coding: utf-8
-import os
+from __future__ import absolute_import
 from codecs import BOM_UTF8
+from contextlib import closing
+import io
+import os
 
-import StringIO
-
-from couchexport.writers import ZippedExportWriter, CsvFileWriter, PythonDictWriter
 from django.test import SimpleTestCase
+from lxml import html, etree
 from mock import patch, Mock
+
+from couchexport.export import export_from_tables
+from couchexport.models import Format
+from couchexport.writers import ZippedExportWriter, CsvFileWriter, PythonDictWriter
 
 
 class ZippedExportWriterTests(SimpleTestCase):
@@ -61,11 +66,34 @@ class CsvFileWriterTests(SimpleTestCase):
         self.assertEqual(file_start, BOM_UTF8 + 'ham')
 
 
+class HtmlExportWriterTests(SimpleTestCase):
+
+    def test_nones_transformed(self):
+        headers = ('Breakfast', 'Breakfast', 'Amuse-Bouche', 'Breakfast')
+        row = ('spam', 'spam', None, 'spam')
+        table = (headers, row, row, row)
+        export_tables = (('Spam', table),)
+
+        with closing(io.BytesIO()) as file_:
+            export_from_tables(export_tables, file_, Format.HTML)
+            html_string = file_.getvalue()
+
+        root = html.fromstring(html_string)
+        html_rows = [
+            [etree.tostring(td).strip() for td in tr.xpath('./td')]
+            for tr in root.xpath('./body/table/tbody/tr')
+        ]
+        self.assertEqual(html_rows,
+                         [['<td>spam</td>', '<td>spam</td>', '<td/>', '<td>spam</td>'],
+                          ['<td>spam</td>', '<td>spam</td>', '<td/>', '<td>spam</td>'],
+                          ['<td>spam</td>', '<td>spam</td>', '<td/>', '<td>spam</td>']])
+
+
 class HeaderNameTest(SimpleTestCase):
 
     def test_names_matching_case(self):
         writer = PythonDictWriter()
-        stringio = StringIO.StringIO()
+        stringio = io.StringIO()
         table_index_1 = "case_Sensitive"
         table_index_2 = "case_sensitive"
         table_headers = [[]]
@@ -92,7 +120,7 @@ class HeaderNameTest(SimpleTestCase):
     def test_max_header_length(self):
         writer = PythonDictWriter()
         writer.max_table_name_size = 10
-        stringio = StringIO.StringIO()
+        stringio = io.StringIO()
         table_index = "my_table_index"
         table_headers = [("first header", "second header")]
         writer.open(
@@ -103,3 +131,20 @@ class HeaderNameTest(SimpleTestCase):
         preview = writer.get_preview()
         self.assertGreater(len(table_index), writer.max_table_name_size)
         self.assertLessEqual(len(preview[0]['table_name']), writer.max_table_name_size)
+
+    def test_max_header_length_duplicates(self):
+        writer = PythonDictWriter()
+        writer.max_table_name_size = 7
+        stringio = io.StringIO()
+        table_headers = [("header1", "header2")]
+        writer.open(
+            [
+                ("prefix1: index", table_headers),
+                ("prefix2- index", table_headers),
+            ],
+            stringio
+        )
+        writer.close()
+        preview = writer.get_preview()
+        table_names = {table['table_name'] for table in preview}
+        self.assertEqual(len(table_names), 2)

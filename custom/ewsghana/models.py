@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.dispatch import receiver
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.signals import commcare_domain_pre_delete
@@ -44,7 +45,7 @@ class EWSGhanaConfig(Document):
     @classmethod
     def get_all_enabled_domains(cls):
         configs = cls.get_all_configs()
-        return [c.domain for c in filter(lambda config: config.enabled, configs)]
+        return [c.domain for c in [config for config in configs if config.enabled]]
 
     @property
     def is_configured(self):

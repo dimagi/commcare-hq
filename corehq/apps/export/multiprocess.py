@@ -18,6 +18,7 @@ The export works as follows:
   * Add successful pages to final ZIP archive
   * Add raw data dumps for unsuccessful pages to final ZIP archive
 """
+from __future__ import absolute_import
 import gzip
 import json
 import logging
@@ -26,7 +27,7 @@ import os
 import tempfile
 import time
 import zipfile
-from Queue import Empty
+from six.moves.queue import Empty
 from collections import namedtuple
 from datetime import timedelta
 
@@ -38,6 +39,8 @@ from corehq.elastic import ScanResult
 from corehq.util.files import safe_filename
 from couchexport.export import get_writer
 from couchexport.writers import ZippedExportWriter
+
+TEMP_FILE_PREFIX = 'cchq_export_dump_'
 
 UNPROCESSED_PAGES_DIR = 'unprocessed'
 
@@ -74,9 +77,9 @@ class QueuedResult(RetryResult):
 
 class OutputPaginator(object):
     """Helper class to paginate raw export output"""
-    def __init__(self, export_id):
+    def __init__(self, export_id, start_page_count=0):
         self.export_id = export_id
-        self.page = 0
+        self.page = start_page_count
         self.page_size = 0
         self.file = None
 
@@ -86,7 +89,8 @@ class OutputPaginator(object):
     def _new_file(self):
         if self.file:
             self.file.close()
-        fileobj = tempfile.NamedTemporaryFile(mode='wb', delete=False)
+        prefix = '{}{}_'.format(TEMP_FILE_PREFIX, self.export_id)
+        fileobj = tempfile.NamedTemporaryFile(prefix=prefix, mode='wb', delete=False)
         self.path = fileobj.name
         self.file = gzip.GzipFile(fileobj=fileobj)
 
@@ -113,18 +117,22 @@ class OutputPaginator(object):
 def rebuild_export_mutiprocess(export_id, num_processes, page_size=100000):
     assert num_processes > 0
 
-    def _log_page_dumped(paginator):
-        logger.info('  Dump page {} complete: {} docs'.format(paginator.page, paginator.page_size))
-
     export_instance = get_properly_wrapped_export_instance(export_id)
     filters = export_instance.get_filters()
     total_docs = get_export_size(export_instance, filters)
-
-    logger.info('Starting data dump of {} docs'.format(total_docs))
     exporter = MultiprocessExporter(export_instance, total_docs, num_processes)
     paginator = OutputPaginator(export_id)
+
+    logger.info('Starting data dump of {} docs'.format(total_docs))
+    run_multiprocess_exporter(exporter, filters, paginator, page_size)
+
+
+def run_multiprocess_exporter(exporter, filters, paginator, page_size):
+    def _log_page_dumped(paginator):
+        logger.info('  Dump page {} complete: {} docs'.format(paginator.page, paginator.page_size))
+
     with exporter, paginator:
-        for index, doc in enumerate(get_export_documents(export_instance, filters)):
+        for doc in get_export_documents(exporter.export_instance, filters):
             paginator.write(doc)
             if paginator.page_size == page_size:
                 _log_page_dumped(paginator)
@@ -142,7 +150,7 @@ def run_export_with_logging(export_instance, page_number, dump_path, doc_count, 
     won't show the traceback
     """
     logger.info('    Processing page {} started (attempt {})'.format(page_number, attempts))
-    progress_queue = getattr(run_export, 'queue', None)
+    progress_queue = getattr(run_export_with_logging, 'queue', None)
     update_frequency = min(1000, int(doc_count / 10) or 1)
     progress_tracker = LoggingProgressTracker(page_number, progress_queue, update_frequency)
     try:
@@ -166,9 +174,9 @@ def run_export(export_instance, page_number, dump_path, doc_count, progress_trac
 def _get_export_documents_from_file(dump_path, doc_count):
     """Mimic the results of an ES scroll query but get results from jsonlines file"""
     def _doc_iter():
-        with gzip.open(dump_path) as f:
-            for line in f.readlines():
-                yield json.loads(line)
+        with gzip.open(dump_path) as file:
+            for line in file:
+                yield json.loads(line.decode())
         os.remove(dump_path)
 
     return ScanResult(doc_count, _doc_iter())
@@ -210,8 +218,10 @@ class LoggingProgressTracker(object):
 class MultiprocessExporter(object):
     """Helper class to manage multi-process exporting"""
 
-    def __init__(self, export_instance, total_docs, num_processes):
+    def __init__(self, export_instance, total_docs, num_processes, existing_archive_path=None, keep_file=False):
+        self.keep_file = keep_file
         self.export_instance = export_instance
+        self.existing_archive_path = existing_archive_path
         self.results = []
         self.progress_queue = multiprocessing.Queue()
         self.progress = multiprocessing.Process(target=_output_progress, args=(self.progress_queue, total_docs))
@@ -230,8 +240,10 @@ class MultiprocessExporter(object):
         )
 
         self.is_zip = isinstance(get_writer(export_instance.export_format), ZippedExportWriter)
+        self.premature_exit = False
 
     def __enter__(self):
+        self.start()
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
@@ -257,7 +269,10 @@ class MultiprocessExporter(object):
     def wait_till_completion(self):
         results = self.get_results()
         final_path = self.build_final_export(results)
-        self.upload(final_path)
+        if self.premature_exit:
+            logger.warning("\n------- PREMATURE EXIT --------\nResult written to %s\n", final_path)
+        else:
+            self.upload(final_path)
 
     def get_results(self, retries_per_page=3):
         export_results = []
@@ -268,7 +283,10 @@ class MultiprocessExporter(object):
                     export_results.append(queued_result.async_result.get(timeout=5))
                     self.results.pop(0)
                 except KeyboardInterrupt:
-                    raise
+                    logger.error('Exiting before all results received.')
+                    self.premature_exit = True
+                    export_results.extend(self.results)
+                    return export_results
                 except multiprocessing.TimeoutError:
                     pass
                 except Exception:
@@ -300,10 +318,24 @@ class MultiprocessExporter(object):
         except:
             pass
 
+    def _get_zipfile_for_final_archive(self):
+        if self.existing_archive_path:
+            return zipfile.ZipFile(
+                self.existing_archive_path, mode='a',
+                compression=zipfile.ZIP_DEFLATED, allowZip64=True
+            )
+        else:
+            prefix = '{}{}_final_'.format(TEMP_FILE_PREFIX, self.export_instance.get_id)
+            final_file_obj = tempfile.NamedTemporaryFile(prefix=prefix, mode='wb', delete=False)
+            return zipfile.ZipFile(
+                final_file_obj, mode='w',
+                compression=zipfile.ZIP_DEFLATED, allowZip64=True
+            )
+
     def build_final_export(self, export_results):
-        final_path = tempfile.mktemp()
         base_name = safe_filename(self.export_instance.name or 'Export')
-        with zipfile.ZipFile(final_path, mode='w', compression=zipfile.ZIP_DEFLATED, allowZip64=True) as final_zip:
+        final_zip = self._get_zipfile_for_final_archive()
+        with final_zip:
             pages = len(export_results)
             for result in export_results:
                 if not result.success:
@@ -322,13 +354,13 @@ class MultiprocessExporter(object):
                 else:
                     final_zip.write(result.path, '{}_{}'.format(base_name, result.page))
 
-        return final_path
+        return final_zip.filename
 
-    def upload(self, final_path, clean=True):
+    def upload(self, final_path):
         logger.info('Uploading final export')
         with open(final_path, 'r') as payload:
             save_export_payload(self.export_instance, payload)
-        if clean:
+        if not self.keep_file:
             os.remove(final_path)
 
 
@@ -343,6 +375,7 @@ def _add_compressed_page_to_zip(zip_file, page_number, zip_path_to_add):
 
 def _output_progress(queue, total_docs):
     """Poll the queue for ProgressValue objects and log progress to logger"""
+    logger.debug('Starting progress reporting process')
     page_progress = {}
     progress = total_dumped = 0
     start = time.time()

@@ -4,6 +4,8 @@ import uuid
 import functools
 import json
 import logging
+from io import BytesIO
+
 import mock
 import os
 import sys
@@ -96,7 +98,8 @@ class TestFileMixin(object):
 
     @classmethod
     def get_path(cls, name, ext, override_path=None):
-        return os.path.join(cls.get_base(override_path), '%s.%s' % (name, ext))
+        ext = '.%s' % ext if ext and not ext.startswith('.') else ext
+        return os.path.join(cls.get_base(override_path), '%s%s' % (name, ext))
 
     @classmethod
     def get_file(cls, name, ext, override_path=None):
@@ -105,16 +108,16 @@ class TestFileMixin(object):
 
     @classmethod
     def write_xml(cls, name, xml, override_path=None):
-        with open(cls.get_path(name, 'xml', override_path), 'w') as f:
+        with open(cls.get_path(name, '.xml', override_path), 'w') as f:
             return f.write(xml)
 
     @classmethod
     def get_json(cls, name, override_path=None):
-        return json.loads(cls.get_file(name, 'json', override_path))
+        return json.loads(cls.get_file(name, '.json', override_path))
 
     @classmethod
     def get_xml(cls, name, override_path=None):
-        return cls.get_file(name, 'xml', override_path)
+        return cls.get_file(name, '.xml', override_path)
 
 
 def flag_enabled(toggle_class_string):
@@ -244,8 +247,7 @@ class RunWithMultipleConfigs(object):
 
 
 def call_with_settings(fn, settings_dict, args, kwargs):
-    keys = settings_dict.keys()
-    original_settings = {key: getattr(settings, key, None) for key in keys}
+    original_settings = {key: getattr(settings, key, None) for key in settings_dict}
     try:
         # set settings to new values
         for key, value in settings_dict.items():
@@ -269,32 +271,34 @@ def run_with_multiple_configs(fn, run_configs, nose_tags=None):
     return inner
 
 
-class log_sql_output(ContextDecorator):
+class capture_log_output(ContextDecorator):
     """
     Can be used as either a context manager or decorator.
     """
 
-    def __init__(self):
-        self.logger = logging.getLogger('django.db.backends')
-        self.new_level = logging.DEBUG
+    def __init__(self, logger_name, level=logging.DEBUG):
+        self.logger = logging.getLogger(logger_name)
+        self.new_level = level
         self.original_level = self.logger.level
-        self.original_debug_value = settings.DEBUG
         self.original_handlers = self.logger.handlers
         for handler in self.original_handlers:
             self.logger.removeHandler(handler)
-        self.logger.addHandler(logging.StreamHandler(sys.stdout))
+        self.output = BytesIO()
+        self.logger.addHandler(logging.StreamHandler(self.output))
 
     def __enter__(self):
-        settings.DEBUG = True
         self.logger.setLevel(self.new_level)
+        return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.logger.setLevel(self.original_level)
-        settings.DEBUG = self.original_debug_value
         for handler in self.logger.handlers:
             self.logger.removeHandler(handler)
         for handler in self.original_handlers:
             self.logger.addHandler(handler)
+
+    def get_output(self):
+        return self.output.getvalue()
 
 
 def generate_cases(argsets, cls=None):

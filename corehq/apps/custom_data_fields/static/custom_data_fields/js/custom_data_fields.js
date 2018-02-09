@@ -10,7 +10,16 @@ function CustomDataField () {
     self.label = ko.observable();
     self.is_required = ko.observable();
     self.choices = ko.observableArray();
-    self.multipleChoice = ko.observable();
+    self.validationMode = ko.observable(); // 'choice' or 'regex'
+    self.multiple_choice = ko.observable();
+    self.regex = ko.observable();
+    self.regex_msg = ko.observable();
+    self.index_in_fixture = ko.observable();
+
+    if (!hqImport('hqwebapp/js/toggles').toggleEnabled('REGEX_FIELD_VALIDATION')) {
+        // if toggle isn't enabled - always show "choice" option
+        self.validationMode('choice');
+    }
 
     self.addChoice = function () {
         self.choices.unshift(new Choice());
@@ -24,32 +33,52 @@ function CustomDataField () {
         self.slug(field.slug);
         self.label(field.label);
         self.is_required(field.is_required);
-        self.choices(field.choices.map(function (choice) {
-            return new Choice(choice);
-        }));
-        self.multipleChoice(field.is_multiple_choice);
+        if (field.choices.length > 0) {
+            self.validationMode('choice');
+            self.choices(field.choices.map(function (choice) {
+                return new Choice(choice);
+            }));
+        } else if (field.regex) {
+            self.validationMode('regex');
+            self.regex(field.regex);
+            self.regex_msg(field.regex_msg);
+        }
+        self.multiple_choice(field.is_multiple_choice);
+        self.index_in_fixture(field.index_in_fixture);
     };
 
     self.serialize = function () {
-        var choices = [];
-        var choicesToRemove = [];
-        _.each(self.choices(), function (choice) {
-            if (choice.value()) {
-                choices.push(choice.value());
-            } else {
-                choicesToRemove.push(choice);
-            }
-        });
-        _.each(choicesToRemove, function (choice) {
-            self.removeChoice(choice);
-        });
+        var choices = [],
+            is_multiple_choice = null,
+            regex = null,
+            regex_msg = null;
+        if (self.validationMode() === 'choice') {
+            var choicesToRemove = [];
+            _.each(self.choices(), function (choice) {
+                if (choice.value()) {
+                    choices.push(choice.value());
+                } else {
+                    choicesToRemove.push(choice);
+                }
+            });
+            _.each(choicesToRemove, function (choice) {
+                self.removeChoice(choice);
+            });
+            is_multiple_choice = self.multiple_choice();
+        } else if (self.validationMode() === 'regex') {
+            regex = self.regex();
+            regex_msg = self.regex_msg();
+        }
 
         return {
             'slug': self.slug(),
             'label': self.label(),
             'is_required': self.is_required(),
             'choices': choices,
-            'is_multiple_choice': self.multipleChoice()
+            'regex': regex,
+            'regex_msg': regex_msg,
+            'is_multiple_choice': is_multiple_choice,
+            'index_in_fixture': self.index_in_fixture(),
         };
     };
 }

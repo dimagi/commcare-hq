@@ -1,11 +1,17 @@
 /* globals ICON_PATH, load */
-ICON_PATH = hqImport("hqwebapp/js/initial_page_data").get('icon_path');
+ICON_PATH = "";
 hqDefine("reports/js/base_maps", function() {
-    var context = hqImport("hqwebapp/js/initial_page_data").get('context');
+    var done = false;
 
-    $(function() {
-        if (context) {
-            load(context, ICON_PATH);
+    $(document).ajaxComplete(function(e, xhr, options) {
+        var $data = $(".base-maps-data");
+        if ($data.length && !done) {
+            var context = $data.data("context");
+            ICON_PATH = $data.data("icon_path");
+            if (ICON_PATH && context) {
+                load(context, ICON_PATH);
+                done = true;
+            }
         }
     });
 });

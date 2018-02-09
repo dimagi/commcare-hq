@@ -64,6 +64,7 @@
             $scope.formData['model_type'] = modelType;
         }
 
+        self._labels = {};
         self._placeholders = {};
         self._app_types = [];
         self._apps_by_type = {};
@@ -73,6 +74,10 @@
 
         self._select2Test = {};
 
+        var _formElemContainer = function(fieldSlug) {
+            return $('#div_id_' + fieldSlug);
+        };
+
         var _formElemGetter = function(fieldSlug) {
             return $('#id_' + fieldSlug);
         };
@@ -81,6 +86,7 @@
             return function (field_data) {
                 if (fieldSlug) {
                     $scope.formData[fieldSlug] = '';
+                    _formElemContainer(fieldSlug).find("label").text(self._labels[fieldSlug]);
                     var $formElem = _formElemGetter(fieldSlug);
                     if ($formElem.length > 0) {
                         $formElem.select2({
@@ -139,7 +145,7 @@
                 $scope.resetForm();
             });
             $(formModalSelector).on('show.bs.modal', function () {
-                window.analytics.workflow("Clicked New Export");
+                hqImport('analytix/js/kissmetrix').track.event("Clicked New Export");
             });
         }
 
@@ -160,6 +166,7 @@
                     if (data.success) {
                         $scope.showNoAppsError = data.app_types.length === 1 && data.apps_by_type.all.length === 0;
                         if (!$scope.showNoAppsError) {
+                            self._labels = data.labels || {};
                             self._placeholders = data.placeholders || {};
                             self._app_types = data.app_types || [];
                             $scope.hasSpecialAppTypes = data.app_types.length > 1;

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from datetime import date, datetime
 import json
 import mock
@@ -52,9 +53,10 @@ from custom.enikshay.integrations.ninetyninedots.tests.test_repeaters import ENi
 from custom.enikshay.tests.utils import (
     ENikshayLocationStructureMixin, get_person_case_structure, setup_enikshay_locations)
 from custom.enikshay.case_utils import update_case
+import six
 
 
-@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True, SERVER_ENVIRONMENT='enikshay')
 class TestBetsResponseHandling(ENikshayLocationStructureMixin, ENikshayRepeaterTestBase):
     def setUp(self):
         super(TestBetsResponseHandling, self).setUp()
@@ -130,7 +132,7 @@ class TestBetsResponseHandling(ENikshayLocationStructureMixin, ENikshayRepeaterT
         self.assertTrue(attempt.failure_reason)
 
 
-@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True, SERVER_ENVIRONMENT='enikshay')
 class TestVoucherRepeater(ENikshayLocationStructureMixin, ENikshayRepeaterTestBase):
 
     def setUp(self):
@@ -171,7 +173,7 @@ class TestVoucherRepeater(ENikshayLocationStructureMixin, ENikshayRepeaterTestBa
         self.assertEqual(1, len(self.repeat_records().all()))
 
 
-@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True, SERVER_ENVIRONMENT='enikshay')
 class TestVoucherPayload(ENikshayLocationStructureMixin, ENikshayRepeaterTestBase):
 
     def test_prescription_get_payload(self):
@@ -198,6 +200,7 @@ class TestVoucherPayload(ENikshayLocationStructureMixin, ENikshayRepeaterTestBas
             u"Location": self.pcc.location_id,
             u"DTOLocation": self.dto.location_id,
             u"VoucherID": voucher.case_id,
+            u"ReadableVoucherID": voucher.get_case_property('voucher_id'),
             u"Amount": u'9',
             u"InvestigationType": None,
             u"PersonId": self.person.attrs['update']['person_id'],
@@ -237,6 +240,7 @@ class TestVoucherPayload(ENikshayLocationStructureMixin, ENikshayRepeaterTestBas
             u"Location": self.plc.location_id,
             u"DTOLocation": self.dto.location_id,
             u"VoucherID": voucher.case_id,
+            u"ReadableVoucherID": voucher.get_case_property('voucher_id'),
             u"Amount": u'10',
             u"InvestigationType": u"xray",
             u"PersonId": self.person.attrs['update']['person_id'],
@@ -252,7 +256,7 @@ class TestVoucherPayload(ENikshayLocationStructureMixin, ENikshayRepeaterTestBas
         )
 
 
-@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True, SERVER_ENVIRONMENT='enikshay')
 class TestIncentivePayload(ENikshayLocationStructureMixin, ENikshayRepeaterTestBase):
     def setUp(self):
         super(TestIncentivePayload, self).setUp()
@@ -267,7 +271,7 @@ class TestIncentivePayload(ENikshayLocationStructureMixin, ENikshayRepeaterTestB
         episode = cases[self.episode_id]
 
         expected_payload = {"incentive_details": [{
-            u"EventID": unicode(TREATMENT_180_EVENT),
+            u"EventID": six.text_type(TREATMENT_180_EVENT),
             u"EventOccurDate": u"2017-08-15",
             u"BeneficiaryUUID": self.user.user_id,
             u"BeneficiaryType": u"mbbs",
@@ -294,7 +298,7 @@ class TestIncentivePayload(ENikshayLocationStructureMixin, ENikshayRepeaterTestB
         episode = cases[self.episode_id]
 
         expected_payload = {"incentive_details": [{
-            u"EventID": unicode(DRUG_REFILL_EVENT),
+            u"EventID": six.text_type(DRUG_REFILL_EVENT),
             u"EventOccurDate": u"2017-08-15",
             u"BeneficiaryUUID": self.person_id,
             u"BeneficiaryType": u"patient",
@@ -321,7 +325,7 @@ class TestIncentivePayload(ENikshayLocationStructureMixin, ENikshayRepeaterTestB
         episode = cases[self.episode_id]
 
         expected_payload = {"incentive_details": [{
-            u"EventID": unicode(SUCCESSFUL_TREATMENT_EVENT),
+            u"EventID": six.text_type(SUCCESSFUL_TREATMENT_EVENT),
             u"EventOccurDate": u"2017-08-15",
             u"BeneficiaryUUID": self.person_id,
             u"BeneficiaryType": u"patient",
@@ -348,7 +352,7 @@ class TestIncentivePayload(ENikshayLocationStructureMixin, ENikshayRepeaterTestB
         episode = cases[self.episode_id]
 
         expected_payload = {"incentive_details": [{
-            u"EventID": unicode(SUCCESSFUL_TREATMENT_EVENT),
+            u"EventID": six.text_type(SUCCESSFUL_TREATMENT_EVENT),
             u"EventOccurDate": u"2017-08-15",
             u"BeneficiaryUUID": self.person_id,
             u"BeneficiaryType": u"patient",
@@ -375,7 +379,7 @@ class TestIncentivePayload(ENikshayLocationStructureMixin, ENikshayRepeaterTestB
         episode = cases[self.episode_id]
 
         expected_payload = {"incentive_details": [{
-            u"EventID": unicode(DIAGNOSIS_AND_NOTIFICATION_EVENT),
+            u"EventID": six.text_type(DIAGNOSIS_AND_NOTIFICATION_EVENT),
             u"EventOccurDate": date_today,
             u"BeneficiaryUUID": self.user.user_id,
             u"BeneficiaryType": u"mbbs",
@@ -404,7 +408,7 @@ class TestIncentivePayload(ENikshayLocationStructureMixin, ENikshayRepeaterTestB
         episode = cases[self.episode_id]
 
         expected_payload = {"incentive_details": [{
-            u"EventID": unicode(AYUSH_REFERRAL_EVENT),
+            u"EventID": six.text_type(AYUSH_REFERRAL_EVENT),
             u"EventOccurDate": date_today,
             u"BeneficiaryUUID": self.user.user_id,
             u"BeneficiaryType": u"ayush_other",
@@ -423,7 +427,7 @@ class TestIncentivePayload(ENikshayLocationStructureMixin, ENikshayRepeaterTestB
         )
 
 
-@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True, SERVER_ENVIRONMENT='enikshay')
 class TestBETS180TreatmentRepeater(ENikshayLocationStructureMixin, ENikshayRepeaterTestBase):
     def setUp(self):
         super(TestBETS180TreatmentRepeater, self).setUp()
@@ -462,7 +466,7 @@ class TestBETS180TreatmentRepeater(ENikshayLocationStructureMixin, ENikshayRepea
         self.assertEqual(1, len(self.repeat_records().all()))
 
 
-@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True, SERVER_ENVIRONMENT='enikshay')
 class BETSDrugRefillRepeaterTest(ENikshayLocationStructureMixin, ENikshayRepeaterTestBase):
     def setUp(self):
         super(BETSDrugRefillRepeaterTest, self).setUp()
@@ -518,7 +522,7 @@ class BETSDrugRefillRepeaterTest(ENikshayLocationStructureMixin, ENikshayRepeate
         self.assertEqual(2, len(self.repeat_records().all()))
 
 
-@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True, SERVER_ENVIRONMENT='enikshay')
 class BETSSuccessfulTreatmentRepeaterTest(ENikshayLocationStructureMixin, ENikshayRepeaterTestBase):
     def setUp(self):
         super(BETSSuccessfulTreatmentRepeaterTest, self).setUp()
@@ -584,7 +588,7 @@ class BETSSuccessfulTreatmentRepeaterTest(ENikshayLocationStructureMixin, ENiksh
         self.assertEqual(1, len(self.repeat_records().all()))
 
 
-@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True, SERVER_ENVIRONMENT='enikshay')
 class BETSDiagnosisAndNotificationRepeaterTest(ENikshayLocationStructureMixin, ENikshayRepeaterTestBase):
     def setUp(self):
         super(BETSDiagnosisAndNotificationRepeaterTest, self).setUp()
@@ -621,7 +625,7 @@ class BETSDiagnosisAndNotificationRepeaterTest(ENikshayLocationStructureMixin, E
         self.assertEqual(1, len(self.repeat_records().all()))
 
 
-@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True, SERVER_ENVIRONMENT='enikshay')
 class BETSAYUSHReferralRepeaterTest(ENikshayLocationStructureMixin, ENikshayRepeaterTestBase):
     def setUp(self):
         super(BETSAYUSHReferralRepeaterTest, self).setUp()
@@ -661,7 +665,7 @@ class BETSAYUSHReferralRepeaterTest(ENikshayLocationStructureMixin, ENikshayRepe
         self.assertEqual(1, len(self.repeat_records().all()))
 
 
-@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True, SERVER_ENVIRONMENT='enikshay')
 class UserRepeaterTest(TestCase):
     domain = 'bets-user-repeater'
 
@@ -700,15 +704,17 @@ class UserRepeaterTest(TestCase):
     def repeat_records(self):
         return RepeatRecord.all(domain=self.domain, due_before=datetime.utcnow())
 
-    def make_user(self, location):
+    def make_user(self, location, user_data=None, username="davos.shipwright@stannis.gov"):
         user = CommCareUser.create(
             self.domain,
-            "davos.shipwright@stannis.gov",
+            username,
             "123",
             location=location,
             commit=False,
         )
         user.user_data['user_level'] = 'real'
+        if user_data:
+            user.user_data.update(user_data)
         user.save()
         self.addCleanup(user.delete)
         return user
@@ -724,6 +730,14 @@ class UserRepeaterTest(TestCase):
             json.loads(records[0].get_payload())
         )
 
+    def test_private_user_payload(self):
+        self.make_user(self.private_location, {'contact_phone_number': "911234567890"})
+        record = self.repeat_records().all()[0]
+        self.assertEqual(
+            json.loads(record.get_payload())['default_phone_number'],
+            "1234567890"
+        )
+
     def test_public_user(self):
         self.make_user(self.public_location)
         self.assertEqual(0, len(self.repeat_records().all()))
@@ -732,8 +746,47 @@ class UserRepeaterTest(TestCase):
         self.make_user(self.test_location)
         self.assertEqual(0, len(self.repeat_records().all()))
 
+    def test_updates(self):
+        # saving a record multiple times shouldn't retrigger
+        user = self.make_user(self.private_location)
+        self.assertEqual(1, len(self.repeat_records().all()))
+        user.save()
+        self.assertEqual(1, len(self.repeat_records().all()))
 
-@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+        # modifying the record and saving it shouldn't retrigger if the record hasn't sent
+        user = self.make_user(self.private_location, username="daenerys@targaryens.net")
+        self.assertEqual(2, len(self.repeat_records().all()))
+        record = list(self.repeat_records())[-1]
+        user.first_name = "daenerys"
+        user.save()
+        self.assertEqual(2, len(self.repeat_records().all()))
+
+        _mock_fire_record(record)
+        # record gets taken out of queue
+        self.assertEqual(1, len(self.repeat_records().all()))
+
+        user = CommCareUser.get(user.user_id)
+        self.assertEqual(
+            user.user_data.get('BETS_user_repeat_record_ids'),
+            record._id
+        )
+        # updating the user after a successful send, should add this user to the queue
+        user.first_name = 'dani'
+        user.save()
+        self.assertEqual(2, len(self.repeat_records().all()))
+
+        record = list(self.repeat_records())[-1]
+        _mock_fire_record(record)
+
+        # updating the id_device_number or id_device_body shouldn't trigger
+        user = CommCareUser.get(user.user_id)
+        user.user_data['id_device_body'] = "AA"
+        user.user_data['id_device_number'] = 1
+        user.save()
+        self.assertEqual(1, len(self.repeat_records().all()))
+
+
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True, SERVER_ENVIRONMENT='enikshay')
 class LocationRepeaterTest(ENikshayLocationStructureMixin, TestCase):
     domain = 'bets-location-repeater'
     maxDiff = None
@@ -819,8 +872,35 @@ class LocationRepeaterTest(ENikshayLocationStructureMixin, TestCase):
         location = self.make_location('flea_bottom', metadata={'is_test': 'yes'})
         self.assertEqual(0, len(self.repeat_records().all()))
 
+        # saving a record multiple times shouldn't retrigger
+        location = self.make_location('kings_landing')
+        self.assertEqual(1, len(self.repeat_records().all()))
+        location.save()
+        self.assertEqual(1, len(self.repeat_records().all()))
 
-@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+        # modifying the record and saving it shouldn't retrigger if the record hasn't sent
+        location = self.make_location('dorn')
+        self.assertEqual(2, len(self.repeat_records().all()))
+        record = list(self.repeat_records())[-1]
+        location.metadata['private_sector_org_id'] = "new data!"
+        location.save()
+        self.assertEqual(2, len(self.repeat_records().all()))
+
+        _mock_fire_record(record)
+        self.assertEqual(1, len(self.repeat_records().all()))
+
+        location = SQLLocation.objects.get(location_id=location.location_id)
+        self.assertEqual(
+            location.metadata.get('BETS_location_repeat_record_ids'),
+            record._id
+        )
+        # updating the location after a successful send, should add this location to the queue
+        location.metadata['private_sector_org_id'] = 'Woop!'
+        location.save()
+        self.assertEqual(2, len(self.repeat_records().all()))
+
+
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True, SERVER_ENVIRONMENT='enikshay')
 class BETSBeneficiaryRepeaterTest(ENikshayRepeaterTestBase):
     def setUp(self):
         super(BETSBeneficiaryRepeaterTest, self).setUp()
@@ -859,6 +939,8 @@ class BETSBeneficiaryRepeaterTest(ENikshayRepeaterTestBase):
     def create_person_case(self, location_id, private=True):
         case = get_person_case_structure(None, self.episode_id)
         case.attrs['owner_id'] = location_id
+        case.attrs['update']['current_episode_type'] = 'confirmed_tb'
+        case.attrs['update']['contact_phone_number'] = '911234567890'
         case.attrs['update'][ENROLLED_IN_PRIVATE] = "true" if private else "false"
         return self.factory.create_or_update_cases([case])[0]
 
@@ -889,3 +971,35 @@ class BETSBeneficiaryRepeaterTest(ENikshayRepeaterTestBase):
         # frivolous update shouldn't trigger another repeat
         update_case(self.domain, real_person.case_id, {frivolous_case_property: "blue"})
         self.assertEqual(2, len(self.repeat_records().all()))
+
+    def test_payload(self):
+        self.create_person_case(self.real_location.location_id)
+        record = self.repeat_records().all()[0]
+        payload = json.loads(record.get_payload())
+        self.assertEqual(
+            payload['properties']['phone_number'],
+            '1234567890'  # "91" is removed
+        )
+
+
+def _mock_fire_record(record):
+    mock_response_json = {
+        "code": 200,
+        "meta": {
+            "failCount": "0",
+            "successCount": "1",
+            "totalCount": "1",
+        },
+        "response": [
+            {
+                "status": "Success",
+                "failureDescription": ""
+            }
+        ]
+    }
+    with mock.patch('corehq.motech.repeaters.models.simple_post') as mock_post:
+        mock_response = mock.MagicMock()
+        mock_response.status_code = 200
+        mock_response.json = mock.MagicMock(return_value=mock_response_json)
+        mock_post.return_value = mock_response
+        record.fire()

@@ -1,4 +1,6 @@
+from __future__ import absolute_import
 from django.test import TestCase
+from django.utils.dateparse import parse_datetime
 
 from casexml.apps.case.mock import CaseFactory, CaseStructure
 from casexml.apps.case.tests.util import delete_all_cases
@@ -13,6 +15,9 @@ from corehq.apps.users.models import WebUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.util.workbook_reading import make_worksheet
+from corehq.util.test_utils import flag_enabled
+from corehq.util.timezones.conversions import PhoneTime
+import six
 
 
 class ImporterTest(TestCase):
@@ -56,7 +61,7 @@ class ImporterTest(TestCase):
     def testImportNone(self):
         res = bulk_import_async(self._config(['anything']), self.domain, None)
         self.assertEqual('Sorry, your session has expired. Please start over and try again.',
-                         unicode(res['errors']))
+                         six.text_type(res['errors']))
         self.assertEqual(0, len(get_case_ids_in_domain(self.domain)))
 
     @run_with_all_backends
@@ -392,6 +397,18 @@ class ImporterTest(TestCase):
         self.assertIn(error_message, res['errors'])
         error_column_name = 'owner_id'
         self.assertEqual(res['errors'][error_message][error_column_name]['rows'], [6])
+
+    @run_with_all_backends
+    def test_opened_on(self):
+        case = self.factory.create_case()
+        new_date = '2015-04-30T14:41:53.000000Z'
+        with flag_enabled('BULK_UPLOAD_DATE_OPENED'):
+            self.import_mock_file([
+                ['case_id', 'date_opened'],
+                [case.case_id, new_date]
+            ])
+        case = CaseAccessors(self.domain).get_case(case.case_id)
+        self.assertEqual(case.opened_on, PhoneTime(parse_datetime(new_date)).done())
 
 
 def make_worksheet_wrapper(*rows):

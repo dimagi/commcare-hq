@@ -1,11 +1,15 @@
 from __future__ import print_function
-from django.core.management.base import BaseCommand, CommandError
+
+from __future__ import absolute_import
+from django.core.management.base import BaseCommand
 from datetime import date, timedelta
 from corehq.elastic import get_es_new
 from elasticsearch.client import SnapshotClient, IndicesClient
 from django.conf import settings
+from pillowtop.models import str_to_kafka_seq
 from pillowtop.utils import get_all_pillow_instances
 from corehq.apps.hqadmin.models import HistoricalPillowCheckpoint
+from six.moves import input
 
 
 DEFAULT_EMPTY_CHECKPOINT_SEQUENCE_FOR_RESTORE = {
@@ -32,12 +36,12 @@ class Command(BaseCommand):
         print("Restoring ES indices from snapshot")
         date = self.get_date(days_ago)
         indices = self.get_indices(indices)
-        confirm = raw_input("This command will close the following es indices to reads and writes "
+        confirm = input("This command will close the following es indices to reads and writes "
                             "for its duration: {}. Are you sure "
                             "you wish to continue? (y/n)".format(indices))
         if confirm.lower() != "y":
             return
-        pillows = raw_input("Have you stopped all pillows? (y/n)")
+        pillows = input("Have you stopped all pillows? (y/n)")
         if pillows.lower() != "y":
             return
         es = get_es_new()
@@ -90,7 +94,10 @@ class Command(BaseCommand):
             try:
                 checkpoint = HistoricalPillowCheckpoint.objects.get(checkpoint_id=checkpoint.checkpoint_id,
                                                                     date_updated=date)
-                seq = checkpoint.seq
+                if pillow.checkpoint.sequence_format == 'json':
+                    seq = str_to_kafka_seq(checkpoint.seq)
+                else:
+                    seq = checkpoint.seq
             except HistoricalPillowCheckpoint.DoesNotExist:
                 seq = DEFAULT_EMPTY_CHECKPOINT_SEQUENCE_FOR_RESTORE[pillow.checkpoint.sequence_format]
 

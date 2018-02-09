@@ -1,9 +1,6 @@
-import os
-import tempfile
+from __future__ import absolute_import
 import uuid
-from StringIO import StringIO
 import logging
-from wsgiref.util import FileWrapper
 
 from django import forms
 from django.conf import settings
@@ -12,7 +9,6 @@ from django.core.validators import validate_email
 from django.utils.translation import ugettext as _
 from corehq.util.workbook_json.excel import flatten_json, json_to_headers, \
     alphanumeric_sort_key
-from couchexport.models import Format
 from dimagi.utils.parsing import string_to_boolean
 
 from couchdbkit.exceptions import (
@@ -33,15 +29,18 @@ from corehq.apps.domain.forms import clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.dbaccessors.all_commcare_users import (
-    get_all_commcare_users_by_domain,
+    get_commcare_users_by_filters,
     get_user_docs_by_username,
 )
 from corehq.apps.users.models import UserRole
-from soil.util import expose_file_download, expose_cached_download
+from soil.util import get_download_file_path, expose_download
 
 from .forms import get_mobile_worker_max_username_length
 from .models import CommCareUser, CouchUser
 from .util import normalize_username, raw_username
+import six
+from six.moves import range
+from six.moves import map
 
 
 class UserUploadError(Exception):
@@ -64,7 +63,7 @@ def check_headers(user_specs):
     headers = set(user_specs.fieldnames)
 
     # Backwards warnings
-    for (old_name, new_name) in old_headers.iteritems():
+    for (old_name, new_name) in six.iteritems(old_headers):
         if old_name in headers:
             messages.append(
                 _("'The column header '{old_name}' is deprecated, please use '{new_name}' instead.").format(
@@ -151,7 +150,7 @@ class GroupMemoizer(object):
         self.groups.add(new_group)
 
     def by_name(self, group_name):
-        if not self.groups_by_name.has_key(group_name):
+        if group_name not in self.groups_by_name:
             group = Group.by_name(self.domain, group_name)
             if not group:
                 self.groups_by_name[group_name] = None
@@ -160,7 +159,7 @@ class GroupMemoizer(object):
         return self.groups_by_name[group_name]
 
     def get(self, group_id):
-        if not self.groups_by_id.has_key(group_id):
+        if group_id not in self.groups_by_id:
             group = Group.get(group_id)
             if group.domain != self.domain:
                 raise ResourceNotFound()
@@ -187,7 +186,7 @@ class GroupMemoizer(object):
 
 
 def _fmt_phone(phone_number):
-    if phone_number and not isinstance(phone_number, basestring):
+    if phone_number and not isinstance(phone_number, six.string_types):
         phone_number = str(int(phone_number))
     return phone_number.lstrip("+")
 
@@ -259,7 +258,7 @@ def create_or_update_groups(domain, group_specs, log):
     group_names = set()
     for row in group_specs:
         group_id = row.get('id')
-        group_name = unicode(row.get('name') or '')
+        group_name = six.text_type(row.get('name') or '')
         case_sharing = row.get('case-sharing')
         reporting = row.get('reporting')
         data = row.get('data')
@@ -297,9 +296,9 @@ def create_or_update_groups(domain, group_specs, log):
 
 
 def get_location_from_site_code(site_code, location_cache):
-    if isinstance(site_code, basestring):
+    if isinstance(site_code, six.string_types):
         site_code = site_code.lower()
-    elif isinstance(site_code, (int, long)):
+    elif isinstance(site_code, six.integer_types):
         site_code = str(site_code)
     else:
         raise UserUploadError(
@@ -330,7 +329,7 @@ def users_with_duplicate_passwords(rows):
 
     for row in rows:
         username = row.get('username')
-        password = unicode(row.get('password'))
+        password = six.text_type(row.get('password'))
         if not is_password(password):
             continue
 
@@ -383,7 +382,7 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, task=None
 
             data = row.get('data')
             email = row.get('email')
-            group_names = map(unicode, row.get('group') or [])
+            group_names = list(map(six.text_type, row.get('group') or []))
             language = row.get('language')
             name = row.get('name')
             password = row.get('password')
@@ -399,7 +398,7 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, task=None
             role = row.get('role', '')
 
             if password:
-                password = unicode(password)
+                password = six.text_type(password)
             try:
                 username = normalize_username(str(username), domain)
             except TypeError:
@@ -417,7 +416,7 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, task=None
             }
 
             is_active = row.get('is_active')
-            if isinstance(is_active, basestring):
+            if isinstance(is_active, six.string_types):
                 try:
                     is_active = string_to_boolean(is_active) if is_active else None
                 except ValueError:
@@ -488,7 +487,7 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, task=None
                     if phone_number:
                         user.add_phone_number(_fmt_phone(phone_number), default=True)
                     if name:
-                        user.set_full_name(unicode(name))
+                        user.set_full_name(six.text_type(name))
                     if data:
                         error = custom_data_validator(data)
                         if error:
@@ -557,7 +556,7 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, task=None
                         group_memoizer.by_name(group_name).add_user(user, save=False)
 
                 except (UserUploadError, CouchUser.Inconsistent) as e:
-                    status_row['flag'] = unicode(e)
+                    status_row['flag'] = six.text_type(e)
 
             ret["rows"].append(status_row)
     finally:
@@ -597,13 +596,10 @@ def build_data_headers(keys, header_prefix='data'):
     )
 
 
-def parse_users(group_memoizer, domain, user_data_model, location_cache):
+def parse_users(group_memoizer, domain, user_data_model, location_cache, user_filters):
 
     def _get_group_names(user):
-        return sorted(map(
-            lambda id: group_memoizer.get(id).name,
-            Group.by_user(user, wrap=False)
-        ), key=alphanumeric_sort_key)
+        return sorted([group_memoizer.get(id).name for id in Group.by_user(user, wrap=False)], key=alphanumeric_sort_key)
 
     def _get_devices(user):
         """
@@ -651,11 +647,11 @@ def parse_users(group_memoizer, domain, user_data_model, location_cache):
     user_groups_length = 0
     max_location_length = 0
     user_dicts = []
-    for user in get_all_commcare_users_by_domain(domain):
+    for user in get_commcare_users_by_filters(domain, user_filters):
         group_names = _get_group_names(user)
         user_dict = _make_user_dict(user, group_names, location_cache)
         user_dicts.append(user_dict)
-        unrecognized_user_data_keys.update(user_dict['uncategorized_data'].keys())
+        unrecognized_user_data_keys.update(user_dict['uncategorized_data'])
         user_groups_length = max(user_groups_length, len(group_names))
         max_location_length = max(max_location_length, len(user_dict["location_code"]))
 
@@ -671,11 +667,11 @@ def parse_users(group_memoizer, domain, user_data_model, location_cache):
         header_prefix='uncategorized_data'
     ))
     user_headers.extend(json_to_headers(
-        {'group': range(1, user_groups_length + 1)}
+        {'group': list(range(1, user_groups_length + 1))}
     ))
     if domain_has_privilege(domain, privileges.LOCATIONS):
         user_headers.extend(json_to_headers(
-            {'location_code': range(1, max_location_length + 1)}
+            {'location_code': list(range(1, max_location_length + 1))}
         ))
 
     def _user_rows():
@@ -703,7 +699,7 @@ def parse_groups(groups):
     )
     for group in sorted_groups:
         group_dicts.append(_make_group_dict(group))
-        group_data_keys.update(group.metadata.keys() if group.metadata else [])
+        group_data_keys.update(group.metadata if group.metadata else [])
 
     group_headers = ['id', 'name', 'case-sharing?', 'reporting?']
     group_headers.extend(build_data_headers(group_data_keys))
@@ -715,7 +711,7 @@ def parse_groups(groups):
     return group_headers, _get_group_rows()
 
 
-def dump_users_and_groups(domain, download_id):
+def dump_users_and_groups(domain, download_id, user_filters):
     from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 
     def _load_memoizer(domain):
@@ -746,7 +742,8 @@ def dump_users_and_groups(domain, download_id):
         group_memoizer,
         domain,
         user_data_model,
-        location_cache
+        location_cache,
+        user_filters
     )
 
     group_headers, group_rows = parse_groups(group_memoizer.groups)
@@ -760,7 +757,8 @@ def dump_users_and_groups(domain, download_id):
     ]
 
     use_transfer = settings.SHARED_DRIVE_CONF.transfer_enabled
-    file_path = _get_download_file_path(domain, use_transfer)
+    filename = "user_export_{}_{}.xlsx".format(domain, uuid.uuid4().hex)
+    file_path = get_download_file_path(use_transfer, filename)
     writer.open(
         header_table=headers,
         file=file_path,
@@ -768,32 +766,4 @@ def dump_users_and_groups(domain, download_id):
     writer.write(rows)
     writer.close()
 
-    common_kwargs = dict(
-        mimetype=Format.from_format('xlsx').mimetype,
-        content_disposition='attachment; filename="{fname}"'.format(fname='{}_users.xlsx'.format(domain)),
-        download_id=download_id,
-    )
-    if use_transfer:
-        expose_file_download(
-            file_path,
-            use_transfer=use_transfer,
-            **common_kwargs
-        )
-    else:
-        expose_cached_download(
-            FileWrapper(open(file_path, 'r')),
-            expiry=(1 * 60 * 60),
-            file_extension='xlsx',
-            **common_kwargs
-        )
-
-
-def _get_download_file_path(domain, use_transfer):
-    if use_transfer:
-        fpath = os.path.join(settings.SHARED_DRIVE_CONF.transfer_dir, "user_export_{}_{}.xlsx".format(
-            domain, uuid.uuid4().hex
-        ))
-    else:
-        _, fpath = tempfile.mkstemp()
-
-    return fpath
+    expose_download(use_transfer, file_path, filename, download_id, 'xlsx')

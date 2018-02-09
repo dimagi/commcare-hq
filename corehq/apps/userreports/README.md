@@ -34,7 +34,7 @@ An overview of the design, API and data structures used here.
                 - [filter_items Expression](#filte_ritems-expression)
                 - [sort_items Expression](#sort_items-expression)
                 - [reduce_items Expression](#reduce_items-expression)
-                - [flatten_items expression](#flatten_items-expression)
+                - [flatten expression](#flatten-expression)
             - [Named Expressions](#named-expressions)
         - [Boolean Expression Filters](#boolean-expression-filters)
             - [Operators](#operators)
@@ -70,6 +70,7 @@ An overview of the design, API and data structures used here.
             - [Formats](#formats)
         - [AggregateDateColumn](#aggregatedatecolumn)
         - [Expanded Columns](#expanded-columns)
+        - [Expression Columns](#expression-columns)
         - [The "aggregation" column property](#the-aggregation-column-property)
             - [Column IDs](#column-ids)
         - [Calculating Column Totals](#calculating-column-totals)
@@ -89,7 +90,8 @@ An overview of the design, API and data structures used here.
             - [Round to the nearest whole number](#round-to-the-nearest-whole-number)
             - [Always round to 3 decimal places](#always-round-to-3-decimal-places)
         - [Date formatting](#date-formatting)
-        - [Converting an ethiopian date string to a gregorian date](#ethiopian-transform)
+        - [Converting an ethiopian date string to a gregorian date](#converting-an-ethiopian-date-string-to-a-gregorian-date)
+        - [Converting a gregorian date string to an ethiopian date](#converting-a-gregorian-date-string-to-an-ethiopian-date)
     - [Charts](#charts)
         - [Pie charts](#pie-charts)
         - [Aggregate multibar charts](#aggregate-multibar-charts)
@@ -211,7 +213,7 @@ filter_items    | Filter a list of items to make a new list | `[1, 2, 3, -1, -2,
 map_items       | Map one list to another list | `[{'name': 'a', gender: 'f'}, {'name': 'b, gender: 'm'}]` -> `['a', 'b']`  (list of names from list of child data)
 sort_items      | Sort a list based on an expression | `[{'name': 'a', age: 5}, {'name': 'b, age: 3}]` -> `[{'name': 'b, age: 3}, {'name': 'a', age: 5}]`  (sort child data by age)
 reduce_items    | Aggregate a list of items into one value | sum on `[1, 2, 3]` -> `6`
-flatten_items   | Flatten multiple lists of items into one list | `[[1, 2], [4, 5]]` -> `[1, 2, 4, 5]`
+flatten   | Flatten multiple lists of items into one list | `[[1, 2], [4, 5]]` -> `[1, 2, 4, 5]`
 
 
 
@@ -631,7 +633,7 @@ We have following expressions that act on a list of objects or list of lists. Th
 
 `map_items` performs a calculation specified by `map_expression` on each item of the list specified by `items_expression` and returns a list of the calculation results. The `map_expression` is evaluated relative to each item in the list and not relative to the parent document from which the list is specified. For e.g. if `items_expression` is a path to repeat-list of children in a form document, `map_expression` is a path relative to the repeat item.
 
-`items_expression` can be any valid expression that returns a list. If this doesn't evaluate to a list an empty list is returned.
+`items_expression` can be any valid expression that returns a list. If this doesn't evaluate to a list an empty list is returned. It may be necessary to specify a `datatype` of `array` if the expression could return a single element.
 
 `map_expression` can be any valid expression relative to the items in above list.
 
@@ -639,6 +641,7 @@ We have following expressions that act on a list of objects or list of lists. Th
 {
     "type": "map_items",
     "items_expression": {
+        "datatype": "array",
         "type": "property_path",
         "property_path": ["form", "child_repeat"]
     },
@@ -655,7 +658,7 @@ Above returns list of ages. Note that the `property_path` in `map_expression` is
 
 `filter_items` performs filtering on given list and returns a new list. If the boolean expression specified by `filter_expression` evaluates to a `True` value, the item is included in the new list and if not, is not included in the new list.
 
-`items_expression` can be any valid expression that returns a list. If this doesn't evaluate to a list an empty list is returned.
+`items_expression` can be any valid expression that returns a list. If this doesn't evaluate to a list an empty list is returned. It may be necessary to specify a `datatype` of `array` if the expression could return a single element.
 
 `filter_expression` can be any valid boolean expression relative to the items in above list.
 
@@ -663,6 +666,7 @@ Above returns list of ages. Note that the `property_path` in `map_expression` is
 {
     "type": "filter_items",
     "items_expression": {
+        "datatype": "array",
         "type": "property_name",
         "property_name": "family_repeat"
     },
@@ -682,7 +686,7 @@ Above returns list of ages. Note that the `property_path` in `map_expression` is
 
 `sort_items` returns a sorted list of items based on sort value of each item.The sort value of an item is specified by `sort_expression`. By default, list will be in ascending order. Order can be changed by adding optional `order` expression with one of `DESC` (for descending) or `ASC` (for ascending) If a sort-value of an item is `None`, the item will appear in the start of list. If sort-values of any two items can't be compared, an empty list is returned.
 
-`items_expression` can be any valid expression that returns a list. If this doesn't evaluate to a list an empty list is returned.
+`items_expression` can be any valid expression that returns a list. If this doesn't evaluate to a list an empty list is returned. It may be necessary to specify a `datatype` of `array` if the expression could return a single element.
 
 `sort_expression` can be any valid expression relative to the items in above list, that returns a value to be used as sort value.
 
@@ -690,6 +694,7 @@ Above returns list of ages. Note that the `property_path` in `map_expression` is
 {
     "type": "sort_items",
     "items_expression": {
+        "datatype": "array",
         "type": "property_path",
         "property_path": ["form", "child_repeat"]
     },
@@ -704,7 +709,7 @@ Above returns list of ages. Note that the `property_path` in `map_expression` is
 
 `reduce_items` returns aggregate value of the list specified by `aggregation_fn`.
 
-`items_expression` can be any valid expression that returns a list. If this doesn't evaluate to a list, `aggregation_fn` will be applied on an empty list
+`items_expression` can be any valid expression that returns a list. If this doesn't evaluate to a list, `aggregation_fn` will be applied on an empty list. It may be necessary to specify a `datatype` of `array` if the expression could return a single element.
 
 `aggregation_fn` is one of following supported functions names.
 
@@ -722,6 +727,7 @@ Function Name  | Example
 {
     "type": "reduce_items",
     "items_expression": {
+        "datatype": "array",
         "type": "property_name",
         "property_name": "family_repeat"
     },
@@ -730,14 +736,14 @@ Function Name  | Example
 ```
 This returns number of family members
 
-##### flatten_items expression
+##### flatten expression
 
-`flatten_items` takes list of list of objects specified by `items_expression` and returns one list of all objects.
+`flatten` takes list of list of objects specified by `items_expression` and returns one list of all objects.
 
-`items_expression` is any valid expression that returns a list of lists. It this doesn't evaluate to a list of lists an empty list is returned.
+`items_expression` is any valid expression that returns a list of lists. It this doesn't evaluate to a list of lists an empty list is returned. It may be necessary to specify a `datatype` of `array` if the expression could return a single element.
 ```json
 {
-    "type": "flatten_items",
+    "type": "flatten",
     "items_expression": {},
 }
 ```
@@ -798,7 +804,8 @@ Operator   | Description  | Value type | Example
 `eq`       | is equal     | constant   | `doc["age"] == 21`
 `not_eq`   | is not equal | constant   | `doc["age"] != 21`
 `in`       | single value is in a list | list | `doc["color"] in ["red", "blue"]`
-`in_multi` | multiselect value is in a list | list | `selected(doc["color"], ["red", "blue"])`
+`in_multi` | a value is in a multi select | list | `selected(doc["color"], "red")`
+`any_in_multi` | one of a list of values in in a multiselect | list | `selected(doc["color"], ["red", "blue"])`
 `lt`       | is less than | number | `doc["age"] < 21`
 `lte`      | is less than or equal | number | `doc["age"] <= 21`
 `gt`       | is greater than | number | `doc["age"] > 21`
@@ -952,7 +959,7 @@ Similar to the boolean indicators - expression indicators leverage the expressio
 
 Property        | Description
 --------------- | -----------
-datatype        | The datatype of the indicator. Current valid choices are: "date", "datetime", "string", "decimal", and "integer".
+datatype        | The datatype of the indicator. Current valid choices are: "date", "datetime", "string", "decimal", "integer", and "small_integer".
 is_nullable     | Whether the database column should allow null values.
 is_primary_key  | Whether the database column should be (part of?) the primary key. (TODO: this needs to be confirmed)
 create_index    | Creates an index on this column. Only applicable if using the SQL backend
@@ -1218,6 +1225,20 @@ operator. e.g.
 (If `pre_value` is an array and `datatype` is not "array", it is assumed that
 `datatype` refers to the data type of the items in the array.)
 
+You can optionally specify the operator that the prevalue filter uses by adding a pre_operator argument. e.g.
+```
+{
+  "type": "pre",
+  "field": "at_risk_field",
+  "slug": "at_risk_slug",
+  "datatype": "array",
+  "pre_value": ["maybe", "yes"],
+  "pre_operator": "between"
+}
+```
+
+Note that instead of using `eq`, `gt`, etc, you will need to use `=`, `>`, etc.
+
 ### Dynamic choice lists
 
 Dynamic choice lists provide a select widget that will generate a list of options dynamically.
@@ -1322,6 +1343,7 @@ Reports are made up of columns. The currently supported column types ares:
 * [_percent_](#percent-columns) which combines two values in to a percent
 * [_aggregate_date_](#aggregatedatecolumn) which aggregates data by month
 * [_expanded_](#expanded-columns) which expands a select question into multiple columns
+* [_expression_](#expression-columns) which can do calculations on data in other columns
 
 ### Field columns
 
@@ -1726,13 +1748,25 @@ If there is an error formatting the date, the transform is not applied to that v
 
 ### Converting an ethiopian date string to a gregorian date
 Converts a string in the YYYY-MM-DD format to a gregorian date. For example,
-2009-09-11 is converted date(2017, 5, 19). If it is unable to convert the date,
+2009-09-11 is converted to date(2017, 5, 19). If it is unable to convert the date,
 it will return an empty string.
 
 ```json
 {
    "type": "custom",
    "custom_type": "ethiopian_date_to_gregorian_date"
+}
+```
+
+### Converting a gregorian date string to an ethiopian date
+Converts a string in the YYYY-MM-DD format to an ethiopian date. For example,
+2017-05-19 is converted to date(2009, 09, 11). If it is unable to convert the date,
+it will return an empty string.
+
+```json
+{
+   "type": "custom",
+   "custom_type": "gregorian_date_to_ethiopian_date"
 }
 ```
 
@@ -2003,6 +2037,7 @@ Following are some custom expressions that are currently available.
 - `location_parent_id`:  A shortcut to get a location's parent ID a location id.
 - `get_case_forms`: A way to get a list of forms submitted for a case.
 - `get_subcases`: A way to get a list of subcases (child cases) for a case.
+- `indexed_case`: A way to get an indexed case from another case.
 
 You can find examples of these in [practical examples](examples/examples.md).
 
@@ -2041,6 +2076,19 @@ A diagram of this workflow can be found [here](examples/async_indicator.png)
 ## Inspecting database tables
 
 The easiest way to inspect the database tables is to use the sql command line utility.
+
 This can be done by runnning `./manage.py dbshell` or using `psql`.
-The naming convention for tables is: `configurable_indicators_[domain name]_[table id]_[hash]`.
+
+The naming convention for tables is: `config_report_[domain name]_[table id]_[hash]`.
+
 In postgres, you can see all tables by typing `\dt` and use sql commands to inspect the appropriate tables.
+
+## ElasticSearch
+
+Optionally you can use ElasticSearch as a data source. ElasticSearch settings
+can be modified using es_index_settings.
+
+Using ES has the following drawbacks:
+
+- Results will be sorted by the first aggregate column when using aggregations
+- You cannot aggregate reports based on month or year

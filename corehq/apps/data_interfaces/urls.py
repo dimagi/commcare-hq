@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.conf.urls import include, url
 from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher, EditDataInterfaceDispatcher
 from corehq.apps.data_interfaces.views import (

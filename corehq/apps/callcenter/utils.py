@@ -2,6 +2,8 @@ from __future__ import absolute_import
 from collections import namedtuple
 from datetime import datetime, timedelta
 import pytz
+import six
+
 from casexml.apps.case.mock import CaseBlock
 import uuid
 from xml.etree import cElementTree as ElementTree
@@ -61,45 +63,34 @@ class _UserCaseHelper(object):
         for transaction in transactions:
             transaction.form.archive()
 
-    def create_user_case(self, case_type, commcare_user, fields):
-        fields['hq_user_id'] = commcare_user._id
+    def create_user_case(self, commcare_user, fields):
         caseblock = CaseBlock(
             create=True,
             case_id=uuid.uuid4().hex,
-            owner_id=self.owner_id,
+            owner_id=fields.pop('owner_id'),
             user_id=CALLCENTER_USER,
-            case_type=case_type,
+            case_type=fields.pop('case_type'),
             case_name=fields.pop('name', None),
             update=fields
         )
         self._submit_case_block(caseblock, "create_user_case")
         self._user_case_changed(fields)
 
-    def update_user_case(self, case, case_type, fields):
+    def update_user_case(self, case, fields, close):
         caseblock = CaseBlock(
             create=False,
             case_id=case.case_id,
-            owner_id=self.owner_id,
-            case_type=case_type,
-            case_name=fields.pop('name', None),
-            close=False,
+            owner_id=fields.pop('owner_id', CaseBlock.undefined),
+            case_type=fields.pop('case_type', CaseBlock.undefined),
+            case_name=fields.pop('name', CaseBlock.undefined),
+            close=close,
             update=fields
         )
         self._submit_case_block(caseblock, "update_user_case")
         self._user_case_changed(fields)
 
-    def close_user_case(self, case, case_type):
-        caseblock = CaseBlock(
-            create=False,
-            case_id=case.case_id,
-            owner_id=self.owner_id,
-            case_type=case_type,
-            close=True,
-        )
-        self._submit_case_block(caseblock, "close_user_case")
-
     def _user_case_changed(self, fields):
-        field_names = fields.keys()
+        field_names = list(fields)
         if _domain_has_new_fields(self.domain.name, field_names):
             add_inferred_export_properties.delay(
                 'UserSave',
@@ -141,7 +132,7 @@ def sync_user_case(commcare_user, case_type, owner_id, case=None):
     """
     with CriticalSection(['user_case_%s_for_%s' % (case_type, commcare_user._id)]):
         domain = commcare_user.project
-        fields = _get_user_case_fields(commcare_user)
+        fields = _get_user_case_fields(commcare_user, case_type, owner_id)
         case = case or CaseAccessors(domain.name).get_case_by_domain_hq_user_id(commcare_user._id, case_type)
         close = commcare_user.to_be_deleted() or not commcare_user.is_active
         user_case_helper = _UserCaseHelper(domain, owner_id)
@@ -150,18 +141,17 @@ def sync_user_case(commcare_user, case_type, owner_id, case=None):
             return case and case.closed and not user_case_should_be_closed
 
         if not case:
-            user_case_helper.create_user_case(case_type, commcare_user, fields)
+            user_case_helper.create_user_case(commcare_user, fields)
         else:
             if case_should_be_reopened(case, close):
                 user_case_helper.re_open_case(case)
-            changed = _user_case_changed(case, case_type, close, fields, owner_id)
-            if changed:
-                user_case_helper.update_user_case(case, case_type, fields)
-            if close and not case.closed:
-                user_case_helper.close_user_case(case, case_type)
+            changed_fields = _get_changed_fields(case, fields)
+            close_case = close and not case.closed
+            if changed_fields or close_case:
+                user_case_helper.update_user_case(case, changed_fields, close_case)
 
 
-def _get_user_case_fields(commcare_user):
+def _get_user_case_fields(commcare_user, case_type, owner_id):
 
     def valid_element_name(name):
         try:
@@ -182,23 +172,41 @@ def _get_user_case_fields(commcare_user):
         'language': commcare_user.language or '',
         'phone_number': commcare_user.phone_number or '',
         'last_device_id_used': commcare_user.devices[0].device_id if commcare_user.devices else '',
+        'owner_id': owner_id,
+        'case_type': case_type,
+        'hq_user_id': commcare_user.get_id
     })
 
     return fields
 
 
-def _user_case_changed(case, case_type, close, fields, owner_id):
+def _get_changed_fields(case, fields):
+    def _to_unicode(val):
+        if isinstance(val, bytes):
+            return val.decode('utf8')
+        elif not isinstance(val, six.text_type):
+            return six.text_type(val)
+        return val
+
+    def _not_same(val1, val2):
+        return _to_unicode(val1) != _to_unicode(val2)
+
+    hq_fields = {
+        'name': 'name',
+        'case_type': 'type',
+        'owner_id': 'owner_id'
+    }
+    changed_fields = {}
     props = case.dynamic_case_properties()
-    changed = close and not case.closed
-    changed = changed or case.type != case_type
-    changed = changed or case.name != fields['name']
-    changed = changed or case.owner_id != owner_id
-    if not changed:
-        for field, value in fields.items():
-            if field != 'name' and props.get(field) != value:
-                changed = True
-                break
-    return changed
+    for field, value in fields.items():
+        if field not in hq_fields and _not_same(props.get(field), value):
+            changed_fields[field] = value
+
+    for field, attrib in hq_fields.items():
+        if _not_same(getattr(case, attrib), fields[field]):
+            changed_fields[field] = fields[field]
+
+    return changed_fields
 
 
 def sync_call_center_user_case(user):
@@ -287,7 +295,7 @@ def get_call_center_domains():
                 cc_case_type=case_type,
                 use_fixtures=config.get('use_fixtures', True)
             )
-    return filter(None, [to_domain_lite(hit) for hit in result.hits])
+    return [_f for _f in [to_domain_lite(hit) for hit in result.hits] if _f]
 
 
 def get_call_center_cases(domain_name, case_type, user=None):

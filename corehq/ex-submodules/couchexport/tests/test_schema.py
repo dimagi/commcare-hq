@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from couchdbkit.ext.django.loading import get_db
 from django.test import TestCase, SimpleTestCase
 from corehq.util.test_utils import DocTestMixin
@@ -8,6 +9,7 @@ from couchexport.util import SerializableFunction
 from dimagi.utils.couch.database import get_safe_write_kwargs
 import json
 from couchexport.models import Format
+from six.moves import zip
 
 
 class ExportSchemaTest(TestCase, DocTestMixin):
@@ -15,7 +17,7 @@ class ExportSchemaTest(TestCase, DocTestMixin):
     def testSaveAndLoad(self):
         index = ["foo", 2]
         schema = ExportSchema(index=index, timestamp=datetime.utcnow())
-        inner = {"dict": {"bar": 1, "baz": [2,3]},
+        inner = {"dict": {"bar": 1, "baz": [2, 3]},
                  "list": ["foo", "bar"],
                  "dictlist": [{"bip": 1, "bop": "blah"},
                               {"bip": 2, "bop": "blah2"}],
@@ -32,8 +34,7 @@ class ExportSchemaTest(TestCase, DocTestMixin):
 
         for index in indices:
             self.addCleanup(
-                lambda idx: map(lambda cp: cp.delete(),
-                                ExportSchema.get_all_checkpoints(idx)),
+                lambda idx: [cp.delete() for cp in ExportSchema.get_all_checkpoints(idx)],
                 index
             )
 
@@ -53,8 +54,7 @@ class ExportSchemaTest(TestCase, DocTestMixin):
 
     def test_get_all_checkpoints(self):
         index = ["mydomain", "myxmlns"]
-        self.addCleanup(lambda: map(lambda cp: cp.delete(),
-                                    ExportSchema.get_all_checkpoints(index)))
+        self.addCleanup(lambda: [cp.delete() for cp in ExportSchema.get_all_checkpoints(index)])
 
         schema1 = ExportSchema(index=index, timestamp=datetime.utcnow())
         schema1.save()

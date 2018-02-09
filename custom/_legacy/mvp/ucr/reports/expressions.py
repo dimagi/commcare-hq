@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.apps.userreports.specs import TypeProperty
 from dimagi.ext.jsonobject import JsonObject
 

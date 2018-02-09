@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.conf.urls import url, include
 
 from corehq.apps.cloudcare.views import (
@@ -34,8 +35,7 @@ app_urls = [
 api_urls = [
     url(r'^login_as/users/$', LoginAsUsers.as_view(), name=LoginAsUsers.urlname),
     url(r'^cases/$', get_cases, name='cloudcare_get_cases'),
-    url(r'^fixtures/(?P<user_id>[\w-]*)/$', get_fixtures, name='cloudcare_get_fixtures'),
-    url(r'^fixtures/(?P<user_id>[\w-]*)/(?P<fixture_id>[:\w-]*)$', get_fixtures,
+    url(r'^fixtures/(?P<user_id>[\w-]+)/(?P<fixture_id>[:\w-]+)$', get_fixtures,
         name='cloudcare_get_fixtures'),
     url(r'^readable_questions/$', ReadableQuestions.as_view(), name=ReadableQuestions.urlname),
 ]

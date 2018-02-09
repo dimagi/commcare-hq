@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import logging
 from django.urls import reverse
 from django.http import Http404
@@ -13,13 +14,14 @@ from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain_es
 from couchforms.analytics import get_exports_by_form
 from dimagi.utils.decorators.memoized import memoized
+from six.moves import map
 
 
 ApplicationDataSource = collections.namedtuple('ApplicationDataSource', ['application', 'source_type', 'source'])
 RMIDataChoice = collections.namedtuple('RMIDataChoice', ['id', 'text', 'data'])
 AppFormRMIResponse = collections.namedtuple('AppFormRMIResponse', [
     'app_types', 'apps_by_type', 'modules_by_app',
-    'forms_by_app_by_module', 'placeholders'
+    'forms_by_app_by_module', 'labels', 'placeholders'
 ])
 AppFormRMIPlaceholder = collections.namedtuple('AppFormRMIPlaceholder', [
     'application', 'module', 'form'
@@ -160,10 +162,17 @@ class ApplicationDataRMIHelper(object):
     APP_TYPE_NONE = 'no_app'
     APP_TYPE_UNKNOWN = 'unknown'
 
-    def __init__(self, domain, user, as_dict=True, form_placeholders=None, case_placeholders=None):
+    def __init__(self, domain, user, as_dict=True, form_placeholders=None,
+                 case_placeholders=None, form_labels=None):
         self.domain = domain
         self.user = user
         self.as_dict = as_dict
+        default_form_labels = AppFormRMIPlaceholder(
+            application=_("Application"),
+            module=_("Menu"),
+            form=_("Form"),
+        )
+        self.form_labels = form_labels or default_form_labels
         default_form_placeholder = AppFormRMIPlaceholder(
             application=_("Select Application"),
             module=_("Select Menu"),
@@ -176,6 +185,7 @@ class ApplicationDataRMIHelper(object):
         )
         self.case_placeholders = case_placeholders or default_case_placeholder
         if self.as_dict:
+            self.form_labels = self.form_labels._asdict()
             self.form_placeholders = self.form_placeholders._asdict()
             self.case_placeholders = self.case_placeholders._asdict()
 
@@ -312,28 +322,22 @@ class ApplicationDataRMIHelper(object):
     @property
     @memoized
     def _no_app_forms(self):
-        return filter(lambda f: not f.get('has_app', False), self._all_forms)
+        return [f for f in self._all_forms if not f.get('has_app', False)]
 
     @property
     @memoized
     def _remote_app_forms(self):
-        return filter(lambda f: f.get('has_app', False) and f.get('show_xmlns', False), self._all_forms)
+        return [f for f in self._all_forms if f.get('has_app', False) and f.get('show_xmlns', False)]
 
     @property
     @memoized
     def _deleted_app_forms(self):
-        return filter(
-            lambda f: f.get('has_app', False) and f.get('app_deleted') and not f.get('show_xmlns', False),
-            self._all_forms
-        )
+        return [f for f in self._all_forms if f.get('has_app', False) and f.get('app_deleted') and not f.get('show_xmlns', False)]
 
     @property
     @memoized
     def _available_app_forms(self):
-        return filter(
-            lambda f: f.get('has_app', False) and not f.get('app_deleted') and not f.get('show_xmlns', False),
-            self._all_forms
-        )
+        return [f for f in self._all_forms if f.get('has_app', False) and not f.get('app_deleted') and not f.get('show_xmlns', False)]
 
     @property
     @memoized
@@ -344,20 +348,17 @@ class ApplicationDataRMIHelper(object):
         choices = [(_("Applications"), self.APP_TYPE_ALL)]
         if self._remote_app_forms or self._deleted_app_forms:
             choices.append((_("Unknown"), self.APP_TYPE_UNKNOWN))
-        choices = map(lambda c: RMIDataChoice(id=c[1], text=c[0], data={}), choices)
+        choices = [RMIDataChoice(id=c[1], text=c[0], data={}) for c in choices]
         if as_dict:
-            choices = map(lambda c: c._asdict(), choices)
+            choices = [c._asdict() for c in choices]
         return choices
 
     def _get_app_type_choices_for_cases(self, has_unknown_case_types=False):
         choices = [(_("Applications"), self.APP_TYPE_ALL)]
         if has_unknown_case_types:
             choices.append((_("Unknown"), self.APP_TYPE_UNKNOWN))
-        choices = map(
-            lambda choice: RMIDataChoice(id=choice[1], text=choice[0], data={}),
-            choices
-        )
-        return map(lambda choice: choice._asdict(), choices)
+        choices = [RMIDataChoice(id=choice[1], text=choice[0], data={}) for choice in choices]
+        return [choice._asdict() for choice in choices]
 
     @staticmethod
     def _get_unique_choices(choices):
@@ -376,12 +377,12 @@ class ApplicationDataRMIHelper(object):
             (self.APP_TYPE_ALL, self._available_app_forms),
             (self.APP_TYPE_UNKNOWN, self._unknown_forms)
         )
-        _app_fmt = lambda c: (c[0], map(lambda f: RMIDataChoice(
+        _app_fmt = lambda c: (c[0], [RMIDataChoice(
             f['app']['id'] if f.get('has_app', False) else self.UNKNOWN_SOURCE,
             f['app']['name'] if f.get('has_app', False) else _("Unknown Application"),
             f
-        ), c[1]))
-        apps_by_type = map(_app_fmt, apps_by_type)
+        ) for f in c[1]])
+        apps_by_type = list(map(_app_fmt, apps_by_type))
         apps_by_type = dict(apps_by_type)
         apps_by_type = self._get_unique_choices(apps_by_type)
 
@@ -396,7 +397,7 @@ class ApplicationDataRMIHelper(object):
     @staticmethod
     def _map_chosen_by_choice_as_dict(chosen_by_choice):
         for k, v in chosen_by_choice.items():
-            chosen_by_choice[k] = map(lambda f: f._asdict(), v)
+            chosen_by_choice[k] = [f._asdict() for f in v]
         return chosen_by_choice
 
     @staticmethod
@@ -470,6 +471,7 @@ class ApplicationDataRMIHelper(object):
             apps_by_type=self._get_applications_by_type(self.as_dict),
             modules_by_app=modules_by_app,
             forms_by_app_by_module=forms_by_app_by_module,
+            labels=self.form_labels,
             placeholders=self.form_placeholders,
         )
         if self.as_dict:
@@ -492,30 +494,30 @@ class ApplicationDataRMIHelper(object):
                         ])
 
                         # Add user case if any module uses it
-                        if any(map(lambda module: module.uses_usercase(), app.modules)):
+                        if any([module.uses_usercase() for module in app.modules]):
                             case_types.add(USERCASE_TYPE)
 
                         used_case_types = used_case_types.union(case_types)
-                        case_types = map(lambda c: RMIDataChoice(
+                        case_types = [RMIDataChoice(
                             id=c,
                             text=c,
                             data=app_choice.data
-                        ), case_types)
+                        ) for c in case_types]
                         if as_dict:
-                            case_types = map(lambda c: c._asdict(), case_types)
+                            case_types = [c._asdict() for c in case_types]
                     case_types_by_app[app_choice.id] = case_types
 
         all_case_types = get_case_types_for_domain_es(self.domain)
         unknown_case_types = all_case_types.difference(used_case_types)
-        unknown_case_types = map(lambda c: RMIDataChoice(
+        unknown_case_types = [RMIDataChoice(
             id=c,
             text=c,
             data={
                 'unknown': True,
             }
-        ), unknown_case_types)
+        ) for c in unknown_case_types]
         if as_dict:
-            unknown_case_types = map(lambda c: c._asdict(), unknown_case_types)
+            unknown_case_types = [c._asdict() for c in unknown_case_types]
         case_types_by_app[self.UNKNOWN_SOURCE] = unknown_case_types
 
         return case_types_by_app

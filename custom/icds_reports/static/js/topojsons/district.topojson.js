@@ -694,7 +694,7 @@ var DISTRICT_TOPOJSON = {
             "Jharkhand": {
                   "scale": 10000,
                   "type": "GeometryCollection",
-                  "center": [77, 14],
+                  "center": [77, 13.5],
                   "geometries": [{
                         "id": "Bokaro",
                         "type": "Polygon",
@@ -1797,7 +1797,7 @@ var DISTRICT_TOPOJSON = {
             "Andhra Pradesh": {
                   "scale": 7000,
                   "type": "GeometryCollection",
-                  "center": [74, 10],
+                  "center": [74, 9.5],
                   "geometries": [{
                         "id": "Anantapur",
                         "type": "Polygon",

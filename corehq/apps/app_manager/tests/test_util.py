@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.test.testcases import SimpleTestCase, TestCase
 from django.http import Http404
 
@@ -11,6 +12,7 @@ from corehq.apps.app_manager.models import (
 from corehq.apps.app_manager.util import LatestAppInfo
 from corehq.apps.app_manager.views.utils import overwrite_app
 from corehq.apps.domain.models import Domain
+from corehq.apps.app_manager.views.utils import get_default_followup_form_xml
 
 
 class TestGetFormData(SimpleTestCase):
@@ -30,29 +32,25 @@ class TestGetFormData(SimpleTestCase):
         self.assertEqual(modules[0]['forms'][0]['action_type'], 'load (load_0)')
 
 
-class TestOverwriteApp(TestCase):
+class TestGetDefaultFollowupForm(SimpleTestCase):
+    def test_default_followup_form(self):
+        app = Application.new_app('domain', "Untitled Application")
 
-    @classmethod
-    def setUpClass(cls):
-        super(TestOverwriteApp, cls).setUpClass()
-        cls.master_app = Application.new_app('domain', "Master Application")
-        cls.linked_app = Application.new_app('domain-2', "Linked Application")
-        module = cls.master_app.add_module(ReportModule.new_module('Reports', None))
-        module.report_configs = [
-            ReportAppConfig(report_id='id', header={'en': 'CommBugz'}),
-        ]
-        cls.linked_app.save()
-        cls.target_json = cls.linked_app.to_json()
+        parent_module = app.add_module(AdvancedModule.new_module('parent', None))
+        parent_module.case_type = 'parent'
+        parent_module.unique_id = 'id_parent_module'
 
-    def test_missing_ucrs(self):
-        with self.assertRaises(AppEditingError):
-            overwrite_app(self.target_json, self.master_app, {})
+        context = {
+            'lang': None,
+            'default_label': "Default label message"
+        }
+        attachment = get_default_followup_form_xml(context=context)
+        followup = app.new_form(0, "Followup Form", None, attachment=attachment)
 
-    def test_report_mapping(self):
-        report_map = {'id': 'mapped_id'}
-        overwrite_app(self.target_json, self.master_app, report_map)
-        linked_app = Application.get(self.linked_app._id)
-        self.assertEqual(linked_app.modules[0].report_configs[0].report_id, 'mapped_id')
+        modules, _ = util.get_form_data('domain', app)
+        self.assertEqual(followup.name['en'], "Followup Form")
+        self.assertEqual(modules[0]['forms'][0]['name']['en'], "Followup Form")
+        self.assertEqual(modules[0]['forms'][0]['questions'][0]['label'], " Default label message ")
 
 
 class TestLatestAppInfo(TestCase):

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import contextlib
 import os
 import tempfile
@@ -28,6 +29,7 @@ from corehq.apps.export.models.new import (
     SMSExportInstance,
 )
 from corehq.apps.export.const import MAX_EXPORTABLE_ROWS
+import six
 
 
 class ExportFile(object):
@@ -153,7 +155,7 @@ class _PaginatedExportWriter(object):
         fd, self._path = tempfile.mkstemp()
         with os.fdopen(fd, 'wb') as file_handle:
             self.writer.open(
-                self._get_paginated_headers().iteritems(),
+                six.iteritems(self._get_paginated_headers()),
                 file_handle,
                 table_titles=self._get_paginated_table_titles(),
                 archive_basepath=self.name
@@ -235,7 +237,7 @@ class _PaginatedExportWriter(object):
             (<table.path>, <page>): (['Column1', 'Column2'],)
         }
         '''
-        return {self._paged_table_index(table): (headers,) for table, headers in self.headers.iteritems()}
+        return {self._paged_table_index(table): (headers,) for table, headers in six.iteritems(self.headers)}
 
     def _get_paginated_table_titles(self):
         '''
@@ -251,7 +253,7 @@ class _PaginatedExportWriter(object):
         }
         '''
         paginated_table_titles = {}
-        for table, table_name in self.table_names.iteritems():
+        for table, table_name in six.iteritems(self.table_names):
             paginated_table_titles[self._paged_table_index(table)] = '{}_{}'.format(
                 table_name, format(self.pages[table], '03')
             )
@@ -334,7 +336,8 @@ def get_export_documents(export_instance, filters):
     # We believe we can occasionally hit the 5m limit to process a single scroll window
     # with a window size of 1000 (https://manage.dimagi.com/default.asp?248384).
     # Thus, smaller window size is intentional
-    return query.size(500).scroll()
+    # Another option we have is to bump the "scroll" parameter up from "5m"
+    return query.size(200).scroll()
 
 
 def _get_export_query(export_instance, filters):
@@ -465,24 +468,29 @@ def _get_base_query(export_instance):
         )
 
 
-def rebuild_export(export_instance, last_access_cutoff=None, filters=None):
+def rebuild_export(export_instance, filters=None):
     """
     Rebuild the given daily saved ExportInstance
     """
-    if _should_not_rebuild_export(export_instance, last_access_cutoff):
-        return
     filters = filters or export_instance.get_filters()
     export_file = get_export_file([export_instance], filters or [])
     with export_file as payload:
         save_export_payload(export_instance, payload)
 
 
-def _should_not_rebuild_export(export, last_access_cutoff):
-    # Don't rebuild exports that haven't been accessed since last_access_cutoff
-    return (
-        last_access_cutoff
-        and export.last_accessed
-        and export.last_accessed < last_access_cutoff
+def should_rebuild_export(export, last_access_cutoff):
+    """
+    :param last_access_cutoff: Any exports not accessed since this date will not be rebuilt.
+    :return: True if export should be rebuilt
+    """
+    # Don't rebuild exports that haven't been accessed since last_access_cutoff or aren't enabled
+    is_auto_rebuild = last_access_cutoff is not None
+    return not is_auto_rebuild or (
+        export.auto_rebuild_enabled
+        and (
+            export.last_accessed is None
+            or export.last_accessed > last_access_cutoff
+        )
     )
 
 
@@ -495,9 +503,8 @@ def save_export_payload(export, payload):
     export.last_updated = datetime.datetime.utcnow()
 
     try:
-        export.save()
+        with export.atomic_blobs():
+            export.set_payload(payload)
     except ResourceConflict:
         # task was executed concurrently, so let first to finish win and abort the rest
         pass
-    else:
-        export.set_payload(payload)

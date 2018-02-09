@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.apps.data_interfaces.interfaces import DataInterface
 from django.utils.translation import ugettext_lazy
 

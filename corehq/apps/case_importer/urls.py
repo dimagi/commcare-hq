@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.conf.urls import url
 from corehq.apps.case_importer.tracking.views import case_uploads, case_upload_file, \
     update_case_upload_comment, case_upload_case_ids, case_upload_form_ids

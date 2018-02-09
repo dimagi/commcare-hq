@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import logging
 from custom.bihar.reports.supervisor import BiharNavReport, MockEmptyReport, \
     url_and_params, BiharSummaryReport, \

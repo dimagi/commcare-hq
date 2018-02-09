@@ -1,4 +1,4 @@
-(function () {
+hqDefine("hqwebapp/js/hq_extensions.jquery", ["jquery"], function($) {
     'use strict';
     $.extend({
         postGo: function (url, params) {
@@ -38,12 +38,5 @@
         }
     });
 
-    $.fn.closest_form = function () {
-        return this.closest('form, .form');
-    };
-    $.fn.my_serialize = function () {
-        var data = this.find('[name]').serialize();
-        return data;
-    };
-
-}());
+    return 1;   // Flag the module as loaded by hqModules.js
+});

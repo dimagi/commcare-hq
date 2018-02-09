@@ -9,11 +9,13 @@ from corehq.apps.es import case_search as case_search_es
     q = (case_search_es.CaseSearchES()
          .domain('testproject')
 """
-from . import filters, queries
+from __future__ import absolute_import
 
+from corehq.apps.es.aggregations import TermsAggregation, BucketResult
 from corehq.apps.es.cases import CaseES, owner
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_ALIAS
 
+from . import filters, queries
 
 PATH = "case_properties"
 RELEVANCE_SCORE = "commcare_search_score"
@@ -49,13 +51,36 @@ class CaseSearchES(CaseES):
         Can be chained with regular filters . Running a set_query after this will destroy it.
         Clauses can be any of SHOULD, MUST, or MUST_NOT
         """
-        fuzziness = "AUTO" if fuzzy else "0"
         # Filter by case_properties.key and do a text search in case_properties.value
+        result = self
+        if fuzzy:
+            # Results must at least match the fuzzy value, and exact matches are weighted higher. `clause` param
+            # is overridden to do this.
+            fuzzy_query = queries.nested(
+                PATH,
+                queries.filtered(
+                    queries.match(value, '{}.value'.format(PATH), fuzziness='AUTO'),
+                    filters.term('{}.key'.format(PATH), key),
+                )
+            )
+            result = result._add_query(fuzzy_query, queries.MUST)
+            clause = queries.SHOULD
+
+        exact_query = queries.nested(
+            PATH,
+            queries.filtered(
+                queries.match(value, '{}.value'.format(PATH), fuzziness='0'),
+                filters.term('{}.key'.format(PATH), key),
+            )
+        )
+        return result._add_query(exact_query, clause)
+
+    def regexp_case_property_query(self, key, regex, clause=queries.MUST):
         new_query = queries.nested(
             PATH,
             queries.filtered(
-                queries.match(value, "{}.value".format(PATH), fuzziness),
-                filters.term("{}.key".format(PATH), key)
+                filters.term('{}.key'.format(PATH), key),
+                queries.regexp('{}.value'.format(PATH), regex)
             )
         )
         return self._add_query(new_query, clause)
@@ -107,3 +132,47 @@ def flatten_result(hit):
         if key and value:
             result[key] = value
     return result
+
+
+class CasePropertyAggregationResult(BucketResult):
+
+    @property
+    def raw_buckets(self):
+        return self.result[self.aggregation.field]['values']['buckets']
+
+    @property
+    def buckets(self):
+        """returns a list of buckets rather than a namedtuple since case property values can
+        have non-valid python names
+        """
+        return self.bucket_list
+
+
+class CasePropertyAggregation(TermsAggregation):
+    type = "case_property"
+    result_class = CasePropertyAggregationResult
+
+    def __init__(self, name, field, size=None):
+        self.name = name
+        self.field = field
+        self.body = {
+            "nested": {
+                "path": "case_properties"
+            },
+            "aggs": {
+                field: {
+                    "filter": {
+                        "term": {
+                            "case_properties.key": field,
+                        }
+                    },
+                    "aggs": {
+                        "values": {
+                            "terms": {
+                                "field": "case_properties.value"
+                            }
+                        }
+                    }
+                }
+            }
+        }

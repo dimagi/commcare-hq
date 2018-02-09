@@ -63,6 +63,11 @@ hqDefine("app_manager/js/forms/form_view", function() {
         var setupValidation = hqImport('app_manager/js/app_manager').setupValidation;
         setupValidation(hqImport("hqwebapp/js/initial_page_data").reverse("validate_form_for_build"));
 
+        // Analytics for renaming form
+        $(".appmanager-edit-title").on('click', '.btn-success', function() {
+            hqImport('analytix/js/kissmetrix').track.event("Renamed form from form settings page");
+        });
+
         // Settings > Logic
         var $formFilter = $('#form-filter');
         if ($formFilter.length && initial_page_data('allow_form_filtering')) {

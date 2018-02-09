@@ -1,16 +1,32 @@
-/* global d3*/
+/* global d3, _, moment */
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function EnrolledChildrenController($scope, $routeParams, $location, $filter, demographicsService,
-                                             locationsService, userLocationId, storageService) {
+                                             locationsService, userLocationId, storageService, genders, ages) {
     var vm = this;
     if (Object.keys($location.search()).length === 0) {
         $location.search(storageService.getKey('search'));
     } else {
         storageService.setKey('search', $location.search());
     }
+    vm.userLocationId = userLocationId;
     vm.filtersData = $location.search();
-    vm.label = "Children (0-6 years) who are enrolled for ICDS services";
+
+    var ageIndex = _.findIndex(ages, function (x) {
+        return x.id === vm.filtersData.age;
+    });
+    if (ageIndex !== -1) {
+        vm.ageLabel = ages[ageIndex].name;
+    }
+
+    var genderIndex = _.findIndex(genders, function (x) {
+        return x.id === vm.filtersData.gender;
+    });
+    if (genderIndex !== -1) {
+        vm.genderLabel = genders[genderIndex].name;
+    }
+
+    vm.label = "Children (0-6 years) who are enrolled for Anganwadi Services";
     vm.step = $routeParams.step;
     vm.steps = {
         'map': {route: '/enrolled_children/map', label: 'Map View'},
@@ -20,17 +36,35 @@ function EnrolledChildrenController($scope, $routeParams, $location, $filter, de
         legendTitle: 'Number of Children',
     };
     vm.chartData = null;
-    vm.top_three = [];
-    vm.bottom_three = [];
+    vm.top_five = [];
+    vm.bottom_five = [];
+    vm.selectedLocations = [];
+    vm.all_locations = [];
     vm.location_type = null;
     vm.loaded = false;
-    vm.filters = ['month'];
+    if (vm.step === 'chart') {
+        vm.filters = ['age'];
+    } else {
+        vm.filters = [];
+    }
 
     vm.rightLegend = {
-        info: 'Total number of children between the age of 0 - 6 years who are enrolled for ICDS services',
+        info: 'Total number of children between the age of 0 - 6 years who are enrolled for Anganwadi Services',
     };
 
     vm.message = storageService.getKey('message') || false;
+
+    vm.prevDay = moment().subtract(1, 'days').format('Do MMMM, YYYY');
+    vm.lastDayOfPreviousMonth = moment().set('date', 1).subtract(1, 'days').format('Do MMMM, YYYY');
+    vm.currentMonth = moment().format("MMMM");
+    vm.showInfoMessage = function () {
+        var selected_month = parseInt($location.search()['month']) || new Date().getMonth() + 1;
+        var selected_year = parseInt($location.search()['year']) || new Date().getFullYear();
+        var current_month = new Date().getMonth() + 1;
+        var current_year = new Date().getFullYear();
+        return selected_month === current_month && selected_year === current_year &&
+            (new Date().getDate() === 1 || new Date().getDate() === 2);
+    };
 
     vm.hideRanking = true;
 
@@ -54,19 +88,37 @@ function EnrolledChildrenController($scope, $routeParams, $location, $filter, de
     }, true);
 
     vm.templatePopup = function(loc, row) {
+        var gender = genderIndex > 0 ? genders[genderIndex].name : '';
+        var age = ageIndex > 0 ? ages[ageIndex].name : '0 - 6 years';
+        var delimiter = gender && age ? ', ' : '';
+        var chosenFilters = gender || age ? '(' + gender + delimiter + age + ')' : '';
         var valid = $filter('indiaNumbers')(row ? row.valid : 0);
-        return '<div class="hoverinfo" style="max-width: 200px !important;">' +
+        var all = $filter('indiaNumbers')(row ? row.all : 0);
+        var percent = row ? d3.format('.2%')(row.valid / (row.all || 1)) : "N/A";
+        return '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
             '<p>' + loc.properties.name + '</p>' +
-            '<div>Total number of children between the age of 0 - 6 years who are enrolled for ICDS services: <strong>' + valid + '</strong></div>';
+            '<div>Number of children ' + chosenFilters + ' who are enrolled for Anganwadi Services: <strong>' + valid + '</strong>' +
+            '<div>Total number of children ' + chosenFilters + ' who are registered: <strong>' + all + '</strong>' +
+            '<div>Percentage of registered children ' + chosenFilters + ' who are enrolled for Anganwadi Services: <strong>' + percent + '</strong>' +
+            '</div>';
     };
 
     vm.loadData = function () {
+        var loc_type = 'National';
+        if (vm.location) {
+            if (vm.location.location_type === 'supervisor') {
+                loc_type = "Sector";
+            } else {
+                loc_type = vm.location.location_type.charAt(0).toUpperCase() + vm.location.location_type.slice(1);
+            }
+        }
+
         if (vm.location && _.contains(['block', 'supervisor', 'awc'], vm.location.location_type)) {
             vm.mode = 'sector';
-            vm.steps['map'].label = 'Sector View';
+            vm.steps['map'].label = loc_type + ' View';
         } else {
             vm.mode = 'map';
-            vm.steps['map'].label = 'Map View';
+            vm.steps['map'].label = 'Map View: ' + loc_type;
         }
 
         vm.myPromise = demographicsService.getEnrolledChildrenData(vm.step, vm.filtersData).then(function(response) {
@@ -75,17 +127,29 @@ function EnrolledChildrenController($scope, $routeParams, $location, $filter, de
             } else if (vm.step === "chart") {
                 vm.chartData = response.data.report_data.chart_data;
                 vm.all_locations = response.data.report_data.all_locations;
-                vm.top_three = response.data.report_data.top_three;
-                vm.bottom_three = response.data.report_data.bottom_three;
+                vm.top_five = response.data.report_data.top_five;
+                vm.bottom_five = response.data.report_data.bottom_five;
                 vm.location_type = response.data.report_data.location_type;
                 vm.chartTicks = vm.chartData[0].values.map(function(d) { return d.x; });
+                var max = Math.ceil(d3.max(vm.chartData, function(line) {
+                    return d3.max(line.values, function(d) {
+                        return d.y;
+                    });
+                }));
+                var min = Math.ceil(d3.min(vm.chartData, function(line) {
+                    return d3.min(line.values, function(d) {
+                        return d.y;
+                    });
+                }));
+                var range = max - min;
+                vm.chartOptions.chart.forceY = [0, parseInt((max + range/10).toFixed(0))];
             }
         });
     };
 
-    var init = function() {
-        var locationId = vm.filtersData.location_id || userLocationId;
-        if (!locationId || locationId === 'all') {
+    vm.init = function() {
+        var locationId = vm.filtersData.location_id || vm.userLocationId;
+        if (!locationId || ["all", "null", "undefined"].indexOf(locationId) >= 0) {
             vm.loadData();
             vm.loaded = true;
             return;
@@ -97,7 +161,7 @@ function EnrolledChildrenController($scope, $routeParams, $location, $filter, de
         });
     };
 
-    init();
+    vm.init();
 
     $scope.$on('filtersChange', function() {
         vm.loadData();
@@ -121,10 +185,7 @@ function EnrolledChildrenController($scope, $routeParams, $location, $filter, de
             useInteractiveGuideline: false,
             tooltip: function (key, x) {
                 var data = _.find(vm.chartData[0].values, function(num) { return num.x === x;});
-
-                var content = "<p>Total number of children between the age of 0 - 6 years who are enrolled for ICDS services: <strong>" + $filter('indiaNumbers')(data.all) + "</strong></p>";
-                content += "<p>% of children " + x + ": <strong>" + d3.format(".2%")(data.y / data.all) + "</strong></p>";
-                return content;
+                return vm.tooltipContent(data, x);
             },
             clipVoronoi: false,
             xAxis: {
@@ -138,20 +199,28 @@ function EnrolledChildrenController($scope, $routeParams, $location, $filter, de
             yAxis: {
                 axisLabel: '',
                 tickFormat: function(d){
-                    return d3.format(",.2f")(d);
+                    return d3.format(",")(d);
                 },
                 axisLabelDistance: 20,
+                forceY: [0],
             },
         },
         caption: {
             enable: true,
-            html: '<i class="fa fa-info-circle"></i> Total number of children between the age of 0 - 6 years who are enrolled for ICDS services',
+            html: '<i class="fa fa-info-circle"></i> Total number of children between the age of 0 - 6 years who are enrolled for Anganwadi Services',
             css: {
                 'text-align': 'center',
                 'margin': '0 auto',
                 'width': '900px',
             }
         },
+    };
+
+    vm.tooltipContent = function (dataInMonth, x) {
+        var average = (dataInMonth.all !== 0) ? d3.format(".2%")(dataInMonth.y / dataInMonth.all) : 0;
+        return "<div>Total number of children between the age of 0 - 6 years who are enrolled for Anganwadi Services: <strong>"
+            + $filter('indiaNumbers')(dataInMonth.all) + "</strong></div>"
+            + "<div>% of children " + x + ": <strong>" + average + "</strong></div>";
     };
 
     vm.moveToLocation = function(loc, index) {
@@ -166,12 +235,24 @@ function EnrolledChildrenController($scope, $routeParams, $location, $filter, de
         }
     };
 
-    vm.showNational = function () {
-        return !isNaN($location.search()['selectedLocationLevel']) && parseInt($location.search()['selectedLocationLevel']) >= 0;
+    vm.resetAdditionalFilter = function() {
+        vm.filtersData.gender = '';
+        vm.filtersData.age = '';
+        $location.search('gender', null);
+        $location.search('age', null);
+    };
+
+    vm.resetOnlyAgeAdditionalFilter = function() {
+        vm.filtersData.age = '';
+        $location.search('age', null);
+    };
+
+    vm.showAllLocations = function () {
+        return vm.all_locations.length < 10;
     };
 }
 
-EnrolledChildrenController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'demographicsService', 'locationsService', 'userLocationId', 'storageService'];
+EnrolledChildrenController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'demographicsService', 'locationsService', 'userLocationId', 'storageService', 'genders', 'ages'];
 
 window.angular.module('icdsApp').directive('enrolledChildren', function() {
     return {

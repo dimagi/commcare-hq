@@ -1,6 +1,10 @@
+from __future__ import absolute_import
 import hashlib
 import binascii
 from copy import copy
+from six.moves import zip
+from functools import reduce
+from six.moves import map
 
 
 EMPTY_HASH = ""
@@ -65,7 +69,7 @@ class Checksum(object):
         if not self._list:
             return EMPTY_HASH
         x = copy(self._list)
-        x = map(Checksum.hash, x)
+        x = list(map(Checksum.hash, x))
         x = reduce(Checksum.xor, x)
         x = binascii.hexlify(str(x))
         return x

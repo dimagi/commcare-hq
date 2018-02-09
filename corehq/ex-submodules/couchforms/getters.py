@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.utils.datastructures import MultiValueDictKeyError
 from corehq.util.global_request import get_request_domain
 from couchforms.const import (
@@ -36,7 +37,7 @@ def get_instance_and_attachment(request):
     if request.META['CONTENT_TYPE'].startswith('multipart/form-data'):
         # ODK submission; of the form
         # $ curl --form 'xml_submission_file=@form.xml' $URL
-        if request.POST.keys():
+        if list(request.POST):
             raise MultimediaBug("Received a submission with POST.keys()")
 
         try:

@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from __future__ import absolute_import
 from django.test import TestCase
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.locations.models import make_location, LocationType

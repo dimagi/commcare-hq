@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import os
 from django.test import SimpleTestCase
 from django.test.utils import override_settings
@@ -26,5 +27,5 @@ class TestStaticReportConfig(SimpleTestCase, TestFileMixin):
                 self.assertEqual('Custom Title', config.title)
 
     def test_production_config(self):
-        for data_source in StaticReportConfiguration.all():
+        for data_source in StaticReportConfiguration.all(ignore_server_environment=True):
             data_source.validate()

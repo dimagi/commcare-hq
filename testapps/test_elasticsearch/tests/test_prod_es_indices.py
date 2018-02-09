@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.conf import settings
 from django.test import SimpleTestCase
 from django.test.utils import override_settings
@@ -155,7 +156,7 @@ EXPECTED_PROD_INDICES = [
     },
     {
         "alias": "hqusers",
-        "index": "test_hqusers_2017-05-30",
+        "index": "test_hqusers_2017-09-07",
         "type": "user",
         "meta": {
             "settings": {

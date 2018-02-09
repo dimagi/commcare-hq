@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth import authenticate
 from auditcare.signals import user_login_failed
@@ -10,7 +11,7 @@ class SignaledAuthenticationForm(AuthenticationForm):
         if username and password:
             self.user_cache = authenticate(username=username, password=password)
             if self.user_cache is None:
-                user_login_failed.send(sender=self,request=self.request,username=username) # This is new
+                user_login_failed.send(sender=self, request=self.request, username=username) # This is new
                 raise forms.ValidationError(_("Please enter a correct username and password. Note that both fields are case-sensitive."))
             elif not self.user_cache.is_active:
                 raise forms.ValidationError(_("This account is inactive."))

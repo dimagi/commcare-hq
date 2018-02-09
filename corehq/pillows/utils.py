@@ -1,5 +1,7 @@
+from __future__ import absolute_import
+
 from corehq.apps.commtrack.const import COMMTRACK_USERNAME
-from corehq.apps.users.models import CouchUser, LastBuild
+from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import SYSTEM_USER_ID, DEMO_USER_ID
 from corehq.pillows.mappings.app_mapping import APP_INDEX_INFO
 from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
@@ -95,54 +97,3 @@ def get_all_expected_es_indices():
 def format_form_meta_for_es(form_metadata):
     form_metadata['appVersion'] = form_metadata['appVersion'].get('#text')
     return form_metadata
-
-
-def _last_build_needs_update(last_build, build_date):
-    if not (last_build and last_build.build_version_date):
-        return True
-    if build_date > last_build.build_version_date:
-        return True
-    return False
-
-
-def update_latest_builds(user, app_id, date, version):
-    """
-    determines whether to update the last build attributes in a user's reporting metadata
-    """
-    last_builds = filter(
-        lambda build: build.app_id == app_id,
-        user.reporting_metadata.last_builds,
-    )
-    if last_builds:
-        assert len(last_builds) == 1, 'Must only have one last build per app'
-        last_build = last_builds[0]
-    else:
-        last_build = None
-
-    if _last_build_needs_update(last_build, date):
-        if last_build is None:
-            last_build = LastBuild()
-            user.reporting_metadata.last_builds.append(last_build)
-        last_build.build_version = version
-        last_build.app_id = app_id
-        last_build.build_version_date = date
-
-    if _last_build_needs_update(user.reporting_metadata.last_build_for_user, date):
-        user.reporting_metadata.last_build_for_user = last_build
-
-
-def filter_by_app(data_list, app_id):
-    """
-    returns the last sync, submission, or build for the given app id
-    :param data_list: list from user's reporting metadata (last syncs, last submissions, or last builds)
-    """
-    last_items = filter(
-        lambda sync: sync.app_id == app_id,
-        data_list,
-    )
-    if last_items:
-        assert len(last_items) == 1, 'Must only have one {} per app'.format(last_items[0].__class__)
-        last_item = last_items[0]
-    else:
-        last_item = None
-    return last_item

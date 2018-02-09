@@ -5,9 +5,9 @@
 {% load compress %}
 
 {% block js %}{{ block.super }}
+    {% include 'hqwebapp/includes/ui_element_js.html' %}
     {% compress js %}
         <script src="{% static 'hqwebapp/js/lib/jquery.textchange.min.js' %}"></script>
-        {% include 'hqwebapp/includes/ui_element_js.html' %}
         <script src="{% static 'hqwebapp/js/base_list_view_model.js' %}"></script>
         <script src="{% static 'commtrack/js/products_and_programs.async.js' %}"></script>
     {% endcompress %}

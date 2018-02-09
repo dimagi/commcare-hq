@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from couchdbkit.exceptions import ResourceNotFound
 from django.conf import settings
 from django.utils.safestring import mark_safe
@@ -21,6 +22,8 @@ from dimagi.utils.decorators.memoized import memoized
 # For translations
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop, ugettext_lazy
+import six
+from six.moves import range
 
 
 PARAM_SLUG_STATUS = 'status'
@@ -154,22 +157,25 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
         all_forms = self._application_forms_info.copy()
 
         for app_map in all_forms.values():
-            app_langs = app_map['app']['langs']
             is_deleted = app_map['is_deleted']
 
-            app_name = self.get_translated_value(self.display_lang, app_langs, app_map['app']['names'])
+            def _translate_name(item):
+                return self.get_translated_value(self.display_lang, app_map['app']['langs'], item)
+
+            app_name = _translate_name(app_map['app']['names'])
             if is_deleted:
                 app_name = "%s [Deleted Application]" % app_name
             app = self._map_structure(app_map['app']['id'], app_name)
 
-            for module_map in app_map['modules']:
+            for module_map in sorted(app_map['modules'],
+                                     key=lambda item: _translate_name(item['module']['names']).lower()
+                                     if item['module'] else ''):
                 if module_map['module'] is not None:
-                    module_name = self.get_translated_value(
-                        self.display_lang, app_langs, module_map['module']['names'])
+                    module_name = _translate_name(module_map['module']['names'])
                     module = self._map_structure(module_map['module']['id'], module_name)
-                    for form_map in module_map['forms']:
-                        form_name = self.get_translated_value(
-                            self.display_lang, app_langs, form_map['form']['names'])
+                    for form_map in sorted(module_map['forms'],
+                                           key=lambda item: _translate_name(item['form']['names']).lower()):
+                        form_name = _translate_name(form_map['form']['names'])
                         module['next'].append(self._map_structure(form_map['xmlns'], form_name))
                     app['next'].append(module)
 
@@ -332,7 +338,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
     @memoized
     def _unknown_forms(self):
         nonmatching = set(self._nonmatching_app_forms)
-        fuzzy_forms = set(self._fuzzy_forms.keys())
+        fuzzy_forms = set(self._fuzzy_forms)
 
         unknown = list(nonmatching.difference(fuzzy_forms))
         return [u for u in unknown if u is not None]
@@ -369,7 +375,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
                 for module in app.get('modules', []):
                     for form in module['forms']:
                         if form['xmlns'] == xmlns:
-                            return form['name'].values()[0]
+                            return list(form['name'].values())[0]
 
         guessed_name = guess_form_name_from_submissions_using_xmlns(self.domain, xmlns)
         return guessed_name or (None if none_if_not_found else _("Name Unknown"))
@@ -382,7 +388,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
 
         If obj is a string, just output that string.
         """
-        if isinstance(obj, basestring):
+        if isinstance(obj, six.string_types):
             return obj
         val = obj.get(display_lang)
         if val:
@@ -391,7 +397,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
             val = obj.get(lang)
             if val:
                 return val
-        return obj.get(obj.keys()[0], _('Untitled'))
+        return obj.get(list(obj)[0], _('Untitled'))
 
     @staticmethod
     def _formatted_name_from_app(display_lang, app):

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.conf.urls import url, include
 
 from corehq.apps.api.urls import CommCareHqApi
@@ -5,8 +6,8 @@ from corehq.apps.zapier.api.v0_5 import (
     ZapierXFormInstanceResource,
     ZapierCustomFieldCaseResource,
     ZapierCustomTriggerFieldFormResource,
-    ZapierCustomActionFieldCaseResource
-)
+    ZapierCustomActionFieldCaseResource,
+    ZapierApplicationResource)
 from corehq.apps.zapier.views import (
     SubscribeView,
     UnsubscribeView,
@@ -19,6 +20,7 @@ hq_api.register(ZapierXFormInstanceResource())
 hq_api.register(ZapierCustomTriggerFieldFormResource())
 hq_api.register(ZapierCustomActionFieldCaseResource())
 hq_api.register(ZapierCustomFieldCaseResource())
+hq_api.register(ZapierApplicationResource())
 
 urlpatterns = [
     url(r'^subscribe/$', SubscribeView.as_view(), name=SubscribeView.urlname),

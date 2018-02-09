@@ -1,11 +1,11 @@
 {
     "domains": [
         "enikshay",
-        "enikshay-reports-qa"
+        "enikshay-reports-qa",
+        "enikshay-performance-test"
     ],
     "server_environment": [
-        "enikshay",
-        "softlayer"
+        "enikshay"
     ],
     "data_source_table": "episode",
     "report_id": "tb_notification_register",

@@ -17,13 +17,13 @@
     </div>
     <div class="modal-footer">
        <button ng-click="$ctrl.reset()" class="btn btn-primary">Reset</button>
-       <button ng-click="$ctrl.apply()" class="btn btn-primary">Apply</button>
+       <button ng-disabled="$ctrl.showMessage" ng-click="$ctrl.apply()" class="btn btn-primary">Apply</button>
     </div>
 </script>
 
 <div class="row text-center">
     <button style="width: 95%;" type="button" class="btn btn-default less-padding" ng-click="$ctrl.open()">
-        <i class="fa fa-search"></i>
+        <i class="fa fa-map-marker"></i>
         {$ $ctrl.getPlaceholder() $}
     </button>
 </div>

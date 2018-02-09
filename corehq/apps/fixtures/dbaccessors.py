@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.util.quickcache import quickcache
 from corehq.util.test_utils import unit_testing_only
 

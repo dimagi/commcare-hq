@@ -1,31 +1,73 @@
+from __future__ import absolute_import
 from datetime import datetime
 
 from django.db.models.aggregates import Sum
 from django.utils.translation import ugettext as _
 
+from corehq.util.quickcache import quickcache
 from custom.icds_reports.models import AggChildHealthMonthly, AggCcsRecordMonthly
-from custom.icds_reports.utils import percent_diff, get_value, apply_exclude
+from custom.icds_reports.utils import percent_diff, get_value, apply_exclude, exclude_records_by_age_for_column
 
 
-# @quickcache(['config'], timeout=24 * 60 * 60)
+@quickcache(['domain', 'config', 'show_test'], timeout=30 * 60)
 def get_maternal_child_data(domain, config, show_test=False):
 
     def get_data_for_child_health_monthly(date, filters):
+
+        moderately_underweight = exclude_records_by_age_for_column(
+            {'age_tranche': 72},
+            'nutrition_status_moderately_underweight'
+        )
+        severely_underweight = exclude_records_by_age_for_column(
+            {'age_tranche': 72},
+            'nutrition_status_severely_underweight'
+        )
+        wasting_moderate = exclude_records_by_age_for_column(
+            {'age_tranche__in': [0, 6, 72]},
+            'wasting_moderate'
+        )
+        wasting_severe = exclude_records_by_age_for_column(
+            {'age_tranche__in': [0, 6, 72]},
+            'wasting_severe'
+        )
+        stunting_moderate = exclude_records_by_age_for_column(
+            {'age_tranche__in': [0, 6, 72]},
+            'stunting_moderate'
+        )
+        stunting_severe = exclude_records_by_age_for_column(
+            {'age_tranche__in': [0, 6, 72]},
+            'stunting_severe'
+        )
+        nutrition_status_weighed = exclude_records_by_age_for_column(
+            {'age_tranche': 72},
+            'nutrition_status_weighed'
+        )
+        height_measured_in_month = exclude_records_by_age_for_column(
+            {'age_tranche__in': [0, 6, 72]},
+            'height_measured_in_month'
+        )
+        weighed_and_height_measured_in_month = exclude_records_by_age_for_column(
+            {'age_tranche__in': [0, 6, 72]},
+            'weighed_and_height_measured_in_month'
+        )
+
         queryset = AggChildHealthMonthly.objects.filter(
             month=date, **filters
         ).values(
             'aggregation_level'
         ).annotate(
             underweight=(
-                Sum('nutrition_status_moderately_underweight') + Sum('nutrition_status_severely_underweight')
+                Sum(moderately_underweight) + Sum(severely_underweight)
             ),
-            valid=Sum('wer_eligible'),
-            wasting=Sum('wasting_moderate') + Sum('wasting_severe'),
-            stunting=Sum('stunting_moderate') + Sum('stunting_severe'),
-            height_eli=Sum('height_eligible'),
+            valid=Sum(nutrition_status_weighed),
+            wasting=Sum(wasting_moderate) + Sum(wasting_severe),
+            stunting=Sum(stunting_moderate) + Sum(stunting_severe),
+            height_measured_in_month=Sum(height_measured_in_month),
+            weighed_and_height_measured_in_month=Sum(weighed_and_height_measured_in_month),
             low_birth_weight=Sum('low_birth_weight_in_month'),
             bf_birth=Sum('bf_at_birth'),
             born=Sum('born_in_month'),
+            weighed_and_born_in_month=Sum('weighed_and_born_in_month'),
             ebf=Sum('ebf_in_month'),
             ebf_eli=Sum('ebf_eligible'),
             cf_initiation=Sum('cf_initiation_in_month'),
@@ -65,9 +107,10 @@ def get_maternal_child_data(domain, config, show_test=False):
                 {
                     'label': _('Underweight (Weight-for-Age)'),
                     'help_text': _((
-                        "Percentage of children between 0-5 years enrolled for ICDS services with weight-for-age "
-                        "less than -2 standard deviations of the WHO Child Growth Standards median. Children who "
-                        "are moderately or severely underweight have a higher risk of mortality."
+                        "Percentage of children between 0-5 years enrolled for Anganwadi Services with "
+                        "weight-for-age less than -2 standard deviations of the WHO Child Growth Standards "
+                        "median. Children who are moderately or severely underweight have a higher risk of "
+                        "mortality."
                     )),
                     'percent': percent_diff(
                         'underweight',
@@ -100,16 +143,16 @@ def get_maternal_child_data(domain, config, show_test=False):
                         'wasting',
                         this_month_data,
                         prev_month_data,
-                        'height_eli'
+                        'weighed_and_height_measured_in_month'
                     ),
                     'color': 'red' if percent_diff(
                         'wasting',
                         this_month_data,
                         prev_month_data,
-                        'height_eli'
+                        'weighed_and_height_measured_in_month'
                     ) > 0 else 'green',
                     'value': get_value(this_month_data, 'wasting'),
-                    'all': get_value(this_month_data, 'height_eli'),
+                    'all': get_value(this_month_data, 'weighed_and_height_measured_in_month'),
                     'format': 'percent_and_div',
                     'frequency': 'month',
                     'redirect': 'wasting'
@@ -120,26 +163,26 @@ def get_maternal_child_data(domain, config, show_test=False):
                     'label': _('Stunting (Height-for-Age)'),
                     'help_text': _((
                         "Percentage of children (6-60 months) with height-for-age below -2Z standard deviations "
-                        "of the WHO Child Growth Standards median. Stunting in children is a sign of chronic "
-                        "undernutrition and has long lasting harmful consequences on the growth of a child")
+                        "of the WHO Child Growth Standards median. Stunting is a sign of chronic undernutrition "
+                        "and has long lasting harmful consequences on the growth of a child")
                     ),
                     'percent': percent_diff(
                         'stunting',
                         this_month_data,
                         prev_month_data,
-                        'height_eli'
+                        'height_measured_in_month'
                     ),
                     'color': 'red' if percent_diff(
                         'stunting',
                         this_month_data,
                         prev_month_data,
-                        'height_eli'
+                        'height_measured_in_month'
                     ) > 0 else 'green',
                     'value': get_value(this_month_data, 'stunting'),
-                    'all': get_value(this_month_data, 'height_eli'),
+                    'all': get_value(this_month_data, 'height_measured_in_month'),
                     'format': 'percent_and_div',
                     'frequency': 'month',
-                    'redirect': 'stunning'
+                    'redirect': 'stunting'
                 },
                 {
                     'label': _('Newborns with Low Birth Weight'),
@@ -152,16 +195,16 @@ def get_maternal_child_data(domain, config, show_test=False):
                         'low_birth_weight',
                         this_month_data,
                         prev_month_data,
-                        'born'
+                        'weighed_and_born_in_month'
                     ),
                     'color': 'red' if percent_diff(
                         'low_birth_weight',
                         this_month_data,
                         prev_month_data,
-                        'born'
+                        'weighed_and_born_in_month'
                     ) > 0 else 'green',
                     'value': get_value(this_month_data, 'low_birth_weight'),
-                    'all': get_value(this_month_data, 'born'),
+                    'all': get_value(this_month_data, 'weighed_and_born_in_month'),
                     'format': 'percent_and_div',
                     'frequency': 'month',
                     'redirect': 'low_birth'
@@ -173,7 +216,7 @@ def get_maternal_child_data(domain, config, show_test=False):
                     'help_text': _((
                         "Percentage of children breastfed within an hour of birth. Early initiation of "
                         "breastfeeding ensure the newborn recieves the 'first milk' rich in nutrients "
-                        "and encourages exclusive breastfeeding practic")
+                        "and encourages exclusive breastfeeding practice")
                     ),
                     'percent': percent_diff(
                         'bf_birth',
@@ -248,9 +291,9 @@ def get_maternal_child_data(domain, config, show_test=False):
                 {
                     'label': _('Institutional Deliveries'),
                     'help_text': _((
-                        "Percentage of pregant women who delivered in a public or private medical facility "
+                        "Percentage of pregnant women who delivered in a public or private medical facility "
                         "in the last month. Delivery in medical instituitions is associated with a "
-                        "decrease maternal mortality rate")
+                        "decrease in maternal mortality rate")
                     ),
                     'percent': percent_diff(
                         'institutional_delivery',

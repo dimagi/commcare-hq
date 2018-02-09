@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.util.workbook_json.excel import IteratorJSONReader
 from corehq.util.dates import iso_string_to_datetime, iso_string_to_date
 

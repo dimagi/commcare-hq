@@ -47,7 +47,10 @@ BEGIN
 		'state_id, ' ||
 		'state_name, ' ||
 		'state_site_code, ' ||
-		'5 FROM ' || quote_ident(_ucr_location_table) || ')';
+		'5, ' ||
+		'block_map_location_name, ' ||
+		'district_map_location_name, ' ||
+		'state_map_location_name FROM ' || quote_ident(_ucr_location_table) || ')';
 END;
 $BODY$
 LANGUAGE plpgsql;
@@ -183,7 +186,8 @@ BEGIN
 		'current_month_wasting, ' ||
 		'valid_in_month, ' ||
 		'valid_all_registered_in_month, ' ||
-		'ebf_no_info_recorded ' ||
+		'ebf_no_info_recorded, ' ||
+		'dob ' ||
 		'FROM ' || quote_ident(_ucr_child_monthly_table) || ' WHERE month = ' || quote_literal(_start_date) || ')';
 
     EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx1') || ' ON ' || quote_ident(_tablename) || '(awc_id, case_id)';
@@ -254,7 +258,9 @@ BEGIN
 		'pregnant_all, ' ||
 		'lactating, ' ||
 		'lactating_all, ' ||
-		'institutional_delivery_in_month FROM ' || quote_ident(_ucr_ccs_record_table) || ' WHERE month = ' || quote_literal(_start_date) || ')';
+		'institutional_delivery_in_month, ' ||
+		'add ' ||
+		'FROM ' || quote_ident(_ucr_ccs_record_table) || ' WHERE month = ' || quote_literal(_start_date) || ')';
 
 		EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx1') || ' ON ' || quote_ident(_tablename) || '(awc_id, case_id)';
         -- There may be better indexes to put here. Should investigate what tableau queries
@@ -344,9 +350,9 @@ BEGIN
 		'sum(valid_in_month), ' ||
 		'sum(nutrition_status_weighed), ' ||
 		'sum(nutrition_status_unweighed), ' ||
-		'sum(nutrition_status_normal), ' ||
-		'sum(nutrition_status_moderately_underweight), ' ||
-		'sum(nutrition_status_severely_underweight), ' ||
+		'sum(CASE WHEN nutrition_status_normal = 1 AND nutrition_status_weighed = 1 THEN 1 ELSE 0 END), ' ||
+		'sum(CASE WHEN nutrition_status_moderately_underweight = 1 AND nutrition_status_weighed = 1 THEN 1 ELSE 0 END), ' ||
+		'sum(CASE WHEN nutrition_status_severely_underweight = 1 AND nutrition_status_weighed = 1 THEN 1 ELSE 0 END), ' ||
 		'sum(wer_eligible), ' ||
 		'sum(thr_eligible), ' ||
 		'sum(rations_21_plus_distributed), ' ||
@@ -376,18 +382,21 @@ BEGIN
 		'5, ' ||
 		'sum(pnc_eligible), ' ||
 		'sum(height_eligible), ' ||
-		'sum(wasting_moderate), ' ||
-		'sum(wasting_severe), ' ||
-		'sum(stunting_moderate), ' ||
-		'sum(stunting_severe), ' ||
+		'sum(CASE WHEN wasting_moderate = 1 AND nutrition_status_weighed = 1 AND height_measured_in_month = 1 THEN 1 ELSE 0 END), ' ||
+		'sum(CASE WHEN wasting_severe = 1 AND nutrition_status_weighed = 1 AND height_measured_in_month = 1 THEN 1 ELSE 0 END), ' ||
+		'sum(CASE WHEN stunting_moderate = 1 AND height_measured_in_month = 1 THEN 1 ELSE 0 END), ' ||
+		'sum(CASE WHEN stunting_severe = 1 AND height_measured_in_month = 1 THEN 1 ELSE 0 END), ' ||
 		'sum(cf_initiated), ' ||
 		'sum(cf_initiation_eligible), ' ||
 		'sum(height_measured_in_month), ' ||
-		'sum(wasting_normal), ' ||
-		'sum(stunting_normal), ' ||
+		'sum(CASE WHEN wasting_normal = 1 AND nutrition_status_weighed = 1 AND height_measured_in_month = 1 THEN 1 ELSE 0 END), ' ||
+		'sum(CASE WHEN stunting_normal = 1 AND height_measured_in_month = 1 THEN 1 ELSE 0 END), ' ||
 		'sum(valid_all_registered_in_month), ' ||
-		'sum(ebf_no_info_recorded) ' ||
-		'FROM ' || quote_ident(_ucr_child_monthly_table) || ' WHERE state_id != ' || quote_literal(_blank_value) ||  ' AND month = ' || quote_literal(_start_date) || ' ' ||
+		'sum(ebf_no_info_recorded), ' ||
+		'sum(CASE WHEN nutrition_status_weighed = 1 AND height_measured_in_month = 1 THEN 1 ELSE 0 END), ' ||
+		'sum(CASE WHEN (born_in_month = 1 AND (nutrition_status_weighed = 1 OR low_birth_weight_born_in_month = 1)) THEN 1 ELSE 0 END) ' ||
+		'FROM ' || quote_ident(_ucr_child_monthly_table) || ' ' ||
+    'WHERE state_id != ' || quote_literal(_blank_value) ||  ' AND month = ' || quote_literal(_start_date) || ' ' ||
 		'GROUP BY state_id, district_id, block_id, supervisor_id, awc_id, month, sex, age_tranche, caste, disabled, minority, resident)';
 
 	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename5 || '_indx1') || ' ON ' || quote_ident(_tablename5) || '(state_id, district_id, block_id, supervisor_id, awc_id)';
@@ -445,7 +454,9 @@ BEGIN
 	    'sum(wasting_normal), ' ||
 	    'sum(stunting_normal), ' ||
 	    'sum(valid_all_registered_in_month), ' ||
-	    'sum(ebf_no_info_recorded) ';
+	    'sum(ebf_no_info_recorded), ' ||
+      'sum(weighed_and_height_measured_in_month), ' ||
+      'sum(weighed_and_born_in_month) ';
 
 	EXECUTE 'INSERT INTO ' || quote_ident(_tablename4) || '(SELECT ' ||
 		'state_id, ' ||
@@ -626,7 +637,8 @@ BEGIN
 		'sum(institutional_delivery_in_month), ' ||
 		'sum(lactating_all), ' ||
 		'sum(pregnant_all) ' ||
-		'FROM ' || quote_ident(_ucr_ccs_record_table) || ' WHERE state_id != ' || quote_literal(_blank_value) ||  ' AND month = ' || quote_literal(_start_date) || ' ' ||
+		'FROM ' || quote_ident(_ucr_ccs_record_table) || ' ' ||
+    'WHERE state_id != ' || quote_literal(_blank_value) ||  ' AND month = ' || quote_literal(_start_date) || ' ' ||
 		'GROUP BY state_id, district_id, block_id, supervisor_id, awc_id, month, ccs_status, trimester, caste, disabled, minority, resident)';
 
 	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename5 || '_indx1') || ' ON ' || quote_ident(_tablename5) || '(state_id, district_id, block_id, supervisor_id, awc_id)';
@@ -946,6 +958,8 @@ DECLARE
 	_tablename5 text;
 	_child_health_tablename text;
 	_ccs_record_tablename text;
+	_ccs_record_monthly_tablename text;
+	_child_health_monthly_tablename text;
 	_daily_attendance_tablename text;
 	_awc_location_tablename text;
 	_thr_tablename text;
@@ -962,18 +976,24 @@ DECLARE
 	_yes_text text;
 	_no_text text;
 	_female text;
+	_month_end_6yr date;
+	_month_start_11yr date;
 	_month_end_11yr date;
 	_month_start_15yr date;
 	_month_end_15yr date;
 	_month_start_18yr date;
+	_month_end_49yr date;
 BEGIN
 	_start_date = date_trunc('MONTH', $1)::DATE;
 	_end_date = (date_trunc('MONTH', $1) + INTERVAL '1 MONTH - 1 day')::DATE;
 	_previous_month_date = (date_trunc('MONTH', _start_date) + INTERVAL '- 1 MONTH')::DATE;
+	_month_end_6yr = (_end_date + INTERVAL ' - 6 YEAR')::DATE;
+	_month_start_11yr = (_start_date + INTERVAL ' - 11 YEAR')::DATE;
 	_month_end_11yr = (_end_date + INTERVAL ' - 11 YEAR')::DATE;
 	_month_start_15yr = (_start_date + INTERVAL ' - 15 YEAR')::DATE;
 	_month_end_15yr = (_end_date + INTERVAL ' - 15 YEAR')::DATE;
 	_month_start_18yr = (_start_date + INTERVAL ' - 18 YEAR')::DATE;
+	_month_end_49yr = (_end_date + INTERVAL ' - 49 YEAR')::DATE;
 	_all_text = 'All';
 	_null_value = NULL;
 	_yes_text = 'yes';
@@ -986,6 +1006,8 @@ BEGIN
 	_tablename5 := 'agg_awc' || '_' || _start_date || '_5';
 	_child_health_tablename := 'agg_child_health';
 	_ccs_record_tablename := 'agg_ccs_record';
+	_ccs_record_monthly_tablename := 'ccs_record_monthly' || '_' || _start_date;
+	_child_health_monthly_tablename := 'child_health_monthly' || '_' || _start_date;
 	_thr_tablename := 'agg_thr_data' || '_' || _start_date;
 	EXECUTE 'SELECT table_name FROM ucr_table_name_mapping WHERE table_type = ' || quote_literal('daily_feeding') INTO _daily_attendance_tablename;
 	EXECUTE 'SELECT table_name FROM ucr_table_name_mapping WHERE table_type = ' || quote_literal('awc_location') INTO _awc_location_tablename;
@@ -1047,7 +1069,8 @@ BEGIN
 		'awc_not_open_department_work = ut.awc_not_open_department_work, ' ||
 		'awc_not_open_other = ut.awc_not_open_other, ' ||
 		'awc_not_open_no_data = ut.awc_not_open_no_data, ' ||
-		'awc_num_open = ut.awc_num_open ' ||
+		'awc_num_open = ut.awc_num_open, ' ||
+		'awc_days_pse_conducted = ut.awc_days_pse_conducted ' ||
 	'FROM (SELECT ' ||
 		'awc_id, ' ||
 		'month, ' ||
@@ -1071,7 +1094,8 @@ BEGIN
 		'sum(awc_not_open_department_work) AS awc_not_open_department_work, ' ||
 		'sum(awc_not_open_other) AS awc_not_open_other, ' ||
 		'25 - sum(awc_open_count) AS awc_not_open_no_data, ' ||
-		'CASE WHEN (sum(awc_open_count) > 0) THEN 1 ELSE 0 END AS awc_num_open ' ||
+		'CASE WHEN (sum(awc_open_count) > 0) THEN 1 ELSE 0 END AS awc_num_open, ' ||
+    'sum(pse_conducted) as awc_days_pse_conducted '
 		'FROM ' || quote_ident(_daily_attendance_tablename) || ' ' ||
 		'WHERE month = ' || quote_literal(_start_date) || ' GROUP BY awc_id, month) ut ' ||
 	'WHERE ut.month = agg_awc.month AND ut.awc_id = agg_awc.awc_id';
@@ -1138,23 +1162,63 @@ BEGIN
 		'cases_person = ut.cases_person, ' ||
 		'cases_person_all = ut.cases_person_all, ' ||
 		'cases_person_has_aadhaar = ut.cases_person_has_aadhaar, ' ||
+		'cases_person_beneficiary = ut.cases_person_beneficiary, ' ||
 		'cases_person_adolescent_girls_11_14 = ut.cases_person_adolescent_girls_11_14, ' ||
 		'cases_person_adolescent_girls_11_14_all = ut.cases_person_adolescent_girls_11_14_all, ' ||
 		'cases_person_adolescent_girls_15_18 = ut.cases_person_adolescent_girls_15_18, ' ||
-		'cases_person_adolescent_girls_15_18_all = ut.cases_person_adolescent_girls_15_18_all ' ||
+		'cases_person_adolescent_girls_15_18_all = ut.cases_person_adolescent_girls_15_18_all, ' ||
+		'cases_person_referred = ut.cases_person_referred ' ||
 	'FROM (SELECT ' ||
 		'awc_id, ' ||
 		'sum(seeking_services) AS cases_person, ' ||
 		'sum(count) AS cases_person_all, ' ||
-		'sum(CASE WHEN aadhar_date <= ' || quote_literal(_end_date) || ' THEN seeking_services ELSE 0 END) as cases_person_has_aadhaar, ' ||
+		'sum(CASE WHEN aadhar_date <= ' || quote_literal(_end_date) ||
+                  ' AND (' || quote_literal(_month_end_6yr) || ' <= dob ' ||
+                  '      OR (sex = ' || quote_literal(_female) ||
+                  '          AND dob BETWEEN ' || quote_literal(_month_end_49yr) || ' AND ' || quote_literal(_month_start_11yr) || '))' ||
+                  ' AND (date_death IS NULL OR date_death >= ' || quote_literal(_end_date) || ')' ||
+      ' THEN seeking_services ELSE 0 END) as cases_person_has_aadhaar, ' ||
+		'sum(CASE WHEN (' || quote_literal(_month_end_6yr) || ' <= dob ' ||
+                  '      OR (sex = ' || quote_literal(_female) ||
+                  '          AND dob BETWEEN ' || quote_literal(_month_end_49yr) || ' AND ' || quote_literal(_month_start_11yr) || '))' ||
+                  ' AND (date_death IS NULL OR date_death >= ' || quote_literal(_end_date) || ')' ||
+      ' THEN seeking_services ELSE 0 END) as cases_person_beneficiary, ' ||
 		'sum(CASE WHEN ' || quote_literal(_month_end_11yr) || ' > dob AND ' || quote_literal(_month_start_15yr) || ' <= dob' || ' AND sex = ' || quote_literal(_female) || ' THEN seeking_services ELSE 0 END) as cases_person_adolescent_girls_11_14, ' ||
 		'sum(CASE WHEN ' || quote_literal(_month_end_11yr) || ' > dob AND ' || quote_literal(_month_start_15yr) || ' <= dob' || ' AND sex = ' || quote_literal(_female) || ' THEN 1 ELSE 0 END) as cases_person_adolescent_girls_11_14_all, ' ||
 		'sum(CASE WHEN ' || quote_literal(_month_end_15yr) || ' > dob AND ' || quote_literal(_month_start_18yr) || ' <= dob' || ' AND sex = ' || quote_literal(_female) || ' THEN seeking_services ELSE 0 END) as cases_person_adolescent_girls_15_18, ' ||
-		'sum(CASE WHEN ' || quote_literal(_month_end_15yr) || ' > dob AND ' || quote_literal(_month_start_18yr) || ' <= dob' || ' AND sex = ' || quote_literal(_female) || ' THEN 1 ELSE 0 END) as cases_person_adolescent_girls_15_18_all ' ||
+		'sum(CASE WHEN ' || quote_literal(_month_end_15yr) || ' > dob AND ' || quote_literal(_month_start_18yr) || ' <= dob' || ' AND sex = ' || quote_literal(_female) || ' THEN 1 ELSE 0 END) as cases_person_adolescent_girls_15_18_all, ' ||
+    'sum(CASE WHEN last_referral_date BETWEEN ' || quote_literal(_start_date) || ' AND ' || quote_literal(_end_date) || ' THEN 1 ELSE 0 END) as cases_person_referred '
 		'FROM ' || quote_ident(_person_tablename) || ' ' ||
 		'WHERE (opened_on <= ' || quote_literal(_end_date) || ' AND (closed_on IS NULL OR closed_on >= ' || quote_literal(_start_date) || ' )) ' ||
 		'GROUP BY awc_id) ut ' ||
 	'WHERE ut.awc_id = agg_awc.awc_id';
+
+  -- Update child_health cases_person_has_aadhaar and cases_person_beneficiary
+  EXECUTE 'UPDATE ' || quote_ident(_tablename5) || ' agg_awc SET ' ||
+    'cases_person_has_aadhaar_v2 = ut.child_has_aadhar, ' ||
+    'cases_person_beneficiary_v2 = ut.child_beneficiary ' ||
+  'FROM (SELECT ' ||
+    'awc_id, ' ||
+    'sum(has_aadhar_id) as child_has_aadhar, ' ||
+    'count(*) as child_beneficiary ' ||
+    'FROM ' || quote_ident(_child_health_monthly_tablename) || ' ' ||
+    'WHERE valid_in_month = 1' ||
+    'GROUP BY awc_id) ut ' ||
+  'WHERE ut.awc_id = agg_awc.awc_id';
+
+  -- Update ccs_record cases_person_has_aadhaar and cases_person_beneficiary
+  -- pregnant and lactating both imply that the case is open, alive and seeking services in the month
+  EXECUTE 'UPDATE ' || quote_ident(_tablename5) || ' agg_awc SET ' ||
+    'cases_person_has_aadhaar_v2 = cases_person_has_aadhaar_v2 + ut.ccs_has_aadhar, ' ||
+    'cases_person_beneficiary_v2 = cases_person_beneficiary_v2 + ut.ccs_beneficiary ' ||
+  'FROM (SELECT ' ||
+    'awc_id, ' ||
+    'sum(has_aadhar_id) as ccs_has_aadhar, ' ||
+    'count(*) as ccs_beneficiary ' ||
+    'FROM ' || quote_ident(_ccs_record_monthly_tablename) || ' ' ||
+    'WHERE pregnant = 1 OR lactating = 1 ' ||
+    'GROUP BY awc_id) ut ' ||
+  'WHERE ut.awc_id = agg_awc.awc_id';
 
 	-- Pass to combine THR information from ccs record and child health table
 	EXECUTE 'UPDATE ' || quote_ident(_tablename5) || ' SET thr_score = ' ||
@@ -1171,6 +1235,10 @@ BEGIN
 		'usage_num_thr = ut.usage_num_thr, ' ||
 		'usage_num_hh_reg = ut.usage_num_hh_reg, ' ||
 		'is_launched = ut.is_launched, ' ||
+		'num_launched_states = ut.num_launched_awcs, ' ||
+		'num_launched_districts = ut.num_launched_awcs, ' ||
+		'num_launched_blocks = ut.num_launched_awcs, ' ||
+		'num_launched_supervisors = ut.num_launched_awcs, ' ||
 		'num_launched_awcs = ut.num_launched_awcs, ' ||
 		'training_phase = ut.training_phase, ' ||
 		'usage_num_add_person = ut.usage_num_add_person, ' ||
@@ -1354,8 +1422,8 @@ BEGIN
 		'functional_toilet AS infra_functional_toilet, ' ||
 		'baby_scale_usable AS infra_baby_weighing_scale, ' ||
 		'flat_scale_usable AS infra_flat_weighing_scale, ' ||
-		'adult_scale_available AS infra_adult_weighing_scale, ' ||
-		'GREATEST(baby_scale_usable, flat_scale_usable) AS infra_infant_weighing_scale, ' ||
+		'GREATEST(adult_scale_available, adult_scale_usable) AS infra_adult_weighing_scale, ' ||
+		'GREATEST(baby_scale_available, flat_scale_available, baby_scale_usable) AS infra_infant_weighing_scale, ' ||
 		'cooking_utensils_usable AS infra_cooking_utensils, ' ||
 		'medicine_kits_usable AS infra_medicine_kits, ' ||
 		'has_adequate_space_pse AS infra_adequate_space_pse ' ||
@@ -1364,6 +1432,11 @@ BEGIN
 	'WHERE ut.awc_id = agg_awc.awc_id';
     -- could possibly add multicol indexes to make order by faster?
 
+	EXECUTE 'UPDATE ' || quote_ident(_tablename5) || ' agg_awc SET ' ||
+    'num_awc_infra_last_update = 1 WHERE infra_last_update_date IS NOT NULL';
+
+	EXECUTE 'UPDATE ' || quote_ident(_tablename5) || ' agg_awc SET ' ||
+    'num_awc_infra_last_update = 0 WHERE infra_last_update_date IS NULL';
 
 	-- Roll Up by Location
 	_rollup_text = 	'sum(num_awcs), ' ||
@@ -1477,7 +1550,13 @@ BEGIN
         'sum(cases_person_adolescent_girls_15_18), ' ||
         'sum(cases_person_adolescent_girls_11_14_all), ' ||
         'sum(cases_person_adolescent_girls_15_18_all), ' ||
-        'sum(infra_infant_weighing_scale) ';
+        'sum(infra_infant_weighing_scale), ' ||
+        'sum(cases_person_beneficiary), ' ||
+        quote_nullable(_null_value) || ', ' ||
+        quote_nullable(_null_value) || ', ' ||
+        'sum(num_awc_infra_last_update), ' ||
+        'sum(cases_person_has_aadhaar_v2 ), ' ||
+        'sum(cases_person_beneficiary_v2) ';
 
 	EXECUTE 'INSERT INTO ' || quote_ident(_tablename4) || '(SELECT ' ||
 		'state_id, ' ||
@@ -1488,10 +1567,10 @@ BEGIN
 		'month, ' ||
 		_rollup_text ||
 		'4, ' ||
-		quote_nullable(_null_value) || ', ' ||
-		quote_nullable(_null_value) || ', ' ||
-		quote_nullable(_null_value) || ', ' ||
-		'1, ' ||
+		'CASE WHEN (sum(num_launched_awcs) > 0) THEN 1 ELSE 0 END, ' ||
+		'CASE WHEN (sum(num_launched_awcs) > 0) THEN 1 ELSE 0 END, ' ||
+		'CASE WHEN (sum(num_launched_awcs) > 0) THEN 1 ELSE 0 END, ' ||
+		'CASE WHEN (sum(num_launched_awcs) > 0) THEN 1 ELSE 0 END, ' ||
 		'sum(num_launched_awcs), ' ||
 		_rollup_text2 ||
 		'FROM ' || quote_ident(_tablename5) || ' ' ||
@@ -1510,9 +1589,9 @@ BEGIN
 		'month, ' ||
 		_rollup_text ||
 		'3, ' ||
-		quote_nullable(_null_value) || ', ' ||
-		quote_nullable(_null_value) || ', ' ||
-		'1, ' ||
+		'CASE WHEN (sum(num_launched_supervisors) > 0) THEN 1 ELSE 0 END, ' ||
+		'CASE WHEN (sum(num_launched_supervisors) > 0) THEN 1 ELSE 0 END, ' ||
+		'CASE WHEN (sum(num_launched_supervisors) > 0) THEN 1 ELSE 0 END, ' ||
 		'sum(num_launched_supervisors), ' ||
 		'sum(num_launched_awcs), ' ||
 		_rollup_text2 ||
@@ -1531,8 +1610,8 @@ BEGIN
 		'month, ' ||
 		_rollup_text ||
 		'2, ' ||
-		quote_nullable(_null_value) || ', ' ||
-		'1, ' ||
+		'CASE WHEN (sum(num_launched_blocks) > 0) THEN 1 ELSE 0 END, ' ||
+		'CASE WHEN (sum(num_launched_blocks) > 0) THEN 1 ELSE 0 END, ' ||
 		'sum(num_launched_blocks), ' ||
 		'sum(num_launched_supervisors), ' ||
 		'sum(num_launched_awcs), ' ||
@@ -1551,7 +1630,7 @@ BEGIN
 		'month, ' ||
 		_rollup_text ||
 		'1, ' ||
-		'1, ' ||
+		'CASE WHEN (sum(num_launched_districts) > 0) THEN 1 ELSE 0 END, ' ||
 		'sum(num_launched_districts), ' ||
 		'sum(num_launched_blocks), ' ||
 		'sum(num_launched_supervisors), ' ||
@@ -1592,11 +1671,15 @@ BEGIN
 		'state_id, ' ||
 		'state_name, ' ||
 		'state_site_code, ' ||
-		'4 FROM awc_location GROUP BY ' ||
+		'4, ' ||
+		'block_map_location_name, ' ||
+		'district_map_location_name, ' ||
+		'state_map_location_name FROM awc_location GROUP BY ' ||
 		'supervisor_id, supervisor_name, supervisor_site_code, ' ||
 		'block_id, block_name, block_site_code,' ||
 		'district_id, district_name, district_site_code,' ||
-		'state_id, state_name, state_site_code' ||
+		'state_id, state_name, state_site_code, ' ||
+		'block_map_location_name, district_map_location_name, state_map_location_name ' ||
 		')';
 
 	EXECUTE 'INSERT INTO awc_location (SELECT ' ||
@@ -1615,10 +1698,14 @@ BEGIN
 		'state_id, ' ||
 		'state_name, ' ||
 		'state_site_code, ' ||
-		'3 FROM awc_location GROUP BY ' ||
+		'3, ' ||
+		'block_map_location_name, ' ||
+		'district_map_location_name, ' ||
+		'state_map_location_name FROM awc_location GROUP BY ' ||
 		'block_id, block_name, block_site_code,' ||
 		'district_id, district_name, district_site_code,' ||
-		'state_id, state_name, state_site_code' ||
+		'state_id, state_name, state_site_code, ' ||
+		'block_map_location_name, district_map_location_name, state_map_location_name ' ||
 		')';
 
 	EXECUTE 'INSERT INTO awc_location (SELECT ' ||
@@ -1637,9 +1724,13 @@ BEGIN
 		'state_id, ' ||
 		'state_name, ' ||
 		'state_site_code, ' ||
-		'2 FROM awc_location GROUP BY ' ||
+		'2, ' ||
+		quote_nullable(null_value) || ', ' ||
+		'district_map_location_name, ' ||
+		'state_map_location_name FROM awc_location GROUP BY ' ||
 		'district_id, district_name, district_site_code,' ||
-		'state_id, state_name, state_site_code' ||
+		'state_id, state_name, state_site_code, ' ||
+		'district_map_location_name, state_map_location_name ' ||
 		')';
 
 	EXECUTE 'INSERT INTO awc_location (SELECT ' ||
@@ -1658,8 +1749,11 @@ BEGIN
 		'state_id, ' ||
 		'state_name, ' ||
 		'state_site_code, ' ||
-		'1 FROM awc_location GROUP BY ' ||
-		'state_id, state_name, state_site_code' ||
+		'1, ' ||
+		quote_nullable(null_value) || ', ' ||
+		quote_nullable(null_value) || ', ' ||
+		'state_map_location_name FROM awc_location GROUP BY ' ||
+		'state_id, state_name, state_site_code, state_map_location_name ' ||
 		')';
 END;
 $BODY$
@@ -1678,6 +1772,7 @@ DECLARE
     _all_text text;
     _null_value text;
     _rollup_text text;
+    _rollup_text_2 text;
 BEGIN
 	_table_date = ($1)::DATE;
 	_current_month = date_trunc('MONTH', $1)::DATE;
@@ -1698,6 +1793,7 @@ BEGIN
 	    'cases_person, ' ||
 	    'cases_person_all, ' ||
 	    'cases_person_has_aadhaar, ' ||
+	    'cases_person_beneficiary, ' ||
 	    'cases_child_health, ' ||
 	    'cases_child_health_all, ' ||
 	    'cases_ccs_pregnant, ' ||
@@ -1714,7 +1810,9 @@ BEGIN
 	    'num_launched_districts, ' ||
 	    'num_launched_blocks, ' ||
 	    'num_launched_supervisors, ' ||
-	    'num_launched_awcs ';
+	    'num_launched_awcs, ' ||
+      'cases_person_has_aadhaar_v2, ' ||
+      'cases_person_beneficiary_v2 ';
 
 	-- DROP and create daily table
 	EXECUTE 'DROP TABLE IF EXISTS ' || quote_ident(_tablename);
@@ -1737,6 +1835,7 @@ BEGIN
             'cases_person, ' ||
             'cases_person_all, ' ||
             'cases_person_has_aadhaar, ' ||
+            'cases_person_beneficiary, ' ||
             'cases_child_health, ' ||
             'cases_child_health_all, ' ||
             'cases_ccs_pregnant, ' ||
@@ -1753,7 +1852,9 @@ BEGIN
             'num_launched_districts, ' ||
             'num_launched_blocks, ' ||
             'num_launched_supervisors, ' ||
-            'num_launched_awcs ' ||
+            'num_launched_awcs, ' ||
+            'cases_person_has_aadhaar_v2, ' ||
+            'cases_person_beneficiary_v2 ' ||
          'FROM agg_awc WHERE aggregation_level = 5 AND month = ' || quote_literal(_current_month) ||
          ')';
 
@@ -1781,6 +1882,7 @@ BEGIN
 		'sum(cases_person), ' ||
 		'sum(cases_person_all), ' ||
 		'sum(cases_person_has_aadhaar), ' ||
+		'sum(cases_person_beneficiary), ' ||
 		'sum(cases_child_health), ' ||
 		'sum(cases_child_health_all), ' ||
 		'sum(cases_ccs_pregnant), ' ||
@@ -1794,6 +1896,9 @@ BEGIN
 		'sum(daily_attendance_open), ' ||
 		'sum(num_awcs), ';
 
+  _rollup_text_2 = 'sum(cases_person_has_aadhaar_v2), ' ||
+    'sum(cases_person_beneficiary_v2) ';
+
 	EXECUTE 'INSERT INTO ' || quote_ident(_tablename) ||
 	    '( '|| _table_columns || ') '
 	    '(SELECT ' ||
@@ -1805,11 +1910,12 @@ BEGIN
 		'4, ' ||
 		'date, ' ||
 		_rollup_text ||
-		quote_nullable(_null_value) || ', ' ||
-		quote_nullable(_null_value) || ', ' ||
-		quote_nullable(_null_value) || ', ' ||
-		'1, ' ||
-		'sum(num_launched_awcs) ' ||
+		'CASE WHEN (sum(num_launched_awcs) > 0) THEN 1 ELSE 0 END, ' ||
+		'CASE WHEN (sum(num_launched_awcs) > 0) THEN 1 ELSE 0 END, ' ||
+		'CASE WHEN (sum(num_launched_awcs) > 0) THEN 1 ELSE 0 END, ' ||
+		'CASE WHEN (sum(num_launched_awcs) > 0) THEN 1 ELSE 0 END, ' ||
+		'sum(num_launched_awcs), ' ||
+    _rollup_text_2 ||
 		'FROM ' || quote_ident(_tablename) || ' ' ||
 		'WHERE aggregation_level = 5 ' ||
 		'GROUP BY state_id, district_id, block_id, supervisor_id, date)';
@@ -1825,11 +1931,12 @@ BEGIN
 		'3, ' ||
 		'date, ' ||
 		_rollup_text ||
-		quote_nullable(_null_value) || ', ' ||
-		quote_nullable(_null_value) || ', ' ||
-		'1, ' ||
+		'CASE WHEN (sum(num_launched_supervisors) > 0) THEN 1 ELSE 0 END, ' ||
+		'CASE WHEN (sum(num_launched_supervisors) > 0) THEN 1 ELSE 0 END, ' ||
+		'CASE WHEN (sum(num_launched_supervisors) > 0) THEN 1 ELSE 0 END, ' ||
 		'sum(num_launched_supervisors), ' ||
-		'sum(num_launched_awcs) ' ||
+		'sum(num_launched_awcs), ' ||
+    _rollup_text_2 ||
 		'FROM ' || quote_ident(_tablename) || ' ' ||
 		'WHERE aggregation_level = 4 ' ||
 		'GROUP BY state_id, district_id, block_id, date)';
@@ -1845,11 +1952,12 @@ BEGIN
 		'2, ' ||
 		'date, ' ||
 		_rollup_text ||
-		quote_nullable(_null_value) || ', ' ||
-		'1, ' ||
+		'CASE WHEN (sum(num_launched_blocks) > 0) THEN 1 ELSE 0 END, ' ||
+		'CASE WHEN (sum(num_launched_blocks) > 0) THEN 1 ELSE 0 END, ' ||
 		'sum(num_launched_blocks), ' ||
 		'sum(num_launched_supervisors), ' ||
-		'sum(num_launched_awcs) ' ||
+		'sum(num_launched_awcs), ' ||
+    _rollup_text_2 ||
 		'FROM ' || quote_ident(_tablename) || ' ' ||
 		'WHERE aggregation_level = 3 ' ||
 		'GROUP BY state_id, district_id, date)';
@@ -1865,11 +1973,12 @@ BEGIN
 		'1, ' ||
 		'date, ' ||
 		_rollup_text ||
-		'1, ' ||
+		'CASE WHEN (sum(num_launched_districts) > 0) THEN 1 ELSE 0 END, ' ||
 		'sum(num_launched_districts), ' ||
 		'sum(num_launched_blocks), ' ||
 		'sum(num_launched_supervisors), ' ||
-		'sum(num_launched_awcs) ' ||
+		'sum(num_launched_awcs), ' ||
+    _rollup_text_2 ||
 		'FROM ' || quote_ident(_tablename) || ' ' ||
 		'WHERE aggregation_level = 2 ' ||
 		'GROUP BY state_id, date)';

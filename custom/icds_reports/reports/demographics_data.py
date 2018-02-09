@@ -1,20 +1,31 @@
+from __future__ import absolute_import
 from datetime import datetime
 
 from dateutil.relativedelta import relativedelta
 from django.db.models.aggregates import Sum
 from django.utils.translation import ugettext as _
 
-from custom.icds_reports.models import AggAwcDailyView
-from custom.icds_reports.utils import percent_increase, percent_diff, get_value, apply_exclude
+from corehq.util.quickcache import quickcache
+from custom.icds_reports.models import AggAwcDailyView, AggAwcMonthly
+from custom.icds_reports.utils import (
+    percent_increase, percent_diff, get_value, apply_exclude,
+    person_has_aadhaar_column, person_is_beneficiary_column
+)
 
 
-def get_demographics_data(domain, yesterday, config, show_test=False):
-    yesterday_date = datetime(*yesterday)
-    two_days_ago = (yesterday_date - relativedelta(days=1)).date()
+@quickcache(['domain', 'now_date', 'config', 'show_test', 'beta'], timeout=30 * 60)
+def get_demographics_data(domain, now_date, config, show_test=False, beta=False):
+    now_date = datetime(*now_date)
+    yesterday_date = (now_date - relativedelta(days=1)).date()
+    two_days_ago = (now_date - relativedelta(days=2)).date()
+    current_month = datetime(*config['month'])
+    previous_month = datetime(*config['prev_month'])
+    del config['month']
+    del config['prev_month']
 
-    def get_data_for(date, filters):
-        queryset = AggAwcDailyView.objects.filter(
-            date=date, **filters
+    def get_data_for(query_class, filters):
+        queryset = query_class.objects.filter(
+            **filters
         ).values(
             'aggregation_level'
         ).annotate(
@@ -25,18 +36,32 @@ def get_demographics_data(domain, yesterday, config, show_test=False):
             ccs_pregnant_all=Sum('cases_ccs_pregnant_all'),
             css_lactating=Sum('cases_ccs_lactating'),
             css_lactating_all=Sum('cases_ccs_lactating_all'),
-            person_adolescent=Sum('cases_person_adolescent_girls_11_18'),
-            person_adolescent_all=Sum('cases_person_adolescent_girls_11_18_all'),
-            person_aadhaar=Sum('cases_person_has_aadhaar'),
-            all_persons=Sum('cases_person')
+            person_adolescent=Sum('cases_person_adolescent_girls_11_14'),
+            person_adolescent_all=Sum('cases_person_adolescent_girls_11_14_all'),
+            person_aadhaar=Sum(person_has_aadhaar_column(beta)),
+            all_persons=Sum(person_is_beneficiary_column(beta))
         )
 
         if not show_test:
             queryset = apply_exclude(domain, queryset)
         return queryset
 
-    yesterday_data = get_data_for(yesterday_date, config)
-    two_days_ago_data = get_data_for(two_days_ago, config)
+    if current_month.month == now_date.month and current_month.year == now_date.year:
+        config['date'] = yesterday_date
+        data = get_data_for(AggAwcDailyView, config)
+        config['date'] = two_days_ago
+        prev_data = get_data_for(AggAwcDailyView, config)
+        if not data:
+            data = prev_data
+            config['date'] = (now_date - relativedelta(days=3)).date()
+            prev_data = get_data_for(AggAwcDailyView, config)
+        frequency = 'day'
+    else:
+        config['month'] = current_month
+        data = get_data_for(AggAwcMonthly, config)
+        config['month'] = previous_month
+        prev_data = get_data_for(AggAwcMonthly, config)
+        frequency = 'month'
 
     return {
         'records': [
@@ -44,163 +69,115 @@ def get_demographics_data(domain, yesterday, config, show_test=False):
                 {
                     'label': _('Registered Households'),
                     'help_text': _('Total number of households registered'),
-                    'percent': percent_increase('household', yesterday_data, two_days_ago_data),
+                    'percent': percent_increase('household', data, prev_data),
                     'color': 'green' if percent_increase(
                         'household',
-                        yesterday_data,
-                        two_days_ago_data) > 0 else 'red',
-                    'value': get_value(yesterday_data, 'household'),
+                        data,
+                        prev_data) > 0 else 'red',
+                    'value': get_value(data, 'household'),
                     'all': None,
                     'format': 'number',
-                    'frequency': 'day',
+                    'frequency': frequency,
                     'redirect': 'registered_household'
                 },
                 {
-                    'label': _('Children (0-6 years)'),
-                    'help_text': _('Total number of children registered between the age of 0 - 6 years'),
-                    'percent': percent_increase('child_health_all', yesterday_data, two_days_ago_data),
-                    'color': 'green' if percent_increase(
-                        'child_health_all',
-                        yesterday_data,
-                        two_days_ago_data) > 0 else 'red',
-                    'value': get_value(yesterday_data, 'child_health_all'),
-                    'all': None,
-                    'format': 'number',
-                    'frequency': 'day',
-                    'redirect': 'enrolled_children'
-                }
-            ],
-            [
-                {
-                    'label': _('Children (0-6 years) enrolled for ICDS services'),
+                    'label': _('Percent Aadhaar-seeded Beneficiaries'),
                     'help_text': _((
-                        "Total number of children registered between the age of 0 - 6 years "
-                        "and enrolled for ICDS services"
-                    )),
-                    'percent': percent_increase('child_health', yesterday_data, two_days_ago_data),
-                    'color': 'green' if percent_increase(
-                        'child_health',
-                        yesterday_data,
-                        two_days_ago_data) > 0 else 'red',
-                    'value': get_value(yesterday_data, 'child_health'),
-                    'all': None,
-                    'format': 'number',
-                    'frequency': 'day'
-                },
-                {
-                    'label': _('Pregnant Women'),
-                    'help_text': _('Total number of pregnant women registered'),
-                    'percent': percent_increase('ccs_pregnant_all', yesterday_data, two_days_ago_data),
-                    'color': 'green' if percent_increase(
-                        'ccs_pregnant_all',
-                        yesterday_data,
-                        two_days_ago_data) > 0 else 'red',
-                    'value': get_value(yesterday_data, 'ccs_pregnant_all'),
-                    'all': None,
-                    'format': 'number',
-                    'frequency': 'day',
-                    'redirect': 'enrolled_women'
-                }
-            ], [
-                {
-                    'label': _('Pregnant Women enrolled for ICDS services'),
-                    'help_text': _('Total number of pregnant women registered and enrolled for ICDS services'),
-                    'percent': percent_increase('ccs_pregnant', yesterday_data, two_days_ago_data),
-                    'color': 'green' if percent_increase(
-                        'ccs_pregnant',
-                        yesterday_data,
-                        two_days_ago_data) > 0 else 'red',
-                    'value': get_value(yesterday_data, 'ccs_pregnant'),
-                    'all': None,
-                    'format': 'number',
-                    'frequency': 'day'
-                },
-                {
-                    'label': _('Lactating Women'),
-                    'help_text': _('Total number of lactating women registered'),
-                    'percent': percent_increase('css_lactating_all', yesterday_data, two_days_ago_data),
-                    'color': 'green' if percent_increase(
-                        'css_lactating_all',
-                        yesterday_data,
-                        two_days_ago_data) > 0 else 'red',
-                    'value': get_value(yesterday_data, 'css_lactating_all'),
-                    'all': None,
-                    'format': 'number',
-                    'frequency': 'day',
-                    'redirect': 'lactating_enrolled_women'
-                }
-            ], [
-                {
-                    'label': _('Lactating Women enrolled for ICDS services'),
-                    'help_text': _('Total number of lactating women registered and enrolled for ICDS services'),
-                    'percent': percent_increase('css_lactating', yesterday_data, two_days_ago_data),
-                    'color': 'green' if percent_increase(
-                        'css_lactating',
-                        yesterday_data,
-                        two_days_ago_data) > 0 else 'red',
-                    'value': get_value(yesterday_data, 'css_lactating'),
-                    'all': None,
-                    'format': 'number',
-                    'frequency': 'day'
-                },
-                {
-                    'label': _('Adolescent Girls (11-18 years)'),
-                    'help_text': _('Total number of adolescent girls (11 - 18 years) who are registered'),
-                    'percent': percent_increase(
-                        'person_adolescent_all',
-                        yesterday_data,
-                        two_days_ago_data
-                    ),
-                    'color': 'green' if percent_increase(
-                        'person_adolescent_all',
-                        yesterday_data,
-                        two_days_ago_data) > 0 else 'red',
-                    'value': get_value(yesterday_data, 'person_adolescent_all'),
-                    'all': None,
-                    'format': 'number',
-                    'redirect': 'adolescent_girls'
-                }
-            ], [
-                {
-                    'label': _('Adolescent Girls (11-18 years) enrolled for ICDS services'),
-                    'help_text': _((
-                        "Total number of adolescent girls (11 - 18 years) "
-                        "who are registered and enrolled for ICDS services"
-                    )),
-                    'percent': percent_increase(
-                        'person_adolescent',
-                        yesterday_data,
-                        two_days_ago_data
-                    ),
-                    'color': 'green' if percent_increase(
-                        'person_adolescent',
-                        yesterday_data,
-                        two_days_ago_data) > 0 else 'red',
-                    'value': get_value(yesterday_data, 'person_adolescent'),
-                    'all': None,
-                    'format': 'number',
-                    'frequency': 'day'
-                },
-                {
-                    'label': _('Percent Adhaar Seeded Individuals'),
-                    'help_text': _((
-                        'Percentage of ICDS beneficiaries whose Adhaar identification has been captured'
+                        'Percentage of ICDS beneficiaries whose Aadhaar identification has been captured'
                     )),
                     'percent': percent_diff(
                         'person_aadhaar',
-                        yesterday_data,
-                        two_days_ago_data,
+                        data,
+                        prev_data,
                         'all_persons'
                     ),
                     'color': 'green' if percent_increase(
                         'person_aadhaar',
-                        yesterday_data,
-                        two_days_ago_data) > 0 else 'red',
-                    'value': get_value(yesterday_data, 'person_aadhaar'),
-                    'all': get_value(yesterday_data, 'all_persons'),
+                        data,
+                        prev_data) > 0 else 'red',
+                    'value': get_value(data, 'person_aadhaar'),
+                    'all': get_value(data, 'all_persons'),
                     'format': 'percent_and_div',
-                    'frequency': 'day',
+                    'frequency': frequency,
                     'redirect': 'adhaar'
+                }
+            ],
+            [
+                {
+                    'label': _('Percent children (0-6 years) enrolled for Anganwadi Services'),
+                    'help_text': _('Percentage of children registered between '
+                                   '0-6 years old who are enrolled for Anganwadi Services'),
+                    'percent': percent_diff('child_health', data, prev_data, 'child_health_all'),
+                    'color': 'green' if percent_diff(
+                        'child_health',
+                        data,
+                        prev_data, 'child_health_all') > 0 else 'red',
+                    'value': get_value(data, 'child_health'),
+                    'all': get_value(data, 'child_health_all'),
+                    'format': 'percent_and_div',
+                    'frequency': frequency,
+                    'redirect': 'enrolled_children'
+                },
+                {
+                    'label': _('Percent pregnant women enrolled for Anganwadi Services'),
+                    'help_text': _('Percentage of pregnant women registered who are enrolled for Anganwadi '
+                                   'Services'),
+                    'percent': percent_diff('ccs_pregnant', data, prev_data, 'ccs_pregnant_all'),
+                    'color': 'green' if percent_diff(
+                        'ccs_pregnant',
+                        data,
+                        prev_data,
+                        'ccs_pregnant_all'
+                    ) > 0 else 'red',
+                    'value': get_value(data, 'ccs_pregnant'),
+                    'all': get_value(data, 'ccs_pregnant_all'),
+                    'format': 'percent_and_div',
+                    'frequency': frequency,
+                    'redirect': 'enrolled_women'
+                }
+            ],
+            [
+
+                {
+                    'label': _('Percent lactating women enrolled for Anganwadi Services'),
+                    'help_text': _('Percentage of lactating women registered who are enrolled for Anganwadi '
+                                   'Services'),
+                    'percent': percent_diff('css_lactating', data, prev_data, 'css_lactating_all'),
+                    'color': 'green' if percent_diff(
+                        'css_lactating',
+                        data,
+                        prev_data,
+                        'css_lactating_all'
+                    ) > 0 else 'red',
+                    'value': get_value(data, 'css_lactating'),
+                    'all': get_value(data, 'css_lactating_all'),
+                    'format': 'percent_and_div',
+                    'frequency': frequency,
+                    'redirect': 'lactating_enrolled_women'
+                },
+                {
+                    'label': _('Percent adolescent girls (11-14 years) enrolled for Anganwadi Services'),
+                    'help_text': _((
+                        "Percentage of adolescent girls registered between 11-14 years"
+                        " old who are enrolled for Anganwadi Services"
+                    )),
+                    'percent': percent_diff(
+                        'person_adolescent',
+                        data,
+                        prev_data,
+                        'person_adolescent_all'
+                    ),
+                    'color': 'green' if percent_diff(
+                        'person_adolescent',
+                        data,
+                        prev_data,
+                        'person_adolescent_all'
+                    ) > 0 else 'red',
+                    'value': get_value(data, 'person_adolescent'),
+                    'all': get_value(data, 'person_adolescent_all'),
+                    'format': 'percent_and_div',
+                    'frequency': frequency,
+                    'redirect': 'adolescent_girls'
                 }
             ]
         ]

@@ -1,4 +1,4 @@
-/* globals hqDefine hqImport django analytics */
+/* globals hqDefine hqImport django */
 hqDefine("app_manager/js/releases/app_view_release_manager", function() {
     var initial_page_data = hqImport("hqwebapp/js/initial_page_data").get;
 
@@ -18,10 +18,6 @@ hqDefine("app_manager/js/releases/app_view_release_manager", function() {
         _.defer(function(){ releasesMain.getMoreSavedApps(false); });
         el.koApplyBindings(releasesMain);
     }
-
-    $("#onboarding-video").click(function() {
-        analytics.workflow('Clicked onboarding video link');
-    });
 
     // View changes / app diff
     var appDiff = hqImport('app_manager/js/releases/app_diff').init('#app-diff-modal .modal-body');
@@ -43,21 +39,15 @@ hqDefine("app_manager/js/releases/app_view_release_manager", function() {
         $profilesTab.koApplyBindings(profileManager);
     }
 
-    if (initial_page_data('intro_only')) {
-        hqImport('app_manager/js/preview_app').forceShowPreview();
-    }
-
     $(function() {
-        analytics.workflow('Visited the Release Manager');
-        if (initial_page_data('confirm')) {
-            analytics.usage('User actions', 'User created login', window.location.pathname);
+        if (initial_page_data('intro_only')) {
+            hqImport('app_manager/js/preview_app').forceShowPreview();
         }
 
-        var ab_test = initial_page_data('ab_test');
-        if (ab_test) {
-            var options = {};
-            options[ab_test.name] = ab_test.version;
-            analytics.identify(options);
+        hqImport('analytix/js/kissmetrix').track.event('Visited the Release Manager');
+        if (initial_page_data('confirm')) {
+            hqImport('analytix/js/google').track.event('User actions', 'User created login', window.location.pathname);
+            hqImport('analytix/js/google').track.event('User actions', 'Forms', 'Name Your First Project');
         }
     });
 });

@@ -1,0 +1,298 @@
+{
+  "domains": [
+    "enikshay-test",
+    "enikshay",
+    "enikshay-performance-test"
+  ],
+  "server_environment": [
+    "enikshay",
+    "softlayer"
+  ],
+  "data_source_table": "person-for-referral-v3",
+  "report_id": "referral-report-v3",
+  "config": {
+    "description": "",
+    "title": "Referred in Report",
+    "sort_expression": [
+      {
+        "field": "referred_to_name",
+        "order": "ASC"
+      }
+    ],
+    "visible": true,
+    "configured_charts": [],
+    "aggregation_columns": [
+      "doc_id"
+    ],
+    "filters": [
+      {
+        "compare_as_string": true,
+        "datatype": "string",
+        "display": "Date of Referral",
+        "field": "date_of_referral",
+        "type": "date",
+        "slug": "date_of_referral_filter"
+      },
+      {
+        "datatype": "string",
+        "field": "does_not_matter",
+        "type": "enikshay_location_hierarchy",
+        "display": "Location",
+        "slug": "location_hierarchy"
+      },
+      {
+        "pre_value": "_invalid_",
+        "datatype": "string",
+        "pre_operator": "distinct from",
+        "display": null,
+        "field": "person_owner_id",
+        "type": "pre",
+        "slug": "owner_id"
+      },
+      {
+        "pre_value": "rejected",
+        "datatype": "string",
+        "pre_operator": "distinct from",
+        "display": null,
+        "field": "referral_status",
+        "type": "pre",
+        "slug": "referral_status"
+      },
+      {
+        "pre_value": "duplicate_referral_reconciliation",
+        "datatype": "string",
+        "pre_operator": "distinct from",
+        "display": null,
+        "field": "referral_closed_reason",
+        "type": "pre",
+        "slug": "referral_closed_reason"
+      },
+      {
+        "pre_value": 1,
+        "datatype": "string",
+        "slug": "have_referral",
+        "field": "have_referral",
+        "type": "pre",
+        "display": null
+      }
+    ],
+    "columns": [
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "aggregation": "simple",
+        "field": "nikshay_id",
+        "calculate_total": false,
+        "type": "field",
+        "display": "Nikshay ID"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "aggregation": "simple",
+        "field": "enikshay_id",
+        "calculate_total": false,
+        "type": "field",
+        "display": "eNikshay ID"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "aggregation": "simple",
+        "field": "name",
+        "calculate_total": false,
+        "type": "field",
+        "display": "Name"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "aggregation": "simple",
+        "field": "age",
+        "calculate_total": false,
+        "type": "field",
+        "display": "Age"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "aggregation": "simple",
+        "field": "sex",
+        "calculate_total": false,
+        "type": "field",
+        "display": "Sex"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "aggregation": "simple",
+        "field": "phone_number",
+        "calculate_total": false,
+        "type": "field",
+        "display": "Phone number"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "aggregation": "simple",
+        "field": "dob",
+        "calculate_total": false,
+        "type": "field",
+        "display": "DOB"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "width": "100px",
+        "format": "default",
+        "aggregation": "simple",
+        "field": "address",
+        "calculate_total": false,
+        "type": "field",
+        "display": "Address"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "width": "150px",
+        "format": "default",
+        "aggregation": "simple",
+        "field": "referred_by_name",
+        "calculate_total": false,
+        "type": "field",
+        "display": "Referred by"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "width": "150px",
+        "format": "default",
+        "aggregation": "simple",
+        "field": "referred_to_name",
+        "calculate_total": false,
+        "type": "field",
+        "display": "Referred To"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "aggregation": "simple",
+        "field": "date_of_referral",
+        "calculate_total": false,
+        "type": "field",
+        "display": "Date of referral"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "transform": {
+          "translations": {
+            "initiation_of_treatment": "Initiation of Treatment",
+            "transfer_out": "Transfer Out"
+          },
+          "type": "translation"
+        },
+        "aggregation": "simple",
+        "field": "referral_reason",
+        "calculate_total": false,
+        "type": "field",
+        "display": "Reason for Referral"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "aggregation": "simple",
+        "field": "date_of_acceptance",
+        "calculate_total": false,
+        "type": "field",
+        "display": "Date of Acceptance"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "transform": {
+          "translations": {
+            "confirmed_drtb": "Confirmed DRTB (Patient)",
+            "presumptive_tb": "Presumptive TB",
+            "confirmed_tb": "Confirmed DSTB (Patient)"
+          },
+          "type": "translation"
+        },
+        "aggregation": "simple",
+        "field": "episode_type",
+        "calculate_total": false,
+        "type": "field",
+        "display": "Episode Type"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "aggregation": "simple",
+        "field": "date_of_diagnosis",
+        "calculate_total": false,
+        "type": "field",
+        "display": "Date of Diagnosis"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "aggregation": "simple",
+        "field": "treatment_initiated",
+        "calculate_total": false,
+        "type": "field",
+        "display": "Initiated on Treatment"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "aggregation": "simple",
+        "field": "case_definition",
+        "calculate_total": false,
+        "type": "field",
+        "display": "Case Definition"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "aggregation": "simple",
+        "field": "regimen",
+        "calculate_total": false,
+        "type": "field",
+        "display": "Regimen"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "transform": {
+          "translations": {
+            "schedule_mwf": "Intermittent (MWF)",
+            "schedule_trs": "Intermittent (TTS)",
+            "schedule_daily": "Daily"
+          },
+          "type": "translation"
+        },
+        "aggregation": "simple",
+        "field": "adherence_schedule_id",
+        "calculate_total": false,
+        "type": "field",
+        "display": "Dosage Frequency"
+      }
+    ]
+  }
+}

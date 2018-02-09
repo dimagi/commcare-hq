@@ -1,7 +1,9 @@
+from __future__ import absolute_import
 import re
 import uuid
 import datetime
 from couchdbkit.resource import ResourceNotFound
+from corehq.apps.translations.models import StandaloneTranslationDoc
 from corehq.apps.users.models import CouchUser
 from django.conf import settings
 from corehq.apps.hqcase.utils import submit_case_block_from_template
@@ -11,6 +13,7 @@ from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import json_format_datetime
 from dimagi.utils.modules import to_function
 from django.utils.translation import ugettext as _
+import six
 
 
 class DateFormat(object):
@@ -48,7 +51,7 @@ def get_date_format(human_readable_format):
 
 
 def strip_plus(phone_number):
-    if (isinstance(phone_number, basestring) and len(phone_number) > 0
+    if (isinstance(phone_number, six.string_types) and len(phone_number) > 0
             and phone_number[0] == "+"):
         return phone_number[1:]
     else:
@@ -67,7 +70,7 @@ def clean_phone_number(text):
 
 def validate_phone_number(phone_number, error_message=None):
     if (
-        not isinstance(phone_number, basestring) or
+        not isinstance(phone_number, six.string_types) or
         not phone_number_plus_re.match(phone_number)
     ):
         error_message = error_message or _("Invalid phone number format.")
@@ -156,19 +159,6 @@ def _get_backend_classes(backend_list):
 @memoized
 def get_sms_backend_classes():
     return _get_backend_classes(settings.SMS_LOADED_SQL_BACKENDS)
-
-
-@memoized
-def get_ivr_backend_classes():
-    return _get_backend_classes(settings.IVR_LOADED_SQL_BACKENDS)
-
-
-@memoized
-def get_backend_classes():
-    return _get_backend_classes(
-        settings.SMS_LOADED_SQL_BACKENDS +
-        settings.IVR_LOADED_SQL_BACKENDS
-    )
 
 
 CLEAN_TEXT_REPLACEMENTS = (
@@ -305,3 +295,13 @@ def is_contact_active(domain, contact_doc_type, contact_id):
         # We can't tie the contact to a document so since we can't say whether
         # it's inactive, we count it as active
         return True
+
+
+def get_or_create_translation_doc(domain):
+    with StandaloneTranslationDoc.get_locked_obj(domain, 'sms', create=True) as tdoc:
+        if len(tdoc.langs) == 0:
+            tdoc.langs = ['en']
+            tdoc.translations['en'] = {}
+            tdoc.save()
+
+        return tdoc

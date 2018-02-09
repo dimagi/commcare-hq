@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import json
 import uuid
 
@@ -18,8 +19,7 @@ from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.tests.util import delete_all_cases
 from casexml.apps.case.util import post_case_blocks
-from corehq.apps.userreports.reports.view import ConfigurableReport, \
-    UCR_EXPORT_TO_EXCEL_ROW_LIMIT
+from corehq.apps.userreports.reports.view import ConfigurableReport
 from corehq.sql_db.connections import Session
 from corehq.util.context_managers import drop_connected_signals
 
@@ -171,34 +171,14 @@ class ConfigurableReportViewTest(ConfigurableReportTestMixin, TestCase):
 
         expected = [
             [
-                u'foo',
+                'foo',
                 [
-                    [u'report_column_display_fruit', u'report_column_display_percent'],
-                    [u'apple', '150%']
+                    ['report_column_display_fruit', 'report_column_display_percent'],
+                    ['apple', '150%']
                 ]
             ]
         ]
         self.assertEqual(view.export_table, expected)
-
-    @run_with_all_ucr_backends
-    def test_export_to_excel_size_under_limit(self):
-        report, view = self._build_report_and_view()
-
-        response = json.loads(view.export_size_check_response.content)
-        self.assertEqual(response['export_allowed'], True)
-
-    @run_with_all_ucr_backends
-    def test_export_to_excel_size_over_limit(self):
-        report, view = self._build_report_and_view()
-
-        with patch(
-            'corehq.apps.userreports.reports.data_source.ConfigurableReportDataSource.get_total_records',
-            return_value=UCR_EXPORT_TO_EXCEL_ROW_LIMIT + 1
-        ):
-            response = json.loads(view.export_size_check_response.content)
-        self.assertEqual(response['export_allowed'], False)
-
-        self.assertEqual(view.export_response.status_code, 400)
 
     @run_with_all_ucr_backends
     def test_paginated_build_table(self):
@@ -211,10 +191,10 @@ class ConfigurableReportViewTest(ConfigurableReportTestMixin, TestCase):
 
         expected = [
             [
-                u'foo',
+                'foo',
                 [
-                    [u'report_column_display_fruit', u'report_column_display_percent'],
-                    [u'apple', '150%']
+                    ['report_column_display_fruit', 'report_column_display_percent'],
+                    ['apple', '150%']
                 ]
             ]
         ]

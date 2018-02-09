@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from datetime import date
 
 from django.apps import apps
@@ -104,7 +105,7 @@ def _terminate_subscriptions(domain_name):
                 new_subscription=None,
             )
 
-        Subscription.objects.filter(
+        Subscription.visible_objects.filter(
             Q(date_start__gt=today) | Q(date_start=today, is_active=False),
             subscriber__domain=domain_name,
         ).update(is_hidden_to_ops=True)

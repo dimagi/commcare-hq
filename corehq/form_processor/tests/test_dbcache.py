@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import uuid
 from django.test import TestCase, SimpleTestCase
 from casexml.apps.case.exceptions import IllegalCaseId
@@ -9,6 +10,7 @@ from corehq.form_processor.backends.sql.casedb import CaseDbCacheSQL
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.tests.utils import use_sql_backend
+from six.moves import range
 
 
 class CaseDbCacheCouchOnlyTest(TestCase):

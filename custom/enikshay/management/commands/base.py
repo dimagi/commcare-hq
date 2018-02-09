@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import csv
 
 from django.core.management.base import BaseCommand
@@ -17,7 +19,18 @@ class ENikshayBatchCaseUpdaterCommand(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('domain')
 
+        parser.add_argument(
+            '--commit',
+            action='store_true',
+        )
+
     def handle(self, domain, **options):
+        print("Running {}".format(self.updater.__name__))
+        if options['commit']:
+            print("Committing changes")
+        else:
+            print("Dry Run")
+
         batch_size = 100
         updates = []
         errors = []
@@ -35,11 +48,13 @@ class ENikshayBatchCaseUpdaterCommand(BaseCommand):
             if update_json:
                 updates.append((episode.case_id, update_json, False))
             if len(updates) >= batch_size:
-                bulk_update_cases(domain, updates, self.__module__)
+                if options['commit']:
+                    bulk_update_cases(domain, updates, self.__module__)
                 updates = []
 
         if len(updates) > 0:
-            bulk_update_cases(domain, updates, self.__module__)
+            if options['commit']:
+                bulk_update_cases(domain, updates, self.__module__)
 
         self.write_errors(errors)
 
@@ -51,7 +66,7 @@ class ENikshayBatchCaseUpdaterCommand(BaseCommand):
         if not errors:
             return None
 
-        with file(self.log_filename, 'w') as f:
+        with open(self.log_filename, 'w') as f:
             writer = csv.writer(f)
             writer.writerow(['Person ID', 'Episode ID', 'Domain', 'Error'])
             writer.writerows(errors)

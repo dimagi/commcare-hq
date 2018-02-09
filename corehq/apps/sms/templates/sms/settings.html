@@ -4,17 +4,8 @@
 {% load crispy_forms_tags %}
 
 {% block js %}{{ block.super }}
+    <script src="{% static 'hqwebapp/js/select2_handler.js' %}"></script>
     <script src="{% static 'sms/js/settings.ko.js' %}"></script>
-{% endblock %}
-
-{% block js-inline %}{{ block.super }}
-    <script>
-        var settingsViewModel = new SettingsViewModel(
-            {{ form.current_values|JSON }}
-        );
-        $('#sms-settings-form').koApplyBindings(settingsViewModel);
-        settingsViewModel.init();
-    </script>
 {% endblock %}
 
 {% block stylesheets %}
@@ -22,6 +13,12 @@
         .form-horizontal .form-group {
             margin-left: 0;
             margin-right: 0;
+        }
+        .form-horizontal .form-group > div .row select {
+            margin-left: 0px;
+        }
+        .controls-multiple .row div {
+            padding-left: 0px;
         }
     </style>
 {% endblock %}
@@ -33,4 +30,5 @@
 
     {% include "sms/partials/day_time_windows.html" with context=form.restricted_sms_times_widget_context only %}
     {% include "sms/partials/day_time_windows.html" with context=form.sms_conversation_times_widget_context only %}
+    {% initial_page_data 'current_values' form.current_values %}
 {% endblock %}

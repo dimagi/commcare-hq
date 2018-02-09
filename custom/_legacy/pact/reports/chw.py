@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.urls import NoReverseMatch, reverse
 from django.http import Http404
 from corehq.apps.api.es import ReportCaseES, ReportXFormES
@@ -66,7 +67,7 @@ class PactCHWProfileReport(PactDrilldownReportMixin, PactElasticTabularReportMix
 
     @memoized
     def get_user(self):
-        if hasattr(self, 'request') and self.request.GET.has_key('chw_id'):
+        if hasattr(self, 'request') and 'chw_id' in self.request.GET:
             self._user_doc = CommCareUser.get(self.request.GET['chw_id'])
             return self._user_doc
         else:
@@ -149,7 +150,7 @@ class PactCHWProfileReport(PactDrilldownReportMixin, PactElasticTabularReportMix
                 yield row_field_dict["form.#type"].replace('_', ' ').title().strip()
 
             res = self.es_results
-            if res.has_key('error'):
+            if 'error' in res:
                 pass
             else:
                 for result in res['hits']['hits']:

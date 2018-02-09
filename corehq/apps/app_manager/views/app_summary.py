@@ -1,5 +1,6 @@
+from __future__ import absolute_import
+import io
 from copy import copy
-from StringIO import StringIO
 from collections import namedtuple
 
 from django.urls import reverse
@@ -21,6 +22,8 @@ from corehq.apps.hqwebapp.decorators import use_angular_js
 from couchexport.export import export_raw
 from couchexport.models import Format
 from couchexport.shortcuts import export_response
+import six
+from six.moves import range
 
 
 class AppSummaryView(HQJSONResponseMixin, LoginAndDomainMixin, BasePageView, ApplicationViewMixin):
@@ -51,6 +54,7 @@ class AppSummaryView(HQJSONResponseMixin, LoginAndDomainMixin, BasePageView, App
             'langs': self.app.langs,
             'app_id': self.app.id,
             'app_name': self.app.default_name(),
+            'read_only': self.app.doc_type == 'LinkedApplication',
         }
 
     @property
@@ -140,7 +144,7 @@ def _translate_name(names, language):
     try:
         return names[language]
     except KeyError:
-        first_name = names.iteritems().next()
+        first_name = next(six.iteritems(names))
         return u"{} [{}]".format(first_name[1], first_name[0])
 
 
@@ -239,7 +243,7 @@ class DownloadAppSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
                     ])
                 ]
 
-        export_string = StringIO()
+        export_string = io.BytesIO()
         export_raw(tuple(headers), data, export_string, Format.XLS_2007),
         return export_response(
             export_string,
@@ -308,7 +312,7 @@ class DownloadFormSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
             (self._get_form_sheet_name(module, form, language), self._get_form_row(form, language))
             for module in modules for form in module.get_forms()
         )
-        export_string = StringIO()
+        export_string = io.BytesIO()
         export_raw(tuple(headers), data, export_string, Format.XLS_2007),
         return export_response(
             export_string,
@@ -384,7 +388,8 @@ class DownloadCaseSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
         case_metadata = self.app.get_case_metadata()
         language = request.GET.get('lang', 'en')
 
-        headers = [(_('All Case Properties'), ('case_type', 'case_property', 'description'))]
+        headers = [(_('All Case Properties'), ('case_type', 'case_property', 'description')),
+                   (_('Case Types'), ('type', 'relationships', 'opened_by', 'closed_by'))]
         headers += list((
             case_type.name,
             tuple(CASE_SUMMARY_EXPORT_HEADER_NAMES)
@@ -395,11 +400,15 @@ class DownloadCaseSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
             self.get_case_property_rows(case_type)
         ) for case_type in case_metadata.case_types)
         data += list((
+            _('Case Types'),
+            self.get_case_type_rows(case_type, language)
+        ) for case_type in case_metadata.case_types)
+        data += list((
             case_type.name,
             self.get_case_questions_rows(case_type, language)
         ) for case_type in case_metadata.case_types)
 
-        export_string = StringIO()
+        export_string = io.BytesIO()
         export_raw(tuple(headers), data, export_string, Format.XLS_2007),
         return export_response(
             export_string,
@@ -413,6 +422,36 @@ class DownloadCaseSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
 
     def get_case_property_rows(self, case_type):
         return tuple((case_type.name, prop.name, prop.description) for prop in case_type.properties)
+
+    def get_case_type_rows(self, case_type, language):
+        form_names = {}
+        form_case_types = {}
+        for m in self.app.modules:
+            for f in m.forms:
+                form_names[f.unique_id] = _get_translated_form_name(self.app, f.unique_id, language)
+                form_case_types[f.unique_id] = m.case_type
+
+        case_types = [case_type.name] + list(case_type.relationships.values())
+        opened_by = {}
+        closed_by = {}
+        for t in case_types:
+            opened_by[t] = [fid for fid in case_type.opened_by.keys() if t == form_case_types[fid]]
+            closed_by[t] = [fid for fid in case_type.closed_by.keys() if t == form_case_types[fid]]
+
+        rows = []
+        relationships = case_type.relationships
+        relationships.update({'': case_type.name})
+        for relationship, type in six.iteritems(relationships):
+            if relationship and not opened_by[type] and not closed_by[type]:
+                rows.append((case_type.name, "[{}] {}".format(relationship, type)))
+            for i in range(max(len(opened_by[type]), len(closed_by[type]))):
+                row = [case_type.name]
+                row.append("[{}] {}".format(relationship, type) if relationship else '')
+                row.append(form_names[opened_by[type][i]] if i < len(opened_by[type]) else '')
+                row.append(form_names[closed_by[type][i]] if i < len(closed_by[type]) else '')
+                rows.append(tuple(row))
+
+        return rows
 
     def get_case_questions_rows(self, case_type, language):
         rows = []

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import datetime
 
 from corehq.apps.es import FormES
@@ -8,6 +9,7 @@ from dimagi.utils.parsing import json_format_datetime
 from corehq.util.couch import stale_ok
 from corehq.util.dates import iso_string_to_datetime
 from couchforms.models import XFormInstance, doc_types
+import six
 
 
 def update_analytics_indexes():
@@ -86,7 +88,7 @@ def get_all_xmlns_app_id_pairs_submitted_to_in_domain(domain):
              .size(0))
     query_result = query.run()
     form_counts = set()
-    for app_id, bucket in query_result.aggregations.app_id.buckets_dict.iteritems():
+    for app_id, bucket in six.iteritems(query_result.aggregations.app_id.buckets_dict):
         for sub_bucket in bucket.xmlns.buckets_list:
             xmlns = sub_bucket.key
             form_counts.add((xmlns, app_id))
@@ -181,7 +183,7 @@ def get_form_count_breakdown_for_domain(domain):
              .size(0))
     query_result = query.run()
     form_counts = {}
-    for app_id, bucket in query_result.aggregations.app_id.buckets_dict.iteritems():
+    for app_id, bucket in six.iteritems(query_result.aggregations.app_id.buckets_dict):
         for sub_bucket in bucket.xmlns.buckets_list:
             xmlns = sub_bucket.key
             form_counts[(domain, app_id, xmlns)] = sub_bucket.doc_count

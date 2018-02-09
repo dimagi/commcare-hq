@@ -1,4 +1,9 @@
-from corehq.motech.repeaters.views import AddCaseRepeaterView, AddCustomSOAPCaseRepeaterView
+from __future__ import absolute_import
+from corehq.motech.repeaters.views import (
+    AddCaseRepeaterView,
+    AddCustomSOAPCaseRepeaterView,
+    AddCustomSOAPLocationRepaterView,
+)
 
 
 class RegisterNikshayPatientRepeaterView(AddCaseRepeaterView):
@@ -29,3 +34,9 @@ class RegisterNikshayPrivatePatientRepeaterView(AddCustomSOAPCaseRepeaterView):
     urlname = 'register_nikshay_private_patient'
     page_title = "Register Nikshay Private Patients"
     page_name = "Register Nikshay Private Patients"
+
+
+class RegisterNikshayHealthEstablishmentRepeaterView(AddCustomSOAPLocationRepaterView):
+    urlname = 'register_nikshay_health_establishment'
+    page_title = "Register Nikshay Health Establishment"
+    page_name = "Register Nikshay Health Establishment"

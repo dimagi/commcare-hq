@@ -1,9 +1,10 @@
+from __future__ import absolute_import
 from django.test import SimpleTestCase
 from django.test.utils import override_settings
 
 from corehq.sql_db.config import parse_existing_shard, ShardMeta, get_shards_to_update
 from ..config import PartitionConfig
-from ..exceptions import NotPowerOf2Error, NotZeroStartError, NonContinuousShardsError
+from ..exceptions import NotPowerOf2Error, NotZeroStartError, NonContinuousShardsError, NoSuchShardDatabaseError
 
 
 def _get_partition_config(shard_config):
@@ -58,6 +59,10 @@ TEST_DATABASES = {
 @override_settings(DATABASES=TEST_DATABASES)
 class TestPartitionConfig(SimpleTestCase):
 
+    def test_num_shards(self):
+        config = PartitionConfig()
+        self.assertEqual(4, config.num_shards)
+
     def test_dbs_by_group(self):
         config = PartitionConfig()
         dbs = config.get_form_processing_dbs()
@@ -73,6 +78,16 @@ class TestPartitionConfig(SimpleTestCase):
             ShardMeta(id=2, dbname='db2', host='hqdb2', port=5432),
             ShardMeta(id=3, dbname='db2', host='hqdb2', port=5432),
         ])
+
+    def test_get_shards_on_db(self):
+        config = PartitionConfig()
+        self.assertEqual([0, 1], config.get_shards_on_db('db1'))
+        self.assertEqual([2, 3], config.get_shards_on_db('db2'))
+
+    def test_get_shards_on_db_not_found(self):
+        config = PartitionConfig()
+        with self.assertRaises(NoSuchShardDatabaseError):
+            config.get_shards_on_db('db3')
 
     @override_settings(PARTITION_DATABASE_CONFIG=TEST_PARTITION_CONFIG_HOST_MAP)
     def test_host_map(self):

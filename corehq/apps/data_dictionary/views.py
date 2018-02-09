@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+import io
 import json
 
 import itertools
@@ -25,8 +27,6 @@ from corehq.apps.hqwebapp.decorators import use_jquery_ui
 
 from couchexport.writers import Excel2007ExportWriter
 from couchexport.models import Format
-
-from StringIO import StringIO
 
 from corehq.util.files import file_extention_from_filename
 from corehq.util.workbook_reading import open_any_workbook
@@ -122,7 +122,7 @@ def _export_data_dictionary(domain):
             'Deprecated': prop.deprecated
         } for prop in case_type.properties.all()]
     headers = ('Case Property', 'Group', 'Data Type', 'Description', 'Deprecated')
-    outfile = StringIO()
+    outfile = io.BytesIO()
     writer = Excel2007ExportWriter()
     header_table = [(tab_name, [headers]) for tab_name in export_data]
     writer.open(header_table=header_table, file=outfile)

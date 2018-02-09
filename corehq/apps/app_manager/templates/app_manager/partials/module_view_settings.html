@@ -54,6 +54,9 @@
                 <div class="form-group">
                     <label class="col-sm-2 control-label">
                         {% trans "Parent Menu" %}
+                        <span class="hq-help-template"
+                              data-title="{% trans "Parent Menu" %}"
+                              data-content="{% blocktrans %}Parent menus may not be nested, so menus that already have a parent will not appear in this list, and this list will be empty if the current menu itself is already another menu's parent.{% endblocktrans %}"></span>
                     </label>
                     <div class="col-sm-4">
                         <select type="text" name="root_module_id" class="form-control">

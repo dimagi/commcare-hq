@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem
 from corehq.apps.users.models import WebUser
 from corehq.form_processor.utils import is_commcarecase
@@ -74,17 +75,14 @@ def _generic_message_bank_content(fixture_name, reminder, handler, recipient):
     custom_messages = FixtureDataItem.by_field_value(
         domain, message_bank, RISK_PROFILE_FIELD, risk_profile
     )
-    custom_messages = filter(
-        lambda m: m.fields_without_attributes['sequence'] == current_message_seq_num,
-        custom_messages
-    )
+    custom_messages = [m for m in custom_messages if m.fields_without_attributes['sequence'] == current_message_seq_num]
 
     if len(custom_messages) != 1:
         if not custom_messages:
-            message = u"No message for risk {}, seq {} in domain {} in fixture {}"
+            message = u"No message for case {}, risk {}, seq {} in domain {} in fixture {}"
         else:
-            message = u"Multiple messages for risk {}, seq {} in domain {} in fixture {}"
-        message = message.format(risk_profile, current_message_seq_num, domain, fixture_name)
+            message = u"Multiple messages for case {}, risk {}, seq {} in domain {} in fixture {}"
+        message = message.format(recipient.case_id, risk_profile, current_message_seq_num, domain, fixture_name)
         notify_dimagi_project_admins(domain, message=message)
         return None
 

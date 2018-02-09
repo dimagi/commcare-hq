@@ -1,7 +1,10 @@
+from __future__ import absolute_import
 import os
+
 from django.test import TestCase
 
-from corehq.form_processor.tests.utils import use_sql_backend, post_xform
+from corehq.apps.receiverwrapper.util import submit_form_locally
+from corehq.form_processor.tests.utils import use_sql_backend
 from corehq.util.test_utils import TestFileMixin
 
 
@@ -15,7 +18,7 @@ class TestNamespaces(TestCase, TestFileMixin):
 
     def testClosed(self):
         xml_data = self.get_xml('namespaces')
-        xform = post_xform(xml_data)
+        xform = submit_form_locally(xml_data, 'test-domain').xform
 
         self.assertEqual("http://commcarehq.org/test/ns", xform.xmlns)
         self._assert_xmlns('no namespace here', xform, 'form/empty')

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.utils.translation import ugettext as _
 
 from corehq.apps.locations.permissions import location_safe
@@ -247,10 +248,10 @@ class AllHmisReport(MonthYearMixin, CaseListReport, M4ChangeReport):
         }
 
         return dict(
-            AncHmisReport.get_initial_row_data().items() +\
-            LdHmisReport.get_initial_row_data().items() +\
-            ImmunizationHmisReport.get_initial_row_data().items() +\
-            all_hmis_report_data.items()
+            list(AncHmisReport.get_initial_row_data().items()) +\
+            list(LdHmisReport.get_initial_row_data().items()) +\
+            list(ImmunizationHmisReport.get_initial_row_data().items()) +\
+            list(all_hmis_report_data.items())
         )
 
     @property

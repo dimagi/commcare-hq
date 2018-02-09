@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.apps.indicators.utils import (INDICATOR_CONFIG_DOC_ID,
     INDICATOR_CONFIG_LOCK_KEY, get_indicator_config)
 from corehq.util.test_utils import unit_testing_only

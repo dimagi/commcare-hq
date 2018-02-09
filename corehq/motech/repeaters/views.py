@@ -1,25 +1,41 @@
+from __future__ import absolute_import
 import json
 from couchdbkit import ResourceNotFound
-from django.http import Http404
+from django.http import (
+    Http404,
+    HttpResponseRedirect,
+)
 
 from django.urls import reverse
 from django.views.generic import View
-from corehq.apps.domain.decorators import LoginAndDomainMixin
+from django.contrib import messages
+from django.utils.translation import ugettext as _, ugettext_lazy
+from django.utils.decorators import method_decorator
 
+from corehq.apps.domain.decorators import LoginAndDomainMixin
+from corehq import toggles
 from dimagi.utils.web import json_response
+from dimagi.utils.decorators.memoized import memoized
 
 from corehq.form_processor.exceptions import XFormNotFound
-from corehq.apps.domain.views import AddRepeaterView
+from corehq.apps.domain.views import (
+    AddRepeaterView,
+    BaseRepeaterView,
+    AddFormRepeaterView,
+)
 from corehq.apps.hqwebapp.decorators import use_select2
-from corehq.motech.repeaters.models import RepeatRecord
+from corehq.motech.repeaters.models import (
+    RepeatRecord,
+    Repeater,
+)
+from corehq.apps.domain.decorators import domain_admin_required
 from corehq.util.xml_utils import indent_xml
-from .forms import CaseRepeaterForm, SOAPCaseRepeaterForm
+from .forms import CaseRepeaterForm, SOAPCaseRepeaterForm, SOAPLocationRepeaterForm
 
 
 class AddCaseRepeaterView(AddRepeaterView):
     urlname = 'add_case_repeater'
     repeater_form_class = CaseRepeaterForm
-    template_name = 'domain/admin/add_form_repeater.html'
 
     @use_select2
     def dispatch(self, request, *args, **kwargs):
@@ -29,8 +45,8 @@ class AddCaseRepeaterView(AddRepeaterView):
     def page_url(self):
         return reverse(self.urlname, args=[self.domain])
 
-    def make_repeater(self):
-        repeater = super(AddCaseRepeaterView, self).make_repeater()
+    def set_repeater_attr(self, repeater, cleaned_data):
+        repeater = super(AddCaseRepeaterView, self).set_repeater_attr(repeater, cleaned_data)
         repeater.white_listed_case_types = self.add_repeater_form.cleaned_data['white_listed_case_types']
         repeater.black_listed_users = self.add_repeater_form.cleaned_data['black_listed_users']
         return repeater
@@ -43,6 +59,80 @@ class AddCustomSOAPCaseRepeaterView(AddCaseRepeaterView):
         repeater = super(AddCustomSOAPCaseRepeaterView, self).make_repeater()
         repeater.operation = self.add_repeater_form.cleaned_data['operation']
         return repeater
+
+
+class AddCustomSOAPLocationRepaterView(AddRepeaterView):
+    repeater_form_class = SOAPLocationRepeaterForm
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=[self.domain])
+
+    def make_repeater(self):
+        repeater = super(AddCustomSOAPLocationRepaterView, self).make_repeater()
+        repeater.operation = self.add_repeater_form.cleaned_data['operation']
+        return repeater
+
+
+class EditRepeaterView(BaseRepeaterView):
+    urlname = 'edit_repeater'
+    template_name = 'domain/admin/add_form_repeater.html'
+
+    @property
+    @memoized
+    def add_repeater_form(self):
+        if self.request.method == 'POST':
+            return self.repeater_form_class(
+                self.request.POST,
+                domain=self.domain,
+                repeater_class=self.repeater_class
+            )
+        else:
+            repeater_id = self.kwargs['repeater_id']
+            repeater = Repeater.get(repeater_id)
+            return self.repeater_form_class(
+                domain=self.domain,
+                repeater_class=self.repeater_class,
+                data=repeater.to_json(),
+                submit_btn_text=_("Update Repeater"),
+            )
+
+    @method_decorator(domain_admin_required)
+    def dispatch(self, request, *args, **kwargs):
+        if self.request.GET.get('repeater_type'):
+            self.kwargs['repeater_type'] = self.request.GET['repeater_type']
+        return super(EditRepeaterView, self).dispatch(request, *args, **kwargs)
+
+    def initialize_repeater(self):
+        return Repeater.get(self.kwargs['repeater_id'])
+
+    def post_save(self, request, repeater):
+        messages.success(request, _("Repeater Successfully Updated"))
+        if self.request.GET.get('repeater_type'):
+            return HttpResponseRedirect(
+                (reverse(self.urlname, args=[self.domain, repeater.get_id]) +
+                 '?repeater_type=' + self.kwargs['repeater_type'])
+            )
+        else:
+            return HttpResponseRedirect(reverse(self.urlname, args=[self.domain, repeater.get_id]))
+
+
+class EditCaseRepeaterView(EditRepeaterView, AddCaseRepeaterView):
+    urlname = 'edit_case_repeater'
+    page_title = ugettext_lazy("Edit Case Repeater")
+
+    @property
+    def page_url(self):
+        return reverse(AddCaseRepeaterView.urlname, args=[self.domain])
+
+
+class EditFormRepeaterView(EditRepeaterView, AddFormRepeaterView):
+    urlname = 'edit_form_repeater'
+    page_title = ugettext_lazy("Edit Form Repeater")
+
+    @property
+    def page_url(self):
+        return reverse(AddFormRepeaterView.urlname, args=[self.domain])
 
 
 class RepeatRecordView(LoginAndDomainMixin, View):

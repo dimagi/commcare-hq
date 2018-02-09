@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import division
 from collections import defaultdict
 from datetime import datetime, timedelta
 from corehq.apps.commtrack.models import StockState
@@ -6,6 +8,7 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reminders.util import get_preferred_phone_number_for_recipient
 from custom.ewsghana.alerts import URGENT_STOCKOUT, URGENT_NON_REPORTING
 from custom.ewsghana.alerts.alert import Notification
+import six
 
 
 class UrgentAlert(object):
@@ -51,7 +54,7 @@ class UrgentStockoutAlert(UrgentAlert):
 
         return [
             sql_product
-            for sql_product, result in product_result_map.iteritems()
+            for sql_product, result in six.iteritems(product_result_map)
             if result['total'] != 0 and result['stockouts'] / float(result['total']) > 0.5
         ]
 
@@ -59,7 +62,7 @@ class UrgentStockoutAlert(UrgentAlert):
         program_id = user.get_domain_membership(self.domain).program_id
 
         if program_id:
-            sql_products = filter(lambda p: p.program_id == program_id, sql_products)
+            sql_products = [p for p in sql_products if p.program_id == program_id]
 
         if not sql_products:
             return

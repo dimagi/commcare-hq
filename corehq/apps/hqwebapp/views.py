@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import division
 import json
 import logging
 import os
@@ -29,6 +31,7 @@ from django.utils.translation import ugettext as _, ugettext_noop
 from django.views.decorators.debug import sensitive_post_parameters
 from django.views.decorators.http import require_GET, require_POST
 from django.views.generic import TemplateView
+from django.views.generic.base import View
 from djangular.views.mixins import JSONResponseMixin
 
 import httpagentparser
@@ -63,6 +66,7 @@ from corehq.apps.hqadmin.management.commands.deploy_in_progress import DEPLOY_IN
 from corehq.apps.hqwebapp.doc_info import get_doc_info, get_object_info
 from corehq.apps.hqwebapp.encoders import LazyEncoder
 from corehq.apps.hqwebapp.forms import EmailAuthenticationForm, CloudCareAuthenticationForm
+from corehq.apps.hqwebapp.utils import get_environment_friendly_name
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.util import format_username
@@ -73,7 +77,10 @@ from corehq.util.datadog.const import DATADOG_UNKNOWN
 from corehq.util.datadog.metrics import JSERROR_COUNT
 from corehq.util.datadog.utils import create_datadog_event, sanitize_url
 from corehq.util.datadog.gauges import datadog_counter
+from corehq.util.soft_assert import soft_assert
 from corehq.util.view_utils import reverse
+import six
+from six.moves import range
 
 
 def is_deploy_in_progress():
@@ -93,7 +100,7 @@ def format_traceback_the_way_python_does(type, exc, tb):
     return u'Traceback (most recent call last):\n{}{}: {}'.format(
         ''.join(traceback.format_tb(tb)),
         type.__name__,
-        unicode(exc)
+        six.text_type(exc)
     )
 
 
@@ -203,7 +210,11 @@ def _two_factor_needed(domain_name, request):
     domain_name = normalize_domain_name(domain_name)
     domain = Domain.get_by_name(domain_name)
     if domain:
-        return domain.two_factor_auth and not request.user.is_verified()
+        return (
+            domain.two_factor_auth
+            and not request.couch_user.two_factor_disabled
+            and not request.user.is_verified()
+        )
 
 
 def yui_crossdomain(req):
@@ -261,7 +272,11 @@ def server_up(req):
         },
         "formplayer": {
             "always_check": True,
-            "check_func": checks.check_formplayer
+            "check_func": checks.check_formplayer,
+        },
+        "elasticsearch": {
+            "always_check": True,
+            "check_func": checks.check_elasticsearch,
         },
     }
 
@@ -370,7 +385,7 @@ def login(req):
     # we need to set the base template to use somewhere
     # somewhere that the login page can access it.
 
-    if settings.SERVER_ENVIRONMENT == 'icds':
+    if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:
         login_url = reverse('domain_login', kwargs={'domain': 'icds-cas'})
         return HttpResponseRedirect(login_url)
 
@@ -492,10 +507,21 @@ def dropbox_upload(request, download_id):
     return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
 
 
+# TODO jschweers: Remove this in Q2 2018 if it hasn't been triggered,
+# change initial_page_data.js to throw an error
+@require_GET
+def assert_initial_page_data(request):
+    _assert = soft_assert(['jschweers' + '@' + 'dimagi.com'])
+    _assert(False, 'Initial page data called before page load complete', {
+        'page': request.META['HTTP_REFERER'],
+    })
+    return json_response({'success': True})
+
+
 @require_superuser
 def debug_notify(request):
     try:
-        0 / 0
+        0 // 0
     except ZeroDivisionError:
         notify_exception(request,
             "If you want to achieve a 500-style email-out but don't want the user to see a 500, use notify_exception(request[, message])")
@@ -528,148 +554,156 @@ def jserror(request):
     return HttpResponse('')
 
 
-@login_required()
-@require_POST
-def bug_report(req):
-    report = dict([(key, req.POST.get(key, '')) for key in (
-        'subject',
-        'username',
-        'domain',
-        'url',
-        'message',
-        'app_id',
-        'cc',
-        'email',
-        '500traceback',
-        'sentry_id',
-    )])
+@method_decorator([login_required], name='dispatch')
+class BugReportView(View):
 
-    report['user_agent'] = req.META['HTTP_USER_AGENT']
-    report['datetime'] = datetime.utcnow()
+    @property
+    def recipients(self):
+        """
+            Returns:
+                list
+        """
+        return settings.BUG_REPORT_RECIPIENTS
 
-    try:
-        couch_user = req.couch_user
-        full_name = couch_user.full_name
-        if couch_user.is_commcare_user():
+    def post(self, req, *args, **kwargs):
+        report = dict([(key, req.POST.get(key, '')) for key in (
+            'subject',
+            'username',
+            'domain',
+            'url',
+            'message',
+            'app_id',
+            'cc',
+            'email',
+            '500traceback',
+            'sentry_id',
+        )])
+
+        report['user_agent'] = req.META['HTTP_USER_AGENT']
+        report['datetime'] = datetime.utcnow()
+
+        try:
+            couch_user = req.couch_user
+            full_name = couch_user.full_name
+            if couch_user.is_commcare_user():
+                email = report['email']
+            else:
+                email = couch_user.get_email()
+        except Exception:
+            full_name = None
             email = report['email']
+        report['full_name'] = full_name
+        report['email'] = email or report['username']
+
+        if report['domain']:
+            domain = report['domain']
+        elif len(couch_user.domains) == 1:
+            # This isn't a domain page, but the user has only one domain, so let's use that
+            domain = couch_user.domains[0]
         else:
-            email = couch_user.get_email()
-    except Exception:
-        full_name = None
-        email = report['email']
-    report['full_name'] = full_name
-    report['email'] = email or report['username']
+            domain = "<no domain>"
 
-    if report['domain']:
-        domain = report['domain']
-    elif len(couch_user.domains) == 1:
-        # This isn't a domain page, but the user has only one domain, so let's use that
-        domain = couch_user.domains[0]
-    else:
-        domain = "<no domain>"
+        message = (
+            u"username: {username}\n"
+            u"full name: {full_name}\n"
+            u"domain: {domain}\n"
+            u"url: {url}\n"
+            u"datetime: {datetime}\n"
+            u"User Agent: {user_agent}\n"
+        ).format(**report)
 
-    message = (
-        u"username: {username}\n"
-        u"full name: {full_name}\n"
-        u"domain: {domain}\n"
-        u"url: {url}\n"
-        u"datetime: {datetime}\n"
-        u"User Agent: {user_agent}\n"
-    ).format(**report)
+        domain_object = Domain.get_by_name(domain) if report['domain'] else None
+        if domain_object:
+            current_project_description = domain_object.project_description if domain_object else None
+            new_project_description = req.POST.get('project_description')
+            if (domain_object and
+                    req.couch_user.is_domain_admin(domain=domain) and
+                    new_project_description and current_project_description != new_project_description):
+                domain_object.project_description = new_project_description
+                domain_object.save()
 
-    domain_object = Domain.get_by_name(domain) if report['domain'] else None
-    if domain_object:
-        current_project_description = domain_object.project_description if domain_object else None
-        new_project_description = req.POST.get('project_description')
-        if (domain_object and
-                req.couch_user.is_domain_admin(domain=domain) and
-                new_project_description and
-                current_project_description != new_project_description):
+            matching_subscriptions = Subscription.visible_objects.filter(
+                is_active=True,
+                subscriber__domain=domain,
+            )
+            if len(matching_subscriptions) >= 1:
+                software_plan = matching_subscriptions[0].plan_version
+            else:
+                software_plan = u'domain has no active subscription'
 
-            domain_object.project_description = new_project_description
-            domain_object.save()
+            message += ((
+                u"software plan: {software_plan}\n"
+                u"Is self start: {self_started}\n"
+                u"Feature Flags: {feature_flags}\n"
+                u"Feature Previews: {feature_previews}\n"
+                u"Is scale backend: {scale_backend}\n"
+                u"Has Support Hand-off Info: {has_handoff_info}\n"
+                u"Internal Project Information: {internal_info_link}\n"
+                u"Project description: {project_description}\n"
+                u"Sentry Error: {sentry_error}\n"
+            ).format(
+                software_plan=software_plan,
+                self_started=domain_object.internal.self_started,
+                feature_flags=list(toggles.toggles_dict(username=report['username'], domain=domain)),
+                feature_previews=list(feature_previews.previews_dict(domain)),
+                scale_backend=should_use_sql_backend(domain),
+                has_handoff_info=bool(domain_object.internal.partner_contact),
+                internal_info_link=reverse('domain_internal_settings', args=[domain], absolute=True),
+                project_description=domain_object.project_description,
+                sentry_error='{}{}'.format(getattr(settings, 'SENTRY_QUERY_URL'), report['sentry_id'])
+            ))
 
-        matching_subscriptions = Subscription.objects.filter(
-            is_active=True,
-            subscriber__domain=domain,
+        subject = u'{subject} ({domain})'.format(subject=report['subject'], domain=domain)
+        cc = [el for el in report['cc'].strip().split(",") if el]
+
+        if full_name and not any([c in full_name for c in '<>"']):
+            reply_to = u'"{full_name}" <{email}>'.format(**report)
+        else:
+            reply_to = report['email']
+
+        # if the person looks like a commcare user, fogbugz can't reply
+        # to their email, so just use the default
+        if settings.HQ_ACCOUNT_ROOT in reply_to:
+            reply_to = settings.SERVER_EMAIL
+
+        message += u"Message:\n\n{message}\n".format(message=report['message'])
+        if req.POST.get('five-hundred-report'):
+            extra_message = ("This messge was reported from a 500 error page! "
+                             "Please fix this ASAP (as if you wouldn't anyway)...")
+            traceback_info = cache.cache.get(report['500traceback'])
+            cache.cache.delete(report['500traceback'])
+            message = "%s \n\n %s \n\n %s" % (message, extra_message, traceback_info)
+
+        email = EmailMessage(
+            subject=subject,
+            body=message,
+            to=self.recipients,
+            headers={'Reply-To': reply_to},
+            cc=cc
         )
-        if len(matching_subscriptions) >= 1:
-            software_plan = matching_subscriptions[0].plan_version
+
+        uploaded_file = req.FILES.get('report_issue')
+        if uploaded_file:
+            filename = uploaded_file.name
+            content = uploaded_file.read()
+            email.attach(filename=filename, content=content)
+
+        # only fake the from email if it's an @dimagi.com account
+        if re.search('@dimagi\.com$', report['username']):
+            email.from_email = report['username']
         else:
-            software_plan = u'domain has no active subscription'
+            email.from_email = settings.CCHQ_BUG_REPORT_EMAIL
 
-        message += ((
-            u"software plan: {software_plan}\n"
-            u"Is self start: {self_started}\n"
-            u"Feature Flags: {feature_flags}\n"
-            u"Feature Previews: {feature_previews}\n"
-            u"Is scale backend: {scale_backend}\n"
-            u"Has Support Hand-off Info: {has_handoff_info}\n"
-            u"Internal Project Information: {internal_info_link}\n"
-            u"Project description: {project_description}\n"
-            u"Sentry Error: {sentry_error}\n"
-        ).format(
-            software_plan=software_plan,
-            self_started=domain_object.internal.self_started,
-            feature_flags=toggles.toggles_dict(username=report['username'], domain=domain).keys(),
-            feature_previews=feature_previews.previews_dict(domain).keys(),
-            scale_backend=should_use_sql_backend(domain),
-            has_handoff_info=bool(domain_object.internal.partner_contact),
-            internal_info_link=reverse('domain_internal_settings', args=[domain], absolute=True),
-            project_description=domain_object.project_description,
-            sentry_error='{}{}'.format(getattr(settings, 'SENTRY_QUERY_URL'), report['sentry_id'])
-        ))
+        email.send(fail_silently=False)
 
-    subject = u'{subject} ({domain})'.format(subject=report['subject'], domain=domain)
-    cc = report['cc'].strip().split(",")
-    cc = filter(None, cc)
+        if req.POST.get('five-hundred-report'):
+            messages.success(
+                req,
+                "Your CommCare HQ Issue Report has been sent. We are working quickly to resolve this problem."
+            )
+            return HttpResponseRedirect(reverse('homepage'))
 
-    if full_name and not any([c in full_name for c in '<>"']):
-        reply_to = u'"{full_name}" <{email}>'.format(**report)
-    else:
-        reply_to = report['email']
-
-    # if the person looks like a commcare user, fogbugz can't reply
-    # to their email, so just use the default
-    if settings.HQ_ACCOUNT_ROOT in reply_to:
-        reply_to = settings.SERVER_EMAIL
-
-    message += u"Message:\n\n{message}\n".format(message=report['message'])
-    if req.POST.get('five-hundred-report'):
-        extra_message = ("This messge was reported from a 500 error page! "
-                         "Please fix this ASAP (as if you wouldn't anyway)...")
-        traceback_info = cache.cache.get(report['500traceback'])
-        cache.cache.delete(report['500traceback'])
-        message = "%s \n\n %s \n\n %s" % (message, extra_message, traceback_info)
-
-    email = EmailMessage(
-        subject=subject,
-        body=message,
-        to=settings.BUG_REPORT_RECIPIENTS,
-        headers={'Reply-To': reply_to},
-        cc=cc
-    )
-
-    uploaded_file = req.FILES.get('report_issue')
-    if uploaded_file:
-        filename = uploaded_file.name
-        content = uploaded_file.read()
-        email.attach(filename=filename, content=content)
-
-    # only fake the from email if it's an @dimagi.com account
-    if re.search('@dimagi\.com$', report['username']):
-        email.from_email = report['username']
-    else:
-        email.from_email = settings.CCHQ_BUG_REPORT_EMAIL
-
-    email.send(fail_silently=False)
-
-    if req.POST.get('five-hundred-report'):
-        messages.success(req,
-            "Your CommCare HQ Issue Report has been sent. We are working quickly to resolve this problem.")
-        return HttpResponseRedirect(reverse('homepage'))
-
-    return HttpResponse()
+        return HttpResponse()
 
 
 def render_static(request, template, page_name):
@@ -872,7 +906,7 @@ class CRUDPaginatedViewMixin(object):
                 'page': self.page,
                 'limit': self.limit,
                 'total': self.total,
-                'limit_options': range(self.DEFAULT_LIMIT, 51, self.DEFAULT_LIMIT),
+                'limit_options': list(range(self.DEFAULT_LIMIT, 51, self.DEFAULT_LIMIT)),
                 'column_names': self.column_names,
                 'num_columns': len(self.column_names),
                 'text': {
@@ -1114,7 +1148,10 @@ def quick_find(request):
 
 
 def osdd(request, template='osdd.xml'):
-    response = render(request, template, {'url_base': get_url_base()})
+    response = render(request, template, {
+        'url_base': get_url_base(),
+        'env': get_environment_friendly_name()
+    })
     response['Content-Type'] = 'application/xml'
     return response
 
@@ -1125,7 +1162,7 @@ def maintenance_alerts(request, template='hqwebapp/maintenance_alerts.html'):
 
     return render(request, template, {
         'alerts': [{
-            'created': unicode(alert.created),
+            'created': six.text_type(alert.created),
             'active': alert.active,
             'html': alert.html,
             'id': alert.id,
@@ -1147,7 +1184,7 @@ class MaintenanceAlertsView(BasePageView):
         from corehq.apps.hqwebapp.models import MaintenanceAlert
         return {
             'alerts': [{
-            'created': unicode(alert.created),
+            'created': six.text_type(alert.created),
             'active': alert.active,
             'html': alert.html,
             'id': alert.id,

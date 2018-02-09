@@ -7,44 +7,46 @@
 
 {% block page_content %}
     {% block main_column_content %}
-        <h1>
-            {% trans "Build Your Own Reports In CommCare!" %}
-        </h1>
         {% if at_report_limit %}
-        <p class="lead">
-            {% blocktrans %}
-            You have reached your report limit of {{ max_allowed_reports }} reports.
-            If you would like to create more, delete one of your existing
-            reports or upgrade your account.
-            {% endblocktrans %}
-        </p>
+        <div class="helpbubble helpbubble-primary helpbubble-no-arrow">
+            <h2>
+                {% blocktrans %}
+                    You have reached your report limit of {{ max_allowed_reports }} reports.
+                {% endblocktrans %}
+            </h2>
+            <p class="lead">
+                {% blocktrans %}
+                If you would like to create more, delete one of your existing reports.
+                {% endblocktrans %}
+            </p>
+            <p class="alert alert-info">
+                <i class="fa fa-info-circle"></i>
+                {% blocktrans %}
+                For even more reports please contact our team at <strong>{{ support_email }}</strong>.
+                {% endblocktrans %}
+            </p>
+        </div>
         {% endif %}
-        <p>
-            {% blocktrans %}
-            Build map reports, pie and bar charts, and form and case lists right in CommCare!
-            Report Builder is an <strong>add-on</strong> to <strong>Standard</strong> or higher software plans.
-            The pricing is based on the number of reports that you need in your project:
-            {% endblocktrans %}
-        </p>
-        <ul>
-            {% blocktrans %}
-            <li>$100/month for 5 reports</li>
-            <li>$200/month for 15 reports</li>
-            <li>$300/month for 30 reports</li>
-            {% endblocktrans %}
-        </ul>
-        <p>
-            {% blocktrans %}
-            For even more reports please contact our team at {{ support_email }}
-            {% endblocktrans %}
-        </p>
-
-        <form action="{% url "report_builder_paywall_activating_subscription" domain %}" method="post">
-            {% csrf_token %}
-            <button class="btn btn-success" type="submit">
-                {% trans "Subscribe to Report Builder" %}
-            </button>
-        </form>
+        <div class="helpbubble helpbubble-bottom-center helpbubble-purple">
+            <h2>
+                {% trans "Build Your Own Reports In CommCare!" %}
+            </h2>
+            <p class="lead">
+                {% blocktrans %}
+                Build map reports, pie and bar charts, and form and case lists right in CommCare!
+                {% endblocktrans %}
+            </p>
+            <p>
+                {% blocktrans %}
+                Report Builder is part of the <strong>Pro</strong> or higher software plans.
+                {% endblocktrans %}
+                {% if pricing_page_url %}
+                    {% blocktrans %}
+                    See the <a href="{{ pricing_page_url }}">pricing plan options</a> for details.
+                    {% endblocktrans %}
+                {% endif %}
+            </p>
+        </div>
 
         <div class="row" style="margin-top: 32px">
             <div class="col-md-2"></div>

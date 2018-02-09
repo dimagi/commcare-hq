@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.conf import settings
 from tastypie.authorization import ReadOnlyAuthorization
 from tastypie.throttle import CacheDBThrottle

@@ -1,4 +1,5 @@
 from __future__ import print_function
+from __future__ import absolute_import
 import os
 
 from django.core.management.base import BaseCommand
@@ -18,7 +19,7 @@ class Command(BaseCommand):
         if not os.path.exists(conf_dir):
             sys.exit("[clear_supervisor_confs] Error: the path %s is not reachable by this process" % conf_dir)
         files = os.listdir(conf_dir)
-        env_confs = filter(lambda x: x.startswith('%s_' % environment) and x.endswith('.conf'), files)
+        env_confs = [x for x in files if x.startswith('%s_' % environment) and x.endswith('.conf')]
         for c in env_confs:
             os.remove(os.path.join(conf_dir, c))
             print("\t[clear_supervisor_confs] Removed supervisor configuration file: %s" % c)

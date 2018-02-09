@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.apps.reports.filters.dates import DatespanFilter
 import json
 from django.utils.translation import ugettext as _, ugettext_noop

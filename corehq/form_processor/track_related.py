@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from collections import defaultdict
 
 
@@ -8,8 +9,26 @@ class TrackRelatedChanges(object):
         self.update_models = defaultdict(list)
         self.delete_models = defaultdict(list)
 
-    def has_tracked_models(self):
-        return bool(self.create_models or self.update_models or self.delete_models)
+    def has_tracked_models(self, model_class=None):
+        return any((
+            self.has_tracked_models_to_create(model_class),
+            self.has_tracked_models_to_update(model_class),
+            self.has_tracked_models_to_delete(model_class)
+        ))
+
+    def has_tracked_models_to_delete(self, model_class=None):
+        return self._has_tracked_models(self.delete_models, model_class)
+
+    def has_tracked_models_to_update(self, model_class=None):
+        return self._has_tracked_models(self.update_models, model_class)
+
+    def has_tracked_models_to_create(self, model_class=None):
+        return self._has_tracked_models(self.create_models, model_class)
+
+    def _has_tracked_models(self, storage, model_class=None):
+        if model_class:
+            return bool(storage[model_class])
+        return any(models for models in storage.values())
 
     def clear_tracked_models(self, model_class=None):
         if not model_class:

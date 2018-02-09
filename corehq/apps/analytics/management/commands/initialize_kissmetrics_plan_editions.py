@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.core.management import BaseCommand
 from corehq.apps.accounting.signals import subscription_upgrade_or_downgrade
 from corehq.apps.domain.models import Domain

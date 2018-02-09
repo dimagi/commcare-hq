@@ -1,51 +1,25 @@
+from __future__ import absolute_import
 from corehq.util.mixin import UUIDGeneratorMixin
 from corehq.apps.sms.mixin import UnrecognizedBackendException
 from corehq.apps.sms.models import SQLMobileBackend, Log, OUTGOING
 from django.db import models
 
 
-class UnrecognizedIVRBackendException(UnrecognizedBackendException):
-    pass
-
-
 class SQLIVRBackend(SQLMobileBackend):
-
+    """
+    IVR Functionality has been removed, but this model is being kept
+    in order to preserve foreign key references in the Call model history.
+    """
     class Meta:
         app_label = 'sms'
         proxy = True
 
-    def initiate_outbound_call(self, call, logged_subevent, ivr_data=None):
-        """
-        Should return False if an error occurred and the call should be retried.
-        Should return True if the call should not be retried (either because it
-        was queued successfully or because an unrecoverable error occurred).
-        """
-        raise NotImplementedError("Please implement this method")
-
-    def get_response(self, gateway_session_id, ivr_responses, collect_input=False,
-            hang_up=True, input_length=None):
-        raise NotImplementedError("Please implement this method")
-
-    def cache_first_ivr_response(self):
-        """
-        If you want the framework to cache the first response that HQ will have
-        to the gateway, set this to True.
-        """
-        return False
-
-    def set_first_ivr_response(self, call, gateway_session_id, ivr_data):
-        call.xforms_session_id = ivr_data.session.session_id
-        call.use_precached_first_response = True
-        call.first_response = self.get_response(
-            gateway_session_id,
-            ivr_data.ivr_responses,
-            collect_input=True,
-            hang_up=False,
-            input_length=ivr_data.input_length
-        )
-
 
 class Call(UUIDGeneratorMixin, Log):
+    """
+    IVR Functionality has been removed, but this model is being kept
+    in order to preserve the call history.
+    """
     UUIDS_TO_GENERATE = ['couch_id']
 
     couch_id = models.CharField(max_length=126, null=True, db_index=True)
@@ -103,32 +77,3 @@ class Call(UUIDGeneratorMixin, Log):
 
     class Meta:
         app_label = 'ivr'
-
-    @classmethod
-    def by_gateway_session_id(cls, gateway_session_id):
-        result = cls.objects.filter(
-            gateway_session_id=gateway_session_id
-        ).order_by('-date')[:1]
-
-        if result:
-            return result[0]
-
-        return None
-
-    @classmethod
-    def answered_call_exists(cls, contact_doc_type, contact_id, from_timestamp, to_timestamp=None):
-        qs = cls.by_recipient(
-            contact_doc_type,
-            contact_id
-        ).filter(
-            direction=OUTGOING,
-            date__gte=from_timestamp,
-            answered=True
-        )
-
-        if to_timestamp:
-            qs = qs.filter(
-                date__lte=to_timestamp
-            )
-
-        return qs.count() > 0

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from couchdbkit import ResourceNotFound
 from django.conf import settings
 from django.core.cache import cache
@@ -55,7 +56,7 @@ def update_toggle_cache(slug, item, state, namespace=None):
 
 
 def namespaced_item(item, namespace):
-    return '{namespace}:{item}'.format(
+    return u'{namespace}:{item}'.format(
         namespace=namespace, item=item
     ) if namespace is not None else item
 
@@ -72,23 +73,22 @@ def parse_toggle(entry):
     return namespace, entry
 
 
-def find_with_toggle_enabled(toggle, namespace):
-    from corehq.toggles import ALL_NAMESPACES
-
-    if namespace not in ALL_NAMESPACES:
-        raise ValueError('Unknown toggle namespace "{}"'.format(namespace))
+def find_users_with_toggle_enabled(toggle):
+    from corehq.toggles import ALL_NAMESPACES, NAMESPACE_USER
     try:
         doc = Toggle.get(toggle.slug)
     except ResourceNotFound:
         return []
-    return [user[len(namespace) + 1:] for user in doc.enabled_users if user.startswith(namespace)]
-
-
-def find_users_with_toggle_enabled(toggle):
-    from corehq.toggles import NAMESPACE_USER
-    return find_with_toggle_enabled(toggle, namespace=NAMESPACE_USER)
+    prefixes = tuple(ns + ':' for ns in ALL_NAMESPACES if ns != NAMESPACE_USER)
+    # Users are not prefixed with NAMESPACE_USER, but exclude NAMESPACE_USER to keep `prefixes` short
+    return [u for u in doc.enabled_users if not u.startswith(prefixes)]
 
 
 def find_domains_with_toggle_enabled(toggle):
     from corehq.toggles import NAMESPACE_DOMAIN
-    return find_with_toggle_enabled(toggle, namespace=NAMESPACE_DOMAIN)
+    try:
+        doc = Toggle.get(toggle.slug)
+    except ResourceNotFound:
+        return []
+    prefix = NAMESPACE_DOMAIN + ':'
+    return [user[len(prefix):] for user in doc.enabled_users if user.startswith(prefix)]

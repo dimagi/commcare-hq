@@ -1,9 +1,12 @@
+from __future__ import absolute_import
+from __future__ import unicode_literals
 import json
 from django import forms
 from django.utils.translation import ugettext as _
 from corehq.apps.userreports.models import DataSourceConfiguration, \
     StaticDataSourceConfiguration
 from corehq.apps.userreports.ui.widgets import JsonWidget
+import six
 
 
 class ReportDataSourceField(forms.ChoiceField):
@@ -30,7 +33,7 @@ class JsonField(forms.CharField):
         super(JsonField, self).__init__(*args, **kwargs)
 
     def prepare_value(self, value):
-        if isinstance(value, basestring):
+        if isinstance(value, six.string_types):
             try:
                 return json.loads(value)
             except ValueError:
@@ -43,10 +46,10 @@ class JsonField(forms.CharField):
         try:
             return json.loads(val)
         except:
-            raise forms.ValidationError(_(u'Please enter valid JSON. This is not valid: {}'.format(value)))
+            raise forms.ValidationError(_('Please enter valid JSON. This is not valid: {}'.format(value)))
 
     def validate(self, value):
         if value in self.null_values and self.required:
             raise forms.ValidationError(self.error_messages['required'])
         if self.expected_type and not isinstance(value, self.expected_type):
-            raise forms.ValidationError(_(u'Expected {} but was {}'.format(self.expected_type, type(value))))
+            raise forms.ValidationError(_('Expected {} but was {}'.format(self.expected_type, type(value))))

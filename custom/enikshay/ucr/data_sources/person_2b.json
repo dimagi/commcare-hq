@@ -1,0 +1,224 @@
+{
+    "domains": [
+        "enikshay"
+    ],
+    "server_environment": [
+        "enikshay"
+    ],
+    "config": {
+        "referenced_doc_type": "CommCareCase",
+        "asynchronous": true,
+        "engine_id": "ucr",
+        "description": "",
+        "base_item_expression": {
+        },
+        "table_id": "person_2b",
+        "display_name": "Person (2b)",
+        "configured_filter": {
+            "operator": "eq",
+            "expression": {
+                "datatype": null,
+                "type": "property_name",
+                "property_name": "type"
+            },
+            "type": "boolean_expression",
+            "property_value": "person"
+        },
+        "configured_indicators": [
+            {
+                "filter": {
+                    "operator": "eq",
+                    "expression": {
+                        "datatype": null,
+                        "type": "property_name",
+                        "property_name": "migration_created_case"
+                    },
+                    "type": "boolean_expression",
+                    "comment": null,
+                    "property_value": "true"
+                },
+                "comment": null,
+                "type": "boolean",
+                "display_name": null,
+                "column_id": "case_created_by_migration"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": null,
+                "datatype": "string",
+                "expression": {
+                    "datatype": null,
+                    "type": "property_name",
+                    "property_name": "name"
+                },
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "name"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": null,
+                "datatype": "string",
+                "expression": {
+                    "datatype": null,
+                    "type": "property_name",
+                    "property_name": "person_id"
+                },
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "person_id"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": null,
+                "datatype": "string",
+                "expression": {
+                    "datatype": null,
+                    "type": "property_name",
+                    "property_name": "enrolled_in_private"
+                },
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "enrolled_in_private"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": null,
+                "datatype": "string",
+                "expression": {
+                    "datatype": null,
+                    "type": "property_name",
+                    "property_name": "current_episode_type"
+                },
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "current_episode_type"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": null,
+                "datatype": "string",
+                "expression": {
+                    "datatype": null,
+                    "type": "property_name",
+                    "property_name": "hiv_status"
+                },
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "hiv_status"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": null,
+                "datatype": "date",
+                "expression": {
+                    "datatype": null,
+                    "type": "property_name",
+                    "property_name": "hiv_test_date"
+                },
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "hiv_test_date"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": null,
+                "datatype": "date",
+                "expression": {
+                    "datatype": null,
+                    "type": "property_name",
+                    "property_name": "cpt_1_date"
+                },
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "cpt_1_date"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": null,
+                "datatype": "date",
+                "expression": {
+                    "datatype": null,
+                    "type": "property_name",
+                    "property_name": "art_initiation_date"
+                },
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "art_initiation_date"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": null,
+                "datatype": "string",
+                "expression": {
+                    "datatype": null,
+                    "type": "property_name",
+                    "property_name": "art_initiated"
+                },
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "art_initiated"
+            },
+            {
+                "comment": null,
+                "display_name": null,
+                "filter": {
+                    "operator": "eq",
+                    "type": "boolean_expression",
+                    "expression": {
+                        "datatype": null,
+                        "type": "property_name",
+                        "property_name": "hiv_test_nikshay_registered"
+                    },
+                    "comment": null,
+                    "property_value": "true"
+                },
+                "type": "boolean",
+                "column_id": "hiv_test_nikshay_registered"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": null,
+                "datatype": "string",
+                "expression": {
+                    "datatype": null,
+                    "type": "property_name",
+                    "property_name": "hiv_test_nikshay_error"
+                },
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "hiv_test_nikshay_error"
+            }
+        ]
+    }
+}

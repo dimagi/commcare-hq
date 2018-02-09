@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from celery.schedules import crontab
 from celery.task import periodic_task
 from django.conf import settings
@@ -11,7 +12,7 @@ from pillowtop.utils import get_all_pillows_json
 _assert = soft_assert("{}@{}".format('jemord', 'dimagi.com'))
 
 
-@periodic_task(run_every=crontab(minute="*/5"), queue=settings.CELERY_PERIODIC_QUEUE)
+@periodic_task(run_every=crontab(minute="*/2"), queue=settings.CELERY_PERIODIC_QUEUE)
 def run_pillow_datadog_metrics():
     pillow_datadog_metrics.delay()
 

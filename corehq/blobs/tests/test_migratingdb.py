@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
-from StringIO import StringIO
+from __future__ import absolute_import
+from io import BytesIO
 
 from testil import replattr
 
@@ -30,12 +31,12 @@ class TestMigratingBlobDB(get_base_class()):
         cls.db = TemporaryMigratingBlobDB(cls.s3db, cls.fsdb)
 
     def test_fall_back_to_fsdb(self):
-        info = self.fsdb.put(StringIO(b"content"), get_id())
+        info = self.fsdb.put(BytesIO(b"content"), get_id())
         with self.db.get(info.identifier) as fh:
             self.assertEqual(fh.read(), b"content")
 
     def test_copy_blob_masks_old_blob(self):
-        content = StringIO(b"fs content")
+        content = BytesIO(b"fs content")
         info = self.fsdb.put(content, get_id())
         content.seek(0)
         self.db.copy_blob(content, info, DEFAULT_BUCKET)
@@ -48,7 +49,7 @@ class TestMigratingBlobDB(get_base_class()):
                 self.assertEqual(fh.read(), b"fs content")
 
     def test_delete_from_both_fs_and_s3(self):
-        info = self.fsdb.put(StringIO(b"content"), get_id())
+        info = self.fsdb.put(BytesIO(b"content"), get_id())
         with self.fsdb.get(info.identifier) as content:
             self.db.copy_blob(content, info, DEFAULT_BUCKET)
         self.assertTrue(self.db.delete(info.identifier))

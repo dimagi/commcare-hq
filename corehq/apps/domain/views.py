@@ -1,9 +1,10 @@
+from __future__ import absolute_import
 import copy
 import datetime
 from decimal import Decimal
 import logging
 import json
-import cStringIO
+import io
 
 import pytz
 from couchdbkit import ResourceNotFound
@@ -42,7 +43,7 @@ from corehq.apps.case_search.models import (
     enable_case_search,
     disable_case_search,
 )
-from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_js_domain_cachebuster
+from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_js_domain_cachebuster, static
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.locations.forms import LocationFixtureForm
 from corehq.apps.locations.models import LocationFixtureConfiguration
@@ -80,7 +81,7 @@ from corehq.apps.smsbillables.forms import SMSRateCalculatorForm
 from corehq.apps.toggle_ui.views import ToggleEditView
 from corehq.apps.users.models import Invitation, CouchUser, Permissions
 from corehq.apps.fixtures.models import FixtureDataType
-from corehq.toggles import NAMESPACE_DOMAIN, all_toggles, CAN_EDIT_EULA, TRANSFER_DOMAIN
+from corehq.toggles import NAMESPACE_DOMAIN, all_toggles, CAN_EDIT_EULA, TRANSFER_DOMAIN, NAMESPACE_USER
 from custom.openclinica.forms import OpenClinicaSettingsForm
 from custom.openclinica.models import OpenClinicaSettings
 from dimagi.utils.couch.resource_conflict import retry_resource
@@ -88,7 +89,7 @@ from dimagi.utils.web import json_request
 from corehq import privileges, feature_previews
 from django_prbac.utils import has_privilege
 from corehq.apps.accounting.models import (
-    Subscription, CreditLine, SoftwareProductType, SubscriptionType,
+    Subscription, CreditLine, SubscriptionType,
     DefaultProductPlan, SoftwarePlanEdition, BillingAccount,
     BillingAccountType,
     Invoice, BillingRecord, InvoicePdf, PaymentMethodType,
@@ -130,6 +131,7 @@ from corehq.motech.repeaters.models import Repeater, RepeatRecord
 from corehq.motech.repeaters.dbaccessors import (
     get_paged_repeat_records,
     get_repeat_record_count,
+    get_repeat_records_by_payload_id,
 )
 from corehq.motech.repeaters.utils import get_all_repeater_types
 from corehq.motech.repeaters.const import (
@@ -145,6 +147,8 @@ from dimagi.utils.post import simple_post
 from toggle.models import Toggle
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.hqwebapp.signals import clear_login_attempts
+import six
+from six.moves import map
 
 
 PAYMENT_ERROR_MESSAGES = {
@@ -571,6 +575,24 @@ def drop_repeater(request, domain, repeater_id):
 
 @require_POST
 @require_can_edit_web_users
+def pause_repeater(request, domain, repeater_id):
+    rep = Repeater.get(repeater_id)
+    rep.pause()
+    messages.success(request, "Forwarding paused!")
+    return HttpResponseRedirect(reverse(DomainForwardingOptionsView.urlname, args=[domain]))
+
+
+@require_POST
+@require_can_edit_web_users
+def resume_repeater(request, domain, repeater_id):
+    rep = Repeater.get(repeater_id)
+    rep.resume()
+    messages.success(request, "Forwarding resumed!")
+    return HttpResponseRedirect(reverse(DomainForwardingOptionsView.urlname, args=[domain]))
+
+
+@require_POST
+@require_can_edit_web_users
 def test_repeater(request, domain):
     url = request.POST["url"]
     repeater_type = request.POST['repeater_type']
@@ -752,17 +774,15 @@ class DomainSubscriptionView(DomainAccountingSettings):
     def get_product_summary(self, plan_version, account, subscription):
         product_rate = plan_version.product_rate
         return {
-            'name': SoftwareProductType.COMMCARE,
             'monthly_fee': _("USD %s /month") % product_rate.monthly_fee,
-            'type': SoftwareProductType.COMMCARE,
             'subscription_credit': self._fmt_credit(self._credit_grand_total(
                 CreditLine.get_credits_by_subscription_and_features(
-                    subscription, product_type=SoftwareProductType.ANY
+                    subscription, is_product=True
                 ) if subscription else None
             )),
             'account_credit': self._fmt_credit(self._credit_grand_total(
                 CreditLine.get_credits_for_account(
-                    account, product_type=SoftwareProductType.ANY
+                    account, is_product=True
                 ) if account else None
             )),
         }
@@ -797,7 +817,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
                 )),
             }
 
-        return map(_get_feature_info, plan_version.feature_rates.all())
+        return list(map(_get_feature_info, plan_version.feature_rates.all()))
 
     @property
     def page_context(self):
@@ -1311,7 +1331,7 @@ class InternalSubscriptionManagementView(BaseAdminProjectSettingsView):
             'is_form_editable': self.is_form_editable,
             'plan_name': Subscription.get_subscribed_plan_by_domain(self.domain),
             'select_subscription_type_form': self.select_subscription_type_form,
-            'subscription_management_forms': self.slug_to_form.values(),
+            'subscription_management_forms': list(self.slug_to_form.values()),
             'today': datetime.date.today(),
         }
 
@@ -1785,6 +1805,31 @@ class ConfirmSubscriptionRenewalView(DomainAccountingSettings, AsyncHandlerMixin
         return self.get(request, *args, **kwargs)
 
 
+class EmailOnDowngradeView(View):
+    urlname = "email_on_downgrade"
+
+    def post(self, request, *args, **kwargs):
+        message = '\n'.join([
+            '{user} is downgrading the subscription for {domain} from {old_plan} to {new_plan}.',
+            '',
+            'Note from user: {note}',
+        ]).format(
+            user=request.couch_user.username,
+            domain=request.domain,
+            old_plan=request.POST.get('old_plan', 'unknown'),
+            new_plan=request.POST.get('new_plan', 'unknown'),
+            note=request.POST.get('note', 'none'),
+        )
+
+        send_mail_async.delay(
+            '{}Subscription downgrade for {}'.format(
+                '[staging] ' if settings.SERVER_ENVIRONMENT == "staging" else "",
+                request.domain
+            ), message, settings.DEFAULT_FROM_EMAIL, [settings.GROWTH_EMAIL]
+        )
+        return json_response({'success': True})
+
+
 class ExchangeSnapshotsView(BaseAdminProjectSettingsView):
     template_name = 'domain/snapshot_settings.html'
     urlname = 'domain_snapshot_settings'
@@ -1995,7 +2040,7 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
                 share_reminders = True
 
             copy_by_id = set()
-            for k in request.POST.keys():
+            for k in request.POST:
                 if k.endswith("-publish"):
                     copy_by_id.add(k[:-len("-publish")])
 
@@ -2043,7 +2088,7 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
 
             if image:
                 im = Image.open(image)
-                out = cStringIO.StringIO()
+                out = io.BytesIO()
                 im.thumbnail((200, 200), Image.ANTIALIAS)
                 im.save(out, new_domain.image_type.split('/')[-1])
                 new_domain.put_attachment(content=out.getvalue(), name=image.name)
@@ -2120,7 +2165,7 @@ class ManageProjectMediaView(BaseAdminProjectSettingsView):
     def page_context(self):
         return {
             'media': self.project_media_data,
-            'licenses': LICENSES.items(),
+            'licenses': list(LICENSES.items()),
         }
 
     @retry_resource(3)
@@ -2158,7 +2203,7 @@ class CaseSearchConfigView(BaseAdminProjectSettingsView):
         enable = request_json.get('enable')
         fuzzies_by_casetype = request_json.get('fuzzy_properties')
         updated_fuzzies = []
-        for case_type, properties in fuzzies_by_casetype.iteritems():
+        for case_type, properties in six.iteritems(fuzzies_by_casetype):
             fp, created = FuzzyProperties.objects.get_or_create(
                 domain=self.domain,
                 case_type=case_type
@@ -2168,7 +2213,7 @@ class CaseSearchConfigView(BaseAdminProjectSettingsView):
             updated_fuzzies.append(fp)
 
         unneeded_fuzzies = FuzzyProperties.objects.filter(domain=self.domain).exclude(
-            case_type__in=fuzzies_by_casetype.keys()
+            case_type__in=list(fuzzies_by_casetype)
         )
         unneeded_fuzzies.delete()
 
@@ -2288,6 +2333,7 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
     fields = [
         'corehq.apps.reports.filters.select.RepeaterFilter',
         'corehq.apps.reports.filters.select.RepeatRecordStateFilter',
+        'corehq.apps.reports.filters.simple.RepeaterPayloadIdFilter',
     ]
 
     def _make_cancel_payload_button(self, record_id):
@@ -2359,37 +2405,70 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
 
     @property
     def total_records(self):
-        return get_repeat_record_count(self.domain, self.repeater_id, self.state)
+        if self.payload_id:
+            return len(self._get_all_records_by_payload())
+        else:
+            return get_repeat_record_count(self.domain, self.repeater_id, self.state)
 
     @property
     def shared_pagination_GET_params(self):
         return [
             {'name': 'repeater', 'value': self.request.GET.get('repeater')},
             {'name': 'record_state', 'value': self.request.GET.get('record_state')},
+            {'name': 'payload_id', 'value': self.request.GET.get('payload_id')},
         ]
 
     def _format_date(self, date):
         tz_utc_aware_date = pytz.utc.localize(date)
         return tz_utc_aware_date.astimezone(self.timezone).strftime('%b %d, %Y %H:%M:%S %Z')
 
+    @memoized
+    def _get_all_records_by_payload(self):
+        # It is assumed that there are relatively few repeat records for a given payload,
+        # so this is just filtered in memory.  If that changes, we should filter in the db.
+        return [
+            r for r in get_repeat_records_by_payload_id(self.domain, self.payload_id)
+            if (not self.repeater_id or r.repeater_id == self.repeater_id)
+            and (not self.state or r.state == self.state)
+        ]
+
+    @property
+    def payload_id(self):
+        return self.request.GET.get('payload_id', None)
+
     @property
     def rows(self):
         self.repeater_id = self.request.GET.get('repeater', None)
         self.state = self.request.GET.get('record_state', None)
-        records = get_paged_repeat_records(
-            self.domain,
-            self.pagination.start,
-            self.pagination.count,
-            repeater_id=self.repeater_id,
-            state=self.state
-        )
+        if self.payload_id:
+            end = self.pagination.start + self.pagination.count
+            records = self._get_all_records_by_payload()[self.pagination.start:end]
+        else:
+            records = get_paged_repeat_records(
+                self.domain,
+                self.pagination.start,
+                self.pagination.count,
+                repeater_id=self.repeater_id,
+                state=self.state
+            )
         rows = [self._make_row(record) for record in records]
         return rows
+
+    def _payload_id_and_search_link(self, payload_id):
+        return (
+            '<a href="{url}?q={payload_id}">'
+            '<img src="{flower}" title="Search in HQ" width="14px" height="14px" />'
+            '</a> {payload_id}'
+        ).format(
+            url=reverse('global_quick_find'),
+            flower=static('prelogin/images/commcare-flower.png'),
+            payload_id=payload_id,
+        )
 
     def _make_row(self, record):
         row = [
             self._make_state_label(record),
-            record.url if record.url else _(u'Unable to generate url for record'),
+            record.repeater.get_url(record) if record.repeater else _(u'Unable to generate url for record'),
             self._format_date(record.last_checked) if record.last_checked else '---',
             self._format_date(record.next_check) if record.next_check else '---',
             render_to_string('domain/repeaters/partials/attempt_history.html', {'record': record}),
@@ -2402,7 +2481,7 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
         ]
 
         if toggles.SUPPORT.enabled_for_request(self.request):
-            row.insert(1, record.payload_id)
+            row.insert(1, self._payload_id_and_search_link(record.payload_id))
         return row
 
     @property
@@ -2428,7 +2507,7 @@ class DomainForwardingOptionsView(BaseAdminProjectSettingsView):
     page_title = ugettext_lazy("Data Forwarding")
     template_name = 'domain/admin/domain_forwarding.html'
 
-    @method_decorator(domain_admin_required)
+    @method_decorator(require_permission(Permissions.edit_motech))
     def dispatch(self, request, *args, **kwargs):
         return super(BaseProjectSettingsView, self).dispatch(request, *args, **kwargs)
 
@@ -2449,18 +2528,19 @@ class DomainForwardingOptionsView(BaseAdminProjectSettingsView):
         return {
             'repeaters': self.repeaters,
             'pending_record_count': RepeatRecord.count(self.domain),
+            'gefingerpoken': self.request.couch_user.is_superuser or
+                             toggles.IS_DEVELOPER.enabled(self.request.couch_user.username)
         }
 
 
-class AddRepeaterView(BaseAdminProjectSettingsView):
-    urlname = 'add_repeater'
+class BaseRepeaterView(BaseAdminProjectSettingsView):
     page_title = ugettext_lazy("Forward Data")
-    template_name = 'domain/admin/add_form_repeater.html'
     repeater_form_class = GenericRepeaterForm
+    template_name = 'domain/admin/add_form_repeater.html'
 
-    @method_decorator(domain_admin_required)
+    @method_decorator(require_permission(Permissions.edit_motech))
     def dispatch(self, request, *args, **kwargs):
-        return super(BaseProjectSettingsView, self).dispatch(request, *args, **kwargs)
+        return super(BaseRepeaterView, self).dispatch(request, *args, **kwargs)
 
     @property
     def page_url(self):
@@ -2489,9 +2569,50 @@ class AddRepeaterView(BaseAdminProjectSettingsView):
         except KeyError:
             raise Http404(
                 "No such repeater {}. Valid types: {}".format(
-                    self.repeater_type, get_all_repeater_types().keys()
+                    self.repeater_type, list(get_all_repeater_types())
                 )
             )
+
+    @property
+    def add_repeater_form(self):
+        return None
+
+    @property
+    def page_context(self):
+        return {
+            'form': self.add_repeater_form,
+            'repeater_type': self.repeater_type,
+        }
+
+    def initialize_repeater(self):
+        raise NotImplementedError
+
+    def make_repeater(self):
+        repeater = self.initialize_repeater()
+        return self.set_repeater_attr(repeater, self.add_repeater_form.cleaned_data)
+
+    def set_repeater_attr(self, repeater, cleaned_data):
+        repeater.domain = self.domain
+        repeater.url = cleaned_data['url']
+        repeater.auth_type = cleaned_data['auth_type'] or None
+        repeater.username = cleaned_data['username']
+        repeater.password = cleaned_data['password']
+        repeater.format = cleaned_data['format']
+        return repeater
+
+    def post_save(self, request, repeater):
+        pass
+
+    def post(self, request, *args, **kwargs):
+        if self.add_repeater_form.is_valid():
+            repeater = self.make_repeater()
+            repeater.save()
+            return self.post_save(request, repeater)
+        return self.get(request, *args, **kwargs)
+
+
+class AddRepeaterView(BaseRepeaterView):
+    urlname = 'add_repeater'
 
     @property
     @memoized
@@ -2507,31 +2628,12 @@ class AddRepeaterView(BaseAdminProjectSettingsView):
             repeater_class=self.repeater_class
         )
 
-    @property
-    def page_context(self):
-        return {
-            'form': self.add_repeater_form,
-            'repeater_type': self.repeater_type,
-        }
+    def initialize_repeater(self):
+        return self.repeater_class()
 
-    def make_repeater(self):
-        repeater = self.repeater_class(
-            domain=self.domain,
-            url=self.add_repeater_form.cleaned_data['url'],
-            auth_type=self.add_repeater_form.cleaned_data['auth_type'] or None,
-            username=self.add_repeater_form.cleaned_data['username'],
-            password=self.add_repeater_form.cleaned_data['password'],
-            format=self.add_repeater_form.cleaned_data['format']
-        )
-        return repeater
-
-    def post(self, request, *args, **kwargs):
-        if self.add_repeater_form.is_valid():
-            repeater = self.make_repeater()
-            repeater.save()
-            messages.success(request, _("Forwarding set up to %s" % repeater.url))
-            return HttpResponseRedirect(reverse(DomainForwardingOptionsView.urlname, args=[self.domain]))
-        return self.get(request, *args, **kwargs)
+    def post_save(self, request, repeater):
+        messages.success(request, _("Forwarding set up to %s" % repeater.url))
+        return HttpResponseRedirect(reverse(DomainForwardingOptionsView.urlname, args=[self.domain]))
 
 
 class AddFormRepeaterView(AddRepeaterView):
@@ -2542,8 +2644,8 @@ class AddFormRepeaterView(AddRepeaterView):
     def page_url(self):
         return reverse(self.urlname, args=[self.domain])
 
-    def make_repeater(self):
-        repeater = super(AddFormRepeaterView, self).make_repeater()
+    def set_repeater_attr(self, repeater, cleaned_data):
+        repeater = super(AddFormRepeaterView, self).set_repeater_attr(repeater, cleaned_data)
         repeater.include_app_id_param = self.add_repeater_form.cleaned_data['include_app_id_param']
         return repeater
 
@@ -2727,7 +2829,7 @@ def toggle_diff(request, domain):
     if Domain.get_by_name(other_domain):
         diff = [{'slug': t.slug, 'label': t.label, 'url': reverse(ToggleEditView.urlname, args=[t.slug])}
                 for t in feature_previews.all_previews() + all_toggles()
-                if t.enabled(request.domain) and not t.enabled(other_domain)]
+                if t.enabled(request.domain, NAMESPACE_DOMAIN) and not t.enabled(other_domain, NAMESPACE_DOMAIN)]
         diff.sort(cmp=lambda x, y: cmp(x['label'], y['label']))
     return json_response(diff)
 
@@ -2739,7 +2841,7 @@ def calculated_properties(request, domain):
     extra_arg = calc_tag[1] if len(calc_tag) > 1 else ''
     calc_tag = calc_tag[0]
 
-    if not calc_tag or calc_tag not in CALC_FNS.keys():
+    if not calc_tag or calc_tag not in list(CALC_FNS):
         data = {"error": 'This tag does not exist'}
     else:
         data = {"value": dom_calc(calc_tag, domain, extra_arg)}
@@ -2943,18 +3045,19 @@ class FlagsAndPrivilegesView(BaseAdminProjectSettingsView):
     def enabled_flags(self):
         def _sort_key(toggle_enabled_tuple):
             return (not toggle_enabled_tuple[1], not toggle_enabled_tuple[2], toggle_enabled_tuple[0].label)
-        return sorted(
-            [(toggle, toggle.enabled(self.domain), toggle.enabled(self.request.couch_user.username))
-                for toggle in all_toggles()],
-            key=_sort_key,
-        )
+        unsorted_toggles = [(
+            toggle,
+            toggle.enabled(self.domain, namespace=NAMESPACE_DOMAIN),
+            toggle.enabled(self.request.couch_user.username, namespace=NAMESPACE_USER)
+        ) for toggle in all_toggles()]
+        return sorted(unsorted_toggles, key=_sort_key)
 
     def _get_privileges(self):
         return sorted([
             (privileges.Titles.get_name_from_privilege(privilege),
              domain_has_privilege(self.domain, privilege))
             for privilege in privileges.MAX_PRIVILEGES
-        ], key=lambda (name, has): (not has, name))
+        ], key=lambda name_has: (not name_has[1], name_has[0]))
 
     @property
     def page_context(self):

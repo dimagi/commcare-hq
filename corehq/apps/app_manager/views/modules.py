@@ -1,4 +1,6 @@
 # coding=utf-8
+from __future__ import absolute_import
+
 from collections import OrderedDict
 import json
 import logging
@@ -16,6 +18,7 @@ from corehq.apps.app_manager import add_ons
 from corehq.apps.app_manager.views.media_utils import process_media_attribute, \
     handle_media_edits
 from corehq.apps.case_search.models import case_search_enabled_for_domain
+from corehq.apps.domain.models import Domain
 from corehq.apps.reports.daterange import get_simple_dateranges
 
 from dimagi.utils.logging import notify_exception
@@ -24,6 +27,7 @@ from corehq.apps.app_manager.views.utils import back_to_main, bail, get_langs, h
 from corehq import toggles
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.app_manager.const import (
+    MOBILE_UCR_VERSION_1,
     USERCASE_TYPE,
     CLAIM_DEFAULT_RELEVANT_CONDITION,
 )
@@ -62,6 +66,7 @@ from corehq.apps.app_manager.models import (
     DefaultCaseSearchProperty, get_all_mobile_filter_configs, get_auto_filter_configurations, CustomIcon)
 from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
     require_can_edit_apps, require_deploy_apps
+from six.moves import map
 
 logger = logging.getLogger(__name__)
 
@@ -229,7 +234,7 @@ def _get_report_module_context(app, module):
         {'slug': f.slug, 'description': f.short_description} for f in get_auto_filter_configurations()
 
     ]
-    from corehq.apps.app_manager.suite_xml.features.mobile_ucr import COLUMN_XPATH_CLIENT_TEMPLATE, get_data_path
+    from corehq.apps.app_manager.suite_xml.features.mobile_ucr import get_column_xpath_client_template, get_data_path
     data_path_placeholders = {}
     for r in module.report_configs:
         data_path_placeholders[r.report_id] = {}
@@ -242,9 +247,11 @@ def _get_report_module_context(app, module):
             'moduleFilter': module.module_filter,
             'availableReports': [_report_to_config(r) for r in all_reports],  # structure for all reports
             'currentReports': [r.to_json() for r in module.report_configs],  # config data for app reports
-            'columnXpathTemplate': COLUMN_XPATH_CLIENT_TEMPLATE,
+            'columnXpathTemplate': get_column_xpath_client_template(app.mobile_ucr_restore_version),
             'dataPathPlaceholders': data_path_placeholders,
             'languages': app.langs,
+            'supportSyncDelay': app.mobile_ucr_restore_version != MOBILE_UCR_VERSION_1,
+            'globalSyncDelay': Domain.get_by_name(app.domain).default_mobile_ucr_sync_interval,
         },
         'static_data_options': {
             'filterChoices': filter_choices,
@@ -287,8 +294,20 @@ def _get_parent_modules(app, module, case_property_builder, case_type_):
 
 
 def _get_valid_parent_modules(app, module):
-    return [parent_module for parent_module in app.modules
-            if not getattr(parent_module, 'root_module_id', None)
+    # If this module already has a child, it can't also have a parent
+    for m in app.modules:
+        if module.unique_id == getattr(m, 'root_module_id', None):
+            return []
+
+    # Modules that already have a parent may not themselves be parents
+    invalid_ids = [m.unique_id for m in app.modules if getattr(m, 'root_module_id', None)]
+    current_parent_id = getattr(module, 'root_module_id', None)
+    if current_parent_id in invalid_ids:
+        invalid_ids.remove(current_parent_id)
+
+    # The current module is not allowed, but its parent is
+    # Shadow modules are not allowed
+    return [parent_module for parent_module in app.modules if (parent_module.unique_id not in invalid_ids)
             and not parent_module == module and parent_module.doc_type != "ShadowModule"]
 
 
@@ -621,16 +640,8 @@ def undo_delete_module(request, domain, record_id):
 def overwrite_module_case_list(request, domain, app_id, module_unique_id):
     app = get_app(domain, app_id)
     source_module_unique_id = request.POST['source_module_unique_id']
-
-    # temporary fallback to handle currently working app states
-    source_module_id = request.POST['source_module_unique_id']
-    if source_module_id is not None:
-        source_module = app.get_module(int(source_module_unique_id))
-        dest_module = app.get_module(module_unique_id)
-    else:
-        source_module = app.get_module_by_unique_id(source_module_unique_id)
-        dest_module = app.get_module_by_unique_id(module_unique_id)
-
+    source_module = app.get_module_by_unique_id(source_module_unique_id)
+    dest_module = app.get_module_by_unique_id(module_unique_id)
     detail_type = request.POST['detail_type']
     assert detail_type in ['short', 'long']
     if not hasattr(source_module, 'case_details'):
@@ -700,7 +711,7 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
     params = json_request(request.POST)
     detail_type = params.get('type')
     short = params.get('short', None)
-    long = params.get('long', None)
+    long_ = params.get('long', None)
     tabs = params.get('tabs', None)
     filter = params.get('filter', ())
     custom_xml = params.get('custom_xml', None)
@@ -740,7 +751,7 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
 
     lang = request.COOKIES.get('lang', app.langs[0])
     if short is not None:
-        detail.short.columns = map(DetailColumn.from_json, short)
+        detail.short.columns = list(map(DetailColumn.from_json, short))
         if persist_case_context is not None:
             detail.short.persist_case_context = persist_case_context
             detail.short.persistent_case_context_xml = persistent_case_context_xml
@@ -755,10 +766,10 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
         if case_list_lookup is not None:
             _save_case_list_lookup_params(detail.short, case_list_lookup, lang)
 
-    if long is not None:
-        detail.long.columns = map(DetailColumn.from_json, long)
+    if long_ is not None:
+        detail.long.columns = list(map(DetailColumn.from_json, long_))
         if tabs is not None:
-            detail.long.tabs = map(DetailTab.wrap, tabs)
+            detail.long.tabs = list(map(DetailTab.wrap, tabs))
         if print_template is not None:
             detail.long.print_template = print_template
     if filter != ():
@@ -790,6 +801,10 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
         detail.long.sort_nodeset_columns = sort_nodeset_columns
 
     if sort_elements is not None:
+        # Attempt to map new elements to old so we don't lose translations
+        # Imperfect because the same field may be used multiple times, or user may change field
+        old_elements_by_field = {e['field']: e for e in detail.short.sort_elements}
+
         detail.short.sort_elements = []
         for sort_element in sort_elements:
             item = SortElement()
@@ -797,6 +812,8 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
             item.type = sort_element['type']
             item.direction = sort_element['direction']
             item.blanks = sort_element['blanks']
+            if item.field in old_elements_by_field:
+                item.display = old_elements_by_field[item.field].display
             item.display[lang] = sort_element['display']
             if toggles.SORT_CALCULATION_IN_CASE_LIST.enabled(domain):
                 item.sort_calculation = sort_element['sort_calculation']
@@ -922,6 +939,7 @@ def validate_module_for_build(request, domain, app_id, module_unique_id, ajax=Tr
 def new_module(request, domain, app_id):
     "Adds a module to an app"
     app = get_app(domain, app_id)
+    from corehq.apps.app_manager.views.utils import get_default_followup_form_xml
     lang = request.COOKIES.get('lang', app.langs[0])
     name = request.POST.get('name')
     module_type = request.POST.get('module_type', 'case')
@@ -948,7 +966,10 @@ def new_module(request, domain, app_id):
                     condition=FormActionCondition(type='always'))
 
                 # one followup form
-                followup = app.new_form(module_id, _("Followup Form"), lang)
+                msg = _("This is your follow up form. "
+                        "Delete this label and add questions for any follow up visits.")
+                attachment = get_default_followup_form_xml(context={'lang': lang, 'default_label': msg})
+                followup = app.new_form(module_id, _("Followup Form"), lang, attachment=attachment)
                 followup.requires = "case"
                 followup.actions.update_case = UpdateCaseAction(condition=FormActionCondition(type='always'))
 

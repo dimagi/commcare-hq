@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from collections import defaultdict
 from django.http import HttpResponse
 from corehq.apps.locations.models import SQLLocation
@@ -9,6 +10,7 @@ from custom.ewsghana.reports.specific_reports.stock_status_report import Product
 from custom.ewsghana.reports.stock_levels_report import FacilityReportData, StockLevelsLegend, InputStock, \
     InventoryManagementData, UsersData
 from custom.ewsghana.utils import calculate_last_period
+import six
 
 
 class DashboardReport(MultiReport):
@@ -57,7 +59,7 @@ class DashboardReport(MultiReport):
                     product_case_with_stock[product_id].remove(case_id)
             grouped_by_case[case_id].add(product_id)
 
-        for case_id, products in grouped_by_case.iteritems():
+        for case_id, products in six.iteritems(grouped_by_case):
             location = SQLLocation.objects.get(
                 supply_point_id=case_id
             )
@@ -73,11 +75,11 @@ class DashboardReport(MultiReport):
             'non_reporting': all_locations_count - (complete + incomplete),
             'without_stock': {
                 product_id: len(case_list)
-                for product_id, case_list in product_case_without_stock.iteritems()
+                for product_id, case_list in six.iteritems(product_case_without_stock)
             },
             'with_stock': {
                 product_id: len(case_list)
-                for product_id, case_list in product_case_with_stock.iteritems()
+                for product_id, case_list in six.iteritems(product_case_with_stock)
             }
         }
 

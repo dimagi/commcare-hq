@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import cgi
 from datetime import datetime, time, timedelta
 from django.utils.translation import ugettext_noop
@@ -27,6 +28,8 @@ from custom.fri.api import get_interactive_participants, get_valid_date_range
 from django.urls import reverse
 from corehq.apps.reports.dispatcher import CustomProjectReportDispatcher
 from dateutil.parser import parse
+from six.moves import range
+from six.moves import filter
 
 RESPONSE_NOT_APPLICABLE = 1
 NO_RESPONSE = 2
@@ -67,7 +70,7 @@ class MessageBankReport(FRIReport):
     @property
     def template_context(self):
         result = {
-            "is_previewer" : self.request.couch_user.is_previewer(),
+            "is_previewer": self.request.couch_user.is_previewer(),
         }
         return result
 
@@ -165,7 +168,7 @@ class MessageReport(FRIReport, DatespanMixin):
             DataTablesColumn(_("Message ID")),
             DataTablesColumn(_("Direction")),
         )
-        header.custom_sort = [[1, "asc"],[0, "asc"],[3, "asc"]]
+        header.custom_sort = [[1, "asc"], [0, "asc"], [3, "asc"]]
         return header
 
     def _case_name(self, contact, reverse=False):
@@ -233,7 +236,7 @@ class MessageReport(FRIReport, DatespanMixin):
         }
         message_bank_messages = get_message_bank(self.domain, for_comparing=True)
 
-        FormProcessorInterface(self.domain).casedb_cache(
+        case_cache = FormProcessorInterface(self.domain).casedb_cache(
             domain=self.domain, strip_history=False, deleted_ok=True
         )
         user_cache = UserCache()
@@ -265,7 +268,7 @@ class MessageReport(FRIReport, DatespanMixin):
                 self._fmt_timestamp(timestamp),
                 self._fmt(message.text),
                 self._fmt(message.fri_id or "-"),
-                self._fmt(direction_map.get(message.direction,"-")),
+                self._fmt(direction_map.get(message.direction, "-")),
             ])
         return result
 
@@ -291,8 +294,8 @@ class PHEDashboardReport(FRIReport):
     @property
     def template_context(self):
         result = {
-            "fri_message_bank_url" : reverse(CustomProjectReportDispatcher.name(), args=[self.domain, MessageBankReport.slug]),
-            "fri_chat_actions" : [self._open_chat_action(case._id) for case in self.interactive_participants],
+            "fri_message_bank_url": reverse(CustomProjectReportDispatcher.name(), args=[self.domain, MessageBankReport.slug]),
+            "fri_chat_actions": [self._open_chat_action(case._id) for case in self.interactive_participants],
         }
         return result
 
@@ -415,7 +418,7 @@ class SurveyResponsesReport(FRIReport):
             last_tuesday = first_tuesday + timedelta(days=49)
             return first_tuesday <= survey_report_date <= last_tuesday
 
-        result = filter(filter_function, result)
+        result = list(filter(filter_function, result))
         return result
 
     def get_first_survey_response(self, case, dt):

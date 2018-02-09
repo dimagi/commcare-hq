@@ -1,5 +1,6 @@
+from __future__ import absolute_import
 from lxml import etree
-import urllib2
+import six.moves.urllib.request, six.moves.urllib.error, six.moves.urllib.parse
 import urlparse
 from django.urls import reverse
 from corehq.apps.app_manager.exceptions import AppEditingError
@@ -56,7 +57,7 @@ def strip_location(profile_url, location):
 
 def make_remote_profile(app, langs=None):
     try:
-        profile = urllib2.urlopen(app.profile_url).read()
+        profile = six.moves.urllib.request.urlopen(app.profile_url).read()
     except Exception:
         raise AppEditingError('Unable to access profile url: "%s"' % app.profile_url)
 

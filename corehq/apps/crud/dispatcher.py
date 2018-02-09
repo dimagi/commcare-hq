@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.apps.domain.decorators import cls_require_superusers
 from corehq.apps.reports.dispatcher import ReportDispatcher
 

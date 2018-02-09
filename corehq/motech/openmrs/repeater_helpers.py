@@ -1,10 +1,53 @@
+from __future__ import absolute_import
 from collections import namedtuple
+from datetime import timedelta
 from requests import HTTPError
 from casexml.apps.case.xform import extract_case_blocks
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.motech.openmrs.logger import logger
+from corehq.motech.openmrs.openmrs_config import IdMatcher
+from six.moves import zip
+
 
 Should = namedtuple('Should', ['method', 'url', 'parser'])
+PERSON_PROPERTIES = (
+    'gender',
+    'age',
+    'birthdate',
+    'birthdateEstimated',
+    'dead',
+    'deathDate',
+    'deathdateEstimated',
+    'causeOfDeath',
+)
+PERSON_SUBRESOURCES = ('attribute', 'address', 'name')
+NAME_PROPERTIES = (
+    'givenName',
+    'familyName',
+    'middleName',
+    'familyName2',
+    'prefix',
+    'familyNamePrefix',
+    'familyNameSuffix',
+    'degree',
+)
+ADDRESS_PROPERTIES = (
+    'address1',
+    'address2',
+    'cityVillage',
+    'stateProvince',
+    'country',
+    'postalCode',
+    'latitude',
+    'longitude',
+    'countyDistrict',
+    'address3',
+    'address4',
+    'address5',
+    'address6',
+    'startDate',
+    'endDate',
+)
 
 
 class Requests(object):
@@ -15,16 +58,26 @@ class Requests(object):
         self.username = username
         self.password = password
 
-    def _url(self, uri):
-        return '{}{}'.format(self.base_url, uri)
+    def get_url(self, uri):
+        return '/'.join((self.base_url.rstrip('/'), uri.lstrip('/')))
 
     def get(self, uri, *args, **kwargs):
-        return self.requests.get(self._url(uri), *args,
+        return self.requests.get(self.get_url(uri), *args,
                                  auth=(self.username, self.password), **kwargs)
 
     def post(self, uri, *args, **kwargs):
-        return self.requests.post(self._url(uri), *args,
+        return self.requests.post(self.get_url(uri), *args,
                                   auth=(self.username, self.password), **kwargs)
+
+    def post_with_raise(self, uri, *args, **kwargs):
+        response = self.post(uri, *args, **kwargs)
+        try:
+            response.raise_for_status()
+        except HTTPError:
+            logger.debug('Request: ', self.get_url(uri), kwargs)
+            logger.debug('Response: ', response.json())
+            raise
+        return response
 
 
 def url(url_format_string, **kwargs):
@@ -50,23 +103,6 @@ def update_person_attribute(requests, person_uuid, attribute_uuid, attribute_typ
     ).json()
 
 
-def set_person_properties(requests, person_uuid, properties):
-    allowed_properties = (
-        'gender', 'birthdate', 'birthdateEstimated', 'dead', 'deathDate', 'causeOfDeath')
-    for p in properties:
-        assert p in allowed_properties
-
-    response = requests.post('/ws/rest/v1/person/{person_uuid}'.format(
-        person_uuid=person_uuid), json=properties
-    )
-    try:
-        response.raise_for_status()
-    except HTTPError:
-        logger.debug(response.json())
-        raise
-    return response.json()
-
-
 def server_datetime_to_openmrs_timestamp(dt):
     openmrs_timestamp = dt.isoformat()[:-3] + '+0000'
     # todo: replace this with tests
@@ -74,65 +110,57 @@ def server_datetime_to_openmrs_timestamp(dt):
     return openmrs_timestamp
 
 
-def create_visit(requests, person_uuid, visit_datetime, values_for_concept, encounter_type,
-                 openmrs_form, visit_type, patient_uuid=None):
-    timestamp = server_datetime_to_openmrs_timestamp(visit_datetime)
+def create_visit(requests, person_uuid, provider_uuid, visit_datetime, values_for_concept, encounter_type,
+                 openmrs_form, visit_type, location_uuid=None, patient_uuid=None):
     patient_uuid = patient_uuid or person_uuid
-    observations = [
-        {
-            "concept": concept_uuid,
-            "value": value,
-            "person": person_uuid,
-            "obsDatetime": timestamp,
-        }
-        for concept_uuid, values in values_for_concept.items()
-        for value in values
-    ]
-    observation_uuids = []
-    for observation in observations:
-        response = requests.post('/ws/rest/v1/obs', json=observation)
-        try:
-            response.raise_for_status()
-        except HTTPError:
-            logger.debug(response.json())
-            raise
-        observation_uuids.append(response.json()['uuid'])
-
-    logger.debug('observations', observation_uuids)
-    encounters = [
-        {
-            "encounterType": encounter_type,
-            "form": openmrs_form,
-            "obs": observation_uuids,
-            "patient": patient_uuid,
-        }
-    ]
-    encounter_uuids = []
-    for encounter in encounters:
-        response = requests.post('/ws/rest/v1/encounter', json=encounter)
-
-        try:
-            response.raise_for_status()
-        except HTTPError:
-            logger.debug(response.json())
-            raise
-        encounter_uuids.append(response.json()['uuid'])
-
-    logger.debug('encounters', encounter_uuids)
+    start_datetime = server_datetime_to_openmrs_timestamp(visit_datetime)
+    stop_datetime = server_datetime_to_openmrs_timestamp(
+        visit_datetime + timedelta(days=1) - timedelta(seconds=1)
+    )
 
     visit = {
-        "encounters": encounter_uuids,
-        "patient": patient_uuid,
-        "visitType": visit_type,
+        'patient': patient_uuid,
+        'visitType': visit_type,
+        'startDatetime': start_datetime,
+        'stopDatetime': stop_datetime,
     }
+    if location_uuid:
+        visit['location'] = location_uuid
+    response = requests.post_with_raise('/ws/rest/v1/visit', json=visit)
+    visit_uuid = response.json()['uuid']
 
-    response = requests.post('/ws/rest/v1/visit', json=visit)
-    try:
-        response.raise_for_status()
-    except HTTPError:
-        logger.debug(response.json())
-        raise
-    logger.debug(response.json()['uuid'])
+    encounter = {
+        'encounterDatetime': start_datetime,
+        'patient': patient_uuid,
+        'form': openmrs_form,
+        'encounterType': encounter_type,
+        'visit': visit_uuid,
+    }
+    if location_uuid:
+        encounter['location'] = location_uuid
+    response = requests.post_with_raise('/ws/rest/v1/encounter', json=encounter)
+    encounter_uuid = response.json()['uuid']
+    if provider_uuid:
+        encounter_provider = {'provider': provider_uuid}
+        uri = '/ws/rest/v1/encounter/{uuid}/encounterprovider'.format(uuid=encounter_uuid)
+        requests.post_with_raise(uri, json=encounter_provider)
+
+    observation_uuids = []
+    for concept_uuid, values in values_for_concept.items():
+        for value in values:
+            observation = {
+                'concept': concept_uuid,
+                'person': person_uuid,
+                'obsDatetime': start_datetime,
+                'encounter': encounter_uuid,
+                'value': value,
+            }
+            if location_uuid:
+                observation['location'] = location_uuid
+            response = requests.post_with_raise('/ws/rest/v1/obs', json=observation)
+            observation_uuids.append(response.json()['uuid'])
+
+    logger.debug('Observations created: ', observation_uuids)
 
 
 def search_patients(requests, search_string):
@@ -143,6 +171,107 @@ def get_patient_by_id(requests, patient_identifier_type, patient_identifier):
     response_json = search_patients(requests, patient_identifier)
     return PatientSearchParser(response_json).get_patient_matching_identifiers(
         patient_identifier_type, patient_identifier)
+
+
+def update_person_name(requests, info, openmrs_config, person_uuid, name_uuid):
+    properties = {
+        property_: value_source.get_value(info)
+        for property_, value_source in openmrs_config.case_config.person_preferred_name.items()
+        if property_ in NAME_PROPERTIES and value_source.get_value(info)
+    }
+    if properties:
+        requests.post_with_raise(
+            '/ws/rest/v1/person/{person_uuid}/name/{name_uuid}'.format(
+                person_uuid=person_uuid,
+                name_uuid=name_uuid,
+            ),
+            json=properties,
+        )
+
+
+def create_person_address(requests, info, openmrs_config, person_uuid):
+    properties = {
+        property_: value_source.get_value(info)
+        for property_, value_source in openmrs_config.case_config.person_preferred_address.items()
+        if property_ in ADDRESS_PROPERTIES and value_source.get_value(info)
+    }
+    if properties:
+        requests.post_with_raise(
+            '/ws/rest/v1/person/{person_uuid}/address/'.format(person_uuid=person_uuid),
+            json=properties,
+        )
+
+
+def update_person_address(requests, info, openmrs_config, person_uuid, address_uuid):
+    properties = {
+        property_: value_source.get_value(info)
+        for property_, value_source in openmrs_config.case_config.person_preferred_address.items()
+        if property_ in ADDRESS_PROPERTIES and value_source.get_value(info)
+    }
+    if properties:
+        requests.post_with_raise(
+            '/ws/rest/v1/person/{person_uuid}/address/{address_uuid}'.format(
+                person_uuid=person_uuid,
+                address_uuid=address_uuid,
+            ),
+            json=properties,
+        )
+
+
+def get_subresource_instances(requests, person_uuid, subresource):
+    assert subresource in PERSON_SUBRESOURCES
+    return requests.get('/ws/rest/v1/person/{person_uuid}/{subresource}'.format(
+        person_uuid=person_uuid,
+        subresource=subresource,
+    )).json()['results']
+
+
+def get_patient(requests, info, openmrs_config, problem_log):
+    patient = None
+    for id_matcher in openmrs_config.case_config.id_matchers:
+        assert isinstance(id_matcher, IdMatcher)
+        if id_matcher.case_property in info.extra_fields:
+            patient = get_patient_by_id(
+                requests, id_matcher.identifier_type_id,
+                info.extra_fields[id_matcher.case_property])
+            if patient:
+                break
+
+    if not patient:
+        problem_log.append("Could not find patient matching case")
+        return
+
+    return patient
+
+
+def update_person_properties(requests, info, openmrs_config, person_uuid):
+    properties = {
+        property_: value_source.get_value(info)
+        for property_, value_source in openmrs_config.case_config.person_properties.items()
+        if property_ in PERSON_PROPERTIES and value_source.get_value(info)
+    }
+    if properties:
+        for p in properties:
+            assert p in PERSON_PROPERTIES
+        requests.post_with_raise(
+            '/ws/rest/v1/person/{person_uuid}'.format(person_uuid=person_uuid),
+            json=properties
+        )
+
+
+def sync_person_attributes(requests, info, openmrs_config, person_uuid, attributes):
+    existing_person_attributes = {
+        attribute['attributeType']['uuid']: (attribute['uuid'], attribute['value'])
+        for attribute in attributes
+    }
+    for person_attribute_type, value_source in openmrs_config.case_config.person_attributes.items():
+        value = value_source.get_value(info)
+        if person_attribute_type in existing_person_attributes:
+            attribute_uuid, existing_value = existing_person_attributes[person_attribute_type]
+            if value != existing_value:
+                update_person_attribute(requests, person_uuid, attribute_uuid, person_attribute_type, value)
+        else:
+            create_person_attribute(requests, person_uuid, person_attribute_type, value)
 
 
 class PatientSearchParser(object):
@@ -166,7 +295,42 @@ class PatientSearchParser(object):
 
 
 CaseTriggerInfo = namedtuple('CaseTriggerInfo',
-                             ['case_id', 'updates', 'created', 'closed', 'extra_fields'])
+                             ['case_id', 'updates', 'created', 'closed', 'extra_fields', 'form_question_values'])
+
+
+def get_form_question_values(form_json):
+    """
+    Returns question-value pairs to result where questions are given as "/data/foo/bar"
+
+    >>> get_form_question_values({'form': {'foo': {'bar': 'baz'}}})
+    {'/data/foo/bar': 'baz'}
+
+    """
+    _reserved_keys = ('@uiVersion', '@xmlns', '@name', '#type', 'case', 'meta', '@version')
+
+    def _recurse_form_questions(form_dict, path, result_):
+        for key, value in form_dict.items():
+            if key in _reserved_keys:
+                continue
+            new_path = path + [key]
+            if isinstance(value, list):
+                # Repeat group
+                for v in value:
+                    assert isinstance(v, dict)
+                    _recurse_form_questions(v, new_path, result_)
+            elif isinstance(value, dict):
+                # Group
+                _recurse_form_questions(value, new_path, result_)
+            else:
+                # key is a question and value is its answer
+                question = '/'.join(new_path)
+                result_[question] = value
+
+    result = {}
+    _recurse_form_questions(form_json['form'], ['/data'], result)  # "/data" is just convention, hopefully familiar
+    # from form builder. The form's data will usually be immediately under "form_json['form']" but not necessarily.
+    # If this causes problems we may need a more reliable way to get to it.
+    return result
 
 
 def get_relevant_case_updates_from_form_json(domain, form_json, case_types, extra_fields):
@@ -176,16 +340,17 @@ def get_relevant_case_updates_from_form_json(domain, form_json, case_types, extr
         [case_block['@case_id'] for case_block in case_blocks], ordered=True)
     for case, case_block in zip(cases, case_blocks):
         assert case_block['@case_id'] == case.case_id
-        if case.type in case_types:
+        if not case_types or case.type in case_types:
             result.append(CaseTriggerInfo(
                 case_id=case_block['@case_id'],
                 updates=dict(
-                    case_block.get('create', {}).items() +
-                    case_block.get('update', {}).items()
+                    list(case_block.get('create', {}).items()) +
+                    list(case_block.get('update', {}).items())
                 ),
                 created='create' in case_block,
                 closed='close' in case_block,
-                extra_fields={field: case.get_case_property(field) for field in extra_fields}
+                extra_fields={field: case.get_case_property(field) for field in extra_fields},
+                form_question_values={}
             ))
     return result
 

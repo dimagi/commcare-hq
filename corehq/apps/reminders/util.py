@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from datetime import datetime, time
 from functools import wraps
 
@@ -199,7 +200,7 @@ def get_two_way_number_for_recipient(recipient):
     if isinstance(recipient, CommCareMobileContactMixin):
         two_way_numbers = recipient.get_two_way_numbers()
         if len(two_way_numbers) == 1:
-            return two_way_numbers.values()[0]
+            return list(two_way_numbers.values())[0]
         elif len(two_way_numbers) > 1:
             # Retrieve the two-way number that's highest up in the list
             if isinstance(recipient, CouchUser):

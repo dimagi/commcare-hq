@@ -22,16 +22,16 @@
         </div>
         <div data-bind="visible: lookup_enabled">
             <form>
-              <div class="form-group">
+              <div class="form-group container-fluid">
                   <label class="col-sm-2 control-label" for="{{ detail.type }}-lookup-autolaunch">
                       {% trans "Autolaunch Lookup" %}
                   </label>
-                  <div class="col-sm-4 checkbox">
+                  <div class="col-sm-10 checkbox">
                       <input type="checkbox" id="{{ detail.type }}-lookup-autolaunch"
                              data-bind="checked: lookup_autolaunch" />
                   </div>
               </div>
-              <div class="form-group">
+              <div class="form-group container-fluid">
                   <label class="col-sm-2 control-label" for="{{ detail.type }}-lookup-action">
                       {% trans "Action" %}
                   </label>
@@ -43,8 +43,6 @@
                           {% trans "Case list callout requires an action" %}
                       </span>
                   </div>
-              </div>
-              <div class="form-group">
                   <label class="col-sm-2 control-label" for="{{ detail.type }}-lookup-name">
                       {% trans "Action Name" %}
                   </label>
@@ -56,21 +54,21 @@
                       </span>
                   </div>
               </div>
-              <div class="form-group" id="{{ detail.type }}-extras">
-                  <label class="col-sm-2 control-label">
+              <div class="form-group container-fluid">
+                  <label class="col-sm-2 control-label {{ detail.type }}-extras">
                       {% trans "Extras" %}
                   </label>
-                  <div class="col-sm-4">
+                  <div class="col-sm-4 {{ detail.type }}-extras">
                       <!-- ko foreach: extras() -->
                       <div class="fd-kv-pair row form-group">
-                          <div class="col-sm-5">
+                          <div class="col-sm-4">
                               <input class="fd-kv-key form-control" type="text" data-bind="value: key, addSaveButtonListener: true" placeholder="key" />
                           </div>
-                          <div class="col-sm-1 text-center">&rarr;</div>
-                          <div class="col-sm-5">
+                          <div class="col-sm-2 text-center">&rarr;</div>
+                          <div class="col-sm-4">
                               <input class="fd-kv-val form-control" type="text" data-bind="value: value, addSaveButtonListener: true" placeholder="value" />
                           </div>
-                          <div class="col-sm-1">
+                          <div class="col-sm-2">
                               <a href="#" class="btn fd-kv-remove-pair btn-sm btn-danger"
                                  data-bind="visible: ($parent.extras().length > 1 || !(key() === '' && value() === '')), click: function(item){ $parent.remove_item('extras', item) }">
                                   <i class="fa fa-remove"></i>
@@ -87,12 +85,10 @@
                           {% trans "At least one extra required" %}
                       </span>
                   </div>
-              </div>
-              <div class="form-group" id="{{ detail.type }}-responses">
-                  <label class="control-label col-sm-2">
+                  <label class="control-label col-sm-2 {{ detail.type }}-responses">
                       {% trans "Responses" %}
                   </label>
-                  <div class="col-sm-4">
+                  <div class="col-sm-4 {{ detail.type }}-responses">
                       <!-- ko foreach: responses() -->
                       <div class="fd-kv-pair row form-group">
                           <div class="col-sm-5">
@@ -114,7 +110,7 @@
                       <span class="help-block" style="display: none;">{% trans "At least one response required" %}</span>
                   </div>
               </div>
-              <div class="case-list-lookup-icon">
+              <div class="case-list-lookup-icon container-fluid">
                   <!-- ko stopBinding: true -->
                   {% with qualifier='case-list-lookup'|add:detail.type %}
                       {% include "app_manager/partials/nav_menu_media.html" with ICON_LABEL="Icon" qualifier=qualifier EXCLUDE_AUDIO=True %}
@@ -131,20 +127,20 @@
                       </label>
                   </div>
               </div>
-              <div data-bind="visible: lookup_display_results">
-                  <div class="form-group" id="{{ detail.type }}-results-text">
-                      <label class="control-label col-sm-2">
+              <div data-bind="visible: lookup_display_results" class="col-sm-6 container-fluid">
+                  <div class="form-group container-fluid" id="{{ detail.type }}-results-text">
+                      <label class="control-label col-sm-4">
                           {% trans "Results display text" %}
                       </label>
-                      <div class="col-sm-4" data-bind="jqueryElement: lookup_field_header.ui"></div>
+                      <div class="col-sm-8" data-bind="jqueryElement: lookup_field_header.ui"></div>
                   </div>
-                  <div class="form-group" id="{{ detail.type }}-results-property">
-                      <label class="control-label col-sm-2">
+                  <div class="form-group container-fluid" id="{{ detail.type }}-results-property">
+                      <label class="control-label col-sm-4">
                           {% trans "Results mapping property" %}
                           <span class="hq-help-template"
                                 data-content="{% trans 'Case property or attribute used to map each result row to the correct case.' %}"></span>
                       </label>
-                      <div class="col-sm-4">
+                      <div class="col-sm-8">
                           <input class="form-control" type="text"
                                  data-bind="value: lookup_field_template"/>
                       </div>

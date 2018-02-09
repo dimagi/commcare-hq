@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import hashlib
 from datetime import datetime
 
@@ -6,6 +7,7 @@ from jsonobject.properties import ListProperty, BooleanProperty
 
 from dimagi.ext.jsonobject import JsonObject, StringProperty, DateTimeProperty, DictProperty
 from dimagi.utils.couch.database import get_db
+import six
 
 
 class PaginationEventHandler(object):
@@ -194,7 +196,7 @@ class ResumableFunctionIterator(object):
 
         retried = {}
         while self.state.retry != retried:
-            for item_id, retries in list(self.state.retry.iteritems()):
+            for item_id, retries in six.iteritems(self.state.retry):
                 if retries == retried.get(item_id):
                     continue  # skip already retried (successfully)
                 retried[item_id] = retries

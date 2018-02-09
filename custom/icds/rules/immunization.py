@@ -19,6 +19,7 @@ These utils can be used to calculate when immunizations are due for a given
 "tasks_type" == "pregnancy"), or a child (case property "tasks_type" == "child").
 """
 
+from __future__ import absolute_import
 import pytz
 import re
 from corehq.apps.products.models import SQLProduct
@@ -26,7 +27,12 @@ from corehq.form_processor.backends.sql.dbaccessors import LedgerAccessorSQL
 from corehq.form_processor.models import CommCareCaseIndexSQL
 from corehq.util.quickcache import quickcache
 from corehq.util.timezones.conversions import ServerTime
+from custom.icds.case_relationships import (
+    child_person_case_from_tasks_case,
+    ccs_record_case_from_tasks_case,
+)
 from datetime import datetime, date, timedelta
+import six
 
 
 def _validate_tasks_case_and_immunization_product(tasks_case, immunization_product):
@@ -61,43 +67,6 @@ def get_immunization_date(ledger_value):
     return date(1970, 1, 1) + timedelta(days=ledger_value.balance)
 
 
-def get_and_check_parent_case(subcase, identifier, relationship, expected_case_type):
-    related = subcase.get_parent(identifier=identifier, relationship=relationship)
-    if len(related) != 1:
-        raise ValueError("Expected exactly 1 matching case, found %s" % len(related))
-
-    parent_case = related[0]
-    if parent_case.type != expected_case_type:
-        raise ValueError("Expected case type %s, found %s" % (expected_case_type, parent_case.type))
-
-    return parent_case
-
-
-def child_person_case_from_tasks_case(tasks_case):
-    child_health_case = get_and_check_parent_case(
-        tasks_case,
-        'parent',
-        CommCareCaseIndexSQL.EXTENSION,
-        'child_health'
-    )
-
-    return get_and_check_parent_case(
-        child_health_case,
-        'parent',
-        CommCareCaseIndexSQL.EXTENSION,
-        'person'
-    )
-
-
-def ccs_record_case_from_tasks_case(tasks_case):
-    return get_and_check_parent_case(
-        tasks_case,
-        'parent',
-        CommCareCaseIndexSQL.EXTENSION,
-        'ccs_record'
-    )
-
-
 def get_date(value):
     if isinstance(value, date):
         if isinstance(value, datetime):
@@ -105,7 +74,7 @@ def get_date(value):
 
         return value
 
-    if not isinstance(value, basestring):
+    if not isinstance(value, six.string_types):
         raise TypeError("Expected date, datetime, or string")
 
     if not re.match('^\d{4}-\d{2}-\d{2}', value):
@@ -197,7 +166,7 @@ def immunization_is_due(tasks_case, anchor_date, immunization_product, all_immun
     if product_schedule_flag:
         tasks_case_schedule_flag = tasks_case.get_case_property('schedule_flag')
         if (
-            not isinstance(tasks_case_schedule_flag, basestring) or
+            not isinstance(tasks_case_schedule_flag, six.string_types) or
             product_schedule_flag not in tasks_case_schedule_flag
         ):
             return False

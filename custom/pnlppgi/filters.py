@@ -1,9 +1,11 @@
+from __future__ import absolute_import
 import datetime
 
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.filters.base import BaseSingleOptionFilter, BaseDrilldownOptionFilter
 from custom.pnlppgi.utils import users_locations
 from dimagi.utils.decorators.memoized import memoized
+from six.moves import range
 
 
 class WeekFilter(BaseSingleOptionFilter):

@@ -1,6 +1,8 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import base64
 import json
+import six
 import uuid
 from collections import OrderedDict
 from copy import deepcopy
@@ -988,7 +990,7 @@ class TestReportPillow(TestCase):
         for fn in transform_functions:
             cleaned = fn(bad_appVersion)
             self.assertFalse(isinstance(cleaned['form']['meta']['appVersion'], dict))
-            self.assertTrue(isinstance(cleaned['form']['meta']['appVersion'], str))
+            self.assertTrue(isinstance(cleaned['form']['meta']['appVersion'], six.text_type))
             self.assertTrue(cleaned['form']['meta']['appVersion'], "CCODK:\"2.5.1\"(11126). v236 CC2.5b[11126] on April-15-2013")
 
 
@@ -1194,13 +1196,13 @@ class TestToManyDictField(TestCase):
         dehydrated_bundle = source_resource.full_dehydrate(bundle)
 
         self.assertTrue('other_models' in dehydrated_bundle.data)
-        self.assertEqual(dehydrated_bundle.data['other_models']['first_other']['id'] , 'foo')
+        self.assertEqual(dehydrated_bundle.data['other_models']['first_other']['id'], 'foo')
         self.assertEqual(dehydrated_bundle.data['other_models']['second_other']['id'], 'bar')
 
         bundle = source_resource.build_bundle(obj=source_objs[1])
         dehydrated_bundle = source_resource.full_dehydrate(bundle)
 
-        self.assertEqual(dehydrated_bundle.data['other_models']['first_other']['id'] , 'bar')
+        self.assertEqual(dehydrated_bundle.data['other_models']['first_other']['id'], 'bar')
         self.assertEqual(dehydrated_bundle.data['other_models']['second_other']['id'], 'baz')
 
 

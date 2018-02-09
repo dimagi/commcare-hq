@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from dimagi.ext.couchdbkit import Document, StringProperty,\
     BooleanProperty, DateTimeProperty
 import datetime
@@ -56,11 +57,8 @@ class RegistrationRequest(Document):
             include_docs=True,
             reduce=False
         ).all()
-        return filter(
-            lambda doc: (doc.new_user_username == doc.requesting_user_username
-                         and doc.confirm_time is None),
-            result
-        )
+        return [doc for doc in result if (doc.new_user_username == doc.requesting_user_username
+                         and doc.confirm_time is None)]
 
     @classmethod
     def get_request_for_username(cls, username):

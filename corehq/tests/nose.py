@@ -32,6 +32,7 @@ from dimagi.utils.parsing import string_to_boolean
 from corehq.tests.noseplugins.cmdline_params import CmdLineParametersPlugin
 from corehq.util.couchdb_management import couch_config
 from corehq.util.test_utils import unit_testing_only
+from six.moves import zip
 
 log = logging.getLogger(__name__)
 
@@ -280,7 +281,7 @@ def print_imports_until_thread_change():
 @nottest
 @unit_testing_only
 def get_all_test_dbs():
-    all_dbs = couch_config.all_dbs_by_db_name.values()
+    all_dbs = list(couch_config.all_dbs_by_db_name.values())
     for db in all_dbs:
         if '/test_' not in db.uri:
             raise ValueError("not a test db url: db=%s url=%r" % (db.dbname, db.uri))

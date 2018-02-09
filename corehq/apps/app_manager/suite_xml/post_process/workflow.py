@@ -14,6 +14,7 @@ from corehq.apps.app_manager.suite_xml.xml_models import StackDatum, Stack, Crea
 from corehq.apps.app_manager.xpath import CaseIDXPath, session_var, \
     XPath
 from dimagi.utils.decorators.memoized import memoized
+from six.moves import filter
 
 
 class WorkflowHelper(PostProcessor):
@@ -82,10 +83,10 @@ class WorkflowHelper(PostProcessor):
         if module_command == id_strings.ROOT:
             datums_list = self.root_module_datums
         else:
-            datums_list = module_datums.values()  # [ [datums for f0], [datums for f1], ...]
+            datums_list = list(module_datums.values())  # [ [datums for f0], [datums for f1], ...]
             root_module = target_form.get_module().root_module
             if root_module and include_target_root:
-                datums_list = datums_list + self.get_module_datums(id_strings.menu_id(root_module)).values()
+                datums_list = datums_list + list(self.get_module_datums(id_strings.menu_id(root_module)).values())
 
         common_datums = commonprefix(datums_list)
         remaining_datums = form_datums[len(common_datums):]
@@ -99,7 +100,7 @@ class WorkflowHelper(PostProcessor):
         return frame_children
 
     def create_workflow_stack(self, form_command, frame_metas):
-        frames = filter(None, [meta.to_frame() for meta in frame_metas if meta is not None])
+        frames = [_f for _f in [meta.to_frame() for meta in frame_metas if meta is not None] if _f]
         if not frames:
             return
 
@@ -293,7 +294,7 @@ class EndOfFormNavigationWorkflow(object):
                 target_frame_children = self.helper.get_frame_children(target_form)
                 if link.datums:
                     frame_children = EndOfFormNavigationWorkflow.get_datums_matched_to_manual_values(
-                        target_frame_children, link.datums
+                        target_frame_children, link.datums, form
                     )
                 else:
                     frame_children = WorkflowHelper.get_datums_matched_to_source(
@@ -315,6 +316,8 @@ class EndOfFormNavigationWorkflow(object):
             if form.post_form_workflow_fallback:
                 # for the fallback negative all if conditions/xpath expressions and use that as the xpath for this
                 link_xpaths = [link.xpath for link in form.form_links]
+                # remove any empty string
+                link_xpaths = [x for x in link_xpaths if x.strip()]
                 if link_xpaths:
                     negate_of_all_link_paths = (
                         ' and '.join(
@@ -334,7 +337,7 @@ class EndOfFormNavigationWorkflow(object):
         return stack_frames
 
     @staticmethod
-    def get_datums_matched_to_manual_values(target_frame_elements, manual_values):
+    def get_datums_matched_to_manual_values(target_frame_elements, manual_values, form):
         """
         Attempt to match the target session variables with ones that the user
         has entered manually
@@ -348,8 +351,8 @@ class EndOfFormNavigationWorkflow(object):
                 if manual_value:
                     yield StackDatum(id=child.id, value=manual_value)
                 else:
-                    raise SuiteValidationError("Unable to link forms, missing form variable: {}".format(
-                        child.id
+                    raise SuiteValidationError("Unable to link form '{}', missing variable '{}'".format(
+                        form.default_name(), child.id
                     ))
 
 

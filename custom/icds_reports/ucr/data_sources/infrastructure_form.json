@@ -8,6 +8,7 @@
   ],
   "server_environment": [
     "softlayer",
+    "icds-new",
     "icds"
   ],
   "config": {
@@ -861,6 +862,7 @@
         "column_id": "baby_scale_usable"
       },
       {
+        "comment": "This variable doesn't actually exist in the app.",
         "filter": {
           "operator": "eq",
           "expression": {
@@ -1353,6 +1355,7 @@
     ],
     "named_expressions": {},
     "named_filters": {},
-    "engine_id": "icds-ucr"
+    "engine_id": "icds-ucr",
+    "disable_destructive_rebuild": true
   }
 }

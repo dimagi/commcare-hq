@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import logging
 
 from collections import namedtuple
@@ -15,6 +16,7 @@ from django.db import IntegrityError
 from django.http.response import Http404
 
 from dimagi.utils.chunked import chunked
+import six
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -48,7 +50,7 @@ class MALTTableGenerator(object):
 
     def _get_malt_row_dicts(self, domain_name, monthspan, all_users_by_id):
         malt_row_dicts = []
-        for users in chunked(all_users_by_id.keys(), 1000):
+        for users in chunked(list(all_users_by_id), 1000):
             apps_submitted_for = get_app_submission_breakdown_es(domain_name, monthspan, users)
             for app_row in apps_submitted_for:
                 app_id = app_row.app_id
@@ -103,10 +105,10 @@ class MALTTableGenerator(object):
         try:
             # try update
             unique_field_dict = {k: v
-                                 for (k, v) in malt_dict.iteritems()
+                                 for (k, v) in six.iteritems(malt_dict)
                                  if k in MALTRow.get_unique_fields()}
             prev_obj = MALTRow.objects.get(**unique_field_dict)
-            for k, v in malt_dict.iteritems():
+            for k, v in six.iteritems(malt_dict):
                 setattr(prev_obj, k, v)
             prev_obj.save()
         except MALTRow.DoesNotExist:

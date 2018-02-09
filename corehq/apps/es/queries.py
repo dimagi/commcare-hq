@@ -10,6 +10,7 @@ are available, and put 'em here if you end up using any of 'em.
 
 .. _`query_docs`: https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-queries.html
 """
+from __future__ import absolute_import
 import re
 
 MUST = "must"
@@ -58,10 +59,10 @@ def _smart_query_string(search_string):
                      '~', '*', '?', ':', '\\', '/']
     for char in special_chars:
         if char in search_string:
-            return False, search_string
+            return True, search_string
     r = re.compile(r'\w+')
     tokens = r.findall(search_string)
-    return True, "*{}*".format("* *".join(tokens))
+    return False, "*{}*".format("* *".join(tokens))
 
 
 def search_string_query(search_string, default_fields=None):
@@ -75,12 +76,14 @@ def search_string_query(search_string, default_fields=None):
     if not search_string:
         return match_all()
 
-    is_simple, query_string = _smart_query_string(search_string)
+    # use simple_query_string for user-provided syntax, since it won't error
+    uses_syntax, query_string = _smart_query_string(search_string)
+    query_method = "simple_query_string" if uses_syntax else "query_string"
     return {
-        "query_string": {
+        query_method: {
             "query": query_string,
             "default_operator": "AND",
-            "fields": default_fields if is_simple else None
+            "fields": default_fields if not uses_syntax else None,
         }
     }
 
@@ -136,5 +139,15 @@ def filtered(query, filter_):
         "filtered": {
             "query": query,
             "filter": filter_,
+        }
+    }
+
+
+def regexp(field, regex):
+    return {
+        'regexp': {
+            field: {
+                'value': regex,
+            }
         }
     }

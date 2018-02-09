@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from couchdbkit.exceptions import ResourceNotFound
 from datetime import datetime
 
@@ -34,10 +35,14 @@ from couchforms.dbaccessors import (
     get_forms_by_type,
     get_deleted_form_ids_for_user,
     get_form_ids_for_user,
-    get_forms_by_id, get_form_ids_by_type)
+    get_forms_by_id,
+    get_form_ids_by_type,
+    get_form_ids_by_xmlns,
+)
 from couchforms.models import XFormInstance, doc_types
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.parsing import json_format_datetime
+import six
 
 
 class FormAccessorCouch(AbstractFormAccessor):
@@ -75,7 +80,7 @@ class FormAccessorCouch(AbstractFormAccessor):
         doc = XFormInstance.get_db().get(form_id, attachments=True)
         doc = doc_types()[doc['doc_type']].wrap(doc)
         if doc.external_blobs:
-            for name, meta in doc.external_blobs.iteritems():
+            for name, meta in six.iteritems(doc.external_blobs):
                 with doc.fetch_attachment(name, stream=True) as content:
                     doc.deferred_put_attachment(
                         content,
@@ -107,11 +112,19 @@ class FormAccessorCouch(AbstractFormAccessor):
 
     @staticmethod
     def soft_delete_forms(domain, form_ids, deletion_date=None, deletion_id=None):
-        return _soft_delete(XFormInstance.get_db(), form_ids, deletion_date, deletion_id)
+        def _form_delete(doc):
+            doc['server_modified_on'] = json_format_datetime(datetime.utcnow())
+        return _soft_delete(XFormInstance.get_db(), form_ids, deletion_date, deletion_id, _form_delete)
 
     @staticmethod
     def soft_undelete_forms(domain, form_ids):
-        return _soft_undelete(XFormInstance.get_db(), form_ids)
+        def _form_undelete(doc):
+            doc['server_modified_on'] = json_format_datetime(datetime.utcnow())
+        return _soft_undelete(XFormInstance.get_db(), form_ids, _form_undelete)
+
+    @staticmethod
+    def iter_form_ids_by_xmlns(domain, xmlns=None):
+        return get_form_ids_by_xmlns(domain, xmlns)
 
 
 class CaseAccessorCouch(AbstractCaseAccessor):
@@ -202,8 +215,10 @@ class CaseAccessorCouch(AbstractCaseAccessor):
         return get_indexed_case_ids(domain, case_ids)
 
     @staticmethod
-    def get_reverse_indexed_cases(domain, case_ids):
-        return get_reverse_indexed_cases(domain, case_ids)
+    def get_reverse_indexed_cases(domain, case_ids, case_types=None, is_closed=None):
+        return [case for case in get_reverse_indexed_cases(domain, case_ids)
+                if (not case_types or case.type in case_types)
+                and (is_closed is None or case.closed == is_closed)]
 
     @staticmethod
     def get_last_modified_dates(domain, case_ids):
@@ -314,7 +329,7 @@ def _get_attachment_content(doc_class, doc_id, attachment_id):
     return AttachmentContent(content_type, resp)
 
 
-def _soft_delete(db, doc_ids, deletion_date=None, deletion_id=None):
+def _soft_delete(db, doc_ids, deletion_date=None, deletion_id=None, custom_delete=None):
     from dimagi.utils.couch.undo import DELETED_SUFFIX
     deletion_date = json_format_datetime(deletion_date or datetime.utcnow())
 
@@ -322,15 +337,20 @@ def _soft_delete(db, doc_ids, deletion_date=None, deletion_id=None):
         doc['doc_type'] += DELETED_SUFFIX
         doc['-deletion_id'] = deletion_id
         doc['-deletion_date'] = deletion_date
+
+        if custom_delete:
+            custom_delete(doc)
+
         return doc
 
     return _operate_on_docs(db, doc_ids, delete)
 
 
-def _soft_undelete(db, doc_ids):
+def _soft_undelete(db, doc_ids, custom_undelete=None):
     from dimagi.utils.couch.undo import DELETED_SUFFIX
 
     def undelete(doc):
+
         doc_type = doc['doc_type']
         if doc_type.endswith(DELETED_SUFFIX):
             doc['doc_type'] = doc_type[:-len(DELETED_SUFFIX)]
@@ -339,6 +359,9 @@ def _soft_undelete(db, doc_ids):
             del doc['-deletion_id']
         if '-deletion_date' in doc:
             del doc['-deletion_date']
+
+        if custom_undelete:
+            custom_undelete(doc)
         return doc
 
     return _operate_on_docs(db, doc_ids, undelete)

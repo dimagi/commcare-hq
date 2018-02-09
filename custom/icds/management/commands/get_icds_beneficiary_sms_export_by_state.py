@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from couchexport.export import export_raw
 from custom.icds.management.commands.get_icds_sms_export import BaseICDSSMSExportCommand
 from custom.icds.const import (
@@ -6,6 +7,7 @@ from custom.icds.const import (
     CHHATTISGARH_SITE_CODE,
     JHARKHAND_SITE_CODE,
     MADHYA_PRADESH_SITE_CODE,
+    RAJASTHAN_SITE_CODE,
 )
 
 
@@ -18,6 +20,7 @@ class Command(BaseICDSSMSExportCommand):
             CHHATTISGARH_SITE_CODE: 'CG',
             JHARKHAND_SITE_CODE: 'JH',
             MADHYA_PRADESH_SITE_CODE: 'MP',
+            RAJASTHAN_SITE_CODE: 'RJ',
         }[state_code]
 
     def get_export_name(self, state_code, start_date, end_date):
@@ -48,6 +51,7 @@ class Command(BaseICDSSMSExportCommand):
             CHHATTISGARH_SITE_CODE,
             JHARKHAND_SITE_CODE,
             MADHYA_PRADESH_SITE_CODE,
+            RAJASTHAN_SITE_CODE,
         ):
             export_name = self.get_export_name(state_code, start_date, end_date)
             with open('%s.xlsx' % export_name, 'wb') as f:

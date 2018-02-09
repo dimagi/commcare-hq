@@ -1,0 +1,175 @@
+{% extends "champ/base_async_template.html" %}
+{% load compress %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% block champjs %}
+    <script type="text/javascript" src="{% static 'champ/js/controlers/prevision_vs_achievements_table.controller.js' %}"></script>
+{% endblock %}
+
+{% block champcontent %}
+    <div id="champApp" ng-controller="PrevisionVsAchievementsTableController as mainCtrl">
+        <h2 ng-bind="mainCtrl.title"></h2>
+        <div class="row" style="margin-bottom: 40px;">
+            <div class="row">
+                <div class="row bubble" style="width: 80%">
+                    <h4 style="text-align: center">Filters</h4>
+                    <div class="row">
+                        <div class="col-md-2">
+                            <label>District:</label>
+                            <ui-select multiple ng-model="mainCtrl.filters.district" theme="bootstrap" on-remove="mainCtrl.onSelectOption($item, 'district')" on-select="mainCtrl.onSelectOption($item, 'district')">
+                                <ui-select-match placeholder="District"><span ng-bind="$item.value"></span></ui-select-match>
+                                <ui-select-choices repeat="district.id as district in mainCtrl.districts | propsFilter: {value: $select.search}">
+                                    <div ng-bind="district.value"></div>
+                                </ui-select-choices>
+                            </ui-select>
+                        </div>
+                        <div class="col-md-2">
+                            <label >Visit Type:</label>
+                            <ui-select ng-model="mainCtrl.filters.visit_type" theme="bootstrap">
+                                <ui-select-match placeholder="Visit Type"><span ng-bind="$select.selected.value"></span></ui-select-match>
+                                <ui-select-choices repeat="visit.id as visit in mainCtrl.visitsTypes">
+                                    <div ng-bind="visit.value"></div>
+                                </ui-select-choices>
+                            </ui-select>
+                        </div>
+                        <div class="col-md-2">
+                            <label >Activity Type:</label>
+                            <ui-select ng-model="mainCtrl.filters.activity_type" theme="bootstrap">
+                                <ui-select-match placeholder="Activity Type"><span ng-bind="$select.selected.value"></span></ui-select-match>
+                                <ui-select-choices repeat="activity.id as activity in mainCtrl.activityTypes">
+                                    <div ng-bind="activity.value"></div>
+                                </ui-select-choices>
+                            </ui-select>
+                        </div>
+                        <div class="col-md-2">
+                            <label >Client Type:</label>
+                            <ui-select multiple ng-model="mainCtrl.filters.client_type" theme="bootstrap" on-remove="mainCtrl.onSelectOption($item, 'client_type')" on-select="mainCtrl.onSelectOption($item, 'client_type')">
+                                <ui-select-match placeholder="Client Type"><span ng-bind="$item.value"></span></ui-select-match>
+                                <ui-select-choices repeat="client.id as client in mainCtrl.clientTypes">
+                                    <div ng-bind="client.value"></div>
+                                </ui-select-choices>
+                            </ui-select>
+                        </div>
+                        <div class="col-md-2">
+                            <label>Organization:</label>
+                            <ui-select multiple ng-model="mainCtrl.filters.organization" theme="bootstrap" on-remove="mainCtrl.onSelectOption($item, 'organization')" on-select="mainCtrl.onSelectOption($item, 'organization')">
+                                <ui-select-match placeholder="Organization"><span ng-bind="$item.value"></span></ui-select-match>
+                                <ui-select-choices repeat="organization.id as organization in mainCtrl.organizations | propsFilter: {value: $select.search}">
+                                    <div ng-bind="organization.value"></div>
+                                </ui-select-choices>
+                            </ui-select>
+                        </div>
+                        <div class="col-md-2">
+                            <label>Fiscal year:</label>
+                            <ui-select ng-model="mainCtrl.filters.fiscal_year" theme="bootstrap">
+                                <ui-select-match placeholder="Fiscal year"><span ng-bind="$select.selected.value"></span></ui-select-match>
+                                <ui-select-choices repeat="year.id as year in mainCtrl.fiscalYears">
+                                    <div ng-bind="year.value"></div>
+                                </ui-select-choices>
+                            </ui-select>
+                        </div>
+                    </div>
+                    <hr>
+                    <div style="margin-bottom: 15px;" class="row">
+                        <div class="col-md-1"></div>
+                        <div class="col-md-2">
+                            <label>Visit Date:</label>
+                            <div>
+                                <input date-range-picker options="mainCtrl.pickerOptions" class="form-control date-picker" type="text" ng-model="mainCtrl.visit_date" />
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <label>Post Date:</label>
+                            <div>
+                                <input date-range-picker options="mainCtrl.pickerOptions" class="form-control date-picker" type="text" ng-model="mainCtrl.post_date" />
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <label>First Art Date:</label>
+                            <div>
+                                <input date-range-picker options="mainCtrl.pickerOptions" class="form-control date-picker" type="text" ng-model="mainCtrl.first_art_date" />
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <label>Handshake Date:</label>
+                            <div>
+                                <input date-range-picker options="mainCtrl.pickerOptions" class="form-control date-picker" type="text" ng-model="mainCtrl.date_handshake" />
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <label>Last VL Test Date:</label>
+                            <div>
+                                <input date-range-picker options="mainCtrl.pickerOptions" class="form-control date-picker" type="text" ng-model="mainCtrl.date_last_vl_test" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row" style="margin-top: 20px;">
+            <button class="btn btn-success" style="float: right; margin-right: 50px;" ng-click="mainCtrl.getData()">Submit</button>
+        </div>
+        <div class="row">
+            <table class="table">
+            <thead>
+                <tr>
+                    <th>Indicateur</th>
+                    <th>Nombre de clients</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>KP_PREV</td>
+                    <td><span ng-bind="mainCtrl.data.kp_prev"></span></td>
+                </tr>
+                <tr>
+                    <td>KP_PREV_target</td>
+                    <td><span ng-bind="mainCtrl.data.target_kp_prev"></span></td>
+                </tr>
+                <tr>
+                    <td>HTC_TST</td>
+                    <td><span ng-bind="mainCtrl.data.htc_tst"></span></td>
+                </tr>
+                <tr>
+                    <td>HTC_TST_target</td>
+                    <td><span ng-bind="mainCtrl.data.target_htc_tst"></span></td>
+                </tr>
+                <tr>
+                    <td>HTC_POS</td>
+                    <td><span ng-bind="mainCtrl.data.htc_pos"></span></td>
+                </tr>
+                <tr>
+                    <td>HTC_POS_target</td>
+                    <td><span ng-bind="mainCtrl.data.target_htc_pos"></span></td>
+                </tr>
+                <tr>
+                    <td>CARE_NEW</td>
+                    <td><span ng-bind="mainCtrl.data.care_new"></span></td>
+                </tr>
+                <tr>
+                    <td>CARE_NEW_target</td>
+                    <td><span ng-bind="mainCtrl.data.target_care_new"></span></td>
+                </tr>
+                <tr>
+                    <td>TX_NEW</td>
+                    <td><span ng-bind="mainCtrl.data.tx_new"></span></td>
+                </tr>
+                <tr>
+                    <td>TX_NEW_target</td>
+                    <td><span ng-bind="mainCtrl.data.target_tx_new"></span></td>
+                </tr>
+                <tr>
+                    <td>TX_UNDETECT</td>
+                    <td><span ng-bind="mainCtrl.data.tx_undetect"></span></td>
+                </tr>
+                <tr>
+                    <td>TX_UNDETECT_target</td>
+                    <td><span ng-bind="mainCtrl.data.target_tx_undetect"></span></td>
+                </tr>
+            </tbody>
+        </table>
+        </div>
+    </div>
+{% endblock %}
+

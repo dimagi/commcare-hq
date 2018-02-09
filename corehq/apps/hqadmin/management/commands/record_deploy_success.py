@@ -1,4 +1,5 @@
 from __future__ import print_function
+from __future__ import absolute_import
 import json
 from datadog import api as datadog_api
 import requests
@@ -8,6 +9,7 @@ from django.core.management.base import BaseCommand
 from corehq.apps.hqadmin.models import HqDeploy
 from datetime import datetime, timedelta
 from django.conf import settings
+from corehq.util.log import send_HTML_email
 
 from dimagi.utils.parsing import json_format_datetime
 from pillow_retry.models import PillowError
@@ -133,6 +135,12 @@ class Command(BaseCommand):
                 environment=options['environment'], user=options['user'],
                 compare_url=compare_url)
             call_command('mail_admins', message_body, **{'subject': 'Deploy successful', 'html': True})
+            if settings.DAILY_DEPLOY_EMAIL:
+                recipient = settings.DAILY_DEPLOY_EMAIL
+                subject = 'Deploy Successful - {}'.format(options['environment'])
+                send_HTML_email(subject=subject,
+                                recipient=recipient,
+                                html_content=message_body)
 
         if settings.SENTRY_CONFIGURED and settings.SENTRY_API_KEY:
             create_update_sentry_release()

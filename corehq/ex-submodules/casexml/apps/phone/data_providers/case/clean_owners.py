@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from collections import defaultdict, namedtuple
 from copy import copy
 from datetime import datetime
@@ -14,6 +15,8 @@ from casexml.apps.phone.models import OwnershipCleanlinessFlag, IndexTree
 from casexml.apps.phone.tasks import ASYNC_RESTORE_SENT
 from corehq.apps.users.cases import get_owner_id
 from dimagi.utils.decorators.memoized import memoized
+import six
+from six.moves import range
 
 
 PotentialSyncElement = namedtuple("PotentialSyncElement", ['case_stub', 'sync_xml_items'])
@@ -27,7 +30,6 @@ class CleanOwnerSyncPayload(object):
     def __init__(self, timing_context, case_ids_to_sync, restore_state):
         self.restore_state = restore_state
         self.case_accessor = CaseAccessors(self.restore_state.domain)
-        self.response = self.restore_state.restore_class()
 
         self.case_ids_to_sync = case_ids_to_sync
         self.all_maybe_syncing = copy(case_ids_to_sync)
@@ -40,7 +42,7 @@ class CleanOwnerSyncPayload(object):
 
         self.timing_context = timing_context
 
-    def get_payload(self):
+    def extend_response(self, response):
         with self.timing_context('process_case_batches'):
             while self.case_ids_to_sync:
                 self.process_case_batch(self._get_next_case_batch())
@@ -58,9 +60,7 @@ class CleanOwnerSyncPayload(object):
             irrelevant_cases = self.purge_and_get_irrelevant_cases()
 
         with self.timing_context('compile_response'):
-            self.compile_response(irrelevant_cases)
-
-        return self.response
+            self.compile_response(irrelevant_cases, response)
 
     def _get_next_case_batch(self):
         ids = pop_ids(self.case_ids_to_sync, chunk_size)
@@ -164,19 +164,19 @@ class CleanOwnerSyncPayload(object):
             irrelevant_cases = purged_cases - self.restore_state.last_sync_log.case_ids_on_phone
         return irrelevant_cases
 
-    def compile_response(self, irrelevant_cases):
+    def compile_response(self, irrelevant_cases, response):
         relevant_sync_elements = [
             potential_sync_element
-            for syncable_case_id, potential_sync_element in self.potential_elements_to_sync.iteritems()
+            for syncable_case_id, potential_sync_element in six.iteritems(self.potential_elements_to_sync)
             if syncable_case_id not in irrelevant_cases
         ]
 
         with self.timing_context('add_commtrack_elements_to_response'):
-            self._add_commtrack_elements_to_response(relevant_sync_elements)
+            self._add_commtrack_elements_to_response(relevant_sync_elements, response)
 
-        self._add_case_elements_to_response(relevant_sync_elements)
+        self._add_case_elements_to_response(relevant_sync_elements, response)
 
-    def _add_commtrack_elements_to_response(self, relevant_sync_elements):
+    def _add_commtrack_elements_to_response(self, relevant_sync_elements, response):
         commtrack_elements = get_stock_payload(
             self.restore_state.project, self.restore_state.stock_settings,
             [
@@ -184,12 +184,11 @@ class CleanOwnerSyncPayload(object):
                 for potential_sync_element in relevant_sync_elements
             ]
         )
-        self.response.extend(commtrack_elements)
+        response.extend(commtrack_elements)
 
-    def _add_case_elements_to_response(self, relevant_sync_elements):
+    def _add_case_elements_to_response(self, relevant_sync_elements, response):
         for relevant_case in relevant_sync_elements:
-            for xml_item in relevant_case.sync_xml_items:
-                self.response.append(xml_item)
+            response.extend(relevant_case.sync_xml_items)
 
 
 class AsyncCleanOwnerPayload(CleanOwnerSyncPayload):
@@ -200,9 +199,9 @@ class AsyncCleanOwnerPayload(CleanOwnerSyncPayload):
         super(AsyncCleanOwnerPayload, self).__init__(timing_context, case_ids_to_sync, restore_state)
         self.current_task = current_task
 
-    def get_payload(self):
+    def extend_response(self, response):
         self._update_progress(total=len(self.all_maybe_syncing))
-        return super(AsyncCleanOwnerPayload, self).get_payload()
+        return super(AsyncCleanOwnerPayload, self).extend_response(response)
 
     def _mark_case_as_checked(self, case):
         super(AsyncCleanOwnerPayload, self)._mark_case_as_checked(case)
@@ -252,11 +251,11 @@ class CleanOwnerCaseSyncOperation(object):
             owner_id not in self.restore_state.last_sync_log.owner_ids_on_phone
         )
 
-    def get_payload(self):
+    def extend_response(self, response):
         with self.timing_context('get_case_ids_to_sync'):
             case_ids_to_sync = self.get_case_ids_to_sync()
         sync_payload = self.payload_class(self.timing_context, case_ids_to_sync, self.restore_state)
-        return sync_payload.get_payload()
+        return sync_payload.extend_response(response)
 
     def get_case_ids_to_sync(self):
         case_ids_to_sync = set()
@@ -321,7 +320,7 @@ class CleanOwnerCaseSyncOperation(object):
                     owner_id, self.restore_state.last_sync_log.date
                 ))
                 # we also need to fetch unowned extension cases that have been modified
-                extension_case_ids = self.restore_state.last_sync_log.extension_index_tree.indices.keys()
+                extension_case_ids = list(self.restore_state.last_sync_log.extension_index_tree.indices.keys())
                 modified_extension_cases = set(filter_cases_modified_since(
                     self.case_accessor, extension_case_ids, self.restore_state.last_sync_log.date
                 ))

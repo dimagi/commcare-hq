@@ -1,4 +1,5 @@
 from __future__ import print_function
+from __future__ import absolute_import
 import json
 import traceback
 from collections import defaultdict, namedtuple
@@ -203,7 +204,7 @@ class IterDB(object):
                 success_ids = {d['_id'] for d in docs}
 
         if self.callback:
-            self.callback.post_commit(op_slug, docs, success_ids, categorized_errors.values())
+            self.callback.post_commit(op_slug, docs, success_ids, list(categorized_errors.values()))
 
         if self.throttle_secs:
             sleep(self.throttle_secs)
@@ -268,7 +269,7 @@ def send_keys_to_couch(db, keys):
     """
     url = db.uri + '/_all_docs'
     r = requests.post(url=url,
-                      data=json.dumps({'keys': filter(None, keys)}),
+                      data=json.dumps({'keys': [_f for _f in keys if _f]}),
                       headers={'content-type': 'application/json'},
                       auth=get_auth(url),
                       params={'include_docs': 'true'})

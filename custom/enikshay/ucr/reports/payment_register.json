@@ -3,10 +3,9 @@
         "enikshay"
     ],
     "server_environment": [
-        "enikshay",
-        "softlayer"
+        "enikshay"
     ],
-    "data_source_table": "voucher",
+    "data_source_table": "voucher_v3",
     "report_id": "payment_register",
     "config": {
         "description": "",
@@ -30,7 +29,7 @@
                 "datatype": "string",
                 "type": "dynamic_choice_list",
                 "display": "Location",
-                "field": "voucher_district_id",
+                "field": "voucher_fulfilled_by_location_id",
                 "choice_provider": {
                     "include_descendants": true,
                     "type": "location",
@@ -117,6 +116,17 @@
                 "calculate_total": false,
                 "type": "field",
                 "display": "Voucher ID"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "doc_id",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Voucher Case ID"
             },
             {
                 "sortable": false,

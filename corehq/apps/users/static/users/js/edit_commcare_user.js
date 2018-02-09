@@ -11,10 +11,8 @@ hqDefine('users/js/edit_commcare_user', function () {
     });
 
     $('#add_phone_number').submit(function() {
-        ga_track_event('Edit Mobile Worker', 'Update phone number', initial_page_data('couch_user_id'), {
-            'hitCallback': function () {
-                document.getElementById('add_phone_number').submit();
-            },
+        hqImport('analytix/js/google').track.event('Edit Mobile Worker', 'Update phone number', initial_page_data('couch_user_id'), '', {}, function () {
+            document.getElementById('add_phone_number').submit();
         });
         return false;
     });
@@ -43,7 +41,7 @@ hqDefine('users/js/edit_commcare_user', function () {
                 form.find('#user-password').html(response.formHTML);
                 if (response.status === "OK") {
                     alert_user(gettext("Password changed successfully"), 'success');
-                    ga_track_event("Edit Mobile Worker", "Reset password", couch_user_id);
+                    hqImport('analytix/js/google').track.event("Edit Mobile Worker", "Reset password", couch_user_id);
                 } else {
                     var message = gettext('Password was not changed ');
                     if (initial_page_data('hide_password_feedback')) {
@@ -79,10 +77,8 @@ hqDefine('users/js/edit_commcare_user', function () {
         // Event tracking
         var $deleteModalForm = $("#delete_user_" + couch_user_id + " form");
         $("button:submit", $deleteModalForm).on("click", function() {
-            ga_track_event("Edit Mobile Worker", "Deleted User", couch_user_id, {
-                'hitCallback': function() {
-                    $deleteModalForm.submit();
-                },
+            hqImport('analytix/js/google').track.event("Edit Mobile Worker", "Deleted User", couch_user_id, "", {}, function() {
+                $deleteModalForm.submit();
             });
             return false;
         });
@@ -111,5 +107,38 @@ hqDefine('users/js/edit_commcare_user', function () {
     });
     $("#groups").submit(function () {
         $(window).unbind("beforeunload");
+    });
+
+    // Input handling
+    $('#id_add_phone_number').on('paste', function (event) {
+        var clipboardData = event.clipboardData  ||  event.originalEvent.clipboardData;
+        var pasteText = clipboardData.getData("Text");
+        var text = pasteText.replace(/\+|\-|\(|\)|\s/g, '');
+        if (/^[0-9]*$/.test(text)) {
+            $("#phone_number_paste_error").css("display", "none");
+            $('#id_add_phone_number').val(text);
+        } else {
+            $("#phone_number_paste_error").css("display", "inline");
+        }
+        return false;
+    });
+
+    var $userInformationForm = $('form[name="user_information"]');
+    $userInformationForm.on("change", null, null, function() {
+        $(":submit").prop("disabled", false);
+    }).on("input", null, null, function() {
+        $(":submit").prop("disabled", false);
+    });
+
+    if ($('#js-unrecognized-data').length > 0) {
+        $(":submit").prop("disabled", false);
+    }
+
+    // Analytics
+    $("button:submit", $userInformationForm).on("click", function(){
+        hqImport('analytix/js/google').track.event("Edit Mobile Worker", "Updated user info", couch_user_id, "", {}, function() {
+            $userInformationForm.submit();
+        });
+        return false;
     });
 });

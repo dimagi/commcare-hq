@@ -1,5 +1,6 @@
+from __future__ import absolute_import
 import json
-import urllib
+import six.moves.urllib.request, six.moves.urllib.parse, six.moves.urllib.error
 from xml.etree import cElementTree as ElementTree
 
 from django.conf import settings
@@ -63,6 +64,8 @@ from corehq.apps.users.decorators import require_can_edit_commcare_users
 from corehq.apps.users.views import BaseUserSettingsView
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from corehq.form_processor.exceptions import XFormNotFound
+from six.moves import filter
+from six.moves import map
 
 
 # default language to user's preference, followed by first app's default, followed by english
@@ -109,10 +112,10 @@ class FormplayerMain(View):
         app_access = ApplicationAccess.get_by_domain(domain)
         app_ids = get_app_ids_in_domain(domain)
 
-        apps = map(
+        apps = list(map(
             lambda app_id: self.fetch_app(domain, app_id),
             app_ids,
-        )
+        ))
         apps = filter(None, apps)
         apps = filter(lambda app: app.get('cloudcare_enabled') or self.preview, apps)
         apps = filter(lambda app: app_access.user_can_access_app(user, app), apps)
@@ -135,7 +138,7 @@ class FormplayerMain(View):
         def set_cookie(response):  # set_coookie is a noop by default
             return response
 
-        cookie_name = urllib.quote(
+        cookie_name = six.moves.urllib.parse.quote(
             'restoreAs:{}:{}'.format(domain, request.couch_user.username))
         username = request.COOKIES.get(cookie_name)
         if username:
@@ -317,7 +320,7 @@ class LoginAsUsers(View):
 
         return json_response({
             'response': {
-                'itemList': map(self._format_user, users_data.hits),
+                'itemList': list(map(self._format_user, users_data.hits)),
                 'total': users_data.total,
                 'page': page,
                 'query': query,
@@ -375,7 +378,7 @@ def form_context(request, domain, app_id, module_id, form_id):
     except (FormNotFoundException, ModuleNotFoundException):
         raise Http404()
 
-    form_name = form.name.values()[0]
+    form_name = list(form.name.values())[0]
 
     # make the name for the session we will use with the case and form
     session_name = u'{app} > {form}'.format(
@@ -451,7 +454,7 @@ def get_cases(request, domain):
 
 @cloudcare_api
 @cache_page(60 * 30)
-def get_fixtures(request, domain, user_id, fixture_id=None):
+def get_fixtures(request, domain, user_id, fixture_id):
     try:
         user = CommCareUser.get_by_user_id(user_id)
     except CouchUser.AccountTypeError:
@@ -464,19 +467,13 @@ def get_fixtures(request, domain, user_id, fixture_id=None):
 
     assert user.is_member_of(domain)
     restore_user = user.to_ota_restore_user()
-    if not fixture_id:
-        ret = ElementTree.Element("fixtures")
-        for fixture in generator.get_fixtures(restore_user):
-            ret.append(fixture)
-        return HttpResponse(ElementTree.tostring(ret), content_type="text/xml")
-    else:
-        fixture = generator.get_fixture_by_id(fixture_id, restore_user)
-        if not fixture:
-            raise Http404
-        assert len(fixture.getchildren()) == 1, 'fixture {} expected 1 child but found {}'.format(
-            fixture_id, len(fixture.getchildren())
-        )
-        return HttpResponse(ElementTree.tostring(fixture.getchildren()[0]), content_type="text/xml")
+    fixture = generator.get_fixture_by_id(fixture_id, restore_user)
+    if not fixture:
+        raise Http404
+    assert len(fixture.getchildren()) == 1, 'fixture {} expected 1 child but found {}'.format(
+        fixture_id, len(fixture.getchildren())
+    )
+    return HttpResponse(ElementTree.tostring(fixture.getchildren()[0]), content_type="text/xml")
 
 
 class ReadableQuestions(View):

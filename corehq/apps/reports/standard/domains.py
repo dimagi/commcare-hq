@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.elastic import es_query
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_noop
@@ -75,7 +76,7 @@ class DomainStatsReport(GenericTabularReport):
         domains = [res['_source'] for res in self.es_results.get('hits', {}).get('hits', [])]
 
         for dom in domains:
-            if dom.has_key('name'): # for some reason when using the statistical facet, ES adds an empty dict to hits
+            if 'name' in dom: # for some reason when using the statistical facet, ES adds an empty dict to hits
                 first_form_default_message = _("No Forms")
                 if dom.get("cp_last_form", None):
                     first_form_default_message = _("Unable to parse date")
@@ -104,7 +105,7 @@ def es_domain_query(params=None, facets=None, domains=None, start_at=None, size=
     if domains is not None:
         q["query"] = {
             "in" : {
-                "name" : domains,
+                "name": domains,
             }
         }
 
@@ -120,8 +121,8 @@ def es_domain_query(params=None, facets=None, domains=None, start_at=None, size=
                 "must": {
                     "match" : {
                         "_all" : {
-                            "query" : search_query,
-                            "operator" : "and", }}}}}
+                            "query": search_query,
+                            "operator": "and", }}}}}
 
     q["facets"] = {}
     if show_stats:

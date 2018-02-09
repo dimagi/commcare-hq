@@ -1,6 +1,8 @@
+from __future__ import absolute_import
 import fluff
 from custom.m4change.constants import PNC_CHILD_IMMUNIZATION_AND_REG_HOME_DELIVERED_FORMS, \
     BOOKED_AND_UNBOOKED_DELIVERY_FORMS
+import six
 
 
 FULL_IMMUNIZATION_VALUES = [
@@ -50,7 +52,7 @@ class PncFullImmunizationCalculator(fluff.Calculator):
         if form.xmlns in PNC_CHILD_IMMUNIZATION_AND_REG_HOME_DELIVERED_FORMS:
             all_passed = True
             for value in FULL_IMMUNIZATION_VALUES:
-                passed = value in form.form.get("immunization_given", "") if isinstance(value, basestring)\
+                passed = value in form.form.get("immunization_given", "") if isinstance(value, six.string_types)\
                     else _check_immunization_value_tuple(form, "immunization_given", value)
                 if not passed:
                     all_passed = False

@@ -1,7 +1,9 @@
+from __future__ import absolute_import
 import re
 from collections import OrderedDict
 
 from corehq.apps.commtrack.sms import SMSError
+import six
 
 
 class EWSFormatter(object):
@@ -67,17 +69,17 @@ class EWSFormatter(object):
         while True:
             try:
                 while commodity is None or not commodity.isalpha():
-                    commodity = an_iter.next().lower()
-                count = an_iter.next()
+                    commodity = next(an_iter).lower()
+                count = next(an_iter)
                 while not count.isdigit():
-                    count = an_iter.next()
+                    count = next(an_iter)
                 product_quantity[commodity] = {'soh': count, 'receipts': 0}
                 valid = True
-                token_a = an_iter.next()
+                token_a = next(an_iter)
                 if not token_a.isalnum():
-                    token_b = an_iter.next()
+                    token_b = next(an_iter)
                     while not token_b.isalnum():
-                        token_b = an_iter.next()
+                        token_b = next(an_iter)
                     if token_b.isdigit():
                         # if digit, then the user is reporting receipts
                         product_quantity[commodity]['receipts'] = token_b
@@ -99,7 +101,7 @@ class EWSFormatter(object):
             return string
 
         result = ""
-        for product, soh_receipt_dict in product_quantity.iteritems():
+        for product, soh_receipt_dict in six.iteritems(product_quantity):
             soh = soh_receipt_dict.get('soh')
             if not soh:
                 continue

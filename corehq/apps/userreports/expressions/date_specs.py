@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import datetime
 import calendar
 
@@ -25,6 +26,11 @@ class AddDaysExpressionSpec(JsonObject):
             return date_val + datetime.timedelta(days=int_val)
         return None
 
+    def __str__(self):
+        return "add_day({date}, {count})".format(
+            date=self._date_expression,
+            count=self._count_expression)
+
 
 class AddMonthsExpressionSpec(JsonObject):
     type = TypeProperty('add_months')
@@ -42,6 +48,11 @@ class AddMonthsExpressionSpec(JsonObject):
             return date_val + relativedelta(months=months_count_val)
         return None
 
+    def __str__(self):
+        return "add_month({date}, {month})".format(
+            date=self._date_expression,
+            month=self._months_expression)
+
 
 class MonthStartDateExpressionSpec(JsonObject):
     type = TypeProperty('month_start_date')
@@ -55,6 +66,9 @@ class MonthStartDateExpressionSpec(JsonObject):
         if date_val is not None:
             return datetime.date(date_val.year, date_val.month, 1)
         return None
+
+    def __str__(self):
+        return "first_day({})".format(self._date_expression)
 
 
 class MonthEndDateExpressionSpec(JsonObject):
@@ -70,6 +84,9 @@ class MonthEndDateExpressionSpec(JsonObject):
             first_week_day, last_day = calendar.monthrange(date_val.year, date_val.month)
             return datetime.date(date_val.year, date_val.month, last_day)
         return None
+
+    def __str__(self):
+        return "last_day({})".format(self._date_expression)
 
 
 class DiffDaysExpressionSpec(JsonObject):
@@ -87,3 +104,7 @@ class DiffDaysExpressionSpec(JsonObject):
         if from_date_val is not None and to_date_val is not None:
             return (to_date_val - from_date_val).days
         return None
+
+    def __str__(self):
+
+        return "({}) - ({})".format(self._to_date_expression, self._from_date_expression)

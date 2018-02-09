@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.test import TestCase
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.util import case_users_filter, case_group_filter

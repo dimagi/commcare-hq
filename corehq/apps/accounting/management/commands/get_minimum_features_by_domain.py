@@ -1,4 +1,6 @@
 from __future__ import print_function
+from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.core.management import BaseCommand
 
 from corehq import privileges
@@ -7,6 +9,7 @@ from corehq.apps.accounting.subscription_changes import DomainDowngradeStatusHan
 from corehq.apps.app_manager.dbaccessors import get_all_apps
 from corehq.apps.app_manager.util import app_callout_templates
 from corehq.apps.domain.models import Domain
+from six.moves import map
 
 
 class Command(BaseCommand):
@@ -22,7 +25,7 @@ class Command(BaseCommand):
     def handle(self, domain_names, **kwargs):
         privileges = sorted(_privilege_to_response_function().keys())
         print(','.join(['Project Space'] + privileges + ['Lowest Plan']))
-        for domain in filter(lambda domain: domain, map(Domain.get_by_name, domain_names)):
+        for domain in [domain for domain in map(Domain.get_by_name, domain_names) if domain]:
             is_privilege_being_used = {
                 priv: _is_domain_using_privilege(domain, priv)
                 for priv in privileges

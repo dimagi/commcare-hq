@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import json
 from copy import copy
 
@@ -13,6 +14,7 @@ from dimagi.utils.logging import notify_error
 from pillowtop.checkpoints.manager import PillowCheckpointEventHandler
 from pillowtop.models import kafka_seq_to_str
 from pillowtop.feed.interface import ChangeFeed, Change, ChangeMeta
+from six.moves import range
 
 MIN_TIMEOUT = 100
 

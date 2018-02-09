@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.core.management import BaseCommand, CommandError
 
 from corehq.pillows.app_submission_tracker import (
@@ -21,6 +22,7 @@ from corehq.pillows.synclog import UpdateUserSyncHistoryReindexerFactory
 from corehq.pillows.user import UserReindexerFactory
 from corehq.pillows.xform import CouchFormReindexerFactory, SqlFormReindexerFactory
 from corehq.util.test_utils import unit_testing_only
+from six.moves import input
 
 USAGE = """Reindex a pillowtop index.
 
@@ -131,7 +133,7 @@ class Command(SubCommand):
             options.pop(option, None)
 
         def confirm():
-            return raw_input("Are you sure you want to delete the current index (if it exists)? y/n\n") == 'y'
+            return input("Are you sure you want to delete the current index (if it exists)? y/n\n") == 'y'
 
         factory = FACTORIES_BY_SLUG[self.subcommand](**options)
         reindexer = factory.build()

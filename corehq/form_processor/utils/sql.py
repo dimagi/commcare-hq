@@ -2,6 +2,7 @@
 Note that the adapters must return the fields in the same order as they appear
 in the table DSL
 """
+from __future__ import absolute_import
 import json
 from collections import namedtuple
 
@@ -59,6 +60,7 @@ def form_adapter(form):
         form.initial_processing_complete,
         form.deleted_on,
         form.deletion_id,
+        form.server_modified_on,
     ]
     return ObjectAdapter(fields, XFormInstanceSQL_DB_TABLE)
 

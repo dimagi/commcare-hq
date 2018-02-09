@@ -1,3 +1,9 @@
+from __future__ import absolute_import
+from custom.enikshay.const import (
+    PRIVATE_HEALTH_ESTABLISHMENT_SECTOR,
+    NOT_AVAILABLE_VALUE,
+)
+
 gender_mapping = {
     'male': 'M',
     'female': 'F',
@@ -7,15 +13,18 @@ gender_mapping = {
 disease_classification = {
     'pulmonary': 'P',
     'extra_pulmonary': 'EP',
+    'extrapulmonary': 'EP',
+    'pulmonary_and_extrapulmonary': 'P',
+    'na': NOT_AVAILABLE_VALUE
 }
 
 patient_type_choice = {
     'new': '1',
     'recurrent': '2',
-    'other_previously_treated': '3',
-    'treatment_after_failure': '4',
-    'other_previously_treated': '5',
-    'treatment_after_lfu': '6',
+    'treatment_after_failure': '3',
+    'treatment_after_lfu': '4',
+    'treatment_after_ltfu': '4',  # duplicate of treatment_after_lfu added in app at places
+    'other_previously_treated': '6',
     'transfer_in': '7',
 }
 
@@ -79,12 +88,14 @@ dcexpulmonory = {
 }
 
 treatment_outcome = {
-    'cured': '1',
-    'treatment_complete': '2',
-    'died': '3',
-    'failure': '4',
-    'regimen_changed': '7',
-    'loss_to_follow_up': '5',
+    'cured': '1',  # Cured
+    'treatment_complete': '2',  # Treatment Completed
+    'died': '3',  # Died
+    'failure': '4',  # Failure
+    'pediatric_failure_to_respond': '4',  # Failure
+    'loss_to_follow_up': '5',  # Defaulted
+    'not_evaluated': '6',  # Transferred Out
+    'regimen_changed': '7',  # Switched to Cat-IV
 }
 
 hiv_status = {
@@ -104,7 +115,9 @@ purpose_of_testing = {
 }
 
 smear_result_grade = {
-    '0': 99,  # Negative
+    '0': 99,  # Old version value
+    'negative_not_seen': 99,  # New version value
+    'n/a': 99,  # Assigned during a certain time period and removed later, similar to negative
     'SC-0': 98,  # Positive
     'SC-1': 1,
     'SC-2': 2,
@@ -115,9 +128,12 @@ smear_result_grade = {
     'SC-7': 7,
     'SC-8': 8,
     'SC-9': 9,
-    '1+': 11,
-    '2+': 12,
-    '3+': 13,
+    '1+': 11,  # Old version value
+    '1plus': 11,  # New version value
+    '2+': 12,  # Old version value
+    '2plus': 12,  # New version value
+    '3+': 13,  # Old version value
+    '3plus': 13,  # New version value
 }
 
 drug_susceptibility_test_status = {
@@ -136,4 +152,15 @@ basis_of_diagnosis = {
     'microbiological_culture': 'C',
     'microbiological_pcr': 'M',
     'microbiological_other': 'M',
+}
+
+health_establishment_type = {
+    'Hospital': 'H',
+    'Lab': 'L',
+    'pharmacy': 'P',
+    'Doctor': 'P'
+}
+
+health_establishment_sector = {
+    PRIVATE_HEALTH_ESTABLISHMENT_SECTOR: 'V',
 }

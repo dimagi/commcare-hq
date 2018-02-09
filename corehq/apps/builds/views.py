@@ -1,5 +1,4 @@
 from __future__ import absolute_import
-from cStringIO import StringIO
 from couchdbkit import ResourceNotFound, BadValueError
 from django.urls import reverse
 from django.http import HttpResponseBadRequest, HttpResponse, Http404
@@ -20,6 +19,7 @@ from corehq.apps.domain.decorators import require_superuser
 from .models import CommCareBuild, CommCareBuildConfig, SemanticVersionProperty
 from .utils import get_all_versions, extract_build_info_from_filename
 
+import io
 import requests
 import requests.exceptions
 import six
@@ -137,6 +137,10 @@ def import_build(request):
         }, status_code=400)
 
     if build_number:
+        # Strip and remove
+        # U+200B ZERO WIDTH SPACE
+        # https://manage.dimagi.com/default.asp?262198
+        build_number = build_number.strip().replace(u'\u200b', '')
         try:
             build_number = int(build_number)
         except ValueError:
@@ -182,7 +186,7 @@ def import_build(request):
             }, status_code=400)
 
         build = CommCareBuild.create_from_zip(
-            StringIO(r.content), version, build_number)
+            io.BytesIO(r.content), version, build_number)
 
     else:
         build = CommCareBuild.create_without_artifacts(version, build_number)

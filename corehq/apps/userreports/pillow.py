@@ -1,5 +1,7 @@
 from __future__ import absolute_import
 
+from __future__ import division
+from __future__ import unicode_literals
 import hashlib
 from collections import defaultdict, Counter
 from datetime import datetime, timedelta
@@ -13,7 +15,9 @@ from corehq.apps.userreports.const import (
     KAFKA_TOPICS, UCR_ES_BACKEND, UCR_SQL_BACKEND, UCR_LABORATORY_BACKEND, UCR_ES_PRIMARY
 )
 from corehq.apps.userreports.data_source_providers import DynamicDataSourceProvider, StaticDataSourceProvider
-from corehq.apps.userreports.exceptions import TableRebuildError, StaleRebuildError, UserReportsWarning
+from corehq.apps.userreports.exceptions import (
+    BadSpecError, TableRebuildError, StaleRebuildError, UserReportsWarning
+)
 from corehq.apps.userreports.models import AsyncIndicator
 from corehq.apps.userreports.specs import EvaluationContext
 from corehq.apps.userreports.sql import metadata
@@ -53,7 +57,7 @@ def time_ucr_process_change(method):
         if seconds > LONG_UCR_LOGGING_THRESHOLD:
             table = args[2]
             doc = args[3]
-            log_message = u"UCR data source {} on doc_id {} took {} seconds to process".format(
+            log_message = "UCR data source {} on doc_id {} took {} seconds to process".format(
                 table.config._id, doc['_id'], seconds
             )
             pillow_logging.warning(log_message)
@@ -152,11 +156,14 @@ class ConfigurableReportTableManagerMixin(object):
         self._rebuild_es_tables(self._tables_by_engine_id(es_supported_backends))
 
     def _rebuild_sql_tables(self, adapters):
-        # todo move this code to sql adapter rebuild_if_necessary
         tables_by_engine = defaultdict(dict)
         for adapter in adapters:
             sql_adapter = get_indicator_adapter(adapter.config)
-            tables_by_engine[sql_adapter.engine_id][sql_adapter.get_table().name] = sql_adapter
+            try:
+                tables_by_engine[sql_adapter.engine_id][sql_adapter.get_table().name] = sql_adapter
+            except BadSpecError:
+                _soft_assert = soft_assert(to='{}@{}'.format('jemord', 'dimagi.com'))
+                _soft_assert(False, "Broken data source {}".format(adapter.config.get_id))
 
         _assert = soft_assert(notify_admins=True)
         _notify_rebuild = lambda msg, obj: _assert(False, msg, obj)
@@ -249,7 +256,7 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Pil
                     table.delete(doc)
 
             if async_tables:
-                AsyncIndicator.update_indicators(change, async_tables)
+                AsyncIndicator.update_from_kafka_change(change, async_tables)
 
         self.domain_timing_context.update(**{
             domain: timer.duration
@@ -262,7 +269,7 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Pil
         for domain, duration in self.domain_timing_context.most_common():
             top_half_domains[domain] = duration
             duration_seen += duration
-            if duration_seen >= total_duration / 2:
+            if duration_seen >= total_duration // 2:
                 break
 
         for domain, duration in top_half_domains.items():

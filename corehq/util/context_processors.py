@@ -1,9 +1,12 @@
+from __future__ import absolute_import
 from django.conf import settings
 from django.urls import resolve, reverse
 from django.http import Http404
 from ws4redis.context_processors import default
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq import privileges
+from corehq.apps.hqwebapp.utils import get_environment_friendly_name
+
 
 COMMCARE = 'commcare'
 COMMTRACK = 'commtrack'
@@ -16,6 +19,7 @@ def base_template(request):
         'base_template': settings.BASE_TEMPLATE,
         'login_template': settings.LOGIN_TEMPLATE,
         'less_debug': settings.LESS_DEBUG,
+        'env': get_environment_friendly_name(),
     }
 
 
@@ -71,11 +75,11 @@ def current_url_name(request):
 def js_api_keys(request):
     if hasattr(request, 'couch_user') and request.couch_user and not request.couch_user.analytics_enabled:
         return {}  # disable js analytics
-    d = {}
-    d.update(settings.ANALYTICS_IDS)
-    d.update({"ANALYTICS_CONFIG": settings.ANALYTICS_CONFIG})
-    d['MAPBOX_ACCESS_TOKEN'] = settings.MAPBOX_ACCESS_TOKEN
-    return d
+    return {
+        'ANALYTICS_IDS': settings.ANALYTICS_IDS,
+        'ANALYTICS_CONFIG': settings.ANALYTICS_CONFIG,
+        'MAPBOX_ACCESS_TOKEN': settings.MAPBOX_ACCESS_TOKEN,
+    }
 
 
 def websockets_override(request):
@@ -95,7 +99,8 @@ def websockets_override(request):
 def enterprise_mode(request):
     return {
         'enterprise_mode': settings.ENTERPRISE_MODE,
-        'is_saas_environment': settings.IS_SAAS_ENVIRONMENT
+        'is_saas_environment': settings.IS_SAAS_ENVIRONMENT,
+        'restrict_domain_creation': settings.RESTRICT_DOMAIN_CREATION,
     }
 
 

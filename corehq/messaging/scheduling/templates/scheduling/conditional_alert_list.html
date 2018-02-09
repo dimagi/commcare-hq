@@ -1,0 +1,41 @@
+{% extends "hqwebapp/base_section.html" %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% block js %}{{ block.super }}
+    <script src="{% static "scheduling/js/conditional_alert_list.js" %}"></script>
+{% endblock %}
+
+{% block stylesheets %}{{ block.super }}
+<style>
+    .label {
+        font-size: 100%;
+    }
+</style>
+{% endblock %}
+
+{% block page_content %}
+    {% registerurl 'conditional_alert_list' domain %}
+    {% registerurl 'edit_conditional_alert' domain '---' %}
+
+    <div class="btn-group">
+        <a href="{% url 'create_conditional_alert' domain %}" class="btn btn-success">
+            <i class="fa fa-plus"></i>
+            {% trans "New Conditional Message" %}
+        </a>
+    </div>
+    <h4>{% trans 'Conditional Messages' %}</h4>
+    <div>
+        <table id="conditional-alert-list" class="table table-striped table-bordered">
+            <thead>
+                <tr>
+                    <th class="col-md-1">{% trans 'Delete' %}</th>
+                    <th class="col-md-5">{% trans 'Name' %}</th>
+                    <th class="col-md-2">{% trans 'Case Type' %}</th>
+                    <th class="col-md-2">{% trans 'Status' %}</th>
+                    <th class="col-md-2">{% trans 'Action' %}</th>
+                </tr>
+            </thead>
+        </table>
+    </div>
+{% endblock %}

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from casexml.apps.phone.fixtures import FixtureProvider
 from corehq.const import OPENROSA_VERSION_MAP
 from corehq.apps.products.models import Product
@@ -24,7 +25,7 @@ def product_fixture_generator_json(domain):
     if not SQLProduct.objects.filter(domain=domain).exists():
         return None
 
-    fields = filter(lambda x: x != CUSTOM_DATA_SLUG, PRODUCT_FIELDS)
+    fields = [x for x in PRODUCT_FIELDS if x != CUSTOM_DATA_SLUG]
     fields.append('@id')
 
     custom_fields = get_by_domain_and_type(domain, 'ProductFields')

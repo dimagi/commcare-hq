@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from collections import namedtuple, defaultdict
 
 from django.test import SimpleTestCase, TestCase
@@ -5,7 +6,7 @@ from mock import MagicMock
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.locations.models import LocationType, SQLLocation
-from corehq.apps.locations.tree_utils import TreeError, assert_no_cycles, expansion_validators
+from corehq.apps.locations.tree_utils import TreeError, assert_no_cycles
 from corehq.apps.locations.bulk_management import (
     NewLocationImporter,
     LocationTypeStub,
@@ -13,39 +14,43 @@ from corehq.apps.locations.bulk_management import (
     LocationTreeValidator,
     LocationCollection,
 )
+import six
 
 
 # These example types and trees mirror the information available in the upload files
+from corehq.apps.locations.util import get_location_data_model
+
+NOT_PROVIDED = LocationStub.NOT_PROVIDED
 
 FLAT_LOCATION_TYPES = [
-    # name, code, parent_code, do_delete, shares_cases, view_descendants, expand_from, sync_to, index
+    # name, code, parent_code, do_delete, shares_cases, view_descendants, index
     # ('name', 'code', 'parent_code', 'shares_cases', 'view_descendants'),
-    ('State', 'state', '', False, False, False, '', '', 0),
-    ('County', 'county', 'state', False, False, True, '', '', 0),
-    ('City', 'city', 'county', False, True, False, '', '', 0),
+    ('State', 'state', '', False, False, False, 0),
+    ('County', 'county', 'state', False, False, True, 0),
+    ('City', 'city', 'county', False, True, False, 0),
 ]
 
 DUPLICATE_TYPE_CODES = [
     # ('name', 'code', 'parent_code', 'shares_cases', 'view_descendants'),
-    ('State', 'state', '', False, False, False, '', '', 0),
-    ('County', 'county', 'state', False, False, True, '', '', 0),
-    ('City', 'city', 'county', False, True, False, '', '', 0),
-    ('Other County', 'county', 'state', False, False, True, '', '', 0),
+    ('State', 'state', '', False, False, False, 0),
+    ('County', 'county', 'state', False, False, True, 0),
+    ('City', 'city', 'county', False, True, False, 0),
+    ('Other County', 'county', 'state', False, False, True, 0),
 ]
 
 CYCLIC_LOCATION_TYPES = [
-    ('State', 'state', '', False, False, False, '', '', 0),
-    ('County', 'county', 'state', False, False, True, '', '', 0),
-    ('City', 'city', 'county', False, True, False, '', '', 0),
+    ('State', 'state', '', False, False, False, 0),
+    ('County', 'county', 'state', False, False, True, 0),
+    ('City', 'city', 'county', False, True, False, 0),
     # These three cycle:
-    ('Region', 'region', 'village', False, False, False, '', '', 0),
-    ('District', 'district', 'region', False, False, True, '', '', 0),
-    ('Village', 'village', 'district', False, True, False, '', '', 0),
+    ('Region', 'region', 'village', False, False, False, 0),
+    ('District', 'district', 'region', False, False, True, 0),
+    ('Village', 'village', 'district', False, True, False, 0),
 ]
 
 
-# external_id, latitude, longitude, custom_data, uncategorized_data, index
-extra_stub_args = ('', '', '', {}, {}, 0)
+# external_id, latitude, longitude, custom_data, index, location_data_model
+extra_stub_args = ('', '', '', NOT_PROVIDED, 0, None)
 
 BASIC_LOCATION_TREE = [
     # (name, site_code, location_type, parent_code, location_id,
@@ -205,33 +210,6 @@ class TestTreeUtils(SimpleTestCase):
             ["Region", "District", "Village"]
         )
 
-    def test_expansion_validators(self):
-        # a, b are TOP. a has c,d as children, b has e as child
-        from_validator, to_validator = expansion_validators(
-            [('a', 'TOP'), ('b', 'TOP'), ('c', 'a'), ('d', 'a'), ('e', 'b')]
-        )
-        self.assertEqual(set(from_validator('a')), set(['a', 'TOP']))
-        self.assertEqual(set(from_validator('b')), set(['b', 'TOP']))
-        self.assertEqual(set(from_validator('c')), set(['c', 'a', 'TOP']))
-        self.assertEqual(set(from_validator('d')), set(['d', 'a', 'TOP']))
-        self.assertEqual(set(from_validator('e')), set(['e', 'b', 'TOP']))
-        self.assertEqual(set(to_validator('a')), set(['a', 'c', 'd']))
-        self.assertEqual(set(to_validator('b')), set(['b', 'e']))
-        self.assertEqual(set(to_validator('c')), set(['c']))
-        self.assertEqual(set(to_validator('d')), set(['d']))
-        self.assertEqual(set(to_validator('e')), set(['e']))
-
-        # a is TOP. a has b as child, b has c as child
-        from_validator, to_validator = expansion_validators(
-            [('a', 'TOP'), ('b', 'a'), ('c', 'b')]
-        )
-        self.assertEqual(set(from_validator('a')), set(['a', 'TOP']))
-        self.assertEqual(set(from_validator('b')), set(['a', 'b', 'TOP']))
-        self.assertEqual(set(from_validator('c')), set(['a', 'b', 'c', 'TOP']))
-        self.assertEqual(set(to_validator('a')), set(['a', 'b', 'c']))
-        self.assertEqual(set(to_validator('b')), set(['b', 'c']))
-        self.assertEqual(set(to_validator('c')), set(['c']))
-
 
 class MockLocationStub(LocationStub):
     def lookup_old_collection_data(self, old_collection):
@@ -311,43 +289,6 @@ class TestTreeValidator(SimpleTestCase):
         self.assertEqual(len(type_errors), 1)
         self.assertIn("county", errors[0])
 
-    def test_valid_expansions(self):
-        validator = get_validator(
-            [
-                # name, code, parent_code, do_delete, shares_cases, view_descendants, expand_from, sync_to, index
-                # empty from, descendant as to
-                ('A', 'a', '', False, False, False, '', 'd', 0),
-                # itself as from, descendant as to
-                ('B', 'b', '', False, False, False, 'b', 'e', 0),
-                # empty to, parentage as from
-                ('C', 'c', 'a', False, False, False, 'a', '', 0),
-                # itself as to, parentage as from
-                ('D', 'd', 'a', False, False, False, 'a', 'd', 0),
-                # parentage as from, empty to
-                ('E', 'e', 'b', False, False, False, 'b', '', 0),
-            ],
-            []
-        )
-        errors = validator.errors
-        self.assertEqual(errors, [])
-
-    def test_invalid_expansions(self):
-        validator = get_validator(
-            [
-                # name, code, parent_code, do_delete, shares_cases, view_descendants, expand_from, sync_to, index
-                ('A', 'a', '', False, False, False, '', 'd', 0),
-                # 'a' is not a descendant of 'b'
-                ('B', 'b', '', False, False, False, 'b', 'a', 0),
-                ('C', 'c', 'a', False, False, False, 'a', '', 0),
-                # 'b' doesn't occur in its parentage
-                ('D', 'd', 'a', False, False, False, 'b', 'd', 0),
-                ('E', 'e', 'b', False, False, False, 'b', '', 0),
-            ],
-            []
-        )
-        errors = validator.errors
-        self.assertEqual(len(errors), 2)
-
     def test_duplicate_location(self):
         validator = get_validator(FLAT_LOCATION_TYPES, DUPLICATE_SITE_CODES)
         errors = validator.errors
@@ -365,7 +306,7 @@ class TestTreeValidator(SimpleTestCase):
 
     def test_missing_types(self):
         # all types in the domain should be listed in given excel
-        old_types = FLAT_LOCATION_TYPES + [('Galaxy', 'galaxy', '', False, False, False, '', '', 0)]
+        old_types = FLAT_LOCATION_TYPES + [('Galaxy', 'galaxy', '', False, False, False, 0)]
 
         old_collection = make_collection(old_types, BASIC_LOCATION_TREE)
         validator = get_validator(FLAT_LOCATION_TYPES, BASIC_LOCATION_TREE, old_collection)
@@ -436,7 +377,7 @@ class TestBulkManagement(TestCase):
 
     def create_location_types(self, location_types):
         def _make_loc_type(name, code, parent_code, _delete, shares_cases, view_descendants,
-                           expand_from, sync_to, _i, parent_type=None):
+                           _i, parent_type=None):
             return LocationType.objects.create(
                 domain=self.domain.name,
                 name=name,
@@ -457,8 +398,8 @@ class TestBulkManagement(TestCase):
 
     def create_locations(self, locations, lt_by_code):
         def _make_loc(name, site_code, location_type, parent_code, location_id,
-                      do_delete, external_id, latitude, longitude, custom_data, uncategorized_data,
-                      index, parent=None):
+                      do_delete, external_id, latitude, longitude, custom_data,
+                      index, location_data_model, parent=None):
             _type = lt_by_code.get(location_type)
             loc = SQLLocation(
                 site_code=site_code, name=name, domain=self.domain.name, location_type=_type,
@@ -494,8 +435,7 @@ class TestBulkManagement(TestCase):
         actual = [
             (lt.name, lt.code,
              lt.parent_type.code if lt.parent_type else '', False, lt.shares_cases or False,
-             lt.view_descendants, lt.expand_from.code if lt.expand_from else '',
-             lt.expand_to.code if lt.expand_to else '')
+             lt.view_descendants)
             for lt in actual_types
         ]
         expected = []
@@ -550,7 +490,7 @@ class TestBulkManagement(TestCase):
             descendants[child] = get_descendants(child)
 
         # for each location assert that calculated and expected get_descendants are equal
-        for (l, desc) in descendants.iteritems():
+        for (l, desc) in six.iteritems(descendants):
             q = SQLLocation.objects.filter(site_code=l)
             loc = q[0] if q else None
 
@@ -568,8 +508,8 @@ class TestBulkManagement(TestCase):
 
     def test_int_datatype(self):
         data = [
-            ('S1', 1, 'state', '', '', False, '12', '', '2345', {}, {}, 0),
-            ('S2', 2, 'state', '', '', False, '12', '', '2345', {}, {}, 0),
+            ('S1', 1, 'state', '', '', False, '12', '', '2345', NOT_PROVIDED, 0, None),
+            ('S2', 2, 'state', '', '', False, '12', '', '2345', NOT_PROVIDED, 0, None),
         ]
 
         result = self.bulk_update_locations(
@@ -582,8 +522,8 @@ class TestBulkManagement(TestCase):
 
     def test_data_format(self):
         data = [
-            ('S1', '1', 'state', '', '', False, '12', 'not-lat', '2345', {}, {}, 0),
-            ('S2', '2', 'state', '', '', False, '12', '3434', '2345', {}, {}, 0),
+            ('S1', '1', 'state', '', '', False, '12', 'not-lat', '2345', NOT_PROVIDED, 0, None),
+            ('S2', '2', 'state', '', '', False, '12', '3434', '2345', NOT_PROVIDED, 0, None),
         ]
         result = self.bulk_update_locations(
             FLAT_LOCATION_TYPES,
@@ -732,9 +672,9 @@ class TestBulkManagement(TestCase):
         self.create_locations(self.basic_tree, lt_by_code)
 
         delete_city_types = [
-            ('State', 'state', '', False, False, False, '', '', 0),
-            ('County', 'county', 'state', False, False, True, '', '', 0),
-            ('City', 'city', 'county', True, True, False, '', '', 0),
+            ('State', 'state', '', False, False, False, 0),
+            ('County', 'county', 'state', False, False, True, 0),
+            ('City', 'city', 'county', True, True, False, 0),
         ]
         delete_cities_locations = [
             ('S1', 's1', 'state', '', '', False) + extra_stub_args,
@@ -762,9 +702,9 @@ class TestBulkManagement(TestCase):
         self.create_locations(self.basic_tree, lt_by_code)
 
         delete_city_types = [
-            ('State', 'state', '', True, False, False, '', '', 0),
-            ('County', 'county', 'state', True, False, True, '', '', 0),
-            ('City', 'city', 'county', True, True, False, '', '', 0),
+            ('State', 'state', '', True, False, False, 0),
+            ('County', 'county', 'state', True, False, True, 0),
+            ('City', 'city', 'county', True, True, False, 0),
         ]
         delete_cities_locations = [
             ('S1', 's1', 'state', '', '', True) + extra_stub_args,
@@ -792,9 +732,9 @@ class TestBulkManagement(TestCase):
         self.create_locations(self.basic_tree, lt_by_code)
 
         delete_city_types = [
-            ('State', 'state', '', False, False, False, '', '', 0),
-            ('County', 'county', 'state', False, False, True, '', '', 0),
-            ('City', 'city', 'county', True, True, False, '', '', 0),
+            ('State', 'state', '', False, False, False, 0),
+            ('County', 'county', 'state', False, False, True, 0),
+            ('City', 'city', 'county', True, True, False, 0),
         ]
 
         result = self.bulk_update_locations(
@@ -845,10 +785,10 @@ class TestBulkManagement(TestCase):
         self.assertLocationsMatch(self.as_pairs(self.basic_tree))
 
         edit_types = [
-            ('State', 'state', '', False, False, False, '', '', 0),
+            ('State', 'state', '', False, False, False, 0),
             # change name of this type
-            ('District', 'county', 'state', False, False, False, '', '', 0),
-            ('City', 'city', 'county', False, False, False, '', '', 0),
+            ('District', 'county', 'state', False, False, False, 0),
+            ('City', 'city', 'county', False, False, False, 0),
         ]
 
         result = self.bulk_update_locations(
@@ -860,36 +800,15 @@ class TestBulkManagement(TestCase):
         self.assertLocationTypesMatch(edit_types)
         self.assertLocationsMatch(self.as_pairs(self.basic_tree))
 
-    def test_edit_expansions(self):
-        # 'expand_from', 'expand_to' can be updated
-        lt_by_code = self.create_location_types(FLAT_LOCATION_TYPES)
-        self.create_locations(self.basic_tree, lt_by_code)
-        self.assertLocationsMatch(self.as_pairs(self.basic_tree))
-
-        edit_expansions = [
-            ('State', 'state', '', False, False, False, '', 'city', 0),
-            ('County', 'county', 'state', False, False, False, '', '', 0),
-            ('City', 'city', 'county', False, False, False, 'county', '', 0),
-        ]
-
-        result = self.bulk_update_locations(
-            edit_expansions,
-            self.basic_tree,
-        )
-
-        self.assertEqual(result.errors, [])
-        self.assertLocationTypesMatch(edit_expansions)
-        self.assertLocationsMatch(self.as_pairs(self.basic_tree))
-
     def test_rearrange_locations(self):
         # a total rearrangement like reversing the tree can be done
         lt_by_code = self.create_location_types(FLAT_LOCATION_TYPES)
         self.create_locations(self.basic_tree, lt_by_code)
 
         reverse_order = [
-            ('State', 'state', 'county', False, False, False, '', '', 0),
-            ('County', 'county', 'city', False, False, False, '', '', 0),
-            ('City', 'city', '', False, False, False, '', '', 0),
+            ('State', 'state', 'county', False, False, False, 0),
+            ('County', 'county', 'city', False, False, False, 0),
+            ('City', 'city', '', False, False, False, 0),
         ]
         edit_types_of_locations = [
             # change parent from TOP to county
@@ -941,9 +860,10 @@ class TestBulkManagement(TestCase):
         self.assertLocationsMatch(self.as_pairs(swap_parents))
 
     def test_custom_data(self):
+        data_model = get_location_data_model(self.domain.name)
         tree = [
-            ('State 1', 's1', 'state', '', '', False, '', '', '', {u'a': 1}, {}, 0),
-            ('County 11', 'c1', 'county', 's1', '', False, '', '', '', {u'b': u'test'}, {}, 0),
+            ('State 1', 's1', 'state', '', '', False, '', '', '', {u'a': 1}, 0, data_model, False),
+            ('County 11', 'c1', 'county', 's1', '', False, '', '', '', {u'b': u'test'}, 0, data_model, False),
         ]
         result = self.bulk_update_locations(
             FLAT_LOCATION_TYPES,
@@ -956,6 +876,36 @@ class TestBulkManagement(TestCase):
         locations = SQLLocation.objects.all()
         self.assertEqual(locations[0].metadata, {u'a': u'1'})  # test that ints are coerced to strings
         self.assertEqual(locations[1].metadata, {u'b': u'test'})
+
+    def test_custom_data_delete_uncategorized(self):
+        data_model = get_location_data_model(self.domain.name)
+
+        # setup some metadata
+        tree = [
+            ('State 1', 's1', 'state', '', '', False, '', '', '', {u'a': 1}, 0, data_model, False),
+            ('County 11', 'c1', 'county', 's1', '', False, '', '', '', {u'b': u'test'}, 0, data_model, False),
+        ]
+        self.bulk_update_locations(
+            FLAT_LOCATION_TYPES,
+            tree
+        )
+
+        locations = SQLLocation.objects.all()
+        self.assertEqual(locations[0].metadata, {u'a': u'1'})
+        self.assertEqual(locations[1].metadata, {u'b': u'test'})
+
+        tree = [
+            ('State 1', 's1', 'state', '', '', False, '', '', '', {u'a': 1}, 0, data_model, True),
+            ('County 11', 'c1', 'county', 's1', '', False, '', '', '', {}, 0, data_model, False),
+        ]
+        self.bulk_update_locations(
+            FLAT_LOCATION_TYPES,
+            tree
+        )
+
+        locations = SQLLocation.objects.all()
+        self.assertEqual(locations[0].metadata, {})  # uncategorized data get's removed
+        self.assertEqual(locations[1].metadata, {u'b': u'test'})  # uncategorized data get's kept
 
     def test_case_sensitivity(self):
         # site-codes are automatically converted to lower-case

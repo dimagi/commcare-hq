@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from tastypie import fields
 from tastypie.bundle import Bundle
 from tastypie.constants import ALL

@@ -1,31 +1,39 @@
+from __future__ import absolute_import
 from collections import defaultdict
 
 from corehq.blobs import Error as BlobError
 from corehq.form_processor.backends.sql.dbaccessors import LedgerAccessorSQL, CaseAccessorSQL
 from corehq.form_processor.exceptions import CaseNotFound, XFormNotFound, LedgerValueNotFound
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors
+from corehq.form_processor.models import XFormInstanceSQL
 from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.util.quickcache import quickcache
 from pillowtop.dao.django import DjangoDocumentStore
 from pillowtop.dao.exceptions import DocumentNotFoundError
 from pillowtop.dao.interface import ReadOnlyDocumentStore
+import six
 
 
 class ReadonlyFormDocumentStore(ReadOnlyDocumentStore):
 
-    def __init__(self, domain):
+    def __init__(self, domain, xmlns=None):
         self.domain = domain
         self.form_accessors = FormAccessors(domain=domain)
+        self.xmlns = xmlns
 
     def get_document(self, doc_id):
         try:
-            return self.form_accessors.get_form(doc_id).to_json(include_attachments=True)
+            form = self.form_accessors.get_form(doc_id)
+            if isinstance(form, XFormInstanceSQL):
+                return form.to_json(include_attachments=True)
+            else:
+                return form.to_json()
         except (XFormNotFound, BlobError) as e:
             raise DocumentNotFoundError(e)
 
     def iter_document_ids(self, last_id=None):
         # todo: support last_id
-        return iter(self.form_accessors.get_all_form_ids_in_domain())
+        return iter(self.form_accessors.iter_form_ids_by_xmlns(self.xmlns))
 
     def iter_documents(self, ids):
         for wrapped_form in self.form_accessors.iter_forms(ids):
@@ -34,9 +42,10 @@ class ReadonlyFormDocumentStore(ReadOnlyDocumentStore):
 
 class ReadonlyCaseDocumentStore(ReadOnlyDocumentStore):
 
-    def __init__(self, domain):
+    def __init__(self, domain, case_type=None):
         self.domain = domain
         self.case_accessors = CaseAccessors(domain=domain)
+        self.case_type = case_type
 
     def get_document(self, doc_id):
         try:
@@ -46,7 +55,7 @@ class ReadonlyCaseDocumentStore(ReadOnlyDocumentStore):
 
     def iter_document_ids(self, last_id=None):
         # todo: support last_id
-        return iter(self.case_accessors.get_case_ids_in_domain())
+        return iter(self.case_accessors.get_case_ids_in_domain(type=self.case_type))
 
     def iter_documents(self, ids):
         for wrapped_case in self.case_accessors.iter_cases(ids):
@@ -89,7 +98,7 @@ class ReadonlyLedgerV2DocumentStore(ReadOnlyDocumentStore):
         for id_string in ids:
             case_id, section_id, entry_id = UniqueLedgerReference.from_id(id_string)
             case_id_map[(section_id, entry_id)].append(case_id)
-        for section_entry, case_ids in case_id_map.iteritems():
+        for section_entry, case_ids in six.iteritems(case_id_map):
             section_id, entry_id = section_entry
             results = self.ledger_accessors.get_ledger_values_for_cases(case_ids, section_id, entry_id)
             for ledger_value in results:

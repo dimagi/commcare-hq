@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import datetime
 import logging
 import uuid
@@ -15,8 +16,8 @@ from corehq.form_processor.backends.couch.dbaccessors import CaseAccessorCouch
 from corehq.form_processor.utils import extract_meta_instance_id
 from couchforms.models import (
     XFormInstance, XFormDeprecated, XFormDuplicate,
-    doc_types, XFormError, SubmissionErrorLog
-)
+    doc_types, XFormError, SubmissionErrorLog,
+    XFormOperation)
 from couchforms.util import fetch_and_wrap_form
 from dimagi.utils.couch import acquire_lock, release_lock
 
@@ -43,6 +44,11 @@ class FormProcessorCouch(object):
                         content_type=meta.content_type,
                         content_length=meta.content_length,
                     )
+
+    @classmethod
+    def copy_form_operations(cls, from_form, to_form):
+        for op in from_form.history:
+            to_form.history.append(op)
 
     @classmethod
     def new_xform(cls, form_data):
@@ -76,8 +82,12 @@ class FormProcessorCouch(object):
 
     @classmethod
     def save_processed_models(cls, processed_forms, cases=None, stock_result=None):
-        docs = list(processed_forms) + (cases or [])
-        docs = filter(None, docs)
+        docs = list(processed_forms)
+        for form in docs:
+            if form:
+                form.server_modified_on = datetime.datetime.utcnow()
+        docs += (cases or [])
+        docs = [_f for _f in docs if _f]
         assert XFormInstance.get_db().uri == CommCareCase.get_db().uri
         with bulk_atomic_blobs(docs):
             XFormInstance.get_db().bulk_save(docs)
@@ -93,6 +103,10 @@ class FormProcessorCouch(object):
         assert not existing_xform.persistent_blobs, "some blobs would be lost"
         if existing_xform._deferred_blobs:
             deprecated._deferred_blobs = existing_xform._deferred_blobs.copy()
+
+        user_id = (new_xform.auth_context and new_xform.auth_context.get('user_id')) or 'unknown'
+        operation = XFormOperation(user=user_id, date=new_xform.edited_on, operation='edit')
+        new_xform.history.append(operation)
         return deprecated, new_xform
 
     @classmethod
@@ -105,6 +119,7 @@ class FormProcessorCouch(object):
         if xform._deferred_blobs:
             dupe._deferred_blobs = xform._deferred_blobs.copy()
         dupe.problem = "Form is a duplicate of another! (%s)" % xform._id
+        dupe.orig_id = xform._id
         return cls.assign_new_id(dupe)
 
     @classmethod
@@ -131,7 +146,7 @@ class FormProcessorCouch(object):
         sorted_forms = sorted(xforms, key=lambda f: 0 if f.is_deprecated else 1)
         # don't process error forms which are being deprecated since they were never processed in the first place.
         # see http://manage.dimagi.com/default.asp?243382
-        filtered_sorted_forms = filter(lambda form: not (form.is_deprecated and form.problem), sorted_forms)
+        filtered_sorted_forms = [form for form in sorted_forms if not (form.is_deprecated and form.problem)]
         touched_cases = {}
         for xform in filtered_sorted_forms:
             for case_update in get_case_updates(xform):
@@ -148,7 +163,7 @@ class FormProcessorCouch(object):
 
     @staticmethod
     def hard_rebuild_case(domain, case_id, detail, save=True, lock=True):
-        case, lock_obj = FormProcessorCouch.get_case_with_lock(case_id, lock=lock)
+        case, lock_obj = FormProcessorCouch.get_case_with_lock(case_id, lock=lock, wrap=True)
         found = bool(case)
         if not found:
             case = CommCareCase()
@@ -196,19 +211,26 @@ class FormProcessorCouch(object):
 
     @staticmethod
     def get_case_with_lock(case_id, lock=False, strip_history=False, wrap=False):
+
+        def _get_case():
+            if wrap:
+                return CommCareCase.get(case_id)
+            else:
+                return CommCareCase.get_db().get(case_id)
+
         try:
             if strip_history:
                 case_doc = CommCareCase.get_lite(case_id, wrap=wrap)
             elif lock:
                 try:
-                    return CommCareCase.get_locked_obj(_id=case_id)
+                    case, lock = CommCareCase.get_locked_obj(_id=case_id)
+                    if case and not wrap:
+                        case = case.to_json()
+                    return case, lock
                 except redis.RedisError:
-                    case_doc = CommCareCase.get(case_id)
+                    case_doc = _get_case()
             else:
-                if wrap:
-                    case_doc = CommCareCase.get(case_id)
-                else:
-                    case_doc = CommCareCase.get_db().get(case_id)
+                case_doc = _get_case()
         except ResourceNotFound:
             return None, None
 

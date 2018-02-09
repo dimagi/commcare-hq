@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from collections import namedtuple
 
 from corehq.apps.app_manager.util import app_doc_types

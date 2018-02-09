@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.test import SimpleTestCase
 from corehq.apps.performance_sms.exceptions import InvalidParameterException
 from corehq.apps.performance_sms.models import PerformanceConfiguration, TemplateVariable

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import json
 import uuid
 from django.test import TestCase, override_settings, Client
@@ -70,9 +71,50 @@ class TestBetsUpdates(TestCase):
         }]})
         self.assertResponseStatus(res, 200)
         self.assertDictContainsSubset(
-            {'state': 'paid', 'amount_paid': '100'},
+            {'state': 'paid', 'amount_paid': '100.0'},
             get_case(self.domain, voucher.case_id).case_json,
         )
+
+    def test_string_amount(self):
+        voucher = self.make_voucher()
+        res = self.make_request({'response': [{
+            'eventType': 'Voucher',
+            'id': voucher.case_id,
+            'status': 'Success',
+            'amount': '100.0',
+            'paymentDate': "2014-11-22 13:23:44.657"
+        }]})
+        self.assertResponseStatus(res, 200)
+        self.assertDictContainsSubset(
+            {'state': 'paid', 'amount_paid': '100.0'},
+            get_case(self.domain, voucher.case_id).case_json,
+        )
+
+    def test_float_amount(self):
+        voucher = self.make_voucher()
+        res = self.make_request({'response': [{
+            'eventType': 'Voucher',
+            'id': voucher.case_id,
+            'status': 'Success',
+            'amount': '100.2',
+            'paymentDate': "2014-11-22 13:23:44.657"
+        }]})
+        self.assertResponseStatus(res, 200)
+        self.assertDictContainsSubset(
+            {'state': 'paid', 'amount_paid': '100.2'},
+            get_case(self.domain, voucher.case_id).case_json,
+        )
+
+    def test_bad_amount(self):
+        voucher = self.make_voucher()
+        res = self.make_request({'response': [{
+            'eventType': 'Voucher',
+            'id': voucher.case_id,
+            'status': 'Success',
+            'amount': 'one hundred',
+            'paymentDate': "2014-11-22 13:23:44.657"
+        }]})
+        self.assertResponseStatus(res, 400)
 
     def test_update_voucher_failure(self):
         voucher = self.make_voucher()
@@ -124,7 +166,7 @@ class TestBetsUpdates(TestCase):
         self.assertDictContainsSubset(
             {
                 'tb_incentive_106_status': 'paid',
-                'tb_incentive_106_amount': '100',
+                'tb_incentive_106_amount': '100.0',
             },
             get_case(self.domain, episode.case_id).case_json,
         )
@@ -189,7 +231,7 @@ class TestBetsUpdates(TestCase):
         )
         # check voucher update
         self.assertDictContainsSubset(
-            {'state': 'paid', 'amount_paid': '100'},
+            {'state': 'paid', 'amount_paid': '100.0'},
             get_case(self.domain, voucher.case_id).case_json,
         )
 
@@ -236,7 +278,7 @@ class TestBetsUpdates(TestCase):
             {
                 "weight": "15 stone",
                 "test_confirming_diagnosis": "Old Nan's wisdom",
-                "tb_incentive_106_amount": "100",
+                "tb_incentive_106_amount": "100.0",
                 "tb_incentive_106_bank_name": "Iron Bank",
                 "tb_incentive_106_check_number": "",
                 "tb_incentive_106_comments": "",
@@ -254,7 +296,7 @@ class TestBetsUpdates(TestCase):
                 "date_paid": "2014-11-22",
                 "time_paid": "13:23:44.657000",
                 "amount_initial": "105",
-                "amount_paid": "100",
+                "amount_paid": "100.0",
                 "payment_mode": "",
                 "check_number": "12345",
             },

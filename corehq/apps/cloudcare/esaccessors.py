@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.apps.es import filters, queries, UserES
 from corehq.apps.locations.models import SQLLocation
 

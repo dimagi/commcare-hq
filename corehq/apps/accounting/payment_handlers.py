@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from decimal import Decimal
 
 from django.conf import settings
@@ -169,8 +170,8 @@ class BaseStripePaymentHandler(object):
 
 
 class InvoiceStripePaymentHandler(BaseStripePaymentHandler):
-    receipt_email_template = 'accounting/invoice_receipt_email.html'
-    receipt_email_template_plaintext = 'accounting/invoice_receipt_email_plaintext.txt'
+    receipt_email_template = 'accounting/email/invoice_receipt.html'
+    receipt_email_template_plaintext = 'accounting/email/invoice_receipt.txt'
 
     def __init__(self, payment_method, domain, invoice):
         super(InvoiceStripePaymentHandler, self).__init__(payment_method, domain)
@@ -222,8 +223,8 @@ class InvoiceStripePaymentHandler(BaseStripePaymentHandler):
 
 
 class BulkStripePaymentHandler(BaseStripePaymentHandler):
-    receipt_email_template = 'accounting/bulk_payment_receipt_email.html'
-    receipt_email_template_plaintext = 'accounting/bulk_payment_receipt_email_plaintext.txt'
+    receipt_email_template = 'accounting/email/bulk_payment_receipt.html'
+    receipt_email_template_plaintext = 'accounting/email/bulk_payment_receipt.txt'
 
     def __init__(self, payment_method, domain):
         super(BulkStripePaymentHandler, self).__init__(payment_method, domain)
@@ -293,8 +294,8 @@ class BulkStripePaymentHandler(BaseStripePaymentHandler):
 
 
 class CreditStripePaymentHandler(BaseStripePaymentHandler):
-    receipt_email_template = 'accounting/credit_receipt_email.html'
-    receipt_email_template_plaintext = 'accounting/credit_receipt_email_plaintext.txt'
+    receipt_email_template = 'accounting/email/credit_receipt.html'
+    receipt_email_template_plaintext = 'accounting/email/credit_receipt.txt'
 
     def __init__(self, payment_method, domain, account, subscription=None, post_data=None):
         super(CreditStripePaymentHandler, self).__init__(payment_method, domain)
@@ -350,16 +351,6 @@ class CreditStripePaymentHandler(BaseStripePaymentHandler):
                     )
                 )
 
-    def process_request(self, request):
-        response = super(CreditStripePaymentHandler, self).process_request(request)
-        if self.credit_lines:
-            response.update({
-                'balances': [{'type': cline.product_type if cline.product_type else cline.feature_type,
-                              'balance': fmt_dollar_amount(cline.balance)}
-                             for cline in self.credit_lines]
-            })
-        return response
-
 
 class AutoPayInvoicePaymentHandler(object):
 
@@ -406,8 +397,8 @@ class AutoPayInvoicePaymentHandler(object):
 
     def _send_payment_receipt(self, invoice, payment_record):
         from corehq.apps.accounting.tasks import send_purchase_receipt
-        receipt_email_template = 'accounting/invoice_receipt_email.html'
-        receipt_email_template_plaintext = 'accounting/invoice_receipt_email_plaintext.txt'
+        receipt_email_template = 'accounting/email/invoice_receipt.html'
+        receipt_email_template_plaintext = 'accounting/email/invoice_receipt.txt'
         try:
             domain = invoice.subscription.subscriber.domain
             context = {

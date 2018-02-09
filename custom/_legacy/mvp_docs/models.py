@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import dateutil
 from couchdbkit import ResourceNotFound
 from couchdbkit.ext.django.loading import get_db

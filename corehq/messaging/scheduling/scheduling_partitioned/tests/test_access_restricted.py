@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.messaging.scheduling.scheduling_partitioned.models import AlertScheduleInstance
 from corehq.util.exceptions import AccessRestricted
 from django.test import TestCase

@@ -1,4 +1,5 @@
 from __future__ import unicode_literals
+from __future__ import absolute_import
 import json
 import time
 from django.conf import settings
@@ -7,6 +8,7 @@ from corehq.util.soft_assert import soft_assert
 from kafka import SimpleProducer
 from kafka.common import LeaderNotAvailableError, FailedPayloadsError, KafkaUnavailableError
 from corehq.apps.change_feed.connection import get_kafka_client_or_none
+from six.moves import range
 
 
 def send_to_kafka(producer, topic, change_meta):

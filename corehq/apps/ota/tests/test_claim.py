@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from uuid import uuid4
 from django.test import TestCase
 from casexml.apps.case.cleanup import claim_case, get_first_claim

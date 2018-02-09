@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import unicode_literals
 import datetime
 from collections import namedtuple
 
@@ -31,8 +33,8 @@ from dimagi.utils.dates import DateSpan
 
 
 SHOW_ALL_CHOICE = '_all'  # todo: if someone wants to name an actually choice "_all" this will break
-NONE_CHOICE = u"\u2400"
-CHOICE_DELIMITER = u"\u001f"
+NONE_CHOICE = "\u2400"
+CHOICE_DELIMITER = "\u001f"
 
 
 class FilterValue(object):
@@ -137,11 +139,18 @@ class QuarterFilterValue(FilterValue):
         }
 
 
+class IsDistinctFromFilter(BasicFilter):
+
+    def build_expression(self, table):
+        return get_column(table, self.column_name).is_distinct_from(bindparam(self.parameter))
+
+
 class NumericFilterValue(FilterValue):
     DBSpecificFilter = namedtuple('DBSpecificFilter', ['sql', 'es'])
     operators_to_filters = {
         '=': DBSpecificFilter(EQFilter, filters.term),
         '!=': DBSpecificFilter(NOTEQFilter, filters.not_term),
+        'distinct from': DBSpecificFilter(IsDistinctFromFilter, filters.not_term),
         '>=': DBSpecificFilter(GTEFilter, lambda field, val: filters.range_filter(field, gte=val)),
         '>': DBSpecificFilter(GTFilter, lambda field, val: filters.range_filter(field, gt=val)),
         '<=': DBSpecificFilter(LTEFilter, lambda field, val: filters.range_filter(field, lte=val)),

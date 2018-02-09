@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.apps.indicators.admin import BaseIndicatorAdminInterface
 from corehq.apps.indicators.admin.forms import (FormDataAliasIndicatorDefinitionForm,
                                                 FormLabelIndicatorDefinitionForm, CaseDataInFormIndicatorDefinitionForm, FormDataInCaseForm)

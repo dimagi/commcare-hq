@@ -52,3 +52,8 @@ APP_TRANSLATION_UPLOAD_FAIL_MESSAGE = (
     "Please make sure you are using a valid Excel 2007 or later (.xlsx) file. "
     "Error details: {}."
 )
+
+MOBILE_UCR_VERSION_1 = '1.0'
+MOBILE_UCR_MIGRATING_TO_2 = '1.5'
+MOBILE_UCR_VERSION_2 = '2.0'
+MOBILE_UCR_VERSIONS = [MOBILE_UCR_VERSION_1, MOBILE_UCR_MIGRATING_TO_2, MOBILE_UCR_VERSION_2]

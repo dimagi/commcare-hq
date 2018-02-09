@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from decimal import Decimal
 import os
 from datetime import date, datetime
@@ -5,7 +6,8 @@ from django.test import TestCase
 from django.conf import settings
 
 from casexml.apps.case.tests.util import delete_all_xforms
-from corehq.form_processor.tests.utils import use_sql_backend, post_xform
+from corehq.apps.receiverwrapper.util import submit_form_locally
+from corehq.form_processor.tests.utils import use_sql_backend
 from corehq.util.test_utils import TestFileMixin
 from couchforms.datatypes import GeoPoint
 
@@ -26,11 +28,11 @@ class TestMeta(TestCase, TestFileMixin):
 
     def testClosed(self):
         xml_data = self.get_xml('meta')
-        xform = post_xform(xml_data)
+        xform = submit_form_locally(xml_data, 'test-domain').xform
 
         self.assertNotEqual(None, xform.metadata)
-        self.assertEqual(date(2010, 07, 22), xform.metadata.timeStart.date())
-        self.assertEqual(date(2010, 07, 23), xform.metadata.timeEnd.date())
+        self.assertEqual(date(2010, 7, 22), xform.metadata.timeStart.date())
+        self.assertEqual(date(2010, 7, 23), xform.metadata.timeEnd.date())
         self.assertEqual("admin", xform.metadata.username)
         self.assertEqual("f7f0c79e-8b79-11df-b7de-005056c00008", xform.metadata.userID)
         self.assertEqual("v1.2.3 (biz bazzle)", xform.metadata.appVersion)
@@ -56,7 +58,7 @@ class TestMeta(TestCase, TestFileMixin):
         (b) does not crash anything
         '''
         xml_data = self.get_xml('decimalmeta')
-        xform = post_xform(xml_data)
+        xform = submit_form_locally(xml_data, 'test-domain').xform
 
         self.assertEqual(xform.metadata.appVersion, '2.0')
         result = {
@@ -76,7 +78,7 @@ class TestMeta(TestCase, TestFileMixin):
 
     def testMetaBadUsername(self):
         xml_data = self.get_xml('meta_bad_username')
-        xform = post_xform(xml_data)
+        xform = submit_form_locally(xml_data, 'test-domain').xform
 
         self.assertEqual(xform.metadata.appVersion, '2.0')
         result = {
@@ -95,7 +97,7 @@ class TestMeta(TestCase, TestFileMixin):
 
     def testMetaAppVersionDict(self):
         xml_data = self.get_xml('meta_dict_appversion')
-        xform = post_xform(xml_data)
+        xform = submit_form_locally(xml_data, 'test-domain').xform
 
         self.assertEqual(xform.metadata.appVersion, '2.0')
         result = {
@@ -115,7 +117,7 @@ class TestMeta(TestCase, TestFileMixin):
     def test_gps_location(self):
         xml_data = self.get_xml('gps_location', override_path=('data',))
 
-        xform = post_xform(xml_data)
+        xform = submit_form_locally(xml_data, 'test-domain').xform
 
         self.assertEqual(
             xform.metadata.location,
@@ -144,7 +146,7 @@ class TestMeta(TestCase, TestFileMixin):
 
     def test_empty_gps_location(self):
         xml_data = self.get_xml('gps_empty_location', override_path=('data',))
-        xform = post_xform(xml_data)
+        xform = submit_form_locally(xml_data, 'test-domain').xform
 
         self.assertEqual(
             xform.metadata.location,
@@ -155,14 +157,14 @@ class TestMeta(TestCase, TestFileMixin):
 
     def testMetaDateInDatetimeFields(self):
         xml_data = self.get_xml('date_in_meta', override_path=('data',))
-        xform = post_xform(xml_data)
+        xform = submit_form_locally(xml_data, 'test-domain').xform
 
         self.assertEqual(datetime(2014, 7, 10), xform.metadata.timeStart)
         self.assertEqual(datetime(2014, 7, 11), xform.metadata.timeEnd)
 
     def test_missing_meta_key(self):
         xml_data = self.get_xml('missing_date_in_meta', override_path=('data',))
-        xform = post_xform(xml_data)
+        xform = submit_form_locally(xml_data, 'test-domain').xform
         self.assertEqual(datetime(2014, 7, 10), xform.metadata.timeStart)
         self.assertIsNone(xform.metadata.timeEnd)
 

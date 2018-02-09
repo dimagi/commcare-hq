@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import json
 
 from django.http import HttpResponse
@@ -15,7 +16,7 @@ from corehq.apps.domain.decorators import login_or_api_key
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.zapier.queries import get_subscription_by_url
 from corehq.apps.zapier.services import delete_subscription_with_url
-from corehq.apps.zapier.consts import EventTypes
+from corehq.apps.zapier.consts import EventTypes, CASE_TYPE_REPEATER_CLASS_MAP
 from corehq import privileges
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
@@ -59,7 +60,7 @@ class SubscribeView(View):
                 application_id=data['application'],
                 form_xmlns=data['form'],
             )
-        elif data['event'] == EventTypes.NEW_CASE:
+        elif data['event'] in CASE_TYPE_REPEATER_CLASS_MAP:
             subscription = ZapierSubscription.objects.create(
                 domain=domain,
                 user_id=str(request.couch_user.get_id),

@@ -1,4 +1,5 @@
-from cStringIO import StringIO
+from __future__ import absolute_import
+import io
 from functools import wraps
 
 def get_file(filename):
@@ -33,7 +34,7 @@ def get_file(filename):
                             request.other_files[key] = item
                 else:
                     # I have had some trouble with request.body not preserving newlines...
-                    request.file = StringIO(request.body)
+                    request.file = io.BytesIO(request.body)
                     request.other_files = {}
             return view(request, *args, **kwargs)
         return view_prime

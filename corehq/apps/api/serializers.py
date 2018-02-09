@@ -1,6 +1,7 @@
 
 # Standard library imports
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from io import BytesIO
 
 # Django & Tastypie imports
@@ -32,7 +33,7 @@ class CommCareCaseSerializer(Serializer):
     def bundle_to_etree(self, bundle):
         '''
         A new override point we have added - how to convert a single-object bundle to XML.
-        The list endpoint will re-use this. TODO: PR against tastypie to expose this hook?
+        The list endpoint will re-use this.
         '''
         return self.case_to_etree(bundle.obj)
 

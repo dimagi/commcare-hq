@@ -1,13 +1,16 @@
+from __future__ import absolute_import
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.form_processor.models import XFormInstanceSQL
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
-from custom.icds.const import (STATE_TYPE_CODE, ANDHRA_PRADESH_SITE_CODE, MAHARASHTRA_SITE_CODE,
-    HINDI, TELUGU, MARATHI)
-from custom.icds.messaging.custom_recipients import (
-    get_child_health_host_case,
+from custom.icds.case_relationships import (
+    child_person_case_from_tasks_case,
+    child_person_case_from_child_health_case,
     mother_person_case_from_ccs_record_case,
 )
+from custom.icds.const import (STATE_TYPE_CODE, ANDHRA_PRADESH_SITE_CODE, MAHARASHTRA_SITE_CODE,
+    HINDI, TELUGU, MARATHI)
+from custom.icds.exceptions import CaseRelationshipError
 from custom.icds.messaging.indicators import DEFAULT_LANGUAGE
 from custom.icds.rules.immunization import (
     get_immunization_products,
@@ -15,13 +18,21 @@ from custom.icds.rules.immunization import (
     get_tasks_case_immunization_ledger_values,
     get_map,
     immunization_is_due,
-    child_person_case_from_tasks_case
 )
 from decimal import Decimal, InvalidOperation
+from dimagi.utils.logging import notify_exception
 from django.template import TemplateDoesNotExist
 from django.template.loader import render_to_string
 
 GROWTH_MONITORING_XMLNS = 'http://openrosa.org/formdesigner/b183124a25f2a0ceab266e4564d3526199ac4d75'
+
+
+def notify_exception_and_return_empty_list():
+    notify_exception(
+        None,
+        message="Error with ICDS custom content handler",
+    )
+    return []
 
 
 def get_last_growth_monitoring_form(domain, case_id):
@@ -88,19 +99,20 @@ def static_negative_growth_indicator(recipient, schedule_instance):
     if not form:
         return []
 
-    host_case = get_child_health_host_case(schedule_instance.domain, schedule_instance.case_id)
-    if not host_case:
-        return []
+    try:
+        child_person_case = child_person_case_from_child_health_case(schedule_instance.case)
+    except CaseRelationshipError:
+        return notify_exception_and_return_empty_list()
 
     try:
         weight_prev = Decimal(form.form_data.get('weight_prev'))
     except (InvalidOperation, TypeError):
-        return []
+        return notify_exception_and_return_empty_list()
 
     try:
         weight_child = Decimal(form.form_data.get('weight_child'))
     except (InvalidOperation, TypeError):
-        return []
+        return notify_exception_and_return_empty_list()
 
     if weight_child > weight_prev:
         return []
@@ -111,7 +123,7 @@ def static_negative_growth_indicator(recipient, schedule_instance):
         template = 'beneficiary_negative_growth.txt'
 
     language_code = recipient.get_language_code() or DEFAULT_LANGUAGE
-    context = {'child_name': host_case.name}
+    context = {'child_name': child_person_case.name}
     return [render_message(language_code, template, context)]
 
 
@@ -121,15 +133,44 @@ def render_content_for_user(user, template, context):
     return render_message(language_code, template, context)
 
 
+def person_case_is_migrated(case):
+    """
+    Applies to both person cases representing mothers and person cases representing children.
+    Returns True if the person is marked as having migrated to another AWC, otherwise False.
+    """
+    return case.get_case_property('migration_status') == 'migrated'
+
+
+def person_case_opted_out(case):
+    """
+    Applies to both person cases representing mothers and person cases representing children.
+    Returns True if the person is marked as having opted out of services, otherwise False.
+    """
+    return case.get_case_property('registered_status') == 'not_registered'
+
+
+def person_case_is_migrated_or_opted_out(case):
+    return person_case_is_migrated(case) or person_case_opted_out(case)
+
+
 def render_missed_visit_message(recipient, case_schedule_instance, template):
     if not isinstance(recipient, CommCareUser):
         return []
 
-    mother_case = mother_person_case_from_ccs_record_case(case_schedule_instance)
+    try:
+        mother_case = mother_person_case_from_ccs_record_case(case_schedule_instance.case)
+    except CaseRelationshipError:
+        return notify_exception_and_return_empty_list()
+
+    if person_case_is_migrated_or_opted_out(mother_case):
+        return []
+
+    if case_schedule_instance.case_owner is None:
+        return []
 
     context = {
-        'awc': case_schedule_instance.case_owner.name if case_schedule_instance.case_owner else '',
-        'beneficiary': mother_case.name if mother_case else '',
+        'awc': case_schedule_instance.case_owner.name,
+        'beneficiary': mother_case.name,
     }
 
     return [render_content_for_user(recipient, template, context)]
@@ -165,12 +206,10 @@ def cf_visits_complete(recipient, case_schedule_instance):
     if not isinstance(recipient, CommCareUser) or not case_schedule_instance.case:
         return []
 
-    if case_schedule_instance.case.type != 'ccs_record':
-        raise ValueError("Expected 'ccs_record' case")
-
-    mother_case = mother_person_case_from_ccs_record_case(case_schedule_instance)
-    if not mother_case:
-        return []
+    try:
+        mother_case = mother_person_case_from_ccs_record_case(case_schedule_instance.case)
+    except CaseRelationshipError:
+        return notify_exception_and_return_empty_list()
 
     context = {
         'beneficiary': mother_case.name,
@@ -202,6 +241,10 @@ def dpt3_and_measles_are_due(recipient, case_schedule_instance):
         immunization_is_due(case, anchor_date, measles_product, products, ledger_values)
     ):
         child_person_case = child_person_case_from_tasks_case(case)
+
+        if person_case_is_migrated_or_opted_out(child_person_case):
+            return []
+
         context = {
             'child_name': child_person_case.name,
         }
@@ -215,7 +258,11 @@ def child_vaccinations_complete(recipient, case_schedule_instance):
     if case.type != 'tasks':
         raise ValueError("Expected 'tasks' case")
 
-    child_person_case = child_person_case_from_tasks_case(case)
+    try:
+        child_person_case = child_person_case_from_tasks_case(case)
+    except CaseRelationshipError:
+        return notify_exception_and_return_empty_list()
+
     context = {
         'child_name': child_person_case.name,
     }

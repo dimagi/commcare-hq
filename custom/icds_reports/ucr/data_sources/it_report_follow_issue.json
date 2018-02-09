@@ -1,0 +1,218 @@
+{
+    "domains": [
+        "icds-dashboard-qa",
+        "icds-test",
+        "icds-cas"
+    ],
+    "server_environment": [
+        "softlayer",
+        "icds-new",
+        "icds"
+    ],
+    "config": {
+        "table_id": "static-it_report_follow_issue",
+        "referenced_doc_type": "XFormInstance",
+        "display_name": "Issue Tracker - Report/Follow Issue",
+        "description": "Data source for Report and Follow Up with Issue forms in Issue Tracker application",
+        "engine_id": "icds-ucr",
+        "base_item_expression": {},
+        "configured_filter": {
+            "comment": "0AD845EA-69E8-4479-9140-4072A14AA0E5 -> Report Issue; 32083FFC-9AD7-46A8-B256-1B9431469262 -> Follow up with Issue",
+            "expression": {
+                "datatype": null,
+                "property_name": "xmlns",
+                "type": "property_name"
+            },
+            "operator": "in",
+            "property_value": [
+                "http://openrosa.org/formdesigner/0AD845EA-69E8-4479-9140-4072A14AA0E5",
+                "http://openrosa.org/formdesigner/32083FFC-9AD7-46A8-B256-1B9431469262"
+            ],
+            "type": "boolean_expression"
+        },
+        "configured_indicators": [
+            {
+                "column_id": "user_location_id",
+                "comment": null,
+                "create_index": false,
+                "datatype": "string",
+                "display_name": "user_location_id",
+                "expression": {
+                    "doc_id_expression": {
+                        "expression": {
+                            "datatype": null,
+                            "property_path": [
+                                "form",
+                                "meta",
+                                "userID"
+                            ],
+                            "type": "property_path"
+                        },
+                        "type": "root_doc"
+                    },
+                    "related_doc_type": "CommCareUser",
+                    "type": "related_doc",
+                    "value_expression": {
+                        "datatype": null,
+                        "property_path": [
+                            "domain_membership",
+                            "location_id"
+                        ],
+                        "type": "property_path"
+                    }
+                },
+                "is_nullable": true,
+                "is_primary_key": false,
+                "transform": {},
+                "type": "expression"
+            },
+            {
+                "column_id": "userID",
+                "comment": null,
+                "create_index": false,
+                "datatype": "string",
+                "display_name": "userID",
+                "expression": {
+                    "datatype": null,
+                    "property_path": [
+                        "form",
+                        "meta",
+                        "userID"
+                    ],
+                    "type": "property_path"
+                },
+                "is_nullable": true,
+                "is_primary_key": false,
+                "transform": {},
+                "type": "expression"
+            },
+            {
+                "column_id": "user_level",
+                "comment": null,
+                "create_index": false,
+                "datatype": "string",
+                "display_name": null,
+                "is_nullable": true,
+                "is_primary_key": false,
+                "property_name": "",
+                "property_path": [
+                    "form",
+                    "user_level"
+                ],
+                "type": "raw"
+            },
+            {
+                "column_id": "form_id",
+                "comment": null,
+                "create_index": false,
+                "datatype": "string",
+                "display_name": "form_id",
+                "expression": {
+                    "datatype": null,
+                    "property_path": [
+                        "xmlns"
+                    ],
+                    "type": "property_path"
+                },
+                "is_nullable": true,
+                "is_primary_key": false,
+                "transform": {},
+                "type": "expression"
+            },
+            {
+                "column_id": "report_issue",
+                "comment": null,
+                "create_index": false,
+                "datatype": "integer",
+                "display_name": "Report an Issue form?",
+                "expression": {
+                    "expression_if_false": {
+                        "constant": 0,
+                        "type": "constant"
+                    },
+                    "expression_if_true": {
+                        "constant": 1,
+                        "type": "constant"
+                    },
+                    "test": {
+                        "comment": null,
+                        "expression": {
+                            "datatype": null,
+                            "property_path": [
+                                "xmlns"
+                            ],
+                            "type": "property_path"
+                        },
+                        "operator": "eq",
+                        "property_value": "http://openrosa.org/formdesigner/0AD845EA-69E8-4479-9140-4072A14AA0E5",
+                        "type": "boolean_expression"
+                    },
+                    "type": "conditional"
+                },
+                "is_nullable": true,
+                "is_primary_key": false,
+                "transform": {},
+                "type": "expression"
+            },
+            {
+                "column_id": "follow_issue",
+                "comment": null,
+                "create_index": false,
+                "datatype": "integer",
+                "display_name": "Follow up with Issue form?",
+                "expression": {
+                    "expression_if_false": {
+                        "constant": 0,
+                        "type": "constant"
+                    },
+                    "expression_if_true": {
+                        "constant": 1,
+                        "type": "constant"
+                    },
+                    "test": {
+                        "comment": null,
+                        "expression": {
+                            "datatype": null,
+                            "property_path": [
+                                "xmlns"
+                            ],
+                            "type": "property_path"
+                        },
+                        "operator": "eq",
+                        "property_value": "http://openrosa.org/formdesigner/32083FFC-9AD7-46A8-B256-1B9431469262",
+                        "type": "boolean_expression"
+                    },
+                    "type": "conditional"
+                },
+                "is_nullable": true,
+                "is_primary_key": false,
+                "transform": {},
+                "type": "expression"
+            },
+            {
+                "column_id": "timeEnd",
+                "comment": null,
+                "create_index": false,
+                "datatype": "date",
+                "display_name": "timeEnd",
+                "expression": {
+                    "datatype": null,
+                    "property_path": [
+                        "form",
+                        "meta",
+                        "timeEnd"
+                    ],
+                    "type": "property_path"
+                },
+                "is_nullable": true,
+                "is_primary_key": false,
+                "transform": {},
+                "type": "expression"
+            }
+        ],
+        "named_expressions": {},
+        "named_filters": {},
+        "sql_column_indexes": [],
+        "disable_destructive_rebuild": true
+    }
+}

@@ -3,10 +3,9 @@
         "enikshay"
     ],
     "server_environment": [
-        "enikshay",
-        "softlayer"
+        "enikshay"
     ],
-    "data_source_table": "episode",
+    "data_source_table": "episode_v4",
     "report_id": "beneficiary_register",
     "config": {
         "description": "",
@@ -20,16 +19,16 @@
                 "compare_as_string": false,
                 "datatype": "datetime",
                 "required": false,
-                "display": "Treatment Initiation Date",
-                "field": "treatment_initiation_date",
+                "slug": "date_of_notification",
+                "field": "date_of_notification",
                 "type": "date",
-                "slug": "treatment_initiation_date"
+                "display": "Date of Nikshay Notification"
             },
             {
                 "compare_as_string": false,
                 "datatype": "string",
                 "type": "dynamic_choice_list",
-                "slug": "village",
+                "display": "Location",
                 "field": "person_owner_id",
                 "choice_provider": {
                     "include_descendants": true,
@@ -37,7 +36,7 @@
                     "order_by_hierarchy": true,
                     "show_full_path": true
                 },
-                "display": "Location"
+                "slug": "village"
             },
             {
                 "pre_value": "true",
@@ -46,9 +45,28 @@
                 "field": "enrolled_in_private",
                 "type": "pre",
                 "slug": "enrolled_in_private"
+            },
+            {
+                "pre_value": 0,
+                "datatype": "integer",
+                "display": null,
+                "field": "presumptive_tb_episode_with_one_occurrence",
+                "type": "pre",
+                "slug": "presumptive_tb_episode_with_one_occurrence"
             }
         ],
         "columns": [
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "person_id_legacy",
+                "calculate_total": false,
+                "type": "field",
+                "display": "UATBC ID"
+            },
             {
                 "sortable": false,
                 "description": null,
@@ -99,10 +117,21 @@
                 "format": "default",
                 "transform": {},
                 "aggregation": "simple",
-                "field": "age_entered",
+                "field": "age",
                 "calculate_total": false,
                 "type": "field",
                 "display": "Age"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "weight",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Weight"
             },
             {
                 "sortable": false,
@@ -132,7 +161,7 @@
                 "format": "default",
                 "transform": {},
                 "aggregation": "simple",
-                "field": "current_address_first_line",
+                "field": "current_address",
                 "calculate_total": false,
                 "type": "field",
                 "display": "Address"
@@ -172,6 +201,20 @@
                 "calculate_total": false,
                 "type": "field",
                 "display": "Village / Town / City"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                    "type": "custom",
+                    "custom_type": "owner_display"
+                },
+                "aggregation": "simple",
+                "field": "current_address_block_taluka_mandal_choice",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Block / Taluka / Mandal"
             },
             {
                 "sortable": false,
@@ -225,18 +268,7 @@
                 "calculate_total": false,
                 "column_id": "treating_provider_name",
                 "type": "field",
-                "display": "Treating Provider Name"
-            },
-            {
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {},
-                "aggregation": "simple",
-                "field": "person_owner_id",
-                "calculate_total": false,
-                "type": "field",
-                "display": "Treating Provider ID"
+                "display": "Treating Provider Name - ID"
             },
             {
                 "sortable": false,
@@ -298,33 +330,25 @@
                 "field": "registered_by",
                 "calculate_total": false,
                 "type": "field",
-                "display": "Registered by Provider Name"
-            },
-            {
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {},
-                "aggregation": "simple",
-                "field": "registered_by_id",
-                "calculate_total": false,
-                "type": "field",
-                "display": "Registered by Provider ID"
+                "display": "Registered by Provider Name - ID"
             },
             {
                 "sortable": false,
                 "description": null,
                 "format": "default",
                 "transform": {
-                    "type": "translation",
                     "translations": {
+                        "dto": "PPIA Admin",
                         "pcp": "MBBS",
-                        "pcc-chemist": "Chemist",
+                        "ppia-do": "PPIA Admin",
                         "pac": "Ayush",
                         "plc": "Lab",
                         "ps-fieldstaff": "Field Staff",
-                        "ppia-do": "PPIA Admin"
-                    }
+                        "pcc": "Chemist",
+                        "pcc-chemist": "Chemist",
+                        "fo": "Field Officer"
+                    },
+                    "type": "translation"
                 },
                 "aggregation": "simple",
                 "field": "created_by_user_type",
@@ -337,11 +361,11 @@
                 "description": null,
                 "format": "default",
                 "transform": {
-                    "type": "translation",
                     "translations": {
                         "presumptive_tb": "Presumptive TB",
                         "confirmed_tb": "Confirmed TB"
-                    }
+                    },
+                    "type": "translation"
                 },
                 "aggregation": "simple",
                 "field": "episode_type",
@@ -431,17 +455,34 @@
                 "description": null,
                 "format": "default",
                 "transform": {
-                    "type": "translation",
                     "translations": {
-                        "F": "Initiated on Treatment",
-                        "N": "Not Initiated on Treatment"
-                    }
+                        "N": "Not Initiated on Treatment",
+                        "F": "Initiated on Treatment"
+                    },
+                    "type": "translation"
                 },
                 "aggregation": "simple",
                 "field": "treatment_initiation_status",
                 "calculate_total": false,
                 "type": "field",
                 "display": "Rx. Initiation Status"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                    "translations": {
+                        "fdc": "FDC",
+                        "private_drugs": "Private Drugs"
+                    },
+                    "type": "translation"
+                },
+                "aggregation": "simple",
+                "field": "treatment_options",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Treatment Regimen"
             },
             {
                 "sortable": false,
@@ -547,14 +588,14 @@
                 "description": null,
                 "format": "default",
                 "transform": {
-                    "type": "translation",
                     "translations": {
                         "99dots": "99DOTS",
                         "contact_centre": "Contact Centre",
                         "treatment_supporter": "Treatment Supporter",
                         "merm": "MERM",
                         "field_officer": "Field Officer"
-                    }
+                    },
+                    "type": "translation"
                 },
                 "aggregation": "simple",
                 "field": "adherence_tracking_mechanism",
@@ -563,37 +604,43 @@
                 "display": "Adherence Mechanism Assigned"
             },
             {
-                "expression": {
-                    "type": "evaluator",
-                    "context_variables": {
-                        "a": {
-                            "datatype": "date",
-                            "type": "property_name",
-                            "property_name": "treatment_initiation_date"
-                        },
-                        "b": {
-                            "datatype": "integer",
-                            "type": "property_name",
-                            "property_name": "aggregated_score_count_taken"
-                        }
-                    },
-                    "statement": "str(round(float(b * 100) / (days(today - a)), 2)) + '%' if days(today - a) != 0 else ''"
-                },
-                "type": "expression",
-                "display": "Total Adherence Score",
-                "column_id": "total_adherence_score"
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "visible": false,
+                "transform": {},
+                "aggregation": "simple",
+                "field": "doses_per_week",
+                "calculate_total": false,
+                "column_id": "doses_per_week",
+                "type": "field",
+                "display": "doses_per_week"
             },
             {
                 "sortable": false,
                 "description": null,
                 "format": "default",
-                "visible": true,
+                "visible": false,
                 "transform": {},
                 "aggregation": "simple",
-                "field": "treatment_outcome_date",
+                "field": "adherence_schedule_date_start",
                 "calculate_total": false,
+                "column_id": "adherence_schedule_date_start",
                 "type": "field",
-                "display": "Date of Treatment Outcome"
+                "display": "adherence_schedule_date_start"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "visible": false,
+                "transform": {},
+                "aggregation": "simple",
+                "field": "adherence_total_doses_taken",
+                "calculate_total": false,
+                "column_id": "adherence_total_doses_taken",
+                "type": "field",
+                "display": "adherence_total_doses_taken"
             },
             {
                 "sortable": false,
@@ -609,30 +656,96 @@
                 "display": "aggregated_score_count_taken"
             },
             {
+                "visible": false,
+                "column_id": "total_expected_doses_taken",
+                "expression": {
+                    "type": "evaluator",
+                    "context_variables": {
+                        "a": {
+                            "datatype": "integer",
+                            "type": "property_name",
+                            "property_name": "doses_per_week"
+                        },
+                        "b": {
+                            "datatype": "date",
+                            "type": "property_name",
+                            "property_name": "adherence_schedule_date_start"
+                        }
+                    },
+                    "statement": "int(round(((today - b).days / 7.0) * a))"
+                },
+                "display": "total_expected_doses_taken",
+                "type": "expression"
+            },
+            {
+                "expression": {
+                    "type": "evaluator",
+                    "context_variables": {
+                        "a": {
+                            "datatype": "integer",
+                            "type": "property_name",
+                            "property_name": "total_expected_doses_taken"
+                        },
+                        "b": {
+                            "datatype": "integer",
+                            "type": "property_name",
+                            "property_name": "adherence_total_doses_taken"
+                        }
+                    },
+                    "statement": "str(round(float(b * 100) / a, 2)) + '%'"
+                },
+                "type": "expression",
+                "display": "Total Adherence Score",
+                "column_id": "total_adherence_score"
+            },
+            {
+                "field": "treatment_outcome_date",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "visible": true,
+                "calculate_total": false,
+                "type": "field",
+                "display": "Date of Treatment Outcome"
+            },
+            {
                 "sortable": false,
                 "description": null,
                 "format": "default",
                 "transform": {
-                    "type": "translation",
                     "translations": {
-                        "treatment_regimen_changed": "Treatment Regimen Changed",
+                        "not_evaluated": "Not Evaluated",
                         "death": "Death",
                         "cured": "Cured",
-                        "failure": "Failure",
+                        "lost_to_followup": "Lost to followup",
                         "switched_to_cat_ivv": "Switched to Cat IV/V",
                         "transferred_to_public_sector": "Transferred to Public Sector",
-                        "not_evaluated": "Not Evaluated",
-                        "lost_to_followup": "Lost to followup",
+                        "treatment_regimen_changed": "Treatment Regimen Changed",
+                        "failure": "Failure",
                         "loss_to_followup_default": "Loss to followup: default",
                         "treatment_completed": "Treatment Completed",
                         "transferred_out": "Transferred Out"
-                    }
+                    },
+                    "type": "translation"
                 },
                 "aggregation": "simple",
                 "field": "treatment_outcome",
                 "calculate_total": false,
                 "type": "field",
                 "display": "Treatment Outcome"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "doc_id",
+                "calculate_total": false,
+                "type": "field",
+                "display": "source_doc_id"
             }
         ]
     }

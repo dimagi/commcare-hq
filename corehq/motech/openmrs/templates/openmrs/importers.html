@@ -1,0 +1,79 @@
+{% extends "domain/admin/info_base.html" %}
+{% load hq_shared_tags %}
+{% load crispy_forms_tags %}
+{% load i18n %}
+
+{% block stylesheets %}{{ block.super }}
+    <link rel="stylesheet" href="{% static 'codemirror/lib/codemirror.css' %}" />
+    <link rel="stylesheet" href="{% static 'codemirror/addon/fold/foldgutter.css' %}"/>
+    <style>
+        .CodeMirror {
+            border: 1px solid #ccc;
+            height: auto;
+            max-width: 800px;
+        }
+    </style>
+{% endblock %}
+
+{% block js %}{{ block.super }}
+    <script src="{% static 'codemirror/lib/codemirror.js' %}"></script>
+    <script src="{% static 'codemirror/mode/javascript/javascript.js' %}"></script>
+    <script src="{% static 'codemirror/addon/fold/foldcode.js' %}"></script>
+    <script src="{% static 'codemirror/addon/fold/foldgutter.js' %}"></script>
+    <script src="{% static 'codemirror/addon/fold/brace-fold.js' %}"></script>
+
+    <script src="{% static 'userreports/js/base.js' %}"></script>
+    <script src="{% static 'openmrs/js/openmrs_importers.js' %}"></script>
+{% endblock %}
+
+{% block js-inline %}{{ block.super }}
+    <script>
+    $(function () {
+        var OpenmrsImporters = hqImport('openmrs/js/openmrs_importers').OpenmrsImporters;
+        var viewModel = new OpenmrsImporters(
+            {{ openmrs_importers|JSON }},
+            "{% url 'openmrs_import_now' domain %}"
+        );
+        viewModel.init();
+        $('#openmrs-importers').koApplyBindings(viewModel);
+    });
+    </script>
+{% endblock %}
+
+{% block page_content %}
+{% include 'openmrs/partials/openmrs_importer_template.html' %}
+
+<form id="openmrs-importers"
+      class="form-horizontal"
+      method="post"
+      data-bind="submit: submit">
+
+    <div data-bind="template: {
+                        name: 'importer_template',
+                        foreach: openmrsImporters,
+                        as: 'openmrsImporter'
+                    }"></div>
+
+    <p>
+        <button type="button"
+                class="btn btn-success"
+                data-bind="click: addOpenmrsImporter">
+            <i class="fa fa-plus"></i>
+            {% trans "Add OpenMRS Importer" %}
+        </button>
+    </p>
+
+    <div class="form-actions">
+        <div class="col-sm-offset-3 col-md-offset-2 controls col-sm-9 col-md-8 col-lg-6">
+            <button class="btn btn-primary" type="submit">
+                {% trans "Update OpenMRS Importers" %}
+            </button>
+            <button class="btn btn-default"
+                    type="button"
+                    data-bind="click: importNow">
+                {% trans "Import Now" %}
+            </button>
+        </div>
+    </div>
+</form>
+{% endblock %}

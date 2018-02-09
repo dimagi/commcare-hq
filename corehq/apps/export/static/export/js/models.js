@@ -1,4 +1,3 @@
-/* globals analytics */
 /**
  * @file Defines all models for the export page. Models map to python models in
  * corehq/apps/export/models/new.py
@@ -66,6 +65,17 @@ hqDefine('export/js/models', function () {
         self.hasDisallowedHtmlFormat = ko.pureComputed(function() {
             return this.hasHtmlFormat() && !this.hasExcelDashboardAccess;
         }, self);
+
+        self.hasCaseHistoryTable = ko.pureComputed(function() {
+            return _.any(self.tables(), function(table) {
+                if (table.label() !== 'Case History') {
+                    return false;
+                }
+                return _.any(table.columns(), function (column) {
+                    return column.selected();
+                });
+            });
+        });
 
         self.export_format.subscribe(function (newFormat){
             // Selecting Excel Dashboard format automatically checks the daily saved export box
@@ -240,23 +250,23 @@ hqDefine('export/js/models', function () {
      */
     ExportInstance.prototype.recordSaveAnalytics = function(callback) {
         var analyticsAction = this.is_daily_saved_export() ? 'Saved' : 'Regular',
-            analyticsExportType = _.capitalize(this.type()),
+            analyticsExportType = utils.capitalize(this.type()),
             args,
             eventCategory;
 
-        analytics.usage("Create Export", analyticsExportType, analyticsAction);
+        hqImport('analytix/js/google').track.event("Create Export", analyticsExportType, analyticsAction);
         if (this.export_format === constants.EXPORT_FORMATS.HTML) {
-            args = ["Create Export", analyticsExportType, 'Excel Dashboard'];
+            args = ["Create Export", analyticsExportType, 'Excel Dashboard', '', {}];
             // If it's not new then we have to add the callback in to redirect
             if (!this.isNew()) {
                 args.push(callback);
             }
-            analytics.usage.apply(null, args);
+            hqImport('analytix/js/google').track.event.apply(null, args);
         }
         if (this.isNew()) {
             eventCategory = constants.ANALYTICS_EVENT_CATEGORIES[this.type()];
-            analytics.usage(eventCategory, 'Custom export creation', '');
-            analytics.workflow("Clicked 'Create' in export edit page", callback);
+            hqImport('analytix/js/google').track.event(eventCategory, 'Custom export creation', '');
+            hqImport('analytix/js/kissmetrix').track.event("Clicked 'Create' in export edit page", {}, callback);
         } else if (this.export_format !== constants.EXPORT_FORMATS.HTML) {
             callback();
         }

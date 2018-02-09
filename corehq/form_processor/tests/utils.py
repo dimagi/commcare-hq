@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import functools
 import logging
 from datetime import datetime
@@ -6,19 +7,18 @@ from uuid import uuid4
 from couchdbkit import ResourceNotFound
 from django.conf import settings
 from django.test.utils import override_settings
-from nose.tools import nottest
 from nose.plugins.attrib import attr
+from nose.tools import nottest
 from unittest2 import skipIf, skipUnless
 
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.phone.models import SyncLog
 from corehq.form_processor.backends.sql.dbaccessors import (
-    CaseAccessorSQL, FormAccessorSQL, LedgerAccessorSQL, LedgerReindexAccessor
-)
+    CaseAccessorSQL, LedgerAccessorSQL, LedgerReindexAccessor,
+    iter_all_rows)
 from corehq.form_processor.backends.sql.processor import FormProcessorSQL
-from corehq.form_processor.interfaces.processor import FormProcessorInterface, ProcessedForms
+from corehq.form_processor.interfaces.processor import ProcessedForms
 from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL, CaseTransaction, Attachment
-from corehq.form_processor.parsers.form import process_xform_xml
 from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.sql_db.config import get_sql_db_aliases_in_use
 from corehq.sql_db.models import PartitionedModel
@@ -50,7 +50,7 @@ class FormProcessorTestUtils(object):
     @unit_testing_only
     def delete_all_sql_cases(cls, domain=None):
         logger.debug("Deleting all SQL cases for domain %s", domain)
-        cls._delete_all_sql_sharded_modesl(CommCareCaseSQL, domain)
+        cls._delete_all_sql_sharded_models(CommCareCaseSQL, domain)
 
     @staticmethod
     def delete_all_ledgers(domain=None):
@@ -80,9 +80,8 @@ class FormProcessorTestUtils(object):
             LedgerAccessorSQL.delete_ledger_values(case_id)
 
         if not domain:
-            for db in get_sql_db_aliases_in_use():
-                for ledger in LedgerReindexAccessor().get_docs(db, None, limit=10000):
-                    _delete_ledgers_for_case(ledger.case_id)
+            for ledger in iter_all_rows(LedgerReindexAccessor()):
+                _delete_ledgers_for_case(ledger.case_id)
         else:
             for case_id in CaseAccessorSQL.get_case_ids_in_domain(domain):
                 _delete_ledgers_for_case(case_id)
@@ -98,7 +97,7 @@ class FormProcessorTestUtils(object):
     @unit_testing_only
     def delete_all_sql_forms(cls, domain=None):
         logger.debug("Deleting all SQL xforms for domain %s", domain)
-        cls._delete_all_sql_sharded_modesl(XFormInstanceSQL, domain)
+        cls._delete_all_sql_sharded_models(XFormInstanceSQL, domain)
 
     @classmethod
     @unit_testing_only
@@ -108,7 +107,7 @@ class FormProcessorTestUtils(object):
 
     @staticmethod
     @unit_testing_only
-    def _delete_all_sql_sharded_modesl(model_class, domain=None):
+    def _delete_all_sql_sharded_models(model_class, domain=None):
         assert issubclass(model_class, PartitionedModel)
         from corehq.sql_db.util import get_db_aliases_for_partitioned_query
         dbs = get_db_aliases_for_partitioned_query()
@@ -205,22 +204,9 @@ def use_sql_backend(cls):
     return partitioned(override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)(cls))
 
 
-@unit_testing_only
-def post_xform(instance_xml, attachments=None, domain='test-domain'):
-    """
-    create a new xform and releases the lock
-
-    this is a testing entry point only and is not to be used in real code
-
-    """
-    result = process_xform_xml(domain, instance_xml, attachments=attachments)
-    with result.get_locked_forms() as xforms:
-        FormProcessorInterface(domain).save_processed_models(xforms)
-        return xforms[0]
-
-
 @nottest
-def create_form_for_test(domain, case_id=None, attachments=None, save=True, state=XFormInstanceSQL.NORMAL,
+def create_form_for_test(
+        domain, case_id=None, attachments=None, save=True, state=XFormInstanceSQL.NORMAL,
         received_on=None, user_id='user1', edited_on=None):
     """
     Create the models directly so that these tests aren't dependent on any
@@ -248,10 +234,7 @@ def create_form_for_test(domain, case_id=None, attachments=None, save=True, stat
     )
 
     attachments = attachments or {}
-    attachment_tuples = map(
-        lambda a: Attachment(name=a[0], raw_content=a[1], content_type=a[1].content_type),
-        attachments.items()
-    )
+    attachment_tuples = [Attachment(name=a[0], raw_content=a[1], content_type=a[1].content_type) for a in attachments.items()]
     attachment_tuples.append(Attachment('form.xml', form_xml, 'text/xml'))
 
     FormProcessorSQL.store_attachments(form, attachment_tuples)

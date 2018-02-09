@@ -5,9 +5,9 @@ from corehq.apps.accounting.models import (
     FeatureType,
     SoftwarePlanEdition,
     SoftwarePlanVisibility,
-    SoftwareProductType,
 )
 from corehq.apps.accounting.utils import log_accounting_error, log_accounting_info
+import six
 
 FEATURE_TYPES = [
     FeatureType.USER,
@@ -21,7 +21,7 @@ def ensure_plans(config, verbose, apps):
     SoftwarePlanVersion = apps.get_model('accounting', 'SoftwarePlanVersion')
     Role = apps.get_model('django_prbac', 'Role')
 
-    for plan_key, plan_deets in config.iteritems():
+    for plan_key, plan_deets in six.iteritems(config):
         edition, is_trial, is_report_builder_enabled = plan_key
         features = _ensure_features(edition, verbose, apps)
         try:
@@ -29,7 +29,7 @@ def ensure_plans(config, verbose, apps):
         except Role.DoesNotExist:
             return
 
-        product, product_rate = _ensure_product_and_rate(
+        product, product_rate = _ensure_product_rate(
             plan_deets['product_rate_monthly_fee'], edition,
             verbose=verbose, apps=apps,
         )
@@ -39,7 +39,10 @@ def ensure_plans(config, verbose, apps):
         )
 
         software_plan = SoftwarePlan(
-            name='%s Edition' % product.name,
+            name=(
+                ('%s Edition' % product_rate.name)
+                if product is None else product.name  # TODO - remove after squashing migrations
+            ),
             edition=edition,
             visibility=SoftwarePlanVisibility.PUBLIC
         )
@@ -106,41 +109,47 @@ def _ensure_role(role_slug, apps):
     return role
 
 
-def _ensure_product_and_rate(monthly_fee, edition, verbose, apps):
+def _ensure_product_rate(monthly_fee, edition, verbose, apps):
     """
-    Ensures that all the necessary SoftwareProducts and SoftwareProductRates are created for the plan.
+    Ensures that all the necessary SoftwareProductRates are created for the plan.
     """
-    SoftwareProduct = apps.get_model('accounting', 'SoftwareProduct')
+    if verbose:
+        log_accounting_info('Ensuring Product Rates')
+
     SoftwareProductRate = apps.get_model('accounting', 'SoftwareProductRate')
 
-    if verbose:
-        log_accounting_info('Ensuring Products and Product Rates')
-
-    product = SoftwareProduct(name='CommCare %s' % edition)
-
-    # TODO - remove after product_type column is dropped and migrations are squashed
-    if hasattr(product, 'product_type'):
-        product.product_type = SoftwareProductType.COMMCARE
-
+    product_name = 'CommCare %s' % edition
     if edition == SoftwarePlanEdition.ENTERPRISE:
-        product.name = "Dimagi Only %s" % product.name
+        product_name = "Dimagi Only %s" % product_name
 
     product_rate = SoftwareProductRate(monthly_fee=monthly_fee)
     try:
-        product = SoftwareProduct.objects.get(name=product.name)
+        # TODO - remove after squashing migrations
+        SoftwareProduct = apps.get_model('accounting', 'SoftwareProduct')
+        product = SoftwareProduct(name=product_name, product_type='CommCare')
+        try:
+            product = SoftwareProduct.objects.get(name=product.name)
+            if verbose:
+                log_accounting_info(
+                    "Product '%s' already exists. Using existing product to add rate."
+                    % product.name
+                )
+        except SoftwareProduct.DoesNotExist:
+            if verbose:
+                log_accounting_info("Creating Product: %s" % product)
+            product.save()
+        product_rate.product = product
+
         if verbose:
-            log_accounting_info(
-                "Product '%s' already exists. Using existing product to add rate."
-                % product.name
-            )
-    except SoftwareProduct.DoesNotExist:
-        product.save()
+            log_accounting_info("Corresponding product rate of $%d created." % product_rate.monthly_fee)
+
+        return product, product_rate
+
+    except LookupError:
+        product_rate.name = product_name
         if verbose:
-            log_accounting_info("Creating Product: %s" % product)
-    if verbose:
-        log_accounting_info("Corresponding product rate of $%d created." % product_rate.monthly_fee)
-    product_rate.product = product
-    return product, product_rate
+            log_accounting_info("Corresponding product rate of $%d created." % product_rate.monthly_fee)
+        return None, product_rate  # TODO - don't return tuple after squashing migrations
 
 
 def _ensure_features(edition, verbose, apps):

@@ -1,7 +1,9 @@
+from __future__ import absolute_import
 from django.utils.translation import ugettext as _
 import itertools
 from corehq.apps.case_importer.util import get_case_properties_for_case_type, \
     RESERVED_FIELDS
+from corehq.toggles import BULK_UPLOAD_DATE_OPENED
 from dimagi.ext import jsonobject
 
 
@@ -20,13 +22,13 @@ def _combine_field_specs(field_specs, exclude_fields):
         if field not in exclude_fields and field not in combined_field_specs:
             combined_field_specs[field] = field_spec
 
-    return sorted(combined_field_specs.values(), key=lambda field_spec: field_spec.field)
+    return sorted(list(combined_field_specs.values()), key=lambda field_spec: field_spec.field)
 
 
 def get_suggested_case_fields(domain, case_type, exclude=None):
     exclude_fields = set(RESERVED_FIELDS) | set(exclude or [])
 
-    special_field_specs = (field_spec for field_spec in get_special_fields())
+    special_field_specs = (field_spec for field_spec in get_special_fields(domain))
 
     dynamic_field_specs = (FieldSpec(field=field, show_in_menu=True)
                            for field in get_case_properties_for_case_type(domain, case_type))
@@ -44,8 +46,8 @@ class FieldSpec(jsonobject.StrictJsonObject):
     discoverable = jsonobject.BooleanProperty(default=True)
 
 
-def get_special_fields():
-    return [
+def get_special_fields(domain=None):
+    special_fields = [
         FieldSpec(
             field='name',
             description=_("This field will be used to set the case's name."),
@@ -86,3 +88,14 @@ def get_special_fields():
             description=_("This field will be used to close cases. "
                           "Any case with 'yes' in this column will be closed.")),
     ]
+    if domain and BULK_UPLOAD_DATE_OPENED.enabled(domain):
+        special_fields.append(
+            FieldSpec(
+                field='date_opened',
+                description=_(
+                    "The date opened property for this case will be changed. "
+                    "Please do not use unless you know what you are doing"
+                )
+            )
+        )
+    return special_fields

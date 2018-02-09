@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import calendar
 from sqlagg import CountUniqueColumn
 from sqlagg.columns import SimpleColumn
@@ -10,6 +11,9 @@ from custom.world_vision.custom_queries import CustomMedianColumn, MeanColumnWit
 from custom.world_vision.sqldata import BaseSqlData
 from custom.world_vision.sqldata.main_sqldata import ImmunizationOverview
 from custom.world_vision.sqldata.mother_sqldata import MotherRegistrationDetails, DeliveryMothersIds
+import six
+from functools import reduce
+from six.moves import range
 
 
 class ChildRegistrationDetails(MotherRegistrationDetails):
@@ -150,7 +154,7 @@ class ChildrenDeaths(BaseSqlData):
             num_cols = len(rows[0])
             for i in range(num_cols):
                 colrows = [cr[i] for cr in rows[1:] if isinstance(cr[i], dict)]
-                columns = [r.get('sort_key') for r in colrows if isinstance(r.get('sort_key'), (int, long))]
+                columns = [r.get('sort_key') for r in colrows if isinstance(r.get('sort_key'), six.integer_types)]
                 if len(columns):
                     total_row.append(reduce(lambda x, y: x + y, columns, 0))
                 else:
@@ -422,7 +426,7 @@ class NutritionFeedingDetails(BaseSqlData):
     def rows(self):
         from custom.world_vision import CHILD_INDICATOR_TOOLTIPS
         result = []
-        for i in range(0,4):
+        for i in range(0, 4):
             result.append([{'sort_key': self.columns[2*i].header, 'html': self.columns[2*i].header,
                             'tooltip': self.get_tooltip(CHILD_INDICATOR_TOOLTIPS['nutrition_details'], self.columns[2*i].slug)},
                            {'sort_key': self.data[self.columns[2*i].slug], 'html': self.data[self.columns[2*i].slug]},

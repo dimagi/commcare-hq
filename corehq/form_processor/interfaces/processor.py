@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import logging
 from collections import namedtuple
 
@@ -106,6 +107,11 @@ class FormProcessorInterface(object):
         """Copy attachments from one for to another (exlucding form.xml)"""
         self.processor.copy_attachments(from_form, to_form)
 
+    def copy_form_operations(self, from_form, to_form):
+        """Copy form operations from one for to another. This happens when a form is edited to ensure
+        that the most recent form has the full history."""
+        self.processor.copy_form_operations(from_form, to_form)
+
     def is_duplicate(self, xform_id, domain=None):
         """
         Check if there is already a form with the given ID. If domain is specified only check for
@@ -145,12 +151,13 @@ class FormProcessorInterface(object):
             logging.exception('BulkSaveError saving forms', extra={'details': {'errors': e.errors}})
             raise
         except Exception as e:
-            xforms_being_saved = [form.form_id for form in forms if form]
-            error_message = u'Unexpected error bulk saving docs during form processing ({})'.format(
-                ', '.join(xforms_being_saved),
-            )
             from corehq.form_processor.submission_post import handle_unexpected_error
-            handle_unexpected_error(self, forms.submitted, e, error_message)
+            instance = forms.submitted
+            if forms.deprecated:
+                # since this is a form edit there will already be a form with the ID so we need to give this one
+                # a new ID
+                instance = self.xformerror_from_xform_instance(instance, '', with_new_id=True)
+            handle_unexpected_error(self, instance, e)
             e.sentry_capture = False  # we've already notified
             raise
 

@@ -40,8 +40,8 @@ hqDefine('app_manager/js/preview_app', function() {
         $(module.SELECTORS.PREVIEW_ACTION_TEXT_HIDE).removeClass('hide');
 
         if (triggerAnalytics) {
-            window.analytics.workflow("[app-preview] Clicked Show App Preview");
-            window.analytics.usage("[app-preview] Clicked Show App Preview");
+            hqImport('analytix/js/kissmetrix').track.event("[app-preview] Clicked Show App Preview");
+            hqImport('analytix/js/google').track.event("App Preview", "Clicked Show App Preview");
         }
 
         var $offsetContainer = (_private.isFormdesigner) ? $(module.SELECTORS.FORMDESIGNER) : $(module.SELECTORS.APP_MANAGER_BODY);
@@ -58,8 +58,8 @@ hqDefine('app_manager/js/preview_app', function() {
         if (localStorage.getItem(module.DATA.TABLET)) $offsetContainer.removeClass('offset-for-tablet');
 
         if (triggerAnalytics) {
-            window.analytics.workflow("[app-preview] Clicked Hide App Preview");
-            window.analytics.usage("[app-preview] Clicked Hide App Preview");
+            hqImport('analytix/js/kissmetrix').track.event("[app-preview] Clicked Hide App Preview");
+            hqImport('analytix/js/google').track.event("App Preview", "Clicked Hide App Preview");
         }
     };
 
@@ -70,7 +70,7 @@ hqDefine('app_manager/js/preview_app', function() {
         _private.triggerPreviewEvent('tablet-view');
 
         if (triggerAnalytics) {
-            window.analytics.workflow('[app-preview] User turned on tablet mode');
+            hqImport('analytix/js/kissmetrix').track.event('[app-preview] User turned on tablet mode');
         }
     };
 
@@ -81,7 +81,7 @@ hqDefine('app_manager/js/preview_app', function() {
         _private.triggerPreviewEvent('phone-view');
 
         if (triggerAnalytics) {
-            window.analytics.workflow('[app-preview] User turned off tablet mode');
+            hqImport('analytix/js/kissmetrix').track.event('[app-preview] User turned off tablet mode');
         }
     };
 
@@ -138,13 +138,15 @@ hqDefine('app_manager/js/preview_app', function() {
         localStorage.setItem(module.DATA.OPEN, module.DATA.OPEN);
     };
 
-    module.initPreviewWindow = function (layoutController) {
+    module.initPreviewWindow = function () {
 
-        var $appPreview = $(module.SELECTORS.PREVIEW_WINDOW),
+        var layoutController = hqImport("hqwebapp/js/layout"),
+            $appPreview = $(module.SELECTORS.PREVIEW_WINDOW),
             $appBody = $(module.SELECTORS.APP_MANAGER_BODY),
             $togglePreviewBtn = $(module.SELECTORS.BTN_TOGGLE_PREVIEW),
             $iframe = $(module.SELECTORS.PREVIEW_WINDOW_IFRAME),
-            $messages = $(layoutController.selector.messages);
+            $messages = layoutController.getMessagesContainer();
+
 
         _private.isFormdesigner = $(module.SELECTORS.FORMDESIGNER).length > 0;
 
@@ -160,7 +162,7 @@ hqDefine('app_manager/js/preview_app', function() {
 
         var _resizeAppPreview = function () {
 
-            var $nav = $(layoutController.selector.navigation),
+            var $nav = layoutController.getNavigationContainer(),
                 $alerts = $('.alert-maintenance');
             var maxHeight = $appPreview.find('.preview-phone-container').outerHeight() + $nav.outerHeight() + 80;
             var $offsetContainer = (_private.isFormdesigner) ? $(module.SELECTORS.FORMDESIGNER) : $appBody;
@@ -198,25 +200,17 @@ hqDefine('app_manager/js/preview_app', function() {
 
         };
         $(window).on(module.EVENTS.RESIZE, _resizeAppPreview);
-        layoutController.utils.setBalancePreviewFn(_resizeAppPreview);
+        layoutController.setBalancePreviewFn(_resizeAppPreview);
         $('.js-preview-toggle-tablet-view').click(_private.toggleTabletView);
         $('.js-preview-back').click(_private.triggerPreviewEvent.bind(this, 'back'));
         $('.js-preview-refresh').click(function() {
             $(module.SELECTORS.BTN_REFRESH).removeClass('app-out-of-date');
             _private.triggerPreviewEvent('refresh');
-            window.analytics.workflow("[app-preview] Clicked Refresh App Preview");
-            window.analytics.usage("[app-preview] Clicked Refresh App Preview");
+            hqImport('analytix/js/kissmetrix').track.event("[app-preview] Clicked Refresh App Preview");
+            hqImport('analytix/js/google').track.event("App Preview", "Clicked Refresh App Preview");
         });
-        $(document).ajaxComplete(function(e, xhr, options) {
-            if (/edit_form_attr/.test(options.url) ||
-                /edit_module_attr/.test(options.url) ||
-                /edit_module_detail_screens/.test(options.url) ||
-                /edit_app_attr/.test(options.url) ||
-                /edit_form_actions/.test(options.url) ||
-                /edit_commcare_settings/.test(options.url) ||
-                /patch_xform/.test(options.url)) {
-                $(module.SELECTORS.BTN_REFRESH).addClass('app-out-of-date');
-            }
+        hqImport("app_manager/js/app_manager_utils").handleAjaxAppChange(function() {
+            $(module.SELECTORS.BTN_REFRESH).addClass('app-out-of-date');
         });
         var onload = function() {
             if (localStorage.getItem(module.DATA.TABLET)) {

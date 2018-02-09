@@ -1,15 +1,18 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import copy
 import uuid
 from datetime import date, datetime
 from decimal import Decimal
 from django.test import SimpleTestCase, TestCase, override_settings
 from fakecouch import FakeCouchDb
+from mock import MagicMock
 from simpleeval import InvalidExpression
 from casexml.apps.case.const import CASE_INDEX_EXTENSION
 from casexml.apps.case.mock import CaseStructure, CaseFactory, CaseIndex
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
+from corehq.apps.userreports.decorators import ucr_context_cache
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.expressions.specs import (
@@ -105,7 +108,7 @@ class PropertyExpressionTest(SimpleTestCase):
             (Decimal("5.3"), "decimal", "5.3"),
             ("5", "string", "5"),
             ("5", "string", 5),
-            (u"fo\u00E9", "string", u"fo\u00E9"),
+            ("fo\u00E9", "string", "fo\u00E9"),
             (date(2015, 9, 30), "date", "2015-09-30"),
             (None, "date", "09/30/2015"),
             (datetime(2015, 9, 30, 19, 4, 27), "datetime", "2015-09-30T19:04:27Z"),
@@ -1324,6 +1327,57 @@ class TestEvaluationContext(SimpleTestCase):
         context.set_cache_value(('k1', 'k2'), 'v1')
         self.assertEqual(context.get_cache_value(('k1', 'k2')), 'v1')
         self.assertEqual(context.get_cache_value(('k1',)), None)
+
+    def test_cached_function(self):
+        counter = MagicMock()
+
+        @ucr_context_cache(vary_on=('arg1', 'arg2',))
+        def fn_that_should_be_cached(arg1, arg2, context):
+            counter()
+
+        context = EvaluationContext({})
+        fn_that_should_be_cached(2, 2, context)
+        self.assertEqual(counter.call_count, 1)
+        fn_that_should_be_cached(2, 2, context)
+        self.assertEqual(counter.call_count, 1)
+        fn_that_should_be_cached(3, 3, context)
+        self.assertEqual(counter.call_count, 2)
+
+    def test_cached_method(self):
+        counter = MagicMock()
+
+        class MyObject(object):
+            @ucr_context_cache(vary_on=('arg1', 'arg2',))
+            def method_that_should_be_cached(self, arg1, arg2, context):
+                counter()
+
+        context = EvaluationContext({})
+        my_obj = MyObject()
+        my_obj.method_that_should_be_cached(2, 2, context)
+        self.assertEqual(counter.call_count, 1)
+        my_obj.method_that_should_be_cached(2, 2, context)
+        self.assertEqual(counter.call_count, 1)
+        my_obj.method_that_should_be_cached(3, 3, context)
+        self.assertEqual(counter.call_count, 2)
+
+    def test_no_overlap(self):
+        counter = MagicMock()
+
+        @ucr_context_cache(vary_on=('arg1',))
+        def fn_that_should_be_cached(arg1, context):
+            counter()
+
+        @ucr_context_cache(vary_on=('arg1',))
+        def another_fn_that_should_be_cached(arg1, context):
+            counter()
+
+        context = EvaluationContext({})
+        fn_that_should_be_cached(2, context)
+        self.assertEqual(counter.call_count, 1)
+        another_fn_that_should_be_cached(2, context)
+        self.assertEqual(counter.call_count, 2)
+        fn_that_should_be_cached(3, context)
+        self.assertEqual(counter.call_count, 3)
 
 
 class SplitStringExpressionTest(SimpleTestCase):

@@ -1,4 +1,5 @@
 from __future__ import print_function
+from __future__ import absolute_import
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from django.core.management.base import BaseCommand
 

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import absolute_import
 from datetime import datetime
 import uuid
 from nose.tools import nottest
@@ -18,7 +19,6 @@ from custom.enikshay.case_utils import CASE_TYPE_REFERRAL, CASE_TYPE_TRAIL
 from custom.enikshay.const import (
     PRIMARY_PHONE_NUMBER,
     BACKUP_PHONE_NUMBER,
-    MERM_ID,
     PERSON_FIRST_NAME,
     PERSON_LAST_NAME,
     TREATMENT_START_DATE,
@@ -28,7 +28,9 @@ from custom.enikshay.const import (
     WEIGHT_BAND,
     ENROLLED_IN_PRIVATE,
     OTHER_NUMBER,
+    TREATMENT_INITIATED_IN_PHI,
 )
+from custom.enikshay.integrations.ninetyninedots.const import MERM_ID
 from corehq.apps.users.models import CommCareUser
 
 
@@ -99,6 +101,7 @@ def get_episode_case_structure(case_id, indexed_occurrence_case, extra_update=No
         'person_name': u'Peregrine เՇร ค Շгคק',
         'site_choice': 'pleural_effusion',
         'treatment_supporter_designation': 'ngo_volunteer',
+        'treatment_initiated': TREATMENT_INITIATED_IN_PHI,
         TREATMENT_START_DATE: "2015-03-03",
         TREATMENT_SUPPORTER_FIRST_NAME: u"𝔊𝔞𝔫𝔡𝔞𝔩𝔣",
         TREATMENT_SUPPORTER_LAST_NAME: u"𝔗𝔥𝔢 𝔊𝔯𝔢𝔶",
@@ -151,7 +154,7 @@ def get_adherence_case_structure(case_id, indexed_episode_id, adherence_date, ex
     )
 
 
-def get_referral_case_structure(case_id, indexed_person_id, extra_update=None):
+def get_referral_case_structure(case_id, indexed_occurrence_id, extra_update=None):
     extra_update = extra_update or {}
     return CaseStructure(
         case_id=case_id,
@@ -161,10 +164,10 @@ def get_referral_case_structure(case_id, indexed_person_id, extra_update=None):
             "update": extra_update
         },
         indices=[CaseIndex(
-            CaseStructure(case_id=indexed_person_id, attrs={"create": False}),
+            CaseStructure(case_id=indexed_occurrence_id, attrs={"create": False}),
             identifier='host',
             relationship=CASE_INDEX_EXTENSION,
-            related_type='episode',
+            related_type='occurrence',
         )],
         walk_related=False,
     )
@@ -188,6 +191,29 @@ def get_prescription_case_structure(case_id, indexed_episode_id, extra_update=No
             identifier='episode_of_prescription',
             relationship=CASE_INDEX_EXTENSION,
             related_type='episode',
+        )],
+        walk_related=False,
+    )
+
+
+def get_prescription_item_case_structure(case_id, indexed_prescription_id, extra_update=None):
+    extra_update = extra_update or {}
+    update = {
+        'state': 'fulfilled',
+    }
+    update.update(extra_update)
+    return CaseStructure(
+        case_id=case_id,
+        attrs={
+            "case_type": "prescription_item",
+            "create": True,
+            "update": update
+        },
+        indices=[CaseIndex(
+            CaseStructure(case_id=indexed_prescription_id, attrs={"create": False}),
+            identifier='prescription',
+            relationship=CASE_INDEX_EXTENSION,
+            related_type='prescription',
         )],
         walk_related=False,
     )
@@ -285,6 +311,9 @@ class ENikshayCaseStructureMixin(object):
         self.test_id = u"test"
         self.lab_referral_id = u"lab_referral"
         self.prescription_id = "prescription_id"
+        self.prescription_item_id = 'prescription_item_id'
+        self.referral_id = 'referal'
+        self.trail_id = 'trail'
         self._prescription_created = False
         self.primary_phone_number = "0123456789"
         self.secondary_phone_number = "0999999999"
@@ -292,6 +321,7 @@ class ENikshayCaseStructureMixin(object):
         self.other_number = "0123456666"
         self._episode = None
         self._person = None
+        self._occurrence = None
 
     def tearDown(self):
         delete_all_users()
@@ -306,6 +336,7 @@ class ENikshayCaseStructureMixin(object):
                 extra_update={
                     PRIMARY_PHONE_NUMBER: self.primary_phone_number,
                     BACKUP_PHONE_NUMBER: self.secondary_phone_number,
+                    OTHER_NUMBER: self.other_number,
                     ENROLLED_IN_PRIVATE: 'false',
                 }
             )
@@ -313,10 +344,12 @@ class ENikshayCaseStructureMixin(object):
 
     @property
     def occurrence(self):
-        return get_occurrence_case_structure(
-            self.occurrence_id,
-            self.person
-        )
+        if not self._occurrence:
+            self._occurrence = get_occurrence_case_structure(
+                self.occurrence_id,
+                self.person
+            )
+        return self._occurrence
 
     @property
     def episode(self):
@@ -325,7 +358,6 @@ class ENikshayCaseStructureMixin(object):
                 self.episode_id,
                 self.occurrence,
                 extra_update={
-                    OTHER_NUMBER: self.other_number,
                     TREATMENT_SUPPORTER_PHONE: self.treatment_supporter_phone,
                     WEIGHT_BAND: "adult_55-69"
                 }
@@ -350,7 +382,7 @@ class ENikshayCaseStructureMixin(object):
                     lab_serial_number=19,
                     test_type_value="microscopy-zn",
                     purpose_of_testing="diagnostic",
-                    result_grade="1+",
+                    result_grade="1plus",
                     testing_facility_id=self.dmc.get_id,
                 )
             },
@@ -404,9 +436,17 @@ class ENikshayCaseStructureMixin(object):
             })
         ])
 
-    def create_prescription_case(self, extra_update=None):
+    def create_prescription_case(self, prescription_id=None, extra_update=None):
         return self.factory.create_or_update_case(
-            get_prescription_case_structure(uuid.uuid4().hex, self.episode_id, extra_update)
+            get_prescription_case_structure(prescription_id or uuid.uuid4().hex, self.episode_id, extra_update)
+        )[0]
+
+    def create_prescription_item_case(self, prescription_case_id, prescription_item_case_id=None):
+        return self.factory.create_or_update_case(
+            get_prescription_item_case_structure(
+                prescription_item_case_id or uuid.uuid4().hex,
+                prescription_case_id
+            )
         )[0]
 
     def create_voucher_case(self, prescription_id, extra_update=None):
@@ -416,13 +456,23 @@ class ENikshayCaseStructureMixin(object):
 
     def create_referral_case(self, case_id):
         return self.factory.create_or_update_cases([
-            get_referral_case_structure(case_id, self.person_id)
+            get_referral_case_structure(case_id, self.occurrence_id)
         ])
 
     @nottest
     def create_test_case(self, occurrence_id, extra_update=None):
         return self.factory.create_or_update_case(
             get_test_case_structure(uuid.uuid4().hex, occurrence_id, extra_update)
+        )[0]
+
+    def create_lab_referral_case(self):
+        return self.factory.create_or_update_case(
+            self.lab_referral,
+        )[0]
+
+    def create_trail_case(self):
+        return self.factory.create_or_update_case(
+            get_trail_case_structure(self.trail_id, self.occurrence_id)
         )[0]
 
 

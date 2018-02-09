@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.conf.urls import url
 
 from custom.up_nrhm.views import asha_af_report

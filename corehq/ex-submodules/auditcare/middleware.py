@@ -9,6 +9,7 @@ from django.utils.deprecation import MiddlewareMixin
 from auditcare.models import AuditEvent
 from auditcare.decorators import watch_login
 from auditcare.decorators import watch_logout
+from six.moves import filter
 
 log = logging.getLogger(__name__)
 
@@ -55,7 +56,7 @@ class AuditMiddleware(MiddlewareMixin):
             if item.find('/django/contrib/auth/tests/') > 0:
                 return True
             return False
-        is_tests = filter(is_test_trace, traces)
+        is_tests = list(filter(is_test_trace, traces))
         if len(is_tests)  == 0:
             log.debug("Middleware is running in a running context")
             admin.site.login = watch_login(admin.site.login)
@@ -71,7 +72,7 @@ class AuditMiddleware(MiddlewareMixin):
                 getattr(settings, "AUDIT_VIEWS", False)):
 
             if hasattr(view_func, 'func_name'): #is this just a plain jane __builtin__.function
-                fqview = "%s.%s" % (view_func.__module__, view_func.func_name)
+                fqview = "%s.%s" % (view_func.__module__, view_func.__name__)
             else:
                 #just assess it from the classname for the class based view
                 fqview = "%s.%s" % (view_func.__module__, view_func.__class__.__name__)

@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import datetime
 
 from django.urls import reverse
@@ -86,7 +87,7 @@ def invoice_column_cell(invoice):
 
 
 class AddItemInterface(GenericTabularReport):
-    base_template = 'accounting/add_new_item_button.html'
+    base_template = 'accounting/partials/add_new_item_button.html'
     exportable = True
 
     item_name = None
@@ -292,7 +293,7 @@ class SubscriptionInterface(AddItemInterface):
 
     @property
     def _subscriptions(self):
-        queryset = Subscription.objects.all()
+        queryset = Subscription.visible_objects.all()
 
         if StartDateFilter.use_filter(self.request):
             queryset = queryset.filter(
@@ -592,7 +593,7 @@ class WireInvoiceInterface(InvoiceInterfaceBase):
         self.is_rendered_as_email = True
         statement_start = StatementPeriodFilter.get_value(
             self.request, self.domain) or datetime.date.today()
-        return render_to_string('accounting/bookkeeper_email.html', {
+        return render_to_string('accounting/email/bookkeeper.html', {
             'headers': self.headers,
             'month': statement_start.strftime("%B"),
             'rows': self.rows,
@@ -677,7 +678,7 @@ class InvoiceInterface(InvoiceInterfaceBase):
             except BillingContactInfo.DoesNotExist:
                 contact_info = BillingContactInfo()
 
-            plan_name = u"{name} v{version}".format(
+            plan_name = "{name} v{version}".format(
                 name=invoice.subscription.plan_version.plan.name,
                 version=invoice.subscription.plan_version.version,
             )
@@ -878,7 +879,7 @@ class InvoiceInterface(InvoiceInterfaceBase):
         self.is_rendered_as_email = True
         statement_start = StatementPeriodFilter.get_value(
             self.request, self.domain) or datetime.date.today()
-        return render_to_string('accounting/bookkeeper_email.html', {
+        return render_to_string('accounting/email/bookkeeper.html', {
             'headers': self.headers,
             'month': statement_start.strftime("%B"),
             'rows': self.rows,
@@ -987,7 +988,8 @@ class PaymentRecordInterface(GenericTabularReport):
         subscriber = SubscriberFilter.get_value(self.request, self.domain)
         if subscriber is not None:
             queryset = queryset.filter(
-                creditadjustment__credit_line__subscription__subscriber__domain=subscriber
+                Q(creditadjustment__credit_line__subscription__subscriber__domain=subscriber)
+                | Q(creditadjustment__credit_line__account__created_by_domain=subscriber)
             )
         transaction_id = PaymentTransactionIdFilter.get_value(self.request, self.domain)
         if transaction_id:
@@ -1119,7 +1121,7 @@ class CreditAdjustmentInterface(GenericTabularReport):
                 return ['', '', '', '']
 
             types = [
-                "Any" if credit_line.product_type is not None else '',
+                "Any" if credit_line.is_product else '',
                 dict(FeatureType.CHOICES).get(
                     credit_line.feature_type,
                     "Any"

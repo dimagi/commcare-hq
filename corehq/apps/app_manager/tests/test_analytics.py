@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.test import TestCase
 from corehq.apps.app_manager.analytics import update_analytics_indexes, \
     get_exports_by_application

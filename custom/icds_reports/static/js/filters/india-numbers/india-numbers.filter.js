@@ -1,6 +1,9 @@
 window.angular.module('icdsApp').filter('indiaNumbers', function() {
     return function(number) {
-        number = Number((number).toFixed(2)).toString();
+        if (!number) {
+            return '0';
+        }
+        number = Number(number).toFixed(0).toString();
         var numbers  = number.split('.');
         var lastThree = '';
         var otherNumbers = '';

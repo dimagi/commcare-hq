@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.apps.commtrack.tests.util import TEST_USER, TEST_DOMAIN, TEST_NUMBER, TEST_PASSWORD, TEST_BACKEND
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.interfaces.supply import SupplyInterface

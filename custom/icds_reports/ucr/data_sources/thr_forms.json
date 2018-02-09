@@ -8,6 +8,7 @@
   ],
   "server_environment": [
     "softlayer",
+    "icds-new",
     "icds"
   ],
   "config": {
@@ -130,6 +131,7 @@
           "submitted_on"
         ]
       }
-    ]
+    ],
+    "disable_destructive_rebuild": true
   }
 }

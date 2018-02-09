@@ -12,8 +12,6 @@ of different frameworks and methods for generating reports. Some of these are
 Recommended approaches for building reports
 -------------------------------------------
 
-TODO: SQL reports, Elastic reports, Custom case lists / details,
-
 Things to keep in mind:
 
 * `report API <report_api>`_
@@ -170,11 +168,6 @@ e.g.
 
         def format_percent(self, value):
             return format_datatables_data("%d%%" % value, value)
-
-
-Using the `sqlalchemy`_ API directly
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-TODO
 
 
 .. _report_api:

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import collections
 import random
 
@@ -49,15 +50,4 @@ NEW_USER_NUMBER = ABTestConfig(
     'New User Phone Number',
     'new_phone_jan2016',
     (NEW_USER_NUMBER_OPTION_SHOW_NUM, NEW_USER_NUMBER_OPTION_HIDE_NUM)
-)
-
-
-APP_BUILDER_VIDEO_ON = 'on'
-APP_BUILDER_VIDEO_OFF = 'off'
-
-
-APP_BUILDER_VIDEO = ABTestConfig(
-    'Onboarding Video Inside App Builder',
-    'app_builder_video_aug2017',
-    (APP_BUILDER_VIDEO_ON, APP_BUILDER_VIDEO_OFF)
 )

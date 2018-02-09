@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from collections import defaultdict, namedtuple
 import datetime
 import logging
@@ -62,17 +63,22 @@ def fmt_feature_rate_dict(feature, feature_rate=None):
     }
 
 
-def fmt_product_rate_dict(product, product_rate=None):
+def fmt_product_rate_dict(product_name, product_rate=None):
     """
-    This will be turned into a JSON representation of this SoftwareProduct and its SoftwareProductRate
+    This will be turned into a JSON representation of this SoftwareProductRate
     """
-    from corehq.apps.accounting.models import SoftwareProductType
+    from corehq.apps.accounting.models import SoftwareProductRate
+
     if product_rate is None:
-        product_rate = product.get_rate()
+        try:
+            product_rate = SoftwareProductRate.objects.filter(
+                is_active=True,
+                name=product_name,
+            ).latest('date_created')
+        except SoftwareProductRate.DoesNotExist:
+            product_rate = SoftwareProductRate.objects.create(name=product_name, is_active=True)
     return {
-        'name': product.name,
-        'product_type': SoftwareProductType.COMMCARE,
-        'product_id': product.id,
+        'name': product_rate.name,
         'rate_id': product_rate.id,
         'monthly_fee': product_rate.monthly_fee.__str__(),
     }
@@ -214,7 +220,7 @@ def get_customer_cards(username, domain):
             method_type=PaymentMethodType.STRIPE
         )
         stripe_customer = payment_method.customer
-        return stripe_customer.cards
+        return dict(stripe_customer.cards)
     except StripePaymentMethod.DoesNotExist:
         pass
     except stripe.error.AuthenticationError:
@@ -341,4 +347,24 @@ def get_account_name_from_default_name(default_name):
         return '%s (%d)' % (
             default_name,
             matching_regex_count + 1
+        )
+
+
+def cancel_future_subscriptions(domain_name, from_date, web_user):
+    from corehq.apps.accounting.models import (
+        Subscription,
+        SubscriptionAdjustment,
+        SubscriptionAdjustmentReason,
+    )
+    for later_subscription in Subscription.visible_objects.filter(
+        subscriber__domain=domain_name,
+        date_start__gt=from_date,
+    ).order_by('date_start').all():
+        later_subscription.date_end = later_subscription.date_start
+        later_subscription.save()
+        SubscriptionAdjustment.record_adjustment(
+            later_subscription,
+            reason=SubscriptionAdjustmentReason.CANCEL,
+            web_user=web_user,
+            note="Cancelled due to changing subscription",
         )

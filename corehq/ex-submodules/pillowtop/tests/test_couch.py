@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from couchdbkit import Database
 from django.conf import settings
 from django.test import TestCase

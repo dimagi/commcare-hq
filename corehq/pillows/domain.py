@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import copy
 from corehq.apps.accounting.models import Subscription
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
@@ -16,7 +17,7 @@ from pillowtop.reindexer.reindexer import ElasticPillowReindexer, ReindexerFacto
 
 def transform_domain_for_elasticsearch(doc_dict):
     doc_ret = copy.deepcopy(doc_dict)
-    sub = Subscription.objects.filter(subscriber__domain=doc_dict['name'], is_active=True)
+    sub = Subscription.visible_objects.filter(subscriber__domain=doc_dict['name'], is_active=True)
     doc_ret['deployment'] = doc_ret.get('deployment', None) or {}
     countries = doc_ret['deployment'].get('countries', [])
     doc_ret['deployment']['countries'] = []

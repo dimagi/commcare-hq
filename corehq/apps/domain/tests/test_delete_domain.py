@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import random
 import uuid
 from datetime import date, datetime
@@ -16,7 +17,6 @@ from corehq.apps.accounting.models import (
     FeatureType,
     SoftwarePlanEdition,
     Subscription,
-    SubscriptionManager,
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.ivr.models import Call
@@ -25,6 +25,7 @@ from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.sms.models import (SMS, SQLLastReadMessage, ExpectedCallback,
     PhoneNumber, MessagingEvent, MessagingSubEvent, SelfRegistrationInvitation,
     SQLMobileBackend, SQLMobileBackendMapping, MobileBackendInvitation)
+from six.moves import range
 
 
 class TestDeleteDomain(TestCase):
@@ -129,7 +130,7 @@ class TestDeleteDomain(TestCase):
             domain='test2',
             name='facility2',
         )
-        for i in xrange(2):
+        for i in range(2):
             self._create_data('test', i)
             self._create_data('test2', i)
 
@@ -163,7 +164,7 @@ class TestDeleteDomain(TestCase):
     def test_active_subscription_terminated(self):
         self.domain.delete()
 
-        terminated_subscription = Subscription.objects.get(subscriber__domain=self.domain.name)
+        terminated_subscription = Subscription.visible_objects.get(subscriber__domain=self.domain.name)
         self.assertFalse(terminated_subscription.is_active)
         self.assertIsNotNone(terminated_subscription.date_end)
 
@@ -180,7 +181,7 @@ class TestDeleteDomain(TestCase):
         self.domain.delete()
 
         self.assertTrue(
-            super(SubscriptionManager, Subscription.objects).get_queryset().get(
+            Subscription.visible_and_suppressed_objects.get(
                 id=next_subscription.id
             ).is_hidden_to_ops
         )

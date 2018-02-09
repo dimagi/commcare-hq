@@ -1,9 +1,9 @@
-/* globals hqImport, hqLayout */
+/* globals hqImport */
 hqDefine("app_manager/js/summary/summary", function() {
     $(function() {
         'use strict';
 
-        hqLayout.utils.setIsAppbuilderResizing(true);
+        hqImport("hqwebapp/js/layout").setIsAppbuilderResizing(true);
 
         var summaryApp = window.angular.module('summaryApp', ['ngRoute', 'summaryModule']),
             initial_page_data = hqImport("hqwebapp/js/initial_page_data").get,
@@ -29,6 +29,7 @@ hqDefine("app_manager/js/summary/summary", function() {
             appSettingsURL: url("release_manager"),
             appHomeURL: url("view_app"),
             appName: initial_page_data("app_name"),
+            readOnly: initial_page_data("read_only"),
         });
 
         summaryApp.config(['$routeProvider', function($routeProvider) {

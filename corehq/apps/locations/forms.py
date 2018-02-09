@@ -1,10 +1,11 @@
+from __future__ import absolute_import
 import re
 
 from crispy_forms.layout import Submit
 from django import forms
-from django.core.urlresolvers import reverse
 from django.db.models import Q
 from django.template.loader import get_template
+from django.urls import reverse
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy
 
@@ -131,11 +132,11 @@ class LocationForm(forms.Form):
 
     def get_fields(self, is_new):
         if is_new:
-            return filter(None, [
+            return [_f for _f in [
                 _("Location Information"),
                 'name',
                 'location_type' if len(self.get_allowed_types(self.domain, self.location.parent)) > 1 else None,
-            ])
+            ] if _f]
         else:
             return [
                 _("Location Information"),
@@ -334,11 +335,18 @@ class LocationForm(forms.Form):
         return location
 
 
+class LocationUserForm(NewMobileWorkerForm):
+    def clean_location_id(self):
+        # The user form class doesn't handle location. `LocationFormSet` adds
+        # the location to the user after.
+        return None
+
+
 class LocationFormSet(object):
     """Ties together the forms for location, location data, user, and user data."""
     _location_form_class = LocationForm
     _location_data_editor = CustomDataEditor
-    _user_form_class = NewMobileWorkerForm
+    _user_form_class = LocationUserForm
     _user_data_editor = CustomDataEditor
 
     def __init__(self, location, request_user, is_new, bound_data=None, *args, **kwargs):
@@ -454,6 +462,7 @@ class LocationFormSet(object):
             pw_field = 'password'
 
         form.fields['username'].help_text = None
+        form.fields['location_id'].required = False  # This field isn't displayed
         form.helper.label_class = 'col-sm-3 col-md-4 col-lg-2'
         form.helper.field_class = 'col-sm-4 col-md-5 col-lg-3'
         form.helper.layout = crispy.Layout(

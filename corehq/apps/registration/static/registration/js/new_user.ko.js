@@ -12,7 +12,9 @@ hqDefine('registration/js/new_user.ko', function () {
     'use strict';
     var module = {};
 
-    var _private = {};
+    var _private = {},
+        _kissmetrics = hqImport('analytix/js/kissmetrix');
+
     _private.rmiUrl = null;
     _private.csrf = null;
     _private.showPasswordFeedback = false;
@@ -23,15 +25,33 @@ hqDefine('registration/js/new_user.ko', function () {
         throw "please call setResetEmailFeedbackFn. " +
               "Expects boolean isValidating. " + isValidating;
     };
-    _private.submitAttemptFn = function () {
-        // useful for off-module analytics
-    };
-    _private.submitSuccessFn = function () {
-        // useful for off-module analytics
+    _private.submitAttemptAnalytics = function (data) {  // eslint-disable-line no-unused-vars
+        _kissmetrics.track.event("Clicked Create Account");
     };
     _private.getPhoneNumberFn = function () {
         // number to return phone number
     };
+    _private.submitSuccessAnalytics = function () {
+        // analytics haven't loaded yet or at all, fail silently
+    };
+
+    // Can't set up analytics until the values for the A/B tests are ready
+    _kissmetrics.whenReadyAlways(function() {
+        _private.isAbPhoneNumber = _kissmetrics.getAbTest('New User Phone Number') === 'show_number';
+
+        _private.submitSuccessAnalytics = function (data) {
+            _kissmetrics.track.event("Account Creation was Successful");
+            if (data.persona) {
+                _kissmetrics.track.event("Persona Field Filled Out", {
+                    personaChoice: data.persona,
+                    personaOther: data.persona_other,
+                });
+            }
+            if (_private.isAbPhoneNumber) {
+                _kissmetrics.track.event("Phone Number Field Filled Out");
+            }
+        };
+    });
 
     module.setResetEmailFeedbackFn = function (callback) {
         // use this function to reset the form-control-feedback ui
@@ -42,10 +62,6 @@ hqDefine('registration/js/new_user.ko', function () {
 
     module.setSubmitAttemptFn = function (callback) {
         _private.submitAttemptFn = callback;
-    };
-
-    module.setSubmitSuccessFn = function (callback) {
-        _private.submitSuccessFn = callback;
     };
 
     module.setGetPhoneNumberFn = function (callback) {
@@ -171,6 +187,39 @@ hqDefine('registration/js/new_user.ko', function () {
             }
         });
 
+        // For User Persona Field
+        self.hasPersonaFields = $(containerSelector).find("[name='persona']").length;
+        self.personaChoice = ko.observable();
+        self.personaOther = ko.observable()
+            .extend({
+                required: {
+                    message: django.gettext("Please specify."),
+                    params: true,
+                },
+            });
+        self.isPersonaChoiceOther = ko.computed(function () {
+            return self.personaChoice() === 'Other';
+        });
+        self.isPersonaChoiceChosen = ko.computed(function () {
+            return !_.isEmpty(self.personaChoice());
+        });
+        self.isPersonaChoiceNeeded = ko.computed(function () {
+            return self.eulaConfirmed() && !self.isPersonaChoiceChosen();
+        });
+        self.isPersonaChoiceOtherPresent = ko.computed(function () {
+            return self.isPersonaChoiceOther() && self.personaOther();
+        });
+        self.isPersonaChoiceOtherNeeded = ko.computed(function () {
+            return self.eulaConfirmed() && self.isPersonaChoiceOther() && !self.personaOther();
+        });
+        self.isPersonaValid = ko.computed(function() {
+            if (!self.hasPersonaFields) {
+                return true;
+            }
+            return self.isPersonaChoiceChosen()
+                   && (!self.isPersonaChoiceOther() || self.isPersonaChoiceOtherPresent());
+        });
+
         // ---------------------------------------------------------------------
         // Form Functionality
         // ---------------------------------------------------------------------
@@ -179,18 +228,25 @@ hqDefine('registration/js/new_user.ko', function () {
 
         var _getDataForSubmission = function () {
             var password = self.password();
-            if(typeof(hex_parser) !== 'undefined') {
+            if (typeof(hex_parser) !== 'undefined') {
                 password = (new hex_parser()).encode(self.password());
             }
-            return {
+            var data = {
                 full_name: self.fullName(),
                 email: self.email(),
                 password: password,
                 project_name: self.projectName(),
                 eula_confirmed: self.eulaConfirmed(),
                 phone_number: _private.getPhoneNumberFn() || self.phoneNumber(),
-                atypical_user: defaults.atypical_user
+                atypical_user: defaults.atypical_user,
             };
+            if (self.hasPersonaFields) {
+                _.extend(data, {
+                    persona: self.personaChoice(),
+                    persona_other: self.isPersonaChoiceOther() ? self.personaOther() : '',
+                });
+            }
+            return data;
         };
 
         var _getFormStepUi = function (stepNum) {
@@ -216,6 +272,7 @@ hqDefine('registration/js/new_user.ko', function () {
         self.isStepTwoValid = ko.computed(function () {
             return self.projectName() !== undefined
                 && self.projectName.isValid()
+                && self.isPersonaValid()
                 && self.eulaConfirmed();
         });
 
@@ -291,11 +348,12 @@ hqDefine('registration/js/new_user.ko', function () {
             self.submitErrors([]);
             self.isSubmitting(true);
 
-            _private.submitAttemptFn();
-            
+            var submitData = _getDataForSubmission();
+            _private.submitAttemptAnalytics(submitData);
+
             _private.rmi(
                 "register_new_user",
-                {data : _getDataForSubmission()},
+                {data : submitData},
                 {
                     success: function (response) {
                         if (response.errors !== undefined
@@ -310,7 +368,7 @@ hqDefine('registration/js/new_user.ko', function () {
                         } else if (response.success) {
                             self.isSubmitting(false);
                             self.isSubmitSuccess(true);
-                            _private.submitSuccessFn();
+                            _private.submitSuccessAnalytics(submitData);
                         }
                     },
                     error: function () {

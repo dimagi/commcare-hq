@@ -1,6 +1,7 @@
 """
 A plugin to accept parameters used for various test runner operations.
 """
+from __future__ import absolute_import
 from nose.plugins import Plugin
 
 REUSE_DB_HELP = """

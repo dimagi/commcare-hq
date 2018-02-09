@@ -1,7 +1,11 @@
+from __future__ import absolute_import
+import jsonfield
 import re
 import requests
 from dimagi.utils.logging import notify_exception
-from corehq.messaging.smsbackends.http.models import SQLSMSBackend
+from django.db import models
+from django.db import IntegrityError
+from corehq.apps.sms.models import SQLSMSBackend
 from corehq.messaging.smsbackends.start_enterprise.const import (
     SINGLE_SMS_URL,
     LONG_TEXT_MSG_TYPE,
@@ -13,6 +17,25 @@ from corehq.messaging.smsbackends.start_enterprise.exceptions import StartEnterp
 from corehq.messaging.smsbackends.start_enterprise.forms import StartEnterpriseBackendForm
 from corehq.apps.sms.models import SMS
 from corehq.apps.sms.util import strip_plus
+
+
+class StartEnterpriseDeliveryReceipt(models.Model):
+    """
+    Holds delivery receipt information pertaining to the Start Enterprise backend.
+    """
+
+    # Points to SMS.couch_id
+    sms_id = models.CharField(max_length=126, db_index=True)
+
+    # The message id received in the gateway response
+    message_id = models.CharField(max_length=126, db_index=True, unique=True)
+
+    # The timestamp that the delivery receipt was received by the gateway.
+    # If None, then no delivery receipt has been received yet.
+    received_on = models.DateTimeField(null=True, db_index=True)
+
+    # The information sent by the gateway
+    info = jsonfield.JSONField(null=True, default=dict)
 
 
 class StartEnterpriseBackend(SQLSMSBackend):
@@ -76,9 +99,21 @@ class StartEnterpriseBackend(SQLSMSBackend):
         )
         self.handle_response(msg_obj, response.status_code, response.text)
 
+    def record_message_ids(self, msg_obj, response_text):
+        for message_id in response_text.split(','):
+            try:
+                StartEnterpriseDeliveryReceipt.objects.create(
+                    sms_id=msg_obj.couch_id,
+                    message_id=message_id
+                )
+            except IntegrityError:
+                # The API is sometimes returning duplicate message IDs for different messages.
+                # There's not much we can do when this happens, but we shouldn't fail hard.
+                pass
+
     def handle_response(self, msg_obj, response_status_code, response_text):
         if response_status_code == 200 and re.match(SUCCESS_RESPONSE_REGEX, response_text):
-            msg_obj.backend_message_id = response_text
+            self.record_message_ids(msg_obj, response_text)
         else:
             self.handle_failure(msg_obj, response_status_code, response_text)
 

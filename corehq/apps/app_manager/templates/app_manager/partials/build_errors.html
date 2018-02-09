@@ -329,6 +329,8 @@
                             Shadow parent form action tags do not appear in the action configuration for the shadow form.
                             The missing tags are: {{ error.case_tags|join:", " }}
                             {% if not not_actual_build %}The shadow form is {% include "app_manager/partials/form_error_message.html" %}{% endif %}
+                        {% case "password_format" %}
+                            {# Do nothing; the full message is contained in error.message #}
                         {% else %}
                             Unknown error: {{ error.type }}
                             Details: {{ error }}

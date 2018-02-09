@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.utils.translation import ugettext_noop
 from corehq.apps.products.models import Product
 from django.template.loader import render_to_string
@@ -58,7 +59,7 @@ class StockStatusMapReport(GenericMapReport, CommtrackReportMixin):
         )
 
         if self.program_id:
-            products = filter(lambda c: c.program_id == self.program_id, products)
+            products = [c for c in products if c.program_id == self.program_id]
         for p in products:
             col_id = lambda c: '%s-%s' % (p._id, c)
 

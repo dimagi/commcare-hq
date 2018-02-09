@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from pillowtop.logger import pillow_logging
 from pillowtop.processors.interface import PillowProcessor
 

@@ -1,7 +1,10 @@
 from __future__ import absolute_import
+from __future__ import division
+from __future__ import unicode_literals
 from decimal import Decimal
 import random
 import datetime
+from django.test import override_settings
 
 from dimagi.utils.dates import add_months_to_date
 
@@ -41,7 +44,10 @@ class BaseInvoiceTestCase(BaseAccountingTest):
     @classmethod
     def setUpClass(cls):
         super(BaseInvoiceTestCase, cls).setUpClass()
-        generator.bootstrap_test_plans()  # TODO - only call for subclasses that actually need the test plans
+
+        # TODO - only call for subclasses that actually need the test plans
+        generator.bootstrap_test_software_plan_versions()
+
         cls.billing_contact = generator.create_arbitrary_web_user_name()
         cls.dimagi_user = generator.create_arbitrary_web_user_name(is_dimagi=True)
         cls.currency = generator.init_default_currency()
@@ -188,12 +194,13 @@ class TestContractedInvoices(BaseInvoiceTestCase):
             random.randint(2, self.subscription_length)
         )
 
+    @override_settings(ACCOUNTS_EMAIL='accounts@example.com')
     def test_contracted_invoice_email_recipient(self):
         """
         For contracted invoices, emails should be sent to finance@dimagi.com
         """
 
-        expected_recipient = ["accounts@dimagi.com"]
+        expected_recipient = ["accounts@example.com"]
 
         tasks.generate_invoices(self.invoice_date)
 
@@ -438,7 +445,7 @@ class TestSmsLineItem(BaseInvoiceTestCase):
         - quantity is equal to 1
         - total and subtotals are 0.0
         """
-        num_sms = random.randint(0, self.sms_rate.monthly_limit/2)
+        num_sms = random.randint(0, self.sms_rate.monthly_limit // 2)
         arbitrary_sms_billables_for_domain(
             self.subscription.subscriber.domain, self.sms_date, num_sms, direction=INCOMING
         )

@@ -1,5 +1,7 @@
+from __future__ import absolute_import
 from corehq.sql_db.util import (
     run_query_across_partitioned_databases,
+    get_db_aliases_for_partitioned_query,
 )
 from django.db.models import Q
 from uuid import UUID
@@ -201,3 +203,33 @@ def delete_case_schedule_instance(instance):
 
     _validate_class(instance, (CaseAlertScheduleInstance, CaseTimedScheduleInstance))
     instance.delete()
+
+
+def delete_alert_schedule_instances_for_schedule(cls, schedule_id):
+    from corehq.messaging.scheduling.scheduling_partitioned.models import (
+        AlertScheduleInstance,
+        CaseAlertScheduleInstance,
+    )
+
+    if cls not in (AlertScheduleInstance, CaseAlertScheduleInstance):
+        raise TypeError("Expected AlertScheduleInstance or CaseAlertScheduleInstance")
+
+    _validate_uuid(schedule_id)
+
+    for db_name in get_db_aliases_for_partitioned_query():
+        cls.objects.using(db_name).filter(alert_schedule_id=schedule_id).delete()
+
+
+def delete_timed_schedule_instances_for_schedule(cls, schedule_id):
+    from corehq.messaging.scheduling.scheduling_partitioned.models import (
+        TimedScheduleInstance,
+        CaseTimedScheduleInstance,
+    )
+
+    if cls not in (TimedScheduleInstance, CaseTimedScheduleInstance):
+        raise TypeError("Expected TimedScheduleInstance or CaseTimedScheduleInstance")
+
+    _validate_uuid(schedule_id)
+
+    for db_name in get_db_aliases_for_partitioned_query():
+        cls.objects.using(db_name).filter(timed_schedule_id=schedule_id).delete()

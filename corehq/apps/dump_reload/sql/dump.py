@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from collections import OrderedDict, Counter
 
 from django.apps import apps
@@ -31,23 +32,45 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = OrderedDict((iterator.model_label, itera
     FilteredModelIteratorBuilder('case_search.CaseSearchConfig', SimpleFilter('domain')),
     UniqueFilteredModelIteratorBuilder('scheduling.SMSContent', SimpleFilter('alertevent__schedule__domain')),
     UniqueFilteredModelIteratorBuilder('scheduling.SMSContent', SimpleFilter('timedevent__schedule__domain')),
+    UniqueFilteredModelIteratorBuilder('scheduling.SMSContent',
+                                       SimpleFilter('randomtimedevent__schedule__domain')),
+    UniqueFilteredModelIteratorBuilder('scheduling.SMSContent',
+                                       SimpleFilter('casepropertytimedevent__schedule__domain')),
     UniqueFilteredModelIteratorBuilder('scheduling.EmailContent', SimpleFilter('alertevent__schedule__domain')),
     UniqueFilteredModelIteratorBuilder('scheduling.EmailContent', SimpleFilter('timedevent__schedule__domain')),
+    UniqueFilteredModelIteratorBuilder('scheduling.EmailContent',
+                                       SimpleFilter('randomtimedevent__schedule__domain')),
+    UniqueFilteredModelIteratorBuilder('scheduling.EmailContent',
+                                       SimpleFilter('casepropertytimedevent__schedule__domain')),
     UniqueFilteredModelIteratorBuilder('scheduling.SMSSurveyContent',
                                        SimpleFilter('alertevent__schedule__domain')),
     UniqueFilteredModelIteratorBuilder('scheduling.SMSSurveyContent',
                                        SimpleFilter('timedevent__schedule__domain')),
+    UniqueFilteredModelIteratorBuilder('scheduling.SMSSurveyContent',
+                                       SimpleFilter('randomtimedevent__schedule__domain')),
+    UniqueFilteredModelIteratorBuilder('scheduling.SMSSurveyContent',
+                                       SimpleFilter('casepropertytimedevent__schedule__domain')),
     UniqueFilteredModelIteratorBuilder('scheduling.IVRSurveyContent',
                                        SimpleFilter('alertevent__schedule__domain')),
     UniqueFilteredModelIteratorBuilder('scheduling.IVRSurveyContent',
                                        SimpleFilter('timedevent__schedule__domain')),
+    UniqueFilteredModelIteratorBuilder('scheduling.IVRSurveyContent',
+                                       SimpleFilter('randomtimedevent__schedule__domain')),
+    UniqueFilteredModelIteratorBuilder('scheduling.IVRSurveyContent',
+                                       SimpleFilter('casepropertytimedevent__schedule__domain')),
     UniqueFilteredModelIteratorBuilder('scheduling.CustomContent', SimpleFilter('alertevent__schedule__domain')),
     UniqueFilteredModelIteratorBuilder('scheduling.CustomContent', SimpleFilter('timedevent__schedule__domain')),
+    UniqueFilteredModelIteratorBuilder('scheduling.CustomContent',
+                                       SimpleFilter('randomtimedevent__schedule__domain')),
+    UniqueFilteredModelIteratorBuilder('scheduling.CustomContent',
+                                       SimpleFilter('casepropertytimedevent__schedule__domain')),
     FilteredModelIteratorBuilder('scheduling.AlertSchedule', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('scheduling.AlertEvent', SimpleFilter('schedule__domain')),
     FilteredModelIteratorBuilder('scheduling.ImmediateBroadcast', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('scheduling.TimedSchedule', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('scheduling.TimedEvent', SimpleFilter('schedule__domain')),
+    FilteredModelIteratorBuilder('scheduling.RandomTimedEvent', SimpleFilter('schedule__domain')),
+    FilteredModelIteratorBuilder('scheduling.CasePropertyTimedEvent', SimpleFilter('schedule__domain')),
     FilteredModelIteratorBuilder('scheduling.ScheduledBroadcast', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('scheduling_partitioned.AlertScheduleInstance', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('scheduling_partitioned.CaseAlertScheduleInstance', SimpleFilter('domain')),
@@ -138,7 +161,7 @@ def get_model_iterator_builders_to_dump(domain, excludes):
     app_config_models = _get_app_list(excluded_apps)
 
     # Collate the objects to be serialized.
-    for model_class in serializers.sort_dependencies(app_config_models.items()):
+    for model_class in serializers.sort_dependencies(list(app_config_models.items())):
         if model_class in excluded_models:
             continue
 

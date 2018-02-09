@@ -31,6 +31,7 @@ def notify_exception(request, message=None, details=None, exec_info=None):
 
 
 def log_signal_errors(signal_results, message, details):
+    has_errors = False
     for result in signal_results:
         # Second argument is None if there was no error
         return_val = result[1]
@@ -41,3 +42,5 @@ def log_signal_errors(signal_results, message, details):
                 details=details,
                 exec_info=(type(return_val), return_val, return_val.__traceback__)
             )
+            has_errors = True
+    return has_errors

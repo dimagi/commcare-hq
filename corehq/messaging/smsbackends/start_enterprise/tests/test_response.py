@@ -1,6 +1,11 @@
+from __future__ import absolute_import
+import uuid
 from corehq.apps.sms.models import QueuedSMS
 from corehq.messaging.smsbackends.start_enterprise.exceptions import StartEnterpriseBackendException
-from corehq.messaging.smsbackends.start_enterprise.models import StartEnterpriseBackend
+from corehq.messaging.smsbackends.start_enterprise.models import (
+    StartEnterpriseBackend,
+    StartEnterpriseDeliveryReceipt,
+)
 from corehq.apps.sms.models import SMS
 from django.test import TestCase
 from mock import patch
@@ -14,10 +19,12 @@ class TestStartEnterpriseBackendResponse(TestCase):
 
     def test_handle_success(self):
         backend = StartEnterpriseBackend()
-        queued_sms = QueuedSMS()
+        queued_sms = QueuedSMS(couch_id=uuid.uuid4().hex)
 
         backend.handle_response(queued_sms, 200, SUCCESSFUL_RESPONSE)
-        self.assertEqual(queued_sms.backend_message_id, SUCCESSFUL_RESPONSE)
+        dlr = StartEnterpriseDeliveryReceipt.objects.get(sms_id=queued_sms.couch_id)
+        self.addCleanup(dlr.delete)
+        self.assertEqual(dlr.message_id, SUCCESSFUL_RESPONSE)
         self.assertFalse(queued_sms.error)
 
     def test_handle_failure(self):

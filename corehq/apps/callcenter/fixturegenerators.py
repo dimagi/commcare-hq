@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from xml.etree import cElementTree as ElementTree
 from datetime import datetime
 import pytz
@@ -7,6 +8,7 @@ from corehq.apps.callcenter.app_parser import get_call_center_config_from_app
 from corehq.util.soft_assert import soft_assert
 from corehq.util.timezones.conversions import ServerTime
 from dimagi.utils.logging import notify_exception
+import six
 
 utc = pytz.utc
 
@@ -123,7 +125,7 @@ def gen_fixture(restore_user, indicator_set):
         'date': indicator_set.reference_date.isoformat()
     })
     indicators_node = ElementTree.SubElement(fixture, 'indicators')
-    for case_id, indicators in data.iteritems():
+    for case_id, indicators in six.iteritems(data):
         group = ElementTree.SubElement(indicators_node, 'case', {'id': case_id})
         for name, value in indicators.items():
             indicator = ElementTree.SubElement(group, name)

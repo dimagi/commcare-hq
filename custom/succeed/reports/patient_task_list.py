@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.urls import reverse
 from django.utils import html
 from django.utils.translation import ugettext as _, ugettext_noop

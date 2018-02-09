@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.conf import settings
 from corehq.apps.reports.datatables import (DataTablesHeader, DataTablesColumn,
     DTSortType)
@@ -5,6 +6,9 @@ from corehq.apps.reports.generic import GenericTabularReport
 from couchdbkit_aggregate import AggregateView, KeyView, AggregateKeyView
 from dimagi.utils.couch.database import get_db
 from corehq.apps.reports.util import format_datatables_data
+import six
+from functools import reduce
+from six.moves import range
 
 __all__ = ['Column', 'BasicTabularReport']
 
@@ -101,8 +105,7 @@ class ColumnCollector(type):
         return super(ColumnCollector, cls).__new__(cls, name, bases, attrs)
 
 
-class BasicTabularReport(GenericTabularReport):
-    __metaclass__ = ColumnCollector
+class BasicTabularReport(six.with_metaclass(ColumnCollector, GenericTabularReport)):
     update_after = False
 
     @property
@@ -164,7 +167,7 @@ class SummingTabularReport(BasicTabularReport):
         total_row = []
         for i in range(num_cols):
             colrows = [cr[i] for cr in ret if isinstance(cr[i], dict)]
-            colnums = [r.get('sort_key') for r in colrows if isinstance(r.get('sort_key'), (int, long))]
+            colnums = [r.get('sort_key') for r in colrows if isinstance(r.get('sort_key'), six.integer_types)]
             total_row.append(reduce(lambda x, y: x+ y, colnums, 0))
         self.total_row = total_row
         return ret

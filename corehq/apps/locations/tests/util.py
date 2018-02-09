@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from collections import namedtuple
 from django.test import TestCase
 from dimagi.utils.couch.database import iter_bulk_delete

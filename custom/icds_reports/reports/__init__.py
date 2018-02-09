@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from dateutil.relativedelta import relativedelta
 
 from corehq.apps.reports.generic import GenericTabularReport
@@ -133,6 +134,6 @@ CUSTOM_REPORTS = (
     )),
     ('CUSTOM REPORTS', (
         TableauReport,
-        DashboardReport
+        DashboardReport,
     )),
 )

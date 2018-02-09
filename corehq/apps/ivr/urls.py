@@ -1,5 +1,4 @@
-from django.conf.urls import patterns
+from __future__ import absolute_import
 
-urlpatterns = patterns("corehq.apps.ivr.views",
-)
 
+urlpatterns = []

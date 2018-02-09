@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from datetime import datetime
 from django_prbac.utils import has_privilege as prbac_has_privilege
 from django.utils.translation import ugettext_lazy as _
@@ -57,6 +58,9 @@ def _uses_detail_format(module, column_format):
 # Apps that were created before add-ons were released get the original set of add-ons enabled
 # automatically, so they wouldn't get functionality suddenly turned off during the release.
 def _grandfathered(slug, app):
+    if app.add_ons:
+        return False
+
     release_date = datetime(2017, 7, 31, 20)
     if slug not in [
         "conditional_form_actions", "subcases", "case_list_menu_item", "enum_image", "menu_mode",
@@ -140,10 +144,6 @@ _ADD_ONS = {
         name=_("New Case Lists Created Empty"),
         description=_("When adding a new case list, don't include a registration and followup form."),
     ),
-    "custom_icon_badges": AddOn(
-        name=_("Custom Icon Badges for modules and forms"),
-        description=_("Allow to configure supported icon badges for modules and forms")
-    ),
 }
 
 _LAYOUT = [
@@ -159,8 +159,7 @@ _LAYOUT = [
         "collapse": True,
         "name": _("Mobile Experience"),
         "description": _("Improve the user experience of your mobile workers"),
-        "slugs": ["case_list_menu_item", "enum_image", "menu_mode", "register_from_case_list",
-                  "custom_icon_badges"],
+        "slugs": ["case_list_menu_item", "enum_image", "menu_mode", "register_from_case_list"],
     },
     {
         "slug": "xpath",

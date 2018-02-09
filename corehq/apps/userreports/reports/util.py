@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import unicode_literals
 from corehq.apps.userreports.models import get_report_config
 from corehq.apps.userreports.columns import get_expanded_column_config
 

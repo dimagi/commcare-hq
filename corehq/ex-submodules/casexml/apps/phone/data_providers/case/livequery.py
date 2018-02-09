@@ -21,6 +21,7 @@ Example case graphs with outcomes:
 
    a(closed) <--ext-- b <--chi-- c(owned) >> []
 """
+from __future__ import absolute_import
 import logging
 from collections import defaultdict
 from itertools import chain, islice
@@ -36,11 +37,12 @@ from casexml.apps.phone.tasks import ASYNC_RESTORE_SENT
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 
 
-def do_livequery(timing_context, restore_state, async_task=None):
+def do_livequery(timing_context, restore_state, response, async_task=None):
     """Get case sync restore response
 
     This function makes no changes to external state other than updating
     the `restore_state.current_sync_log` and progress of `async_task`.
+    Extends `response` with restore elements.
     """
     def index_key(index):
         return '{} {}'.format(index.case_id, index.identifier)
@@ -236,14 +238,13 @@ def do_livequery(timing_context, restore_state, async_task=None):
 
         with timing_context("compile_response(%s cases)" % len(sync_ids)):
             iaccessor = PrefetchIndexCaseAccessor(accessor, indices)
-            response = compile_response(
+            compile_response(
                 timing_context,
                 restore_state,
+                response,
                 batch_cases(iaccessor, sync_ids),
                 init_progress(async_task, len(sync_ids)),
             )
-
-    return response
 
 
 def discard_already_synced_cases(live_ids, restore_state, accessor):
@@ -306,9 +307,7 @@ def init_progress(async_task, total):
     return update_progress
 
 
-def compile_response(timing_context, restore_state, batches, update_progress):
-    response = restore_state.restore_class()
-
+def compile_response(timing_context, restore_state, response, batches, update_progress):
     done = 0
     for cases in batches:
         with timing_context("get_stock_payload"):
@@ -329,5 +328,3 @@ def compile_response(timing_context, restore_state, batches, update_progress):
 
         done += len(cases)
         update_progress(done)
-
-    return response

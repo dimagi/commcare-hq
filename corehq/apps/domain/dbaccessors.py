@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.apps.domain.models import Domain
 from corehq.util.couch import get_db_by_doc_type
 from corehq.util.couch_helpers import paginate_view
@@ -109,6 +110,16 @@ def get_domain_ids_by_names(names):
         reduce=False,
         include_docs=False
     )]
+
+
+def iter_domains():
+    for row in paginate_view(
+            Domain.get_db(),
+            'domain/domains',
+            100,
+            reduce=False,
+            include_docs=False):
+        yield row['key']
 
 
 def count_downloads_for_all_snapshots(domain_id):

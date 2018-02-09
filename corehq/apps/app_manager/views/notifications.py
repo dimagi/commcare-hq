@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import json
 import datetime
 from django.utils.translation import ugettext as _
@@ -19,9 +20,6 @@ def notify_form_changed(domain, couch_user, app_id, form_unique_id):
 
 
 def notify_event(domain, couch_user, app_id, form_unique_id, message):
-    doc_url = 'https://confluence.dimagi.com/display/internal/App+Builder+Notifications'
-    what = _('what is this?')
-    message = u'{} (<a href="{}" target="_blank">{}</a>)'.format(message, doc_url, what)
     message_obj = RedisMessage(json.dumps({
         'domain': domain,
         'user_id': couch_user._id,

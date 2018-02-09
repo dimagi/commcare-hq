@@ -1,6 +1,8 @@
+# coding=utf-8
 from __future__ import absolute_import
 from xml.etree import cElementTree as ElementTree
 from django.http import HttpResponse
+import six
 
 RESPONSE_XMLNS = 'http://openrosa.org/http/response'
 
@@ -13,6 +15,8 @@ class ResponseNature(object):
     # here, but nice for this all to be in one place
     SUBMIT_SUCCESS = 'submit_success'
     SUBMIT_ERROR = 'submit_error'
+    PROCESSING_FAILURE = 'processing_failure'
+    POST_PROCESSING_FAILURE = 'post_processing_failure'
 
     # users app
     SUBMIT_USER_REGISTERED = 'submit_user_registered'
@@ -29,6 +33,10 @@ def get_response_element(message, nature=''):
 
 def get_simple_response_xml(message, nature=''):
     return OpenRosaResponse(message, nature, status=None).xml()
+
+
+def get_openrosa_reponse(message, nature, status):
+    return OpenRosaResponse(message, nature, status).response()
 
 
 class OpenRosaResponse(object):
@@ -49,7 +57,7 @@ class OpenRosaResponse(object):
         msg_elem = ElementTree.Element('message')
         if self.nature:
             msg_elem.attrib = {'nature': self.nature}
-        msg_elem.text = unicode(self.message)
+        msg_elem.text = six.text_type(self.message)
         elem.append(msg_elem)
         return elem
 
@@ -58,3 +66,18 @@ class OpenRosaResponse(object):
 
     def response(self):
         return HttpResponse(self.xml(), status=self.status)
+
+
+SUCCESS_RESPONSE = get_openrosa_reponse(u'   √   ', ResponseNature.SUBMIT_SUCCESS, 201)
+SUBMISSION_IGNORED_RESPONSE = get_openrosa_reponse(
+    u'√ (this submission was ignored)', ResponseNature.SUBMIT_SUCCESS, 201
+)
+BLACKLISTED_RESPONSE = get_openrosa_reponse(
+    message=(
+        "This submission was blocked because of an unusual volume "
+        "of submissions from this project space.  Please contact "
+        "support to resolve."
+    ),
+    nature=ResponseNature.SUBMIT_ERROR,
+    status=509,
+)

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from itertools import groupby
 from collections import defaultdict
 from xml.etree.cElementTree import Element
@@ -7,6 +8,7 @@ from corehq.apps.custom_data_fields.dbaccessors import get_by_domain_and_type
 from corehq.apps.fixtures.utils import get_index_schema_node
 from corehq.apps.locations.models import SQLLocation, LocationType, LocationFixtureConfiguration
 from corehq import toggles
+import six
 
 
 class LocationSet(object):
@@ -120,13 +122,19 @@ class FlatLocationSerializer(object):
         )
         location_type_attrs = ['{}_id'.format(t) for t in all_types if t is not None]
         attrs_to_index = ['@{}'.format(attr) for attr in location_type_attrs]
-        attrs_to_index.extend(['@id', '@type'])
+        attrs_to_index.extend(_get_indexed_field_name(field.slug) for field in data_fields
+                              if field.index_in_fixture)
+        attrs_to_index.extend(['@id', '@type', 'name'])
 
         return [get_index_schema_node(fixture_id, attrs_to_index),
-                self._get_fixture_node(fixture_id, restore_user, locations_queryset, location_type_attrs, data_fields)]
+                self._get_fixture_node(fixture_id, restore_user, locations_queryset,
+                                       location_type_attrs, data_fields)]
 
-    def _get_fixture_node(self, fixture_id, restore_user, locations_queryset, location_type_attrs, data_fields):
-        root_node = Element('fixture', {'id': fixture_id, 'user_id': restore_user.user_id, 'indexed': 'true'})
+    def _get_fixture_node(self, fixture_id, restore_user, locations_queryset,
+                          location_type_attrs, data_fields):
+        root_node = Element('fixture', {'id': fixture_id,
+                                        'user_id': restore_user.user_id,
+                                        'indexed': 'true'})
         outer_node = Element('locations')
         root_node.append(outer_node)
         all_locations = list(locations_queryset.order_by('site_code'))
@@ -149,10 +157,14 @@ class FlatLocationSerializer(object):
                     # For some reason this wasn't included in the locations we already fetched
                     from corehq.util.soft_assert import soft_assert
                     _soft_assert = soft_assert('{}@{}.com'.format('frener', 'dimagi'))
-                    message = """
-                        The flat location fixture didn't prefetch all parent locations:
-                        {domain}: {location_id}
-                    """.format(current_location.domain, current_location.location_id)
+                    message = (
+                        "The flat location fixture didn't prefetch all parent "
+                        "locations: {domain}: {location_id}. User id: {user_id}"
+                    ).format(
+                        domain=current_location.domain,
+                        location_id=current_location.location_id,
+                        user_id=restore_user.user_id,
+                    )
                     _soft_assert(False, msg=message)
 
                 attrs['{}_id'.format(current_location.location_type.code)] = current_location.location_id
@@ -204,20 +216,30 @@ def get_location_fixture_queryset(user):
 
     for user_location in user_locations:
         location_type = user_location.location_type
-        expand_from = location_type.expand_from or location_type
-        expand_to_level = (SQLLocation.active_objects
-                           .filter(domain__exact=user.domain, location_type=location_type.expand_to)
-                           .values_list('level', flat=True)
-                           .first())
-        expand_from_locations = _get_expand_from_level(user.domain, user_location, expand_from)
-        all_locations |= _get_children(expand_from_locations, expand_to_level)
-        all_locations |= (SQLLocation.active_objects
-                          .get_queryset_ancestors(expand_from_locations, include_self=True))
+        expand_to_level = _get_level_to_expand_to(user.domain, location_type.expand_to)
+        expand_from_level = location_type.expand_from or location_type
+        expand_from_locations = _get_locs_to_expand_from(user.domain, user_location, expand_from_level)
+        locs_below_expand_from = _get_children(expand_from_locations, expand_to_level)
+        locs_at_or_above_expand_from = (SQLLocation.active_objects
+                                        .get_queryset_ancestors(expand_from_locations, include_self=True))
+        locations_to_sync = locs_at_or_above_expand_from | locs_below_expand_from
+        if location_type.include_only.exists():
+            locations_to_sync = locations_to_sync.filter(location_type__in=location_type.include_only.all())
+        all_locations |= locations_to_sync
 
     return all_locations
 
 
-def _get_expand_from_level(domain, user_location, expand_from):
+def _get_level_to_expand_to(domain, expand_to):
+    if expand_to is None:
+        return None
+    return (SQLLocation.active_objects
+            .filter(domain__exact=domain, location_type=expand_to)
+            .values_list('level', flat=True)
+            .first())
+
+
+def _get_locs_to_expand_from(domain, user_location, expand_from):
     """From the users current location, return all locations of the highest
     level they want to start expanding from.
     """
@@ -236,7 +258,9 @@ def _get_expand_from_level(domain, user_location, expand_from):
 def _get_children(expand_from_locations, expand_to_level):
     """From the topmost location, get all the children we want to sync
     """
-    children = SQLLocation.active_objects.get_queryset_descendants(expand_from_locations).prefetch_related('location_type')
+    children = (SQLLocation.active_objects
+                .get_queryset_descendants(expand_from_locations)
+                .prefetch_related('location_type'))
     if expand_to_level is not None:
         children = children.filter(level__lte=expand_to_level)
     return children
@@ -289,9 +313,9 @@ def _types_to_fixture(location_db, type, locs, data_fields):
 def _get_metadata_node(location, data_fields):
     node = Element('location_data')
     # add default empty nodes for all known fields: http://manage.dimagi.com/default.asp?247786
-    for key in data_fields:
-        element = Element(key)
-        element.text = unicode(location.metadata.get(key, ''))
+    for field in data_fields:
+        element = Element(field.slug)
+        element.text = six.text_type(location.metadata.get(field.slug, ''))
         node.append(element)
     return node
 
@@ -316,8 +340,17 @@ def _fill_in_location_element(xml_root, location, data_fields):
     for field in fixture_fields:
         field_node = Element(field)
         val = getattr(location, field)
-        field_node.text = unicode(val if val is not None else '')
+        field_node.text = six.text_type(val if val is not None else '')
         xml_root.append(field_node)
+
+    # in order to be indexed, custom data fields need to be top-level
+    # so we stick them in there with the prefix data_
+    for field in data_fields:
+        if field.index_in_fixture:
+            field_node = Element(_get_indexed_field_name(field.slug))
+            val = location.metadata.get(field.slug)
+            field_node.text = six.text_type(val if val is not None else '')
+            xml_root.append(field_node)
 
     xml_root.append(_get_metadata_node(location, data_fields))
 
@@ -326,8 +359,10 @@ def _get_location_data_fields(domain):
     from corehq.apps.locations.views import LocationFieldsView
     fields_definition = get_by_domain_and_type(domain, LocationFieldsView.field_type)
     if fields_definition:
-        return {
-            f.slug for f in fields_definition.fields
-        }
+        return fields_definition.fields
     else:
-        return set()
+        return []
+
+
+def _get_indexed_field_name(slug):
+    return "data_{}".format(slug)

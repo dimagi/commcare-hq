@@ -1,7 +1,6 @@
 from __future__ import print_function
+from __future__ import absolute_import
 
-import traceback
-from cStringIO import StringIO
 from django.core.management import call_command
 
 from django.core.management.base import BaseCommand
@@ -10,6 +9,8 @@ from django.core import cache
 from django.conf import settings
 from dimagi.utils import gitinfo
 import gevent
+
+from corehq.util.log import get_traceback_string
 
 POOL_SIZE = getattr(settings, 'PREINDEX_POOL_SIZE', 8)
 
@@ -56,7 +57,7 @@ class Command(BaseCommand):
         if options['check']:
             exit(0 if get_preindex_complete(head) else 1)
 
-        if get_preindex_complete(head):
+        if get_preindex_complete(head) and email:
             mail_admins('Already preindexed', "Skipping this step")
             return
         else:
@@ -92,9 +93,7 @@ class Command(BaseCommand):
                 job.get()
         except Exception:
             subject = " HQAdmin preindex_everything failed"
-            f = StringIO()
-            traceback.print_exc(file=f)
-            message = f.getvalue()
+            message = get_traceback_string()
         else:
             subject = " HQAdmin preindex_everything may or may not be complete"
             message = (

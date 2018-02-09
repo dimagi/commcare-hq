@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import csv
 import datetime
 from mock import MagicMock
@@ -18,6 +20,7 @@ from custom.enikshay.case_utils import CASE_TYPE_VOUCHER
 from custom.enikshay.const import VOUCHER_ID
 from custom.enikshay.integrations.bets.repeater_generators import VoucherPayload
 from custom.enikshay.integrations.bets.views import VoucherUpdate
+from six.moves import map
 
 
 class Command(BaseCommand):
@@ -72,20 +75,20 @@ class Command(BaseCommand):
 
         with open(filename) as f:
             reader = csv.reader(f)
-            headers = reader.next()
+            headers = next(reader)
             missing_headers = set(self.voucher_update_properties) - set(headers)
             if missing_headers:
-                print "Missing the following headers:"
+                print("Missing the following headers:")
                 for header in missing_headers:
-                    print " ", header
-                print "\nAborting."
+                    print(" ", header)
+                print("\nAborting.")
                 return
 
             rows = list(reader)
 
-        print "Received info on {} vouchers.  Headers are:".format(len(rows))
+        print("Received info on {} vouchers.  Headers are:".format(len(rows)))
         for header in headers:
-            print header
+            print(header)
 
         voucher_updates = []
         unrecognized_vouchers = []
@@ -127,7 +130,7 @@ class Command(BaseCommand):
 
     def write_csv(self, filename, headers, rows):
         filename = "voucher_confirmations-{}.csv".format(filename)
-        print "writing {}".format(filename)
+        print("writing {}".format(filename))
         with open(filename, 'w') as f:
             writer = csv.writer(f)
             writer.writerow(headers)
@@ -144,7 +147,7 @@ class Command(BaseCommand):
                 voucher_update[prop] for prop in self.voucher_update_properties
             ]
 
-        rows = map(make_row, voucher_updates)
+        rows = list(map(make_row, voucher_updates))
         self.write_csv('updates', headers, rows)
 
     def log_unrecognized_vouchers(self, headers, unrecognized_vouchers):
@@ -168,11 +171,11 @@ class Command(BaseCommand):
                 api_payload[prop] for prop in self.voucher_api_properties
             ]
 
-        rows = map(make_row, unmodified_vouchers)
+        rows = list(map(make_row, unmodified_vouchers))
         self.write_csv('updates', headers, rows)
 
     def update_vouchers(self, voucher_updates):
-        print "updating voucher cases"
+        print("updating voucher cases")
         for chunk in chunked(with_progress_bar(voucher_updates), 100):
             updates = [
                 (update.case_id, update.properties, False)
@@ -186,7 +189,7 @@ class Command(BaseCommand):
         Mark updated records as "succeeded", all others as "cancelled"
         Delete duplicate records if any exist
         """
-        print "Reconciling repeat records"
+        print("Reconciling repeat records")
         chemist_voucher_repeater_id = 'be435d3f407bfb1016cc89ebbf8146b1'
         lab_voucher_repeater_id = 'be435d3f407bfb1016cc89ebbfc42a47'
 
@@ -199,7 +202,7 @@ class Command(BaseCommand):
         get_db = (lambda: IterDB(RepeatRecord.get_db())) if self.commit else MagicMock
         with get_db() as iter_db:
             for repeater_id in [chemist_voucher_repeater_id, lab_voucher_repeater_id]:
-                print "repeater {}".format(repeater_id)
+                print("repeater {}".format(repeater_id))
                 records = iter_repeat_records_by_domain(self.domain, repeater_id=repeater_id)
                 record_count = get_repeat_record_count(self.domain, repeater_id=repeater_id)
                 for record in with_progress_bar(records, record_count):

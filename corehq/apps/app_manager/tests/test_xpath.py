@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.test import SimpleTestCase
 from corehq.apps.app_manager.xpath import XPath, CaseSelectionXPath, LedgerdbXpath, CaseTypeXpath
 

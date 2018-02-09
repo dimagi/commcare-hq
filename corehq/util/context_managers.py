@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from contextlib import contextmanager
 from corehq.util.soft_assert import soft_assert
 
@@ -30,3 +31,13 @@ def notify_someone(email, success_message, error_message='Sorry, your HQ task fa
     except BaseException as e:
         send_message_if_needed(error_message, e)
         raise
+
+
+@contextmanager
+def catch_signal(signal):
+    """Catch django signal and return the mocked call."""
+    import mock
+    handler = mock.Mock()
+    signal.connect(handler)
+    yield handler
+    signal.disconnect(handler)

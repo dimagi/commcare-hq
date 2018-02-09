@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import logging
 import time
 
@@ -14,6 +15,7 @@ from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
 from couchforms.models import XFormInstance
 from django.conf import settings
 from dimagi.utils.logging import notify_error
+from six.moves import range
 
 
 def check_es_cluster_health():
@@ -112,10 +114,10 @@ def get_last_change_for_doc_class(doc_class):
     """
     db = doc_class.get_db()
     doc_type = doc_class._doc_type
-    return (
+    return next(
         (change['id'], change['rev']) for change in get_recent_changes(db, 100)
         if change['doc_type'] == doc_type
-    ).next()
+    )
 
 
 def _get_latest_doc_from_index(es_index, sort_field):
@@ -168,7 +170,7 @@ def _check_es_rev(index, doc_id, couch_revs):
         status = False
         message = "Not in sync"
 
-        if res.has_key('hits'):
+        if 'hits' in res:
             if res['hits'].get('total', 0) == 0:
                 status = False
                 # if doc doesn't exist it's def. not in sync

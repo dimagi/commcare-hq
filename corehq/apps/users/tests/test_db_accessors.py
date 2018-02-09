@@ -1,7 +1,9 @@
+from __future__ import absolute_import
 from django.test import TestCase
-from corehq.apps.users.models import WebUser, CommCareUser
+from corehq.apps.users.models import WebUser, CommCareUser, Permissions, UserRole
 from corehq.apps.users.dbaccessors.all_commcare_users import (
     get_all_commcare_users_by_domain,
+    get_commcare_users_by_filters,
     get_user_docs_by_username,
     delete_all_users,
     get_all_user_ids,
@@ -26,6 +28,15 @@ class AllCommCareUsersTest(TestCase):
         cls.other_domain = Domain(name='other_domain')
         cls.other_domain.save()
 
+        UserRole.init_domain_with_presets(cls.ccdomain.name)
+        cls.user_roles = UserRole.by_domain(cls.ccdomain.name)
+        cls.custom_role = UserRole.get_or_create_with_permissions(
+            cls.ccdomain.name,
+            Permissions(edit_apps=True, edit_web_users=True),
+            "Custom Role"
+        )
+        cls.custom_role.save()
+
         cls.ccuser_1 = CommCareUser.create(
             domain=cls.ccdomain.name,
             username='ccuser_1',
@@ -38,6 +49,9 @@ class AllCommCareUsersTest(TestCase):
             password='secret',
             email='email1@example.com',
         )
+        cls.ccuser_2.set_role(cls.ccdomain.name, cls.custom_role.get_qualified_id())
+        cls.ccuser_2.save()
+
         cls.web_user = WebUser.create(
             domain=cls.ccdomain.name,
             username='webuser',
@@ -64,6 +78,50 @@ class AllCommCareUsersTest(TestCase):
         super(AllCommCareUsersTest, cls).tearDownClass()
 
     def test_get_all_commcare_users_by_domain(self):
+        from corehq.util.elastic import ensure_index_deleted
+        from corehq.elastic import get_es_new, send_to_elasticsearch
+        from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO, USER_INDEX
+        from pillowtop.es_utils import initialize_index_and_mapping
+
+        es = get_es_new()
+        ensure_index_deleted(USER_INDEX)
+        initialize_index_and_mapping(es, USER_INDEX_INFO)
+        send_to_elasticsearch('users', self.ccuser_1.to_json())
+        send_to_elasticsearch('users', self.ccuser_2.to_json())
+        es.indices.refresh(USER_INDEX)
+
+        usernames = lambda users: [u.username for u in users]
+        # if no filters are passed, should return all cc-users in the domain
+        self.assertItemsEqual(
+            usernames(get_commcare_users_by_filters(self.ccdomain.name, {})),
+            usernames([self.ccuser_2, self.ccuser_1])
+        )
+        self.assertEqual(
+            get_commcare_users_by_filters(self.ccdomain.name, {}, count_only=True),
+            2
+        )
+        # can search by username
+        self.assertItemsEqual(
+            usernames(get_commcare_users_by_filters(self.ccdomain.name, {'search_string': 'user_1'})),
+            [self.ccuser_1.username]
+        )
+        self.assertEqual(
+            get_commcare_users_by_filters(self.ccdomain.name, {'search_string': 'user_1'}, count_only=True),
+            1
+        )
+        # can search by role_id
+        self.assertItemsEqual(
+            usernames(get_commcare_users_by_filters(self.ccdomain.name, {'role_id': self.custom_role._id})),
+            [self.ccuser_2.username]
+        )
+        self.assertEqual(
+            get_commcare_users_by_filters(self.ccdomain.name, {'role_id': self.custom_role._id}, count_only=True),
+            1
+        )
+
+        ensure_index_deleted(USER_INDEX)
+
+    def test_get_commcare_users_by_filters(self):
         expected_users = [self.ccuser_2, self.ccuser_1]
         expected_usernames = [user.username for user in expected_users]
         actual_usernames = [user.username for user in get_all_commcare_users_by_domain(self.ccdomain.name)]

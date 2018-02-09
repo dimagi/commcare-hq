@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.urls import reverse
 from django.http import Http404, HttpResponseRedirect, HttpResponseBadRequest
 from django.utils.decorators import method_decorator
@@ -20,6 +21,7 @@ from corehq.apps.domain.utils import get_domain_module_map
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.reports.exceptions import BadRequestError
 from corehq.util.quickcache import quickcache
+import six
 
 
 datespan_default = datespan_in_request(
@@ -56,7 +58,7 @@ class ReportDispatcher(View):
     map_name = None
 
     def __init__(self, **kwargs):
-        if not self.map_name or not isinstance(self.map_name, basestring): # unicode?
+        if not self.map_name or not isinstance(self.map_name, six.string_types):
             raise NotImplementedError("Class property 'map_name' must be a string, and not empty.")
         super(ReportDispatcher, self).__init__(**kwargs)
 
@@ -76,7 +78,7 @@ class ReportDispatcher(View):
         """
         return True
 
-    def get_reports(self, domain=None):
+    def get_reports(self, domain):
         attr_name = self.map_name
         from corehq import reports
         if domain:
@@ -85,8 +87,8 @@ class ReportDispatcher(View):
             project = None
 
         def process(reports):
-            if project and callable(reports):
-                reports = reports(project)
+            if callable(reports):
+                reports = reports(project) if project else tuple()
             return tuple(reports)
 
         corehq_reports = process(getattr(reports, attr_name, ()))
@@ -109,18 +111,15 @@ class ReportDispatcher(View):
 
         return corehq_reports + custom_reports
 
-    def get_reports_dict(self, domain=None):
-        return dict((report.slug, report)
-                    for name, group in self.get_reports(domain)
-                    for report in group)
-
     def get_report(self, domain, report_slug, *args):
         """
         Returns the report class for `report_slug`, or None if no report is
         found.
-
         """
-        return self.get_reports_dict(domain).get(report_slug, None)
+        for name, group in self.get_reports(domain):
+            for report in group:
+                if report.slug == report_slug:
+                    return report
 
     @quickcache(['domain', 'report_slug'], timeout=300)
     def get_report_class_name(self, domain, report_slug):

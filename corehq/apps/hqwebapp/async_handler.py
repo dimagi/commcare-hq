@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import json
 from django.http import HttpResponse, HttpRequest
 from django.utils.functional import cached_property
@@ -55,6 +56,12 @@ class BaseAsyncHandler(object):
         self.request = request
         self.data = request.POST if request.method == 'POST' else request.GET
         self.action = self.data.get('action')
+        # When used with the javascript BaseSelect2Handler, some field names might have hyphens,
+        # for example if the Django form has a 'prefix' attribute specified.
+        # Convert hyphens to underscores for the purposes of this integration, since python method
+        # names can't have hyphens.
+        if self.action:
+            self.action = self.action.replace('-', '_')
 
     def _fmt_error(self, error):
         return json.dumps({

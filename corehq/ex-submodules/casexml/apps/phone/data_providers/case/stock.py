@@ -1,16 +1,21 @@
+from __future__ import absolute_import
 from collections import defaultdict
-from casexml.apps.stock.consumption import compute_default_monthly_consumption, \
-    ConsumptionConfiguration
+from datetime import datetime
+
+from corehq import toggles
 from corehq.form_processor.exceptions import LedgerValueNotFound
 from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import json_format_datetime
-from datetime import datetime
+
+from casexml.apps.stock.consumption import compute_default_monthly_consumption, \
+    ConsumptionConfiguration
 from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
 
 
 def get_stock_payload(project, stock_settings, case_stub_list):
-    if project and not project.commtrack_enabled:
+    uses_ledgers = project.commtrack_enabled or toggles.NON_COMMTRACK_LEDGERS.enabled(project.name)
+    if project and not uses_ledgers:
         return
 
     generator = StockPayloadGenerator(project.name, stock_settings, case_stub_list)
@@ -37,7 +42,7 @@ class StockPayloadGenerator(object):
             section_timestamp_map = defaultdict(lambda: json_format_datetime(datetime.utcnow()))
             for section_id in sorted(case_ledgers.keys()):
                 state_map = case_ledgers[section_id]
-                stock_states = sorted(state_map.values(), key=lambda s: s.product_id)
+                stock_states = sorted(list(state_map.values()), key=lambda s: s.product_id)
                 as_of = json_format_datetime(max(txn.last_modified_date for txn in stock_states))
                 section_timestamp_map[section_id] = as_of
                 yield self.elem_maker.balance(
@@ -77,7 +82,7 @@ class StockPayloadGenerator(object):
                             self._consumption_entry(case_id, product_id, state)
                         )
 
-                consumption_entries = filter(lambda e: e is not None, consumption_entries)
+                consumption_entries = [e for e in consumption_entries if e is not None]
                 if consumption_entries:
                     yield self.elem_maker.balance(
                         *consumption_entries,

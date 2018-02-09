@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DataTablesColumnGroup
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import CustomProjectReport
@@ -27,7 +28,7 @@ class ASHAFunctionalityChecklistReport(GenericTabularReport, NRHMDatespanMixin, 
 
     @property
     def ashas(self):
-        return sorted(self.model_data.data.values(), key=lambda x: x['completed_on'])
+        return sorted(list(self.model_data.data.values()), key=lambda x: x['completed_on'])
 
     @property
     def headers(self):

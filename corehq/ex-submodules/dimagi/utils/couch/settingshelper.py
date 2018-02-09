@@ -1,4 +1,5 @@
 
+from __future__ import absolute_import
 def get_server_url(server_root, username, password):
     if username and password:
         return "http://%(user)s:%(pass)s@%(server)s" % \

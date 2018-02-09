@@ -1,8 +1,10 @@
+from __future__ import absolute_import
 import uuid
 from corehq.apps.app_manager.const import AUTO_SELECT_USERCASE
 from corehq.apps.app_manager.models import AdvancedModule, Module, UpdateCaseAction, LoadUpdateAction, \
     FormActionCondition, OpenSubCaseAction, OpenCaseAction, AdvancedOpenCaseAction, Application, AdvancedForm, \
     AutoSelectCase, CaseIndex, PreloadAction, ShadowModule
+import six
 
 
 class AppFactory(object):
@@ -42,7 +44,7 @@ class AppFactory(object):
         module.case_type = case_type
 
         def get_unique_id(module_or_form):
-            return module_or_form if isinstance(module_or_form, basestring) else module_or_form.unique_id
+            return module_or_form if isinstance(module_or_form, six.string_types) else module_or_form.unique_id
 
         if parent_module:
             module.root_module_id = get_unique_id(parent_module)

@@ -1,17 +1,14 @@
 from __future__ import print_function
-import multiprocessing
-import os
-
-import kombu.five
-from celery import Celery
-from celery import current_app
-from celery.backends.base import DisabledBackend
-from celery.task import task
-from celery.worker.autoscale import Autoscaler
-from django.conf import settings
-from djcelery.loaders import DjangoLoader
+from __future__ import absolute_import
 from datetime import datetime
 from time import sleep, time
+
+from celery import Celery, current_app
+from celery.backends.base import DisabledBackend
+from celery.task import task
+from django.conf import settings
+import kombu.five
+import six
 
 
 def no_result_task(*args, **kwargs):
@@ -129,7 +126,7 @@ def revoke_tasks(task_names, interval=5):
             if not result:
                 continue
 
-            for worker, task_dicts in result.iteritems():
+            for worker, task_dicts in six.iteritems(result):
                 tasks.extend(_get_task_info_fcn(task_state)(task_dicts))
 
         for task in tasks:
@@ -188,83 +185,6 @@ def get_running_workers(timeout=10):
 
     worker_names = []
     for worker_info in result:
-        worker_names.extend(worker_info.keys())
+        worker_names.extend(list(worker_info))
 
     return worker_names
-
-
-class LoadBasedAutoscaler(Autoscaler):
-    def _maybe_scale(self, req=None):
-        procs = self.processes
-        cur = min(self.qty, self.max_concurrency)
-
-        available_cpus = multiprocessing.cpu_count()
-        try:
-            load_avgs = os.getloadavg()
-            one_min_avg = load_avgs[0]
-            normalized_load = one_min_avg / available_cpus
-        except OSError:
-            # if we can't get the load average, let's just use normal autoscaling
-            load_avgs = None
-            normalized_load = 0
-
-        if cur > procs and normalized_load < 0.90:
-            self.scale_up(cur - procs)
-            return True
-        elif procs > self.min_concurrency:
-            if cur < procs:
-                self.scale_down(min(procs - cur, procs - self.min_concurrency))
-                return True
-            elif normalized_load > 0.90:
-                # if load is too high trying scaling down 1 worker at a time.
-                # if we're already at minimum concurrency let's just ride it out
-                self.scale_down(1)
-                return True
-
-
-class OffPeakLoadBasedAutoscaler(LoadBasedAutoscaler):
-    def _is_off_peak(self):
-        now = datetime.utcnow().time()
-        if settings.OFF_PEAK_TIME:
-            time_begin = settings.OFF_PEAK_TIME[0]
-            time_end = settings.OFF_PEAK_TIME[1]
-            if time_begin < time_end:  # off peak is middle of day
-                if time_begin < now < time_end:
-                    return True
-            else:  # off peak is overnight
-                if time_begin < now or now < time_end:
-                    return True
-
-        # if this setting isn't set consider us always during peak time
-        return False
-
-    def _during_peak_time(self):
-        return not self._is_off_peak()
-
-    def _maybe_scale(self, req=None):
-        procs = self.processes
-
-        if self._during_peak_time():
-            if procs > self.min_concurrency:
-                self.scale_down(1)
-                return True
-            elif procs == self.min_concurrency:
-                return False
-
-        return super(OffPeakLoadBasedAutoscaler, self)._maybe_scale(req)
-
-
-class LoadBasedLoader(DjangoLoader):
-    def read_configuration(self):
-        ret = super(LoadBasedLoader, self).read_configuration()
-        ret['CELERYD_AUTOSCALER'] = 'corehq.util.celery_utils:LoadBasedAutoscaler'
-        ret['CELERYD_PREFETCH_MULTIPLIER'] = 1
-        ret['AUTOSCALE_KEEPALIVE'] = 120
-        return ret
-
-
-class OffPeakLoadBasedLoader(LoadBasedLoader):
-    def read_configuration(self):
-        ret = super(OffPeakLoadBasedLoader, self).read_configuration()
-        ret['CELERYD_AUTOSCALER'] = 'corehq.util.celery_utils:OffPeakLoadBasedAutoscaler'
-        return ret

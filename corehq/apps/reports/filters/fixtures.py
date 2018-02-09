@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import json
 from django.urls import reverse
 from django.utils.translation import ugettext_noop

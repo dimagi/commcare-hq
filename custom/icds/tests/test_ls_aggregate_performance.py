@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.test import SimpleTestCase, TestCase
 from mock import patch, Mock
 
@@ -17,38 +18,19 @@ from custom.icds.messaging.indicators import (
 )
 from lxml import etree
 
+
 class PropertyMock(Mock):
     def __get__(self, instance, owner):
         return self()
 
 
-class TestLSAggregatePerformanceIndicator(SimpleTestCase, TestXmlMixin):
-    file_path = ('../../../..', 'custom/icds/tests/data/fixtures')
-
-    @patch.object(LSAggregatePerformanceIndicator, 'visits_fixture', new_callable=PropertyMock)
-    @patch.object(LSAggregatePerformanceIndicator, 'thr_fixture', new_callable=PropertyMock)
-    @patch.object(LSAggregatePerformanceIndicator, 'weighed_fixture', new_callable=PropertyMock)
-    @patch.object(LSAggregatePerformanceIndicator, 'days_open_fixture', new_callable=PropertyMock)
-    def test_report_parsing(self, days_open, weighed, thr, visits):
-        days_open.return_value = etree.fromstring(self.get_xml('days_open_fixture'))
-        weighed.return_value = etree.fromstring(self.get_xml('weighed_fixture'))
-        thr.return_value = etree.fromstring(self.get_xml('thr_fixture'))
-        visits.return_value = etree.fromstring(self.get_xml('visit_fixture'))
-        indicator = LSAggregatePerformanceIndicator('domain', 'user')
-        message = indicator.get_messages(language_code='en')[0]
-        self.assertIn('Home visits completed on time / Home visits completed: 22 / 269', message)
-        self.assertIn('Beneficiaries received adequate THR / Beneficiaries eligible for THR: 19 / 34', message)
-        self.assertIn('Children weighed under 3 years / Total children under 3 years: 30 / 33', message)
-        self.assertIn('Average days AWC open / Goal: 59 / 25', message)
-
-
-class TestAWWAggregatePerformanceIndicator(TestCase, TestXmlMixin):
+class BaseAggregatePerformanceTestCase(TestCase, TestXmlMixin):
     domain = 'domain'
     file_path = ('../../../..', 'custom/icds/tests/data/fixtures')
 
     @classmethod
     def setUpClass(cls):
-        super(TestAWWAggregatePerformanceIndicator, cls).setUpClass()
+        super(BaseAggregatePerformanceTestCase, cls).setUpClass()
         cls.domain_obj = create_domain(cls.domain)
 
         location_type_structure = [
@@ -71,13 +53,36 @@ class TestAWWAggregatePerformanceIndicator(TestCase, TestXmlMixin):
     @classmethod
     def tearDownClass(cls):
         cls.domain_obj.delete()
-        super(TestAWWAggregatePerformanceIndicator, cls).tearDownClass()
+        super(BaseAggregatePerformanceTestCase, cls).tearDownClass()
 
     @classmethod
     def _make_user(cls, name, location):
         user = CommCareUser.create(cls.domain, name, 'password')
         user.set_location(location)
         return user
+
+
+class TestLSAggregatePerformanceIndicator(BaseAggregatePerformanceTestCase):
+
+    @patch.object(LSAggregatePerformanceIndicator, 'visits_fixture', new_callable=PropertyMock)
+    @patch.object(LSAggregatePerformanceIndicator, 'thr_fixture', new_callable=PropertyMock)
+    @patch.object(LSAggregatePerformanceIndicator, 'weighed_fixture', new_callable=PropertyMock)
+    @patch.object(LSAggregatePerformanceIndicator, 'days_open_fixture', new_callable=PropertyMock)
+    def test_report_parsing(self, days_open, weighed, thr, visits):
+        days_open.return_value = etree.fromstring(self.get_xml('days_open_fixture'))
+        weighed.return_value = etree.fromstring(self.get_xml('weighed_fixture'))
+        thr.return_value = etree.fromstring(self.get_xml('thr_fixture'))
+        visits.return_value = etree.fromstring(self.get_xml('visit_fixture'))
+        indicator = LSAggregatePerformanceIndicator(self.domain, self.ls)
+        message = indicator.get_messages(language_code='en')[0]
+        self.assertIn('Number of visits / Number of desired visits: 45 / 195', message)
+        self.assertIn('Number of visits on time / Number of visits: 16 / 45', message)
+        self.assertIn('THR Distribution: 19 / 34', message)
+        self.assertIn('Number of children weighed: 30 / 33', message)
+        self.assertIn('Average no. of days AWC open / Goal: 3 / 25', message)
+
+
+class TestAWWAggregatePerformanceIndicator(BaseAggregatePerformanceTestCase):
 
     @patch.object(LSAggregatePerformanceIndicator, 'visits_fixture', new_callable=PropertyMock)
     @patch.object(LSAggregatePerformanceIndicator, 'thr_fixture', new_callable=PropertyMock)
@@ -90,9 +95,10 @@ class TestAWWAggregatePerformanceIndicator(TestCase, TestXmlMixin):
         visits.return_value = etree.fromstring(self.get_xml('visit_fixture'))
         indicator = AWWAggregatePerformanceIndicator(self.domain, self.aww)
         message = indicator.get_messages(language_code='en')[0]
-        self.assertIn('Home visits completed / Goal: 6 / 65', message)
-        self.assertIn('Beneficiaries received adequate THR / Beneficiaries eligible for THR: 1 / 2', message)
-        self.assertIn('Children weighed under 3 years / Total children under 3 years: 1 / 2', message)
+        self.assertIn('Number of visits / Number of desired visits: 6 / 65', message)
+        self.assertIn('Number of visits on time / Number of visits: 2 / 6', message)
+        self.assertIn('THR Distribution: 1 / 2', message)
+        self.assertIn('Number of children weighed: 1 / 2', message)
         self.assertIn('Days AWC open / Goal: 3 / 25', message)
 
     @patch.object(LSAggregatePerformanceIndicator, 'visits_fixture', new_callable=PropertyMock)
@@ -107,9 +113,12 @@ class TestAWWAggregatePerformanceIndicator(TestCase, TestXmlMixin):
         thr.return_value = etree.fromstring(self.get_xml('thr_fixture'))
         visits.return_value = etree.fromstring(self.get_xml('visit_fixture'))
         indicator = AWWAggregatePerformanceIndicator(self.domain, aww3)
-        with self.assertRaises(Exception) as e:
-            indicator.get_messages(language_code='en')
-        self.assertIn('AWC AWC3 not found in the restore', e.exception.message)
+        message = indicator.get_messages(language_code='en')[0]
+        self.assertIn('Number of visits / Number of desired visits: 0 / 65', message)
+        self.assertIn('Number of visits on time / Number of visits: 0 / 0', message)
+        self.assertIn('THR Distribution: 0 / 0', message)
+        self.assertIn('Number of children weighed: 0 / 0', message)
+        self.assertIn('Days AWC open / Goal: 0 / 25', message)
 
     @patch.object(LSAggregatePerformanceIndicator, 'visits_fixture', new_callable=PropertyMock)
     @patch.object(LSAggregatePerformanceIndicator, 'thr_fixture', new_callable=PropertyMock)

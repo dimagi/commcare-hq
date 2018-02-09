@@ -34,8 +34,11 @@
 {% block stylesheets %}
 {{ block.super }}
     <style>
-        ul.choices-list > li {
+        ul.validation-list > li {
             padding-top: 5px;
+        }
+        .validation-options {
+            padding-bottom: 5px;
         }
     </style>
 {% endblock %}
@@ -113,15 +116,45 @@
                                         </span>
                                     </th>
                                     <th class="col-sm-3">
-                                        {% trans "Choices" %}
+                                        {% if request|toggle_enabled:"REGEX_FIELD_VALIDATION" %}
+                                            {% trans "Validation" %}
+                                            <span class="hq-help-template"
+                                                data-title="{% trans "Validation" %}"
+                                                data-content="{% blocktrans %}
+                                                    Specify a means of validating user input to this field.
+                                                    You can provide a drop-down list of choices or specify
+                                                    a regular expression to be applied to the input. For
+                                                    example, ^[1-9]{10}$ will match only 10 character
+                                                    numeric input.
+                                                {% endblocktrans %}">
+                                            </span>
+                                        {% else %}
+                                            {% trans "Choices" %}
+                                            <span class="hq-help-template"
+                                                data-title="{% trans "Choices" %}"
+                                                data-content="{% blocktrans %}
+                                                    Provides a drop-down list of choices for this field
+                                                    instead of free text entry.
+                                                {% endblocktrans %}">
+                                            </span>
+                                        {% endif %}
+                                    </th>
+                                    {% if show_index_in_fixture %}
+                                    <th class="col-sm-1">
+                                        {% trans "Index in Restore" %}
                                         <span class="hq-help-template"
-                                              data-title="{% trans "Choices" %}"
+                                              data-title="{% trans "Index in Restore" %}"
                                               data-content="{% blocktrans %}
-                                                  Provides a drop-down list of choices for this field
-                                                  instead of free text entry.
+                                                Check this box to indicate that mobile should index this
+                                                field for faster filtering with large sets of locations.
+                                                To use this optimization, you'll need to reference the
+                                                field as a top-level attribute prefixed with 'data_'.
+                                                For example, reference a field called 'is_test' like:
+                                                instance('locations')/locations/location[data_is_test='1']
                                               {% endblocktrans %}">
                                         </span>
                                     </th>
+                                    {% endif %}
                                     <th class="col-sm-1">{% trans "Delete" %}</th>
                                 </tr>
                             </thead>
@@ -140,31 +173,74 @@
                                         <input type="checkbox" data-bind="checked: is_required"/>
                                     </td>
                                     <td>
-                                        <a data-bind="click: addChoice" type="button" class="btn btn-primary" >
-                                            <i class="fa fa-plus"></i> {% trans "Add Choice" %}
-                                        </a>
-                                        <ul data-bind="sortable: choices" class="list-unstyled choices-list">
-                                            <li data-bind="attr: {'data-order': _sortableOrder}">
-                                                <div class="input-group">
-                                                    <span class="input-group-addon"><i class="fa fa-sort sortable-handle"></i></span>
-                                                    <input class="form-control" type="text" data-bind="value: value"/>
-                                                    <div class="input-group-btn">
-                                                        <a type="button"
-                                                           class="btn btn-danger"
-                                                           data-bind="click: $parent.removeChoice">
-                                                            &times;
-                                                        </a>
+
+                                        {% if request|toggle_enabled:"REGEX_FIELD_VALIDATION" %}
+                                        <div class="btn-group validation-options">
+                                            <div data-bind="css: {active: !validationMode()},
+                                                            click: function () {validationMode(undefined)}"
+                                                 class="btn btn-default">
+                                                {% trans "None" %}
+                                            </div>
+                                            <div data-bind="css: {active: validationMode() === 'choice'},
+                                                            click: function () {validationMode('choice')}"
+                                                 class="btn btn-default">
+                                                {% trans "Choices" %}
+                                            </div>
+                                            <div data-bind="css: {active: validationMode() === 'regex'},
+                                                            click: function () {validationMode('regex')}"
+                                                 class="btn btn-default">
+                                                {% trans "Regex" %}
+                                            </div>
+                                        </div>
+                                        {% endif %}
+
+                                        <div data-bind="visible: validationMode() === 'choice'">
+
+                                            <button data-bind="click: addChoice"
+                                                    type="button" class="btn btn-primary" >
+                                                <i class="fa fa-plus"></i> {% trans "Add Choice" %}
+                                            </button>
+
+                                            <ul data-bind="sortable: choices" class="list-unstyled validation-list">
+                                                <li data-bind="attr: {'data-order': _sortableOrder}">
+                                                    <div class="input-group">
+                                                        <span class="input-group-addon"><i class="fa fa-sort sortable-handle"></i></span>
+                                                        <input class="form-control" type="text" data-bind="value: value"/>
+                                                        <div class="input-group-btn">
+                                                            <a type="button"
+                                                               class="btn btn-danger"
+                                                               data-bind="click: $parent.removeChoice">
+                                                                <i class="fa fa-times"></i>
+                                                            </a>
+                                                        </div>
                                                     </div>
-                                                 </div>
-                                            </li>
+                                                </li>
+                                            </ul>
+
+                                        </div>
+
+                                        {% if request|toggle_enabled:"REGEX_FIELD_VALIDATION" %}
+                                        <ul data-bind="visible: validationMode() === 'regex'"
+                                            class="list-unstyled validation-list">
+                                            <li><input data-bind="value: regex" class="form-control" type="text"
+                                                       placeholder="{% trans "Regular Expression" %}"/></li>
+                                            <li><input data-bind="value: regex_msg" class="form-control" type="text"
+                                                       placeholder="{% trans "Validation Message" %}"/></li>
                                         </ul>
+                                        {% endif %}
+
                                         {% if request|toggle_enabled:"MULTIPLE_CHOICE_CUSTOM_FIELD" %}
                                             <span data-bind="visible: choices().length !== 0">
                                                 <label style="display: inline" for="multipleChoice">{% trans 'Multiple choice' %}: </label>
-                                                <input data-bind="checked: multipleChoice" id="multipleChoice" type="checkbox"/>
+                                                <input data-bind="checked: multiple_choice" id="multipleChoice" type="checkbox"/>
                                             </span>
                                         {% endif %}
                                     </td>
+                                    {% if show_index_in_fixture %}
+                                    <td>
+                                        <input type="checkbox" data-bind="checked: index_in_fixture"/>
+                                    </td>
+                                    {% endif %}
                                     <td>
                                         <a type="button"
                                            class="btn btn-danger"

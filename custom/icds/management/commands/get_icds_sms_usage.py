@@ -1,10 +1,14 @@
+from __future__ import absolute_import
+import pytz
 from corehq.apps.sms.models import SMS
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.utils import is_commcarecase
 from corehq.messaging.smsbackends.icds_nic.models import SQLICDSBackend
-from corehq.util.argparse_types import utc_timestamp
+from corehq.util.argparse_types import date_type
+from corehq.util.timezones.conversions import UserTime
 from couchexport.export import export_raw
+from datetime import datetime, timedelta, time
 from django.core.management.base import BaseCommand
 
 
@@ -13,8 +17,8 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('domain')
-        parser.add_argument('start_timestamp', type=utc_timestamp)
-        parser.add_argument('end_timestamp', type=utc_timestamp)
+        parser.add_argument('start_date', type=date_type)
+        parser.add_argument('end_date', type=date_type)
 
     def get_location_id(self, sms):
         location_id = None
@@ -71,13 +75,37 @@ class Command(BaseCommand):
 
         return sms.custom_metadata.get('icds_indicator', 'unknown')
 
-    def handle(self, domain, start_timestamp, end_timestamp, **options):
+    def get_start_and_end_timestamps(self, start_date, end_date):
+        timezone = pytz.timezone('Asia/Kolkata')
+
+        start_timestamp = UserTime(
+            datetime.combine(start_date, time(0, 0)),
+            timezone
+        ).server_time().done().replace(tzinfo=None)
+
+        end_timestamp = UserTime(
+            datetime.combine(end_date, time(0, 0)),
+            timezone
+        ).server_time().done().replace(tzinfo=None)
+
+        # end_date is inclusive
+        end_timestamp += timedelta(days=1)
+
+        return start_timestamp, end_timestamp
+
+    def handle(self, domain, start_date, end_date, **options):
+        start_timestamp, end_timestamp = self.get_start_and_end_timestamps(start_date, end_date)
         self.recipient_id_to_location_id = {}
         self.location_id_to_location = {}
         self.location_id_to_state_code = {}
         self.state_code_to_name = {'unknown': 'Unknown'}
 
         data = {}
+
+        filename = 'icds-sms-usage--%s--%s.xlsx' % (
+            start_date.strftime('%Y-%m-%d'),
+            end_date.strftime('%Y-%m-%d'),
+        )
 
         for sms in SMS.objects.filter(
             domain=domain,
@@ -98,7 +126,7 @@ class Command(BaseCommand):
 
             data[state_code][indicator_slug] += 1
 
-        with open('icds-sms-usage.xlsx', 'wb') as f:
+        with open(filename, 'wb') as f:
             headers = ('State Code', 'State Name', 'Indicator', 'SMS Count')
             excel_data = []
 

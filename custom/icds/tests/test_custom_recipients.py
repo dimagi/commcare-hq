@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.apps.data_interfaces.tests.util import create_case
 from corehq.apps.locations.tests.util import make_loc, setup_location_types
 from corehq.messaging.scheduling.scheduling_partitioned.models import (
@@ -5,7 +6,6 @@ from corehq.messaging.scheduling.scheduling_partitioned.models import (
     CaseTimedScheduleInstance,
 )
 from custom.icds.const import AWC_LOCATION_TYPE_CODE, SUPERVISOR_LOCATION_TYPE_CODE
-from custom.icds.messaging.custom_recipients import mother_person_case_from_ccs_record_case
 from custom.icds.tests.base import BaseICDSTest
 
 
@@ -15,29 +15,7 @@ class CustomRecipientTest(BaseICDSTest):
     @classmethod
     def setUpClass(cls):
         super(CustomRecipientTest, cls).setUpClass()
-        cls.mother_person_case = cls.create_case('person')
-        cls.child_person_case = cls.create_case(
-            'person',
-            cls.mother_person_case.case_id,
-            cls.mother_person_case.type,
-            'mother',
-            'child'
-        )
-        cls.child_health_extension_case = cls.create_case(
-            'child_health',
-            cls.child_person_case.case_id,
-            cls.child_person_case.type,
-            'parent',
-            'extension'
-        )
-        cls.lone_child_health_extension_case = cls.create_case('child_health')
-        cls.ccs_record_case = cls.create_case(
-            'ccs_record',
-            cls.mother_person_case.case_id,
-            cls.mother_person_case.type,
-            'parent',
-            'child'
-        )
+        cls.create_basic_related_cases()
 
         cls.location_types = setup_location_types(cls.domain,
             [SUPERVISOR_LOCATION_TYPE_CODE, AWC_LOCATION_TYPE_CODE])
@@ -51,7 +29,7 @@ class CustomRecipientTest(BaseICDSTest):
             self.assertEqual(
                 cls(
                     domain=self.domain,
-                    case_id=self.child_health_extension_case.case_id,
+                    case_id=self.child_health_case.case_id,
                     recipient_type='CustomRecipient',
                     recipient_id='ICDS_MOTHER_PERSON_CASE_FROM_CHILD_HEALTH_CASE'
                 ).recipient.case_id,
@@ -61,7 +39,7 @@ class CustomRecipientTest(BaseICDSTest):
             self.assertIsNone(
                 cls(
                     domain=self.domain,
-                    case_id=self.lone_child_health_extension_case.case_id,
+                    case_id=self.lone_child_health_case.case_id,
                     recipient_type='CustomRecipient',
                     recipient_id='ICDS_MOTHER_PERSON_CASE_FROM_CHILD_HEALTH_CASE'
                 ).recipient
@@ -99,20 +77,3 @@ class CustomRecipientTest(BaseICDSTest):
                         recipient_id='ICDS_SUPERVISOR_FROM_AWC_OWNER'
                     ).recipient
                 )
-
-    def test_mother_person_case_from_ccs_record_case(self):
-        for cls in (CaseAlertScheduleInstance, CaseTimedScheduleInstance):
-            self.assertEqual(
-                mother_person_case_from_ccs_record_case(cls(
-                    domain=self.domain,
-                    case_id=self.ccs_record_case.case_id,
-                )).case_id,
-                self.mother_person_case.case_id
-            )
-
-            self.assertIsNone(
-                mother_person_case_from_ccs_record_case(cls(
-                    domain=self.domain,
-                    case_id=self.child_health_extension_case.case_id,
-                ))
-            )

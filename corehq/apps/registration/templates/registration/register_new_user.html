@@ -6,6 +6,26 @@
 
 {% block title %}{% trans "Create an Account" %}{% endblock title %}
 
+{% block head %}{{ block.super }}
+    {% if is_saas_environment %}
+    <!-- Facebook Pixel Code -->
+    <script>
+    !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+    n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
+    n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
+    t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,
+    document,'script','https://connect.facebook.net/en_US/fbevents.js');
+    fbq('init', '301081893674207');
+    fbq('track', 'PageView');
+    </script>
+    <noscript><img height="1" width="1" style="display:none"
+    src="https://www.facebook.com/tr?id=301081893674207&ev=PageView&noscript=1"
+    /></noscript>
+    <!-- DO NOT MODIFY -->
+    <!-- End Facebook Pixel Code -->
+    {% endif %}
+{% endblock %}
+
 {% block js %}{{ block.super }}
     {% compress js %}
         <script src="{% static 'jquery-ui/ui/effect.js' %}"></script>
@@ -17,6 +37,40 @@
         <script src="{% static 'blazy/blazy.js' %}"></script>
         <script src="{% static 'registration/js/register_new_user.js' %}"></script>
     {% endcompress %}
+    {% if is_saas_environment %}
+      <!-- Google Code for Destination Lead Conversion Page -->
+      <script type="text/javascript">
+      /* <![CDATA[ */
+      var google_conversion_id = 941515958;
+      var google_conversion_language = "en";
+      var google_conversion_format = "3";
+      var google_conversion_color = "ffffff";
+      var google_conversion_label = "glkzCMmv73UQtsn5wAM";
+      var google_remarketing_only = false;
+      /* ]]> */
+      </script>
+      <script type="text/javascript" src="//www.googleadservices.com/pagead/conversion.js"></script>
+      <noscript>
+        <div style="display:inline;">
+          <img height="1" width="1" style="border-style:none;" alt="" src="//www.googleadservices.com/pagead/conversion/941515958/?label=glkzCMmv73UQtsn5wAM&amp;guid=ON&amp;script=0"/>
+        </div>
+      </noscript>
+
+      <!-- linked in -->
+      <script type="text/javascript">
+      _linkedin_data_partner_id = "63907";
+      </script><script type="text/javascript">
+      (function(){var s = document.getElementsByTagName("script")[0];
+      var b = document.createElement("script");
+      b.type = "text/javascript";b.async = true;
+      b.src = "https://snap.licdn.com/li.lms-analytics/insight.min.js";
+      s.parentNode.insertBefore(b, s);})();
+      </script>
+      <noscript>
+      <img height="1" width="1" style="display:none;" alt="" src="https://dc.ads.linkedin.com/collect/?pid=63907&fmt=gif" />
+      </noscript>
+      <!-- end linked in -->
+    {% endif %}
 {% endblock %}
 
 {% block stylesheets %}
@@ -52,7 +106,9 @@
 {% initial_page_data 'show_number' show_number %}
 {% initial_page_data 'number_utils_script' 'intl-tel-input/build/js/utils.js'|static %}
 {% initial_page_data 'reg_form_defaults' reg_form_defaults %}
-{% initial_page_data 'ab_test' ab_test %}
+
+{% analytics_ab_test 'kissmetrics.new_phone_jan2016' ab_show_number|JSON %}
+
 {% registerurl 'process_registration' %}
 <div class="container">
   <div class="row">

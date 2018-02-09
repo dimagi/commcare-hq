@@ -322,12 +322,15 @@ class CriticalSection(object):
       to the lock timeout
     fail_hard - if True, exceptions are raised when locks can't be acquired
     timeout - the number of seconds before each lock times out
+    block - whether to wait for the lock to be acquired or not
     """
-    def __init__(self, keys, fail_hard=False, timeout=60):
+    def __init__(self, keys, fail_hard=False, timeout=60, block=True):
         self.keys = keys
         self.locks = []
+        self.status = []
         self.fail_hard = fail_hard
         self.timeout = timeout
+        self.block = block
 
     def __enter__(self):
         try:
@@ -336,10 +339,15 @@ class CriticalSection(object):
                 lock = client.lock(key, timeout=self.timeout)
                 self.locks.append(lock)
             for lock in self.locks:
-                lock.acquire(blocking=True)
+                self.status.append(lock.acquire(blocking=self.block))
         except Exception:
             if self.fail_hard:
                 raise
+        return self
+
+    def success(self):
+        """Return True if all locks were acquired successfully"""
+        return len(self.status) == len(self.locks) and all(self.status)
 
     def __exit__(self, exc_type, exc_value, traceback):
         for lock in self.locks:

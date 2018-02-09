@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from couchdbkit.ext.django.schema import StringProperty, ListProperty
 
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors

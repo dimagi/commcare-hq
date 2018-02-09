@@ -4,28 +4,30 @@ import logging
 import os
 import shutil
 import tempfile
-from io import FileIO
-from cStringIO import StringIO
+from io import BytesIO
 from uuid import uuid4
 from distutils.version import LooseVersion
 from datetime import datetime, timedelta
 from wsgiref.util import FileWrapper
 from xml.etree import cElementTree as ElementTree
 
+import six
 from celery.exceptions import TimeoutError
 from celery.result import AsyncResult
 from couchdbkit import ResourceNotFound
 from django.http import HttpResponse, StreamingHttpResponse
 from django.conf import settings
 
-from casexml.apps.phone.data_providers import get_element_providers, get_full_response_providers
+from casexml.apps.phone.data_providers import get_element_providers, get_async_providers
 from casexml.apps.phone.exceptions import (
     MissingSyncLog, InvalidSyncLogException, SyncLogUserMismatch,
-    BadStateException, RestoreException, DateOpenedBugException,
+    BadStateException, RestoreException
 )
 from casexml.apps.phone.restore_caching import AsyncRestoreTaskIdCache, RestorePayloadPathCache
 from casexml.apps.phone.tasks import get_async_restore_payload, ASYNC_RESTORE_SENT
-from corehq.toggles import EXTENSION_CASES_SYNC_ENABLED, LIVEQUERY_SYNC
+from casexml.apps.phone.utils import get_cached_items_with_count
+from corehq.toggles import EXTENSION_CASES_SYNC_ENABLED, LIVEQUERY_SYNC, ICDS_LIVEQUERY, NAMESPACE_USER
+from corehq.util.datadog.utils import bucket_value
 from corehq.util.timer import TimingContext
 from corehq.util.datadog.gauges import datadog_counter
 from dimagi.utils.decorators.memoized import memoized
@@ -54,7 +56,6 @@ from casexml.apps.phone.const import (
     CLEAN_OWNERS,
     LIVEQUERY,
 )
-from casexml.apps.phone.utils import get_restore_response_class
 from casexml.apps.phone.xml import get_sync_element, get_progress_element
 from corehq.blobs import get_blob_db
 from corehq.blobs.exceptions import NotFound
@@ -100,32 +101,31 @@ class StockSettings(object):
         self.sync_consumption_ledger = sync_consumption_ledger
 
 
-class RestoreResponse(object):
+class RestoreContent(object):
     start_tag_template = (
-        '<OpenRosaResponse xmlns="http://openrosa.org/http/response"{items}>'
-        '<message nature="{nature}">Successfully restored account {username}!</message>'
+        b'<OpenRosaResponse xmlns="http://openrosa.org/http/response"%(items)s>'
+        b'<message nature="%(nature)s">Successfully restored account %(username)s!</message>'
     )
-    items_template = ' items="{}"'
-    closing_tag = '</OpenRosaResponse>'
+    items_template = b' items="%s"'
+    closing_tag = b'</OpenRosaResponse>'
 
     def __init__(self, username=None, items=False):
         self.username = username
         self.items = items
         self.num_items = 0
-        self.finalized = False
-
-    def close(self):
-        self.response_body.close()
 
     def __enter__(self):
+        self.response_body = tempfile.TemporaryFile('w+b')
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        self.close()
+        self.response_body.close()
 
     def append(self, xml_element):
         self.num_items += 1
-        if isinstance(xml_element, basestring):
+        if isinstance(xml_element, six.binary_type):
+            xml_element, num = get_cached_items_with_count(xml_element)
+            self.num_items += num - 1
             self.response_body.write(xml_element)
         else:
             self.response_body.write(xml_util.tostring(xml_element))
@@ -134,182 +134,54 @@ class RestoreResponse(object):
         for element in iterable:
             self.append(element)
 
-    def finalize(self):
-        raise NotImplemented()
-
-    def as_string(self):
-        raise NotImplemented()
-
-    @classmethod
-    def get_payload(cls, filename):
-        '''
-        Given a filename (or identifier) returns the associated payload as
-        a filelike object. If it doesn't exist, return None.
-
-        :filename: Identifier to lookup payload
-        :returns: Filelike object or None
-        '''
-        raise NotImplemented()
-
-    def __str__(self):
-        return self.as_string()
-
-
-class FileRestoreResponse(RestoreResponse):
-
-    BODY_TAG_SUFFIX = '-body'
-    EXTENSION = 'xml'
-
-    def __init__(self, username=None, items=False):
-        super(FileRestoreResponse, self).__init__(username, items)
-        self.filename = os.path.join(settings.SHARED_DRIVE_CONF.restore_dir, uuid4().hex)
-
-        self.response_body = FileIO(self.get_filename(self.BODY_TAG_SUFFIX), 'w+')
-
-    def get_filename(self, suffix=None):
-        return "{filename}{suffix}.{ext}".format(
-            filename=self.filename,
-            suffix=suffix or '',
-            ext=self.EXTENSION
-        )
-
-    def __add__(self, other):
-        if not isinstance(other, FileRestoreResponse):
-            raise NotImplemented()
-
-        response = FileRestoreResponse(self.username, self.items)
-        response.num_items = self.num_items + other.num_items
+    def _write_to_file(self, fileobj):
+        # Add 1 to num_items to account for message element
+        items = (self.items_template % (self.num_items + 1)) if self.items else b''
+        fileobj.write(self.start_tag_template % {
+            b"items": items,
+            b"username": self.username.encode("utf8"),
+            b"nature": ResponseNature.OTA_RESTORE_SUCCESS.encode("utf8"),
+        })
 
         self.response_body.seek(0)
-        other.response_body.seek(0)
+        shutil.copyfileobj(self.response_body, fileobj)
 
-        shutil.copyfileobj(self.response_body, response.response_body)
-        shutil.copyfileobj(other.response_body, response.response_body)
+        fileobj.write(self.closing_tag)
 
-        return response
+    def get_fileobj(self):
+        fileobj = tempfile.TemporaryFile('w+b')
+        try:
+            self._write_to_file(fileobj)
+            fileobj.seek(0)
+            return fileobj
+        except:
+            fileobj.close()
+            raise
 
-    def finalize(self):
-        """
-        Creates the final file with start and ending tag
-        """
-        with open(self.get_filename(), 'w') as response:
-            # Add 1 to num_items to account for message element
-            items = self.items_template.format(self.num_items + 1) if self.items else ''
-            response.write(self.start_tag_template.format(
-                items=items,
-                username=self.username,
-                nature=ResponseNature.OTA_RESTORE_SUCCESS
-            ))
 
-            self.response_body.seek(0)
-            shutil.copyfileobj(self.response_body, response)
+class RestoreResponse(object):
 
-            response.write(self.closing_tag)
-
-        self.finalized = True
-        self.close()
+    def __init__(self, fileobj):
+        self.fileobj = fileobj
 
     def as_file(self):
-        return open(self.get_filename(), 'r')
-
-    @classmethod
-    def get_payload(cls, filename):
-        if os.path.exists(filename):
-            return open(filename, 'r')
-        return None
-
-    @classmethod
-    def get_content_length(cls, filename):
-        return os.path.getsize(filename)
+        return self.fileobj
 
     def as_string(self):
-        with open(self.get_filename(), 'r') as f:
-            return f.read()
+        """Get content as utf8-encoded bytes
+
+        NOTE: This method is only used in tests.
+        Cannot be called more than once, and `self.as_file()` will
+        return a closed file after this is called.
+        """
+        with self.fileobj:
+            return self.fileobj.read()
 
     def get_http_response(self):
-        headers = {'Content-Length': os.path.getsize(self.get_filename())}
-        return stream_response(open(self.get_filename(), 'r'), headers)
-
-
-class BlobRestoreResponse(RestoreResponse):
-
-    EXTENSION = 'xml'
-
-    def __init__(self, username=None, items=False):
-        super(BlobRestoreResponse, self).__init__(username, items)
-        self.identifier = 'restore-response-{}'.format(uuid4().hex)
-
-        self.response_body = tempfile.TemporaryFile('w+')
-
-    def get_filename(self, suffix=None):
-        return "{identifier}{suffix}.{ext}".format(
-            identifier=self.identifier,
-            suffix=suffix or '',
-            ext=self.EXTENSION
-        )
-
-    def __add__(self, other):
-        if not isinstance(other, BlobRestoreResponse):
-            raise NotImplementedError
-
-        response = BlobRestoreResponse(self.username, self.items)
-        response.num_items = self.num_items + other.num_items
-
-        self.response_body.seek(0)
-        other.response_body.seek(0)
-
-        shutil.copyfileobj(self.response_body, response.response_body)
-        shutil.copyfileobj(other.response_body, response.response_body)
-
-        return response
-
-    def finalize(self):
-        """
-        Creates the final file with start and ending tag
-        """
-        with tempfile.TemporaryFile('w+') as response:
-            # Add 1 to num_items to account for message element
-            items = self.items_template.format(self.num_items + 1) if self.items else ''
-            response.write(self.start_tag_template.format(
-                items=items,
-                username=self.username,
-                nature=ResponseNature.OTA_RESTORE_SUCCESS
-            ))
-
-            self.response_body.seek(0)
-            shutil.copyfileobj(self.response_body, response)
-
-            response.write(self.closing_tag)
-            response.seek(0)
-            get_blob_db().put(response, self.get_filename(), timeout=60)
-
-        self.finalized = True
-        self.close()
-
-    def as_file(self):
-        return get_blob_db().get(self.get_filename())
-
-    @classmethod
-    def get_payload(cls, identifier):
-        try:
-            return get_blob_db().get(identifier)
-        except NotFound:
-            return None
-
-    @classmethod
-    def get_content_length(cls, identifier):
-        return get_blob_db().size(identifier)
-
-    def as_string(self):
-        try:
-            blob = get_blob_db().get(self.get_filename())
-            return blob.read()
-        finally:
-            blob.close()
-
-    def get_http_response(self):
-        headers = {'Content-Length': get_blob_db().size(self.get_filename())}
-        return stream_response(get_blob_db().get(self.get_filename()), headers)
+        self.fileobj.seek(0, os.SEEK_END)
+        headers = {'Content-Length': self.fileobj.tell()}
+        self.fileobj.seek(0)
+        return stream_response(self.fileobj, headers)
 
 
 class AsyncRestoreResponse(object):
@@ -339,7 +211,7 @@ class AsyncRestoreResponse(object):
     def get_http_response(self):
         headers = {"Retry-After": self.progress['retry_after']}
         response = stream_response(
-            StringIO(self.compile_response()),
+            BytesIO(self.compile_response()),
             status=202,
             headers=headers,
         )
@@ -348,32 +220,44 @@ class AsyncRestoreResponse(object):
 
 class CachedResponse(object):
 
-    def __init__(self, domain, payload_path):
-        self.payload_path = payload_path
-        self.restore_class = get_restore_response_class()
-        self.payload = self.restore_class.get_payload(self.payload_path) if payload_path else None
+    def __init__(self, name):
+        self.name = name
 
-    def __nonzero__(self):
-        return bool(self.payload)
+    @classmethod
+    def save_for_later(cls, fileobj, timeout):
+        """Save restore response for later
+
+        :param fileobj: A file-like object.
+        :param timeout: Minimum content expiration in seconds.
+        :returns: A new `CachedResponse` pointing to the saved content.
+        """
+        name = 'restore-response-{}.xml'.format(uuid4().hex)
+        get_blob_db().put(NoClose(fileobj), name, timeout=max(timeout // 60, 60))
+        return cls(name)
+
+    def __bool__(self):
+        try:
+            return bool(self.as_file())
+        except NotFound:
+            return False
+
+    __nonzero__ = __bool__
 
     def as_string(self):
-        try:
-            return self.payload.read()
-        finally:
-            self.payload.close()
-
-    def get_content_length(self):
-        return self.restore_class.get_content_length(self.payload_path)
+        with self.as_file() as fileobj:
+            return fileobj.read()
 
     def as_file(self):
-        return self.payload
+        try:
+            value = self._fileobj
+        except AttributeError:
+            value = get_blob_db().get(self.name) if self.name else None
+            self._fileobj = value
+        return value
 
     def get_http_response(self):
-        headers = {}
-        content_length = self.get_content_length()
-        if content_length is not None:
-            headers['Content-Length'] = content_length
-        return stream_response(self.payload, headers)
+        headers = {'Content-Length': get_blob_db().size(self.name)}
+        return stream_response(self.as_file(), headers)
 
 
 class RestoreParams(object):
@@ -404,7 +288,7 @@ class RestoreParams(object):
         self.app = app
         self.device_id = device_id
         self.openrosa_version = (LooseVersion(openrosa_version)
-            if isinstance(openrosa_version, basestring) else openrosa_version)
+            if isinstance(openrosa_version, six.string_types) else openrosa_version)
 
     @property
     def app_id(self):
@@ -435,10 +319,6 @@ class RestoreState(object):
     reasons.
     """
 
-    @property
-    def restore_class(self):
-        return get_restore_response_class()
-
     def __init__(self, project, restore_user, params, async=False,
                  overwrite_cache=False, case_sync=None):
         if not project or not project.name:
@@ -459,7 +339,10 @@ class RestoreState(object):
         self._last_sync_log = Ellipsis
 
         if case_sync is None:
+            username = self.restore_user.username
             if LIVEQUERY_SYNC.enabled(self.domain):
+                case_sync = LIVEQUERY
+            elif self.domain == 'icds-cas' and ICDS_LIVEQUERY.enabled(username, namespace=NAMESPACE_USER):
                 case_sync = LIVEQUERY
             else:
                 case_sync = DEFAULT_CASE_SYNC
@@ -496,8 +379,6 @@ class RestoreState(object):
             if self.params.sync_log_id:
                 try:
                     sync_log = get_properly_wrapped_sync_log(self.params.sync_log_id)
-                    if settings.SERVER_ENVIRONMENT == "production":
-                        self._check_for_date_opened_bug(sync_log)
                 except ResourceNotFound:
                     # if we are in loose mode, return an HTTP 412 so that the phone will
                     # just force a fresh sync
@@ -517,26 +398,6 @@ class RestoreState(object):
             else:
                 self._last_sync_log = None
         return self._last_sync_log
-
-    def _check_for_date_opened_bug(self, sync_log):
-        introduced_date = datetime(2016, 7, 19, 19, 15)
-        reverted_date = datetime(2016, 7, 20, 9, 15)  # date bug was reverted on HQ
-        resolved_date = datetime(2016, 7, 21, 0, 0)  # approximate date this fix was deployed
-
-        if introduced_date < sync_log.date < reverted_date:
-            raise DateOpenedBugException(self.restore_user, sync_log._id)
-
-        # if the last synclog was before the time we pushed out this resolution,
-        # we also need to check that they don't have a bad sync
-        if reverted_date <= sync_log.date < resolved_date:
-            synclogs = SyncLog.view(
-                "phone/sync_logs_by_user",
-                reduce=True,
-                startkey=[sync_log.user_id, json_format_datetime(introduced_date), None],
-                endkey=[sync_log.user_id, json_format_datetime(reverted_date), {}],
-            ).first()
-            if synclogs and synclogs.get('value') != 0:
-                raise DateOpenedBugException(self.restore_user, sync_log._id)
 
     @property
     def is_initial(self):
@@ -632,7 +493,7 @@ class RestoreConfig(object):
             case_sync=case_sync,
         )
 
-        self.force_cache = self.cache_settings.force_cache or self.async
+        self.force_cache = self.cache_settings.force_cache
         self.cache_timeout = self.cache_settings.cache_timeout
         self.overwrite_cache = self.cache_settings.overwrite_cache
 
@@ -670,12 +531,25 @@ class RestoreConfig(object):
             device_id=self.params.device_id,
         )
 
-    def validate(self):
+    def get_response(self):
+        async = self.async
         try:
-            self.restore_state.validate_state()
-        except InvalidSyncLogException as e:
-            # This exception will get caught by the view and a 412 will be returned to the phone for resync
-            raise RestoreException(e)
+            with self.timing_context:
+                payload = self.get_payload()
+            response = payload.get_http_response()
+        except RestoreException as e:
+            logging.exception("%s error during restore submitted by %s: %s" %
+                              (type(e).__name__, self.restore_user.username, str(e)))
+            async = False
+            response = get_simple_response_xml(
+                e.message,
+                ResponseNature.OTA_RESTORE_ERROR
+            )
+            response = HttpResponse(response, content_type="text/xml; charset=utf-8",
+                                    status=412)  # precondition failed
+        if not async:
+            self._record_timing(response.status_code)
+        return response
 
     def get_payload(self):
         self.validate()
@@ -700,17 +574,12 @@ class RestoreConfig(object):
 
         return response
 
-    def generate_payload(self, async_task=None):
-        if async_task:
-            self.timing_context.stop("wait_for_task_to_start")
-        self.restore_state.start_sync()
-        response = self._generate_restore_response(async_task=async_task)
-        self.restore_state.finish_sync()
-        self.set_cached_payload_if_necessary(response, self.restore_state.duration)
-        if async_task:
-            self.timing_context.stop()  # root timer
-            self._record_timing('async')
-        return response
+    def validate(self):
+        try:
+            self.restore_state.validate_state()
+        except InvalidSyncLogException as e:
+            # This exception will get caught by the view and a 412 will be returned to the phone for resync
+            raise RestoreException(e)
 
     def get_cached_response(self):
         if self.overwrite_cache:
@@ -718,7 +587,30 @@ class RestoreConfig(object):
 
         cache_payload_path = self.restore_payload_path_cache.get_value()
 
-        return CachedResponse(self.domain, cache_payload_path)
+        return CachedResponse(cache_payload_path)
+
+    def generate_payload(self, async_task=None):
+        if async_task:
+            self.timing_context.stop("wait_for_task_to_start")
+        self.restore_state.start_sync()
+        fileobj = self._generate_restore_response(async_task=async_task)
+        try:
+            self.restore_state.finish_sync()
+            cached_response = self.set_cached_payload_if_necessary(
+                fileobj, self.restore_state.duration, async_task)
+            if async_task:
+                fileobj.close()
+                assert cached_response is not None
+                response = cached_response
+                self.timing_context.stop()  # root timer
+                self._record_timing('async')
+            else:
+                fileobj.seek(0)
+                response = RestoreResponse(fileobj)
+        except:
+            fileobj.close()
+            raise
+        return response
 
     def _get_asynchronous_payload(self):
         new_task = False
@@ -730,8 +622,8 @@ class RestoreConfig(object):
         if not task_exists:
             # start a new task
             # NOTE this starts a nested timer (wait_for_task_to_start),
-            # which will be stopped by self.generate_payload() in the
-            # asynchronous task. It is expected that
+            # which will be stopped by self.generate_payload(async_task)
+            # in the asynchronous task. It is expected that
             # get_async_restore_payload.delay(self) will serialize this
             # RestoreConfig and it's associated TimingContext before it
             # returns, and thereby fork the timing context. The timing
@@ -758,56 +650,30 @@ class RestoreConfig(object):
 
     def _generate_restore_response(self, async_task=None):
         """
-        This function returns a RestoreResponse class that encapsulates the response.
+        :returns: A file-like object containing response content.
         """
-        with self.restore_state.restore_class(
-                self.restore_user.username, items=self.params.include_item_count) as response:
-            element_providers = get_element_providers(self.timing_context)
-            for provider in element_providers:
+        username = self.restore_user.username
+        count_items = self.params.include_item_count
+        with RestoreContent(username, count_items) as content:
+            for provider in get_element_providers(self.timing_context):
                 with self.timing_context(provider.__class__.__name__):
-                    for element in provider.get_elements(self.restore_state):
-                        response.append(element)
+                    content.extend(provider.get_elements(self.restore_state))
 
-            full_response_providers = get_full_response_providers(self.timing_context, async_task)
-            for provider in full_response_providers:
+            for provider in get_async_providers(self.timing_context, async_task):
                 with self.timing_context(provider.__class__.__name__):
-                    partial_response = provider.get_response(self.restore_state)
-                    response = response + partial_response
-                    partial_response.close()
+                    provider.extend_response(self.restore_state, content)
 
-            response.finalize()
-            return response
+            return content.get_fileobj()
 
-    def get_response(self):
-        async = self.async
-        try:
-            with self.timing_context:
-                payload = self.get_payload()
-            response = payload.get_http_response()
-        except RestoreException as e:
-            logging.exception("%s error during restore submitted by %s: %s" %
-                              (type(e).__name__, self.restore_user.username, str(e)))
-            async = False
-            response = get_simple_response_xml(
-                e.message,
-                ResponseNature.OTA_RESTORE_ERROR
-            )
-            response = HttpResponse(response, content_type="text/xml; charset=utf-8",
-                                    status=412)  # precondition failed
-        if not async:
-            self._record_timing(response.status_code)
-        return response
-
-    def set_cached_payload_if_necessary(self, resp, duration):
-        cache_payload_path = resp.get_filename()
+    def set_cached_payload_if_necessary(self, fileobj, duration, async):
         # on initial sync, only cache if the duration was longer than the threshold
         is_long_restore = duration > timedelta(seconds=INITIAL_SYNC_CACHE_THRESHOLD)
 
-        if self.force_cache or is_long_restore or self.sync_log:
-            self._set_cache_in_redis(cache_payload_path)
-
-    def _set_cache_in_redis(self, cache_payload_path):
-        self.restore_payload_path_cache.set_value(cache_payload_path, self.cache_timeout)
+        if async or self.force_cache or is_long_restore or self.sync_log:
+            response = CachedResponse.save_for_later(fileobj, self.cache_timeout)
+            self.restore_payload_path_cache.set_value(response.name, self.cache_timeout)
+            return response
+        return None
 
     def delete_cached_payload_if_necessary(self):
         if self.overwrite_cache and self.restore_payload_path_cache.get_value():
@@ -853,15 +719,16 @@ class RestoreConfig(object):
         if (env, self.domain) in settings.RESTORE_TIMING_DOMAINS:
             tags.append(u'domain:{}'.format(self.domain))
         if timing is not None:
+            timer_buckets = (5, 20, 60, 120)
             for timer in timing.to_list(exclude_root=True):
                 if timer.name in RESTORE_SEGMENTS:
                     segment = RESTORE_SEGMENTS[timer.name]
-                    bucket = _get_time_bucket(timer.duration)
+                    bucket = bucket_value(timer.duration, timer_buckets, 's')
                     datadog_counter(
                         'commcare.restores.{}'.format(segment),
                         tags=tags + ['duration:%s' % bucket],
                     )
-            tags.append('duration:%s' % _get_time_bucket(timing.duration))
+            tags.append('duration:%s' % bucket_value(timing.duration, timer_buckets, 's'))
         datadog_counter('commcare.restores.count', tags=tags)
 
 
@@ -872,22 +739,17 @@ RESTORE_SEGMENTS = {
 }
 
 
-def _get_time_bucket(duration):
-    """Get time bucket for the given duration
+class NoClose:
+    """HACK file object with no-op `close()` to avoid close by S3Transfer
 
-    Bucket restore times because datadog's histogram is too limited
-
-    Basically restore frequency is not high enough to have a meaningful
-    time distribution with datadog's 10s aggregation window, especially
-    with tags. More details:
-    https://help.datadoghq.com/hc/en-us/articles/211545826
+    https://github.com/boto/s3transfer/issues/80
     """
-    if duration < 5:
-        return "lt_005s"
-    if duration < 20:
-        return "lt_020s"
-    if duration < 60:
-        return "lt_060s"
-    if duration < 120:
-        return "lt_120s"
-    return "over_120s"
+
+    def __init__(self, fileobj):
+        self.fileobj = fileobj
+
+    def __getattr__(self, name):
+        return getattr(self.fileobj, name)
+
+    def close(self):
+        pass

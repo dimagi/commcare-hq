@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import division
 from collections import namedtuple
 import datetime
 from django.utils.translation import ugettext as _, ugettext_lazy
@@ -14,6 +16,7 @@ from corehq.apps.es.users import UserES
 from itertools import chain
 from corehq.apps.locations.models import SQLLocation
 from django.db.models import Sum
+from six.moves import range
 
 
 def get_performance_threshold(domain_name):
@@ -141,8 +144,7 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
     def delta_high_performing_pct(self):
         if (self.delta_high_performing and self._previous_summary and
            self._previous_summary.number_of_performing_users):
-            return float(self.delta_high_performing /
-                         float(self._previous_summary.number_of_performing_users)) * 100.
+            return self.delta_high_performing / float(self._previous_summary.number_of_performing_users) * 100
 
     @property
     def delta_low_performing(self):
@@ -155,8 +157,7 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
     def delta_low_performing_pct(self):
         if self.delta_low_performing and self._previous_summary \
                 and self._previous_summary.number_of_low_performing_users:
-            return float(self.delta_low_performing /
-                         float(self._previous_summary.number_of_low_performing_users)) * 100.
+            return self.delta_low_performing / float(self._previous_summary.number_of_low_performing_users) * 100
 
     @property
     def delta_active(self):
@@ -165,7 +166,7 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
     @property
     def delta_active_pct(self):
         if self.delta_active and self._previous_summary and self._previous_summary.active:
-            return float(self.delta_active / float(self._previous_summary.active)) * 100.
+            return self.delta_active / float(self._previous_summary.active) * 100
 
     @property
     def delta_inactive(self):
@@ -176,7 +177,7 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
         if self.delta_inactive and self._previous_summary:
             if self._previous_summary.inactive == 0:
                 return self.delta_inactive * 100.
-            return float(self.delta_inactive / float(self._previous_summary.inactive)) * 100.
+            return self.delta_inactive / float(self._previous_summary.inactive) * 100
 
     def _get_all_user_stubs(self):
         return {
@@ -234,10 +235,7 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
         but are not this month (though are still active).
         """
         if self._previous_summary:
-            unhealthy_users = filter(
-                lambda stub: stub.is_active and not stub.is_performing,
-                self._get_all_user_stubs_with_extra_data()
-            )
+            unhealthy_users = [stub for stub in self._get_all_user_stubs_with_extra_data() if stub.is_active and not stub.is_performing]
             return sorted(unhealthy_users, key=lambda stub: stub.delta_forms)
 
     def get_dropouts(self):
@@ -246,10 +244,7 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
         but are not active this month
         """
         if self._previous_summary:
-            dropouts = filter(
-                lambda stub: not stub.is_active,
-                self._get_all_user_stubs_with_extra_data()
-            )
+            dropouts = [stub for stub in self._get_all_user_stubs_with_extra_data() if not stub.is_active]
             return sorted(dropouts, key=lambda stub: stub.delta_forms)
 
     def get_newly_performing(self):
@@ -258,10 +253,7 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
         after not performing last month.
         """
         if self._previous_summary:
-            dropouts = filter(
-                lambda stub: stub.is_newly_performing,
-                self._get_all_user_stubs_with_extra_data()
-            )
+            dropouts = [stub for stub in self._get_all_user_stubs_with_extra_data() if stub.is_newly_performing]
             return sorted(dropouts, key=lambda stub: -stub.delta_forms)
 
 
@@ -289,6 +281,7 @@ class ProjectHealthDashboard(ProjectReport):
 
     exportable = True
     emailable = True
+    js_scripts = ['reports/js/project_health_dashboard.js']
 
     @property
     @memoized
@@ -308,7 +301,7 @@ class ProjectHealthDashboard(ProjectReport):
             return 6
 
     def get_group_location_ids(self):
-        params = filter(None, self.request.GET.getlist('grouplocationfilter'))
+        params = [_f for _f in self.request.GET.getlist('grouplocationfilter') if _f]
         return params
 
     def parse_group_location_params(self, param_ids):

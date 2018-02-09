@@ -31,7 +31,7 @@
     <p>
         <button class="btn btn-success" data-bind="
             click: function() {
-                analytics.workflow('Clicked Make New Version');
+                hqImport('analytix/js/kissmetrix').track.event('Clicked Make New Version');
                           return makeNewBuild();
             },
             attr: {disabled: !buildButtonEnabled() ? 'disabled' : undefined},
@@ -105,6 +105,13 @@
                   </div>
               {% endif %}
               <div class="build-is-released">
+                  <!--ko if: is_released() == 'error' -->
+
+                  <span class="label label-danger">{% trans "Could not update" %}</span>
+
+                  <!--/ko-->
+                  <!--ko if: is_released() != 'error' -->
+
                   <span class="label label-info"
                         data-bind="visible: id() === $root.latestReleaseId()">{% trans "Latest" %}</span>
                   <i class="fa fa-spin fa-refresh hide js-release-waiting"></i>
@@ -130,6 +137,8 @@
                           {% trans "In Test" %}
                       </button>
                   </div>
+
+                  <!--/ko-->
               </div>
               <h4 class="panel-release-title">
                 <strong>{% trans "Version" %} <span data-bind="text: version"></span></strong> |

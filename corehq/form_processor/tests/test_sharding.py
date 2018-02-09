@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import division
 from collections import defaultdict
 from unittest import skipUnless, SkipTest
 from uuid import uuid4, UUID
@@ -10,6 +12,8 @@ from corehq.form_processor.backends.sql.dbaccessors import ShardAccessor
 from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL
 from corehq.form_processor.tests.utils import create_form_for_test, FormProcessorTestUtils, use_sql_backend
 from corehq.sql_db.config import partition_config
+import six
+from six.moves import range
 
 DOMAIN = 'sharding-test'
 
@@ -83,6 +87,16 @@ class ShardingTests(TestCase):
         for form_id, db_alias in dbs_for_docs.items():
             XFormInstanceSQL.objects.using(db_alias).get(form_id=form_id)
 
+    def test_same_dbalias_util(self):
+        from corehq.sql_db.util import get_db_alias_for_partitioned_doc, new_id_in_same_dbalias
+        for i in range(10):
+            # test multiple times to test a wider probability
+            f1_id = six.text_type(uuid4())
+            old_db_alias = get_db_alias_for_partitioned_doc(f1_id)
+            f2_id = new_id_in_same_dbalias(f1_id)
+            new_db_alias = get_db_alias_for_partitioned_doc(f2_id)
+            self.assertEqual(new_db_alias, old_db_alias)
+
 
 DATABASES = {
     key: {
@@ -148,7 +162,7 @@ class ShardAccessorTests(TestCase):
             doc_count_per_db[db_alias] += 1
 
         num_dbs = len(partition_config.get_form_processing_dbs())
-        even_split = int(N / num_dbs)
+        even_split = int(N // num_dbs)
         tolerance = N * 0.05  # 5% tollerance
         diffs = [abs(even_split - count) for count in doc_count_per_db.values()]
         outliers = [diff for diff in diffs if diff > tolerance]
@@ -164,7 +178,7 @@ class ShardAccessorTests(TestCase):
 
         csiphash_hashes = ShardAccessor.hash_doc_ids_python(doc_ids)
         self.assertEquals(len(csiphash_hashes), N)
-        self.assertTrue(all(isinstance(hash_, (int, long)) for hash_ in csiphash_hashes.values()))
+        self.assertTrue(all(isinstance(hash_, six.integer_types) for hash_ in csiphash_hashes.values()))
 
         N_shards = 1024
         part_mask = N_shards - 1

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from collections import OrderedDict
 from datetime import datetime, date, time, timedelta
 from xml.etree import cElementTree as ElementTree
@@ -56,7 +57,7 @@ class CallcenterFixtureTests(SimpleTestCase):
         """.format(userid=user.user_id), ElementTree.tostring(fixture))
 
     def test_callcenter_fixture_commcare_user(self):
-        user = CommCareUser(_id='123')
+        user = CommCareUser(_id='123', username="test@test")
         indicator_set = MockIndicatorSet(name='test', indicators=OrderedDict([
             ('user_case1', {'i1': 1, 'i2': 2}),
             ('user_case2', {'i1': 0, 'i2': 3})

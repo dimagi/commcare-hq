@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from xml.etree import cElementTree as ElementTree
 from django.test import TestCase
 from corehq.blobs import get_blob_db
@@ -18,32 +19,6 @@ from corehq.form_processor.tests.utils import use_sql_backend
 DOMAIN = 'fixture-test'
 SA_PROVINCES = 'sa_provinces'
 FR_PROVINCES = 'fr_provinces'
-
-
-class OtaWebUserFixtureTest(TestCase):
-
-    @classmethod
-    def setUpClass(cls):
-        super(OtaWebUserFixtureTest, cls).setUpClass()
-        cls.domain = Domain.get_or_create_with_name(DOMAIN, is_active=True)
-        cls.restore_user = create_restore_user(domain=DOMAIN, is_mobile_user=False)
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.domain.delete()
-        get_blob_db().delete(DOMAIN, FIXTURE_BUCKET)
-        delete_all_users()
-        super(OtaWebUserFixtureTest, cls).tearDownClass()
-
-    def test_basic_fixture_generation(self):
-        fixture_xml = list(generator.get_fixtures(self.restore_user))
-        self.assertEqual(len(fixture_xml), 1)
-        self.assertEqual(fixture_xml[0].findall('./groups/group'), [])
-
-
-@use_sql_backend
-class OtaWebUserFixtureTestSQL(OtaWebUserFixtureTest):
-    pass
 
 
 class OtaFixtureTest(TestCase):
@@ -100,10 +75,6 @@ class OtaFixtureTest(TestCase):
 
                 expected = _get_item_list_fixture(self.user.get_id, data_type.tag, data_item)
                 check_xml_line_by_line(self, expected, item_list_xml[0])
-
-    def test_basic_fixture_generation(self):
-        fixture_xml = generator.get_fixtures(self.restore_user)
-        self._check_fixture(fixture_xml, item_lists=[SA_PROVINCES, FR_PROVINCES])
 
     def test_fixtures_by_id(self):
         fixture_xml = generator.get_fixture_by_id('user-groups', self.restore_user)

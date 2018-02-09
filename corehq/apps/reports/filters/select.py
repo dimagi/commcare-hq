@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import datetime
 import calendar
 
@@ -17,6 +18,9 @@ from corehq.motech.repeaters.const import (
     RECORD_CANCELLED_STATE,
     RECORD_PENDING_STATE,
 )
+import six
+from six.moves import range
+from six.moves import map
 
 
 class GroupFilterMixin(object):
@@ -45,7 +49,7 @@ class YearFilter(BaseSingleOptionFilter):
     @property
     def options(self):
         start_year = getattr(settings, 'START_YEAR', 2008)
-        years = [(unicode(y), y) for y in range(start_year, datetime.datetime.utcnow().year + 1)]
+        years = [(six.text_type(y), y) for y in range(start_year, datetime.datetime.utcnow().year + 1)]
         years.reverse()
         return years
 
@@ -126,13 +130,13 @@ class RepeaterFilter(BaseSingleOptionFilter):
     @property
     def options(self):
         repeaters = self._get_repeaters()
-        return map(
+        return list(map(
             lambda repeater: (repeater.get_id, u'{}: {}'.format(
                 repeater.doc_type,
                 repeater.url,
             )),
             repeaters,
-        )
+        ))
 
     def _get_repeaters(self):
         return get_repeaters_by_domain(self.domain)

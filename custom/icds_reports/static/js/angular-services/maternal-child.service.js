@@ -18,8 +18,8 @@ window.angular.module('icdsApp').factory('maternalChildService', ['$http', funct
                 params: params,
             });
         },
-        getPrevalenceOfStunningData: function(step, params) {
-            var get_url = url('prevalence_of_stunning', step);
+        getPrevalenceOfStuntingData: function(step, params) {
+            var get_url = url('prevalence_of_stunting', step);
             return  $http({
                 method: "GET",
                 url: get_url,

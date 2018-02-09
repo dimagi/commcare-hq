@@ -1,0 +1,14 @@
+{% extends 'users/base_template.html' %}
+{% load hq_shared_tags %}
+{% load i18n %}
+{% load crispy_forms_tags %}
+
+
+{% block js %}{{ block.super }}
+    <script src="{% static 'users/js/filtered_download.js' %}"></script>
+{% endblock %}
+
+{% block page_content %}
+    {% initial_page_data 'count_users_url' count_users_url %}
+	{% crispy form %}
+{% endblock %}

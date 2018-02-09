@@ -1,9 +1,12 @@
+from __future__ import absolute_import
 import re
 import json
 import datetime
 import socket
 from django.conf import settings
+
 from corehq.apps.locations.models import SQLLocation
+from custom.enikshay.integrations.bets.repeater_generators import LocationPayloadGenerator
 from corehq.motech.repeaters.exceptions import RequestConnectionError
 from corehq.motech.repeaters.repeater_generators import BasePayloadGenerator, SOAPPayloadGeneratorMixin
 from custom.enikshay.const import (
@@ -17,16 +20,24 @@ from custom.enikshay.const import (
     TREATMENT_OUTCOME_DATE,
     DSTB_EPISODE_TYPE,
     PERSON_CASE_2B_VERSION,
+    HEALTH_ESTABLISHMENT_SUCCESS_RESPONSE_REGEX,
+    NOT_AVAILABLE_VALUE,
+    DUMMY_VALUES,
+    AGENCY_LOCATION_TYPES,
 )
 from custom.enikshay.case_utils import (
     get_person_case_from_episode,
     get_person_locations,
     get_open_episode_case_from_person,
     get_occurrence_case_from_test,
-    get_open_episode_case_from_occurrence,
+    get_associated_episode_case_for_test,
     get_person_case_from_occurrence,
-    get_lab_referral_from_test, get_occurrence_case_from_episode)
-from custom.enikshay.integrations.nikshay.exceptions import NikshayResponseException
+    get_lab_referral_from_test,
+    get_occurrence_case_from_episode,
+)
+from custom.enikshay.integrations.nikshay.exceptions import (
+    NikshayResponseException,
+)
 from custom.enikshay.exceptions import (
     NikshayLocationNotFound,
     NikshayRequiredValueMissing,
@@ -46,10 +57,17 @@ from custom.enikshay.integrations.nikshay.field_mappings import (
     purpose_of_testing,
     smear_result_grade,
     drug_susceptibility_test_status,
-    basis_of_diagnosis)
+    basis_of_diagnosis,
+    health_establishment_type,
+    health_establishment_sector,
+)
 from custom.enikshay.case_utils import update_case
 from dimagi.utils.post import parse_SOAP_response
+
+from custom.enikshay.integrations.nikshay.utils import get_location_user_for_notification
+from custom.enikshay.location_utils import get_health_establishment_hierarchy_codes
 from dimagi.utils.decorators.memoized import memoized
+import six
 
 ENIKSHAY_ID = 8
 NIKSHAY_NULL_DATE = '1900-01-01'
@@ -88,11 +106,9 @@ class BaseNikshayPayloadGenerator(BasePayloadGenerator):
             "IP_FROM": server_ip,
         }
 
-    def use_2b_app_structure(self, person_case, episode_case):
-        return (
-            episode_case.dynamic_case_properties().get('episode_type') == DSTB_EPISODE_TYPE and
-            person_case.dynamic_case_properties().get('case_version') == PERSON_CASE_2B_VERSION
-        )
+    @staticmethod
+    def use_2b_app_structure(person_case):
+        return person_case.dynamic_case_properties().get('case_version') == PERSON_CASE_2B_VERSION
 
 
 class NikshayRegisterPatientPayloadGenerator(BaseNikshayPayloadGenerator):
@@ -106,7 +122,7 @@ class NikshayRegisterPatientPayloadGenerator(BaseNikshayPayloadGenerator):
         episode_case_properties = episode_case.dynamic_case_properties()
         person_case_properties = person_case.dynamic_case_properties()
         occurence_case = None
-        use_2b_app_structure = self.use_2b_app_structure(person_case, episode_case)
+        use_2b_app_structure = self.use_2b_app_structure(person_case)
         if use_2b_app_structure:
             occurence_case = get_occurrence_case_from_episode(episode_case.domain, episode_case.get_id)
         properties_dict = self._base_properties(repeat_record)
@@ -140,7 +156,7 @@ class NikshayRegisterPatientPayloadGenerator(BaseNikshayPayloadGenerator):
                 external_id=nikshay_id,
             )
         except NikshayResponseException as e:
-            _save_error_message(payload_doc.domain, payload_doc.case_id, unicode(e.message))
+            _save_error_message(payload_doc.domain, payload_doc.case_id, six.text_type(e.message))
 
     def handle_failure(self, response, payload_doc, repeat_record):
         if response.status_code == 409:  # Conflict
@@ -153,11 +169,11 @@ class NikshayRegisterPatientPayloadGenerator(BaseNikshayPayloadGenerator):
                 },
             )
         else:
-            _save_error_message(payload_doc.domain, payload_doc.case_id, unicode(response.json()))
+            _save_error_message(payload_doc.domain, payload_doc.case_id, six.text_type(response.json()))
 
     def handle_exception(self, exception, repeat_record):
         if isinstance(exception, RequestConnectionError):
-            update_case(repeat_record.domain, repeat_record.payload_id, {"nikshay_error": unicode(exception)})
+            update_case(repeat_record.domain, repeat_record.payload_id, {"nikshay_error": six.text_type(exception)})
 
 
 class NikshayTreatmentOutcomePayload(BaseNikshayPayloadGenerator):
@@ -188,12 +204,12 @@ class NikshayTreatmentOutcomePayload(BaseNikshayPayloadGenerator):
         })
 
     def handle_failure(self, response, payload_doc, repeat_record):
-        _save_error_message(payload_doc.domain, payload_doc.case_id, unicode(response.json()),
+        _save_error_message(payload_doc.domain, payload_doc.case_id, six.text_type(response.json()),
                             "treatment_outcome_nikshay_registered", "treatment_outcome_nikshay_error")
 
     def handle_exception(self, exception, repeat_record):
         if isinstance(exception, RequestConnectionError):
-            _save_error_message(repeat_record.domain, repeat_record.payload_id, unicode(exception),
+            _save_error_message(repeat_record.domain, repeat_record.payload_id, six.text_type(exception),
                                 "treatment_outcome_nikshay_registered", "treatment_outcome_nikshay_error")
 
 
@@ -214,7 +230,7 @@ class NikshayHIVTestPayloadGenerator(BaseNikshayPayloadGenerator):
         base_properties = self._base_properties(repeat_record)
         base_properties.update({
             "PatientID": episode_case_properties.get('nikshay_id'),
-            "HIVStatus": hiv_status.get(person_case_properties.get('hiv_status')),
+            "HIVStatus": hiv_status.get(person_case_properties.get('hiv_status'), hiv_status.get('unknown')),
             "HIVTestDate": _format_date_or_null_date(person_case_properties, 'hiv_test_date'),
             "CPTDeliverDate": _format_date_or_null_date(person_case_properties, 'cpt_1_date'),
             "ARTCentreDate": _format_date_or_null_date(person_case_properties, 'art_initiation_date'),
@@ -237,12 +253,12 @@ class NikshayHIVTestPayloadGenerator(BaseNikshayPayloadGenerator):
         )
 
     def handle_failure(self, response, payload_doc, repeat_record):
-        _save_error_message(payload_doc.domain, payload_doc.case_id, unicode(response.json()),
+        _save_error_message(payload_doc.domain, payload_doc.case_id, six.text_type(response.json()),
                             "hiv_test_nikshay_registered", "hiv_test_nikshay_error")
 
     def handle_exception(self, exception, repeat_record):
         if isinstance(exception, RequestConnectionError):
-            _save_error_message(repeat_record.domain, repeat_record.payload_id, unicode(exception),
+            _save_error_message(repeat_record.domain, repeat_record.payload_id, six.text_type(exception),
                                 "hiv_test_nikshay_registered", "hiv_test_nikshay_error")
 
 
@@ -251,12 +267,12 @@ class NikshayFollowupPayloadGenerator(BaseNikshayPayloadGenerator):
 
     def get_payload(self, repeat_record, test_case):
         occurence_case = get_occurrence_case_from_test(test_case.domain, test_case.get_id)
-        episode_case = get_open_episode_case_from_occurrence(test_case.domain, occurence_case.get_id)
+        episode_case = get_associated_episode_case_for_test(test_case, occurence_case.get_id)
         person_case = get_person_case_from_occurrence(test_case.domain, occurence_case.get_id)
 
         test_case_properties = test_case.dynamic_case_properties()
         episode_case_properties = episode_case.dynamic_case_properties()
-        use_2b_app_structure = self.use_2b_app_structure(person_case, episode_case)
+        use_2b_app_structure = self.use_2b_app_structure(person_case)
 
         interval_id, lab_serial_number, result_grade, dmc_code = self._get_mandatory_fields(
             test_case, test_case_properties, occurence_case,
@@ -291,18 +307,26 @@ class NikshayFollowupPayloadGenerator(BaseNikshayPayloadGenerator):
         lab_serial_number = test_case_properties.get('lab_serial_number')
         test_result_grade = test_case_properties.get('result_grade')
         bacilli_count = test_case_properties.get('max_bacilli_count')
+        try:
+            # Since 9 is the max value supported by Nikshay, notify 9 in case 9+
+            if bacilli_count and int(bacilli_count) > 9:
+                bacilli_count = '9'
+        except ValueError:
+            pass
         result_grade = self.get_result_grade(test_result_grade, bacilli_count)
 
         if not (lab_serial_number and result_grade):
             raise NikshayRequiredValueMissing("Mandatory value missing in one of the following "
-                                       "LabSerialNo: {lab_serial_number}, ResultGrade: {result_grade}"
-                                       .format(lab_serial_number=lab_serial_number,
-                                               result_grade=test_result_grade))
+                                              "LabSerialNo: {lab_serial_number}, ResultGrade: {result_grade}, "
+                                              "Max Bacilli Count: {max_bacilli_count}"
+                                              .format(lab_serial_number=lab_serial_number,
+                                                      result_grade=test_result_grade,
+                                                      max_bacilli_count=bacilli_count))
 
         return interval_id, lab_serial_number, result_grade, dmc_code
 
     def get_result_grade(self, test_result_grade, bacilli_count):
-        if test_result_grade in smear_result_grade.keys():
+        if test_result_grade in smear_result_grade:
             return smear_result_grade.get(test_result_grade)
         elif test_result_grade == 'scanty':
             return smear_result_grade.get("SC-{b_count}".format(b_count=bacilli_count), None)
@@ -343,7 +367,7 @@ class NikshayFollowupPayloadGenerator(BaseNikshayPayloadGenerator):
                     location_id=dmc_location_id, test_case_id=test_case.get_id)
             )
         nikshay_code = dmc.metadata.get('nikshay_code')
-        if not nikshay_code or (isinstance(nikshay_code, basestring) and not nikshay_code.isdigit()):
+        if not nikshay_code or (isinstance(nikshay_code, six.string_types) and not nikshay_code.isdigit()):
             raise NikshayRequiredValueMissing("Inappropriate value for dmc, got value: {}".format(nikshay_code))
         return dmc.metadata.get('nikshay_code')
 
@@ -358,12 +382,12 @@ class NikshayFollowupPayloadGenerator(BaseNikshayPayloadGenerator):
         )
 
     def handle_failure(self, response, payload_doc, repeat_record):
-        _save_error_message(payload_doc.domain, payload_doc.case_id, unicode(response.json()),
+        _save_error_message(payload_doc.domain, payload_doc.case_id, six.text_type(response.json()),
                             "followup_nikshay_registered", "followup_nikshay_error")
 
     def handle_exception(self, exception, repeat_record):
         if isinstance(exception, RequestConnectionError):
-            _save_error_message(repeat_record.domain, repeat_record.payload_id, unicode(exception),
+            _save_error_message(repeat_record.domain, repeat_record.payload_id, six.text_type(exception),
                                 "followup_nikshay_registered", "followup_nikshay_error")
 
 
@@ -374,11 +398,27 @@ class NikshayRegisterPrivatePatientPayloadGenerator(SOAPPayloadGeneratorMixin, B
     @memoized
     def _get_person_locations(self, episode_case):
         person_case = self._get_person_case(episode_case)
-        return get_person_locations(person_case)
+        return get_person_locations(person_case, episode_case)
 
     @memoized
     def _get_person_case(self, episode_case):
         return get_person_case_from_episode(episode_case.domain, episode_case.get_id)
+
+    @staticmethod
+    def _get_husband_father_name(person_case_properties):
+        husband_father_name = sanitize_text_for_xml(person_case_properties.get('husband_father_name', ''))
+        # check after sanitize for xml to consider cases where it would become blank after being sanitized
+        if husband_father_name:
+            return husband_father_name
+        return sanitize_text_for_xml(person_case_properties.get('last_name', ''))
+
+    @staticmethod
+    def _get_address(person_case_properties):
+        # API for Address with char sanitize_text_for_xml ',' returns Invalid data format error
+        current_address = sanitize_text_for_xml(person_case_properties.get('current_address', '')).replace(',', '')
+        if current_address:
+            return current_address
+        return "NULL"
 
     def get_payload(self, repeat_record, episode_case):
         person_case = self._get_person_case(episode_case)
@@ -397,21 +437,22 @@ class NikshayRegisterPrivatePatientPayloadGenerator(SOAPPayloadGeneratorMixin, B
             "TBUcode": person_locations.tu,
             "HFIDNO": person_locations.pcp,
             "pname": sanitize_text_for_xml(person_case.name),
-            "fhname": sanitize_text_for_xml(person_case_properties.get('husband_father_name', '')),
-            "age": person_case_properties.get('age', ''),
+            "fhname": self._get_husband_father_name(person_case_properties),
+            "age": (_get_person_age(person_case_properties) or '0'),
             "gender": person_case_properties.get('sex', '').capitalize(),
-            # API for Address with char ',' returns Invalid data format error
-            "Address": sanitize_text_for_xml(person_case_properties.get('current_address', '').replace(',', '')),
-            "pin": person_case_properties.get('current_address_postal_code', ''),
+            "Address": self._get_address(person_case_properties),
+            "pin": (person_case_properties.get('current_address_postal_code') or DUMMY_VALUES['pincode']),
             "lno": person_case_properties.get('phone_number', ''),
             "mno": '0',
             "tbdiagdate": _format_date(str(episode_date)),
             "tbstdate": _format_date(
                 episode_case_properties.get(TREATMENT_START_DATE, str(datetime.date.today()))),
-            "Type": disease_classification.get(episode_case_properties.get('disease_classification', ''), ''),
-            "B_diagnosis": basis_of_diagnosis.get(episode_case_properties.get('basis_of_diagnosis', ''), ''),
-            "D_SUSTest": drug_susceptibility_test_status.get(episode_case_properties.get('dst_status', '')),
-            "Treat_I": episode_case_properties.get('treatment_initiation_status', ''),
+            "Type": (disease_classification.get(episode_case_properties.get('disease_classification'))
+                     or NOT_AVAILABLE_VALUE),
+            "B_diagnosis": basis_of_diagnosis.get(episode_case_properties.get('basis_of_diagnosis'), ''),
+            "D_SUSTest": (drug_susceptibility_test_status.get(episode_case_properties.get('dst_status'))
+                          or NOT_AVAILABLE_VALUE),
+            "Treat_I": (episode_case_properties.get('treatment_initiation_status') or NOT_AVAILABLE_VALUE),
             "usersid": settings.ENIKSHAY_PRIVATE_API_USERS.get(person_locations.sto, ''),
             "password": settings.ENIKSHAY_PRIVATE_API_PASSWORD,
             "Source": ENIKSHAY_ID,
@@ -422,6 +463,7 @@ class NikshayRegisterPrivatePatientPayloadGenerator(SOAPPayloadGeneratorMixin, B
             repeat_record.repeater.url,
             repeat_record.repeater.operation,
             response,
+            verify=repeat_record.repeater.verify,
         )
         try:
             health_facility_id = self._get_person_locations(payload_doc).pcp
@@ -436,6 +478,7 @@ class NikshayRegisterPrivatePatientPayloadGenerator(SOAPPayloadGeneratorMixin, B
                     "private_nikshay_registered": "true",
                     "nikshay_id": nikshay_id,
                     "private_nikshay_error": "",
+                    "date_private_nikshay_notification": datetime.date.today(),
                 },
                 external_id=nikshay_id,
             )
@@ -445,8 +488,9 @@ class NikshayRegisterPrivatePatientPayloadGenerator(SOAPPayloadGeneratorMixin, B
             repeat_record.repeater.url,
             repeat_record.repeater.operation,
             response,
+            verify=repeat_record.repeater.verify,
         )
-        _save_error_message(payload_doc.domain, payload_doc.case_id, unicode(message),
+        _save_error_message(payload_doc.domain, payload_doc.case_id, six.text_type(message),
                             "private_nikshay_registered", "private_nikshay_error"
                             )
 
@@ -456,9 +500,97 @@ class NikshayRegisterPrivatePatientPayloadGenerator(SOAPPayloadGeneratorMixin, B
                 repeat_record.domain,
                 repeat_record.payload_id,
                 {
-                    "private_nikshay_error": unicode(exception)
+                    "private_nikshay_error": six.text_type(exception)
                 }
             )
+
+
+class NikshayHealthEstablishmentPayloadGenerator(SOAPPayloadGeneratorMixin, LocationPayloadGenerator):
+    format_name = 'location_xml'
+    format_label = 'XML'
+
+    @staticmethod
+    def _get_establishment_type(location):
+        if location.location_type.name == AGENCY_LOCATION_TYPES['plc']:
+            return health_establishment_type.get('Lab')
+        if location.location_type.name == AGENCY_LOCATION_TYPES['pcp']:
+            return health_establishment_type.get(
+                location.metadata.get('facility_type')
+            )
+
+    @staticmethod
+    def _get_address(location_user_data):
+        if location_user_data.get('address_line_1') or location_user_data.get('address_line_2'):
+            return (u"%s %s" % (
+                location_user_data.get('address_line_1'), location_user_data.get('address_line_2'))).strip()
+        else:
+            return NOT_AVAILABLE_VALUE
+
+    @staticmethod
+    def _get_mobile_number(location_user_data):
+        contact_phone_number = location_user_data.get('contact_phone_number')
+        if contact_phone_number:
+            # reject any isd codes entered like 919876543210 so pick last 10 digits only
+            return contact_phone_number.strip()[-10:]
+        return DUMMY_VALUES['phone_number']
+
+    @staticmethod
+    def _get_telephone_number(location_user_data):
+        landline_no = location_user_data.get('landline_no')
+        if landline_no:
+            # reject any isd codes entered like 02223777800 so pick last 10 digits only
+            return landline_no.strip()[-10:]
+        return DUMMY_VALUES['phone_number']
+
+    @staticmethod
+    def _get_value_or_dummy_value(location_user_data, value_for):
+        return location_user_data.get(value_for) or DUMMY_VALUES.get(value_for)
+
+    def get_payload(self, repeat_record, location):
+        location_hierarchy_codes = get_health_establishment_hierarchy_codes(location)
+        location_user = get_location_user_for_notification(location)
+        location_user_data = location_user.user_data
+        return {
+            'ESTABLISHMENT_TYPE': self._get_establishment_type(location),
+            'SECTOR': health_establishment_sector.get(location.metadata.get('sector', ''), ''),
+            'ESTABLISHMENT_NAME': sanitize_text_for_xml(location.name),
+            'MCI_HR_NO': self._get_value_or_dummy_value(location_user_data, 'registration_number'),
+            'CONTACT_PNAME': sanitize_text_for_xml(location_user.full_name),
+            'CONTACT_PDESIGNATION': (location_user_data.get('pcp_qualification') or NOT_AVAILABLE_VALUE),
+            'TELEPHONE_NO': self._get_telephone_number(location_user_data),
+            'MOBILE_NO': self._get_mobile_number(location_user_data),
+            'COMPLETE_ADDRESS': sanitize_text_for_xml(self._get_address(location_user_data)),
+            'PINCODE': self._get_value_or_dummy_value(location_user_data, 'pincode'),
+            'EMAILID': self._get_value_or_dummy_value(location_user_data, 'email'),
+            'STATE_CODE': location_hierarchy_codes.stcode,
+            'DISTRICT_CODE': location_hierarchy_codes.dtcode,
+            'TBU_CODE': location.metadata.get('nikshay_tu_id'),
+            'MUST_CREATE_NEW': 'N',
+            'USER_ID': settings.ENIKSHAY_PRIVATE_API_USERS.get(location_hierarchy_codes.stcode, ''),
+            'PASSWORD': settings.ENIKSHAY_PRIVATE_API_PASSWORD,
+            'Source': ENIKSHAY_ID,
+        }
+
+    def handle_success(self, response, payload_doc, repeat_record):
+        message = parse_SOAP_response(
+            repeat_record.repeater.url,
+            repeat_record.repeater.operation,
+            response,
+            verify=repeat_record.repeater.verify,
+        )
+        message_node = message.find("NewDataSet/HE_DETAILS/Message")
+        already_registered_id_node = message.find("NewDataSet/Table1/HE_ID")
+        if already_registered_id_node is not None:
+            health_facility_id = already_registered_id_node.text
+        else:
+            message_text = message_node.text
+            health_facility_id = re.match(HEALTH_ESTABLISHMENT_SUCCESS_RESPONSE_REGEX, message_text).groups()[0]
+        if payload_doc.metadata.get('nikshay_code'):
+            # The repeater checks for this to be absent but in case its added after the trigger
+            # and before its fetched from Nikshay, just keep a copy of the older value for ref
+            payload_doc.metadata['old_nikshay_code'] = payload_doc.metadata.get('nikshay_code')
+        payload_doc.metadata['nikshay_code'] = health_facility_id
+        payload_doc.save()
 
 
 def _get_nikshay_id_from_response(response):
@@ -506,7 +638,8 @@ def _get_person_case_properties(episode_case, person_case, person_case_propertie
         # 2B is currently setting age_entered but we are in the short term moving it to use age instead
         "page": _get_person_age(person_case_properties),
         "paddress": person_case_properties.get('current_address', ''),
-        "pmob": person_case_properties.get(PRIMARY_PHONE_NUMBER, ''),
+        # send 0 since that is accepted by Nikshay for this mandatory field
+        "pmob": (person_case_properties.get(PRIMARY_PHONE_NUMBER) or '0'),
         "cname": person_case_properties.get('secondary_contact_name_address', ''),
         "caddress": person_case_properties.get('secondary_contact_name_address', ''),
         "cmob": person_case_properties.get(BACKUP_PHONE_NUMBER, ''),
@@ -566,8 +699,8 @@ def _get_episode_case_properties(episode_case_properties, occurence_case, person
             episode_disease_classification,
             ''
         ),
-        "dcpulmunory": dcpulmonory.get(episode_case_properties.get('disease_classification', ''), "N"),
-        "dcexpulmunory": dcexpulmonory.get(episode_case_properties.get('disease_classification', ''), "N"),
+        "dcpulmunory": dcpulmonory.get(episode_disease_classification, "N"),
+        "dcexpulmunory": dcexpulmonory.get(episode_disease_classification, "N"),
         "dotname": (' '.join(
             [episode_case_properties.get(TREATMENT_SUPPORTER_FIRST_NAME, ''),
              episode_case_properties.get(TREATMENT_SUPPORTER_LAST_NAME, '')])
@@ -592,7 +725,7 @@ def _save_error_message(domain, case_id, error, reg_field="nikshay_registered", 
         case_id,
         {
             reg_field: "false",
-            error_field: unicode(error),
+            error_field: six.text_type(error),
         },
     )
 

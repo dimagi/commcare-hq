@@ -1,8 +1,11 @@
 /*global FormplayerFrontend, Util */
 
 FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone, Marionette, $) {
+
     Menus.Controller = {
         selectMenu: function (options) {
+
+            options.preview = FormplayerFrontend.currentUser.displayOptions.singleAppMode;
 
             var fetchingNextMenu = FormplayerFrontend.request("app:select:menus", options);
 
@@ -12,7 +15,6 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
              a list of entities (cases) and their details
              */
             $.when(fetchingNextMenu).done(function (menuResponse) {
-
                 // show any notifications from Formplayer
                 if (menuResponse.notification && !_.isNull(menuResponse.notification.message)) {
                     FormplayerFrontend.request("handleNotification", menuResponse.notification);
@@ -39,6 +41,11 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
                 }
 
                 Menus.Controller.showMenu(menuResponse);
+
+                if (menuResponse.shouldRequestLocation) {
+                    Menus.Util.handleLocationRequest(options);
+                }
+                Menus.Util.startOrStopLocationWatching(menuResponse.shouldWatchLocation);
             }).fail(function() {
                 // if it didn't go through, then it displayed an error message.
                 // the right thing to do is then to just stay in the same place.
@@ -64,7 +71,7 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
             if (menuListView) {
                 FormplayerFrontend.regions.main.show(menuListView.render());
             }
-            if (menuResponse.persistentCaseTile) {
+            if (menuResponse.persistentCaseTile && !FormplayerFrontend.currentUser.displayOptions.singleAppMode) {
                 Menus.Controller.showPersistentCaseTile(menuResponse.persistentCaseTile);
             } else {
                 FormplayerFrontend.regions.persistentCaseTile.empty();
@@ -195,6 +202,60 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
     };
 
     Menus.Util = {
+        handleLocationRequest: function(optionsFromLastRequest) {
+            var success = function(position) {
+                FormplayerFrontend.regions.loadingProgress.empty();
+                Menus.Util.recordPosition(position);
+                Menus.Controller.selectMenu(optionsFromLastRequest);
+            };
+
+            var error = function(err) {
+                FormplayerFrontend.regions.loadingProgress.empty();
+                FormplayerFrontend.trigger('showError',
+                    getErrorMessage(err) +
+                    "Without access to your location, computations that rely on the here() function will show up blank.");
+            };
+
+            var getErrorMessage = function(err) {
+                switch(err.code) {
+                    case err.PERMISSION_DENIED:
+                        return "You denied CommCare HQ permission to read your browser's current location. ";
+                    case err.TIMEOUT:
+                        return "Your connection was not strong enough to acquire your location. Please try again later. ";
+                    case err.POSITION_UNAVAILABLE:
+                    default:
+                        return "Your browser location could not be determined. ";
+                }
+            };
+
+            if (navigator.geolocation) {
+                var progressView = new FormplayerFrontend.Layout.Views.ProgressView({
+                    progressMessage: "Fetching your location...",
+                });
+                FormplayerFrontend.regions.loadingProgress.show(progressView.render());
+                navigator.geolocation.getCurrentPosition(success, error, {timeout: 10000});
+            }
+        },
+
+        startOrStopLocationWatching: function(shouldWatchLocation) {
+            if (navigator.geolocation) {
+                var watching = Boolean(sessionStorage.lastLocationWatchId);
+                if (!watching && shouldWatchLocation) {
+                    sessionStorage.lastLocationWatchId = navigator.geolocation.watchPosition(Menus.Util.recordPosition);
+                } else if (watching && !shouldWatchLocation) {
+                    navigator.geolocation.clearWatch(sessionStorage.lastLocationWatchId);
+                    sessionStorage.lastLocationWatchId = '';
+                }
+            }
+        },
+
+        recordPosition: function(position) {
+            sessionStorage.locationLat = position.coords.latitude;
+            sessionStorage.locationLon = position.coords.longitude;
+            sessionStorage.locationAltitude = position.coords.altitude;
+            sessionStorage.locationAccuracy = position.coords.accuracy;
+        },
+
         showBreadcrumbs: function (breadcrumbs) {
             var detailCollection,
                 breadcrumbModels;

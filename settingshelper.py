@@ -207,8 +207,6 @@ def get_allowed_websocket_channels(request, channels):
     if request.user and request.user.is_authenticated and request.user.is_superuser:
         return channels
     else:
-        # todo: support for non-superusers
-        # it might be easier to wait on supporting this until we switch to channels
         raise PermissionDenied(
             'Not allowed to subscribe or to publish to websockets without '
             'superuser permissions or domain membership!'
@@ -254,9 +252,12 @@ def configure_sentry(base_dir, server_env, pub_key, priv_key, project_id):
         'tags': {},
         'include_versions': False,  # performance without this is bad
         'processors': (
-            'raven.processors.SanitizePasswordsProcessor',
             'raven.processors.RemovePostDataProcessor',
-        )
+            'corehq.util.sentry.HQSanitzeSystemPasswordsProcessor',
+        ),
+        'ignore_exceptions': [
+            'KeyboardInterrupt'
+        ]
     }
 
 

@@ -1,8 +1,9 @@
+from __future__ import absolute_import
 from couchdbkit.exceptions import ResourceNotFound
 from tastypie.exceptions import NotFound
 
 from corehq.apps.api.resources.meta import CustomResourceMeta
-from corehq.apps.api.resources.v0_4 import XFormInstanceResource
+from corehq.apps.api.resources.v0_4 import XFormInstanceResource, BaseApplicationResource
 from corehq.apps.api.resources.v0_5 import DoesNothingPaginator
 from corehq.apps.case_importer.util import get_case_properties_for_case_type
 from corehq.apps.export.system_properties import MAIN_FORM_TABLE_PROPERTIES
@@ -12,6 +13,7 @@ from corehq.apps.app_manager.models import Application
 
 from tastypie.resources import Resource
 from tastypie import fields
+import six
 
 
 class ZapierXFormInstanceResource(XFormInstanceResource):
@@ -19,6 +21,14 @@ class ZapierXFormInstanceResource(XFormInstanceResource):
     def dehydrate(self, bundle):
         remove_advanced_fields(bundle.data)
         return bundle
+
+
+class ZapierApplicationResource(BaseApplicationResource):
+    """
+    A stripped down application resource that just returns IDs and Names
+    """
+    id = fields.CharField(attribute='_id')
+    name = fields.CharField(attribute='name')
 
 
 class CustomField(object):
@@ -161,7 +171,7 @@ class ZapierCustomFieldCaseResource(BaseZapierCustomFieldResource):
                     label=self._build_label(prop)
                 )
             ))
-        for case_prop, case_prop_zapier_name in CASE_PROPERTIES.iteritems():
+        for case_prop, case_prop_zapier_name in six.iteritems(CASE_PROPERTIES):
             custom_fields.append(CustomField(
                 dict(
                     type='unicode',

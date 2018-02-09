@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import print_function
 from django.core.management.base import BaseCommand, CommandError
 from corehq.util.celery_utils import get_running_workers
 
@@ -27,7 +29,7 @@ class Command(BaseCommand):
             result = get_running_workers(timeout=timeout)
 
         if not result:
-            print '(none)'
+            print('(none)')
         else:
             for name in result:
-                print name
+                print(name)

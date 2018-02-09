@@ -82,6 +82,15 @@ FormplayerFrontend.reqres.setHandler('currentUser', function () {
     return FormplayerFrontend.currentUser;
 });
 
+FormplayerFrontend.reqres.setHandler('lastRecordedLocation', function() {
+    if (!sessionStorage.locationLat) {
+        return null;
+    } else {
+        var locationComponents = [sessionStorage.locationLat, sessionStorage.locationLon, sessionStorage.locationAltitude, sessionStorage.locationAccuracy];
+        return locationComponents.join();
+    }
+});
+
 FormplayerFrontend.on('clearBreadcrumbs', function () {
     $('#persistent-case-tile').html("");
 });
@@ -120,9 +129,9 @@ FormplayerFrontend.reqres.setHandler('showSuccess', function(successMessage) {
 });
 
 FormplayerFrontend.reqres.setHandler('handleNotification', function(notification) {
-    if(notification.error){
+    if (notification.error){
         FormplayerFrontend.request('showError', notification.message);
-    } else{
+    } else {
         FormplayerFrontend.request('showSuccess', notification.message);
     }
 });
@@ -147,8 +156,8 @@ FormplayerFrontend.on('startForm', function (data) {
         if (resp.status === "success") {
             showSuccess(gettext("Form successfully saved"), $("#cloudcare-notifications"), 10000);
             if (user.environment === FormplayerFrontend.Constants.PREVIEW_APP_ENVIRONMENT) {
-                window.analytics.workflow("[app-preview] User submitted a form");
-                window.analytics.usage("[app-preview] User submitted a form");
+                hqImport('analytix/js/kissmetrix').track.event("[app-preview] User submitted a form");
+                hqImport('analytix/js/google').track.event("App Preview", "User submitted a form");
             }
 
             // After end of form nav, we want to clear everything except app and sesson id
@@ -246,7 +255,7 @@ FormplayerFrontend.on("start", function (options) {
     }
 });
 
-FormplayerFrontend.on('configureDebugger', function(menuSessionId) {
+FormplayerFrontend.on('configureDebugger', function() {
     var CloudCareDebugger = hqImport('cloudcare/js/debugger/debugger').CloudCareDebuggerMenu,
         TabIDs = hqImport('cloudcare/js/debugger/debugger').TabIDs,
         user = FormplayerFrontend.request('currentUser'),
@@ -256,13 +265,18 @@ FormplayerFrontend.on('configureDebugger', function(menuSessionId) {
     if (!$debug.length)
         return;
 
+    var urlObject = Util.currentUrlToObject();
+    var selections = urlObject.steps;
+    var appId = urlObject.appId;
+
     $debug.html('');
     cloudCareDebugger = new CloudCareDebugger({
         baseUrl: user.formplayer_url,
-        menuSessionId: menuSessionId,
+        selections: selections,
         username: user.username,
         restoreAs: user.restoreAs,
         domain: user.domain,
+        appId: appId,
         tabs: [
             TabIDs.EVAL_XPATH,
         ],
@@ -416,15 +430,16 @@ FormplayerFrontend.on('view:phone', function() {
  */
 FormplayerFrontend.on('clearProgress', function() {
     var progressView = FormplayerFrontend.regions.loadingProgress.currentView,
-        progressFinishTimeout = 0;
-    if (progressView) {
         progressFinishTimeout = 200;
-        progressView.setProgress(1, progressFinishTimeout);
-    }
 
-    setTimeout(function() {
+    if (progressView) {
+        progressView.setProgress(1, progressFinishTimeout);
+        setTimeout(function() {
+            FormplayerFrontend.regions.loadingProgress.empty();
+        }, progressFinishTimeout);
+    } else {
         FormplayerFrontend.regions.loadingProgress.empty();
-    }, progressFinishTimeout);
+    }
 });
 
 

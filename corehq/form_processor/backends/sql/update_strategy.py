@@ -1,4 +1,6 @@
+from __future__ import absolute_import
 import logging
+from collections import defaultdict
 
 from iso8601 import iso8601
 
@@ -12,6 +14,8 @@ from corehq.apps.couch_sql_migration.progress import couch_sql_migration_in_prog
 from corehq.form_processor.models import CommCareCaseSQL, CommCareCaseIndexSQL, CaseTransaction, CaseAttachmentSQL
 from corehq.form_processor.update_strategy_base import UpdateStrategy
 from django.utils.translation import ugettext as _
+
+from corehq.util.soft_assert import soft_assert
 
 
 def _validate_length(length):
@@ -63,12 +67,18 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
 
     def update_from_case_update(self, case_update, xformdoc, other_forms=None):
         self._apply_case_update(case_update, xformdoc)
+        self.add_transaction_for_form(self.case, case_update, xformdoc)
 
+    @staticmethod
+    def add_transaction_for_form(case, case_update, form):
         types = [CaseTransaction.type_from_action_type_slug(a.action_type_slug) for a in case_update.actions]
-        transaction = CaseTransaction.form_transaction(self.case, xformdoc, types)
-        if transaction not in self.case.get_tracked_models_to_create(CaseTransaction):
-            # don't add multiple transactions for the same form
-            self.case.track_create(transaction)
+        transaction = CaseTransaction.form_transaction(case, form, types)
+        for trans in case.get_tracked_models_to_create(CaseTransaction):
+            if transaction == trans:
+                trans.type |= transaction.type
+                break
+        else:
+            case.track_create(transaction)
 
     def _apply_case_update(self, case_update, xformdoc):
         sql_migration_in_progress = couch_sql_migration_in_progress(xformdoc.domain)

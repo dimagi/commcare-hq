@@ -1,4 +1,5 @@
 from __future__ import print_function
+from __future__ import absolute_import
 from datetime import date, timedelta
 import json
 
@@ -49,7 +50,7 @@ class Command(BaseCommand):
             data = [{"property": prop, "value": hubspot_properties[prop]} for prop in property_names]
         except KeyError:
             raise CommandError("Property should be one of following\n{}".format(
-                hubspot_properties.keys()
+                list(hubspot_properties)
             ))
         user_data = {
             "email": couch_user.email,

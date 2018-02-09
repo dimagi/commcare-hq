@@ -45,8 +45,19 @@ SHELL_PLUS_POST_IMPORTS = (
     ('corehq.apps.es', '*'),
 )
 
+INTERNAL_IPS = ['127.0.0.1']
 ALLOWED_HOSTS = ['*']
 FIX_LOGGER_ERROR_OBFUSCATION = True
+LOCAL_LOGGING_LOGGERS = {
+    'auditcare': {
+        'handlers': ['null'],
+        'level': 'WARNING',
+    },
+    'raven': {
+        'handlers': ['null'],
+        'level': 'WARNING',
+    }
+}
 
 DATABASES = {
     'default': {
@@ -85,9 +96,6 @@ CELERY_EAGER_PROPAGATES_EXCEPTIONS = True
 INACTIVITY_TIMEOUT = 60 * 24 * 365
 
 CACHE_REPORTS = False
-
-# Fail hard on csrf failures during dev
-CSRF_SOFT_MODE = False
 
 # Make a dir to use for storing attachments as blobs on the filesystem
 shared_dirname = os.path.join(os.path.dirname(os.path.realpath(__file__)),

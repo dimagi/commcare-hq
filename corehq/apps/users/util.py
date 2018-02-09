@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import re
 
 from django.conf import settings
@@ -5,7 +6,7 @@ from django.contrib.auth.models import User
 from django.utils import html, safestring
 
 from couchdbkit.resource import ResourceNotFound
-from corehq import privileges
+from corehq import privileges, toggles
 from corehq.util.quickcache import quickcache
 
 from django.core.cache import cache
@@ -28,7 +29,7 @@ WEIRD_USER_IDS = [
 
 
 def cc_user_domain(domain):
-    sitewide_domain = settings.HQ_ACCOUNT_ROOT 
+    sitewide_domain = settings.HQ_ACCOUNT_ROOT
     return ("%s.%s" % (domain, sitewide_domain)).lower()
 
 
@@ -60,7 +61,7 @@ def raw_username(username):
     """
     Strips the @domain.commcarehq.org from the username if it's there
     """
-    sitewide_domain = settings.HQ_ACCOUNT_ROOT 
+    sitewide_domain = settings.HQ_ACCOUNT_ROOT
     username = username.lower()
     try:
         u, d = username.split("@")
@@ -196,3 +197,94 @@ def user_display_string(username, first_name="", last_name=""):
 def user_location_data(location_ids):
     # Spec for 'commcare_location_ids' custom data field
     return ' '.join(location_ids)
+
+
+def update_device_meta(user, device_id, commcare_version=None, device_app_meta=None, save=True):
+    from corehq.apps.users.models import CommCareUser
+    from custom.enikshay.user_setup import set_enikshay_device_id
+
+    updated = False
+    if device_id and isinstance(user, CommCareUser):
+        if not user.is_demo_user:
+            # this only updates once per day for each device
+            updated = user.update_device_id_last_used(
+                device_id,
+                commcare_version=commcare_version,
+                device_app_meta=device_app_meta,
+            )
+            if toggles.ENIKSHAY.enabled(user.domain):
+                updated = set_enikshay_device_id(user, device_id) or updated
+            if save and updated:
+                user.save(fire_signals=False)
+    return updated
+
+
+def _last_build_needs_update(last_build, build_date):
+    if not (last_build and last_build.build_version_date):
+        return True
+    if build_date > last_build.build_version_date:
+        return True
+    return False
+
+
+def update_latest_builds(user, app_id, date, version):
+    """
+    determines whether to update the last build attributes in a user's reporting metadata
+    """
+    from corehq.apps.users.models import LastBuild
+    last_build = filter_by_app(user.reporting_metadata.last_builds, app_id)
+    changed = False
+    if _last_build_needs_update(last_build, date):
+        if last_build is None:
+            last_build = LastBuild()
+            user.reporting_metadata.last_builds.append(last_build)
+        last_build.build_version = version
+        last_build.app_id = app_id
+        last_build.build_version_date = date
+        changed = True
+
+    if _last_build_needs_update(user.reporting_metadata.last_build_for_user, date):
+        user.reporting_metadata.last_build_for_user = last_build
+        changed = True
+
+    return changed
+
+
+def filter_by_app(obj_list, app_id):
+    """
+    :param obj_list: list from objects with ``app_id`` property
+    :returns: The first object with matching app_id
+    """
+    for item in obj_list:
+        if item.app_id == app_id:
+            return item
+
+
+def update_last_sync(user, app_id, sync_date, version):
+    """
+    This function does not save the user.
+    :return: True if user updated
+    """
+    from corehq.apps.users.models import LastSync
+    last_sync = filter_by_app(user.reporting_metadata.last_syncs, app_id)
+    if _last_sync_needs_update(last_sync, sync_date):
+        if last_sync is None:
+            last_sync = LastSync()
+            user.reporting_metadata.last_syncs.append(last_sync)
+        last_sync.sync_date = sync_date
+        last_sync.build_version = version
+        last_sync.app_id = app_id
+
+        if _last_sync_needs_update(user.reporting_metadata.last_sync_for_user, sync_date):
+            user.reporting_metadata.last_sync_for_user = last_sync
+
+        return True
+    return False
+
+
+def _last_sync_needs_update(last_sync, sync_datetime):
+    if not (last_sync and last_sync.sync_date):
+        return True
+    if sync_datetime > last_sync.sync_date:
+        return True
+    return False

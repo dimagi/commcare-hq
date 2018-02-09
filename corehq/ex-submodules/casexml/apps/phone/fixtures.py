@@ -3,7 +3,7 @@ from abc import ABCMeta, abstractmethod
 
 import six
 
-from xml.etree import ElementTree
+from xml.etree import cElementTree as ElementTree
 from casexml.apps.phone.models import OTARestoreUser
 from casexml.apps.case.xml import V1, V2
 from django.conf import settings
@@ -53,9 +53,9 @@ class FixtureGenerator(object):
         self._generator_providers = {}
         if hasattr(settings, "FIXTURE_GENERATORS"):
             for group, func_paths in settings.FIXTURE_GENERATORS.items():
-                self._generator_providers[group] = filter(None, [
+                self._generator_providers[group] = [_f for _f in [
                     to_function(func_path, failhard=True) for func_path in func_paths
-                ])
+                ] if _f]
 
     def get_providers(self, user, fixture_id=None, version=V2):
         if version == V1:
@@ -64,7 +64,7 @@ class FixtureGenerator(object):
         if not isinstance(user, OTARestoreUser):
             return []
 
-        providers = list(itertools.chain(*self._generator_providers.values()))
+        providers = list(itertools.chain(*list(self._generator_providers.values())))
 
         if fixture_id:
             full_id = fixture_id
@@ -81,8 +81,9 @@ class FixtureGenerator(object):
 
     def _get_fixtures(self, restore_user, fixture_id=None):
         providers = self.get_providers(restore_user, fixture_id=fixture_id)
+        restore_state = _get_restore_state(restore_user)
         return itertools.chain(*[
-            provider(_get_restore_state(restore_user))
+            provider(restore_state)
             for provider in providers
         ])
 
@@ -92,22 +93,16 @@ class FixtureGenerator(object):
         """
         fixtures = self._get_fixtures(restore_user, fixture_id)
         for fixture in fixtures:
-            if isinstance(fixture, basestring):
-                # could be a string if it's coming from cache
+            if isinstance(fixture, six.binary_type):
+                # could be bytes if it's coming from cache
                 cached_fixtures = ElementTree.fromstring(
-                    "<cached-fixture>{}</cached-fixture>".format(fixture)
+                    b"<cached-fixture>%s</cached-fixture>" % fixture
                 )
                 for fixture in cached_fixtures:
                     if fixture.attrib.get("id") == fixture_id:
                         return fixture
             elif fixture.attrib.get("id") == fixture_id:
                 return fixture
-
-    def get_fixtures(self, restore_user):
-        """
-        Gets all fixtures associated with an OTA restore operation
-        """
-        return self._get_fixtures(restore_user)
 
 
 generator = FixtureGenerator()

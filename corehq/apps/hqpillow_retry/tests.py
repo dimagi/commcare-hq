@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import datetime
 from django.test import TestCase
 from pillow_retry.models import PillowError
@@ -9,7 +10,6 @@ class PillowRetryEnqueuingOperationTest(TestCase):
 
     def test_get_items_to_be_processed(self):
         p = PillowError(
-            queued=False,
             date_created=datetime.datetime.utcnow() - datetime.timedelta(days=1),
             date_next_attempt=datetime.datetime.utcnow() - datetime.timedelta(days=2),
             date_last_attempt=datetime.datetime.utcnow() - datetime.timedelta(days=3),

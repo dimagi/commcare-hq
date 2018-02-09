@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.conf.urls import url, include
 from django.contrib.auth.views import (
     password_change,
@@ -40,6 +41,7 @@ from corehq.apps.domain.views import (
     EditMyProjectSettingsView,
     EditOpenClinicaSettingsView,
     EditPrivacySecurityView,
+    EmailOnDowngradeView,
     ExchangeSnapshotsView,
     FlagsAndPrivilegesView,
     FeaturePreviewsView,
@@ -59,13 +61,22 @@ from corehq.apps.domain.views import (
     calculated_properties,
     cancel_repeat_record,
     drop_repeater,
+    pause_repeater,
+    resume_repeater,
     requeue_repeat_record,
     select,
     set_published_snapshot,
     test_repeater,
     toggle_diff,
 )
-from corehq.motech.repeaters.views import AddCaseRepeaterView, RepeatRecordView
+from corehq.motech.repeaters.views import (
+    AddCaseRepeaterView,
+    RepeatRecordView,
+    EditCaseRepeaterView,
+    EditFormRepeaterView,
+    EditRepeaterView,
+)
+
 from corehq.apps.reports.dispatcher import DomainReportDispatcher
 
 
@@ -122,6 +133,7 @@ domain_settings = [
         name=SelectedEnterprisePlanView.urlname),
     url(r'^subscription/change/account/$', ConfirmBillingAccountInfoView.as_view(),
         name=ConfirmBillingAccountInfoView.urlname),
+    url(r'^subscription/change/email/$', EmailOnDowngradeView.as_view(), name=EmailOnDowngradeView.urlname),
     url(r'^subscription/pro_bono/$', ProBonoView.as_view(), name=ProBonoView.urlname),
     url(r'^subscription/credits/make_payment/$', CreditsStripePaymentView.as_view(),
         name=CreditsStripePaymentView.urlname),
@@ -159,7 +171,15 @@ domain_settings = [
         name=AddCaseRepeaterView.urlname),
     url(r'^forwarding/new/(?P<repeater_type>\w+)/$', AddRepeaterView.as_view(), name=AddRepeaterView.urlname),
     url(r'^forwarding/test/$', test_repeater, name='test_repeater'),
+    url(r'^forwarding/CaseRepeater/edit/(?P<repeater_id>\w+)/$', EditCaseRepeaterView.as_view(),
+        {'repeater_type': 'CaseRepeater'}, name=EditCaseRepeaterView.urlname),
+    url(r'^forwarding/FormRepeater/edit/(?P<repeater_id>\w+)/$', EditFormRepeaterView.as_view(),
+        {'repeater_type': 'FormRepeater'}, name=EditFormRepeaterView.urlname),
+    url(r'^forwarding/edit/(?P<repeater_id>\w+)/$', EditRepeaterView.as_view(),
+        name=EditRepeaterView.urlname),
     url(r'^forwarding/(?P<repeater_id>[\w-]+)/stop/$', drop_repeater, name='drop_repeater'),
+    url(r'^forwarding/(?P<repeater_id>[\w-]+)/pause/$', pause_repeater, name='pause_repeater'),
+    url(r'^forwarding/(?P<repeater_id>[\w-]+)/resume/$', resume_repeater, name='resume_repeater'),
     url(r'^snapshots/set_published/(?P<snapshot_name>[\w-]+)/$', set_published_snapshot, name='domain_set_published'),
     url(r'^snapshots/set_published/$', set_published_snapshot, name='domain_clear_published'),
     url(r'^snapshots/$', ExchangeSnapshotsView.as_view(), name=ExchangeSnapshotsView.urlname),

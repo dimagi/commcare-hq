@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.apps.sms.forms import BackendForm, LoadBalancingBackendFormMixin
 from dimagi.utils.django.fields import TrimmedCharField
 from crispy_forms import layout as crispy

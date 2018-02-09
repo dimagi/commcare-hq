@@ -1,6 +1,7 @@
 """
 https://docs.google.com/document/d/1RPPc7t9NhRjOOiedlRmtCt3wQSjAnWaj69v2g7QRzS0/edit
 """
+from __future__ import absolute_import
 import datetime
 import json
 
@@ -15,15 +16,14 @@ from dimagi.ext import jsonobject
 from jsonobject.exceptions import BadValueError
 
 from corehq import toggles
-from corehq.apps.domain.decorators import login_or_digest_or_basic_or_apikey
+from corehq.apps.domain.decorators import api_auth
 from corehq.apps.locations.resources.v0_5 import LocationResource
-from corehq.apps.hqcase.utils import bulk_update_cases
 from corehq.motech.repeaters.views import AddCaseRepeaterView
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 
-
 from custom.enikshay.case_utils import CASE_TYPE_VOUCHER, CASE_TYPE_EPISODE
 from .const import BETS_EVENT_IDS
+from .tasks import process_payment_confirmations
 from .utils import get_bets_location_json
 
 SUCCESS = "Success"
@@ -47,13 +47,24 @@ class FlexibleDateTimeProperty(jsonobject.DateTimeProperty):
 class PaymentUpdate(jsonobject.JsonObject):
     id = jsonobject.StringProperty(required=True)
     status = jsonobject.StringProperty(required=True, choices=[SUCCESS, FAILURE])
-    amount = jsonobject.IntegerProperty(required=False)
+    amount = jsonobject.FloatProperty(required=False)
     paymentDate = FlexibleDateTimeProperty(required=True)
     comments = jsonobject.StringProperty(required=False)
     failureDescription = jsonobject.StringProperty(required=False)
     paymentMode = jsonobject.StringProperty(required=False)
     checkNumber = jsonobject.StringProperty(required=False)
     bankName = jsonobject.StringProperty(required=False)
+
+    @classmethod
+    def wrap(cls, data):
+        amount = data.get('amount', None)
+        if amount:
+            try:
+                float_amount = float(amount)
+                data['amount'] = float_amount
+            except (ValueError, TypeError):
+                raise BadValueError("amount '{}' is not a number".format(amount))
+        return super(PaymentUpdate, cls).wrap(data)
 
     @property
     def case_id(self):
@@ -173,7 +184,7 @@ def _validate_updates_exist(domain, updates):
 
 @require_POST
 @csrf_exempt
-@login_or_digest_or_basic_or_apikey()
+@api_auth
 @toggles.ENIKSHAY_API.required_decorator()
 def payment_confirmation(request, domain):
     try:
@@ -184,9 +195,7 @@ def payment_confirmation(request, domain):
             notify_exception(request, "BETS sent the eNikshay API a bad request.")
         return json_response({"error": e.message}, status_code=e.status_code)
 
-    bulk_update_cases(domain, [
-        (update.case_id, update.properties, False) for update in updates
-    ], __name__ + ".payment_confirmation")
+    process_payment_confirmations.delay(domain, updates)
     return json_response({'status': SUCCESS})
 
 

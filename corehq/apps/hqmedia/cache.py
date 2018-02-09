@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import division
 import StringIO
 import zipfile
 from django.core.cache import cache
@@ -85,7 +87,7 @@ class BulkMultimediaStatusCache(BaseMultimediaStatusCache):
         if self.total_files is None:
             raise ValueError("You need to set total_files before you can update progress.")
         self.processed_files = num_files_processed
-        self.progress = int(100 * (float(self.processed_files) / float(self.total_files)))
+        self.progress = int(100 * (self.processed_files / self.total_files))
         if self.progress >= 100:
             self.complete = True
         self.save()

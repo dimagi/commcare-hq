@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.test import TestCase
 from django.test.testcases import SimpleTestCase
 from django.test.utils import override_settings
@@ -8,8 +9,9 @@ from casexml.apps.case.tests.util import (
     delete_all_sync_logs,
 )
 from casexml.apps.case.mock import CaseBlock
-from casexml.apps.phone.restore import FileRestoreResponse
-from casexml.apps.phone.tests.utils import create_restore_user, MockDevice
+from casexml.apps.phone.restore import RestoreContent
+from casexml.apps.phone.tests.utils import create_restore_user
+from casexml.apps.phone.utils import MockDevice
 
 
 @override_settings(CASEXML_FORCE_DOMAIN_CHECK=False)
@@ -42,50 +44,35 @@ class OtaV3RestoreTest(TestCase):
         self.assertIn(case_id, device.sync().cases)
 
 
-class TestRestoreResponse(SimpleTestCase):
+class TestRestoreContent(SimpleTestCase):
 
     def _expected(self, username, body, items=None):
-        items_text = ' items="{}"'.format(items) if items is not None else ''
+        items_text = (b' items="%s"' % items) if items is not None else b''
         return (
-            '<OpenRosaResponse xmlns="http://openrosa.org/http/response"{items}>'
-            '<message nature="ota_restore_success">Successfully restored account {username}!</message>'
-            '{body}'
-            '</OpenRosaResponse>'
-        ).format(
-            username=username,
-            body=body,
-            items=items_text
-        )
+            b'<OpenRosaResponse xmlns="http://openrosa.org/http/response"%(items)s>'
+            b'<message nature="ota_restore_success">Successfully restored account %(username)s!</message>'
+            b'%(body)s'
+            b'</OpenRosaResponse>'
+        ) % {
+            b"username": username.encode('utf8'),
+            b"body": body,
+            b"items": items_text,
+        }
 
     def test_no_items(self):
-        user = 'user1'
-        body = '<elem>data0</elem>'
+        user = u'user1'
+        body = b'<elem>data0</elem>'
         expected = self._expected(user, body, items=None)
-        with FileRestoreResponse(user, False) as response:
+        with RestoreContent(user, False) as response:
             response.append(body)
-            response.finalize()
-            self.assertEqual(expected, str(response))
+            with response.get_fileobj() as fileobj:
+                self.assertEqual(expected, fileobj.read())
 
     def test_items(self):
-        user = 'user1'
-        body = '<elem>data0</elem>'
+        user = u'user1'
+        body = b'<elem>data0</elem>'
         expected = self._expected(user, body, items=2)
-        response = FileRestoreResponse(user, True)
-        response.append(body)
-        response.finalize()
-        self.assertEqual(expected, str(response))
-
-    def test_add(self):
-        user = 'user1'
-        body1 = '<elem>data0</elem>'
-        body2 = '<elem>data1</elem>'
-        expected = self._expected(user, body1 + body2, items=3)
-        response1 = FileRestoreResponse(user, True)
-        response1.append(body1)
-
-        response2 = FileRestoreResponse(user, True)
-        response2.append(body2)
-
-        added = response1 + response2
-        added.finalize()
-        self.assertEqual(expected, str(added))
+        with RestoreContent(user, True) as response:
+            response.append(body)
+            with response.get_fileobj() as fileobj:
+                self.assertEqual(expected, fileobj.read())

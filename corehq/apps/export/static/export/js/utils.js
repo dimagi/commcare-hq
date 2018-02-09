@@ -31,6 +31,10 @@ hqDefine('export/js/utils', function() {
         }, 'slow', undefined, callback);
     };
 
+    var capitalize = function(string) {
+        return string.charAt(0).toUpperCase() + string.substring(1).toLowerCase();
+    };
+
     /**
      * readablePath
      *
@@ -77,6 +81,7 @@ hqDefine('export/js/utils', function() {
         getTagCSSClass: getTagCSSClass,
         redirect: redirect,
         animateToEl: animateToEl,
+        capitalize: capitalize,
         readablePath: readablePath,
         customPathToNodes: customPathToNodes,
     };

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.forms.fields import CharField
 
 class TrimmedCharField(CharField):

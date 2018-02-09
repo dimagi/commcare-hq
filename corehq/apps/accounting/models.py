@@ -1,8 +1,9 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import datetime
 from decimal import Decimal
 import itertools
-from StringIO import StringIO
+from io import BytesIO
 from tempfile import NamedTemporaryFile
 
 
@@ -59,6 +60,7 @@ from corehq.apps.accounting.utils import (
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.users.models import WebUser
+from corehq.blobs.mixin import BlobMixin
 from corehq.const import USER_DATE_FORMAT
 from corehq.util.dates import get_first_last_days
 from corehq.util.mixin import ValidateModelMixin
@@ -75,8 +77,6 @@ MAX_INVOICE_COMMUNICATIONS = 5
 SMALL_INVOICE_THRESHOLD = 100
 
 UNLIMITED_FEATURE_USAGE = -1
-
-CONSISTENT_DATES_CHECK = Q(date_start__lt=F('date_end')) | Q(date_end__isnull=True)
 
 _soft_assert_domain_not_loaded = soft_assert(
     to='{}@{}'.format('npellegrino', 'dimagi.com'),
@@ -114,19 +114,6 @@ class FeatureType(object):
     CHOICES = (
         (USER, USER),
         (SMS, SMS),
-    )
-
-
-class SoftwareProductType(object):
-    COMMCARE = "CommCare"
-    COMMTRACK = "CommTrack"
-    COMMCONNECT = "CommConnect"
-    ANY = ""
-
-    CHOICES = (
-        (COMMCARE, COMMCARE),
-        (COMMTRACK, COMMTRACK),
-        (COMMCONNECT, COMMCONNECT),
     )
 
 
@@ -427,9 +414,7 @@ class BillingAccount(ValidateModelMixin, models.Model):
     @classmethod
     def _get_account_by_created_by_domain(cls, domain):
         try:
-            return cls.objects.exclude(
-                account_type=BillingAccountType.TRIAL
-            ).get(created_by_domain=domain)
+            return cls.objects.get(created_by_domain=domain)
         except cls.DoesNotExist:
             return None
         except cls.MultipleObjectsReturned:
@@ -438,9 +423,8 @@ class BillingAccount(ValidateModelMixin, models.Model):
                 "latest one was served, but you should reconcile very soon."
                 % domain
             )
-            return cls.objects.exclude(
-                account_type=BillingAccountType.TRIAL
-            ).filter(created_by_domain=domain).latest('date_created')
+            return cls.objects.filter(created_by_domain=domain).latest('date_created')
+        return None
 
     @property
     def autopay_card(self):
@@ -484,8 +468,8 @@ class BillingAccount(ValidateModelMixin, models.Model):
         send_html_email_async(
             subject,
             old_user,
-            render_to_string('accounting/autopay_card_removed.html', context),
-            text_content=strip_tags(render_to_string('accounting/autopay_card_removed.html', context)),
+            render_to_string('accounting/email/autopay_card_removed.html', context),
+            text_content=strip_tags(render_to_string('accounting/email/autopay_card_removed.html', context)),
         )
 
     def _send_autopay_card_added_email(self, domain):
@@ -513,8 +497,8 @@ class BillingAccount(ValidateModelMixin, models.Model):
         send_html_email_async(
             subject,
             self.auto_pay_user,
-            render_to_string('accounting/invoice_autopay_setup.html', context),
-            text_content=strip_tags(render_to_string('accounting/invoice_autopay_setup.html', context)),
+            render_to_string('accounting/email/invoice_autopay_setup.html', context),
+            text_content=strip_tags(render_to_string('accounting/email/invoice_autopay_setup.html', context)),
         )
 
 
@@ -581,32 +565,12 @@ class BillingContactInfo(models.Model):
             return "%s %s" % (self.first_name, self.last_name)
 
 
-class SoftwareProduct(models.Model):
-    """
-    Specifies a product name that can be included in a subscription. e.g. CommTrack Pro, CommCare Community, etc.
-    """
-    name = models.CharField(max_length=40, unique=True)
-    last_modified = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        app_label = 'accounting'
-
-    def __str__(self):
-        return "Software Product '%s'" % self.name
-
-    def get_rate(self, default_instance=True):
-        try:
-            return self.softwareproductrate_set.filter(is_active=True).latest('date_created')
-        except SoftwareProductRate.DoesNotExist:
-            return SoftwareProductRate() if default_instance else None  # the defaults
-
-
 class SoftwareProductRate(models.Model):
     """
-    Links a SoftwareProduct to a monthly fee.
-    Once created, ProductRates cannot be modified. Instead, a new ProductRate must be created.
+    Represents the monthly fixed fee for a software product.
+    Once created, SoftwareProductRates cannot be modified. Instead, a new SoftwareProductRate must be created.
     """
-    product = models.ForeignKey(SoftwareProduct, on_delete=models.PROTECT)
+    name = models.CharField(max_length=40)
     monthly_fee = models.DecimalField(default=Decimal('0.00'), max_digits=10, decimal_places=2)
     date_created = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
@@ -616,10 +580,10 @@ class SoftwareProductRate(models.Model):
         app_label = 'accounting'
 
     def __str__(self):
-        return '%s @ $%s /month' % (self.product.name, self.monthly_fee)
+        return '%s @ $%s /month' % (self.name, self.monthly_fee)
 
     def __eq__(self, other):
-        if not isinstance(other, self.__class__) or not self.product.pk == other.product.pk:
+        if not isinstance(other, self.__class__) or not self.name == other.name:
             return False
         for field in ['monthly_fee', 'is_active']:
             if not getattr(self, field) == getattr(other, field):
@@ -628,8 +592,7 @@ class SoftwareProductRate(models.Model):
 
     @classmethod
     def new_rate(cls, product_name, monthly_fee, save=True):
-        product, _ = SoftwareProduct.objects.get_or_create(name=product_name)
-        rate = SoftwareProductRate(product=product, monthly_fee=monthly_fee)
+        rate = SoftwareProductRate(name=product_name, monthly_fee=monthly_fee)
         if save:
             rate.save()
         return rate
@@ -906,7 +869,7 @@ class Subscriber(models.Model):
         app_label = 'accounting'
 
     def __unicode__(self):
-        return u"DOMAIN %s" % self.domain
+        return "DOMAIN %s" % self.domain
 
     def create_subscription(self, new_plan_version, new_subscription, is_internal_change):
         assert new_plan_version
@@ -1007,11 +970,16 @@ class Subscriber(models.Model):
             raise SubscriptionChangeError("The upgrade was not successful.")
 
 
-class SubscriptionManager(models.Manager):
+class VisibleSubscriptionManager(models.Manager):
 
     def get_queryset(self):
-        return super(SubscriptionManager, self).get_queryset().filter(is_hidden_to_ops=False)
+        return super(VisibleSubscriptionManager, self).get_queryset().filter(is_hidden_to_ops=False)
 
+
+class DisabledManager(models.Manager):
+
+    def get_queryset(self):
+        raise NotImplementedError
 
 class Subscription(models.Model):
     """
@@ -1052,7 +1020,9 @@ class Subscription(models.Model):
     is_hidden_to_ops = models.BooleanField(default=False)
     skip_auto_downgrade = models.BooleanField(default=False)
 
-    objects = SubscriptionManager()
+    visible_objects = VisibleSubscriptionManager()
+    visible_and_suppressed_objects = models.Manager()
+    objects = DisabledManager()
 
     class Meta:
         app_label = 'accounting'
@@ -1101,7 +1071,7 @@ class Subscription(models.Model):
 
     @property
     def next_subscription_filter(self):
-        return (Subscription.objects.
+        return (Subscription.visible_objects.
                 filter(subscriber=self.subscriber, date_start__gt=self.date_start).
                 exclude(pk=self.pk).
                 filter(Q(date_end__isnull=True) | ~Q(date_start=F('date_end'))))
@@ -1126,8 +1096,7 @@ class Subscription(models.Model):
         conflicts with other subscriptions related to this subscriber.
         """
         assert date_start is not None
-        for sub in Subscription.objects.filter(
-            CONSISTENT_DATES_CHECK,
+        for sub in Subscription.visible_objects.filter(
             subscriber=self.subscriber,
         ).exclude(
             id=self.id,
@@ -1266,6 +1235,11 @@ class Subscription(models.Model):
         self.is_active = False
         self.save()
 
+        if 'date_delay_invoicing' in kwargs:
+            date_delay_invoicing = kwargs.pop('date_delay_invoicing')
+        else:
+            date_delay_invoicing = self.date_delay_invoicing
+
         new_subscription = Subscription(
             account=account if account else self.account,
             plan_version=new_plan_version,
@@ -1273,10 +1247,10 @@ class Subscription(models.Model):
             salesforce_contract_id=self.salesforce_contract_id,
             date_start=today,
             date_end=date_end,
-            date_delay_invoicing=self.date_delay_invoicing,
+            date_delay_invoicing=date_delay_invoicing,
             is_active=True,
-            do_not_invoice=do_not_invoice if do_not_invoice else self.do_not_invoice,
-            no_invoice_reason=no_invoice_reason if no_invoice_reason else self.no_invoice_reason,
+            do_not_invoice=do_not_invoice if do_not_invoice is not None else self.do_not_invoice,
+            no_invoice_reason=no_invoice_reason if no_invoice_reason is not None else self.no_invoice_reason,
             service_type=(service_type or SubscriptionType.NOT_SET),
             pro_bono_status=(pro_bono_status or ProBonoStatus.NO),
             funding_source=(funding_source or FundingSource.CLIENT),
@@ -1420,7 +1394,7 @@ class Subscription(models.Model):
                 account=self.account,
                 subscription=subscription,
                 feature_type=credit_line.feature_type,
-                product_type=credit_line.product_type,
+                is_product=credit_line.is_product,
                 related_credit=credit_line
             )
             credit_line.is_active = False
@@ -1454,8 +1428,8 @@ class Subscription(models.Model):
                 'domain': domain_name,
                 'ending_on': ending_on,
             }
-            template = 'accounting/trial_ending_reminder_email.html'
-            template_plaintext = 'accounting/trial_ending_reminder_email_plaintext.txt'
+            template = 'accounting/email/trial_ending_reminder.html'
+            template_plaintext = 'accounting/email/trial_ending_reminder.txt'
         else:
             subject = _(
                 "CommCare Alert: %(domain)s's subscription to "
@@ -1466,8 +1440,8 @@ class Subscription(models.Model):
                 'ending_on': ending_on,
             }
 
-            template = 'accounting/subscription_ending_reminder_email.html'
-            template_plaintext = 'accounting/subscription_ending_reminder_email_plaintext.html'
+            template = 'accounting/email/subscription_ending_reminder.html'
+            template_plaintext = 'accounting/email/subscription_ending_reminder.txt'
 
         from corehq.apps.domain.views import DomainSubscriptionView
         context = {
@@ -1516,12 +1490,12 @@ class Subscription(models.Model):
         subject = "Alert: {domain}'s subscription is ending on {end_date}".format(
                   domain=domain,
                   end_date=end_date)
-        template = 'accounting/subscription_ending_reminder_dimagi.html'
-        template_plaintext = 'accounting/subscription_ending_reminder_dimagi_plaintext.html'
+        template = 'accounting/email/subscription_ending_reminder_dimagi.html'
+        template_plaintext = 'accounting/email/subscription_ending_reminder_dimagi.txt'
         context = {
             'domain': domain,
             'end_date': end_date,
-            'client_reminder_email_date': (self.end_date - datetime.timedelta(days=30)).strftime(USER_DATE_FORMAT),
+            'client_reminder_email_date': (self.date_end - datetime.timedelta(days=30)).strftime(USER_DATE_FORMAT),
             'contacts': ', '.join(self._reminder_email_contacts(domain)),
             'dimagi_contact': email,
         }
@@ -1563,7 +1537,7 @@ class Subscription(models.Model):
     @classmethod
     def get_active_subscription_by_domain(cls, domain_name):
         try:
-            return cls.objects.select_related(
+            return cls.visible_objects.select_related(
                 'plan_version__role'
             ).get(
                 is_active=True,
@@ -1600,7 +1574,7 @@ class Subscription(models.Model):
         date_start = date_start or today
 
         # find subscriptions that end in the future / after this subscription
-        available_subs = Subscription.objects.filter(
+        available_subs = Subscription.visible_objects.filter(
             subscriber=subscriber,
         )
 
@@ -1647,7 +1621,7 @@ class Subscription(models.Model):
             return last_subscription
 
         adjustment_method = adjustment_method or SubscriptionAdjustmentMethod.INTERNAL
-        subscription = Subscription.objects.create(
+        subscription = Subscription.visible_objects.create(
             account=account,
             plan_version=plan_version,
             subscriber=subscriber,
@@ -1677,7 +1651,7 @@ class Subscription(models.Model):
                                            date_start=None):
         subscriber = Subscriber.objects.get_or_create(domain=domain)[0]
         date_start = date_start or datetime.date.today()
-        last_subscription = Subscription.objects.filter(
+        last_subscription = Subscription.visible_objects.filter(
             subscriber=subscriber, date_end=date_start
         )
         if not last_subscription.exists():
@@ -1903,10 +1877,11 @@ class Invoice(InvoiceBase):
     @classmethod
     def autopayable_invoices(cls, date_due):
         """ Invoices that can be auto paid on date_due """
-        invoices = (cls.objects.
-                    select_related('subscription__account').
-                    filter(subscription__account__auto_pay_user__isnull=False).
-                    filter(date_due=date_due))
+        invoices = cls.objects.select_related('subscription__account').filter(
+            date_due=date_due,
+            is_hidden=False,
+            subscription__account__auto_pay_user__isnull=False,
+        )
         return invoices
 
     def pay_invoice(self, payment_record):
@@ -1976,8 +1951,8 @@ class BillingRecordBase(models.Model):
     pdf_data_id = models.CharField(max_length=48)
     last_modified = models.DateTimeField(auto_now=True)
 
-    INVOICE_HTML_TEMPLATE = 'accounting/invoice_email.html'
-    INVOICE_TEXT_TEMPLATE = 'accounting/invoice_email_plaintext.html'
+    INVOICE_HTML_TEMPLATE = 'accounting/email/invoice.html'
+    INVOICE_TEXT_TEMPLATE = 'accounting/email/invoice.txt'
 
     class Meta:
         abstract = True
@@ -2069,7 +2044,7 @@ class BillingRecordBase(models.Model):
     def send_email(self, contact_emails=None):
         pdf_attachment = {
             'title': self.pdf.get_filename(self.invoice),
-            'file_obj': StringIO(self.pdf.get_data(self.invoice)),
+            'file_obj': BytesIO(self.pdf.get_data(self.invoice)),
             'mimetype': 'application/pdf',
         }
         domain = self.invoice.get_domain()
@@ -2112,8 +2087,8 @@ class BillingRecordBase(models.Model):
 class WireBillingRecord(BillingRecordBase):
     invoice = models.ForeignKey(WireInvoice, on_delete=models.PROTECT)
 
-    INVOICE_HTML_TEMPLATE = 'accounting/wire_invoice_email.html'
-    INVOICE_TEXT_TEMPLATE = 'accounting/wire_invoice_email_plaintext.html'
+    INVOICE_HTML_TEMPLATE = 'accounting/email/wire_invoice.html'
+    INVOICE_TEXT_TEMPLATE = 'accounting/email/wire_invoice.txt'
 
     class Meta:
         app_label = 'accounting'
@@ -2151,11 +2126,11 @@ class WirePrepaymentBillingRecord(WireBillingRecord):
 
 class BillingRecord(BillingRecordBase):
     invoice = models.ForeignKey(Invoice, on_delete=models.PROTECT)
-    INVOICE_CONTRACTED_HTML_TEMPLATE = 'accounting/invoice_email_contracted.html'
-    INVOICE_CONTRACTED_TEXT_TEMPLATE = 'accounting/invoice_email_contracted_plaintext.html'
+    INVOICE_CONTRACTED_HTML_TEMPLATE = 'accounting/email/invoice_contracted.html'
+    INVOICE_CONTRACTED_TEXT_TEMPLATE = 'accounting/email/invoice_contracted.txt'
 
-    INVOICE_AUTOPAY_HTML_TEMPLATE = 'accounting/invoice_email_autopayment.html'
-    INVOICE_AUTOPAY_TEXT_TEMPLATE = 'accounting/invoice_email_autopayment.txt'
+    INVOICE_AUTOPAY_HTML_TEMPLATE = 'accounting/email/invoice_autopayment.html'
+    INVOICE_AUTOPAY_TEXT_TEMPLATE = 'accounting/email/invoice_autopayment.txt'
 
     class Meta:
         app_label = 'accounting'
@@ -2196,7 +2171,8 @@ class BillingRecord(BillingRecordBase):
         date_start, date_end = get_first_last_days(year, month)
         return self.__class__.objects.filter(
             invoice__date_start__lte=date_end, invoice__date_end__gte=date_start,
-            invoice__subscription__subscriber=self.invoice.subscription.subscriber
+            invoice__subscription__subscriber=self.invoice.subscription.subscriber,
+            invoice__is_hidden_to_ops=False,
         ).count() > MAX_INVOICE_COMMUNICATIONS
 
     def email_context(self):
@@ -2265,7 +2241,7 @@ class BillingRecord(BillingRecordBase):
         subscription_credits = BillingRecord._get_total_balance(
             CreditLine.get_credits_by_subscription_and_features(
                 self.invoice.subscription,
-                product_type=SoftwareProductType.ANY,
+                is_product=True,
             )
         )
         if subscription_credits or credit_adjustments.filter(
@@ -2280,7 +2256,7 @@ class BillingRecord(BillingRecordBase):
         account_credits = BillingRecord._get_total_balance(
             CreditLine.get_credits_for_account(
                 self.invoice.subscription.account,
-                product_type=SoftwareProductType.ANY,
+                is_product=True,
             )
         )
         if account_credits or credit_adjustments.filter(
@@ -2425,7 +2401,7 @@ class BillingRecord(BillingRecordBase):
         )
 
 
-class InvoicePdf(SafeSaveDocument):
+class InvoicePdf(BlobMixin, SafeSaveDocument):
     invoice_id = StringProperty()
     date_created = DateTimeProperty()
     is_wire = BooleanProperty(default=False)
@@ -2564,8 +2540,7 @@ class CreditLine(ValidateModelMixin, models.Model):
     """
     account = models.ForeignKey(BillingAccount, on_delete=models.PROTECT)
     subscription = models.ForeignKey(Subscription, on_delete=models.PROTECT, null=True, blank=True)
-    product_type = models.CharField(max_length=25, null=True, blank=True,
-                                    choices=((SoftwareProductType.ANY, SoftwareProductType.ANY),))
+    is_product = models.BooleanField(default=False)
     feature_type = models.CharField(max_length=10, null=True, blank=True,
                                     choices=FeatureType.CHOICES)
     date_created = models.DateTimeField(auto_now_add=True)
@@ -2585,8 +2560,8 @@ class CreditLine(ValidateModelMixin, models.Model):
                     'account_id': self.account.id,
                     'feature': (' for Feature %s' % self.feature_type
                                 if self.feature_type is not None else ""),
-                    'product': (' for Product %s' % self.product_type
-                                if self.product_type is not None else ""),
+                    'product': (' for Product'
+                                if self.is_product is not None else ""),
                     'balance': self.balance,
                 })
 
@@ -2651,11 +2626,11 @@ class CreditLine(ValidateModelMixin, models.Model):
             return itertools.chain(
                 cls.get_credits_by_subscription_and_features(
                     line_item.invoice.subscription,
-                    product_type=SoftwareProductType.ANY,
+                    is_product=True,
                 ),
                 cls.get_credits_for_account(
                     line_item.invoice.subscription.account,
-                    product_type=SoftwareProductType.ANY,
+                    is_product=True,
                 )
             )
 
@@ -2667,35 +2642,35 @@ class CreditLine(ValidateModelMixin, models.Model):
         )
 
     @classmethod
-    def get_credits_for_account(cls, account, feature_type=None, product_type=None):
-        assert not (feature_type and product_type)
+    def get_credits_for_account(cls, account, feature_type=None, is_product=False):
+        assert not (feature_type and is_product)
         return cls.objects.filter(
             account=account, subscription__exact=None
         ).filter(
-            product_type__exact=product_type, feature_type__exact=feature_type
+            is_product=is_product, feature_type__exact=feature_type
         ).all()
 
     @classmethod
     def get_credits_by_subscription_and_features(cls, subscription,
                                                  feature_type=None,
-                                                 product_type=None):
-        assert not (feature_type and product_type)
+                                                 is_product=False):
+        assert not (feature_type and is_product)
         return cls.objects.filter(
             subscription=subscription,
             feature_type__exact=feature_type,
-            product_type__exact=product_type,
+            is_product=is_product,
         ).all()
 
     @classmethod
     def get_non_general_credits_by_subscription(cls, subscription):
         return cls.objects.filter(subscription=subscription).filter(
-            Q(product_type__isnull=False) |
+            Q(is_product=True) |
             Q(feature_type__in=[f[0] for f in FeatureType.CHOICES])
         ).all()
 
     @classmethod
     def add_credit(cls, amount, account=None, subscription=None,
-                   product_type=None, feature_type=None, payment_record=None,
+                   is_product=False, feature_type=None, payment_record=None,
                    invoice=None, line_item=None, related_credit=None,
                    note=None, reason=None, web_user=None, permit_inactive=False):
         if account is None and subscription is None:
@@ -2703,7 +2678,7 @@ class CreditLine(ValidateModelMixin, models.Model):
                 "You must specify either a subscription "
                 "or account to add this credit to."
             )
-        if feature_type is not None and product_type is not None:
+        if feature_type is not None and is_product:
             raise CreditLineError(
                 "Can only add credit for a product OR a feature, but not both."
             )
@@ -2712,7 +2687,7 @@ class CreditLine(ValidateModelMixin, models.Model):
             credit_line = cls.objects.get(
                 account__exact=account,
                 subscription__exact=subscription,
-                product_type__exact=product_type,
+                is_product=is_product,
                 feature_type__exact=feature_type,
             )
             if not permit_inactive and not credit_line.is_active and not invoice:
@@ -2731,8 +2706,7 @@ class CreditLine(ValidateModelMixin, models.Model):
                                      if subscription is not None else ""),
                     'feature': (" | Feature %s" % feature_type
                                 if feature_type is not None else ""),
-                    'product': (" | Product %s" % product_type
-                                if product_type is not None else ""),
+                    'product': (" | Product" if is_product else ""),
                     'error': e.message,
                 }
             )
@@ -2740,7 +2714,7 @@ class CreditLine(ValidateModelMixin, models.Model):
             credit_line = cls.objects.create(
                 account=account,
                 subscription=subscription,
-                product_type=product_type,
+                is_product=is_product,
                 feature_type=feature_type,
             )
             is_new = True
@@ -2791,7 +2765,7 @@ class PaymentMethod(models.Model):
     :customer_id: is used by the API of the payment method we're using that
     uniquely identifies the payer on their end.
     """
-    web_user = models.CharField(max_length=80, null=True, db_index=True)
+    web_user = models.CharField(max_length=80, db_index=True)
     method_type = models.CharField(max_length=50,
                                    default=PaymentMethodType.STRIPE,
                                    choices=PaymentMethodType.CHOICES,
@@ -2860,7 +2834,7 @@ class StripePaymentMethod(PaymentMethod):
             'exp_month': card.exp_month,
             'exp_year': card.exp_year,
             'token': card.id,
-            'is_autopay': card.metadata.get('auto_pay_{}'.format(billing_account.id), False),
+            'is_autopay': self._is_autopay(card, billing_account),
         } for card in self.all_cards]
 
     def get_card(self, card_token):
@@ -2869,7 +2843,7 @@ class StripePaymentMethod(PaymentMethod):
     def get_autopay_card(self, billing_account):
         return next((
             card for card in self.all_cards
-            if card.metadata.get(self._auto_pay_card_metadata_key(billing_account)) == 'True'
+            if self._is_autopay(card, billing_account)
         ), None)
 
     def remove_card(self, card_token):
@@ -2912,7 +2886,7 @@ class StripePaymentMethod(PaymentMethod):
         """
         Unsets the auto_pay status for this card, and removes it from the billing account
         """
-        if card.metadata[self._auto_pay_card_metadata_key(billing_account)] == "True":
+        if self._is_autopay(card, billing_account):
             self._update_autopay_status(card, billing_account, autopay=False)
             billing_account.remove_autopay_user()
 
@@ -2935,6 +2909,10 @@ class StripePaymentMethod(PaymentMethod):
             other_payment_method._remove_autopay_card(billing_account)
         except StripePaymentMethod.DoesNotExist:
             pass
+
+    @staticmethod
+    def _is_autopay(card, billing_account):
+        return card.metadata.get(StripePaymentMethod._auto_pay_card_metadata_key(billing_account)) == 'True'
 
     @staticmethod
     def _auto_pay_card_metadata_key(billing_account):

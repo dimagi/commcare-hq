@@ -1,4 +1,6 @@
+from __future__ import absolute_import
 from collections import OrderedDict
+from django.core.validators import RegexValidator
 from django.urls import reverse
 from django.utils.translation import ugettext as _
 from django import forms
@@ -11,6 +13,7 @@ from dimagi.utils.decorators.memoized import memoized
 
 from .models import (CustomDataFieldsDefinition, is_system_key,
                      CUSTOM_DATA_FIELD_PREFIX)
+import six
 
 
 def add_prefix(field_dict, prefix):
@@ -20,7 +23,7 @@ def add_prefix(field_dict, prefix):
     """
     return {
         "{}-{}".format(prefix, k): v
-        for k, v in field_dict.iteritems()
+        for k, v in six.iteritems(field_dict)
     }
 
 
@@ -84,7 +87,11 @@ class CustomDataEditor(object):
         return dict(cleaned_data, **system_data)
 
     def _make_field(self, field):
-        if field.choices:
+        if field.regex:
+            validator = RegexValidator(field.regex, field.regex_msg)
+            return forms.CharField(label=field.label, required=field.is_required,
+                                   validators=[validator])
+        elif field.choices:
             if not field.is_multiple_choice:
                 choice_field = forms.ChoiceField(
                     label=field.label,
@@ -99,7 +106,8 @@ class CustomDataEditor(object):
                     widget=Select2MultipleChoiceWidget
                 )
             return choice_field
-        return forms.CharField(label=field.label, required=field.is_required)
+        else:
+            return forms.CharField(label=field.label, required=field.is_required)
 
     @property
     @memoized
@@ -122,7 +130,7 @@ class CustomDataEditor(object):
                 for field_name, field in fields.items()
             ]
         else:
-            field_names = fields.keys()
+            field_names = list(fields)
 
         CustomDataForm = type('CustomDataForm', (forms.Form,), fields)
         CustomDataForm.helper = FormHelper()

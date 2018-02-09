@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from collections import defaultdict
 from datetime import datetime, timedelta
 from django.db.models.aggregates import Max
@@ -5,6 +6,7 @@ from corehq.apps.commtrack.models import StockState
 from corehq.apps.locations.models import SQLLocation
 from custom.ewsghana.alerts import ONGOING_NON_REPORTING
 from custom.ewsghana.alerts.alert import WeeklyAlert
+import six
 
 
 class OnGoingNonReporting(WeeklyAlert):
@@ -23,12 +25,12 @@ class OnGoingNonReporting(WeeklyAlert):
         locations = []
 
         if program_id:
-            for location_name, programs_dict in data.iteritems():
+            for location_name, programs_dict in six.iteritems(data):
                 if program_id in programs_dict and \
                         (not programs_dict[program_id] or programs_dict[program_id] < date_until):
                     locations.append(location_name)
         else:
-            for location_name, programs_dict in data.iteritems():
+            for location_name, programs_dict in six.iteritems(data):
                 if all([not last_reported or last_reported < date_until
                         for last_reported in programs_dict.values()]):
                     locations.append(location_name)

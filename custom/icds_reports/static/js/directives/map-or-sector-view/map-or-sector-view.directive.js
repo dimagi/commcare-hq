@@ -1,17 +1,20 @@
 /* global d3 */
 
-function MapOrSectorController() {
+function MapOrSectorController($location, storageService, locationsService) {
     var vm = this;
-    vm.height = vm.location && vm.location.location_type === 'block' ? 700 : 2000;
+    var location_id = $location.search().location_id;
+
+    vm.showChart = parseInt($location.search().selectedLocationLevel) === 1;
 
     vm.chartOptions = {
+
         chart: {
             type: 'multiBarHorizontalChart',
-            height: vm.height,
-            width: 1000,
+            width: 1400,
+            height: 550,
             margin: {
-                bottom: 120,
-                left: 200,
+                bottom: 40,
+                left: 350,
             },
             x: function (d) {
                 return d[0];
@@ -20,18 +23,31 @@ function MapOrSectorController() {
                 return d[1];
             },
             showControls: false,
-            showValues: false,
-            duration: 500,
+            showLegend: false,
+            showValues: true,
+            valueFormat: function (d) {
+                if (vm.data.mapData.format === "number") {
+                    return d;
+                }
+                return d3.format(".2%")(d);
+            },
             xAxis: {
                 showMaxMin: false,
             },
             yAxis: {
                 tickFormat: function (d) {
-                    return d3.format(".4r")(d);
+                    if (vm.data.mapData.format === "number") {
+                        return d3.format("d")(d);
+                    }
+                    var max = d3.max(vm.data.mapData.chart_data[0].values, function(value) {
+                        return value[1];
+                    });
+                    return max < 0.1 ? d3.format(".2%")(d) : d3.format("%")(d);
                 },
+                axisLabelDistance: 20,
             },
-            tooltip: function(x, y) {
-                if(!vm.data.mapData.tooltips_data || !vm.data.mapData.tooltips_data[y]) {
+            tooltip: function (x, y) {
+                if (!vm.data.mapData.tooltips_data || !vm.data.mapData.tooltips_data[y]) {
                     return 'NA';
                 }
 
@@ -44,15 +60,53 @@ function MapOrSectorController() {
                     row: vm.data.mapData.tooltips_data[y],
                 });
             },
+            callback: function(chart) {
+                var height = 550;
+                var calc_height = vm.data.mapData ? vm.data.mapData.chart_data[0].values.length * 50 : 0;
+                vm.chartOptions.chart.height = calc_height > height ? calc_height : height;
+
+                chart.multibar.dispatch.on('elementClick', function (e) {
+                    locationsService.getLocationByNameAndParent(e.point[0], location_id).then(function (locations) {
+                        var location = locations[0];
+                        $location.search('location_name', location.name);
+                        $location.search('location_id', location.location_id);
+
+                        storageService.setKey('search', $location.search());
+                        if (location.location_type_name === 'awc') {
+                            $location.path('awc_reports');
+                        }
+                    });
+                });
+                return chart;
+            },
+        },
+        caption: {
+            enable: true,
+            html: function () {
+                return '<i class="fa fa-info-circle"></i> ' + (vm.data.mapData !== void(0) ? vm.data.mapData.info : "");
+            },
+            css: {
+                'text-align': 'center',
+                'margin': '0 auto',
+                'width': '900px',
+            },
+        },
+        title: {
+            enable: true,
+            text: vm.label,
+            css: {
+                'text-align': 'right',
+                'color': 'black',
+            },
         },
     };
 }
 
-MapOrSectorController.$inject = [];
+MapOrSectorController.$inject = [ '$location', 'storageService', 'locationsService'];
 
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
-window.angular.module('icdsApp').directive('mapOrSectorView', function() {
+window.angular.module('icdsApp').directive('mapOrSectorView', function () {
     return {
         restrict: 'E',
         scope: {
@@ -60,6 +114,7 @@ window.angular.module('icdsApp').directive('mapOrSectorView', function() {
             data: '=',
             templatePopup: '&',
             location: '=',
+            label: '=',
         },
         templateUrl: url('icds-ng-template', 'map-or-sector-view.directive'),
         bindToController: true,

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.test import TestCase
 import mock
 
@@ -8,6 +9,7 @@ from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
+from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.apps.hqcase.utils import submit_case_blocks
 from casexml.apps.case.mock import CaseBlock, CaseFactory, CaseStructure, CaseIndex
 from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
@@ -15,6 +17,7 @@ from corehq.apps.users.tasks import remove_indices_from_deleted_cases
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from corehq.form_processor.models import UserArchivedRebuild
 from corehq.form_processor.tests.utils import run_with_all_backends
+from six.moves import range
 
 
 class RetireUserTestCase(TestCase):
@@ -67,17 +70,61 @@ class RetireUserTestCase(TestCase):
 
         self.commcare_user.retire()
         cases = CaseAccessors(self.domain).get_cases(case_ids)
-        self.assertTrue(all(map(lambda c: c.is_deleted, cases)))
+        self.assertTrue(all([c.is_deleted for c in cases]))
         self.assertEqual(len(cases), 3)
         form = FormAccessors(self.domain).get_form(xform.form_id)
         self.assertTrue(form.is_deleted)
 
         self.commcare_user.unretire()
         cases = CaseAccessors(self.domain).get_cases(case_ids)
-        self.assertFalse(all(map(lambda c: c.is_deleted, cases)))
+        self.assertFalse(all([c.is_deleted for c in cases]))
         self.assertEqual(len(cases), 3)
         form = FormAccessors(self.domain).get_form(xform.form_id)
         self.assertFalse(form.is_deleted)
+
+    @run_with_all_backends
+    def test_undelete_system_forms(self):
+        case_ids = [uuid.uuid4().hex, uuid.uuid4().hex, uuid.uuid4().hex]
+
+        # create 3 cases
+        caseblocks = []
+        for case_id in case_ids:
+            owner_id = self.commcare_user._id
+
+            caseblocks.append(CaseBlock(
+                create=True,
+                case_id=case_id,
+                owner_id=owner_id,
+                user_id=owner_id,
+            ).as_string())
+        submit_case_blocks(caseblocks, self.domain, user_id=owner_id)[0]
+
+        # submit a system form to update one, and another to update two
+        caseblocks = [
+            CaseBlock(
+                create=False,
+                case_id=case_id,
+                user_id=SYSTEM_USER_ID,
+                update={'foo': 'bar'},
+            ).as_string()
+            for case_id in case_ids
+        ]
+        xform_1 = submit_case_blocks(caseblocks[:1], self.domain, user_id=SYSTEM_USER_ID)[0]
+        xform_2 = submit_case_blocks(caseblocks[1:], self.domain, user_id=SYSTEM_USER_ID)[0]
+
+        # Both forms should be deleted on `retire()`
+        self.commcare_user.retire()
+        form_1 = FormAccessors(self.domain).get_form(xform_1.form_id)
+        self.assertTrue(form_1.is_deleted)
+        form_2 = FormAccessors(self.domain).get_form(xform_2.form_id)
+        self.assertTrue(form_2.is_deleted)
+
+        # Both forms should be undeleted on `unretire()`
+        self.commcare_user.unretire()
+        form_1 = FormAccessors(self.domain).get_form(xform_1.form_id)
+        self.assertFalse(form_1.is_deleted)
+        form_2 = FormAccessors(self.domain).get_form(xform_2.form_id)
+        self.assertFalse(form_2.is_deleted)
 
     @run_with_all_backends
     def test_deleted_indices_removed(self):

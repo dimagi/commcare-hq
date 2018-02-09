@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import celery
 from datetime import datetime, timedelta
 

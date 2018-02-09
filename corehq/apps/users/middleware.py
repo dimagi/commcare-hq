@@ -1,6 +1,10 @@
+from __future__ import absolute_import
 from django.conf import settings
 import django.core.exceptions
+from django.template.response import TemplateResponse
 from django.utils.deprecation import MiddlewareMixin
+
+from corehq import toggles
 from corehq.apps.users.models import CouchUser, InvalidUser, AnonymousCouchUser
 from corehq.apps.users.util import username_to_user_id
 from corehq.toggles import ANONYMOUS_WEB_APPS_USAGE, PUBLISH_CUSTOM_REPORTS
@@ -54,3 +58,33 @@ class UsersMiddleware(MiddlewareMixin):
         elif is_public_reports(view_kwargs, request):
             request.couch_user = AnonymousCouchUser()
         return None
+
+
+class Enforce2FAMiddleware(MiddlewareMixin):
+    """Require all superusers and staff accounts to have Two-Factor Auth enabled"""
+    def __init__(self, get_response=None):
+        super(Enforce2FAMiddleware, self).__init__(get_response)
+
+        if settings.DEBUG:
+            raise django.core.exceptions.MiddlewareNotUsed
+
+    def process_view(self, request, view_func, view_args, view_kwargs):
+        if not (
+            hasattr(request, 'user')
+            and hasattr(request, 'couch_user')
+            and request.user
+            and request.couch_user
+        ):
+            return None
+
+        if not toggles.TWO_FACTOR_SUPERUSER_ROLLOUT.enabled(request.user.username):
+            return None
+        elif request.user.is_staff or request.user.is_superuser and not request.user.is_verified():
+            if request.path.startswith('/account/') or request.couch_user.two_factor_disabled:
+                return None
+            else:
+                return TemplateResponse(
+                    request=request,
+                    template='two_factor/core/otp_required.html',
+                    status=403,
+                )

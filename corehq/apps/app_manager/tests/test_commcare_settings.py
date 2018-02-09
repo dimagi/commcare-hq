@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import os
 import yaml
 from collections import defaultdict
@@ -14,6 +15,8 @@ from corehq.apps.app_manager.commcare_settings import (
 )
 from corehq.apps.app_manager.static_strings import STATICALLY_ANALYZABLE_TRANSLATIONS
 from corehq.apps.app_manager.models import Application
+import six
+from six.moves import range
 
 
 class CommCareSettingsTest(SimpleTestCase):
@@ -116,7 +119,7 @@ class CommCareSettingsTest(SimpleTestCase):
                         value = setting.get(key)
                         if not value:
                             continue
-                        if not isinstance(value, basestring):
+                        if not isinstance(value, six.string_types):
                             for v in value:
                                 self.assertIn(
                                     v,

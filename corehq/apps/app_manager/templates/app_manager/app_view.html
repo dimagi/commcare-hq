@@ -1,31 +1,37 @@
 {% extends "app_manager/managed_app.html" %}
-{% load xforms_extras %}
+{% load compress %}
+{% load crispy_forms_tags %}
 {% load hq_shared_tags %}
 {% load i18n %}
-{% load crispy_forms_tags %}
+{% load xforms_extras %}
 
 {% block head %}{{ block.super }}
   {% include 'analytics/fullstory.html' %}
 {% endblock %}
 
 {% block js %}{{  block.super }}
-  <script src="{% static 'app_manager/js/app_manager_utils.js' %}"></script>
-  <script src="{% static 'app_manager/js/download_async_modal.js' %}"></script>
-  <script src="{% static 'app_manager/js/releases/releases.js' %}"></script>
-  <script src="{% static 'app_manager/js/releases/language_profiles.js' %}"></script>
-  <script src="{% static "jsdiff/diff.js" %}"></script>
-  <script src="{% static 'app_manager/js/releases/app_diff.js' %}"></script>
-  <script src="{% static 'hqwebapp/js/bulk_upload_file.js' %}"></script>
-  <script src="{% static 'app_manager/js/supported_languages.js' %}"></script>
-  <script src="{% static 'app_manager/js/settings/password_setter.jquery.js' %}"></script>
-  <script src="{% static "hqmedia/js/hqmediauploaders.js" %}"></script>
-  <script src="{% static 'hqmedia/js/hqmedia.reference_controller.js' %}"></script>
-  <script src="{% static 'app_manager/js/app_view.js' %}"></script>
+  {% compress js %}
+      <script src="{% static 'app_manager/js/download_async_modal.js' %}"></script>
+      <script src="{% static 'app_manager/js/releases/releases.js' %}"></script>
+      <script src="{% static 'app_manager/js/releases/language_profiles.js' %}"></script>
+      <script src="{% static "jsdiff/diff.js" %}"></script>
+      <script src="{% static 'app_manager/js/releases/app_diff.js' %}"></script>
+      <script src="{% static 'hqwebapp/js/bulk_upload_file.js' %}"></script>
+      <script src="{% static 'app_manager/js/supported_languages.js' %}"></script>
+      <script src="{% static 'app_manager/js/settings/password_setter.jquery.js' %}"></script>
+      <script src="{% static "hqmedia/js/hqmediauploaders.js" %}"></script>
+      <script src="{% static 'hqmedia/js/hqmedia.reference_controller.js' %}"></script>
+      <script src="{% static 'app_manager/js/app_view.js' %}"></script>
+  {% endcompress %}
   {% if app.get_doc_type == "Application" %}
-      <script src="{% static 'app_manager/js/app_view_application.js' %}"></script>
-      <script src="{% static 'translations/js/translations.js' %}"></script>
+      {% compress js %}
+          <script src="{% static 'app_manager/js/app_view_application.js' %}"></script>
+          <script src="{% static 'translations/js/translations.js' %}"></script>
+      {% endcompress %}
   {% endif %}
-  <script src="{% static 'app_manager/js/add_ons.js' %}"></script>
+  {% compress js %}
+      <script src="{% static 'app_manager/js/add_ons.js' %}"></script>
+  {% endcompress %}
 {% endblock js %}
 
 {% block pre_form_content %}

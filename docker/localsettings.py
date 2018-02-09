@@ -1,9 +1,7 @@
 ####### Configuration for CommCareHQ Running in docker #######
 
+from __future__ import absolute_import
 import os
-
-ICDS_UCR_DATABASE_ALIAS = 'default'
-ICDS_UCR_TEST_DATABASE_ALIAS = 'default'
 
 DATABASES = {
     'default': {
@@ -151,7 +149,6 @@ COMPRESS_JS_COMPRESSOR = 'compressor.js.JsCompressor'
 CELERY_ALWAYS_EAGER = True
 CELERY_EAGER_PROPAGATES_EXCEPTIONS = True
 INACTIVITY_TIMEOUT = 60 * 24 * 365
-CSRF_SOFT_MODE = False
 SHARED_DRIVE_ROOT = '/sharedfiles'
 
 BASE_ADDRESS = '{}:8000'.format(os.environ.get('HQ_PORT_8000_TCP_ADDR', 'localhost'))
@@ -236,7 +233,6 @@ if os.environ.get("COMMCAREHQ_BOOTSTRAP") == "yes":
     ADMINS = (('Admin', 'admin@example.com'),)
 
     CELERY_SEND_TASK_ERROR_EMAILS = True
-
     LESS_DEBUG = True
     COMPRESS_OFFLINE = False
 
@@ -245,6 +241,8 @@ if os.environ.get("COMMCAREHQ_BOOTSTRAP") == "yes":
     TOUCHFORMS_API_USER = 'admin@example.com'
     TOUCHFORMS_API_PASSWORD = 'password'
 
+    FORMPLAYER_URL = 'http://formplayer:8010'
+
     CCHQ_API_THROTTLE_REQUESTS = 200
     CCHQ_API_THROTTLE_TIMEFRAME = 10
 
@@ -252,3 +250,7 @@ if os.environ.get("COMMCAREHQ_BOOTSTRAP") == "yes":
     SHARED_TEMP_DIR_NAME = 'temp'
 
 BIGCOUCH = True
+
+LOCAL_APPS = (
+    'kombu.transport.django',  # required for celery
+)

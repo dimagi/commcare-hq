@@ -1,13 +1,19 @@
+from __future__ import absolute_import
 from datetime import datetime
+
 from jsonobject.base_properties import DefaultProperty
+from six.moves import filter
+
 from casexml.apps.case.xform import extract_case_blocks
-from corehq.apps.es.forms import FormES
 from corehq.apps.receiverwrapper.util import get_version_from_appversion_text
 from corehq.apps.userreports.const import XFORM_CACHE_KEY_PREFIX
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.specs import TypeProperty
+from corehq.apps.userreports.util import add_tabbed_text
 from corehq.elastic import mget_query
+from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
+from corehq.toggles import ICDS_UCR_ELASTICSEARCH_DOC_LOADING, NAMESPACE_OTHER
 from dimagi.ext.jsonobject import JsonObject, ListProperty, StringProperty, DictProperty, BooleanProperty
 
 
@@ -16,23 +22,15 @@ CUSTOM_UCR_EXPRESSIONS = [
     ('icds_month_end', 'custom.icds_reports.ucr.expressions.month_end'),
     ('icds_parent_id', 'custom.icds_reports.ucr.expressions.parent_id'),
     ('icds_parent_parent_id', 'custom.icds_reports.ucr.expressions.parent_parent_id'),
-    ('icds_open_in_month', 'custom.icds_reports.ucr.expressions.open_in_month'),
     ('icds_get_case_forms_by_date', 'custom.icds_reports.ucr.expressions.get_case_forms_by_date'),
     ('icds_get_all_forms_repeats', 'custom.icds_reports.ucr.expressions.get_all_forms_repeats'),
     ('icds_get_last_form_repeat', 'custom.icds_reports.ucr.expressions.get_last_form_repeat'),
-    ('icds_alive_in_month', 'custom.icds_reports.ucr.expressions.alive_in_month'),
-    ('icds_ccs_pregnant', 'custom.icds_reports.ucr.expressions.ccs_pregnant'),
-    ('icds_ccs_lactating', 'custom.icds_reports.ucr.expressions.ccs_lactating'),
-    ('icds_child_age_in_days', 'custom.icds_reports.ucr.expressions.child_age_in_days'),
-    ('icds_child_age_in_months_month_start',
-     'custom.icds_reports.ucr.expressions.child_age_in_months_month_start'),
-    ('icds_child_age_in_months_month_end', 'custom.icds_reports.ucr.expressions.child_age_in_months_month_end'),
-    ('icds_child_valid_in_month', 'custom.icds_reports.ucr.expressions.child_valid_in_month'),
     ('icds_get_case_history', 'custom.icds_reports.ucr.expressions.get_case_history'),
     ('icds_get_case_history_by_date', 'custom.icds_reports.ucr.expressions.get_case_history_by_date'),
     ('icds_get_last_case_property_update', 'custom.icds_reports.ucr.expressions.get_last_case_property_update'),
     ('icds_get_case_forms_in_date', 'custom.icds_reports.ucr.expressions.get_forms_in_date_expression'),
     ('icds_get_app_version', 'custom.icds_reports.ucr.expressions.get_app_version'),
+    ('icds_datetime_now', 'custom.icds_reports.ucr.expressions.datetime_now'),
 ]
 
 
@@ -89,18 +87,22 @@ class GetCaseHistorySpec(JsonObject):
         if context.get_cache_value(cache_key) is not None:
             return context.get_cache_value(cache_key)
 
-        # TODO(Sheel/Emord) looks like this is only used when getting the last
+        # TODO(Emord) looks like this is only used when getting the last
         # property update. maybe this could be optimized sort by received_on
         # and stop looking at forms once it finds the update
         case_history = []
         for f in forms:
             case_blocks = extract_case_blocks(f)
             if case_blocks:
-                case_history.append(
-                    next(case_block for case_block in case_blocks
-                         if case_block['@case_id'] == case_id))
+                for case_block in case_blocks:
+                    if case_block['@case_id'] == case_id:
+                        case_history.append(case_block)
+
         context.set_cache_value(cache_key, case_history)
         return case_history
+
+    def __str__(self):
+        return "case_history(\n{cases}\n)".format(cases=add_tabbed_text(str(self._case_forms_expression)))
 
 
 class GetCaseHistoryByDateSpec(JsonObject):
@@ -161,10 +163,10 @@ class FormsInDateExpressionSpec(JsonObject):
         if context.get_cache_value(cache_key) is not None:
             return context.get_cache_value(cache_key)
 
-        xform_ids = self._get_case_form_ids(case_id, context)
+        xform_ids = FormsInDateExpressionSpec._get_case_form_ids(case_id, context)
         # TODO(Emord) this will eventually break down when cases have a lot of
         # forms associated with them. perhaps change to intersecting two sets
-        xforms = self._get_filtered_forms_from_es(case_id, xform_ids, context)
+        xforms = FormsInDateExpressionSpec._get_filtered_forms_from_es(case_id, xform_ids, context)
         if self.xmlns:
             xforms = [x for x in xforms if x['xmlns'] in xmlns_tuple]
         if from_date:
@@ -176,37 +178,30 @@ class FormsInDateExpressionSpec(JsonObject):
             context.set_cache_value(cache_key, count)
             return count
 
-        form_ids = [x['_id'] for x in xforms]
-        xforms = FormAccessors(domain).get_forms(form_ids)
-        xforms = [self._get_form_json(f, context) for f in xforms if f.domain == domain]
+        if not ICDS_UCR_ELASTICSEARCH_DOC_LOADING.enabled(case_id, NAMESPACE_OTHER):
+            form_ids = [x['_id'] for x in xforms]
+            xforms = FormAccessors(domain).get_forms(form_ids)
+            xforms = FormsInDateExpressionSpec._get_form_json_list(case_id, xforms, context, domain)
 
         context.set_cache_value(cache_key, xforms)
         return xforms
 
-    def _get_filtered_forms_from_es(self, case_id, xform_ids, context):
-        cache_key = (self.__class__.__name__, 'es_helper', case_id, tuple(xform_ids))
+    @staticmethod
+    def _get_filtered_forms_from_es(case_id, xform_ids, context):
+        es_toggle_enabled = ICDS_UCR_ELASTICSEARCH_DOC_LOADING.enabled(case_id, NAMESPACE_OTHER)
+        cache_key = (FormsInDateExpressionSpec.__name__, 'es_helper', case_id, tuple(xform_ids),
+                     es_toggle_enabled)
         if context.get_cache_value(cache_key) is not None:
             return context.get_cache_value(cache_key)
 
-        def _transform_time_end(xform):
-            xform = xform.get('_source', {})
-            if not xform.get('xmlns', None):
-                return None
-            try:
-                time = xform['form']['meta']['timeEnd']
-            except KeyError:
-                return None
-
-            xform['timeEnd'] = datetime.strptime(time, '%Y-%m-%dT%H:%M:%S.%fZ').date()
-            return xform
-
-        forms = mget_query('forms', xform_ids, ['form.meta.timeEnd', 'xmlns', '_id'])
-        forms = filter(None, map(_transform_time_end, forms))
+        source = True if es_toggle_enabled else ['form.meta.timeEnd', 'xmlns', '_id']
+        forms = FormsInDateExpressionSpec._bulk_get_forms_from_elasticsearch(xform_ids, source)
         context.set_cache_value(cache_key, forms)
         return forms
 
-    def _get_case_form_ids(self, case_id, context):
-        cache_key = (self.__class__.__name__, 'helper', case_id)
+    @staticmethod
+    def _get_case_form_ids(case_id, context):
+        cache_key = (FormsInDateExpressionSpec.__name__, 'helper', case_id)
         if context.get_cache_value(cache_key) is not None:
             return context.get_cache_value(cache_key)
 
@@ -215,14 +210,73 @@ class FormsInDateExpressionSpec(JsonObject):
         context.set_cache_value(cache_key, xform_ids)
         return xform_ids
 
-    def _get_form_json(self, form, context):
-        cache_key = (XFORM_CACHE_KEY_PREFIX, form.get_id)
-        if context.get_cache_value(cache_key) is not None:
-            return context.get_cache_value(cache_key)
+    @staticmethod
+    def _get_form_json_list(case_id, xforms, context, domain):
+        domain_filtered_forms = [f for f in xforms if f.domain == domain]
+        return [FormsInDateExpressionSpec._get_form_json(f, context) for f in domain_filtered_forms]
+
+    @staticmethod
+    def _get_form_json(form, context):
+        cached_form = FormsInDateExpressionSpec._get_cached_form_json(form, context)
+        if cached_form is not None:
+            return cached_form
 
         form_json = form.to_json()
-        context.set_cache_value(cache_key, form_json)
+        FormsInDateExpressionSpec._set_cached_form_json(form, form_json, context)
         return form_json
+
+    @staticmethod
+    def _bulk_get_form_json_from_es(forms):
+        form_ids = [form.form_id for form in forms]
+        es_forms = FormsInDateExpressionSpec._bulk_get_forms_from_elasticsearch(form_ids, source=True)
+        return {
+            f['_id']: f for f in es_forms
+        }
+
+    @staticmethod
+    def _get_cached_form_json(form, context):
+        return context.get_cache_value(FormsInDateExpressionSpec._get_form_json_cache_key(form))
+
+    @staticmethod
+    def _set_cached_form_json(form, form_json, context):
+        context.set_cache_value(FormsInDateExpressionSpec._get_form_json_cache_key(form), form_json)
+
+    @staticmethod
+    def _get_form_json_cache_key(form):
+        return (XFORM_CACHE_KEY_PREFIX, form.form_id)
+
+    @staticmethod
+    def _bulk_get_forms_from_elasticsearch(form_ids, source):
+        forms = mget_query('forms', form_ids, source)
+        return list(filter(None, [
+            FormsInDateExpressionSpec._transform_time_end_and_filter_bad_data(f) for f in forms
+        ]))
+
+    @staticmethod
+    def _transform_time_end_and_filter_bad_data(xform):
+        xform = xform.get('_source', {})
+        if not xform.get('xmlns', None):
+            return None
+        try:
+            time = xform['form']['meta']['timeEnd']
+        except KeyError:
+            return None
+
+        xform['timeEnd'] = datetime.strptime(time, '%Y-%m-%dT%H:%M:%S.%fZ').date()
+        return xform
+
+    def __str__(self):
+        value = "case_forms[{case_id}]".format(case_id=self._case_id_expression)
+        if self.from_date_expression or self.to_date_expression:
+            value = "{value}[date={start} to {end}]".format(value=value,
+                                                            start=self._from_date_expression,
+                                                            end=self._to_date_expression)
+        if self.xmlns:
+            value = "{value}[xmlns=\n{xmlns}\n]".format(value=value,
+                                                    xmlns=add_tabbed_text("\n".join(self.xmlns)))
+        if self.count:
+            value = "count({value})".format(value=value)
+        return value
 
 
 class GetAppVersion(JsonObject):
@@ -235,6 +289,24 @@ class GetAppVersion(JsonObject):
     def __call__(self, item, context=None):
         app_version_string = self._app_version_string(item, context)
         return get_version_from_appversion_text(app_version_string)
+
+    def __str__(self):
+        return "Application Version"
+
+
+class DateTimeNow(JsonObject):
+    type = TypeProperty('icds_datetime_now')
+
+    def __call__(self, item, context=None):
+        return _datetime_now()
+
+    def __str__(self):
+        return "datetime.now"
+
+
+def _datetime_now():
+    return datetime.utcnow()
+
 
 def month_start(spec, context):
     # fix offset to 3 months in past
@@ -294,35 +366,18 @@ def parent_id(spec, context):
     spec = {
         'type': 'nested',
         'argument_expression': {
-            'type': 'array_index',
-            'array_expression': {
-                'type': 'filter_items',
-                'items_expression': {
-                    'type': 'root_doc',
-                    'expression': {
-                        'datatype': 'array',
-                        'type': 'property_name',
-                        'property_name': 'indices'
-                    }
-                },
-                'filter_expression': {
-                    'type': 'boolean_expression',
-                    'operator': 'eq',
-                    'property_value': 'parent',
-                    'expression': {
-                        'type': 'property_name',
-                        'property_name': 'identifier'
-                    }
+            'type': 'indexed_case',
+            'case_expression': {
+                'type': 'root_doc',
+                'expression': {
+                    'type': 'identity'
                 }
             },
-            'index_expression': {
-                'type': 'constant',
-                'constant': 0
-            }
+            'index': 'parent'
         },
         'value_expression': {
             'type': 'property_name',
-            'property_name': 'referenced_id'
+            'property_name': '_id'
         }
     }
     return ExpressionFactory.from_spec(spec, context)
@@ -330,120 +385,24 @@ def parent_id(spec, context):
 
 def parent_parent_id(spec, context):
     spec = {
-        'type': 'related_doc',
-        'related_doc_type': 'CommCareCase',
-        'doc_id_expression': {
-            'type': 'icds_parent_id'
-        },
-        'value_expression': {
-            'type': 'nested',
-            'argument_expression': {
-                'type': 'array_index',
-                'array_expression': {
-                    'type': 'filter_items',
-                    'items_expression': {
-                        'type': 'root_doc',
-                        'expression': {
-                            'datatype': 'array',
-                            'type': 'property_name',
-                            'property_name': 'indices'
-                        }
-                    },
-                    'filter_expression': {
-                        'type': 'boolean_expression',
-                        'operator': 'eq',
-                        'property_value': 'parent',
-                        'expression': {
-                            'type': 'property_name',
-                            'property_name': 'identifier'
-                        }
+        'type': 'nested',
+        'argument_expression': {
+            'type': 'indexed_case',
+            'case_expression': {
+                'type': 'indexed_case',
+                'case_expression': {
+                    'type': 'root_doc',
+                    'expression': {
+                        'type': 'identity'
                     }
                 },
-                'index_expression': {
-                    'type': 'constant',
-                    'constant': 0
-                }
+                'index': 'parent'
             },
-            'value_expression': {
-                'type': 'property_name',
-                'property_name': 'referenced_id'
-            }
-        }
-    }
-    return ExpressionFactory.from_spec(spec, context)
-
-
-def open_in_month(spec, context):
-    spec = {
-        'type': 'conditional',
-        'test': {
-            'type': 'and',
-            'filters': [
-                {
-                    'type': 'boolean_expression',
-                    'operator': 'gte',
-                    'expression': {
-                        'type': 'diff_days',
-                        'from_date_expression': {
-                            'expression': {
-                                'datatype': 'date',
-                                'type': 'property_name',
-                                'property_name': 'opened_on'
-                            },
-                            'type': 'root_doc'
-                        },
-                        'to_date_expression': {
-                            'type': 'icds_month_end',
-                        }
-                    },
-                    'property_value': 0
-                },
-                {
-                    'type': 'or',
-                    'filters': [
-                        {
-                            'type': 'boolean_expression',
-                            'operator': 'eq',
-                            'expression': {
-                                'expression': {
-                                    'datatype': 'string',
-                                    'type': 'property_name',
-                                    'property_name': 'closed'
-                                },
-                                'type': 'root_doc'
-                            },
-                            'property_value': 'False'
-                        },
-                        {
-                            'type': 'boolean_expression',
-                            'operator': 'gte',
-                            'expression': {
-                                'type': 'diff_days',
-                                'from_date_expression': {
-                                    'type': 'icds_month_start',
-                                },
-                                'to_date_expression': {
-                                    'expression': {
-                                        'datatype': 'date',
-                                        'type': 'property_name',
-                                        'property_name': 'closed_on'
-                                    },
-                                    'type': 'root_doc'
-                                }
-                            },
-                            'property_value': 0
-                        }
-                    ]
-                }
-            ]
+            'index': 'parent'
         },
-        'expression_if_true': {
-            'type': 'constant',
-            'constant': 'yes'
-        },
-        'expression_if_false': {
-            'type': 'constant',
-            'constant': 'no'
+        'value_expression': {
+            'type': 'property_name',
+            'property_name': '_id'
         }
     }
     return ExpressionFactory.from_spec(spec, context)
@@ -462,55 +421,36 @@ def get_case_forms_by_date(spec, context):
     else:
         case_id_expression = spec['case_id_expression']
 
-    get_case_forms_expression = {
+    items_expression = {
         "type": "icds_get_case_forms_in_date",
         "case_id_expression": case_id_expression
     }
-    filters = []
     if spec['start_date'] is not None:
-        get_case_forms_expression['from_date_expression'] = spec['start_date']
+        items_expression['from_date_expression'] = spec['start_date']
     if spec['end_date'] is not None:
-        get_case_forms_expression['to_date_expression'] = spec['end_date']
+        items_expression['to_date_expression'] = spec['end_date']
     if spec['xmlns']:
-        get_case_forms_expression['xmlns'] = spec['xmlns']
+        items_expression['xmlns'] = spec['xmlns']
     if spec['form_filter'] is not None:
-        filters.append(spec['form_filter'])
+        items_expression = {
+            "type": "filter_items",
+            "filter_expression": spec['form_filter'],
+            "items_expression": items_expression
+        }
 
-    if len(filters) > 0:
-        spec = {
-            "type": "sort_items",
-            "sort_expression": {
-                "type": "property_path",
-                "property_path": [
-                    "form",
-                    "meta",
-                    "timeEnd"
-                ],
-                "datatype": "date"
-            },
-            "items_expression": {
-                "filter_expression": {
-                    "type": "and",
-                    "filters": filters
-                },
-                "type": "filter_items",
-                "items_expression": get_case_forms_expression
-            }
-        }
-    else:
-        spec = {
-            "type": "sort_items",
-            "sort_expression": {
-                "type": "property_path",
-                "property_path": [
-                    "form",
-                    "meta",
-                    "timeEnd"
-                ],
-                "datatype": "date"
-            },
-            "items_expression": get_case_forms_expression
-        }
+    spec = {
+        "type": "sort_items",
+        "sort_expression": {
+            "type": "property_path",
+            "property_path": [
+                "form",
+                "meta",
+                "timeEnd"
+            ],
+            "datatype": "date"
+        },
+        "items_expression": items_expression
+    }
     return ExpressionFactory.from_spec(spec, context)
 
 
@@ -618,359 +558,6 @@ def get_last_form_repeat(spec, context):
                     'property_path': spec['repeat_path']
                 },
             }
-        }
-    }
-    return ExpressionFactory.from_spec(spec, context)
-
-
-def alive_in_month(spec, context):
-    spec = {
-        'type': 'conditional',
-        'test': {
-            'type': 'or',
-            'filters': [
-                {
-                    'operator': 'in',
-                    'expression': {
-                        'value_expression': {
-                            'datatype': 'date',
-                            'type': 'property_name',
-                            'property_name': 'date_death'
-                        },
-                        'type': 'related_doc',
-                        'related_doc_type': 'CommCareCase',
-                        'doc_id_expression': {
-                            'type': 'icds_parent_id'
-                        }
-                    },
-                    'type': 'boolean_expression',
-                    'property_value': [
-                        '',
-                        None
-                    ]
-                },
-                {
-                    'operator': 'gte',
-                    'expression': {
-                        'from_date_expression': {
-                            'type': 'icds_month_start'
-                        },
-                        'type': 'diff_days',
-                        'to_date_expression': {
-                            'value_expression': {
-                                'datatype': 'date',
-                                'type': 'property_name',
-                                'property_name': 'date_death'
-                            },
-                            'type': 'related_doc',
-                            'related_doc_type': 'CommCareCase',
-                            'doc_id_expression': {
-                                'type': 'icds_parent_id'
-                            }
-                        }
-                    },
-                    'type': 'boolean_expression',
-                    'property_value': 0
-                }
-            ]
-        },
-        'expression_if_true': {
-            'type': 'constant',
-            'constant': 'yes'
-        },
-        'expression_if_false': {
-            'type': 'constant',
-            'constant': 'no'
-        }
-    }
-    return ExpressionFactory.from_spec(spec, context)
-
-
-def ccs_pregnant(spec, context):
-    spec = {
-        'type': 'conditional',
-        'test': {
-            'type': 'and',
-            'filters': [
-                {
-                    'type': 'boolean_expression',
-                    'operator': 'eq',
-                    'expression': {
-                        'type': 'icds_open_in_month'
-                    },
-                    'property_value': 'yes'
-                },
-                {
-                    'type': 'boolean_expression',
-                    'operator': 'eq',
-                    'expression': {
-                        'type': 'icds_alive_in_month'
-                    },
-                    'property_value': 'yes'
-                },
-                {
-                    'type': 'or',
-                    'filters': [
-                        {
-                            'operator': 'in',
-                            'type': 'boolean_expression',
-                            'expression': {
-                                'type': 'root_doc',
-                                'expression': {
-                                    'datatype': 'date',
-                                    'type': 'property_name',
-                                    'property_name': 'add'
-                                }
-                            },
-                            'property_value': [
-                                '',
-                                None
-                            ]
-                        },
-                        {
-                            'type': 'boolean_expression',
-                            'operator': 'gt',
-                            'property_value': 0,
-                            'expression': {
-                                'type': 'diff_days',
-                                'to_date_expression': {
-                                    'type': 'root_doc',
-                                    'expression': {
-                                        'datatype': 'date',
-                                        'type': 'property_name',
-                                        'property_name': 'add'
-                                    }
-                                },
-                                'from_date_expression': {
-                                    'type': 'icds_month_end'
-                                }
-                            }
-                        }
-                    ]
-                }
-            ]
-        },
-        'expression_if_true': {
-            'type': 'constant',
-            'constant': 'yes'
-        },
-        'expression_if_false': {
-            'type': 'constant',
-            'constant': 'no'
-        }
-    }
-    return ExpressionFactory.from_spec(spec, context)
-
-
-def ccs_lactating(spec, context):
-    spec = {
-        'type': 'conditional',
-        'test': {
-            'type': 'and',
-            'filters': [
-                {
-                    'type': 'boolean_expression',
-                    'operator': 'eq',
-                    'expression': {
-                        'type': 'icds_open_in_month'
-                    },
-                    'property_value': 'yes'
-                },
-                {
-                    'type': 'boolean_expression',
-                    'operator': 'eq',
-                    'expression': {
-                        'type': 'icds_alive_in_month'
-                    },
-                    'property_value': 'yes'
-                },
-                {
-                    'type': 'not',
-                    'filter': {
-                        'operator': 'in',
-                        'type': 'boolean_expression',
-                        'expression': {
-                            'type': 'root_doc',
-                            'expression': {
-                                'datatype': 'date',
-                                'type': 'property_name',
-                                'property_name': 'add'
-                            }
-                        },
-                        'property_value': [
-                            '',
-                            None
-                        ]
-                    }
-                },
-                {
-                    'type': 'boolean_expression',
-                    'operator': 'gte',
-                    'property_value': 0,
-                    'expression': {
-                        'type': 'diff_days',
-                        'to_date_expression': {
-                            'type': 'icds_month_end'
-                        },
-                        'from_date_expression': {
-                            'type': 'root_doc',
-                            'expression': {
-                                'datatype': 'date',
-                                'type': 'property_name',
-                                'property_name': 'add'
-                            }
-                        }
-                    }
-                },
-                {
-                    'type': 'boolean_expression',
-                    'operator': 'lte',
-                    'property_value': 183,
-                    'expression': {
-                        'type': 'diff_days',
-                        'from_date_expression': {
-                            'type': 'root_doc',
-                            'expression': {
-                                'datatype': 'date',
-                                'type': 'property_name',
-                                'property_name': 'add'
-                            }
-                        },
-                        'to_date_expression': {
-                            'type': 'icds_month_start'
-                        }
-                    }
-                }
-            ]
-        },
-        'expression_if_true': {
-            'type': 'constant',
-            'constant': 'yes'
-        },
-        'expression_if_false': {
-            'type': 'constant',
-            'constant': 'no'
-        }
-    }
-    return ExpressionFactory.from_spec(spec, context)
-
-
-def child_age_in_days(spec, context):
-    spec = {
-        'type': 'diff_days',
-        'from_date_expression': {
-            'type': 'related_doc',
-            'related_doc_type': 'CommCareCase',
-            'doc_id_expression': {
-                'type': 'icds_parent_id'
-            },
-            'value_expression': {
-                'datatype': 'date',
-                'property_name': 'dob',
-                'type': 'property_name'
-            }
-        },
-        'to_date_expression': {
-            'type': 'icds_month_end'
-        }
-    }
-    return ExpressionFactory.from_spec(spec, context)
-
-
-def child_age_in_months_month_end(spec, context):
-    spec = {
-        'type': 'evaluator',
-        'statement': 'age_in_days / 30.4',
-        'context_variables': {
-            'age_in_days': {
-                'type': 'icds_child_age_in_days'
-            }
-        }
-    }
-    return ExpressionFactory.from_spec(spec, context)
-
-
-def child_age_in_months_month_start(spec, context):
-    spec = {
-        'type': 'evaluator',
-        'statement': 'age_in_days / 30.4',
-        'context_variables': {
-            'age_in_days': {
-                'type': 'diff_days',
-                'from_date_expression': {
-                    'type': 'related_doc',
-                    'related_doc_type': 'CommCareCase',
-                    'doc_id_expression': {
-                        'type': 'icds_parent_id'
-                    },
-                    'value_expression': {
-                        'datatype': 'date',
-                        'property_name': 'dob',
-                        'type': 'property_name'
-                    }
-                },
-                'to_date_expression': {
-                    'type': 'icds_month_start'
-                }
-            }
-        }
-    }
-    return ExpressionFactory.from_spec(spec, context)
-
-
-def child_valid_in_month(spec, context):
-    spec = {
-        'type': 'conditional',
-        'test': {
-            "type": "and",
-            "filters": [
-                {
-                    'type': 'boolean_expression',
-                    'operator': 'eq',
-                    'property_value': 'yes',
-                    'expression': {
-                        'type': 'icds_alive_in_month'
-                    }
-                },
-                {
-                    'type': 'boolean_expression',
-                    'operator': 'eq',
-                    'property_value': 'yes',
-                    'expression': {
-                        'type': 'icds_open_in_month'
-                    }
-                },
-                {
-                    "type": "not",
-                    "filter": {
-                        "operator": "in",
-                        "type": "boolean_expression",
-                        "expression": {
-                            "type": "icds_child_age_in_months_month_start"
-                        },
-                        "property_value": [
-                            "",
-                            None
-                        ]
-                    }
-                },
-                {
-                    "type": "boolean_expression",
-                    "operator": "lte",
-                    "property_value": 72,
-                    "expression": {
-                        "type": "icds_child_age_in_months_month_start"
-                    }
-                }
-            ]
-        },
-        'expression_if_true': {
-            'type': 'constant',
-            'constant': 'yes'
-        },
-        'expression_if_false': {
-            'type': 'constant',
-            'constant': 'no'
         }
     }
     return ExpressionFactory.from_spec(spec, context)
@@ -1146,3 +733,53 @@ def get_app_version(spec, context):
         app_version_string=ExpressionFactory.from_spec(wrapped.app_version_string, context)
     )
     return wrapped
+
+
+def datetime_now(spec, context):
+    return DateTimeNow.wrap(spec)
+
+
+def icds_get_related_docs_ids(case_id):
+    """gets a related case id from an ICDS ccs_record or child_health case. Expects the hierarchy:
+                                      /---->  ccs_record
+         household -----> person  --<
+                                      \---->  child_health
+
+    This could likely be optimized pretty easily to take in multiple case_ids but we
+    don't currently have an interface to do so
+    """
+    db = CaseAccessors('icds-cas')
+    try:
+        current_case = db.get_case(case_id)
+    except CaseNotFound:
+        return []
+    if not current_case.indices or current_case.type not in ('ccs_record', 'child_health'):
+        return []
+
+    try:
+        person_case = db.get_case(current_case.indices[0].referenced_id)
+    except CaseNotFound:
+        return []
+    if not person_case.indices or person_case.type != 'person':
+        return []
+
+    try:
+        house_case = db.get_case(person_case.indices[0].referenced_id)
+    except CaseNotFound:
+        return []
+    if house_case.type != 'household':
+        return []
+
+    person_case_ids = [
+        case.case_id
+        for case in db.get_reverse_indexed_cases([house_case.case_id])
+        if case.type == 'person'
+    ]
+    if not person_case_ids:
+        return []
+
+    return [
+        case.case_id
+        for case in db.get_reverse_indexed_cases(person_case_ids)
+        if case.case_id != case_id and case.type in ('ccs_record', 'child_health')
+    ]

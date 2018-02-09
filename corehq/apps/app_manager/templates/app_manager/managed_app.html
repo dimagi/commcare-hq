@@ -1,13 +1,16 @@
 {% extends "app_manager/apps_base.html" %}
-{% load xforms_extras %}
-{% load url_extras %}
+{% load compress %}
 {% load hq_shared_tags %}
 {% load i18n %}
+{% load url_extras %}
+{% load xforms_extras %}
 
 {% block title %}{{ module.name|clean_trans:langs }}{% endblock %}
 
 {% block js %}
     {{ block.super }}
+    {% compress js %}
+    <script src="{% static 'app_manager/js/app_manager_utils.js' %}"></script>
     <script src="{% static 'app_manager/js/preview_app.js' %}"></script>
     <script src="{% static 'app_manager/js/apps_base.js' %}"></script>
     <script src="{% static 'app_manager/js/app_manager.js' %}"></script>
@@ -16,6 +19,7 @@
     <script src="{% static 'app_manager/js/managed_app.js' %}"></script>
     <script src="{% static 'hqwebapp/js/rollout_modal.js' %}"></script>
     <script src="{% static 'app_manager/js/section_changer.js' %}"></script>
+    {% endcompress %}
 {% endblock %}
 
 {% block breadcrumbs %}

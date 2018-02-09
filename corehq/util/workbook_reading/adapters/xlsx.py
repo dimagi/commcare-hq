@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from contextlib import contextmanager
 from zipfile import BadZipfile
 from datetime import datetime, time
@@ -58,6 +59,7 @@ class _XLSXWorksheetAdaptor(object):
             yield [Cell(self._make_cell_value(cell)) for cell in row]
 
     def to_worksheet(self):
+        # Note that an empty sheet and a sheet with one row both have max_row = 1
         return Worksheet(title=self._worksheet.title, max_row=self._worksheet.max_row,
                          iter_rows=self.iter_rows)
 

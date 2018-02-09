@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from contextlib import contextmanager
 import json
 from tempfile import NamedTemporaryFile
@@ -15,7 +16,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.views.generic.base import TemplateView
 
-from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest_or_basic_or_apikey
+from corehq.apps.domain.decorators import login_and_domain_required, api_auth
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.fixtures.tasks import fixture_upload_async, fixture_download_async
 from corehq.apps.fixtures.dispatcher import require_can_edit_fixtures
@@ -27,7 +28,7 @@ from corehq.apps.fixtures.exceptions import (
 from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem, FieldList, FixtureTypeField
 from corehq.apps.fixtures.fixturegenerators import item_lists_by_domain
 from corehq.apps.fixtures.upload import upload_fixture_file, validate_fixture_file_format
-from corehq.apps.fixtures.utils import is_identifier_invalid
+from corehq.apps.fixtures.utils import clear_fixture_cache, is_identifier_invalid
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.util import format_datatables_data
 from corehq.apps.users.models import Permissions
@@ -41,6 +42,8 @@ from copy import deepcopy
 from soil import CachedDownload, DownloadBase
 from soil.exceptions import TaskFailedError
 from soil.util import expose_cached_download, get_download_context
+import six
+from six.moves import range
 
 
 def strip_json(obj, disallow_basic=None, disallow=None):
@@ -105,6 +108,7 @@ def update_tables(request, domain, data_type_id, test_patch=None):
         elif request.method == 'DELETE':
             with CouchTransaction() as transaction:
                 data_type.recursive_delete(transaction)
+            clear_fixture_cache(domain)
             return json_response({})
         elif not request.method == 'PUT':
             return HttpResponseBadRequest()
@@ -120,13 +124,13 @@ def update_tables(request, domain, data_type_id, test_patch=None):
         if is_identifier_invalid(data_tag):
             validation_errors.append(data_tag)
         for field_name, options in fields_update['fields'].items():
-            method = options.keys()
+            method = list(options.keys())
             if 'update' in method:
                 field_name = options['update']
             if is_identifier_invalid(field_name) and 'remove' not in method:
                 validation_errors.append(field_name)
-        validation_errors = map(lambda e: _("\"%s\" cannot include special characters or "
-                                            "begin with \"xml\" or a number.") % e, validation_errors)
+        validation_errors = [_("\"%s\" cannot include special characters or "
+                                            "begin with \"xml\" or a number.") % e for e in validation_errors]
         if len(data_tag) > 31:
             validation_errors.append(_("Table ID can not be longer than 31 characters."))
 
@@ -147,6 +151,7 @@ def update_tables(request, domain, data_type_id, test_patch=None):
                     return HttpResponseBadRequest("DuplicateFixture")
                 else:
                     data_type = create_types(fields_patches, domain, data_tag, is_global, transaction)
+        clear_fixture_cache(domain)
         return json_response(strip_json(data_type))
 
 
@@ -168,7 +173,7 @@ def update_types(patches, domain, data_type_id, data_tag, is_global, transaction
             new_fixture_fields.append(old_field)
         if "remove" in patch:
             continue
-    new_fields = fields_patches.keys()
+    new_fields = list(fields_patches.keys())
     for new_field_name in new_fields:
         patch = fields_patches.pop(new_field_name)
         if "is_new" in patch:
@@ -205,7 +210,9 @@ def update_items(fields_patches, domain, data_type_id, transaction):
                 )
         setattr(item, "fields", updated_fields)
         transaction.save(item)
-    data_items = FixtureDataItem.by_data_type(domain, data_type_id, bypass_cache=True)
+    transaction.add_post_commit_action(
+        lambda: FixtureDataItem.by_data_type(domain, data_type_id, bypass_cache=True)
+    )
 
 
 def create_types(fields_patches, domain, data_tag, is_global, transaction):
@@ -227,7 +234,7 @@ def data_table(request, domain):
     try:
         sheets = prepare_fixture_html(table_ids, domain)
     except FixtureDownloadError as e:
-        messages.info(request, unicode(e))
+        messages.info(request, six.text_type(e))
         raise Http404()
     sheets.pop("types")
     if not sheets:
@@ -235,8 +242,8 @@ def data_table(request, domain):
             "headers": DataTablesHeader(DataTablesColumn("No lookup Tables Uploaded")),
             "rows": []
         }
-    selected_sheet = sheets.values()[0]
-    selected_sheet_tag = sheets.keys()[0]
+    selected_sheet = list(sheets.values())[0]
+    selected_sheet_tag = list(sheets.keys())[0]
     data_table = {
         "headers": None,
         "rows": None,
@@ -385,7 +392,7 @@ class UploadFixtureAPIResponse(object):
 
     def __init__(self, status, message):
         assert status in self.response_codes, \
-            'status must be in {!r}: {}'.format(self.status.keys(), status)
+            'status must be in {!r}: {}'.format(list(self.response_codes), status)
         self.status = status
         self.message = message
 
@@ -396,7 +403,7 @@ class UploadFixtureAPIResponse(object):
 
 @csrf_exempt
 @require_POST
-@login_or_digest_or_basic_or_apikey()
+@api_auth
 @require_can_edit_fixtures
 def upload_fixture_api(request, domain, **kwargs):
     """

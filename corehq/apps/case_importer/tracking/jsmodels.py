@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.apps.case_importer.tracking.permissions import user_may_view_file_upload, \
     user_may_update_comment
 from corehq.apps.case_importer.tracking.task_status import TaskStatus

@@ -1,5 +1,8 @@
+from __future__ import absolute_import
 from dimagi.utils.couch.database import safe_delete
 from corehq.util.test_utils import unit_testing_only
+from corehq.apps.reports.models import CaseExportSchema, FormExportSchema
+from corehq.form_processor.utils import use_new_exports
 
 
 def get_latest_case_export_schema(domain, case_type):
@@ -73,6 +76,37 @@ def get_case_export_instances(domain):
 
     key = [domain, 'CaseExportInstance']
     return _get_export_instance(CaseExportInstance, key)
+
+
+def _get_saved_exports(domain, has_deid_permissions, old_exports_getter, new_exports_getter):
+    exports = old_exports_getter(domain)
+    new_exports = new_exports_getter(domain)
+    if use_new_exports(domain):
+        exports += new_exports
+    else:
+        from corehq.apps.export.utils import revert_new_exports
+        exports += revert_new_exports(new_exports)
+    if not has_deid_permissions:
+        exports = [e for e in exports if not e.is_safe]
+    return sorted(exports, key=lambda x: x.name)
+
+
+def get_case_exports_by_domain(domain, has_deid_permissions):
+    old_exports_getter = CaseExportSchema.get_stale_exports
+    new_exports_getter = get_case_export_instances
+    return _get_saved_exports(domain, has_deid_permissions, old_exports_getter, new_exports_getter)
+
+
+def get_form_exports_by_domain(domain, has_deid_permissions):
+    old_exports_getter = FormExportSchema.get_stale_exports
+    new_exports_getter = get_form_export_instances
+    return _get_saved_exports(domain, has_deid_permissions, old_exports_getter, new_exports_getter)
+
+
+def get_export_count_by_domain(domain):
+    exports = get_form_exports_by_domain(domain, True)
+    exports += get_case_exports_by_domain(domain, True)
+    return len(exports)
 
 
 def _get_export_instance(cls, key):

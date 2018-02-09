@@ -1,9 +1,13 @@
+from __future__ import absolute_import
+import json
+
+from django.conf import settings
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.utils.translation import ugettext_lazy as _
 from casexml.apps.case.signals import case_post_save
 from corehq.apps.locations.models import SQLLocation
-from corehq.motech.repeaters.models import CaseRepeater, LocationRepeater, UserRepeater
+from corehq.motech.repeaters.models import CaseRepeater, LocationRepeater, UserRepeater, RepeatRecord
 from corehq.motech.repeaters.signals import create_repeat_records
 from corehq.apps.users.signals import commcare_user_post_save
 from corehq.form_processor.models import CommCareCaseSQL
@@ -13,6 +17,7 @@ from custom.enikshay.case_utils import CASE_TYPE_PERSON
 from custom.enikshay.const import (
     ENROLLED_IN_PRIVATE, PRESCRIPTION_TOTAL_DAYS_THRESHOLD,
     BETS_DATE_PRESCRIPTION_THRESHOLD_MET)
+from custom.enikshay.exceptions import ENikshayException
 from custom.enikshay.integrations.bets.const import (
     TREATMENT_180_EVENT, DRUG_REFILL_EVENT, SUCCESSFUL_TREATMENT_EVENT,
     DIAGNOSIS_AND_NOTIFICATION_EVENT, AYUSH_REFERRAL_EVENT, CHEMIST_VOUCHER_EVENT,
@@ -27,6 +32,8 @@ from custom.enikshay.integrations.utils import (
     case_properties_changed, is_valid_episode_submission, is_valid_voucher_submission,
     is_valid_archived_submission, is_valid_person_submission, case_was_created,
     is_migrated_uatbc_episode, string_to_date_or_None)
+from .utils import get_bets_location_json, queued_payload, get_bets_user_json
+import six
 
 
 class BETSRepeaterMixin(object):
@@ -269,7 +276,7 @@ class BETSDrugRefillRepeater(BaseBETSRepeater):
             )
             trigger_by_threshold[n] = trigger_for_n
 
-        trigger_dates_unique = self._list_items_unique(filter(None, threshold_prop_values_by_threshold.values()))
+        trigger_dates_unique = self._list_items_unique([_f for _f in list(threshold_prop_values_by_threshold.values()) if _f])
         if not trigger_dates_unique:
             self._flag_program_team()
 
@@ -389,7 +396,38 @@ class BETSUserRepeater(BETSRepeaterMixin, UserRepeater):
         return (location.metadata.get('is_test') != "yes"
                 and location.location_type.code in self.location_types_to_forward)
 
+    def get_attempt_info(self, repeat_record):
+        """Store the payload as extra information
+        """
+        try:
+            return six.text_type(self.get_payload(repeat_record))
+        except ENikshayException:
+            return None
+
     def allowed_to_forward(self, user):
+        # if this user is already in the repeater queue don't add another one
+        if queued_payload(user.domain, user.user_id):
+            return False
+
+        # If this user has already been forwarded without any changes, then
+        # don't send it to BETS again
+        successful_records = user.user_data.get('BETS_user_repeat_record_ids')
+        if successful_records:
+            latest_record_id = successful_records.split(" ")[-1]
+            latest_record = RepeatRecord.get(latest_record_id)
+            previous_payload = latest_record.attempts[-1].info if latest_record.attempts else "{}"
+            try:
+                previous_payload_json = json.loads(previous_payload)
+                current_payload = get_bets_user_json(user.domain, user)
+                del previous_payload_json['user_data']['id_device_number']
+                del previous_payload_json['user_data']['id_device_body']
+                del current_payload['user_data']['id_device_number']
+                del current_payload['user_data']['id_device_body']
+                if current_payload == previous_payload_json:
+                    return False
+            except (TypeError, ValueError):
+                pass
+
         return (user.user_data.get('user_level', None) == 'real'
                 and any(self._is_relevant_location(loc)
                         for loc in user.get_sql_locations(self.domain)))
@@ -410,9 +448,34 @@ class BETSLocationRepeater(BETSRepeaterMixin, LocationRepeater):
                         'pac',
     )
 
+    def get_attempt_info(self, repeat_record):
+        """Store the payload as extra information
+        """
+        return six.text_type(self.get_payload(repeat_record))
+
     def allowed_to_forward(self, location):
+        # if this location is already in the repeater queue, don't forward again
+        if queued_payload(location.domain, location.location_id):
+            return False
+
+        # If this location has already been forwarded without any changes, then
+        # don't send it to BETS again
+        successful_records = location.metadata.get('BETS_location_repeat_record_ids')
+        if successful_records:
+            latest_record_id = successful_records.split(" ")[-1]
+            latest_record = RepeatRecord.get(latest_record_id)
+            previous_payload = latest_record.attempts[-1].info if latest_record.attempts else "{}"
+            try:
+                previous_payload_json = json.loads(previous_payload)
+                current_payload = get_bets_location_json(location)
+                if current_payload == previous_payload_json:
+                    return False
+            except (TypeError, ValueError):
+                pass
+
         return (location.metadata.get('is_test') != "yes"
                 and location.location_type.code in self.location_types_to_forward)
+
 
 class BETSBeneficiaryRepeater(BaseBETSRepeater):
     friendly_name = _("BETS - Patient (beneficiary) registration and update")
@@ -421,11 +484,13 @@ class BETSBeneficiaryRepeater(BaseBETSRepeater):
         'phone_number',
         'current_address_district_choice',
         'current_address_state_choice',
+        'current_episode_type',
     )
 
     def allowed_to_forward(self, person_case):
         return (person_case.type == CASE_TYPE_PERSON
                 and person_case.get_case_property(ENROLLED_IN_PRIVATE) == 'true'
+                and person_case.get_case_property('current_episode_type') == 'confirmed_tb'
                 and is_valid_person_submission(person_case)
                 and (case_was_created(person_case)
                      or case_properties_changed(person_case, self.properties_we_care_about)))
@@ -433,6 +498,8 @@ class BETSBeneficiaryRepeater(BaseBETSRepeater):
 
 @receiver(case_post_save, sender=CommCareCaseSQL, dispatch_uid="create_BETS_case_repeat_records")
 def create_BETS_repeat_records(sender, case, **kwargs):
+    if settings.SERVER_ENVIRONMENT != "enikshay":
+        return
     create_repeat_records(ChemistBETSVoucherRepeater, case)
     create_repeat_records(LabBETSVoucherRepeater, case)
     create_repeat_records(BETS180TreatmentRepeater, case)
@@ -445,11 +512,12 @@ def create_BETS_repeat_records(sender, case, **kwargs):
 
 @receiver(post_save, sender=SQLLocation, dispatch_uid="create_BETS_location_repeat_records")
 def create_BETS_location_repeat_records(sender, raw=False, **kwargs):
-    if raw:
+    if raw or settings.SERVER_ENVIRONMENT != "enikshay":
         return
     create_repeat_records(BETSLocationRepeater, kwargs['instance'])
 
 
 @receiver(commcare_user_post_save, dispatch_uid="create_BETS_user_repeat_records")
 def create_BETS_user_repeat_records(sender, couch_user, **kwargs):
-    create_repeat_records(BETSUserRepeater, couch_user)
+    if settings.SERVER_ENVIRONMENT == "enikshay":
+        create_repeat_records(BETSUserRepeater, couch_user)

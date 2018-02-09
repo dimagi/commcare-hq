@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.messaging.smsbackends.telerivet.models import SQLTelerivetBackend
 from django.test import TestCase
 

@@ -1,8 +1,9 @@
 {% extends "app_manager/app_view.html" %}
-{% load xforms_extras %}
+{% load compress %}
+{% load crispy_forms_tags %}
 {% load hq_shared_tags %}
 {% load i18n %}
-{% load crispy_forms_tags %}
+{% load xforms_extras %}
 
 {% block title %}
   {% trans "Releases" %} -
@@ -14,14 +15,16 @@
 {% endblock %}
 
 {% block js %}{{ block.super }}
-    <script src="{% static "app_manager/js/releases/app_view_release_manager.js" %}"></script>
+    {% compress js %}
+        <script src="{% static "app_manager/js/releases/app_view_release_manager.js" %}"></script>
+    {% endcompress %}
 {% endblock js %}
 
 {% block js-inline %}{{ block.super }}
 {% endblock %}
 
 {% block app_view_tabs %}
-  {% initial_page_data 'ab_test' ab_test %}
+  {% analytics_ab_test 'kissmetrics.release_manager_ab' ab_test %}
   {% initial_page_data 'app_id' app.id %}
   {% initial_page_data 'app_version' app.version %}
   {% initial_page_data 'application_profile_url' application_profile_url %}

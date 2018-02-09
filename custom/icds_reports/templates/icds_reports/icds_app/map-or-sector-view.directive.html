@@ -1,8 +1,13 @@
 <div class="map-or-sector-view-directive">
     <div ng-if="$ctrl.mode === 'map' && $ctrl.data.mapData">
-        <indie-map template-popup="$ctrl.templatePopup(loc)" legend-title="{$ $ctrl.data.legendTitle $}" data="$ctrl.data.mapData"></indie-map>
+        <div>
+            <indie-map template-popup="$ctrl.templatePopup(loc)" legend-title="{$ $ctrl.data.legendTitle $}" data="$ctrl.data.mapData"></indie-map>
+        </div>
+        <div ng-if="$ctrl.showChart">
+            <nvd3 id="sectorChart" options="$ctrl.chartOptions" data="$ctrl.data.mapData.chart_data" class="with-3d-shadow with-transitions"></nvd3>
+        </div>
     </div>
     <div ng-if="$ctrl.mode === 'sector'">
-        <nvd3 options="$ctrl.chartOptions" data="$ctrl.data.mapData.chart_data" class="with-3d-shadow with-transitions"></nvd3>
+        <nvd3 id="sectorChart" options="$ctrl.chartOptions" data="$ctrl.data.mapData.chart_data" class="with-3d-shadow with-transitions"></nvd3>
     </div>
 </div>

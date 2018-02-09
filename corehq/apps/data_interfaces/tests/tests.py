@@ -1,4 +1,5 @@
 from __future__ import print_function
+from __future__ import absolute_import
 from os.path import abspath, dirname, join
 
 from django.test import TestCase
@@ -17,6 +18,7 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import WebUser
 from corehq.apps.data_interfaces.utils import archive_forms_old
 from corehq import privileges, toggles
+import six
 
 THISDIR = dirname(abspath(__file__))
 BASE_PATH = join(THISDIR, 'files')
@@ -119,7 +121,7 @@ class BulkArchiveFormsUnit(TestCase):
         self.username = "ben"
         self.xforms = {}
 
-        for key, _id, in self.XFORMS.iteritems():
+        for key, _id, in six.iteritems(self.XFORMS):
             meta = TestFormMetadata(domain=DOMAIN_NAME)
             self.xforms[_id] = get_simple_wrapped_form(_id, metadata=meta)
 
@@ -135,7 +137,7 @@ class BulkArchiveFormsUnit(TestCase):
             print(response)
 
         # Need to re-get instance from DB to get updated attributes
-        for key, _id in self.XFORMS.iteritems():
+        for key, _id in six.iteritems(self.XFORMS):
             self.assertTrue(FormAccessors(DOMAIN_NAME).get_form(_id).is_archived)
 
         self.assertEqual(len(response['success']), len(self.xforms))
@@ -147,7 +149,7 @@ class BulkArchiveFormsUnit(TestCase):
         with drop_connected_signals(xform_archived):
             response = archive_forms_old(DOMAIN_NAME, 'user1', self.username, list(uploaded_file.get_worksheet()))
 
-        for key, _id in self.XFORMS.iteritems():
+        for key, _id in six.iteritems(self.XFORMS):
             self.assertTrue(FormAccessors(DOMAIN_NAME).get_form(_id).is_archived)
 
         self.assertEqual(len(response['success']), len(self.xforms))

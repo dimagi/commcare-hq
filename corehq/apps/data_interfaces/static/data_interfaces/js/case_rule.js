@@ -1,10 +1,6 @@
 hqDefine("data_interfaces/js/case_rule", function() {
 
     $(function() {
-        if(hqImport("hqwebapp/js/initial_page_data").get('read_only_mode')) {
-            $('#rule-definition :input').prop('disabled', true);
-        }
-
         $("#rule-definition-form").submit(function(event) {
             var result = true;
             var criteria_model = hqImport('data_interfaces/js/case_rule_criteria').get_criteria_model();

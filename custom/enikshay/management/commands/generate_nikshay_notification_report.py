@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import print_function
 from datetime import datetime
 from openpyxl import Workbook
 import csv
@@ -16,6 +18,7 @@ from custom.enikshay.case_utils import get_person_case_from_episode, get_open_ep
 from custom.enikshay.const import DSTB_EPISODE_TYPE
 from custom.enikshay.exceptions import ENikshayCaseNotFound
 from custom.enikshay.integrations.utils import is_valid_person_submission
+from six.moves import range
 
 DOMAIN = "enikshay"
 
@@ -58,7 +61,7 @@ class Command(BaseCommand):
         )
 
     def _search_person_using_enikshay_id(self, enikshay_id):
-        return self.search.case_property_query("person_id", enikshay_id).values_list(['_id', ], flat=True)
+        return self.search.case_property_query("person_id", enikshay_id).values_list('_id', flat=True)
 
     def _load_episode_ids_from_person(self, file_path):
         """
@@ -84,7 +87,7 @@ class Command(BaseCommand):
                 episode_case = get_open_episode_case_from_person(DOMAIN, person_id)
                 self.episode_ids.append(episode_case.get_id)
             except ENikshayCaseNotFound:
-                print("Could not find episode for person with enikshay ID:", person_id)
+                print(("Could not find episode for person with enikshay ID:", person_id))
 
     def _load_episode_ids_from_file(self, file_path):
         with open(file_path, 'rU') as csvfile:

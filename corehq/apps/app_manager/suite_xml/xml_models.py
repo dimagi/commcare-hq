@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from eulxml.xmlmap import (
     IntegerField, NodeField, NodeListField,
     SimpleBooleanField, StringField, XmlObject,
@@ -5,6 +6,7 @@ from eulxml.xmlmap import (
 )
 from lxml import etree
 from corehq.apps.app_manager.exceptions import UnknownInstanceError
+import six
 
 
 class XPathField(StringField):
@@ -125,7 +127,7 @@ class Annotation(OrderedXmlObject):
 class Graph(XmlObject):
     ROOT_NAME = 'graph'
 
-    type = StringField("@type", choices=["xy", "bubble"])
+    type = StringField("@type", choices=["xy", "bubble", "bar", "time"])
     series = NodeListField('series', Series)
     configuration = NodeField('configuration', ConfigurationGroup)
     annotations = NodeListField('annotation', Annotation)
@@ -552,10 +554,10 @@ class GraphTemplate(Template):
                                     #       figure out why their unquoted colors
                                     #       aren't working.
                                     ConfigurationItem(id=k, xpath_function=v)
-                                    for k, v in s.config.iteritems()
+                                    for k, v in six.iteritems(s.config)
                                 ] + [
                                     ConfigurationItem(id=k, locale_id=locale_series_config(index, k))
-                                    for k, v in s.locale_specific_config.iteritems()
+                                    for k, v in six.iteritems(s.locale_specific_config)
                                 ]
                             )
                         )
@@ -566,11 +568,11 @@ class GraphTemplate(Template):
                         [
                             ConfigurationItem(id=k, xpath_function=v)
                             for k, v
-                            in graph.config.iteritems()
+                            in six.iteritems(graph.config)
                         ] + [
                             ConfigurationItem(id=k, locale_id=locale_config(k))
                             for k, v
-                            in graph.locale_specific_config.iteritems()
+                            in six.iteritems(graph.locale_specific_config)
                         ]
                     )
                 ),
@@ -726,23 +728,35 @@ class Detail(OrderedXmlObject, IdNode):
         if self._variables is None:
             self._variables = DetailVariableList()
 
-    def get_variables(self):
+    def _get_variables_node(self):
         self._init_variables()
         return self._variables.variables
 
-    def set_variables(self, value):
+    def _set_variables_node(self, value):
         self._init_variables()
         self._variables.variables = value
 
-    variables = property(get_variables, set_variables)
+    variables = property(_get_variables_node, _set_variables_node)
+
+    def has_variables(self):
+        # can't check len(self.variables) directly since NodeList uses an
+        # xpath to find its children which doesn't work here since
+        # each node has a custom name
+        return self._variables is not None and len(self.variables.node.getchildren()) > 0
+
+    def get_variables(self):
+        """
+        :returns: List of DetailVariable objects
+        """
+        return [self.variables.mapper.to_python(node) for node in self.variables.node.getchildren()]
 
     def get_all_xpaths(self):
         result = set()
 
         if self.nodeset:
             result.add(self.nodeset)
-        if self._variables:
-            for variable in self.variables:
+        if self.has_variables():
+            for variable in self.get_variables():
                 result.add(variable.function)
 
         if self.actions:

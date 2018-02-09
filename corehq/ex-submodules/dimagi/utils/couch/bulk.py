@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import uuid
 from collections import defaultdict
 import json
@@ -49,6 +50,10 @@ class CouchTransaction(object):
         self.depth = 0
         self.docs_to_delete = defaultdict(list)
         self.docs_to_save = defaultdict(dict)
+        self.post_commit_actions = []
+
+    def add_post_commit_action(self, action):
+        self.post_commit_actions.append(action)
 
     def delete(self, doc):
         self.docs_to_delete[doc.__class__].append(doc)
@@ -77,6 +82,9 @@ class CouchTransaction(object):
         for cls, doc_map in self.docs_to_save.items():
             docs = list(doc_map.values())
             cls.bulk_save(docs)
+
+        for action in self.post_commit_actions:
+            action()
 
     def __enter__(self):
         self.depth += 1
