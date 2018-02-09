@@ -585,6 +585,10 @@ CELERY_REMINDER_RULE_QUEUE = CELERY_MAIN_QUEUE
 # on its own queue.
 CELERY_REMINDER_CASE_UPDATE_QUEUE = CELERY_MAIN_QUEUE
 
+# This is the celery queue to use for running automatic update rules.
+# It's set to the background queue here and can be overriden to put it
+# on its own queue.
+CELERY_CASE_UPDATE_RULE_QUEUE = 'background_queue'
 
 # This is the celery queue to use for sending repeat records.
 # It's set to the main queue here and can be overridden to put it
