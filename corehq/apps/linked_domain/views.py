@@ -64,7 +64,7 @@ class DomainLinkView(BaseAdminProjectSettingsView):
     def page_context(self):
         timezone = get_timezone_for_request()
 
-        def _link_context(link):
+        def _link_context(link, timezone=timezone):
             return {
                 'linked_domain': link.linked_domain,
                 'master_domain': link.master_domain,
@@ -72,7 +72,7 @@ class DomainLinkView(BaseAdminProjectSettingsView):
                 'remote_username': link.remote_username,
                 'remote_api_key': link.remote_api_key,
                 'is_remote': link.is_remote,
-                'last_update': server_to_user_time(link.last_pull, timezone),
+                'last_update': server_to_user_time(link.last_pull, timezone) if link.last_pull else 'Never',
             }
 
         model_status = []
