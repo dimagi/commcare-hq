@@ -52,18 +52,19 @@ def get_ethiopian_to_gregorian(date_string):
         return ''
 
 
-def get_gregorian_to_ethiopian(date_string):
+def get_gregorian_to_ethiopian(datetime_input):
     '''
     Takes a string gregorian date and converts it to
     the equivalent ethiopian date
 
-    :param date_string: A date string that is in the format YYYY-MM-DD
-    :returns: An ethiopian datetime or ''
+    :param datetime_input: A datetime
+    :returns: An ethiopian date string or ''
     '''
-    if not date_string:
+    if not datetime_input:
         return ''
 
     try:
+        date_string = datetime_input.strftime('%Y-%m-%d')
         year, month, day = split_date_string(date_string)
     except ValueError:
         return ''
