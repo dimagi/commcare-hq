@@ -903,8 +903,6 @@ CUSTOM_LANDING_PAGE = False
 
 TABLEAU_URL_ROOT = "https://icds.commcarehq.org/"
 
-HQ_INSTANCE = 'development'
-
 SENTRY_PUBLIC_KEY = None
 SENTRY_PRIVATE_KEY = None
 SENTRY_PROJECT_ID = None
