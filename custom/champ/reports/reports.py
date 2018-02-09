@@ -18,8 +18,8 @@ class PrevisionVsAchievementsTableReport(CustomProjectReport):
     slug = 'prevision_vs_achievements_table_report'
     name = 'Prevision vs Achievements Table'
     title = 'Prevision vs Achievements Table'
-    base_template = 'champ/base_template.html'
-    report_template_path = 'champ/prevision_vs_achievements_table.html'
+    base_template = 'champ/knockout/base_template.html'
+    report_template_path = 'champ/knockout/prevision_vs_achievements_table.html'
 
 
 @location_safe

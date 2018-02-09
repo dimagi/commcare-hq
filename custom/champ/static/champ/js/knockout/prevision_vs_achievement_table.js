@@ -1,0 +1,149 @@
+ko.bindingHandlers.select2 = {
+    init: function (element, valueAccessor) {
+        $(element).select2(valueAccessor());
+        ko.utils.domNodeDisposal.addDisposeCallback(element, function () {
+            $(element).select2('destroy');
+        });
+    },
+    update: function (element, valueAccessor, allBindingsAccessor) {
+        var allBindings = allBindingsAccessor(),
+            value = ko.utils.unwrapObservable(allBindings.value || allBindings.selectedOptions);
+        if (value) {
+            $(element).select2('val', value).trigger('change');
+        } else {
+            $(element).select2();
+        }
+    }
+};
+
+var ALL_OPTION = {'id': '', 'text': 'All'};
+var url = hqImport('hqwebapp/js/initial_page_data').reverse;
+
+function PrecisionVsAcievementsTableModel() {
+    var self = this;
+    var currentYear = new Date().getFullYear();
+
+    var defaultStartDate = moment(new Date(currentYear, 0, 1)).format('YYYY-MM-DD');
+    var defaultEndDate = moment().format('YYYY-MM-DD');
+    var defaultDate = defaultStartDate + ' - ' + defaultEndDate;
+
+    self.kp_prev = ko.observable();
+    self.target_kp_prev = ko.observable();
+    self.htc_tst = ko.observable();
+    self.target_htc_tst = ko.observable();
+    self.htc_pos = ko.observable();
+    self.target_htc_pos = ko.observable();
+    self.care_new = ko.observable();
+    self.target_care_new = ko.observable();
+    self.tx_new = ko.observable();
+    self.target_tx_new = ko.observable();
+    self.tx_undetect = ko.observable();
+    self.target_tx_undetect = ko.observable();
+
+    self.title = "Prevision vs Achievements";
+    self.availableDistricts = ko.observableArray();
+    self.fiscalYears = ko.observableArray();
+    self.groups = ko.observableArray();
+    self.filters = {
+        district: ko.observableArray(),
+        visit_type: ko.observable(),
+        activity_type: ko.observable(),
+        client_type: ko.observableArray(),
+        organization: ko.observableArray(),
+        fiscal_year: ko.observable(currentYear),
+        visit_date: ko.observable(defaultDate),
+        post_date: ko.observable(defaultDate),
+        first_art_date: ko.observable(defaultDate),
+        date_handshake: ko.observable(defaultDate),
+        date_last_vl_test: ko.observable(defaultDate),
+
+    };
+
+    self.tableData = {
+        kp_prev: ko.observable(),
+    };
+
+    self.availableClientTypes = [
+        {id: '', text: 'All'},
+        {id: 'FSW', text: 'FSW'},
+        {id: 'MSM', text: 'MSM'},
+        {id: 'client_fsw', text: 'Client FSW'},
+    ];
+
+    self.visitsTypes = [
+        {id: '', text: 'All'},
+        {id: 'first_visit', text: 'First Visit'},
+        {id: 'follow_up_visit', text: 'Follow Up Visit'},
+    ];
+
+    self.activityTypes = [
+        {id: '', text: 'All'},
+        {id: 'epm', text: 'EPM'},
+        {id: 'mat_distribution', text: 'Material Distribution'},
+    ];
+
+    self.chart = void(0);
+
+    for (var year=2014; year <= (currentYear + 4); year++ ) {
+        self.fiscalYears().push({
+            text: year,
+            id: year,
+        });
+    }
+
+    self.getData = function() {
+        var hierarchy_url = url('hierarchy');
+        $.getJSON(hierarchy_url, function(data) {
+            self.districts = data.districts;
+            self.availableDistricts(self.districts);
+        });
+        var group_url = url('group_filter');
+        $.getJSON(group_url, function(data) {
+            self.groups(data.options);
+        })
+    };
+
+    self.getData();
+
+    self.onSelectOption = function(event, property) {
+        if (event.added !== void(0)) {
+            var $item = event.added;
+            if ($item.id === '' || self.filters[property].indexOf('') !== -1) {
+                self.filters[property]([$item.id]);
+            }
+        }
+    };
+
+    self.getTableData = function (chart) {
+        var get_url = url('champ_pva_table');
+        $.post(get_url, ko.toJSON(self.filters), function(data) {
+            self.kp_prev(data.kp_prev);
+            self.target_kp_prev(data.target_kp_prev);
+            self.htc_tst(data.htc_tst);
+            self.target_htc_tst(data.target_htc_tst);
+            self.htc_pos(data.htc_pos);
+            self.target_htc_pos(data.target_htc_pos);
+            self.care_new(data.care_new);
+            self.target_care_new(data.target_care_new);
+            self.tx_new(data.tx_new);
+            self.target_tx_new(data.target_tx_new);
+            self.tx_undetect(data.tx_undetect);
+            self.target_tx_undetect(data.target_tx_undetect);
+        })
+    };
+
+    self.submit = function () {
+        self.getTableData()
+    };
+    self.getTableData()
+
+    $('.date-picker').daterangepicker(
+        {
+            startDate: defaultStartDate,
+            endDate: defaultEndDate,
+            locale: {
+                format: 'YYYY-MM-DD',
+            }
+        }
+    );
+}
