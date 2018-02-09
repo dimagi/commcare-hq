@@ -1,8 +1,6 @@
 files:
   ignore:
-    - '*/south_migrations/*'
     - '*.min.js'
-    - localsettings.py
 
 linters:
   flake8:
