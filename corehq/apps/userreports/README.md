@@ -959,7 +959,7 @@ Similar to the boolean indicators - expression indicators leverage the expressio
 
 Property        | Description
 --------------- | -----------
-datatype        | The datatype of the indicator. Current valid choices are: "date", "datetime", "string", "decimal", and "integer".
+datatype        | The datatype of the indicator. Current valid choices are: "date", "datetime", "string", "decimal", "integer", and "small_integer".
 is_nullable     | Whether the database column should allow null values.
 is_primary_key  | Whether the database column should be (part of?) the primary key. (TODO: this needs to be confirmed)
 create_index    | Creates an index on this column. Only applicable if using the SQL backend
