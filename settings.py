@@ -92,9 +92,9 @@ STATICFILES_FINDERS = (
     'compressor.finders.CompressorFinder',
 )
 
-STATICFILES_DIRS = (
+STATICFILES_DIRS = [
     BOWER_COMPONENTS,
-)
+]
 
 # bleh, why did this submodule have to be removed?
 # deploy fails if this item is present and the path does not exist
