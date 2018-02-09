@@ -212,7 +212,7 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
     time_end = models.DateTimeField(null=True, blank=True)
     time_start = models.DateTimeField(null=True, blank=True)
     commcare_version = models.CharField(max_length=8, blank=True, null=True)
-    build_version = models.IntegerField(null=True, blank=True)
+    build_version = models.PositiveSmallIntegerField(null=True, blank=True)
 
     def __init__(self, *args, **kwargs):
         super(XFormInstanceSQL, self).__init__(*args, **kwargs)
