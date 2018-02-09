@@ -1,6 +1,5 @@
 files:
   ignore:
-    - '*/migrations/*'
     - '*/south_migrations/*'
     - '*.min.js'
     - localsettings.py
