@@ -11,6 +11,7 @@ from corehq import privileges
 from corehq.apps.app_manager.dbaccessors import domain_has_apps, get_brief_apps_in_domain
 from corehq.apps.dashboard.models import (
     AppsPaginator,
+    DataPaginator,
     ReportsPaginator,
     Tile,
     Tile,
@@ -184,6 +185,7 @@ def _get_default_tiles(request):
             title=_('Data'),
             slug='data',
             icon='fcc fcc-data',
+            paginator_class=DataPaginator,
             urlname="data_interfaces_default",
             visibility_check=can_edit_data,
             help_text=_('Export and manage data'),
