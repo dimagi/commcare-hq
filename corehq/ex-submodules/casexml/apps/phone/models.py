@@ -422,10 +422,10 @@ class SyncLog(AbstractSyncLog):
 
         return get_last_synclog_for_user(user_id)
 
-    def save():
+    def save(self):
         save_synclog_to_sql(self)
 
-    def delete():
+    def delete(self):
         SyncLogSQL.objects.filter(synclog_id=self._id).delete()
 
     def _assert(self, conditional, msg="", case_id=None):
@@ -777,7 +777,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
         self.doc_type = "SyncLog"
         save_synclog_to_sql(self)
 
-    def delete():
+    def delete(self):
         SyncLogSQL.objects.filter(synclog_id=self._id).delete()
 
     def case_count(self):
