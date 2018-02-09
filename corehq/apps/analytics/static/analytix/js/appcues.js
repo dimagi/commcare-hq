@@ -34,5 +34,17 @@ hqDefine('analytix/js/appcues', [
         });
     });
 
-    return 1;
+    function trackEvent(label, data) {
+        _ready.done(function () {
+            if (_.isObject(data)) {
+                Appcues.track(label, data);
+            } else {
+                Appcues.track(label);
+            }
+        });
+    }
+
+    return {
+        track: trackEvent,
+    };
 });
