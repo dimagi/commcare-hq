@@ -90,15 +90,15 @@ hqDefine("app_manager/js/forms/form_designer", function() {
                 usage("Form Builder", group, message);
             }
 
-            function interaction(label, attributes) {
-                hqImport('analytix/js/appcues').track(label, attributes);
+            function event(label, attributes) {
+                hqImport('analytix/js/appcues').trackEvent(label, attributes);
             }
 
             return {
                 fbUsage: fbUsage,
                 usage: usage,
                 workflow: workflow,
-                interaction: interaction,
+                event: event,
             };
         });
 
