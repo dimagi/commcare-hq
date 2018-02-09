@@ -27,6 +27,7 @@ from corehq.apps.sms.models import (
 from django.conf import settings
 from corehq.apps.app_manager.models import Form
 from corehq.form_processor.utils import is_commcarecase
+from corehq.messaging.templating import _get_obj_template_info
 from dimagi.utils.couch import CriticalSection
 from django.utils.translation import ugettext_noop
 from dimagi.utils.modules import to_function
@@ -81,56 +82,6 @@ def get_recipient_phone_number(reminder, recipient, verified_numbers):
     if verified_number is None:
         unverified_number = get_one_way_number_for_recipient(recipient)
     return (verified_number, unverified_number)
-
-
-def _get_case_template_info(case):
-    return case.to_json()
-
-
-def _get_web_user_template_info(user):
-    return {
-        'name': user.username,
-        'first_name': user.first_name,
-        'last_name': user.last_name,
-        'phone_number': user.default_phone_number or '',
-    }
-
-
-def _get_mobile_user_template_info(user):
-    return {
-        'name': user.raw_username,
-        'first_name': user.first_name,
-        'last_name': user.last_name,
-        'phone_number': user.default_phone_number or '',
-    }
-
-
-def _get_group_template_info(group):
-    return {
-        'name': group.name,
-    }
-
-
-def _get_location_template_info(location):
-    return {
-        'name': location.name,
-        'site_code': location.site_code,
-    }
-
-
-def _get_obj_template_info(obj):
-    if is_commcarecase(obj):
-        return _get_case_template_info(obj)
-    elif isinstance(obj, WebUser):
-        return _get_web_user_template_info(obj)
-    elif isinstance(obj, CommCareUser):
-        return _get_mobile_user_template_info(obj)
-    elif isinstance(obj, Group):
-        return _get_group_template_info(obj)
-    elif isinstance(obj, SQLLocation):
-        return _get_location_template_info(obj)
-
-    return {}
 
 
 def _add_case_to_template_params(case, result):
