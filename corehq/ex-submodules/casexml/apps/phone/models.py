@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from collections import defaultdict, namedtuple
 from copy import copy
 from datetime import datetime
+import uuid
 import json
 from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
 from casexml.apps.phone.exceptions import IncompatibleSyncLogType
@@ -12,6 +13,7 @@ from corehq.toggles import ENABLE_LOADTEST_USERS
 from corehq.apps.domain.models import Domain
 from dimagi.ext.couchdbkit import *
 from django.db import models
+from django.contrib.postgres.fields import JSONField
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.couch import LooselyEqualDocumentSchema
@@ -354,6 +356,40 @@ class AbstractSyncLog(SafeSaveDocument, UnicodeMixIn):
         raise NotImplementedError()
 
 
+def save_synclog_to_sql(synclog_object):
+    if synclog_object._id:
+        synclog = SyncLogSQL.objects.filter(synclog_id=synclog_object._id).first()
+    else:
+        synclog_id = str(uuid.uuid4())
+        synclog_object._id = synclog_id
+        synclog = SyncLogSQL(
+            domain=synclog_object.domain,
+            user_id=synclog_object.user_id,
+            synclog_id=str(uuid.uuid4()),
+            previous_synclog_id=synclog_object.previous_synclog_id
+        )
+    synclog.doc = synclog_object.to_json()
+    synclog.save()
+
+
+class SyncLogSQL(models.Model):
+    domain = models.CharField(max_length=255, default=None, db_index=True)
+    user_id = models.CharField(max_length=255, default=None, db_index=True)
+    date = models.DateTimeField(db_index=True)
+    synclog_id = models.UUIDField(unique=True, primary_key=True)
+    # needs to be a foreign key?
+    previous_synclog_id = models.CharField(max_length=255, default=None, null=True, blank=True)
+    doc = JSONField()
+    log_format = models.CharField(
+        max_length=10,
+        default=LOG_FORMAT_LEGACY,
+        choices=[
+            (format, format)
+            for format in [LOG_FORMAT_LEGACY, LOG_FORMAT_SIMPLIFIED, LOG_FORMAT_LIVEQUERY]
+        ]
+    )
+
+
 class SyncLog(AbstractSyncLog):
     """
     A log of a single sync operation.
@@ -385,6 +421,12 @@ class SyncLog(AbstractSyncLog):
         from casexml.apps.phone.dbaccessors.sync_logs_by_user import get_last_synclog_for_user
 
         return get_last_synclog_for_user(user_id)
+
+    def save():
+        save_synclog_to_sql(self)
+
+    def delete():
+        SyncLogSQL.objects.filter(synclog_id=self._id).delete()
 
     def _assert(self, conditional, msg="", case_id=None):
         if not conditional:
@@ -733,7 +775,10 @@ class SimplifiedSyncLog(AbstractSyncLog):
     def save(self, *args, **kwargs):
         # force doc type to SyncLog to avoid changing the couch view.
         self.doc_type = "SyncLog"
-        super(SimplifiedSyncLog, self).save(*args, **kwargs)
+        save_synclog_to_sql(self)
+
+    def delete():
+        SyncLogSQL.objects.filter(synclog_id=self._id).delete()
 
     def case_count(self):
         return len(self.case_ids_on_phone)
@@ -1195,7 +1240,9 @@ def get_properly_wrapped_sync_log(doc_id):
     Looks up and wraps a sync log, using the class based on the 'log_format' attribute.
     Defaults to the existing legacy SyncLog class.
     """
-    return properly_wrap_sync_log(SyncLog.get_db().get(doc_id))
+    synclog = SyncLogSQL.objects.filter(synclog_id=doc_id).first()
+    #Todo what exception should we raise exception if no doc found?
+    return properly_wrap_sync_log(synclog.doc)
 
 
 def properly_wrap_sync_log(doc):

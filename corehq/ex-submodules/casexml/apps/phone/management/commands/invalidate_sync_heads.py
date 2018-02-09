@@ -1,7 +1,9 @@
 from __future__ import absolute_import
+from bulk_update.helper import bulk_update as bulk_update_helper
 from django.core.management import BaseCommand
 
-from casexml.apps.phone.models import SimplifiedSyncLog
+from casexml.apps.phone.models import SyncLogSQL, LOG_FORMAT_SIMPLIFY, \
+    properly_wrap_sync_log
 
 
 class Command(BaseCommand):
@@ -15,17 +17,12 @@ class Command(BaseCommand):
         parser.add_argument('date')
 
     def handle(self, user_id, date, **options):
-        results = SimplifiedSyncLog.view(
-            "phone/sync_logs_by_user",
-            startkey=[user_id, {}],
-            endkey=[user_id, date],
-            descending=True,
-            reduce=False,
-            include_docs=True,
+        synclogs = SyncLogSQL.objects.filter(
+            user_id=user_id,
+            date=date,
+            log_format=LOG_FORMAT_SIMPLIFY
         )
-
-        logs = []
-        for log in results:
-            log.case_ids_on_phone = {'broken to force 412'}
-            logs.append(log)
-        SimplifiedSyncLog.bulk_save(logs)
+        for synclog in synclogs:
+            doc = properly_wrap_sync_log(synclog.doc)
+            doc.case_ids_on_phone = {'broken to force 412'}
+        bulk_update_helper(synclogs)

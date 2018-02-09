@@ -7,6 +7,7 @@ from corehq.apps.app_manager.tests.util import delete_all_apps
 from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CommCareUser, WebUser
+from casexml.apps.case.tests.util import delete_all_sync_logs
 from casexml.apps.phone.models import SimplifiedSyncLog
 from corehq.apps.users.dbaccessors.all_commcare_users import (
     delete_all_users,
@@ -27,10 +28,7 @@ class TestDbAccessors(TestCase):
     @classmethod
     def setUpClass(cls):
         super(TestDbAccessors, cls).setUpClass()
-        db = SimplifiedSyncLog.get_db()
-        # datetime.min is not compatible for `json_format_datetime`
-        for synclog_id in get_synclog_ids_by_date(datetime(1970, 1, 1), datetime.max):
-            db.delete_doc(synclog_id)
+        delete_all_sync_logs()
 
         # Needed because other tests do not always clean up their users or applications.
         delete_all_users()

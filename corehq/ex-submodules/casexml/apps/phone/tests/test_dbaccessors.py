@@ -3,6 +3,7 @@ import datetime
 
 from django.test import TestCase
 
+from casexml.apps.case.tests.util import delete_all_sync_logs
 from casexml.apps.phone.analytics import get_sync_logs_for_user, update_analytics_indexes
 from casexml.apps.phone.dbaccessors.sync_logs_by_user import get_last_synclog_for_user
 from casexml.apps.phone.models import SyncLog, SimplifiedSyncLog
@@ -15,6 +16,7 @@ class DBAccessorsTest(TestCase, DocTestMixin):
     @classmethod
     def setUpClass(cls):
         super(DBAccessorsTest, cls).setUpClass()
+        delete_all_sync_logs()
         cls.user_id = 'lkasdhfadsloi'
         cls.sync_logs = [
             SyncLog(user_id=cls.user_id, date=datetime.datetime(2015, 7, 1, 0, 0)),

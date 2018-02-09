@@ -23,6 +23,7 @@ def get_user_sync_history_pillow(pillow_id='UpdateUserSyncHistoryPillow', **kwar
     """
     This gets a pillow which iterates through all synclogs
     """
+    #Todo; convert to SQL?
     couch_db = SyncLog.get_db()
     change_feed = CouchChangeFeed(couch_db, include_docs=True)
     checkpoint = PillowCheckpoint('synclog', change_feed.sequence_format)
@@ -41,7 +42,7 @@ def get_user_sync_history_pillow(pillow_id='UpdateUserSyncHistoryPillow', **kwar
 class UserSyncHistoryProcessor(PillowProcessor):
 
     def process_change(self, pillow_instance, change):
-
+        #Todo; convert to SQL?
         synclog = change.get_document()
         if not synclog:
             return
