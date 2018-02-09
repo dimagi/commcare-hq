@@ -736,6 +736,7 @@ ANALYTICS_IDS = {
     'HUBSPOT_API_ID': '',
     'GTM_ID': '',
     'DRIFT_ID': '',
+    'APPCUES_ID': '',
 }
 
 ANALYTICS_CONFIG = {
