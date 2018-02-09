@@ -5,7 +5,7 @@ from datetime import datetime
 import uuid
 import json
 from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
-from casexml.apps.phone.exceptions import IncompatibleSyncLogType
+from casexml.apps.phone.exceptions import IncompatibleSyncLogType, MissingSyncLogSQLException
 from corehq.toggles import LEGACY_SYNC_SUPPORT
 from corehq.util.global_request import get_request_domain
 from corehq.util.soft_assert import soft_assert
@@ -359,6 +359,9 @@ class AbstractSyncLog(SafeSaveDocument, UnicodeMixIn):
 def save_synclog_to_sql(synclog_object):
     if synclog_object._id:
         synclog = SyncLogSQL.objects.filter(synclog_id=synclog_object._id).first()
+        if not synclog:
+            raise MissingSyncLogSQLException("A SyncLogSQL object with this synclog_id ({})is not found".format(
+                synclog_object._id))
     else:
         synclog_id = str(uuid.uuid4())
         synclog_object._id = synclog_id
@@ -366,7 +369,9 @@ def save_synclog_to_sql(synclog_object):
             domain=synclog_object.domain,
             user_id=synclog_object.user_id,
             synclog_id=str(uuid.uuid4()),
-            previous_synclog_id=synclog_object.previous_synclog_id
+            date=synclog_object.date,
+            previous_synclog_id=getattr(synclog_object, 'previous_synclog_id', None),
+            log_format=synclog_object.log_format,
         )
     synclog.doc = synclog_object.to_json()
     synclog.save()

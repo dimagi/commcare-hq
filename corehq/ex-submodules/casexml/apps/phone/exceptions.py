@@ -39,6 +39,10 @@ class InvalidSyncLogException(Exception):
     pass
 
 
+class MissingSyncLogSQLException(Exception):
+    pass
+
+
 class MissingSyncLog(InvalidSyncLogException):
     pass
 
