@@ -4,7 +4,7 @@ from copy import copy
 from datetime import datetime
 import uuid
 import json
-from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
+from couchdbkit.exceptions import ResourceConflict
 from casexml.apps.phone.exceptions import IncompatibleSyncLogType, MissingSyncLogSQLException
 from corehq.toggles import LEGACY_SYNC_SUPPORT
 from corehq.util.global_request import get_request_domain
@@ -14,6 +14,7 @@ from corehq.apps.domain.models import Domain
 from dimagi.ext.couchdbkit import *
 from django.db import models
 from django.contrib.postgres.fields import JSONField
+from django.core.exceptions import ValidationError
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.couch import LooselyEqualDocumentSchema
@@ -1247,7 +1248,11 @@ def get_properly_wrapped_sync_log(doc_id):
     Looks up and wraps a sync log, using the class based on the 'log_format' attribute.
     Defaults to the existing legacy SyncLog class.
     """
-    synclog = SyncLogSQL.objects.filter(synclog_id=doc_id).first()
+    try:
+        synclog = SyncLogSQL.objects.filter(synclog_id=doc_id).first()
+    except ValidationError:
+        # this occurs if doc_id is not a valid UUID
+        synclog = None
     if not synclog:
         raise MissingSyncLogSQLException("A SyncLogSQL object with this synclog_id ({})is not found".format(
             doc_id))
