@@ -4,8 +4,8 @@ import datetime
 from django.test import TestCase
 
 from casexml.apps.case.tests.util import delete_all_sync_logs
-from casexml.apps.phone.analytics import get_sync_logs_for_user, update_analytics_indexes
-from casexml.apps.phone.dbaccessors.sync_logs_by_user import get_last_synclog_for_user
+from casexml.apps.phone.analytics import update_analytics_indexes
+from casexml.apps.phone.dbaccessors.sync_logs_by_user import get_last_synclog_for_user, get_synclogs_for_user
 from casexml.apps.phone.models import SyncLog, SimplifiedSyncLog
 from corehq.util.test_utils import DocTestMixin
 
@@ -37,7 +37,7 @@ class DBAccessorsTest(TestCase, DocTestMixin):
         super(DBAccessorsTest, cls).tearDownClass()
 
     def test_get_sync_logs_for_user(self):
-        self.assert_doc_sets_equal(get_sync_logs_for_user(self.user_id, 4), self.sync_logs)
+        self.assert_doc_sets_equal(get_synclogs_for_user(self.user_id, 4), self.sync_logs)
 
     def test_get_last_synclog_for_user(self):
         self.assert_docs_equal(get_last_synclog_for_user(self.user_id), self.sync_logs[0])

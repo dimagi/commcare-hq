@@ -363,7 +363,6 @@ def save_synclog_to_sql(synclog_json_object):
 def synclog_to_sql_object(synclog_json_object):
     # synclog_json_object should be a SyncLog instance
     # if synclog_json_object._id
-    print synclog_json_object._id
     synclog = None
     if synclog_json_object._id:
         synclog = SyncLogSQL.objects.filter(synclog_id=synclog_json_object._id).first()
