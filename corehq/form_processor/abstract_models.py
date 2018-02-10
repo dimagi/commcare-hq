@@ -4,7 +4,8 @@ import logging
 from abc import ABCMeta, abstractmethod
 
 import six as six
-from couchdbkit import ResourceNotFound
+
+from casexml.apps.phone.exceptions import MissingSyncLogSQLException
 
 from dimagi.utils.decorators.memoized import memoized
 from couchforms import const
@@ -124,7 +125,7 @@ class AbstractXFormInstance(object):
         if self.last_sync_token:
             try:
                 return get_properly_wrapped_sync_log(self.last_sync_token)
-            except ResourceNotFound:
+            except MissingSyncLogSQLException:
                 pass
         return None
 

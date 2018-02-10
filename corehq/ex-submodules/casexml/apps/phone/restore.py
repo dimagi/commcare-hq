@@ -14,14 +14,13 @@ from xml.etree import cElementTree as ElementTree
 import six
 from celery.exceptions import TimeoutError
 from celery.result import AsyncResult
-from couchdbkit import ResourceNotFound
 from django.http import HttpResponse, StreamingHttpResponse
 from django.conf import settings
 
 from casexml.apps.phone.data_providers import get_element_providers, get_async_providers
 from casexml.apps.phone.exceptions import (
     MissingSyncLog, InvalidSyncLogException, SyncLogUserMismatch,
-    BadStateException, RestoreException
+    BadStateException, RestoreException, MissingSyncLogSQLException
 )
 from casexml.apps.phone.restore_caching import AsyncRestoreTaskIdCache, RestorePayloadPathCache
 from casexml.apps.phone.tasks import get_async_restore_payload, ASYNC_RESTORE_SENT
@@ -379,7 +378,7 @@ class RestoreState(object):
             if self.params.sync_log_id:
                 try:
                     sync_log = get_properly_wrapped_sync_log(self.params.sync_log_id)
-                except ResourceNotFound:
+                except MissingSyncLogSQLException:
                     # if we are in loose mode, return an HTTP 412 so that the phone will
                     # just force a fresh sync
                     raise MissingSyncLog('No sync log with ID {} found'.format(self.params.sync_log_id))
@@ -442,6 +441,7 @@ class RestoreState(object):
         previous_log_rev = None if self.is_initial else self.last_sync_log._rev
         last_seq = str(get_db().info()["update_seq"])
         new_synclog = SimplifiedSyncLog(
+            _id=SyncLog.get_db().server.next_uuid(),
             domain=self.restore_user.domain,
             build_id=self.params.app_id,
             user_id=self.restore_user.user_id,

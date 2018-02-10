@@ -328,12 +328,10 @@ class AbstractSyncLog(SafeSaveDocument, UnicodeMixIn):
         if self.previous_log_removed or not self.previous_log_id:
             return
 
-        if not hasattr(self, "_previous_log_ref"):
-            try:
-                self._previous_log_ref = SyncLog.get(self.previous_log_id)
-            except ResourceNotFound:
-                self._previous_log_ref = None
-        return self._previous_log_ref
+        try:
+            return get_properly_wrapped_sync_log(self.previous_log_id)
+        except MissingSyncLogSQLException:
+            return None
 
     @classmethod
     def from_other_format(cls, other_sync_log):
@@ -356,24 +354,28 @@ class AbstractSyncLog(SafeSaveDocument, UnicodeMixIn):
         raise NotImplementedError()
 
 
-def save_synclog_to_sql(synclog_object):
-    if synclog_object._id:
-        synclog = SyncLogSQL.objects.filter(synclog_id=synclog_object._id).first()
-        if not synclog:
-            raise MissingSyncLogSQLException("A SyncLogSQL object with this synclog_id ({})is not found".format(
-                synclog_object._id))
-    else:
-        synclog_id = str(uuid.uuid4())
-        synclog_object._id = synclog_id
+def save_synclog_to_sql(synclog_json_object):
+    # synclog_json_object should be a SyncLog instance
+    # if synclog_json_object._id
+    print synclog_json_object._id
+    synclog = None
+    if synclog_json_object._id:
+        synclog = SyncLogSQL.objects.filter(synclog_id=synclog_json_object._id).first()
+
+    is_new_synclog_sql = not synclog_json_object._id or not synclog
+
+    if is_new_synclog_sql:
+        synclog_id = synclog_json_object._id or uuid.uuid4().hex.lower()
+        synclog_json_object._id = synclog_id
         synclog = SyncLogSQL(
-            domain=synclog_object.domain,
-            user_id=synclog_object.user_id,
-            synclog_id=str(uuid.uuid4()),
-            date=synclog_object.date,
-            previous_synclog_id=getattr(synclog_object, 'previous_synclog_id', None),
-            log_format=synclog_object.log_format,
+            domain=synclog_json_object.domain,
+            user_id=synclog_json_object.user_id,
+            synclog_id=synclog_id,
+            date=synclog_json_object.date,
+            previous_synclog_id=getattr(synclog_json_object, 'previous_synclog_id', None),
+            log_format=synclog_json_object.log_format,
         )
-    synclog.doc = synclog_object.to_json()
+    synclog.doc = synclog_json_object.to_json()
     synclog.save()
 
 
@@ -1246,7 +1248,9 @@ def get_properly_wrapped_sync_log(doc_id):
     Defaults to the existing legacy SyncLog class.
     """
     synclog = SyncLogSQL.objects.filter(synclog_id=doc_id).first()
-    #Todo what exception should we raise exception if no doc found?
+    if not synclog:
+        raise MissingSyncLogSQLException("A SyncLogSQL object with this synclog_id ({})is not found".format(
+            doc_id))
     return properly_wrap_sync_log(synclog.doc)
 
 
