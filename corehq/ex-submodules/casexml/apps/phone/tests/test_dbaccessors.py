@@ -15,15 +15,16 @@ class DBAccessorsTest(TestCase, DocTestMixin):
 
     @classmethod
     def setUpClass(cls):
+        domain = "synclog_test"
         super(DBAccessorsTest, cls).setUpClass()
         delete_all_sync_logs()
         cls.user_id = 'lkasdhfadsloi'
         cls.sync_logs = [
-            SyncLog(user_id=cls.user_id, date=datetime.datetime(2015, 7, 1, 0, 0)),
-            SimplifiedSyncLog(user_id=cls.user_id, date=datetime.datetime(2015, 3, 1, 0, 0)),
-            SyncLog(user_id=cls.user_id, date=datetime.datetime(2015, 1, 1, 0, 0))
+            SyncLog(domain=domain, user_id=cls.user_id, date=datetime.datetime(2015, 7, 1, 0, 0)),
+            SimplifiedSyncLog(domain=domain, user_id=cls.user_id, date=datetime.datetime(2015, 3, 1, 0, 0)),
+            SyncLog(domain=domain, user_id=cls.user_id, date=datetime.datetime(2015, 1, 1, 0, 0))
         ]
-        sync_logs_other = [SyncLog(user_id='other')]
+        sync_logs_other = [SyncLog(domain=domain, user_id='other')]
         cls.docs = cls.sync_logs + sync_logs_other
         for doc in cls.docs:
             doc.save()

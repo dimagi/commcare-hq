@@ -356,6 +356,11 @@ class AbstractSyncLog(SafeSaveDocument, UnicodeMixIn):
 
 
 def save_synclog_to_sql(synclog_json_object):
+    synclog = synclog_to_sql_object(synclog_json_object)
+    synclog.save()
+
+
+def synclog_to_sql_object(synclog_json_object):
     # synclog_json_object should be a SyncLog instance
     # if synclog_json_object._id
     print synclog_json_object._id
@@ -377,13 +382,13 @@ def save_synclog_to_sql(synclog_json_object):
             log_format=synclog_json_object.log_format,
         )
     synclog.doc = synclog_json_object.to_json()
-    synclog.save()
+    return synclog
 
 
 class SyncLogSQL(models.Model):
     domain = models.CharField(max_length=255, default=None, db_index=True)
     user_id = models.CharField(max_length=255, default=None, db_index=True)
-    date = models.DateTimeField(db_index=True)
+    date = models.DateTimeField(db_index=True, null=True, blank=True)
     synclog_id = models.UUIDField(unique=True, primary_key=True)
     # needs to be a foreign key?
     previous_synclog_id = models.CharField(max_length=255, default=None, null=True, blank=True)
