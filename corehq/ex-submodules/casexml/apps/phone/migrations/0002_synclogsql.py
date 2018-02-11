@@ -16,7 +16,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='SyncLogSQL',
             fields=[
-                ('domain', models.CharField(db_index=True, default=None, max_length=255)),
+                ('domain', models.CharField(db_index=True, null=True, blank=True, default=None, max_length=255)),
                 ('user_id', models.CharField(db_index=True, default=None, max_length=255)),
                 ('date', models.DateTimeField(db_index=True, null=True, blank=True)),
                 ('synclog_id', models.UUIDField(primary_key=True, serialize=False, unique=True)),

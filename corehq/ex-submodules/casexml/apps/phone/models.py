@@ -385,7 +385,7 @@ def synclog_to_sql_object(synclog_json_object):
 
 
 class SyncLogSQL(models.Model):
-    domain = models.CharField(max_length=255, default=None, db_index=True)
+    domain = models.CharField(max_length=255, null=True, blank=True, default=None, db_index=True)
     user_id = models.CharField(max_length=255, default=None, db_index=True)
     date = models.DateTimeField(db_index=True, null=True, blank=True)
     synclog_id = models.UUIDField(unique=True, primary_key=True)
