@@ -20,6 +20,7 @@ def get_synclogs_for_user(user_id, limit=10, wrap=True):
 
 
 def get_synclog_ids_before_date(before_date, limit=1000, num_tries=10):
+    # not migrated to SQL because this is only used to delete couch docs
     if isinstance(before_date, date):
         before_date = before_date.strftime("%Y-%m-%d")
 
