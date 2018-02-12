@@ -43,7 +43,9 @@ from corehq.messaging.scheduling.models import (
     ImmediateBroadcast,
     ScheduledBroadcast,
     SMSContent,
+    EmailContent,
     SMSSurveyContent,
+    CustomContent,
 )
 from corehq.messaging.scheduling.scheduling_partitioned.models import ScheduleInstance, CaseScheduleInstanceMixin
 from couchdbkit.resource import ResourceNotFound
@@ -104,9 +106,18 @@ class ScheduleForm(Form):
     CONTENT_EMAIL = 'email'
     CONTENT_SMS_SURVEY = 'sms_survey'
     CONTENT_IVR_SURVEY = 'ivr_survey'
+    CONTENT_CUSTOM_SMS = 'custom_sms'
 
     LANGUAGE_PROJECT_DEFAULT = 'PROJECT_DEFAULT'
 
+    active = ChoiceField(
+        required=True,
+        label='',
+        choices=(
+            ('Y', ugettext_lazy("Active")),
+            ('N', ugettext_lazy("Inactive")),
+        ),
+    )
     send_frequency = ChoiceField(
         required=True,
         label=ugettext_lazy('Send'),
@@ -202,8 +213,12 @@ class ScheduleForm(Form):
         label=ugettext_lazy("What to send"),
         choices=(
             (CONTENT_SMS, ugettext_lazy('SMS')),
-            # (CONTENT_EMAIL, ugettext_lazy('Email')),
+            (CONTENT_EMAIL, ugettext_lazy('Email')),
         )
+    )
+    subject = CharField(
+        required=False,
+        widget=HiddenInput,
     )
     message = CharField(
         required=False,
@@ -335,6 +350,10 @@ class ScheduleForm(Form):
         if isinstance(content, SMSContent):
             result['content'] = self.CONTENT_SMS
             result['message'] = content.message
+        elif isinstance(content, EmailContent):
+            result['content'] = self.CONTENT_EMAIL
+            result['subject'] = content.subject
+            result['message'] = content.message
         elif isinstance(content, SMSSurveyContent):
             result['content'] = self.CONTENT_SMS_SURVEY
             result['form_unique_id'] = content.form_unique_id
@@ -355,6 +374,7 @@ class ScheduleForm(Form):
         result = {}
         schedule = self.initial_schedule
         if schedule:
+            result['active'] = 'Y' if schedule.active else 'N'
             result['default_language_code'] = (
                 schedule.default_language_code
                 if schedule.default_language_code
@@ -438,6 +458,16 @@ class ScheduleForm(Form):
 
     def get_layout_fields(self):
         return [
+            crispy.Fieldset(
+                '',
+                hqcrispy.B3MultiField(
+                    '',
+                    crispy.Div(
+                        twbscrispy.InlineField('active'),
+                        css_class='col-sm-3',
+                    ),
+                ),
+            ),
             crispy.Fieldset(
                 self.scheduling_fieldset_legend,
                 *self.get_scheduling_layout_fields()
@@ -600,6 +630,18 @@ class ScheduleForm(Form):
         return [
             crispy.Field('content', data_bind='value: content'),
             hqcrispy.B3MultiField(
+                _("Subject"),
+                crispy.Field(
+                    'subject',
+                    data_bind='value: subject.messagesJSONString',
+                ),
+                crispy.Div(
+                    crispy.Div(template='scheduling/partial/message_configuration.html'),
+                    data_bind='with: subject',
+                ),
+                data_bind="visible: content() === '%s'" % self.CONTENT_EMAIL,
+            ),
+            hqcrispy.B3MultiField(
                 _("Message"),
                 crispy.Field(
                     'message',
@@ -609,7 +651,9 @@ class ScheduleForm(Form):
                     crispy.Div(template='scheduling/partial/message_configuration.html'),
                     data_bind='with: message',
                 ),
-                data_bind="visible: content() === '%s'" % self.CONTENT_SMS,
+                data_bind=(
+                    "visible: content() === '%s' || content() === '%s'" % (self.CONTENT_SMS, self.CONTENT_EMAIL)
+                ),
             ),
             crispy.Div(
                 crispy.Field('form_unique_id'),
@@ -759,6 +803,9 @@ class ScheduleForm(Form):
     @property
     def uses_sms_survey(self):
         return self.cleaned_data.get('content') == self.CONTENT_SMS_SURVEY
+
+    def clean_active(self):
+        return self.cleaned_data.get('active') == 'Y'
 
     def clean_user_recipients(self):
         if ScheduleInstance.RECIPIENT_TYPE_MOBILE_WORKER not in self.cleaned_data.get('recipient_types', []):
@@ -930,18 +977,26 @@ class ScheduleForm(Form):
 
         return occurrences
 
-    def clean_message(self):
-        if self.cleaned_data.get('content') != self.CONTENT_SMS:
+    def clean_subject(self):
+        if self.cleaned_data.get('content') != self.CONTENT_EMAIL:
             return None
 
-        value = json.loads(self.cleaned_data['message'])
+        return self._clean_message_field('subject')
+
+    def clean_message(self):
+        if self.cleaned_data.get('content') not in (self.CONTENT_SMS, self.CONTENT_EMAIL):
+            return None
+
+        return self._clean_message_field('message')
+
+    def _clean_message_field(self, field_name):
+        value = json.loads(self.cleaned_data[field_name])
         cleaned_value = {k: v.strip() for k, v in value.items()}
 
         if '*' in cleaned_value:
+            if not cleaned_value['*']:
+                raise ValidationError(_("This field is required"))
             return cleaned_value
-
-        if len(cleaned_value) == 0:
-            raise ValidationError(_("This field is required"))
 
         for expected_language_code in self.language_list:
             if not cleaned_value.get(expected_language_code):
@@ -1008,6 +1063,11 @@ class ScheduleForm(Form):
             return SMSContent(
                 message=self.cleaned_data['message']
             )
+        elif self.cleaned_data['content'] == self.CONTENT_EMAIL:
+            return EmailContent(
+                subject=self.cleaned_data['subject'],
+                message=self.cleaned_data['message'],
+            )
         elif self.cleaned_data['content'] == self.CONTENT_SMS_SURVEY:
             return SMSSurveyContent(
                 form_unique_id=self.cleaned_data['form_unique_id'],
@@ -1050,6 +1110,7 @@ class ScheduleForm(Form):
     def distill_extra_scheduling_options(self):
         form_data = self.cleaned_data
         return {
+            'active': form_data['active'],
             'default_language_code': self.distill_default_language_code(),
             'include_descendant_locations': (
                 ScheduleInstance.RECIPIENT_TYPE_LOCATION in form_data['recipient_types'] and
@@ -1385,6 +1446,12 @@ class ConditionalAlertScheduleForm(ScheduleForm):
         )
     )
 
+    custom_sms_content_id = ChoiceField(
+        required=False,
+        label=ugettext_lazy("Custom SMS Content"),
+        choices=((k, v[1]) for k, v in settings.AVAILABLE_CUSTOM_SCHEDULING_CONTENT.items()),
+    )
+
     reset_case_property_enabled = ChoiceField(
         required=True,
         choices=(
@@ -1421,6 +1488,25 @@ class ConditionalAlertScheduleForm(ScheduleForm):
             ),
         ]
 
+    def add_initial_for_content(self, result):
+        content = self.initial_schedule.memoized_events[0].content
+        if isinstance(content, CustomContent):
+            result['content'] = self.CONTENT_CUSTOM_SMS
+            result['custom_sms_content_id'] = content.custom_content_id
+        else:
+            return super(ConditionalAlertScheduleForm, self).add_initial_for_content(result)
+
+    def add_additional_content_types(self):
+        super(ConditionalAlertScheduleForm, self).add_additional_content_types()
+
+        if (
+            self.criteria_form.is_system_admin or
+            self.initial.get('content') == self.CONTENT_CUSTOM_SMS
+        ):
+            self.fields['content'].choices += [
+                (self.CONTENT_CUSTOM_SMS, _("Custom SMS")),
+            ]
+
     @property
     def scheduling_fieldset_legend(self):
         return ''
@@ -1437,11 +1523,17 @@ class ConditionalAlertScheduleForm(ScheduleForm):
 
     @cached_property
     def requires_system_admin_to_edit(self):
-        return CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM in self.initial.get('recipient_types', [])
+        return (
+            CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM in self.initial.get('recipient_types', []) or
+            self.initial.get('content') == self.CONTENT_CUSTOM_SMS
+        )
 
     @cached_property
     def requires_system_admin_to_save(self):
-        return CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM in self.cleaned_data['recipient_types']
+        return (
+            CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM in self.cleaned_data['recipient_types'] or
+            self.cleaned_data['content'] == self.CONTENT_CUSTOM_SMS
+        )
 
     def update_send_time_type_choices(self):
         self.fields['send_time_type'].choices += [
@@ -1457,7 +1549,7 @@ class ConditionalAlertScheduleForm(ScheduleForm):
 
         if (
             self.criteria_form.is_system_admin or
-            CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM in self.initial['recipient_types']
+            CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM in self.initial.get('recipient_types', [])
         ):
             new_choices.extend([
                 (CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM, _("Custom Recipient")),
@@ -1572,6 +1664,18 @@ class ConditionalAlertScheduleForm(ScheduleForm):
         ])
         return result
 
+    def get_content_layout_fields(self):
+        result = super(ConditionalAlertScheduleForm, self).get_content_layout_fields()
+        result.extend([
+            hqcrispy.B3MultiField(
+                _("Custom SMS Content"),
+                twbscrispy.InlineField('custom_sms_content_id'),
+                self.get_system_admin_label(),
+                data_bind="visible: content() === '%s'" % self.CONTENT_CUSTOM_SMS,
+            ),
+        ])
+        return result
+
     def get_advanced_layout_fields(self):
         result = super(ConditionalAlertScheduleForm, self).get_advanced_layout_fields()
         result.extend([
@@ -1638,7 +1742,7 @@ class ConditionalAlertScheduleForm(ScheduleForm):
         return value
 
     def clean_custom_recipient(self):
-        recipient_types = self.cleaned_data.get('recipient_types')
+        recipient_types = self.cleaned_data.get('recipient_types', [])
         custom_recipient = self.cleaned_data.get('custom_recipient')
 
         if CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM not in recipient_types:
@@ -1648,6 +1752,16 @@ class ConditionalAlertScheduleForm(ScheduleForm):
             raise ValidationError(_("This field is required"))
 
         return custom_recipient
+
+    def clean_custom_sms_content_id(self):
+        if self.cleaned_data['content'] != self.CONTENT_CUSTOM_SMS:
+            return None
+
+        value = self.cleaned_data['custom_sms_content_id']
+        if not value:
+            raise ValidationError(_("This field is required"))
+
+        return value
 
     def clean_reset_case_property_enabled(self):
         value = self.cleaned_data['reset_case_property_enabled']
@@ -1738,6 +1852,14 @@ class ConditionalAlertScheduleForm(ScheduleForm):
             result.append((CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM, custom_recipient_id))
 
         return result
+
+    def distill_content(self):
+        if self.cleaned_data['content'] == self.CONTENT_CUSTOM_SMS:
+            return CustomContent(
+                custom_content_id=self.cleaned_data['custom_sms_content_id']
+            )
+        else:
+            return super(ConditionalAlertScheduleForm, self).distill_content()
 
     def distill_model_timed_event(self):
         event_type = self.cleaned_data['send_time_type']

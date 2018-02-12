@@ -66,7 +66,7 @@ function RegisteredHouseholdController($scope, $routeParams, $location, $filter,
 
     vm.templatePopup = function(loc, row) {
         var household = row ? $filter('indiaNumbers')(row.household) : 'N/A';
-        return '<div class="hoverinfo">' +
+        return '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
             '<p>' + loc.properties.name + '</p>' +
             '<div>Total number of household registered: <strong>' + household + '</strong></div>';
     };
@@ -111,8 +111,8 @@ function RegisteredHouseholdController($scope, $routeParams, $location, $filter,
                 }));
                 var range = max - min;
                 vm.chartOptions.chart.forceY = [
-                    (min - range/10).toFixed(2) < 0 ? 0 : (min - range/10).toFixed(2),
-                    (max + range/10).toFixed(2),
+                    parseInt((min - range/10).toFixed(0)) < 0 ? 0 : parseInt((min - range/10).toFixed(0)),
+                    parseInt((max + range/10).toFixed(0)),
                 ];
             }
         });
@@ -120,7 +120,7 @@ function RegisteredHouseholdController($scope, $routeParams, $location, $filter,
 
     vm.init = function() {
         var locationId = vm.filtersData.location_id || vm.userLocationId;
-        if (!locationId || locationId === 'all' || locationId === 'null') {
+        if (!locationId || ["all", "null", "undefined"].indexOf(locationId) >= 0) {
             vm.loadData();
             vm.loaded = true;
             return;
@@ -227,7 +227,7 @@ function RegisteredHouseholdController($scope, $routeParams, $location, $filter,
 
     vm.tooltipContent = function (monthName, value) {
         return "<p><strong>" + monthName + "</strong></p><br/>"
-            + "<p>Total number of household registered: <strong>" + value + "</strong></p>";
+            + "<div>Total number of household registered: <strong>" + value + "</strong></div>";
     };
 
     vm.showAllLocations = function () {

@@ -22,6 +22,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.fixtures.models import FixtureDataType
 from corehq.apps.reminders.models import METHOD_SMS_SURVEY, METHOD_IVR_SURVEY
 from corehq.apps.users.models import CommCareUser, UserRole
+from corehq.apps.users.tasks import bulk_deactivate_users
 from corehq.apps.userreports.exceptions import DataSourceConfigurationNotFoundError
 from corehq.const import USER_DATE_FORMAT
 
@@ -98,6 +99,11 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
         })
         return privs_to_responses
 
+    def get_response(self):
+        response = super(DomainDowngradeActionHandler, self).get_response()
+        worker_response = self.response_mobile_worker_creation(
+            self.domain, self.new_plan_version)
+        return response and worker_response
 
     @staticmethod
     def response_outbound_sms(domain, new_plan_version):
@@ -221,6 +227,31 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
         from corehq.apps.app_manager.views.utils import unset_practice_mode_configured_apps
         unset_practice_mode_configured_apps(project.name)
 
+    @staticmethod
+    def response_mobile_worker_creation(domain, new_plan_version):
+        """ Deactivates users if there are too many for a community plan """
+        from corehq.apps.accounting.models import (
+            DefaultProductPlan, FeatureType, UNLIMITED_FEATURE_USAGE)
+
+        # checks for community plan
+        if (new_plan_version != DefaultProductPlan.get_default_plan_version()):
+            return True
+
+        # checks if unlimited is on for this user
+        user_rate = new_plan_version.feature_rates.filter(
+            feature__feature_type=FeatureType.USER).latest('date_created')
+        if user_rate.monthly_limit == UNLIMITED_FEATURE_USAGE:
+            return True
+
+        # checks for extra users
+        num_users = CommCareUser.total_by_domain(
+            domain.name, is_active=True)
+        num_allowed = user_rate.monthly_limit
+        if num_users > num_allowed:
+            # offloads deactivation onto a separate thread
+            bulk_deactivate_users.delay(domain)
+        return True
+
 
 class DomainUpgradeActionHandler(BaseModifySubscriptionActionHandler):
     """
@@ -336,12 +367,12 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
         return privs_to_responses
 
     def get_response(self):
-        response = super(DomainDowngradeStatusHandler, self).get_response()
-        response.extend([response for response in [
-                self.response_later_subscription,
-                self.response_mobile_worker_creation,
-            ] if response is not None])
-        return response
+        responses = super(DomainDowngradeStatusHandler, self).get_response()
+        responses.extend([response for response in [
+            self.response_later_subscription,
+            self.response_mobile_worker_creation,
+        ] if response is not None])
+        return responses
 
     @staticmethod
     def response_cloudcare(domain, new_plan_version):
@@ -479,27 +510,56 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
             num_allowed = user_rate.monthly_limit
             num_extra = num_users - num_allowed
             if num_extra > 0:
-                return _fmt_alert(
-                    ungettext(
-                        "You have %(num_users)d Mobile Worker over the monthly "
-                        "limit of %(monthly_limit)d for this new plan. There "
-                        "will be an additional monthly charge of USD "
-                        "%(excess_fee)s per Mobile Worker, totalling USD "
-                        "%(monthly_total)s per month, if you select this plan.",
-                        "You have %(num_users)d Mobile Workers over the "
-                        "monthly limit of %(monthly_limit)d for this new plan. "
-                        "There will be an additional monthly charge "
-                        "of USD %(excess_fee)s per Mobile Worker, totalling "
-                        "USD %(monthly_total)s per month, if you "
-                        "select this plan.",
-                        num_extra
-                    ) % {
-                        'num_users': num_extra,
-                        'monthly_limit': user_rate.monthly_limit,
-                        'excess_fee': user_rate.per_excess_fee,
-                        'monthly_total': user_rate.per_excess_fee * num_extra,
-                    }
-                )
+                from corehq.apps.accounting.models import DefaultProductPlan
+                if self.new_plan_version != DefaultProductPlan.get_default_plan_version():
+                    return _fmt_alert(
+                        ungettext(
+                            "You have %(num_extra)d Mobile Worker over the monthly "
+                            "limit of %(monthly_limit)d for this new plan. There "
+                            "will be an additional monthly charge of USD "
+                            "%(excess_fee)s per Mobile Worker, totalling USD "
+                            "%(monthly_total)s per month, if you select this plan.",
+
+                            "You have %(num_extra)d Mobile Workers over the "
+                            "monthly limit of %(monthly_limit)d for this new plan. "
+                            "There will be an additional monthly charge "
+                            "of USD %(excess_fee)s per Mobile Worker, totalling "
+                            "USD %(monthly_total)s per month, if you "
+                            "select this plan.",
+                            num_extra
+                        ) % {
+                            'num_extra': num_extra,
+                            'monthly_limit': user_rate.monthly_limit,
+                            'excess_fee': user_rate.per_excess_fee,
+                            'monthly_total': user_rate.per_excess_fee * num_extra,
+                        }
+                    )
+                else:
+                    return _fmt_alert(
+                        ungettext(
+                            "Community plans include %(monthly_limit)s Mobile Workers by default. "
+                            "Because you have %(num_extra)d extra Mobile Worker, "
+                            "all your project's Mobile Workers will be deactivated. "
+                            "You can re-activate these manually after downgrade. "
+                            "Each active Mobile Worker over %(monthly_limit)s will result "
+                            "in an additional charge of USD %(excess_fee)s, totalling "
+                            "USD %(monthly_total)s per month.",
+
+                            "Community plans include %(monthly_limit)s Mobile Workers by default. "
+                            "Because you have %(num_extra)d extra Mobile Workers, "
+                            "all your project's Mobile Workers will be deactivated. "
+                            "You can re-activate these manually after downgrade. "
+                            "Each active Mobile Worker over %(monthly_limit)s will result "
+                            "in an additional charge of USD %(excess_fee)s, totalling "
+                            "USD %(monthly_total)s per month.",
+                            num_extra
+                        ) % {
+                            'num_extra': num_extra,
+                            'monthly_limit': user_rate.monthly_limit,
+                            'excess_fee': user_rate.per_excess_fee,
+                            'monthly_total': user_rate.per_excess_fee * num_extra,
+                        }
+                    )
         except FeatureRate.DoesNotExist:
             log_accounting_error(
                 "It seems that the plan %s did not have rate for Mobile "
@@ -618,6 +678,8 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
     def response_practice_mobile_workers(project, new_plan_version):
         from corehq.apps.app_manager.views.utils import get_practice_mode_configured_apps
         apps = get_practice_mode_configured_apps(project.name)
+        if not apps:
+            return None
         return _fmt_alert(
             ungettext(
                 "You have %(num_apps)d application that has a practice mobile worker "

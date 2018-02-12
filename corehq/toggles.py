@@ -869,13 +869,6 @@ APPLICATION_ERROR_REPORT = StaticToggle(
     namespaces=[NAMESPACE_USER],
 )
 
-AGGREGATE_USER_STATUS_REPORT = StaticToggle(
-    'aggregate_user_status_report',
-    'Show Aggregate User Status',
-    TAG_PRODUCT,
-    namespaces=[NAMESPACE_DOMAIN],
-)
-
 OPENCLINICA = StaticToggle(
     'openclinica',
     'KEMRI: Offer OpenClinica settings and CDISC ODM export',
@@ -1426,6 +1419,13 @@ BULK_UPLOAD_DATE_OPENED = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
+REGEX_FIELD_VALIDATION = StaticToggle(
+    'regex_field_validation',
+    'Enable regex validation for custom data fields',
+    TAG_SOLUTIONS,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
 ICDS_LIVEQUERY = PredictablyRandomToggle(
     'icds_livequery',
     'ICDS: Enable livequery case sync for a random subset of ICDS users',
@@ -1488,5 +1488,5 @@ SHOW_ALL_SCHEDULED_REPORT_EMAILS = StaticToggle(
     "In the 'My Scheduled Reports' tab, show all reports the user is part of (if the user is an "
     "admin, show all in the current project)",
     TAG_PRODUCT,
-    [NAMESPACE_USER],
+    [NAMESPACE_DOMAIN],
 )

@@ -797,10 +797,10 @@ class TestAWCReport(TestCase):
                             "color": "green",
                             "percent": "Data in the previous reporting period was 0",
                             "value": 0,
-                            "label": "Percent children (0-6 years) enrolled for ICDS services",
+                            "label": "Percent children (0-6 years) enrolled for Anganwadi Services",
                             "frequency": "month",
                             "help_text": "Percentage of children registered between 0-6 years old "
-                                         "who are enrolled for ICDS services"
+                                         "who are enrolled for Anganwadi Services"
                         },
                         {
                             "all": 2,
@@ -808,10 +808,10 @@ class TestAWCReport(TestCase):
                             "color": "red",
                             "percent": 0.0,
                             "value": 2,
-                            "label": "Percent pregnant women enrolled for ICDS services",
+                            "label": "Percent pregnant women enrolled for Anganwadi Services",
                             "frequency": "month",
                             "help_text": "Percentage of pregnant women registered "
-                                         "who are enrolled for ICDS services"
+                                         "who are enrolled for Anganwadi Services"
                         }
                     ],
                     [
@@ -821,10 +821,10 @@ class TestAWCReport(TestCase):
                             "color": "red",
                             "percent": 0.0,
                             "value": 3,
-                            "label": "Percent lactating women enrolled for ICDS services",
+                            "label": "Percent lactating women enrolled for Anganwadi Services",
                             "frequency": "month",
                             "help_text": "Percentage of lactating women registered "
-                                         "who are enrolled for ICDS services"
+                                         "who are enrolled for Anganwadi Services"
                         },
                         {
                             "all": 0,
@@ -832,10 +832,10 @@ class TestAWCReport(TestCase):
                             "color": "red",
                             "percent": -100.0,
                             "value": 0,
-                            "label": "Percent adolescent girls (11-18 years) enrolled for ICDS services",
+                            "label": "Percent adolescent girls (11-14 years) enrolled for Anganwadi Services",
                             "frequency": "month",
                             "help_text": "Percentage of adolescent girls registered between"
-                                         " 11-18 years old who are enrolled for ICDS services"
+                                         " 11-14 years old who are enrolled for Anganwadi Services"
                         }
                     ]
                 ],
@@ -916,11 +916,11 @@ class TestAWCReport(TestCase):
                             "color": "green",
                             "percent": "Data in the previous reporting period was 0",
                             "value": 0,
-                            "label": "Percent children (0-6 years) enrolled for ICDS services",
+                            "label": "Percent children (0-6 years) enrolled for Anganwadi Services",
                             "frequency": "day",
                             "help_text": (
                                 "Percentage of children registered between 0-6 years old "
-                                "who are enrolled for ICDS services"
+                                "who are enrolled for Anganwadi Services"
                             )
                         },
                         {
@@ -929,10 +929,10 @@ class TestAWCReport(TestCase):
                             "color": "green",
                             "percent": "Data in the previous reporting period was 0",
                             "value": 2,
-                            "label": "Percent pregnant women enrolled for ICDS services",
+                            "label": "Percent pregnant women enrolled for Anganwadi Services",
                             "frequency": "day",
                             "help_text": (
-                                "Percentage of pregnant women registered who are enrolled for ICDS services"
+                                "Percentage of pregnant women registered who are enrolled for Anganwadi Services"
                             )
                         }
                     ],
@@ -943,10 +943,10 @@ class TestAWCReport(TestCase):
                             "color": "green",
                             "percent": "Data in the previous reporting period was 0",
                             "value": 3,
-                            "label": "Percent lactating women enrolled for ICDS services",
+                            "label": "Percent lactating women enrolled for Anganwadi Services",
                             "frequency": "day",
                             "help_text": (
-                                "Percentage of lactating women registered who are enrolled for ICDS services"
+                                "Percentage of lactating women registered who are enrolled for Anganwadi Services"
                             )
                         },
                         {
@@ -956,12 +956,12 @@ class TestAWCReport(TestCase):
                             "percent": "Data in the previous reporting period was 0",
                             "value": 0,
                             "label": (
-                                "Percent adolescent girls (11-18 years) enrolled for ICDS services"
+                                "Percent adolescent girls (11-14 years) enrolled for Anganwadi Services"
                             ),
                             "frequency": "day",
                             "help_text": (
-                                "Percentage of adolescent girls registered between 11-18 years old who "
-                                "are enrolled for ICDS services"
+                                "Percentage of adolescent girls registered between 11-14 years old who "
+                                "are enrolled for Anganwadi Services"
                             )
                         }
                     ]
@@ -1027,11 +1027,11 @@ class TestAWCReport(TestCase):
                             "color": "green",
                             "percent": "Data in the previous reporting period was 0",
                             "value": 0,
-                            "label": "Percent children (0-6 years) enrolled for ICDS services",
+                            "label": "Percent children (0-6 years) enrolled for Anganwadi Services",
                             "frequency": "day",
                             "help_text": (
                                 "Percentage of children registered between 0-6 years old "
-                                "who are enrolled for ICDS services"
+                                "who are enrolled for Anganwadi Services"
                             )
                         },
                         {
@@ -1040,10 +1040,10 @@ class TestAWCReport(TestCase):
                             "color": "green",
                             "percent": "Data in the previous reporting period was 0",
                             "value": 2,
-                            "label": "Percent pregnant women enrolled for ICDS services",
+                            "label": "Percent pregnant women enrolled for Anganwadi Services",
                             "frequency": "day",
                             "help_text": (
-                                "Percentage of pregnant women registered who are enrolled for ICDS services"
+                                "Percentage of pregnant women registered who are enrolled for Anganwadi Services"
                             )
                         }
                     ],
@@ -1054,10 +1054,10 @@ class TestAWCReport(TestCase):
                             "color": "green",
                             "percent": "Data in the previous reporting period was 0",
                             "value": 3,
-                            "label": "Percent lactating women enrolled for ICDS services",
+                            "label": "Percent lactating women enrolled for Anganwadi Services",
                             "frequency": "day",
                             "help_text": (
-                                "Percentage of lactating women registered who are enrolled for ICDS services"
+                                "Percentage of lactating women registered who are enrolled for Anganwadi Services"
                             )
                         },
                         {
@@ -1067,12 +1067,12 @@ class TestAWCReport(TestCase):
                             "percent": "Data in the previous reporting period was 0",
                             "value": 0,
                             "label": (
-                                "Percent adolescent girls (11-18 years) enrolled for ICDS services"
+                                "Percent adolescent girls (11-14 years) enrolled for Anganwadi Services"
                             ),
                             "frequency": "day",
                             "help_text": (
-                                "Percentage of adolescent girls registered between 11-18 years old who "
-                                "are enrolled for ICDS services"
+                                "Percentage of adolescent girls registered between 11-14 years old who "
+                                "are enrolled for Anganwadi Services"
                             )
                         }
                     ]

@@ -271,6 +271,10 @@ nvd3#sectorChart > div.title.h4 {
     right: 0;
 }
 
+.alert-container {
+    margin-top: 130px;
+}
+
 .crop {
     overflow:hidden;
     white-space:nowrap;
@@ -280,7 +284,6 @@ nvd3#sectorChart > div.title.h4 {
 
 .report-content {
     color: #ffffff !important;
-    margin-top: 110px;
     padding: 20px 20px 80px;
 }
 
@@ -598,6 +601,9 @@ h4 {
 }
 
 .nvtooltip {
+    max-width: 300px !important;
+    white-space: normal;
+    padding: 5px;
 }
 
 .carousel-control.left {

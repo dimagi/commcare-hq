@@ -41,17 +41,22 @@
 #
 # If you are unsure of how to resolve a conflict, notify the branch owner.
 
+# FORMPLAYER
+# From the formplayer, repo, call `./scripts/rebuildstaging`
+# This rebuilds the `autostaging` branch of formplayer and runs the formplayer-staging job on jenkins
 
 trunk: master
 name: autostaging
 branches:
   - vellum-staging # J$ 11/13
-  - je/cythonized-jsonobject # j$ 1/8
+  # - je/cythonized-jsonobject # j$ 1/8
   - xbryanc:dlemailbutton_updates  # Bryan 1/29
   - sophiamcg:organization-structure-search-tree-interaction  # Sophia 1/29
-  - jls/data-feedback-loop-test # Jenny 1/30
   - xbryanc:show_scheduled_reports_updates  # Bryan 1/31
   - sophiamcg:organization-structure-collapse-button  # Sophia 1/31
+  - jls/data-feedback-loop-test # Jenny 2/1
+  - jls/debug-app-preview # Jenny 2/5
+  - fr/two-factor-mobile-users  # FR 2/7
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty

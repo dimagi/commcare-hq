@@ -89,6 +89,9 @@ hqDefine("reports/js/edit_scheduled_report", function() {
         }
     };
 
+    $('#id_language').select2({
+        placeholder: gettext("Select a language..."),
+    });
     $("#id_config_ids").change(function(){
         updateUcrElements($(this).val());
     });

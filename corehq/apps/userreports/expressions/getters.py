@@ -171,6 +171,7 @@ def transform_from_datatype(datatype):
         'datetime': transform_datetime,
         'decimal': transform_decimal,
         'integer': transform_int,
+        'small_integer': transform_int,
         'string': transform_unicode,
         'array': transform_array,
     }.get(datatype) or identity

@@ -51,14 +51,3 @@ NEW_USER_NUMBER = ABTestConfig(
     'new_phone_jan2016',
     (NEW_USER_NUMBER_OPTION_SHOW_NUM, NEW_USER_NUMBER_OPTION_HIDE_NUM)
 )
-
-
-NEW_USER_PERSONA_OPTION_SHOW = 'show_persona'
-NEW_USER_PERSONA_OPTION_HIDE = 'hide_persona'
-
-
-NEW_USER_PERSONA_FIELD = ABTestConfig(
-    'New User Persona Field',
-    'new_user_persona_field_nov2017',
-    (NEW_USER_PERSONA_OPTION_SHOW, NEW_USER_PERSONA_OPTION_HIDE)
-)

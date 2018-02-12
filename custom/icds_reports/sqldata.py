@@ -350,6 +350,23 @@ class AggChildHealthMonthlyDataSource(ProgressReportSqlData):
                 ],
                 slug='status_weighed'
             ),
+            AggregateColumn(
+                '% Height measurement efficiency (Children <5 measured)',
+                percent_num,
+                [
+                    SumColumn('height_measured_in_month', filters=self.filters + [
+                        NOT(EQ('age_tranche', 'age_72'))
+                    ]),
+                    SumColumn('height_eligible', alias='height_eligible', filters=self.filters + [
+                        AND([
+                            NOT(EQ('age_tranche', 'age_0')),
+                            NOT(EQ('age_tranche', 'age_6')),
+                            NOT(EQ('age_tranche', 'age_72'))
+                        ])
+                    ])
+                ],
+                slug='status_height_efficiency'
+            ),
             DatabaseColumn(
                 'Total number Unweighed',
                 SumColumn('nutrition_status_unweighed', filters=self.filters + [
@@ -406,13 +423,17 @@ class AggChildHealthMonthlyDataSource(ProgressReportSqlData):
                             NOT(EQ('age_tranche', 'age_72'))
                         ])
                     ]),
-                    SumColumn('height_eligible', alias='height_eligible', filters=self.filters + [
-                        AND([
-                            NOT(EQ('age_tranche', 'age_0')),
-                            NOT(EQ('age_tranche', 'age_6')),
-                            NOT(EQ('age_tranche', 'age_72'))
-                        ])
-                    ])
+                    SumColumn(
+                        'weighed_and_height_measured_in_month',
+                        alias='weighed_and_height_measured_in_month',
+                        filters=self.filters + [
+                            AND([
+                                NOT(EQ('age_tranche', 'age_0')),
+                                NOT(EQ('age_tranche', 'age_6')),
+                                NOT(EQ('age_tranche', 'age_72'))
+                            ])
+                        ]
+                    )
                 ],
                 slug='wasting_severe'
             ),
@@ -427,7 +448,7 @@ class AggChildHealthMonthlyDataSource(ProgressReportSqlData):
                             NOT(EQ('age_tranche', 'age_72'))
                         ])
                     ]),
-                    AliasColumn('height_eligible')
+                    AliasColumn('weighed_and_height_measured_in_month')
                 ],
                 slug='wasting_moderate'
             ),
@@ -442,7 +463,7 @@ class AggChildHealthMonthlyDataSource(ProgressReportSqlData):
                             NOT(EQ('age_tranche', 'age_72'))
                         ])
                     ]),
-                    AliasColumn('height_eligible')
+                    AliasColumn('weighed_and_height_measured_in_month')
                 ],
                 slug='wasting_normal'
             ),
@@ -457,7 +478,17 @@ class AggChildHealthMonthlyDataSource(ProgressReportSqlData):
                             NOT(EQ('age_tranche', 'age_72'))
                         ])
                     ]),
-                    AliasColumn('height_eligible')
+                    SumColumn(
+                        'height_measured_in_month',
+                        alias='height_measured_in_month',
+                        filters=self.filters + [
+                            AND([
+                                NOT(EQ('age_tranche', 'age_0')),
+                                NOT(EQ('age_tranche', 'age_6')),
+                                NOT(EQ('age_tranche', 'age_72'))
+                            ])
+                        ]
+                    )
                 ],
                 slug='stunting_severe'
             ),
@@ -472,7 +503,7 @@ class AggChildHealthMonthlyDataSource(ProgressReportSqlData):
                             NOT(EQ('age_tranche', 'age_72'))
                         ])
                     ]),
-                    AliasColumn('height_eligible')
+                    AliasColumn('height_measured_in_month')
                 ],
                 slug='stunting_moderate'
             ),
@@ -487,7 +518,7 @@ class AggChildHealthMonthlyDataSource(ProgressReportSqlData):
                             NOT(EQ('age_tranche', 'age_72'))
                         ])
                     ]),
-                    AliasColumn('height_eligible')
+                    AliasColumn('height_measured_in_month')
                 ],
                 slug='stunting_normal'
             ),
@@ -1087,7 +1118,17 @@ class ChildrenExport(ExportableMixin, SqlData):
                             NOT(EQ('age_tranche', 'age_72'))
                         ])
                     ]),
-                    AliasColumn('height_eligible')
+                    SumColumn(
+                        'weighed_and_height_measured_in_month',
+                        alias='weighed_and_height_measured_in_month',
+                        filters=self.filters + [
+                            AND([
+                                NOT(EQ('age_tranche', 'age_0')),
+                                NOT(EQ('age_tranche', 'age_6')),
+                                NOT(EQ('age_tranche', 'age_72'))
+                            ])
+                        ]
+                    )
                 ],
                 slug='percent_severe_wasting'
             ),
@@ -1102,7 +1143,7 @@ class ChildrenExport(ExportableMixin, SqlData):
                             NOT(EQ('age_tranche', 'age_72'))
                         ])
                     ]),
-                    AliasColumn('height_eligible')
+                    AliasColumn('weighed_and_height_measured_in_month')
                 ],
                 slug='percent_moderate_wasting'
             ),
@@ -1117,7 +1158,7 @@ class ChildrenExport(ExportableMixin, SqlData):
                             RawFilter("age_tranche = '72'")
                         ])
                     ]),
-                    AliasColumn('height_eligible')
+                    AliasColumn('weighed_and_height_measured_in_month')
                 ],
                 slug='percent_normal_wasting'
             ),
@@ -1132,7 +1173,17 @@ class ChildrenExport(ExportableMixin, SqlData):
                             NOT(EQ('age_tranche', 'age_72'))
                         ])
                     ]),
-                    AliasColumn('height_eligible')
+                    SumColumn(
+                        'height_measured_in_month',
+                        alias='height_measured_in_month',
+                        filters=self.filters + [
+                            AND([
+                                NOT(EQ('age_tranche', 'age_0')),
+                                NOT(EQ('age_tranche', 'age_6')),
+                                NOT(EQ('age_tranche', 'age_72'))
+                            ])
+                        ]
+                    )
                 ],
                 slug='percent_severe_stunting'
             ),
@@ -1147,7 +1198,7 @@ class ChildrenExport(ExportableMixin, SqlData):
                             NOT(EQ('age_tranche', 'age_72'))
                         ])
                     ]),
-                    AliasColumn('height_eligible')
+                    AliasColumn('height_measured_in_month')
                 ],
                 slug='percent_moderate_stunting'
             ),
@@ -1162,7 +1213,7 @@ class ChildrenExport(ExportableMixin, SqlData):
                             NOT(EQ('age_tranche', 'age_72'))
                         ])
                     ]),
-                    AliasColumn('height_eligible')
+                    AliasColumn('height_measured_in_month')
                 ],
                 slug='percent_normal_stunting'
             ),
@@ -2076,6 +2127,13 @@ class FactSheetsReport(object):
                             },
                             {
                                 'data_source': 'AggChildHealthMonthlyDataSource',
+                                'header': 'Height measurement efficiency (Children <5 measured)',
+                                'slug': 'status_height_efficiency',
+                                'average': [],
+                                'format': 'percent',
+                            },
+                            {
+                                'data_source': 'AggChildHealthMonthlyDataSource',
                                 'header': 'Total number of unweighed children (0-5 Years)',
                                 'slug': 'nutrition_status_unweighed',
                                 'reverseColors': True,
@@ -2468,41 +2526,41 @@ class FactSheetsReport(object):
                             },
                             {
                                 'data_source': 'AggAWCMonthlyDataSource',
-                                'header': 'Total chldren (0-6 years) enrolled for ICDS services',
+                                'header': 'Total chldren (0-6 years) enrolled for Anganwadi Services',
                                 'slug': 'cases_child_health',
                                 'average': [],
 
                             },
                             {
                                 'data_source': 'AggChildHealthMonthlyDataSource',
-                                'header': 'Children (0-28 days)  enrolled for ICDS services',
+                                'header': 'Children (0-28 days)  enrolled for Anganwadi Services',
                                 'slug': 'zero',
                                 'average': [],
                             },
                             {
                                 'data_source': 'AggChildHealthMonthlyDataSource',
-                                'header': 'Children (28 days - 6 months)  enrolled for ICDS services',
+                                'header': 'Children (28 days - 6 months)  enrolled for Anganwadi Services',
                                 'slug': 'one',
                                 'average': [],
 
                             },
                             {
                                 'data_source': 'AggChildHealthMonthlyDataSource',
-                                'header': 'Children (6 months - 1 year)  enrolled for ICDS services',
+                                'header': 'Children (6 months - 1 year)  enrolled for Anganwadi Services',
                                 'slug': 'two',
                                 'average': [],
 
                             },
                             {
                                 'data_source': 'AggChildHealthMonthlyDataSource',
-                                'header': 'Children (1 year - 3 years)  enrolled for ICDS services',
+                                'header': 'Children (1 year - 3 years)  enrolled for Anganwadi Services',
                                 'slug': 'three',
                                 'average': [],
 
                             },
                             {
                                 'data_source': 'AggChildHealthMonthlyDataSource',
-                                'header': 'Children (3 years - 6 years)  enrolled for ICDS services',
+                                'header': 'Children (3 years - 6 years)  enrolled for Anganwadi Services',
                                 'slug': 'four',
                                 'average': [],
 
@@ -2523,14 +2581,14 @@ class FactSheetsReport(object):
                             },
                             {
                                 'data_source': 'AggAWCMonthlyDataSource',
-                                'header': 'Adolescent girls (11-14 years)  enrolled for ICDS services',
+                                'header': 'Adolescent girls (11-14 years)  enrolled for Anganwadi Services',
                                 'slug': 'cases_person_adolescent_girls_11_14',
                                 'average': [],
 
                             },
                             {
                                 'data_source': 'AggAWCMonthlyDataSource',
-                                'header': 'Adolescent girls (15-18 years)  enrolled for ICDS services',
+                                'header': 'Adolescent girls (15-18 years)  enrolled for Anganwadi Services',
                                 'slug': 'cases_person_adolescent_girls_15_18',
                                 'average': [],
 
