@@ -4,7 +4,7 @@ from copy import copy
 from datetime import datetime
 import uuid
 import json
-from couchdbkit.exceptions import ResourceConflict
+from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
 from casexml.apps.phone.exceptions import IncompatibleSyncLogType, MissingSyncLogSQLException
 from corehq.toggles import LEGACY_SYNC_SUPPORT
 from corehq.util.global_request import get_request_domain
@@ -1258,6 +1258,11 @@ def get_properly_wrapped_sync_log(doc_id):
         # this occurs if doc_id is not a valid UUID
         synclog = None
     if not synclog:
+        try:
+            # try to lookup in couch
+            return properly_wrap_sync_log(SyncLog.get_db().get(doc_id))
+        except ResourceNotFound:
+            pass
         raise MissingSyncLogSQLException("A SyncLogSQL object with this synclog_id ({})is not found".format(
             doc_id))
     return properly_wrap_sync_log(synclog.doc)
