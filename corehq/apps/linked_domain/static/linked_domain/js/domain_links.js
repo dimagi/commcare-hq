@@ -9,7 +9,7 @@ hqDefine("linked_domain/js/domain_links", [
     initialPageData,
     _,
     ko,
-    alert_user,
+    alert_user
 ) {
     var _private = {};
     _private.RMI = function () {};
@@ -24,7 +24,7 @@ hqDefine("linked_domain/js/domain_links", [
         self.update_url = null;
 
         if (self.type === 'app' && self.detail && self.detail.app_id){
-            self.update_url = initialPageData.reverse('app_settings', self.detail.app_id)
+            self.update_url = initialPageData.reverse('app_settings', self.detail.app_id);
         }
         self.hasError = ko.observable(false);
         self.hasSuccess = ko.observable(false);
@@ -34,13 +34,13 @@ hqDefine("linked_domain/js/domain_links", [
             self.showSpinner(true);
             self.showUpdate(false);
             _private.RMI("update_linked_model", {"model": {
-                    'type': self.type,
-                    'detail': self.detail
-                }}).done(function (data) {
-                    self.last_update(data.last_update);
-                    self.hasSuccess(true);
-                    self.showSpinner(false);
-                })
+                'type': self.type,
+                'detail': self.detail,
+            }}).done(function (data) {
+                self.last_update(data.last_update);
+                self.hasSuccess(true);
+                self.showSpinner(false);
+            })
                 .fail(function (jqXHR, textStatus, errorThrown) {
                     console.log(errorThrown);
                     self.hasError(true);
@@ -73,16 +73,15 @@ hqDefine("linked_domain/js/domain_links", [
         }));
 
         self.deleteLink = function(link) {
-            console.log(link);
             _private.RMI("delete_domain_link", {"linked_domain": link.linked_domain()})
                 .done(function (data) {
                     self.linked_domains.remove(link);
-            })
+                })
                 .fail(function (jqXHR, textStatus, errorThrown) {
                     console.log(errorThrown);
                     alert_user.alert_user(gettext('Something unexpected happened.\n' +
-                        'Please try again, or report an issue if the problem persists.'), 'danger')
-            });
+                        'Please try again, or report an issue if the problem persists.'), 'danger');
+                });
         };
     };
 
@@ -96,9 +95,9 @@ hqDefine("linked_domain/js/domain_links", [
         self.remote_api_key = ko.observable(link.remote_api_key);
         self.last_update = link.last_update;
         if (self.is_remote){
-            self.domain_link = self.linked_domain
+            self.domain_link = self.linked_domain;
         } else{
-            self.domain_link = initialPageData.reverse('domain_links', self.linked_domain()   )
+            self.domain_link = initialPageData.reverse('domain_links', self.linked_domain());
         }
     };
 
