@@ -9,6 +9,7 @@ from casexml.apps.case.xform import get_case_updates, is_device_report
 from corehq.apps.domain.auth import determine_authtype_from_request, BASIC
 from corehq.apps.domain.decorators import (
     check_domain_migration, login_or_digest_ex, login_or_basic_ex, login_or_token_ex,
+    two_factor_exempt,
 )
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.receiverwrapper.auth import (
@@ -261,6 +262,7 @@ def _secure_post_token(request, domain, app_id=None):
 
 @location_safe
 @csrf_exempt
+@two_factor_exempt
 @require_POST
 @check_domain_migration
 def secure_post(request, domain, app_id=None):
