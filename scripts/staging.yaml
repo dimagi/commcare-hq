@@ -55,7 +55,6 @@ branches:
   - xbryanc:show_scheduled_reports_updates  # Bryan 1/31
   - sophiamcg:organization-structure-collapse-button  # Sophia 1/31
   - jls/data-feedback-loop-test # Jenny 2/1
-  - jls/debug-app-preview # Jenny 2/5
   - fr/two-factor-mobile-users  # FR 2/7
   - dmr/celery-queues  # Danny 2/12
 submodules:
