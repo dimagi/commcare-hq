@@ -8,7 +8,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('warehouse', '0020_synclogfact'),
+        ('warehouse', '0022_userstagingtable_assigned_location_ids'),
     ]
 
     operations = [
