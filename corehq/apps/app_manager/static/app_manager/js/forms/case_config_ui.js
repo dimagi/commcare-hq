@@ -75,9 +75,11 @@ hqDefine('app_manager/js/forms/case_config_ui', function() {
                         self.requires(requires);
                         self.setPropertiesMap(data.propertiesMap);
 
-                        hqImport('analytix/js/kissmetrix').track.event("Saved question as a Case Property", {
-                            questionsSaved: data.propertiesMap.case.length,
-                        });
+                        if (_(data.propertiesMap).has(self.caseType)) {
+                            hqImport('analytix/js/kissmetrix').track.event("Saved question as a Case Property", {
+                                questionsSaved: _(data.propertiesMap).property(self.caseType).length,
+                            });
+                        }
                     },
                 });
             },
