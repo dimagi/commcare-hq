@@ -45,10 +45,6 @@ class EditOpenmrsRepeaterView(EditRepeaterView, AddOpenmrsRepeaterView):
     urlname = 'edit_openmrs_repeater'
     page_title = ugettext_lazy("Edit OpenMRS Repeater")
 
-    @property
-    def page_url(self):
-        return EditRepeaterView.page_url
-
 
 @login_and_domain_required
 @require_http_methods(["GET", "POST"])

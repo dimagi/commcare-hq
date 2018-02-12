@@ -84,7 +84,10 @@ class EditRepeaterView(BaseRepeaterView):
 
     @property
     def page_url(self):
-        return reverse(self.urlname, args=[self.domain, self.repeater_type, self.repeater_id])
+        # The EditRepeaterView url routes to the correct edit form for its subclasses. It does this with
+        # `repeater_type` in r'^forwarding/(?P<repeater_type>\w+)/edit/(?P<repeater_id>\w+)/$'
+        # See corehq/apps/domain/urls.py for details.
+        return reverse(EditRepeaterView.urlname, args=[self.domain, self.repeater_type, self.repeater_id])
 
     @property
     @memoized
