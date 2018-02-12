@@ -1,5 +1,13 @@
 from __future__ import absolute_import
+from datetime import date
+import hashlib
+
+from dateutil.relativedelta import relativedelta
 from django.db import models
+from toggle.models import Toggle
+
+from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_datasource_config
+from corehq.apps.userreports.util import get_table_name
 
 
 class AwcLocation(models.Model):
@@ -556,3 +564,225 @@ class CcsRecordMonthly(models.Model):
         app_label = 'icds_model'
         managed = False
         db_table = 'ccs_record_monthly'
+
+
+from django.db import connections, InternalError, transaction
+from corehq.sql_db.routers import db_for_read_write
+
+
+def get_cursor(model):
+    db = db_for_read_write(model)
+    return connections[db].cursor()
+
+
+class AggregateComplementaryFeedingForms(models.Model):
+    """Aggregated data based on AWW App, Home Visit Scheduler module,
+    Complementary Feeding form.
+
+    A child table exists for each state_id and month.
+
+    A row exists for every case that has ever had a Complementary Feeding Form
+    submitted against it.
+    """
+
+    # partitioned based on these fields
+    state_id = models.CharField(max_length=40)
+    month = models.DateField(help_text="Will always be YYYY-MM-01")
+
+    # primary key as it's unqiue for every partition
+    case_id = models.CharField(max_length=40, primary_key=True)
+
+    latest_time_end_processed = models.DateTimeField(
+        help_text="The latest form.meta.timeEnd that has been processed for this case"
+    )
+
+    # Most of these could possibly be represented by a boolean, but have
+    # historically been stored as integers because they are in SUM statements
+    comp_feeding_ever = models.PositiveSmallIntegerField(
+        null=True,
+        help_text="Complementary feeding has ever occurred for this case"
+    )
+    demo_comp_feeding = models.PositiveSmallIntegerField(
+        null=True,
+        help_text="Demo of complementary feeding has ever occurred"
+    )
+    counselled_pediatric_ifa = models.PositiveSmallIntegerField(
+        null=True,
+        help_text="Once the child is over 1 year, has ever been counseled on pediatric IFA"
+    )
+    play_comp_feeding_vid = models.PositiveSmallIntegerField(
+        null=True,
+        help_text="Case has ever been counseled about complementary feeding with a video"
+    )
+    comp_feeding_latest = models.PositiveSmallIntegerField(
+        null=True,
+        help_text="Complementary feeding occurred for this case in the latest form"
+    )
+    diet_diversity = models.PositiveSmallIntegerField(
+        null=True,
+        help_text="Diet diversity occurred for this case in the latest form"
+    )
+    diet_quantity = models.PositiveSmallIntegerField(
+        null=True,
+        help_text="Diet quantity occurred for this case in the latest form"
+    )
+    hand_wash = models.PositiveSmallIntegerField(
+        null=True,
+        help_text="Hand washing occurred for this case in the latest form"
+    )
+
+    class Meta:
+        db_table = 'icds_dashboard_comp_feed_form'
+
+    @staticmethod
+    def child_tablename(state_id, month):
+        month_string = month.strftime('%Y-%m')
+        hash_for_table = hashlib.md5(state_id + month_string).hexdigest()[8:]
+        return 'icds_db_child_cf_form_' + hash_for_table
+
+    @staticmethod
+    def bootstrap_prev_month(state_id, month):
+        month = month - relativedelta(months=1)
+        parent_tablename = 'icds_dashboard_comp_feed_form'
+        month_string = month.strftime('%Y-%m-%d')
+        tablename = AggregateComplementaryFeedingForms.child_tablename(state_id, month)
+
+        with get_cursor(AggregateComplementaryFeedingForms) as cursor:
+            cursor.execute(
+                "CREATE TABLE IF NOT EXISTS \"" + tablename + "\" (CHECK ( "
+                "  month = '" + month_string + "' AND "
+                "  state_id = '" + state_id + "'"
+                " ), "
+                "LIKE \"" + parent_tablename + "\" INCLUDING DEFAULTS INCLUDING CONSTRAINTS INCLUDING INDEXES"
+                ") INHERITS (\"" + parent_tablename + "\")"
+            )
+
+        return tablename
+
+    @staticmethod
+    def create_child_table(state_id, month):
+        parent_tablename = 'icds_dashboard_comp_feed_form'
+        month_string = month.strftime('%Y-%m-%d')
+        tablename = AggregateComplementaryFeedingForms.child_tablename(state_id, month)
+
+        with get_cursor(AggregateComplementaryFeedingForms) as cursor:
+            cursor.execute("DROP TABLE IF EXISTS \"" + tablename + "\"")
+            cursor.execute(
+                "CREATE TABLE \"" + tablename + "\" (CHECK ( " +
+                "  month = '" + month_string + "' AND " +
+                "  state_id = '" + state_id + "'" +
+                "), " +
+                "LIKE \"" + parent_tablename + "\" INCLUDING DEFAULTS INCLUDING CONSTRAINTS INCLUDING INDEXES" +
+                ") INHERITS (\"" + parent_tablename + "\")"
+            )
+
+        return tablename
+
+    @staticmethod
+    def data_from_ucr(state_id, month):
+        current_month_start = month
+        next_month_start = current_month_start + relativedelta(months=1)
+
+        return """
+        SELECT child_health_case_id AS case_id,
+        LAST_VALUE(timeend) OVER w AS latest_time_end,
+        MAX(play_comp_feeding_vid) OVER w AS play_comp_feeding_vid,
+        MAX(comp_feeding) OVER w AS comp_feeding_ever,
+        MAX(demo_comp_feeding) OVER w AS demo_comp_feeding,
+        MAX(counselled_pediatric_ifa) OVER w AS counselled_pediatric_ifa,
+        LAST_VALUE(comp_feeding) OVER w AS comp_feeding_latest,
+        LAST_VALUE(diet_diversity) OVER w AS diet_diversity,
+        LAST_VALUE(diet_quantity) OVER w AS diet_quantity,
+        LAST_VALUE(hand_wash) OVER w AS hand_wash
+        FROM {ucr_tablename}
+        WHERE timeend >= {current_month_start} AND timeend < {next_month_start} AND state_id = {state_id}
+        WINDOW w AS (
+            PARTITION BY child_health_case_id
+            ORDER BY timeend RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
+        )
+        """.format(
+            ucr_tablename='"{}"'.format(ucr_data_source_tablename()),
+            current_month_start="'{}'".format(current_month_start),
+            next_month_start="'{}'".format(next_month_start),
+            state_id="'{}'".format(state_id)
+        )
+
+    @staticmethod
+    def query(state_id, month):
+        month = month.replace(day=1)
+
+        tablename = AggregateComplementaryFeedingForms.create_child_table(state_id, month)
+        previous_month_tablename = AggregateComplementaryFeedingForms.bootstrap_prev_month(state_id, month)
+
+        # data from the UCR will already be filtered for data from this month so
+        # all data from the UCR is from a later time than the previous month and
+        # we can safely use COALESCE instead of a larger CASE WHEN
+        return ("""
+            INSERT INTO {tablename} (
+              state_id, month, case_id, latest_time_end_processed, comp_feeding_ever,
+              demo_comp_feeding, counselled_pediatric_ifa, play_comp_feeding_vid,
+              comp_feeding_latest, diet_diversity, diet_quantity, hand_wash
+            ) (
+              SELECT
+                '{state_id}' AS state_id,
+                '{month}' AS month,
+                COALESCE(ucr.case_id, prev_month.case_id) AS case_id,
+                GREATEST(ucr.latest_time_end, prev_month.latest_time_end_processed) AS latest_time_end_processed,
+                GREATEST(ucr.comp_feeding_ever, prev_month.comp_feeding_ever) AS comp_feeding_ever,
+                GREATEST(ucr.demo_comp_feeding, prev_month.demo_comp_feeding) AS demo_comp_feeding,
+                GREATEST(ucr.counselled_pediatric_ifa, prev_month.counselled_pediatric_ifa) AS counselled_pediatric_ifa,
+                GREATEST(ucr.play_comp_feeding_vid, prev_month.play_comp_feeding_vid) AS play_comp_feeding_vid,
+                COALESCE(ucr.comp_feeding_latest, prev_month.comp_feeding_latest) AS comp_feeding_latest,
+                COALESCE(ucr.diet_diversity, prev_month.diet_diversity) AS diet_diversity,
+                COALESCE(ucr.diet_quantity, prev_month.diet_quantity) AS diet_quantity,
+                COALESCE(ucr.hand_wash, prev_month.hand_wash) AS hand_wash
+              FROM ({ucr_table_query}) ucr
+              FULL OUTER JOIN "{previous_month_tablename}" prev_month
+              ON ucr.case_id = prev_month.case_id
+            )
+            """.format(
+                previous_month_tablename=previous_month_tablename,
+                tablename=tablename,
+                ucr_table_query=AggregateComplementaryFeedingForms.data_from_ucr(state_id, month),
+                month=month.strftime('%Y-%m-%d'),
+                state_id=state_id))
+
+    @staticmethod
+    def aggregate(state_id, month):
+        with get_cursor(AggregateComplementaryFeedingForms) as cursor:
+            cursor.execute(AggregateComplementaryFeedingForms.query(state_id, month))
+
+    @staticmethod
+    def compare_with_old_data(state_id, month):
+        from corehq.form_processor.utils.sql import fetchall_as_namedtuple
+
+        with get_cursor(AggregateComplementaryFeedingForms) as cursor:
+            cursor.execute("""
+            SELECT agg.case_id
+            FROM child_health_monthly_ucr chm_ucr
+            FULL OUTER JOIN cf_form_agg agg
+            ON chm_ucr.doc_id = agg.case_id AND chm_ucr.month = agg.month
+            WHERE chm_ucr = month and agg.state_id = state_id AND (
+                  (chm_ucr.cf_eligible = 1 AND (
+                      chm_ucr.cf_in_month != agg.comp_feeding_latest OR
+                      chm_ucr.cf_diet_diversity != agg.diet_diversity OR
+                      chm_ucr.cf_diet_quantity != agg.diet_quantity OR
+                      chm_ucr.cf_handwashing != agg.hand_wash OR
+                      chm_ucr.cf_demo != agg.demo_comp_feeding OR
+                      chm_ucr.counsel_pediatric_ifa != agg.counselled_pediatric_ifa OR
+                      chm_ucr.counsel_comp_feeding_vid != agg.play_comp_feeding_vid OR
+                  )) OR (chm_ucr.cf_initiation_eligible = 1 AND
+                      chm_ucr.cf_initiated != agg.comp_feeding_ever OR
+                  )
+            )
+            """)
+
+            rows = fetchall_as_namedtuple(cursor)
+            return [row.child_health_case_id for row in rows]
+
+
+def ucr_data_source_tablename():
+    domain = Toggle.get('dashboard_icds_reports').enabled_users[0][len('domain:'):]
+    doc_id = StaticDataSourceConfiguration.get_doc_id(domain, 'static-complementary_feeding_forms')
+    config, _ = get_datasource_config(doc_id, domain)
+    return get_table_name('icds-cas', config.table_id)
