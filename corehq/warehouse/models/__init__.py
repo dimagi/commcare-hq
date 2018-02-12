@@ -28,7 +28,6 @@ from corehq.warehouse.models.staging import (
     FormStagingTable,
     SyncLogStagingTable,
     LocationStagingTable,
-    LocationTypeStagingTable,
     ApplicationStagingTable
 )
 
@@ -41,7 +40,6 @@ def get_cls_by_slug(slug):
         FormStagingTable.slug: FormStagingTable,
         SyncLogStagingTable.slug: SyncLogStagingTable,
         LocationStagingTable.slug: LocationStagingTable,
-        LocationTypeStagingTable.slug: LocationTypeStagingTable,
         ApplicationStagingTable.slug: ApplicationStagingTable,
 
         UserDim.slug: UserDim,

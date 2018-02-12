@@ -35,8 +35,8 @@ FROM
         {{ group_staging }}
     WHERE doc_type = 'Group'
 ) user_group_table
-INNER JOIN {{ group_dim }} AS gd
+LEFT JOIN {{ group_dim }} AS gd
 ON user_group_table.group_id = gd.group_id
 
-INNER JOIN {{ user_dim }} AS ud
+LEFT JOIN {{ user_dim }} AS ud
 ON user_group_table.user_id = ud.user_id;
