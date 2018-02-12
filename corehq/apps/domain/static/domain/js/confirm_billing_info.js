@@ -15,7 +15,7 @@ hqDefine("domain/js/confirm_billing_info", function() {
     Stripe.setPublishableKey(initialPageData.get("stripe_public_key"));
     var cardManager = new stripeCardManager.StripeCardManager({
         cards: initialPageData.get("cards"),
-        url: initialPageData.get("cards_view_url"),
+        url: initialPageData.reverse("cards_view"),
     });
     $(function() {
         $("#card-manager").koApplyBindings(cardManager);

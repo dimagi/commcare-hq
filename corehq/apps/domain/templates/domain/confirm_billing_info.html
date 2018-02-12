@@ -14,7 +14,7 @@
     {% initial_page_data "plan" plan %}
     {% initial_page_data "cards" cards %}
     {% initial_page_data "stripe_public_key" stripe_public_key %}
-    {% initial_page_data "cards_view_url" url 'cards_view' domain %}
+    {% registerurl "cards_view" domain %}
     <p class="lead">
         {% blocktrans with plan.name as p%}
         You are about to subscribe to the {{ p }} Software Plan.
