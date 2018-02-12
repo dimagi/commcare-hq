@@ -1,3 +1,4 @@
+/* globals CodeMirror */
 hqDefine('domain/js/repeat_record_report', function() {
     $(function() {
         $('#report-content').on('click', '.toggle-next-attempt', function (e) {
@@ -29,7 +30,7 @@ hqDefine('domain/js/repeat_record_report', function() {
                             mode: mode,
                             readOnly: true,
                             lineNumbers: true,
-                            lineWrapping: true
+                            lineWrapping: true,
                         });
                         codeMirror.refresh();
                     } else {
@@ -40,12 +41,12 @@ hqDefine('domain/js/repeat_record_report', function() {
                     var defaultText = gettext('Failed to fetch payload'),
                         errorMessage = data.responseJSON ? data.responseJSON.error : null;
 
-                    $modal.find('.modal-body').text(errorMessage || defaultText)
+                    $modal.find('.modal-body').text(errorMessage || defaultText);
                 },
             });
         });
 
-        $('#view-record-payload-modal').on('hide.bs.modal', function(event) {
+        $('#view-record-payload-modal').on('hide.bs.modal', function() {
             if (codeMirror) {
                 codeMirror.setValue('');
             }
@@ -77,7 +78,7 @@ hqDefine('domain/js/repeat_record_report', function() {
                     $btn.addClass('btn-danger');
                 },
             });
-          });
+        });
 
         $('#report-content').on('click', '.cancel-record-payload', function() {
             var $btn = $(this),
@@ -87,7 +88,7 @@ hqDefine('domain/js/repeat_record_report', function() {
             $.post({
                 url: "{% url 'cancel_repeat_record' domain %}",
                 data: { record_id: recordId },
-                success: function(data) {
+                success: function() {
                     $btn.removeSpinnerFromButton();
                     $btn.text(gettext('Success!'));
                     $btn.addClass('btn-success');
@@ -98,7 +99,7 @@ hqDefine('domain/js/repeat_record_report', function() {
                     $btn.addClass('btn-danger');
                 },
             });
-          });
+        });
 
         $('#report-content').on('click', '.requeue-record-payload', function() {
             var $btn = $(this),
@@ -108,7 +109,7 @@ hqDefine('domain/js/repeat_record_report', function() {
             $.post({
                 url: "{% url 'requeue_repeat_record' domain %}",
                 data: { record_id: recordId },
-                success: function(data) {
+                success: function() {
                     $btn.removeSpinnerFromButton();
                     $btn.text(gettext('Success!'));
                     $btn.addClass('btn-success');
@@ -119,6 +120,6 @@ hqDefine('domain/js/repeat_record_report', function() {
                     $btn.addClass('btn-danger');
                 },
             });
-          });
+        });
     });
 });
