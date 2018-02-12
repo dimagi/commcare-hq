@@ -102,9 +102,7 @@ class FormProcessorTestUtils(object):
     @classmethod
     @unit_testing_only
     def delete_all_sync_logs(cls):
-        #Todo: make it bulk
-        for synclog in SyncLogSQL.objects.all():
-            synclog.delete()
+        SyncLogSQL.objects.all().delete()
 
     @staticmethod
     @unit_testing_only
