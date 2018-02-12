@@ -22,16 +22,22 @@ from django.forms.fields import (
 from django.forms.forms import Form
 from django.forms.widgets import CheckboxSelectMultiple, HiddenInput
 from django.utils.functional import cached_property
+from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.django.fields import TrimmedCharField
 from django.utils.translation import ugettext as _, ugettext_lazy
+from corehq.apps.app_manager.models import Form as CCHQForm, AdvancedForm
 from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.locations.models import SQLLocation
-from corehq.apps.reminders.forms import validate_form_unique_id
 from corehq.apps.reminders.util import get_form_list
 from corehq.apps.sms.util import get_or_create_translation_doc
 from corehq.apps.smsforms.models import SQLXFormsSession
 from corehq.apps.users.models import CommCareUser
+from corehq.messaging.scheduling.const import (
+    VISIT_WINDOW_START,
+    VISIT_WINDOW_END,
+    VISIT_WINDOW_DUE_DATE,
+)
 from corehq.messaging.scheduling.exceptions import ImmediateMessageEditAttempt, UnsupportedScheduleError
 from corehq.messaging.scheduling.models import (
     Schedule,
@@ -406,6 +412,19 @@ class ScheduleForm(Form):
             self.add_initial_for_content(result)
 
         return result
+
+    @memoized
+    def get_form_and_app(self, form_unique_id):
+        error_msg = _("Please choose a form")
+        try:
+            form, app = CCHQForm.get_form(form_unique_id, and_app=True)
+        except:
+            raise ValidationError(error_msg)
+
+        if app.domain != self.domain:
+            raise ValidationError(error_msg)
+
+        return form, app
 
     def __init__(self, domain, schedule, can_use_sms_surveys, *args, **kwargs):
         self.domain = domain
@@ -801,6 +820,13 @@ class ScheduleForm(Form):
         return result
 
     @property
+    def current_visit_scheduler_form(self):
+        """
+        Only used in the ConditionalAlertScheduleForm
+        """
+        return {}
+
+    @property
     def uses_sms_survey(self):
         return self.cleaned_data.get('content') == self.CONTENT_SMS_SURVEY
 
@@ -1012,7 +1038,8 @@ class ScheduleForm(Form):
         if not value:
             raise ValidationError(_("This field is required"))
 
-        return validate_form_unique_id(value, self.domain)
+        self.get_form_and_app(value)
+        return value
 
     def clean_survey_expiration_in_hours(self):
         if self.cleaned_data.get('content') != self.CONTENT_SMS_SURVEY:
@@ -1389,6 +1416,7 @@ class BroadcastForm(ScheduleForm):
 class ConditionalAlertScheduleForm(ScheduleForm):
     START_DATE_RULE_TRIGGER = 'RULE_TRIGGER'
     START_DATE_CASE_PROPERTY = 'CASE_PROPERTY'
+    START_DATE_FROM_VISIT_SCHEDULER = 'VISIT_SCHEDULER'
 
     START_OFFSET_ZERO = 'ZERO'
     START_OFFSET_NEGATIVE = 'NEGATIVE'
@@ -1470,6 +1498,27 @@ class ConditionalAlertScheduleForm(ScheduleForm):
         required=False,
     )
 
+    visit_scheduler_form_unique_id = CharField(
+        label=ugettext_lazy("Scheduler: Form"),
+        required=False,
+    )
+
+    visit_number = IntegerField(
+        label='',
+        required=False,
+        min_value=1,
+    )
+
+    visit_window_position = ChoiceField(
+        label=ugettext_lazy("Scheduler: Use"),
+        required=False,
+        choices=(
+            (VISIT_WINDOW_START, ugettext_lazy("the first date in the visit window")),
+            (VISIT_WINDOW_DUE_DATE, ugettext_lazy("the due date of the visit")),
+            (VISIT_WINDOW_END, ugettext_lazy("the last date in the visit window")),
+        ),
+    )
+
     def __init__(self, domain, schedule, can_use_sms_surveys, rule, criteria_form, *args, **kwargs):
         self.initial_rule = rule
         self.criteria_form = criteria_form
@@ -1478,6 +1527,7 @@ class ConditionalAlertScheduleForm(ScheduleForm):
             self.set_read_only_fields_during_editing()
         self.update_recipient_types_choices()
         self.update_send_time_type_choices()
+        self.update_start_date_type_choices()
 
     def get_extra_timing_fields(self):
         return [
@@ -1508,6 +1558,19 @@ class ConditionalAlertScheduleForm(ScheduleForm):
             ]
 
     @property
+    def current_visit_scheduler_form(self):
+        value = self['visit_scheduler_form_unique_id'].value()
+        if not value:
+            return {}
+
+        try:
+            form, app = self.get_form_and_app(value)
+        except:
+            return {}
+
+        return {'id': form.unique_id, 'text': form.full_path_name}
+
+    @property
     def scheduling_fieldset_legend(self):
         return ''
 
@@ -1525,14 +1588,16 @@ class ConditionalAlertScheduleForm(ScheduleForm):
     def requires_system_admin_to_edit(self):
         return (
             CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM in self.initial.get('recipient_types', []) or
-            self.initial.get('content') == self.CONTENT_CUSTOM_SMS
+            self.initial.get('content') == self.CONTENT_CUSTOM_SMS or
+            self.initial.get('start_date_type') == self.START_DATE_FROM_VISIT_SCHEDULER
         )
 
     @cached_property
     def requires_system_admin_to_save(self):
         return (
             CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM in self.cleaned_data['recipient_types'] or
-            self.cleaned_data['content'] == self.CONTENT_CUSTOM_SMS
+            self.cleaned_data['content'] == self.CONTENT_CUSTOM_SMS or
+            self.cleaned_data['start_date_type'] == self.START_DATE_FROM_VISIT_SCHEDULER
         )
 
     def update_send_time_type_choices(self):
@@ -1556,6 +1621,15 @@ class ConditionalAlertScheduleForm(ScheduleForm):
             ])
 
         self.fields['recipient_types'].choices = new_choices
+
+    def update_start_date_type_choices(self):
+        if (
+            self.criteria_form.is_system_admin or
+            self.initial.get('start_date_type') == self.START_DATE_FROM_VISIT_SCHEDULER
+        ):
+            self.fields['start_date_type'].choices += [
+                (self.START_DATE_FROM_VISIT_SCHEDULER, _("A date from a visit scheduler")),
+            ]
 
     def add_initial_for_send_time(self, initial):
         if self.initial_schedule.event_type == TimedSchedule.EVENT_CASE_PROPERTY_TIME:
@@ -1597,9 +1671,18 @@ class ConditionalAlertScheduleForm(ScheduleForm):
             else:
                 result['reset_case_property_enabled'] = self.NO
 
+            scheduler_module_info = action_definition.get_scheduler_module_info()
             if action_definition.start_date_case_property:
                 result['start_date_type'] = self.START_DATE_CASE_PROPERTY
                 result['start_date_case_property'] = action_definition.start_date_case_property
+            elif scheduler_module_info.enabled:
+                # No need to set a value for visit_scheduler_form_unique_id, that initial
+                # value gets set from self.current_visit_scheduler_form
+                result['start_date_type'] = self.START_DATE_FROM_VISIT_SCHEDULER
+
+                # Convert to 1-based index for display as in the form builder
+                result['visit_number'] = scheduler_module_info.visit_number + 1
+                result['visit_window_position'] = scheduler_module_info.window_position
             else:
                 result['start_date_type'] = self.START_DATE_RULE_TRIGGER
 
@@ -1614,7 +1697,7 @@ class ConditionalAlertScheduleForm(ScheduleForm):
                         'start_date_type',
                         data_bind='value: start_date_type',
                     ),
-                    css_class='col-sm-4',
+                    css_class='col-sm-8',
                 ),
                 crispy.Div(
                     twbscrispy.InlineField(
@@ -1623,7 +1706,23 @@ class ConditionalAlertScheduleForm(ScheduleForm):
                     data_bind="visible: start_date_type() === '%s'" % self.START_DATE_CASE_PROPERTY,
                     css_class='col-sm-4',
                 ),
+                crispy.Div(
+                    self.get_system_admin_label(),
+                    data_bind="visible: start_date_type() === '%s'" % self.START_DATE_FROM_VISIT_SCHEDULER,
+                ),
                 data_bind='visible: showStartDateInput',
+            ),
+            crispy.Div(
+                crispy.Field('visit_scheduler_form_unique_id'),
+                hqcrispy.B3MultiField(
+                    _("Scheduler: Visit"),
+                    crispy.Div(
+                        twbscrispy.InlineField('visit_number'),
+                        css_class='col-sm-4',
+                    ),
+                ),
+                crispy.Field('visit_window_position'),
+                data_bind="visible: start_date_type() === '%s'" % self.START_DATE_FROM_VISIT_SCHEDULER,
             ),
             hqcrispy.B3MultiField(
                 _("Begin"),
@@ -1810,6 +1909,58 @@ class ConditionalAlertScheduleForm(ScheduleForm):
             allow_parent_case_references=False,
         )
 
+    def clean_visit_scheduler_form_unique_id(self):
+        if self.cleaned_data.get('start_date_type') != self.START_DATE_FROM_VISIT_SCHEDULER:
+            return None
+
+        value = self.cleaned_data.get('visit_scheduler_form_unique_id')
+        if not value:
+            raise ValidationError(_("This field is required"))
+
+        form, app = self.get_form_and_app(value)
+        if isinstance(form, AdvancedForm) and form.schedule and form.schedule.enabled:
+            return value
+
+        raise ValidationError(_("Please select a visit scheduler form"))
+
+    def clean_visit_number(self):
+        if self.cleaned_data.get('start_date_type') != self.START_DATE_FROM_VISIT_SCHEDULER:
+            return None
+
+        form_unique_id = self.cleaned_data.get('visit_scheduler_form_unique_id')
+        if not form_unique_id:
+            raise ValidationError(_("Please first select a visit scheduler form"))
+
+        value = self.cleaned_data.get('visit_number')
+        if value is None or value <= 0:
+            raise ValidationError(_("Please enter a number greater than 0"))
+
+        visit_index = value - 1
+
+        form, app = self.get_form_and_app(form_unique_id)
+        try:
+            visit = form.schedule.visits[visit_index]
+        except IndexError:
+            raise ValidationError(_("Visit number not found. Please check form configuration."))
+
+        if visit.repeats:
+            raise ValidationError(_("Repeat visits are not supported"))
+
+        if not isinstance(visit.expires, int):
+            raise ValidationError(_("Visits which do not have a window end date are not supported"))
+
+        return value
+
+    def clean_visit_window_position(self):
+        if self.cleaned_data.get('start_date_type') != self.START_DATE_FROM_VISIT_SCHEDULER:
+            return None
+
+        value = self.cleaned_data.get('visit_window_position')
+        if not value:
+            raise ValidationError("This field is required")
+
+        return value
+
     def distill_start_offset(self):
         send_frequency = self.cleaned_data.get('send_frequency')
         start_offset_type = self.cleaned_data.get('start_offset_type')
@@ -1835,7 +1986,19 @@ class ConditionalAlertScheduleForm(ScheduleForm):
         return self.cleaned_data['start_day_of_week']
 
     def distill_scheduler_module_info(self):
-        return CreateScheduleInstanceActionDefinition.SchedulerModuleInfo(enabled=False)
+        if self.cleaned_data.get('start_date_type') != self.START_DATE_FROM_VISIT_SCHEDULER:
+            return CreateScheduleInstanceActionDefinition.SchedulerModuleInfo(enabled=False)
+
+        form_unique_id = self.cleaned_data['visit_scheduler_form_unique_id']
+        form, app = self.get_form_and_app(form_unique_id)
+        return CreateScheduleInstanceActionDefinition.SchedulerModuleInfo(
+            enabled=True,
+            app_id=app.get_id,
+            form_unique_id=form_unique_id,
+            # Convert to 0-based index
+            visit_number=self.cleaned_data['visit_number'] - 1,
+            visit_window_position=self.cleaned_data['visit_window_position'],
+        )
 
     def distill_recipients(self):
         result = super(ConditionalAlertScheduleForm, self).distill_recipients()
@@ -1874,7 +2037,7 @@ class ConditionalAlertScheduleForm(ScheduleForm):
         fields = {
             'recipients': self.distill_recipients(),
             'reset_case_property_name': self.cleaned_data['reset_case_property_name'],
-            'scheduler_module_info': self.distill_scheduler_module_info(),
+            'scheduler_module_info': self.distill_scheduler_module_info().to_json(),
             'start_date_case_property': self.cleaned_data['start_date_case_property'],
         }
 
@@ -1894,7 +2057,7 @@ class ConditionalAlertScheduleForm(ScheduleForm):
 
         action_definition.recipients = self.distill_recipients()
         action_definition.reset_case_property_name = self.cleaned_data['reset_case_property_name']
-        action_definition.scheduler_module_info = self.distill_scheduler_module_info()
+        action_definition.set_scheduler_module_info(self.distill_scheduler_module_info())
         action_definition.start_date_case_property = self.cleaned_data['start_date_case_property']
         action_definition.save()
 

@@ -1,16 +1,38 @@
 from __future__ import absolute_import
 import json
+from corehq.apps.app_manager.dbaccessors import get_app_ids_in_domain, get_latest_released_app
+from corehq.apps.app_manager.models import Application, AdvancedForm
 from corehq.apps.casegroups.dbaccessors import search_case_groups_in_domain
 from corehq.apps.es import GroupES
 from corehq.apps.hqwebapp.async_handler import BaseAsyncHandler
 from corehq.apps.hqwebapp.encoders import LazyEncoder
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.analytics import get_search_users_in_domain_es_query
+from corehq.util.quickcache import quickcache
 from django.utils.translation import ugettext as _
 
 
+@quickcache(['domain', 'timestamp'], timeout=10 * 60)
+def get_visit_scheduler_forms(domain, timestamp):
+    """
+    The timestamp is set once at the beginning of each loading
+    of the page, so that this result is only calculated once
+    per page load.
+    """
+    result = []
+    for app_id in get_app_ids_in_domain(domain):
+        app = get_latest_released_app(domain, app_id)
+        if isinstance(app, Application):
+            for module in app.get_modules():
+                for form in module.get_forms():
+                    if isinstance(form, AdvancedForm) and form.schedule and form.schedule.enabled:
+                        result.append({'id': form.unique_id, 'text': form.full_path_name})
+    return result
+
+
 class MessagingRecipientHandler(BaseAsyncHandler):
-    slug = 'scheduling_recipients'
+    slug = 'scheduling_select2_helper'
+
     allowed_actions = [
         'schedule_user_recipients',
         'schedule_user_group_recipients',
@@ -88,6 +110,33 @@ class MessagingRecipientHandler(BaseAsyncHandler):
     def _fmt_success(self, data):
         success = json.dumps({'results': data}, cls=LazyEncoder)
         return success
+
+
+class ConditionalAlertAsyncHandler(MessagingRecipientHandler):
+
+    allowed_actions = [
+        'schedule_user_recipients',
+        'schedule_user_group_recipients',
+        'schedule_user_organization_recipients',
+        'schedule_case_group_recipients',
+        'schedule_visit_scheduler_form_unique_id',
+    ]
+
+    @property
+    def schedule_visit_scheduler_form_unique_id_response(self):
+        domain = self.request.domain
+        timestamp = self.data.get('timestamp')
+        if not timestamp:
+            raise ValueError("Expected timestamp to be passed")
+
+        query = self.data.get('searchString').lower()
+        all_forms = get_visit_scheduler_forms(domain, timestamp)
+
+        filtered_result = [
+            entry for entry in all_forms
+            if not query or query in entry['text'].lower()
+        ]
+        return filtered_result[:10]
 
 
 class SMSSettingsAsyncHandler(MessagingRecipientHandler):
