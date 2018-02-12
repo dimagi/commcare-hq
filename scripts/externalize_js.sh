@@ -1,5 +1,13 @@
 #!/bin/sh
 
+# PURPOSE:
+# Externalizing JS is a fairly manual process that has to happen
+# on a couple hundred files. Hopefully this will simplify that process
+
+# For now, it creates the new file, places whatever was in the js-inline
+# script tags in the new file, and adds the new necessary static import
+# to the html file.
+
 # TODOS:
 #   check for template tags in the js file
 #       print necessary initial page data
