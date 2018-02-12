@@ -77,7 +77,7 @@ def get_synclog_ids_by_date(start_datetime, end_datetime):
         # records with an exclusive start date.
         if result_modified_datetime == start_datetime:
             continue
-        yield synclog.synclog_id
+        yield synclog.synclog_id.hex
 
 
 def get_forms_by_last_modified(start_datetime, end_datetime):
