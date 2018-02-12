@@ -419,7 +419,7 @@ class FundamentalCaseTests(FundamentalBaseTests):
         xml = """<?xml version='1.0' ?>
         <form version="1" uiVersion="1" xmlns:jrm="http://openrosa.org/jr/xforms" xmlns="http://commcarehq.org/test/submit">
             <meta>
-                <clinic_id>5020280</clinic_id>
+                <device_id>5020280</device_id>
                 <timeStart>2010-07-22T13:54:27.971</timeStart>
                 <timeEnd>2010-07-23T13:55:11.648</timeEnd>
                 <username>admin</username>

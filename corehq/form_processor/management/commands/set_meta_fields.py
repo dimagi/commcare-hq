@@ -19,7 +19,7 @@ META_FIELDS = ("time_end", "time_start", "commcare_version", "build_version")
 
 def form_ids_by_domain_received_on(domain, from_date, to_date):
     from corehq.sql_db.util import run_query_across_partitioned_databases
-    q_expr = Q(domain=domain, received_on__gt=from_date, received_on__lt=to_date)
+    q_expr = Q(domain=domain, received_on__gte=from_date, received_on__lte=to_date)
     return list(run_query_across_partitioned_databases(
         XFormInstanceSQL, q_expr, values=['form_id']
     ))
@@ -61,10 +61,10 @@ class Command(BaseCommand):
         parser.add_argument('--domain', help='Domain to update xforms in.')
         parser.add_argument(
             '--from_date',
-            help='Date after which to update xforms.')
+            help='Date after which to update xforms (Inclusive).')
         parser.add_argument(
             '--to_date',
-            help='Date before which to update xforms.')
+            help='Date before which to update xforms (Inclusive).')
         parser.add_argument(
             '--failfast',
             action='store_true',
