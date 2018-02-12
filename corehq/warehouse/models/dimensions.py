@@ -230,6 +230,8 @@ class ApplicationDim(BaseDim, CustomSQLETLMixin):
     application_id = models.CharField(max_length=255, unique=True)
     name = models.CharField(max_length=255)
     application_last_modified = models.DateTimeField(null=True)
+    version = models.IntegerField(null=True)
+    copy_of = models.CharField(max_length=255, null=True, blank=True)
 
     @classmethod
     def dependencies(cls):
