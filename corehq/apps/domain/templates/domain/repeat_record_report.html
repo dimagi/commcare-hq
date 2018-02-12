@@ -15,6 +15,11 @@
     {% endcompress %}
 {% endblock js %}
 
+{% block additional_initial_page_data %} {{ block.super }}
+    {% registerurl 'repeat_record' domain %}
+    {% registerurl 'cancel_repeat_record' domain %}
+    {% registerurl 'requeue_repeat_record' domain %}
+{% endblock %}
 
 {% block modals %}{{ block.super }}
     <!-- "View Payload" Modal -->

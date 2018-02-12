@@ -1,5 +1,7 @@
 /* globals CodeMirror */
 hqDefine('domain/js/repeat_record_report', function() {
+    var initialPageData = hqImport("hqwebapp/js/initial_page_data");
+
     $(function() {
         $('#report-content').on('click', '.toggle-next-attempt', function (e) {
             $(this).nextAll('.record-attempt').toggle();
@@ -11,7 +13,7 @@ hqDefine('domain/js/repeat_record_report', function() {
                 $modal = $(this);
 
             $.get({
-                url: "{% url 'repeat_record' domain %}",
+                url: initialPageData.get("repeat_record"),
                 data: { record_id: recordData.recordId },
                 success: function(data) {
                     var $payload = $modal.find('.payload'),
@@ -58,7 +60,7 @@ hqDefine('domain/js/repeat_record_report', function() {
             $btn.disableButton();
 
             $.post({
-                url: "{% url 'repeat_record' domain %}",
+                url: initialPageData.get("repeat_record"),
                 data: { record_id: recordId },
                 success: function(data) {
                     $btn.removeSpinnerFromButton();
@@ -86,7 +88,7 @@ hqDefine('domain/js/repeat_record_report', function() {
             $btn.disableButton();
 
             $.post({
-                url: "{% url 'cancel_repeat_record' domain %}",
+                url: initialPageData.get('cancel_repeat_record'),
                 data: { record_id: recordId },
                 success: function() {
                     $btn.removeSpinnerFromButton();
@@ -107,7 +109,7 @@ hqDefine('domain/js/repeat_record_report', function() {
             $btn.disableButton();
 
             $.post({
-                url: "{% url 'requeue_repeat_record' domain %}",
+                url: initialPageData.get("requeue_repeat_record"),
                 data: { record_id: recordId },
                 success: function() {
                     $btn.removeSpinnerFromButton();
