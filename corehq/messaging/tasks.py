@@ -58,7 +58,7 @@ def _sync_case_for_messaging(domain, case_id):
 
 def _get_cached_rule(domain, rule_id):
     rules = AutomaticUpdateRule.by_domain_cached(domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING)
-    rules = list([rule for rule in rules if rule.pk == rule_id])
+    rules = [rule for rule in rules if rule.pk == rule_id]
 
     if len(rules) != 1:
         return None
