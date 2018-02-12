@@ -15,6 +15,9 @@
 #       convert tags to requesting initial page data
 #   auto indent the moved javascript
 
+# strict mode --> kill it if something fails
+set -euo pipefail
+
 app=$1
 module=$2
 
