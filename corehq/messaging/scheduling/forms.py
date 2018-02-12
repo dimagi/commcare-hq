@@ -1701,8 +1701,7 @@ class ConditionalAlertScheduleForm(ScheduleForm):
                 result['start_date_type'] = self.START_DATE_CASE_PROPERTY
                 result['start_date_case_property'] = action_definition.start_date_case_property
             elif scheduler_module_info.enabled:
-                # No need to set a value for visit_scheduler_form_unique_id, that initial
-                # value gets set from self.current_visit_scheduler_form
+                result['visit_scheduler_form_unique_id'] = scheduler_module_info.form_unique_id
                 result['start_date_type'] = self.START_DATE_FROM_VISIT_SCHEDULER
 
                 # Convert to 1-based index for display as in the form builder
@@ -2031,7 +2030,7 @@ class ConditionalAlertScheduleForm(ScheduleForm):
             form_unique_id=form_unique_id,
             # Convert to 0-based index
             visit_number=self.cleaned_data['visit_number'] - 1,
-            visit_window_position=self.cleaned_data['visit_window_position'],
+            window_position=self.cleaned_data['visit_window_position'],
         )
 
     def distill_recipients(self):
