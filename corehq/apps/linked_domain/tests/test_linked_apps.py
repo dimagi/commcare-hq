@@ -10,6 +10,7 @@ from corehq.apps.app_manager.exceptions import AppEditingError
 from corehq.apps.app_manager.models import (
     Application,
     ReportModule, ReportAppConfig, Module, LinkedApplication)
+from corehq.apps.linked_domain.dbaccessors import get_domain_master_link
 from corehq.apps.linked_domain.exceptions import ActionNotPermitted
 from corehq.apps.linked_domain.models import DomainLink, RemoteLinkDetails
 from corehq.apps.linked_domain.remote_accessors import _convert_app_from_remote_linking_source, \
@@ -130,18 +131,19 @@ class TestLinkedApps(BaseLinkedAppsTest):
         latest_master_release = self.linked_app.get_latest_master_release()
         self.assertEqual(release.get_id, latest_master_release.get_id)
 
-        original = self.plain_master_app.linked_whitelist
-        self.plain_master_app.linked_whitelist = []
-        self.plain_master_app.save()
+        self.domain_link.linked_domain = 'other'
+        self.domain_link.save()
+        get_domain_master_link.clear('domain-2')
 
         def _revert():
-            self.plain_master_app.linked_whitelist = original
-            self.plain_master_app.save()
+            self.domain_link.linked_domain = 'domain-2'
+            self.domain_link.save()
 
         self.addCleanup(_revert)
 
         with self.assertRaises(ActionNotPermitted):
-            self.linked_app.get_latest_master_release()
+            # re-fetch to bust memoize cache
+            LinkedApplication.get(self.linked_app._id).get_latest_master_release()
 
 
 class TestRemoteLinkedApps(BaseLinkedAppsTest):

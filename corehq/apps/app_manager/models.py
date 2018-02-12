@@ -59,6 +59,7 @@ from corehq.apps.app_manager.suite_xml.utils import get_select_chain
 from corehq.apps.app_manager.suite_xml.generator import SuiteGenerator, MediaSuiteGenerator
 from corehq.apps.app_manager.xpath_validator import validate_xpath
 from corehq.apps.data_dictionary.util import get_case_property_description_dict
+from corehq.apps.linked_domain.exceptions import ActionNotPermitted
 from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
 from corehq.apps.users.dbaccessors.couch_users import get_display_name_for_user_id
 from corehq.util.timezones.utils import get_timezone_for_domain
@@ -6293,6 +6294,8 @@ class LinkedApplication(Application):
     def get_latest_master_release(self):
         if self.domain_link:
             return get_latest_master_app_release(self.domain_link, self.master)
+        else:
+            raise ActionNotPermitted
 
 
 def import_app(app_id_or_source, domain, source_properties=None, validate_source_domain=None):
