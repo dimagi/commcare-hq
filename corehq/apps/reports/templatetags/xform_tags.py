@@ -114,7 +114,7 @@ def render_form(form, domain, options):
         for operation in form.history:
             user_date = ServerTime(operation.date).user_time(timezone).done()
             operation.readable_date = user_date.strftime("%Y-%m-%d %H:%M")
-            operation.readable_action = unicode(FORM_OPERATIONS.get(operation.operation, operation.operation))
+            operation.readable_action = six.text_type(FORM_OPERATIONS.get(operation.operation, operation.operation))
             operation.user_info = get_doc_info_by_id(domain, operation.user).to_json()
     return render_to_string("reports/form/partials/single_form.html", context, request=request)
 
