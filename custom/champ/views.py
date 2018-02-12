@@ -212,18 +212,15 @@ class PrevisionVsAchievementsTableView(ChampView):
             'activity_type': self.post_data.get('activity_type', None),
             'client_type': self.get_list_property('client_type'),
             'organization': self.get_list_property('organization'),
-            'visit_date_start': self.post_data.get('visit_date_start', None),
-            'visit_date_end': self.post_data.get('visit_date_end', None),
-            'posttest_date_start': self.post_data.get('post_date_start', None),
-            'posttest_date_end': self.post_data.get('post_date_end', None),
-            'first_art_date_start': self.post_data.get('first_art_date_start', None),
-            'first_art_date_end': self.post_data.get('first_art_date_end', None),
-            'date_handshake_start': self.post_data.get('date_handshake_start', None),
-            'date_handshake_end': self.post_data.get('date_handshake_end', None),
-            'date_last_vl_test_start': self.post_data.get('date_last_vl_test_start', None),
-            'date_last_vl_test_end': self.post_data.get('date_last_vl_test_end', None),
             'fiscal_year': self.post_data.get('fiscal_year', None),
         }
+
+        update_date_property(config, self.post_data, 'visit_date', 'visit_date')
+        update_date_property(config, self.post_data, 'posttest_date', 'posttest_date')
+        update_date_property(config, self.post_data, 'first_art_date', 'first_art_date')
+        update_date_property(config, self.post_data, 'date_handshake', 'date_handshake')
+        update_date_property(config, self.post_data, 'date_last_vl_test', 'date_last_vl_test')
+
         clienttype = self.get_list_property('target_clienttype')
         target_client_types = []
         for type in clienttype:

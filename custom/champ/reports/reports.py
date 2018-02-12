@@ -27,5 +27,5 @@ class ServicesUptakeReport(CustomProjectReport):
     slug = 'service_uptake_report'
     name = 'Services Uptake'
     title = 'Services Uptake'
-    base_template = 'champ/base_template.html'
-    report_template_path = 'champ/service_uptake.html'
+    base_template = 'champ/knockout/base_template.html'
+    report_template_path = 'champ/knockout/service_uptake.html'

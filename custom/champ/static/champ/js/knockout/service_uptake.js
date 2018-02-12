@@ -19,26 +19,12 @@ ko.bindingHandlers.select2 = {
 var ALL_OPTION = {'id': '', 'text': 'All'};
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
-function PrecisionVsAcievementsTableModel() {
+function ServiceUptakeModel() {
     var self = this;
-    var currentYear = new Date().getFullYear();
 
-    var defaultStartDate = moment(new Date(currentYear, 0, 1)).format('YYYY-MM-DD');
-    var defaultEndDate = moment().format('YYYY-MM-DD');
-    var defaultDate = defaultStartDate + ' - ' + defaultEndDate;
-
-    self.kp_prev = ko.observable();
-    self.target_kp_prev = ko.observable();
-    self.htc_tst = ko.observable();
-    self.target_htc_tst = ko.observable();
-    self.htc_pos = ko.observable();
-    self.target_htc_pos = ko.observable();
-    self.care_new = ko.observable();
-    self.target_care_new = ko.observable();
-    self.tx_new = ko.observable();
-    self.target_tx_new = ko.observable();
-    self.tx_undetect = ko.observable();
-    self.target_tx_undetect = ko.observable();
+    self.months = [];
+    self.years = [];
+    self.chart = void(0);
 
     self.title = "Prevision vs Achievements";
     self.availableDistricts = ko.observableArray();
@@ -50,14 +36,13 @@ function PrecisionVsAcievementsTableModel() {
         activity_type: ko.observable(),
         client_type: ko.observableArray(),
         organization: ko.observableArray(),
-        fiscal_year: ko.observable(currentYear),
-        visit_date: ko.observable(defaultDate),
-        post_date: ko.observable(defaultDate),
-        first_art_date: ko.observable(defaultDate),
-        date_handshake: ko.observable(defaultDate),
-        date_last_vl_test: ko.observable(defaultDate),
+        month_start: ko.observable(1),
+        month_end: ko.observable(new Date().getMonth() + 1),
+        year_start: ko.observable(new Date().getFullYear()),
+        year_end: ko.observable(new Date().getFullYear()),
 
     };
+
 
     self.availableClientTypes = [
         {id: '', text: 'All'},
@@ -78,8 +63,17 @@ function PrecisionVsAcievementsTableModel() {
         {id: 'mat_distribution', text: 'Material Distribution'},
     ];
 
-    for (var year=2014; year <= (currentYear + 4); year++ ) {
-        self.fiscalYears().push({
+    self.chart = void(0);
+
+    moment.months().forEach(function(key, value) {
+        self.months.push({
+            text: key,
+            id: value + 1,
+        });
+    });
+
+    for (var year=2014; year <= new Date().getFullYear(); year++ ) {
+        self.years.push({
             text: year,
             id: year,
         });
@@ -108,37 +102,35 @@ function PrecisionVsAcievementsTableModel() {
         }
     };
 
-    self.getTableData = function () {
-        var get_url = url('champ_pva_table');
+    self.getChartData = function () {
+        var get_url = url('service_uptake');
         $.post(get_url, ko.toJSON(self.filters), function(data) {
-            self.kp_prev(data.kp_prev);
-            self.target_kp_prev(data.target_kp_prev);
-            self.htc_tst(data.htc_tst);
-            self.target_htc_tst(data.target_htc_tst);
-            self.htc_pos(data.htc_pos);
-            self.target_htc_pos(data.target_htc_pos);
-            self.care_new(data.care_new);
-            self.target_care_new(data.target_care_new);
-            self.tx_new(data.tx_new);
-            self.target_tx_new(data.target_tx_new);
-            self.tx_undetect(data.tx_undetect);
-            self.target_tx_undetect(data.target_tx_undetect);
+            self.chart.xAxis.tickValues(data.tickValues);
+            d3.select('#chart').datum(data.chart).call(self.chart);
+            nv.utils.windowResize(chart.update);
         })
     };
 
     self.submit = function () {
-        self.getTableData()
+        self.getChartData()
     };
-    
-    self.getTableData();
 
-    $('.date-picker').daterangepicker(
-        {
-            startDate: defaultStartDate,
-            endDate: defaultEndDate,
-            locale: {
-                format: 'YYYY-MM-DD',
-            }
-        }
-    );
+     nv.addGraph(function () {
+        self.chart = nv.models.lineChart().useInteractiveGuideline(true);
+
+        self.chart.xAxis.axisLabel('').showMaxMin(true);
+        self.chart.xAxis.tickFormat(function(d) {
+            return d3.time.format('%b %Y')(new Date(d));
+        });
+        self.chart.yAxis.axisLabel('');
+        self.chart.yAxis.tickFormat(function(d){
+            return d3.format(".2%")(d);
+        });
+        self.chart.margin(20, 20, 60, 100);
+        self.getChartData(self.chart);
+        nv.utils.windowResize(self.chart.update);
+        return self.chart;
+    });
+
+    self.getChartData();
 }
