@@ -25,6 +25,8 @@ from django.utils.functional import cached_property
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.django.fields import TrimmedCharField
 from django.utils.translation import ugettext as _, ugettext_lazy
+from corehq.apps.app_manager.dbaccessors import get_latest_released_app
+from corehq.apps.app_manager.exceptions import FormNotFoundException
 from corehq.apps.app_manager.models import Form as CCHQForm, AdvancedForm
 from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.hqwebapp import crispy as hqcrispy
@@ -415,6 +417,10 @@ class ScheduleForm(Form):
 
     @memoized
     def get_form_and_app(self, form_unique_id):
+        """
+        Returns the form and app associated with the primary application
+        document (i.e., not a build).
+        """
         error_msg = _("Please choose a form")
         try:
             form, app = CCHQForm.get_form(form_unique_id, and_app=True)
@@ -425,6 +431,25 @@ class ScheduleForm(Form):
             raise ValidationError(error_msg)
 
         return form, app
+
+    @memoized
+    def get_latest_released_form_and_app(self, form_unique_id):
+        """
+        Returns the form and app associated with the latest released
+        build of an app.
+        """
+        form, app = self.get_form_and_app(form_unique_id)
+
+        latest_released_app = get_latest_released_app(app.domain, app.get_id)
+        if latest_released_app is None:
+            raise ValidationError(_("Please make a released build of the application"))
+
+        try:
+            latest_released_form = latest_released_app.get_form(form_unique_id)
+        except FormNotFoundException:
+            raise ValidationError(_("Form not found in latest released app build"))
+
+        return latest_released_form, latest_released_app
 
     def __init__(self, domain, schedule, can_use_sms_surveys, *args, **kwargs):
         self.domain = domain
@@ -1564,7 +1589,7 @@ class ConditionalAlertScheduleForm(ScheduleForm):
             return {}
 
         try:
-            form, app = self.get_form_and_app(value)
+            form, app = self.get_latest_released_form_and_app(value)
         except:
             return {}
 
@@ -1917,7 +1942,7 @@ class ConditionalAlertScheduleForm(ScheduleForm):
         if not value:
             raise ValidationError(_("This field is required"))
 
-        form, app = self.get_form_and_app(value)
+        form, app = self.get_latest_released_form_and_app(value)
         if isinstance(form, AdvancedForm) and form.schedule and form.schedule.enabled:
             return value
 
@@ -1937,17 +1962,25 @@ class ConditionalAlertScheduleForm(ScheduleForm):
 
         visit_index = value - 1
 
-        form, app = self.get_form_and_app(form_unique_id)
+        form, app = self.get_latest_released_form_and_app(form_unique_id)
         try:
             visit = form.schedule.visits[visit_index]
         except IndexError:
-            raise ValidationError(_("Visit number not found. Please check form configuration."))
+            raise ValidationError(
+                _("Visit number not found in latest released app build. Please check form configuration.")
+            )
 
         if visit.repeats:
-            raise ValidationError(_("Repeat visits are not supported"))
+            raise ValidationError(
+                _("The referenced visit in the latest released app build is a repeat visit. "
+                  "Repeat visits are not supported")
+            )
 
         if not isinstance(visit.expires, int):
-            raise ValidationError(_("Visits which do not have a window end date are not supported"))
+            raise ValidationError(
+                _("The referenced visit in the latest released app build does not have a window end date. "
+                  "Visits which do not have a window end date are not supported")
+            )
 
         return value
 
@@ -1993,6 +2026,7 @@ class ConditionalAlertScheduleForm(ScheduleForm):
         form, app = self.get_form_and_app(form_unique_id)
         return CreateScheduleInstanceActionDefinition.SchedulerModuleInfo(
             enabled=True,
+            # The id of the primary application doc
             app_id=app.get_id,
             form_unique_id=form_unique_id,
             # Convert to 0-based index
