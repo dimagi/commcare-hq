@@ -18,6 +18,33 @@
 # strict mode --> kill it if something fails
 set -euo pipefail
 
+function abort () {
+    echo $1
+    echo "Aborting."
+    exit 1
+}
+
+function should_continue () {
+    select yn in "Yes" "No"; do
+        case $yn in
+            Yes ) break;;
+            No ) abort "Sounds good.";;
+        esac
+    done
+}
+
+has_local_changes=`git diff-index HEAD` && true
+if [[ $has_local_changes ]]
+then
+    abort "You have uncommitted changes in your working tree."
+fi
+
+branch=$(git rev-parse --abbrev-ref HEAD)
+if [[ $branch == 'master' ]]
+then
+    abort "You must not be on master to run this command."
+fi
+
 app=$1
 module=$2
 
@@ -26,6 +53,10 @@ html_file_location="./corehq/apps/$app/templates/$app/$module.html"
 new_module_name="$app/js/$module"
 new_module_location="./corehq/apps/$app/static/$app/js/$module.js"
 
+if [ -f $new_module_location ]; then
+    echo "The new module has already been created.\nDo you want to continue?"
+    should_continue
+fi
 
 # create file
 touch $new_module_location
@@ -81,7 +112,7 @@ git commit -m "first pass externalizing javascript in $module"
 # (maybe should just open these in an available browser? todo)
 ./manage.py show_urls | grep $module
 echo "----------------------------"
-echo "^^^^^^ Check to see if this/these page works"
+echo "^^^^^^ Check to see if this/these page(s) works"
 echo "----------------------------"
 
 
