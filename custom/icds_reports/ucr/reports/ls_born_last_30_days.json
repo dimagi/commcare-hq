@@ -42,6 +42,18 @@
         "field": "supervisor_id",
         "type": "dynamic_choice_list",
         "slug": "supervisor_id"
+      },
+      {  
+        "type": "numeric",
+        "slug": "is_migrated",
+        "field": "is_migrated",
+        "display": "Whether Migrated"
+        },
+        {
+        "type": "numeric",
+        "slug": "is_availing",
+        "field": "is_availing",
+        "display": "Whether Availing Services"
       }
     ],
     "columns": [
