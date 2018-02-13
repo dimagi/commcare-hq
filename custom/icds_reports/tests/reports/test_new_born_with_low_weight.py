@@ -49,17 +49,18 @@ class TestNewBornWithLowWeight(TestCase):
             },
             loc_level='state'
         )
+        print data['data']
         self.assertDictEqual(
             data['data'],
             {
                 "st1": {
-                    "in_month": 4,
+                    "in_month": 3,
                     "low_birth": 2,
                     'original_name': ["st1"],
-                    "fillKey": "20%-60%"
+                    "fillKey": "60%-100%"
                 },
                 "st2": {
-                    "in_month": 3,
+                    "in_month": 1,
                     "low_birth": 0,
                     'original_name': ["st2"],
                     "fillKey": "0%-20%"
@@ -93,7 +94,7 @@ class TestNewBornWithLowWeight(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(data['rightLegend']['average'], 25.0)
+        self.assertEquals(data['rightLegend']['average'], 33.333333333333336)
 
     def test_map_data_right_legend_extended_info(self):
         data = get_newborn_with_low_birth_weight_map(
@@ -107,10 +108,10 @@ class TestNewBornWithLowWeight(TestCase):
         self.assertListEqual(
             data['rightLegend']['extended_info'],
             [
-                {'indicator': 'Total Number of Newborns born in given month:', 'value': "7"},
+                {'indicator': 'Total Number of Newborns born in given month:', 'value': "4"},
                 {'indicator': 'Number of Newborns with LBW in given month:', 'value': "2"},
-                {'indicator': '% newborns with LBW in given month:', 'value': '28.57%'},
-                {'indicator': '% Unweighed:', 'value': '71.43%'}
+                {'indicator': '% newborns with LBW in given month:', 'value': '50.00%'},
+                {'indicator': '% Unweighed:', 'value': '50.00%'}
             ]
         )
 
@@ -170,10 +171,10 @@ class TestNewBornWithLowWeight(TestCase):
             data['data'],
             {
                 'block_map': {
-                    'in_month': 4,
+                    'in_month': 3,
                     'original_name': ['b1', 'b2'],
                     'low_birth': 2,
-                    'fillKey': '20%-60%'
+                    'fillKey': '60%-100%'
                 }
             }
         )
@@ -189,7 +190,7 @@ class TestNewBornWithLowWeight(TestCase):
             },
             loc_level='block',
         )
-        self.assertEquals(data['rightLegend']['average'], 66.66666666666667)
+        self.assertEquals(data['rightLegend']['average'], 75.0)
 
     def test_chart_data(self):
         self.assertDictEqual(

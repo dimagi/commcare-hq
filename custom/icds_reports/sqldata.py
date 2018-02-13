@@ -1218,6 +1218,15 @@ class ChildrenExport(ExportableMixin, SqlData):
                 slug='percent_normal_stunting'
             ),
             AggregateColumn(
+                'Percent of newborns with low birth weight',
+                percent,
+                [
+                    SumColumn('low_birth_weight_in_month'),
+                    SumColumn('weighed_and_born_in_month')
+                ],
+                slug='newborn_low_birth_weight'
+            ),
+            AggregateColumn(
                 'Percentage of children with completed 1 year immunizations',
                 lambda x, y, z: '%.2f%%' % (((x or 0) + (y or 0)) * 100 / float(z or 1)),
                 [
