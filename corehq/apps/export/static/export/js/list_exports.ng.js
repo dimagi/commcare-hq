@@ -20,7 +20,7 @@
 
     var exportsControllers = {};
     exportsControllers.ListExportsController = function (
-        $scope, djangoRMI, bulk_download_url, legacy_bulk_download_url, $rootScope
+        $scope, djangoRMI, bulk_download_url, legacy_bulk_download_url, $rootScope, modelType
     ) {
         /**
          * This controller fetches a list of saved exports from
@@ -150,6 +150,24 @@
         };
         $scope.isLocationSafeForUser = function(export_) {
             return (!export_.emailedExport) || export_.emailedExport.isLocationSafeForUser;
+        };
+
+        trackExportPageEnter();
+
+        /**
+         * Send a Kissmetrics event, depending on model type
+         */
+        function trackExportPageEnter() {
+            switch (modelType) {
+                case 'form':
+                    hqImport('analytix/js/kissmetrix').track.event('Visited Export Forms Page');
+                    break;
+                case 'case':
+                    hqImport('analytix/js/kissmetrix').track.event('Visited Export Cases Page');
+                    break;
+                default:
+                    break;
+            }
         };
     };
     exportsControllers.FeedFilterFormController = function (
