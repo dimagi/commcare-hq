@@ -14,6 +14,7 @@ from django.utils.functional import cached_property
 from django.utils.translation import ugettext as _, ugettext_lazy
 
 from corehq import privileges
+from corehq import toggles
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule, CreateScheduleInstanceActionDefinition
 from corehq.apps.domain.models import Domain
@@ -57,6 +58,11 @@ def _requires_new_reminder_framework():
     def decorate(fn):
         @wraps(fn)
         def wrapped(request, *args, **kwargs):
+            if (
+                hasattr(request, 'couch_user') and
+                toggles.NEW_REMINDERS_MIGRATOR.enabled(request.couch_user.username)
+            ):
+                return fn(request, *args, **kwargs)
             if not hasattr(request, 'project'):
                 request.project = Domain.get_by_name(request.domain)
             if request.project.uses_new_reminders:

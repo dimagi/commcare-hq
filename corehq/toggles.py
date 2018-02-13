@@ -1129,6 +1129,14 @@ CUSTOM_APP_BASE_URL = StaticToggle(
 )
 
 
+NEW_REMINDERS_MIGRATOR = StaticToggle(
+    'new_reminders_migrator',
+    "Enables features to handle migrating domains to the new reminders framework",
+    TAG_INTERNAL,
+    [NAMESPACE_USER]
+)
+
+
 PHONE_NUMBERS_REPORT = StaticToggle(
     'phone_numbers_report',
     "Report related to the phone numbers owned by a project's contacts",
