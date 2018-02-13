@@ -9,7 +9,7 @@
 
 {% initial_analytics_data 'appcues.userId' request.couch_user.userID %}
 {% initial_analytics_data 'appcues.email' request.couch_user.get_email %}
-{% initial_analytics_data 'appcues.dateCreated' request.couch_user.created_on %}
+{% initial_analytics_data 'appcues.dateCreated' request.couch_user.timestamp_created %}
 {% initial_analytics_data 'appcues.firstName' request.couch_user.first_name %}
 {% initial_analytics_data 'appcues.lastName' request.couch_user.last_name %}
 {% initial_analytics_data 'appcues.userIsDimagi' request.couch_user.is_dimagi %}

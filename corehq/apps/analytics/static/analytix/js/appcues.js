@@ -28,8 +28,8 @@ hqDefine('analytix/js/appcues', [
                 firstName: _get("firstName"),
                 lastName: _get("lastName"),
                 email: _get("email"),
-                createdAt: _get("createdAt"),
-                isDimagi: _get("isDimagi"),
+                createdAt: _get("dateCreated"),
+                isDimagi: _get("userIsDimagi"),
             });
         });
     });
