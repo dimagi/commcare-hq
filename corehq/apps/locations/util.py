@@ -16,7 +16,6 @@ from corehq.blobs import get_blob_db
 from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.util.files import safe_filename_header
 from corehq.util.quickcache import quickcache
-from corehq.util.workbook_json.excel import json_to_headers
 from couchexport.models import Format
 from couchexport.writers import Excel2007ExportWriter
 from dimagi.utils.couch.loosechange import map_reduce
@@ -207,7 +206,7 @@ class LocationExporter(object):
             additional_headers = []
             additional_headers.extend(u'data: {}'.format(f.slug) for f in self.data_model.fields)
             if self.include_consumption_flag and loc_type.name not in self.administrative_types:
-                additional_headers.extend(self._prefix_headers('consumption', self.product_codes))
+                additional_headers.extend(u'consumption: {}'.format(code) for code in self.product_codes)
             additional_headers.append(LOCATION_SHEET_HEADERS_OPTIONAL['uncategorized_data'])
             additional_headers.append(LOCATION_SHEET_HEADERS_OPTIONAL['delete_uncategorized_data'])
 
@@ -253,12 +252,6 @@ class LocationExporter(object):
                 self._increment_progress()
 
         writer.write([(location_type.code, _row_generator())])
-
-    @staticmethod
-    def _prefix_headers(prefix, headers):
-        return json_to_headers(
-            {prefix: {header: None for header in headers}}
-        )
 
     def _write_type_sheet(self, writer):
         def foreign_code(lt, attr):
