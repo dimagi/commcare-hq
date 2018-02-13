@@ -737,6 +737,7 @@ ANALYTICS_IDS = {
     'GTM_ID': '',
     'DRIFT_ID': '',
     'APPCUES_ID': '',
+    'APPCUES_KEY': '',
 }
 
 ANALYTICS_CONFIG = {
