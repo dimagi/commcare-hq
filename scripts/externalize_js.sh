@@ -71,6 +71,11 @@ else
     echo "----------------------------"
 fi
 
+# commit the blob movement
+git add $new_module_location $html_file_location
+git commit -m "first pass externalizing javascript in $module"
+
+
 # a bit more yelling at the user
 ./manage.py show_urls | grep $module
 echo "^^^^^^ Check to see if this/these page works"
