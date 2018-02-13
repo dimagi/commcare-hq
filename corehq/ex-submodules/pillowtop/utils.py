@@ -158,16 +158,18 @@ def get_pillow_json(pillow_config):
     timestamp = checkpoint.timestamp
     if timestamp:
         time_since_last = datetime.utcnow() - timestamp
-        hours_since_last = time_since_last.total_seconds() // 3600
+        seconds_since_last = time_since_last.total_seconds()
+        hours_since_last = seconds_since_last // 3600
 
         try:
             # remove microsecond portion
-            time_since_last = str(time_since_last)
-            time_since_last = time_since_last[0:time_since_last.index('.')]
+            prettified_time_since_last = str(time_since_last)
+            prettified_time_since_last = prettified_time_since_last[0:prettified_time_since_last.index('.')]
         except ValueError:
             pass
     else:
-        time_since_last = ''
+        seconds_since_last = 0
+        prettified_time_since_last = ''
         hours_since_last = None
     offsets = pillow.get_change_feed().get_latest_offsets_json()
 
@@ -183,7 +185,8 @@ def get_pillow_json(pillow_config):
         'seq_format': checkpoint.sequence_format,
         'seq': _seq_to_int(checkpoint, checkpoint.wrapped_sequence),
         'offsets': offsets,
-        'time_since_last': time_since_last,
+        'seconds_since_last': seconds_since_last,
+        'time_since_last': prettified_time_since_last,
         'hours_since_last': hours_since_last
     }
 

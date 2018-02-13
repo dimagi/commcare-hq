@@ -356,15 +356,24 @@ def exclude_records_by_age_for_column(exclude_config, column):
     )
 
 
-def generate_data_for_map(data, loc_level, num_prop, denom_prop, fill_key_lower, fill_key_bigger):
+def generate_data_for_map(data, loc_level, num_prop, denom_prop, fill_key_lower, fill_key_bigger, all_property=None):
     data_for_map = defaultdict(lambda: {
         num_prop: 0,
         denom_prop: 0,
         'original_name': []
     })
 
+    if all_property:
+        data_for_map = defaultdict(lambda: {
+            num_prop: 0,
+            denom_prop: 0,
+            'original_name': [],
+            all_property: 0
+        })
+
     valid_total = 0
     in_month_total = 0
+    total = 0
     values_to_calculate_average = []
 
     for row in data:
@@ -378,7 +387,10 @@ def generate_data_for_map(data, loc_level, num_prop, denom_prop, fill_key_lower,
 
         valid_total += valid
         in_month_total += in_month
-
+        if all_property:
+            all_data = row[all_property] or 0
+            data_for_map[on_map_name][all_property] += all_data
+            total += all_data
         data_for_map[on_map_name][num_prop] += in_month
         data_for_map[on_map_name][denom_prop] += valid
         data_for_map[on_map_name]['original_name'].append(name)
@@ -394,7 +406,7 @@ def generate_data_for_map(data, loc_level, num_prop, denom_prop, fill_key_lower,
             data_for_location.update({'fillKey': (fill_format % (fill_key_bigger, 100))})
 
     average = sum(values_to_calculate_average) / float(len(values_to_calculate_average) or 1)
-    return data_for_map, valid_total, in_month_total, average
+    return data_for_map, valid_total, in_month_total, average, total
 
 
 def calculate_date_for_age(dob, date):

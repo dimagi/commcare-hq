@@ -1597,6 +1597,12 @@ def _get_feature_flag_items(domain):
             'title': _('Location Fixture'),
             'url': reverse(LocationFixtureConfigView.urlname, args=[domain])
         })
+
+    if toggles.LINKED_DOMAINS.enabled(domain):
+        feature_flag_items.append({
+            'title': _('Linked Projects'),
+            'url': reverse('domain_links', args=[domain])
+        })
     return feature_flag_items
 
 
