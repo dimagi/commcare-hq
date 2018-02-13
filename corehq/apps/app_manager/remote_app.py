@@ -1,7 +1,8 @@
 from __future__ import absolute_import
 from lxml import etree
-import six.moves.urllib.request, six.moves.urllib.error, six.moves.urllib.parse
+import six.moves.urllib.error
 import six.moves.urllib.parse
+import six.moves.urllib.request
 from django.urls import reverse
 from corehq.apps.app_manager.exceptions import AppEditingError
 from corehq.apps.app_manager.xform import WrappedNode

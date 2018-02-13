@@ -1,6 +1,4 @@
 from __future__ import absolute_import
-import six.moves.urllib.request, six.moves.urllib.error, six.moves.urllib.parse
-import six.moves.urllib.parse
 from xml.etree import cElementTree as ElementTree
 from django.http import HttpResponse
 from tastypie.authentication import Authentication
