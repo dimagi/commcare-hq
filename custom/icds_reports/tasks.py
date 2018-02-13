@@ -376,7 +376,8 @@ def _send_data_validation_email(csv_columns, month, bad_data):
 
     filename = month.strftime('validation_results_%s.csv' % SERVER_DATE_FORMAT)
     send_HTML_email(
-        'ICDS Dashboard Validation Results', DASHBOARD_TEAM_EMAILS, email_content,
+        '[{}] - ICDS Dashboard Validation Results'.format(settings.SERVER_ENVIRONMENT),
+        DASHBOARD_TEAM_EMAILS, email_content,
         file_attachments=[{'file_obj': csv_file, 'title': filename, 'mimetype': 'text/csv'}],
     )
 
