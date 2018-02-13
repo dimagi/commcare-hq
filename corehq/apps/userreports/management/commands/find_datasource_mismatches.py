@@ -4,7 +4,9 @@ from __future__ import print_function
 import csv
 from datetime import datetime
 
+import pytz
 from django.core.management.base import BaseCommand
+from django.utils.dateparse import parse_datetime
 
 from corehq.apps.userreports.document_stores import get_document_store
 from corehq.apps.userreports.models import get_datasource_config
@@ -43,21 +45,28 @@ class Command(BaseCommand):
 
             for val in current_row:
                 try:
-                    if getattr(row, val.column.database_column_name) != val.value:
+                    inserted_value = getattr(row, val.column.database_column_name)
+                    if (inserted_value != val.value
+                       or row.inserted_at.replace(tzinfo=pytz.utc) < parse_datetime(doc['server_modified_on'])):
                         bad_rows.append({
                             'doc_id': row.doc_id,
                             'column_name': val.column.database_column_name,
                             'inserted_at': row.inserted_at.isoformat(),
+                            'server_modified_on': doc['server_modified_on'],
                             'stored_value': getattr(row, val.column.database_column_name),
                             'desired_value': val.value,
+                            'message': ('column mismatch'
+                                        if inserted_value != val.value else "modified date early"),
                         })
                 except AttributeError:
                     bad_rows.append({
                         'doc_id': row.doc_id,
                         'column_name': val.column.database_column_name,
                         'inserted_at': 'missing',
+                        'server_modified_on': doc['server_modified_on'],
                         'stored_value': 'missing',
                         'desired_value': val.value,
+                        'message': 'doc missing',
                     })
 
         filename = 'datasource_mismatches_{}_{}.csv'.format(
@@ -65,7 +74,9 @@ class Command(BaseCommand):
             datetime.utcnow().strftime("%Y-%m-%d-%H-%M-%S")
         )
         with open(filename, 'w') as f:
-            writer = csv.DictWriter(f, ['doc_id', 'column_name', 'inserted_at', 'stored_value', 'desired_value'])
+            headers = ['doc_id', 'column_name', 'inserted_at', 'server_modified_on',
+                       'stored_value', 'desired_value', 'message']
+            writer = csv.DictWriter(f, headers)
             writer.writeheader()
             writer.writerows(bad_rows)
 
