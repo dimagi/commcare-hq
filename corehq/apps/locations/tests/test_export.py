@@ -58,6 +58,31 @@ class TestLocationsExport(LocationHierarchyTestCase):
         cls.city_headers = cls.headers['city'][0]
         cls.boston_data = [row for row in writer.data['city'] if row[0] == cls.boston.location_id][0]
 
+    def test_consisent_header_order(self):
+        # This intentionally checks both contents and order
+        self.assertEqual(
+            self.city_headers,
+            [
+                'location_id',
+                'site_code',
+                'name',
+                'parent_site_code',
+                'external_id',
+                'latitude',
+                'longitude',
+                'Delete(Y/N)',
+                # The custom data fields have a set order - make sure to preserve that
+                'data: is_test',
+                'data: favorite_color',
+                'data: secret_code',
+                'data: foo',
+                'data: bar',
+                'data: baz',
+                'uncategorized_data',
+                'Delete Uncategorized Data(Y/N)',
+            ]
+        )
+
     def test_custom_data_headers_line_up(self):
         # Boston was set up with location data values that match the keys
         for header, value in zip(self.city_headers, self.boston_data):
