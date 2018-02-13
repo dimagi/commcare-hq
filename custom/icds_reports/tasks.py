@@ -35,6 +35,7 @@ from custom.icds_reports.utils import zip_folder, create_pdf_file
 from dimagi.utils.chunked import chunked
 from dimagi.utils.dates import force_to_date
 from dimagi.utils.logging import notify_exception
+import six
 from six.moves import range
 
 celery_task_logger = logging.getLogger('celery.task')
@@ -332,9 +333,28 @@ def icds_data_validation(day):
         )
     ).values_list(*return_values)
 
+    _send_data_validation_email(
+        return_values, month, {
+            'bad_wasting_awcs': bad_wasting_awcs,
+            'bad_stunting_awcs': bad_stunting_awcs,
+            'bad_underweight_awcs': bad_underweight_awcs,
+            'bad_lbw_awcs': bad_lbw_awcs,
+        })
+
+
+def _send_data_validation_email(csv_columns, month, bad_data):
+    # intentionally using length here because the query will need to evaluate anyway to send the CSV file
+    if all(len(v) == 0 for _, v in six.iteritems(bad_data)):
+        return
+
+    bad_wasting_awcs = bad_data.get('bad_wasting_awcs', [])
+    bad_stunting_awcs = bad_data.get('bad_stunting_awcs', [])
+    bad_underweight_awcs = bad_data.get('bad_underweight_awcs', [])
+    bad_lbw_awcs = bad_data.get('bad_lbw_awcs', [])
+
     csv_file = io.BytesIO()
     writer = csv.writer(csv_file)
-    writer.writerow(('type',) + return_values)
+    writer.writerow(('type',) + csv_columns)
     _icds_add_awcs_to_file(writer, 'wasting', bad_wasting_awcs)
     _icds_add_awcs_to_file(writer, 'stunting', bad_stunting_awcs)
     _icds_add_awcs_to_file(writer, 'underweight', bad_underweight_awcs)
