@@ -168,7 +168,7 @@
                 default:
                     break;
             }
-        };
+        }
     };
     exportsControllers.FeedFilterFormController = function (
         $scope, $rootScope, djangoRMI, filterFormElements, filterFormModalElement
