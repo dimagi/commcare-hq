@@ -42,8 +42,8 @@ class RegisterPatientPayloadGenerator(NinetyNineDotsBasePayloadGenerator):
         person_case = get_person_case_from_occurrence(episode_case.domain, occurrence_case)
         return json.dumps(get_patient_payload(person_case, occurrence_case, episode_case).to_json())
 
-    def handle_success(self, response, episode_case, repeat_record):
-        if response.status_code == 201:
+    def handle_success(self, response, episode_case, repeat_record, force=False):
+        if response.status_code == 201 or force:
             update_case(
                 episode_case.domain,
                 episode_case.case_id,
@@ -54,7 +54,9 @@ class RegisterPatientPayloadGenerator(NinetyNineDotsBasePayloadGenerator):
             )
 
     def handle_failure(self, response, episode_case, repeat_record):
-        if 400 <= response.status_code <= 500:
+        if "A patient with this beneficiary_id already exists" in response.json().get('error'):
+            self.handle_success(response, episode_case, repeat_record, force=True)
+        elif 400 <= response.status_code <= 500:
             update_case(
                 episode_case.domain,
                 episode_case.case_id,
