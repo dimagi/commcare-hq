@@ -22,7 +22,7 @@ def get_visit_scheduler_forms(domain, timestamp):
     result = []
     for app_id in get_app_ids_in_domain(domain):
         app = get_latest_released_app(domain, app_id)
-        if isinstance(app, Application):
+        if app and app.doc_type == 'Application':
             for module in app.get_modules():
                 for form in module.get_forms():
                     if isinstance(form, AdvancedForm) and form.schedule and form.schedule.enabled:
