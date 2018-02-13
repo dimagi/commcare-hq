@@ -347,6 +347,7 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
             return XFormPhoneMetadata.wrap(clean_metadata(self.form_data[const.TAG_META]))
 
     def set_meta_properties(self):
+        # doesn't save the form
         from corehq.apps.receiverwrapper.util import get_app_version_info
         self.time_end = self.metadata.timeEnd
         self.time_start = self.metadata.timeStart
