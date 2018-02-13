@@ -24,12 +24,13 @@ hqDefine('analytix/js/appcues', [
             scriptUrl = "//fast.appcues.com/" + apiId + '.js';
 
         _ready = utils.initApi(_ready, apiId, scriptUrl, _logger, function () {
-            Appcues.identify(_get("userId"), {
+            Appcues.identify(_get("username"), {
                 firstName: _get("firstName"),
                 lastName: _get("lastName"),
-                email: _get("email"),
+                email: _get("username"),
                 createdAt: _get("dateCreated"),
                 isDimagi: _get("userIsDimagi"),
+                instance: _get("instance"),
             });
         });
     });
