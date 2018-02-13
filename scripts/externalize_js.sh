@@ -15,6 +15,12 @@
 #       convert tags to requesting initial page data
 #   auto indent the moved javascript
 
+# NOTES:
+# GNU-sed is apparently much more powerful than the OSX standard,
+# and there is at least one place where it's quite useful.
+# I'm using it here, so anyone else who liekly touches this should as well.
+
+
 # strict mode --> kill it if something fails
 set -euo pipefail
 
@@ -64,23 +70,12 @@ touch $new_module_location
 # add boilerplate
 echo "hqDefine('$new_module_name', function() {" >> $new_module_location
 
-# check if there is an endblock specifically for js-inline and handle accordingly
-count=$(sed -n "/{% endblock js-inline %}/p" $html_file_location | wc -l)
-if [ "$count" -gt 0 ]; then
-    # pull inline js from file, removes the script tags, and places it into the new file
-    sed -n "/{% block js-inline %}/, /{% endblock js-inline %}/ p" $html_file_location | \
-        python -c "import sys; sys.stdout.writelines(sys.stdin.readlines()[2:-2])" >> $new_module_location
+# pull inline js from file, removes the script tags, and places it into the new file
+sed -n "/{% block js-inline %}/, /{% endblock\( js-inline\)\? %}/ p" $html_file_location | \
+    python -c "import sys; sys.stdout.writelines(sys.stdin.readlines()[2:-2])" >> $new_module_location
 
-    # remove from old file
-    sed -i "" '/{% block js-inline %}/, /{% endblock js-inline %}/ d' $html_file_location
-else
-    # pull inline js from file, removes the script tags, and places it into the new file
-    sed -n "/{% block js-inline %}/, /{% endblock %}/ p" $html_file_location | \
-        python -c "import sys; sys.stdout.writelines(sys.stdin.readlines()[2:-2])" >> $new_module_location
-
-    # remove from old file
-    sed -i "" '/{% block js-inline %}/, /{% endblock %}/ d' $html_file_location
-fi
+# remove from old file
+sed -i "/{% block js-inline %}/, /{% endblock\( js-inline\)\? %}/ d" $html_file_location
 
 # close off boilerplate
 echo "});" >> $new_module_location
@@ -91,10 +86,10 @@ script_import="<script src=\"{% static '$new_module_name.js' %}\"></script>"
 count=$(sed -n "/{% block js %}/p" $html_file_location | wc -l)
 # if there is a block js, add it inside at the end
 if [ "$count" -gt 0 ]; then
-    sed -i "" "/{% block js %}/,/{% endblock/ {
-            /{% endblock/ i \\
-            $script_import
-        }" $html_file_location
+    sed -i "/{% block js %}/,/{% endblock/ {
+        /{% endblock/ i \\
+        $script_import
+    }" $html_file_location
 # otherwise, just tell them to add one somewhere on the page
 else
     echo "----------------------------"
