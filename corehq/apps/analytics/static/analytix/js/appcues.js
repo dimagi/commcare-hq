@@ -21,7 +21,8 @@ hqDefine('analytix/js/appcues', [
 
     $(function () {
         var apiId = _get('apiId'),
-            scriptUrl = "//fast.appcues.com/" + apiId + '.js';
+            scriptUrl = "//fast.appcues.com/" + apiId + '.js',
+            _logger = logging.getLoggerForApi('Appcues');
 
         _ready = utils.initApi(_ready, apiId, scriptUrl, _logger, function () {
             Appcues.identify(_get("username"), {
@@ -45,6 +46,7 @@ hqDefine('analytix/js/appcues', [
         });
     }
     return {
+        logger: _logger,
         trackEvent: trackEvent,
     };
 });
