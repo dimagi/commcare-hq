@@ -26,7 +26,7 @@ from corehq.toggles import ASYNC_RESTORE
 from corehq.apps.cloudcare.const import DEVICE_ID as FORMPLAYER_DEVICE_ID
 from corehq.apps.commtrack.exceptions import MissingProductId
 from corehq.apps.domain_migration_flags.api import any_migrations_in_progress
-from corehq.apps.users.models import CouchUser, WebUser
+from corehq.apps.users.models import CouchUser
 from corehq.apps.users.permissions import can_view_case_exports, can_view_form_exports, \
     has_permission_to_view_report
 from corehq.form_processor.exceptions import CouchSaveAborted, PostSaveError
@@ -152,61 +152,59 @@ class SubmissionPost(object):
             return u'   √   '
 
         messages = []
-        if instance.metadata.deviceID == FORMPLAYER_DEVICE_ID:
-            user = CouchUser.get(instance.user_id)
-            if not user or not user.is_web_user():
-                return _('Form successfully saved!')
-            user = WebUser.get(instance.user_id)
+        user = CouchUser.get_by_user_id(instance.user_id)
+        if not user or not user.is_web_user():
+            return _('Form successfully saved!')
 
-            from corehq.apps.export.views import CaseExportListView, FormExportListView
-            from corehq.apps.reports.views import CaseDetailsView, FormDataView
-            form_link = case_link = form_export_link = case_export_link = None
-            form_view = 'corehq.apps.reports.standard.inspect.SubmitHistory'
-            if has_permission_to_view_report(user, instance.domain, form_view):
-                form_link = reverse(FormDataView.urlname, args=[instance.domain, instance.form_id])
-            case_view = 'corehq.apps.reports.standard.cases.basic.CaseListReport'
-            if cases and has_permission_to_view_report(user, instance.domain, case_view):
-                if len(cases) == 1:
-                    case_link = reverse(CaseDetailsView.urlname, args=[instance.domain, cases[0].case_id])
-                else:
-                    case_link = ", ".join(["[{}]({})".format(
-                        c.name, reverse(CaseDetailsView.urlname, args=[instance.domain, c.case_id])
-                    ) for c in cases])
-            if can_view_form_exports(user, instance.domain):
-                form_export_link = reverse(FormExportListView.urlname, args=[instance.domain])
-            if cases and can_view_case_exports(user, instance.domain):
-                case_export_link = reverse(CaseExportListView.urlname, args=[instance.domain])
+        from corehq.apps.export.views import CaseExportListView, FormExportListView
+        from corehq.apps.reports.views import CaseDetailsView, FormDataView
+        form_link = case_link = form_export_link = case_export_link = None
+        form_view = 'corehq.apps.reports.standard.inspect.SubmitHistory'
+        if has_permission_to_view_report(user, instance.domain, form_view):
+            form_link = reverse(FormDataView.urlname, args=[instance.domain, instance.form_id])
+        case_view = 'corehq.apps.reports.standard.cases.basic.CaseListReport'
+        if cases and has_permission_to_view_report(user, instance.domain, case_view):
+            if len(cases) == 1:
+                case_link = reverse(CaseDetailsView.urlname, args=[instance.domain, cases[0].case_id])
+            else:
+                case_link = ", ".join(["[{}]({})".format(
+                    c.name, reverse(CaseDetailsView.urlname, args=[instance.domain, c.case_id])
+                ) for c in cases])
+        if can_view_form_exports(user, instance.domain):
+            form_export_link = reverse(FormExportListView.urlname, args=[instance.domain])
+        if cases and can_view_case_exports(user, instance.domain):
+            case_export_link = reverse(CaseExportListView.urlname, args=[instance.domain])
 
-            # Start with generic message
-            messages.append(_('Form successfully saved!'))
+        # Start with generic message
+        messages.append(_('Form successfully saved!'))
 
-            # Add link to form/case if possible
-            if form_link and case_link:
-                if len(cases) == 1:
-                    messages.append(
-                        _("You submitted [this form]({}), which affected [this case]({}).")
-                        .format(form_link, case_link))
-                else:
-                    messages.append(
-                        _("You submitted [this form]({}), which affected these cases: {}.")
-                        .format(form_link, case_link))
-            elif form_link:
-                messages.append(_("You submitted [this form]({}).").format(form_link))
-            elif case_link:
-                if len(cases) == 1:
-                    messages.append(_("Your form affected [this case]({}).").format(case_link))
-                else:
-                    messages.append(_("Your form affected these cases: {}.").format(case_link))
-
-            # Add link to all form/case exports
-            if form_export_link and case_export_link:
+        # Add link to form/case if possible
+        if form_link and case_link:
+            if len(cases) == 1:
                 messages.append(
-                    _("Click to export your [case]({}) or [form]({}) data.")
-                    .format(case_export_link, form_export_link))
-            elif form_export_link:
-                messages.append(_("Click to export your [form data]({}).").format(form_export_link))
-            elif case_export_link:
-                messages.append(_("Click to export your [case data]({}).").format(case_export_link))
+                    _("You submitted [this form]({}), which affected [this case]({}).")
+                    .format(form_link, case_link))
+            else:
+                messages.append(
+                    _("You submitted [this form]({}), which affected these cases: {}.")
+                    .format(form_link, case_link))
+        elif form_link:
+            messages.append(_("You submitted [this form]({}).").format(form_link))
+        elif case_link:
+            if len(cases) == 1:
+                messages.append(_("Your form affected [this case]({}).").format(case_link))
+            else:
+                messages.append(_("Your form affected these cases: {}.").format(case_link))
+
+        # Add link to all form/case exports
+        if form_export_link and case_export_link:
+            messages.append(
+                _("Click to export your [case]({}) or [form]({}) data.")
+                .format(case_export_link, form_export_link))
+        elif form_export_link:
+            messages.append(_("Click to export your [form data]({}).").format(form_export_link))
+        elif case_export_link:
+            messages.append(_("Click to export your [case data]({}).").format(case_export_link))
 
         return "\n\n".join(messages)
 
