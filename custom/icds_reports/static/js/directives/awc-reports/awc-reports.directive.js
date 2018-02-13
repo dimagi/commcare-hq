@@ -1703,13 +1703,11 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
     vm.label = "AWC Report";
     vm.tooltipPlacement = "right";
     vm.step = $routeParams.step;
-    vm.data = null;
     vm.filters = ['gender', 'age'];
     vm.prevDay = moment().subtract(1, 'days').format('Do MMMM, YYYY');
     vm.lastDayOfPreviousMonth = moment().set('date', 1).subtract(1, 'days').format('Do MMMM, YYYY');
     vm.currentMonth = moment().format("MMMM");
     vm.userLocationId = userLocationId;
-
 
     vm.dtOptions = DTOptionsBuilder.newOptions()
         .withOption('ajax', {
@@ -1821,7 +1819,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
         }
 
         var get_url = url('awc_reports', step);
-        if (parseInt(vm.selectedLocationLevel) === 4) {
+        if (parseInt(vm.selectedLocationLevel && step !== 'beneficiary') === 4) {
             vm.myPromise = $http({
                 method: "GET",
                 url: get_url,

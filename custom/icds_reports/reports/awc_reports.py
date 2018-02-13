@@ -1009,6 +1009,7 @@ def get_awc_report_beneficiary(start, length, draw, order, awc_id, month, two_be
         age_in_months__lte=60
     )
 
+    data_count = data.count()
     if 'current_month_nutrition_status' in order:
         sort_order = {
             'Severely underweight': 1,
@@ -1031,7 +1032,6 @@ def get_awc_report_beneficiary(start, length, draw, order, awc_id, month, two_be
     else:
         data = data.order_by('-month', order)
 
-    data_count = len(data)
     data = data[start:(start + length)]
 
     config = {
