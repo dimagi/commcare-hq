@@ -37,21 +37,19 @@ echo "hqDefine('$new_module_name', function() {" >> $new_module_location
 count=$(sed -n "/{% endblock js-inline %}/p" $html_file_location | wc -l)
 if [ "$count" -gt 0 ]; then
     # pull inline js from file, removes the script tags, and places it into the new file
-    sed -n "/{% block js-inline %}/, /{% endblock js-inline %}/ p" $html_file_location | sed -n "3,$ p" >> $new_module_location
+    sed -n "/{% block js-inline %}/, /{% endblock js-inline %}/ p" $html_file_location | \
+        python -c "import sys; sys.stdout.writelines(sys.stdin.readlines()[2:-2])" >> $new_module_location
 
     # remove from old file
     sed -i "" '/{% block js-inline %}/, /{% endblock js-inline %}/ d' $html_file_location
 else
     # pull inline js from file, removes the script tags, and places it into the new file
-    sed -n "/{% block js-inline %}/, /{% endblock %}/ p" $html_file_location | sed -n "3,$ p" >> $new_module_location
+    sed -n "/{% block js-inline %}/, /{% endblock %}/ p" $html_file_location | \
+        python -c "import sys; sys.stdout.writelines(sys.stdin.readlines()[2:-2])" >> $new_module_location
 
     # remove from old file
     sed -i "" '/{% block js-inline %}/, /{% endblock %}/ d' $html_file_location
 fi
-
-# removes the last two lines (which are script and endblock tags)
-sed -i "" '$d' $new_module_location
-sed -i "" '$d' $new_module_location
 
 # close off boilerplate
 echo "});" >> $new_module_location
@@ -63,8 +61,8 @@ count=$(sed -n "/{% block js %}/p" $html_file_location | wc -l)
 # if there is a block js, add it inside
 if [ "$count" -gt 0 ]; then
     sed -i "" "/{% block js %}/a\\
-    $script_import
-    " $html_file_location
+        $script_import
+        " $html_file_location
 # otherwise, just tell them to add one somewhere on the page
 else
     echo "----------------------------"
