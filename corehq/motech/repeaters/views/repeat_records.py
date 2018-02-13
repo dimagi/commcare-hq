@@ -5,6 +5,7 @@ import pytz
 from django.http import HttpResponse, Http404
 from django.template.loader import render_to_string
 from django.urls import reverse
+from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_POST
 from django.views.generic import View
@@ -14,7 +15,7 @@ from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import json_response
 
 from corehq import toggles
-from corehq.apps.domain.decorators import LoginAndDomainMixin
+from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import static
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.dispatcher import DomainReportDispatcher
@@ -219,7 +220,8 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
         return DataTablesHeader(*columns)
 
 
-class RepeatRecordView(LoginAndDomainMixin, View):
+@method_decorator(domain_admin_required, name='dispatch')
+class RepeatRecordView(View):
 
     urlname = 'repeat_record'
     http_method_names = ['get', 'post']
