@@ -28,18 +28,20 @@ def get_newborn_with_low_birth_weight_map(domain, config, loc_level, show_test=F
         ).annotate(
             low_birth=Sum('low_birth_weight_in_month'),
             in_month=Sum('weighed_and_born_in_month'),
+            all=Sum('born_in_month')
         ).order_by('%s_name' % loc_level, '%s_map_location_name' % loc_level)
         if not show_test:
             queryset = apply_exclude(domain, queryset)
         return queryset
 
-    data_for_map, in_month_total, low_birth_total, average = generate_data_for_map(
+    data_for_map, in_month_total, low_birth_total, average, total = generate_data_for_map(
         get_data_for(config),
         loc_level,
         'low_birth',
         'in_month',
         20,
-        60
+        60,
+        'all'
     )
 
     fills = OrderedDict()
@@ -66,7 +68,7 @@ def get_newborn_with_low_birth_weight_map(domain, config, loc_level, show_test=F
             "extended_info": [
                 {
                     'indicator': 'Total Number of Newborns born in given month{}:'.format(chosen_filters),
-                    'value': indian_formatted_number(in_month_total)
+                    'value': indian_formatted_number(total)
                 },
                 {
                     'indicator': 'Number of Newborns with LBW in given month{}:'.format(chosen_filters),
@@ -78,9 +80,9 @@ def get_newborn_with_low_birth_weight_map(domain, config, loc_level, show_test=F
                         low_birth_total * 100 / float(in_month_total or 1))
                 },
                 {
-                    'indicator': '% Unweighed{}:'.format(chosen_filters),
+                    'indicator': '% Unweighted{}:'.format(chosen_filters),
                     'value': '%.2f%%' % (
-                        (in_month_total - low_birth_total) * 100 / float(in_month_total or 1))
+                        in_month_total * 100 / float(total or 1))
                 }
             ]
 
@@ -104,6 +106,7 @@ def get_newborn_with_low_birth_weight_chart(domain, config, loc_level, show_test
     ).annotate(
         low_birth=Sum('low_birth_weight_in_month'),
         in_month=Sum('weighed_and_born_in_month'),
+        all=Sum('born_in_month')
     ).order_by('month')
 
     if not show_test:
@@ -117,23 +120,25 @@ def get_newborn_with_low_birth_weight_chart(domain, config, loc_level, show_test
 
     for date in dates:
         miliseconds = int(date.strftime("%s")) * 1000
-        data['blue'][miliseconds] = {'y': 0, 'all': 0, 'low_birth': 0}
+        data['blue'][miliseconds] = {'y': 0, 'in_month': 0, 'low_birth': 0, 'all': 0}
 
     best_worst = {}
     for row in chart_data:
         date = row['month']
-        in_month = row['in_month']
+        in_month = row['in_month'] or 0
         location = row['%s_name' % loc_level]
-        low_birth = row['low_birth']
+        low_birth = row['low_birth'] or 0
+        all_birth = row['all'] or 0
 
-        best_worst[location] = (low_birth or 0) * 100 / float(in_month or 1)
+        best_worst[location] = low_birth * 100 / float(in_month or 1)
 
         date_in_miliseconds = int(date.strftime("%s")) * 1000
 
         data_for_month = data['blue'][date_in_miliseconds]
         data_for_month['low_birth'] += low_birth
-        data_for_month['all'] += in_month
-        data_for_month['y'] = data_for_month['low_birth'] / float(data_for_month['all'] or 1)
+        data_for_month['in_month'] += in_month
+        data_for_month['all'] += all_birth
+        data_for_month['y'] = low_birth / float(in_month or 1)
 
     top_locations = sorted(
         [dict(loc_name=key, percent=val) for key, val in six.iteritems(best_worst)],
@@ -147,8 +152,9 @@ def get_newborn_with_low_birth_weight_chart(domain, config, loc_level, show_test
                     {
                         'x': key,
                         'y': val['y'],
-                        'all': val['all'],
-                        'low_birth': val['low_birth']
+                        'in_month': val['in_month'],
+                        'low_birth': val['low_birth'],
+                        'all': val['all']
                     } for key, val in six.iteritems(data['blue'])
                 ],
                 "key": "% Newborns with Low Birth Weight",
@@ -176,6 +182,7 @@ def get_newborn_with_low_birth_weight_data(domain, config, loc_level, location_i
     ).annotate(
         low_birth=Sum('low_birth_weight_in_month'),
         in_month=Sum('weighed_and_born_in_month'),
+        all=Sum('born_in_month')
     ).order_by('%s_name' % loc_level)
 
     if not show_test:
@@ -188,22 +195,24 @@ def get_newborn_with_low_birth_weight_data(domain, config, loc_level, location_i
     tooltips_data = defaultdict(lambda: {
         'in_month': 0,
         'low_birth': 0,
+        'all': 0
     })
 
     loc_children = get_child_locations(domain, location_id, show_test)
     result_set = set()
 
     for row in data:
-        in_month = row['in_month']
+        in_month = row['in_month'] or 0
         name = row['%s_name' % loc_level]
         result_set.add(name)
-
+        all_records = row['all'] or 0
         low_birth = row['low_birth'] or 0
 
         value = low_birth / float(in_month or 1)
 
         tooltips_data[name]['low_birth'] += low_birth
-        tooltips_data[name]['in_month'] += (in_month or 0)
+        tooltips_data[name]['in_month'] += in_month
+        tooltips_data[name]['all'] += all_records
 
         chart_data['blue'].append([
             name, value
