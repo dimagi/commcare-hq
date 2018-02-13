@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 import six.moves.urllib.request, six.moves.urllib.error, six.moves.urllib.parse
-import urlparse
+import six.moves.urllib.parse
 from xml.etree import cElementTree as ElementTree
 from django.http import HttpResponse
 from tastypie.authentication import Authentication
@@ -112,7 +112,7 @@ class UrlencodedDeserializer(Serializer):
     def from_urlencode(self, data, options=None):
         """ handles basic form encoded url posts """
         qs = dict((k, v if len(v) > 1 else v[0])
-            for k, v in six.iteritems(urlparse.parse_qs(data)))
+            for k, v in six.iteritems(six.moves.urllib.parse.parse_qs(data)))
 
         return qs
 

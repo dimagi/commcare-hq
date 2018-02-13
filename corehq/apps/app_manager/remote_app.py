@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from lxml import etree
 import six.moves.urllib.request, six.moves.urllib.error, six.moves.urllib.parse
-import urlparse
+import six.moves.urllib.parse
 from django.urls import reverse
 from corehq.apps.app_manager.exceptions import AppEditingError
 from corehq.apps.app_manager.xform import WrappedNode
@@ -40,7 +40,7 @@ def reset_suite_remote_url(suite_node, url_base, profile_url, download_index_url
     suite_local_text = suite_node.findtext('resource/location[@authority="local"]')
     suite_remote = suite_node.find('resource/location[@authority="remote"]')
     suite_name = strip_location(profile_url, suite_local_text)
-    suite_remote.xml.text = url_base + urlparse.urljoin(download_index_url,
+    suite_remote.xml.text = url_base + six.moves.urllib.parse.urljoin(download_index_url,
                                                         suite_name)
 
 
