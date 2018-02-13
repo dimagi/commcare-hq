@@ -349,8 +349,8 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
     def set_meta_properties(self):
         # doesn't save the form
         from corehq.apps.receiverwrapper.util import get_app_version_info
-        self.time_end = self.metadata.timeEnd
-        self.time_start = self.metadata.timeStart
+        self.time_end = getattr(self.metadata, 'timeEnd')
+        self.time_start = getattr(self.metadata, 'timeStart')
         app_version_info = get_app_version_info(self.domain, self.build_id, None, self.metadata)
 
         self.commcare_version = app_version_info.commcare_version
