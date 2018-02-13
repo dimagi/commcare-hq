@@ -113,7 +113,7 @@ def check_data_migration_in_progress(domain, last_migration_check_time):
     '{domain}',
     timeout=36 * 60 * 60,
     max_retries=0,
-    queue='background_queue',
+    queue='case_rule_queue',
 )
 def run_case_update_rules_for_domain(domain, now=None):
     now = now or datetime.utcnow()

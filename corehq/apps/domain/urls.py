@@ -1,4 +1,6 @@
 from __future__ import absolute_import
+
+from django.conf import settings
 from django.conf.urls import url, include
 from django.contrib.auth.views import (
     password_change,
@@ -8,7 +10,6 @@ from django.contrib.auth.views import (
     password_reset,
 )
 from django.utils.translation import ugettext as _
-from django.conf import settings
 from django.views.generic import RedirectView
 
 from corehq.apps.callcenter.views import CallCenterOwnerOptionsView
@@ -69,6 +70,8 @@ from corehq.apps.domain.views import (
     test_repeater,
     toggle_diff,
 )
+from corehq.apps.linked_domain.views import DomainLinkView
+from corehq.apps.reports.dispatcher import DomainReportDispatcher
 from corehq.motech.openmrs.views import EditOpenmrsRepeaterView
 from corehq.motech.repeaters.views import (
     AddCaseRepeaterView,
@@ -77,9 +80,6 @@ from corehq.motech.repeaters.views import (
     EditFormRepeaterView,
     EditRepeaterView,
 )
-
-from corehq.apps.reports.dispatcher import DomainReportDispatcher
-
 
 urlpatterns = [
     url(r'^domain/select/$', select, name='domain_select'),
@@ -192,6 +192,7 @@ domain_settings = [
     url(r'^snapshots/new/$', CreateNewExchangeSnapshotView.as_view(), name=CreateNewExchangeSnapshotView.urlname),
     url(r'^multimedia/$', ManageProjectMediaView.as_view(), name=ManageProjectMediaView.urlname),
     url(r'^case_search/$', CaseSearchConfigView.as_view(), name=CaseSearchConfigView.urlname),
+    url(r'^domain_links/$', DomainLinkView.as_view(), name=DomainLinkView.urlname),
     url(r'^calendar_settings/$', CalendarFixtureConfigView.as_view(), name=CalendarFixtureConfigView.urlname),
     url(r'^location_settings/$', LocationFixtureConfigView.as_view(), name=LocationFixtureConfigView.urlname),
     url(r'^commtrack/settings/$', RedirectView.as_view(url='commtrack_settings', permanent=True)),

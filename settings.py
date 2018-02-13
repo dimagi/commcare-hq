@@ -233,6 +233,7 @@ HQ_APPS = (
     'corehq.apps.hqcase',
     'corehq.apps.hqwebapp',
     'corehq.apps.hqmedia',
+    'corehq.apps.linked_domain',
     'corehq.apps.locations',
     'corehq.apps.products',
     'corehq.apps.prelogin',
@@ -569,28 +570,11 @@ CELERY_ANNOTATIONS = {
 }
 
 CELERY_MAIN_QUEUE = 'celery'
-
-# this is the default celery queue
-# for periodic tasks on a separate queue override this to something else
-CELERY_PERIODIC_QUEUE = CELERY_MAIN_QUEUE
-
-# This is the celery queue to use for running reminder rules.
-# It's set to the main queue here and can be overridden to put it
-# on its own queue.
-CELERY_REMINDER_RULE_QUEUE = CELERY_MAIN_QUEUE
-
-# This is the celery queue to use for running reminder case updates.
-# It's set to the main queue here and can be overridden to put it
-# on its own queue.
-CELERY_REMINDER_CASE_UPDATE_QUEUE = CELERY_MAIN_QUEUE
-
-
-# This is the celery queue to use for sending repeat records.
-# It's set to the main queue here and can be overridden to put it
-# on its own queue.
-CELERY_REPEAT_RECORD_QUEUE = CELERY_MAIN_QUEUE
-
-ENIKSHAY_QUEUE = CELERY_MAIN_QUEUE
+CELERY_PERIODIC_QUEUE = 'celery_periodic'
+CELERY_REMINDER_RULE_QUEUE = 'reminder_rule_queue'
+CELERY_REMINDER_CASE_UPDATE_QUEUE = 'reminder_case_update_queue'
+CELERY_REPEAT_RECORD_QUEUE = 'repeat_record_queue'
+ENIKSHAY_QUEUE = 'enikshay_queue'
 
 # Will cause a celery task to raise a SoftTimeLimitExceeded exception if
 # time limit is exceeded.
@@ -901,8 +885,6 @@ RESTRICT_DOMAIN_CREATION = False
 CUSTOM_LANDING_PAGE = False
 
 TABLEAU_URL_ROOT = "https://icds.commcarehq.org/"
-
-HQ_INSTANCE = 'development'
 
 SENTRY_PUBLIC_KEY = None
 SENTRY_PRIVATE_KEY = None
@@ -1579,21 +1561,29 @@ ALLOWED_CUSTOM_CONTENT_HANDLERS = {
 # Used by the new reminders framework
 AVAILABLE_CUSTOM_SCHEDULING_CONTENT = {
     "ICDS_STATIC_NEGATIVE_GROWTH_MESSAGE":
-        "custom.icds.messaging.custom_content.static_negative_growth_indicator",
+        ["custom.icds.messaging.custom_content.static_negative_growth_indicator",
+         "ICDS: Static/Negative Growth Indicator"],
     "ICDS_MISSED_CF_VISIT_TO_AWW":
-        "custom.icds.messaging.custom_content.missed_cf_visit_to_aww",
+        ["custom.icds.messaging.custom_content.missed_cf_visit_to_aww",
+         "ICDS: Missed CF Visit for AWW recipient"],
     "ICDS_MISSED_CF_VISIT_TO_LS":
-        "custom.icds.messaging.custom_content.missed_cf_visit_to_ls",
+        ["custom.icds.messaging.custom_content.missed_cf_visit_to_ls",
+         "ICDS: Missed CF Visit for LS recipient"],
     "ICDS_MISSED_PNC_VISIT_TO_LS":
-        "custom.icds.messaging.custom_content.missed_pnc_visit_to_ls",
+        ["custom.icds.messaging.custom_content.missed_pnc_visit_to_ls",
+         "ICDS: Missed PNC Visit for LS recipient"],
     "ICDS_CHILD_ILLNESS_REPORTED":
-        "custom.icds.messaging.custom_content.child_illness_reported",
+        ["custom.icds.messaging.custom_content.child_illness_reported",
+         "ICDS: Child Illness Reported"],
     "ICDS_CF_VISITS_COMPLETE":
-        "custom.icds.messaging.custom_content.cf_visits_complete",
+        ["custom.icds.messaging.custom_content.cf_visits_complete",
+         "ICDS: CF Visits Complete"],
     "ICDS_DPT3_AND_MEASLES_ARE_DUE":
-        "custom.icds.messaging.custom_content.dpt3_and_measles_are_due",
+        ["custom.icds.messaging.custom_content.dpt3_and_measles_are_due",
+         "ICDS: DPT3 and Measles Due"],
     "ICDS_CHILD_VACCINATIONS_COMPLETE":
-        "custom.icds.messaging.custom_content.child_vaccinations_complete",
+        ["custom.icds.messaging.custom_content.child_vaccinations_complete",
+         "ICDS: Child vaccinations complete"],
 }
 
 # Used by the old reminders framework
@@ -1952,12 +1942,10 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'ccs_record_cases.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'ccs_record_cases_monthly_v2.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'ccs_record_cases_monthly_tableau2.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'ccs_record_cases_monthly_tableaunov17.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'child_cases_monthly_v2.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'child_delivery_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'child_health_cases.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'child_health_cases_monthly_tableau2.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'child_health_cases_monthly_tableaunov17.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'daily_feeding_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'gm_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'hardware_cases.json'),

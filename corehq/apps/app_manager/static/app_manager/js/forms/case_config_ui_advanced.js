@@ -76,25 +76,25 @@ hqDefine('app_manager/js/forms/case_config_ui_advanced', function () {
             var index = self.caseConfigViewModel.load_update_cases.indexOf(action);
             var modes = [
                 {
-                    label: 'Raw',
+                    label: gettext('Raw'),
                     value: 'raw'
                 },
                 {
-                    label: 'User Data',
+                    label: gettext('User Data'),
                     value: 'user'
                 },
                 {
-                    label: 'Lookup Table',
+                    label: gettext('Lookup Table'),
                     value: 'fixture'
                 },
                 {
-                    label: 'User Properties',
+                    label: gettext('User Properties'),
                     value: 'usercase'
                 }
             ];
             if (index > 0) {
                 modes.push({
-                    label: 'Case Index',
+                    label: gettext('Case Index'),
                     value: 'case'
                 });
             }
@@ -315,15 +315,15 @@ hqDefine('app_manager/js/forms/case_config_ui_advanced', function () {
 
         var _actions = [
             {
-                display: 'Load / Update / Close a case',
+                display: gettext('Load / Update / Close a case'),
                 value: 'load'
             },
             {
-                display: 'Automatic Case Selection',
+                display: gettext('Automatic Case Selection'),
                 value: 'auto_select'
             },
             {
-                display: 'Load Case From Fixture',
+                display: gettext('Load Case From Fixture'),
                 value: 'load_case_from_fixture'
             },
         ];
@@ -334,7 +334,7 @@ hqDefine('app_manager/js/forms/case_config_ui_advanced', function () {
                     value: 'separator',
                 },
                 {
-                    display: 'Open a Case',
+                    display: gettext('Open a Case'),
                     value: 'open',
                 },
             ]);
@@ -513,16 +513,16 @@ hqDefine('app_manager/js/forms/case_config_ui_advanced', function () {
                 return;
             }
             if (!case_type) {
-                return "Case Type required";
+                return gettext("Case Type required");
             } else if (!case_tag) {
-                return "Case Tag required";
+                return gettext("Case Tag required");
             }
             if (!/^[a-zA-Z][\w_-]*(\/[a-zA-Z][\w_-]*)*$/.test(case_tag)) {
-                return "Case Tag: only letters, numbers, '-', and '_' allowed";
+                return gettext("Case Tag: only letters, numbers, '-', and '_' allowed");
             }
             var tags = self.caseConfig.caseConfigViewModel.getCaseTags('all');
             if (_.where(tags, {value: case_tag}).length > 1) {
-                return "Case Tag already in use";
+                return gettext("Case Tag already in use");
             }
             return null;
         },
@@ -534,7 +534,6 @@ hqDefine('app_manager/js/forms/case_config_ui_advanced', function () {
                     } else {
                         return false;
                     }
-
                 },
                 write: function (value) {
                     self.close_condition.type(value ? 'always' : 'never');
@@ -570,11 +569,14 @@ hqDefine('app_manager/js/forms/case_config_ui_advanced', function () {
                 return _.template(
                     nameSnip + spanSnip +
                     '<% if (action.parent_tags()) { %> : ' +
-                    'subcase of <span style="font-weight: bold;"><%= action.parent_tags() %></span>' +
+                    gettext('subcase of') + '<span style="font-weight: bold;"><%= action.parent_tags() %></span>' +
                     '<% } %>' + closeSnip + "</span>")({action: action});
             } else {
                 if (action.auto_select) {
-                    nameSnip = "<i class=\"fa fa-tag\"></i> <%= action.case_tag() %> (autoselect mode: <%= action.auto_select.mode() %>)";
+                    nameSnip = "<i class=\"fa fa-tag\"></i> <%= action.case_tag() %> (" + gettext("autoselect mode: ") + "<%= action.auto_select.mode() %>)";
+                }
+                if (action.load_case_from_fixture) {
+                    nameSnip += gettext(" (from fixture)");
                 }
                 return _.template(nameSnip + spanSnip +
                     "<% if (action.hasPreload()) { %> : load<% } %>" +
@@ -723,18 +725,18 @@ hqDefine('app_manager/js/forms/case_config_ui_advanced', function () {
                     var value_source = self.auto_select.value_source();
                     var value_key = self.auto_select.value_key();
                     if (!mode) {
-                        return "Autoselect mode required";
+                        return gettext("Autoselect mode required");
                     } else if (!value_key && mode !== 'usercase') {
-                        return 'Property required';
+                        return gettext('Property required');
                     } else if (!value_source) {
                         if (mode === 'case') {
-                            return 'Case required';
+                            return gettext('Case required');
                         } else if (mode === 'fixture') {
-                            return 'Lookup table tag required';
+                            return gettext('Lookup table tag required');
                         }
                     }
                     if (!self.case_type()) {
-                        return 'Expected case type required';
+                        return gettext('Expected case type required');
                     }
                     return null;
                 } else {
@@ -829,16 +831,16 @@ hqDefine('app_manager/js/forms/case_config_ui_advanced', function () {
                     }
                     var parent = self.caseConfig.caseConfigViewModel.getActionFromTag(self.case_index.tag());
                     if (!parent) {
-                        return "Subcase parent reference is missing";
+                        return gettext("Subcase parent reference is missing");
                     } else if (!self.case_index.reference_id()) {
-                        return 'Parent "' + self.case_index.tag() + '" reference ID required for subcases';
+                        return gettext('Parent reference ID required for subcases: ') + self.case_index.tag();
                     } else if (parent.actionType === 'open') {
                         if (!parent.repeat_context()) {
                             return null;
                         } else if (!self.repeat_context() ||
                             // manual string startsWith
                             self.repeat_context().lastIndexOf(parent.repeat_context(), 0) === 0) {
-                            return 'Subcase must be in same repeat context as parent "' + self.case_index.tag() + '".';
+                            return gettext('Subcase must be in same repeat context as parent "') + self.case_index.tag() + '".';
                         }
                     }
                     return null;
@@ -937,7 +939,7 @@ hqDefine('app_manager/js/forms/case_config_ui_advanced', function () {
                 write: function (value) {
                     if (value) {
                         self.case_indices.push(CaseIndex.wrap({
-                            tag: 'Select parent',
+                            tag: gettext('Select parent'),
                             reference_id: 'parent',
                             relationship: 'child'
                         }));
@@ -1023,16 +1025,16 @@ hqDefine('app_manager/js/forms/case_config_ui_advanced', function () {
                         var caseIndex = self.case_indices[i];
                         var parent = self.caseConfig.caseConfigViewModel.getActionFromTag(caseIndex.tag());
                         if (!parent) {
-                            return "Subcase parent reference is missing";
+                            return gettext("Subcase parent reference is missing");
                         } else if (!caseIndex.reference_id()) {
-                            return 'Parent "' + caseIndex.tag() + '" reference ID required for subcases';
+                            return gettext('Parent reference ID required for subcases: ') + caseIndex.tag();
                         } else if (parent.actionType === 'open') {
                             if (!parent.repeat_context()) {
                                 return null;
                             } else if (!self.repeat_context() ||
                                 // manual string startsWith
                                 self.repeat_context().lastIndexOf(parent.repeat_context(), 0) === 0) {
-                                return 'Subcase must be in same repeat context as parent "' + caseIndex.tag() + '".';
+                                return gettext('Subcase must be in same repeat context as parent "') + caseIndex.tag() + '".';
                             }
                         }
                     }
@@ -1114,15 +1116,15 @@ hqDefine('app_manager/js/forms/case_config_ui_advanced', function () {
                     return;
                 }
                 if (!case_type) {
-                    return "Case Type required";
+                    return gettext("Case Type required");
                 }
                 if (case_tag) {
                     if (!/^[a-zA-Z][\w_-]*(\/[a-zA-Z][\w_-]*)*$/.test(case_tag)) {
-                        return "Case Tag: only letters, numbers, '-', and '_' allowed";
+                        return gettext("Case Tag: only letters, numbers, '-', and '_' allowed");
                     }
                     var tags = self.caseConfig.caseConfigViewModel.getCaseTags('all');
                     if (_.where(tags, {value: case_tag}).length > 1) {
-                        return "Case Tag already in use";
+                        return gettext("Case Tag already in use");
                     }
                 }
                 return null;
@@ -1199,13 +1201,13 @@ hqDefine('app_manager/js/forms/case_config_ui_advanced', function () {
             self.validate = ko.computed(function () {
                 if (self.path() || self.key()) {
                     if (action.propertyCounts()[self.key()] > 1) {
-                        return "Property updated by two questions";
+                        return gettext("Property updated by two questions");
                     } else if (action.caseConfig.reserved_words.indexOf(self.key()) !== -1) {
-                        return '<strong>' + self.key() + '</strong> is a reserved word';
+                        return gettext("Reserved word: ") + '<strong>' + self.key() + '</strong>';
                     } else if (self.repeat_context() && self.repeat_context() !== self.action.repeat_context()) {
-                        return 'Inside the wrong repeat!';
+                        return gettext('Inside the wrong repeat!');
                     } else if (action.subcase() && _(self.key()).contains('/')) {
-                        return 'Parent property references not allowed for subcases';
+                        return gettext('Parent property references not allowed for subcases');
                     }
                 }
                 return null;
@@ -1241,9 +1243,9 @@ hqDefine('app_manager/js/forms/case_config_ui_advanced', function () {
             self.validateProperty = ko.computed(function () {
                 if (self.path() || self.key()) {
                     if (action.caseConfig.reserved_words.indexOf(self.key()) !== -1) {
-                        return '<strong>' + self.key() + '</strong> is a reserved word';
+                        return gettext("Reserved word: ") + '<strong>' + self.key() + '</strong>';
                     } else if (action.subcase() && _(self.key()).contains('/')) {
-                        return 'Parent property references not allowed for subcases';
+                        return gettext('Parent property references not allowed for subcases');
                     }
                 }
                 return null;
@@ -1251,7 +1253,7 @@ hqDefine('app_manager/js/forms/case_config_ui_advanced', function () {
             self.validateQuestion = ko.computed(function () {
                 if (self.path()) {
                     if (action.preloadCounts()[self.path()] > 1) {
-                        return "Two properties load to the same question";
+                        return gettext("Two properties load to the same question");
                     }
                 }
                 return null;

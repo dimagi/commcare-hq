@@ -21,6 +21,7 @@ from custom.enikshay.const import (
     DRUG_RESISTANCE_SENSITIVITY_RESISTANT,
     DRUG_RESISTANCE_SENSITIVITY_SENSITIVE,
 )
+from six.moves import map
 
 
 class Command(BaseModelReconciliationCommand):

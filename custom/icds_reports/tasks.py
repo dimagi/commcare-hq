@@ -33,6 +33,7 @@ from custom.icds_reports.models import AggChildHealthMonthly
 from custom.icds_reports.reports.issnip_monthly_register import ISSNIPMonthlyReport
 from custom.icds_reports.utils import zip_folder, create_pdf_file
 from dimagi.utils.chunked import chunked
+from dimagi.utils.dates import force_to_date
 from dimagi.utils.logging import notify_exception
 from six.moves import range
 
@@ -41,9 +42,8 @@ celery_task_logger = logging.getLogger('celery.task')
 UCRAggregationTask = namedtuple("UCRAggregationTask", ['type', 'date'])
 
 DASHBOARD_TEAM_MEMBERS = ['jemord', 'lbagnoli', 'ssrikrishnan', 'mharrison']
-_dashboard_team_soft_assert = soft_assert(to=[
-    '{}@{}'.format(member_id, 'dimagi.com') for member_id in DASHBOARD_TEAM_MEMBERS
-])
+DASHBOARD_TEAM_EMAILS = ['{}@{}'.format(member_id, 'dimagi.com') for member_id in DASHBOARD_TEAM_MEMBERS]
+_dashboard_team_soft_assert = soft_assert(to=DASHBOARD_TEAM_EMAILS)
 
 
 @periodic_task(run_every=crontab(minute=30, hour=23), acks_late=True, queue='background_queue')
@@ -300,7 +300,7 @@ def icds_data_validation(day):
     """
 
     # agg tables store the month like YYYY-MM-01
-    month = day
+    month = force_to_date(day)
     month.replace(day=1)
     return_values = ('state_name', 'district_name', 'block_name', 'supervisor_name', 'awc_name')
 
@@ -356,7 +356,7 @@ def icds_data_validation(day):
 
     filename = month.strftime('validation_results_%s.csv' % SERVER_DATE_FORMAT)
     send_HTML_email(
-        'ICDS Dashboard Validation Results', DASHBOARD_TEAM_MEMBERS, email_content,
+        'ICDS Dashboard Validation Results', DASHBOARD_TEAM_EMAILS, email_content,
         file_attachments=[{'file_obj': csv_file, 'title': filename, 'mimetype': 'text/csv'}],
     )
 

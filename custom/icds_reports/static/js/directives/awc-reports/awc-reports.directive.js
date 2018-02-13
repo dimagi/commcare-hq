@@ -2027,8 +2027,8 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
                     var eligible = day ? day.eligible : '0';
 
                     var tooltip_content = "<p><strong>" + d.value + "</strong></p><br/>";
-                    tooltip_content += "<p>Number of children who attended PSE: <strong>" + attended + "</strong></p>";
-                    tooltip_content += "<p>Number of children who were eligible to attend PSE: <strong>" + eligible + "</strong></p>";
+                    tooltip_content += "<div>Number of children who attended PSE: <strong>" + attended + "</strong></div>";
+                    tooltip_content += "<div>Number of children who were eligible to attend PSE: <strong>" + eligible + "</strong></div>";
 
                     return tooltip_content;
                 });

@@ -67,7 +67,7 @@ function AdhaarController($scope, $routeParams, $location, $filter, demographics
     vm.templatePopup = function(loc, row) {
         var in_month = row ? $filter('indiaNumbers')(row.in_month) : 'N/A';
         var percent = row ? d3.format('.2%')(row.in_month / (row.all || 1)) : "N/A";
-        return '<div class="hoverinfo">' +
+        return '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
             '<p>' + loc.properties.name + '</p>' +
             '<div>Total number of ICDS beneficiaries whose Aadhaar has been captured: <strong>' + in_month + '</strong></div>' +
             '<div>% of ICDS beneficiaries whose Aadhaar has been captured: <strong>' + percent + '</strong></div>';
@@ -113,8 +113,9 @@ function AdhaarController($scope, $routeParams, $location, $filter, demographics
                 }) * 100);
                 var range = max - min;
                 vm.chartOptions.chart.forceY = [
-                    ((min - range/10)/100).toFixed(2) < 0 ? 0 : ((min - range/10)/100).toFixed(2),
-                    ((max + range/10)/100).toFixed(2),
+                    parseInt(((min - range/10)/100).toFixed(2)) < 0 ?
+                        0 : parseInt(((min - range/10)/100).toFixed(2)),
+                    parseInt(((max + range/10)/100).toFixed(2)),
                 ];
             }
         });
@@ -122,7 +123,7 @@ function AdhaarController($scope, $routeParams, $location, $filter, demographics
 
     vm.init = function() {
         var locationId = vm.filtersData.location_id || vm.userLocationId;
-        if (!locationId || locationId === 'all' || locationId === 'null') {
+        if (!locationId || ["all", "null", "undefined"].indexOf(locationId) >= 0) {
             vm.loadData();
             vm.loaded = true;
             return;
@@ -220,8 +221,8 @@ function AdhaarController($scope, $routeParams, $location, $filter, demographics
 
     vm.getTooltipContent = function(val, day) {
         var content = "<p><strong>" + val.value + "</strong></p><br/>";
-        content += "<p>Total number of ICDS beneficiaries whose Aadhaar has been captured: <strong>" + $filter('indiaNumbers')(day.in_month) + "</strong></p>";
-        content += "<p>% of ICDS beneficiaries whose Aadhaar has been captured: <strong>" + d3.format('.2%')(day.y) + "</strong></p>";
+        content += "<div>Total number of ICDS beneficiaries whose Aadhaar has been captured: <strong>" + $filter('indiaNumbers')(day.in_month) + "</strong></div>";
+        content += "<div>% of ICDS beneficiaries whose Aadhaar has been captured: <strong>" + d3.format('.2%')(day.y) + "</strong></div>";
         return content;
     };
 

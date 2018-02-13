@@ -12,6 +12,7 @@ from custom.enikshay.management.commands.base_model_reconciliation import (
     BaseModelReconciliationCommand,
     DOMAIN,
 )
+from six.moves import map
 
 
 class Command(BaseModelReconciliationCommand):

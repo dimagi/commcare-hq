@@ -68,7 +68,7 @@ function AWCDailyStatusController($scope, $routeParams, $location, $filter, icds
         var total = row ? $filter('indiaNumbers')(row.all) : 'N/A';
         var in_day = row ? $filter('indiaNumbers')(row.in_day) : 'N/A';
         var percent = row ? d3.format('.2%')(row.in_day / (row.all || 1)) : 'N/A';
-        return '<div class="hoverinfo">' +
+        return '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
             '<p>' + loc.properties.name + '</p>' +
             '<div>Total number of AWCs that were open yesterday: <strong>' + in_day + '</strong></div>' +
             '<div>Total number of AWCs that have been launched: <strong>' + total + '</strong></div>' +
@@ -114,14 +114,14 @@ function AWCDailyStatusController($scope, $routeParams, $location, $filter, icds
                     });
                 }));
                 var range = max - min;
-                vm.chartOptions.chart.forceY = [0, (max + range/10).toFixed(2)];
+                vm.chartOptions.chart.forceY = [0, parseInt((max + range/10).toFixed(0))];
             }
         });
     };
 
     vm.init = function() {
         var locationId = vm.filtersData.location_id || vm.userLocationId;
-        if (!locationId || locationId === 'all' || locationId === 'null') {
+        if (!locationId || ["all", "null", "undefined"].indexOf(locationId) >= 0) {
             vm.loadData();
             vm.loaded = true;
             return;
@@ -225,9 +225,9 @@ function AWCDailyStatusController($scope, $routeParams, $location, $filter, icds
     };
 
     vm.tooltipContent = function(monthName, value, total) {
-        return "<p>Total number of AWCs that were open on <strong>" + monthName + "</strong>: <strong>" + $filter('indiaNumbers')(value) + "</strong></p>"
-        + "<p>Total number of AWCs that have been launched: <strong>" + $filter('indiaNumbers')(total) + "</strong></p>"
-        + "<p>% of AWCs open on <strong>" + monthName + "</strong>: <strong>" + d3.format('.2%')(value / (total || 1)) + "</strong></p>";
+        return "<div>Total number of AWCs that were open on <strong>" + monthName + "</strong>: <strong>" + $filter('indiaNumbers')(value) + "</strong></div>"
+        + "<div>Total number of AWCs that have been launched: <strong>" + $filter('indiaNumbers')(total) + "</strong></div>"
+        + "<div>% of AWCs open on <strong>" + monthName + "</strong>: <strong>" + d3.format('.2%')(value / (total || 1)) + "</strong></div>";
     };
 
     vm.showAllLocations = function () {

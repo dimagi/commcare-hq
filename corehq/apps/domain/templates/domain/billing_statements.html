@@ -15,7 +15,7 @@
         var PaymentMethodHandler = hqImport('accounting/js/payment_method_handler').PaymentMethodHandler;
         var Invoice = hqImport('accounting/js/payment_method_handler').Invoice;
         var TotalCostItem = hqImport('accounting/js/payment_method_handler').TotalCostItem;
-        var paginatedListModel = new CRUDPaginatedListModel(
+        var paginatedListModel = hqImport("hqwebapp/js/crud_paginated_list").CRUDPaginatedListModel(
             {{ pagination.total }},
             {{ pagination.limit }},
             {{ pagination.page }},

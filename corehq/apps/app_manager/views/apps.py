@@ -35,8 +35,7 @@ from corehq.apps.app_manager.const import (
 from corehq.apps.app_manager.dbaccessors import get_app, get_current_app, get_latest_released_app_version
 from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
     require_can_edit_apps, require_deploy_apps, no_conflict
-from corehq.apps.app_manager.exceptions import IncompatibleFormTypeException, RearrangeError, RemoteRequestError, \
-    AppLinkError
+from corehq.apps.app_manager.exceptions import IncompatibleFormTypeException, RearrangeError, AppLinkError
 from corehq.apps.app_manager.forms import CopyApplicationForm
 from corehq.apps.app_manager.models import (
     Application,
@@ -66,6 +65,8 @@ from corehq.apps.domain.decorators import (
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
+from corehq.apps.linked_domain.applications import create_linked_app
+from corehq.apps.linked_domain.exceptions import RemoteRequestError
 from corehq.apps.translations.models import Translation
 from corehq.apps.users.dbaccessors.all_commcare_users import get_practice_mode_mobile_workers
 from corehq.elastic import ESError
@@ -359,25 +360,15 @@ def copy_app(request, domain):
                                               " Make sure you have at least one released build."))
                     return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[domain, app_id]))
 
-                if link_domain not in app.linked_whitelist:
-                    app.linked_whitelist.append(link_domain)
-                    app.save()
-
-                linked_app = LinkedApplication(
-                    name=data['name'],
-                    domain=link_domain,
-                    master=app_id,
-                    master_domain=master_domain,
-                )
-                linked_app.save()
+                linked_app = create_linked_app(master_domain, app_id, link_domain, data['name'])
                 try:
-                    update_linked_app(linked_app)
+                    update_linked_app(linked_app, request.couch_user.get_id)
                 except AppLinkError as e:
                     messages.error(request, str(e))
                     return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[domain, app_id]))
 
                 messages.success(request, _('Application successfully copied and linked.'))
-                return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[master_domain, linked_app.get_id]))
+                return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[link_domain, linked_app.get_id]))
             else:
                 extra_properties = {'name': data['name']}
                 app_copy = import_app_util(app_id_or_source, link_domain, extra_properties)
@@ -837,7 +828,7 @@ def drop_user_case(request, domain, app_id):
 def pull_master_app(request, domain, app_id):
     app = get_current_app(domain, app_id)
     try:
-        update_linked_app(app)
+        update_linked_app(app, request.couch_user.get_id)
     except AppLinkError as e:
         messages.error(request, str(e))
         return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[domain, app_id]))

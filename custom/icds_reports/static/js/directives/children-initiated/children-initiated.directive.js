@@ -77,7 +77,7 @@ function ChildrenInitiatedController($scope, $routeParams, $location, $filter, m
         var total = row ? $filter('indiaNumbers')(row.all) : 'N/A';
         var children = row ? $filter('indiaNumbers')(row.children) : 'N/A';
         var percent = row ? d3.format('.2%')(row.children / (row.all || 1)) : 'N/A';
-        return '<div class="hoverinfo">' +
+        return '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
             '<p>' + loc.properties.name + '</p>' +
             '<div>Total number of children between age 6 - 8 months' + chosenFilters + ': <strong>' + total + '</strong></div>' +
             '<div>Total number of children (6-8 months) given timely introduction to sold or semi-solid food in the given month' + chosenFilters + ': <strong>' + children + '</strong></div>' +
@@ -124,8 +124,9 @@ function ChildrenInitiatedController($scope, $routeParams, $location, $filter, m
                 }) * 100);
                 var range = max - min;
                 vm.chartOptions.chart.forceY = [
-                    ((min - range/10)/100).toFixed(2) < 0 ? 0 : ((min - range/10)/100).toFixed(2),
-                    ((max + range/10)/100).toFixed(2),
+                    parseInt(((min - range/10)/100).toFixed(2)) < 0 ?
+                        0 : parseInt(((min - range/10)/100).toFixed(2)),
+                    parseInt(((max + range/10)/100).toFixed(2)),
                 ];
             }
         });
@@ -133,7 +134,7 @@ function ChildrenInitiatedController($scope, $routeParams, $location, $filter, m
 
     vm.init = function() {
         var locationId = vm.filtersData.location_id || vm.userLocationId;
-        if (!locationId || locationId === 'all' || locationId === 'null') {
+        if (!locationId || ["all", "null", "undefined"].indexOf(locationId) >= 0) {
             vm.loadData();
             vm.loaded = true;
             return;
@@ -239,9 +240,9 @@ function ChildrenInitiatedController($scope, $routeParams, $location, $filter, m
 
     vm.tooltipContent = function (monthName, dataInMonth) {
         return "<p><strong>" + monthName + "</strong></p><br/>"
-            + "<p>Total number of children between age 6 - 8 months: <strong>" + dataInMonth.all + "</strong></p>"
-            + "<p>Total number of children (6-8 months) given timely introduction to sold or semi-solid food in the given month: <strong>" + dataInMonth.in_month + "</strong></p>"
-            + "<p>% children (6-8 months) given timely introduction to solid or semi-solid food in the given month: <strong>" + d3.format('.2%')(dataInMonth.y) + "</strong></p>";
+            + "<div>Total number of children between age 6 - 8 months: <strong>" + dataInMonth.all + "</strong></div>"
+            + "<div>Total number of children (6-8 months) given timely introduction to sold or semi-solid food in the given month: <strong>" + dataInMonth.in_month + "</strong></div>"
+            + "<div>% children (6-8 months) given timely introduction to solid or semi-solid food in the given month: <strong>" + d3.format('.2%')(dataInMonth.y) + "</strong></div>";
     };
 
     vm.showAllLocations = function () {

@@ -4,13 +4,7 @@
 {% load i18n %}
 {% load compress %}
 
-{% block js %}{{ block.super }}
-    {% compress js %}
-        <script src="{% static 'hqwebapp/js/stay-on-tab.js' %}"></script>
-        <script src="{% static 'accounting/js/adjust_balance_modal.js' %}"></script>
-        <script src="{% static 'accounting/js/subscriptions.js' %}"></script>
-    {% endcompress %}
-{% endblock %}
+{% requirejs_main 'accounting/js/subscriptions_main' %}
 
 {% block page_content %}
     {% initial_page_data 'current_version' subscription.plan_version.id %}

@@ -61,6 +61,7 @@ describe('Prevalence Of Severe Directive', function () {
 
     it('tests supervisor location', function () {
         controller.filtersData.location_id = 'test-id';
+        controller.userLocationId = 'test-id';
 
         $httpBackend.expectGET('icds_locations?location_id=test-id').respond(200, {location_type: 'supervisor'});
         $httpBackend.expectGET('prevalence_of_severe?location_id=test-id').respond(200, {
@@ -75,6 +76,7 @@ describe('Prevalence Of Severe Directive', function () {
 
     it('tests non supervisor location', function () {
         controller.filtersData.location_id = 'test-id';
+        controller.userLocationId = 'test-id';
 
         $httpBackend.expectGET('icds_locations?location_id=test-id').respond(200, {location_type: 'non supervisor'});
         $httpBackend.expectGET('prevalence_of_severe?location_id=test-id').respond(200, {
@@ -89,14 +91,14 @@ describe('Prevalence Of Severe Directive', function () {
 
     it('tests template popup', function () {
         var result = controller.templatePopup({properties: {name: 'test'}}, {total: 20, total_measured: 15, severe: 5, moderate: 5, normal: 5});
-        assert.equal(result, '<div class="hoverinfo">'
-            + '<p>test</p>'
-            + '<div>Total Children (6 - 60 months) weighed in given month: <strong>20</strong></div>'
-            + '<div>Total Children (6 - 60 months) with height measured in given month: <strong>15</strong></div>'
-            + '<div>% Unmeasured (6 - 60 months): <strong>25.00%</strong></div>'
-            + '<div>% Severely Acute Malnutrition (6 - 60 months): <strong>25.00%</strong></div>'
-            + '<div>% Moderately Acute Malnutrition (6 - 60 months): <strong>25.00%</strong></div>'
-            + '<div>% Normal (6 - 60 months): <strong>25.00%</strong></div></ul>');
+        assert.equal(result, '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
+            '<p>test</p>' +
+            '<div>Total Children (6 - 60 months) weighed in given month: <strong>20</strong></div>' +
+            '<div>Total Children (6 - 60 months) with height measured in given month: <strong>15</strong></div>' +
+            '<div>Number of Children (6 - 60 months) unmeasured: <strong>5</strong></div>' +
+            '<div>% Severely Acute Malnutrition (6 - 60 months): <strong>33.33%</strong></div>' +
+            '<div>% Moderately Acute Malnutrition (6 - 60 months): <strong>33.33%</strong></div>' +
+            '<div>% Normal (6 - 60 months): <strong>33.33%</strong></div>');
     });
 
     it('tests location change', function () {
@@ -190,7 +192,7 @@ describe('Prevalence Of Severe Directive', function () {
         });
         assert.equal(controller.chartOptions.caption.html,
             '<i class="fa fa-info-circle"></i> ' +
-            'Percentage of children between 6 - 60 months enrolled for ICDS services with weight-for-height below -2 standard deviations of the WHO Child Growth Standards median. \n' +
+            'Percentage of children between (6 - 60 months) enrolled for Anganwadi Services with weight-for-height below -2 standard deviations of the WHO Child Growth Standards median. \n' +
             '\n' +
             'Wasting in children is a symptom of acute undernutrition usually as a consequence\n' +
             'of insufficient food intake or a high incidence of infectious diseases. Severe Acute Malnutrition (SAM) is nutritional status for a child who has severe wasting (weight-for-height) below -3 Z and Moderate Acute Malnutrition (MAM) is nutritional status for a child that has moderate wasting (weight-for-height) below -2Z.'
@@ -200,13 +202,15 @@ describe('Prevalence Of Severe Directive', function () {
     it('tests chart tooltip content', function () {
         var month = {value: "Jul 2017", series: []};
 
-        var expected = '<p><strong>Jul 2017</strong></p><br/>'
-            + '<p>% children with Normal Acute Malnutrition: <strong>10.00%</strong></p>'
-            + '<p>% children with Moderate Acute Malnutrition (MAM): <strong>15.00%</strong></p>'
-            + '<p>% children with Severe Acute Malnutrition (SAM): <strong>20.00%</strong></p>'
-            + '<p>% Unmeasured: <strong>55.00%</strong></p>';
+        var expected = '<p><strong>Jul 2017</strong></p><br/>' +
+            '<div>Total Children (6 - 60 months) weighed in given month: <strong>20</strong></div>' +
+            '<div>Total Children (6 - 60 months) with height measured in given month: <strong>10</strong></div>' +
+            '<div>Number of Children (6 - 60 months) unmeasured: <strong>10</strong></div>' +
+            '<div>% children (6 - 60 months)  with Normal Acute Malnutrition: <strong>10.00%</strong></div>' +
+            '<div>% children (6 - 60 months)  with Moderate Acute Malnutrition (MAM): <strong>15.00%</strong></div>' +
+            '<div>% children (6 - 60 months)  with Severe Acute Malnutrition (SAM): <strong>20.00%</strong></div>';
 
-        var result = controller.tooltipContent(month.value, 0.1, 0.15, 0.2);
+        var result = controller.tooltipContent(month.value, 0.1, 0.15, 0.2, 20, 10);
         assert.equal(expected, result);
     });
 
