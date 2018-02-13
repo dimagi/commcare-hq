@@ -208,7 +208,7 @@ class AddCustomSOAPCaseRepeaterView(AddCaseRepeaterView):
         return repeater
 
 
-class AddCustomSOAPLocationRepaterView(AddRepeaterView):
+class AddCustomSOAPLocationRepeaterView(AddRepeaterView):
     repeater_form_class = SOAPLocationRepeaterForm
 
     @property
@@ -216,7 +216,7 @@ class AddCustomSOAPLocationRepaterView(AddRepeaterView):
         return reverse(self.urlname, args=[self.domain])
 
     def make_repeater(self):
-        repeater = super(AddCustomSOAPLocationRepaterView, self).make_repeater()
+        repeater = super(AddCustomSOAPLocationRepeaterView, self).make_repeater()
         repeater.operation = self.add_repeater_form.cleaned_data['operation']
         return repeater
 

@@ -1,7 +1,7 @@
 from .repeaters import (
     AddCaseRepeaterView,
     AddCustomSOAPCaseRepeaterView,
-    AddCustomSOAPLocationRepaterView,
+    AddCustomSOAPLocationRepeaterView,
     AddFormRepeaterView,
     AddRepeaterView,
     DomainForwardingOptionsView,
