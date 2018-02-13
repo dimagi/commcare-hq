@@ -79,3 +79,14 @@ git commit -m "first pass externalizing javascript in $module"
 # a bit more yelling at the user
 ./manage.py show_urls | grep $module
 echo "^^^^^^ Check to see if this/these page works"
+echo "----------------------------"
+
+
+template_tags=$(sed -n "/{%/=; /{{/=" $new_module_location)
+template_tag_count="$template_tags" | wc -l
+if [ "$template_tag_count" -gt 0]; then
+    echo "----------------------------"
+    echo "Please fix template tags on these lines."
+    echo $template_tags
+    echo "----------------------------"
+fi
