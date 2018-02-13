@@ -263,7 +263,7 @@ class TestTreatmentOutcomeRepeater(ENikshayLocationStructureMixin, ENikshayRepea
         self.assertEqual(1, len(self.repeat_records().all()))
 
 
-@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True, SERVER_ENVIRONMENT='enikshay')
 class TestUnenrollPatientRepeater(ENikshayLocationStructureMixin, ENikshayRepeaterTestBase):
 
     def setUp(self):
