@@ -49,7 +49,6 @@ class TestNewBornWithLowWeight(TestCase):
             },
             loc_level='state'
         )
-        print data['data']
         self.assertDictEqual(
             data['data'],
             {
