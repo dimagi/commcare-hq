@@ -33,7 +33,7 @@ def pillow_datadog_metrics():
 
         datadog_gauge(
             'commcare.change_feed.seconds_since_last_update',
-            pillow['seconds_since_last_update'], tags=tags
+            pillow['seconds_since_last'], tags=tags
         )
 
         for topic_name, offset in pillow['offsets'].items():
