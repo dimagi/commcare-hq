@@ -59,6 +59,7 @@ from corehq.apps.app_manager.suite_xml.utils import get_select_chain
 from corehq.apps.app_manager.suite_xml.generator import SuiteGenerator, MediaSuiteGenerator
 from corehq.apps.app_manager.xpath_validator import validate_xpath
 from corehq.apps.data_dictionary.util import get_case_property_description_dict
+from corehq.apps.linked_domain.exceptions import ActionNotPermitted
 from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
 from corehq.apps.users.dbaccessors.couch_users import get_display_name_for_user_id
 from corehq.util.timezones.utils import get_timezone_for_domain
@@ -6268,51 +6269,33 @@ class RemoteApp(ApplicationBase):
         return questions
 
 
-class RemoteAppDetails(namedtuple('RemoteAppDetails', 'url_base domain username api_key app_id')):
-    def __bool__(self):
-        return bool(self.url_base)
-
-    __nonzero__ = __bool__
-
-
-class RemoteLinkedAppAuth(DocumentSchema):
-    username = StringProperty()
-    api_key = StringProperty()
-
-
 class LinkedApplication(Application):
     """
     An app that can pull changes from an app in a different domain.
     """
     # This is the id of the master application
     master = StringProperty()
-    master_domain = StringProperty()
-    remote_url_base = StringProperty()
-    remote_auth = SchemaProperty(RemoteLinkedAppAuth)
-
-    _meta_fields = Application._meta_fields + ['remote_auth']
 
     @property
-    def remote_app_details(self):
-        return RemoteAppDetails(
-            self.remote_url_base,
-            self.master_domain,
-            self.remote_auth.username,
-            self.remote_auth.api_key,
-            self.master
-        )
+    @memoized
+    def domain_link(self):
+        from corehq.apps.linked_domain.dbaccessors import get_domain_master_link
+        return get_domain_master_link(self.domain)
 
     def get_master_version(self):
-        return get_master_app_version(self.master_domain, self.master, self.remote_app_details)
+        if self.domain_link:
+            return get_master_app_version(self.domain_link, self.master)
 
     @property
     def master_is_remote(self):
-        return bool(self.remote_url_base)
+        if self.domain_link:
+            return self.domain_link.is_remote
 
     def get_latest_master_release(self):
-        return get_latest_master_app_release(
-            self.master_domain, self.master, self.domain, self.remote_app_details
-        )
+        if self.domain_link:
+            return get_latest_master_app_release(self.domain_link, self.master)
+        else:
+            raise ActionNotPermitted
 
 
 def import_app(app_id_or_source, domain, source_properties=None, validate_source_domain=None):

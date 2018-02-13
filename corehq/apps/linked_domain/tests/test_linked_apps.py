@@ -9,8 +9,10 @@ from mock import patch
 from corehq.apps.app_manager.exceptions import AppEditingError
 from corehq.apps.app_manager.models import (
     Application,
-    ReportModule, ReportAppConfig, Module, RemoteAppDetails, LinkedApplication)
+    ReportModule, ReportAppConfig, Module, LinkedApplication)
+from corehq.apps.linked_domain.dbaccessors import get_domain_master_link
 from corehq.apps.linked_domain.exceptions import ActionNotPermitted
+from corehq.apps.linked_domain.models import DomainLink, RemoteLinkDetails
 from corehq.apps.linked_domain.remote_accessors import _convert_app_from_remote_linking_source, \
     _get_missing_multimedia, _fetch_remote_media
 from corehq.apps.app_manager.tests.util import TestXmlMixin
@@ -38,10 +40,13 @@ class BaseLinkedAppsTest(TestCase, TestXmlMixin):
         cls.linked_app = LinkedApplication.new_app('domain-2', "Linked Application")
         cls.linked_app.save()
 
+        cls.domain_link = DomainLink.link_domains('domain-2', 'domain')
+
     @classmethod
     def tearDownClass(cls):
         cls.linked_app.delete()
         cls.plain_master_app.delete()
+        cls.domain_link.delete()
         super(BaseLinkedAppsTest, cls).tearDownClass()
 
     def setUp(self):
@@ -77,7 +82,6 @@ class TestLinkedApps(BaseLinkedAppsTest):
 
     def test_get_master_version(self):
         self.linked_app.master = self.plain_master_app.get_id
-        self.linked_app.master_domain = self.plain_master_app.domain
 
         self.assertIsNone(self.linked_app.get_master_version())
 
@@ -97,7 +101,6 @@ class TestLinkedApps(BaseLinkedAppsTest):
 
     def test_get_latest_master_release(self):
         self.linked_app.master = self.plain_master_app.get_id
-        self.linked_app.master_domain = self.plain_master_app.domain
 
         self.assertIsNone(self.linked_app.get_latest_master_release())
 
@@ -119,7 +122,6 @@ class TestLinkedApps(BaseLinkedAppsTest):
 
     def test_get_latest_master_release_not_permitted(self):
         self.linked_app.master = self.plain_master_app.get_id
-        self.linked_app.master_domain = self.plain_master_app.domain
 
         release = self.plain_master_app.make_build()
         release.is_released = True
@@ -129,18 +131,19 @@ class TestLinkedApps(BaseLinkedAppsTest):
         latest_master_release = self.linked_app.get_latest_master_release()
         self.assertEqual(release.get_id, latest_master_release.get_id)
 
-        original = self.plain_master_app.linked_whitelist
-        self.plain_master_app.linked_whitelist = []
-        self.plain_master_app.save()
+        self.domain_link.linked_domain = 'other'
+        self.domain_link.save()
+        get_domain_master_link.clear('domain-2')
 
         def _revert():
-            self.plain_master_app.linked_whitelist = original
-            self.plain_master_app.save()
+            self.domain_link.linked_domain = 'domain-2'
+            self.domain_link.save()
 
         self.addCleanup(_revert)
 
         with self.assertRaises(ActionNotPermitted):
-            self.linked_app.get_latest_master_release()
+            # re-fetch to bust memoize cache
+            LinkedApplication.get(self.linked_app._id).get_latest_master_release()
 
 
 class TestRemoteLinkedApps(BaseLinkedAppsTest):
@@ -214,8 +217,8 @@ class TestRemoteLinkedApps(BaseLinkedAppsTest):
         self.master_app_with_report_modules.get_module(0).set_icon('en', image_path)
         self.master_app_with_report_modules.create_mapping(self.image, image_path, save=False)
 
-        remote_app_details = RemoteAppDetails(
-            'http://localhost:8000', 'test_domain', 'user', 'key', self.master_app_with_report_modules._id
+        remote_details = RemoteLinkDetails(
+            'http://localhost:8000', 'user', 'key'
         )
         data = 'this is a test'
         media_details = list(self.master_app_with_report_modules.multimedia_map.values())[0]
@@ -223,7 +226,7 @@ class TestRemoteLinkedApps(BaseLinkedAppsTest):
         media_details['media_type'] = 'CommCareMultimedia'
         with patch('corehq.apps.linked_domain.remote_accessors._fetch_remote_media_content') as mock:
             mock.return_value = data
-            _fetch_remote_media('domain', [('case_list_image.jpg', media_details)], remote_app_details)
+            _fetch_remote_media('domain', [('case_list_image.jpg', media_details)], remote_details)
 
         media = CommCareMultimedia.get(media_details['multimedia_id'])
         self.addCleanup(media.delete)

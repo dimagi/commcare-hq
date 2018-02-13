@@ -22,6 +22,7 @@ from casexml.apps.case.const import ARCHIVED_CASE_OWNER_ID
 from custom.enikshay.management.commands.duplicate_occurrences_and_episodes_reconciliation import (
     get_case_recently_modified_on_phone,
 )
+from six.moves import map
 
 
 class Command(BaseModelReconciliationCommand):
