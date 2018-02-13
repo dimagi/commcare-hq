@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import calendar
-from datetime import datetime
+from datetime import datetime, date
 from ethiopian_date import EthiopianDateConverter
 from dimagi.utils.dates import force_to_datetime
 
@@ -52,20 +52,21 @@ def get_ethiopian_to_gregorian(date_string):
         return ''
 
 
-def get_gregorian_to_ethiopian(datetime_input):
+def get_gregorian_to_ethiopian(date_input):
     '''
-    Takes a string gregorian date and converts it to
+    Takes a gregorian date string or datetime and converts it to
     the equivalent ethiopian date
 
-    :param datetime_input: A datetime
+    :param date_input: A datetime or date string
     :returns: An ethiopian date string or ''
     '''
-    if not datetime_input:
+    if not date_input:
         return ''
 
     try:
-        date_string = datetime_input.strftime('%Y-%m-%d')
-        year, month, day = split_date_string(date_string)
+        if isinstance(date_input, date):
+            date_input = date_input.strftime('%Y-%m-%d')
+        year, month, day = split_date_string(date_input)
     except ValueError:
         return ''
 

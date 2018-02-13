@@ -77,6 +77,8 @@ def test_ethiopian_to_gregorian(self, date_string, expected_result):
     (date(2017, 5, 19), '2009-09-11'),
     (date(2017, 9, 10), '2009-13-05'),
     (None, ''),
+    ('2017-05-19 ', '2009-09-11'),
+    ('2017-5-19', '2009-09-11')
 ), TestEthiopianConversion)
 def test_gregorian_to_ethiopian(self, date_string, expected_result):
     transform = TransformFactory.get_transform({
