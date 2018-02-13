@@ -9,7 +9,8 @@ hqDefine('domain/js/internal_subscription_management', function() {
         date.setDate(date.getDate() + parseInt(viewModel.trialLength()));
         return date.toJSON().slice(0, 10);
     });
-    $('#subscription_management').koApplyBindings(viewModel);
-
-    $('.date-picker').datepicker({ dateFormat: "yy-mm-dd" });
+    $(function() {
+        $('#subscription_management').koApplyBindings(viewModel);
+        $('.date-picker').datepicker({ dateFormat: "yy-mm-dd" });
+    });
 });
