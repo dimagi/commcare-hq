@@ -1,6 +1,5 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-from django.test import TestCase
 
 from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition, CustomDataField
 
