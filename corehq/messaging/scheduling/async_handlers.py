@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 import json
 from corehq.apps.app_manager.dbaccessors import get_app_ids_in_domain, get_latest_released_app
-from corehq.apps.app_manager.models import Application, AdvancedForm
+from corehq.apps.app_manager.models import AdvancedForm
 from corehq.apps.casegroups.dbaccessors import search_case_groups_in_domain
 from corehq.apps.es import GroupES
 from corehq.apps.hqwebapp.async_handler import BaseAsyncHandler
