@@ -11,8 +11,8 @@ hqDefine("domain/js/current_subscription", function() {
             {
                 submitBtnText: gettext("Buy Credits"),
                 errorMessages: initialPageData.get("payment_error_messages"),
-                credit_card_url: initialPageData.get("credit_card_url"),
-                wire_url: initialPageData.get("wire_url"),
+                credit_card_url: initialPageData.reverse("domain_credits_payment"),
+                wire_url: initialPageData.reverse("domain_wire_payment"),
                 wire_email: initialPageData.get("user_email"),
             }
         );

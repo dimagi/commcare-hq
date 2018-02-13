@@ -825,8 +825,6 @@ class DomainSubscriptionView(DomainAccountingSettings):
             'plan': self.plan,
             'change_plan_url': reverse(SelectPlanView.urlname, args=[self.domain]),
             'can_purchase_credits': self.can_purchase_credits,
-            'credit_card_url': reverse(CreditsStripePaymentView.urlname, args=[self.domain]),
-            'wire_url': reverse(CreditsWireInvoiceView.urlname, args=[self.domain]),
             'stripe_public_key': settings.STRIPE_PUBLIC_KEY,
             'payment_error_messages': PAYMENT_ERROR_MESSAGES,
             'sms_rate_calc_url': reverse(SMSRatesView.urlname,

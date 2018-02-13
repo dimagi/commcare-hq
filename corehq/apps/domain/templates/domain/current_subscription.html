@@ -13,11 +13,11 @@
 {% block page_content %}
     {% initial_page_data "stripe_public_key" stripe_public_key %}
     {% initial_page_data "payment_error_messages" payment_error_messages %}
-    {% initial_page_data "credit_card_url" credit_card_url %}
-    {% initial_page_data "wire_url" wire_url %}
     {% initial_page_data "wire_email" user_email %}
     {% initial_page_data "plan" plan %}
     {% initial_page_data "can_purchase_credits" can_purchase_credits %}
+    {% registerurl "domain_credits_payment" domain %}
+    {% registerurl "domain_wire_payment" domain %}
 
     <div class="row">
         <div class="col-sm-12">
