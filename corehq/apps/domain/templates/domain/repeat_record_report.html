@@ -7,11 +7,11 @@
 />{% endblock stylesheets %}
 
 {% block js %}{{ block.super }}
-    <script src="{% static 'domain/js/repeat_record_report.js' %}"></script>
     {% compress js %}
         <script src="{% static 'codemirror/lib/codemirror.js' %}"></script>
         <script src="{% static 'codemirror/mode/xml/xml.js' %}"></script>
         <script src="{% static 'codemirror/mode/javascript/javascript.js' %}"></script>
+        <script src="{% static 'domain/js/repeat_record_report.js' %}"></script>
     {% endcompress %}
 {% endblock js %}
 
