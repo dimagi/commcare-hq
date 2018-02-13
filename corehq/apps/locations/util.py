@@ -211,7 +211,7 @@ class LocationExporter(object):
             additional_headers.append(LOCATION_SHEET_HEADERS_OPTIONAL['uncategorized_data'])
             additional_headers.append(LOCATION_SHEET_HEADERS_OPTIONAL['delete_uncategorized_data'])
 
-            headers[loc_type.code] = [LOCATION_SHEET_HEADERS_BASE.values() + additional_headers]
+            headers[loc_type.code] = [list(LOCATION_SHEET_HEADERS_BASE.values()) + additional_headers]
 
         return list(headers.items())
 
