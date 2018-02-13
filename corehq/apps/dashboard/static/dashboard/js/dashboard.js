@@ -36,9 +36,11 @@ hqDefine("dashboard/js/dashboard", [
             return self.hasItemList() && !self.hasError();
         });
         self.showSpinner = ko.computed(function() {
-            return self.hasItemList()                                   // this is an ajax tile
-                   && (self.items().length === 0 || !self.totalPages()) // both requests are complete...
-                   && !self.hasError();                                 // ...and they completed successfully
+            // Show spinner if this is an ajax tile, it's still waiting for one or both requests,
+            // and neither request has errored out
+            return self.hasItemList()
+                   && (self.items().length === 0 || self.totalPages() === undefined)
+                   && !self.hasError();
         });
         self.showItemList = ko.computed(function() {
             return !self.showSpinner() && !self.hasError();

@@ -2,6 +2,7 @@ from __future__ import absolute_import, division
 from django.conf import settings
 from django.urls import reverse
 from django.http import HttpResponseRedirect
+from django.http.response import Http404
 from django.utils.translation import ugettext_noop, ugettext as _
 from djangular.views.mixins import allow_remote_invocation
 
@@ -54,14 +55,13 @@ def _get_tile(request, slug):
     try:
         tile = [t for t in _get_default_tiles(request) if t.slug == slug][0]
     except IndexError:
-        return json_response(
-            {'message': _("Tile not found: {}").format(slug)},
-            status_code=404,
-        )
+        raise Http404()
+
     return tile
 
 
 @login_and_domain_required
+@location_safe
 def dashboard_tile(request, domain, slug):
     tile = _get_tile(request, slug)
     current_page = int(request.GET.get('currentPage', 1))
@@ -71,6 +71,7 @@ def dashboard_tile(request, domain, slug):
 
 
 @login_and_domain_required
+@location_safe
 def dashboard_tile_total(request, domain, slug):
     tile = _get_tile(request, slug)
     return json_response({'total': tile.paginator.total})
