@@ -15,11 +15,6 @@
 #       convert tags to requesting initial page data
 #   auto indent the moved javascript
 
-# NOTES:
-# GNU-sed is apparently much more powerful than the OSX standard,
-# and there is at least one place where it's quite useful.
-# I'm using it here, so anyone else who liekly touches this should as well.
-
 
 # strict mode --> kill it if something fails
 set -euo pipefail
@@ -38,6 +33,17 @@ function should_continue () {
         esac
     done
 }
+
+# GNU-sed is apparently much more powerful than the OSX standard,
+# and there is at least one place where it's quite useful.
+# Some regexes below won't function correctly without it.
+has_gnu_sed=`sed --version | grep "GNU sed"`
+if [[ false ]]; then
+    echo "Hey! This script was written using GNU sed so it may not function quite as expected using your setup."
+    echo "If you want to install GNU sed, please visit this link http://bfy.tw/GbIs"
+    echo "Do you want to run the rest of the script anyway?"
+    should_continue
+fi
 
 has_local_changes=`git diff-index HEAD` && true
 if [[ $has_local_changes ]]
