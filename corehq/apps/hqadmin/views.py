@@ -3,6 +3,8 @@ import six.moves.html_parser
 import json
 import socket
 import uuid
+import os
+import tempfile
 from io import StringIO
 from collections import defaultdict, namedtuple, OrderedDict, Counter
 from datetime import timedelta, date, datetime
@@ -80,6 +82,9 @@ from corehq.util.supervisord.api import (
     pillow_supervisor_status
 )
 from corehq.util.timer import TimingContext
+from couchexport.files import Temp
+from couchexport.models import Format
+from couchexport.shortcuts import export_response
 from couchforms.models import XFormInstance
 from couchforms.openrosa_response import RESPONSE_XMLNS
 from dimagi.utils.couch.database import get_db, is_bigcouch
@@ -1156,13 +1161,13 @@ def _gir_csv_response(month, year):
     for item in queryset:
         domain_months[item.domain_name].append(item)
     field_names = GIR_FIELDS
-    response = HttpResponse(content_type='text/csv')
-    response['Content-Disposition'] = u'attachment; filename=gir.csv'
-    writer = UnicodeWriter(response)
-    writer.writerow(list(field_names))
-    for months in domain_months.values():
-        writer.writerow(months[0].export_row(months[1:]))
-    return response
+    fd, path = tempfile.mkstemp()
+    with os.fdopen(fd, 'wb') as tmpfile:
+        writer = UnicodeWriter(tmpfile)
+        writer.writerow(list(field_names))
+        for months in domain_months.values():
+            writer.writerow(months[0].export_row(months[1:]))
+        return export_response(Temp(path), Format.UNZIPPED_CSV, 'gir')
 
 
 @require_superuser
