@@ -107,6 +107,7 @@ class ScheduleForm(Form):
     SEND_MONTHLY = 'monthly'
     SEND_IMMEDIATELY = 'immediately'
 
+    STOP_AFTER_FIRST_OCCURRENCE = 'after_first_occurrence'
     STOP_AFTER_OCCURRENCES = 'after_occurrences'
     STOP_NEVER = 'never'
 
@@ -176,7 +177,8 @@ class ScheduleForm(Form):
     stop_type = ChoiceField(
         required=False,
         choices=(
-            # The text for STOP_AFTER_OCCURRENCES gets set dynamically
+            # The text for STOP_AFTER_FIRST_OCCURRENCE and STOP_AFTER_OCCURRENCES gets set dynamically
+            (STOP_AFTER_FIRST_OCCURRENCE, ''),
             (STOP_AFTER_OCCURRENCES, ''),
             (STOP_NEVER, ugettext_lazy('Never')),
         )
@@ -322,6 +324,8 @@ class ScheduleForm(Form):
 
         if self.initial_schedule.total_iterations == TimedSchedule.REPEAT_INDEFINITELY:
             initial['stop_type'] = self.STOP_NEVER
+        elif self.initial_schedule.total_iterations == 1:
+            initial['stop_type'] = self.STOP_AFTER_FIRST_OCCURRENCE
         else:
             initial['stop_type'] = self.STOP_AFTER_OCCURRENCES
             initial['occurrences'] = self.initial_schedule.total_iterations
@@ -610,7 +614,7 @@ class ScheduleForm(Form):
                         data_bind='value: occurrences',
                     ),
                     css_class='col-sm-6',
-                    data_bind="visible: stop_type() != '%s'" % self.STOP_NEVER,
+                    data_bind="visible: stop_type() === '%s'" % self.STOP_AFTER_OCCURRENCES,
                 ),
                 data_bind='visible: showStopInput',
             ),
@@ -1149,6 +1153,8 @@ class ScheduleForm(Form):
         form_data = self.cleaned_data
         if form_data['stop_type'] == self.STOP_NEVER:
             return TimedSchedule.REPEAT_INDEFINITELY
+        elif form_data['stop_type'] == self.STOP_AFTER_FIRST_OCCURRENCE:
+            return 1
 
         return form_data['occurrences']
 

@@ -135,12 +135,16 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
 
         self.setOccurrencesOptionText = function(newValue) {
             var occurrences = $('option[value="after_occurrences"]');
+            var firstOccurrence = $('option[value="after_first_occurrence"]');
             if(newValue === 'daily') {
                 occurrences.text(gettext("After occurrences:"));
+                firstOccurrence.text(gettext("After first occurrence"));
             } else if(newValue === 'weekly') {
                 occurrences.text(gettext("After weeks:"));
+                firstOccurrence.text(gettext("After first week"));
             } else if(newValue === 'monthly') {
                 occurrences.text(gettext("After months:"));
+                firstOccurrence.text(gettext("After first month"));
             }
         };
 
@@ -169,7 +173,12 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
         self.computedEndDate = ko.computed(function() {
             if(self.stop_type() !== 'never') {
                 var start_date_milliseconds = Date.parse(self.start_date());
-                var occurrences = parseInt(self.occurrences());
+                var occurrences = null;
+                if(self.stop_type() === 'after_first_occurrence') {
+                    occurrences = 1;
+                } else {
+                    occurrences = parseInt(self.occurrences());
+                };
 
                 if(!isNaN(start_date_milliseconds) && !isNaN(occurrences)) {
                     var milliseconds_in_a_day = 24 * 60 * 60 * 1000;
