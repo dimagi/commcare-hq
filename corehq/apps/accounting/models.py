@@ -2127,7 +2127,7 @@ class WirePrepaymentBillingRecord(WireBillingRecord):
 class BillingRecord(BillingRecordBase):
     invoice = models.ForeignKey(Invoice, on_delete=models.PROTECT)
     INVOICE_CONTRACTED_HTML_TEMPLATE = 'accounting/email/invoice_contracted.html'
-    INVOICE_CONTRACTED_TEXT_TEMPLATE = 'accounting/email/invoice_contracted_plaintext.txt'
+    INVOICE_CONTRACTED_TEXT_TEMPLATE = 'accounting/email/invoice_contracted.txt'
 
     INVOICE_AUTOPAY_HTML_TEMPLATE = 'accounting/email/invoice_autopayment.html'
     INVOICE_AUTOPAY_TEXT_TEMPLATE = 'accounting/email/invoice_autopayment.txt'
@@ -2405,8 +2405,6 @@ class InvoicePdf(BlobMixin, SafeSaveDocument):
     invoice_id = StringProperty()
     date_created = DateTimeProperty()
     is_wire = BooleanProperty(default=False)
-
-    _migrating_blobs_from_couch = True
 
     def generate_pdf(self, invoice):
         self.save()

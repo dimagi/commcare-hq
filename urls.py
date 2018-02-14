@@ -89,7 +89,8 @@ domain_specific = [
         lambda request, domain: render(request, 'hqwebapp/base.html', {'domain': domain})
     )),
     url(r'^zapier/', include('corehq.apps.zapier.urls')),
-    url(r'^zipline/', include('custom.zipline.urls'))
+    url(r'^zipline/', include('custom.zipline.urls')),
+    url(r'^remote_link/', include('corehq.apps.linked_domain.urls'))
 ]
 
 urlpatterns = [

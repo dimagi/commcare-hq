@@ -261,6 +261,20 @@ class RawIndicatorTest(SingleIndicatorTestBase):
         self._check_result(indicator, dict(foo=None), None)
         self._check_result(indicator, dict(nofoo='foryou'), None)
 
+    def test_raw_small_ints(self):
+        indicator = IndicatorFactory.from_spec({
+            "type": "raw",
+            "column_id": "foo",
+            "datatype": "small_integer",
+            'property_name': 'foo',
+            "display_name": "raw foos",
+        })
+        self._check_result(indicator, dict(foo="bar"), None)
+        self._check_result(indicator, dict(foo=1), 1)
+        self._check_result(indicator, dict(foo=1.2), 1)
+        self._check_result(indicator, dict(foo=None), None)
+        self._check_result(indicator, dict(nofoo='foryou'), None)
+
     def test_raw_strings(self):
         indicator = IndicatorFactory.from_spec({
             "type": "raw",
@@ -421,6 +435,14 @@ class ExpressionIndicatorTest(SingleIndicatorTestBase):
             "expression": 10,
             "column_id": "foo",
             "datatype": "integer"
+        })
+        self._check_result(indicator, {}, 10)
+        self._check_result(indicator, {'foo': 'bar'}, 10)
+        indicator = IndicatorFactory.from_spec({
+            "type": "expression",
+            "expression": 10,
+            "column_id": "foo",
+            "datatype": "small_integer"
         })
         self._check_result(indicator, {}, 10)
         self._check_result(indicator, {'foo': 'bar'}, 10)

@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from datetime import datetime, timedelta
 import six.moves.urllib.request, six.moves.urllib.parse, six.moves.urllib.error
-import urlparse
+import six.moves.urllib.parse
 import warnings
 
 from django.utils.translation import ugettext_lazy as _
@@ -346,14 +346,14 @@ class FormRepeater(Repeater):
             return url
         else:
             # adapted from http://stackoverflow.com/a/2506477/10840
-            url_parts = list(urlparse.urlparse(url))
-            query = urlparse.parse_qsl(url_parts[4])
+            url_parts = list(six.moves.urllib.parse.urlparse(url))
+            query = six.moves.urllib.parse.parse_qsl(url_parts[4])
             try:
                 query.append(("app_id", self.payload_doc(repeat_record).app_id))
             except (XFormNotFound, ResourceNotFound):
                 return None
             url_parts[4] = six.moves.urllib.parse.urlencode(query)
-            return urlparse.urlunparse(url_parts)
+            return six.moves.urllib.parse.urlunparse(url_parts)
 
     def get_headers(self, repeat_record):
         headers = super(FormRepeater, self).get_headers(repeat_record)

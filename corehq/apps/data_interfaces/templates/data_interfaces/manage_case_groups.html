@@ -3,67 +3,7 @@
 {% load hq_shared_tags %}
 {% load crispy_forms_tags %}
 
-{% block js-inline %}{{ block.super }}
-    {% if bulk_upload_id %}
-        <script>
-            var isPollingActive = true,
-                attempts = 0;
-
-            var retry = function () {
-                attempts += 1;
-                setTimeout(pollStatus, 2000);
-            };
-
-            var pollStatus = function () {
-                if (isPollingActive && attempts < 10) {
-                    $.ajax({
-                        url: '',
-                        type: 'post',
-                        dataType: 'json',
-                        data: {
-                            action: 'bulk',
-                            upload_id: '{{ bulk_upload_id }}'
-                        },
-                        error: function (data) {
-                            retry();
-                        },
-                        success: function (data) {
-                            if (data) {
-                                isPollingActive = false;
-                                $('#upload-notice').html(
-                                    _.template($('#template-bulk-status').text())(data)
-                                );
-                            } else {
-                                retry();
-                            }
-                        }
-                    });
-                } else {
-                    if (attempts >= 10) {
-                        $('#upload-notice').text("{% trans 'Sorry, it looks like the upload failed.' %}");
-                    }
-                    isPollingActive = false;
-                }
-            };
-            $(function () {
-                pollStatus();
-            });
-        </script>
-    {% endif %}
-    <script>
-        $(function () {
-            var $editGroupName = $('#edit-group-name');
-            $('#toggle-group-name').click(function (e) {
-                $editGroupName.toggle();
-                e.preventDefault();
-            });
-        });
-    </script>
-{% endblock %}
-
-{% block js %}{{ block.super }}
-    <script src="{% static 'hqwebapp/js/bulk_upload_file.js' %}"></script>
-{% endblock %}
+{% requirejs_main "data_interfaces/js/manage_case_groups" %}
 
 {% block pagination_header %}
     <h3>
@@ -108,6 +48,8 @@
 {% endblock %}
 
 {% block pagination_templates %}
+    {% initial_page_data 'bulk_upload_id' bulk_upload_id %}
+
     <script type="text/html" id="existing-case-template">
         <td class="col-sm-5">
             <a data-bind="attr: { href: detailsUrl }, text: name" target="_blank"></a>

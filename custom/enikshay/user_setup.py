@@ -21,6 +21,7 @@ from .const import (
     PRIVATE_SECTOR_WORKER_ROLE,
 )
 from .models import AgencyIdCounter, IssuerId
+from six.moves import range
 
 
 def save_user_callback(sender, couch_user, **kwargs):

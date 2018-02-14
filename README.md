@@ -167,7 +167,22 @@ COMPRESS_OFFLINE = False
 The disadvantage is that this is a different setup than production, where LESS files are compressed. It also slows down page load times, compared to compressing offline.
 
 
-#### Option 2: Compress OFFLINE, just like production
+#### Option 2: Compress in Django, caching results in Redis
+
+This is a good option if your local environment is running slowly and you're not doing development in LESS files. Set the following in your `localsettings.py`:
+
+```
+COMPRESS_ENABLED = True
+COMPRESS_OFFLINE = False
+
+COMPRESS_MINT_DELAY = 30
+COMPRESS_MTIME_DELAY = 3
+COMPRESS_REBUILD_TIMEOUT = 6000
+```
+
+The three later settings control how often files are re-compressed; read more about them [here](http://django-compressor.readthedocs.io/en/latest/settings/). In practice, getting files to re-compress whenever you make a change can be tricky; if doing LESS work it's often easier to switch back to option 1 above, compiling client-side.
+
+#### Option 3: Compress OFFLINE, just like production
 
 This mirrors production's setup, but it's really only useful if you're trying to debug issues that mirror production that's related to staticfiles and compressor. For all practical uses, please use Option 1 to save yourself the headache.
 

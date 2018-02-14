@@ -33,18 +33,6 @@ function FunctionalToiletController($scope, $routeParams, $location, $filter, in
     };
     vm.message = storageService.getKey('message') || false;
 
-    vm.prevDay = moment().subtract(1, 'days').format('Do MMMM, YYYY');
-    vm.lastDayOfPreviousMonth = moment().set('date', 1).subtract(1, 'days').format('Do MMMM, YYYY');
-    vm.currentMonth = moment().format("MMMM");
-    vm.showInfoMessage = function () {
-        var selected_month = parseInt($location.search()['month']) || new Date().getMonth() + 1;
-        var selected_year = parseInt($location.search()['year']) || new Date().getFullYear();
-        var current_month = new Date().getMonth() + 1;
-        var current_year = new Date().getFullYear();
-        return selected_month === current_month && selected_year === current_year &&
-            (new Date().getDate() === 1 || new Date().getDate() === 2);
-    };
-
     $scope.$watch(function() {
         return vm.selectedLocations;
     }, function (newValue, oldValue) {
@@ -67,7 +55,7 @@ function FunctionalToiletController($scope, $routeParams, $location, $filter, in
     vm.templatePopup = function(loc, row) {
         var in_month = row ? $filter('indiaNumbers')(row.in_month) : 'N/A';
         var percent = row ? d3.format('.2%')(row.in_month / (row.all || 1)) : "N/A";
-        return '<div class="hoverinfo">' +
+        return '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
             '<p>' + loc.properties.name + '</p>' +
             '<div>Number of AWCs that reported having a functional toilet: <strong>' + in_month + '</strong></div>' +
             '<div>% of AWCs that reported having a functional toilet: <strong>' + percent + '</strong></div>';
@@ -113,8 +101,9 @@ function FunctionalToiletController($scope, $routeParams, $location, $filter, in
                 }) * 100);
                 var range = max - min;
                 vm.chartOptions.chart.forceY = [
-                    ((min - range/10)/100).toFixed(2) < 0 ? 0 : ((min - range/10)/100).toFixed(2),
-                    ((max + range/10)/100).toFixed(2),
+                    parseInt(((min - range/10)/100).toFixed(2)) < 0 ?
+                        0 : parseInt(((min - range/10)/100).toFixed(2)),
+                    parseInt(((max + range/10)/100).toFixed(2)),
                 ];
             }
         });
@@ -122,7 +111,7 @@ function FunctionalToiletController($scope, $routeParams, $location, $filter, in
 
     vm.init = function() {
         var locationId = vm.filtersData.location_id || vm.userLocationId;
-        if (!locationId || locationId === 'all' || locationId === 'null') {
+        if (!locationId || ["all", "null", "undefined"].indexOf(locationId) >= 0) {
             vm.loadData();
             vm.loaded = true;
             return;
@@ -222,8 +211,8 @@ function FunctionalToiletController($scope, $routeParams, $location, $filter, in
 
     vm.tooltipContent = function (monthName, dataInMonth) {
         var tooltip_content = "<p><strong>" + monthName + "</strong></p><br/>";
-        tooltip_content += "<p>Number of AWCs that reported having a functional toilet: <strong>" + $filter('indiaNumbers')(dataInMonth.in_month) + "</strong></p>";
-        tooltip_content += "<p>% of AWCs that reported having a functional toilet: <strong>" + d3.format('.2%')(dataInMonth.y) + "</strong></p>";
+        tooltip_content += "<div>Number of AWCs that reported having a functional toilet: <strong>" + $filter('indiaNumbers')(dataInMonth.in_month) + "</strong></div>";
+        tooltip_content += "<div>% of AWCs that reported having a functional toilet: <strong>" + d3.format('.2%')(dataInMonth.y) + "</strong></div>";
 
         return tooltip_content;
     };

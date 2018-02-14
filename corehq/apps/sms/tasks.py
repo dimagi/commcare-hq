@@ -19,7 +19,7 @@ from corehq.apps.sms.change_publishers import publish_sms_saved
 from corehq.apps.sms.mixin import (InvalidFormatException,
     PhoneNumberInUseException, apply_leniency)
 from corehq.apps.sms.models import (INCOMING, MigrationStatus, OUTGOING,
-    PhoneLoadBalancingMixin, PhoneNumber, QueuedSMS, SMS)
+    PhoneLoadBalancingMixin, PhoneNumber, QueuedSMS, SMS, DailyOutboundSMSLimitReached)
 from corehq.apps.sms.util import is_contact_active
 from corehq.apps.smsbillables.exceptions import RetryBillableTaskException
 from corehq.apps.smsbillables.models import SmsBillable
@@ -221,6 +221,67 @@ def handle_incoming(msg):
         handle_unsuccessful_processing_attempt(msg)
 
 
+class OutboundDailyCounter(object):
+
+    def __init__(self, domain_object=None):
+        self.domain_object = domain_object
+        self.utc_date = datetime.utcnow().date()
+        self.key = 'outbound-daily-count-for-%s-%s' % (
+            domain_object.name if domain_object else '',
+            self.utc_date.strftime('%Y-%m-%d')
+        )
+
+        # We need access to the raw redis client because calling incr on
+        # a django_redis RedisCache object raises an error if the key
+        # doesn't exist.
+        self.client = get_redis_client().client.get_client()
+
+    def increment(self):
+        # If the key doesn't exist, redis will set it to 0 and then increment.
+        value = self.client.incr(self.key)
+
+        # If it's the first time we're calling incr, set the key's expiration
+        if value == 1:
+            self.client.expire(self.key, 24 * 60 * 60)
+
+        return value
+
+    def decrement(self):
+        return self.client.decr(self.key)
+
+    @property
+    def daily_limit(self):
+        if self.domain_object:
+            return self.domain_object.daily_outbound_sms_limit
+        else:
+            # If the message isn't tied to a domain, still impose a limit.
+            # Outbound messages not tied to a domain can happen when unregistered
+            # contacts opt in or out from a gateway.
+            return 10000
+
+    def can_send_outbound_sms(self, queued_sms):
+        """
+        Returns False if the outbound daily limit has been exceeded.
+        """
+        value = self.increment()
+
+        if value > self.daily_limit:
+            # Delay processing by an hour so that in case the
+            # limit gets increased within the same day, we start
+            # processing the backlog right away.
+            self.decrement()
+            delay_processing(queued_sms, 60)
+
+            # Log the fact that we reached this limit
+            DailyOutboundSMSLimitReached.create_for_domain_and_date(
+                self.domain_object.name if self.domain_object else '',
+                self.utc_date
+            )
+            return False
+
+        return True
+
+
 @no_result_task(queue="sms_queue", acks_late=True)
 def process_sms(queued_sms_pk):
     """
@@ -246,12 +307,16 @@ def process_sms(queued_sms_pk):
             release_lock(message_lock, True)
             return
 
+        outbound_counter = None
         if msg.direction == OUTGOING:
-            if msg.domain:
-                domain_object = Domain.get_by_name(msg.domain)
-            else:
-                domain_object = None
+            domain_object = Domain.get_by_name(msg.domain) if msg.domain else None
+
             if domain_object and handle_domain_specific_delays(msg, domain_object, utcnow):
+                release_lock(message_lock, True)
+                return
+
+            outbound_counter = OutboundDailyCounter(domain_object)
+            if not outbound_counter.can_send_outbound_sms(msg):
                 release_lock(message_lock, True)
                 return
 
@@ -289,6 +354,8 @@ def process_sms(queued_sms_pk):
 
         release_lock(message_lock, True)
         if requeue:
+            if outbound_counter:
+                outbound_counter.decrement()
             send_to_sms_queue(msg)
 
 

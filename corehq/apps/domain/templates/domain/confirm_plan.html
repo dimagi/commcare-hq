@@ -1,24 +1,9 @@
 {% extends "domain/base_change_plan.html" %}
 {% load i18n %}
+{% load hq_shared_tags %}
 
-{% block js-inline %}{{ block.super }}
-    <script>
-        $(function () {
-            $('#confirm-product-agreement').click(function () {
-                var $submit = $('#submit-button-pa'),
-                    $helpText = $('#submit-button-help-qa');
-                if ($(this).prop('checked')) {
-                    $submit.prop('disabled', false);
-                    $submit.removeClass('disabled');
-                    $helpText.addClass('hide');
-                } else {
-                    $submit.prop('disabled', true);
-                    $submit.addClass('disabled');
-                    $helpText.removeClass('hide');
-                }
-            });
-        });
-    </script>
+{% block js %}{{ block.super }}
+    <script src="{% static 'domain/js/confirm_plan.js' %}"></script>
 {% endblock %}
 
 {% block form_content %}

@@ -60,7 +60,7 @@ from corehq.apps.smsbillables.interface import (
     SMSBillablesInterface,
     SMSGatewayFeeCriteriaInterface,
 )
-from corehq.apps.domain.views import DomainForwardingRepeatRecords
+from corehq.motech.repeaters.views import DomainForwardingRepeatRecords
 from custom.openclinica.reports import OdmExportReport
 
 

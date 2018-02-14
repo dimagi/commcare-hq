@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import division
 from datetime import datetime, timedelta
 import logging
 import itertools

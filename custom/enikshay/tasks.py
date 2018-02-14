@@ -49,6 +49,7 @@ from .const import (
     DATE_FULFILLED,
     DAILY_SCHEDULE_FIXTURE_NAME,
     DAILY_SCHEDULE_ID,
+    ENROLLED_IN_PRIVATE,
     SCHEDULE_ID_FIXTURE,
     HISTORICAL_CLOSURE_REASON,
     ENIKSHAY_TIMEZONE,
@@ -218,6 +219,11 @@ class EpisodeUpdater(object):
         case_accessor = CaseAccessors(self.domain)
         episode_cases = case_accessor.iter_cases(case_ids)
         for episode_case in episode_cases:
+
+            # only run on private sector
+            if episode_case.get_case_property(ENROLLED_IN_PRIVATE) != 'true':
+                continue
+
             # if this episode is part of a deleted or archived person, don't update
             try:
                 person_case = get_person_case_from_episode(self.domain, episode_case.case_id)

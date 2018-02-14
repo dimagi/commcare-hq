@@ -60,6 +60,7 @@ from .tree_utils import assert_no_cycles
 from .util import load_locs_json, location_hierarchy_config, dump_locations
 import six
 from six.moves import map
+from six.moves import range
 
 
 logger = logging.getLogger(__name__)
