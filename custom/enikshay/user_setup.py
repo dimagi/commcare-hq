@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import division
 import math
 import uuid
 from crispy_forms import layout as crispy
@@ -79,7 +80,7 @@ def compress_id(serial_id, growth_symbols, lead_symbols, body_symbols, body_digi
     max_fixed_length_size = (body_digit_base ** body_digit_count) * lead_digit_base
 
     if serial_id >= max_fixed_length_size:
-        times_over_max = serial_id / max_fixed_length_size
+        times_over_max = serial_id // max_fixed_length_size
         growth_digit_count = int(math.log(times_over_max, growth_digit_base)) + 1
     else:
         growth_digit_count = 0
@@ -95,7 +96,7 @@ def compress_id(serial_id, growth_symbols, lead_symbols, body_symbols, body_digi
     remainder = serial_id
     counts = []
     for divisor in divisors:
-        counts.append(remainder / divisor)
+        counts.append(remainder // divisor)
         remainder = remainder % divisor
 
     if remainder != 0:
