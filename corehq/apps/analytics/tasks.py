@@ -511,18 +511,21 @@ def _email_is_valid(email):
 
 
 def submit_data_to_hub_and_kiss(submit_json):
-    hubspot_dispatch = (batch_track_on_hubspot, "Error submitting periodic analytics data to Hubspot")
+    hubspot_dispatch = (batch_track_on_hubspot, "Error submitting periodic analytics data to Hubspot",
+                        settings.ANALYTICS_IDS.get('HUBSPOT_API_KEY', None))
     kissmetrics_dispatch = (
-        _track_periodic_data_on_kiss, "Error submitting periodic analytics data to Kissmetrics"
+        _track_periodic_data_on_kiss, "Error submitting periodic analytics data to Kissmetrics",
+        settings.ANALYTICS_IDS.get('KISSMETRICS_KEY', None)
     )
 
-    for (dispatcher, error_message) in [hubspot_dispatch, kissmetrics_dispatch]:
-        try:
-            dispatcher(submit_json)
-        except requests.exceptions.HTTPError as e:
-            _hubspot_failure_soft_assert(False, e.response.content)
-        except Exception as e:
-            notify_exception(None, u"{msg}: {exc}".format(msg=error_message, exc=e))
+    for (dispatcher, error_message, api_key) in [hubspot_dispatch, kissmetrics_dispatch]:
+        if api_key:
+            try:
+                dispatcher(submit_json)
+            except requests.exceptions.HTTPError as e:
+                _hubspot_failure_soft_assert(False, e.response.content)
+            except Exception as e:
+                notify_exception(None, u"{msg}: {exc}".format(msg=error_message, exc=e))
 
 
 def _track_periodic_data_on_kiss(submit_json):
