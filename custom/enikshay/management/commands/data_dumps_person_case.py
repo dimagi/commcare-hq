@@ -144,9 +144,6 @@ def get_last_episode(person_case):
     elif len(active_open_episode_cases) > 1:
         raise Exception("Multiple active open episode cases found for %s" % person_case.case_id)
     elif len(open_episode_cases) > 0:
-        if len(open_episode_cases) == 1:
-            return open_episode_cases[0]
-        elif len(open_episode_cases) > 1:
-            raise Exception("Multiple open episode cases found for %s" % person_case.case_id)
+        raise Exception("Open inactive episode cases found for %s" % person_case.case_id)
     else:
         return get_recently_closed_case(episode_cases)
