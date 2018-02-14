@@ -84,8 +84,8 @@ class Command(BaseCommand):
             )
             if i % 100 == 0:
                 print('Migrated {}/{} logs'.format(i, total_count))
-                SyncLogSQL.objects.bulk_create(logs)
+                SyncLogSQL.objects.bulk_create(sql_logs)
                 sql_logs = []
         if sql_logs:
             print('Migrated {}/{} logs'.format(total_count, total_count))
-            SyncLogSQL.objects.bulk_create(logs)
+            SyncLogSQL.objects.bulk_create(sql_logs)
