@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 import json
 
-from django.http import JsonResponse, HttpResponseRedirect
+from django.http import JsonResponse
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_lazy, ugettext as _
@@ -16,7 +16,6 @@ from corehq.motech.openmrs.dbaccessors import get_openmrs_importers_by_domain
 from corehq.motech.openmrs.models import OpenmrsImporter
 from corehq.motech.openmrs.tasks import import_patients_to_domain
 from corehq.motech.repeaters.models import RepeatRecord
-from corehq.motech.repeaters.views import AddCaseRepeaterView, EditRepeaterView
 from corehq.motech.openmrs.openmrs_config import OpenmrsCaseConfig, OpenmrsFormConfig
 from corehq.motech.openmrs.forms import OpenmrsConfigForm, OpenmrsImporterForm
 from corehq.motech.openmrs.models import ColumnMapping
@@ -34,17 +33,6 @@ from six.moves import range
 
 
 PASSWORD_PLACEHOLDER = '*' * 16
-
-
-class AddOpenmrsRepeaterView(AddCaseRepeaterView):
-    urlname = 'new_openmrs_repeater$'
-    page_title = ugettext_lazy("Forward to OpenMRS")
-    page_name = ugettext_lazy("Forward to OpenMRS")
-
-
-class EditOpenmrsRepeaterView(EditRepeaterView, AddOpenmrsRepeaterView):
-    urlname = 'edit_openmrs_repeater'
-    page_title = ugettext_lazy("Edit OpenMRS Repeater")
 
 
 @login_and_domain_required

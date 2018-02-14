@@ -63,7 +63,6 @@ from corehq.apps.domain.views import (
 )
 from corehq.apps.linked_domain.views import DomainLinkView
 from corehq.apps.reports.dispatcher import DomainReportDispatcher
-from corehq.motech.openmrs.views import EditOpenmrsRepeaterView
 from corehq.motech.repeaters.views import (
     AddCaseRepeaterView,
     AddFormRepeaterView,
@@ -71,6 +70,7 @@ from corehq.motech.repeaters.views import (
     DomainForwardingOptionsView,
     EditCaseRepeaterView,
     EditFormRepeaterView,
+    EditOpenmrsRepeaterView,
     EditRepeaterView,
     RepeatRecordView,
     cancel_repeat_record,

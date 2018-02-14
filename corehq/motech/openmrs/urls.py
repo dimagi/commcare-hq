@@ -6,11 +6,12 @@ from corehq.motech.openmrs.views import (
     openmrs_person_attribute_types,
     openmrs_raw_api,
     openmrs_test_fire,
-    AddOpenmrsRepeaterView,
     openmrs_edit_config,
     OpenmrsImporterView,
     openmrs_import_now,
 )
+from corehq.motech.repeaters.views.repeaters import AddOpenmrsRepeaterView
+
 
 urlpatterns = [
     url(

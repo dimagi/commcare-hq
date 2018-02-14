@@ -199,6 +199,12 @@ class AddCaseRepeaterView(AddRepeaterView):
         return repeater
 
 
+class AddOpenmrsRepeaterView(AddCaseRepeaterView):
+    urlname = 'new_openmrs_repeater$'
+    page_title = ugettext_lazy("Forward to OpenMRS")
+    page_name = ugettext_lazy("Forward to OpenMRS")
+
+
 class AddCustomSOAPCaseRepeaterView(AddCaseRepeaterView):
     repeater_form_class = SOAPCaseRepeaterForm
 
@@ -291,6 +297,11 @@ class EditFormRepeaterView(EditRepeaterView, AddFormRepeaterView):
     @property
     def page_url(self):
         return reverse(AddFormRepeaterView.urlname, args=[self.domain])
+
+
+class EditOpenmrsRepeaterView(EditRepeaterView, AddOpenmrsRepeaterView):
+    urlname = 'edit_openmrs_repeater'
+    page_title = ugettext_lazy("Edit OpenMRS Repeater")
 
 
 @require_POST
