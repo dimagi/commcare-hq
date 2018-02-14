@@ -1,7 +1,7 @@
 /**
  *  Handles fixtures' "Manage Tables" page.
  */
-define([
+hqDefine("fixtures/js/lookup-manage", [
     "jquery",
     "knockout",
     "hqwebapp/js/initial_page_data",
