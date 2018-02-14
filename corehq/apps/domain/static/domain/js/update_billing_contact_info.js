@@ -1,8 +1,11 @@
-hqDefine('domain/js/update_billing_contact_info', function() {
-    Stripe.setPublishableKey('{{ stripe_public_key }}');
-    var cardManager = new hqImport("accounting/js/stripe_card_manager").StripeCardManager({
-        cards: {{ cards|JSON }},
-        url: '{{ card_base_url }}',
+hqDefine('domain/js/update_billing_contact_info', function () {
+    var initialPageData = hqImport("hqwebapp/js/initial_page_data"),
+        StripeCardManager = hqImport("accounting/js/stripe_card_manager").StripeCardManager;
+
+    Stripe.setPublishableKey(initialPageData.get("stripe_public_key"));
+    var cardManager = new StripeCardManager({
+        cards: initialPageData.get("cards"),
+        url: initialPageData.reverse("cards_view"),
     });
     $("#card-manager").koApplyBindings(cardManager);
 
