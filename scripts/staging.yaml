@@ -57,6 +57,7 @@ branches:
   - jls/data-feedback-loop-test # Jenny 2/1
   - fr/two-factor-mobile-users  # FR 2/7
   - dmr/celery-queues  # Danny 2/12
+  - jls/releases-filter # Jenny 2/14
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
