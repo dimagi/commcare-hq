@@ -1634,7 +1634,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
                 ),
                 # Active users
                 util.numcell("%s / %s" % (active_users, total_users),
-                             value=int((float(active_users) // total_users) * 10000) if total_users else -1,
+                             value=int((float(active_users) / total_users) * 10000) if total_users else -1,
                              raw="%s / %s" % (active_users, total_users)),
                 # Cases opened
                 util.numcell(
