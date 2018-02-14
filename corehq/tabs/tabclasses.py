@@ -1065,20 +1065,6 @@ class MessagingTab(UITab):
 
     @property
     @memoized
-    def performance_urls(self):
-        performance_urls = []
-        if self.can_access_reminders and toggles.SMS_PERFORMANCE_FEEDBACK.enabled(self.domain):
-            performance_urls.append(
-                {
-                    'title': _('Configure Performance Messages'),
-                    'url': reverse('performance_sms.list_performance_configs', args=[self.domain]),
-                    'show_in_dropdown': True,
-                }
-            )
-        return performance_urls
-
-    @property
-    @memoized
     def supply_urls(self):
         supply_urls = []
 
@@ -1166,7 +1152,6 @@ class MessagingTab(UITab):
         for title, urls in (
             (_("Messages"), self.messages_urls),
             (_("Data Collection and Reminders"), self.reminders_urls),
-            (_("Performance Messaging"), self.performance_urls),
             (_("CommCare Supply"), self.supply_urls),
             (_("Contacts"), self.contacts_urls),
             (_("Settings"), self.settings_urls)
