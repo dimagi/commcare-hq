@@ -5,7 +5,7 @@ from abc import ABCMeta, abstractmethod
 
 import six as six
 
-from casexml.apps.phone.exceptions import MissingSyncLogSQLException
+from casexml.apps.phone.exceptions import MissingSyncLog
 
 from dimagi.utils.decorators.memoized import memoized
 from couchforms import const
@@ -125,7 +125,7 @@ class AbstractXFormInstance(object):
         if self.last_sync_token:
             try:
                 return get_properly_wrapped_sync_log(self.last_sync_token)
-            except MissingSyncLogSQLException:
+            except MissingSyncLog:
                 pass
         return None
 

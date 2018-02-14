@@ -5,7 +5,7 @@ from datetime import datetime
 import uuid
 import json
 from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
-from casexml.apps.phone.exceptions import IncompatibleSyncLogType, MissingSyncLogSQLException
+from casexml.apps.phone.exceptions import IncompatibleSyncLogType, MissingSyncLog
 from corehq.toggles import LEGACY_SYNC_SUPPORT
 from corehq.util.global_request import get_request_domain
 from corehq.util.soft_assert import soft_assert
@@ -331,7 +331,7 @@ class AbstractSyncLog(SafeSaveDocument, UnicodeMixIn):
 
         try:
             return get_properly_wrapped_sync_log(self.previous_log_id)
-        except MissingSyncLogSQLException:
+        except MissingSyncLog:
             return None
 
     @classmethod
@@ -1251,9 +1251,12 @@ def get_properly_wrapped_sync_log(doc_id):
     """
     Looks up and wraps a sync log, using the class based on the 'log_format' attribute.
     Defaults to the existing legacy SyncLog class.
+
+    Raises MissingSyncLog if doc_id is not found
     """
     try:
         synclog = SyncLogSQL.objects.filter(synclog_id=doc_id).first()
+        return properly_wrap_sync_log(synclog.doc)
     except ValidationError:
         # this occurs if doc_id is not a valid UUID
         synclog = None
@@ -1263,9 +1266,8 @@ def get_properly_wrapped_sync_log(doc_id):
             return properly_wrap_sync_log(SyncLog.get_db().get(doc_id))
         except ResourceNotFound:
             pass
-        raise MissingSyncLogSQLException("A SyncLogSQL object with this synclog_id ({})is not found".format(
+        raise MissingSyncLog("A SyncLogSQL object with this synclog_id ({})is not found".format(
             doc_id))
-    return properly_wrap_sync_log(synclog.doc)
 
 
 def properly_wrap_sync_log(doc):

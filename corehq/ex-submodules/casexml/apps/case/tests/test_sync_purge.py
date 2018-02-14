@@ -4,7 +4,7 @@ import uuid
 from django.test import TestCase
 
 from casexml.apps.case.xml import V1
-from casexml.apps.phone.exceptions import MissingSyncLogSQLException
+from casexml.apps.phone.exceptions import MissingSyncLog
 from casexml.apps.phone.tests.utils import create_restore_user
 from casexml.apps.phone.utils import MockDevice
 from corehq.apps.domain.models import Domain
@@ -54,7 +54,7 @@ class TestSyncPurge(TestCase):
         self.assertEqual(synclog.previous_log_id, initial_synclog_id)
         self.assertTrue(synclog.previous_log_removed)
 
-        with self.assertRaises(MissingSyncLogSQLException):
+        with self.assertRaises(MissingSyncLog):
             initial_sync.get_log()
 
         # form submissions after purge don't fail
