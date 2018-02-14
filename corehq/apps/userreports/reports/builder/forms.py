@@ -980,10 +980,11 @@ class ConfigureNewReportBase(forms.Form):
         data_source_config = DataSourceConfiguration.get(data_source_config_id)
 
         filters = self.cleaned_data['user_filters'] + self.cleaned_data['default_filters']
-        required_column_set = set([c["column_id"]
-                                   for c in self.ds_builder.indicators(self._configured_columns, filters)])
-        current_column_set = set([c["column_id"] for c in data_source_config.configured_indicators])
-        missing_columns = [c for c in required_column_set if c not in current_column_set]
+        # The data source needs indicators for all possible calculations, not just the ones currently in use
+        required_columns = {c["column_id"]
+                            for c in self.ds_builder.all_possible_indicators(self._configured_columns, filters)}
+        current_columns = {c["column_id"] for c in data_source_config.configured_indicators}
+        missing_columns = required_columns - current_columns
 
         # rebuild the table
         if missing_columns:
