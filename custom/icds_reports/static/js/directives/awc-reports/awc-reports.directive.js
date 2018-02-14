@@ -1819,7 +1819,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
         }
 
         var get_url = url('awc_reports', step);
-        if (parseInt(vm.selectedLocationLevel && step !== 'beneficiary') === 4) {
+        if (parseInt(vm.selectedLocationLevel) === 4 && step !== 'beneficiary') {
             vm.myPromise = $http({
                 method: "GET",
                 url: get_url,

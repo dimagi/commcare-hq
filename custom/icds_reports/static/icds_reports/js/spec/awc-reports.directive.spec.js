@@ -213,26 +213,6 @@ describe('AWC Reports Directive', function () {
         assert.equal(expected, result);
     });
 
-    it('tests get data for step', function () {
-        controller.filtersData.location_id = 'test-id';
-        controller.selectedLocationLevel = 4;
-        var step = 'beneficiary';
-        var mockBeneficiaryDetails = {
-            "age_in_months": 43, "weight": [50], "wfl": [], "dob": "2014-03-15",
-            "age": "3 years 8 months ", "height": [150], "person_name": "child1HH1-05",
-            "sex": "M", "mother_name": "motherHH1",
-        };
-
-        $httpBackend.expectGET('beneficiary_details?location_id=test-id').respond(200, mockBeneficiaryDetails);
-        controller.getDataForStep(step);
-        $httpBackend.flush();
-
-        var centerExpected = {"lat": 22.1, "lng": 78.22, "zoom": 5};
-        assert.deepEqual(controller.center, centerExpected);
-        assert.equal(controller.message, false);
-        assert.notEqual(controller.markers, null);
-    });
-
     it('tests show beneficiary details', function () {
         this.timeout(500);
         controller.filtersData.location_id = 'test-id';
