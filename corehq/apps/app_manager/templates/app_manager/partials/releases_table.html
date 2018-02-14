@@ -19,7 +19,7 @@
             </small>
         </p>
     </div>
-    <p class="pull-right auto-release-notes">
+    <p class="pull-right auto-release-notes" data-bind="visible: savedApps().length || limitToReleased()">
         <a href="#" data-bind="click: toggleLimitToReleased">
             <span data-bind="visible: !limitToReleased()">
                 {% trans 'Show only released versions' %}
