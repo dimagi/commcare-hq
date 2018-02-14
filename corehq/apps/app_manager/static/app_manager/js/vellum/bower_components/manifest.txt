@@ -1,8 +1,8 @@
 ├─┬ At.js#d1ed42f66d
-│ ├─┬ Caret.js#0.3.1 incompatible with ~0.2.2 (0.2.2 available, latest is 0.3.1)
+│ ├─┬ Caret.js#0.2.2 (latest is 0.3.1)
 │ │ └── jquery#3.2.1
-│ └── jquery#3.2.1 (3.3.1 available)
-├── Caret.js#0.3.1
+│ └── jquery#3.2.1
+├── Caret.js#0.2.2 incompatible with 0.3.1 (0.3.1 available)
 ├── MediaUploader#521085b566
 ├── XMLWriter#ab8760d6e0
 ├─┬ bootstrap#3.3.7 (latest is 4.0.0)
