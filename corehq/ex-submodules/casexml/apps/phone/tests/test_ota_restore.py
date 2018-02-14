@@ -107,7 +107,7 @@ class BaseOtaRestoreTest(TestCase, TestFileMixin):
 @override_settings(CASEXML_FORCE_DOMAIN_CHECK=False)
 class OtaRestoreTest(BaseOtaRestoreTest):
 
-    def _get_the_only_synclog(self):
+    def _get_the_first_synclog(self):
         return properly_wrap_sync_log(SyncLogSQL.objects.first().doc)
 
     def _get_synclog_count(self):
@@ -117,7 +117,7 @@ class OtaRestoreTest(BaseOtaRestoreTest):
         self.assertEqual(0, self._get_synclog_count())
         restore_payload = deprecated_generate_restore_payload(
             self.project, self.restore_user, items=True)
-        sync_log = self._get_the_only_synclog()
+        sync_log = self._get_the_first_synclog()
         check_xml_line_by_line(
             self,
             dummy_restore_xml(sync_log.get_id, items=3, user=self.restore_user),
@@ -210,7 +210,7 @@ class OtaRestoreTest(BaseOtaRestoreTest):
             user=self.restore_user,
             items=True,
         )
-        sync_log_id = self._get_the_only_synclog().get_id
+        sync_log_id = self._get_the_first_synclog().get_id
         check_xml_line_by_line(
             self,
             dummy_restore_xml(sync_log_id, expected_case_block, items=4, user=self.restore_user),
