@@ -421,14 +421,18 @@ class DataSourceBuilder(object):
             if column['property']:
                 column_option = self.report_column_options[column['property']]
                 for indicator in column_option.get_indicators(column['calculation'], is_multiselect_chart_report):
-                    indicators.setdefault(str(indicator), indicator)
+                    # A column may have multiple indicators. e.g. "Group By" and "Count Per Choice" aggregations
+                    # will use one indicator for the field's string value, and "Sum" and "Average" aggregations
+                    # will use a second indicator for the field's numerical value. "column_id" includes the
+                    # indicator's data type, so it is unique per indicator.
+                    indicators.setdefault(indicator['column_id'], indicator)
 
         for filter_ in filters:
             # Property is only set if the filter exists in report_column_options
             if filter_['property']:
                 property_ = self.data_source_properties[filter_['property']]
                 indicator = property_.to_report_filter_indicator(filter_)
-                indicators.setdefault(str(indicator), indicator)
+                indicators.setdefault(indicator['column_id'], indicator)
 
         if as_dict:
             return indicators
@@ -445,7 +449,7 @@ class DataSourceBuilder(object):
         for column_option in self.report_column_options.values():
             for agg in column_option.aggregation_options:
                 for indicator in column_option.get_indicators(agg):
-                    indicators.setdefault(str(indicator), indicator)
+                    indicators.setdefault(indicator['column_id'], indicator)
 
         return list(indicators.values())[:MAX_COLUMNS]
 
