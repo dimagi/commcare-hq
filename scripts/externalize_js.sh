@@ -38,7 +38,7 @@ function should_continue () {
 # and there is at least one place where it's quite useful.
 # Some regexes below won't function correctly without it.
 has_gnu_sed=`sed --version | grep "GNU sed"`
-if [[ $has_gnu_sed ]]; then
+if [[ ! $has_gnu_sed ]]; then
     echo "Hey! This script was written using GNU sed so it may not function quite as expected using your setup."
     echo "If you want to install GNU sed, please visit this link http://bfy.tw/GbIs"
     echo "Do you want to run the rest of the script anyway?"
@@ -110,7 +110,6 @@ git commit -m "first pass externalizing javascript in $module"
 
 
 # a bit more yelling at the user
-# (maybe should just open these in an available browser? todo)
 ./manage.py show_urls | grep $module
 echo "----------------------------"
 echo "^^^^^^ Check to see if this/these page(s) works"

@@ -745,7 +745,6 @@ class EditExistingBillingAccountView(DomainAccountingSettings, AsyncHandlerMixin
             'billing_account_info_form': self.billing_info_form,
             'cards': self._get_cards(),
             'stripe_public_key': settings.STRIPE_PUBLIC_KEY,
-            'card_base_url': reverse(CardsView.url_name, args=[self.domain]),
         }
 
     def _get_cards(self):
