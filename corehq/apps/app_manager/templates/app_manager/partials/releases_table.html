@@ -90,7 +90,6 @@
              data-bind="css: {
                 'build-released': is_released(),
                 'build-unreleased': !is_released(),
-                'hide': $root.limitToReleased() && !is_released(),
                 'build-latest-release': id() === $root.latestReleaseId(),
                 'error': build_broken
             }">
