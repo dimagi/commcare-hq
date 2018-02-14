@@ -1703,10 +1703,8 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
     vm.label = "AWC Report";
     vm.tooltipPlacement = "right";
     vm.step = $routeParams.step;
-    vm.data = null;
     vm.filters = ['gender', 'age'];
     vm.userLocationId = userLocationId;
-
 
     vm.dtOptions = DTOptionsBuilder.newOptions()
         .withOption('ajax', {
@@ -1818,7 +1816,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
         }
 
         var get_url = url('awc_reports', step);
-        if (parseInt(vm.selectedLocationLevel) === 4) {
+        if (parseInt(vm.selectedLocationLevel) === 4 && step !== 'beneficiary') {
             vm.myPromise = $http({
                 method: "GET",
                 url: get_url,
