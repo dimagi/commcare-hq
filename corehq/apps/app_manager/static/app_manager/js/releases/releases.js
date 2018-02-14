@@ -211,6 +211,7 @@ hqDefine('app_manager/js/releases/releases', function () {
         self.savedApps = ko.observableArray();
         self.doneFetching = ko.observable(false);
         self.buildState = ko.observable('');
+        self.limitToReleased = ko.observable(false);
         self.fetchState = ko.observable('');
         self.nextVersionToFetch = null;
         self.fetchLimit = o.fetchLimit || 5;
@@ -307,6 +308,11 @@ hqDefine('app_manager/js/releases/releases', function () {
             }
         };
 
+        self.clearSavedApps = function() {
+            self.savedApps.splice(0);
+            self.nextVersionToFetch = null;
+        };
+
         self.getMoreSavedApps = function (scroll) {
             self.fetchState('pending');
             $.ajax({
@@ -314,7 +320,8 @@ hqDefine('app_manager/js/releases/releases', function () {
                 dataType: 'json',
                 data: {
                     start_build: self.nextVersionToFetch,
-                    limit: self.fetchLimit
+                    limit: self.fetchLimit,
+                    limit_to_released: self.limitToReleased(),
                 },
                 success: function (savedApps) {
                     self.addSavedApps(savedApps);
@@ -362,6 +369,13 @@ hqDefine('app_manager/js/releases/releases', function () {
                 });
             }
         };
+
+        self.toggleLimitToReleased = function() {
+            self.limitToReleased(!self.limitToReleased());
+            self.clearSavedApps();
+            self.getMoreSavedApps(false);
+        };
+
         self.reload_message = gettext("Sorry, that didn't go through. " +
                 "Please reload your page and try again");
         self.deleteSavedApp = function (savedApp) {
