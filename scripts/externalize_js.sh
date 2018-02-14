@@ -110,7 +110,6 @@ git commit -m "first pass externalizing javascript in $module"
 
 
 # a bit more yelling at the user
-# (maybe should just open these in an available browser? todo)
 ./manage.py show_urls | grep $module
 echo "----------------------------"
 echo "^^^^^^ Check to see if this/these page(s) works"
