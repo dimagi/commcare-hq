@@ -406,7 +406,7 @@ class DataSourceBuilder(object):
                 "map_expression": sub_doc(path)
             }
 
-    def indicators(self, columns, filters, is_multiselect_chart_report=False):
+    def indicators(self, columns, filters, is_multiselect_chart_report=False, as_dict=False):
         """
         Return a list of indicators to be used in a data source configuration that supports the given columns and
         indicators.
@@ -430,6 +430,9 @@ class DataSourceBuilder(object):
                 indicator = property_.to_report_filter_indicator(filter_)
                 indicators.setdefault(str(indicator), indicator)
 
+        if as_dict:
+            return indicators
+
         return list(indicators.values())
 
     def all_possible_indicators(self, required_columns, required_filters):
@@ -437,9 +440,7 @@ class DataSourceBuilder(object):
         Will generate a set of possible indicators for the datasource making sure to include the
         provided columns and filters
         """
-        indicators = OrderedDict()
-        for i in self.indicators(required_columns, required_filters):
-            indicators.setdefault(str(i), i)
+        indicators = self.indicators(required_columns, required_filters, as_dict=True)
 
         for column_option in self.report_column_options.values():
             for agg in column_option.aggregation_options:
