@@ -178,7 +178,7 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
                     occurrences = 1;
                 } else {
                     occurrences = parseInt(self.occurrences());
-                };
+                }
 
                 if(!isNaN(start_date_milliseconds) && !isNaN(occurrences)) {
                     var milliseconds_in_a_day = 24 * 60 * 60 * 1000;
