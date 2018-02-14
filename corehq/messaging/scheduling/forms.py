@@ -107,6 +107,7 @@ class ScheduleForm(Form):
     SEND_MONTHLY = 'monthly'
     SEND_IMMEDIATELY = 'immediately'
 
+    STOP_AFTER_FIRST_OCCURRENCE = 'after_first_occurrence'
     STOP_AFTER_OCCURRENCES = 'after_occurrences'
     STOP_NEVER = 'never'
 
@@ -176,7 +177,8 @@ class ScheduleForm(Form):
     stop_type = ChoiceField(
         required=False,
         choices=(
-            # The text for STOP_AFTER_OCCURRENCES gets set dynamically
+            # The text for STOP_AFTER_FIRST_OCCURRENCE and STOP_AFTER_OCCURRENCES gets set dynamically
+            (STOP_AFTER_FIRST_OCCURRENCE, ''),
             (STOP_AFTER_OCCURRENCES, ''),
             (STOP_NEVER, ugettext_lazy('Never')),
         )
@@ -322,6 +324,8 @@ class ScheduleForm(Form):
 
         if self.initial_schedule.total_iterations == TimedSchedule.REPEAT_INDEFINITELY:
             initial['stop_type'] = self.STOP_NEVER
+        elif self.initial_schedule.total_iterations == 1:
+            initial['stop_type'] = self.STOP_AFTER_FIRST_OCCURRENCE
         else:
             initial['stop_type'] = self.STOP_AFTER_OCCURRENCES
             initial['occurrences'] = self.initial_schedule.total_iterations
@@ -610,7 +614,7 @@ class ScheduleForm(Form):
                         data_bind='value: occurrences',
                     ),
                     css_class='col-sm-6',
-                    data_bind="visible: stop_type() != '%s'" % self.STOP_NEVER,
+                    data_bind="visible: stop_type() === '%s'" % self.STOP_AFTER_OCCURRENCES,
                 ),
                 data_bind='visible: showStopInput',
             ),
@@ -1149,6 +1153,8 @@ class ScheduleForm(Form):
         form_data = self.cleaned_data
         if form_data['stop_type'] == self.STOP_NEVER:
             return TimedSchedule.REPEAT_INDEFINITELY
+        elif form_data['stop_type'] == self.STOP_AFTER_FIRST_OCCURRENCE:
+            return 1
 
         return form_data['occurrences']
 
@@ -1544,6 +1550,25 @@ class ConditionalAlertScheduleForm(ScheduleForm):
         ),
     )
 
+    capture_custom_metadata_item = ChoiceField(
+        label='',
+        choices=(
+            (NO, ugettext_lazy("No")),
+            (YES, ugettext_lazy("Yes")),
+        ),
+        required=False,
+    )
+
+    custom_metadata_item_name = TrimmedCharField(
+        label=ugettext_lazy("Custom Data: Name"),
+        required=False,
+    )
+
+    custom_metadata_item_value = TrimmedCharField(
+        label=ugettext_lazy("Custom Data: Value"),
+        required=False,
+    )
+
     def __init__(self, domain, schedule, can_use_sms_surveys, rule, criteria_form, *args, **kwargs):
         self.initial_rule = rule
         self.criteria_form = criteria_form
@@ -1614,7 +1639,8 @@ class ConditionalAlertScheduleForm(ScheduleForm):
         return (
             CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM in self.initial.get('recipient_types', []) or
             self.initial.get('content') == self.CONTENT_CUSTOM_SMS or
-            self.initial.get('start_date_type') == self.START_DATE_FROM_VISIT_SCHEDULER
+            self.initial.get('start_date_type') == self.START_DATE_FROM_VISIT_SCHEDULER or
+            self.initial.get('capture_custom_metadata_item') == self.YES
         )
 
     @cached_property
@@ -1622,7 +1648,8 @@ class ConditionalAlertScheduleForm(ScheduleForm):
         return (
             CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM in self.cleaned_data['recipient_types'] or
             self.cleaned_data['content'] == self.CONTENT_CUSTOM_SMS or
-            self.cleaned_data['start_date_type'] == self.START_DATE_FROM_VISIT_SCHEDULER
+            self.cleaned_data['start_date_type'] == self.START_DATE_FROM_VISIT_SCHEDULER or
+            self.cleaned_data['capture_custom_metadata_item'] == self.YES
         )
 
     def update_send_time_type_choices(self):
@@ -1670,6 +1697,19 @@ class ConditionalAlertScheduleForm(ScheduleForm):
             if recipient_type == CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM:
                 initial['custom_recipient'] = recipient_id
 
+    def add_initial_for_custom_metadata(self, result):
+        if (
+            isinstance(self.initial_schedule.custom_metadata, dict) and
+            len(self.initial_schedule.custom_metadata) > 0
+        ):
+            result['capture_custom_metadata_item'] = self.YES
+            for name, value in self.initial_schedule.custom_metadata.items():
+                result['custom_metadata_item_name'] = name
+                result['custom_metadata_item_value'] = value
+                # We only capture one item right now, but the framework allows
+                # capturing any number of name, value pairs
+                break
+
     def compute_initial(self):
         result = super(ConditionalAlertScheduleForm, self).compute_initial()
         if self.initial_schedule:
@@ -1686,6 +1726,8 @@ class ConditionalAlertScheduleForm(ScheduleForm):
 
                 if schedule.start_day_of_week >= 0:
                     result['start_day_of_week'] = str(schedule.start_day_of_week)
+
+            self.add_initial_for_custom_metadata(result)
 
         if self.initial_rule:
             action_definition = self.initial_rule.memoized_actions[0].definition
@@ -1821,6 +1863,33 @@ class ConditionalAlertScheduleForm(ScheduleForm):
                 ),
             ),
         ])
+
+        if (
+            self.criteria_form.is_system_admin or
+            self.initial.get('capture_custom_metadata_item') == self.YES
+        ):
+            result.extend([
+                hqcrispy.B3MultiField(
+                    _("Capture Custom Data on each SMS"),
+                    crispy.Div(
+                        twbscrispy.InlineField(
+                            'capture_custom_metadata_item',
+                            data_bind='value: capture_custom_metadata_item',
+                        ),
+                        css_class='col-sm-4',
+                    ),
+                    crispy.Div(
+                        self.get_system_admin_label(),
+                        data_bind="visible: capture_custom_metadata_item() === 'Y'",
+                    ),
+                ),
+                crispy.Div(
+                    crispy.Field('custom_metadata_item_name'),
+                    crispy.Field('custom_metadata_item_value'),
+                    data_bind="visible: capture_custom_metadata_item() === 'Y'",
+                ),
+            ])
+
         return result
 
     def get_system_admin_label(self):
@@ -1993,6 +2062,26 @@ class ConditionalAlertScheduleForm(ScheduleForm):
 
         return value
 
+    def clean_custom_metadata_item_name(self):
+        if self.cleaned_data.get('capture_custom_metadata_item') != self.YES:
+            return None
+
+        value = self.cleaned_data.get('custom_metadata_item_name')
+        if not value:
+            raise ValidationError(_("This field is required."))
+
+        return value
+
+    def clean_custom_metadata_item_value(self):
+        if self.cleaned_data.get('capture_custom_metadata_item') != self.YES:
+            return None
+
+        value = self.cleaned_data.get('custom_metadata_item_value')
+        if not value:
+            raise ValidationError(_("This field is required."))
+
+        return value
+
     def distill_start_offset(self):
         send_frequency = self.cleaned_data.get('send_frequency')
         start_offset_type = self.cleaned_data.get('start_offset_type')
@@ -2065,6 +2154,18 @@ class ConditionalAlertScheduleForm(ScheduleForm):
             )
 
         return super(ConditionalAlertScheduleForm, self).distill_model_timed_event()
+
+    def distill_extra_scheduling_options(self):
+        extra_options = super(ConditionalAlertScheduleForm, self).distill_extra_scheduling_options()
+
+        if self.cleaned_data.get('capture_custom_metadata_item') == self.YES:
+            extra_options['custom_metadata'] = {
+                self.cleaned_data['custom_metadata_item_name']: self.cleaned_data['custom_metadata_item_value']
+            }
+        else:
+            extra_options['custom_metadata'] = {}
+
+        return extra_options
 
     def create_rule_action(self, rule, schedule):
         fields = {
