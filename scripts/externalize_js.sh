@@ -45,17 +45,28 @@ if [[ ! $has_gnu_sed ]]; then
     should_continue
 fi
 
-has_local_changes=`git diff-index HEAD` && true
-if [[ $has_local_changes ]]
-then
-    abort "You have uncommitted changes in your working tree."
+
+echo "Do you want this script to commit changes for you?"
+select yn in "Yes" "No"; do
+    case $yn in
+        Yes ) autocommit=true; break;;
+        No ) autocommit=false; break;;
+    esac
+done
+
+
+if [[ $autocommit == "true" ]]; then
+    has_local_changes=`git diff-index HEAD` && true
+    if [[ $has_local_changes ]]; then
+        abort "You have uncommitted changes in your working tree."
+    fi
+
+    branch=$(git rev-parse --abbrev-ref HEAD)
+    if [[ $branch == 'master' ]]; then
+        abort "You must not be on master to run this command."
+    fi
 fi
 
-branch=$(git rev-parse --abbrev-ref HEAD)
-if [[ $branch == 'master' ]]
-then
-    abort "You must not be on master to run this command."
-fi
 
 app=$1
 module=$2
@@ -105,8 +116,10 @@ else
 fi
 
 # commit the blob movement
-git add $new_module_location $html_file_location
-git commit -m "first pass externalizing javascript in $module"
+if [[ $autocommit == "true" ]]; then
+    git add $new_module_location $html_file_location
+    git commit -m "first pass externalizing javascript in $module"
+fi
 
 
 # check where in page there are template tags
