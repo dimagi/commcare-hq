@@ -6,7 +6,7 @@ from xml.etree import cElementTree as ElementTree
 
 from django.test import TestCase
 
-from casexml.apps.phone.models import SyncLogSQL
+from casexml.apps.phone.models import SyncLogSQL, properly_wrap_sync_log
 from casexml.apps.phone.tests.utils import (
     call_fixture_generator,
     create_restore_user,
@@ -224,7 +224,7 @@ class FixtureTest(TestCase, TestXmlMixin):
         )
 
     def _get_latest_synclog(self):
-        return SyncLogSQL.objects.last().doc
+        return properly_wrap_sync_log(SyncLogSQL.objects.last().doc)
 
     def test_program_fixture(self):
         user = self.user
