@@ -1,4 +1,3 @@
-/* globals hqDefine */
 hqDefine('app_manager/js/import_app', function () {
     function CompressionViewModel(source, post_url){
         var self = this;
@@ -7,7 +6,7 @@ hqDefine('app_manager/js/import_app', function () {
         self.save = function(formElement) {
             $.postGo(post_url,
                      {name : self.name(),
-                      compressed: LZW.compress(self.source())}
+                      compressed: hqImport("hqwebapp/js/lib/compression").LZW.compress(self.source())}
                     );
             return false;
         };
