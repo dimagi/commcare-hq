@@ -122,13 +122,27 @@ if [[ $autocommit == "true" ]]; then
 fi
 
 
+variable_open_bracket_regex="{\(%\|{\)"
+variable_close_bracket_regex="\(%\|}\)}"
 # check where in page there are template tags
-template_tags=`sed -n "/{%/=; /{{/=" $new_module_location`
+template_tags=`sed -n "/$variable_open_bracket_regex/=" $new_module_location`
 template_tag_count=`echo $template_tags | wc -l`
 if [ "$template_tag_count" -gt 0 ]; then
+
+    gettext_open="gettext("
+    gettext_close=")"
+    sed -i "/\('\|\"\)$variable_open_bracket_regex trans/s/ $variable_close_bracket_regex\(\"\|'\)/$gettext_close/; s/\('\|\"\)$variable_open_bracket_regex trans /$gettext_open/" $new_module_location
+
+    initialpagedata_open="initialPageData.get('"
+    initial_page_data_close="')"
+
+    initial_page_data_tags=`sed -n "/$variable_open_bracket_regex/=" $new_module_location`
+    sed -i "s/$variable_open_bracket_regex /$initialpagedata_open/; s/ $variable_close_bracket_regex/')/" $new_module_location
     echo "----------------------------"
-    echo "Please fix template tags on these lines."
+    echo "Please check template tags on these lines."
     echo $template_tags
+    echo "and in particular these lines"
+    echo $initial_page_data_tags
     echo "----------------------------"
 fi
 
