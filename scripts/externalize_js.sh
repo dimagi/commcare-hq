@@ -38,7 +38,7 @@ function should_continue () {
 # and there is at least one place where it's quite useful.
 # Some regexes below won't function correctly without it.
 has_gnu_sed=`sed --version | grep "GNU sed"`
-if [[ false ]]; then
+if [[ $has_gnu_sed ]]; then
     echo "Hey! This script was written using GNU sed so it may not function quite as expected using your setup."
     echo "If you want to install GNU sed, please visit this link http://bfy.tw/GbIs"
     echo "Do you want to run the rest of the script anyway?"
