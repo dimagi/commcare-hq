@@ -46,30 +46,32 @@ def set_meta_fields(from_date, to_date, failfast):
         return
     total_count = len(all_form_ids)
     updated_count = 0
+    skip_count = 0
     # split by partition for bulk updating
     for dbname, form_ids_by_db in split_list_by_db_partition(all_form_ids):
-        for form_ids in chunked(form_ids_by_db, 100):
-            forms_to_update = []
-            for form in sql_iter_forms(form_ids):
-                try:
-                    form.set_meta_properties()
-                except Exception as e:
-                    logger.exception("Error setting meta properties for form {id}".format(id=form.form_id))
-                    if failfast:
-                        raise e
-                needs_update = any([getattr(form, field) for field in META_FIELDS])
-                if needs_update:
-                    forms_to_update.append(form)
-                else:
-                    print("Skipping form {} as it doesn't have meta information".format(form.form_id))
-            if forms_to_update:
-                print('Updating form_ids: {}'.format(
-                    ','.join([form.form_id for form in forms_to_update]))
-                )
+        forms_to_update = []
+        for i, form in enumerate(sql_iter_forms(form_ids_by_db)):
+            try:
+                form.set_meta_properties()
+            except Exception as e:
+                logger.exception("Error setting meta properties for form {id}".format(id=form.form_id))
+                if failfast:
+                    raise e
+            needs_save = any([getattr(form, field) for field in META_FIELDS])
+            if needs_save:
+                forms_to_update.append(form)
+            else:
+                print("Skipping form {} as it doesn't have meta information".format(form.form_id))
+                skip_count += 1
+            if forms_to_update and i%100==0:
+                bulk_update_helper(forms_to_update)
+                updated_count += len(forms_to_update)
+                forms_to_update = []
+        if forms_to_update:
             bulk_update_helper(forms_to_update)
             updated_count += len(forms_to_update)
-    print("Updated {updated} forms out of {total} forms".format(
-        updated=updated_count, total=total_count
+    print("Updated {updated} forms out of {total} forms, skipped {skipcount}".format(
+        updated=updated_count, total=total_count, skipcount=skip_count
     ))
 
 
