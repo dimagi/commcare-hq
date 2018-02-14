@@ -64,11 +64,11 @@ def set_meta_fields(from_date, to_date, failfast):
                 print("Skipping form {} as it doesn't have meta information".format(form.form_id))
                 skip_count += 1
             if forms_to_update and i%100==0:
-                bulk_update_helper(forms_to_update)
+                bulk_update_helper(forms_to_update, using=dbname)
                 updated_count += len(forms_to_update)
                 forms_to_update = []
         if forms_to_update:
-            bulk_update_helper(forms_to_update)
+            bulk_update_helper(forms_to_update, using=dbname)
             updated_count += len(forms_to_update)
     print("Updated {updated} forms out of {total} forms, skipped {skipcount}".format(
         updated=updated_count, total=total_count, skipcount=skip_count
