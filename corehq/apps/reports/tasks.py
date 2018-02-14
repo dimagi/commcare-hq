@@ -67,9 +67,12 @@ EXPIRE_TIME = 60 * 60 * 24
 
 def send_delayed_report(report_id):
     """
-    Sends a scheduled report, via  celery background task.
+    Sends a scheduled report, via celery background task.
     """
-    send_report.delay(report_id)
+    if settings.SERVER_ENVIRONMENT == 'production' and ReportNotification.get(report_id).domain == 'ews-ghana':
+        send_report_throttled.delay(report_id)
+    else:
+        send_report.delay(report_id)
 
 
 @task(queue='background_queue', ignore_result=True)
@@ -79,6 +82,11 @@ def send_report(notification_id):
         notification.send()
     except UnsupportedScheduledReportError:
         pass
+
+
+@task(queue='send_report_throttled', ignore_result=True)
+def send_report_throttled(notification_id):
+    send_report(notification_id)
 
 
 @task
