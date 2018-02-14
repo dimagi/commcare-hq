@@ -19,6 +19,7 @@ DOMAIN = "enikshay"
 class Command(BaseCommand):
     """
     data dumps for person cases
+    https://docs.google.com/spreadsheets/d/1OPp0oFlizDnIyrn7Eiv11vUp8IBmc73hES7qqT-mKKA/edit#gid=1039030624
     """
     def add_arguments(self, parser):
         parser.add_argument('file_name')
@@ -47,9 +48,16 @@ class Command(BaseCommand):
         with open(result_file_name, 'w') as csvfile:
             writer = csv.DictWriter(csvfile, fieldnames=result_file_headers)
             writer.writeheader()
+            # iterate cases
             for case in get_cases(case_type):
                 last_episode_case = None
                 case_row = {}
+                # iterate columns to be generated
+                # details is a dict with key in [
+                # "N/A" -> not to be populated so ignore it
+                # self -> value would be a case property or some meta on the case itself
+                # custom -> value would be some custom logic to be manually coded
+                # specific case reference/association -> value would be case property on this associated case]
                 for column_name, details in report.items():
                     for case_reference, calculation in details.items():
                         if case_reference == "N/A":
@@ -94,6 +102,9 @@ def get_cases(case_type):
 
 
 def get_case_ids(case_type):
+    """
+    All open and closed person cases with person.dataset = 'real' and person.enrolled_in_private != 'true'
+    """
     return (CaseSearchES()
             .domain(DOMAIN)
             .case_type(case_type)
@@ -130,6 +141,14 @@ def get_all_episode_cases_from_person(domain, person_case_id):
 
 
 def get_last_episode(person_case):
+    """
+    For all episode cases under the person (the host of the host of the episode is the primary person case)
+    If count(open episode cases with episode.is_active = 'yes') > 1, report error
+    If count(open episode cases with episode.is_active = 'yes') = 1, pick this case
+    If count(open episode cases with episode.is_active = 'yes') = 0:
+        If count(open episode cases) > 0, report error
+    Else, pick the episode with the latest episode.closed_date
+    """
     episode_cases = get_all_episode_cases_from_person(person_case.domain, person_case.case_id)
     open_episode_cases = [
         episode_case for episode_case in episode_cases
@@ -139,10 +158,10 @@ def get_last_episode(person_case):
         episode_case for episode_case in open_episode_cases
         if episode_case.get_case_property('is_active') == 'yes'
     ]
-    if len(active_open_episode_cases) == 1:
-        return active_open_episode_cases[0]
-    elif len(active_open_episode_cases) > 1:
+    if len(active_open_episode_cases) > 1:
         raise Exception("Multiple active open episode cases found for %s" % person_case.case_id)
+    elif len(active_open_episode_cases) == 1:
+        return active_open_episode_cases[0]
     elif len(open_episode_cases) > 0:
         raise Exception("Open inactive episode cases found for %s" % person_case.case_id)
     else:
