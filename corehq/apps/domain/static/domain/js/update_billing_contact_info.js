@@ -1,3 +1,4 @@
+/* global Stripe */
 hqDefine('domain/js/update_billing_contact_info', function () {
     var initialPageData = hqImport("hqwebapp/js/initial_page_data"),
         StripeCardManager = hqImport("accounting/js/stripe_card_manager").StripeCardManager;
