@@ -100,7 +100,7 @@ if [ "$count" -gt 0 ]; then
 else
     echo "----------------------------"
     echo "Please add this static import somewhere in the html file"
-    echo "{% block js %}{{ block.super }}\n\t<script src='{% static "$new_module_name".js %}'></script>\n{% endblock %}"
+    echo "{% block js %}{{ block.super }}\n\t<script src=\"{% static '$new_module_name'.js %}\"></script>\n{% endblock %}"
     echo "----------------------------"
 fi
 
