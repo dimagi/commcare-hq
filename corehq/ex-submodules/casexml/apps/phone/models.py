@@ -379,6 +379,12 @@ def synclog_to_sql_object(synclog_json_object):
             date=synclog_json_object.date,
             previous_synclog_id=getattr(synclog_json_object, 'previous_synclog_id', None),
             log_format=synclog_json_object.log_format,
+            build_id=synclog_json_object.build_id,
+            duration=synclog_json_object.duration,
+            last_submitted=synclog_json_object.last_submitted,
+            had_state_error=synclog_json_object.had_state_error,
+            error_date=synclog_json_object.error_date,
+            error_hash=synclog_json_object.error_hash,
         )
     synclog.doc = synclog_json_object.to_json()
     return synclog
@@ -400,6 +406,12 @@ class SyncLogSQL(models.Model):
             for format in [LOG_FORMAT_LEGACY, LOG_FORMAT_SIMPLIFIED, LOG_FORMAT_LIVEQUERY]
         ]
     )
+    build_id = models.CharField(max_length=255, null=True, blank=True)
+    duration = models.PositiveSmallIntegerField(null=True, blank=True)
+    last_submitted = models.DateTimeField(db_index=True, null=True, blank=True)
+    had_state_error = models.BooleanField(default=False)
+    error_date = models.DateTimeField(db_index=True, null=True, blank=True)
+    error_hash = models.CharField(max_length=255, null=True, blank=True)
 
 
 class SyncLog(AbstractSyncLog):
