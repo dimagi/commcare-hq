@@ -260,7 +260,6 @@ class DomainLinkHistoryReport(GenericTabularReport):
     def rows(self):
         if not self.selected_link:
             return []
-        print(self.selected_link.master_domain, self.selected_link.linked_domain)
         rows = self._base_query()[self.pagination.start:self.pagination.start + self.pagination.count + 1]
         return [self._make_row(record, self.selected_link) for record in rows]
 
