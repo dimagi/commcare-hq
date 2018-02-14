@@ -211,6 +211,7 @@ hqDefine('app_manager/js/releases/releases', function () {
         self.savedApps = ko.observableArray();
         self.doneFetching = ko.observable(false);
         self.buildState = ko.observable('');
+        self.limitToReleased = ko.observable(false);
         self.fetchState = ko.observable('');
         self.nextVersionToFetch = null;
         self.fetchLimit = o.fetchLimit || 5;
@@ -362,6 +363,11 @@ hqDefine('app_manager/js/releases/releases', function () {
                 });
             }
         };
+
+        self.toggleLimitToReleased = function() {
+            self.limitToReleased(!self.limitToReleased());
+        };
+
         self.reload_message = gettext("Sorry, that didn't go through. " +
                 "Please reload your page and try again");
         self.deleteSavedApp = function (savedApp) {

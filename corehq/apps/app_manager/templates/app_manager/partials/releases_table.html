@@ -20,7 +20,14 @@
         </p>
     </div>
     <p class="pull-right auto-release-notes">
-        {% trans 'What are Released Versions?' %}
+        <a href="#" data-bind="click: toggleLimitToReleased">
+            <span data-bind="visible: !limitToReleased()">
+                {% trans 'Show only released versions' %}
+            </span>
+            <span data-bind="visible: limitToReleased()">
+                {% trans 'Show all versions' %}
+            </span>
+        </a>
         <span class="hq-help-template"
             data-title="Released Versions"
             data-container="body"
@@ -83,6 +90,7 @@
              data-bind="css: {
                 'build-released': is_released(),
                 'build-unreleased': !is_released(),
+                'hide': $root.limitToReleased() && !is_released(),
                 'build-latest-release': id() === $root.latestReleaseId(),
                 'error': build_broken
             }">
