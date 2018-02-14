@@ -18,6 +18,7 @@ from corehq.apps.hqadmin.reports import (
     CommCareVersionReport,
     UserAuditReport)
 from corehq.apps.hqpillow_retry.views import PillowErrorsReport
+from corehq.apps.linked_domain.views import DomainLinkHistoryReport
 from corehq.apps.reports.standard import (
     monitoring, inspect, export,
     deployments, sms, ivr
@@ -386,5 +387,6 @@ ADMIN_REPORTS = (
 DOMAIN_REPORTS = (
     (_('Project Settings'), (
         DomainForwardingRepeatRecords,
+        DomainLinkHistoryReport,
     )),
 )

@@ -12,14 +12,20 @@ from djangular.views.mixins import allow_remote_invocation, JSONResponseMixin
 from corehq.apps.app_manager.dbaccessors import get_latest_released_app, get_app, get_brief_apps_in_domain
 from corehq.apps.domain.decorators import login_or_api_key, domain_admin_required
 from corehq.apps.domain.views import BaseAdminProjectSettingsView, DomainViewMixin
-from corehq.apps.linked_domain.const import LINKED_MODELS
+from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id
+from corehq.apps.hqwebapp.templatetags.hq_shared_tags import pretty_doc_info
+from corehq.apps.linked_domain.const import LINKED_MODELS, LINKED_MODELS_MAP
 from corehq.apps.linked_domain.dbaccessors import get_domain_master_link, get_linked_domains
 from corehq.apps.linked_domain.decorators import require_linked_domain
 from corehq.apps.linked_domain.local_accessors import get_toggles_previews, get_custom_data_models, get_user_roles
 from corehq.apps.linked_domain.models import AppLinkDetail, wrap_detail, DomainLinkHistory, DomainLink
 from corehq.apps.linked_domain.updates import update_model_type
 from corehq.apps.linked_domain.util import convert_app_for_remote_linking, server_to_user_time
+from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
+from corehq.apps.reports.dispatcher import DomainReportDispatcher
+from corehq.apps.reports.generic import GenericTabularReport
 from corehq.util.timezones.utils import get_timezone_for_request
+from dimagi.utils.decorators.memoized import memoized
 
 
 @login_or_api_key
@@ -186,3 +192,114 @@ class DomainLinkRMIView(JSONResponseMixin, View, DomainViewMixin):
         return {
             'success': True,
         }
+
+
+class DomainLinkHistoryReport(GenericTabularReport):
+    name = 'Project Link History'
+    base_template = "reports/base_template.html"
+    section_name = 'Project Settings'
+    slug = 'project_link_report'
+    dispatcher = DomainReportDispatcher
+    ajax_pagination = True
+    asynchronous = False
+    sortable = False
+
+    @property
+    def fields(self):
+        if self.master_link:
+            fields = []
+        else:
+            fields = ['corehq.apps.linked_domain.filters.DomainLinkFilter']
+        fields.append('corehq.apps.linked_domain.filters.DomainLinkModelFilter')
+        return fields
+
+    @property
+    def link_model(self):
+        return self.request.GET.get('domain_link_model')
+
+    @property
+    @memoized
+    def domain_link(self):
+        if self.request.GET.get('domain_link'):
+            try:
+                return DomainLink.objects.get(pk=self.request.GET.get('domain_link'))
+            except DomainLink.DoesNotExist:
+                pass
+
+    @property
+    @memoized
+    def master_link(self):
+        return get_domain_master_link(self.domain)
+
+    @property
+    @memoized
+    def selected_link(self):
+        return self.master_link or self.domain_link
+
+    @property
+    def total_records(self):
+        query = self._base_query()
+        return query.count()
+
+    def _base_query(self):
+        query = DomainLinkHistory.objects.filter(link=self.selected_link)
+        if self.link_model:
+            query = query.filter(model=self.link_model)
+
+        return query
+
+    @property
+    def shared_pagination_GET_params(self):
+        link_id = str(self.selected_link.pk) if self.selected_link else ''
+        return [
+            {'name': 'domain_link', 'value': link_id},
+            {'name': 'domain_link_model', 'value': self.link_model},
+        ]
+
+    @property
+    def rows(self):
+        if not self.selected_link:
+            return []
+        print(self.selected_link.master_domain, self.selected_link.linked_domain)
+        rows = self._base_query()[self.pagination.start:self.pagination.start + self.pagination.count + 1]
+        return [self._make_row(record, self.selected_link) for record in rows]
+
+    def _make_row(self, record, link):
+        row = [
+            '{} -> {}'.format(link.master_domain, link.linked_domain),
+            server_to_user_time(record.date, self.timezone),
+            self._make_model_cell(record),
+            pretty_doc_info(get_doc_info_by_id(self.domain, record.user_id))
+        ]
+        return row
+
+    @memoized
+    def linked_app_names(self, domain):
+        return {
+            app._id: app.name for app in get_brief_apps_in_domain(domain)
+            if app.doc_type == 'LinkedApplication'
+        }
+
+    def _make_model_cell(self, record):
+        name = LINKED_MODELS_MAP[record.model]
+        if record.model != 'app':
+            return name
+
+        detail = record.wrapped_detail
+        app_name = 'Unknown App'
+        if detail:
+            app_names = self.linked_app_names(self.selected_link.linked_domain)
+            app_name = app_names.get(detail.app_id, detail.app_id)
+        return '{} ({})'.format(name, app_name)
+
+    @property
+    def headers(self):
+        tzname = self.timezone.localize(datetime.utcnow()).tzname()
+        columns = [
+            DataTablesColumn(ugettext('Link')),
+            DataTablesColumn(ugettext('Date ({})'.format(tzname))),
+            DataTablesColumn(ugettext('Data Model')),
+            DataTablesColumn(ugettext('User')),
+        ]
+
+        return DataTablesHeader(*columns)

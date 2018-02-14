@@ -1,4 +1,6 @@
 from __future__ import absolute_import
+
+from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
 from corehq.util.timezones.conversions import ServerTime
 
 
