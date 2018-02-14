@@ -385,7 +385,7 @@ class TwoFactorPhoneSetupView(BaseMyAccountView, PhoneSetupView):
         return super(TwoFactorPhoneSetupView, self).dispatch(request, *args, **kwargs)
 
 
-class NewPhoneView(TwoFactorSetupView):
+class TwoFactorResetView(TwoFactorSetupView):
     urlname = 'new_phone'
 
     form_list = (
@@ -398,7 +398,7 @@ class NewPhoneView(TwoFactorSetupView):
 
     def get(self, request, *args, **kwargs):
         default_device(request.user).delete()
-        return super(NewPhoneView, self).get(request, *args, **kwargs)
+        return super(TwoFactorResetView, self).get(request, *args, **kwargs)
 
 
 class BaseProjectDataView(BaseDomainView):
