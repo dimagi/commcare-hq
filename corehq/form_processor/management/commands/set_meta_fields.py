@@ -19,7 +19,7 @@ META_FIELDS = ("time_end", "time_start", "commcare_version", "build_version")
 
 def sql_iter_forms(form_ids):
     for chunk in chunked(form_ids, 100):
-        chunk = list([_f for _f in chunk if _f])
+        chunk = chunk(form_ids)
         for form in FormAccessorSQL.get_forms(chunk):
             yield form
 
