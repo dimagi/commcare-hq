@@ -16,8 +16,6 @@ from corehq.apps.callcenter.views import CallCenterOwnerOptionsView
 from corehq.apps.domain.forms import ConfidentialPasswordResetForm, HQSetPasswordForm
 from corehq.apps.domain.views import (
     ActivateTransferDomainView,
-    AddFormRepeaterView,
-    AddRepeaterView,
     BillingStatementPdfView,
     BulkStripePaymentView,
     CalendarFixtureConfigView,
@@ -33,7 +31,6 @@ from corehq.apps.domain.views import (
     DeactivateTransferDomainView,
     DefaultProjectSettingsView,
     DomainBillingStatementsView,
-    DomainForwardingOptionsView,
     DomainSubscriptionView,
     EditBasicProjectInfoView,
     EditExistingBillingAccountView,
@@ -60,24 +57,27 @@ from corehq.apps.domain.views import (
     WireInvoiceView,
     autocomplete_fields,
     calculated_properties,
-    cancel_repeat_record,
-    drop_repeater,
-    pause_repeater,
-    resume_repeater,
-    requeue_repeat_record,
     select,
     set_published_snapshot,
-    test_repeater,
     toggle_diff,
 )
 from corehq.apps.linked_domain.views import DomainLinkView
 from corehq.apps.reports.dispatcher import DomainReportDispatcher
 from corehq.motech.repeaters.views import (
     AddCaseRepeaterView,
-    RepeatRecordView,
+    AddFormRepeaterView,
+    AddRepeaterView,
+    DomainForwardingOptionsView,
     EditCaseRepeaterView,
     EditFormRepeaterView,
     EditRepeaterView,
+    RepeatRecordView,
+    cancel_repeat_record,
+    drop_repeater,
+    pause_repeater,
+    requeue_repeat_record,
+    resume_repeater,
+    test_repeater,
 )
 
 urlpatterns = [
