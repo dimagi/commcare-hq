@@ -29,6 +29,7 @@ from dimagi.utils.dates import DateSpan
 from django.db.models import Case, When, Q, F, IntegerField
 import six
 import uuid
+from six.moves import range
 
 OPERATORS = {
     "==": operator.eq,

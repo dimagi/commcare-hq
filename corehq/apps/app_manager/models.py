@@ -42,7 +42,7 @@ from functools import wraps
 from copy import deepcopy
 from mimetypes import guess_type
 from six.moves.urllib.request import urlopen
-from urlparse import urljoin
+from six.moves.urllib.parse import urljoin
 
 from couchdbkit import MultipleResultsFound
 import itertools

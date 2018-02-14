@@ -38,6 +38,7 @@ from custom.enikshay.tests.utils import (
     get_episode_case_structure
 )
 import six
+from six.moves import range
 
 MOCK_FIXTURE_ITEMS = {
     '99DOTS': {

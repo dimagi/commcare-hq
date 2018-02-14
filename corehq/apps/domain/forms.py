@@ -5,7 +5,7 @@ import logging
 import re
 import sys
 import uuid
-from urlparse import urlparse, parse_qs
+from six.moves.urllib.parse import urlparse, parse_qs
 
 from captcha.fields import CaptchaField
 
