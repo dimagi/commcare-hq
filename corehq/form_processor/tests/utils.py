@@ -12,7 +12,7 @@ from nose.tools import nottest
 from unittest2 import skipIf, skipUnless
 
 from casexml.apps.case.models import CommCareCase
-from casexml.apps.phone.models import SyncLogSQL
+from casexml.apps.phone.models import SyncLogSQL, SyncLog
 from corehq.form_processor.backends.sql.dbaccessors import (
     CaseAccessorSQL, LedgerAccessorSQL, LedgerReindexAccessor,
     iter_all_rows)
@@ -103,6 +103,7 @@ class FormProcessorTestUtils(object):
     @unit_testing_only
     def delete_all_sync_logs(cls):
         SyncLogSQL.objects.all().delete()
+        cls._delete_all_from_view(SyncLog.get_db(), 'phone/sync_logs_by_user')
 
     @staticmethod
     @unit_testing_only

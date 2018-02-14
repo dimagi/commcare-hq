@@ -360,7 +360,34 @@ def save_synclog_to_sql(synclog_json_object):
     synclog.save()
 
 
+def delete_synclog(synclog_id):
+    """
+    Deletes synclog object both from Couch and SQL, if the doc
+        isn't found in either couch or SQL an exception is raised
+    """
+    deleted = False
+    try:
+        synclog = SyncLogSQL.objects.filter(synclog_id=synclog_id).first()
+        if synclog:
+            synclog.delete()
+            deleted = True
+    except ValidationError:
+        pass
+
+    try:
+        synclog = properly_wrap_sync_log(SyncLog.get_db().get(synclog_id))
+        SyncLog.get_db().delete_doc(synclog)
+        deleted = True
+    except ResourceNotFound:
+        pass
+
+    if not deleted:
+        raise MissingSyncLog("A SyncLogSQL object with this synclog_id ({})is not found".format(synclog_id))
+
+
 def synclog_to_sql_object(synclog_json_object):
+    # Returns a SyncLogSQL object, a saved instance from DB or
+    #   instantiated SQL object to be saved
     # synclog_json_object should be a SyncLog instance
     # if synclog_json_object._id
     synclog = None
@@ -450,7 +477,7 @@ class SyncLog(AbstractSyncLog):
         save_synclog_to_sql(self)
 
     def delete(self):
-        SyncLogSQL.objects.filter(synclog_id=self._id).delete()
+        delete_synclog(self._id)
 
     def _assert(self, conditional, msg="", case_id=None):
         if not conditional:
@@ -802,7 +829,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
         save_synclog_to_sql(self)
 
     def delete(self):
-        SyncLogSQL.objects.filter(synclog_id=self._id).delete()
+        delete_synclog(self._id)
 
     def case_count(self):
         return len(self.case_ids_on_phone)
