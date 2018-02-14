@@ -386,7 +386,7 @@ class TwoFactorPhoneSetupView(BaseMyAccountView, PhoneSetupView):
 
 
 class TwoFactorResetView(TwoFactorSetupView):
-    urlname = 'new_phone'
+    urlname = 'reset'
 
     form_list = (
         ('method', HQTwoFactorMethodForm),
