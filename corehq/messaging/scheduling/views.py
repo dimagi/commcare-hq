@@ -23,7 +23,7 @@ from corehq.apps.hqwebapp.decorators import use_datatables, use_select2, use_jqu
 from corehq.apps.hqwebapp.views import DataTablesAJAXPaginationMixin
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
-from corehq.messaging.scheduling.async_handlers import MessagingRecipientHandler
+from corehq.messaging.scheduling.async_handlers import MessagingRecipientHandler, ConditionalAlertAsyncHandler
 from corehq.messaging.scheduling.forms import (
     BroadcastForm,
     ConditionalAlertForm,
@@ -439,7 +439,7 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
     urlname = 'create_conditional_alert'
     page_title = ugettext_lazy('New Conditional Message')
     template_name = 'scheduling/conditional_alert.html'
-    async_handlers = [MessagingRecipientHandler]
+    async_handlers = [ConditionalAlertAsyncHandler]
     read_only_mode = False
 
     @method_decorator(_requires_new_reminder_framework())
