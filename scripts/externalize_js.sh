@@ -139,7 +139,8 @@ if [ "$template_tag_count" -gt 0 ]; then
     initialpagedata_open="initialPageData.get('"
     initial_page_data_close="')"
 
-    initial_page_data_tags=`sed -n "/$variable_open_bracket_regex/=" $new_module_location`
+    initial_page_data_tags=`sed -n "s/.*$variable_open_bracket_regex//; s/ $variable_close_bracket_regex.*//p" $new_module_location`
+    initial_page_data_tag_lines=`sed -n "/$variable_open_bracket_regex/=" $new_module_location`
     tag_count=`echo $initial_page_data_tags | wc -l`
     if [ "$tag_count" -gt 0 ]; then
         sed -i "s/$variable_open_bracket_regex /$initialpagedata_open/; s/ $variable_close_bracket_regex/')/" $new_module_location
@@ -147,7 +148,11 @@ if [ "$template_tag_count" -gt 0 ]; then
         sed -i "/hqDefine/a \
                 $initialpagedata_import" $new_module_location
         echo "and in particular these lines"
-        echo $initial_page_data_tags
+        echo $initial_page_data_tag_lines
+        echo "and add these data imports as well"
+        for ipd in $initial_page_data_tags; do
+            echo "{% initial_page_data '$ipd' $ipd %}"
+        done
     fi
     echo "----------------------------"
 fi
