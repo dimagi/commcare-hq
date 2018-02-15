@@ -1,10 +1,11 @@
+/* eslint-disable no-control-regex */
 hqDefine('sms/js/chat', function () {
     var initialPageData = hqImport('hqwebapp/js/initial_page_data');
     $(function() {
         function resize_messages() {
-            body_height = $("body").height();
-            chat_header_height = $("#chat_header").height();
-            chat_footer_height = $("#chat_footer").height();
+            var body_height = $("body").height();
+            var chat_header_height = $("#chat_header").height();
+            var chat_footer_height = $("#chat_footer").height();
             $("#chat_messages").height(body_height - chat_header_height - chat_footer_height);
         }
         function MessageHistoryChoice(description, utc_timestamp) {
@@ -28,7 +29,7 @@ hqDefine('sms/js/chat', function () {
                 } else {
                     self.seen_text(String.fromCharCode(9830));
                 }
-            }
+            };
             self.set_seen_text(seen);
         }
         function ChatWindowViewModel() {
@@ -71,7 +72,7 @@ hqDefine('sms/js/chat', function () {
                         initial_history_choices[choice].timestamp
                     )
                 );
-            };
+            }
             self.selected_history_choice = ko.observable();
             // false until the user selects one of the history choices
             self.history_choice_selected = false;
@@ -80,34 +81,34 @@ hqDefine('sms/js/chat', function () {
                     self.history_choice_selected = true;
                 }
                 for (var j = 0; j < self.history_choices().length; j++) {
-                    entry = self.history_choices()[j];
-                    if (i == j) {
+                    var entry = self.history_choices()[j];
+                    if (i === j) {
                         entry.selected(true);
                         self.selected_history_choice(entry);
                     } else {
                         entry.selected(false);
                     }
                 }
-            }
+            };
             self.update_history_choice(0, false);
 
             self.update_messages = function (set_next_timeout) {
                 self.update_in_progress = true;
-                payload = {
+                var payload = {
                     contact_id: initialPageData.get('contact_id')
                 };
-                if (self.latest_message_utc_timestamp != null) {
+                if (self.latest_message_utc_timestamp !== null) {
                     payload.start_date = self.latest_message_utc_timestamp;
                 }
-                request = $.ajax({
+                $.ajax({
                     url: initialPageData.reverse('api_history'),
                     data: payload,
                     async: true,
                     dataType: "json",
-                    success: function (data, textStatus, jqXHR) {
+                    success: function (data) {
                         var chat_message = null;
                         var requires_notification = false;
-                        for (i = 0; i < data.length; i++) {
+                        for (var i = 0; i < data.length; i++) {
                             chat_message = new ChatMessage(
                                 data[i].sender,
                                 data[i].text,
@@ -120,7 +121,7 @@ hqDefine('sms/js/chat', function () {
                             }
                             self.latest_message_utc_timestamp = data[i].utc_timestamp;
                             if (self.first_update) {
-                                if ((self.last_read_message_utc_timestamp == null) || (chat_message.utc_timestamp > self.last_read_message_utc_timestamp)) {
+                                if ((self.last_read_message_utc_timestamp === null) || (chat_message.utc_timestamp > self.last_read_message_utc_timestamp)) {
                                     chat_message.set_seen_text(false);
                                     chat_message.unread_message = true;
                                 }
@@ -135,7 +136,7 @@ hqDefine('sms/js/chat', function () {
                             }
                         }
                         if (data.length > 0) {
-                            scrollHeight = $("#chat_messages").prop("scrollHeight");
+                            var scrollHeight = $("#chat_messages").prop("scrollHeight");
                             $("#chat_messages").scrollTop(scrollHeight);
                         }
                         if (self.first_update) {
@@ -147,7 +148,7 @@ hqDefine('sms/js/chat', function () {
                             }
                         }
                     },
-                    complete: function (jqXHR, textStatus) {
+                    complete: function () {
                         if (set_next_timeout) {
                             var time_to_wait = self.regular_update_interval;
                             if (self.quick_update_countdown > 0) {
@@ -162,7 +163,7 @@ hqDefine('sms/js/chat', function () {
             };
             self.send_message = function () {
                 $("#send_sms_button").prop("disabled", true);
-                request = $.ajax({
+                var request = $.ajax({
                     url: initialPageData.reverse('api_send_sms'),
                     type: "POST",
                     data: {
@@ -172,8 +173,8 @@ hqDefine('sms/js/chat', function () {
                         text: $("#text_box").val()
                     }
                 });
-                request.done(function (response, textStatus, jqXHR) {
-                    if (response == "OK") {
+                request.done(function (response) {
+                    if (response === "OK") {
                         $("#text_box").val("");
                         self.update_message_length(null);
                         self.quick_update_countdown = self.quick_update_cycles;
@@ -183,10 +184,9 @@ hqDefine('sms/js/chat', function () {
                             clearTimeout(self.update_messages_timeout_handle);
                             self.update_messages_timeout();
                         }
-                    } else {
                     }
                 });
-                request.always(function (param1, textStatus, param3) {
+                request.always(function () {
                     $("#send_sms_button").prop("disabled", false);
                 });
             };
@@ -202,10 +202,10 @@ hqDefine('sms/js/chat', function () {
                     return 70;
                 }
             };
-            self.update_message_length = function (event) {
+            self.update_message_length = function () {
                 setTimeout(function () {
-                    len = $("#text_box").val().length;
-                    max_len = self.get_max_message_length();
+                    var len = $("#text_box").val().length;
+                    var max_len = self.get_max_message_length();
                     self.message_length(len + " / " + max_len);
                     if (len > max_len) {
                         $("#message_length_label").css("background-color", "#F00");
@@ -228,14 +228,14 @@ hqDefine('sms/js/chat', function () {
                         self.flash_on();
                     }
                 }, 1000);
-                if (typeof (num_seconds) == typeof (1)) {
+                if (typeof (num_seconds) === typeof (1)) {
                     setTimeout(function () {
                         self.stop_new_message_notification();
                     }, num_seconds * 1000);
                 }
             };
             self.stop_new_message_notification = function () {
-                if (self.title_timeout_handle != null) {
+                if (self.title_timeout_handle !== null) {
                     clearTimeout(self.title_timeout_handle);
                     self.title_timeout_handle = null;
                 }
@@ -266,7 +266,7 @@ hqDefine('sms/js/chat', function () {
                 $("#message_count").css("background-color", "#FFF");
             };
             self.update_last_read_message = function () {
-                request = $.ajax({
+                $.ajax({
                     url: initialPageData.reverse('api_last_read_message'),
                     type: "GET",
                     async: false,
@@ -274,9 +274,9 @@ hqDefine('sms/js/chat', function () {
                         contact_id: "initialPageData.get('contact_id')",
                     },
                     dataType: "json",
-                    success: function (data, textStatus, jqXHR) {
+                    success: function (data) {
                         try {
-                            timestamp = Date.parse(data.message_timestamp);
+                            var timestamp = Date.parse(data.message_timestamp);
                             if (isNaN(timestamp)) {
                                 self.last_read_message_utc_timestamp = null;
                             } else {
@@ -293,7 +293,7 @@ hqDefine('sms/js/chat', function () {
                 self.allow_highlights_to_disappear = true;
             }, 60000);
         }
-        chat_window_view_model = new ChatWindowViewModel();
+        var chat_window_view_model = new ChatWindowViewModel();
         ko.applyBindings(chat_window_view_model);
         $(window).resize(resize_messages);
         $(window).focus(chat_window_view_model.enter_focus);
