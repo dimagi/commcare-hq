@@ -24,7 +24,7 @@ class RemoteLinkDetails(namedtuple('RemoteLinkDetails', 'url_base username api_k
 
 class ExcludeDeletedManager(models.Manager):
     def get_queryset(self):
-        return super(ExcludeDeletedManager, self).get_queryset().filter(deletd=False)
+        return super(ExcludeDeletedManager, self).get_queryset().filter(deleted=False)
 
 
 class DomainLink(models.Model):
