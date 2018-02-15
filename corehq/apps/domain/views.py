@@ -1553,8 +1553,7 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
                 )
             else:
                 messages.success(
-                    request,
-                    _(
+                    request, _(
                         u"Your project has been successfully subscribed to the %s Software Plan."
                     ) % software_plan_name
                 )
