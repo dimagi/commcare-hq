@@ -1542,15 +1542,15 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
             return self.async_response
         if self.is_form_post and self.billing_account_info_form.is_valid():
             is_saved = self.billing_account_info_form.save()
-            software_plan_name = DESC_BY_EDITION[self.selected_plan_version.plan.edition]['name'].encode('utf-8')
+            software_plan_name = DESC_BY_EDITION[self.selected_plan_version.plan.edition]['name']
             if not is_saved:
                 messages.error(
-                    request, _("It appears there was an issue subscribing your project to the %s Software Plan. You "
+                    request, _(u"It appears there was an issue subscribing your project to the %s Software Plan. You "
                                "may try resubmitting, but if that doesn't work, rest assured someone will be "
                                "contacting you shortly.") % software_plan_name)
             else:
                 messages.success(
-                    request, _("Your project has been successfully subscribed to the %s Software Plan."
+                    request, _(u"Your project has been successfully subscribed to the %s Software Plan."
                                % software_plan_name)
                 )
                 return HttpResponseRedirect(reverse(DomainSubscriptionView.urlname, args=[self.domain]))
