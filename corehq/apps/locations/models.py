@@ -298,16 +298,22 @@ class LocationManager(LocationQueriesMixin, TreeManager):
     def mptt_get_queryset_descendants(self, *args, **kw):
         return super(LocationManager, self).get_queryset_descendants(*args, **kw)
 
-    def get_queryset_ancestors(self, *args, **kw):
+    def get_queryset_ancestors(self, queryset, include_self=False):
         timing = TimingContext("get_queryset_ancestors")
+        mptt_qs = queryset
+        if isinstance(queryset, ComparedQuerySet):
+            mptt_qs = queryset._mptt_set
         with timing("mptt"):
-            mptt_set = self.mptt_get_queryset_ancestors(*args, **kw)
+            mptt_set = self.mptt_get_queryset_ancestors(mptt_qs, include_self)
         return ComparedQuerySet(mptt_set, timing)
 
-    def get_queryset_descendants(self, *args, **kw):
+    def get_queryset_descendants(self, queryset, include_self=False):
         timing = TimingContext("get_queryset_descendants")
+        mptt_qs = queryset
+        if isinstance(queryset, ComparedQuerySet):
+            mptt_qs = queryset._mptt_set
         with timing("mptt"):
-            mptt_set = self.mptt_get_queryset_descendants(*args, **kw)
+            mptt_set = self.mptt_get_queryset_descendants(mptt_qs, include_self)
         return ComparedQuerySet(mptt_set, timing)
 
     def get_or_None(self, **kwargs):

@@ -8,6 +8,8 @@ import time
 from collections import defaultdict
 from contextlib import contextmanager
 
+from django.db.models.query import QuerySet
+
 from corehq.util.datadog.gauges import datadog_counter
 from corehq.util.datadog.utils import bucket_value
 
@@ -25,6 +27,9 @@ class ComparedQuerySet(object):
             timing_context = timing_context._timing.clone()
         self._timing = timing_context
 
+    def __str__(self):
+        return "MPTT query: {}".format(self._mptt_set.query)
+
     def __iter__(self):
         with _commit_timing(self):
             with self._timing("mptt") as timer1:
@@ -37,15 +42,26 @@ class ComparedQuerySet(object):
             with self._timing("mptt"):
                 return len(self._mptt_set)
 
-    def get(self, *args, **kw):
+    def __getitem__(self, key):
         with _commit_timing(self):
             with self._timing("mptt"):
-                return self._mptt_set.get(*args, **kw)
+                result = self._mptt_set.__getitem__(key)
+        if isinstance(result, QuerySet):
+            return ComparedQuerySet(result, self)
+        return result
 
     def exists(self, *args, **kw):
         with _commit_timing(self):
             with self._timing("mptt"):
                 return self._mptt_set.exists(*args, **kw)
+
+    def union(self, *other_qs, **kwargs):
+        other_mptt = [qs._mptt_set if isinstance(qs, ComparedQuerySet) else qs
+            for qs in other_qs]
+        return ComparedQuerySet(
+            self._mptt_set.union(*other_mptt, **kwargs),
+            self,
+        )
 
     def accessible_to_user(self, domain, user):
         # mostly copied from models.py:LocationQueriesMixin
@@ -68,7 +84,17 @@ class ComparedQuerySet(object):
         return result
 
 
-def _make_method(name):
+def _make_get_method(name):
+    def method(self, *args, **kw):
+        with _commit_timing(self):
+            with self._timing("mptt"):
+                obj = getattr(self._mptt_set, name)(*args, **kw)
+        return obj
+    method.__name__ = str(name)  # unicode_literals: must be bytes on PY2
+    return method
+
+
+def _make_qs_method(name):
     def method(self, *args, **kw):
         return ComparedQuerySet(
             getattr(self._mptt_set, name)(*args, **kw),
@@ -78,15 +104,23 @@ def _make_method(name):
     return method
 
 
-for name in [
-    "annotate",
-    "filter",
-    "none",
-    "order_by",
-    "values",
-    "values_list",
+for name, _make_method in [
+    # methods that get a model instance
+    ("get", _make_get_method),
+    ("first", _make_get_method),
+    ("last", _make_get_method),
+    # methods that return a new QuerySet
+    ("annotate", _make_qs_method),
+    ("defer", _make_qs_method),
+    ("exclude", _make_qs_method),
+    ("filter", _make_qs_method),
+    ("none", _make_qs_method),
+    ("only", _make_qs_method),
+    ("order_by", _make_qs_method),
+    ("values", _make_qs_method),
+    ("values_list", _make_qs_method),
     # from subclasses of QuerySet
-    "location_ids",
+    ("location_ids", _make_qs_method),
 ]:
     setattr(ComparedQuerySet, name, _make_method(name))
 
