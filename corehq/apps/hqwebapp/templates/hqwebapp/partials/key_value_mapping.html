@@ -122,25 +122,10 @@
         </a>
     </div>
     <div class="col-sm-2" id="$parent.cssId()">
-        <button type="button" class="btn btn-default" data-toggle="modal" data-target="#hqimage" data-bind="
-                           attr: { 'data-hqmediapath': currentPath },
-                           event: {
-                                mediaUploadComplete: uploadComplete,
-                                click: function(){setCustomPath(); passToUploadController()}
-                           }">
-            <i class="fa fa-cloud-upload"></i>
-            <span data-bind="visible: isMediaMatched">{% trans 'Replace' %}</span>
-            <span data-bind="visible: isMediaUnmatched">{% trans 'Upload' %}</span>
-        </button>
+        {% include 'hqmedia/includes/upload_controller_upload_button.html' %}
     </div>
     <div class="col-sm-3">
-        <button type="button" class="btn btn-default pull-right"
-                data-bind="
-                    visible: !$parent.editing(),
-                    click: function(){if (!useCustomPath()) setCustomPath(); $parent.toggleEditMode()}">
-            <i class="fa fa-cog"></i>
-            {% trans 'Set Path' %}
-        </button>
+        {% include 'hqmedia/includes/upload_controller_show_path_button.html' %}
     </div>
 </div>
 

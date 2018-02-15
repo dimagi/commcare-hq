@@ -73,7 +73,12 @@
 
 {% block modals %}{{ block.super }}
 {% for uploader in uploaders %}
+{{ request|toggle_tag_info:"NEW_MULTIMEDIA_UPLOADER" }}
+{% if request|toggle_enabled:'NEW_MULTIMEDIA_UPLOADER' %}
+{% include "app_manager/partials/new_multimedia_uploader.html" %}
+{% else %}
 {% include 'hqmedia/partials/multimedia_uploader.html' %}
+{% endif %}
 {% endfor %}
 {% include 'app_manager/partials/password_setter_modal.html' %}
 {% include 'app_manager/partials/toggle_diff_modal.html' %}

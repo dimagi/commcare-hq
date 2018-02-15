@@ -19,16 +19,7 @@
                     {% trans "Preview" %}
                 </a>
             {% endif %}
-            <button type="button" class="btn btn-default" data-toggle="modal" data-target="#{{ slug }}"
-                    data-bind="attr: { 'data-hqmediapath': currentPath },
-                               event: {
-                                    mediaUploadComplete: uploadComplete,
-                                    click: passToUploadController
-                               }">
-                <i class="fa fa-cloud-upload"></i>
-                <span data-bind="visible: isMediaMatched">{% trans 'Replace' %}</span>
-                <span data-bind="visible: isMediaUnmatched">{% trans 'Upload' %}</span>
-            </button>
+            {% include 'hqmedia/includes/upload_controller_upload_button.html' %}
             <button type="button" class="btn btn-danger"
                     data-bind="
                         visible: refHasPath,
@@ -38,16 +29,7 @@
                     ">
                 <i class="fa fa-remove"></i>
             </button>
-            <button type="button" class="btn btn-default pull-right"
-                    data-bind="
-                        visible: showDefaultPath,
-                        click: function () {
-                            setCustomPath();
-                            analytics.usage('App Builder', 'Click Show Path for a Form or Module', '{{ type }}');
-                        }">
-                <i class="fa fa-cog"></i>
-                {% trans 'Set Path' %}
-            </button>
+            {% include 'hqmedia/includes/upload_controller_show_path_button.html' %}
             {% if type == "audio" %}
             <p data-bind="visible: isMediaMatched"
                class="help-block">

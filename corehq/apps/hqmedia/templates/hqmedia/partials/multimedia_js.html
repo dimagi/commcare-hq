@@ -1,4 +1,6 @@
 {% load hq_shared_tags %}
+{{ request|toggle_tag_info:"NEW_MULTIMEDIA_UPLOADER" }}
+{% if not request|toggle_enabled:'NEW_MULTIMEDIA_UPLOADER' %}
 <script>
     YUI_config = {
         combine: false,
@@ -9,4 +11,5 @@
 </script>
 <script src="{% static 'hqmedia/MediaUploader/yui-base.js' %}"></script>
 <script src="{% static 'hqmedia/MediaUploader/yui-uploader.js' %}"></script>
+{% endif %}
 <script src="{% static 'hqmedia/MediaUploader/hqmedia.upload_controller.js' %}"></script>

@@ -1,0 +1,91 @@
+{% load hq_shared_tags %}
+{% load i18n %}
+
+<div class="container">
+
+    <!-- launch button for modal -->
+    <p>
+      <button type="button" class="btn btn-primary" id="js-select-file" data-target="#upload-file" data-toggle="modal">Upload File</button>
+    </p>
+
+    <!-- create modal -->
+    <div class="modal fade" id="upload-file" role="dialog">
+      <div class="modal-dialog">
+        <div class="modal-content">
+
+          <div id="js-create-header" class="modal-header">
+            <script type="text/html">
+              <h4 class="modal-title">Upload <%= filetype %></h4>
+              <button type="button" class="close close-modal" data-dismiss="modal">&times;</button>
+            </script>
+          </div>
+
+          <div class="modal-body">
+            <div class="row">
+              <div id="select-file-section"></div>
+            </div>
+            <div class="row">
+              <div id="selected-media-section"></div>  
+            </div>
+            <div class="row">
+              <div id="media-data-section"></div>
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn btn-sm btn-default" data-dismiss="modal">Close</button>
+            <!-- <i class="fa fa-cloud-upload"></i> -->
+            <input id="submit-file" class="btn btn-sm btn-default" type="submit" value="Begin Upload"> 
+          </div>
+
+        </div><!-- close modal-content -->
+      </div><!-- close modal-dialog -->
+    </div><!-- close modal -->
+  </div><!-- close container -->
+
+  <!-- select new file -->
+  <script id="js-select-file-section" type="text/html">
+    <div class="select-label col-sm-4">
+      Select new <%= filetype %>
+    </div>
+    <!-- <div class="select-btn col-sm-4"> -->
+    <div class="select-btn col-sm-4">
+      <label for="js-file-upload" id="js-file-upload-label" class="select-file button btn-sm">
+        Select File
+      </label>
+      <input id="js-file-upload" type="file" accept="image/*" capture="camera" style="visibility:hidden;">
+    </div>
+  </script>
+
+  <!-- selection section container -->
+  <script id="js-selected-media-section" type="text/html">
+    <div class="current-label col-sm-4">
+      Current <%= filetype %>
+    </div>
+    <div id="js-current-preview" class="current-preview col-sm-3">
+      <img id="js-output-file" class="output-image"/>
+    </div>
+    <div class="js-current-btn col-sm-5">
+      <button id="js-full-image" class="btn btn-sm btn-default full-size-btn">View Full Size</button>
+    </div>
+  </script>
+
+  <!-- create data, progress, ready text container -->
+  <script id="js-media-data-section" type="text/html">
+    <div id="js-file-data" class="col-sm-8 col-sm-offset-4">
+      <div class="file-data">
+        <i class="fa fa-check"></i> <%= fileName %> [<%= fileSize %>] MB
+      </div>
+    </div>
+    <div id="js-file-progress" class="col-sm-8 col-sm-offset-4">
+      <div class="progress">
+        <div class="progress-bar progress-bar-striped active" role="progressbar" aria-valuenow="100" aria-valuemin="100" aria-valuemax="100" style="width: 10%;">
+        </div>
+      </div>
+    </div>
+    <div id="js-file-ready-text" class="col-sm-8 col-sm-offset-4">
+      <div class="ready-text">
+        Ready to upload. Click <strong>Begin Upload</strong> to start.
+      </div>
+    </div>
+  </script>

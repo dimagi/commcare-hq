@@ -304,7 +304,13 @@
 
 {% block modals %}{{ block.super }}
 {% include "app_manager/partials/form_view_modals.html" %}
+
+{{ request|toggle_tag_info:"NEW_MULTIMEDIA_UPLOADER" }}
+{% if request|toggle_enabled:'NEW_MULTIMEDIA_UPLOADER' %}
+{% include "app_manager/partials/new_multimedia_uploader.html" %}
+{% else %}
 {% include "app_manager/partials/nav_menu_media_modals.html" %}
+{% endif %}
 {% endblock modals %}
 
 {% block breadcrumbs %}
