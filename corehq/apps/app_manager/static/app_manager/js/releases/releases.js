@@ -259,6 +259,14 @@ hqDefine('app_manager/js/releases/releases', function () {
             }
             return hqImport("hqwebapp/js/initial_page_data").reverse.apply(null, arguments);
         };
+        self.webAppsUrl = function(idObservable) {
+            var url = hqImport("hqwebapp/js/initial_page_data").reverse("formplayer_main"),
+                data = {
+                    appId: ko.utils.unwrapObservable(idObservable),
+                };
+
+            return url + '#' + JSON.stringify(data);
+        };
         self.app_error_url = function(app_id, version) {
             return self.reverse('project_report_dispatcher') + '?app=' + app_id + '&version_number=' + version;
         };

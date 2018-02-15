@@ -173,6 +173,22 @@
                         </div>
                     </div>
                 </div>
+                {% if True %}{# TODO: has web apps access #}
+                    <div class="panel panel-appmanager">
+                        <div class="panel-heading">
+                            <h4 class="panel-title">
+                                <a class="track-usage-link"
+                                   target="_blank"
+                                   data-category="App Manager"
+                                   data-action="Deploy Type"
+                                   data-label="Open in Web Apps"
+                                   data-bind="attr: {href: $root.webAppsUrl(id)}">
+                                    {% trans 'Open in Web Apps' %}
+                                </a>
+                            </h4>
+                        </div>
+                    </div>
+                {% endif %}
                 <div class="panel panel-appmanager">
                     <div class="panel-heading">
                         <h4 class="panel-title">
@@ -319,6 +335,7 @@
                         <div class="panel-heading">
                             <h4 class="panel-title">
                                 <a class="track-usage-link"
+                                   target="_blank"
                                    data-category="App Manager"
                                    data-action="Deploy Type"
                                    data-label="View Source Files"
