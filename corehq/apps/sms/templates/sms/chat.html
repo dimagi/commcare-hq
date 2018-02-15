@@ -9,6 +9,15 @@
         {% compress css %}
         <link type="text/less" rel="stylesheet" media="all" href="{% static 'hqwebapp/less/style.less' %}"/>
         {% endcompress %}
+
+        {% initial_page_data 'message_count_threshold' message_count_threshold %}
+        {% initial_page_data 'history_choices' history_choices %}
+        {% initial_page_data 'contact_id' contact_id %}
+        {% registerurl 'api_history' domain %}
+        {% registerurl 'api_send_sms' domain %}
+        {% initial_page_data 'vn_id' vn_id|default:'' %}
+        {% registerurl 'api_last_read_message' domain %}
+
         {% javascript_libraries ko=True %}
         <style>
             html, body {
