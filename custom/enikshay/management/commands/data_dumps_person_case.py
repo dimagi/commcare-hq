@@ -1,8 +1,5 @@
 from __future__ import absolute_import
 from __future__ import print_function
-import csv
-from datetime import datetime
-from django.core.management.base import BaseCommand
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.apps.es.case_search import CaseSearchES
 from corehq.apps.es import queries
@@ -12,105 +9,62 @@ from custom.enikshay.case_utils import (
     get_all_occurrence_cases_from_person,
 )
 from custom.enikshay.const import ENROLLED_IN_PRIVATE
+from custom.enikshay.management.commands.base_data_dump import BaseDataDump
 
 DOMAIN = "enikshay"
 
 
-class Command(BaseCommand):
+class Command(BaseDataDump):
     """
     data dumps for person cases
     https://docs.google.com/spreadsheets/d/1OPp0oFlizDnIyrn7Eiv11vUp8IBmc73hES7qqT-mKKA/edit#gid=1039030624
     """
-    def add_arguments(self, parser):
-        parser.add_argument('file_name')
-        parser.add_argument('case_type')
+    @staticmethod
+    def get_custom_value(column_name, case):
+        if column_name == 'Reason for "Remove a Person" / Closure':
+            if case.closed:
+                return "closed"
+            elif case.owner_id == "_invalid_":
+                return "removed"
+            elif case.owner_id == '_archive_':
+                return "archived"
+            else:
+                return "active"
+        elif column_name == 'Latest Episode - Date Closed (If any)':
+            try:
+                last_episode_case = get_last_episode(case)
+                if last_episode_case.closed:
+                    return "closed"
+                else:
+                    return "open"
+            except Exception as e:
+                return str(e)
 
-    def setup_result_file_name(self):
-        result_file_name = "data_dumps_{case_type}_{timestamp}.csv".format(
-            case_type=self.case_type,
-            timestamp=datetime.now().strftime("%Y-%m-%d--%H-%M-%S"),
-        )
-        return result_file_name
+    def get_case_reference_value(self, case_reference, case, calculation):
+        if case_reference == 'last_episode':
+            try:
+                last_episode_case = get_last_episode(case)
+                return last_episode_case.get_case_property(calculation)
+            except Exception as e:
+                return str(e)
+        return Exception("unknown case reference %s" % case_reference)
 
-    def handle(self, case_type, file_name, *args, **options):
-        report = {}
-        result_file_headers = []
-        with open(file_name, 'rU') as input_file:
-            reader = csv.DictReader(input_file)
-            for row in reader:
-                report[row['Column Name']] = {
-                    row['Case Reference']: row['Calculation']
-                }
-                result_file_headers.append(row['Column Name'])
+    def handle(self, case_type, input_file_name, *args, **options):
+        self.case_type = case_type
+        self.input_file_name = input_file_name
+        self.setup()
+        self.generate_dump()
 
-        result_file_name = self.setup_result_file_name()
-
-        with open(result_file_name, 'w') as csvfile:
-            writer = csv.DictWriter(csvfile, fieldnames=result_file_headers)
-            writer.writeheader()
-            # iterate cases
-            for case in get_cases(case_type):
-                last_episode_case = None
-                case_row = {}
-                # iterate columns to be generated
-                # details is a dict with key in [
-                # "N/A" -> not to be populated so ignore it
-                # self -> value would be a case property or some meta on the case itself
-                # custom -> value would be some custom logic to be manually coded
-                # specific case reference/association -> value would be case property on this associated case]
-                for column_name, details in report.items():
-                    for case_reference, calculation in details.items():
-                        if case_reference == "N/A":
-                            case_row[column_name] = "N/A"
-                        elif case_reference == 'self':
-                            if calculation == 'caseid':
-                                case_row[column_name] = case.case_id
-                            else:
-                                case_row[column_name] = case.get_case_property(calculation)
-                        elif case_reference == 'last_episode':
-                            try:
-                                last_episode_case = last_episode_case or get_last_episode(case)
-                                case_row[column_name] = last_episode_case.get_case_property(calculation)
-                            except Exception as e:
-                                case_row[column_name] = str(e)
-                        elif case_reference == 'custom':
-                            if column_name == 'Reason for "Remove a Person" / Closure':
-                                if case.closed:
-                                    case_row[column_name] = "closed"
-                                elif case.owner_id == "_invalid_":
-                                    case_row[column_name] = "removed"
-                                elif case.owner_id == '_archive_':
-                                    case_row[column_name] = "archived"
-                                else:
-                                    case_row[column_name] = "active"
-                            elif column_name == 'Latest Episode - Date Closed (If any)':
-                                try:
-                                    last_episode_case = last_episode_case or get_last_episode(case)
-                                    if last_episode_case.closed:
-                                        case_row[column_name] = "closed"
-                                    else:
-                                        case_row[column_name] = "open"
-                                except Exception as e:
-                                    case_row[column_name] = str(e)
-                writer.writerow(case_row)
-
-
-def get_cases(case_type):
-    case_accessor = CaseAccessors(DOMAIN)
-    for case_id in get_case_ids(case_type):
-        yield case_accessor.get_case(case_id)
-
-
-def get_case_ids(case_type):
-    """
-    All open and closed person cases with person.dataset = 'real' and person.enrolled_in_private != 'true'
-    """
-    return (CaseSearchES()
-            .domain(DOMAIN)
-            .case_type(case_type)
-            .case_property_query(ENROLLED_IN_PRIVATE, 'true', clause=queries.MUST_NOT)
-            .case_property_query("dataset", 'real')
-            .get_ids()[0:10])
+    def get_case_ids(self, case_type):
+        """
+        All open and closed person cases with person.dataset = 'real' and person.enrolled_in_private != 'true'
+        """
+        return (CaseSearchES()
+                .domain(DOMAIN)
+                .case_type(case_type)
+                .case_property_query(ENROLLED_IN_PRIVATE, 'true', clause=queries.MUST_NOT)
+                .case_property_query("dataset", 'real')
+                .get_ids()[0:10])
 
 
 def get_recently_closed_case(all_cases):
