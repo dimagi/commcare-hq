@@ -1556,8 +1556,7 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
                     request,
                     _(
                         u"Your project has been successfully subscribed to the %s Software Plan."
-                        % software_plan_name
-                    )
+                    ) % software_plan_name
                 )
                 return HttpResponseRedirect(reverse(DomainSubscriptionView.urlname, args=[self.domain]))
         return super(ConfirmBillingAccountInfoView, self).post(request, *args, **kwargs)
