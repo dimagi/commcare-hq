@@ -25,9 +25,5 @@
   "orig_id": null,
   "deprecated_form_id": null,
   "doc_type": "XFormInstance",
-  "backend_id": "sql",
-  "commcare_version": null,
-  "build_version":null,
-  "time_end":null,
-  "time_start":null
+  "backend_id": "sql"
 }
