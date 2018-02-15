@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.test import TestCase
 
 from corehq.apps.linked_domain.exceptions import DomainLinkError
@@ -15,7 +16,7 @@ class LinkedDomainTests(TestCase):
         self.assertEqual(link.pk, link1.pk)
 
     def test_double_link(self):
-        link = DomainLink.link_domains('linked', 'master')
+        DomainLink.link_domains('linked', 'master')
         with self.assertRaises(DomainLinkError):
             DomainLink.link_domains('linked', 'master2')
 
