@@ -40,7 +40,7 @@ from corehq.motech.repeaters.models import RepeatRecord
 
 class DomainForwardingRepeatRecords(GenericTabularReport):
     name = 'Repeat Records'
-    base_template = 'domain/repeat_record_report.html'
+    base_template = 'repeaters/repeat_record_report.html'
     section_name = 'Project Settings'
     slug = 'repeat_record_report'
     dispatcher = DomainReportDispatcher
@@ -189,7 +189,7 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
             record.repeater.get_url(record) if record.repeater else _(u'Unable to generate url for record'),
             self._format_date(record.last_checked) if record.last_checked else '---',
             self._format_date(record.next_check) if record.next_check else '---',
-            render_to_string('domain/repeaters/partials/attempt_history.html', {'record': record}),
+            render_to_string('repeaters/partials/attempt_history.html', {'record': record}),
             self._make_view_payload_button(record.get_id),
             self._make_resend_payload_button(record.get_id),
             self._make_requeue_payload_button(record.get_id) if record.cancelled and not record.succeeded
