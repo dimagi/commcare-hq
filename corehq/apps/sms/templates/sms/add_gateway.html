@@ -9,9 +9,9 @@
 {% endblock %}
 
 {% block page_content %}
-    {% initial_page_data 'form.give_other_domains_access' form.give_other_domains_access.value|BOOL %}
-    {% initial_page_data 'use_load_balancing' use_load_balancing|BOOL %}
-    {% initial_page_data 'form.phone_numbers' form.phone_numbers.value|default:'[]'|safe %}
+    {% initial_page_data 'give_other_domains_access' form.give_other_domains_access.value %}
+    {% initial_page_data 'use_load_balancing' use_load_balancing %}
+    {% initial_page_data 'phone_numbers' form.phone_numbers.value|default:'[]'|safe %}
 
     <div id="add-gateway-form">
         {% crispy form %}
