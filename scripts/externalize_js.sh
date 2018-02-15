@@ -60,6 +60,17 @@ if [[ $autocommit == "true" ]]; then
     branch=$(git rev-parse --abbrev-ref HEAD)
     if [[ $branch == 'master' ]]; then
         abort "You must not be on master to run this command."
+
+        function branch() {
+            read -p "What are your initials?" initials
+            git checkout -b $initials/ejs/$app-$module
+        }
+        select yn in "Yes" "No"; do
+            case $yn in
+                Yes ) branch; break;;
+                No ) abort "You must not be on master to run this command."
+            esac
+        done
     fi
 fi
 
