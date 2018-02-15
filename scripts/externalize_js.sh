@@ -42,37 +42,26 @@ if [[ ! $has_gnu_sed ]]; then
 fi
 
 
-echo "Do you want this script to commit changes for you?"
-select yn in "Yes" "No"; do
-    case $yn in
-        Yes ) autocommit=true; break;;
-        No ) autocommit=false; break;;
-    esac
-done
+has_local_changes=`git diff-index HEAD` && true
+if [[ $has_local_changes ]]; then
+    abort "You have uncommitted changes in your working tree."
+fi
 
+branch=$(git rev-parse --abbrev-ref HEAD)
+if [[ $branch == 'master' ]]; then
+    echo "You must not be on master to run this command."
+    echo "Create a new branch?"
 
-if [[ $autocommit == "true" ]]; then
-    has_local_changes=`git diff-index HEAD` && true
-    if [[ $has_local_changes ]]; then
-        abort "You have uncommitted changes in your working tree."
-    fi
-
-    branch=$(git rev-parse --abbrev-ref HEAD)
-    if [[ $branch == 'master' ]]; then
-        echo "You must not be on master to run this command."
-        echo "Create a new branch?"
-
-        function branch() {
-            read -p "What are your initials?" initials
-            git checkout -b $initials/ejs/$app-$module
-        }
-        select yn in "Yes" "No"; do
-            case $yn in
-                Yes ) branch; break;;
-                No ) abort "You must not be on master to run this command."
-            esac
-        done
-    fi
+    function branch() {
+        read -p "What are your initials?" initials
+        git checkout -b $initials/ejs/$app-$module
+    }
+    select yn in "Yes" "No"; do
+        case $yn in
+            Yes ) branch; break;;
+            No ) abort "You must not be on master to run this command."
+        esac
+    done
 fi
 
 
@@ -124,11 +113,8 @@ else
 fi
 
 # commit the blob movement
-if [[ $autocommit == "true" ]]; then
-    git add $new_module_location $html_file_location
-    git commit -m "first pass externalizing javascript in $module"
-fi
-
+git add $new_module_location $html_file_location
+git commit -m "first pass externalizing javascript in $module"
 
 # check where in page there are template tags
 variable_open_bracket_regex="{\(%\|{\)"
