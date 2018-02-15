@@ -22,6 +22,11 @@ class RemoteLinkDetails(namedtuple('RemoteLinkDetails', 'url_base username api_k
     __nonzero__ = __bool__
 
 
+class ExcludeDeletedManager(models.Manager):
+    def get_queryset(self):
+        return super(ExcludeDeletedManager, self).get_queryset().filter(deletd=False)
+
+
 class DomainLink(models.Model):
     linked_domain = models.CharField(max_length=126, null=False, unique=True)
     master_domain = models.CharField(max_length=126, null=False)
@@ -32,6 +37,9 @@ class DomainLink(models.Model):
     remote_base_url = models.CharField(max_length=255, null=True, blank=True)
     remote_username = models.CharField(max_length=255, null=True, blank=True)
     remote_api_key = models.CharField(max_length=255, null=True, blank=True)
+
+    objects = ExcludeDeletedManager()
+    all_objects = models.Manager()
 
     @property
     def qualified_master(self):
@@ -69,7 +77,7 @@ class DomainLink(models.Model):
     @classmethod
     def link_domains(cls, linked_domain, master_domain, remote_details=None):
         try:
-            link = cls.objects.get(linked_domain=linked_domain)
+            link = cls.all_objects.get(linked_domain=linked_domain)
         except cls.DoesNotExist:
             link = DomainLink(linked_domain=linked_domain, master_domain=master_domain)
 
