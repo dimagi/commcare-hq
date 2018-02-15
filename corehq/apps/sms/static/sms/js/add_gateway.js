@@ -1,5 +1,7 @@
 hqDefine('sms/js/add_gateway', function() {
-    var initialPageData = hqImport('hqwebapp/js/initial_page_data');
+    var initialPageData = hqImport('hqwebapp/js/initial_page_data'),
+        AddGatewayFormHandler = hqImport('add_gateway_form_handler').AddGatewayFormHandler;
+
     var gatewayFormHandler = new AddGatewayFormHandler({
         share_backend: initialPageData.get('form').give_other_domains_access.value,
         use_load_balancing: initialPageData.get('use_load_balancing'),
