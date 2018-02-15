@@ -1476,13 +1476,6 @@ EMAIL_EXPORT_WHEN_DONE_BUTTON = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
-LOCATION_SEARCH = StaticToggle(
-    'location_search',
-    "Allow search for location in organization structure",
-    TAG_PRODUCT,
-    [NAMESPACE_DOMAIN],
-)
-
 SHOW_ALL_SCHEDULED_REPORT_EMAILS = StaticToggle(
     'show_all_scheduled_report_emails',
     "In the 'My Scheduled Reports' tab, show all reports the user is part of (if the user is an "
