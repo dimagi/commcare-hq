@@ -397,14 +397,14 @@ def synclog_to_sql_object(synclog_json_object):
     is_new_synclog_sql = not synclog_json_object._id or not synclog
 
     if is_new_synclog_sql:
-        synclog_id = synclog_json_object._id or uuid.uuid4().hex.lower()
+        synclog_id = synclog_json_object._id or uuid.uuid1().hex.lower()
         synclog_json_object._id = synclog_id
         synclog = SyncLogSQL(
             domain=synclog_json_object.domain,
             user_id=synclog_json_object.user_id,
             synclog_id=synclog_id,
             date=synclog_json_object.date,
-            previous_synclog_id=getattr(synclog_json_object, 'previous_synclog_id', None),
+            previous_synclog_id=getattr(synclog_json_object, 'previous_log_id', None),
             log_format=synclog_json_object.log_format,
             build_id=synclog_json_object.build_id,
             duration=synclog_json_object.duration,
@@ -418,12 +418,12 @@ def synclog_to_sql_object(synclog_json_object):
 
 
 class SyncLogSQL(models.Model):
+    synclog_id = models.UUIDField(unique=True, primary_key=True, default=uuid.uuid1().hex)
     domain = models.CharField(max_length=255, null=True, blank=True, default=None, db_index=True)
     user_id = models.CharField(max_length=255, default=None, db_index=True)
     date = models.DateTimeField(db_index=True, null=True, blank=True)
-    synclog_id = models.UUIDField(unique=True, primary_key=True)
     # needs to be a foreign key?
-    previous_synclog_id = models.CharField(max_length=255, default=None, null=True, blank=True)
+    previous_synclog_id = models.UUIDField(max_length=255, default=None, null=True, blank=True)
     doc = JSONField()
     log_format = models.CharField(
         max_length=10,
