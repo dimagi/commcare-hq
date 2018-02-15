@@ -77,6 +77,7 @@ def _make_method(name):
     method.__name__ = str(name)  # unicode_literals: must be bytes on PY2
     return method
 
+
 for name in [
     "annotate",
     "filter",
