@@ -7,7 +7,7 @@ hqDefine("hqadmin/js/visualizations", function() {
         // and returns {"foo": "bar", "bat": "", "fizz": "bang"}
         if (!a) {
             return {};
-        };
+        }
         a = a.split('&');
         var b = {};
         for (var i = 0; i < a.length; ++i)
@@ -169,7 +169,7 @@ hqDefine("hqadmin/js/visualizations", function() {
                         $startdate_field.val(startdate.toISOString().substr(0, 10)); // substr bc date strs are 10 chars
                     }
                     if (!$enddate_field.val()) {
-                        $enddate_field.val(enddate.toISOString().substr(0, 10))
+                        $enddate_field.val(enddate.toISOString().substr(0, 10));
                     }
                     if (!$interval_field.val()) {
                         $interval_field.val(self.interval);
