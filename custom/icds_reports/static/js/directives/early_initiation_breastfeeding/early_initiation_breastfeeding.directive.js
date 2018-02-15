@@ -42,18 +42,6 @@ function EarlyInitiationBreastfeedingController($scope, $routeParams, $location,
 
     vm.message = storageService.getKey('message') || false;
 
-    vm.prevDay = moment().subtract(1, 'days').format('Do MMMM, YYYY');
-    vm.lastDayOfPreviousMonth = moment().set('date', 1).subtract(1, 'days').format('Do MMMM, YYYY');
-    vm.currentMonth = moment().format("MMMM");
-    vm.showInfoMessage = function () {
-        var selected_month = parseInt($location.search()['month']) || new Date().getMonth() + 1;
-        var selected_year = parseInt($location.search()['year']) || new Date().getFullYear();
-        var current_month = new Date().getMonth() + 1;
-        var current_year = new Date().getFullYear();
-        return selected_month === current_month && selected_year === current_year &&
-            (new Date().getDate() === 1 || new Date().getDate() === 2);
-    };
-
     $scope.$watch(function() {
         return vm.selectedLocations;
     }, function (newValue, oldValue) {
@@ -126,8 +114,9 @@ function EarlyInitiationBreastfeedingController($scope, $routeParams, $location,
                 }) * 100);
                 var range = max - min;
                 vm.chartOptions.chart.forceY = [
-                    ((min - range/10)/100).toFixed(2) < 0 ? 0 : ((min - range/10)/100).toFixed(2),
-                    ((max + range/10)/100).toFixed(2),
+                    parseInt(((min - range/10)/100).toFixed(2)) < 0 ?
+                        0 : parseInt(((min - range/10)/100).toFixed(2)),
+                    parseInt(((max + range/10)/100).toFixed(2)),
                 ];
             }
         });
@@ -135,7 +124,7 @@ function EarlyInitiationBreastfeedingController($scope, $routeParams, $location,
 
     vm.init = function() {
         var locationId = vm.filtersData.location_id || vm.userLocationId;
-        if (!vm.userLocationId || !locationId || locationId === 'all') {
+        if (!locationId || ["all", "null", "undefined"].indexOf(locationId) >= 0) {
             vm.loadData();
             vm.loaded = true;
             return;
@@ -216,9 +205,9 @@ function EarlyInitiationBreastfeedingController($scope, $routeParams, $location,
 
     vm.tooltipContent = function (monthName, dataInMonth) {
         return "<p><strong>" + monthName + "</strong></p><br/>"
-            + "<p>Total Number of Children born in the given month: <strong>" + $filter('indiaNumbers')(dataInMonth.all) + "</strong></p>"
-            + "<p>Total Number of Children who were put to the breast within one hour of birth: <strong>" + $filter('indiaNumbers')(dataInMonth.birth) + "</strong></p>"
-            + "<p>% children who were put to the breast within one hour of birth: <strong>" + d3.format('.2%')(dataInMonth.y) + "</strong></p>";
+            + "<div>Total Number of Children born in the given month: <strong>" + $filter('indiaNumbers')(dataInMonth.all) + "</strong></div>"
+            + "<div>Total Number of Children who were put to the breast within one hour of birth: <strong>" + $filter('indiaNumbers')(dataInMonth.birth) + "</strong></div>"
+            + "<div>% children who were put to the breast within one hour of birth: <strong>" + d3.format('.2%')(dataInMonth.y) + "</strong></div>";
     };
 
     vm.moveToLocation = function(loc, index) {

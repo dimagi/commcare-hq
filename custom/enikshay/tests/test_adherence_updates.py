@@ -19,6 +19,7 @@ from custom.enikshay.const import (
     DOSE_TAKEN_INDICATORS as DTIndicators,
     DOSE_UNKNOWN,
     DAILY_SCHEDULE_FIXTURE_NAME,
+    ENROLLED_IN_PRIVATE,
     SCHEDULE_ID_FIXTURE,
     HISTORICAL_CLOSURE_REASON,
 )
@@ -37,6 +38,7 @@ from custom.enikshay.tests.utils import (
     get_episode_case_structure
 )
 import six
+from six.moves import range
 
 MOCK_FIXTURE_ITEMS = {
     '99DOTS': {
@@ -273,7 +275,7 @@ class TestAdherenceUpdater(TestCase):
 
         occurrence = get_occurrence_case_structure(self.occurrence_id, person)
 
-        episode_structure = get_episode_case_structure(self.episode_id, occurrence)
+        episode_structure = get_episode_case_structure(self.episode_id, occurrence, {ENROLLED_IN_PRIVATE: 'true'})
         self.factory.create_or_update_case(episode_structure)
 
         archived_person = get_person_case_structure("person_2", self.user.user_id, owner_id="_archive_")

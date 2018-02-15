@@ -14,6 +14,7 @@ from django.utils.functional import cached_property
 from django.utils.translation import ugettext as _, ugettext_lazy
 
 from corehq import privileges
+from corehq import toggles
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule, CreateScheduleInstanceActionDefinition
 from corehq.apps.domain.models import Domain
@@ -23,7 +24,7 @@ from corehq.apps.hqwebapp.decorators import use_datatables, use_select2, use_jqu
 from corehq.apps.hqwebapp.views import DataTablesAJAXPaginationMixin
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
-from corehq.messaging.scheduling.async_handlers import MessagingRecipientHandler
+from corehq.messaging.scheduling.async_handlers import MessagingRecipientHandler, ConditionalAlertAsyncHandler
 from corehq.messaging.scheduling.forms import (
     BroadcastForm,
     ConditionalAlertForm,
@@ -57,6 +58,11 @@ def _requires_new_reminder_framework():
     def decorate(fn):
         @wraps(fn)
         def wrapped(request, *args, **kwargs):
+            if (
+                hasattr(request, 'couch_user') and
+                toggles.NEW_REMINDERS_MIGRATOR.enabled(request.couch_user.username)
+            ):
+                return fn(request, *args, **kwargs)
             if not hasattr(request, 'project'):
                 request.project = Domain.get_by_name(request.domain)
             if request.project.uses_new_reminders:
@@ -439,7 +445,7 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
     urlname = 'create_conditional_alert'
     page_title = ugettext_lazy('New Conditional Message')
     template_name = 'scheduling/conditional_alert.html'
-    async_handlers = [MessagingRecipientHandler]
+    async_handlers = [ConditionalAlertAsyncHandler]
     read_only_mode = False
 
     @method_decorator(_requires_new_reminder_framework())

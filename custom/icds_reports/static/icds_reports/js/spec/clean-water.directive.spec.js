@@ -183,9 +183,9 @@ describe('Clean Water Directive', function () {
         var data = {all: 20, in_month: 10, y: 0.5};
         var month = {value: "Jul 2017", series: []};
 
-        var expected = '<p><strong>Jul 2017</strong></p><br/><p>Number of AWCs that reported having a source of clean drinking water:' +
-            ' <strong>10</strong></p><p>% of AWCs that reported having a source of clean drinking water:' +
-            ' <strong>50.00%</strong></p>';
+        var expected = '<p><strong>Jul 2017</strong></p><br/>' +
+            '<div>Number of AWCs that reported having a source of clean drinking water: <strong>10</strong></div>' +
+            '<div>% of AWCs that reported having a source of clean drinking water: <strong>50.00%</strong></div>';
 
         var result = controller.tooltipContent(month.value, data);
         assert.equal(expected, result);

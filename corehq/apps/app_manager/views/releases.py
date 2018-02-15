@@ -69,6 +69,7 @@ def _get_error_counts(domain, app_id, version_numbers):
 @require_deploy_apps
 def paginate_releases(request, domain, app_id):
     limit = request.GET.get('limit')
+    only_show_released = json.loads(request.GET.get('only_show_released', 'false'))
     try:
         limit = int(limit)
     except (TypeError, ValueError):
@@ -80,13 +81,22 @@ def paginate_releases(request, domain, app_id):
     else:
         start_build = {}
     timezone = get_timezone_for_user(request.couch_user, domain)
-    saved_apps = Application.get_db().view('app_manager/saved_app',
-        startkey=[domain, app_id, start_build],
-        endkey=[domain, app_id],
-        descending=True,
-        limit=limit,
-        wrapper=lambda x: SavedAppBuild.wrap(x['value']).to_saved_build_json(timezone),
-    ).all()
+
+    saved_apps = []
+    batch = [None]
+    while len(saved_apps) < limit and len(batch):
+        batch = Application.get_db().view('app_manager/saved_app',
+            startkey=[domain, app_id, start_build],
+            endkey=[domain, app_id],
+            descending=True,
+            limit=limit,
+            wrapper=lambda x: SavedAppBuild.wrap(x['value']).to_saved_build_json(timezone),
+        ).all()
+        if len(batch):
+            start_build = batch[-1]['version'] - 1
+        saved_apps = saved_apps + [app for app in batch if not only_show_released or app['is_released']]
+    saved_apps = saved_apps[:limit]
+
     j2me_enabled_configs = CommCareBuildConfig.j2me_enabled_config_labels()
     for app in saved_apps:
         app['include_media'] = app['doc_type'] != 'RemoteApp'

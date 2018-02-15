@@ -119,13 +119,15 @@ function LocationFilterController($scope, $location, $uibModal, locationHierarch
 
     vm.userLocationId = userLocationId;
     vm.animationsEnabled = true;
-    vm.selectedLocationId = $location.search()['location_id'] || vm.userLocationId;
+    vm.selectedLocationId = $location.search()['location_id'] !== 'undefined' &&
+        $location.search()['location_id'] !== 'null' ? $location.search()['location_id'] : vm.userLocationId;
     vm.locationsCache = {};
     vm.selectedLocations = [];
     vm.hierarchy = [];
     vm.currentLevel = 0;
     vm.maxLevel = 0;
-    vm.location_id = $location.search()['location_id'] || vm.selectedLocationId;
+    vm.location_id = $location.search()['location_id'] !== 'undefined' &&
+        $location.search()['location_id'] !== 'null' ? $location.search()['location_id'] : vm.selectedLocationId;
 
     var ALL_OPTION = {name: 'All', location_id: 'all'};
 

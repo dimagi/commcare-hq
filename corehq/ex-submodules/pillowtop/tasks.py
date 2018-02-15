@@ -31,6 +31,11 @@ def pillow_datadog_metrics():
             'feed_type:{}'.format('couch' if _is_couch(pillow) else 'kafka')
         ]
 
+        datadog_gauge(
+            'commcare.change_feed.seconds_since_last_update',
+            pillow['seconds_since_last'], tags=tags
+        )
+
         for topic_name, offset in pillow['offsets'].items():
             if _is_couch(pillow):
                 if not isinstance(pillow['seq'], int) or len(pillow['offsets']) != 1:

@@ -187,9 +187,9 @@ describe('Enrolled Women Directive', function () {
         var month = {value: "Jul 2017", series: []};
 
         var expected = "<p><strong>Jul 2017</strong></p><br/>"
-            + "<p>Number of pregnant women who are enrolled for Anganwadi Services: <strong>72</strong></p>"
-            + "<p>Total number of pregnant women who are registered: <strong>72</strong></p>"
-            + "<p>Percentage of registered pregnant women who are enrolled for Anganwadi Services: <strong>100.00%</strong></p>";
+            + "<div>Number of pregnant women who are enrolled for Anganwadi Services: <strong>72</strong></div>"
+            + "<div>Total number of pregnant women who are registered: <strong>72</strong></div>"
+            + "<div>Percentage of registered pregnant women who are enrolled for Anganwadi Services: <strong>100.00%</strong></div>";
 
         var result = controller.tooltipContent(month.value, data);
         assert.equal(expected, result);

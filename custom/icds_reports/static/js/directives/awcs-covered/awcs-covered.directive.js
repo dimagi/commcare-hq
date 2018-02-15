@@ -35,18 +35,6 @@ function AWCSCoveredController($scope, $routeParams, $location, $filter, icdsCas
     vm.filters = ['age', 'gender'];
     vm.message = storageService.getKey('message') || false;
 
-    vm.prevDay = moment().subtract(1, 'days').format('Do MMMM, YYYY');
-    vm.lastDayOfPreviousMonth = moment().set('date', 1).subtract(1, 'days').format('Do MMMM, YYYY');
-    vm.currentMonth = moment().format("MMMM");
-    vm.showInfoMessage = function () {
-        var selected_month = parseInt($location.search()['month']) || new Date().getMonth() + 1;
-        var selected_year = parseInt($location.search()['year']) || new Date().getFullYear();
-        var current_month = new Date().getMonth() + 1;
-        var current_year = new Date().getFullYear();
-        return selected_month === current_month && selected_year === current_year &&
-            (new Date().getDate() === 1 || new Date().getDate() === 2);
-    };
-
     $scope.$watch(function() {
         return vm.selectedLocations;
     }, function (newValue, oldValue) {
@@ -114,8 +102,8 @@ function AWCSCoveredController($scope, $routeParams, $location, $filter, icdsCas
                 }));
                 var range = max - min;
                 vm.chartOptions.chart.forceY = [
-                    (min - range/10).toFixed(2) < 0 ? 0 : (min - range/10).toFixed(2),
-                    (max + range/10).toFixed(2),
+                    parseInt((min - range/10).toFixed(0)) < 0 ? 0 : parseInt((min - range/10).toFixed(0)),
+                    parseInt((max + range/10).toFixed(0)),
                 ];
             }
         });
@@ -233,7 +221,7 @@ function AWCSCoveredController($scope, $routeParams, $location, $filter, icdsCas
     vm.tooltipContent = function(monthName, value) {
         return "<p><strong>" + monthName + "</strong></p><br/>"
             + vm.data.legendTitle
-            + "<p>Number of AWCs Launched: <strong>" + value + "</strong></p>";
+            + "<div>Number of AWCs Launched: <strong>" + value + "</strong></div>";
     };
 
     vm.showAllLocations = function () {

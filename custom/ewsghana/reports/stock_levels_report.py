@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import division
 import collections
 from collections import OrderedDict
 from datetime import timedelta
@@ -192,7 +193,7 @@ class InventoryManagementData(EWSData):
             if not daily_consumption:
                 return 0
             consumption = round(float(daily_consumption) * 30.0)
-            quantity = float(state.stock_on_hand) - int((date - state.report.date).days / 7.0) * consumption
+            quantity = float(state.stock_on_hand) - ((date - state.report.date).days // 7) * consumption
             if consumption and consumption > 0 and quantity > 0:
                 return quantity / consumption
             return 0
@@ -217,7 +218,7 @@ class InventoryManagementData(EWSData):
         ).select_related('report', 'sql_product').order_by('report__date')
 
         rows = OrderedDict()
-        weeks = ceil((enddate - startdate).days / 7.0)
+        weeks = ceil((enddate - startdate).days / 7)
 
         for state in st:
             product_name = '{0} ({1})'.format(state.sql_product.name, state.sql_product.code)

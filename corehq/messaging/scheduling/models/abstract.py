@@ -4,6 +4,7 @@ import uuid
 from dimagi.utils.decorators.memoized import memoized
 from django.db import models, transaction
 from corehq.apps.reminders.util import get_one_way_number_for_recipient
+from corehq.apps.sms.api import MessageMetadata, send_sms_with_backend_name, send_sms
 from corehq.apps.translations.models import StandaloneTranslationDoc
 from corehq.apps.users.models import CommCareUser
 from corehq.messaging.scheduling.exceptions import (
@@ -11,6 +12,12 @@ from corehq.messaging.scheduling.exceptions import (
     UnknownContentType,
 )
 from corehq.messaging.scheduling import util
+from corehq.messaging.templating import (
+    _get_obj_template_info,
+    MessagingTemplateRenderer,
+    SimpleDictTemplateParam,
+    CaseMessagingTemplateParam,
+)
 from django.utils.functional import cached_property
 
 
@@ -195,8 +202,45 @@ class Event(ContentForeignKeyMixin):
 
 
 class Content(models.Model):
+    # If this this content is being invoked in the context of a case,
+    # for example when a case triggers an alert, this is the case.
+    case = None
+
+    # If this content in being invoked in the context of a ScheduleInstance
+    # (i.e., this was scheduled content), this is the ScheduleInstance.
+    schedule_instance = None
+
     class Meta:
         abstract = True
+
+    def set_context(self, case=None, schedule_instance=None):
+        if case:
+            self.case = case
+
+        if schedule_instance:
+            self.schedule_instance = schedule_instance
+
+    @cached_property
+    def case_rendering_context(self):
+        """
+        This is a cached property because many of the lookups done
+        within a CaseMessagingTemplateParam are memoized, so by
+        caching this return value we're able to reuse those lookups
+        when looping over all expanded recipients of a ScheduleInstance.
+        """
+        if self.case:
+            return CaseMessagingTemplateParam(self.case)
+
+        return None
+
+    def get_template_renderer(self, recipient):
+        r = MessagingTemplateRenderer()
+        r.set_context_param('recipient', SimpleDictTemplateParam(_get_obj_template_info(recipient)))
+
+        if self.case_rendering_context:
+            r.set_context_param('case', self.case_rendering_context)
+
+        return r
 
     @classmethod
     def get_one_way_phone_number(cls, recipient):
@@ -217,27 +261,61 @@ class Content(models.Model):
     def get_cleaned_message(message_dict, language_code):
         return message_dict.get(language_code, '').strip()
 
-    @staticmethod
-    def get_translation_from_message_dict(message_dict, schedule, preferred_language_code):
+    @memoized
+    def get_lang_doc(self, domain):
+        return StandaloneTranslationDoc.get_obj(domain, 'sms')
+
+    def get_translation_from_message_dict(self, domain, message_dict, preferred_language_code):
         """
+        :param domain: the domain
         :param message_dict: a dictionary of {language code: message}
-        :param schedule: an instance of corehq.messaging.scheduling.models.Schedule
         :param preferred_language_code: the language code of the user's preferred language
         """
-        lang_doc = StandaloneTranslationDoc.get_obj(schedule.domain, 'sms')
-        return (
-            Content.get_cleaned_message(message_dict, preferred_language_code) or
-            Content.get_cleaned_message(message_dict, schedule.default_language_code) or
-            (Content.get_cleaned_message(message_dict, lang_doc.default_lang) if lang_doc else None) or
-            Content.get_cleaned_message(message_dict, '*')
-        )
+        result = Content.get_cleaned_message(message_dict, preferred_language_code)
 
-    def send(self, recipient, schedule_instance, logged_event, case=None):
+        if not result and self.schedule_instance:
+            schedule = self.schedule_instance.memoized_schedule
+            result = Content.get_cleaned_message(message_dict, schedule.default_language_code)
+
+        if not result and self.get_lang_doc(domain):
+            result = Content.get_cleaned_message(message_dict, self.get_lang_doc(domain).default_lang)
+
+        if not result:
+            result = Content.get_cleaned_message(message_dict, '*')
+
+        return result
+
+    def send(self, recipient, logged_event):
         """
         :param recipient: a CommCareUser, WebUser, or CommCareCase/SQL
         representing the contact who should receive the content.
         """
         raise NotImplementedError()
+
+    def get_sms_message_metadata(self, logged_subevent):
+        custom_metadata = {}
+
+        if self.case:
+            custom_metadata['case_id'] = self.case.case_id
+
+        if self.schedule_instance and self.schedule_instance.memoized_schedule.custom_metadata:
+            custom_metadata.update(self.schedule_instance.memoized_schedule.custom_metadata)
+
+        return MessageMetadata(
+            custom_metadata=custom_metadata,
+            messaging_subevent_id=logged_subevent.pk,
+        )
+
+    def send_sms_message(self, domain, recipient, phone_number, message, logged_subevent):
+        if not message:
+            return
+
+        metadata = self.get_sms_message_metadata(logged_subevent)
+
+        if self.schedule_instance and self.schedule_instance.memoized_schedule.is_test:
+            send_sms_with_backend_name(domain, phone_number, message, 'TEST', metadata=metadata)
+        else:
+            send_sms(domain, recipient, phone_number, message, metadata=metadata)
 
 
 class Broadcast(models.Model):

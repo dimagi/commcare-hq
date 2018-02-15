@@ -1,5 +1,4 @@
 from __future__ import absolute_import
-from collections import OrderedDict
 
 from django.test.utils import override_settings
 
@@ -53,20 +52,22 @@ class TestPrevalenceOfUndernutrition(TestCase):
             data['data'],
             {
                 'st1': {
-                    'total': 1585,
+                    'weighed': 1585,
                     'severely_underweight': 40,
                     'moderately_underweight': 320,
                     'fillKey': '20%-35%',
                     'original_name': ["st1"],
-                    'normal': 1225
+                    'normal': 1225,
+                    'total': 2375
                 },
                 'st2': {
-                    'total': 1895,
+                    'weighed': 1895,
                     'severely_underweight': 60,
                     'moderately_underweight': 330,
                     'original_name': ["st2"],
                     'fillKey': '20%-35%',
-                    'normal': 1505
+                    'normal': 1505,
+                    'total': 2570
                 }
             }
         )
@@ -110,7 +111,7 @@ class TestPrevalenceOfUndernutrition(TestCase):
             data['rightLegend']['extended_info'],
             [
                 {'indicator': 'Total Children (0 - 5 years) weighed in given month:', 'value': '3,480'},
-                {'indicator': '% Unweighed (0 - 5 years):', 'value': '29.63%'},
+                {'indicator': 'Number of children unweighed (0 - 5 years):', 'value': '1,465'},
                 {'indicator': '% Severely Underweight (0 - 5 years):', 'value': '2.87%'},
                 {'indicator': '% Moderately Underweight (0 - 5 years):', 'value': '18.68%'},
                 {'indicator': '% Normal (0 - 5 years):', 'value': '78.45%'}
@@ -173,7 +174,8 @@ class TestPrevalenceOfUndernutrition(TestCase):
                     'severely_underweight': 8,
                     'moderately_underweight': 64,
                     'normal': 245,
-                    'total': 317,
+                    'weighed': 317,
+                    'total': 475,
                     'original_name': ['b1', 'b2'],
                     'fillKey': '20%-35%'
                 }
@@ -193,195 +195,341 @@ class TestPrevalenceOfUndernutrition(TestCase):
         )
         self.assertEquals(data['rightLegend']['average'], 22.743014091234773)
 
-    def test_chart_data(self):
-        self.assertDictEqual(
-            get_prevalence_of_undernutrition_data_chart(
-                'icds-cas',
-                config={
-                    'month': (2017, 5, 1)
+    def test_chart_data_keys_length(self):
+        data = get_prevalence_of_undernutrition_data_chart(
+            'icds-cas',
+            config={
+                'month': (2017, 5, 1)
+            },
+            loc_level='state'
+        )
+        self.assertEquals(len(data), 5)
+
+    def test_chart_data_location_type(self):
+        data = get_prevalence_of_undernutrition_data_chart(
+            'icds-cas',
+            config={
+                'month': (2017, 5, 1)
+            },
+            loc_level='state'
+        )
+        self.assertEquals(data['location_type'], 'State')
+
+    def test_chart_data_bottom_five(self):
+        data = get_prevalence_of_undernutrition_data_chart(
+            'icds-cas',
+            config={
+                'month': (2017, 5, 1)
+            },
+            loc_level='state'
+        )
+        self.assertListEqual(
+            data['bottom_five'],
+            [
+                {
+                    "loc_name": "st2",
+                    "percent": 20.58047493403694
                 },
-                loc_level='state'
-            ),
+                {
+                    "loc_name": "st1",
+                    "percent": 22.71293375394322
+                },
+            ]
+        )
+
+    def test_chart_data_top_five(self):
+        data = get_prevalence_of_undernutrition_data_chart(
+            'icds-cas',
+            config={
+                'month': (2017, 5, 1)
+            },
+            loc_level='state'
+        )
+        self.assertListEqual(
+            data['top_five'],
+            [
+                {
+                    "loc_name": "st2",
+                    "percent": 20.58047493403694
+                },
+                {
+                    "loc_name": "st1",
+                    "percent": 22.71293375394322
+                },
+            ]
+        )
+
+    def test_chart_data_elements_length(self):
+        data = get_prevalence_of_undernutrition_data_chart(
+            'icds-cas',
+            config={
+                'month': (2017, 5, 1)
+            },
+            loc_level='state'
+        )
+        self.assertEquals(len(data['chart_data']), 3)
+
+    def test_chart_data_pink(self):
+        data = get_prevalence_of_undernutrition_data_chart(
+            'icds-cas',
+            config={
+                'month': (2017, 5, 1)
+            },
+            loc_level='state'
+        )
+        self.assertDictEqual(
+            data['chart_data'][0],
             {
-                "location_type": "State",
-                "bottom_five": [
+                "color": ChartColors.PINK,
+                "classed": "dashed",
+                "strokeWidth": 2,
+                "values": [
                     {
-                        "loc_name": "st1",
-                        "percent": 15.157894736842104
+                        "y": 0.0,
+                        "x": 1485907200000,
+                        "weighed": 0,
+                        "unweighed": 0
                     },
                     {
-                        "loc_name": "st2",
-                        "percent": 15.17509727626459
-                    },
-                ],
-                "top_five": [
-                    {
-                        "loc_name": "st1",
-                        "percent": 15.157894736842104
+                        "y": 0.0,
+                        "x": 1488326400000,
+                        "weighed": 0,
+                        "unweighed": 0
                     },
                     {
-                        "loc_name": "st2",
-                        "percent": 15.17509727626459
-                    },
-                ],
-                "chart_data": [
-                    {
-                        "color": ChartColors.PINK,
-                        "classed": "dashed",
-                        "strokeWidth": 2,
-                        "values": [
-                            {
-                                "y": 0.0,
-                                "x": 1485907200000,
-                                "all": 0
-                            },
-                            {
-                                "y": 0.0,
-                                "x": 1488326400000,
-                                "all": 0
-                            },
-                            {
-                                "y": 0.5048923679060665,
-                                "x": 1491004800000,
-                                "all": 5110
-                            },
-                            {
-                                "y": 0.5520728008088979,
-                                "x": 1493596800000,
-                                "all": 4945
-                            }
-                        ],
-                        "key": "% Normal"
+                        "y": 0.7467438494934877,
+                        "x": 1491004800000,
+                        "weighed": 3455,
+                        "unweighed": 1655
                     },
                     {
-                        "color": ChartColors.ORANGE,
-                        "classed": "dashed",
-                        "strokeWidth": 2,
-                        "values": [
-                            {
-                                "y": 0.0,
-                                "x": 1485907200000,
-                                "all": 0
-                            },
-                            {
-                                "y": 0.0,
-                                "x": 1488326400000,
-                                "all": 0
-                            },
-                            {
-                                "y": 0.15655577299412915,
-                                "x": 1491004800000,
-                                "all": 5110
-                            },
-                            {
-                                "y": 0.13144590495449948,
-                                "x": 1493596800000,
-                                "all": 4945
-                            }
-                        ],
-                        "key": "% Moderately Underweight (-2 SD)"
-                    },
-                    {
-                        "color": ChartColors.RED,
-                        "classed": "dashed",
-                        "strokeWidth": 2,
-                        "values": [
-                            {
-                                "y": 0.0,
-                                "x": 1485907200000,
-                                "all": 0
-                            },
-                            {
-                                "y": 0.0,
-                                "x": 1488326400000,
-                                "all": 0
-                            },
-                            {
-                                "y": 0.014677103718199608,
-                                "x": 1491004800000,
-                                "all": 5110
-                            },
-                            {
-                                "y": 0.020222446916076844,
-                                "x": 1493596800000,
-                                "all": 4945
-                            }
-                        ],
-                        "key": "% Severely Underweight (-3 SD) "
+                        "y": 0.7844827586206896,
+                        "x": 1493596800000,
+                        "weighed": 3480,
+                        "unweighed": 1465
                     }
                 ],
-                "all_locations": [
-                    {
-                        "loc_name": "st1",
-                        "percent": 15.157894736842104
-                    },
-                    {
-                        "loc_name": "st2",
-                        "percent": 15.17509727626459
-                    },
-                ]
+                "key": "% Normal"
             }
         )
 
-    def test_sector_data(self):
+    def test_chart_data_orange(self):
+        data = get_prevalence_of_undernutrition_data_chart(
+            'icds-cas',
+            config={
+                'month': (2017, 5, 1)
+            },
+            loc_level='state'
+        )
         self.assertDictEqual(
-            get_prevalence_of_undernutrition_sector_data(
-                'icds-cas',
-                config={
-                    'month': (2017, 5, 1),
-                    'state_id': 'st1',
-                    'district_id': 'd1',
-                    'block_id': 'b1',
-                },
-                location_id='b1',
-                loc_level='supervisor'
-            ),
+            data['chart_data'][1],
             {
-                "info": "Percentage of children between 0-5 years enrolled for Anganwadi Services with "
-                        "weight-for-age less than -2 standard deviations of the WHO Child Growth Standards median."
-                        " <br/><br/>Children who are moderately "
-                        "or severely underweight have a higher risk of mortality",
-                "tooltips_data": {
-                    u"s2": {
-                        "total": 182,
-                        "severely_underweight": 4,
-                        "moderately_underweight": 54,
-                        "normal": 124
-                    },
-                    u"s1": {
-                        "total": 134,
-                        "severely_underweight": 8,
-                        "moderately_underweight": 36,
-                        "normal": 90
-                    },
-                    None: {
-                        "total": 158,
-                        "severely_underweight": 6,
-                        "moderately_underweight": 45,
-                        "normal": 107
-                    }
-                },
-                "chart_data": [
+                "color": ChartColors.ORANGE,
+                "classed": "dashed",
+                "strokeWidth": 2,
+                "values": [
                     {
-                        "color": MapColors.BLUE,
-                        "classed": "dashed",
-                        "strokeWidth": 2,
-                        "values": [
-                            [
-                                None,
-                                0.3227848101265823
-                            ],
-                            [
-                                "s1",
-                                0.3283582089552239
-                            ],
-                            [
-                                "s2",
-                                0.31868131868131866
-                            ]
-                        ],
-                        "key": ""
+                        "y": 0.0,
+                        "x": 1485907200000,
+                        "weighed": 0,
+                        "unweighed": 0
+                    },
+                    {
+                        "y": 0.0,
+                        "x": 1488326400000,
+                        "weighed": 0,
+                        "unweighed": 0
+                    },
+                    {
+                        "y": 0.23154848046309695,
+                        "x": 1491004800000,
+                        "weighed": 3455,
+                        "unweighed": 1655
+                    },
+                    {
+                        "y": 0.1867816091954023,
+                        "x": 1493596800000,
+                        "weighed": 3480,
+                        "unweighed": 1465
                     }
-                ]
+                ],
+                "key": "% Moderately Underweight (-2 SD)"
             }
+        )
+
+    def test_chart_data_red(self):
+        data = get_prevalence_of_undernutrition_data_chart(
+            'icds-cas',
+            config={
+                'month': (2017, 5, 1)
+            },
+            loc_level='state'
+        )
+        self.assertDictEqual(
+            data['chart_data'][2],
+            {
+                "color": ChartColors.RED,
+                "classed": "dashed",
+                "strokeWidth": 2,
+                "values": [
+                    {
+                        "y": 0.0,
+                        "x": 1485907200000,
+                        "weighed": 0,
+                        "unweighed": 0
+                    },
+                    {
+                        "y": 0.0,
+                        "x": 1488326400000,
+                        "weighed": 0,
+                        "unweighed": 0
+                    },
+                    {
+                        "y": 0.02170767004341534,
+                        "x": 1491004800000,
+                        "weighed": 3455,
+                        "unweighed": 1655
+                    },
+                    {
+                        "y": 0.028735632183908046,
+                        "x": 1493596800000,
+                        "weighed": 3480,
+                        "unweighed": 1465
+                    }
+                ],
+                "key": "% Severely Underweight (-3 SD) "
+            }
+        )
+
+    def test_chart_data_all_locations(self):
+        data = get_prevalence_of_undernutrition_data_chart(
+            'icds-cas',
+            config={
+                'month': (2017, 5, 1)
+            },
+            loc_level='state'
+        )
+        self.assertListEqual(
+            data['all_locations'],
+            [
+                {
+                    "loc_name": "st2",
+                    "percent": 20.58047493403694
+                },
+                {
+                    "loc_name": "st1",
+                    "percent": 22.71293375394322
+                },
+            ]
+        )
+
+    def test_sector_data_keys_length(self):
+        data = get_prevalence_of_undernutrition_sector_data(
+            'icds-cas',
+            config={
+                'month': (2017, 5, 1),
+                'state_id': 'st1',
+                'district_id': 'd1',
+                'block_id': 'b1',
+            },
+            location_id='b1',
+            loc_level='supervisor'
+        )
+        self.assertEquals(len(data), 3)
+
+    def test_sector_data_info(self):
+        data = get_prevalence_of_undernutrition_sector_data(
+            'icds-cas',
+            config={
+                'month': (2017, 5, 1),
+                'state_id': 'st1',
+                'district_id': 'd1',
+                'block_id': 'b1',
+            },
+            location_id='b1',
+            loc_level='supervisor'
+        )
+        self.assertEquals(
+            data['info'],
+            "Percentage of children between 0-5 years enrolled for Anganwadi Services with weight-for-age"
+            " less than -2 standard deviations of the WHO Child Growth Standards median."
+            " <br/><br/>Children who are moderately "
+            "or severely underweight have a higher risk of mortality"
+        )
+
+    def test_sector_data_tooltips_data(self):
+        data = get_prevalence_of_undernutrition_sector_data(
+            'icds-cas',
+            config={
+                'month': (2017, 5, 1),
+                'state_id': 'st1',
+                'district_id': 'd1',
+                'block_id': 'b1',
+            },
+            location_id='b1',
+            loc_level='supervisor'
+        )
+        self.assertDictEqual(
+            data['tooltips_data'],
+            {
+                u"s2": {
+                    "weighed": 182,
+                    "severely_underweight": 4,
+                    "moderately_underweight": 54,
+                    "normal": 124,
+                    "total": 326
+                },
+                u"s1": {
+                    "weighed": 134,
+                    "severely_underweight": 8,
+                    "moderately_underweight": 36,
+                    "normal": 90,
+                    "total": 144
+                },
+                None: {
+                    "weighed": 158,
+                    "severely_underweight": 6,
+                    "moderately_underweight": 45,
+                    "normal": 107,
+                    "total": 235
+                }
+            }
+        )
+
+    def test_sector_data_chart_data(self):
+        data = get_prevalence_of_undernutrition_sector_data(
+            'icds-cas',
+            config={
+                'month': (2017, 5, 1),
+                'state_id': 'st1',
+                'district_id': 'd1',
+                'block_id': 'b1',
+            },
+            location_id='b1',
+            loc_level='supervisor'
+        )
+        self.assertListEqual(
+            data['chart_data'],
+            [
+                {
+                    "color": MapColors.BLUE,
+                    "classed": "dashed",
+                    "strokeWidth": 2,
+                    "values": [
+                        [
+                            None,
+                            0.3227848101265823
+                        ],
+                        [
+                            "s1",
+                            0.3283582089552239
+                        ],
+                        [
+                            "s2",
+                            0.31868131868131866
+                        ]
+                    ],
+                    "key": ""
+                }
+            ]
         )

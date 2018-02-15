@@ -1,4 +1,6 @@
 from __future__ import absolute_import
+
+from django.conf import settings
 from django.conf.urls import url, include
 from django.contrib.auth.views import (
     password_change,
@@ -8,15 +10,12 @@ from django.contrib.auth.views import (
     password_reset,
 )
 from django.utils.translation import ugettext as _
-from django.conf import settings
 from django.views.generic import RedirectView
 
 from corehq.apps.callcenter.views import CallCenterOwnerOptionsView
 from corehq.apps.domain.forms import ConfidentialPasswordResetForm, HQSetPasswordForm
 from corehq.apps.domain.views import (
     ActivateTransferDomainView,
-    AddFormRepeaterView,
-    AddRepeaterView,
     BillingStatementPdfView,
     BulkStripePaymentView,
     CalendarFixtureConfigView,
@@ -32,7 +31,6 @@ from corehq.apps.domain.views import (
     DeactivateTransferDomainView,
     DefaultProjectSettingsView,
     DomainBillingStatementsView,
-    DomainForwardingOptionsView,
     DomainSubscriptionView,
     EditBasicProjectInfoView,
     EditExistingBillingAccountView,
@@ -59,26 +57,28 @@ from corehq.apps.domain.views import (
     WireInvoiceView,
     autocomplete_fields,
     calculated_properties,
-    cancel_repeat_record,
-    drop_repeater,
-    pause_repeater,
-    resume_repeater,
-    requeue_repeat_record,
     select,
     set_published_snapshot,
-    test_repeater,
     toggle_diff,
 )
+from corehq.apps.linked_domain.views import DomainLinkView
+from corehq.apps.reports.dispatcher import DomainReportDispatcher
 from corehq.motech.repeaters.views import (
     AddCaseRepeaterView,
-    RepeatRecordView,
+    AddFormRepeaterView,
+    AddRepeaterView,
+    DomainForwardingOptionsView,
     EditCaseRepeaterView,
     EditFormRepeaterView,
     EditRepeaterView,
+    RepeatRecordView,
+    cancel_repeat_record,
+    drop_repeater,
+    pause_repeater,
+    requeue_repeat_record,
+    resume_repeater,
+    test_repeater,
 )
-
-from corehq.apps.reports.dispatcher import DomainReportDispatcher
-
 
 urlpatterns = [
     url(r'^domain/select/$', select, name='domain_select'),
@@ -187,6 +187,7 @@ domain_settings = [
     url(r'^snapshots/new/$', CreateNewExchangeSnapshotView.as_view(), name=CreateNewExchangeSnapshotView.urlname),
     url(r'^multimedia/$', ManageProjectMediaView.as_view(), name=ManageProjectMediaView.urlname),
     url(r'^case_search/$', CaseSearchConfigView.as_view(), name=CaseSearchConfigView.urlname),
+    url(r'^domain_links/$', DomainLinkView.as_view(), name=DomainLinkView.urlname),
     url(r'^calendar_settings/$', CalendarFixtureConfigView.as_view(), name=CalendarFixtureConfigView.urlname),
     url(r'^location_settings/$', LocationFixtureConfigView.as_view(), name=LocationFixtureConfigView.urlname),
     url(r'^commtrack/settings/$', RedirectView.as_view(url='commtrack_settings', permanent=True)),

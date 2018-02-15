@@ -190,9 +190,9 @@ describe('Early Initiation Breastfeeding Directive', function () {
         var month = {value: "Jul 2017", series: []};
 
         var expected = '<p><strong>Jul 2017</strong></p><br/>'
-            + '<p>Total Number of Children born in the given month: <strong>171</strong></p>'
-            + '<p>Total Number of Children who were put to the breast within one hour of birth: <strong>5</strong></p>'
-            + '<p>% children who were put to the breast within one hour of birth: <strong>24.34%</strong></p>';
+            + '<div>Total Number of Children born in the given month: <strong>171</strong></div>'
+            + '<div>Total Number of Children who were put to the breast within one hour of birth: <strong>5</strong></div>'
+            + '<div>% children who were put to the breast within one hour of birth: <strong>24.34%</strong></div>';
 
         var result = controller.tooltipContent(month.value, data);
         assert.equal(expected, result);

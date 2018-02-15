@@ -290,7 +290,6 @@ HQ_APPS = (
     'corehq.messaging.smsbackends.push',
     'corehq.messaging.smsbackends.apposit',
     'corehq.messaging.smsbackends.test',
-    'corehq.apps.performance_sms',
     'corehq.apps.registration',
     'corehq.messaging.smsbackends.unicel',
     'corehq.messaging.smsbackends.icds_nic',
@@ -570,28 +569,11 @@ CELERY_ANNOTATIONS = {
 }
 
 CELERY_MAIN_QUEUE = 'celery'
-
-# this is the default celery queue
-# for periodic tasks on a separate queue override this to something else
-CELERY_PERIODIC_QUEUE = CELERY_MAIN_QUEUE
-
-# This is the celery queue to use for running reminder rules.
-# It's set to the main queue here and can be overridden to put it
-# on its own queue.
-CELERY_REMINDER_RULE_QUEUE = CELERY_MAIN_QUEUE
-
-# This is the celery queue to use for running reminder case updates.
-# It's set to the main queue here and can be overridden to put it
-# on its own queue.
-CELERY_REMINDER_CASE_UPDATE_QUEUE = CELERY_MAIN_QUEUE
-
-
-# This is the celery queue to use for sending repeat records.
-# It's set to the main queue here and can be overridden to put it
-# on its own queue.
-CELERY_REPEAT_RECORD_QUEUE = CELERY_MAIN_QUEUE
-
-ENIKSHAY_QUEUE = CELERY_MAIN_QUEUE
+CELERY_PERIODIC_QUEUE = 'celery_periodic'
+CELERY_REMINDER_RULE_QUEUE = 'reminder_rule_queue'
+CELERY_REMINDER_CASE_UPDATE_QUEUE = 'reminder_case_update_queue'
+CELERY_REPEAT_RECORD_QUEUE = 'repeat_record_queue'
+ENIKSHAY_QUEUE = 'enikshay_queue'
 
 # Will cause a celery task to raise a SoftTimeLimitExceeded exception if
 # time limit is exceeded.
@@ -902,8 +884,6 @@ RESTRICT_DOMAIN_CREATION = False
 CUSTOM_LANDING_PAGE = False
 
 TABLEAU_URL_ROOT = "https://icds.commcarehq.org/"
-
-HQ_INSTANCE = 'development'
 
 SENTRY_PUBLIC_KEY = None
 SENTRY_PRIVATE_KEY = None
@@ -1423,7 +1403,6 @@ COUCHDB_APPS = [
     'ilsgateway',
     'ewsghana',
     ('auditcare', 'auditcare'),
-    ('performance_sms', META_DB),
     ('repeaters', 'receiverwrapper'),
     ('userreports', META_DB),
     ('custom_data_fields', META_DB),
@@ -1817,6 +1796,7 @@ ENIKSHAY_REPEATERS = (
     'custom.enikshay.integrations.ninetyninedots.repeaters.NinetyNineDotsUpdatePatientRepeater',
     'custom.enikshay.integrations.ninetyninedots.repeaters.NinetyNineDotsAdherenceRepeater',
     'custom.enikshay.integrations.ninetyninedots.repeaters.NinetyNineDotsTreatmentOutcomeRepeater',
+    'custom.enikshay.integrations.ninetyninedots.repeaters.NinetyNineDotsUnenrollPatientRepeater',
     'custom.enikshay.integrations.nikshay.repeaters.NikshayRegisterPatientRepeater',
     'custom.enikshay.integrations.nikshay.repeaters.NikshayTreatmentOutcomeRepeater',
     'custom.enikshay.integrations.nikshay.repeaters.NikshayHIVTestRepeater',

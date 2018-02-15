@@ -49,12 +49,15 @@ trunk: master
 name: autostaging
 branches:
   - vellum-staging # J$ 11/13
-  - je/cythonized-jsonobject # j$ 1/8
+  # - je/cythonized-jsonobject # j$ 1/8
   - xbryanc:dlemailbutton_updates  # Bryan 1/29
   - sophiamcg:organization-structure-search-tree-interaction  # Sophia 1/29
   - xbryanc:show_scheduled_reports_updates  # Bryan 1/31
   - sophiamcg:organization-structure-collapse-button  # Sophia 1/31
   - jls/data-feedback-loop-test # Jenny 2/1
+  - fr/two-factor-mobile-users  # FR 2/7
+  - dmr/celery-queues  # Danny 2/12
+  - nh/omrs/repeater_format  # Norman 2/15
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
