@@ -34,7 +34,7 @@ psycogreen==1.0
 pycrypto==2.6.1
 py-KISSmetrics==1.0.1
 pygooglechart==0.4.0
-python-dateutil==1.5
+python-dateutil==2.6.1
 python-magic==0.4.13
 pytz==2017.2
 PyYAML==3.12
