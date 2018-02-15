@@ -9,10 +9,6 @@
 # to the html file.
 
 # TODOS:
-#   check for template tags in the js file
-#       print necessary initial page data
-#       actually add initial page data tags
-#       convert tags to requesting initial page data
 #   auto indent the moved javascript
 
 
@@ -122,9 +118,9 @@ if [[ $autocommit == "true" ]]; then
 fi
 
 
+# check where in page there are template tags
 variable_open_bracket_regex="{\(%\|{\)"
 variable_close_bracket_regex="\(%\|}\)}"
-# check where in page there are template tags
 template_tags=`sed -n "/$variable_open_bracket_regex/=" $new_module_location`
 template_tag_count=`echo $template_tags | wc -l`
 if [ "$template_tag_count" -gt 0 ]; then
@@ -132,10 +128,12 @@ if [ "$template_tag_count" -gt 0 ]; then
     echo "Please check template tags on these lines."
     echo $template_tags
 
+    # convert translation tags first
     gettext_open="gettext("
     gettext_close=")"
     sed -i "/\('\|\"\)$variable_open_bracket_regex trans/s/ $variable_close_bracket_regex\(\"\|'\)/$gettext_close/; s/\('\|\"\)$variable_open_bracket_regex trans /$gettext_open/" $new_module_location
 
+    # now move on to tags that require imports
     initialpagedata_open="initialPageData.get('"
     initial_page_data_close="')"
 
