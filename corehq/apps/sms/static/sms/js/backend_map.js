@@ -42,7 +42,7 @@ hqDefine('sms/js/backend_map', function() {
 
     $(function(){
         var backendViewModel = new BackendMapViewModel({
-            'backend_map': initialPageData.get('form.backend_map')
+            'backend_map': initialPageData.get('form.backend_map'),
         });
         $('#backend-map-form').koApplyBindings(backendViewModel);
     });
