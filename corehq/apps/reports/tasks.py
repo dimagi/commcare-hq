@@ -70,6 +70,8 @@ def send_delayed_report(report_id):
     Sends a scheduled report, via celery background task.
     """
     if settings.SERVER_ENVIRONMENT == 'production' and ReportNotification.get(report_id).domain == 'ews-ghana':
+        # this is used because ews-ghana was spamming the queue:
+        # https://manage.dimagi.com/default.asp?270029#BugEvent.1457969
         send_report_throttled.delay(report_id)
     else:
         send_report.delay(report_id)
