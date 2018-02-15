@@ -2,7 +2,7 @@ from __future__ import absolute_import
 import csv
 from datetime import datetime
 
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.base import BaseCommand
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 
 DOMAIN = "enikshay"
@@ -68,7 +68,8 @@ class BaseDataDump(BaseCommand):
                                 case_row[column_name] = str(e)
                         else:
                             try:
-                                case_row[column_name] = self.get_case_reference_value(case_reference, case, calculation)
+                                case_row[column_name] = self.get_case_reference_value(
+                                    case_reference, case, calculation)
                             except Exception as e:
                                 case_row[column_name] = str(e)
 
