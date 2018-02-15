@@ -71,9 +71,15 @@ class HQPasswordChangeForm(EncodedPasswordChangeFormMixin, PasswordChangeForm):
 
 
 class HQPhoneNumberMethodForm(PhoneNumberMethodForm):
+    number = forms.CharField(label=_("Phone Number"),
+                             validators=[validate_international_phonenumber],
+                             widget=forms.TextInput(
+                                 attrs={'placeholder': 'Enter your backup phone number, starting with +, '
+                                                       'followed by your country code.'}))
 
     def __init__(self, **kwargs):
-        validate_international_phonenumber.message = "Please enter a valid phone number, starting with a + followed by your country code."
+        validate_international_phonenumber.message = "Make sure to enter a valid phone number, " \
+                                                     "starting with a + followed by your country code."
         super(HQPhoneNumberMethodForm, self).__init__(**kwargs)
         self.helper = FormHelper()
         self.helper.form_class = 'form form-horizontal'
