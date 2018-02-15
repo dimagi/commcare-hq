@@ -8,6 +8,7 @@
 {% endblock %}
 
 {% block page_content %}
+    {% initial_page_data 'form.backend_map' form.backend_map.value|safe %}
     <div id="backend-map-form">
         {% crispy form %}
     </div>

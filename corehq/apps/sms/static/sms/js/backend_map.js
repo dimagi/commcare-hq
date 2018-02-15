@@ -1,4 +1,5 @@
 hqDefine('sms/js/backend_map', function() {
+    var initialPageData = hqImport('hqwebapp/js/initial_page_data');
     function BackendMapping(prefix, backend_id) {
         'use strict';
         var self = this;
@@ -41,7 +42,7 @@ hqDefine('sms/js/backend_map', function() {
 
     $(function(){
         var backendViewModel = new BackendMapViewModel({
-            'backend_map': {{ form.backend_map.value|safe }}
+            'backend_map': initialPageData.get('form.backend_map')
         });
         $('#backend-map-form').koApplyBindings(backendViewModel);
     });
