@@ -1,12 +1,12 @@
 hqDefine("appstore/js/facet_sidebar", function() {
     var escapeRegExp = function(str) {
         return str.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&");
-    }
+    };
 
     var replaceAll = function(find, replace, str) {
         // http://stackoverflow.com/questions/1144783/replacing-all-occurrences-of-a-string-in-javascript#answer-1144788
         return str.replace(new RegExp(escapeRegExp(find), 'g'), replace);
-    }
+    };
 
     var chevron_toggle = function(show, $toggling, $chevron, $holds_toggle_state, after_fn) {
         var chev = "icon-double-angle-",
@@ -32,7 +32,7 @@ hqDefine("appstore/js/facet_sidebar", function() {
         if (after_fn) {
             after_fn();
         }
-    }
+    };
 
     $(function () {
         $(".more-sortable-button").click(function() {
@@ -75,22 +75,22 @@ hqDefine("appstore/js/facet_sidebar", function() {
             }
             var prefix = "";
             if ($this.data('prefix')) {
-                prefix += $(this).data('prefix')
+                prefix += $(this).data('prefix');
             }
 
             $(".sortable").each(function(){
                 var sortable_name = $(this).data("name");
                 $(this).find('.facet-checkbox').each(function(){
-                    $facet = $(this);
+                    var $facet = $(this);
                     if ($facet.is(":checked") && $facet.attr("name")) {
                         url += prefix + sortable_name + "=" + $facet.attr("name") + "&";
                     }
-                })
+                });
             });
 
             if ($facet_search_bar.val()) {
                 var name = $facet_search_bar.attr("name") || "search";
-                url += name + "=" + $facet_search_bar.val()
+                url += name + "=" + $facet_search_bar.val();
             }
             window.location = encodeURI(url);
         });

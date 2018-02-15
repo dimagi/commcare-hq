@@ -1,26 +1,19 @@
+/* global d3, insertLinebreaks, loadCharts */
+// depends on hqadmin/js/nvd3_charts_helper.js for loadCharts and insertLinebreaks
 hqDefine("hqadmin/js/visualizations", function() {
-    var merge_options = function(obj1, obj2) {
-        var obj3 = {};
-        for (var attrname in obj1) {
-            obj3[attrname] = obj1[attrname];
-        }
-        for (var attrname in obj2) {
-            obj3[attrname] = obj2[attrname];
-        }
-        return obj3;
-    }
-
     // adapted from http://stackoverflow.com/questions/901115/
     var getUrlParams = function(a) {
         // takes a string of the form "foo=bar&bat=&fizz=bang"
         // and returns {"foo": "bar", "bat": "", "fizz": "bang"}
-        a = a.split('&')
-        if (a == "") return {};
+        if (!a) {
+            return {};
+        };
+        a = a.split('&');
         var b = {};
         for (var i = 0; i < a.length; ++i)
         {
             var p=a[i].split('=');
-            if (p.length != 2) continue;
+            if (p.length !== 2) continue;
             b[p[0]] = decodeURIComponent(p[1].replace(/\+/g, " "));
         }
         return b;
@@ -76,7 +69,7 @@ hqDefine("hqadmin/js/visualizations", function() {
                     self.loadChartData(update_active_chart, startdate, enddate);
 
                     if (self.should_update_url) {
-                        params = getUrlParams($(location).attr('search').substr(1));
+                        var params = getUrlParams($(location).attr('search').substr(1));
                         params['datefield'] = datefield || "";
                         params['interval'] = interval;
                         params['startdate'] = startdate;
@@ -103,7 +96,7 @@ hqDefine("hqadmin/js/visualizations", function() {
                     $chart.show().removeClass('hidden');
                     $(window).trigger('resize');
                     var chart = self.charts[$chart.parents('.tab-pane').attr('id')];
-                        _update_chart_if_exists(chart); // for some reason nvd3 doesn't fully animate the charts, force this update
+                    _update_chart_if_exists(chart); // for some reason nvd3 doesn't fully animate the charts, force this update
                 });
             });
         };
@@ -140,15 +133,15 @@ hqDefine("hqadmin/js/visualizations", function() {
                 data["startdate"] = startdate;
             }
 
-            if(!jQuery.isEmptyObject(self.get_request_params)) {
+            if (!$.isEmptyObject(self.get_request_params)) {
                 data['get_request_params'] = self.get_request_params;
             }
 
-            if(self.is_cumulative != null) {
+            if (self.is_cumulative != null) {
                 data['is_cumulative'] = self.is_cumulative;
             }
 
-            self.data = merge_options(self.data, data);
+            _.extend(self.data, data);
 
             $.getJSON(self.ajax_url, self.data,
                 function(d) {
@@ -169,9 +162,9 @@ hqDefine("hqadmin/js/visualizations", function() {
                     });
 
                     // set the date fields if they're not already set
-                    $startdate_field = $("#" + self.chart_name + "-startdate");
-                    $enddate_field = $("#" + self.chart_name + "-enddate");
-                    $interval_field = $("#" + self.chart_name + "-interval");
+                    var $startdate_field = $("#" + self.chart_name + "-startdate");
+                    var $enddate_field = $("#" + self.chart_name + "-enddate");
+                    var $interval_field = $("#" + self.chart_name + "-interval");
                     if (!$startdate_field.val()) {
                         $startdate_field.val(startdate.toISOString().substr(0, 10)); // substr bc date strs are 10 chars
                     }
