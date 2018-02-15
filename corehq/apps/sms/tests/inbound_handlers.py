@@ -10,8 +10,6 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from datetime import date, time
 from mock import patch
 
-from corehq.util.test_utils import flag_enabled
-
 
 class MockContextManager(object):
 
