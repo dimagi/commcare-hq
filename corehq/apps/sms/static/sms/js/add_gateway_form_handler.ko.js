@@ -21,7 +21,7 @@ hqDefine('sms/js/add_gateway_form_handler', function () {
                 for(var i = 0; i < arr.length; i++) {
                     self.phone_numbers.push(new PhoneNumber(arr[i].phone_number));
                 }
-                if(self.phone_numbers().length == 0) {
+                if(self.phone_numbers().length === 0) {
                     self.addPhoneNumber();
                 }
             }
@@ -32,7 +32,7 @@ hqDefine('sms/js/add_gateway_form_handler', function () {
         };
 
         self.removePhoneNumber = function() {
-            if(self.phone_numbers().length == 1) {
+            if(self.phone_numbers().length === 1) {
                 alert(initial.phone_number_required_text);
             } else {
                 self.phone_numbers.remove(this);
