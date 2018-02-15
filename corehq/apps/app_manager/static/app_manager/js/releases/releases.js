@@ -211,7 +211,7 @@ hqDefine('app_manager/js/releases/releases', function () {
         self.savedApps = ko.observableArray();
         self.doneFetching = ko.observable(false);
         self.buildState = ko.observable('');
-        self.limitToReleased = ko.observable(false);
+        self.onlyShowReleased = ko.observable(false);
         self.fetchState = ko.observable('');
         self.nextVersionToFetch = null;
         self.fetchLimit = o.fetchLimit || 5;
@@ -321,7 +321,7 @@ hqDefine('app_manager/js/releases/releases', function () {
                 data: {
                     start_build: self.nextVersionToFetch,
                     limit: self.fetchLimit,
-                    limit_to_released: self.limitToReleased(),
+                    only_show_released: self.onlyShowReleased(),
                 },
                 success: function (savedApps) {
                     self.addSavedApps(savedApps);
@@ -371,7 +371,7 @@ hqDefine('app_manager/js/releases/releases', function () {
         };
 
         self.toggleLimitToReleased = function() {
-            self.limitToReleased(!self.limitToReleased());
+            self.onlyShowReleased(!self.onlyShowReleased());
             self.clearSavedApps();
             self.getMoreSavedApps(false);
         };

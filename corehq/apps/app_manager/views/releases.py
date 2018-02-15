@@ -69,7 +69,7 @@ def _get_error_counts(domain, app_id, version_numbers):
 @require_deploy_apps
 def paginate_releases(request, domain, app_id):
     limit = request.GET.get('limit')
-    limit_to_released = json.loads(request.GET.get('limit_to_released'))
+    only_show_released = json.loads(request.GET.get('only_show_released', 'false'))
     try:
         limit = int(limit)
     except (TypeError, ValueError):
@@ -94,7 +94,7 @@ def paginate_releases(request, domain, app_id):
         ).all()
         if len(batch):
             start_build = batch[-1]['version'] - 1
-        saved_apps = saved_apps + [app for app in batch if not limit_to_released or app['is_released']]
+        saved_apps = saved_apps + [app for app in batch if not only_show_released or app['is_released']]
     saved_apps = saved_apps[:limit]
 
     j2me_enabled_configs = CommCareBuildConfig.j2me_enabled_config_labels()
