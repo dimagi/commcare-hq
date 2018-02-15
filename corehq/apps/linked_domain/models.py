@@ -28,7 +28,7 @@ class ExcludeDeletedManager(models.Manager):
 
 
 class DomainLink(models.Model):
-    linked_domain = models.CharField(max_length=126, null=False, unique=True)
+    linked_domain = models.CharField(max_length=126, null=False)
     master_domain = models.CharField(max_length=126, null=False)
     last_pull = models.DateTimeField(null=True, blank=True)
     deleted = models.BooleanField(default=False)
@@ -80,11 +80,15 @@ class DomainLink(models.Model):
             link = cls.all_objects.get(linked_domain=linked_domain)
         except cls.DoesNotExist:
             link = DomainLink(linked_domain=linked_domain, master_domain=master_domain)
-
-        if link.master_domain != master_domain and not link.deleted:
-            raise DomainLinkError('Domain "{}" is already linked to a different domain ({}).'.format(
-                linked_domain, link.master_domain
-            ))
+        else:
+            if link.master_domain != master_domain:
+                if link.deleted:
+                    # create a new link to the new master domain
+                    link = DomainLink(linked_domain=linked_domain, master_domain=master_domain)
+                else:
+                    raise DomainLinkError('Domain "{}" is already linked to a different domain ({}).'.format(
+                        linked_domain, link.master_domain
+                    ))
 
         if remote_details:
             link.remote_base_url = remote_details.url_base
