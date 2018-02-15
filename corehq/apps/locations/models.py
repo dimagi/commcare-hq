@@ -6,16 +6,19 @@ from functools import partial
 
 from bulk_update.helper import bulk_update as bulk_update_helper
 
-from memoized import memoized
-from django.db import models, transaction
 import jsonfield
+from django.db import models, transaction
+from django_cte import CTEQuerySet
+from memoized import memoized
+from mptt.models import TreeForeignKey
+
 from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.apps.domain.models import Domain
-from corehq.apps.locations.queryutil import ComparedQuerySet, TimingContext
+from corehq.apps.locations.adjacencylist import AdjListModel, AdjListManager
+from corehq.apps.locations.queryutil import ComparedQuerySet
 from corehq.apps.products.models import SQLProduct
 from corehq.toggles import LOCATION_TYPE_STOCK_RATES
-from mptt.models import MPTTModel, TreeForeignKey, TreeManager
 
 
 class LocationTypeManager(models.Manager):
@@ -269,6 +272,7 @@ class LocationQueriesMixin(object):
         assert isinstance(ids_query, ComparedQuerySet), ids_query
         return ComparedQuerySet(
             self.filter(id__in=ids_query._mptt_set),
+            self.filter(id__in=ids_query._cte_set),
             ids_query,
         )
 
@@ -278,44 +282,28 @@ class LocationQueriesMixin(object):
             publish_location_saved(domain, location_id, is_deletion=True)
         return super(LocationQueriesMixin, self).delete(*args, **kwargs)
 
+    def _user_input_filter(self, domain, user_input):
+        """Build a Q expression for filtering on user input
+
+        Accepts partial matches, matches against name and site_code.
+        """
+        Q = models.Q
+        return Q(domain=domain) & Q(
+            Q(name__icontains=user_input) | Q(site_code__icontains=user_input)
+        )
+
     def filter_by_user_input(self, domain, user_input):
         """
         Accepts partial matches, matches against name and site_code.
         """
-        return (self.filter(domain=domain)
-                    .filter(models.Q(name__icontains=user_input) |
-                            models.Q(site_code__icontains=user_input)))
+        return self.filter(self._user_input_filter(domain, user_input))
 
 
-class LocationQuerySet(LocationQueriesMixin, models.query.QuerySet):
+class LocationQuerySet(LocationQueriesMixin, CTEQuerySet):
     pass
 
 
-class LocationManager(LocationQueriesMixin, TreeManager):
-
-    def mptt_get_queryset_ancestors(self, *args, **kw):
-        return super(LocationManager, self).get_queryset_ancestors(*args, **kw)
-
-    def mptt_get_queryset_descendants(self, *args, **kw):
-        return super(LocationManager, self).get_queryset_descendants(*args, **kw)
-
-    def get_queryset_ancestors(self, queryset, include_self=False):
-        timing = TimingContext("get_queryset_ancestors")
-        mptt_qs = queryset
-        if isinstance(queryset, ComparedQuerySet):
-            mptt_qs = queryset._mptt_set
-        with timing("mptt"):
-            mptt_set = self.mptt_get_queryset_ancestors(mptt_qs, include_self)
-        return ComparedQuerySet(mptt_set, timing)
-
-    def get_queryset_descendants(self, queryset, include_self=False):
-        timing = TimingContext("get_queryset_descendants")
-        mptt_qs = queryset
-        if isinstance(queryset, ComparedQuerySet):
-            mptt_qs = queryset._mptt_set
-        with timing("mptt"):
-            mptt_set = self.mptt_get_queryset_descendants(mptt_qs, include_self)
-        return ComparedQuerySet(mptt_set, timing)
+class LocationManager(LocationQueriesMixin, AdjListManager):
 
     def get_or_None(self, **kwargs):
         try:
@@ -323,12 +311,11 @@ class LocationManager(LocationQueriesMixin, TreeManager):
         except SQLLocation.DoesNotExist:
             return None
 
-    def _get_base_queryset(self):
-        return LocationQuerySet(self.model, using=self._db)
-
     def get_queryset(self):
-        return (self._get_base_queryset()
-                .order_by(self.tree_id_attr, self.left_attr))  # mptt default
+        return (
+            LocationQuerySet(self.model, using=self._db)
+            .order_by(self.tree_id_attr, self.left_attr)  # mptt default
+        )
 
     def get_from_user_input(self, domain, user_input):
         """
@@ -349,7 +336,7 @@ class LocationManager(LocationQueriesMixin, TreeManager):
             Massachusetts/Middlesex/Cambridge
         It matches by name or site-code
         """
-        direct_matches = self.filter_by_user_input(domain, user_input)
+        direct_matches = self._user_input_filter(domain, user_input)
         return self.get_queryset_descendants(direct_matches, include_self=True)
 
     def get_locations(self, location_ids):
@@ -389,7 +376,7 @@ class OnlyArchivedLocationManager(LocationManager):
         return list(self.accessible_to_user(domain, user).location_ids())
 
 
-class SQLLocation(MPTTModel):
+class SQLLocation(AdjListModel):
     domain = models.CharField(max_length=255, db_index=True)
     name = models.CharField(max_length=255, null=True)
     location_id = models.CharField(max_length=100, db_index=True, unique=True)
@@ -420,26 +407,6 @@ class SQLLocation(MPTTModel):
     # This should really be the default location manager
     active_objects = OnlyUnarchivedLocationManager()
     inactive_objects = OnlyArchivedLocationManager()
-
-    def mptt_get_ancestors(self, **kw):
-        # VERIFIED does not call self.objects.get_queryset_ancestors
-        return super(SQLLocation, self).get_ancestors(**kw)
-
-    def mptt_get_descendants(self, **kw):
-        # VERIFIED does not call self.objects.get_queryset_descendants
-        return super(SQLLocation, self).get_descendants(**kw)
-
-    def get_ancestors(self, **kw):
-        timing = TimingContext("get_ancestors")
-        with timing("mptt"):
-            mptt_set = self.mptt_get_ancestors(**kw)
-        return ComparedQuerySet(mptt_set, timing)
-
-    def get_descendants(self, **kw):
-        timing = TimingContext("get_descendants")
-        with timing("mptt"):
-            mptt_set = self.mptt_get_descendants(**kw)
-        return ComparedQuerySet(mptt_set, timing)
 
     @classmethod
     def get_sync_fields(cls):
@@ -652,9 +619,16 @@ class SQLLocation(MPTTModel):
 
     @property
     def path(self):
-        _path = list(reversed(self.lineage))
-        _path.append(self._id)
-        return _path
+        try:
+            return self._path
+        except AttributeError:
+            self._path = list(reversed(self.lineage))
+            self._path.append(self._id)
+        return self._path
+
+    @path.setter
+    def path(self, value):
+        self._path = value
 
     @classmethod
     def by_location_id(cls, location_id):
