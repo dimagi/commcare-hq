@@ -98,7 +98,7 @@ class DueNextMonth(TotalCalculator):
 
     @fluff.date_emitter
     def total(self, case):
-        yield get_edd(case) - self.window / 2
+        yield get_edd(case) - self.window // 2
 
 
 class RecentDeliveryList(TotalCalculator):
