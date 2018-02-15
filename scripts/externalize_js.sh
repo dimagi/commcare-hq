@@ -59,7 +59,8 @@ if [[ $autocommit == "true" ]]; then
 
     branch=$(git rev-parse --abbrev-ref HEAD)
     if [[ $branch == 'master' ]]; then
-        abort "You must not be on master to run this command."
+        echo "You must not be on master to run this command."
+        echo "Create a new branch?"
 
         function branch() {
             read -p "What are your initials?" initials
