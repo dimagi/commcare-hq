@@ -79,7 +79,6 @@ domain_specific = [
     url(r'^', include('custom.uth.urls')),
     url(r'^dashboard/', include('corehq.apps.dashboard.urls')),
     url(r'^configurable_reports/', include('corehq.apps.userreports.urls')),
-    url(r'^performance_messaging/', include('corehq.apps.performance_sms.urls')),
     url(r'^', include('custom.icds.urls')),
     url(r'^', include('custom.icds_reports.urls')),
     url(r'^', include('custom.enikshay.urls')),

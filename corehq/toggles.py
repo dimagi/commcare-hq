@@ -1077,14 +1077,6 @@ EWS_BROADCAST_BY_ROLE = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
-SMS_PERFORMANCE_FEEDBACK = StaticToggle(
-    'sms_performance_feedback',
-    'Enable SMS-based performance feedback',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN],
-    help_link='https://docs.google.com/document/d/1YvbYLV4auuf8gVdYZ6jFZTsOLfJdxm49XhvWkska4GE/edit#',
-)
-
 LEGACY_SYNC_SUPPORT = StaticToggle(
     'legacy_sync_support',
     "Support mobile sync bugs in older projects (2.9 and below).",
