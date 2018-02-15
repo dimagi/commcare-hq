@@ -47,6 +47,11 @@ if [[ $has_local_changes ]]; then
     abort "You have uncommitted changes in your working tree."
 fi
 
+
+APP=$1
+MODULE=$2
+
+
 branch=$(git rev-parse --abbrev-ref HEAD)
 if [[ $branch == 'master' ]]; then
     echo "You must not be on master to run this command."
@@ -54,7 +59,7 @@ if [[ $branch == 'master' ]]; then
 
     function branch() {
         read -p "What are your initials?" initials
-        git checkout -b $initials/ejs/$app-$module
+        git checkout -b $initials/ejs/$APP-$MODULE
     }
     select yn in "Yes" "No"; do
         case $yn in
@@ -65,88 +70,88 @@ if [[ $branch == 'master' ]]; then
 fi
 
 
-app=$1
-module=$2
-
 # formulate locations and names
-html_file_location="./corehq/apps/$app/templates/$app/$module.html"
-new_module_name="$app/js/$module"
-new_module_location="./corehq/apps/$app/static/$app/js/$module.js"
+HTML_FILE_LOCATION="./corehq/apps/$APP/templates/$APP/$MODULE.html"
+NEW_MODULE_NAME="$APP/js/$MODULE"
+NEW_MODULE_LOCATION="./corehq/apps/$APP/static/$APP/js/$MODULE.js"
 
-if [ -f $new_module_location ]; then
+if [ -f $NEW_MODULE_LOCATION ]; then
     echo "The new module has already been created.\nDo you want to continue?"
     should_continue
 fi
 
 # create file
-touch $new_module_location
+touch $NEW_MODULE_LOCATION
 
 # add boilerplate
-echo "hqDefine('$new_module_name', function() {" >> $new_module_location
+echo "hqDefine('$NEW_MODULE_NAME', function() {" >> $NEW_MODULE_LOCATION
 
 # pull inline js from file, removes the script tags, and places it into the new file
-sed -n "/{% block js-inline %}/, /{% endblock\( js-inline\)\? %}/ p" $html_file_location | \
-    python -c "import sys; sys.stdout.writelines(sys.stdin.readlines()[2:-2])" >> $new_module_location
+sed -n "/{% block js-inline %}/, /{% endblock\( js-inline\)\? %}/ p" $HTML_FILE_LOCATION | \
+    python -c "import sys; sys.stdout.writelines(sys.stdin.readlines()[2:-2])" >> $NEW_MODULE_LOCATION
 
 # remove from old file
-sed -i "/{% block js-inline %}/, /{% endblock\( js-inline\)\? %}/ d" $html_file_location
+sed -i "/{% block js-inline %}/, /{% endblock\( js-inline\)\? %}/ d" $HTML_FILE_LOCATION
 
 # close off boilerplate
-echo "});" >> $new_module_location
+echo "});" >> $NEW_MODULE_LOCATION
 
 
 # add import to the html
-script_import="<script src=\"{% static '$new_module_name.js' %}\"></script>"
-count=$(sed -n "/{% block js %}/p" $html_file_location | wc -l)
+script_import="<script src=\"{% static '$NEW_MODULE_NAME.js' %}\"></script>"
+count=$(sed -n "/{% block js %}/p" $HTML_FILE_LOCATION | wc -l)
 # if there is a block js, add it inside at the end
 if [ "$count" -gt 0 ]; then
     sed -i "/{% block js %}/,/{% endblock/ {
         /{% endblock/ i \\
         $script_import
-    }" $html_file_location
+    }" $HTML_FILE_LOCATION
 # otherwise, just tell them to add one somewhere on the page
 else
     echo "----------------------------"
     echo "Please add this static import somewhere in the html file"
-    echo "{% block js %}{{ block.super }}\n\t<script src='{% static "$new_module_name".js %}'></script>\n{% endblock %}"
+    echo "{% block js %}{{ block.super }}\n\t<script src='{% static "$NEW_MODULE_NAME".js %}'></script>\n{% endblock %}"
     echo "----------------------------"
 fi
 
 # commit the blob movement
-git add $new_module_location $html_file_location
-git commit -m "first pass externalizing javascript in $module"
+git add $NEW_MODULE_LOCATION $HTML_FILE_LOCATION
+git commit -m "first pass externalizing javascript in $MODULE"
 
 # check where in page there are template tags
-variable_open_bracket_regex="{\(%\|{\)"
-variable_close_bracket_regex="\(%\|}\)}"
-template_tags=`sed -n "/$variable_open_bracket_regex/=" $new_module_location`
-template_tag_count=`echo $template_tags | wc -l`
-if [ "$template_tag_count" -gt 0 ]; then
+OPEN_BRACKET_REGEX="{\(%\|{\)"
+CLOSE_BRACKET_REGEX="\(%\|}\)}"
+QUOTE="\('\|\"\)"
+TEMPLATE_TAGS=`sed -n "/$OPEN_BRACKET_REGEX/=" $NEW_MODULE_LOCATION`
+TEMPLATE_TAG_COUNT=`echo $TEMPLATE_TAGS | wc -l`
+if [ "$TEMPLATE_TAG_COUNT" -gt 0 ]; then
     echo "----------------------------"
     echo "Please check template tags on these lines."
-    echo $template_tags
+    echo $TEMPLATE_TAGS
 
     # convert translation tags first
-    gettext_open="gettext("
-    gettext_close=")"
-    sed -i "/\('\|\"\)$variable_open_bracket_regex trans/s/ $variable_close_bracket_regex\(\"\|'\)/$gettext_close/; s/\('\|\"\)$variable_open_bracket_regex trans /$gettext_open/" $new_module_location
+    GETTEXT_OPEN="gettext("
+    GETTEXT_CLOSE=")"
+    sed -i "/$QUOTE$OPEN_BRACKET_REGEX trans/s/ $CLOSE_BRACKET_REGEX$QUOTE/$GETTEXT_CLOSE/; \
+            s/$QUOTE$OPEN_BRACKET_REGEX trans /$GETTEXT_OPEN/" $NEW_MODULE_LOCATION
 
     # now move on to tags that require imports
-    initialpagedata_open="initialPageData.get('"
-    initial_page_data_close="')"
+    INITIALPAGEDATA_OPEN="initialPageData.get('"
+    INITIAL_PAGE_DATA_CLOSE="')"
 
-    initial_page_data_tags=`sed -n "s/.*$variable_open_bracket_regex//; s/ $variable_close_bracket_regex.*//p" $new_module_location`
-    initial_page_data_tag_lines=`sed -n "/$variable_open_bracket_regex/=" $new_module_location`
-    tag_count=`echo $initial_page_data_tags | wc -l`
-    if [ "$tag_count" -gt 0 ]; then
-        sed -i "s/$variable_open_bracket_regex /$initialpagedata_open/; s/ $variable_close_bracket_regex/')/" $new_module_location
-        initialpagedata_import="var initialPageData = hqImport('hqwebapp\/js\/initial_page_data')\;"
+    INITIAL_PAGE_DATA_TAGS=`sed -n "s/.*$OPEN_BRACKET_REGEX//; s/ $CLOSE_BRACKET_REGEX.*//p" $NEW_MODULE_LOCATION`
+    INITIAL_PAGE_DATA_TAG_LINES=`sed -n "/$OPEN_BRACKET_REGEX/=" $NEW_MODULE_LOCATION`
+    TAG_COUNT=`echo $INITIAL_PAGE_DATA_TAGS | wc -l`
+    if [ "$TAG_COUNT" -gt 0 ]; then
+        sed -i "s/$OPEN_BRACKET_REGEX /$INITIALPAGEDATA_OPEN/; \
+                s/ $CLOSE_BRACKET_REGEX/$INITIAL_PAGE_DATA_CLOSE/" $NEW_MODULE_LOCATION
+        INITIALPAGEDATA_IMPORT="var initialPageData = hqImport('hqwebapp\/js\/initial_page_data')\;"
         sed -i "/hqDefine/a \
-                $initialpagedata_import" $new_module_location
+                $INITIALPAGEDATA_IMPORT" $NEW_MODULE_LOCATION
         echo "and in particular these lines"
-        echo $initial_page_data_tag_lines
+        echo $INITIAL_PAGE_DATA_TAG_LINES
         echo "and add these data imports as well"
-        for ipd in $initial_page_data_tags; do
+        for ipd in $INITIAL_PAGE_DATA_TAGS; do
             echo "{% initial_page_data '$ipd' $ipd %}"
         done
     fi
@@ -156,7 +161,7 @@ fi
 
 # a bit more yelling at the user
 # (maybe should just open these in an available browser? todo)
-./manage.py show_urls | grep $module
+./manage.py show_urls | grep $MODULE
 echo "----------------------------"
 echo "^^^^^^ Check to see if this/these page(s) works"
 echo "----------------------------"
