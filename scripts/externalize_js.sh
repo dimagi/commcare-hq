@@ -112,19 +112,19 @@ echo "});" >> $NEW_MODULE_LOCATION
 
 
 # add import to the html
-script_import="<script src=\"{% static '$NEW_MODULE_NAME.js' %}\"></script>"
+SCRIPT_IMPORT="<script src=\"{% static '$NEW_MODULE_NAME.js' %}\"></script>"
 count=$(sed -n "/{% block js %}/p" $HTML_FILE_LOCATION | wc -l)
 # if there is a block js, add it inside at the end
 if [ "$count" -gt 0 ]; then
     sed -i "/{% block js %}/,/{% endblock/ {
         /{% endblock/ i \\
-        $script_import
+        $SCRIPT_IMPORT
     }" $HTML_FILE_LOCATION
 # otherwise, just tell them to add one somewhere on the page
 else
     echo "----------------------------"
     echo "Please add this static import somewhere in the html file"
-    echo "{% block js %}{{ block.super }}\n\t<script src=\"{% static '$NEW_MODULE_NAME'.js %}\"></script>\n{% endblock %}"
+    echo "{% block js %}{{ block.super }}\n\t$SCRIPT_IMPORT\n{% endblock %}"
     echo "----------------------------"
 fi
 
