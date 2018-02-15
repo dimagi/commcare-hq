@@ -5,6 +5,7 @@ from two_factor.forms import (
     PhoneNumberMethodForm, DeviceValidationForm, MethodForm,
     TOTPDeviceForm, PhoneNumberForm
 )
+from two_factor.validators import validate_international_phonenumber
 
 from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
@@ -14,7 +15,6 @@ from corehq.apps.users.models import CouchUser
 
 from django.utils.translation import ugettext as _
 from django.utils.safestring import mark_safe
-from django.core.exceptions import ValidationError
 
 from datetime import datetime
 
@@ -73,6 +73,7 @@ class HQPasswordChangeForm(EncodedPasswordChangeFormMixin, PasswordChangeForm):
 class HQPhoneNumberMethodForm(PhoneNumberMethodForm):
 
     def __init__(self, **kwargs):
+        validate_international_phonenumber.message = "Please enter a valid phone number, starting with a + followed by your country code."
         super(HQPhoneNumberMethodForm, self).__init__(**kwargs)
         self.helper = FormHelper()
         self.helper.form_class = 'form form-horizontal'
