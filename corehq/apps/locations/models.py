@@ -466,7 +466,7 @@ class SQLLocation(AdjListModel):
 
     @property
     def lineage(self):
-        return list(self.get_ancestors(ascending=True).location_ids())
+        return list(reversed(self.path[:-1]))
 
     _id = property(lambda self: self.location_id)
     get_id = property(lambda self: self.location_id)
@@ -622,8 +622,7 @@ class SQLLocation(AdjListModel):
         try:
             return self._path
         except AttributeError:
-            self._path = list(reversed(self.lineage))
-            self._path.append(self._id)
+            self._path = list(self.get_ancestors(include_self=True).location_ids())
         return self._path
 
     @path.setter
