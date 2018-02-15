@@ -8,6 +8,10 @@
         <script src="{% static 'sms/js/add_gateway.js' %}"></script>
 {% endblock %}
 
+{% block additional_initial_page_data %}
+    {% initial_page_data 'form' form %}
+    {% initial_page_data 'use_load_balancing' use_load_balancing|BOOL %}
+%}
 
 {% block page_content %}
     <div id="add-gateway-form">
