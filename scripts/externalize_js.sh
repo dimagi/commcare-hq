@@ -128,6 +128,9 @@ variable_close_bracket_regex="\(%\|}\)}"
 template_tags=`sed -n "/$variable_open_bracket_regex/=" $new_module_location`
 template_tag_count=`echo $template_tags | wc -l`
 if [ "$template_tag_count" -gt 0 ]; then
+    echo "----------------------------"
+    echo "Please check template tags on these lines."
+    echo $template_tags
 
     gettext_open="gettext("
     gettext_close=")"
@@ -137,12 +140,15 @@ if [ "$template_tag_count" -gt 0 ]; then
     initial_page_data_close="')"
 
     initial_page_data_tags=`sed -n "/$variable_open_bracket_regex/=" $new_module_location`
-    sed -i "s/$variable_open_bracket_regex /$initialpagedata_open/; s/ $variable_close_bracket_regex/')/" $new_module_location
-    echo "----------------------------"
-    echo "Please check template tags on these lines."
-    echo $template_tags
-    echo "and in particular these lines"
-    echo $initial_page_data_tags
+    tag_count=`echo $initial_page_data_tags | wc -l`
+    if [ "$tag_count" -gt 0 ]; then
+        sed -i "s/$variable_open_bracket_regex /$initialpagedata_open/; s/ $variable_close_bracket_regex/')/" $new_module_location
+        initialpagedata_import="var initialPageData = hqImport('hqwebapp\/js\/initial_page_data')\;"
+        sed -i "/hqDefine/a \
+                $initialpagedata_import" $new_module_location
+        echo "and in particular these lines"
+        echo $initial_page_data_tags
+    fi
     echo "----------------------------"
 fi
 
