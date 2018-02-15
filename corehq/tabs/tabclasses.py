@@ -1604,6 +1604,10 @@ def _get_feature_flag_items(domain):
             'title': _('Linked Projects'),
             'url': reverse('domain_links', args=[domain])
         })
+        feature_flag_items.append({
+            'title': _('Linked Project History'),
+            'url': reverse('domain_report_dispatcher', args=[domain, 'project_link_report'])
+        })
     return feature_flag_items
 
 

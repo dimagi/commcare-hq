@@ -16,3 +16,5 @@ LINKED_MODELS = [
     (MODELS_ROLES, ugettext_lazy('User Roles')),
     (MODEL_FLAGS, ugettext_lazy('Feature Flags and Previews')),
 ]
+
+LINKED_MODELS_MAP = dict(LINKED_MODELS)

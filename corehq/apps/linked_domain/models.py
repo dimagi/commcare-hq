@@ -22,15 +22,24 @@ class RemoteLinkDetails(namedtuple('RemoteLinkDetails', 'url_base username api_k
     __nonzero__ = __bool__
 
 
+class ExcludeDeletedManager(models.Manager):
+    def get_queryset(self):
+        return super(ExcludeDeletedManager, self).get_queryset().filter(deleted=False)
+
+
 class DomainLink(models.Model):
-    linked_domain = models.CharField(max_length=126, null=False, unique=True)
+    linked_domain = models.CharField(max_length=126, null=False)
     master_domain = models.CharField(max_length=126, null=False)
     last_pull = models.DateTimeField(null=True, blank=True)
+    deleted = models.BooleanField(default=False)
 
     # used for linking across remote instances of HQ
     remote_base_url = models.CharField(max_length=255, null=True, blank=True)
     remote_username = models.CharField(max_length=255, null=True, blank=True)
     remote_api_key = models.CharField(max_length=255, null=True, blank=True)
+
+    objects = ExcludeDeletedManager()
+    all_objects = models.Manager()
 
     @property
     def qualified_master(self):
@@ -68,24 +77,26 @@ class DomainLink(models.Model):
     @classmethod
     def link_domains(cls, linked_domain, master_domain, remote_details=None):
         try:
-            link = cls.objects.get(linked_domain=linked_domain)
+            link = cls.all_objects.get(linked_domain=linked_domain)
         except cls.DoesNotExist:
             link = DomainLink(linked_domain=linked_domain, master_domain=master_domain)
-
-        if link.master_domain != master_domain:
-            raise DomainLinkError('Domain "{}" is already linked to a different domain ({}).'.format(
-                linked_domain, link.master_domain
-            ))
+        else:
+            if link.master_domain != master_domain:
+                if link.deleted:
+                    # create a new link to the new master domain
+                    link = DomainLink(linked_domain=linked_domain, master_domain=master_domain)
+                else:
+                    raise DomainLinkError('Domain "{}" is already linked to a different domain ({}).'.format(
+                        linked_domain, link.master_domain
+                    ))
 
         if remote_details:
             link.remote_base_url = remote_details.url_base
             link.remote_username = remote_details.username
             link.remote_api_key = remote_details.api_key
-        link.save()
 
-        from corehq.apps.linked_domain.dbaccessors import get_domain_master_link, get_linked_domains
-        get_domain_master_link.clear(linked_domain)
-        get_linked_domains.clear(master_domain)
+        link.deleted = False
+        link.save()
         return link
 
 
