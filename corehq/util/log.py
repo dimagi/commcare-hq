@@ -1,5 +1,6 @@
 from __future__ import print_function
 from __future__ import absolute_import
+from __future__ import division
 import six
 import sys
 from collections import defaultdict
@@ -293,7 +294,7 @@ def with_progress_bar(iterable, length=None, prefix='Processing', oneline=True):
         sys.stdout.flush()
 
     print("Started at {:%Y-%m-%d %H:%M:%S}".format(start))
-    checkpoints = {length*i/granularity for i in range(length)}
+    checkpoints = {length * i // granularity for i in range(length)}
     for i, x in enumerate(iterable):
         yield x
         if i in checkpoints:

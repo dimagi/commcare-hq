@@ -26,7 +26,7 @@ function EnrolledChildrenController($scope, $routeParams, $location, $filter, de
         vm.genderLabel = genders[genderIndex].name;
     }
 
-    vm.label = "Children (0-6 years) who are enrolled for ICDS services";
+    vm.label = "Children (0-6 years) who are enrolled for Anganwadi Services";
     vm.step = $routeParams.step;
     vm.steps = {
         'map': {route: '/enrolled_children/map', label: 'Map View'},
@@ -49,22 +49,10 @@ function EnrolledChildrenController($scope, $routeParams, $location, $filter, de
     }
 
     vm.rightLegend = {
-        info: 'Total number of children between the age of 0 - 6 years who are enrolled for ICDS services',
+        info: 'Total number of children between the age of 0 - 6 years who are enrolled for Anganwadi Services',
     };
 
     vm.message = storageService.getKey('message') || false;
-
-    vm.prevDay = moment().subtract(1, 'days').format('Do MMMM, YYYY');
-    vm.lastDayOfPreviousMonth = moment().set('date', 1).subtract(1, 'days').format('Do MMMM, YYYY');
-    vm.currentMonth = moment().format("MMMM");
-    vm.showInfoMessage = function () {
-        var selected_month = parseInt($location.search()['month']) || new Date().getMonth() + 1;
-        var selected_year = parseInt($location.search()['year']) || new Date().getFullYear();
-        var current_month = new Date().getMonth() + 1;
-        var current_year = new Date().getFullYear();
-        return selected_month === current_month && selected_year === current_year &&
-            (new Date().getDate() === 1 || new Date().getDate() === 2);
-    };
 
     vm.hideRanking = true;
 
@@ -95,11 +83,11 @@ function EnrolledChildrenController($scope, $routeParams, $location, $filter, de
         var valid = $filter('indiaNumbers')(row ? row.valid : 0);
         var all = $filter('indiaNumbers')(row ? row.all : 0);
         var percent = row ? d3.format('.2%')(row.valid / (row.all || 1)) : "N/A";
-        return '<div class="hoverinfo">' +
+        return '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
             '<p>' + loc.properties.name + '</p>' +
-            '<div>Number of children ' + chosenFilters + ' who are enrolled for ICDS services: <strong>' + valid + '</strong>' +
+            '<div>Number of children ' + chosenFilters + ' who are enrolled for Anganwadi Services: <strong>' + valid + '</strong>' +
             '<div>Total number of children ' + chosenFilters + ' who are registered: <strong>' + all + '</strong>' +
-            '<div>Percentage of registered children ' + chosenFilters + ' who are enrolled for ICDS services: <strong>' + percent + '</strong>' +
+            '<div>Percentage of registered children ' + chosenFilters + ' who are enrolled for Anganwadi Services: <strong>' + percent + '</strong>' +
             '</div>';
     };
 
@@ -142,14 +130,14 @@ function EnrolledChildrenController($scope, $routeParams, $location, $filter, de
                     });
                 }));
                 var range = max - min;
-                vm.chartOptions.chart.forceY = [0, (max + range/10).toFixed(2)];
+                vm.chartOptions.chart.forceY = [0, parseInt((max + range/10).toFixed(0))];
             }
         });
     };
 
     vm.init = function() {
         var locationId = vm.filtersData.location_id || vm.userLocationId;
-        if (!vm.userLocationId || !locationId || locationId === 'all') {
+        if (!locationId || ["all", "null", "undefined"].indexOf(locationId) >= 0) {
             vm.loadData();
             vm.loaded = true;
             return;
@@ -207,7 +195,7 @@ function EnrolledChildrenController($scope, $routeParams, $location, $filter, de
         },
         caption: {
             enable: true,
-            html: '<i class="fa fa-info-circle"></i> Total number of children between the age of 0 - 6 years who are enrolled for ICDS services',
+            html: '<i class="fa fa-info-circle"></i> Total number of children between the age of 0 - 6 years who are enrolled for Anganwadi Services',
             css: {
                 'text-align': 'center',
                 'margin': '0 auto',
@@ -218,9 +206,9 @@ function EnrolledChildrenController($scope, $routeParams, $location, $filter, de
 
     vm.tooltipContent = function (dataInMonth, x) {
         var average = (dataInMonth.all !== 0) ? d3.format(".2%")(dataInMonth.y / dataInMonth.all) : 0;
-        return "<p>Total number of children between the age of 0 - 6 years who are enrolled for ICDS services: <strong>"
-            + $filter('indiaNumbers')(dataInMonth.all) + "</strong></p>"
-            + "<p>% of children " + x + ": <strong>" + average + "</strong></p>";
+        return "<div>Total number of children between the age of 0 - 6 years who are enrolled for Anganwadi Services: <strong>"
+            + $filter('indiaNumbers')(dataInMonth.all) + "</strong></div>"
+            + "<div>% of children " + x + ": <strong>" + average + "</strong></div>";
     };
 
     vm.moveToLocation = function(loc, index) {

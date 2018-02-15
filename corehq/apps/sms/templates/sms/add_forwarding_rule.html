@@ -4,22 +4,8 @@
 {% load timezone_tags %}
 {% load crispy_forms_tags %}
 
-{% block js-inline %}{{ block.super }}
-<script>
-    function toggle_keyword() {
-        if($("#id_forward_type").val() == "KEYWORD") {
-            $("#keyword_row").removeClass('hide');
-        } else {
-            $("#keyword_row").addClass('hide');
-        }
-    }
-    $(function(){
-        toggle_keyword();
-        $("#id_forward_type").change(function() {
-            toggle_keyword();
-        });
-    });
-</script>
+{% block js %}{{ block.super }}
+    <script src='{% static "sms/js/add_forwarding_rule.js" %}'></script>
 {% endblock %}
 
 {% block page_content %}

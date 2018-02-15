@@ -11,7 +11,7 @@ function EnrolledWomenController($scope, $routeParams, $location, $filter, demog
     }
     vm.userLocationId = userLocationId;
     vm.filtersData = $location.search();
-    vm.label = "Pregnant Women enrolled for ICDS services";
+    vm.label = "Pregnant Women enrolled for Anganwadi Services";
     vm.step = $routeParams.step;
     vm.steps = {
         'map': {route: '/enrolled_women/map', label: 'Map View'},
@@ -30,22 +30,10 @@ function EnrolledWomenController($scope, $routeParams, $location, $filter, demog
     vm.filters = ['gender', 'age'];
 
     vm.rightLegend = {
-        info: 'Total number of children between the age of 0 - 6 years who are enrolled for ICDS services',
+        info: 'Total number of children between the age of 0 - 6 years who are enrolled for Anganwadi Services',
     };
 
     vm.message = storageService.getKey('message') || false;
-
-    vm.prevDay = moment().subtract(1, 'days').format('Do MMMM, YYYY');
-    vm.lastDayOfPreviousMonth = moment().set('date', 1).subtract(1, 'days').format('Do MMMM, YYYY');
-    vm.currentMonth = moment().format("MMMM");
-    vm.showInfoMessage = function () {
-        var selected_month = parseInt($location.search()['month']) || new Date().getMonth() + 1;
-        var selected_year = parseInt($location.search()['year']) || new Date().getFullYear();
-        var current_month = new Date().getMonth() + 1;
-        var current_year = new Date().getFullYear();
-        return selected_month === current_month && selected_year === current_year &&
-            (new Date().getDate() === 1 || new Date().getDate() === 2);
-    };
 
     $scope.$watch(function() {
         return vm.selectedLocations;
@@ -70,11 +58,11 @@ function EnrolledWomenController($scope, $routeParams, $location, $filter, demog
         var valid = $filter('indiaNumbers')(row ? row.valid : 0);
         var all = $filter('indiaNumbers')(row ? row.all : 0);
         var percent = row ? d3.format('.2%')(row.valid / (row.all || 1)) : "N/A";
-        return '<div class="hoverinfo">' +
+        return '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
             '<p>' + loc.properties.name + '</p>' +
-            '<div>Number of pregnant women who are enrolled for ICDS services: <strong>' + valid + '</strong>' +
+            '<div>Number of pregnant women who are enrolled for Anganwadi Services: <strong>' + valid + '</strong>' +
             '<div>Total number of pregnant women who are registered: <strong>' + all + '</strong>' +
-            '<div>Percentage of registered pregnant women who are enrolled for ICDS services: <strong>' + percent + '</strong>' +
+            '<div>Percentage of registered pregnant women who are enrolled for Anganwadi Services: <strong>' + percent + '</strong>' +
             '</div>';
     };
 
@@ -127,7 +115,7 @@ function EnrolledWomenController($scope, $routeParams, $location, $filter, demog
 
     vm.init = function() {
         var locationId = vm.filtersData.location_id || vm.userLocationId;
-        if (!vm.userLocationId || !locationId || locationId === 'all') {
+        if (!locationId || ["all", "null", "undefined"].indexOf(locationId) >= 0) {
             vm.loadData();
             vm.loaded = true;
             return;
@@ -209,7 +197,7 @@ function EnrolledWomenController($scope, $routeParams, $location, $filter, demog
         },
         caption: {
             enable: true,
-            html: '<i class="fa fa-info-circle"></i> Total number of pregnant women who are enrolled for ICDS services',
+            html: '<i class="fa fa-info-circle"></i> Total number of pregnant women who are enrolled for Anganwadi Services',
             css: {
                 'text-align': 'center',
                 'margin': '0 auto',
@@ -220,9 +208,9 @@ function EnrolledWomenController($scope, $routeParams, $location, $filter, demog
 
     vm.tooltipContent = function(monthName, day) {
         return "<p><strong>" + monthName + "</strong></p><br/>"
-            + "<p>Number of pregnant women who are enrolled for ICDS services: <strong>" + $filter('indiaNumbers')(day.y) + "</strong></p>"
-            + "<p>Total number of pregnant women who are registered: <strong>" + $filter('indiaNumbers')(day.all) + "</strong></p>"
-            + "<p>Percentage of registered pregnant women who are enrolled for ICDS services: <strong>" + d3.format('.2%')(day.y / (day.all || 1)) + "</strong></p>";
+            + "<div>Number of pregnant women who are enrolled for Anganwadi Services: <strong>" + $filter('indiaNumbers')(day.y) + "</strong></div>"
+            + "<div>Total number of pregnant women who are registered: <strong>" + $filter('indiaNumbers')(day.all) + "</strong></div>"
+            + "<div>Percentage of registered pregnant women who are enrolled for Anganwadi Services: <strong>" + d3.format('.2%')(day.y / (day.all || 1)) + "</strong></div>";
     };
 
     vm.showAllLocations = function () {

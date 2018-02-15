@@ -81,7 +81,7 @@ describe('Exclusive Breastfeeding Directive', function () {
 
     it('tests template popup', function () {
         var result = controller.templatePopup({properties: {name: 'test'}}, {all: 10, children: 5});
-        assert.equal(result, '<div class="hoverinfo">' +
+        assert.equal(result, '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
             '<p>test</p>'
             + '<div>Total number of children between ages 0 - 6 months: <strong>10</strong></div>'
             + '<div>Total number of children (0-6 months) exclusively breastfed in the given month:  <strong>5</strong></div>'
@@ -191,9 +191,9 @@ describe('Exclusive Breastfeeding Directive', function () {
         var month = {value: "Jul 2017", series: []};
 
         var expected = '<p><strong>Jul 2017</strong></p><br/>'
-            + '<p>Total number of children between ages 0 - 6 months: <strong>10</strong></p>'
-            + '<p>Total number of children (0-6 months) exclusively breastfed in the given month: <strong>5</strong></p>'
-            + '<p>% children (0-6 months) exclusively breastfed in the given month: <strong>72.00%</strong></p>';
+            + '<div>Total number of children between ages 0 - 6 months: <strong>10</strong></div>'
+            + '<div>Total number of children (0-6 months) exclusively breastfed in the given month: <strong>5</strong></div>'
+            + '<div>% children (0-6 months) exclusively breastfed in the given month: <strong>72.00%</strong></div>';
 
         var result = controller.tooltipContent(month.value, data);
         assert.equal(expected, result);

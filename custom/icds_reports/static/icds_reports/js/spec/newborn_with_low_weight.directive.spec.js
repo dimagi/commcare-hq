@@ -80,13 +80,13 @@ describe('Newborn Low Weight Directive', function () {
     });
 
     it('tests template popup', function () {
-        var result = controller.templatePopup({properties: {name: 'test'}}, {low_birth: 5, in_month: 10});
-        assert.equal(result, '<div class="hoverinfo">' +
+        var result = controller.templatePopup({properties: {name: 'test'}}, {low_birth: 5, in_month: 10, all: 20});
+        assert.equal(result, '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
             '<p>test</p>'
-            + '<div>Total Number of Newborns born in given month: <strong>10</strong></div>'
+            + '<div>Total Number of Newborns born in given month: <strong>20</strong></div>'
             + '<div>Number of Newborns with LBW in given month: <strong>5</strong></div>'
             + '<div>% newborns with LBW in given month: <strong>50.00%</strong></div>'
-            + '<div>% Unweighed: <strong>50.00%</strong></div>');
+            + '<div>% Unweighted: <strong>50.00%</strong></div>');
     });
 
     it('tests location change', function () {
@@ -187,14 +187,14 @@ describe('Newborn Low Weight Directive', function () {
     });
 
     it('tests chart tooltip content', function () {
-        var data = {all: 10, low_birth: 5, y: 0.72};
+        var data = {in_month: 10, low_birth: 5, y: 0.72, all: 12};
         var month = {value: "Jul 2017", series: []};
 
         var expected = '<p><strong>Jul 2017</strong></p><br/>'
-            + '<p>Total Number of Newborns born in given month: <strong>10</strong></p>'
-            + '<p>Number of Newborns with LBW in given month: <strong>5</strong></p>'
-            + '<p>% newborns with LBW in given month: <strong>72.00%</strong></p>'
-            + '<p>% Unweighed: <strong>28.00%</strong></p>';
+            + '<div>Total Number of Newborns born in given month: <strong>12</strong></div>'
+            + '<div>Number of Newborns with LBW in given month: <strong>5</strong></div>'
+            + '<div>% newborns with LBW in given month: <strong>72.00%</strong></div>'
+            + '<div>% Unweighted: <strong>83.33%</strong></div>';
 
         var result = controller.tooltipContent(month.value, data);
         assert.equal(expected, result);

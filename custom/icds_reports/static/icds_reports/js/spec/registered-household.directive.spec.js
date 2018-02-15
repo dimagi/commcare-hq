@@ -76,7 +76,7 @@ describe('Registered Household Directive', function () {
 
     it('tests template popup', function () {
         var result = controller.templatePopup({properties: {name: 'test'}}, {household: 5});
-        assert.equal(result, '<div class="hoverinfo">'
+        assert.equal(result, '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">'
             + '<p>test</p>'
             + '<div>Total number of household registered: <strong>5</strong></div>');
     });
@@ -180,7 +180,7 @@ describe('Registered Household Directive', function () {
         var month = {value: "Jul 2017", series: []};
 
         var expected = '<p><strong>Jul 2017</strong></p><br/>'
-            + '<p>Total number of household registered: <strong>60</strong></p>';
+            + '<div>Total number of household registered: <strong>60</strong></div>';
 
         var result = controller.tooltipContent(month.value, 60);
         assert.equal(expected, result);

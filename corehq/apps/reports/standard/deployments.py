@@ -462,10 +462,6 @@ class AggregateUserStatusReport(ProjectReport, ProjectReportParametersMixin):
     emailable = False
     js_scripts = ['reports/js/aggregate_user_status.js']
 
-    @classmethod
-    def show_in_navigation(cls, domain=None, project=None, user=None):
-        return domain and toggles.AGGREGATE_USER_STATUS_REPORT.enabled(domain)
-
     @use_nvd3
     def decorator_dispatcher(self, request, *args, **kwargs):
         super(AggregateUserStatusReport, self).decorator_dispatcher(request, *args, **kwargs)

@@ -333,7 +333,7 @@ def save_document(doc_ids):
         related_docs_to_rebuild = set()
 
         with timer:
-            for doc in doc_store.iter_documents(indicator_by_doc_id.keys()):
+            for doc in doc_store.iter_documents(list(indicator_by_doc_id.keys())):
                 indicator = indicator_by_doc_id[doc['_id']]
                 successfully_processed, to_remove, rebuild_related_docs = _save_document_helper(indicator, doc)
                 if rebuild_related_docs:

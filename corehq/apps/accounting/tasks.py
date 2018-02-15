@@ -187,7 +187,7 @@ def warn_active_subscriptions_per_domain_not_one():
         ).count()
         if active_subscription_count > 1:
             log_accounting_error("Multiple active subscriptions found for domain %s" % domain_name)
-        elif active_subscription_count == 0:
+        elif active_subscription_count == 0 and Domain.get_by_name(domain_name).is_active:
             log_accounting_error("There is no active subscription for domain %s" % domain_name)
 
 
@@ -217,6 +217,8 @@ def generate_invoices(based_on_date=None):
     all_domain_ids = [d['id'] for d in Domain.get_all(include_docs=False)]
     for domain_doc in iter_docs(Domain.get_db(), all_domain_ids):
         domain = Domain.wrap(domain_doc)
+        if not domain.is_active:
+            continue
         try:
             invoice_factory = DomainInvoiceFactory(
                 invoice_start, invoice_end, domain)
@@ -768,7 +770,7 @@ def restore_logos(self, domain_name):
         raise e
 
 
-@periodic_task(run_every=crontab(day_of_month=2, hour=5), queue='background_queue', acks_late=True)
+@periodic_task(run_every=crontab(day_of_month='1', hour=5, minute=0), queue='background_queue', acks_late=True)
 def send_prepaid_credits_export():
     if settings.ENTERPRISE_MODE:
         return
@@ -832,9 +834,9 @@ def send_prepaid_credits_export():
         ])
 
     date_string = datetime.datetime.utcnow().strftime(SERVER_DATE_FORMAT)
-    filename = 'prepaid-credits-export_%s_%s.csv' % (settings.HQ_INSTANCE, date_string)
+    filename = 'prepaid-credits-export_%s_%s.csv' % (settings.SERVER_ENVIRONMENT, date_string)
     send_HTML_email(
-        '[%s] Prepaid Credits Export - %s' % (settings.HQ_INSTANCE, date_string),
+        '[%s] Prepaid Credits Export - %s' % (settings.SERVER_ENVIRONMENT, date_string),
         settings.ACCOUNTS_EMAIL,
         'See attached file.',
         file_attachments=[{'file_obj': file_obj, 'title': filename, 'mimetype': 'text/csv'}],

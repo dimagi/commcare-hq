@@ -11,7 +11,7 @@ function AdolescentWomenController($scope, $routeParams, $location, $filter, dem
     }
     vm.userLocationId = userLocationId;
     vm.filtersData = $location.search();
-    vm.label = "Adolescent Girls (11-18 years)";
+    vm.label = "Adolescent Girls (11-14 years)";
     vm.step = $routeParams.step;
     vm.steps = {
         'map': {route: '/adolescent_girls/map', label: 'Map View'},
@@ -30,22 +30,10 @@ function AdolescentWomenController($scope, $routeParams, $location, $filter, dem
     vm.filters = ['age', 'gender'];
 
     vm.rightLegend = {
-        info: 'Total number of adolescent girls who are enrolled for ICDS services',
+        info: 'Total number of adolescent girls who are enrolled for Anganwadi Services',
     };
 
     vm.message = storageService.getKey('message') || false;
-
-    vm.prevDay = moment().subtract(1, 'days').format('Do MMMM, YYYY');
-    vm.lastDayOfPreviousMonth = moment().set('date', 1).subtract(1, 'days').format('Do MMMM, YYYY');
-    vm.currentMonth = moment().format("MMMM");
-    vm.showInfoMessage = function () {
-        var selected_month = parseInt($location.search()['month']) || new Date().getMonth() + 1;
-        var selected_year = parseInt($location.search()['year']) || new Date().getFullYear();
-        var current_month = new Date().getMonth() + 1;
-        var current_year = new Date().getFullYear();
-        return selected_month === current_month && selected_year === current_year &&
-            (new Date().getDate() === 1 || new Date().getDate() === 2);
-    };
 
     $scope.$watch(function() {
         return vm.selectedLocations;
@@ -72,11 +60,11 @@ function AdolescentWomenController($scope, $routeParams, $location, $filter, dem
         var valid = $filter('indiaNumbers')(row ? row.valid : 0);
         var all = $filter('indiaNumbers')(row ? row.all : 0);
         var percent = row ? d3.format('.2%')(row.valid / (row.all || 1)) : "N/A";
-        return '<div class="hoverinfo">' +
+        return '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
             '<p>' + loc.properties.name + '</p>' +
-            '<div>Number of adolescent girls (11 - 18 years) who are enrolled for ICDS services: <strong>' + valid + '</strong>' +
-            '<div>Total number of adolescent girls (11 - 18 years) who are registered: <strong>' + all + '</strong>' +
-            '<div>Percentage of registered adolescent girls (11 - 18 years) who are enrolled for ICDS services: <strong>' + percent + '</strong>' +
+            '<div>Number of adolescent girls (11 - 14 years) who are enrolled for Anganwadi Services: <strong>' + valid + '</strong>' +
+            '<div>Total number of adolescent girls (11 - 14 years) who are registered: <strong>' + all + '</strong>' +
+            '<div>Percentage of registered adolescent girls (11 - 14 years) who are enrolled for Anganwadi Services: <strong>' + percent + '</strong>' +
             '</div>';
     };
 
@@ -212,7 +200,7 @@ function AdolescentWomenController($scope, $routeParams, $location, $filter, dem
         },
         caption: {
             enable: true,
-            html: '<i class="fa fa-info-circle"></i> Total number of adolescent girls who are enrolled for ICDS services',
+            html: '<i class="fa fa-info-circle"></i> Total number of adolescent girls who are enrolled for Anganwadi Services',
             css: {
                 'text-align': 'center',
                 'margin': '0 auto',
@@ -223,9 +211,9 @@ function AdolescentWomenController($scope, $routeParams, $location, $filter, dem
 
     vm.tooltipContent = function (monthName, day) {
         return "<p><strong>" + monthName + "</strong></p><br/>"
-            + "<p>Number of adolescent girls (11 - 18 years) who are enrolled for ICDS services: <strong>" + $filter('indiaNumbers')(day.y) + "</strong></p>"
-            + "<p>Total number of adolescent girls (11 - 18 years) who are registered: <strong>" + $filter('indiaNumbers')(day.all) + "</strong></p>"
-            + "<p>Percentage of registered adolescent girls (11 - 18 years) who are enrolled for ICDS services: <strong>" + d3.format('.2%')(day.y / (day.all || 1)) + "</strong></p>";
+            + "<div>Number of adolescent girls (11 - 18 years) who are enrolled for Anganwadi Services: <strong>" + $filter('indiaNumbers')(day.y) + "</strong></div>"
+            + "<div>Total number of adolescent girls (11 - 18 years) who are registered: <strong>" + $filter('indiaNumbers')(day.all) + "</strong></div>"
+            + "<div>Percentage of registered adolescent girls (11 - 18 years) who are enrolled for Anganwadi Services: <strong>" + d3.format('.2%')(day.y / (day.all || 1)) + "</strong></div>";
     };
 
     vm.showAllLocations = function () {

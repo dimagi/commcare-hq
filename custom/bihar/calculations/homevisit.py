@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import division
 from datetime import timedelta
 import logging
 from custom.bihar import getters

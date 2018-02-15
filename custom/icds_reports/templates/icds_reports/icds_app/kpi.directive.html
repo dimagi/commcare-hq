@@ -2,13 +2,13 @@
     <div class="col-md-6" ng-repeat="cell in section track by $index">
         <div class="report-cell kpi">
             <div class="row">
-                <div class="col-md-2"
+                <div class="col-md-1"
                      uib-popover-html="cell.help_text"
                      popover-placement="right"
                      popover-trigger="'mouseenter'">
                     <i ng-show="cell.help_text !== null" class="fa fa-info-circle fa-2x" ></i>
                 </div>
-                <div class="col-md-8 kpi-content">
+                <div class="col-md-11 kpi-content">
                     <div class="kpi-justify-center">
                         <span class="title white" ng-bind="cell.label"></span>
                     </div>
@@ -33,9 +33,10 @@
                             <span class="white" ng-bind="cell.percent"></span>
                         </span>
                     </div>
-                </div>
-                <div class="col-md-2 see-more-content">
-                    <span ng-show="cell.redirect" class="see-more" aria-hidden="true"><a href="{$ $ctrl.goToStep(cell.redirect) $}" class="fa">See more</a></span>
+                    <div class="row see-more-content">
+                        <div class="col-md-offset-10 col-md-2"></div>
+                        <span ng-show="cell.redirect" class="see-more" aria-hidden="true"><a href="{$ $ctrl.goToStep(cell.redirect) $}" class="fa">See more</a></span>
+                    </div>
                 </div>
             </div>
         </div>

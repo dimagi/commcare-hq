@@ -81,6 +81,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         {id: 'many', name: 'One PDF per AWC'},
         {id: 'one', name: 'One Combined PDF for all AWCs'},
     ];
+    vm.downloaded = false;
 
     vm.awcLocations = [];
     vm.selectedAWCs = [];
@@ -351,6 +352,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
 
     vm.goToLink = function () {
         window.open($rootScope.issnip_report_link);
+        vm.downloaded = true;
     };
 
 }

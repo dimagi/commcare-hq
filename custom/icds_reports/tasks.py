@@ -35,6 +35,7 @@ from custom.icds_reports.utils import zip_folder, create_pdf_file
 from dimagi.utils.chunked import chunked
 from dimagi.utils.dates import force_to_date
 from dimagi.utils.logging import notify_exception
+import six
 from six.moves import range
 
 celery_task_logger = logging.getLogger('celery.task')
@@ -42,9 +43,8 @@ celery_task_logger = logging.getLogger('celery.task')
 UCRAggregationTask = namedtuple("UCRAggregationTask", ['type', 'date'])
 
 DASHBOARD_TEAM_MEMBERS = ['jemord', 'lbagnoli', 'ssrikrishnan', 'mharrison']
-_dashboard_team_soft_assert = soft_assert(to=[
-    '{}@{}'.format(member_id, 'dimagi.com') for member_id in DASHBOARD_TEAM_MEMBERS
-])
+DASHBOARD_TEAM_EMAILS = ['{}@{}'.format(member_id, 'dimagi.com') for member_id in DASHBOARD_TEAM_MEMBERS]
+_dashboard_team_soft_assert = soft_assert(to=DASHBOARD_TEAM_EMAILS)
 
 
 @periodic_task(run_every=crontab(minute=30, hour=23), acks_late=True, queue='background_queue')
@@ -333,9 +333,28 @@ def icds_data_validation(day):
         )
     ).values_list(*return_values)
 
+    _send_data_validation_email(
+        return_values, month, {
+            'bad_wasting_awcs': bad_wasting_awcs,
+            'bad_stunting_awcs': bad_stunting_awcs,
+            'bad_underweight_awcs': bad_underweight_awcs,
+            'bad_lbw_awcs': bad_lbw_awcs,
+        })
+
+
+def _send_data_validation_email(csv_columns, month, bad_data):
+    # intentionally using length here because the query will need to evaluate anyway to send the CSV file
+    if all(len(v) == 0 for _, v in six.iteritems(bad_data)):
+        return
+
+    bad_wasting_awcs = bad_data.get('bad_wasting_awcs', [])
+    bad_stunting_awcs = bad_data.get('bad_stunting_awcs', [])
+    bad_underweight_awcs = bad_data.get('bad_underweight_awcs', [])
+    bad_lbw_awcs = bad_data.get('bad_lbw_awcs', [])
+
     csv_file = io.BytesIO()
     writer = csv.writer(csv_file)
-    writer.writerow(('type',) + return_values)
+    writer.writerow(('type',) + csv_columns)
     _icds_add_awcs_to_file(writer, 'wasting', bad_wasting_awcs)
     _icds_add_awcs_to_file(writer, 'stunting', bad_stunting_awcs)
     _icds_add_awcs_to_file(writer, 'underweight', bad_underweight_awcs)
@@ -357,7 +376,8 @@ def icds_data_validation(day):
 
     filename = month.strftime('validation_results_%s.csv' % SERVER_DATE_FORMAT)
     send_HTML_email(
-        'ICDS Dashboard Validation Results', DASHBOARD_TEAM_MEMBERS, email_content,
+        '[{}] - ICDS Dashboard Validation Results'.format(settings.SERVER_ENVIRONMENT),
+        DASHBOARD_TEAM_EMAILS, email_content,
         file_attachments=[{'file_obj': csv_file, 'title': filename, 'mimetype': 'text/csv'}],
     )
 

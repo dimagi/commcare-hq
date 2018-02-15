@@ -45,6 +45,12 @@ class UpdateTreatmentOutcomeRepeaterView(AddCaseRepeaterView):
     page_name = "Update 99DOTS Treatment Outcome"
 
 
+class UnenrollPatientRepeaterView(AddCaseRepeaterView):
+    urlname = 'unenroll_99dots_patient'
+    page_title = "Unenroll 99DOTS Patients"
+    page_name = "Unenroll 99DOTS Patients"
+
+
 @toggles.NINETYNINE_DOTS.required_decorator()
 @api_auth
 @require_POST

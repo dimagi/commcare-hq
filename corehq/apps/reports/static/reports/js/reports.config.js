@@ -74,6 +74,8 @@ var HQReport = function (options) {
                     e.preventDefault();
                     window.open(self.getReportRenderUrl("print"));
                 });
+
+                trackReportPageEnter();
             }
         });
     };
@@ -223,5 +225,21 @@ var HQReport = function (options) {
         self.resetModal = function () {
             $(hqReport.emailReportModal).find('.send-button').button('reset');
         };
+    }
+
+    /**
+     * Send a Kissmetrics event, depending on report page slug
+     */
+    function trackReportPageEnter() {
+        switch (self.slug) {
+            case 'submit_history' :
+                hqImport('analytix/js/kissmetrix').track.event('Visited Submit History Page');
+                break;
+            case 'case_list' :
+                hqImport('analytix/js/kissmetrix').track.event('Visited Case List Page');
+                break;
+            default:
+                break;
+        }
     }
 };
