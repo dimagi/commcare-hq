@@ -10,8 +10,8 @@ from django.db import models, transaction
 import jsonfield
 from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.form_processor.exceptions import CaseNotFound
-from corehq.apps.commtrack.const import COMMTRACK_USERNAME
 from corehq.apps.domain.models import Domain
+from corehq.apps.locations.queryutil import ComparedQuerySet, TimingContext
 from corehq.apps.products.models import SQLProduct
 from corehq.toggles import LOCATION_TYPE_STOCK_RATES
 from mptt.models import MPTTModel, TreeForeignKey, TreeManager
@@ -263,7 +263,13 @@ class LocationQueriesMixin(object):
         assigned_location_ids = user.get_location_ids(domain)
         if not assigned_location_ids:
             return self.none()  # No locations are assigned to this user
-        return self.all() & SQLLocation.objects.get_locations_and_children(assigned_location_ids)
+
+        ids_query = SQLLocation.objects.get_locations_and_children(assigned_location_ids)
+        assert isinstance(ids_query, ComparedQuerySet), ids_query
+        return ComparedQuerySet(
+            self.filter(id__in=ids_query._mptt_set),
+            ids_query,
+        )
 
     def delete(self, *args, **kwargs):
         from .document_store import publish_location_saved
@@ -285,6 +291,24 @@ class LocationQuerySet(LocationQueriesMixin, models.query.QuerySet):
 
 
 class LocationManager(LocationQueriesMixin, TreeManager):
+
+    def mptt_get_queryset_ancestors(self, *args, **kw):
+        return super(LocationManager, self).get_queryset_ancestors(*args, **kw)
+
+    def mptt_get_queryset_descendants(self, *args, **kw):
+        return super(LocationManager, self).get_queryset_descendants(*args, **kw)
+
+    def get_queryset_ancestors(self, *args, **kw):
+        timing = TimingContext("get_queryset_ancestors")
+        with timing("mptt"):
+            mptt_set = self.mptt_get_queryset_ancestors(*args, **kw)
+        return ComparedQuerySet(mptt_set, timing)
+
+    def get_queryset_descendants(self, *args, **kw):
+        timing = TimingContext("get_queryset_descendants")
+        with timing("mptt"):
+            mptt_set = self.mptt_get_queryset_descendants(*args, **kw)
+        return ComparedQuerySet(mptt_set, timing)
 
     def get_or_None(self, **kwargs):
         try:
@@ -389,6 +413,26 @@ class SQLLocation(MPTTModel):
     # This should really be the default location manager
     active_objects = OnlyUnarchivedLocationManager()
     inactive_objects = OnlyArchivedLocationManager()
+
+    def mptt_get_ancestors(self, **kw):
+        # VERIFIED does not call self.objects.get_queryset_ancestors
+        return super(SQLLocation, self).get_ancestors(**kw)
+
+    def mptt_get_descendants(self, **kw):
+        # VERIFIED does not call self.objects.get_queryset_descendants
+        return super(SQLLocation, self).get_descendants(**kw)
+
+    def get_ancestors(self, **kw):
+        timing = TimingContext("get_ancestors")
+        with timing("mptt"):
+            mptt_set = self.mptt_get_ancestors(**kw)
+        return ComparedQuerySet(mptt_set, timing)
+
+    def get_descendants(self, **kw):
+        timing = TimingContext("get_descendants")
+        with timing("mptt"):
+            mptt_set = self.mptt_get_descendants(**kw)
+        return ComparedQuerySet(mptt_set, timing)
 
     @classmethod
     def get_sync_fields(cls):
