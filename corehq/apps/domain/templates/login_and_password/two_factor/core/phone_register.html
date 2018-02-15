@@ -7,7 +7,7 @@
 
   {% if wizard.steps.current == 'setup' %}
       <p>{% blocktrans %}Your backup phone number will be used if your primary method of
-        registration is not available. Enter your backup phone number, starting with +
+        registration is not available. Enter your backup phone number, starting with a +,
           followed by your country code.{% endblocktrans %}</p>
   {% elif wizard.steps.current == 'validation' %}
       <p>{% blocktrans %}We've sent a token to your phone number. Please
