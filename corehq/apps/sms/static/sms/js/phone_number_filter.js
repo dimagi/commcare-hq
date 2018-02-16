@@ -1,4 +1,6 @@
 hqDefine("sms/js/phone_number_filter", function() {
+    var initialPageData = hqImport("hqwebapp/js/initial_page_data");
+
     function SMSPhoneNumberFilterViewModel(initial_value, groups) {
         var PHONE_NUMBER_SELECT_OPTIONS = [
                 {id: "has_phone_number", text: gettext("That have phone numbers")},
@@ -42,11 +44,11 @@ hqDefine("sms/js/phone_number_filter", function() {
         });
     }
 
-    var initial_value = {{ initial_value| JSON }},
-        model = new SMSPhoneNumberFilterViewModel(initial_value, {{ groups| JSON }});
-    $('#{{ css_id }}').koApplyBindings(model);
+    var initialValue = initialPageData.get('initial_value'),
+        model = new SMSPhoneNumberFilterViewModel(initialValue, initialPageData.get('groups'));
+    $('#' + initialPageData.get("css_id")).koApplyBindings(model);
     $('[name=selected_group]').select2({
         allowClear: true,
-        placeholder: '{% trans "Select a group" %}',
+        placeholder: gettext("Select a group"),
     });
 });
