@@ -24,10 +24,17 @@ hqDefine('sms/js/chat_contacts', function() {
                 {
                     "aTargets": [0],
                     "render": function(data, type, row) {
-                        return '<a target="_blank" href="' + row[4] + '">' + row[0] + '</a>' +
-                               '<span class="btn btn-primary pull-right" ' +
-                               'onClick="window.open(\'' + row[5] + '\', \'_blank\', \'location=no,menubar=no,scrollbars=no,status=no,toolbar=no,height=400,width=400\');">' +
-                               gettext("Chat") + '<i class="fa fa-share"></i></span>';
+                        return _.template(
+                            '<a target="_blank" href="<%= href =%>"><%= content =%></a>' +
+                            '<span class="btn btn-primary pull-right" ' +
+                                  'onClick="window.open(\'<%= url =%>\', \'_blank\', \'location=no,menubar=no,scrollbars=no,status=no,toolbar=no,height=400,width=400\');">' +
+                            '<%= chat =%><i class="fa fa-share"></i></span>'
+                        )({
+                            href: row[4],
+                            content: row[0],
+                            url: row[5],
+                            chat: gettext("Chat"),
+                        });
                     },
                 },
             ],
