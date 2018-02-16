@@ -1,4 +1,5 @@
-/* globals django */
+/* globals django, reloadLocationSearchSelect */
+// reloadLocationSearchSelect is defined in locations/manage/locations.html
 
 function api_get_children(loc_uuid, callback) {
     var params = (loc_uuid ? {parent_id: loc_uuid} : {});
@@ -304,9 +305,7 @@ function LocationModel(data, root, depth) {
                 success: function () {
                     alert_user(loc.archive_success_message({"name": name}), "success");
                     loc.remove_elements_after_action(button);
-                    if (hqImport('hqwebapp/js/toggles').toggleEnabled('LOCATION_SEARCH')) {
-                        reloadLocationSearchSelect(); // eslint-disable-line no-undef
-                    }
+                    reloadLocationSearchSelect();
                 },
             });
             $(archive_location_modal).modal('hide');
@@ -332,9 +331,7 @@ function LocationModel(data, root, depth) {
             error: 'error',
             success: function () {
                 loc.remove_elements_after_action(button);
-                if (hqImport('hqwebapp/js/toggles').toggleEnabled('LOCATION_SEARCH')) {
-                    reloadLocationSearchSelect(); // eslint-disable-line no-undef
-                }
+                reloadLocationSearchSelect();
             },
         });
     };
@@ -359,9 +356,7 @@ function LocationModel(data, root, depth) {
                         if (response.success){
                             alert_user(loc.delete_success_message({"name": name}), "success");
                             loc.remove_elements_after_action(button);
-                            if (hqImport('hqwebapp/js/toggles').toggleEnabled('LOCATION_SEARCH')) {
-                                reloadLocationSearchSelect(); // eslint-disable-line no-undef
-                            }
+                            reloadLocationSearchSelect();
                         }
                         else {
                             alert_user(response.message, "warning");
