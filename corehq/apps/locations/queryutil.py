@@ -104,24 +104,24 @@ def _make_qs_method(name):
     return method
 
 
-for name, _make_method in [
+for _make_method, name in [
     # methods that get a model instance
-    ("count", _make_get_method),
-    ("get", _make_get_method),
-    ("first", _make_get_method),
-    ("last", _make_get_method),
+    (_make_get_method, "count"),
+    (_make_get_method, "get"),
+    (_make_get_method, "first"),
+    (_make_get_method, "last"),
     # methods that return a new QuerySet
-    ("annotate", _make_qs_method),
-    ("defer", _make_qs_method),
-    ("exclude", _make_qs_method),
-    ("filter", _make_qs_method),
-    ("none", _make_qs_method),
-    ("only", _make_qs_method),
-    ("order_by", _make_qs_method),
-    ("values", _make_qs_method),
-    ("values_list", _make_qs_method),
+    (_make_qs_method, "annotate"),
+    (_make_qs_method, "defer"),
+    (_make_qs_method, "exclude"),
+    (_make_qs_method, "filter"),
+    (_make_qs_method, "none"),
+    (_make_qs_method, "only"),
+    (_make_qs_method, "order_by"),
+    (_make_qs_method, "values"),
+    (_make_qs_method, "values_list"),
     # from subclasses of QuerySet
-    ("location_ids", _make_qs_method),
+    (_make_qs_method, "location_ids"),
 ]:
     setattr(ComparedQuerySet, name, _make_method(name))
 
