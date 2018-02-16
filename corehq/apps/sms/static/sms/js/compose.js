@@ -1,4 +1,5 @@
 hqDefine('sms/js/compose', function() {
+    var initialPageData = hqImport('hqwebapp/js/initial_page_data');
 
         $(function(){
             $("#hint_id_recipients").addClass("alert alert-info");
@@ -22,7 +23,7 @@ hqDefine('sms/js/compose', function() {
 
 
             $('.sms-typeahead').multiTypeahead({
-                source: {{ sms_contacts|JSON }}
+                source: initialPageData.get('sms_contacts')
             }).focus();
 
         });
