@@ -10,7 +10,7 @@ hqDefine('sms/js/languages', function() {
             langs: langs,
             saveURL: saveURL,
             edit: edit,
-            validate: validate
+            validate: validate,
         });
         $("#supported-languages").koApplyBindings(sl);
     });
