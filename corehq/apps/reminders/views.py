@@ -896,8 +896,6 @@ class RemindersListView(BaseMessagingSectionView):
     @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
     @use_datatables
     def dispatch(self, request, *args, **kwargs):
-        if self.reminders_migration_in_progress:
-            add_migration_in_progress_message(request)
         return super(BaseMessagingSectionView, self).dispatch(request, *args, **kwargs)
 
     @property
@@ -971,6 +969,12 @@ class RemindersListView(BaseMessagingSectionView):
                 'success': False,
             }
 
+    def get(self, *args, **kwargs):
+        if self.reminders_migration_in_progress:
+            add_migration_in_progress_message(self.request)
+
+        return super(RemindersListView, self).get(*args, **kwargs)
+
     def post(self, *args, **kwargs):
         action = self.request.POST.get('action')
         if action in [ACTION_ACTIVATE, ACTION_DEACTIVATE, ACTION_DELETE]:
@@ -996,8 +1000,6 @@ class BroadcastListView(BaseMessagingSectionView, DataTablesAJAXPaginationMixin)
     @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
     @use_datatables
     def dispatch(self, request, *args, **kwargs):
-        if self.reminders_migration_in_progress:
-            add_migration_in_progress_message(request)
         return super(BroadcastListView, self).dispatch(request, *args, **kwargs)
 
     @property
@@ -1080,6 +1082,8 @@ class BroadcastListView(BaseMessagingSectionView, DataTablesAJAXPaginationMixin)
             upcoming = (action == self.LIST_UPCOMING)
             return self.get_broadcast_ajax_response(upcoming)
         else:
+            if self.reminders_migration_in_progress:
+                add_migration_in_progress_message(self.request)
             return super(BroadcastListView, self).get(*args, **kwargs)
 
     def post(self, *args, **kwargs):
