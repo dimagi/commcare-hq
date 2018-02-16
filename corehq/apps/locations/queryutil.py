@@ -106,6 +106,7 @@ def _make_qs_method(name):
 
 for name, _make_method in [
     # methods that get a model instance
+    ("count", _make_get_method),
     ("get", _make_get_method),
     ("first", _make_get_method),
     ("last", _make_get_method),
