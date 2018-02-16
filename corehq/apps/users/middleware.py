@@ -80,20 +80,14 @@ class Enforce2FAMiddleware(MiddlewareMixin):
         return self.enforce_two_factor(toggles, request)
 
     def enforce_two_factor(self, toggles, request):
-        if not toggles.TWO_FACTOR_SUPERUSER_ROLLOUT.enabled(request.user.username):
-            return None
+        if (toggles.TWO_FACTOR_SUPERUSER_ROLLOUT.enabled(request.user.username)
+                and not request.couch_user.two_factor_disabled
+                and not request.user.is_verified()
+                and not request.path.startswith('/account/')):
+            return TemplateResponse(
+                request=request,
+                template='two_factor/core/otp_required.html',
+                status=403,
+            )
         else:
-            if request.couch_user.two_factor_disabled:
-                return None
-            else:
-                if request.user.is_verified():
-                    return None
-                else:
-                    if not request.path.startswith('/account/'):
-                        return TemplateResponse(
-                            request=request,
-                            template='two_factor/core/otp_required.html',
-                            status=403,
-                        )
-                    else:
-                        return None
+            return None
