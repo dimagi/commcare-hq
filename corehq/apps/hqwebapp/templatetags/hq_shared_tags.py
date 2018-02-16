@@ -651,27 +651,6 @@ def registerurl(parser, token):
     return AddToBlockNode(nodelist, 'registered_urls')
 
 
-@register.tag
-def registerstatic(parser, token):
-    split_contents = token.split_contents()
-    tag = split_contents[0]
-    url_name = parse_literal(split_contents[1], parser, tag)
-    url = parse_literal(split_contents[2], parser, tag)
-
-    url = static(url)
-
-    class FakeNode(template.Node):
-        # must mock token or error handling code will fail and not reveal real error
-        token = Token(TOKEN_TEXT, '', (0, 0), 0)
-
-        def render(self, context):
-            return (u"<div data-name=\"{}\" data-value={}></div>"
-                    .format(url_name, json.dumps(url)))
-
-    nodelist = NodeList([FakeNode()])
-    return AddToBlockNode(nodelist, 'initial_page_data')
-
-
 @register.simple_tag
 def html_attr(value):
     if not isinstance(value, six.string_types):
