@@ -2,6 +2,7 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 {% load crispy_forms_tags %}
+{% requirejs_main 'sms/js/manage_registration_invitations' %}
 
 {% block pagination_templates %}
 <script type="text/html" id="invitations-template">
@@ -12,7 +13,6 @@
     <td><a data-bind="text: app_name, attr: {href: app_link, target: '_blank'}"></a></td>
     <td data-bind="text: phone_type"></td>
 </script>
-<script src="{% static 'hqwebapp/js/crud_paginated_list_init.js' %}"></script>
 {% endblock %}
 
 {% block page_breadcrumbs %}
@@ -25,21 +25,6 @@
     </ol>
 {% endblock %}
 
-{% block js-inline %}{{ block.super }}
-<script>
-$(function () {
-    var RegistrationModel = function() {
-        var self = this;
-        self.registration_message_type = ko.observable();
-        self.showCustomRegistrationMessage = ko.computed(function() {
-            return self.registration_message_type() == 'CUSTOM';
-        });
-    };
-    var registrationModel = new RegistrationModel();
-    ko.applyBindings(registrationModel, $('#registration-modal').get(0));
-});
-</script>
-{% endblock %}
 
 {% block page_content %}
 {% if sms_mobile_worker_registration_enabled %}
