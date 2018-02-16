@@ -2,8 +2,15 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 
+{% block js %}{{ block.super }}
+    <script src="{% static 'sms/js/chat_contacts.js' %}"></script>
+{% endblock %}
+
 
 {% block page_content %}
+    {% registerurl "chat_contact_list" domain %}
+    {% registerstatic "ajax_loader" "hqwebapp/images/ajax-loader.gif" %}
+
     <div id="id_filter" style="padding-bottom: 40px;" class="row">
         <div class="col-xs-8">
             <input id="id_filter_text"
