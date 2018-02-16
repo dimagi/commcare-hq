@@ -79,7 +79,7 @@ class Enforce2FAMiddleware(MiddlewareMixin):
 
         if not toggles.TWO_FACTOR_SUPERUSER_ROLLOUT.enabled(request.user.username):
             return None
-        elif request.user.is_staff or request.user.is_superuser and not request.user.is_verified():
+        elif not request.user.is_verified():
             if request.path.startswith('/account/') or request.couch_user.two_factor_disabled:
                 return None
             else:
