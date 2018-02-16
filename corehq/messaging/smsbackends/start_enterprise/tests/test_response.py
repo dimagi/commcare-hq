@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import uuid
 from corehq.apps.sms.models import QueuedSMS
 from corehq.messaging.smsbackends.start_enterprise.exceptions import StartEnterpriseBackendException

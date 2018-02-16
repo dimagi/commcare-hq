@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from itertools import groupby
 from collections import defaultdict
 from xml.etree.cElementTree import Element
@@ -7,6 +8,7 @@ from corehq.apps.custom_data_fields.dbaccessors import get_by_domain_and_type
 from corehq.apps.fixtures.utils import get_index_schema_node
 from corehq.apps.locations.models import SQLLocation, LocationType, LocationFixtureConfiguration
 from corehq import toggles
+import six
 
 
 class LocationSet(object):
@@ -214,20 +216,30 @@ def get_location_fixture_queryset(user):
 
     for user_location in user_locations:
         location_type = user_location.location_type
-        expand_from = location_type.expand_from or location_type
-        expand_to_level = (SQLLocation.active_objects
-                           .filter(domain__exact=user.domain, location_type=location_type.expand_to)
-                           .values_list('level', flat=True)
-                           .first())
-        expand_from_locations = _get_expand_from_level(user.domain, user_location, expand_from)
-        all_locations |= _get_children(expand_from_locations, expand_to_level)
-        all_locations |= (SQLLocation.active_objects
-                          .get_queryset_ancestors(expand_from_locations, include_self=True))
+        expand_to_level = _get_level_to_expand_to(user.domain, location_type.expand_to)
+        expand_from_level = location_type.expand_from or location_type
+        expand_from_locations = _get_locs_to_expand_from(user.domain, user_location, expand_from_level)
+        locs_below_expand_from = _get_children(expand_from_locations, expand_to_level)
+        locs_at_or_above_expand_from = (SQLLocation.active_objects
+                                        .get_queryset_ancestors(expand_from_locations, include_self=True))
+        locations_to_sync = locs_at_or_above_expand_from | locs_below_expand_from
+        if location_type.include_only.exists():
+            locations_to_sync = locations_to_sync.filter(location_type__in=location_type.include_only.all())
+        all_locations |= locations_to_sync
 
     return all_locations
 
 
-def _get_expand_from_level(domain, user_location, expand_from):
+def _get_level_to_expand_to(domain, expand_to):
+    if expand_to is None:
+        return None
+    return (SQLLocation.active_objects
+            .filter(domain__exact=domain, location_type=expand_to)
+            .values_list('level', flat=True)
+            .first())
+
+
+def _get_locs_to_expand_from(domain, user_location, expand_from):
     """From the users current location, return all locations of the highest
     level they want to start expanding from.
     """
@@ -246,7 +258,9 @@ def _get_expand_from_level(domain, user_location, expand_from):
 def _get_children(expand_from_locations, expand_to_level):
     """From the topmost location, get all the children we want to sync
     """
-    children = SQLLocation.active_objects.get_queryset_descendants(expand_from_locations).prefetch_related('location_type')
+    children = (SQLLocation.active_objects
+                .get_queryset_descendants(expand_from_locations)
+                .prefetch_related('location_type'))
     if expand_to_level is not None:
         children = children.filter(level__lte=expand_to_level)
     return children
@@ -301,7 +315,7 @@ def _get_metadata_node(location, data_fields):
     # add default empty nodes for all known fields: http://manage.dimagi.com/default.asp?247786
     for field in data_fields:
         element = Element(field.slug)
-        element.text = unicode(location.metadata.get(field.slug, ''))
+        element.text = six.text_type(location.metadata.get(field.slug, ''))
         node.append(element)
     return node
 
@@ -326,7 +340,7 @@ def _fill_in_location_element(xml_root, location, data_fields):
     for field in fixture_fields:
         field_node = Element(field)
         val = getattr(location, field)
-        field_node.text = unicode(val if val is not None else '')
+        field_node.text = six.text_type(val if val is not None else '')
         xml_root.append(field_node)
 
     # in order to be indexed, custom data fields need to be top-level
@@ -335,7 +349,7 @@ def _fill_in_location_element(xml_root, location, data_fields):
         if field.index_in_fixture:
             field_node = Element(_get_indexed_field_name(field.slug))
             val = location.metadata.get(field.slug)
-            field_node.text = unicode(val if val is not None else '')
+            field_node.text = six.text_type(val if val is not None else '')
             xml_root.append(field_node)
 
     xml_root.append(_get_metadata_node(location, data_fields))

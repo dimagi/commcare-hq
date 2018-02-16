@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import os
 from xml.etree import cElementTree as ElementTree
 from django.test import SimpleTestCase, TestCase
@@ -22,6 +23,7 @@ from corehq.apps.userreports.reports.specs import FieldColumn, MultibarChartSpec
 from corehq.apps.userreports.tests.utils import mock_datasource_config, mock_sql_backend
 from corehq.toggles import MOBILE_UCR, NAMESPACE_DOMAIN
 from toggle.shortcuts import update_toggle_cache, clear_toggle_cache
+import six
 
 
 class ReportAppConfigTest(SimpleTestCase):
@@ -29,7 +31,7 @@ class ReportAppConfigTest(SimpleTestCase):
     def test_new_uuid(self):
         report_app_config = ReportAppConfig(report_id='report_id')
         self.assertTrue(report_app_config.uuid)
-        self.assertIsInstance(report_app_config.uuid, basestring)
+        self.assertIsInstance(report_app_config.uuid, six.string_types)
 
     def test_different_uuids(self):
         report_app_config_1 = ReportAppConfig(report_id='report_id')

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.apps.receiverwrapper.util import get_version_from_appversion_text, \
     get_commcare_version_from_appversion_text
 

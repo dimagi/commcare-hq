@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from datetime import datetime
 
 from corehq.apps.commtrack.models import CommtrackConfig, ConsumptionConfig
@@ -17,6 +18,7 @@ from custom.ilsgateway.tanzania.reminders.supervision import SupervisionReminder
 from custom.ilsgateway.tests.handlers.utils import ILSTestScript, TEST_DOMAIN, prepare_domain, create_products
 from custom.ilsgateway.utils import make_loc
 from custom.logistics.tests.utils import bootstrap_user
+import six
 
 
 class RemindersTest(ILSTestScript):
@@ -284,7 +286,7 @@ class TestStockOut(RemindersTest):
         self.run_script(script)
 
         with localize('sw'):
-            reminder_stockout = unicode(REMINDER_STOCKOUT)
+            reminder_stockout = six.text_type(REMINDER_STOCKOUT)
 
         StockoutReminder(TEST_DOMAIN, now).send()
         script = """

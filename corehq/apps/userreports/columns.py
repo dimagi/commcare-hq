@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.utils.translation import ugettext as _
 
 from corehq.apps.reports.sqlreport import DatabaseColumn
@@ -73,8 +74,8 @@ def get_expanded_column_config(data_source_configuration, column_config, lang):
 
     if over_expansion_limit:
         column_warnings.append(_(
-            u'The "{header}" column had too many values to expand! '
-            u'Expansion limited to {max} distinct values.'
+            'The "{header}" column had too many values to expand! '
+            'Expansion limited to {max} distinct values.'
         ).format(
             header=column_config.get_header(lang),
             max=column_config.max_expansion,

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from copy import deepcopy
 from django.conf import settings
 from mock import patch

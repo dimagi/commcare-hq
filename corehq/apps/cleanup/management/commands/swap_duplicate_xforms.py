@@ -1,4 +1,6 @@
 from __future__ import print_function
+from __future__ import absolute_import
+from __future__ import division
 import re
 from collections import defaultdict
 
@@ -8,6 +10,7 @@ from uuid import UUID
 from django.core.management import BaseCommand
 
 from couchforms.models import XFormInstance, XFormDuplicate
+from six.moves import input
 
 
 PROBLEM_TEMPLATE_START = "This document was an xform duplicate that replaced "
@@ -49,7 +52,7 @@ class Command(BaseCommand):
 
         dry_run = options.get("dry_run", True)
         if not options.get('no_input', False) and not dry_run:
-            confirm = raw_input(
+            confirm = input(
                 u"""
                 Are you sure you want to swap the given XFormInstances for duplicates?
                 This is NOT a dry run. y/N?

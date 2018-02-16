@@ -1,5 +1,6 @@
 from __future__ import print_function
 
+from __future__ import absolute_import
 from django.core.management.base import BaseCommand, CommandError
 from casexml.apps.case.dbaccessors import get_reverse_indices
 from casexml.apps.case.models import CommCareCase

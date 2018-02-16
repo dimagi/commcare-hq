@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.utils.deprecation import MiddlewareMixin
 from django.utils.translation import ugettext_lazy
 from corehq.apps.hqwebapp.views import no_permissions
@@ -29,6 +30,18 @@ class LocationAccessMiddleware(MiddlewareMixin):
     def process_view(self, request, view_fn, view_args, view_kwargs):
         user = getattr(request, 'couch_user', None)
         domain = getattr(request, 'domain', None)
+        self.apply_location_access(request)
+
+        if not request.can_access_all_locations:
+            if not is_location_safe(view_fn, request, view_args, view_kwargs):
+                return location_restricted_response(request)
+            elif not user.get_sql_location(domain):
+                return no_permissions(request, message=RESTRICTED_USER_UNASSIGNED_MSG)
+
+    @classmethod
+    def apply_location_access(cls, request):
+        user = getattr(request, 'couch_user', None)
+        domain = getattr(request, 'domain', None)
         if not domain or not user or not user.is_member_of(domain):
             # This is probably some non-domain page or a test, let normal auth handle it
             request.can_access_all_locations = True
@@ -41,7 +54,3 @@ class LocationAccessMiddleware(MiddlewareMixin):
             request.can_access_all_locations = True
         else:
             request.can_access_all_locations = False
-            if not is_location_safe(view_fn, view_args, view_kwargs):
-                return location_restricted_response(request)
-            elif not user.get_sql_location(domain):
-                return no_permissions(request, message=RESTRICTED_USER_UNASSIGNED_MSG)

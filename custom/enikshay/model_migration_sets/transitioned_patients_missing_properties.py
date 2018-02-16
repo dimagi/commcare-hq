@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from custom.enikshay.case_utils import get_occurrence_case_from_episode
 from custom.enikshay.exceptions import ENikshayCaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors

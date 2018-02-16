@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import datetime
 from dimagi.utils.parsing import json_format_datetime
 
@@ -129,7 +130,9 @@ def get_repeaters_by_domain(domain):
         reduce=False,
     ).all()
 
-    return [Repeater.wrap(result['doc']) for result in results]
+    return [Repeater.wrap(result['doc']) for result in results
+            if Repeater.get_class_from_doc_type(result['doc']['doc_type'])
+            ]
 
 
 def _get_repeater_ids_by_domain(domain):

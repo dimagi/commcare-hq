@@ -1,4 +1,6 @@
-from cStringIO import StringIO
+from __future__ import absolute_import
+import io
+
 from django.db import models, transaction
 
 from casexml.apps.phone.restore import stream_response
@@ -7,6 +9,7 @@ from corehq.blobs.atomic import AtomicBlobs
 from corehq.blobs.util import random_url_id
 from corehq.blobs.exceptions import NotFound
 from corehq.util.quickcache import quickcache
+import six
 
 
 class DemoUserRestore(models.Model):
@@ -75,10 +78,10 @@ class DemoUserRestore(models.Model):
 
     def _write_restore_blob(self, restore, db):
 
-        if isinstance(restore, unicode):
-            restore = StringIO(restore.encode("utf-8"))
+        if isinstance(restore, six.text_type):
+            restore = io.BytesIO(restore.encode("utf-8"))
         elif isinstance(restore, bytes):
-            restore = StringIO(restore)
+            restore = io.BytesIO(restore)
 
         info = db.put(restore, random_url_id(16))
         self.restore_blob_id = info.identifier

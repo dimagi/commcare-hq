@@ -1,19 +1,17 @@
-from collections import Counter
+from __future__ import absolute_import
 
 from django.http.response import JsonResponse
 from django.utils.decorators import method_decorator
 from django.shortcuts import render
-from django.views.generic.base import View
+from django.views.generic.base import View, TemplateView
 
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.decorators import domain_admin_required
+from corehq.apps.es import CaseES
 from corehq.apps.locations.permissions import location_safe
-from corehq.apps.users.models import CommCareUser
 from corehq.apps.userreports.reports.filters.choice_providers import ChoiceQueryContext, LocationChoiceProvider
-from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from custom.enikshay.case_utils import CASE_TYPE_VOUCHER, CASE_TYPE_PERSON
-from custom.enikshay.const import VOUCHER_ID, ENIKSHAY_ID
+from custom.enikshay.duplicate_ids import get_duplicated_case_stubs, add_debug_info_to_cases
 from custom.enikshay.reports.utils import StubReport
 from custom.enikshay.reports.choice_providers import DistrictChoiceProvider
 
@@ -57,45 +55,25 @@ class DistrictLocationsView(LocationsView):
     choice_provider = DistrictChoiceProvider
 
 
-@domain_admin_required
-def duplicate_ids_report(request, domain, case_type):
-    case_type = {'voucher': CASE_TYPE_VOUCHER, 'person': CASE_TYPE_PERSON}[case_type]
-    id_property = {'voucher': VOUCHER_ID, 'person': ENIKSHAY_ID}[case_type]
+@method_decorator(domain_admin_required, name='dispatch')
+class DuplicateIdsReport(TemplateView):
+    def get(self, request, domain, case_type, *args, **kwargs):
+        case_type = {'voucher': CASE_TYPE_VOUCHER, 'person': CASE_TYPE_PERSON}[case_type]
+        # By default, only show full debug info for the 300 most recent cases
+        limit_debug_to = None if request.GET.get('full_debug_info') else 300
+        context = self.get_duplicate_id_case_info(domain, case_type, limit_debug_to)
+        return render(request, 'enikshay/duplicate_ids_report.html', context)
 
-    accessor = CaseAccessors(domain)
-    case_ids = accessor.get_case_ids_in_domain(case_type)
-    all_cases = [
-        {
-            'case_id': case.case_id,
-            'readable_id': case.get_case_property(id_property),
-            'opened_on': case.opened_on,
+    @staticmethod
+    def get_duplicate_id_case_info(domain, case_type, limit_debug_to=None):
+        total_cases = CaseES().domain(domain).case_type(case_type).count()
+        bad_cases = get_duplicated_case_stubs(domain, case_type)
+        add_debug_info_to_cases(bad_cases, limit_debug_to)
+        context = {
+            'case_type': case_type,
+            'num_bad_cases': len(bad_cases),
+            'num_total_cases': total_cases,
+            'num_good_cases': total_cases - len(bad_cases),
+            'bad_cases': bad_cases,
         }
-        for case in accessor.iter_cases(case_ids)
-    ]
-    counts = Counter(case['readable_id'] for case in all_cases)
-    bad_cases = [case for case in all_cases if counts[case['readable_id']] > 1]
-
-    for case in bad_cases:
-        form = CaseAccessorSQL.get_transactions(case['case_id'])[0].form
-        if form:
-            case['form_name'] = form.form_data.get('@name', 'NA')
-            form_device_number = form.form_data.get('serial_id', {}).get('outputs', {}).get('device_number')
-            case['device_number_in_form'] = form_device_number
-
-            user = CommCareUser.get(form.user_id) if form.user_id else None
-            if user:
-                case['username'] = user.username
-                try:
-                    device_number = [d.device_id for d in user.devices].index(form.metadata.deviceID) + 1
-                except ValueError:
-                    device_number = -1
-                case['real_device_number'] = unicode(device_number)
-
-    context = {
-        'case_type': case_type,
-        'num_bad_cases': len(bad_cases),
-        'num_total_cases': len(all_cases),
-        'num_good_cases': len(all_cases) - len(bad_cases),
-        'bad_cases': sorted(bad_cases, key=lambda case: case['opened_on'], reverse=True)
-    }
-    return render(request, 'enikshay/duplicate_ids_report.html', context)
+        return context

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.conf.urls import url
 
 from corehq.motech.openmrs.views import (
@@ -5,18 +6,19 @@ from corehq.motech.openmrs.views import (
     openmrs_person_attribute_types,
     openmrs_raw_api,
     openmrs_test_fire,
-    OpenmrsRepeaterView,
     openmrs_edit_config,
     OpenmrsImporterView,
     openmrs_import_now,
 )
+from corehq.motech.repeaters.views.repeaters import AddOpenmrsRepeaterView
+
 
 urlpatterns = [
     url(
         r'^new_openmrs_repeater$',
-        OpenmrsRepeaterView.as_view(),
+        AddOpenmrsRepeaterView.as_view(),
         {'repeater_type': 'OpenmrsRepeater'},
-        name=OpenmrsRepeaterView.urlname
+        name=AddOpenmrsRepeaterView.urlname
     ),
     url(
         r'^(?P<repeater_id>\w+)/edit_config/$',

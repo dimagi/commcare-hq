@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from datetime import datetime
 from django.test import SimpleTestCase
 from corehq.util.dates import get_quarter_date_range, get_quarter_for_date

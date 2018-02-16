@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import division
 from collections import OrderedDict
 import re
 import os
@@ -6,6 +8,9 @@ import json
 from corehq.util.quickcache import quickcache
 from dimagi.ext.jsonobject import JsonObject, StringProperty, ListProperty, DictProperty
 from corehq.apps.reports.sqlreport import DataFormatter
+import six
+from six.moves import range
+from six.moves import map
 
 
 @quickcache(['domain'], timeout=5 * 60)
@@ -38,7 +43,7 @@ def get_mapping(domain_name):
 def get_domains_with_next(domain_name, value_chain=None):
     configuration = get_domain_configuration(domain_name).by_type_hierarchy
     if value_chain:
-        configuration = filter(lambda x: x['val'] == value_chain, configuration)
+        configuration = [x for x in configuration if x['val'] == value_chain]
     domains = []
     for chain in configuration:
         domains.extend(chain.next)
@@ -59,7 +64,7 @@ def get_pracices(domain_name, value_chain=None):
 
 
 def _chunks(l, n):
-    return [l[i:i+n] for i in xrange(0, len(l), n)]
+    return [l[i:i+n] for i in range(0, len(l), n)]
 
 
 class ByTypeHierarchyRecord(JsonObject):
@@ -87,7 +92,7 @@ class CareDataFormatter(DataFormatter):
                     missing_rows[key] = {'0', '1', '2'}.difference({row[-1]})
                 else:
                     missing_rows[key] = missing_rows[key].difference({row[-1]})
-            for k, v in missing_rows.iteritems():
+            for k, v in six.iteritems(missing_rows):
                 for missing_val in v:
                     dict_key = k + (missing_val,)
                     tmp_missing.update({dict_key: dict(all=0, some=0, none=0, gender=missing_val)})
@@ -100,12 +105,12 @@ class CareDataFormatter(DataFormatter):
             f = lambda x: (x[0][0], x[0][1], x[0][2], x[0][3])
         else:
             f = lambda x: x
-        chunks = _chunks(sorted(data.items(), key=f), chunk_size)
+        chunks = _chunks(sorted(list(data.items()), key=f), chunk_size)
         for chunk in chunks:
             group_row = dict(all=0, some=0, none=0)
             disp_name = None
             for val in chunk:
-                for k, v in val[1].iteritems():
+                for k, v in six.iteritems(val[1]):
                     if k in group_row:
                         group_row[k] += v
                 value_chains = get_domain_configuration(domain).by_type_hierarchy
@@ -125,7 +130,7 @@ class CareDataFormatter(DataFormatter):
             result = [disp_name]
 
             for element in row[1:]:
-                result.append(unicode(round(element['html'] * sum_of_elements)) + '%')
+                result.append(six.text_type(round(element['html'] * sum_of_elements)) + '%')
             yield result
 
             for value in chunk:
@@ -162,7 +167,7 @@ class TableCardDataGroupsFormatter(DataFormatter):
             ['D'],
         ]
 
-        for i in xrange(0, max([len(element) for element in data]) - 2):
+        for i in range(0, max([len(element) for element in data]) - 2):
             range_groups[0].append(0)
             range_groups[1].append(0)
             range_groups[2].append(0)
@@ -178,7 +183,7 @@ class TableCardDataGroupsFormatter(DataFormatter):
 
         for group in range_groups:
             for idx, row in enumerate(group[1:], 1):
-                percent = 100 * float(group[idx]) / float(len(data))
+                percent = 100 * float(group[idx]) / len(data)
                 group[idx] = "%.2f%%" % percent
         return range_groups
 
@@ -211,7 +216,7 @@ class TableCardDataIndividualFormatter(DataFormatter):
         for prop in row:
             if prop.get('sort_key') == 'N/A':
                 continue
-            values = map(int, re.findall(r'\d+', remove_tags(prop['html'])))
+            values = list(map(int, re.findall(r'\d+', remove_tags(prop['html']))))
             num_practices += values[0]
             total_practices += values[1]
 
@@ -236,7 +241,7 @@ class TableCardDataIndividualFormatter(DataFormatter):
         for group in groups:
             result[group] = self._init_row(practices)
 
-        for key, row in data.iteritems():
+        for key, row in six.iteritems(data):
             formatted_row = self._format.format_row(row)
             result[key[0]][row['practices']] = formatted_row[1]
 
@@ -270,7 +275,7 @@ class TableCardDataGroupsIndividualFormatter(TableCardDataIndividualFormatter):
         for group in groups:
             result[group] = self._init_row(practices)
 
-        for key, row in data.iteritems():
+        for key, row in six.iteritems(data):
             formatted_row = self._format.format_row(row)
             result[key[0]][row['practices']] = formatted_row[1]
             id_to_name[key[0]] = u'{} ({})'.format(key[1], key[2])

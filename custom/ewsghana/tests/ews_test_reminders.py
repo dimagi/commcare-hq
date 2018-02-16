@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.sms.tests.util import setup_default_sms_test_backend
 from custom.ewsghana.tests.handlers.utils import EWSTestCase

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.motech.repeaters.models import UpdateCaseRepeater, CreateCaseRepeater, CaseRepeater
 
 

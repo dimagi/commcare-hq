@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import uuid
 from datetime import datetime
 from functools import partial
@@ -88,6 +89,8 @@ class LocationType(models.Model):
     administrative = models.BooleanField(default=False)
     shares_cases = models.BooleanField(default=False)
     view_descendants = models.BooleanField(default=False)
+
+    # Sync optimization controls
     _expand_from = models.ForeignKey(
         'self',
         null=True,
@@ -103,6 +106,9 @@ class LocationType(models.Model):
         related_name='+',
         on_delete=models.SET_NULL,
     )  # include all levels of this type and their ancestors
+    # If specified, include only the linked types
+    include_only = models.ManyToManyField('self', symmetrical=False, related_name='included_in')
+
     last_modified = models.DateTimeField(auto_now=True)
     has_user = models.BooleanField(default=False)
 
@@ -265,6 +271,14 @@ class LocationQueriesMixin(object):
             publish_location_saved(domain, location_id, is_deletion=True)
         return super(LocationQueriesMixin, self).delete(*args, **kwargs)
 
+    def filter_by_user_input(self, domain, user_input):
+        """
+        Accepts partial matches, matches against name and site_code.
+        """
+        return (self.filter(domain=domain)
+                    .filter(models.Q(name__icontains=user_input) |
+                            models.Q(site_code__icontains=user_input)))
+
 
 class LocationQuerySet(LocationQueriesMixin, models.query.QuerySet):
     pass
@@ -294,14 +308,6 @@ class LocationManager(LocationQueriesMixin, TreeManager):
             return self.get(domain=domain, site_code=user_input)
         except self.model.DoesNotExist:
             return self.get(domain=domain, name__iexact=user_input)
-
-    def filter_by_user_input(self, domain, user_input):
-        """
-        Accepts partial matches, matches against name and site_code.
-        """
-        return (self.filter(domain=domain)
-                    .filter(models.Q(name__icontains=user_input) |
-                            models.Q(site_code__icontains=user_input)))
 
     def filter_path_by_user_input(self, domain, user_input):
         """
@@ -342,6 +348,16 @@ class OnlyUnarchivedLocationManager(LocationManager):
         return list(self.accessible_to_user(domain, user).location_ids())
 
 
+class OnlyArchivedLocationManager(LocationManager):
+
+    def get_queryset(self):
+        return (super(OnlyArchivedLocationManager, self).get_queryset()
+                .filter(is_archived=True))
+
+    def accessible_location_ids(self, domain, user):
+        return list(self.accessible_to_user(domain, user).location_ids())
+
+
 class SQLLocation(MPTTModel):
     domain = models.CharField(max_length=255, db_index=True)
     name = models.CharField(max_length=255, null=True)
@@ -372,6 +388,7 @@ class SQLLocation(MPTTModel):
     objects = _tree_manager = LocationManager()
     # This should really be the default location manager
     active_objects = OnlyUnarchivedLocationManager()
+    inactive_objects = OnlyArchivedLocationManager()
 
     @classmethod
     def get_sync_fields(cls):
@@ -622,16 +639,6 @@ class SQLLocation(MPTTModel):
     def sql_location(self):
         # For backwards compatability
         return self
-
-    def parents(self):
-        # get locations in path except the last one which is self
-        return SQLLocation.objects.get_locations(self.path[:-1])
-
-    def get_parent_of_type(self, parent_type):
-        parents = self.parents().filter(location_type__name=parent_type)
-        if len(parents) > 1:
-            raise ValueError("More than one parents for the same type")
-        return parents
 
 
 def filter_for_archived(locations, include_archive_ancestors):

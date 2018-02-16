@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.utils.translation import ugettext as _
 from jsonobject.exceptions import BadValueError
 from corehq.apps.userreports.exceptions import BadSpecError
@@ -27,6 +29,7 @@ def _build_count_indicator(spec, context):
         wrapped.display_name,
         wrapped.column_id,
         CustomFilter(lambda item, context=None: True),
+        wrapped,
     )
 
 
@@ -42,7 +45,8 @@ def _build_raw_indicator(spec, context):
     return RawIndicator(
         wrapped.display_name,
         column,
-        getter=wrapped.getter
+        getter=wrapped.getter,
+        wrapped_spec=wrapped,
     )
 
 
@@ -59,6 +63,7 @@ def _build_expression_indicator(spec, context):
         wrapped.display_name,
         column,
         getter=wrapped.parsed_expression(context),
+        wrapped_spec=wrapped,
     )
 
 
@@ -68,6 +73,7 @@ def _build_boolean_indicator(spec, context):
         wrapped.display_name,
         wrapped.column_id,
         FilterFactory.from_spec(wrapped.filter, context),
+        wrapped_spec=wrapped,
     )
 
 
@@ -76,10 +82,10 @@ def _build_choice_list_indicator(spec, context):
     base_display_name = wrapped_spec.display_name
 
     def _construct_display(choice):
-        return u'{base} ({choice})'.format(base=base_display_name, choice=choice)
+        return '{base} ({choice})'.format(base=base_display_name, choice=choice)
 
     def _construct_column(choice):
-        return u'{col}_{choice}'.format(col=spec['column_id'], choice=choice)
+        return '{col}_{choice}'.format(col=spec['column_id'], choice=choice)
 
     choice_indicators = [
         BooleanIndicator(
@@ -89,10 +95,11 @@ def _build_choice_list_indicator(spec, context):
                 expression=wrapped_spec.getter,
                 operator=wrapped_spec.get_operator(),
                 reference_expression=ExpressionFactory.from_spec(choice),
-            )
+            ),
+            wrapped_spec=None,
         ) for choice in spec['choices']
     ]
-    return CompoundIndicator(base_display_name, choice_indicators)
+    return CompoundIndicator(base_display_name, choice_indicators, wrapped_spec)
 
 
 def _build_ledger_balances_indicator(spec, context):
@@ -109,7 +116,8 @@ def _build_repeat_iteration_indicator(spec, context):
             is_nullable=False,
             is_primary_key=True,
         ),
-        getter=lambda doc, ctx: ctx.iteration
+        getter=lambda doc, ctx: ctx.iteration,
+        wrapped_spec=None,
     )
 
 
@@ -122,7 +130,8 @@ def _build_inserted_at(spec, context):
             is_nullable=False,
             is_primary_key=False,
         ),
-        getter=lambda doc, ctx: ctx.inserted_timestamp
+        getter=lambda doc, ctx: ctx.inserted_timestamp,
+        wrapped_spec=None,
     )
 
 
@@ -155,6 +164,6 @@ class IndicatorFactory(object):
             raise BadSpecError(
                 _('Illegal indicator type: "{0}", must be one of the following choice: ({1})'.format(
                     spec['type'],
-                    ', '.join(self.constructor_map.keys())
+                    ', '.join(self.constructor_map)
                 ))
             )

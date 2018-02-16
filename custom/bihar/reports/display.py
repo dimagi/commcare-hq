@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import division
 from datetime import date, timedelta
 import re
 from corehq.apps.reports.standard.cases.data_sources import CaseDisplay
@@ -8,6 +10,7 @@ from corehq.util.dates import iso_string_to_datetime
 from custom.bihar.calculations.utils.xmlns import BP, NEW, MTB_ABORT, DELIVERY, REGISTRATION, PNC
 from couchdbkit.exceptions import ResourceNotFound
 from corehq.apps.users.models import CommCareUser, CouchUser
+from six.moves import range
 
 EMPTY_FIELD = "---"
 
@@ -149,7 +152,7 @@ class MCHMotherDisplay(MCHDisplay):
                 elif children_count > 1 and "child_info" in form_dict:
                     child_list = form_dict["child_info"]
 
-                for idx,child in enumerate(child_list):
+                for idx, child in enumerate(child_list):
                     case_child = {}
                     if "case" in child:
                         case_child = CommCareCase.get(child["case"]["@case_id"])
@@ -252,7 +255,7 @@ class MCHMotherDisplay(MCHDisplay):
                     mother_dob = mother_dob["#value"]
                 days = (date.today() - CaseDisplay.parse_date(self, mother_dob).date()).days
                 mother_dob = self.parse_date(mother_dob)
-                return "%s, %s" % (mother_dob, days/365)
+                return "%s, %s" % (mother_dob, days // 365)
             except AttributeError:
                 return _("Bad date format!")
         else:
@@ -483,7 +486,7 @@ class MCHChildDisplay(MCHDisplay):
 
                 parent_json = parent_case.case_properties()
 
-                setattr(self, "_father_mother_name", "%s, %s" %(get_property(parent_json,"husband_name"), get_property(parent_json, "mother_name")))
+                setattr(self, "_father_mother_name", "%s, %s" %(get_property(parent_json, "husband_name"), get_property(parent_json, "mother_name")))
                 setattr(self, "_full_mcts_id", get_property(parent_json, "full_mcts_id"))
                 setattr(self, "_ward_number", get_property(parent_json, "ward_number"))
                 setattr(self, "_mobile_number", get_property(parent_case, 'mobile_number'))
@@ -630,7 +633,7 @@ class MCHChildDisplay(MCHDisplay):
                     dob = dob["#value"]
                 days = (date.today() - CaseDisplay.parse_date(self, dob).date()).days
                 dob = self.parse_date(dob)
-                return "%s, %s" % (dob, int(days/365.25))
+                return "%s, %s" % (dob, int(days / 365.25))
             except AttributeError:
                 return _("Bad date format!")
         else:

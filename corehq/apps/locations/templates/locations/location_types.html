@@ -96,6 +96,16 @@
                                           {% endblocktrans %}">
                                     </span>
                                 </th>
+                                <th data-bind="visible: advanced_mode">
+                                    {% trans "Include only" %}
+                                    <span class="hq-help-template"
+                                          data-title="{% trans "Include only" %}"
+                                          data-content="{% blocktrans %}
+                                              <p>Include only locations of the specified types.</p>
+                                              <p>Every type you select must also have its parent included.</p>
+                                          {% endblocktrans %}">
+                                    </span>
+                                </th>
                                 {% if request|toggle_enabled:'LOCATION_USERS' %}
                                 <th data-bind="visible: advanced_mode">
                                     {% trans "Has Location User" %}
@@ -196,7 +206,16 @@
                                                    optionsText: 'name',
                                                    optionsValue: 'pk',
                                                    value: include_without_expanding,
-                                                   optionsCaption: '\u2013{%trans 'none'%}\u2013'">
+                                                   optionsCaption: '\u2013{%trans 'none' %}\u2013'">
+                                </select>
+                            </td>
+                            <td class="form-group" data-bind="visible: $parent.advanced_mode">
+                                <select multiple="true" class="include-only form-control"
+                                        data-bind="options: $data.include_only_options(),
+                                                   optionsText: 'name',
+                                                   optionsValue: 'pk',
+                                                   selectedOptions: include_only,
+                                                   optionsCaption: '\u2013{%trans 'all' %}\u2013'">
                                 </select>
                             </td>
                             {% if request|toggle_enabled:'LOCATION_USERS' %}

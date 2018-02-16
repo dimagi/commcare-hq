@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import calendar
 from corehq.apps.reports.filters.select import YearFilter
 from corehq.apps.reports.generic import GenericTabularReport

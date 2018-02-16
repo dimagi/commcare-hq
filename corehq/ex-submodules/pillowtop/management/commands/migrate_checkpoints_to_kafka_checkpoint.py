@@ -1,5 +1,6 @@
 from __future__ import print_function
 
+from __future__ import absolute_import
 from django.core.management.base import BaseCommand
 
 from pillowtop.models import DjangoPillowCheckpoint, KafkaCheckpoint, str_to_kafka_seq

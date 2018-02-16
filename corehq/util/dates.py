@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import division
 import calendar
 import datetime
 import time
@@ -87,12 +89,12 @@ def get_quarter_date_range(year, quarter):
     assert quarter in (1, 2, 3, 4)
     return (
         datetime.datetime(year, quarter * 3 - 2, 1),
-        datetime.datetime(year + quarter * 3 / 12, (quarter * 3 + 1) % 12, 1)
+        datetime.datetime(year + quarter * 3 // 12, (quarter * 3 + 1) % 12, 1)
     )
 
 
 def get_quarter_for_date(date):
-    quarter = (date.month - 1) / 3 + 1
+    quarter = (date.month - 1) // 3 + 1
     return date.year, quarter
 
 

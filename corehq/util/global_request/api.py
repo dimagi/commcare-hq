@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import threading
 
 _thread_local = threading.local()

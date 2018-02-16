@@ -8,6 +8,7 @@
   ],
   "server_environment": [
     "softlayer",
+    "icds-new",
     "icds"
   ],
   "report_id": "static-ls_ifa_consumption",
@@ -56,6 +57,20 @@
         "field": "edd",
         "type": "date",
         "slug": "edd"
+      },
+	  {  
+        "required": false,
+		"type": "numeric",
+        "slug": "is_migrated",
+        "field": "is_migrated",
+        "display": "Whether Migrated"
+      },
+      {
+        "required": false,
+		"type": "numeric",
+        "slug": "is_availing",
+        "field": "is_availing",
+        "display": "Whether Availing Services"
       }
     ],
     "columns": [

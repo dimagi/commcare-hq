@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import datetime
 import csv
 
@@ -16,6 +18,7 @@ from custom.enikshay.const import (
     TEST_RESULT_TB_NOT_DETECTED,
 )
 from custom.enikshay.exceptions import ENikshayCaseNotFound
+from six.moves import range
 
 
 class Command(BaseCommand):

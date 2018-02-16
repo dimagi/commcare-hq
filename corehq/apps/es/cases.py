@@ -15,6 +15,7 @@ closed after May 1st.
          .OR(case_es.is_closed(False),
              case_es.closed_range(gte=datetime.date(2015, 05, 01))))
 """
+from __future__ import absolute_import
 from .es_query import HQESQuery
 from . import aggregations, filters
 
@@ -96,7 +97,7 @@ def active_in_range(gt=None, gte=None, lt=None, lte=None):
 def user_ids_handle_unknown(user_ids):
     missing_users = None in user_ids
 
-    user_ids = filter(None, user_ids)
+    user_ids = [_f for _f in user_ids if _f]
 
     if not missing_users:
         user_filter = user(user_ids)

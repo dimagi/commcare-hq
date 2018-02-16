@@ -149,6 +149,7 @@ WebFormSession.prototype.serverRequest = function (requestParams, callback, bloc
     // stupid hack for now to make up for both being used in different requests
     requestParams['session_id'] = self.session_id;
     requestParams['debuggerEnabled'] = self.debuggerEnabled;
+    requestParams['tz_offset_millis'] = (new Date()).getTimezoneOffset() * 60 * 1000 * -1;
     if (this.blockingRequestInProgress) {
         return;
     }
@@ -454,10 +455,17 @@ WebFormSession.prototype.submitForm = function(form) {
                 form.submitting();
                 self.onsubmit(resp);
             } else {
-                $.each(resp.errors, function(ix, error) {
+                $.each(resp.errors, function (ix, error) {
                     self.serverError(getForIx(form, ix), error);
                 });
-                alert('There are errors in this form; they must be corrected before the form can be submitted.');
+                if (resp.notification) {
+                    alert("Form submission failed with error: \n\n"
+                        + resp.notification.message + ". \n\n " +
+                        "This must be corrected before the form can be submitted.");
+                } else {
+                    alert("There are errors in this form's answers. " +
+                        "These must be corrected before the form can be submitted.");
+                }
             }
         },
         true);

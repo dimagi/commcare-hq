@@ -27,6 +27,8 @@
         class="fcc fcc-app-completeform appnav-primary-icon appnav-primary-icon-lg"
     {% elif form.get_action_type == 'update' %}
         class="fcc fcc-app-updateform appnav-primary-icon appnav-primary-icon-lg"
+    {% elif form.form_type == 'shadow_form' %}
+        class="fa fa-moon-o appnav-primary-icon"
     {% else %}
         class="fa fa-file-o appnav-primary-icon"
     {% endif %}

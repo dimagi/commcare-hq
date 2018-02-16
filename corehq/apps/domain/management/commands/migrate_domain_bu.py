@@ -1,4 +1,5 @@
 from __future__ import print_function
+from __future__ import absolute_import
 import csv
 
 from django.core.management.base import BaseCommand
@@ -25,7 +26,7 @@ class Command(BaseCommand):
             for row in reader:
                 name_by_map[row[0]] = row[1]
 
-        domain_ids = get_domain_ids_by_names(name_by_map.keys())
+        domain_ids = get_domain_ids_by_names(list(name_by_map))
 
         def update_domain(doc):
             domain = Domain.wrap(doc)

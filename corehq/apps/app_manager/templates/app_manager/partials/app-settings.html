@@ -203,7 +203,11 @@
     <div class="tab-content appmanager-tab-content">
         {% if app.get_doc_type == 'LinkedApplication' %}
         <div class="tab-pane active" id="linked-app">
-            <p> Your app is at version {{ app.version }}. The master app is at version {{ master_version }}. </p>
+            <p> Your app is at version {{ app.version }}.
+                {% if master_version %}The master app is at version {{ master_version }}.
+                {% else %}Unable to get master version.
+                {% endif %}
+            </p>
             <a class="btn btn-primary"
                href="{% url 'pull_master_app' domain app.id %}">
                 {% trans 'Update from Master App' %}
@@ -237,7 +241,7 @@
                         </form>
                     </div>
                 {% endif %}
-                {% if linked_apps_enabled %}
+                {% if linked_domains_enabled %}
                     <div id="linked-whitelist" class="panel panel-appmanager panel-appmanager-form" data-bind="visible: linkedDomains().length > 0">
                     <legend>{% trans 'Linked Project Whitelist' %}</legend>
                     <div class="tab-pane panel-body">

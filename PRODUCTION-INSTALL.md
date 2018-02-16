@@ -154,9 +154,9 @@ Create `/home/commcarehq/commcare-hq/services/supervisor`
     
     mkdir -p services/supervisor
     
-And populate it with process definitions:
+And populate it with process definitions (assuming you have the commcare-cloud repo alongside this one):
 
-    for i in `ls deployment/commcare-hq-deploy/fab/services/templates/`; do /home/commcarehq/bin/python manage.py make_supervisor_conf --conf_file $i --conf_destination services/supervisor --params '{"project":"commcarehq", "environment": "prod", "code_current": "/home/commcarehq/commcare-hq/", "django_bind": "127.0.0.1", "django_port": 8000, "flower_port": 5555, "log_dir":"/tmp", "virtualenv_current":"/home/commcarehq/", "sudo_user": "commcarehq", "celery_params": {"concurrency": 1}}'; done
+    for i in `ls ../commcare-cloud/fab/fab/services/templates/`; do /home/commcarehq/bin/python manage.py make_supervisor_conf --conf_file $i --conf_destination services/supervisor --params '{"project":"commcarehq", "environment": "prod", "code_current": "/home/commcarehq/commcare-hq/", "django_bind": "127.0.0.1", "django_port": 8000, "flower_port": 5555, "log_dir":"/tmp", "virtualenv_current":"/home/commcarehq/", "sudo_user": "commcarehq", "celery_params": {"concurrency": 1}}'; done
     
 ### Install bower & collect static files
     

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import uuid
 
 from django.test import TestCase, override_settings
@@ -12,6 +13,7 @@ from corehq.util.elastic import ensure_index_deleted
 from corehq.util.test_utils import trap_extra_setup, create_and_save_a_case
 from pillowtop.es_utils import initialize_index_and_mapping
 from testapps.test_pillowtop.utils import process_pillow_changes
+from six.moves import range
 
 DOMAIN = 'report-case-pillowtest-domain'
 

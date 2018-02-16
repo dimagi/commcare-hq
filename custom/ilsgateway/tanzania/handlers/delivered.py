@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from datetime import datetime
 from corehq.apps.locations.dbaccessors import get_users_by_location_id
 from corehq.apps.products.models import SQLProduct
@@ -11,6 +12,7 @@ from custom.ilsgateway.tanzania.handlers.soh import parse_report
 from custom.ilsgateway.tanzania.reminders import DELIVERY_CONFIRM_DISTRICT, DELIVERY_PARTIAL_CONFIRM, \
     DELIVERY_CONFIRM_CHILDREN, DELIVERED_CONFIRM, INVALID_PRODUCT_CODE
 from custom.ilsgateway.utils import send_translated_message
+import six
 
 
 class DeliveryFormatter(Formatter):
@@ -56,7 +58,7 @@ class DeliveredHandler(GenericStockReportHandler):
     def on_error(self, data):
         for error in data['errors']:
             if isinstance(error, InvalidProductCodeException):
-                self.respond(INVALID_PRODUCT_CODE, product_code=unicode(error))
+                self.respond(INVALID_PRODUCT_CODE, product_code=six.text_type(error))
                 return
 
     def help(self):

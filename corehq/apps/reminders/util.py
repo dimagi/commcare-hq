@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from datetime import datetime, time
 from functools import wraps
 
@@ -6,6 +7,7 @@ from django.http import Http404
 from django.utils.translation import ugettext as _
 
 from corehq import privileges
+from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_app, get_app_ids_in_domain
 from corehq.apps.app_manager.models import Form
 from corehq.apps.casegroups.models import CommCareCaseGroup
@@ -199,7 +201,7 @@ def get_two_way_number_for_recipient(recipient):
     if isinstance(recipient, CommCareMobileContactMixin):
         two_way_numbers = recipient.get_two_way_numbers()
         if len(two_way_numbers) == 1:
-            return two_way_numbers.values()[0]
+            return list(two_way_numbers.values())[0]
         elif len(two_way_numbers) > 1:
             # Retrieve the two-way number that's highest up in the list
             if isinstance(recipient, CouchUser):
@@ -246,6 +248,11 @@ def requires_old_reminder_framework():
     def decorate(fn):
         @wraps(fn)
         def wrapped(request, *args, **kwargs):
+            if (
+                hasattr(request, 'couch_user') and
+                toggles.NEW_REMINDERS_MIGRATOR.enabled(request.couch_user.username)
+            ):
+                return fn(request, *args, **kwargs)
             if not hasattr(request, 'project'):
                 request.project = Domain.get_by_name(request.domain)
             if not request.project.uses_new_reminders:

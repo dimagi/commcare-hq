@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+import re
 from dimagi.ext.couchdbkit import (Document, StringProperty,
     BooleanProperty, SchemaListProperty, StringListProperty)
 from dimagi.ext.jsonobject import JsonObject
@@ -5,6 +7,8 @@ from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext as _
 
 from .dbaccessors import get_by_domain_and_type
+import six
+from six.moves import filter
 
 
 CUSTOM_DATA_FIELD_PREFIX = "data-field"
@@ -39,6 +43,8 @@ class CustomDataField(JsonObject):
     is_required = BooleanProperty()
     label = StringProperty()
     choices = StringListProperty()
+    regex = StringProperty()
+    regex_msg = StringProperty()
     is_multiple_choice = BooleanProperty(default=False)
     # Currently only relevant for location fields
     index_in_fixture = BooleanProperty(default=False)
@@ -63,8 +69,6 @@ class CustomDataFieldsDefinition(Document):
 
     @classmethod
     def get_or_create(cls, domain, field_type):
-        # todo: this overrides get_or_create from DocumentBase but with a completely different signature.
-        # This method should probably be renamed.
         existing = get_by_domain_and_type(domain, field_type)
 
         if existing:
@@ -74,13 +78,12 @@ class CustomDataFieldsDefinition(Document):
             new.save()
             return new
 
-    # TODO use this in the CustomDataEditor too?
     def get_validator(self, data_field_class):
         """
         Returns a validator to be used in bulk import
         """
         def validate_choices(field, value):
-            if field.choices and value and unicode(value) not in field.choices:
+            if field.choices and value and six.text_type(value) not in field.choices:
                 return _(
                     "'{value}' is not a valid choice for {slug}, the available "
                     "options are: {options}."
@@ -89,6 +92,11 @@ class CustomDataFieldsDefinition(Document):
                     slug=field.slug,
                     options=', '.join(field.choices),
                 )
+
+        def validate_regex(field, value):
+            if field.regex and value and not re.search(field.regex, value):
+                return _("'{value}' is not a valid match for {slug}").format(
+                    value=value, slug=field.slug)
 
         def validate_required(field, value):
             if field.is_required and not value:
@@ -106,6 +114,7 @@ class CustomDataFieldsDefinition(Document):
                 value = custom_fields.get(field.slug, None)
                 errors.append(validate_required(field, value))
                 errors.append(validate_choices(field, value))
+                errors.append(validate_regex(field, value))
             return ' '.join(filter(None, errors))
 
         return validate_custom_fields

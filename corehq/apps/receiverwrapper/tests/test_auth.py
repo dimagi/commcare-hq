@@ -1,6 +1,7 @@
+from __future__ import absolute_import
 import uuid
 from django.urls import reverse
-from urllib import urlencode
+from six.moves.urllib.parse import urlencode
 
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import normalize_username
@@ -137,7 +138,7 @@ class _AuthTestsCouchOnly(object):
     def test_submit_mode(self):
         # test 'submit_mode=demo' request param
 
-        accepted_response = openrosa_response.SUCCESS_RESPONSE.content
+        accepted_response = openrosa_response.get_openarosa_success_response().content
         ignored_response = openrosa_response.SUBMISSION_IGNORED_RESPONSE.content
 
         client = django_digest.test.Client()

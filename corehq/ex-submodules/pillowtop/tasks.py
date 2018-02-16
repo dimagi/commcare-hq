@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from celery.schedules import crontab
 from celery.task import periodic_task
 from django.conf import settings
@@ -29,6 +30,11 @@ def pillow_datadog_metrics():
             'pillow_name:{}'.format(pillow['name']),
             'feed_type:{}'.format('couch' if _is_couch(pillow) else 'kafka')
         ]
+
+        datadog_gauge(
+            'commcare.change_feed.seconds_since_last_update',
+            pillow['seconds_since_last'], tags=tags
+        )
 
         for topic_name, offset in pillow['offsets'].items():
             if _is_couch(pillow):

@@ -1,17 +1,18 @@
+from __future__ import absolute_import
 from django.conf.urls import include, url
 from corehq.apps.domain.views import PublicSMSRatesView
 from corehq.apps.settings.views import (
     TwoFactorProfileView, TwoFactorSetupView, TwoFactorSetupCompleteView,
     TwoFactorBackupTokensView, TwoFactorDisableView, TwoFactorPhoneSetupView,
-    NewPhoneView
+    TwoFactorResetView
 )
 from two_factor.urls import urlpatterns as tf_urls
 from two_factor.gateways.twilio.urls import urlpatterns as tf_twilio_urls
 from corehq.apps.hqwebapp.views import (
     MaintenanceAlertsView, redirect_to_default,
-    yui_crossdomain, password_change, no_permissions, login, logout, bug_report, debug_notify,
+    yui_crossdomain, password_change, no_permissions, login, logout, debug_notify,
     quick_find, osdd, create_alert, activate_alert, deactivate_alert, jserror, dropbox_upload, domain_login,
-    retrieve_download, toggles_js, couch_doc_counts, server_up)
+    assert_initial_page_data, retrieve_download, toggles_js, couch_doc_counts, server_up, BugReportView)
 from corehq.apps.hqwebapp.session_details_endpoint.views import SessionDetailsView
 
 urlpatterns = [
@@ -26,8 +27,9 @@ urlpatterns = [
     url(r'^accounts/login/$', login, name="login"),
     url(r'^accounts/logout/$', logout, name="logout"),
     url(r'^reports/$', redirect_to_default),
-    url(r'^bug_report/$', bug_report, name='bug_report'),
+    url(r'^bug_report/$', BugReportView.as_view(), name='bug_report'),
     url(r'^debug/notify/$', debug_notify, name='debug_notify'),
+    url(r'^assert/initial_page_data/$', assert_initial_page_data, name='assert_initial_page_data'),
     url(r'^search/$', quick_find, name="global_quick_find"),
     url(r'^searchDescription.xml$', osdd, name="osdd"),
     url(r'^messaging-pricing', PublicSMSRatesView.as_view(), name=PublicSMSRatesView.urlname),
@@ -45,7 +47,7 @@ urlpatterns = [
     url(r'^account/two_factor/disable/$', TwoFactorDisableView.as_view(), name=TwoFactorDisableView.urlname),
     url(r'^account/two_factor/backup/phone/register/$', TwoFactorPhoneSetupView.as_view(), name=TwoFactorPhoneSetupView.urlname),
     url(r'', include((tf_urls + tf_twilio_urls, 'two_factor'), namespace='two_factor')),
-    url(r'^account/two_factor/new_phone/$', NewPhoneView.as_view(), name=NewPhoneView.urlname),
+    url(r'^account/two_factor/reset/$', TwoFactorResetView.as_view(), name=TwoFactorResetView.urlname),
     url(r'^hq/admin/session_details/$', SessionDetailsView.as_view(),
         name=SessionDetailsView.urlname),
 

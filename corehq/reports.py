@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import datetime
 from django.urls import reverse
 from corehq import privileges
@@ -15,10 +16,13 @@ from corehq.apps.hqadmin.reports import (
     CommTrackProjectSpacesReport,
     DeviceLogSoftAssertReport,
     CommCareVersionReport,
-)
+    UserAuditReport)
 from corehq.apps.hqpillow_retry.views import PillowErrorsReport
-from corehq.apps.reports.standard import (monitoring, inspect, export,
-    deployments, sms, ivr)
+from corehq.apps.linked_domain.views import DomainLinkHistoryReport
+from corehq.apps.reports.standard import (
+    monitoring, inspect, export,
+    deployments, sms, ivr
+)
 from corehq.apps.reports.standard.forms import reports as receiverwrapper
 from corehq.apps.reports.standard.project_health import ProjectHealthDashboard
 from corehq.apps.userreports.exceptions import BadSpecError
@@ -38,7 +42,7 @@ from corehq.apps.fixtures.interface import FixtureViewInterface, FixtureEditInte
 import hashlib
 from dimagi.utils.modules import to_function
 import logging
-import toggles
+from . import toggles
 from django.utils.translation import ugettext_noop as _, ugettext_lazy
 from corehq.apps.indicators.admin import document_indicators, couch_indicators, dynamic_indicators
 from corehq.apps.data_interfaces.interfaces import CaseReassignmentInterface, BulkFormManagementInterface
@@ -57,7 +61,7 @@ from corehq.apps.smsbillables.interface import (
     SMSBillablesInterface,
     SMSGatewayFeeCriteriaInterface,
 )
-from corehq.apps.domain.views import DomainForwardingRepeatRecords
+from corehq.motech.repeaters.views import DomainForwardingRepeatRecords
 from custom.openclinica.reports import OdmExportReport
 
 
@@ -86,6 +90,7 @@ def REPORTS(project):
     )
     deployments_reports = (
         deployments.ApplicationStatusReport,
+        deployments.AggregateUserStatusReport,
         receiverwrapper.SubmissionErrorReport,
         phonelog.DeviceLogDetailsReport,
         deployments.SyncHistoryReport,
@@ -160,8 +165,7 @@ def _get_dynamic_reports(project):
     """include any reports that can be configured/customized with static parameters for this domain"""
     for reportset in project.dynamic_reports:
         yield (reportset.section_title,
-               filter(None,
-                      (_make_dynamic_report(report, [reportset.section_title]) for report in reportset.reports)))
+               [_f for _f in (_make_dynamic_report(report, [reportset.section_title]) for report in reportset.reports) if _f])
 
 
 def _make_dynamic_report(report_config, keyprefix):
@@ -183,7 +187,7 @@ def _make_dynamic_report(report_config, keyprefix):
 
     try:
         metaclass = to_function(report_config.report, failhard=True)
-    except StandardError:
+    except Exception:
         logging.error('dynamic report config for [%s] is invalid' % report_config.report)
         return None
 
@@ -286,6 +290,13 @@ def _get_report_builder_reports(project):
              for config in report_builder_reports]
         )
 
+
+def get_report_builder_count(domain):
+    configs = _safely_get_report_configs(domain)
+    report_builder_reports = [c for c in configs if c.report_meta.created_by_builder]
+    return len(report_builder_reports)
+
+
 DATA_INTERFACES = (
     (ugettext_lazy("Export Data"), (
         export.DeidExportReport,
@@ -369,11 +380,13 @@ ADMIN_REPORTS = (
         DeviceLogSoftAssertReport,
         CommCareVersionReport,
         AdminPhoneNumberReport,
+        UserAuditReport,
     )),
 )
 
 DOMAIN_REPORTS = (
     (_('Project Settings'), (
         DomainForwardingRepeatRecords,
+        DomainLinkHistoryReport,
     )),
 )

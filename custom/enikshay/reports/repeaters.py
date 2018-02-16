@@ -1,11 +1,14 @@
+from __future__ import absolute_import
 from datetime import datetime, timedelta
 
 from django.conf import settings
+from dimagi.utils.chunked import chunked
 from django.utils.html import escape
 from django.utils.translation import ugettext as _
 from django.urls import reverse
 from dimagi.utils.decorators.memoized import memoized
 
+from corehq.elastic import ES_MAX_CLAUSE_COUNT
 from corehq.apps.es.case_search import flatten_result
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.sms.models import MessagingEvent
@@ -13,12 +16,12 @@ from casexml.apps.case.models import CommCareCase
 from corehq.motech.repeaters.dbaccessors import (
     iter_repeat_records_by_domain,
     get_repeat_record_count,
-    get_repeat_records_by_payload_id
+    get_repeat_records_by_payload_id,
+    get_repeaters_by_domain,
 )
-from corehq.apps.domain.views import DomainForwardingRepeatRecords
+from corehq.motech.repeaters.views import DomainForwardingRepeatRecords
 from corehq.apps.es import CaseSearchES
 from corehq.apps.reports.generic import GenericTabularReport
-from corehq.motech.repeaters.dbaccessors import get_repeaters_by_domain
 from corehq.apps.reports.filters.select import RepeaterFilter
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 
@@ -193,21 +196,30 @@ class ENikshayVoucherReport(GenericTabularReport):
         return self.get_rows(paged=False)
 
     def get_rows(self, paged=True):
-        vouchers = [
-            CommCareCase.wrap(flatten_result(result))
-            for result in self._search_results(paged).raw_hits
-        ]
+        location_ids = self._get_voucher_location_ids()
+        if location_ids:
+            vouchers = []
+            for location_id_chunk in chunked(location_ids, ES_MAX_CLAUSE_COUNT):
+                vouchers += [
+                    CommCareCase.wrap(flatten_result(result))
+                    for result in self._search_results(paged, location_id_chunk).raw_hits
+                ]
+        else:
+            vouchers = [
+                CommCareCase.wrap(flatten_result(result))
+                for result in self._search_results(paged).raw_hits
+            ]
+
         return [row for voucher in vouchers for row in self._make_rows(voucher)]
 
     @memoized
-    def _search_results(self, paged=True):
+    def _search_results(self, paged=True, location_ids=None):
         cs = (
             CaseSearchES()
             .domain(self.domain)
             .case_type(CASE_TYPE_VOUCHER)
         )
 
-        location_ids = self._get_voucher_location_ids()
         if location_ids:
             cs = cs.case_property_query('voucher_fulfilled_by_location_id', " ".join(location_ids))
 
@@ -222,6 +234,7 @@ class ENikshayVoucherReport(GenericTabularReport):
 
         return cs.run()
 
+    @memoized
     def _get_voucher_location_ids(self):
         """Return all locations beneath the district that could own the voucher
         """
@@ -308,7 +321,14 @@ class ENikshayVoucherReport(GenericTabularReport):
 
     @property
     def total_records(self):
-        return self._search_results().total
+        location_ids = self._get_voucher_location_ids()
+        if location_ids:
+            total = 0
+            for location_id_chunk in chunked(location_ids, ES_MAX_CLAUSE_COUNT):
+                total += self._search_results(location_ids=location_id_chunk).total
+        else:
+            total = self._search_results().total
+        return total
 
     @property
     def shared_pagination_GET_params(self):

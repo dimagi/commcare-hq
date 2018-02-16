@@ -1,20 +1,21 @@
+from __future__ import absolute_import
 from django.conf.urls import url
 
 from custom.icds_reports.views import TableauView, DashboardView, IcdsDynamicTemplateView, ProgramSummaryView, \
-    AwcOpenedView, PrevalenceOfUndernutritionView, LocationView, LocationAncestorsView, AwcReportsView, \
-    ExportIndicatorView, ProgressReportView, PrevalenceOfSevereView, PrevalenceOfStunningView, \
+    PrevalenceOfUndernutritionView, LocationView, LocationAncestorsView, AwcReportsView, \
+    ExportIndicatorView, FactSheetsView, PrevalenceOfSevereView, PrevalenceOfStuntingView, \
     ExclusiveBreastfeedingView, NewbornsWithLowBirthWeightView, EarlyInitiationBreastfeeding, \
     ChildrenInitiatedView, InstitutionalDeliveriesView, ImmunizationCoverageView, AWCDailyStatusView, \
     AWCsCoveredView, RegisteredHouseholdView, EnrolledChildrenView, EnrolledWomenView, \
     LactatingEnrolledWomenView, AdolescentGirlsView, AdhaarBeneficiariesView, CleanWaterView, \
-    FunctionalToiletView, MedicineKitView, InfantsWeightScaleView, AdultWeightScaleView, AggregationScriptPage
+    FunctionalToiletView, MedicineKitView, InfantsWeightScaleView, AdultWeightScaleView, AggregationScriptPage, \
+    ICDSBugReportView, AWCLocationView, DownloadPDFReport, CheckPDFReportStatus
 
 urlpatterns = [
     url(r'^tableau/(?P<workbook>\w+)/(?P<worksheet>\w+)$', TableauView.as_view(), name='icds_tableau'),
     url(r'^icds_dashboard/', DashboardView.as_view(), name='icds_dashboard'),
     url(r'^icds-ng-template/(?P<template>[\w-].+)', IcdsDynamicTemplateView.as_view(), name='icds-ng-template'),
     url(r'^program_summary/(?P<step>[\w-]+)/', ProgramSummaryView.as_view(), name='program_summary'),
-    url(r'^awc_opened/(?P<step>[\w-]+)/', AwcOpenedView.as_view(), name='awc_opened'),
     url(r'^awc_reports/(?P<step>[\w-]+)/', AwcReportsView.as_view(), name='awc_reports'),
     url(
         r'^underweight_children/(?P<step>[\w-]+)/',
@@ -25,9 +26,9 @@ urlpatterns = [
         PrevalenceOfSevereView.as_view(),
         name='prevalence_of_severe'),
     url(
-        r'^prevalence_of_stunning/(?P<step>[\w-]+)/',
-        PrevalenceOfStunningView.as_view(),
-        name='prevalence_of_stunning'),
+        r'^prevalence_of_stunting/(?P<step>[\w-]+)/',
+        PrevalenceOfStuntingView.as_view(),
+        name='prevalence_of_stunting'),
     url(
         r'^low_birth/(?P<step>[\w-]+)/',
         NewbornsWithLowBirthWeightView.as_view(),
@@ -39,7 +40,7 @@ urlpatterns = [
     url(r'^locations$', LocationView.as_view(), name='icds_locations'),
     url(r'^locations/ancestors$', LocationAncestorsView.as_view(), name='icds_locations_ancestors'),
     url(r'^export_indicator$', ExportIndicatorView.as_view(), name='icds_export_indicator'),
-    url(r'^progress_report$', ProgressReportView.as_view(), name='progress_report'),
+    url(r'^fact_sheets$', FactSheetsView.as_view(), name='fact_sheets'),
     url(
         r'^exclusive-breastfeeding/(?P<step>[\w-]+)/',
         ExclusiveBreastfeedingView.as_view(),
@@ -108,5 +109,9 @@ urlpatterns = [
         r'^adult_weight_scale/(?P<step>[\w-]+)/',
         AdultWeightScaleView.as_view(),
         name='adult_weight_scale'),
-    url(r'^aggregation_script/', AggregationScriptPage.as_view(), name=AggregationScriptPage.urlname)
+    url(r'^aggregation_script/', AggregationScriptPage.as_view(), name=AggregationScriptPage.urlname),
+    url(r'^bug_report/', ICDSBugReportView.as_view(), name='icds_bug_report'),
+    url(r'^awc_locations/', AWCLocationView.as_view(), name='awc_locations'),
+    url(r'^download_pdf/', DownloadPDFReport.as_view(), name='icds_download_pdf'),
+    url(r'^issnip_pdf_status/', CheckPDFReportStatus.as_view(), name='issnip_pdf_status')
 ]

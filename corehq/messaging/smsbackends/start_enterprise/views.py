@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+import logging
 from corehq.apps.sms.views import IncomingBackendView
 from corehq.messaging.smsbackends.start_enterprise.models import (
     StartEnterpriseBackend,
@@ -15,10 +17,12 @@ class StartEnterpriseDeliveryReceiptView(IncomingBackendView):
         return StartEnterpriseBackend
 
     def get(self, request, api_key, *args, **kwargs):
-        message_id = request.GET.get('msgId')
+        logging.info("Received Start Enterprise delivery receipt with items: %s" % list(request.GET.dict().keys()))
+
+        message_id = request.GET.get('msgid')
 
         if not message_id:
-            return HttpResponseBadRequest("Missing 'msgId'")
+            return HttpResponseBadRequest("Missing 'msgid'")
 
         message_id = message_id.strip()
 

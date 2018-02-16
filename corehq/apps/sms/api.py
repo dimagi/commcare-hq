@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import logging
 import random
 import string
@@ -12,7 +13,7 @@ from dimagi.utils.logging import notify_exception
 from corehq import privileges
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.sms.util import (clean_phone_number, clean_text,
-    get_backend_classes)
+    get_sms_backend_classes)
 from corehq.apps.sms.models import (OUTGOING, INCOMING,
     PhoneBlacklist, SMS, SelfRegistrationInvitation, MessagingEvent,
     SQLMobileBackend, SQLSMSBackend, QueuedSMS, PhoneNumber)
@@ -23,9 +24,11 @@ from corehq.apps.sms.mixin import BadSMSConfigException
 from corehq.apps.sms.util import is_contact_active
 from corehq.apps.domain.models import Domain
 from datetime import datetime
-
+from dimagi.utils.couch.cache.cache_core import get_redis_client
 from corehq.apps.sms.util import register_sms_contact, strip_plus
 from corehq import toggles
+import six
+from six.moves import range
 
 # A list of all keywords which allow registration via sms.
 # Meant to allow support for multiple languages.
@@ -101,7 +104,7 @@ def send_sms(domain, contact, phone_number, text, metadata=None):
     """
     if phone_number is None:
         return False
-    if isinstance(phone_number, int) or isinstance(phone_number, long):
+    if isinstance(phone_number, six.integer_types):
         phone_number = str(phone_number)
     phone_number = clean_phone_number(phone_number)
 
@@ -191,7 +194,7 @@ def send_sms_with_backend_name(domain, phone_number, text, backend_name, metadat
 def enqueue_directly(msg):
     try:
         from corehq.apps.sms.management.commands.run_sms_queue import SMSEnqueuingOperation
-        SMSEnqueuingOperation().enqueue_directly(msg)
+        SMSEnqueuingOperation().enqueue(msg)
     except:
         # If this direct enqueue fails, no problem, it will get picked up
         # shortly.
@@ -269,8 +272,31 @@ def send_message_via_backend(msg, backend=None, orig_phone_number=None):
         msg.save()
         return True
     except Exception:
-        log_sms_exception(msg)
+        should_log_exception = True
+
+        if backend:
+            should_log_exception = should_log_exception_for_backend(backend)
+
+        if should_log_exception:
+            log_sms_exception(msg)
+
         return False
+
+
+def should_log_exception_for_backend(backend):
+    """
+    Only returns True if an exception hasn't been logged for the given backend
+    in the last hour.
+    """
+    client = get_redis_client()
+    key = 'exception-logged-for-backend-%s' % backend.couch_id
+
+    if client.get(key):
+        return False
+    else:
+        client.set(key, 1)
+        client.expire(key, 60 * 60)
+        return True
 
 
 def random_password():
@@ -477,7 +503,7 @@ def incoming(phone_number, text, backend_api, timestamp=None,
 
 
 def is_opt_message(text, keyword_list):
-    if not isinstance(text, basestring):
+    if not isinstance(text, six.string_types):
         return False
 
     text = text.strip().upper()
@@ -485,7 +511,7 @@ def is_opt_message(text, keyword_list):
 
 
 def get_opt_keywords(msg):
-    backend_class = get_backend_classes().get(msg.backend_api, SQLSMSBackend)
+    backend_class = get_sms_backend_classes().get(msg.backend_api, SQLSMSBackend)
     return (
         backend_class.get_opt_in_keywords(),
         backend_class.get_opt_out_keywords()
@@ -572,7 +598,7 @@ def process_incoming(msg):
             handled = load_and_call(settings.CUSTOM_SMS_HANDLERS, v, msg.text, msg)
 
             if not handled and v and v.pending_verification:
-                import verify
+                from . import verify
                 handled = verify.process_verification(v, msg,
                     create_subevent_for_inbound=not has_domain_two_way_scope)
 

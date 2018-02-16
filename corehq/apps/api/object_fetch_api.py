@@ -1,5 +1,6 @@
 from __future__ import absolute_import
-import urllib
+from __future__ import unicode_literals
+import six.moves.urllib.request, six.moves.urllib.parse, six.moves.urllib.error
 from wsgiref.util import FileWrapper
 
 from django.urls import reverse
@@ -10,7 +11,7 @@ from django.views.generic import View
 from corehq.apps.locations.permissions import location_safe
 from dimagi.utils.django.cached_object import IMAGE_SIZE_ORDERING, OBJECT_ORIGINAL
 
-from corehq.apps.domain.decorators import login_or_digest_or_basic_or_apikey
+from corehq.apps.domain.decorators import api_auth
 from corehq.apps.reports.views import can_view_attachments, _get_location_safe_form, require_form_view_permission
 from corehq.form_processor.exceptions import CaseNotFound, AttachmentNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, get_cached_case_attachment, FormAccessors
@@ -18,7 +19,7 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, get_cach
 
 class CaseAttachmentAPI(View):
 
-    @method_decorator(login_or_digest_or_basic_or_apikey())
+    @method_decorator(api_auth)
     def get(self, request, domain, case_id=None, attachment_id=None):
         """
         https://github.com/dimagi/commcare/wiki/CaseAttachmentAPI
@@ -78,7 +79,7 @@ class CaseAttachmentAPI(View):
                         r.write('Resolution: %d x %d<br>' % (meta['width'], meta['height']))
                         r.write('Filesize: %d<br>' % meta['content_length'])
 
-                        url_params = urllib.urlencode({
+                        url_params = six.moves.urllib.parse.urlencode({
                             "img": '1',
                             "size": fsize,
                             "max_size": max_filesize,
@@ -120,7 +121,7 @@ class CaseAttachmentAPI(View):
 @location_safe
 class FormAttachmentAPI(View):
 
-    @method_decorator(login_or_digest_or_basic_or_apikey())
+    @method_decorator(api_auth)
     @method_decorator(require_form_view_permission)
     def get(self, request, domain, form_id=None, attachment_id=None):
         if not form_id or not attachment_id:

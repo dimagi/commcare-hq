@@ -1,9 +1,10 @@
 # coding=utf-8
 from __future__ import print_function
+from __future__ import absolute_import
 import json
 import os
 import uuid
-from cStringIO import StringIO
+from io import BytesIO
 from os.path import join
 
 import corehq.blobs.migrate as mod
@@ -227,7 +228,7 @@ class TestApplicationMigrations(BaseMigrationTest):
         db.save_doc(doc)
         apps["Application"] = Application.get(app._id)  # update _rev
 
-        self.do_migration(apps.values())
+        self.do_migration(list(apps.values()))
 
         for app in apps.values():
             exp = type(app).get(app._id)
@@ -350,7 +351,7 @@ class TestXFormInstanceMigrations(BaseMigrationTest):
             item.save()
             items[doc_type] = item
 
-        self.do_migration(items.values(), num_attachments=2)
+        self.do_migration(list(items.values()), num_attachments=2)
 
         for item in items.values():
             exp = type(item).get(item._id)
@@ -406,7 +407,7 @@ class TestCommCareCaseMigrations(BaseMigrationTest):
             item.save()
             items[doc_type] = item
 
-        self.do_migration(items.values(), num_attachments=1)
+        self.do_migration(list(items.values()), num_attachments=1)
 
         for item in items.values():
             exp = type(item).get(item._id)
@@ -543,7 +544,7 @@ class TestMigrateBackend(TestCase):
         for rex in (x() for x in self.sql_reindex_accessors):
             item, ident = create_obj(rex)
             helper = rex.blob_helper({"_obj_not_json": item})
-            db1.put(StringIO(data), ident, helper._blobdb_bucket())
+            db1.put(BytesIO(data), ident, helper._blobdb_bucket())
             self.sql_docs.append(item)
             lost, lost_blob_id = create_obj(rex)
             self.sql_docs.append(lost)

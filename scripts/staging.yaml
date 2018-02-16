@@ -41,37 +41,33 @@
 #
 # If you are unsure of how to resolve a conflict, notify the branch owner.
 
+# FORMPLAYER
+# From the formplayer, repo, call `./scripts/rebuildstaging`
+# This rebuilds the `autostaging` branch of formplayer and runs the formplayer-staging job on jenkins
 
 trunk: master
 name: autostaging
 branches:
   - vellum-staging # J$ 11/13
-#  - nh/240812/mw_pwd_reset  # Norman 3/23
-  - nh/new_rb  # Norman 11/22
-  - br/kill-old-cloucare  # Danny 7/21
-  - np/11.1 # NP 8/24
-  - np/build_attrs # NP - part of np/111
-  - jls/fixtures-require-js-2017-qa # Jenny 9/18
-  - je/mobile-ucr-v2 # j$ 9/29
-  - jls/scroll-app-menu # Jenny 10/3
-  - mk-search-under-location # Manish 4-Oct
-  - np/more-requestcontext-to-dict # NP
+  # - je/cythonized-jsonobject # j$ 1/8
+  - xbryanc:dlemailbutton_updates  # Bryan 1/29
+  - sophiamcg:organization-structure-search-tree-interaction  # Sophia 1/29
+  - xbryanc:show_scheduled_reports_updates  # Bryan 1/31
+  - sophiamcg:organization-structure-collapse-button  # Sophia 1/31
+  - fr/two-factor-mobile-users  # FR 2/7
+  - dmr/celery-queues  # Danny 2/12
+  - nh/omrs/repeater_format  # Norman 2/15
+  - jr/ejs/sms-chat # Jordan 2/16
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
     # just so we always get latest master
     branches: []
   submodules/django-digest-src:
-    branches:
-      - np/111 # NP 8/24
-  submodules/django-prbac-src:
     branches: []
   corehq/apps/prelogin:
     branches: []
   corehq/apps/hqmedia/static/hqmedia/MediaUploader:
     branches: []
-  deployment/commcare-hq-deploy:
-    branches:
-      - jls/r-js # Jenny 10/2
   submodules/commcare-translations:
     branches: []

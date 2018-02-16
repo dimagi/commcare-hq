@@ -1,21 +1,27 @@
+from __future__ import absolute_import
 import json
 from collections import Counter
 from couchdbkit.exceptions import ResourceNotFound
+import decimal
 from django.conf import settings
+from django.contrib import messages
 from django.urls import reverse
 from django.http.response import Http404, HttpResponse
 from django.utils.decorators import method_decorator
+from django.utils.translation import ugettext_lazy as _
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_js_domain_cachebuster, \
     toggle_js_user_cachebuster
 from couchforms.analytics import get_last_form_submission_received
-from corehq.apps.domain.models import Domain
 from corehq.apps.domain.decorators import require_superuser_or_developer
 from corehq.apps.hqwebapp.views import BasePageView
+from corehq.apps.toggle_ui.utils import find_static_toggle
 from corehq.apps.users.models import CouchUser
 from corehq.apps.hqwebapp.decorators import use_datatables
-from corehq.toggles import all_toggles, ALL_TAGS, NAMESPACE_USER, NAMESPACE_DOMAIN
+from corehq.toggles import all_toggles, ALL_TAGS, NAMESPACE_USER, NAMESPACE_DOMAIN, \
+    DynamicallyPredictablyRandomToggle, PredictablyRandomToggle, ALL_NAMESPACES
 from toggle.models import Toggle
 from toggle.shortcuts import clear_toggle_cache, parse_toggle
+import six
 
 NOT_FOUND = "Not Found"
 
@@ -104,10 +110,6 @@ class ToggleEditView(ToggleBaseView):
         return reverse(self.urlname, args=[self.toggle_slug])
 
     @property
-    def expanded(self):
-        return self.request.GET.get('expand') == 'true'
-
-    @property
     def usage_info(self):
         return self.request.GET.get('usage_info') == 'true'
 
@@ -116,11 +118,19 @@ class ToggleEditView(ToggleBaseView):
         return self.args[0] if len(self.args) > 0 else self.kwargs.get('toggle', "")
 
     @property
+    def is_random(self):
+        return isinstance(self.static_toggle, PredictablyRandomToggle)
+
+    @property
+    def is_random_editable(self):
+        return isinstance(self.static_toggle, DynamicallyPredictablyRandomToggle)
+
+    @property
     def static_toggle(self):
         """
         Returns the corresponding toggle definition from corehq/toggles.py
         """
-        return _find_static_toggle(self.toggle_slug)
+        return find_static_toggle(self.toggle_slug)
 
     def get_toggle(self):
         if not self.static_toggle:
@@ -140,19 +150,17 @@ class ToggleEditView(ToggleBaseView):
     def page_context(self):
         toggle_meta = self.toggle_meta()
         toggle = self.get_toggle()
+        namespaces = [NAMESPACE_USER if n is None else n for n in toggle_meta.namespaces]
         context = {
             'toggle_meta': toggle_meta,
             'toggle': toggle,
-            'expanded': self.expanded,
-            'namespaces': [NAMESPACE_USER if n is None else n for n in toggle_meta.namespaces],
+            'namespaces': namespaces,
             'usage_info': self.usage_info,
             'server_environment': settings.SERVER_ENVIRONMENT,
+            'is_random': self.is_random_editable,
+            'is_random_editable': self.is_random_editable,
+            'allows_items': all(n in ALL_NAMESPACES for n in namespaces)
         }
-        if self.expanded:
-            context['domain_toggle_list'] = sorted(
-                [(row['key'], toggle_meta.enabled(row['key'])) for row in Domain.get_all(include_docs=False)],
-                key=lambda domain_tup: (not domain_tup[1], domain_tup[0])
-            )
         if self.usage_info:
             context['last_used'] = _get_usage_info(toggle)
         return context
@@ -160,6 +168,8 @@ class ToggleEditView(ToggleBaseView):
     def post(self, request, *args, **kwargs):
         toggle = self.get_toggle()
         item_list = request.POST.get('item_list', [])
+        randomness = request.POST.get('randomness', None)
+        randomness = decimal.Decimal(randomness) if randomness else None
         if item_list:
             item_list = json.loads(item_list)
             item_list = [u.strip() for u in item_list if u and u.strip()]
@@ -167,6 +177,19 @@ class ToggleEditView(ToggleBaseView):
         previously_enabled = set(toggle.enabled_users)
         currently_enabled = set(item_list)
         toggle.enabled_users = item_list
+
+        save_randomness = (
+            self.is_random_editable and randomness is not None
+        )
+        if save_randomness and (0 <= randomness <= 1):
+            setattr(toggle, DynamicallyPredictablyRandomToggle.RANDOMNESS_KEY, randomness)
+            # clear cache
+            if isinstance(self.toggle_meta(), DynamicallyPredictablyRandomToggle):
+                _clear_caches_for_dynamic_toggle(self.toggle_meta())
+
+        elif save_randomness:
+            messages.error(request, _("The randomness value {} must be between 0 and 1".format(randomness)))
+
         toggle.save()
 
         changed_entries = previously_enabled ^ currently_enabled  # ^ means XOR
@@ -197,15 +220,9 @@ def toggle_app_manager_v2(request):
         else:
             toggle.enabled_users.remove(request.user.username)
         toggle.save()
-        _call_save_fn_and_clear_cache(slug, changed_entries, toggle.enabled_users, _find_static_toggle(slug))
+        _call_save_fn_and_clear_cache(slug, changed_entries, toggle.enabled_users, find_static_toggle(slug))
 
     return HttpResponse(json.dumps({'success': True}), content_type="application/json")
-
-
-def _find_static_toggle(slug):
-    for toggle in all_toggles():
-        if toggle.slug == slug:
-            return toggle
 
 
 def _call_save_fn_and_clear_cache(toggle_slug, changed_entries, currently_enabled, static_toggle):
@@ -224,6 +241,13 @@ def _call_save_fn_and_clear_cache(toggle_slug, changed_entries, currently_enable
             toggle_js_user_cachebuster.clear(username)
 
         clear_toggle_cache(toggle_slug, entry, namespace=namespace)
+
+
+def _clear_caches_for_dynamic_toggle(toggle_meta):
+    # note: this is rather coupled with python property internals
+    DynamicallyPredictablyRandomToggle.randomness.fget.clear(toggle_meta)
+    # also have to do this since the toggle itself is cached
+    all_toggles.clear()
 
 
 def _get_usage_info(toggle):
@@ -276,7 +300,7 @@ def _format_date(date):
 
 def _get_most_recently_used(last_used):
     """Returns the name and date of the most recently used toggle"""
-    last_used = {k: v for k, v in last_used.iteritems() if v != NOT_FOUND}
+    last_used = {k: v for k, v in six.iteritems(last_used) if v != NOT_FOUND}
     most_recently_used = sorted(last_used, key=last_used.get, reverse=True)
     return {
         'name': most_recently_used[0],

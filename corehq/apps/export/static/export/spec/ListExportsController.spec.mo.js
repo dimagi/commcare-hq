@@ -36,6 +36,7 @@ describe('ListExportsController Unit Tests', function() {
         }]);
         listExportsTestApp.constant('bulk_download_url', "/fake/bulk/download/url");
         listExportsTestApp.constant('legacy_bulk_download_url', "/fake/legacy/bulk/download/url");
+        listExportsTestApp.constant('modelType', null);
         module('ngtest.ListExportsApp');
         // Kickstart the injectors previously registered with calls to angular.mock.module
         inject(function () {});
@@ -178,7 +179,7 @@ describe('ListExportsController Unit Tests', function() {
             });
 
             it('analytics ok', function() {
-                assert.isTrue(analytics.usage.calledWith("Update Saved Export", "Form", "Saved"));
+                assert.isTrue(hqImport('analytix/js/google').track.event.calledWith("Form Exports", "Update Saved Export", "Saved"));
                 $httpBackend.flush();
             });
         });
@@ -209,7 +210,7 @@ describe('ListExportsController Unit Tests', function() {
             });
 
             it('analytics ok', function() {
-                assert.isTrue(analytics.usage.calledWith("Disable Saved Export", "Form", "Saved"));
+                assert.isTrue(hqImport('analytix/js/google').track.event.calledWith("Form Exports", "Disable Saved Export", "Saved"));
                 $httpBackend.flush();
             });
         });

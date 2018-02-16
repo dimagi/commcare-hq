@@ -1,11 +1,12 @@
+from __future__ import absolute_import
+from django.conf import settings
 from corehq.fluff.calculators.case import CasePropertyFilter
 import fluff
 from fluff.pillow import get_multi_fluff_pillow
 from couchforms.models import XFormInstance
 from fluff.filters import ORFilter, ANDFilter, CustomFilter
 from casexml.apps.case.models import CommCareCase
-from corehq.apps.change_feed.document_types import get_doc_meta_object_from_document
-from corehq.apps.change_feed.topics import get_topic
+from corehq.apps.change_feed.topics import CASE, FORM, CASE_SQL, FORM_SQL
 from corehq.fluff.calculators.xform import FormPropertyFilter
 from custom.intrahealth import (
     COMMANDE_XMLNSES,
@@ -189,6 +190,7 @@ class LivraisonFluff(fluff.IndicatorDocument):
 
 class RecouvrementFluff(fluff.IndicatorDocument):
     document_class = CommCareCase
+    kafka_topic = CASE_SQL if settings.SERVER_ENVIRONMENT == 'pna' else CASE
 
     document_filter = ANDFilter([
         CasePropertyFilter(type='payment'),
@@ -221,11 +223,6 @@ def IntraHealthFormFluffPillow(delete_filtered=False):
             LivraisonFluff,
         ],
         name='IntraHealthFormFluff',
-        kafka_topic=get_topic(get_doc_meta_object_from_document(XFormInstance().to_json())),
+        kafka_topic=FORM_SQL if settings.SERVER_ENVIRONMENT == 'pna' else FORM,
         delete_filtered=delete_filtered
     )
-
-
-# Remove these once they are out of the pillow retry queue
-CouvertureFluffPillow = CouvertureFluff.pillow()
-IntraHealthFluffPillow = IntraHealthFluff.pillow()

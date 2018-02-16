@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from datetime import date, datetime, timedelta
 
 from dateutil.relativedelta import relativedelta
@@ -14,9 +15,10 @@ from custom.enikshay.private_sector_datamigration.models import (
     MigratedBeneficiaryCounter,
     Voucher,
 )
-from custom.enikshay.user_setup import compress_nikshay_id
+from custom.enikshay.user_setup import compress_nikshay_id, join_chunked
 
 from dimagi.utils.decorators.memoized import memoized
+from six.moves import range
 
 PERSON_CASE_TYPE = 'person'
 OCCURRENCE_CASE_TYPE = 'occurrence'
@@ -454,11 +456,7 @@ class BeneficiaryCaseFactory(object):
 
     @property
     def person_id(self):
-        num_chars_between_hyphens = 3
-        return '-'.join([
-            self.person_id_flat[i:i + num_chars_between_hyphens]
-            for i in range(0, len(self.person_id_flat), num_chars_between_hyphens)
-        ])
+        return join_chunked(self.person_id_flat, 3)
 
     @memoized
     def _location_by_agency(self, agency):

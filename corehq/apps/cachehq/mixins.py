@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import logging
 from django.conf import settings
 from couchdbkit import ResourceNotFound
@@ -18,8 +19,8 @@ class _InvalidateCacheMixin(object):
             self.clear_caches()
 
     @classmethod
-    def save_docs(cls, docs, use_uuids=True, all_or_nothing=False):
-        super(_InvalidateCacheMixin, cls).save_docs(docs, use_uuids, all_or_nothing)
+    def save_docs(cls, docs, use_uuids=True):
+        super(_InvalidateCacheMixin, cls).save_docs(docs, use_uuids)
         for doc in docs:
             doc.clear_caches()
 
@@ -38,9 +39,9 @@ class _InvalidateCacheMixin(object):
         invalidate_document(self, deleted=True)
 
     @classmethod
-    def delete_docs(cls, docs, all_or_nothing=False, empty_on_delete=False):
+    def delete_docs(cls, docs, empty_on_delete=False):
         super(_InvalidateCacheMixin, cls).bulk_delete(
-            docs, all_or_nothing=all_or_nothing, empty_on_delete=empty_on_delete)
+            docs, empty_on_delete=empty_on_delete)
         for doc in docs:
             doc.clear_caches()
             invalidate_document(doc, deleted=True)

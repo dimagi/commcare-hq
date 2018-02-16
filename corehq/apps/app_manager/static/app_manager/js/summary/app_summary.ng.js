@@ -145,6 +145,7 @@
         $scope.appSettingsURL = summaryConfig.appSettingsURL;
         $scope.appHomeURL = summaryConfig.appHomeURL;
         $scope.appName = summaryConfig.appName;
+        $scope.readOnly = summaryConfig.readOnly;
 
         self.init = function () {
             $scope.loading = true;
@@ -243,6 +244,7 @@
         $scope.appSettingsURL = summaryConfig.appSettingsURL;
         $scope.appHomeURL = summaryConfig.appHomeURL;
         $scope.appName = summaryConfig.appName;
+        $scope.readOnly = summaryConfig.readOnly;
 
         $scope.filterCaseTypes = function (caseType) {
             $scope.typeSearch = caseType ? {'name': caseType} : null;

@@ -1,6 +1,7 @@
 #!/usr/bin/env python
-from StringIO import StringIO
+from __future__ import absolute_import
 import base64
+import io
 from datetime import datetime, timedelta, time
 import re
 import json
@@ -10,7 +11,9 @@ from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadReque
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from corehq import privileges
+from corehq import toggles
 from corehq.apps.hqadmin.views import BaseAdminSectionView
+from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form, sign
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback, requires_privilege_plaintext_response
@@ -52,7 +55,8 @@ from corehq.apps.sms.forms import (ForwardingRuleForm, BackendMapForm,
                                    DEFAULT, CUSTOM, SendRegistrationInvitationsForm,
                                    WELCOME_RECIPIENT_NONE, WELCOME_RECIPIENT_CASE,
                                    WELCOME_RECIPIENT_MOBILE_WORKER, WELCOME_RECIPIENT_ALL, ComposeMessageForm)
-from corehq.apps.sms.util import get_contact, get_sms_backend_classes, ContactNotFoundException
+from corehq.apps.sms.util import (get_contact, get_sms_backend_classes, ContactNotFoundException,
+    get_or_create_translation_doc)
 from corehq.apps.sms.messages import _MESSAGES
 from corehq.apps.smsbillables.utils import country_name_from_isd_code_or_empty as country_name_from_code
 from corehq.apps.groups.models import Group
@@ -64,6 +68,7 @@ from corehq.apps.domain.decorators import (
 )
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.utils import is_commcarecase
+from corehq.messaging.scheduling.async_handlers import SMSSettingsAsyncHandler
 from corehq.messaging.smsbackends.test.models import SQLTestSMSBackend
 from corehq.messaging.smsbackends.telerivet.models import SQLTelerivetBackend
 from corehq.apps.translations.models import StandaloneTranslationDoc
@@ -83,16 +88,19 @@ from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from dimagi.utils.parsing import json_format_datetime, string_to_boolean
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.decorators.view import get_file
+from django.utils.functional import cached_property
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_response
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.couch.cache import cache_core
 from django.conf import settings
+from django_prbac.utils import has_privilege
 from couchdbkit.resource import ResourceNotFound
 from couchexport.models import Format
 from couchexport.export import export_raw
 from couchexport.shortcuts import export_response
+import six
 
 
 # Tuple of (description, days in the past)
@@ -109,6 +117,10 @@ def default(request, domain):
 
 class BaseMessagingSectionView(BaseDomainView):
     section_name = ugettext_noop("Messaging")
+
+    @cached_property
+    def can_use_inbound_sms(self):
+        return has_privilege(self.request, privileges.INBOUND_SMS)
 
     @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
     def dispatch(self, *args, **kwargs):
@@ -235,7 +247,7 @@ def send_to_recipients(request, domain):
                     keys=[recipient, recipient[1:]], include_docs=True,
                     wrapper=wrap_user_by_type).all()
 
-                phone_users = filter(lambda u: u.is_member_of(domain), phone_users)
+                phone_users = [u for u in phone_users if u.is_member_of(domain)]
                 if len(phone_users) > 0:
                     phone_numbers.append((phone_users[0], recipient))
                 else:
@@ -251,7 +263,7 @@ def send_to_recipients(request, domain):
         for username in usernames:
             if username not in login_ids:
                 unknown_usernames.append(username)
-        login_ids = login_ids.values()
+        login_ids = list(login_ids.values())
 
         users = []
         empty_groups = []
@@ -708,7 +720,18 @@ def get_contact_info(domain):
     case_ids = []
     mobile_worker_ids = []
     data = []
-    for p in PhoneNumber.by_domain(domain).filter(is_two_way=True):
+
+    if toggles.INBOUND_SMS_LENIENCY.enabled(domain):
+        phone_numbers_seen = set()
+        phone_numbers = []
+        for p in PhoneNumber.by_domain(domain).order_by('phone_number', '-is_two_way', 'created_on', 'couch_id'):
+            if p.phone_number not in phone_numbers_seen:
+                phone_numbers.append(p)
+                phone_numbers_seen.add(p.phone_number)
+    else:
+        phone_numbers = PhoneNumber.by_domain(domain).filter(is_two_way=True)
+
+    for p in phone_numbers:
         if p.owner_doc_type == 'CommCareCase':
             case_ids.append(p.owner_id)
             data.append([
@@ -771,7 +794,7 @@ def chat_contact_list(request, domain):
 
     if sSearch:
         regex = re.compile('^.*%s.*$' % sSearch)
-        data = filter(lambda row: regex.match(row[0]) or regex.match(row[2]), data)
+        data = [row for row in data if regex.match(row[0]) or regex.match(row[2])]
     filtered_records = len(data)
 
     data.sort(key=lambda row: row[0])
@@ -1670,11 +1693,7 @@ class SMSLanguagesView(BaseMessagingSectionView):
 
     @property
     def page_context(self):
-        with StandaloneTranslationDoc.get_locked_obj(self.domain, "sms", create=True) as tdoc:
-            if len(tdoc.langs) == 0:
-                tdoc.langs = ["en"]
-                tdoc.translations["en"] = {}
-                tdoc.save()
+        tdoc = get_or_create_translation_doc(self.domain)
         context = {
             "domain": self.domain,
             "sms_langs": tdoc.langs,
@@ -1742,7 +1761,7 @@ def download_sms_translations(request, domain):
     for row in rows:
         row.append(_MESSAGES.get(row[0]))
 
-    temp = StringIO()
+    temp = io.BytesIO()
     headers = (("translations", tuple(columns)),)
     data = (("translations", tuple(rows)),)
     export_raw(headers, data, temp)
@@ -1769,7 +1788,7 @@ def upload_sms_translations(request, domain):
                         msg_id = row["property"]
                         if msg_id in msg_ids:
                             val = row[lang]
-                            if not isinstance(val, basestring):
+                            if not isinstance(val, six.string_types):
                                 val = str(val)
                             val = val.strip()
                             result[lang][msg_id] = val
@@ -1784,10 +1803,11 @@ def upload_sms_translations(request, domain):
     return HttpResponseRedirect(reverse('sms_languages', args=[domain]))
 
 
-class SMSSettingsView(BaseMessagingSectionView):
+class SMSSettingsView(BaseMessagingSectionView, AsyncHandlerMixin):
     urlname = "sms_settings"
     template_name = "sms/settings.html"
     page_title = ugettext_noop("SMS Settings")
+    async_handlers = [SMSSettingsAsyncHandler]
 
     @property
     def page_name(self):
@@ -1817,10 +1837,19 @@ class SMSSettingsView(BaseMessagingSectionView):
 
     @property
     @memoized
+    def new_reminders_migrator(self):
+        return toggles.NEW_REMINDERS_MIGRATOR.enabled(self.request.couch_user.username)
+
+    @property
+    @memoized
     def form(self):
         if self.request.method == "POST":
-            form = SettingsForm(self.request.POST, cchq_domain=self.domain,
-                cchq_is_previewer=self.previewer)
+            form = SettingsForm(
+                self.request.POST,
+                cchq_domain=self.domain,
+                cchq_is_previewer=self.previewer,
+                new_reminders_migrator=self.new_reminders_migrator,
+            )
         else:
             domain_obj = Domain.get_by_name(self.domain, strict=True)
             enabled_disabled = lambda b: (ENABLED if b else DISABLED)
@@ -1877,9 +1906,17 @@ class SMSSettingsView(BaseMessagingSectionView):
                     enabled_disabled(domain_obj.sms_mobile_worker_registration_enabled),
                 "registration_welcome_message":
                     self.get_welcome_message_recipient(domain_obj),
+                "daily_outbound_sms_limit":
+                    domain_obj.daily_outbound_sms_limit,
+                "uses_new_reminders":
+                    'Y' if domain_obj.uses_new_reminders else 'N',
             }
-            form = SettingsForm(initial=initial, cchq_domain=self.domain,
-                cchq_is_previewer=self.previewer)
+            form = SettingsForm(
+                initial=initial,
+                cchq_domain=self.domain,
+                cchq_is_previewer=self.previewer,
+                new_reminders_migrator=self.new_reminders_migrator,
+            )
         return form
 
     @property
@@ -1889,6 +1926,9 @@ class SMSSettingsView(BaseMessagingSectionView):
         }
 
     def post(self, request, *args, **kwargs):
+        if self.async_response is not None:
+            return self.async_response
+
         form = self.form
         if form.is_valid():
             domain_obj = Domain.get_by_name(self.domain, strict=True)
@@ -1917,10 +1957,17 @@ class SMSSettingsView(BaseMessagingSectionView):
                  "sms_mobile_worker_registration_enabled"),
             ]
             if self.previewer:
-                field_map.append(
+                field_map.extend([
                     ("custom_chat_template",
-                     "custom_chat_template")
-                )
+                     "custom_chat_template"),
+                    ("daily_outbound_sms_limit",
+                     "daily_outbound_sms_limit"),
+                ])
+            if self.new_reminders_migrator:
+                field_map.extend([
+                    ("uses_new_reminders",
+                     "uses_new_reminders"),
+                ])
             for (model_field_name, form_field_name) in field_map:
                 setattr(domain_obj, model_field_name,
                     form.cleaned_data[form_field_name])
@@ -1960,6 +2007,7 @@ class SMSSettingsView(BaseMessagingSectionView):
     @method_decorator(domain_admin_required)
     @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
     @use_timepicker
+    @use_select2
     def dispatch(self, request, *args, **kwargs):
         return super(SMSSettingsView, self).dispatch(request, *args, **kwargs)
 

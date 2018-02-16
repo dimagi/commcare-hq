@@ -1,8 +1,9 @@
+from __future__ import absolute_import
 from corehq.apps.sms.util import clean_phone_number
 from corehq.apps.sms.api import incoming
 from corehq.apps.sms.models import SQLSMSBackend
-from urllib2 import urlopen
-from urllib import urlencode
+from six.moves.urllib.request import urlopen
+from six.moves.urllib.parse import urlencode
 from corehq.messaging.smsbackends.unicel.forms import UnicelBackendForm
 from django.conf import settings
 

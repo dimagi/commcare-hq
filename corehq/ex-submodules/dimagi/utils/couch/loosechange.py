@@ -1,4 +1,6 @@
 from __future__ import print_function
+from __future__ import absolute_import
+from __future__ import division
 import re
 from datetime import datetime, timedelta, tzinfo
 from dimagi.utils.parsing import ISO_DATE_FORMAT
@@ -75,7 +77,7 @@ class TZ(tzinfo):
     def __init__(self, tz):
         if isinstance(tz, int):
             self.offset = tz
-            self.name = '%s%02d%02d' % ('+' if tz >= 0 else '-', abs(tz) / 60, abs(tz) % 60)
+            self.name = '%s%02d%02d' % ('+' if tz >= 0 else '-', abs(tz) // 60, abs(tz) % 60)
         else:
             if tz in ('Z', 'UTC'):
                 tz = '+0000'

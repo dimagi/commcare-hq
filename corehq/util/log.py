@@ -1,4 +1,7 @@
 from __future__ import print_function
+from __future__ import absolute_import
+from __future__ import division
+import six
 import sys
 from collections import defaultdict
 from itertools import islice
@@ -22,6 +25,7 @@ from corehq.util.view_utils import get_request
 from corehq.util.datadog.utils import get_url_group, sanitize_url
 from corehq.util.datadog.metrics import ERROR_COUNT
 from corehq.util.datadog.const import DATADOG_UNKNOWN
+from six.moves import range
 
 
 def clean_exception(exception):
@@ -116,7 +120,7 @@ class HqAdminEmailHandler(AdminEmailHandler):
             ])
 
             context.update({
-                'get': request.GET.items(),
+                'get': list(request.GET.items()),
                 'post': SafeExceptionReporterFilter().get_post_parameters(request),
                 'method': request.method,
                 'username': request.user.username if getattr(request, 'user', None) else "",
@@ -127,12 +131,12 @@ class HqAdminEmailHandler(AdminEmailHandler):
     def emit(self, record):
         context = self.get_context(record)
 
-        message = "\n\n".join(filter(None, [
+        message = "\n\n".join([_f for _f in [
             context['message'],
             self.format_details(context['details']),
             context['stack_trace'],
             context['request_repr'],
-        ]))
+        ] if _f])
         html_message = render_to_string('hqadmin/email/error_email.html', context)
         mail.mail_admins(self._clean_subject(context['subject']), message, fail_silently=True,
                          html_message=html_message)
@@ -290,7 +294,7 @@ def with_progress_bar(iterable, length=None, prefix='Processing', oneline=True):
         sys.stdout.flush()
 
     print("Started at {:%Y-%m-%d %H:%M:%S}".format(start))
-    checkpoints = {length*i/granularity for i in range(length)}
+    checkpoints = {length * i // granularity for i in range(length)}
     for i, x in enumerate(iterable):
         yield x
         if i in checkpoints:
@@ -300,6 +304,17 @@ def with_progress_bar(iterable, length=None, prefix='Processing', oneline=True):
     end = datetime.now()
     print("Finished at {:%Y-%m-%d %H:%M:%S}".format(end))
     print("Elapsed time: {}".format(display_seconds((end - start).total_seconds())))
+
+
+def get_traceback_string():
+    if six.PY3:
+        from io import StringIO
+        f = StringIO()
+    else:
+        from cStringIO import StringIO
+        f = StringIO()
+    traceback.print_exc(file=f)
+    return f.getvalue()
 
 
 def send_HTML_email(subject, recipient, html_content, *args, **kwargs):

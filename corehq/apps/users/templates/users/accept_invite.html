@@ -89,12 +89,12 @@
                         <div class="hide">
                           {{ form.errors }}
                         </div>
-                    </fieldset>
-                    <div class="form-actions">
+                        <div class="form-actions">
                         <div class="col-sm-offset-4 col-sm-4">
-                            <button type="submit" class="btn btn-primary">{% trans 'Create Account' %}</button>
+                            <button type="submit" class="btn btn-primary" data-bind="enable: passwordSufficient">{% trans 'Create Account' %}</button>
                         </div>
-                    </div>
+                        </div>
+                    </fieldset>
                 </form>
             </div>
             <div class="col-sm-4">

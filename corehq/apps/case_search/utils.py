@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import re
 
 from corehq.apps.es.case_search import CaseSearchES

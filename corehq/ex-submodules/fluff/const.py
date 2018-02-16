@@ -1,5 +1,6 @@
 
 TYPE_INTEGER = 'integer'
+TYPE_SMALL_INTEGER = 'small_integer'
 TYPE_DECIMAL = 'decimal'
 TYPE_STRING = 'string'
 TYPE_DATE = 'date'

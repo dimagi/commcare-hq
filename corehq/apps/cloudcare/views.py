@@ -1,5 +1,6 @@
+from __future__ import absolute_import
 import json
-import urllib
+import six.moves.urllib.request, six.moves.urllib.parse, six.moves.urllib.error
 from xml.etree import cElementTree as ElementTree
 
 from django.conf import settings
@@ -26,6 +27,7 @@ from xml2json.lib import xml2json
 
 from corehq import toggles, privileges
 from corehq.apps.accounting.decorators import requires_privilege_for_commcare_user, requires_privilege_with_fallback
+from corehq.apps.analytics import ab_tests
 from corehq.apps.app_manager.dbaccessors import (
     get_latest_build_doc,
     get_latest_released_app_doc,
@@ -63,6 +65,8 @@ from corehq.apps.users.decorators import require_can_edit_commcare_users
 from corehq.apps.users.views import BaseUserSettingsView
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from corehq.form_processor.exceptions import XFormNotFound
+from six.moves import filter
+from six.moves import map
 
 
 @require_cloudcare_access
@@ -96,10 +100,10 @@ class FormplayerMain(View):
         app_access = ApplicationAccess.get_by_domain(domain)
         app_ids = get_app_ids_in_domain(domain)
 
-        apps = map(
+        apps = list(map(
             lambda app_id: self.fetch_app(domain, app_id),
             app_ids,
-        )
+        ))
         apps = filter(None, apps)
         apps = filter(lambda app: app.get('cloudcare_enabled') or self.preview, apps)
         apps = filter(lambda app: app_access.user_can_access_app(user, app), apps)
@@ -122,7 +126,7 @@ class FormplayerMain(View):
         def set_cookie(response):  # set_coookie is a noop by default
             return response
 
-        cookie_name = urllib.quote(
+        cookie_name = six.moves.urllib.parse.quote(
             'restoreAs:{}:{}'.format(domain, request.couch_user.username))
         username = request.COOKIES.get(cookie_name)
         if username:
@@ -248,12 +252,16 @@ class PreviewAppView(TemplateView):
     @use_legacy_jquery
     def get(self, request, *args, **kwargs):
         app = get_app(request.domain, kwargs.pop('app_id'))
-        return self.render_to_response({
+        ab_test = ab_tests.ABTest(ab_tests.DATA_FEEDBACK_LOOP, self.request)
+        response = self.render_to_response({
             'app': app,
             'formplayer_url': settings.FORMPLAYER_URL,
             "maps_api_key": settings.GMAPS_API_KEY,
             "environment": PREVIEW_APP_ENVIRONMENT,
+            'ab_test': ab_test.context,     # sets ab test version if needed
         })
+        ab_test.update_response(response)
+        return response
 
 
 class SingleAppLandingPageView(TemplateView):
@@ -324,7 +332,7 @@ class LoginAsUsers(View):
 
         return json_response({
             'response': {
-                'itemList': map(self._format_user, users_data.hits),
+                'itemList': list(map(self._format_user, users_data.hits)),
                 'total': users_data.total,
                 'page': page,
                 'query': query,
@@ -382,7 +390,7 @@ def form_context(request, domain, app_id, module_id, form_id):
     except (FormNotFoundException, ModuleNotFoundException):
         raise Http404()
 
-    form_name = form.name.values()[0]
+    form_name = list(form.name.values())[0]
 
     # make the name for the session we will use with the case and form
     session_name = u'{app} > {form}'.format(

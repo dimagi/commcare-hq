@@ -1,4 +1,5 @@
 from __future__ import print_function
+from __future__ import absolute_import
 import traceback
 
 from django.core.management.base import BaseCommand
@@ -60,9 +61,9 @@ class Command(BaseCommand):
                         skipped_domains.append(domain)
                         continue
 
-                    has_skipped_tables = any(map(lambda meta: bool(meta.skipped_tables), metas))
-                    has_skipped_columns = any(map(lambda meta: bool(meta.skipped_columns), metas))
-                    is_remote_app_migration = any(map(lambda meta: bool(meta.is_remote_app_migration), metas))
+                    has_skipped_tables = any([bool(meta.skipped_tables) for meta in metas])
+                    has_skipped_columns = any([bool(meta.skipped_columns) for meta in metas])
+                    is_remote_app_migration = any([bool(meta.is_remote_app_migration) for meta in metas])
                     if has_skipped_tables or has_skipped_columns:
                         print('Skipping {} because we would have skipped columns'.format(domain))
                         skipped_domains.append(domain)

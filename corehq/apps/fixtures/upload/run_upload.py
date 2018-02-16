@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import division
 from couchdbkit import ResourceNotFound
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext as _
@@ -13,6 +15,8 @@ from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import normalize_username
 from dimagi.utils.couch.bulk import CouchTransaction
 from soil import DownloadBase
+import six
+from six.moves import range
 
 
 def upload_fixture_file(domain, filename, replace, task=None):
@@ -40,7 +44,7 @@ def _run_fixture_upload(domain, workbook, replace=False, task=None):
 
         def _update_progress(table_count, item_count, items_in_table):
             if task:
-                processed = table_count * 10 + (10. * item_count / items_in_table)
+                processed = table_count * 10 + (10 * item_count / items_in_table)
                 DownloadBase.set_progress(task, processed, 10 * total_tables)
 
         for table_number, table_def in enumerate(type_sheets):
@@ -95,7 +99,7 @@ def _run_fixture_upload(domain, workbook, replace=False, task=None):
                         item_fields[field.field_name] = FieldList(
                             field_list=[FixtureItemField(
                                 # using unicode here, to cast ints, and multi-language strings
-                                field_value=unicode(di['field'][field.field_name]),
+                                field_value=six.text_type(di['field'][field.field_name]),
                                 properties={}
                             )]
                         )
@@ -106,8 +110,8 @@ def _run_fixture_upload(domain, workbook, replace=False, task=None):
                         prop_dict = di[field.field_name]
                         for x in range(0, prop_combo_len):
                             fix_item_field = FixtureItemField(
-                                field_value=unicode(field_prop_combos[x]),
-                                properties={prop: unicode(prop_dict[prop][x]) for prop in prop_dict}
+                                field_value=six.text_type(field_prop_combos[x]),
+                                properties={prop: six.text_type(prop_dict[prop][x]) for prop in prop_dict}
                             )
                             field_list.append(fix_item_field)
                         item_fields[field.field_name] = FieldList(

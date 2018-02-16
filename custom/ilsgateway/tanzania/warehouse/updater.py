@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import division
 from datetime import datetime, timedelta
 import logging
 import itertools
@@ -103,7 +105,7 @@ def average_lead_time(facility_id, window_date):
         else:
             continue
 
-    return total_time / count if count else None
+    return total_time // count if count else None
 
 
 def needed_status_types(org_summary):
@@ -279,7 +281,7 @@ def process_facility_warehouse_data(facility, start_date, end_date, runner=None)
         location_id=facility.location_id,
         status_date__gte=start_date,
         status_date__lt=end_date
-    ).order_by('status_date').iterator()
+    ).order_by('status_date')
     process_facility_statuses(location_id, new_statuses)
 
     new_reports = StockReport.objects.filter(
@@ -287,7 +289,7 @@ def process_facility_warehouse_data(facility, start_date, end_date, runner=None)
         date__gte=start_date,
         date__lt=end_date,
         stocktransaction__type='stockonhand'
-    ).distinct().order_by('date').iterator()
+    ).distinct().order_by('date')
     process_facility_product_reports(location_id, new_reports)
 
     new_trans = get_latest_transaction_from_each_month(supply_point_id, start_date, end_date)

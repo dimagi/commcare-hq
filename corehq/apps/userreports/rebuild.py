@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from corehq.apps.userreports.models import id_is_static
 from dimagi.utils.couch import get_redis_client
 
@@ -18,19 +19,13 @@ class DataSourceResumeHelper(object):
         self._client = get_redis_client().client.get_client()
         self._key = get_redis_key_for_config(config)
 
-    def get_ids_to_resume_from(self):
+    def get_completed_case_type_or_xmlns(self):
         return self._client.lrange(self._key, 0, -1)
 
-    def set_ids_to_resume_from(self, ids):
-        self._client.rpush(self._key, *ids)
+    def add_completed_case_type_or_xmlns(self, case_type_or_xmlns):
+        self._client.rpush(self._key, case_type_or_xmlns)
 
-    def remove_id(self, doc_id):
-        self._client.lrem(self._key, 1, doc_id)
-
-    def add_id(self, doc_id):
-        self._client.rpush(self._key, doc_id)
-
-    def clear_ids(self):
+    def clear_resume_info(self):
         self._client.delete(self._key)
 
     def has_resume_info(self):

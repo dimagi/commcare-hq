@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import datetime
 from collections import namedtuple
 
@@ -14,7 +15,7 @@ from corehq.apps.export.filters import (
 from corehq.apps.export.forms import (
     BaseFilterExportDownloadForm,
     EmwfFilterFormExport,
-    LocationRestrictedMobileWorkerFilter,
+    ExpandedMobileWorkerFilter,
     FilterCaseESExportDownloadForm,
     CaseExportFilterBuilder,
     FormExportFilterBuilder,
@@ -114,7 +115,7 @@ class TestEmwfFilterFormExport(TestCase):
 
         self.assertTrue(self.export_filter.skip_layout)
         self.assertEqual(self.subject.export_user_filter, FormSubmittedByFilter)
-        self.assertEqual(self.subject.dynamic_filter_class, LocationRestrictedMobileWorkerFilter)
+        self.assertEqual(self.subject.dynamic_filter_class, ExpandedMobileWorkerFilter)
 
     def test_export_to_es_user_types_map(self):
         mapping = {'mobile': ['mobile'], 'demo_user': ['demo'], 'supply': ['supply'],
@@ -202,7 +203,7 @@ class TestEmwfFilterFormExportFilters(TestCase):
 
         self.assertTrue(export_filter.skip_layout)
         self.assertEqual(export_filter.export_user_filter, FormSubmittedByFilter)
-        self.assertEqual(export_filter.dynamic_filter_class, LocationRestrictedMobileWorkerFilter)
+        self.assertEqual(export_filter.dynamic_filter_class, ExpandedMobileWorkerFilter)
 
     @patch('corehq.apps.export.filters.get_groups_user_ids')
     def test_get_group_filter(self, patch_object):

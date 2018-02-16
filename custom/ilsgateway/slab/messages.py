@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.utils.translation import ugettext_lazy as _
 
 REMINDER_TRANS = _("Did you receive or transfer stock to another facility last month?"

@@ -1,4 +1,4 @@
-/* global d3 */
+/* global d3, moment */
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function AdolescentWomenController($scope, $routeParams, $location, $filter, demographicsService,
@@ -9,8 +9,9 @@ function AdolescentWomenController($scope, $routeParams, $location, $filter, dem
     } else {
         storageService.setKey('search', $location.search());
     }
+    vm.userLocationId = userLocationId;
     vm.filtersData = $location.search();
-    vm.label = "Adolescent Girls (11-18 years)";
+    vm.label = "Adolescent Girls (11-14 years)";
     vm.step = $routeParams.step;
     vm.steps = {
         'map': {route: '/adolescent_girls/map', label: 'Map View'},
@@ -22,12 +23,14 @@ function AdolescentWomenController($scope, $routeParams, $location, $filter, dem
     vm.chartData = null;
     vm.top_five = [];
     vm.bottom_five = [];
+    vm.selectedLocations = [];
+    vm.all_locations = [];
     vm.location_type = null;
     vm.loaded = false;
     vm.filters = ['age', 'gender'];
 
     vm.rightLegend = {
-        info: 'Total number of adolescent girls who are enrolled for ICDS services',
+        info: 'Total number of adolescent girls who are enrolled for Anganwadi Services',
     };
 
     vm.message = storageService.getKey('message') || false;
@@ -38,11 +41,13 @@ function AdolescentWomenController($scope, $routeParams, $location, $filter, dem
         if (newValue === oldValue || !newValue || newValue.length === 0) {
             return;
         }
-        if (newValue.length === 6) {
-            var parent = newValue[3];
-            $location.search('location_id', parent.location_id);
+
+        var isAWCSelected = (newValue.length === 6);
+        if (isAWCSelected) {
+            var supervisor = newValue[3];
+            $location.search('location_id', supervisor.location_id);
             $location.search('selectedLocationLevel', 3);
-            $location.search('location_name', parent.name);
+            $location.search('location_name', supervisor.name);
             storageService.setKey('message', true);
             setTimeout(function() {
                 storageService.setKey('message', false);
@@ -53,9 +58,13 @@ function AdolescentWomenController($scope, $routeParams, $location, $filter, dem
 
     vm.templatePopup = function(loc, row) {
         var valid = $filter('indiaNumbers')(row ? row.valid : 0);
-        return '<div class="hoverinfo" style="max-width: 200px !important;">' +
+        var all = $filter('indiaNumbers')(row ? row.all : 0);
+        var percent = row ? d3.format('.2%')(row.valid / (row.all || 1)) : "N/A";
+        return '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
             '<p>' + loc.properties.name + '</p>' +
-            '<div>Total number of adolescent girls who are enrolled for ICDS services: <strong>' + valid + '</strong>' +
+            '<div>Number of adolescent girls (11 - 14 years) who are enrolled for Anganwadi Services: <strong>' + valid + '</strong>' +
+            '<div>Total number of adolescent girls (11 - 14 years) who are registered: <strong>' + all + '</strong>' +
+            '<div>Percentage of registered adolescent girls (11 - 14 years) who are enrolled for Anganwadi Services: <strong>' + percent + '</strong>' +
             '</div>';
     };
 
@@ -92,14 +101,23 @@ function AdolescentWomenController($scope, $routeParams, $location, $filter, dem
                         return d.y;
                     });
                 }));
-                vm.chartOptions.chart.forceY = [0, max + max/10];
+                var min = Math.ceil(d3.min(vm.chartData, function(line) {
+                    return d3.min(line.values, function(d) {
+                        return d.y;
+                    });
+                }));
+                var range = max - min;
+                vm.chartOptions.chart.forceY = [
+                    (min - range/10) < 0 ? 0 : (min - range/10),
+                    (max + range/10),
+                ];
             }
         });
     };
 
-    var init = function() {
-        var locationId = vm.filtersData.location_id || userLocationId;
-        if (!locationId || locationId === 'all') {
+    vm.init = function() {
+        var locationId = vm.filtersData.location_id || vm.userLocationId;
+        if (!vm.userLocationId || !locationId || locationId === 'all') {
             vm.loadData();
             vm.loaded = true;
             return;
@@ -111,7 +129,7 @@ function AdolescentWomenController($scope, $routeParams, $location, $filter, dem
         });
     };
 
-    init();
+    vm.init();
 
     $scope.$on('filtersChange', function() {
         vm.loadData();
@@ -174,28 +192,28 @@ function AdolescentWomenController($scope, $routeParams, $location, $filter, dem
                 var tooltip = chart.interactiveLayer.tooltip;
                 tooltip.contentGenerator(function (d) {
 
-                    var findValue = function (values, date) {
-                        var day = _.find(values, function(num) { return d3.time.format('%b %Y')(new Date(num['x'])) === date;});
-                        return d3.format(",")(day['y']);
-                    };
-
-                    var tooltip_content = "<p><strong>" + d.value + "</strong></p><br/>";
-                    tooltip_content += "<p>Total number of adolescent girls who are enrolled for ICDS services: <strong>" + findValue(vm.chartData[0].values, d.value) + "</strong></p>";
-
-                    return tooltip_content;
+                    var day = _.find(vm.chartData[0].values, function(num) { return d3.time.format('%b %Y')(new Date(num['x'])) === d.value;});
+                    return vm.tooltipContent(d.value, day);
                 });
                 return chart;
             },
         },
         caption: {
             enable: true,
-            html: '<i class="fa fa-info-circle"></i> Total number of adolescent girls who are enrolled for ICDS services',
+            html: '<i class="fa fa-info-circle"></i> Total number of adolescent girls who are enrolled for Anganwadi Services',
             css: {
                 'text-align': 'center',
                 'margin': '0 auto',
                 'width': '900px',
             },
         },
+    };
+
+    vm.tooltipContent = function (monthName, day) {
+        return "<p><strong>" + monthName + "</strong></p><br/>"
+            + "<div>Number of adolescent girls (11 - 14 years) who are enrolled for Anganwadi Services: <strong>" + $filter('indiaNumbers')(day.y) + "</strong></div>"
+            + "<div>Total number of adolescent girls (11 - 14 years) who are registered: <strong>" + $filter('indiaNumbers')(day.all) + "</strong></div>"
+            + "<div>Percentage of registered adolescent girls (11 - 14 years) who are enrolled for Anganwadi Services: <strong>" + d3.format('.2%')(day.y / (day.all || 1)) + "</strong></div>";
     };
 
     vm.showAllLocations = function () {

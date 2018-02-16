@@ -1,5 +1,5 @@
+from __future__ import absolute_import
 import json
-from StringIO import StringIO
 
 import re
 from django.test import SimpleTestCase
@@ -51,6 +51,7 @@ from couchexport.export import get_writer
 from couchexport.models import Format
 from couchexport.transforms import couch_to_excel_datetime
 from pillowtop.es_utils import initialize_index_and_mapping
+from six.moves import range
 
 
 class WriterTest(SimpleTestCase):

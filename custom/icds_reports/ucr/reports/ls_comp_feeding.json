@@ -8,6 +8,7 @@
   ],
   "server_environment": [
     "softlayer",
+    "icds-new",
     "icds"
   ],
   "report_id": "static-ls_comp_feeding",
@@ -41,6 +42,20 @@
         "field": "supervisor_id",
         "type": "dynamic_choice_list",
         "slug": "supervisor_id"
+      },
+	  {  
+        "required": false,
+		"type": "numeric",
+        "slug": "is_migrated",
+        "field": "is_migrated",
+        "display": "Whether Migrated"
+      },
+      {
+        "required": false,
+		"type": "numeric",
+        "slug": "is_availing",
+        "field": "is_availing",
+        "display": "Whether Availing Services"
       }
     ],
     "columns": [

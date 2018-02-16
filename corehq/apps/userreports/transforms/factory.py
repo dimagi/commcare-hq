@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import unicode_literals
 import json
 from django.utils.translation import ugettext as _
 from jsonobject.exceptions import BadValueError
@@ -7,7 +9,7 @@ from corehq.apps.userreports.transforms.specs import (
     DateFormatTransform,
     NumberFormatTransform,
     TranslationTransform,
-)
+    MultipleValueStringTranslationTransform)
 
 
 class TransformFactory(object):
@@ -16,6 +18,7 @@ class TransformFactory(object):
         'date_format': DateFormatTransform,
         'number_format': NumberFormatTransform,
         'translation': TranslationTransform,
+        'multiple_value_string_translation': MultipleValueStringTranslationTransform
     }
 
     @classmethod
@@ -25,7 +28,7 @@ class TransformFactory(object):
         except KeyError:
             raise BadSpecError(_('Invalid or missing transform type: {}. Valid options are: {}').format(
                 spec.get('type', None),
-                ', '.join(cls.spec_map.keys()),
+                ', '.join(cls.spec_map),
             ))
         except BadValueError as e:
             raise BadSpecError(_('Problem creating transform: {}. Message is: {}').format(

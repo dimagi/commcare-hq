@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from sqlagg.columns import CountColumn
 from sqlagg.filters import RawFilter
 from sqlagg.filters import IN, AND, GTE, LT, EQ

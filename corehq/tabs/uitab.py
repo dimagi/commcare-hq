@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.conf import settings
 from django.core.cache import cache
 from django.urls import reverse, resolve, Resolver404
@@ -18,7 +19,8 @@ def url_is_location_safe(url):
         match = resolve(url)
     except Resolver404:
         return False
-    return is_location_safe(match.func, match.args, match.kwargs)
+    # pass empty request, since we should exclude any url that requires request context
+    return is_location_safe(match.func, None, match.args, match.kwargs)
 
 
 class UITab(object):
@@ -172,11 +174,11 @@ class UITab(object):
                 for url_prefix_format in self.url_prefix_formats]
 
     def get_url_prefix_formats_suggestion(self):
-        import urlparse
+        import six.moves.urllib.parse
         accepted_urls = []
         # sorted shortest first
         all_urls = sorted(
-            urlparse.urlparse(url).path
+            six.moves.urllib.parse.urlparse(url).path
             # replace the actual domain with {domain}
             .replace('/a/{}'.format(self.domain), '/a/{domain}')
             for url in self._get_inferred_urls

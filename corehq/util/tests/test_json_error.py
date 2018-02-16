@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.test.testcases import SimpleTestCase
 
 from corehq.util.test_utils import generate_cases

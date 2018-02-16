@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import sys
 
 if "django.conf" not in sys.modules:

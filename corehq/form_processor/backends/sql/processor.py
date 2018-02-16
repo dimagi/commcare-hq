@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import datetime
 import logging
 import uuid
@@ -23,6 +24,7 @@ from corehq.form_processor.models import (
 from corehq.form_processor.utils import extract_meta_instance_id, extract_meta_user_id
 from couchforms.const import ATTACHMENT_NAME
 from dimagi.utils.couch import acquire_lock, release_lock
+import six
 
 
 class FormProcessorSQL(object):
@@ -71,7 +73,7 @@ class FormProcessorSQL(object):
 
     @classmethod
     def new_xform(cls, form_data):
-        form_id = extract_meta_instance_id(form_data) or unicode(uuid.uuid4())
+        form_id = extract_meta_instance_id(form_data) or six.text_type(uuid.uuid4())
 
         return XFormInstanceSQL(
             # other properties can be set post-wrap
@@ -176,7 +178,7 @@ class FormProcessorSQL(object):
             # avoid moving to a separate sharded db
             xform.form_id = new_id_in_same_dbalias(xform.form_id)
         else:
-            xform.form_id = unicode(uuid.uuid4())
+            xform.form_id = six.text_type(uuid.uuid4())
         return xform
 
     @classmethod

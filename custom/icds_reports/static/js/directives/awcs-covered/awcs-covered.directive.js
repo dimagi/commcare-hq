@@ -1,4 +1,4 @@
-/* global d3 */
+/* global d3, moment */
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function AWCSCoveredController($scope, $routeParams, $location, $filter, icdsCasReachService,
@@ -9,25 +9,30 @@ function AWCSCoveredController($scope, $routeParams, $location, $filter, icdsCas
     } else {
         storageService.setKey('search', $location.search());
     }
+    vm.userLocationId = userLocationId;
     vm.filtersData = $location.search();
-    vm.label = "AWC Covered";
+    vm.label = "AWCs Launched";
     vm.step = $routeParams.step;
     vm.steps = {
         'map': {route: '/awcs_covered/map', label: 'Map View'},
         'chart': {route: '/awcs_covered/chart', label: 'Chart View'},
     };
     vm.data = {
-        legendTitle: 'Total AWCs that have launched ICDS CAS',
+        legendTitle: 'Total AWCs that have launched ICDS-CAS. ' +
+        'AWCs are considered launched after submitting at least one Household Registration form.',
+    };
+    vm.rightLegend = {
+        info: 'Total AWCs that have launched ICDS-CAS. ' +
+        'AWCs are considered launched after submitting at least one Household Registration form.',
     };
     vm.chartData = null;
     vm.top_five = [];
     vm.bottom_five = [];
+    vm.selectedLocations = [];
+    vm.all_locations = [];
     vm.location_type = null;
     vm.loaded = false;
     vm.filters = ['age', 'gender'];
-    vm.rightLegend = {
-        info: 'Total AWCs that have launched ICDS CAS',
-    };
     vm.message = storageService.getKey('message') || false;
 
     $scope.$watch(function() {
@@ -51,10 +56,10 @@ function AWCSCoveredController($scope, $routeParams, $location, $filter, icdsCas
 
     vm.templatePopup = function(loc, row) {
         var awcs = row ? $filter('indiaNumbers')(row.awcs) : 'N/A';
-        return '<div class="hoverinfo" style="max-width: 200px !important;">' +
+        return '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
             '<p>' + loc.properties.name + '</p>' +
             '<p>' + vm.rightLegend.info + '</p>' +
-            '<div>Number of AWSs Launched: <strong>' + awcs + '</strong></div>';
+            '<div>Number of AWCs Launched: <strong>' + awcs + '</strong></div>';
     };
 
     vm.loadData = function () {
@@ -90,14 +95,23 @@ function AWCSCoveredController($scope, $routeParams, $location, $filter, icdsCas
                         return d.y;
                     });
                 }));
-                vm.chartOptions.chart.forceY = [0, max + max/10];
+                var min = Math.ceil(d3.min(vm.chartData, function(line) {
+                    return d3.min(line.values, function(d) {
+                        return d.y;
+                    });
+                }));
+                var range = max - min;
+                vm.chartOptions.chart.forceY = [
+                    parseInt((min - range/10).toFixed(0)) < 0 ? 0 : parseInt((min - range/10).toFixed(0)),
+                    parseInt((max + range/10).toFixed(0)),
+                ];
             }
         });
     };
 
-    var init = function() {
-        var locationId = vm.filtersData.location_id || userLocationId;
-        if (!locationId || locationId === 'all' || locationId === 'null') {
+    vm.init = function() {
+        var locationId = vm.filtersData.location_id || vm.userLocationId;
+        if (!vm.userLocationId || !locationId || locationId === 'all' || locationId === 'null') {
             vm.loadData();
             vm.loaded = true;
             return;
@@ -109,7 +123,7 @@ function AWCSCoveredController($scope, $routeParams, $location, $filter, icdsCas
         });
     };
 
-    init();
+    vm.init();
 
     $scope.$on('filtersChange', function() {
         vm.loadData();
@@ -118,7 +132,7 @@ function AWCSCoveredController($scope, $routeParams, $location, $filter, icdsCas
     vm.getDisableIndex = function () {
         var i = -1;
         window.angular.forEach(vm.selectedLocations, function (key, value) {
-            if (key !== null && key.location_id === userLocationId) {
+            if (key !== null && key.location_id === vm.userLocationId) {
                 i = value;
             }
         });
@@ -187,23 +201,27 @@ function AWCSCoveredController($scope, $routeParams, $location, $filter, icdsCas
                         return d3.format(",")(day['y']);
                     };
 
-                    var tooltip_content = "<p><strong>" + d.value + "</strong></p><br/>";
-                    tooltip_content += "<p>Number of AWCs Launched: <strong>" + findValue(vm.chartData[0].values, d.value) + "</strong></p>";
-
-                    return tooltip_content;
+                    var tooltipContent = vm.tooltipContent(d.value, findValue(vm.chartData[0].values, d.value));
+                    return tooltipContent;
                 });
                 return chart;
             },
         },
         caption: {
             enable: true,
-            html: '<i class="fa fa-info-circle"></i> Number of AWCs Launched',
+            html: '<i class="fa fa-info-circle"></i> ' + vm.data.legendTitle,
             css: {
                 'text-align': 'center',
                 'margin': '0 auto',
                 'width': '900px',
             },
         },
+    };
+
+    vm.tooltipContent = function(monthName, value) {
+        return "<p><strong>" + monthName + "</strong></p><br/>"
+            + vm.data.legendTitle
+            + "<div>Number of AWCs Launched: <strong>" + value + "</strong></div>";
     };
 
     vm.showAllLocations = function () {

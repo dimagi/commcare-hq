@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import simplejson
 from . import CACHE_DOCS, key_doc_id, rcache
 

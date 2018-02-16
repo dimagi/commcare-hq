@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from datetime import datetime
 
 from corehq.apps.users.models import CommCareUser
@@ -20,7 +21,7 @@ class RandrHandler(KeywordHandler):
         return self._handle(help=True)
 
     def _send_submission_alert_to_msd(self, params):
-        users = filter(lambda u: u.user_data.get('role', None) == 'MSD', CommCareUser.by_domain(self.domain))
+        users = [u for u in CommCareUser.by_domain(self.domain) if u.user_data.get('role', None) == 'MSD']
         for user in users:
             send_translated_message(user, SUBMITTED_NOTIFICATION_MSD, **params)
 

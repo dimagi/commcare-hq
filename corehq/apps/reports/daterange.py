@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from collections import namedtuple
 import datetime
 from django.utils.translation import ugettext_lazy as _
@@ -35,7 +36,7 @@ def get_simple_dateranges():
     """
     Get all dateranges that are simple (don't require additional config)
     """
-    return filter(lambda choice: choice.simple, get_all_daterange_choices())
+    return [choice for choice in get_all_daterange_choices() if choice.simple]
 
 
 def get_daterange_start_end_dates(date_range, start_date=None, end_date=None, days=None):

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import json
 import logging
 import requests
@@ -44,11 +45,11 @@ class JsonApiRequest(object):
     Wrap requests with URL, header and authentication for DHIS2 API
     """
 
-    def __init__(self, server_url, username, password, domain_name=None):
+    def __init__(self, domain_name, server_url, username, password):
+        self.domain_name = domain_name
         self.server_url = server_url if server_url.endswith('/') else server_url + '/'
         self.headers = {'Accept': 'application/json'}
         self.auth = (username, password)
-        self.domain_name = domain_name
 
     @staticmethod
     def json_or_error(response):
@@ -84,13 +85,11 @@ class JsonApiRequest(object):
         )
 
     def delete(self, path, **kwargs):
-        path = path.lstrip('/')
         return self.send_request(
             requests.delete, self.get_request_url(path), headers=self.headers, auth=self.auth, **kwargs
         )
 
     def post(self, path, data, **kwargs):
-        path = path.lstrip('/')
         # Make a copy of self.headers so as not to set content type on requests that don't send content
         headers = dict(self.headers, **{'Content-type': 'application/json'})
         json_data = json.dumps(data, cls=DjangoJSONEncoder)
@@ -99,7 +98,6 @@ class JsonApiRequest(object):
         )
 
     def put(self, path, data, **kwargs):
-        path = path.lstrip('/')
         headers = dict(self.headers, **{'Content-type': 'application/json'})
         json_data = json.dumps(data, cls=DjangoJSONEncoder)
         return self.send_request(

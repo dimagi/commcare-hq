@@ -8,6 +8,7 @@
   ],
   "server_environment": [
     "softlayer",
+    "icds-new",
     "icds"
   ],
   "report_id": "static-ls_report_child_names",
@@ -69,6 +70,20 @@
         "field": "owner_id",
         "type": "dynamic_choice_list",
         "slug": "owner_id"
+      },
+	  {  
+        "required": false,
+		"type": "numeric",
+        "slug": "is_migrated",
+        "field": "is_migrated",
+        "display": "Whether Migrated"
+      },
+      {
+        "required": false,
+		"type": "numeric",
+        "slug": "is_availing",
+        "field": "is_availing",
+        "display": "Whether Availing Services"
       }
     ],
     "columns": [

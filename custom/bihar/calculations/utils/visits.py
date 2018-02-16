@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import logging
 from custom.bihar.calculations.utils import xmlns
 
@@ -26,7 +27,7 @@ def visit_is(action, visit_type):
             and VISIT_TYPES[actual_visit_type] != action.xform_xmlns):
         # make sure it's not just because this is a manual case reassignment
         # or some other HQ-submitted system form
-        if action.xform_xmlns not in VISIT_TYPES.values():
+        if action.xform_xmlns not in list(VISIT_TYPES.values()):
             return False
         logging.error('last_visit_type is %r but xmlns is not %r: %r' % (
             actual_visit_type,
@@ -41,4 +42,4 @@ def has_visit(case, type):
     """
     returns whether a visit of a type exists in the case
     """
-    return len(filter(lambda a: visit_is(a, type), case.actions)) > 0
+    return len([a for a in case.actions if visit_is(a, type)]) > 0

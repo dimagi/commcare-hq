@@ -1,5 +1,6 @@
 from __future__ import absolute_import
-import urllib
+from __future__ import unicode_literals
+import six.moves.urllib.request, six.moves.urllib.parse, six.moves.urllib.error
 from collections import namedtuple, OrderedDict
 import datetime
 import functools
@@ -7,6 +8,7 @@ import json
 import os
 import tempfile
 import uuid
+import re
 
 from django.conf import settings
 from django.contrib import messages
@@ -18,17 +20,20 @@ from django.utils.translation import ugettext as _, ugettext_lazy
 from django.views.decorators.http import require_POST
 from django.views.generic import View
 
+from couchdbkit.exceptions import ResourceNotFound
 from sqlalchemy import types, exc
 from sqlalchemy.exc import ProgrammingError
 
 from corehq.apps.accounting.models import Subscription
-from corehq.apps.analytics.tasks import update_hubspot_properties
-from corehq.apps.app_manager.fields import ApplicationDataSource
+from corehq.apps.analytics.tasks import update_hubspot_properties, send_hubspot_form, HUBSPOT_SAVED_UCR_FORM_ID
 from corehq.apps.domain.models import Domain
-from corehq.apps.es import DomainES
 from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
+from corehq.apps.reports.daterange import get_simple_dateranges
 from corehq.apps.userreports.specs import FactoryContext
+from corehq.apps.userreports.indicators.factory import IndicatorFactory
+from corehq.apps.userreports.filters.factory import FilterFactory
+from corehq.tabs.tabclasses import ProjectReportsTab
 from corehq.util import reverse
 from corehq.util.quickcache import quickcache
 from couchexport.export import export_from_tables
@@ -55,8 +60,13 @@ from corehq.apps.hqwebapp.decorators import (
     use_jquery_ui,
     use_nvd3,
 )
-from corehq.apps.userreports.app_manager import get_case_data_source, get_form_data_source, _clean_table_name
-from corehq.apps.userreports.const import REPORT_BUILDER_EVENTS_KEY, DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE
+from corehq.apps.userreports.app_manager import get_case_data_source, get_form_data_source
+from corehq.apps.userreports.const import (
+    REPORT_BUILDER_EVENTS_KEY,
+    DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE,
+    NAMED_EXPRESSION_PREFIX,
+    NAMED_FILTER_PREFIX,
+)
 from corehq.apps.userreports.document_stores import get_document_store
 from corehq.apps.userreports.exceptions import (
     BadBuilderConfigError,
@@ -75,8 +85,6 @@ from corehq.apps.userreports.models import (
     get_report_config,
     report_config_id_is_static,
     id_is_static,
-    DataSourceMeta,
-    DataSourceBuildInformation,
 )
 from corehq.apps.userreports.rebuild import DataSourceResumeHelper
 from corehq.apps.userreports.reports.builder.forms import (
@@ -94,10 +102,8 @@ from corehq.apps.userreports.specs import EvaluationContext
 from corehq.apps.userreports.sql import IndicatorSqlAdapter
 from corehq.apps.userreports.tasks import (
     rebuild_indicators,
-    delete_data_source_task,
     resume_building_indicators,
     rebuild_indicators_in_place,
-    recalculate_indicators,
 )
 from corehq.apps.userreports.ui.forms import (
     ConfigurableReportEditForm,
@@ -121,9 +127,7 @@ from pillowtop.dao.exceptions import DocumentNotFoundError
 import six
 
 
-SAMPLE_DATA_MAX_ROWS = 100
 TEMP_REPORT_PREFIX = '__tmp'
-TEMP_DATA_SOURCE_LIFESPAN = 24 * 60 * 60
 
 
 def get_datasource_config_or_404(config_id, domain):
@@ -236,7 +240,7 @@ class BaseEditConfigReportView(BaseUserConfigReportsView):
     def post(self, request, *args, **kwargs):
         if self.edit_form.is_valid():
             self.edit_form.save(commit=True)
-            messages.success(request, _(u'Report "{}" saved!').format(self.config.title))
+            messages.success(request, _('Report "{}" saved!').format(self.config.title))
             return HttpResponseRedirect(reverse(
                 'edit_configurable_report', args=[self.domain, self.config._id])
             )
@@ -266,12 +270,17 @@ class ReportBuilderView(BaseDomainView):
     @property
     def main_context(self):
         main_context = super(ReportBuilderView, self).main_context
+        allowed_num_reports = allowed_report_builder_reports(self.request)
         main_context.update({
             'has_report_builder_access': has_report_builder_access(self.request),
-            'at_report_limit':
-                number_of_report_builder_reports(self.domain) >= allowed_report_builder_reports(self.request),
-            'report_limit': allowed_report_builder_reports(self.request),
+            'at_report_limit': (
+                number_of_report_builder_reports(self.domain) >= allowed_num_reports
+                and allowed_num_reports is not None
+            ),
+            'report_limit': allowed_num_reports,
             'paywall_url': paywall_home(self.domain),
+            'pricing_page_url': reverse('public_pricing') if settings.ENABLE_PRELOGIN_SITE else "",
+            'support_email': settings.SUPPORT_EMAIL,
         })
         return main_context
 
@@ -282,64 +291,6 @@ class ReportBuilderView(BaseDomainView):
     @property
     def section_url(self):
         return reverse(ReportBuilderDataSourceSelect.urlname, args=[self.domain])
-
-    def _build_temp_data_source(self, app_source, username):
-        data_source_config = DataSourceConfiguration(
-            domain=self.domain,
-            table_id=_clean_table_name(self.domain, uuid.uuid4().hex),
-            **self._get_config_kwargs(app_source)
-        )
-        data_source_config.validate()
-        data_source_config.save()
-        self._expire_data_source(data_source_config._id)
-        rebuild_indicators(data_source_config._id, username, limit=SAMPLE_DATA_MAX_ROWS)  # Do synchronously
-        self.filter_data_source_changes(data_source_config._id)
-        return data_source_config._id
-
-    def _expire_data_source(self, data_source_config_id):
-        always_eager = hasattr(settings, "CELERY_ALWAYS_EAGER") and settings.CELERY_ALWAYS_EAGER
-        # CELERY_ALWAYS_EAGER will cause the data source to be deleted immediately. Switch it off temporarily
-        settings.CELERY_ALWAYS_EAGER = False
-        delete_data_source_task.apply_async(
-            (self.domain, data_source_config_id),
-            countdown=TEMP_DATA_SOURCE_LIFESPAN
-        )
-        settings.CELERY_ALWAYS_EAGER = always_eager
-
-    def _get_config_kwargs(self, app_source):
-        app = Application.get(app_source.application)
-        builder = DataSourceBuilder(self.domain, app, app_source.source_type, app_source.source)
-        return {
-            'display_name': builder.data_source_name,
-            'referenced_doc_type': builder.source_doc_type,
-            'configured_filter': builder.filter,
-            'configured_indicators': builder.all_possible_indicators(),
-            'base_item_expression': builder.base_item_expression(False),
-            'meta': DataSourceMeta(
-                build=DataSourceBuildInformation(
-                    source_id=app_source.source,
-                    app_id=app._id,
-                    app_version=app.version,
-                )
-            )
-        }
-
-    @staticmethod
-    def filter_data_source_changes(data_source_config_id):
-        """
-        Add filter to data source to prevent it from being updated by DB changes
-        """
-        # Reload using the ID instead of just passing in the object to avoid ResourceConflicts
-        data_source_config = DataSourceConfiguration.get(data_source_config_id)
-        data_source_config.configured_filter = {
-            # An expression that is always false:
-            "type": "boolean_expression",
-            "operator": "eq",
-            "expression": 1,
-            "property_value": 2,
-        }
-        data_source_config.validate()
-        data_source_config.save()
 
 
 @quickcache(["domain"], timeout=0, memoize_timeout=4)
@@ -388,15 +339,15 @@ class ReportBuilderPaywallPricing(ReportBuilderPaywallBase):
     @property
     def page_context(self):
         context = super(ReportBuilderPaywallPricing, self).page_context
-        if has_report_builder_access(self.request):
-            max_allowed_reports = allowed_report_builder_reports(self.request)
-            num_builder_reports = number_of_report_builder_reports(self.domain)
-            if num_builder_reports >= max_allowed_reports:
-                context.update({
-                    'at_report_limit': True,
-                    'max_allowed_reports': max_allowed_reports,
-
-                })
+        max_allowed_reports = allowed_report_builder_reports(self.request)
+        num_builder_reports = number_of_report_builder_reports(self.domain)
+        context.update({
+            'has_report_builder_access': has_report_builder_access(self.request),
+            'at_report_limit': num_builder_reports >= max_allowed_reports and max_allowed_reports is not None,
+            'max_allowed_reports': max_allowed_reports if max_allowed_reports is not None else 0,
+            'support_email': settings.SUPPORT_EMAIL,
+            'pricing_page_url': reverse('public_pricing') if settings.ENABLE_PRELOGIN_SITE else "",
+        })
         return context
 
 
@@ -448,7 +399,6 @@ class ReportBuilderDataSourceSelect(ReportBuilderView):
     def post(self, request, *args, **kwargs):
         if self.form.is_valid():
             app_source = self.form.get_selected_source()
-            data_source_config_id = self._build_temp_data_source(app_source, request.user.username)
 
             track_workflow(
                 request.user.email,
@@ -467,7 +417,6 @@ class ReportBuilderDataSourceSelect(ReportBuilderView):
                 'application': app_source.application,
                 'source_type': app_source.source_type,
                 'source': app_source.source,
-                'data_source': data_source_config_id,
             }
             return HttpResponseRedirect(
                 reverse(ConfigureReport.urlname, args=[self.domain], params=get_params)
@@ -483,24 +432,7 @@ class EditReportInBuilder(View):
         report = get_document_or_404(ReportConfiguration, request.domain, report_id)
         if report.report_meta.created_by_builder:
             try:
-                if not toggle_enabled(request, toggles.REPORT_BUILDER_V2):
-                    from corehq.apps.userreports.v1.views import (
-                        ConfigureChartReport,
-                        ConfigureListReport,
-                        ConfigureMapReport,
-                        ConfigureWorkerReport,
-                        ConfigureTableReport,
-                    )
-                    view_class = {
-                        'chart': ConfigureChartReport,
-                        'list': ConfigureListReport,
-                        'worker': ConfigureWorkerReport,
-                        'table': ConfigureTableReport,
-                        'map': ConfigureMapReport,
-                    }[report.report_meta.builder_report_type]
-                    return view_class.as_view(existing_report=report)(request, *args, **kwargs)
-                else:
-                    return ConfigureReport.as_view(existing_report=report)(request, *args, **kwargs)
+                return ConfigureReport.as_view(existing_report=report)(request, *args, **kwargs)
             except BadBuilderConfigError as e:
                 messages.error(request, e.message)
                 return HttpResponseRedirect(reverse(ConfigurableReport.slug, args=[request.domain, report_id]))
@@ -532,9 +464,21 @@ class ConfigureReport(ReportBuilderView):
             self.source_type = self.request.GET['source_type']
             self.source_id = self.request.GET['source']
 
-        self.data_source_builder = DataSourceBuilder(self.domain, self.app, self.source_type, self.source_id)
+        try:
+            data_source_builder = DataSourceBuilder(self.domain, self.app, self.source_type, self.source_id)
+        except ResourceNotFound:
+            self.template_name = 'userreports/report_error.html'
+            if self.existing_report:
+                context = {'report_id': self.existing_report.get_id,
+                           'is_static': self.existing_report.is_static}
+            else:
+                context = {}
+            context['error_message'] = DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE
+            context.update(self.main_context)
+            return self.render_to_response(context)
+
         self._properties_by_column_id = {}
-        for p in self.data_source_builder.data_source_properties.values():
+        for p in data_source_builder.data_source_properties.values():
             column = p.to_report_column_option()
             for agg in column.aggregation_options:
                 indicators = column.get_indicators(agg)
@@ -560,25 +504,6 @@ class ConfigureReport(ReportBuilderView):
         else:
             request = request or self.request
             return request.GET.get('report_name', '')
-
-    @memoized
-    def _get_preview_data_source(self):
-        """
-        Return the ID of the report's DataSourceConfiguration
-        """
-
-        if self.existing_report:
-            source_type = {
-                "CommCareCase": "case",
-                "XFormInstance": "form"
-            }[self.existing_report.config.referenced_doc_type]
-            source_id = self.existing_report.config.meta.build.source_id
-            app_id = self.existing_report.config.meta.build.app_id
-            app_source = ApplicationDataSource(app_id, source_type, source_id)
-            data_soruce_id = self._build_temp_data_source(app_source, self.request.user.username)
-            return data_soruce_id
-        else:
-            return self.request.GET['data_source']
 
     def _get_existing_report_type(self):
         if self.existing_report:
@@ -632,6 +557,8 @@ class ConfigureReport(ReportBuilderView):
         report_form = form_type(
             self.page_name, self.app_id, self.source_type, self.source_id, self.existing_report
         )
+        temp_ds_id = report_form.create_temp_data_source(self.request.user.username)
+
         return {
             'existing_report': self.existing_report,
             'report_description': self.report_description,
@@ -650,38 +577,12 @@ class ConfigureReport(ReportBuilderView):
             'source_id': self.source_id,
             'application': self.app_id,
             'report_preview_url': reverse(ReportPreview.urlname,
-                                          args=[self.domain, self._get_preview_data_source()]),
-            'preview_datasource_id': self._get_preview_data_source(),
+                                          args=[self.domain, temp_ds_id]),
+            'preview_datasource_id': temp_ds_id,
             'report_builder_events': self.request.session.pop(REPORT_BUILDER_EVENTS_KEY, []),
             'MAPBOX_ACCESS_TOKEN': settings.MAPBOX_ACCESS_TOKEN,
+            'date_range_options': [r._asdict() for r in get_simple_dateranges()],
         }
-
-    def _handle_exception(self, response, exception):
-        if self.existing_report and self.existing_report.report_meta.edited_manually:
-            error_message_base = _(
-                'It looks like this report was edited by hand and is no longer editable in report builder.'
-            )
-            if toggle_enabled(self.request, toggles.USER_CONFIGURABLE_REPORTS):
-                error_message = '{} {}'.format(error_message_base, _(
-                    'You can edit the report manually using the <a href="{}">advanced UI</a>.'
-                ).format(reverse(EditConfigReportView.urlname, args=[self.domain, self.existing_report._id])))
-            else:
-                error_message = '{} {}'.format(
-                    error_message_base,
-                    _('You can delete and recreate this report using the button below, or '
-                      'report an issue if you believe you are seeing this page in error.')
-                )
-            response['error_message'] = error_message
-            return response
-        elif isinstance(exception, DataSourceConfigurationNotFoundError):
-            response['details'] = None
-            response['error_message'] = '{} {}'.format(
-                str(exception),
-                DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE
-            )
-            return response
-        else:
-            raise
 
     def _get_bound_form(self, report_data):
         form_class = _get_form_type(report_data['report_type'])
@@ -726,7 +627,10 @@ class ConfigureReport(ReportBuilderView):
                         'default_filters': getattr(bound_form, 'default_filters', 'Not set'),
                     })
                     return self.get(request, domain, *args, **kwargs)
+                else:
+                    ProjectReportsTab.clear_dropdown_cache(domain, request.couch_user.get_id)
             self._delete_temp_data_source(report_data)
+            send_hubspot_form(HUBSPOT_SAVED_UCR_FORM_ID, request)
             return json_response({
                 'report_url': reverse(ConfigurableReport.slug, args=[self.domain, report_configuration._id]),
                 'report_id': report_configuration._id,
@@ -765,21 +669,6 @@ def _munge_report_data(report_data):
     :param report_data:
     :return:
     """
-    agg_columns = []
-    if report_data['report_type'] == "table":
-        clean_columns = []
-
-        for col in report_data['columns']:
-            if col['calculation'] == "Group By":
-                agg_columns.append(col)
-            else:
-                clean_columns.append(col)
-        agg_columns = [x['property'] for x in agg_columns]
-
-        report_data['columns'] = clean_columns
-
-    report_data['group_by'] = agg_columns or None
-
     report_data['columns'] = json.dumps(report_data['columns'])
     report_data['user_filters'] = json.dumps(report_data['user_filters'])
     report_data['default_filters'] = json.dumps(report_data['default_filters'])
@@ -789,12 +678,11 @@ class ReportPreview(BaseDomainView):
     urlname = 'report_preview'
 
     def post(self, request, domain, data_source):
-        report_data = json.loads(urllib.unquote(request.body))
+        report_data = json.loads(six.moves.urllib.parse.unquote(request.body))
         form_class = _get_form_type(report_data['report_type'])
 
-        # ignore filters
+        # ignore user filters
         report_data['user_filters'] = []
-        report_data['default_filters'] = []
 
         _munge_report_data(report_data)
 
@@ -807,7 +695,7 @@ class ReportPreview(BaseDomainView):
             report_data
         )
         if bound_form.is_valid():
-            temp_report = bound_form.create_temp_report(data_source)
+            temp_report = bound_form.create_temp_report(data_source, self.request.user.username)
             response_data = ConfigurableReport.report_preview_data(self.domain, temp_report)
             if response_data:
                 return json_response(response_data)
@@ -842,7 +730,7 @@ def delete_report(request, domain, report_id):
 
     messages.success(
         request,
-        _(u'Report "{name}" has been deleted. <a href="{url}" class="post-link">Undo</a>').format(
+        _('Report "{name}" has been deleted. <a href="{url}" class="post-link">Undo</a>').format(
             name=config.title,
             url=reverse('undo_delete_configurable_report', args=[domain, config._id]),
         ),
@@ -851,9 +739,10 @@ def delete_report(request, domain, report_id):
     if did_purge_something:
         messages.warning(
             request,
-            _(u"This report was used in one or more applications. "
+            _("This report was used in one or more applications. "
               "It has been removed from there too.")
         )
+    ProjectReportsTab.clear_dropdown_cache(domain, request.couch_user.get_id)
     redirect = request.GET.get("redirect", None)
     if not redirect:
         redirect = reverse('configurable_reports_home', args=[domain])
@@ -869,10 +758,10 @@ def undelete_report(request, domain, report_id):
         undo_delete(config)
         messages.success(
             request,
-            _(u'Successfully restored report "{name}"').format(name=config.title)
+            _('Successfully restored report "{name}"').format(name=config.title)
         )
     else:
-        messages.info(request, _(u'Report "{name}" not deleted.').format(name=config.title))
+        messages.info(request, _('Report "{name}" not deleted.').format(name=config.title))
     return HttpResponseRedirect(reverse(ConfigurableReport.slug, args=[request.domain, report_id]))
 
 
@@ -1034,13 +923,13 @@ class CreateDataSourceFromAppView(BaseUserConfigReportsView):
             if app_source.source_type == 'case':
                 data_source = get_case_data_source(app, app_source.source)
                 data_source.save()
-                messages.success(request, _(u"Data source created for '{}'".format(app_source.source)))
+                messages.success(request, _("Data source created for '{}'".format(app_source.source)))
             else:
                 assert app_source.source_type == 'form'
                 xform = Form.get_form(app_source.source)
                 data_source = get_form_data_source(app, xform)
                 data_source.save()
-                messages.success(request, _(u"Data source created for '{}'".format(xform.default_name())))
+                messages.success(request, _("Data source created for '{}'".format(xform.default_name())))
 
             return HttpResponseRedirect(reverse(
                 EditDataSourceView.urlname, args=[self.domain, data_source._id]
@@ -1065,18 +954,8 @@ class BaseEditDataSourceView(BaseUserConfigReportsView):
             'data_source': self.config,
             'read_only': self.read_only,
             'code_mirror_off': self.request.GET.get('code_mirror', 'true') == 'false',
-            'can_rebuild': self.can_rebuild,
             'used_by_reports': self.get_reports(),
         }
-
-    @property
-    def can_rebuild(self):
-        # Don't allow rebuilds if there have been more than 1 million forms or cases
-        domain = DomainES().in_domains(self.domain).run().hits[0]
-        doc_type = self.config.referenced_doc_type
-        if doc_type == 'XFormInstance':
-            return domain.get('cp_n_forms', 0) < 1000000
-        return True
 
     @property
     def page_url(self):
@@ -1116,7 +995,7 @@ class BaseEditDataSourceView(BaseUserConfigReportsView):
     def post(self, request, *args, **kwargs):
         if self.edit_form.is_valid():
             config = self.edit_form.save(commit=True)
-            messages.success(request, _(u'Data source "{}" saved!').format(
+            messages.success(request, _('Data source "{}" saved!').format(
                 config.display_name
             ))
             if self.config_id is None:
@@ -1165,7 +1044,7 @@ class EditDataSourceView(BaseEditDataSourceView):
 
     @property
     def page_name(self):
-        return u"Edit {}".format(self.config.display_name)
+        return "Edit {}".format(self.config.display_name)
 
 
 @toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
@@ -1183,7 +1062,7 @@ def delete_data_source_shared(domain, config_id, request=None):
     if request:
         messages.success(
             request,
-            _(u'Data source "{name}" has been deleted. <a href="{url}" class="post-link">Undo</a>').format(
+            _('Data source "{name}" has been deleted. <a href="{url}" class="post-link">Undo</a>').format(
                 name=config.display_name,
                 url=reverse('undo_delete_data_source', args=[domain, config._id]),
             ),
@@ -1201,10 +1080,10 @@ def undelete_data_source(request, domain, config_id):
         undo_delete(config)
         messages.success(
             request,
-            _(u'Successfully restored data source "{name}"').format(name=config.display_name)
+            _('Successfully restored data source "{name}"').format(name=config.display_name)
         )
     else:
-        messages.info(request, _(u'Data source "{name}" not deleted.').format(name=config.display_name))
+        messages.info(request, _('Data source "{name}" not deleted.').format(name=config.display_name))
     return HttpResponseRedirect(reverse(
         EditDataSourceView.urlname, args=[domain, config._id]
     ))
@@ -1238,22 +1117,22 @@ def resume_building_data_source(request, domain, config_id):
     if not is_static and config.meta.build.finished:
         messages.warning(
             request,
-            _(u'Table "{}" has already finished building. Rebuild table to start over.').format(
+            _('Table "{}" has already finished building. Rebuild table to start over.').format(
                 config.display_name
             )
         )
     elif not DataSourceResumeHelper(config).has_resume_info():
         messages.warning(
             request,
-            _(u'Table "{}" did not finish building but resume information is not available. '
-              u'Unfortunately, this means you need to rebuild the table.').format(
+            _('Table "{}" did not finish building but resume information is not available. '
+              'Unfortunately, this means you need to rebuild the table.').format(
                 config.display_name
             )
         )
     else:
         messages.success(
             request,
-            _(u'Resuming rebuilding table "{}".').format(config.display_name)
+            _('Resuming rebuilding table "{}".').format(config.display_name)
         )
         resume_building_indicators.delay(config_id, request.user.username)
     return HttpResponseRedirect(reverse(
@@ -1277,27 +1156,6 @@ def build_data_source_in_place(request, domain, config_id):
     )
 
     rebuild_indicators_in_place.delay(config_id, request.user.username)
-    return HttpResponseRedirect(reverse(
-        EditDataSourceView.urlname, args=[domain, config._id]
-    ))
-
-
-@toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
-@require_POST
-def recalculate_data_source(request, domain, config_id):
-    config, is_static = get_datasource_config_or_404(config_id, domain)
-    if config.is_deactivated:
-        config.is_deactivated = False
-        config.save()
-
-    messages.success(
-        request,
-        _('Table "{}" is now being recalculated. New data should start showing up soon').format(
-            config.display_name
-        )
-    )
-
-    recalculate_indicators.delay(config_id, request.user.username)
     return HttpResponseRedirect(reverse(
         EditDataSourceView.urlname, args=[domain, config._id]
     ))
@@ -1465,18 +1323,25 @@ def export_data_source(request, domain, config_id):
 @login_and_domain_required
 def data_source_status(request, domain, config_id):
     config, _ = get_datasource_config_or_404(config_id, domain)
-    return json_response({'isBuilt': config.meta.build.finished or config.meta.build.rebuilt_asynchronously})
+    build = config.meta.build
+    # there appears to be a way that these can be built, but not have initiated set
+    if build.initiated or build.initiated_in_place:
+        return JsonResponse({
+            'isBuilt': build.finished or build.rebuilt_asynchronously or build.finished_in_place
+        })
+
+    return JsonResponse({'isBuilt': True})
 
 
 def _get_report_filter(domain, report_id, filter_id):
     report = get_report_config_or_404(report_id, domain)[0]
     report_filter = report.get_ui_filter(filter_id)
     if report_filter is None:
-        raise Http404(_(u'Filter {} not found!').format(filter_id))
+        raise Http404(_('Filter {} not found!').format(filter_id))
     return report_filter
 
 
-def _is_location_safe_choice_list(view_fn, domain, report_id, filter_id, **view_kwargs):
+def _is_location_safe_choice_list(view_fn, request, domain, report_id, filter_id, **view_kwargs):
     return has_location_filter(view_fn, domain=domain, subreport_slug=report_id)
 
 
@@ -1508,3 +1373,93 @@ def _shared_context(domain):
         'reports': ReportConfiguration.by_domain(domain) + static_reports,
         'data_sources': DataSourceConfiguration.by_domain(domain) + static_data_sources,
     }
+
+
+class DataSourceSummaryView(BaseUserConfigReportsView):
+    urlname = 'summary_configurable_data_source'
+    template_name = "userreports/summary_data_source.html"
+    page_title = ugettext_lazy("Data Source Summary")
+
+    @property
+    def config_id(self):
+        return self.kwargs['config_id']
+
+    @property
+    @memoized
+    def config(self):
+        return get_datasource_config_or_404(self.config_id, self.domain)[0]
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=(self.domain, self.config_id,))
+
+    @property
+    def page_name(self):
+        return "Summary - {}".format(self.config.display_name)
+
+    @property
+    def page_context(self):
+        return {
+            'datasource_display_name': self.config.display_name,
+            'filter_summary': self.configured_filter_summary(),
+            'indicator_summary': self._add_links_to_output(self.indicator_summary()),
+            'named_expression_summary': self._add_links_to_output(self.named_expression_summary()),
+            'named_filter_summary': self._add_links_to_output(self.named_filter_summary()),
+            'named_filter_prefix': NAMED_FILTER_PREFIX,
+            'named_expression_prefix': NAMED_EXPRESSION_PREFIX,
+        }
+
+    def indicator_summary(self):
+        context = self.config.get_factory_context()
+        wrapped_specs = [
+            IndicatorFactory.from_spec(spec, context).wrapped_spec
+            for spec in self.config.configured_indicators
+        ]
+        return [
+            {
+                "column_id": wrapped.column_id,
+                "comment": wrapped.comment,
+                "readable_output": wrapped.readable_output(context)
+            }
+            for wrapped in wrapped_specs if wrapped
+        ]
+
+    def named_expression_summary(self):
+        return [
+            {
+                "name": name,
+                "comment": self.config.named_expressions[name].get('comment'),
+                "readable_output": str(exp)
+            }
+            for name, exp in self.config.named_expression_objects.items()
+        ]
+
+    def named_filter_summary(self):
+        return [
+            {
+                "name": name,
+                "comment": self.config.named_filters[name].get('comment'),
+                "readable_output": str(filter)
+            }
+            for name, filter in self.config.named_filter_objects.items()
+        ]
+
+    def configured_filter_summary(self):
+        return str(FilterFactory.from_spec(self.config.configured_filter,
+                                           context=self.config.get_factory_context()))
+
+    def _add_links_to_output(self, items):
+        def make_link(match):
+            value = match.group()
+            return '<a href="#{value}">{value}</a>'.format(value=value)
+
+        def add_links(content):
+            content = re.sub(r"{}:[A-Za-z0-9_-]+".format(NAMED_FILTER_PREFIX), make_link, content)
+            content = re.sub(r"{}:[A-Za-z0-9_-]+".format(NAMED_EXPRESSION_PREFIX), make_link, content)
+            return content
+
+        list = []
+        for i in items:
+            i['readable_output'] = add_links(i.get('readable_output'))
+            list.append(i)
+        return list

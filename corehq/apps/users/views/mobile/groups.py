@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from couchdbkit.exceptions import ResourceNotFound
 from django.contrib import messages
 from django.urls import reverse

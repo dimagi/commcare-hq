@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import fluff
 from casexml.apps.case.models import CommCareCase
 from corehq.fluff.calculators.case import CasePropertyFilter

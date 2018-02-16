@@ -1,13 +1,21 @@
-hqDefine("reminders/js/reminders.keywords.ko", function() {
+hqDefine("reminders/js/reminders.keywords.ko", [
+    "jquery",
+    "knockout",
+    "hqwebapp/js/initial_page_data",
+], function(
+    $,
+    ko,
+    initialPageData
+) {
     var KeywordActionsViewModel = function (initial_values) {
         'use strict';
         var self = this;
-    
+
         // load initial values
         self.keyword = ko.observable(initial_values.keyword);
         self.description = ko.observable(initial_values.description);
         self.override_open_sessions = ko.observable(initial_values.override_open_sessions);
-    
+
         self.sender_content_type = ko.observable(initial_values.sender_content_type);
         self.isMessageSMS = ko.computed(function () {
             return self.sender_content_type() === 'sms';
@@ -15,49 +23,49 @@ hqDefine("reminders/js/reminders.keywords.ko", function() {
         self.isMessageSurvey = ko.computed(function () {
             return self.sender_content_type() === 'survey';
         });
-    
+
         self.sender_message = ko.observable(initial_values.sender_message);
         self.sender_form_unique_id = ko.observable(initial_values.sender_form_unique_id);
         self.notify_others = ko.observable(initial_values.other_recipient_type !== 'none');
-    
+
         self.other_recipient_type = ko.observable(initial_values.other_recipient_type);
         self.showRecipientGroup = ko.computed(function () {
             return self.other_recipient_type() === 'USER_GROUP';
         });
-    
+
         self.other_recipient_id = ko.observable(initial_values.other_recipient_id);
         self.other_recipient_content_type = ko.observable(initial_values.other_recipient_content_type);
         self.notify_others = ko.computed(function () {
             return (self.other_recipient_content_type() === 'sms'
                 || self.other_recipient_content_type() === 'survey');
         });
-    
+
         self.other_recipient_message = ko.observable(initial_values.other_recipient_message);
         self.other_recipient_form_unique_id = ko.observable(initial_values.other_recipient_form_unique_id);
         self.process_structured_sms = ko.observable(initial_values.process_structured_sms);
         self.structured_sms_form_unique_id = ko.observable(initial_values.structured_sms_form_unique_id);
         self.use_custom_delimiter = ko.observable(initial_values.use_custom_delimiter);
         self.delimiter = ko.observable(initial_values.delimiter);
-    
+
         self.use_named_args = ko.observable(initial_values.use_named_args);
         self.use_named_args_separator = ko.observable(initial_values.use_named_args_separator);
         self.useJoiningCharacter = ko.computed(function () {
             return self.use_named_args() && self.use_named_args_separator();
         });
-    
+
         self.named_args = ko.observableArray((initial_values.named_args.length > 0) ? initial_values.named_args : [{"name" : "", "xpath" : ""}]);
         self.named_args_separator = ko.observable(initial_values.named_args_separator);
         self.example_structured_sms = ko.observable("");
-    
+
         self.init = function () {
             self.updateExampleStructuredSMS();
         };
-    
+
         self.addNamedArg = function() {
             self.named_args.push({"name" : "", "xpath" : ""});
             self.updateExampleStructuredSMS();
         };
-    
+
         self.removeNamedArg = function() {
             if(self.named_args().length === 1) {
                 alert("You must have at least one named answer.");
@@ -66,7 +74,7 @@ hqDefine("reminders/js/reminders.keywords.ko", function() {
             }
             self.updateExampleStructuredSMS();
         };
-    
+
         self.updateExampleStructuredSMS = function() {
             var named_args_separator = "";
             if (self.use_named_args_separator() && self.named_args_separator()) {
@@ -95,7 +103,7 @@ hqDefine("reminders/js/reminders.keywords.ko", function() {
     };
 
     $(function () {
-        var kvm = new KeywordActionsViewModel(hqImport("hqwebapp/js/initial_page_data").get("current_values"));
+        var kvm = new KeywordActionsViewModel(initialPageData.get("current_values"));
         $('#keywords-form').koApplyBindings(kvm);
         kvm.init();
     });

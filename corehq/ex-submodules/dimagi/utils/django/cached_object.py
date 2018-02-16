@@ -1,13 +1,11 @@
+from __future__ import absolute_import
 import hashlib
 import logging
 import os
 import simplejson
 from dimagi.utils.decorators.memoized import memoized
 
-try:
-    import cStringIO as StringIO
-except:
-    import StringIO
+import io
 
 from django.core import cache
 from PIL import Image, ImageOps
@@ -104,7 +102,7 @@ class CachedObjectMeta(dict):
         """
         Given the image object and the size key, prepare the metadata calculations
         image_obj: Image object
-        file_stream: StringIO stream
+        file_stream: io.BytesIO stream
         size_key: matching the image_size_map - if original calculate from the original file
         metadata: dict of attachment information taken from the couch _attachments dict
         """
@@ -206,7 +204,7 @@ class CachedObject(object):
     def fetch_stream(self, key):
         stream = self.rcache.get(self.stream_key(key))
         if stream is not None:
-            return StringIO.StringIO(stream)
+            return io.BytesIO(stream)
         else:
             return None
 
@@ -284,7 +282,7 @@ class CachedImage(CachedObject):
     def fetch_image(self, key):
         stream = self.rcache.get(self.stream_key(key))
         if stream is not None:
-            source_image_obj = Image.open(StringIO.StringIO(stream))
+            source_image_obj = Image.open(io.BytesIO(stream))
             return source_image_obj
         else:
             #if the stream is None, then that means that size is too big.
@@ -294,7 +292,7 @@ class CachedImage(CachedObject):
             for skey in IMAGE_SIZE_ORDERING[size_idx:]:
                 next_stream = self.rcache.get(self.stream_key(skey))
                 if next_stream is not None:
-                    source_image_obj = Image.open(StringIO.StringIO(next_stream))
+                    source_image_obj = Image.open(io.BytesIO(next_stream))
                     #will eventually return original
                     return source_image_obj
                 else:
@@ -351,7 +349,7 @@ class CachedImage(CachedObject):
                 mime_ext = CachedImageMeta.get_extension(source_meta.content_type)
 
                 #output to buffer
-                target_handle = StringIO.StringIO()
+                target_handle = io.BytesIO()
                 target_image_obj.save(target_handle, mime_ext)
                 target_handle.seek(0)
                 target_meta = CachedImageMeta.make_meta(target_handle, size_key, metadata={'content_type': source_meta.content_type})

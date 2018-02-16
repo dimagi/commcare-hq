@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from celery.schedules import crontab
 from celery.task import task, periodic_task
 from custom.ewsghana.alerts.ongoing_non_reporting import OnGoingNonReporting

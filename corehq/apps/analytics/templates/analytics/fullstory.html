@@ -1,8 +1,8 @@
-{% if FULLSTORY_ID and not request.project.restrict_superusers %}
+{% if ANALYTICS_IDS.FULLSTORY_ID and not request.project.restrict_superusers %}
 <script>
         window['_fs_debug'] = false;
         window['_fs_host'] = 'www.fullstory.com';
-        window['_fs_org'] = '{{ FULLSTORY_ID }}';
+        window['_fs_org'] = '{{ ANALYTICS_IDS.FULLSTORY_ID }}';
         (function(m,n,e,t,l,o,g,y){
             g=m[e]=function(a,b){g.q?g.q.push([a,b]):g._api(a,b);};g.q=[];
             o=n.createElement(t);o.async=1;o.src='https://'+_fs_host+'/s/fs.js';

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import jsonobject
 import requests
 from requests import HTTPError

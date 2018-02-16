@@ -2,25 +2,29 @@
 hqDefine("userreports/js/configurable_report", function() {
     var initial_page_data = hqImport("hqwebapp/js/initial_page_data").get;
 
-    var getStandardHQReport = function() {
+    var getStandardHQReport = function(isFirstLoad) {
         if (!initial_page_data("standardHQReport")) {
             return undefined;
         }
 
         var $editReportButton = $("#edit-report-link");
 
-        if (initial_page_data("created_by_builder")) {
+        if (initial_page_data("created_by_builder") && !isFirstLoad) {
             var $applyFiltersButton = $("#apply-filters"),
-                type = initial_page_data("builder_report_type");
-            $applyFiltersButton.click(function(){
-                window.analytics.usage("Report Viewer", "Apply Filters", type);
+                builder_type = initial_page_data("builder_report_type"),
+                report_type = initial_page_data("type");
+            $applyFiltersButton.click(function () {
+                var label = hqImport('hqwebapp/js/main').capitalize(builder_type) + '-' + hqImport('hqwebapp/js/main').capitalize(report_type);
+                hqImport('userreports/js/report_analytix').track.event("View Report Builder Report", label);
             });
-            window.analytics.trackWorkflowLink($editReportButton, "Clicked Edit to enter the Report Builder");
-            window.analytics.usage("Report Viewer", "View Report", type);
+            hqImport('userreports/js/report_analytix').track.event("Loaded Report Builder Report");
+            $editReportButton.click(function () {
+                hqImport('analytix/js/kissmetrix').track.event("RBv2 - Click Edit Report");
+            });
         }
 
         _.each(initial_page_data("report_builder_events"), function(e) {
-            window.analytics.usage.apply(this, e);
+            hqImport('userreports/js/report_analytix').track.event.apply(this, e);
         });
 
         // Poll the status of the data source
@@ -80,7 +84,7 @@ hqDefine("userreports/js/configurable_report", function() {
     };
 
     $(function() {
-        getStandardHQReport();
+        getStandardHQReport(true);
 
         // Bind the ReportConfigsViewModel to the save button.
         var defaultConfig = initial_page_data("default_config");
@@ -112,8 +116,7 @@ hqDefine("userreports/js/configurable_report", function() {
         });
 
         if (initial_page_data("created_by_builder")) {
-            window.analytics.usage(
-                    'Report Builder',
+            hqImport('userreports/js/report_analytix').track.event(
                     initial_page_data("builder_report_type"),
                     'Load a report that was built in report builder'
             );

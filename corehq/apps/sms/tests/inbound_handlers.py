@@ -1,15 +1,31 @@
+from __future__ import absolute_import
 from corehq.apps.hqcase.utils import update_case
 from corehq.apps.sms.api import incoming
 from corehq.apps.sms.models import WORKFLOW_KEYWORD
 from corehq.apps.sms.tests.util import TouchformsTestCase, time_parser
 from corehq.apps.reminders.models import (RECIPIENT_OWNER, RECIPIENT_USER_GROUP)
 from corehq.apps.sms.messages import *
-from corehq.apps.smsforms.app import submit_unfinished_form
 from corehq.apps.smsforms.models import SQLXFormsSession
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from datetime import date, time
+from mock import patch
 
 
+class MockContextManager(object):
+
+    def __enter__(self):
+        pass
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        pass
+
+
+def mock_critical_section_for_smsforms_sessions(contact_id):
+    return MockContextManager()
+
+
+@patch('corehq.apps.smsforms.util.critical_section_for_smsforms_sessions',
+       new=mock_critical_section_for_smsforms_sessions)
 class KeywordTestCase(TouchformsTestCase):
     """
     Must be run manually (see util.TouchformsTestCase)
@@ -297,8 +313,8 @@ class KeywordTestCase(TouchformsTestCase):
         self.assertFormQuestionEquals(form, "q_multi_select", "a c")
         self.assertFormQuestionEquals(form, "q_int", 50, cast=int)
         self.assertFormQuestionEquals(form, "q_float", 21.3, cast=float)
-        self.assertFormQuestionEquals(form, "q_long", -100, cast=long)
-        self.assertFormQuestionEquals(form, "q_date", date(2014, 1, 1))
+        self.assertFormQuestionEquals(form, "q_long", -100, cast=int)
+        self.assertFormQuestionEquals(form, "q_date", '2014-01-01')
         self.assertFormQuestionEquals(form, "q_time", time(23, 45), cast=time_parser)
 
         # Mobile worker creates a case via structured sms
@@ -380,8 +396,8 @@ class KeywordTestCase(TouchformsTestCase):
         self.assertFormQuestionEquals(form, "q_multi_select", "c")
         self.assertFormQuestionEquals(form, "q_int", 50, cast=int)
         self.assertFormQuestionEquals(form, "q_float", 21.3, cast=float)
-        self.assertFormQuestionEquals(form, "q_long", -100, cast=long)
-        self.assertFormQuestionEquals(form, "q_date", date(2014, 1, 1))
+        self.assertFormQuestionEquals(form, "q_long", -100, cast=int)
+        self.assertFormQuestionEquals(form, "q_date", '2014-01-01')
         self.assertFormQuestionEquals(form, "q_time", time(23, 45), cast=time_parser)
 
         # Test validation on all fields from structured sms: positional args with custom delimiter
@@ -430,8 +446,8 @@ class KeywordTestCase(TouchformsTestCase):
         self.assertFormQuestionEquals(form, "q_multi_select", "a c")
         self.assertFormQuestionEquals(form, "q_int", 50, cast=int)
         self.assertFormQuestionEquals(form, "q_float", 21.3, cast=float)
-        self.assertFormQuestionEquals(form, "q_long", -100, cast=long)
-        self.assertFormQuestionEquals(form, "q_date", date(2014, 1, 1))
+        self.assertFormQuestionEquals(form, "q_long", -100, cast=int)
+        self.assertFormQuestionEquals(form, "q_date", '2014-01-01')
         self.assertFormQuestionEquals(form, "q_time", time(23, 45), cast=time_parser)
 
         # Test validation on all fields from structured sms: named args with custom delimiter
@@ -480,8 +496,8 @@ class KeywordTestCase(TouchformsTestCase):
         self.assertFormQuestionEquals(form, "q_multi_select", "a c")
         self.assertFormQuestionEquals(form, "q_int", 50, cast=int)
         self.assertFormQuestionEquals(form, "q_float", 21.3, cast=float)
-        self.assertFormQuestionEquals(form, "q_long", -100, cast=long)
-        self.assertFormQuestionEquals(form, "q_date", date(2014, 1, 1))
+        self.assertFormQuestionEquals(form, "q_long", -100, cast=int)
+        self.assertFormQuestionEquals(form, "q_date", '2014-01-01')
         self.assertFormQuestionEquals(form, "q_time", time(23, 45), cast=time_parser)
 
         # Test validation on all fields from structured sms: named args with custom delimiter and joining character
@@ -530,8 +546,8 @@ class KeywordTestCase(TouchformsTestCase):
         self.assertFormQuestionEquals(form, "q_multi_select", "a c")
         self.assertFormQuestionEquals(form, "q_int", 50, cast=int)
         self.assertFormQuestionEquals(form, "q_float", 21.3, cast=float)
-        self.assertFormQuestionEquals(form, "q_long", -100, cast=long)
-        self.assertFormQuestionEquals(form, "q_date", date(2014, 1, 1))
+        self.assertFormQuestionEquals(form, "q_long", -100, cast=int)
+        self.assertFormQuestionEquals(form, "q_date", '2014-01-01')
         self.assertFormQuestionEquals(form, "q_time", time(23, 45), cast=time_parser)
 
         # Test leaving fields blank via structured sms
@@ -742,6 +758,8 @@ class KeywordTestCase(TouchformsTestCase):
         self.assertLastOutboundSMSEquals(self.user2, "Default SMS Response")
 
 
+@patch('corehq.apps.smsforms.util.critical_section_for_smsforms_sessions',
+       new=mock_critical_section_for_smsforms_sessions)
 class PartialFormSubmissionTestCase(TouchformsTestCase):
     """
     Must be run manually (see util.TouchformsTestCase)
@@ -777,7 +795,10 @@ class PartialFormSubmissionTestCase(TouchformsTestCase):
         incoming("999123", "mod pid123", "TEST")
         incoming("999123", "2", "TEST")
         session = self.get_open_session(self.user)
-        submit_unfinished_form(session.session_id, include_case_side_effects=True)
+        session.submit_partially_completed_forms = True
+        session.include_case_updates_in_partial_submissions = True
+        session.close()
+        session.save()
 
         form = self.get_last_form_submission()
         self.assertFormQuestionEquals(form, "arm", "arm_b")
@@ -787,15 +808,17 @@ class PartialFormSubmissionTestCase(TouchformsTestCase):
         case = self.get_case("pid123")
         self.assertCasePropertyEquals(case, "arm", "arm_b")
 
-        session = SQLXFormsSession.objects.get(pk=session.pk)
-        self.assertFalse(session.is_open)
+        self.assertFalse(session.session_is_open)
         self.assertEqual(session.submission_id, form.form_id)
 
         # Start a modify form, and submit a partial submission without case side effects
         incoming("999123", "mod pid123", "TEST")
         incoming("999123", "1", "TEST")
         session = self.get_open_session(self.user)
-        submit_unfinished_form(session.session_id, include_case_side_effects=False)
+        session.submit_partially_completed_forms = True
+        session.include_case_updates_in_partial_submissions = False
+        session.close()
+        session.save()
 
         form = self.get_last_form_submission()
         self.assertFormQuestionEquals(form, "arm", "arm_a")
@@ -805,6 +828,5 @@ class PartialFormSubmissionTestCase(TouchformsTestCase):
         case = self.get_case("pid123")
         self.assertCasePropertyEquals(case, "arm", "arm_b")
 
-        session = SQLXFormsSession.objects.get(pk=session.pk)
-        self.assertFalse(session.is_open)
+        self.assertFalse(session.session_is_open)
         self.assertEqual(session.submission_id, form.form_id)

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from datetime import datetime
 from uuid import uuid4
 
@@ -7,7 +8,10 @@ from django.test import TestCase, override_settings
 
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from custom.enikshay.tests.utils import ENikshayCaseStructureMixin, ENikshayLocationStructureMixin
-from custom.enikshay.exceptions import NikshayLocationNotFound
+from custom.enikshay.exceptions import (
+    ENikshayCaseNotFound,
+    NikshayLocationNotFound,
+)
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 
 from custom.enikshay.case_utils import (
@@ -24,13 +28,18 @@ from custom.enikshay.case_utils import (
     get_open_referral_case_from_person,
     get_fulfilled_prescription_vouchers_from_episode,
     get_private_diagnostic_test_cases_from_episode,
+    get_person_case_from_lab_referral,
+    get_person_case_from_prescription,
+    get_person_case_from_referral,
+    get_person_case_from_trail,
+    get_person_case_from_prescription_item,
 )
 
 from casexml.apps.case.const import ARCHIVED_CASE_OWNER_ID
 
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
-class ENikshayCaseUtilsTests(ENikshayCaseStructureMixin, TestCase):
+class ENikshayCaseUtilsTests(ENikshayCaseStructureMixin, ENikshayLocationStructureMixin, TestCase):
     @classmethod
     def setUpClass(cls):
         super(ENikshayCaseUtilsTests, cls).setUpClass()
@@ -100,9 +109,50 @@ class ENikshayCaseUtilsTests(ENikshayCaseStructureMixin, TestCase):
             self.person_id
         )
 
+    def test_get_person_case_from_occurrence_with_deleted_person(self):
+        CaseAccessors(self.domain).soft_delete_cases([self.person_id])
+        with self.assertRaises(ENikshayCaseNotFound):
+            get_person_case_from_occurrence(self.domain, self.occurrence_id)
+
     def test_get_person_case_from_episode(self):
         self.assertEqual(
             get_person_case_from_episode(self.domain, self.episode_id).case_id,
+            self.person_id
+        )
+
+    def test_get_person_case_from_lab_referral(self):
+        self.create_lab_referral_case()
+        self.assertEqual(
+            get_person_case_from_lab_referral(self.domain, self.lab_referral_id).case_id,
+            self.person_id
+        )
+
+    def test_get_person_case_from_prescription(self):
+        self.create_prescription_case(prescription_id=self.prescription_id)
+        self.assertEqual(
+            get_person_case_from_prescription(self.domain, self.prescription_id).case_id,
+            self.person_id
+        )
+
+    def test_get_person_case_from_prescription_item(self):
+        self.create_prescription_case(prescription_id=self.prescription_id)
+        self.create_prescription_item_case(self.prescription_id, self.prescription_item_id)
+        self.assertEqual(
+            get_person_case_from_prescription_item(self.domain, self.prescription_item_id).case_id,
+            self.person_id
+        )
+
+    def test_get_person_case_from_referral(self):
+        self.create_referral_case(self.referral_id)
+        self.assertEqual(
+            get_person_case_from_referral(self.domain, self.referral_id).case_id,
+            self.person_id
+        )
+
+    def test_get_person_case_from_trail(self):
+        self.create_trail_case()
+        self.assertEqual(
+            get_person_case_from_trail(self.domain, self.trail_id).case_id,
             self.person_id
         )
 

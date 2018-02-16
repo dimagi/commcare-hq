@@ -1,14 +1,16 @@
+from __future__ import absolute_import
+from __future__ import unicode_literals
 from collections import namedtuple, OrderedDict
 from itertools import chain
 import json
 import uuid
+from django.conf import settings
 from django import forms
 from django.forms import Widget
 from django.forms.utils import flatatt
-from django.template.loader import render_to_string
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
+from django.utils.translation import ugettext as _
 from corehq.apps.app_manager.app_schemas.case_properties import get_case_properties
 
 from corehq.apps.userreports.reports.builder.columns import (
@@ -55,6 +57,7 @@ from corehq.apps.userreports.sql import get_column_name
 from corehq.apps.userreports.ui.fields import JsonField
 from corehq.apps.userreports.util import has_report_builder_access
 from dimagi.utils.decorators.memoized import memoized
+import six
 
 # This dict maps filter types from the report builder frontend to UCR filter types
 REPORT_BUILDER_FILTER_TYPE_MAP = {
@@ -73,6 +76,11 @@ STATIC_CASE_PROPS = [
     "user_id",
 ]
 
+# PostgreSQL limit = 1600. Sane limit = 500?
+MAX_COLUMNS = 500
+TEMP_DATA_SOURCE_LIFESPAN = 24 * 60 * 60
+SAMPLE_DATA_MAX_ROWS = 100
+
 
 class FilterField(JsonField):
     """
@@ -83,7 +91,7 @@ class FilterField(JsonField):
     def validate(self, value):
         super(FilterField, self).validate(value)
         for filter_conf in value:
-            if filter_conf.get('format', None) not in REPORT_BUILDER_FILTER_TYPE_MAP.keys() + [""]:
+            if filter_conf.get('format', None) not in (list(REPORT_BUILDER_FILTER_TYPE_MAP) + [""]):
                 raise forms.ValidationError("Invalid filter format!")
 
 
@@ -100,14 +108,14 @@ class Select2(Widget):
 
     def render(self, name, value, attrs=None, choices=()):
         self.value = '' if value is None else value
-        final_attrs = self.build_attrs(attrs, name=name)
+        final_attrs = self.build_attrs(attrs, extra_attrs={'name': name})
 
         return format_html(
-            u'<input{final_attrs} type="text" value="{value}" data-bind="select2: {choices}, {ko_binding}">',
+            '<input{final_attrs} type="text" value="{value}" data-bind="select2: {choices}, {ko_binding}">',
             final_attrs=flatatt(final_attrs),
             value=self.value,
             choices=json.dumps(self._choices_for_binding(choices)),
-            ko_binding=u"value: {}".format(self.ko_value) if self.ko_value else "",
+            ko_binding="value: {}".format(self.ko_value) if self.ko_value else "",
         )
 
     def _choices_for_binding(self, choices):
@@ -127,10 +135,10 @@ class QuestionSelect(Widget):
 
     def render(self, name, value, attrs=None, choices=()):
         self.value = '' if value is None else value
-        final_attrs = self.build_attrs(attrs, name=name)
+        final_attrs = self.build_attrs(attrs, extra_attrs={'name': name})
 
         return format_html(
-            u"""
+            """
             <input{final_attrs} value="{value}" data-bind='
                questionsSelect: {choices},
                optionsCaption: " ",
@@ -262,6 +270,10 @@ class DataSourceProperty(object):
         }
         if configuration['format'] == 'Date':
             filter.update({'compare_as_string': True})
+        if filter_format == 'dynamic_choice_list' and self._id == COMPUTED_OWNER_NAME_PROPERTY_ID:
+            filter.update({"choice_provider": {"type": "owner"}})
+        if filter_format == 'dynamic_choice_list' and self._id == COMPUTED_USER_NAME_PROPERTY_ID:
+            filter.update({"choice_provider": {"type": "user"}})
         if configuration.get('pre_value') or configuration.get('pre_operator'):
             filter.update({
                 'type': 'pre',  # type could have been "date"
@@ -301,8 +313,8 @@ class DataSourceBuilder(object):
             self.source_xform = XForm(self.source_form.source)
         if self.source_type == 'case':
             prop_map = get_case_properties(
-                self.app, [self.source_id], defaults=DEFAULT_CASE_PROPERTY_DATATYPES.keys(),
-                include_parent_properties=False
+                self.app, [self.source_id], defaults=list(DEFAULT_CASE_PROPERTY_DATATYPES),
+                include_parent_properties=True,
             )
             self.case_properties = sorted(set(prop_map[self.source_id]) | {'closed'})
 
@@ -387,47 +399,43 @@ class DataSourceBuilder(object):
         Return a list of indicators to be used in a data source configuration that supports the given columns and
         indicators.
         :param columns: A list of objects representing columns in the report.
-            Each object has a "property" and "aggregation" key
+            Each object has a "property" and "calculation" key
         :param filters: A list of filter configuration objects
         """
-        indicators = []
+
+        indicators = OrderedDict()
         for column in columns:
-            column_option = self.report_column_options[column['property']]
-            indicators.extend(column_option.get_indicators(column['aggregation'], is_multiselect_chart_report))
+            # Property is only set if the column exists in report_column_options
+            if column['property']:
+                column_option = self.report_column_options[column['property']]
+                for indicator in column_option.get_indicators(column['calculation'],
+                                                              is_multiselect_chart_report):
+                    indicators.setdefault(str(indicator), indicator)
 
-        for filter in filters:
-            property = self.data_source_properties[filter['property']]
-            indicator = property.to_report_filter_indicator(filter)
-            indicators.append(indicator)
+        for filter_ in filters:
+            # Property is only set if the filter exists in report_column_options
+            if filter_['property']:
+                property_ = self.data_source_properties[filter_['property']]
+                indicator = property_.to_report_filter_indicator(filter_)
+                indicators.setdefault(str(indicator), indicator)
 
-        # remove duplicates
-        # There can be duplicates because filters and columns could be based on the same property
-        indicators_without_dups = []
-        seen_indicator_ids = set()
-        for i in indicators:
-            if (i['column_id'], i['type']) not in seen_indicator_ids:
-                indicators_without_dups.append(i)
-                seen_indicator_ids.add((i['column_id'], i['type']))
-        indicators = indicators_without_dups
+        return list(indicators.values())
 
-        return indicators
+    def all_possible_indicators(self, required_columns, required_filters):
+        """
+        Will generate a set of possible indicators for the datasource making sure to include the
+        provided columns and filters
+        """
+        indicators = OrderedDict()
+        for i in self.indicators(required_columns, required_filters):
+            indicators.setdefault(str(i), i)
 
-    def all_possible_indicators(self):
-        indicators = []
         for column_option in self.report_column_options.values():
             for agg in column_option.aggregation_options:
-                indicators.extend(column_option.get_indicators(agg))
+                for indicator in column_option.get_indicators(agg):
+                    indicators.setdefault(str(indicator), indicator)
 
-        # Remove duplicates
-        return_list = []
-        return_list_set = set()
-        for indicator in indicators:
-            as_hashable = str(indicator)
-            if as_hashable not in return_list_set:
-                return_list.append(indicator)
-                return_list_set.add(as_hashable)
-
-        return return_list
+        return list(indicators.values())[:MAX_COLUMNS]
 
     @property
     @memoized
@@ -575,7 +583,7 @@ class DataSourceBuilder(object):
     @memoized
     def report_column_options(self):
         options = OrderedDict()
-        for id_, prop in self.data_source_properties.iteritems():
+        for id_, prop in six.iteritems(self.data_source_properties):
             options[id_] = prop.to_report_column_option()
 
         # NOTE: Count columns aren't useful for table reports. But we need it in the column options because
@@ -590,19 +598,41 @@ class DataSourceBuilder(object):
     @memoized
     def data_source_name(self):
         if self.source_type == 'form':
-            return u"{} (v{})".format(self.source_form.default_name(), self.app.version)
+            return "{} (v{})".format(self.source_form.default_name(), self.app.version)
         if self.source_type == 'case':
-            return u"{} (v{})".format(self.source_id, self.app.version)
+            return "{} (v{})".format(self.source_id, self.app.version)
 
+    def _ds_config_kwargs(self, indicators, is_multiselect_chart_report=False, multiselect_field=None):
+        if is_multiselect_chart_report:
+            base_item_expression = self.base_item_expression(True, multiselect_field)
+        else:
+            base_item_expression = self.base_item_expression(False)
 
-def _legend(title, subtext):
-    """
-    Return a string to be used in a crispy form Fieldset legend.
-    This function is just a light wrapped around some simple templating.
-    """
-    return u'{title}</br><div class="subtext"><small>{subtext}</small></div>'.format(
-        title=title, subtext=subtext
-    )
+        return dict(
+            display_name=self.data_source_name,
+            referenced_doc_type=self.source_doc_type,
+            configured_filter=self.filter,
+            configured_indicators=indicators,
+            base_item_expression=base_item_expression,
+            meta=DataSourceMeta(build=DataSourceBuildInformation(
+                source_id=self.source_id,
+                app_id=self.app._id,
+                app_version=self.app.version,
+            ))
+        )
+
+    def get_temp_ds_config_kwargs(self, required_columns, required_filters):
+        indicators = self.all_possible_indicators(required_columns, required_filters)
+        return self._ds_config_kwargs(indicators)
+
+    def get_ds_config_kwargs(self, columns, filters,
+                             is_multiselect_chart_report=False, multiselect_field=None):
+        indicators = self.indicators(
+            columns,
+            filters,
+            is_multiselect_chart_report
+        )
+        return self._ds_config_kwargs(indicators, is_multiselect_chart_report, multiselect_field)
 
 
 class DataSourceForm(forms.Form):
@@ -663,6 +693,7 @@ class DataSourceForm(forms.Form):
                 StrictButton(
                     _('Next'),
                     type="submit",
+                    css_id='js-next-data-source',
                     css_class="btn-primary",
                 )
             ),
@@ -683,7 +714,7 @@ class DataSourceForm(forms.Form):
         cleaned_data = super(DataSourceForm, self).clean()
 
         existing_reports = ReportConfiguration.by_domain(self.domain)
-        builder_reports = filter(lambda report: report.report_meta.created_by_builder, existing_reports)
+        builder_reports = [report for report in existing_reports if report.report_meta.created_by_builder]
         if has_report_builder_access(self.domain) and len(builder_reports) >= self.max_allowed_reports:
             # Don't show the warning when domain does not have report buidler access, because this is just a
             # preview and the report will not be saved.
@@ -710,7 +741,6 @@ class ConfigureNewReportBase(forms.Form):
     default_filters = FilterField(required=False)
     report_title = forms.CharField(widget=forms.HiddenInput, required=False)
     report_description = forms.CharField(widget=forms.HiddenInput, required=False)
-    button_text = ugettext_noop('Done')
 
     def __init__(self, report_name, app_id, source_type, report_source_id, existing_report=None, *args, **kwargs):
         """
@@ -722,7 +752,6 @@ class ConfigureNewReportBase(forms.Form):
 
         if self.existing_report:
             self._bootstrap(self.existing_report)
-            self.button_text = _('Update Report')
         else:
             self.report_name = report_name
             assert source_type in ['case', 'form']
@@ -745,29 +774,6 @@ class ConfigureNewReportBase(forms.Form):
                 for i in indicators:
                     self._report_columns_by_column_id[i['column_id']] = column
 
-
-        # NOTE: The corresponding knockout view model is defined in:
-        #       templates/userreports/reportbuilder/configure_report.html
-        self.helper = FormHelper()
-        self.helper.form_class = "form form-horizontal form-config-report"
-        self.helper.label_class = 'col-sm-3 col-md-2 col-lg-2'
-        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
-        self.helper.attrs['data_bind'] = "submit: submitHandler"
-        self.helper.form_id = "report-config-form"
-
-        buttons = [
-            StrictButton(
-                _(self.button_text),
-                css_class="btn btn-primary disable-on-submit",
-                type="submit",
-            )
-        ]
-        # Add a back button if we aren't editing an existing report
-        self.helper.layout = crispy.Layout(
-            self.container_fieldset,
-            hqcrispy.FormActions(crispy.ButtonHolder(*buttons)),
-        )
-
     def _bootstrap(self, existing_report):
         """
         Use an existing report to initialize some of the instance variables of this
@@ -789,117 +795,26 @@ class ConfigureNewReportBase(forms.Form):
             ))
 
     @property
-    def column_config_template(self):
-        return render_to_string('userreports/partials/property_list_configuration.html')
-
-    @property
-    def container_fieldset(self):
-        """
-        Return the first fieldset in the form.
-        """
-        return crispy.Div(
-            self.user_filter_fieldset
-        )
-
-    @property
-    def validation_error_text(self):
-        return crispy.HTML(
-            """<div class="alert alert-danger"
-                    data-bind="text: validationErrorText,
-                               visible: showValidationError">
-               </div>"""
-        )
-
-    @property
-    def user_filter_fieldset(self):
-        """
-        Return a fieldset representing the markup used for configuring the
-        user filters.
-        """
-        return crispy.Fieldset(
-            _legend(
-                _("User Filters"),
-                _("Add filters to your report to allow viewers to select which data the report will display. "
-                  "These filters will be displayed at the top of your report.")
-            ),
-            crispy.Div(
-                crispy.HTML(self.column_config_template),
-                id="user-filters-table",
-                data_bind='with: userFiltersList'
-            ),
-            crispy.Hidden('user_filters', None, data_bind="value: userFiltersList.serializedProperties")
-        )
-
-    @property
-    def default_filter_fieldset(self):
-        """
-        Return a fieldset representing the markup used for configuring the
-        default filters.
-        """
-        return crispy.Fieldset(
-            _legend(
-                _("Default Filters"),
-                _("These filters are not displayed to report viewers and are always applied to the data.")
-            ),
-            crispy.Div(
-                crispy.HTML(self.column_config_template),
-                id="default-filters-table",
-                data_bind='with: defaultFiltersList'
-            ),
-            crispy.Hidden('default_filters', None, data_bind="value: defaultFiltersList.serializedProperties")
-        )
-
-    @property
     def _configured_columns(self):
         """
         To be used by DataSourceBuilder.indicators()
         """
-        configured_columns = [
-            {
-                "property": c['property'],
-                "aggregation": c['calculation'],
-            }
-            for c in self.cleaned_data['columns']
-        ]
-        configured_columns += [
-            {
-                "property": c,
-                "aggregation": "Group By"
-            }
-            for c in self.cleaned_data.get('group_by', [])
-        ]
+        configured_columns = self.cleaned_data['columns']
         location = self.cleaned_data.get("location")
         if location:
             configured_columns += [{
                 "property": location,
-                "aggregation": "simple"  # Not aggregated
+                "calculation": "simple"  # Not aggregated
             }]
         return configured_columns
 
     def _get_data_source_configuration_kwargs(self):
-        if self._is_multiselect_chart_report:
-            base_item_expression = self.ds_builder.base_item_expression(True, self.cleaned_data['group_by'][0])
-        else:
-            base_item_expression = self.ds_builder.base_item_expression(False)
-
-        # We need the the column configurations that were selected by the user to determine the data source
-        # indicators.
-        return dict(
-            display_name=self.ds_builder.data_source_name,
-            referenced_doc_type=self.ds_builder.source_doc_type,
-            configured_filter=self.ds_builder.filter,
-            configured_indicators=self.ds_builder.indicators(
-                self._configured_columns,
-                self.cleaned_data['user_filters'] + self.cleaned_data['default_filters'],
-                self._is_multiselect_chart_report
-            ),
-            base_item_expression=base_item_expression,
-            meta=DataSourceMeta(build=DataSourceBuildInformation(
-                source_id=self.report_source_id,
-                app_id=self.app._id,
-                app_version=self.app.version,
-            ))
-        )
+        filters = self.cleaned_data['user_filters'] + self.cleaned_data['default_filters']
+        ms_field = self._report_aggregation_cols[0] if self._is_multiselect_chart_report else None
+        return self.ds_builder.get_ds_config_kwargs(self._configured_columns,
+                                                    filters,
+                                                    self._is_multiselect_chart_report,
+                                                    ms_field)
 
     def _build_data_source(self):
         data_source_config = DataSourceConfiguration(
@@ -929,7 +844,7 @@ class ConfigureNewReportBase(forms.Form):
                 self._is_multiselect_chart_report,
             )
             if data_source.configured_indicators != indicators:
-                for property_name, value in self._get_data_source_configuration_kwargs().iteritems():
+                for property_name, value in six.iteritems(self._get_data_source_configuration_kwargs()):
                     setattr(data_source, property_name, value)
                 data_source.save()
                 tasks.rebuild_indicators.delay(data_source._id)
@@ -970,13 +885,14 @@ class ConfigureNewReportBase(forms.Form):
         report.save()
         return report
 
-    def create_temp_report(self, data_source_id):
+    def create_temp_report(self, data_source_id, username):
         """
-        Creates and saves a report config.
+        Updates the datasource then creates and saves a report config.
 
         :raises BadSpecError if report is invalid
         """
 
+        self._update_temp_datasource(data_source_id, username)
         report = ReportConfiguration(
             domain=self.domain,
             config_id=data_source_id,
@@ -994,6 +910,77 @@ class ConfigureNewReportBase(forms.Form):
         report.validate()
         report.save()
         return report
+
+    def create_temp_data_source(self, username):
+        """
+        Build a temp datasource and return the ID
+        """
+
+        filters = [f._asdict() for f in self.initial_user_filters + self.initial_default_filters]
+        columns = [c._asdict() for c in self.initial_columns]
+
+        data_source_config = DataSourceConfiguration(
+            domain=self.domain,
+            table_id=_clean_table_name(self.domain, uuid.uuid4().hex),
+            **self.ds_builder.get_temp_ds_config_kwargs(columns, filters)
+        )
+        data_source_config.validate()
+        data_source_config.save()
+
+        # expire the data source
+        always_eager = hasattr(settings, "CELERY_ALWAYS_EAGER") and settings.CELERY_ALWAYS_EAGER
+        # CELERY_ALWAYS_EAGER will cause the data source to be deleted immediately. Switch it off temporarily
+        settings.CELERY_ALWAYS_EAGER = False
+        tasks.delete_data_source_task.apply_async(
+            (self.domain, data_source_config._id),
+            countdown=TEMP_DATA_SOURCE_LIFESPAN
+        )
+        settings.CELERY_ALWAYS_EAGER = always_eager
+
+        tasks.rebuild_indicators(data_source_config._id,
+                                 username,
+                                 limit=SAMPLE_DATA_MAX_ROWS)  # Do synchronously
+        self._filter_data_source_changes(data_source_config._id)
+        return data_source_config._id
+
+    @staticmethod
+    def _filter_data_source_changes(data_source_config_id):
+        """
+        Add filter to data source to prevent it from being updated by DB changes
+        """
+        # Reload using the ID instead of just passing in the object to avoid ResourceConflicts
+        data_source_config = DataSourceConfiguration.get(data_source_config_id)
+        data_source_config.configured_filter = {
+            # An expression that is always false:
+            "type": "boolean_expression",
+            "operator": "eq",
+            "expression": 1,
+            "property_value": 2,
+        }
+        data_source_config.validate()
+        data_source_config.save()
+
+    def _update_temp_datasource(self, data_source_config_id, username):
+        data_source_config = DataSourceConfiguration.get(data_source_config_id)
+
+        filters = self.cleaned_data['user_filters'] + self.cleaned_data['default_filters']
+        required_column_set = set([c["column_id"]
+                                   for c in self.ds_builder.indicators(self._configured_columns, filters)])
+        current_column_set = set([c["column_id"] for c in data_source_config.configured_indicators])
+        missing_columns = [c for c in required_column_set if c not in current_column_set]
+
+        # rebuild the table
+        if missing_columns:
+            temp_config = self.ds_builder.get_temp_ds_config_kwargs(self._configured_columns, filters)
+            data_source_config.configured_indicators = temp_config["configured_indicators"]
+            data_source_config.configured_filter = temp_config["configured_filter"]
+            data_source_config.base_item_expression = temp_config["base_item_expression"]
+            data_source_config.validate()
+            data_source_config.save()
+            tasks.rebuild_indicators(data_source_config._id,
+                                     username,
+                                     limit=SAMPLE_DATA_MAX_ROWS)  # Do synchronously
+            self._filter_data_source_changes(data_source_config._id)
 
     @property
     @memoized
@@ -1050,14 +1037,15 @@ class ConfigureNewReportBase(forms.Form):
         the knockout view model representing this filter in the report builder.
 
         """
-        exists = self._column_exists(filter['field'])
+        field = filter['field']
+        field, exists = self._check_and_update_column(field)
         if filter['type'] == 'pre':
             return DefaultFilterViewModel(
                 exists_in_current_version=exists,
                 display_text='',
                 format='Value' if filter['pre_value'] else 'Date',
-                property=self._get_property_id_by_indicator_id(filter['field']) if exists else None,
-                data_source_field=filter['field'] if not exists else None,
+                property=self._get_property_id_by_indicator_id(field) if exists else None,
+                data_source_field=field if not exists else None,
                 pre_value=filter['pre_value'],
                 pre_operator=filter['pre_operator'],
             )
@@ -1073,8 +1061,8 @@ class ConfigureNewReportBase(forms.Form):
                 exists_in_current_version=exists,
                 display_text=filter['display'],
                 format=filter_type_map[filter['type']],
-                property=self._get_property_id_by_indicator_id(filter['field']) if exists else None,
-                data_source_field=filter['field'] if not exists else None
+                property=self._get_property_id_by_indicator_id(field) if exists else None,
+                data_source_field=field if not exists else None
             )
 
     def _get_column_option_by_indicator_id(self, indicator_column_id):
@@ -1101,28 +1089,30 @@ class ConfigureNewReportBase(forms.Form):
         if column:
             return column.get_property()
 
-    def _column_exists(self, column_id):
+    def _check_and_update_column(self, column_id):
         """
-        Return True if this column corresponds to a question/case property in
-        the current version of this form/case configuration.
+        :param column_id: a string like "data_date_q_d1b3693e"
 
-        This could be true if a user makes a report, modifies the app, then
-        edits the report.
+        :return: (column_id, exists) tuple where:
 
-        column_id is a string like "data_date_q_d1b3693e"
+            column_id is the valid column id. If the column is from version 1
+            of the report builder, it will be converted to the current version.
+
+            exists = True if column corresponds to a question/case property in
+            the current version of this form/case configuration. May be False
+            if the user makes a report, modifies the app, then edits the report.
         """
-        return column_id in self._report_columns_by_column_id
+        if column_id in self._report_columns_by_column_id:
+            return column_id, True
 
-    def _convert_v1_column_id_to_current_format(self, column_id):
-        """
-        Assuming column_id does not exist, assume it's from version 1 of the report builder, and attempt to convert
-        it to the current version.
+        # This is needed because previously hidden value questions and case
+        # property columns didn't have a datatype in their ids, but the builder
+        # now expects that, so this attempts to just append a datatype.
+        possibly_corrected_column_id = column_id + "_string"
+        if possibly_corrected_column_id in self._report_columns_by_column_id:
+            return possibly_corrected_column_id, True
 
-        This is needed because previously hidden value questions and case property columns didn't have a datatype
-        in their ids, but the builder now expects that, so this attempts to just append a datatype.
-        """
-        return column_id + "_string"
-
+        return column_id, False
 
     def _get_multiselect_indicator_id(self, column_field, indicators):
         """
@@ -1191,44 +1181,6 @@ class ConfigureListReportForm(ConfigureNewReportBase):
         required=False,
         widget=forms.HiddenInput,
     )
-    column_legend_fine_print = ugettext_noop(
-        u"Add columns to your report to display information from cases or form submissions. You may rearrange the "
-        u"order of the columns by dragging the arrows next to the column."
-    )
-
-    @property
-    def container_fieldset(self):
-        source_name = ''
-        if self.source_type == 'case':
-            source_name = self.report_source_id
-        if self.source_type == 'form':
-            source_name = Form.get_form(self.report_source_id).default_name()
-        return crispy.Div(
-            crispy.Fieldset(
-                _legend(
-                    _("Rows"),
-                    _('This report will show one row for each {name} {source}').format(
-                        name=source_name, source=self.source_type
-                    )
-                )
-            ),
-            self.column_fieldset,
-            self.user_filter_fieldset,
-            self.default_filter_fieldset,
-            self.validation_error_text,
-        )
-
-    @property
-    def column_fieldset(self):
-        return crispy.Fieldset(
-            _legend(_("Columns"), _(self.column_legend_fine_print)),
-            crispy.Div(
-                crispy.HTML(self.column_config_template),
-                id="columns-table",
-                data_bind='with: columnsList'
-            ),
-            hqcrispy.B3HiddenFieldWithErrors('columns', data_bind="value: columnsList.serializedProperties"),
-        )
 
     @property
     @memoized
@@ -1249,12 +1201,7 @@ class ConfigureListReportForm(ConfigureNewReportBase):
                 indicator_id = mselect_indicator_id or c['field']
                 display = c['display']
                 agg = c.get("aggregation")
-                exists = self._column_exists(indicator_id)
-                if not exists:
-                    possibly_corrected_column_id = self._convert_v1_column_id_to_current_format(indicator_id)
-                    if self._column_exists(possibly_corrected_column_id):
-                        exists = True
-                        indicator_id = possibly_corrected_column_id
+                indicator_id, exists = self._check_and_update_column(indicator_id)
 
                 if mselect_indicator_id:
                     if mselect_indicator_id not in added_multiselect_columns:
@@ -1337,21 +1284,19 @@ class ConfigureListReportForm(ConfigureNewReportBase):
             data_source_field=prop.to_report_column_option().get_indicator(COUNT_PER_CHOICE)['column_id'],
             calculation=COUNT_PER_CHOICE
         ))
-        for prop in self.data_source_properties.values():
-            questions_found = 0
-            if prop.get_type() == PROPERTY_TYPE_QUESTION:
-                questions_found += 1
-                cols.append(ColumnViewModel(
-                    display_text=prop.get_text(),
-                    exists_in_current_version=True,
-                    property=prop.get_id(),
-                    data_source_field=prop.get_id(),
-                    calculation=COUNT_PER_CHOICE,
-                ))
-                if questions_found == 4:
-                    break
+        questions = [p for p in self.data_source_properties.values()
+                     if p.get_type() == PROPERTY_TYPE_QUESTION]
+        if len(questions) > 9:
+            questions = questions[:9]
+        for q in questions:
+            cols.append(ColumnViewModel(
+                display_text=q.get_text(),
+                exists_in_current_version=True,
+                property=q.get_id(),
+                data_source_field=q.get_id(),
+                calculation=COUNT_PER_CHOICE,
+            ))
         return cols
-
 
     @property
     def _report_columns(self):
@@ -1359,7 +1304,7 @@ class ConfigureListReportForm(ConfigureNewReportBase):
         for i, conf in enumerate(self.cleaned_data['columns']):
             columns.extend(
                 self.ds_builder.report_column_options[conf['property']].to_column_dicts(
-                    i, conf['display_text'], "simple"
+                    i, conf.get('display_text', conf['property']), "simple"
                 )
             )
         return columns
@@ -1371,64 +1316,22 @@ class ConfigureListReportForm(ConfigureNewReportBase):
 
 class ConfigureTableReportForm(ConfigureListReportForm):
     report_type = 'table'
-    column_legend_fine_print = ugettext_noop(
-        u'Add columns for this report to aggregate. Each property you add will create a column for every value '
-        u'of that property.  For example, if you add a column for a yes or no question, the report will show a '
-        u'column for "yes" and a column for "no."'
-    )
-    group_by = forms.MultipleChoiceField(label=_("Show one row for each"))
     chart = forms.CharField(widget=forms.HiddenInput)
-
-    def __init__(self, report_name, app_id, source_type, report_source_id, existing_report=None, *args, **kwargs):
-        super(ConfigureTableReportForm, self).__init__(
-            report_name, app_id, source_type, report_source_id, existing_report, *args, **kwargs
-        )
-        if self.source_type == "form":
-            self.fields['group_by'].widget = QuestionSelect(attrs={'class': 'input-large'})
-        else:
-            self.fields['group_by'].widget = Select2(attrs={'class': 'input-large'})
-        self.fields['group_by'].choices = self._group_by_choices
-
-    @property
-    def container_fieldset(self):
-        return crispy.Div(
-            self.column_fieldset,
-            crispy.Fieldset(
-                _legend(
-                    _("Rows"),
-                    _(
-                        'Choose which property this report will group its results by. Each value of this property'
-                        ' will be a row in the table. For example, if you choose a yes or no question, the report '
-                        'will show a row for "yes" and a row for "no."'
-                    ),
-                ),
-                crispy.Field(
-                    'group_by'
-                ),
-                crispy.HTML(
-                    """<div class="controls col-sm-9 col-md-8 col-lg-6 col-sm-offset-3 col-md-offset-2 col-lg-offset-2"
-                             data-bind="visible:showGroupByValidationError">
-                             <strong class="text-danger">{error}</strong>
-                     </div>""".format(
-                        error=_("Please select a row.")
-                    )
-                )
-            ),
-            self.user_filter_fieldset,
-            self.default_filter_fieldset,
-            self.validation_error_text,
-        )
 
     @property
     def _report_charts(self):
 
         def get_non_agged_columns():
             return [c for c in self._report_columns if c['aggregation'] != "simple"]
+
+        def get_agged_columns():
+            return [c for c in self._report_columns if c['aggregation'] == "simple"]
+
         if get_non_agged_columns():
             if self.cleaned_data['chart'] == "bar":
                 return [{
                     "type": "multibar",
-                    "x_axis_column": "column_agg_0",
+                    "x_axis_column": get_agged_columns()[0]['column_id'] if get_agged_columns() else '',
                     # TODO: Possibly use more columns?
                     "y_axis_columns": [
                         {"column_id": c["column_id"], "display": c["display"]} for c in get_non_agged_columns()
@@ -1437,7 +1340,7 @@ class ConfigureTableReportForm(ConfigureListReportForm):
             elif self.cleaned_data['chart'] == "pie":
                 return [{
                     "type": "pie",
-                    "aggregation_column": "column_agg_0",
+                    "aggregation_column": get_agged_columns()[0]['column_id'],
                     "value_column": get_non_agged_columns()[0]['column_id'],
                 }]
         return []
@@ -1457,110 +1360,25 @@ class ConfigureTableReportForm(ConfigureListReportForm):
 
     @property
     def _report_columns(self):
-        agg_fields = self.cleaned_data['group_by']
-        agg_field_ids = set(
-            self.data_source_properties[agg_field].to_report_column_option().get_indicator("Group By")['column_id']
-            for agg_field in agg_fields
-        )
-
         columns = []
         for i, conf in enumerate(self.cleaned_data['columns']):
             column = self.ds_builder.report_column_options[conf['property']]
             columns.extend(
                 column.to_column_dicts(
-                    i,
-                    conf['display_text'],
-                    conf['calculation'],
-                    conf['property'] in agg_fields
-                )
-            )
-
-        # Add the aggregation indicator to the columns if it's not already present.
-        extra_cols = []
-        existing_columns = set(c['property'] for c in self.cleaned_data['columns'])
-        for index, agg_field in enumerate(agg_fields):
-            if agg_field not in existing_columns:
-                column = self.ds_builder.report_column_options[agg_field]
-                agg_field_text = column.get_default_display()
-                extra_cols += column.to_column_dicts(
-                    "agg_{}".format(index), agg_field_text, "simple", is_aggregated_on=True
-                )
-        columns = extra_cols + columns
-
-        # Don't expand the aggregation columns
-        for c in columns:
-            if c['field'] in agg_field_ids:
-                c['aggregation'] = "simple"
-
+                    index=i,
+                    display_text=conf['display_text'],
+                    aggregation=conf['calculation'],
+                    is_aggregated_on=conf.get('calculation') == "Group By",
+                ))
         return columns
 
     @property
     @memoized
     def _report_aggregation_cols(self):
         return [
-            self.data_source_properties[f].to_report_column_option().get_indicator("Group By")['column_id']
-            for f in self.cleaned_data['group_by']
+            self.ds_builder.report_column_options[conf['property']].get_indicator("Group By")['column_id']
+            for conf in self.cleaned_data['columns'] if conf['calculation'] == "Group By"
         ]
-
-    @property
-    def _group_by_choices(self):
-        return [(p.get_id(), p.get_text()) for p in self.data_source_properties.values()]
-
-
-class ConfigureWorkerReportForm(ConfigureTableReportForm):
-    # This is a ConfigureTableReportForm, but with a predetermined aggregation
-    report_type = 'worker'
-    column_legend_fine_print = ugettext_noop(
-        u'Add columns for this report to aggregate. Each property you add will create a column for every value of '
-        u'that property. For example, if you add a column for a yes or no question, the report will show a column '
-        u'for "yes" and a column for "no".'
-    )
-
-    def __init__(self, *args, **kwargs):
-        super(ConfigureWorkerReportForm, self).__init__(*args, **kwargs)
-        self.fields.pop('group_by')
-
-    @property
-    def aggregation_field(self):
-        if self.source_type == "form":
-            return "username"
-        if self.source_type == "case":
-            return COMPUTED_USER_NAME_PROPERTY_ID
-
-    @property
-    @memoized
-    def _default_case_report_filters(self):
-        return [
-            UserFilterViewModel(
-                exists_in_current_version=True,
-                property='closed',
-                data_source_field=None,
-                display_text='closed',
-                format='Choice',
-            ),
-            UserFilterViewModel(
-                exists_in_current_version=True,
-                property=COMPUTED_USER_NAME_PROPERTY_ID,
-                data_source_field=None,
-                display_text='user name',
-                format='Choice',
-            ),
-        ]
-
-    @property
-    def container_fieldset(self):
-        return crispy.Div(
-            crispy.Fieldset(
-                _legend(
-                    _("Rows"),
-                    _('This report will show one row for each mobile worker'),
-                )
-            ),
-            self.column_fieldset,
-            self.user_filter_fieldset,
-            self.default_filter_fieldset,
-            self.validation_error_text,
-        )
 
 
 class ConfigureMapReportForm(ConfigureListReportForm):
@@ -1571,16 +1389,6 @@ class ConfigureMapReportForm(ConfigureListReportForm):
         super(ConfigureMapReportForm, self).__init__(
             report_name, app_id, source_type, report_source_id, existing_report, *args, **kwargs
         )
-        if self.source_type == "form":
-            self.fields['location'].widget = QuestionSelect(
-                attrs={'class': 'input-large'},
-                ko_value='groupBy'
-            )
-        else:
-            self.fields['location'].widget = Select2(
-                attrs={'class': 'input-large'},
-                ko_value="groupBy"
-            )
         self.fields['location'].choices = self._location_choices
 
         # Set initial value of location
@@ -1591,30 +1399,6 @@ class ConfigureMapReportForm(ConfigureListReportForm):
     @property
     def _location_choices(self):
         return [(p.get_id(), p.get_text()) for p in self.data_source_properties.values()]
-
-    @property
-    def container_fieldset(self):
-        return crispy.Div(
-            self.column_fieldset,
-            crispy.Fieldset(
-                _legend(
-                    _("Location"),
-                    _('Choose which property represents the location.'),
-                ),
-                'location',
-                crispy.HTML(
-                    """<div class="controls col-sm-9 col-md-8 col-lg-6 col-sm-offset-3 col-md-offset-2 col-lg-offset-2"
-                             data-bind="visible:showGroupByValidationError">
-                             <strong class="text-danger">{error}</strong>
-                     </div>""".format(
-                        error=_("Please select a property to represent the location.")
-                    )
-                )
-            ),
-            self.user_filter_fieldset,
-            self.default_filter_fieldset,
-            self.validation_error_text,
-        )
 
     @property
     @memoized

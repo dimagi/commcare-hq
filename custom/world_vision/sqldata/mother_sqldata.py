@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import division
 from sqlagg import CountUniqueColumn, AliasColumn
 from sqlagg.columns import SimpleColumn, SumColumn
 from sqlagg.filters import LTE, AND, GTE, GT, EQ, NOTEQ, OR, IN
@@ -7,6 +9,8 @@ from corehq.apps.reports.util import get_INFilter_bindparams
 from custom.utils.utils import clean_IN_filter_value
 from custom.world_vision.sqldata import BaseSqlData
 from custom.world_vision.sqldata.main_sqldata import AnteNatalCareServiceOverview, DeliveryPlaceDetails
+from six.moves import range
+import six
 
 
 class MotherRegistrationDetails(BaseSqlData):
@@ -213,7 +217,7 @@ class AnteNatalCareServiceOverviewExtended(AnteNatalCareServiceOverview):
                   {'sort_key': self.data[self.columns[0].slug], 'html': self.data[self.columns[0].slug]},
                   {'sort_key': 'n/a', 'html': 'n/a'},
                   {'sort_key': 'n/a', 'html': 'n/a'}]]
-        for i in range(1,15):
+        for i in range(1, 15):
             result.append([{'sort_key': self.columns[i].header, 'html': self.columns[i].header,
                             'tooltip': self.get_tooltip(MOTHER_INDICATOR_TOOLTIPS['ante_natal_care_service_details'], self.columns[i].slug)},
                            {'sort_key': self.data[self.columns[i].slug], 'html': self.data[self.columns[i].slug]},
@@ -457,7 +461,7 @@ class PostnatalCareOverview(BaseSqlData):
     def rows(self):
         from custom.world_vision import MOTHER_INDICATOR_TOOLTIPS
         result = []
-        for i in range(0,4):
+        for i in range(0, 4):
             result.append([{'sort_key': self.columns[i].header, 'html': self.columns[i].header,
                             'tooltip': self.get_tooltip(MOTHER_INDICATOR_TOOLTIPS['postnatal_care_details'], self.columns[i].slug)},
                            {'sort_key': self.data[self.columns[i].slug], 'html': self.data[self.columns[i].slug]},
@@ -669,7 +673,7 @@ class NumberOfPNCVisits(BaseSqlData):
         for row in rows:
             counter[row[-1]['html']] += 1
 
-        for k, v in counter.iteritems():
+        for k, v in six.iteritems(counter):
             percent = self.percent_fn(len(rows), v)
             result.append([{'sort_key': "Mothers with %d PNC visits within 42 days of delivery" % k,
                             'html': "Mothers with %d PNC visits within 42 days of delivery" % k},

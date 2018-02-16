@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import division
 from corehq.apps.reports.graph_models import MultiBarChart, Axis
 from custom.care_pathways.reports import CareBaseReport
 from custom.care_pathways.filters import TableCardGroupByFilter, TableCardTypeFilter
@@ -92,7 +94,7 @@ class TableCardReport(CareBaseReport):
 
     def _chart_data(self, chart, columns, rows):
         def p2f(column):
-            return float(column.strip('%')) / 100.0
+            return float(column.strip('%')) / 100
 
         if rows:
             charts = [[], [], [], []]

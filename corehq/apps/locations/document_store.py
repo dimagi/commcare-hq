@@ -1,6 +1,7 @@
 """
 This file contains stuff for publishing and reading changes for UCR.
 """
+from __future__ import absolute_import
 from pillowtop.dao.exceptions import DocumentNotFoundError
 from pillowtop.dao.interface import ReadOnlyDocumentStore
 from pillowtop.feed.interface import ChangeMeta

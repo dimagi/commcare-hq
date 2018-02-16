@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import division
 import calendar
 import datetime
 import re
@@ -8,6 +10,8 @@ from corehq.apps.reports.standard import DatespanMixin, CustomProjectReport
 from corehq.apps.reports.util import format_datatables_data
 from custom.up_nrhm.sql_data import ASHAFacilitatorsData
 from django.utils.translation import ugettext as _, ugettext_noop
+from six.moves import zip
+from six.moves import range
 
 
 class BlockLevelMonthReport(GenericTabularReport, DatespanMixin, CustomProjectReport):
@@ -96,4 +100,4 @@ class BlockLevelMonthReport(GenericTabularReport, DatespanMixin, CustomProjectRe
 
         rows.append([_("<b>Total number of ASHAs who did not report/not known</b>")] + not_reporting +
                     [avg(not_reporting)])
-        return rows, sum(total) / len(total)
+        return rows, sum(total) // len(total)

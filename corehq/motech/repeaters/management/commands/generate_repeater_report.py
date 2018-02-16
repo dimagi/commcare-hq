@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import print_function
 from datetime import datetime
 from openpyxl import Workbook
 import csv
@@ -7,6 +9,7 @@ from django.core.management.base import BaseCommand, CommandError
 from corehq.util.log import with_progress_bar
 from corehq.motech.repeaters.models import RepeatRecord
 from corehq.motech.repeaters.dbaccessors import iter_repeat_records_by_domain, get_repeat_record_count
+from six.moves import range
 
 
 class Command(BaseCommand):

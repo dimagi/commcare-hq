@@ -1,0 +1,6 @@
+#!/bin/bash
+
+# Returns the IP address of the default gateway on the Docker network
+
+CONTAINER=$(docker container ls | awk '/formplayer/ { print $1 }')
+docker exec $CONTAINER sh -c 'cat /etc/hosts | grep webhost'

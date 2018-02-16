@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from collections import namedtuple
 from django.test import SimpleTestCase
 from mock import patch
@@ -179,8 +180,7 @@ class StockExportColumnTest(SimpleTestCase):
     domain = 'stock-domain'
 
     @patch('corehq.apps.export.models.new.StockExportColumn._get_product_name', return_value='water')
-    @patch('corehq.apps.export.models.new.Product.by_domain', return_value=[])
-    def test_get_headers(self, _, __):
+    def test_get_headers(self, _):
         column = StockExportColumn(
             domain=self.domain,
             label="Stock",

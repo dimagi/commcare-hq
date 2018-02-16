@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import json
 import datetime
 from django.utils.translation import ugettext as _

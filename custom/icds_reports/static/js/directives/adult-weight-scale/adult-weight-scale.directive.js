@@ -1,4 +1,4 @@
-/* global d3 */
+/* global d3, moment */
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function AdultWeightScaleController($scope, $routeParams, $location, $filter, infrastructureService,
@@ -9,8 +9,9 @@ function AdultWeightScaleController($scope, $routeParams, $location, $filter, in
     } else {
         storageService.setKey('search', $location.search());
     }
+    vm.userLocationId = userLocationId;
     vm.filtersData = $location.search();
-    vm.label = "AWCs with Weighing Scale: Mother and Child";
+    vm.label = "AWCs Reported Weighing Scale: Mother and Child";
     vm.step = $routeParams.step;
     vm.steps = {
         'map': {route: '/adult_weight_scale/map', label: 'Map View'},
@@ -22,11 +23,13 @@ function AdultWeightScaleController($scope, $routeParams, $location, $filter, in
     vm.chartData = null;
     vm.top_five = [];
     vm.bottom_five = [];
+    vm.selectedLocations = [];
+    vm.all_locations = [];
     vm.location_type = null;
     vm.loaded = false;
     vm.filters = ['gender', 'age'];
     vm.rightLegend = {
-        info: 'Percentage of AWCs with weighing scale for mother and child',
+        info: 'Percentage of AWCs that reported having a weighing scale for mother and child',
     };
     vm.message = storageService.getKey('message') || false;
 
@@ -52,10 +55,10 @@ function AdultWeightScaleController($scope, $routeParams, $location, $filter, in
     vm.templatePopup = function(loc, row) {
         var in_month = row ? $filter('indiaNumbers')(row.in_month) : 'N/A';
         var percent = row ? d3.format('.2%')(row.in_month / (row.all || 1)) : "N/A";
-        return '<div class="hoverinfo" style="max-width: 200px !important;">' +
+        return '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
             '<p>' + loc.properties.name + '</p>' +
-            '<div>Total number of AWCs with a weighing scale for mother and child: <strong>' + in_month + '</strong></div>' +
-            '<div>% of AWCs with a weighing scale for mother and child: <strong>' + percent + '</strong></div>';
+            '<div>Total number of AWCs that reported having a weighing scale for mother and child: <strong>' + in_month + '</strong></div>' +
+            '<div>% of AWCs that reported having a weighing scale for mother and child: <strong>' + percent + '</strong></div>';
     };
 
     vm.loadData = function () {
@@ -86,21 +89,29 @@ function AdultWeightScaleController($scope, $routeParams, $location, $filter, in
                 vm.bottom_five = response.data.report_data.bottom_five;
                 vm.location_type = response.data.report_data.location_type;
                 vm.chartTicks = vm.chartData[0].values.map(function(d) { return d.x; });
+                var max = Math.ceil(d3.max(vm.chartData, function(line) {
+                    return d3.max(line.values, function(d) {
+                        return d.y;
+                    });
+                }) * 100);
+                var min = Math.ceil(d3.min(vm.chartData, function(line) {
+                    return d3.min(line.values, function(d) {
+                        return d.y;
+                    });
+                }) * 100);
+                var range = max - min;
                 vm.chartOptions.chart.forceY = [
-                    0,
-                    Math.ceil(d3.max(vm.chartData, function(line) {
-                        return d3.max(line.values, function(d) {
-                            return d.y;
-                        });
-                    }) * 100) / 100 + 0.01,
+                    parseInt(((min - range/10)/100).toFixed(2)) < 0 ?
+                        0 : parseInt(((min - range/10)/100).toFixed(2)),
+                    parseInt(((max + range/10)/100).toFixed(2)),
                 ];
             }
         });
     };
 
-    var init = function() {
-        var locationId = vm.filtersData.location_id || userLocationId;
-        if (!locationId || locationId === 'all' || locationId === 'null') {
+    vm.init = function() {
+        var locationId = vm.filtersData.location_id || vm.userLocationId;
+        if (!locationId || ["all", "null", "undefined"].indexOf(locationId) >= 0) {
             vm.loadData();
             vm.loaded = true;
             return;
@@ -112,7 +123,7 @@ function AdultWeightScaleController($scope, $routeParams, $location, $filter, in
         });
     };
 
-    init();
+    vm.init();
 
     $scope.$on('filtersChange', function() {
         vm.loadData();
@@ -121,7 +132,7 @@ function AdultWeightScaleController($scope, $routeParams, $location, $filter, in
     vm.getDisableIndex = function () {
         var i = -1;
         window.angular.forEach(vm.selectedLocations, function (key, value) {
-            if (key !== null && key.location_id === userLocationId) {
+            if (key !== null && key.location_id === vm.userLocationId) {
                 i = value;
             }
         });
@@ -180,27 +191,29 @@ function AdultWeightScaleController($scope, $routeParams, $location, $filter, in
             callback: function(chart) {
                 var tooltip = chart.interactiveLayer.tooltip;
                 tooltip.contentGenerator(function (d) {
-
-                    var data_in_month = _.find(vm.chartData[0].values, function(num) { return d3.time.format('%b %Y')(new Date(num['x'])) === d.value;});
-
-                    var tooltip_content = "<p><strong>" + d.value + "</strong></p><br/>";
-                    tooltip_content += "<p>Number of AWCs with a weighing scale for mother and child: <strong>" + $filter('indiaNumbers')(data_in_month.in_month) + "</strong></p>";
-                    tooltip_content += "<p>% of AWCs with a weighing scale for mother and child: <strong>" + d3.format('.2%')(data_in_month.y) + "</strong></p>";
-
-                    return tooltip_content;
+                    var dataInMonth = _.find(vm.chartData[0].values, function(num) { return d3.time.format('%b %Y')(new Date(num['x'])) === d.value;});
+                    return vm.tooltipContent(d.value, dataInMonth);
                 });
                 return chart;
             },
         },
         caption: {
             enable: true,
-            html: '<i class="fa fa-info-circle"></i> Percentage of AWCs with weighing scale for mother and child',
+            html: '<i class="fa fa-info-circle"></i> Percentage of AWCs that reported having a weighing scale for mother and child',
             css: {
                 'text-align': 'center',
                 'margin': '0 auto',
                 'width': '900px',
             }
         },
+    };
+
+    vm.tooltipContent = function (monthName, dataInMonth) {
+        var tooltip_content = "<p><strong>" + monthName + "</strong></p><br/>";
+        tooltip_content += "<div>Number of AWCs that reported having a weighing scale for mother and child: <strong>" + $filter('indiaNumbers')(dataInMonth.in_month) + "</strong></div>";
+        tooltip_content += "<div>% of AWCs that reported having a weighing scale for mother and child: <strong>" + d3.format('.2%')(dataInMonth.y) + "</strong></div>";
+
+        return tooltip_content;
     };
 
     vm.showAllLocations = function () {

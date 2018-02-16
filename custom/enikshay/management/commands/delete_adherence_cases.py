@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import csv
 from django.core.management.base import BaseCommand
 from dimagi.utils.chunked import chunked
@@ -64,7 +66,7 @@ class Command(BaseCommand):
                     adherence_case_ids.update(adherence.case_id for adherence in dots_adherence_cases)
 
         if options['commit']:
-            print "Deleting {} cases".format(len(adherence_case_ids))
+            print("Deleting {} cases".format(len(adherence_case_ids)))
             for ids in with_progress_bar(
                     chunked(adherence_case_ids, 100), length=len(adherence_case_ids)):
                 CaseAccessors(domain).soft_delete_cases(list(ids), deletion_id="delete_99dots_adherence")

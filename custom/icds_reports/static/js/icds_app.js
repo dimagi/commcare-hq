@@ -1,9 +1,27 @@
-function MainController($scope, $route, $routeParams, $location, $uibModal, $window, reportAnIssueUrl) {
+/* global d3, moment */
+
+function MainController($scope, $route, $routeParams, $location, $uibModal, $window, reportAnIssueUrl, isWebUser) {
     $scope.$route = $route;
     $scope.$location = $location;
     $scope.$routeParams = $routeParams;
     $scope.systemUsageCollapsed = true;
     $scope.healthCollapsed = true;
+    $scope.isWebUser = isWebUser;
+    var selected_month = parseInt($location.search()['month']) || new Date().getMonth() + 1;
+    var selected_year = parseInt($location.search()['year']) || new Date().getFullYear();
+    var current_month = new Date().getMonth() + 1;
+    var current_year = new Date().getFullYear();
+
+    $scope.showInfoMessage = function() {
+        if (!$location.path().startsWith("/fact_sheets") && !$location.path().startsWith("/download") &&
+            selected_month === current_month && selected_year === current_year &&
+            (new Date().getDate() === 1 || new Date().getDate() === 2)) {
+            $scope.lastDayOfPreviousMonth = moment().set('date', 1).subtract(1, 'days').format('Do MMMM, YYYY');
+            $scope.currentMonth = moment().format("MMMM");
+            return true;
+        }
+        return false;
+    };
 
     $scope.reportAnIssue = function() {
         if (reportAnIssueUrl) {
@@ -16,6 +34,37 @@ function MainController($scope, $route, $routeParams, $location, $uibModal, $win
             templateUrl: 'reportIssueModal.html',
         });
     };
+
+    // hack to have the same width between origin table and fixture headers,
+    // without this fixture headers are bigger and not align to original columns
+    var observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            if (mutation.addedNodes && mutation.addedNodes.length > 0) {
+                var hasClass = [].some.call(mutation.addedNodes, function(el) {
+                    return el.classList !== void(0) && el.classList.contains('fixedHeader-floating');
+                });
+                if (hasClass) {
+                    if ($scope.$route.current.pathParams.step === 'beneficiary') {
+                        var fixedTitle = d3.select('.fixed-title')[0][0].clientHeight;
+                        var fixedFilters = d3.select('.fixes-filters')[0][0].clientHeight;
+                        var width = "width: " + mutation.addedNodes[0].style.width + ' !important;'
+                            + 'top:' + (fixedTitle + fixedFilters - 8) + 'px !important;';
+                        mutation.addedNodes[0].style.cssText = (mutation.addedNodes[0].style.cssText + width);
+                    } else {
+                        mutation.addedNodes[0].style.cssText = (mutation.addedNodes[0].style.cssText + 'display: none;');
+                    }
+                }
+            }
+        });
+    });
+
+    var config = {
+        attributes: true,
+        childList: true,
+        characterData: true,
+    };
+
+    observer.observe(document.body, config);
 }
 
 MainController.$inject = [
@@ -26,9 +75,10 @@ MainController.$inject = [
     '$uibModal',
     '$window',
     'reportAnIssueUrl',
+    'isWebUser',
 ];
 
-window.angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamaps', 'ui.bootstrap', 'nvd3', 'datatables', 'datatables.bootstrap', 'datatables.fixedcolumns', 'leaflet-directive', 'cgBusy'])
+window.angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamaps', 'ui.bootstrap', 'nvd3', 'datatables', 'datatables.bootstrap', 'datatables.fixedcolumns', 'datatables.fixedheader', 'leaflet-directive', 'cgBusy', 'perfect_scrollbar'])
     .controller('MainController', MainController)
     .config(['$interpolateProvider', '$routeProvider', function($interpolateProvider, $routeProvider) {
         $interpolateProvider.startSymbol('{$');
@@ -69,11 +119,11 @@ window.angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamap
             .when("/wasting/:step", {
                 template : "<prevalence-of-severe></prevalence-of-severe>",
             })
-            .when("/stunning", {
-                redirectTo : "/stunning/map",
+            .when("/stunting", {
+                redirectTo : "/stunting/map",
             })
-            .when("/stunning/:step", {
-                template : "<prevalence-of-stunning></prevalence-of-stunning>",
+            .when("/stunting/:step", {
+                template : "<prevalence-of-stunting></prevalence-of-stunting>",
             })
             .when("/comp_feeding", {
                 template : "comp_feeding",
@@ -90,10 +140,10 @@ window.angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamap
             .when("/download", {
                 template : "<download></download>",
             })
-            .when("/progress_report", {
+            .when("/fact_sheets", {
                 template : "<progress-report></progress-report>",
             })
-            .when("/progress_report/:report", {
+            .when("/fact_sheets/:report", {
                 template : "<progress-report></progress-report>",
             })
             .when("/exclusive_breastfeeding", {

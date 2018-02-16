@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.conf import settings
 from django.urls import resolve, reverse
 from django.http import Http404
@@ -98,8 +99,10 @@ def websockets_override(request):
 def enterprise_mode(request):
     return {
         'enterprise_mode': settings.ENTERPRISE_MODE,
-        'is_saas_environment': settings.IS_SAAS_ENVIRONMENT
+        'is_saas_environment': settings.IS_SAAS_ENVIRONMENT,
+        'restrict_domain_creation': settings.RESTRICT_DOMAIN_CREATION,
     }
+
 
 def commcare_hq_names(request):
     return {

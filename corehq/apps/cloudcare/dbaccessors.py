@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
 from corehq.apps.cloudcare.models import ApplicationAccess
 from corehq.util.quickcache import quickcache

@@ -8,6 +8,7 @@
   ],
   "server_environment": [
     "softlayer",
+    "icds-new",
     "icds"
   ],
   "config": {
@@ -500,21 +501,55 @@
         "column_id": "medicine_kits_available"
       },
       {
-        "filter": {
-          "operator": "eq",
-          "expression": {
-            "datatype": "string",
-            "type": "property_path",
-            "property_path": [
-              "form",
-              "supply_position_available_1",
-              "preschool_kit"
-            ]
+        "expression": {
+          "type": "conditional",
+          "test": {
+            "operator": "eq",
+            "expression": {
+              "datatype": "string",
+              "type": "property_path",
+              "property_path": [
+                "form",
+                "supply_position_available_1",
+                "preschool_kit"
+              ]
+            },
+            "type": "boolean_expression",
+            "property_value": "yes"
           },
-          "type": "boolean_expression",
-          "property_value": "yes"
+          "expression_if_true": {
+            "type": "constant",
+            "constant": 1
+          },
+          "expression_if_false": {
+            "type": "conditional",
+            "test": {
+              "operator": "eq",
+              "expression": {
+                "datatype": "string",
+                "type": "property_path",
+                "property_path": [
+                  "form",
+                  "supply_position_available_1",
+                  "preschool_kit"
+                ]
+              },
+              "type": "boolean_expression",
+              "property_value": "no"
+            },
+            "expression_if_true": {
+              "type": "constant",
+              "constant": 0
+            },
+            "expression_if_false": {
+              "type": "constant",
+              "constant": null
+            }
+          }
         },
-        "type": "boolean",
+        "type": "expression",
+        "datatype": "integer",
+        "is_nullable": true,
         "display_name": null,
         "column_id": "preschool_kit_available"
       },
@@ -822,22 +857,57 @@
         "display_name": null,
         "column_id": "medicine_kits_usable"
       },
+
       {
-        "filter": {
-          "operator": "eq",
-          "expression": {
-            "datatype": "string",
-            "type": "property_path",
-            "property_path": [
-              "form",
-              "supply_position_usable_1",
-              "preschool_kit"
-            ]
+        "expression": {
+          "type": "conditional",
+          "test": {
+            "operator": "eq",
+            "expression": {
+              "datatype": "string",
+              "type": "property_path",
+              "property_path": [
+                "form",
+                "supply_position_usable_1",
+                "preschool_kit"
+              ]
+            },
+            "type": "boolean_expression",
+            "property_value": "yes"
           },
-          "type": "boolean_expression",
-          "property_value": "yes"
+          "expression_if_true": {
+            "type": "constant",
+            "constant": 1
+          },
+          "expression_if_false": {
+            "type": "conditional",
+            "test": {
+              "operator": "eq",
+              "expression": {
+                "datatype": "string",
+                "type": "property_path",
+                "property_path": [
+                  "form",
+                  "supply_position_usable_1",
+                  "preschool_kit"
+                ]
+              },
+              "type": "boolean_expression",
+              "property_value": "no"
+            },
+            "expression_if_true": {
+              "type": "constant",
+              "constant": 0
+            },
+            "expression_if_false": {
+              "type": "constant",
+              "constant": null
+            }
+          }
         },
-        "type": "boolean",
+        "type": "expression",
+        "datatype": "integer",
+        "is_nullable": true,
         "display_name": null,
         "column_id": "preschool_kit_usable"
       },
@@ -1354,6 +1424,7 @@
     ],
     "named_expressions": {},
     "named_filters": {},
-    "engine_id": "icds-ucr"
+    "engine_id": "icds-ucr",
+    "disable_destructive_rebuild": true
   }
 }

@@ -170,8 +170,7 @@ def get_indexed_cases(domain, case_ids):
 
 
 def primary_actions(case):
-    return filter(lambda a: not a.is_case_rebuild,
-                  case.actions)
+    return [a for a in case.actions if not a.is_case_rebuild]
 
 
 def iter_cases(case_ids, strip_history=False, wrap=True):
@@ -184,34 +183,58 @@ def iter_cases(case_ids, strip_history=False, wrap=True):
             yield case
 
 
+def property_changed_in_action(case_transaction, case_id, case_property_name):
+    from casexml.apps.case.xform import get_case_updates
+    PropertyChangedInfo = namedtuple("PropertyChangedInfo", 'transaction new_value modified_on')
+    include_create_fields = case_property_name in ['owner_id', 'name', 'external_id']
+    case_updates = get_case_updates(case_transaction.form)
+
+    actions = []
+    for update in case_updates:
+        if update.id == case_id:
+            actions.append((update.modified_on_str, update.get_update_action(), case_transaction))
+            if include_create_fields and case_transaction.is_case_create:
+                actions.append((update.modified_on_str, update.get_create_action(), case_transaction))
+
+    for (modified_on, action, case_transaction) in actions:
+        if action:
+            property_changed = action.dynamic_properties.get(case_property_name)
+            if include_create_fields:
+                property_changed = getattr(action, case_property_name, None)
+
+            if property_changed:
+                return PropertyChangedInfo(case_transaction, property_changed, modified_on)
+
+    return False
+
+
+def get_latest_property_change_to_value(case, case_property_name, value):
+    """Returns a PropertyChangedInfo namedtuple for the last time case_property_name changed to "value"
+    """
+    case_transactions = case.actions
+    for i, case_transaction in enumerate(case_transactions):
+        property_changed_info = property_changed_in_action(case_transaction, case.case_id, case_property_name)
+        if property_changed_info and property_changed_info.new_value == value:
+            return property_changed_info
+
+
 def get_datetime_case_property_changed(case, case_property_name, value):
     """Returns the datetime a particular case property was changed to a specific value
 
     Not performant!
     """
-    from casexml.apps.case.xform import get_case_updates
-    PropertyChangedInfo = namedtuple("PropertyChangedInfo", 'new_value modified_on')
+    property_changed_info = get_latest_property_change_to_value(case, case_property_name, value)
+    if property_changed_info:
+        # get the date that case_property changed
+        return parse_datetime(property_changed_info.modified_on)
 
-    def property_changed_in_action(action, case_property_name):
-        update_actions = [
-            (update.modified_on_str, update.get_update_action())
-            for update in get_case_updates(action.form)
-            if update.id == case.case_id
-        ]
-        for (modified_on, action) in update_actions:
-            if action:
-                property_changed = action.dynamic_properties.get(case_property_name)
-                if property_changed:
-                    return PropertyChangedInfo(property_changed, modified_on)
-        return False
 
-    date_of_change = None
-    actions = case.actions
-    for i, transactions in enumerate(actions):
-        property_changed_info = property_changed_in_action(transactions, case_property_name)
-        if property_changed_info and property_changed_info.new_value == value:
-            # get the date that case_property changed
-            date_of_change = parse_datetime(property_changed_info.modified_on)
-            break
+def get_all_changes_to_case_property(case, case_property_name):
+    case_property_changes = []
+    case_transactions = case.actions
+    for transaction in case_transactions:
+        property_changed_info = property_changed_in_action(transaction, case.case_id, case_property_name)
+        if property_changed_info:
+            case_property_changes.append(property_changed_info)
 
-    return date_of_change
+    return case_property_changes

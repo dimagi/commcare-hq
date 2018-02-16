@@ -1,5 +1,6 @@
+from __future__ import absolute_import
 import mock
-from cStringIO import StringIO
+from io import BytesIO
 from django.test import TestCase, SimpleTestCase
 from casexml.apps.phone.restore_caching import AsyncRestoreTaskIdCache, RestorePayloadPathCache
 from corehq.apps.app_manager.tests.util import TestXmlMixin
@@ -175,7 +176,7 @@ class AsyncRestoreTestCouchOnly(BaseAsyncRestoreTest):
         delay = mock.MagicMock()
         delay.id = 'random_task_id'
         task.delay.return_value = delay
-        response.return_value = StringIO('<restore_id>123</restore_id>')
+        response.return_value = BytesIO(b'<restore_id>123</restore_id>')
         get_value.return_value = 'path-to-cached-restore'
 
         self._restore_config(async=True, overwrite_cache=False).get_payload()
@@ -260,7 +261,7 @@ class AsyncRestoreTest(BaseAsyncRestoreTest):
         delay.id = 'random_task_id'
         task.delay.return_value = delay
         get_value.return_value = 'path-to-cached-restore'
-        response.return_value = StringIO('<restore_id>123</restore_id>')
+        response.return_value = BytesIO(b'<restore_id>123</restore_id>')
 
         self._restore_config(async=True, overwrite_cache=False).get_payload()
         self.assertFalse(invalidate.called)

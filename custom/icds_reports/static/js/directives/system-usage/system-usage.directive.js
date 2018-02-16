@@ -1,3 +1,5 @@
+/* global moment */
+
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function SystemUsageController($scope, $http, $log, $routeParams, $location, storageService, userLocationId) {
@@ -6,6 +8,13 @@ function SystemUsageController($scope, $http, $log, $routeParams, $location, sto
     vm.label = "Program Summary";
     vm.filters = ['gender', 'age'];
     vm.step = $routeParams.step;
+    vm.userLocationId = userLocationId;
+    vm.selectedLocations = [];
+
+    vm.prevDay = moment().subtract(1, 'days').format('Do MMMM, YYYY');
+    vm.currentMonth = moment().format("MMMM");
+    vm.lastDayOfPreviousMonth = moment().set('date', 1).subtract(1, 'days').format('Do MMMM, YYYY');
+
     if (Object.keys($location.search()).length === 0) {
         $location.search(storageService.getKey('search'));
     } else {
@@ -58,7 +67,7 @@ function SystemUsageController($scope, $http, $log, $routeParams, $location, sto
     vm.getDisableIndex = function () {
         var i = -1;
         window.angular.forEach(vm.selectedLocations, function (key, value) {
-            if (key !== null && key.location_id === userLocationId) {
+            if (key !== null && key.location_id === vm.userLocationId) {
                 i = value;
             }
         });
@@ -75,6 +84,14 @@ function SystemUsageController($scope, $http, $log, $routeParams, $location, sto
             $location.search('selectedLocationLevel', index);
             $location.search('location_name', loc.name);
         }
+    };
+
+    vm.showInfoMessage = function () {
+        var selected_month = parseInt($location.search()['month']) ||new Date().getMonth() + 1;
+        var selected_year =  parseInt($location.search()['year']) || new Date().getFullYear();
+        var current_month = new Date().getMonth() + 1;
+        var current_year = new Date().getFullYear();
+        return selected_month === current_month && selected_year === current_year && new Date().getDate() === 1;
     };
 
     vm.getDataForStep(vm.step);

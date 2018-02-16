@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import logging
 from collections import namedtuple
 from datetime import datetime
@@ -17,6 +18,7 @@ from corehq.form_processor.models import XFormInstanceSQL, FormReprocessRebuild
 from corehq.form_processor.submission_post import SubmissionPost
 from corehq.form_processor.utils.general import should_use_sql_backend
 from dimagi.utils.couch import LockManager
+import six
 
 ReprocessingResult = namedtuple('ReprocessingResult', 'form cases ledgers error')
 
@@ -119,7 +121,7 @@ def reprocess_form(form, save=True, lock_form=True):
                 case_stock_result = SubmissionPost.process_xforms_for_cases([form], casedb)
             except (IllegalCaseId, UsesReferrals, MissingProductId,
                     PhoneDateValueError, InvalidCaseIndex, CaseValueError) as e:
-                error_message = '{}: {}'.format(type(e).__name__, unicode(e))
+                error_message = '{}: {}'.format(type(e).__name__, six.text_type(e))
                 form = interface.xformerror_from_xform_instance(form, error_message)
                 return ReprocessingResult(form, [], [], error_message)
 

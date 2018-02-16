@@ -1,4 +1,5 @@
-import urlparse
+from __future__ import absolute_import
+import six.moves.urllib.parse
 from collections import namedtuple
 
 from django.urls import reverse
@@ -153,7 +154,7 @@ def path_starts_with_url(path, url):
     >>> path_starts_with_url('/a/test/reports/', '/a/test/reports/saved/')
     False
     """
-    url = urlparse.urlparse(url).path
+    url = six.moves.urllib.parse.urlparse(url).path
     return path.startswith(url)
 
 

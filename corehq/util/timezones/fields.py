@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.conf import settings
 from django.db import models
 from django.utils.encoding import smart_unicode, smart_str

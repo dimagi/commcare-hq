@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from copy import deepcopy
 from django.test import SimpleTestCase, TestCase
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin

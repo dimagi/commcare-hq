@@ -1,9 +1,10 @@
+from __future__ import absolute_import
 import tempfile
 
 from couchexport.export import export_raw
 from couchexport.models import Format
 from django.test import SimpleTestCase, TestCase
-from StringIO import StringIO
+from io import BytesIO
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.fixtures.exceptions import FixtureUploadError
@@ -176,7 +177,7 @@ class TestFixtureUpload(TestCase):
         return get_workbook(_make_path('test_upload', '{}.xlsx'.format(filename)))
 
     def _get_workbook_from_data(self, headers, rows):
-        file = StringIO()
+        file = BytesIO()
         export_raw(headers, rows, file, format=Format.XLS_2007)
         with tempfile.TemporaryFile(suffix='.xlsx') as f:
             f.write(file.getvalue())

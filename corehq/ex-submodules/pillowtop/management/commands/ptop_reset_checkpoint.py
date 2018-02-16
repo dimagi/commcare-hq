@@ -1,7 +1,9 @@
 from __future__ import print_function
+from __future__ import absolute_import
 from django.core.management.base import BaseCommand
 import sys
 from pillowtop import get_pillow_by_name, get_all_pillow_configs
+from six.moves import input
 
 
 class Command(BaseCommand):
@@ -31,7 +33,7 @@ class Command(BaseCommand):
             sys.exit()
 
         if not options.get('interactive'):
-            confirm = raw_input("""
+            confirm = input("""
             You have requested to reset the checkpoints for the pillow [%s]. This is an irreversible
             operation, and may take a long time, and cause extraneous updates to the requisite
             consumers of the _changes feeds  Are you sure you want to do this?

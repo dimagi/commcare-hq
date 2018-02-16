@@ -1,5 +1,7 @@
+from __future__ import absolute_import
+from __future__ import unicode_literals
 import json
-from StringIO import StringIO
+from io import BytesIO
 from contextlib import contextmanager, closing
 from datetime import datetime
 
@@ -27,7 +29,6 @@ from dimagi.utils.dates import DateSpan
 from dimagi.utils.modules import to_function
 from django.conf import settings
 from django.contrib import messages
-from django.urls import reverse
 from django.http import HttpRequest, HttpResponse, Http404, HttpResponseBadRequest, HttpResponseRedirect
 from django.utils.translation import ugettext as _, ugettext_noop
 from braces.views import JSONResponseMixin
@@ -63,6 +64,7 @@ from corehq.apps.userreports.util import (
     get_ucr_class_name)
 from corehq.util.couch import get_document_or_404, get_document_or_not_found, \
     DocumentNotFound
+from corehq.util.view_utils import reverse
 from couchexport.export import export_from_tables
 from couchexport.models import Format
 from dimagi.utils.couch.pagination import DatatablesParams
@@ -76,6 +78,7 @@ from soil.exceptions import TaskFailedError
 from soil.util import get_download_context
 
 from corehq.apps.reports.datatables import DataTablesHeader
+import six
 
 
 def get_filter_values(filters, request_dict, user=None):
@@ -92,7 +95,7 @@ def get_filter_values(filters, request_dict, user=None):
             for filter in filters
         }
     except FilterException as e:
-        raise UserReportsFilterError(unicode(e))
+        raise UserReportsFilterError(six.text_type(e))
 
 
 def query_dict_to_dict(query_dict, domain, string_type_params):
@@ -112,7 +115,7 @@ def query_dict_to_dict(query_dict, domain, string_type_params):
 
     # json.loads casts strings 'true'/'false' to booleans, so undo it
     for key in string_type_params:
-        u_key = unicode(key)  # QueryDict's key/values are unicode strings
+        u_key = six.text_type(key)  # QueryDict's key/values are unicode strings
         if u_key in query_dict:
             request_dict[key] = query_dict[u_key]  # json_request converts keys to strings
     return request_dict
@@ -290,7 +293,7 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
                         'You may need to delete and recreate the report. '
                         'If you believe you are seeing this message in error, please report an issue.'
                     )
-                    details = unicode(e)
+                    details = six.text_type(e)
                 self.template_name = 'userreports/report_error.html'
                 context = {
                     'report_id': self.report_config_id,
@@ -315,11 +318,7 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
             raise Http403()
 
     def has_permissions(self, domain, user):
-        if domain is None:
-            return False
-        if not user.is_active:
-            return False
-        return user.can_view_report(domain, get_ucr_class_name(self.report_config_id))
+        return _has_permission(domain, user, self.report_config_id)
 
     def add_warnings(self, request):
         for warning in self.data_source.column_warnings:
@@ -495,7 +494,7 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
                 if isinstance(value, Choice):
                     values.append(value.display)
                 else:
-                    values.append(unicode(value))
+                    values.append(six.text_type(value))
             return ', '.join(values)
         elif isinstance(filter_value, DateSpan):
             return filter_value.default_serialization()
@@ -503,7 +502,7 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
             if isinstance(filter_value, Choice):
                 return filter_value.display
             else:
-                return unicode(filter_value)
+                return six.text_type(filter_value)
 
     def _get_filter_values(self):
         slug_to_filter = {
@@ -513,11 +512,11 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
 
         filters_without_prefilters = {
             filter_slug: filter_value
-            for filter_slug, filter_value in self.filter_values.iteritems()
+            for filter_slug, filter_value in six.iteritems(self.filter_values)
             if not isinstance(slug_to_filter[filter_slug], PreFilter)
         }
 
-        for filter_slug, filter_value in filters_without_prefilters.iteritems():
+        for filter_slug, filter_value in six.iteritems(filters_without_prefilters):
             label = slug_to_filter[filter_slug].label
             yield label, self._get_filter_export_format(filter_value)
 
@@ -570,7 +569,7 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
     @property
     @memoized
     def email_response(self):
-        with closing(StringIO()) as temp:
+        with closing(BytesIO()) as temp:
             export_from_tables(self.export_table, temp, Format.HTML)
             return HttpResponse(json.dumps({
                 'report': temp.getvalue(),
@@ -579,7 +578,7 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
     @property
     @memoized
     def excel_response(self):
-        file = StringIO()
+        file = BytesIO()
         export_from_tables(self.export_table, file, Format.XLS_2007)
         return file
 
@@ -668,18 +667,27 @@ class DownloadUCRStatusView(BaseDomainView):
         return "#"
 
     def get(self, request, *args, **kwargs):
-        context = super(DownloadUCRStatusView, self).main_context
-        context.update({
-            'domain': self.domain,
-            'download_id': kwargs['download_id'],
-            'poll_url': reverse('ucr_download_job_poll', args=[self.domain, kwargs['download_id']]),
-            'title': _("Download Report Status"),
-            'progress_text': _("Preparing report download."),
-            'error_text': _("There was an unexpected error! Please try again or report an issue."),
-            'next_url': reverse(ConfigurableReport.slug, args=[self.domain, self.report_config_id]),
-            'next_url_text': _("Go back to report"),
-        })
-        return render(request, 'hqwebapp/soil_status_full.html', context)
+        if _has_permission(self.domain, request.couch_user, self.report_config_id):
+            context = super(DownloadUCRStatusView, self).main_context
+            context.update({
+                'domain': self.domain,
+                'download_id': kwargs['download_id'],
+                'poll_url': reverse('ucr_download_job_poll',
+                                    args=[self.domain, kwargs['download_id']],
+                                    params={'config_id': self.report_config_id}),
+                'title': _("Download Report Status"),
+                'progress_text': _("Preparing report download."),
+                'error_text': _("There was an unexpected error! Please try again or report an issue."),
+                'next_url': reverse(ConfigurableReport.slug, args=[self.domain, self.report_config_id]),
+                'next_url_text': _("Go back to report"),
+            })
+            return render(request, 'hqwebapp/soil_status_full.html', context)
+        else:
+            raise Http403()
+
+    @conditionally_location_safe(has_location_filter)
+    def dispatch(self, *args, **kwargs):
+        return super(DownloadUCRStatusView, self).dispatch(*args, **kwargs)
 
     def page_url(self):
         return reverse(self.urlname, args=self.args, kwargs=self.kwargs)
@@ -704,16 +712,35 @@ class DownloadUCRStatusView(BaseDomainView):
         return report_config_id_is_static(self.report_config_id)
 
     @property
+    @memoized
     def report_config_id(self):
-        return self.kwargs['config_id']
+        return self.kwargs['subreport_slug']
 
 
+def _safe_download_poll(view_fn, request, domain, download_id, *args, **kwargs):
+    config_id = request.GET.get('config_id')
+    return config_id and has_location_filter(None, domain=domain, subreport_slug=config_id)
+
+
+@conditionally_location_safe(_safe_download_poll)
 def ucr_download_job_poll(request, domain,
                           download_id,
                           template="hqwebapp/partials/shared_download_status.html"):
-    try:
-        context = get_download_context(download_id, 'Preparing download')
-        context.update({'link_text': _('Download Report')})
-    except TaskFailedError as e:
-        return HttpResponseServerError(e.errors)
-    return render(request, template, context)
+    config_id = request.GET.get('config_id')
+    if config_id and _has_permission(domain, request.couch_user, config_id):
+        try:
+            context = get_download_context(download_id, 'Preparing download')
+            context.update({'link_text': _('Download Report')})
+        except TaskFailedError as e:
+            return HttpResponseServerError(e.errors)
+        return render(request, template, context)
+    else:
+        raise Http403()
+
+
+def _has_permission(domain, user, config_id):
+    if domain is None:
+        return False
+    if not user.is_active:
+        return False
+    return user.can_view_report(domain, get_ucr_class_name(config_id))

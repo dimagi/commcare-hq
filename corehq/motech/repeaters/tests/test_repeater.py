@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import uuid
 from collections import namedtuple
 from datetime import datetime, timedelta
@@ -16,7 +17,7 @@ from corehq.apps.receiverwrapper.exceptions import DuplicateFormatException, Ign
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.motech.repeaters.repeater_generators import FormRepeaterXMLPayloadGenerator, RegisterGenerator, \
     BasePayloadGenerator
-from corehq.motech.repeaters.tasks import check_repeaters
+from corehq.motech.repeaters.tasks import check_repeaters, process_repeat_record
 from corehq.motech.repeaters.models import (
     CaseRepeater,
     FormRepeater,
@@ -31,7 +32,7 @@ from corehq.form_processor.tests.utils import run_with_all_backends, FormProcess
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from couchforms.const import DEVICE_LOG_XMLNS
 from dimagi.utils.parsing import json_format_datetime
-
+from corehq.util.test_utils import flag_enabled
 
 MockResponse = namedtuple('MockResponse', 'status_code reason')
 CASE_ID = "ABC123CASEID"
@@ -581,7 +582,8 @@ class RepeaterFailureTest(BaseRepeaterTest):
         self.assertFalse(repeat_record.succeeded)
 
         # Should be marked as successful after a successful run
-        with patch('corehq.motech.repeaters.models.simple_post'):
+        with patch('corehq.motech.repeaters.models.simple_post') as mock_simple_post:
+            mock_simple_post.return_value.status_code = 200
             repeat_record.fire()
 
         self.assertTrue(repeat_record.succeeded)
@@ -831,3 +833,51 @@ class LocationRepeaterTest(TestCase):
                 'site_code': location.site_code,
             }
         )
+
+
+class TestRepeaterPause(BaseRepeaterTest):
+    def setUp(self):
+        super(TestRepeaterPause, self).setUp()
+        self.domain_name = "test-domain"
+        self.domain = create_domain(self.domain_name)
+
+        self.repeater = CaseRepeater(
+            domain=self.domain_name,
+            url='case-repeater-url',
+        )
+        self.repeater.save()
+        self.post_xml(self.xform_xml, self.domain_name)
+        self.repeat_record = self.repeater.register(CaseAccessors(self.domain).get_case(CASE_ID))
+
+    @run_with_all_backends
+    def test_trigger_when_paused(self):
+        # not paused
+        with patch.object(RepeatRecord, 'fire') as mock_fire:
+            with patch.object(RepeatRecord, 'postpone_by') as mock_postpone_fire:
+                process_repeat_record(self.repeat_record)
+                self.assertEqual(mock_fire.call_count, 1)
+                self.assertEqual(mock_postpone_fire.call_count, 0)
+
+                # paused
+                self.repeater.pause()
+                # re fetch repeat record
+                repeat_record_id = self.repeat_record.get_id
+                self.repeat_record = RepeatRecord.get(repeat_record_id)
+                process_repeat_record(self.repeat_record)
+                self.assertEqual(mock_fire.call_count, 1)
+                self.assertEqual(mock_postpone_fire.call_count, 1)
+
+                # resumed
+                self.repeater.resume()
+                # re fetch repeat record
+                repeat_record_id = self.repeat_record.get_id
+                self.repeat_record = RepeatRecord.get(repeat_record_id)
+                process_repeat_record(self.repeat_record)
+                self.assertEqual(mock_fire.call_count, 2)
+                self.assertEqual(mock_postpone_fire.call_count, 1)
+
+    def tearDown(self):
+        self.domain.delete()
+        self.repeater.delete()
+        delete_all_repeat_records()
+        super(TestRepeaterPause, self).tearDown()

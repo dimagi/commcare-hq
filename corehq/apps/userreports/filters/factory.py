@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import json
 import warnings
 from django.utils.translation import ugettext as _
@@ -7,7 +8,7 @@ from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.filters.specs import (PropertyMatchFilterSpec, NotFilterSpec, NamedFilterSpec,
     BooleanExpressionFilterSpec)
 from corehq.apps.userreports.exceptions import BadSpecError
-from corehq.apps.userreports.filters import ANDFilter, ORFilter, NOTFilter, SinglePropertyValueFilter
+from corehq.apps.userreports.filters import ANDFilter, ORFilter, NOTFilter, SinglePropertyValueFilter, NamedFilter
 from corehq.apps.userreports.operators import equal, get_operator
 
 
@@ -57,7 +58,8 @@ def _build_boolean_expression_filter(spec, context):
 
 def _build_named_filter(spec, context):
     wrapped = NamedFilterSpec.wrap(spec)
-    return context.named_filters[wrapped.name]
+    filter = context.named_filters[wrapped.name]
+    return NamedFilter(wrapped.name, filter)
 
 
 class FilterFactory(object):

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import collections
 from django import forms
 from django.forms.fields import MultiValueField, CharField
@@ -14,6 +15,8 @@ from django.utils.safestring import mark_safe
 import json
 from django.utils.translation import ugettext_noop
 from dimagi.utils.dates import DateSpan
+import six
+from six.moves import range
 
 
 class BootstrapCheckboxInput(CheckboxInput):
@@ -23,7 +26,7 @@ class BootstrapCheckboxInput(CheckboxInput):
         self.inline_label = inline_label
 
     def render(self, name, value, attrs=None):
-        final_attrs = self.build_attrs(attrs, type='checkbox', name=name)
+        final_attrs = self.build_attrs(attrs, extra_attrs={'type': 'checkbox', 'name': name})
         try:
             result = self.check_test(value)
         except: # Silently catch exceptions
@@ -46,7 +49,7 @@ class BootstrapAddressField(MultiValueField):
     def __init__(self,num_lines=3,*args,**kwargs):
         fields = tuple([CharField(widget=TextInput(attrs={'class':'input-xxlarge'})) for _ in range(0, num_lines)])
         self.widget = BootstrapAddressFieldWidget(widgets=[field.widget for field in fields])
-        super(BootstrapAddressField,self).__init__(fields=fields,*args,**kwargs)
+        super(BootstrapAddressField, self).__init__(fields=fields,*args,**kwargs)
 
     def compress(self, data_list):
         return data_list
@@ -76,7 +79,7 @@ class BootstrapDisabledInput(Input):
     def render(self, name, value, attrs=None):
         if value is None:
             value = ''
-        final_attrs = self.build_attrs(attrs, type=self.input_type, name=name)
+        final_attrs = self.build_attrs(attrs, extra_attrs={'type': self.input_type, 'name': name})
         if value != '':
             # Only add the 'value' attribute if a value is non-empty.
             final_attrs['value'] = force_unicode(self._format_value(value))
@@ -110,7 +113,7 @@ $(function() {
         tags: %s
     });
 });
-</script>\n""" % (attrs['id'], json.dumps(map(lambda c: {'text': c, 'id': c}, self.choices))))
+</script>\n""" % (attrs['id'], json.dumps([{'text': c, 'id': c} for c in self.choices])))
 
         else:
             output = mark_safe("")
@@ -175,7 +178,7 @@ class Select2Ajax(forms.TextInput):
         self._initial = val
 
     def _clean_initial(self, val):
-        if isinstance(val, collections.Sequence) and not isinstance(val, (str, unicode)):
+        if isinstance(val, collections.Sequence) and not isinstance(val, (str, six.text_type)):
             # if its a tuple or list
             return {"id": val[0], "text": val[1]}
         elif val is None:

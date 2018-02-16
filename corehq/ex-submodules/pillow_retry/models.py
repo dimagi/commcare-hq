@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import json
 import traceback
 from datetime import datetime, timedelta
@@ -41,7 +42,6 @@ class PillowError(models.Model):
     error_traceback = models.TextField(null=True)
     change = JSONField(null=True)
     change_metadata = JSONField(null=True)
-    queued = models.BooleanField(default=False)
 
     @property
     def change_object(self):
@@ -127,7 +127,6 @@ class PillowError(models.Model):
         max_attempts = settings.PILLOW_RETRY_QUEUE_MAX_PROCESSING_ATTEMPTS
         multi_attempts_cutoff = cls.multi_attempts_cutoff()
         query = PillowError.objects \
-            .filter(queued=False) \
             .filter(date_next_attempt__lte=utcnow) \
             .filter(
                 models.Q(current_attempt=0) |
@@ -156,7 +155,6 @@ class PillowError(models.Model):
 
         multi_attempts_cutoff = cls.multi_attempts_cutoff()
         return PillowError.objects.filter(
-            models.Q(queued=False),
             models.Q(date_last_attempt__lt=last_attempt_lt),
             models.Q(current_attempt__gte=attempts_gte) | models.Q(total_attempts__gte=multi_attempts_cutoff)
         ).update(

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from custom.enikshay.reports.adherence import AdherenceReport
 from custom.enikshay.reports.case_finding import CaseFindingReport
 from custom.enikshay.reports.historical_adherence import HistoricalAdherenceReport

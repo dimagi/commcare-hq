@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import os
 
 from django.core import management
@@ -5,6 +6,7 @@ from django.core import management
 from corehq.apps.receiverwrapper.auth import AuthContext
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.util.test_utils import softer_assert
+import xml.etree.ElementTree as ElementTree
 
 import sqlalchemy
 
@@ -24,6 +26,9 @@ class TestFluffs(IntraHealthTestCase):
         cls.couverture = cls.couverture_table
         with open(os.path.join(DATAPATH, 'taux.xml')) as f:
             xml = f.read()
+            xml_obj = ElementTree.fromstring(xml)
+            xml_obj[2][4].text = cls.mobile_worker.get_id
+            xml = ElementTree.tostring(xml_obj)
             cls.taux = submit_form_locally(
                 xml, TEST_DOMAIN, auth_context=AuthContext(
                     user_id=cls.mobile_worker.get_id, domain=TEST_DOMAIN, authenticated=True

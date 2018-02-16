@@ -1,10 +1,11 @@
+from __future__ import absolute_import
 from datetime import datetime
 
 from django.urls import reverse
 
 from corehq.apps.reports.filters.base import BaseMultipleOptionFilter, BaseReportFilter, BaseSingleOptionFilter
 from corehq.apps.reports.filters.dates import DatespanFilter
-from corehq.apps.reports.filters.search import SearchFilter
+from corehq.apps.reports.filters.base import BaseSimpleFilter
 from corehq.apps.reports_core.exceptions import FilterValueException
 from corehq.apps.reports_core.filters import QuarterFilter as UCRQuarterFilter
 from corehq.apps.userreports.reports.filters.choice_providers import LocationChoiceProvider
@@ -54,7 +55,7 @@ class EnikshayLocationFilter(BaseMultipleOptionFilter):
     @classmethod
     def get_value(cls, request, domain):
         selected = super(EnikshayLocationFilter, cls).get_value(request, domain)
-        if len(filter(None, selected)) == 0 and not request.couch_user.has_permission(domain, 'access_all_locations'):
+        if len([_f for _f in selected if _f]) == 0 and not request.couch_user.has_permission(domain, 'access_all_locations'):
             # Force the user to select their assigned locations, otherwise selecting no locations will result in
             # all results being returned.
             selected = request.couch_user.get_location_ids(domain)
@@ -201,6 +202,6 @@ class VoucherStateFilter(BaseSingleOptionFilter):
         ]
 
 
-class VoucherIDFilter(SearchFilter):
+class VoucherIDFilter(BaseSimpleFilter):
     slug = "voucher_id"
     label = "Voucher Readable ID"

@@ -23,21 +23,26 @@
     var visualFormCtrl = {
         usernameClear: function () {
             $formElements.username()
-                .removeClass('has-error has-pending has-success');
+                .removeClass('has-error has-pending has-success has-warning');
         },
         usernameSuccess: function () {
             $formElements.username()
-                .removeClass('has-error has-pending')
+                .removeClass('has-error has-pending has-warning')
                 .addClass('has-success');
+        },
+        usernameWarning: function () {
+            $formElements.username()
+                .removeClass('has-error has-pending has-success')
+                .addClass('has-warning');
         },
         usernamePending: function () {
             $formElements.username()
-                .removeClass('has-error has-success')
+                .removeClass('has-error has-success has-warning')
                 .addClass('has-pending');
         },
         usernameError: function () {
             $formElements.username()
-                .removeClass('has-success has-pending')
+                .removeClass('has-success has-pending has-warning')
                 .addClass('has-error');
         },
         passwordSuccess: function () {
@@ -96,6 +101,7 @@
         PENDING: 'pending',
         TAKEN: 'taken',
         AVAILABLE: 'available',
+        AVAILABLE_WARNING: 'warning',
         ERROR: 'error'
     };
 
@@ -207,7 +213,7 @@
             var reqStr = location_url + "?name=" + query;
             $http.get(reqStr).then(
                 function (response) {
-                    $scope.availableLocations = response.data;
+                    $scope.availableLocations = response.data.results;
                 }
             );
         };
@@ -225,7 +231,7 @@
                 last_name: 'User',
                 is_anonymous: true,
             });
-            ga_track_event('Manage Mobile Workers', 'New Anonymous Mobile Worker', '');
+            hqImport('analytix/js/google').track.event('Manage Mobile Workers', 'New Anonymous Mobile Worker', '');
         };
 
         $scope.initializeMobileWorker = function (mobileWorker) {
@@ -246,7 +252,7 @@
                     generateStrongPasswords: generateStrongPasswords,
                 });
             }
-            ga_track_event('Manage Mobile Workers', 'New Mobile Worker', '');
+            hqImport('analytix/js/google').track.event('Manage Mobile Workers', 'New Mobile Worker', '');
         };
 
         $scope.submitNewMobileWorker = function () {
@@ -323,11 +329,16 @@
                             username: username
                         })
                         .success(function (data) {
-                            if (!!data.success) {
+                            if (data.success) {
                                 visualFormCtrl.usernameSuccess();
                                 $scope.usernameAvailabilityStatus = USERNAME_STATUS.AVAILABLE;
                                 deferred.resolve(data.success);
                                 $scope.usernameStatusMessage = data.success;
+                            } else if (data.warning) {
+                                visualFormCtrl.usernameWarning();
+                                $scope.usernameAvailabilityStatus = USERNAME_STATUS.AVAILABLE_WARNING;
+                                deferred.resolve(data.warning);
+                                $scope.usernameStatusMessage = data.warning;
                             } else {
                                 visualFormCtrl.usernameError();
                                 $scope.usernameAvailabilityStatus = USERNAME_STATUS.TAKEN;

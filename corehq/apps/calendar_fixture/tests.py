@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import division
 import uuid
 from datetime import datetime, timedelta
 from django.test import TestCase
@@ -47,7 +49,7 @@ class TestFixture(TestCase):
         month_element = fixture[0][0][0]
         self.assertEqual(str(expected_date.month), month_element.attrib['number'])
         day_element = fixture[0][0][0][0]
-        self.assertEqual(str(int(expected_date.strftime('%s')) / (60 * 60 * 24)), day_element.attrib['date'])
+        self.assertEqual(str(int(expected_date.strftime('%s')) // (60 * 60 * 24)), day_element.attrib['date'])
 
     def _check_last_date(self, fixture, expected_date):
         year_element = fixture[0][-1]
@@ -55,4 +57,4 @@ class TestFixture(TestCase):
         month_element = fixture[0][-1][-1]
         self.assertEqual(str(expected_date.month), month_element.attrib['number'])
         day_element = fixture[0][-1][-1][-1]
-        self.assertEqual(str(int(expected_date.strftime('%s')) / (60 * 60 * 24)), day_element.attrib['date'])
+        self.assertEqual(str(int(expected_date.strftime('%s')) // (60 * 60 * 24)), day_element.attrib['date'])

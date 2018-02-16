@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import json
 from decimal import Decimal
 from django.utils.encoding import force_unicode

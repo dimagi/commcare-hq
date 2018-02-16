@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.apps.locations.dbaccessors import get_web_users_by_location
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reminders.util import get_preferred_phone_number_for_recipient
@@ -8,6 +9,7 @@ from custom.ewsghana.reminders.const import DAYS_UNTIL_LATE
 from custom.ewsghana.reminders.second_soh_reminder import SecondSOHReminder
 from custom.ewsghana.utils import send_sms, has_notifications_enabled, report_status
 from dimagi.utils.couch.database import iter_docs
+from six.moves import map
 
 
 class ThirdSOHReminder(SecondSOHReminder):
@@ -34,10 +36,10 @@ class ThirdSOHReminder(SecondSOHReminder):
     def get_users_messages(self):
         locations = SQLLocation.active_objects.filter(domain=self.domain, location_type__administrative=False)
         for sql_location in locations:
-            in_charges = map(CommCareUser.wrap, iter_docs(
+            in_charges = list(map(CommCareUser.wrap, iter_docs(
                 CommCareUser.get_db(),
                 [in_charge.user_id for in_charge in sql_location.facilityincharge_set.all()]
-            ))
+            )))
             web_users = [
                 web_user
                 for web_user in get_web_users_by_location(self.domain, sql_location.location_id)

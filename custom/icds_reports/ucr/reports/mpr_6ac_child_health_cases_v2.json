@@ -5,6 +5,8 @@
     "icds-cas"
   ],
   "server_environment": [
+    "softlayer",
+    "icds-new",
     "icds"
   ],
   "report_id": "static-mpr_6ac_child_health_cases_v2",

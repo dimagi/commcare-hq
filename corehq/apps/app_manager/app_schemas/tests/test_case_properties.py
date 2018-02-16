@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.test import SimpleTestCase
 from mock import patch, MagicMock
 from corehq.apps.app_manager.app_schemas.case_properties import get_case_properties

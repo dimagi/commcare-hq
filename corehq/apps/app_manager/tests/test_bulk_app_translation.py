@@ -1,9 +1,10 @@
 # coding=utf-8
+from __future__ import absolute_import
 import codecs
 import tempfile
 
 from django.test import SimpleTestCase
-from StringIO import StringIO
+from io import BytesIO
 
 from mock import patch
 
@@ -19,6 +20,7 @@ from corehq.apps.app_manager.app_translations import (
     expected_bulk_app_sheet_headers,
     update_form_translations,
     get_unicode_dicts)
+from six.moves import zip
 
 
 class BulkAppTranslationTestBase(SimpleTestCase, TestXmlMixin):
@@ -50,7 +52,7 @@ class BulkAppTranslationTestBase(SimpleTestCase, TestXmlMixin):
         if not expected_messages:
             expected_messages = ["App Translations Updated!"]
 
-        file = StringIO()
+        file = BytesIO()
         export_raw(excel_headers, excel_data, file, format=Format.XLS_2007)
 
         with tempfile.TemporaryFile(suffix='.xlsx') as f:
@@ -258,14 +260,14 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBase):
             self.upload_headers_bad_column,
             self.upload_data,
             expected_messages=[
-                u'Sheet "Modules_and_forms" has less columns than expected. Sheet '
+                u'Sheet "Modules_and_forms" has fewer columns than expected. Sheet '
                 u'will be processed but the following translations will be '
                 u'unchanged: default_fra',
 
                 u'Sheet "Modules_and_forms" has unrecognized columns. Sheet will '
                 u'be processed but ignoring the following columns: default-fra',
 
-                u'Sheet "module1" has less columns than expected. Sheet '
+                u'Sheet "module1" has fewer columns than expected. Sheet '
                 u'will be processed but the following translations will be '
                 u'unchanged: default_fra',
 
@@ -273,7 +275,7 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBase):
                 u'be processed but ignoring the following columns: default-fra',
                 u"You must provide at least one translation of the case property 'name'",
 
-                u'Sheet "module1_form1" has less columns than expected. Sheet '
+                u'Sheet "module1_form1" has fewer columns than expected. Sheet '
                 u'will be processed but the following translations will be '
                 u'unchanged: default_fra',
 
@@ -341,7 +343,7 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
         super(BulkAppTranslationDownloadTest, cls).setUpClass()
         cls.app = Application.wrap(cls.get_json("app"))
         # Todo, refactor this into BulkAppTranslationTestBase.upload_raw_excel_translations
-        file = StringIO()
+        file = BytesIO()
         export_raw(cls.excel_headers, cls.excel_data, file, format=Format.XLS_2007)
 
         with tempfile.TemporaryFile(suffix='.xlsx') as f:
@@ -438,7 +440,7 @@ class AggregateMarkdownNodeTests(SimpleTestCase, TestXmlMixin):
            '', '', '', '', '', '', '', '', ''))))
 
     def get_worksheet(self, title):
-        string_io = StringIO()
+        string_io = BytesIO()
         export_raw(self.headers, self.data, string_io, format=Format.XLS_2007)
         string_io.seek(0)
         workbook = WorkbookJSONReader(string_io)  # __init__ will read string_io

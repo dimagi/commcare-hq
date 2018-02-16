@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from abc import ABCMeta, abstractmethod, abstractproperty
 import six
 from casexml.apps.case.exceptions import IllegalCaseId
@@ -177,7 +178,7 @@ class AbstractCaseDbCache(six.with_metaclass(ABCMeta)):
         pass
 
     @abstractmethod
-    def get_reverse_indexed_cases(self, case_ids):
+    def get_reverse_indexed_cases(self, case_ids, case_types=None, is_closed=None):
         pass
 
     def apply_action_intents(self, case, primary_intent, deprecation_intent=None):

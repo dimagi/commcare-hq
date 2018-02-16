@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.hqcase.utils import update_case
 from corehq.apps.locations.tests.util import make_loc, setup_location_types
@@ -99,17 +100,19 @@ class CustomContentTest(BaseICDSTest):
             case_id=self.child_health_case.case_id,
         )
 
+        c.set_context(schedule_instance=schedule_instance)
+
         # Test when current weight is greater than previous
         submit_growth_form(self.domain, self.child_health_case.case_id, '10.1', '10.4')
         self.assertEqual(
-            c.get_list_of_messages(self.mother_person_case, schedule_instance),
+            c.get_list_of_messages(self.mother_person_case),
             []
         )
 
         # Test when current weight is equal to previous
         submit_growth_form(self.domain, self.child_health_case.case_id, '10.1', '10.1')
         self.assertEqual(
-            c.get_list_of_messages(self.mother_person_case, schedule_instance),
+            c.get_list_of_messages(self.mother_person_case),
             ["As per the latest records of your AWC, the weight of your child Joe has remained static in the last "
              "month. Please consult your AWW for necessary advice."]
         )
@@ -117,7 +120,7 @@ class CustomContentTest(BaseICDSTest):
         # Test when current weight is less than previous
         submit_growth_form(self.domain, self.child_health_case.case_id, '10.1', '9.9')
         self.assertEqual(
-            c.get_list_of_messages(self.mother_person_case, schedule_instance),
+            c.get_list_of_messages(self.mother_person_case),
             ["As per the latest records of your AWC, the weight of your child Joe has reduced in the last month. "
              "Please consult your AWW for necessary advice."]
         )
@@ -135,7 +138,7 @@ class CustomContentTest(BaseICDSTest):
         update_case(self.domain, self.child_health_case.case_id, {'property': 'value10'})
 
         self.assertEqual(
-            c.get_list_of_messages(self.mother_person_case, schedule_instance),
+            c.get_list_of_messages(self.mother_person_case),
             ["As per the latest records of your AWC, the weight of your child Joe has reduced in the last month. "
              "Please consult your AWW for necessary advice."]
         )
@@ -148,10 +151,12 @@ class CustomContentTest(BaseICDSTest):
             case_id=self.red_child_health_case.case_id,
         )
 
+        c.set_context(schedule_instance=schedule_instance)
+
         # Current weight is less than previous, but grade is red, so no messages are sent
         submit_growth_form(self.domain, self.red_child_health_case.case_id, '10.1', '9.9')
         self.assertEqual(
-            c.get_list_of_messages(self.mother_person_case, schedule_instance),
+            c.get_list_of_messages(self.mother_person_case),
             []
         )
 
@@ -164,9 +169,11 @@ class CustomContentTest(BaseICDSTest):
             case_id=self.ccs_record_case.case_id,
         )
 
+        c.set_context(schedule_instance=schedule_instance)
+
         language_code_patch.return_value = ENGLISH
         self.assertEqual(
-            c.get_list_of_messages(self.user1, schedule_instance),
+            c.get_list_of_messages(self.user1),
             ["AWC awc1 has not reported a visit during complementary feeding initiation period for Sam"],
         )
 
@@ -179,9 +186,11 @@ class CustomContentTest(BaseICDSTest):
             case_id=self.ccs_record_case.case_id,
         )
 
+        c.set_context(schedule_instance=schedule_instance)
+
         language_code_patch.return_value = ENGLISH
         self.assertEqual(
-            c.get_list_of_messages(self.user3, schedule_instance),
+            c.get_list_of_messages(self.user3),
             ["AWC awc1 has not reported a visit during complementary feeding initiation period for Sam"],
         )
 
@@ -194,9 +203,11 @@ class CustomContentTest(BaseICDSTest):
             case_id=self.ccs_record_case.case_id,
         )
 
+        c.set_context(schedule_instance=schedule_instance)
+
         language_code_patch.return_value = ENGLISH
         self.assertEqual(
-            c.get_list_of_messages(self.user3, schedule_instance),
+            c.get_list_of_messages(self.user3),
             ["AWC awc1 has not reported a visit during the PNC within one week of delivery for Sam"],
         )
 
@@ -209,9 +220,11 @@ class CustomContentTest(BaseICDSTest):
             case_id=self.child_person_case.case_id,
         )
 
+        c.set_context(schedule_instance=schedule_instance)
+
         language_code_patch.return_value = ENGLISH
         self.assertEqual(
-            c.get_list_of_messages(self.user3, schedule_instance),
+            c.get_list_of_messages(self.user3),
             ["AWC awc1 has reported illness for the child Joe. Please ensure that AWW follows up with mother "
              "immediately"],
         )
@@ -225,9 +238,11 @@ class CustomContentTest(BaseICDSTest):
             case_id=self.ccs_record_case.case_id,
         )
 
+        c.set_context(schedule_instance=schedule_instance)
+
         language_code_patch.return_value = ENGLISH
         self.assertEqual(
-            c.get_list_of_messages(self.user1, schedule_instance),
+            c.get_list_of_messages(self.user1),
             ["Congratulations! You've done all the Complementary Feeding  Visits for Sam"],
         )
 
@@ -240,9 +255,11 @@ class CustomContentTest(BaseICDSTest):
             case_id=self.child_tasks_case.case_id,
         )
 
+        c.set_context(schedule_instance=schedule_instance)
+
         language_code_patch.return_value = ENGLISH
         self.assertEqual(
-            c.get_list_of_messages(self.user1, schedule_instance),
+            c.get_list_of_messages(self.user1),
             ["Congratulations! You've given all the vaccines to Joe"],
         )
 

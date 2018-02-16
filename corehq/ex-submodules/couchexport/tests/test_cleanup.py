@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.test import TestCase
 from couchexport.export import ExportConfiguration
 from dimagi.utils.couch.database import get_safe_write_kwargs, get_db

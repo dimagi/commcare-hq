@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import division
 import json
 from django.utils.translation import ugettext_lazy as _
 from corehq.apps.accounting.utils import fmt_dollar_amount

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.apps.userreports.specs import TypeProperty
 from dimagi.ext.jsonobject import JsonObject, StringProperty
 from dimagi.utils.dates import force_to_datetime

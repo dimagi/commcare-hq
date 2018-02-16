@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from couchdbkit.client import Database
 from corehq.util.couch import get_document_class_by_doc_type
 from dimagi.utils.decorators.memoized import memoized
@@ -76,7 +77,7 @@ class CouchConfig(object):
             return self.all_dbs_by_db_name[db_name]
         except KeyError:
             raise DatabaseNotFound('no database with name {} in settings! Options are: {}'.format(
-                db_name, ', '.join(self.all_dbs_by_db_name.keys())
+                db_name, ', '.join(self.all_dbs_by_db_name)
             ))
 
 

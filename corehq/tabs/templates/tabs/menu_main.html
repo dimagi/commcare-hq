@@ -6,6 +6,7 @@
     {% cache 500 header_tab tab.class_name tab.domain tab.is_active_tab tab.couch_user.get_id LANGUAGE_CODE %}
     {% with tab.filtered_dropdown_items as items %}
         <li class="mainmenu-tab {% if items %}dropdown{% endif %}{% if tab.is_active_tab %} active{% endif %}"
+            id="{{ tab.class_name }}"
             {% if ANALYTICS_IDS.GOOGLE_ANALYTICS_API_ID and tab.ga_tracker %}
                 data-category="{{ tab.ga_tracker.category }}"
                 data-action="{{ tab.ga_tracker.action }}"

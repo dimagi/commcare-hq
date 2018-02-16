@@ -4,6 +4,7 @@ Use this in preparation ``for form_processor/0067_auto_20170915_1506.py`` migrat
 
 from __future__ import print_function
 
+from __future__ import absolute_import
 from itertools import groupby
 
 from django.core.management.base import BaseCommand
@@ -13,6 +14,7 @@ from corehq.form_processor.models import CommCareCaseIndexSQL
 from corehq.form_processor.utils.sql import fetchall_as_namedtuple, fetchone_as_namedtuple
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 from dimagi.utils.chunked import chunked
+import six
 
 
 IDENTIFIER_INDEX_NAME = 'form_processor_commcarecaseindexsql_identifier'
@@ -62,7 +64,7 @@ class Command(BaseCommand):
                 )
                 for case_id, indices in grouped_indices:
                     print('--> Case: {}\n'.format(case_id))
-                    print('    {}'.format('\n    '.join(unicode(i) for i in indices)))
+                    print('    {}'.format('\n    '.join(six.text_type(i) for i in indices)))
                 print('\n')
             else:
                 print(self.style.WARNING('Attempting to create unique index and constraint for db: {}'.format(db)))

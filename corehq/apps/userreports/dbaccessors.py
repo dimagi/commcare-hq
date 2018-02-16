@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from corehq.apps.domain.dbaccessors import get_docs_in_domain_by_class
 from corehq.apps.domain.models import Domain
 from corehq.apps.userreports.const import UCR_ES_BACKEND, UCR_LABORATORY_BACKEND, UCR_ES_PRIMARY
@@ -26,13 +27,16 @@ def get_report_configs_for_domain(domain):
     )
 
 
-def get_datasources_for_domain(domain):
+def get_datasources_for_domain(domain, referenced_doc_type=None):
     from corehq.apps.userreports.models import DataSourceConfiguration
+    key = [domain]
+    if referenced_doc_type:
+        key.append(referenced_doc_type)
     return sorted(
         DataSourceConfiguration.view(
             'userreports/data_sources_by_build_info',
-            start_key=[domain],
-            end_key=[domain, {}],
+            start_key=key,
+            end_key=key + [{}],
             reduce=False,
             include_docs=True
         ),

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.messaging.scheduling.models.abstract import Schedule, Event, Broadcast
 from corehq.messaging.scheduling import util
 from datetime import timedelta, time
@@ -31,35 +32,40 @@ class AlertSchedule(Schedule):
         current_event = self.memoized_events[instance.current_event_num]
         return current_event.memoized_content
 
-    def move_to_next_event(self, instance):
-        instance.current_event_num += 1
-        if instance.current_event_num >= len(self.memoized_events):
-            instance.schedule_iteration_num += 1
-            instance.current_event_num = 0
-        self.set_next_event_due_timestamp(instance)
+    def delete_related_events(self):
+        for event in self.alertevent_set.all():
+            event.content.delete()
 
-        if instance.schedule_iteration_num > 1:
-            # AlertSchedules do not repeat
-            instance.active = False
+        self.alertevent_set.all().delete()
+
+    def total_iterations_complete(self, instance):
+        # AlertSchedules do not repeat
+        return instance.schedule_iteration_num > 1
 
     @classmethod
-    def create_simple_alert(cls, domain, content):
+    def create_simple_alert(cls, domain, content, extra_options=None):
+        schedule = cls(domain=domain)
+        schedule.set_simple_alert(content, extra_options=extra_options)
+        return schedule
+
+    def set_simple_alert(self, content, extra_options=None):
         with transaction.atomic():
-            schedule = cls(domain=domain)
-            schedule.save()
+            self.ui_type = Schedule.UI_TYPE_IMMEDIATE
+            self.set_extra_scheduling_options(extra_options)
+            self.save()
+
+            self.delete_related_events()
 
             if content.pk is None:
                 content.save()
 
             event = AlertEvent(
                 order=1,
-                schedule=schedule,
+                schedule=self,
                 time_to_wait=time(0, 0),
             )
             event.content = content
             event.save()
-
-        return schedule
 
 
 class AlertEvent(Event):
@@ -69,3 +75,13 @@ class AlertEvent(Event):
 
 class ImmediateBroadcast(Broadcast):
     schedule = models.ForeignKey('scheduling.AlertSchedule', on_delete=models.CASCADE)
+
+    def soft_delete(self):
+        from corehq.messaging.scheduling.tasks import delete_alert_schedule_instances
+
+        with transaction.atomic():
+            self.deleted = True
+            self.save()
+            self.schedule.deleted = True
+            self.schedule.save()
+            delete_alert_schedule_instances.delay(self.schedule_id)

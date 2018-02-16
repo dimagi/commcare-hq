@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from dimagi.utils.decorators.memoized import Memoized
 from django.test import TestCase, SimpleTestCase
 import mock

@@ -3,8 +3,7 @@
         "enikshay-reports-qa"
     ],
     "server_environment": [
-        "enikshay",
-        "softlayer"
+        "enikshay"
     ],
     "data_source_table": "voucher_qa",
     "report_id": "payment_register_qa",

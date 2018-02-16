@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import json
 
 from django.contrib import messages
@@ -152,7 +153,7 @@ def _update_group_membership(request, domain, group_id):
 
     # check to make sure no users were deleted at time of making group
     all_users = CommCareUser.ids_by_domain(domain)
-    safe_ids = filter(lambda u: u in all_users, selected_users)
+    safe_ids = [u for u in selected_users if u in all_users]
 
     group.users = safe_ids
     group.save()

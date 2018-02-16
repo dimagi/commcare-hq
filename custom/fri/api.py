@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import random
 import re
 from dateutil.parser import parse
@@ -22,6 +23,8 @@ from dimagi.utils.couch import release_lock
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from corehq.apps.domain.models import Domain
 from dimagi.utils.logging import notify_exception
+import six
+from six.moves import range
 
 # (time, length in minutes), indexed by day, where Monday=0, Sunday=6
 WINDOWS = (
@@ -110,7 +113,7 @@ def get_interactive_participants(domain):
     current_date = datetime.now(tz=timezone).date()
     for case in cases:
         study_arm = case.get_case_property("study_arm")
-        if isinstance(study_arm, basestring) and study_arm.upper() == "A" and not case.closed:
+        if isinstance(study_arm, six.string_types) and study_arm.upper() == "A" and not case.closed:
             start_date = get_date(case, "start_date")
             if start_date is None:
                 continue
@@ -130,8 +133,8 @@ def get_message_bank(domain, risk_profile=None, for_comparing=False):
         result = []
         for message in messages:
             result.append({
-                "message" : message,
-                "compare_string" : letters_only(message.message),
+                "message": message,
+                "compare_string": letters_only(message.message),
             })
         return result
     else:
@@ -240,7 +243,7 @@ def get_date(case, prop):
         return datetime.date()
     elif isinstance(value, date):
         return value
-    elif isinstance(value, basestring):
+    elif isinstance(value, six.string_types):
         try:
             value = parse(value).date()
         except:

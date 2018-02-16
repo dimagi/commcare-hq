@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import math
 from django.test import SimpleTestCase, RequestFactory
 from django.test.utils import override_settings
@@ -6,6 +7,7 @@ from corehq.util.soft_assert.core import SoftAssert
 from corehq.util.soft_assert.api import _send_message, soft_assert
 from corehq.util.cache_utils import ExponentialBackoff
 from corehq.util.test_utils import softer_assert
+from six.moves import range
 
 
 class SoftAssertTest(SimpleTestCase):
@@ -131,7 +133,7 @@ class SoftAssertHelpersTest(SimpleTestCase):
         tests = iter([test1, test2])
 
         def backend(subject, message):
-            test_ = tests.next()
+            test_ = next(tests)
             test_(subject, message)
 
         self.soft_assert = SoftAssert(

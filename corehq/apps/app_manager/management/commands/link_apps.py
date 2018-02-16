@@ -1,7 +1,12 @@
+from __future__ import absolute_import
 from __future__ import print_function
+
 from django.core.management import BaseCommand, CommandError
 
+from corehq.apps.app_manager.dbaccessors import get_latest_released_app_version
 from corehq.apps.app_manager.models import Application
+from corehq.apps.app_manager.views.utils import update_linked_app
+from corehq.apps.linked_domain.applications import link_app
 
 
 class Command(BaseCommand):
@@ -16,11 +21,15 @@ class Command(BaseCommand):
     def handle(self, master_id, linked_id, **options):
         print("Linking apps")
         master_app = Application.get(master_id)
+        master_version = get_latest_released_app_version(master_app.domain, master_id)
+        if not master_version:
+            raise CommandError(
+                "Creating linked app failed."
+                " Unable to get latest released version of your app."
+                " Make sure you have at least one released build."
+            )
+
         linked_app = Application.get(linked_id)
-        master_app.linked_whitelist.append(linked_app.domain)
-        linked_app.doc_type = 'LinkedApplication'
-        linked_app.master = master_id
-        if master_app.version < linked_app.version:
-            master_app.version = linked_app.version
-        master_app.save()
-        linked_app.save()
+
+        link_app(linked_app, master_app.domain, master_app.domain)
+        update_linked_app(linked_app, 'system')

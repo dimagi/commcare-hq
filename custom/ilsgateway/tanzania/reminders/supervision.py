@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from custom.ilsgateway.tanzania.reminders.reminder import Reminder
 
 from custom.ilsgateway.models import SupplyPointStatusTypes, SupplyPointStatus

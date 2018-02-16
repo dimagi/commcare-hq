@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.core.management.base import BaseCommand
 from corehq.apps.domain.models import Domain
 
@@ -8,7 +9,7 @@ class Command(BaseCommand):
     def handle(self, **options):
         def settify(entity):
             entity = [entity] if not isinstance(entity, list) else entity
-            return set(filter(None, entity))
+            return set([_f for _f in entity if _f])
 
         domains = Domain.get_all()
         for d in domains:

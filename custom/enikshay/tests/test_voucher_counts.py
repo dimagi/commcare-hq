@@ -1,10 +1,13 @@
+from __future__ import absolute_import
 from datetime import date
 from mock import patch, MagicMock
 from django.test import TestCase, override_settings
 from casexml.apps.case.mock import CaseStructure
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from ..tasks import EpisodeVoucherUpdate, EpisodeUpdater
+from ..const import ENROLLED_IN_PRIVATE
 from .utils import ENikshayCaseStructureMixin, get_voucher_case_structure
+import six
 
 
 @patch('corehq.apps.callcenter.data_source.call_center_data_source_configuration_provider', MagicMock())
@@ -13,6 +16,7 @@ class TestVoucherCounts(ENikshayCaseStructureMixin, TestCase):
 
     def setUp(self):
         super(TestVoucherCounts, self).setUp()
+        self.episode.attrs['update'][ENROLLED_IN_PRIVATE] = 'true'
         self.cases = self.create_case_structure()
 
     def make_voucher(self, prescription, final_prescription_num_days=5,
@@ -106,7 +110,7 @@ class TestVoucherCounts(ENikshayCaseStructureMixin, TestCase):
             EpisodeUpdater(self.domain).run()
 
             episode = CaseAccessors(self.domain).get_case(self.cases['episode'].case_id)
-            self.assertEqual(episode.get_case_property("prescription_total_days"), unicode(29 + 11))
+            self.assertEqual(episode.get_case_property("prescription_total_days"), six.text_type(29 + 11))
 
             # test that a subsequent update performs a noop
             self.assertEqual(
@@ -190,9 +194,11 @@ class TestVoucherCounts(ENikshayCaseStructureMixin, TestCase):
         )
 
     def test_voucher_generation_dates(self):
-        prescription1 = self.create_prescription_case({
-            'drugs_ordered_readable': "Happy Pills, Sad Pills, Buggy Pillz"
-        })
+        prescription1 = self.create_prescription_case(
+            extra_update={
+                'drugs_ordered_readable': "Happy Pills, Sad Pills, Buggy Pillz",
+            },
+        )
         voucher11 = get_voucher_case_structure(None, prescription1.case_id, {
             'date_issued': '2012-01-01',
             'state': "available",
@@ -201,9 +207,11 @@ class TestVoucherCounts(ENikshayCaseStructureMixin, TestCase):
             'date_issued': '2012-01-01',
             'state': "available",
         })
-        prescription2 = self.create_prescription_case({
-            'drugs_ordered_readable': "Other pillz"
-        })
+        prescription2 = self.create_prescription_case(
+            extra_update={
+                'drugs_ordered_readable': "Other pillz",
+            },
+        )
         voucher21 = get_voucher_case_structure(None, prescription2.case_id, {
             'date_fulfilled': '2014-01-02',
             'date_issued': '2014-01-01',

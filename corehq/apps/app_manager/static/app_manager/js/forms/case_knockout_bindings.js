@@ -26,7 +26,7 @@
         },
         truncateValue: function (value, MAXLEN) {
             MAXLEN = MAXLEN || 40;
-            return (value.length <= MAXLEN) ? (value) : (value.slice(0, MAXLEN/2) + "..." + value.slice(value.length - MAXLEN/2, value.length - 1));
+            return (value.length <= MAXLEN) ? (value) : (value.slice(0, MAXLEN/2) + "..." + value.slice(value.length - MAXLEN/2));
         },
     };
 

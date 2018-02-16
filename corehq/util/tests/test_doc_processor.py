@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import uuid
 
 from couchdbkit import ResourceConflict, ResourceNotFound
@@ -22,6 +23,7 @@ from corehq.util.pagination import TooManyRetries
 from dimagi.ext.couchdbkit import Document
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.database import get_db
+from six.moves import range
 
 
 class TestResumableDocsByTypeIterator(TestCase):
@@ -144,11 +146,11 @@ class SimulateDeleteReindexAccessor(ReindexAccessor):
         return self.wrapped_accessor.model_class
 
     @property
-    def startkey_attribute_name(self):
-        return self.wrapped_accessor.startkey_attribute_name
+    def id_field(self):
+        return self.wrapped_accessor.id_field
 
-    def get_docs(self, from_db, startkey, last_doc_pk=None, limit=500):
-        return self.wrapped_accessor.get_docs(from_db, startkey, last_doc_pk, limit)
+    def get_docs(self, from_db, last_doc_pk=None, limit=500):
+        return self.wrapped_accessor.get_docs(from_db, last_doc_pk, limit)
 
     def get_doc(self, doc_id):
         if doc_id in self.deleted_doc_ids:
@@ -199,6 +201,18 @@ class BaseResumableSqlModelIteratorTest(object):
     def test_resume_iteration(self):
         itr = iter(self.itr)
         self.assertEqual([next(itr)["_id"] for i in range(6)], self.all_doc_ids[:6])
+        # stop/resume iteration
+        self.itr = self.get_iterator()
+        self.assertEqual([doc["_id"] for doc in self.itr], self.all_doc_ids[4:])
+
+    def test_resume_iteration_with_v1_persistent_state(self):
+        itr = iter(self.itr)
+        self.assertEqual([next(itr)["_id"] for i in range(6)], self.all_doc_ids[:6])
+        # simulate old state
+        # do not change this unless there are no existing iterations in progress
+        arg0, arg1 = self.itr.state.args
+        self.itr.state.args = [arg0, "legacy/ignored filter_value", arg1]
+        self.itr._save_state()
         # stop/resume iteration
         self.itr = self.get_iterator()
         self.assertEqual([doc["_id"] for doc in self.itr], self.all_doc_ids[4:])
@@ -382,7 +396,7 @@ class BaseCouchDocProcessorTest(SimpleTestCase):
             {"endkey": [doc_type, {}], "group_level": 1, "reduce": True, "startkey": [doc_type]},
             [{"key": doc_type, "value": total}]
         )]
-        for chunk in chunked(range(total), chuck_size):
+        for chunk in chunked(list(range(total)), chuck_size):
             chunk_rows = [self._get_row(ident, doc_type=doc_type) for ident in chunk]
             if chunk[0] == 0:
                 results.append((
@@ -450,18 +464,18 @@ class TestCouchDocProcessor(BaseCouchDocProcessorTest):
         )
 
     def test_single_run_no_filtering(self):
-        self._test_processor(4, range(4))
+        self._test_processor(4, list(range(4)))
 
     def test_filtering(self):
         self._test_processor(3, [0, 2, 3], ['bar-1'])
 
     def test_multiple_runs_no_skip(self):
-        self._test_processor(4, range(4))
+        self._test_processor(4, list(range(4)))
         self._test_processor(0, [])
 
     def test_multiple_runs_with_skip(self):
         with self.assertRaises(TooManyRetries):
-            self._test_processor(3, range(3), skip_docs=['bar-3'])
+            self._test_processor(3, list(range(3)), skip_docs=['bar-3'])
 
         self._test_processor(1, [3])
 

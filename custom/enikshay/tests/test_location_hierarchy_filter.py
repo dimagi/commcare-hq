@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.test import override_settings, TestCase
 from mock import MagicMock, patch
 
@@ -7,6 +8,7 @@ from corehq.apps.userreports.models import ReportConfiguration, DataSourceConfig
 from corehq.apps.userreports.reports.factory import ReportFactory
 from corehq.apps.userreports.reports.view import get_filter_values
 from custom.enikshay.tests.utils import ENikshayLocationStructureMixin
+from six.moves import range
 
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)

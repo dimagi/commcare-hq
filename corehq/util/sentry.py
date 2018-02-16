@@ -1,4 +1,10 @@
+from __future__ import absolute_import, unicode_literals
+from six import string_types
+from six.moves import filter
+import re
+from django.conf import settings
 from raven.contrib.django import DjangoClient
+from raven.processors import SanitizePasswordsProcessor
 
 from corehq.util.cache_utils import is_rate_limited
 from corehq.util.datadog.gauges import datadog_counter
@@ -27,7 +33,34 @@ def _get_rate_limit_key(exc_info):
         return RATE_LIMITED_EXCEPTIONS[exc_name]
 
 
+class HQSanitzeSystemPasswordsProcessor(SanitizePasswordsProcessor):
+    def __init__(self, client):
+        super(HQSanitzeSystemPasswordsProcessor, self).__init__(client)
+        couch_database_passwords = set(filter(None, [
+            db['COUCH_PASSWORD'] for db in settings.COUCH_DATABASES.values()
+        ]))
+        self._regex = re.compile('({})'.format('|'.join(
+            couch_database_passwords
+        )))
+
+    def sanitize(self, key, value):
+        value = super(HQSanitzeSystemPasswordsProcessor, self).sanitize(key, value)
+        if value and isinstance(value, string_types):
+            return self._regex.sub(self.MASK, value)
+        return value
+
+    def process(self, data, **kwargs):
+        data = super(HQSanitzeSystemPasswordsProcessor, self).process(data, **kwargs)
+        if 'exception' in data and 'values' in data['exception']:
+            # sentry's data structure is rather silly/complicated
+            for value in data['exception']['values'] or []:
+                if 'value' in value:
+                    value['value'] = self.sanitize('value', value['value'])
+        return data
+
+
 class HQSentryClient(DjangoClient):
+
     def should_capture(self, exc_info):
         ex_value = exc_info[1]
         capture = getattr(ex_value, 'sentry_capture', True)

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import json
 from django.http import HttpResponse
 from django.views.decorators.http import require_GET

@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import unicode_literals
 from abc import ABCMeta, abstractmethod
 
 from django.utils.translation import ugettext
@@ -14,6 +16,7 @@ from corehq.apps.users.analytics import get_search_users_in_domain_es_query
 from corehq.apps.users.util import raw_username
 from corehq.util.soft_assert import soft_assert
 from corehq.util.workbook_json.excel import alphanumeric_sort_key
+import six
 
 DATA_SOURCE_COLUMN = 'data_source_column'
 LOCATION = 'location'
@@ -47,9 +50,7 @@ class ChoiceQueryContext(object):
             raise TypeError("One of page or offset must be passed in")
 
 
-class ChoiceProvider(object):
-    __metaclass__ = ABCMeta
-
+class ChoiceProvider(six.with_metaclass(ABCMeta, object)):
     location_safe = False
 
     def __init__(self, report, filter_slug):
@@ -83,7 +84,7 @@ class ChoiceProvider(object):
         used_values = {value for value, _ in choices}
         for value in values:
             if value not in used_values:
-                choices.add(Choice(value, unicode(value) if value is not None else ''))
+                choices.add(Choice(value, six.text_type(value) if value is not None else ''))
                 used_values.add(value)
         return choices
 
@@ -127,9 +128,7 @@ class StaticChoiceProvider(ChoiceProvider):
                 if choice.value in values}
 
 
-class ChainableChoiceProvider(ChoiceProvider):
-    __metaclass__ = ABCMeta
-
+class ChainableChoiceProvider(six.with_metaclass(ABCMeta, ChoiceProvider)):
     @abstractmethod
     def query(self, query_context):
         pass
@@ -175,7 +174,7 @@ class DataSourceColumnChoiceProvider(ChoiceProvider):
     def get_values_for_query(self, query_context):
         query = self._adapter.session_helper.Session.query(self._sql_column)
         if query_context.query:
-            query = query.filter(self._sql_column.ilike(u"%{}%".format(query_context.query)))
+            query = query.filter(self._sql_column.ilike("%{}%".format(query_context.query)))
 
         query = query.distinct().order_by(self._sql_column).limit(query_context.limit).offset(query_context.offset)
         try:
@@ -202,7 +201,7 @@ class MultiFieldDataSourceColumnChoiceProvider(DataSourceColumnChoiceProvider):
             query = query.filter(
                 or_(
                     *[
-                        sql_column.ilike(u"%{}%".format(query_context.query))
+                        sql_column.ilike("%{}%".format(query_context.query))
                         for sql_column in self._sql_columns
                     ]
                 )

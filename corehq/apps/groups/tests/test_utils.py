@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.apps.groups.models import Group
 from corehq.dbaccessors.couchapps.all_docs import get_all_docs_with_doc_types
 from corehq.util.test_utils import unit_testing_only

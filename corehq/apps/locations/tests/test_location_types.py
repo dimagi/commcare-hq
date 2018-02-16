@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.test import TestCase, SimpleTestCase
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.locations.models import LocationType

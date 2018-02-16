@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from pillowtop.dao.exceptions import DocumentNotFoundError
 from pillowtop.dao.interface import DocumentStore
 

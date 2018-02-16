@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.views.decorators.http import require_POST
 from django.http.response import HttpResponse
 

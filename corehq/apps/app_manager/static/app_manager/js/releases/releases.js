@@ -1,4 +1,3 @@
-/* globals: ga_track_event */
 hqDefine('app_manager/js/releases/releases', function () {
     function SavedApp(app_data, releasesMain) {
         var self = ko.mapping.fromJS(app_data);
@@ -41,7 +40,7 @@ hqDefine('app_manager/js/releases/releases', function () {
         };
 
         self.track_deploy_type = function(type) {
-            ga_track_event('App Manager', 'Deploy Type', type);
+            hqImport('analytix/js/google').track.event('App Manager', 'Deploy Type', type);
         };
 
         self.changeAppCode = function () {
@@ -120,8 +119,8 @@ hqDefine('app_manager/js/releases/releases', function () {
 
         self.click_app_code = function() {
             self.get_app_code();
-            ga_track_event('App Manager', 'Initiate Install', 'Get App Code');
-            analytics.workflow('Initiate Installation Method');
+            hqImport('analytix/js/google').track.event('App Manager', 'Initiate Install', 'Get App Code');
+            hqImport('analytix/js/kissmetrix').track.event('Initiate Installation Method');
         };
         
         self.get_app_code = function() {
@@ -169,8 +168,8 @@ hqDefine('app_manager/js/releases/releases', function () {
         };
 
         self.clickDeploy = function () {
-            ga_track_event('App Manager', 'Deploy Button', self.id());
-            analytics.workflow('Clicked Deploy');
+            hqImport('analytix/js/google').track.event('App Manager', 'Deploy Button', self.id());
+            hqImport('analytix/js/kissmetrix').track.event('Clicked Deploy');
             $.post(releasesMain.reverse('hubspot_click_deploy'));
             self.get_short_odk_url();
         };
@@ -192,8 +191,8 @@ hqDefine('app_manager/js/releases/releases', function () {
         };
 
         self.trackScan = function() {
-            ga_track_event('App Manager', 'Initiate Install', 'Show Bar Code');
-            analytics.workflow('Initiate Installation Method');
+            hqImport('analytix/js/google').track.event('App Manager', 'Initiate Install', 'Show Bar Code');
+            hqImport('analytix/js/kissmetrix').track.event('Initiate Installation Method');
         };
 
         self.reveal_java_download = function(){
@@ -212,6 +211,7 @@ hqDefine('app_manager/js/releases/releases', function () {
         self.savedApps = ko.observableArray();
         self.doneFetching = ko.observable(false);
         self.buildState = ko.observable('');
+        self.onlyShowReleased = ko.observable(false);
         self.fetchState = ko.observable('');
         self.nextVersionToFetch = null;
         self.fetchLimit = o.fetchLimit || 5;
@@ -259,6 +259,14 @@ hqDefine('app_manager/js/releases/releases', function () {
                 arguments[i] = ko.utils.unwrapObservable(arguments[i]);
             }
             return hqImport("hqwebapp/js/initial_page_data").reverse.apply(null, arguments);
+        };
+        self.webAppsUrl = function(idObservable) {
+            var url = hqImport("hqwebapp/js/initial_page_data").reverse("formplayer_main"),
+                data = {
+                    appId: ko.utils.unwrapObservable(idObservable),
+                };
+
+            return url + '#' + encodeURI(JSON.stringify(data));
         };
         self.app_error_url = function(app_id, version) {
             return self.reverse('project_report_dispatcher') + '?app=' + app_id + '&version_number=' + version;
@@ -308,6 +316,11 @@ hqDefine('app_manager/js/releases/releases', function () {
             }
         };
 
+        self.clearSavedApps = function() {
+            self.savedApps.splice(0);
+            self.nextVersionToFetch = null;
+        };
+
         self.getMoreSavedApps = function (scroll) {
             self.fetchState('pending');
             $.ajax({
@@ -315,7 +328,8 @@ hqDefine('app_manager/js/releases/releases', function () {
                 dataType: 'json',
                 data: {
                     start_build: self.nextVersionToFetch,
-                    limit: self.fetchLimit
+                    limit: self.fetchLimit,
+                    only_show_released: self.onlyShowReleased(),
                 },
                 success: function (savedApps) {
                     self.addSavedApps(savedApps);
@@ -363,6 +377,13 @@ hqDefine('app_manager/js/releases/releases', function () {
                 });
             }
         };
+
+        self.toggleLimitToReleased = function() {
+            self.onlyShowReleased(!self.onlyShowReleased());
+            self.clearSavedApps();
+            self.getMoreSavedApps(false);
+        };
+
         self.reload_message = gettext("Sorry, that didn't go through. " +
                 "Please reload your page and try again");
         self.deleteSavedApp = function (savedApp) {
@@ -394,9 +415,9 @@ hqDefine('app_manager/js/releases/releases', function () {
                 success: function(data) {
                     self.fetchState('');
                     self.currentAppVersion(data.currentVersion);
-                    if (!data.latestRelease) {
+                    if (!data.latestBuild) {
                         self.actuallyMakeBuild();
-                    } else if (data.latestRelease !== self.lastAppVersion()) {
+                    } else if (data.latestBuild !== self.lastAppVersion()) {
                         window.alert(gettext("The versions list has changed since you loaded the page."));
                         self.reloadApps();
                     } else if (self.lastAppVersion() !== self.currentAppVersion()) {

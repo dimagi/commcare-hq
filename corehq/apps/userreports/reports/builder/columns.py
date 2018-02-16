@@ -1,14 +1,15 @@
+from __future__ import absolute_import
+from __future__ import unicode_literals
 from corehq.apps.userreports.reports.builder import (
     make_form_meta_block_indicator,
     make_case_property_indicator,
-    make_user_name_indicator,
-    make_owner_name_indicator,
     make_form_question_indicator,
     make_multiselect_question_indicator,
 )
 from corehq.apps.userreports.reports.builder.const import COUNT_PER_CHOICE
 from corehq.apps.userreports.sql import get_column_name
 from dimagi.utils.decorators.memoized import memoized
+import six
 
 
 class ColumnOption(object):
@@ -119,9 +120,7 @@ class QuestionColumnOption(ColumnOption):
         else:
             data_type = None  # use the default
 
-        column_id = get_column_name(self._property.strip("/"))
-        if data_type:
-            column_id += ("_" + data_type)
+        column_id = get_column_name(self._property.strip("/"), suffix=data_type)
         return make_form_question_indicator(
             self._question_source, column_id, data_type, root_doc=is_multiselect_chart_report
         )
@@ -141,7 +140,7 @@ class FormMetaColumnOption(ColumnOption):
         # aggregation parameter is never used because we need not infer the data type
         # self._question_source is a tuple of (identifier, datatype)
         identifier = self._meta_property_spec[0]
-        if isinstance(identifier, basestring):
+        if isinstance(identifier, six.string_types):
             identifier = [identifier]
         identifier = "/".join(identifier)
         column_id = get_column_name(identifier.strip("/"))
@@ -236,20 +235,64 @@ class CasePropertyColumnOption(ColumnOption):
         return map[self._get_aggregation_config(aggregation)]
 
     def get_indicator(self, aggregation, is_multiselect_chart_report=False):
-        column_id = get_column_name(self._property) + "_" + self._get_datatype(aggregation)
+        column_id = get_column_name(self._property, suffix=self._get_datatype(aggregation))
         return make_case_property_indicator(self._property, column_id, datatype=self._get_datatype(aggregation))
 
 
 class UsernameComputedCasePropertyOption(ColumnOption):
     def get_indicator(self, aggregation, is_multiselect_chart_report=False):
         column_id = get_column_name(self._property)
-        return make_user_name_indicator(column_id)
+        expression = {
+            'type': 'property_name',
+            'property_name': 'user_id',
+            'datatype': 'string',
+        }
+        if is_multiselect_chart_report:
+            expression = {"type": "root_doc", "expression": expression}
+        return {
+            'datatype': 'string',
+            'type': 'expression',
+            'column_id': column_id,
+            'expression': expression
+        }
+
+    def to_column_dicts(self, index, display_text, aggregation, is_aggregated_on=False):
+        column_dicts = super(UsernameComputedCasePropertyOption, self).to_column_dicts(
+            index, display_text, aggregation
+        )
+        column_dicts[0]['transform'] = {
+            'type': 'custom',
+            'custom_type': 'user_without_domain_display'
+        }
+        return column_dicts
 
 
 class OwnernameComputedCasePropertyOption(ColumnOption):
     def get_indicator(self, aggregation, is_multiselect_chart_report=False):
         column_id = get_column_name(self._property)
-        return make_owner_name_indicator(column_id)
+        expression = {
+            'type': 'property_name',
+            'property_name': 'owner_id',
+            'datatype': 'string',
+        }
+        if is_multiselect_chart_report:
+            expression = {"type": "root_doc", "expression": expression}
+        return {
+            'datatype': 'string',
+            'type': 'expression',
+            'column_id': column_id,
+            'expression': expression
+        }
+
+    def to_column_dicts(self, index, display_text, aggregation, is_aggregated_on=False):
+        column_dicts = super(OwnernameComputedCasePropertyOption, self).to_column_dicts(
+            index, display_text, aggregation
+        )
+        column_dicts[0]['transform'] = {
+            'type': 'custom',
+            'custom_type': 'owner_display'
+        }
+        return column_dicts
 
 
 class CountColumn(ColumnOption):
@@ -267,9 +310,18 @@ class CountColumn(ColumnOption):
 
     def get_indicator(self, aggregation, is_multiselect_chart_report=False):
         return {
+            "column_id": "count",
             "display_name": "Count",
-            "type": "count",
-            "column_id": "count"
+            "type": "boolean",
+            "filter": {
+                "type": "boolean_expression",
+                "operator": "eq",
+                "expression": {
+                    "type": "constant",
+                    "constant": 1
+                },
+                "property_value": 1
+            }
         }
 
     def to_column_dicts(self, index, display_text, aggregation, is_aggregated_on=False):

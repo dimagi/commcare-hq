@@ -8,6 +8,7 @@
   ],
   "server_environment": [
     "softlayer",
+    "icds-new",
     "icds"
   ],
   "config": {
@@ -1018,7 +1019,77 @@
             "constant": "tt_normal"
           }
         }
-      }
+      },
+	  {
+		"expression": {
+			"type": "conditional",
+			"test": {
+			  "operator": "eq", 
+			  "expression": {
+				"value_expression": {
+				  "datatype": null, 
+				  "type": "property_name", 
+				  "property_name": "migration_status"
+				}, 
+				"type": "related_doc", 
+				"related_doc_type": "CommCareCase", 
+				"doc_id_expression": {
+				  "type": "named", 
+				  "name": "parent_id"
+				}
+			  }, 
+			  "type": "boolean_expression", 
+			  "property_value": "migrated"
+			},
+			"expression_if_true": {
+				"type": "constant",
+				"constant": 1
+			},
+			"expression_if_false": {
+				"type": "constant",
+				"constant": 0
+			}
+		}, 
+		"type": "expression", 
+		"column_id": "is_migrated",
+		"is_nullable": true,
+		"datatype": "integer"
+	 },
+	 {
+	    "expression": {
+			"type": "conditional",
+			"test": {
+				"operator": "not_eq",
+				"expression": {
+					"value_expression": {
+						"datatype": null,
+						"type": "property_name",
+						"property_name": "registered_status"
+					},
+					"type": "related_doc",
+					"related_doc_type": "CommCareCase",
+					"doc_id_expression": {
+						"type": "named",
+						"name": "parent_id"
+					}
+				},
+				"type": "boolean_expression",
+				"property_value": "not_registered"
+			},
+			"expression_if_true": {
+				"type": "constant",
+				"constant": 1
+			},
+			"expression_if_false": {
+				"type": "constant",
+				"constant": 0
+			}
+		},
+		"type": "expression",
+		"column_id": "is_availing",
+		"is_nullable": true,
+		"datatype": "integer"
+	 }
     ],
     "named_expressions": {
       "parent_id": {
@@ -1764,6 +1835,7 @@
           "owner_id"
         ]
       }
-    ]
+    ],
+    "disable_destructive_rebuild": true
   }
 }

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import json
 
 from django.conf import settings
@@ -5,7 +6,10 @@ from jsonobject.api import JsonObject
 from jsonobject.properties import IntegerProperty, StringProperty
 
 from dimagi.utils.decorators.memoized import memoized
-from .exceptions import PartitionValidationError, NotPowerOf2Error, NonContinuousShardsError, NotZeroStartError
+from six.moves import zip
+from .exceptions import PartitionValidationError, NotPowerOf2Error, NonContinuousShardsError, NotZeroStartError, \
+    NoSuchShardDatabaseError
+from six.moves import range
 
 FORM_PROCESSING_GROUP = 'form_processing'
 PROXY_GROUP = 'proxy'
@@ -68,7 +72,7 @@ class PartitionConfig(object):
 
         shards_seen = set()
         previous_range = None
-        for group, shard_range, in sorted(self.partition_config['shards'].items(), key=lambda x: x[1]):
+        for group, shard_range, in sorted(list(self.partition_config['shards'].items()), key=lambda x: x[1]):
             if not previous_range:
                 if shard_range[0] != 0:
                     raise NotZeroStartError('Shard numbering must start at 0')
@@ -86,6 +90,12 @@ class PartitionConfig(object):
 
         if not _is_power_of_2(num_shards):
             raise NotPowerOf2Error('Total number of shards must be a power of 2: {}'.format(num_shards))
+
+        self._num_shards = num_shards
+
+    @property
+    def num_shards(self):
+        return self._num_shards
 
     @property
     def partition_config(self):
@@ -125,6 +135,16 @@ class PartitionConfig(object):
         host_map = self.partition_config.get('host_map', {})
         db_shards = self._get_django_shards()
         return [shard.to_shard_meta(host_map) for shard in db_shards]
+
+    @memoized
+    def get_shards_on_db(self, db):
+        """Given a database name, returns a list of the shard ids that are on that database"""
+        try:
+            shard_range = self.partition_config['shards'][db]
+        except KeyError:
+            raise NoSuchShardDatabaseError('No database {} found in shard config'.format(db))
+        else:
+            return list(range(shard_range[0], shard_range[1] + 1))
 
     @memoized
     def get_django_shard_map(self):

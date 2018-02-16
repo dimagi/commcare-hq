@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.test import TestCase
 from django.core.cache import caches
 
@@ -38,7 +39,7 @@ class InferredSchemaSignalTest(TestCase):
         self._add_props(props)
         schema = get_case_inferred_schema(self.domain, self.case_type)
         group_schema = schema.group_schemas[0]
-        self.assertEqual(set(map(lambda item: item.path[0].name, group_schema.items)), props)
+        self.assertEqual(set([item.path[0].name for item in group_schema.items]), props)
         self._check_sql_props(props)
 
     def test_add_inferred_export_properties_saved_schema(self):
@@ -51,11 +52,11 @@ class InferredSchemaSignalTest(TestCase):
         schema = get_case_inferred_schema(self.domain, self.case_type)
         group_schema = schema.group_schemas[0]
         self.assertEqual(
-            set(map(lambda item: item.path[0].name, group_schema.items)),
+            set([item.path[0].name for item in group_schema.items]),
             combined_props
         )
         self.assertTrue(
-            all(map(lambda item: isinstance(item, ScalarItem), group_schema.items)),
+            all([isinstance(item, ScalarItem) for item in group_schema.items]),
         )
         self._check_sql_props(combined_props)
 

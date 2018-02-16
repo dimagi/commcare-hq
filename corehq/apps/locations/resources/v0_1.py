@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import json
 from tastypie import fields
 from tastypie.exceptions import BadRequest
@@ -120,3 +121,4 @@ class InternalLocationResource(LocationResource):
         object_class = SQLLocation
         resource_name = 'location_internal'
         limit = 0
+        max_limit = 10000

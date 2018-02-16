@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from couchdbkit.exceptions import NoResultFound
 from django.test import TestCase
 from corehq.apps.app_manager.dbaccessors import (
@@ -16,7 +17,7 @@ from corehq.apps.app_manager.dbaccessors import (
     get_latest_app_ids_and_versions,
     get_latest_released_app_doc,
     get_apps_by_id,
-    get_brief_app)
+    get_brief_app, get_latest_released_app_version)
 from corehq.apps.app_manager.models import Application, RemoteApp, Module
 from corehq.apps.domain.models import Domain
 from corehq.util.test_utils import DocTestMixin
@@ -103,7 +104,6 @@ class DBAccessorsTest(TestCase, DocTestMixin):
         self.assert_docs_equal(normal_app, brief_normal_app)
 
     def test_get_brief_app(self):
-        self.apps[0].mobile_ucr_sync_interval = 7
         self.apps[0].save()
         brief_app = get_brief_app(self.domain, self.apps[0]._id)
         self.assertIsNotNone(brief_app)
@@ -112,7 +112,6 @@ class DBAccessorsTest(TestCase, DocTestMixin):
         exepcted_app = self._make_app_brief(self.apps[0])
         exepcted_app.anonymous_cloudcare_hash = None
         self.assert_docs_equal(brief_app, exepcted_app)
-        self.assertEqual(brief_app.mobile_ucr_sync_interval, 7)
 
     def test_get_brief_app_not_found(self):
         with self.assertRaises(NoResultFound):
@@ -201,15 +200,15 @@ class DBAccessorsTest(TestCase, DocTestMixin):
         app_build_versions = get_all_built_app_ids_and_versions(self.domain)
 
         self.assertEqual(len(app_build_versions), 3)
-        self.assertEqual(len(filter(lambda abv: abv.app_id == '1234', app_build_versions)), 1)
-        self.assertEqual(len(filter(lambda abv: abv.app_id == self.apps[0]._id, app_build_versions)), 2)
+        self.assertEqual(len([abv for abv in app_build_versions if abv.app_id == '1234']), 1)
+        self.assertEqual(len([abv for abv in app_build_versions if abv.app_id == self.apps[0]._id]), 2)
 
     def test_get_all_built_app_ids_and_versions_by_app(self):
         app_build_versions = get_all_built_app_ids_and_versions(self.domain, app_id='1234')
 
         self.assertEqual(len(app_build_versions), 1)
-        self.assertEqual(len(filter(lambda abv: abv.app_id == '1234', app_build_versions)), 1)
-        self.assertEqual(len(filter(lambda abv: abv.app_id != '1234', app_build_versions)), 0)
+        self.assertEqual(len([abv for abv in app_build_versions if abv.app_id == '1234']), 1)
+        self.assertEqual(len([abv for abv in app_build_versions if abv.app_id != '1234']), 0)
 
 
 class TestAppGetters(TestCase):
@@ -282,3 +281,7 @@ class TestAppGetters(TestCase):
         apps = get_apps_by_id(self.domain, [self.app_id])
         self.assertEqual(1, len(apps))
         self.assertEqual(apps[0].version, 4)
+
+    def test_get_latest_released_app_version(self):
+        version = get_latest_released_app_version(self.domain, self.app_id)
+        self.assertEqual(version, 2)

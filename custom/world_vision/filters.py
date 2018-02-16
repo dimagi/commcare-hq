@@ -1,7 +1,9 @@
+from __future__ import absolute_import
 from django.utils.translation import ugettext_noop
 from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter
 from corehq.apps.reports.filters.dates import DatespanFilter
 from custom.world_vision.sqldata import LocationSqlData, LOCATION_HIERARCHY
+import six
 
 
 class LocationFilter(BaseDrilldownOptionFilter):
@@ -36,7 +38,7 @@ class LocationFilter(BaseDrilldownOptionFilter):
         return hierarchy
 
     def get_labels(self):
-        return [(v['name'], v['prop']) for k,v in sorted(LOCATION_HIERARCHY.iteritems())]
+        return [(v['name'], v['prop']) for k, v in sorted(six.iteritems(LOCATION_HIERARCHY))]
 
     @property
     def filter_context(self):

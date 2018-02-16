@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.util.exceptions import AccessRestricted
 from django.db import models
 

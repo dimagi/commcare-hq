@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from collections import defaultdict
 from datetime import datetime, timedelta
 from functools import partial
@@ -29,6 +30,7 @@ from custom.ilsgateway.models import ILSGatewayConfig, ReportRun, \
 from dimagi.utils.dates import get_business_day_of_month, get_business_day_of_month_before
 
 from .oneoff import *
+import six
 
 
 @periodic_task(run_every=crontab(hour="4", minute="00", day_of_week="*"),
@@ -350,7 +352,7 @@ def recalculation_on_location_change(domain, last_run):
 
     non_facilities_to_recalculate = defaultdict(set)
     recalculated = set()
-    for (sql_location, recalculation_type), data_list in recalcs_dict.iteritems():
+    for (sql_location, recalculation_type), data_list in six.iteritems(recalcs_dict):
         # If there are more changes, consider earliest and latest change.
         # Thanks to this we avoid recalculations when in fact group/parent wasn't changed.
         # E.g Group is changed from A -> B and later from B -> A.
@@ -376,7 +378,7 @@ def recalculation_on_location_change(domain, last_run):
             to_recalculate = {}
         recalculated.add(sql_location)
 
-        for location_type, sql_locations_to_recalculate in to_recalculate.iteritems():
+        for location_type, sql_locations_to_recalculate in six.iteritems(to_recalculate):
             for sql_location_to_recalculate in sql_locations_to_recalculate:
                 non_facilities_to_recalculate[location_type].add(sql_location_to_recalculate)
 

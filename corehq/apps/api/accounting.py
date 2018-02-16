@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from tastypie.fields import ToManyField
 from tastypie.resources import ModelResource
 from corehq.apps.accounting.models import Feature, FeatureRate, SoftwarePlanVersion, LineItem, PaymentMethod, \
@@ -92,7 +93,7 @@ class DefaultProductPlanResource(ModelResource):
 
     class Meta(AccountingResourceMeta):
         queryset = DefaultProductPlan.objects.all().order_by('pk')
-        fields = ['id', 'product_type', 'edition', 'is_trial', 'last_modified']
+        fields = ['id', 'edition', 'is_trial', 'last_modified']
         resource_name = 'default_product_plan'
 
 
@@ -163,7 +164,7 @@ class SubscriptionResource(ModelResource):
     subscriber = fields.IntegerField('subscriber_id', null=True)
 
     class Meta(AccountingResourceMeta):
-        queryset = Subscription.objects.all().order_by('pk')
+        queryset = Subscription.visible_and_suppressed_objects.all().order_by('pk')
         fields = ['id', 'salesforce_contract_id', 'date_start', 'date_end', 'date_delay_invoicing',
                   'date_created', 'is_active', 'do_not_invoice', 'auto_generate_credits', 'is_trial',
                   'service_type', 'pro_bono_status', 'last_modified', 'funding_source', 'is_hidden_to_ops',

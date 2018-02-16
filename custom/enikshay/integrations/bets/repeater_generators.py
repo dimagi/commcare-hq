@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from datetime import datetime, date
 import json
 import jsonobject
@@ -27,6 +28,7 @@ from custom.enikshay.const import (
     USERTYPE_DISPLAYS,
     FIRST_PRESCRIPTION_VOUCHER_REDEEMED_DATE,
     BETS_DATE_PRESCRIPTION_THRESHOLD_MET,
+    VOUCHER_ID,
 )
 from custom.enikshay.exceptions import NikshayLocationNotFound
 from custom.enikshay.integrations.utils import string_to_date_or_None
@@ -42,6 +44,7 @@ from .const import (
     TOTAL_DAY_THRESHOLDS
 )
 from .utils import get_bets_location_json
+import six
 
 
 def _get_district_location_id(pcp_location):
@@ -181,7 +184,7 @@ class IncentivePayload(BETSPayload):
         # We don't know whether the trigger fired because the threshold was met
         # or because treatment ended.  Just use whichever happened first.
         return string_to_date_or_None(
-            min(filter(None, [completed_date, threshold_met_date])))
+            min([_f for _f in [completed_date, threshold_met_date] if _f]))
 
     @classmethod
     def create_successful_treatment_payload(cls, episode_case):
@@ -287,6 +290,7 @@ class IncentivePayload(BETSPayload):
 class VoucherPayload(BETSPayload):
 
     VoucherID = jsonobject.StringProperty(required=False)
+    ReadableVoucherID = jsonobject.StringProperty(required=False)
     Amount = jsonobject.StringProperty(required=False)
 
     @classmethod
@@ -323,6 +327,7 @@ class VoucherPayload(BETSPayload):
             EventOccurDate=string_to_date_or_None(
                 voucher_case_properties.get(DATE_FULFILLED)),
             VoucherID=voucher_case.case_id,
+            ReadableVoucherID=voucher_case.get_case_property(VOUCHER_ID),
             BeneficiaryUUID=fulfilled_by_id,
             BeneficiaryType=LOCATION_TYPE_MAP[location.location_type.code],
             Location=fulfilled_by_location_id,
@@ -355,7 +360,7 @@ class BETSBasePayloadGenerator(BasePayloadGenerator):
     def handle_exception(self, exception, repeat_record):
         if isinstance(exception, RequestConnectionError):
             update_case(repeat_record.domain, repeat_record.payload_id, {
-                "bets_{}_error".format(self.event_id): u"RequestConnectionError: {}".format(unicode(exception))
+                "bets_{}_error".format(self.event_id): u"RequestConnectionError: {}".format(six.text_type(exception))
             })
 
     def handle_success(self, response, case, repeat_record):
@@ -378,7 +383,7 @@ class BETSBasePayloadGenerator(BasePayloadGenerator):
                     if case.dynamic_case_properties().get(self.event_property_name) != 'sent'
                     else 'sent'
                 ),
-                "bets_{}_error".format(self.event_id): unicode(response.json()),
+                "bets_{}_error".format(self.event_id): six.text_type(response.json()),
             }
         )
 
@@ -487,7 +492,7 @@ class BETSDrugRefillPayloadGenerator(IncentivePayloadGenerator):
                     if case.dynamic_case_properties().get(self.get_event_property_name(case)) != 'sent'
                     else 'sent'
                 ),
-                "bets_{}_error".format(self.event_id): unicode(response.json()),
+                "bets_{}_error".format(self.event_id): six.text_type(response.json()),
             }
         )
 
@@ -630,6 +635,6 @@ class BETSBeneficiaryPayloadGenerator(BasePayloadGenerator):
 
 def get_national_number(phonenumber):
     try:
-        return str(phonenumbers.parse(phonenumber, "IN").national_number)
+        return str(phonenumbers.parse(str(phonenumber), "IN").national_number)
     except phonenumbers.NumberParseException:
         return ""

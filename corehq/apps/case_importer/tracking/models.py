@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.db import models
 from jsonfield import JSONField
 from corehq.apps.case_importer.tracking.task_status import TaskStatus, \

@@ -2,14 +2,15 @@ from __future__ import absolute_import
 from __future__ import print_function
 import logging
 import requests
+from io import BytesIO, StringIO
 
-from cStringIO import StringIO
 from jenkinsapi.jenkins import Jenkins
 
 from corehq.apps.builds.models import CommCareBuild
 from django.core.management.base import BaseCommand, CommandError
 from dimagi.utils.decorators.memoized import memoized
 from six.moves import input
+import six
 
 
 class Command(BaseCommand):
@@ -74,13 +75,13 @@ class Command(BaseCommand):
             print(artifacts_url)
             return
 
-        self.add_build(StringIO(zip_file.content), version_number, selected_build_number)
+        self.add_build(BytesIO(zip_file.content), version_number, selected_build_number)
 
     @property
     @memoized
     def jenkin_projects(self):
         print("Pinging Jenkins build server. Pelase wait...")
-        return list(self.build_server.iterkeys())
+        return list(six.iterkeys(self.build_server))
 
     @property
     @memoized
@@ -106,7 +107,6 @@ class Command(BaseCommand):
              352366: 2.22.0}
         """
         from lxml import etree
-        from StringIO import StringIO
 
         to_ret = {}
         count = 0

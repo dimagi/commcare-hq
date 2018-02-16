@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.test import SimpleTestCase, TestCase
 from corehq.apps.groups.tests.test_groups import WrapGroupTestMixin
 from corehq.apps.products.models import Product, SQLProduct

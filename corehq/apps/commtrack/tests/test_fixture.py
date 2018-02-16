@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import datetime
 import random
 import string
@@ -17,6 +18,7 @@ from corehq.apps.products.fixtures import product_fixture_generator
 from corehq.apps.products.models import Product
 from corehq.apps.programs.models import Program
 from corehq.apps.commtrack.tests import util
+from six.moves import range
 
 
 class FixtureTest(TestCase, TestXmlMixin):
@@ -53,7 +55,7 @@ class FixtureTest(TestCase, TestXmlMixin):
         self._initialize_product_names(len(product_list))
         for i, product in enumerate(product_list):
             product_id = product._id
-            product_name = self.product_names.next()
+            product_name = next(self.product_names)
             product_unit = self._random_string(20)
             product_code = self._random_string(20)
             product_description = self._random_string(20)

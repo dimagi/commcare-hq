@@ -44,3 +44,8 @@
 .loc_header:hover {
   background-color: #eef;
 }
+
+.loc_search {
+  padding: 5px;
+  margin-bottom: 10px
+}

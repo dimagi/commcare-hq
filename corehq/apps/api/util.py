@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils.translation import ugettext as _
 
@@ -48,11 +49,17 @@ def get_obj(bundle_or_obj):
         return bundle_or_obj
 
 
-def form_to_es_form(xform_instance):
+def form_to_es_form(xform_instance, include_attachments=False):
+    # include_attachments is only relevant for SQL domains; they're always
+    # included for Couch domains
     from corehq.pillows.xform import transform_xform_for_elasticsearch, xform_pillow_filter
     from corehq.apps.api.models import ESXFormInstance
+    from corehq.form_processor.models import XFormInstanceSQL
 
-    json_form = xform_instance.to_json()
+    if include_attachments and isinstance(xform_instance, XFormInstanceSQL):
+        json_form = xform_instance.to_json(include_attachments=True)
+    else:
+        json_form = xform_instance.to_json()
     if not xform_pillow_filter(json_form):
         es_form = transform_xform_for_elasticsearch(json_form)
         return ESXFormInstance(es_form)

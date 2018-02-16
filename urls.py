@@ -67,6 +67,7 @@ domain_specific = [
     url(r'^', include(hqwebapp_domain_specific)),
     url(r'^case/', include('corehq.apps.hqcase.urls')),
     url(r'^case/', include('corehq.apps.case_search.urls')),
+    url(r'^case_migrations/', include('corehq.apps.case_migrations.urls')),
     url(r'^cloudcare/', include('corehq.apps.cloudcare.urls')),
     url(r'^fixtures/', include('corehq.apps.fixtures.urls')),
     url(r'^importer/', include('corehq.apps.case_importer.urls')),
@@ -78,16 +79,17 @@ domain_specific = [
     url(r'^', include('custom.uth.urls')),
     url(r'^dashboard/', include('corehq.apps.dashboard.urls')),
     url(r'^configurable_reports/', include('corehq.apps.userreports.urls')),
-    url(r'^performance_messaging/', include('corehq.apps.performance_sms.urls')),
     url(r'^', include('custom.icds.urls')),
     url(r'^', include('custom.icds_reports.urls')),
     url(r'^', include('custom.enikshay.urls')),
+    url(r'^champ_cameroon/', include('custom.champ.urls')),
     url(r'^openmrs/', include('corehq.motech.openmrs.urls')),
     url(r'^_base_template/$', login_and_domain_required(
         lambda request, domain: render(request, 'hqwebapp/base.html', {'domain': domain})
     )),
     url(r'^zapier/', include('corehq.apps.zapier.urls')),
-    url(r'^zipline/', include('custom.zipline.urls'))
+    url(r'^zipline/', include('custom.zipline.urls')),
+    url(r'^remote_link/', include('corehq.apps.linked_domain.urls'))
 ]
 
 urlpatterns = [
@@ -171,6 +173,14 @@ if settings.DEBUG:
         ]
     except ImportError:
         pass
+
+    if 'package_monitor' in settings.INSTALLED_APPS:
+        try:
+            urlpatterns += [
+                url(r'^package_monitor/', include('package_monitor.urls', namespace='package_monitor')),
+            ]
+        except ImportError:
+            pass
 
     urlpatterns += [
         url(r'^mocha/', include('corehq.apps.mocha.urls')),

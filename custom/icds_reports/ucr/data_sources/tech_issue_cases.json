@@ -8,6 +8,7 @@
   ],
   "server_environment": [
     "softlayer",
+    "icds-new",
     "icds"
   ],
   "config": {
@@ -418,6 +419,7 @@
         "property_value": "ls"
       }
     },
-    "engine_id": "icds-ucr"
+    "engine_id": "icds-ucr",
+    "disable_destructive_rebuild": true
   }
 }

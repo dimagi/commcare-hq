@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.test import TestCase
 
 from corehq.apps.commtrack.tests.util import make_loc, bootstrap_domain, bootstrap_location_types

@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import print_function
 from django.core.management.base import BaseCommand
 from auditcare.models import AccessAudit, ModelActionAudit
 
@@ -16,7 +18,7 @@ class Command(BaseCommand):
 
     def handle(self, **options):
         recompute = options['recompute']
-        print recompute
+        print(recompute)
         db = AccessAudit.get_db()
         vals = db.view('auditcare/model_actions_by_id', group=True, group_level=1).all()
 
@@ -27,8 +29,8 @@ class Command(BaseCommand):
 
         for model, count in model_dict.items():
             #for each model type, query ALL audit instances.
-            print "### %s" % (model)
-            model_counts = db.view('auditcare/model_actions_by_id', group=True, startkey=[model,u''], endkey=[model,u'z']).all()
+            print("### %s" % (model))
+            model_counts = db.view('auditcare/model_actions_by_id', group=True, startkey=[model, u''], endkey=[model, u'z']).all()
             #within a given model, query ALL instances
 
             #sort the models by id, then by rev descending
@@ -37,7 +39,7 @@ class Command(BaseCommand):
                 num = mc['value']
                 model_uuid = mc['key'][1]
                 #now for each model uuid, do a query again to get all the rev numbers
-                item_revs = db.view('auditcare/model_actions_by_id', reduce=False, startkey=[model,model_uuid], endkey=[model,model_uuid]).all()
+                item_revs = db.view('auditcare/model_actions_by_id', reduce=False, startkey=[model, model_uuid], endkey=[model, model_uuid]).all()
                 revs = sorted([(x['id'], x['value']) for x in item_revs], key=lambda y: y[1], reverse=True)
                 #tuples of (audit_id, rev_id)
                 #print "%s:%s -> %s" % (model, model_uuid, revs)

@@ -1,4 +1,6 @@
+from __future__ import absolute_import
 from datetime import datetime
+from django.conf import settings
 
 from corehq.toggles import was_user_created_after
 
@@ -32,6 +34,9 @@ class StaticUINotify(object):
         self.ends_on = ends_on
 
     def enabled(self, request):
+        if settings.ENTERPRISE_MODE:
+            return False
+
         if hasattr(request, 'user'):
             from corehq.apps.notifications.models import DismissedUINotify
 
@@ -78,4 +83,10 @@ APP_BUILDER_ADD_ONS = StaticUINotify(
     'app_builder_add_ons_jul2017',
     ends_on=datetime(2017, 8, 31, 20),
     only_visible_for_users_created_before=datetime(2017, 7, 31, 20),
+)
+
+REPORT_BUILDER_V2 = StaticUINotify(
+    'report_builder_v2_nov2017',
+    ends_on=datetime(2017, 12, 22, 20),
+    only_visible_for_users_created_before=datetime(2017, 11, 5, 20),
 )

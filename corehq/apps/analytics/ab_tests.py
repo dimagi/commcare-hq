@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import collections
 import random
 
@@ -52,12 +53,12 @@ NEW_USER_NUMBER = ABTestConfig(
 )
 
 
-APP_BUILDER_VIDEO_ON = 'on'
-APP_BUILDER_VIDEO_OFF = 'off'
+DATA_FEEDBACK_LOOP_OPTION_ON = 'data_feedback_loop_on'
+DATA_FEEDBACK_LOOP_OPTION_OFF = 'data_feedback_loop_off'
 
 
-APP_BUILDER_VIDEO = ABTestConfig(
-    'Onboarding Video Inside App Builder',
-    'app_builder_video_aug2017',
-    (APP_BUILDER_VIDEO_ON, APP_BUILDER_VIDEO_OFF)
+DATA_FEEDBACK_LOOP = ABTestConfig(
+    'Data Feedback Loop',
+    'data_feedback_loop_feb2018',
+    (DATA_FEEDBACK_LOOP_OPTION_ON, DATA_FEEDBACK_LOOP_OPTION_OFF)
 )

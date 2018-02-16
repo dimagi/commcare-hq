@@ -28,7 +28,7 @@
     {% for user in toggle_users %}
     $("#btn-user-filter-{{ user.type }}").on('applied-click', function(data) {
         if(document.getElementById("user-filter-{{ user.type }}").checked ) {
-            ga_track_event(data.event_category, 'Select "user type"', '{{ user.name }}');
+            hqImport('analytix/js/google').track.event(data.event_category, 'Select "user type"', '{{ user.name }}');
         }
     });
     {% endfor %}

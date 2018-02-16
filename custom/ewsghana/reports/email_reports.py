@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import division
 from collections import defaultdict
 
 from casexml.apps.stock.models import StockTransaction
@@ -11,6 +13,7 @@ from custom.ewsghana.reports import EWSData, MultiReport
 from django.utils.translation import ugettext as _
 from custom.ewsghana.utils import get_descendants, get_country_id, ews_date_format
 from dimagi.utils.decorators.memoized import memoized
+import six
 
 
 class EmailReportData(EWSData):
@@ -100,7 +103,7 @@ class StockSummaryReportData(EmailReportData):
                 row_data[p_name][s] += 1
 
         rows = []
-        for k, v in row_data.iteritems():
+        for k, v in six.iteritems(row_data):
             if v['total_fac'] > 0:
                 rows.append([
                     k,
@@ -167,7 +170,7 @@ class CMSRMSReportData(EmailReportData):
                 row_data[product.name]['total_fac'] += 1
 
         rows = []
-        for k, v in row_data.iteritems():
+        for k, v in six.iteritems(row_data):
             row = [
                 k,
                 v['total_fac'],

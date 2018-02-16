@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import re
 
 from crispy_forms.layout import Submit
@@ -131,11 +132,11 @@ class LocationForm(forms.Form):
 
     def get_fields(self, is_new):
         if is_new:
-            return filter(None, [
+            return [_f for _f in [
                 _("Location Information"),
                 'name',
                 'location_type' if len(self.get_allowed_types(self.domain, self.location.parent)) > 1 else None,
-            ])
+            ] if _f]
         else:
             return [
                 _("Location Information"),

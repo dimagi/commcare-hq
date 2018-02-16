@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import json
 from django.http import HttpResponseRedirect, Http404
 from django.urls import reverse
@@ -15,6 +16,7 @@ from corehq.motech.dhis2.tasks import send_datasets
 from corehq.apps.domain.views import BaseProjectSettingsView
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import json_response
+from six.moves import range
 
 
 @method_decorator(require_permission(Permissions.edit_motech), name='dispatch')
@@ -139,7 +141,7 @@ class Dhis2LogDetailView(BaseProjectSettingsView, DetailView):
 
 
 @require_POST
-@method_decorator(require_permission(Permissions.edit_motech))
+@require_permission(Permissions.edit_motech)
 def send_dhis2_data(request, domain):
     send_datasets.delay(domain, send_now=True)
     return json_response({'success': _('Data is being sent to DHIS2.')}, status_code=202)

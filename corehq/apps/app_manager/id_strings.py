@@ -1,4 +1,6 @@
+from __future__ import absolute_import
 import re
+from six.moves import zip
 
 ROOT = u'root'
 
@@ -65,7 +67,7 @@ def current_language():
 
 @pattern('m%d.%s.title')
 def detail_title_locale(detail_type):
-    if detail_type.startswith('case'):
+    if detail_type.startswith('case') or detail_type.startswith('search'):
         return "cchq.case"
     elif detail_type.startswith('referral'):
         return "cchq.referral"
@@ -82,7 +84,10 @@ def detail_tab_title_locale(module, detail_type, tab):
 
 @pattern('m%d.%s.%s_%s_%d.header')
 def detail_column_header_locale(module, detail_type, column):
-    field = column.field.replace('#', '')
+    if column.useXpathExpression:
+        field = 'calculated_property'
+    else:
+        field = column.field.replace('#', '')
     return u"m{module.id}.{detail_type}.{d.model}_{field}_{d_id}.header".format(
         detail_type=detail_type,
         module=module,

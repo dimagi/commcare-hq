@@ -203,8 +203,14 @@ hqDefine('userreports/js/builder_view_models', function () {
         self.formatHelpText = getOrDefault(options, 'formatHelpText', null);
         self.calcHelpText = getOrDefault(options, 'calcHelpText', null);
         self.filterValueHelpText = getOrDefault(options, 'filterValueHelpText', null);
+
+        // For analytics
         self.analyticsAction = getOrDefault(options, 'analyticsAction', null);
         self.analyticsLabel = getOrDefault(options, 'analyticsLabel', this.reportType());
+        self.addItemCallback = getOrDefault(options, 'addItemCallback', null);
+        self.removeItemCallback = getOrDefault(options, 'removeItemCallback', null);
+        self.reorderItemCallback = getOrDefault(options, 'reorderItemCallback', null);
+        self.afterRenderCallback = getOrDefault(options, 'afterRenderCallback', null);
 
         self.hasDisplayCol = getOrDefault(options, 'hasDisplayCol', true);
         self.hasFormatCol = getOrDefault(options, 'hasFormatCol', true);
@@ -222,6 +228,25 @@ hqDefine('userreports/js/builder_view_models', function () {
             );
         });
         self.showWarnings = ko.observable(false);
+
+        self.removeColumn = function (col) {
+            self.columns.remove(col);
+            if (_.isFunction(self.removeItemCallback)) {
+                self.removeItemCallback(col);
+            }
+        };
+
+        self.reorderColumn = function () {
+            if (_.isFunction(self.reorderItemCallback)) {
+                self.reorderItemCallback();
+            }
+        };
+
+        self.afterRender = function (elem, col) {
+            if (_.isFunction(self.afterRenderCallback)) {
+                self.afterRenderCallback(elem, col);
+            }
+        };
     };
     PropertyList.prototype._createListItem = function() {
         return new PropertyListItem(
@@ -248,8 +273,11 @@ hqDefine('userreports/js/builder_view_models', function () {
     PropertyList.prototype.buttonHandler = function () {
         this.columns.push(this._createListItem());
         if (!_.isEmpty(this.analyticsAction) && !_.isEmpty(this.analyticsLabel)){
-            window.analytics.usage("Report Builder", this.analyticsAction, this.analyticsLabel);
-            window.analytics.workflow("Clicked " + this.analyticsAction + " in Report Builder");
+            hqImport('userreports/js/report_analytix').track.event(this.analyticsAction, this.analyticsLabel);
+            hqImport('analytix/js/kissmetrix').track.event("Clicked " + this.analyticsAction + " in Report Builder");
+        }
+        if (_.isFunction(this.addItemCallback)) {
+            this.addItemCallback();
         }
     };
     /**
@@ -361,8 +389,7 @@ hqDefine('userreports/js/builder_view_models', function () {
             requireColumns: reportType !== "chart",
             requireColumnsText: "At least one column is required",
             noColumnsValidationCallback: function(){
-                window.analytics.usage(
-                    'Report Builder',
+                hqImport('userreports/js/report_analytix').track.event(
                     'Click On Done (No Columns)',
                     reportType
                 );

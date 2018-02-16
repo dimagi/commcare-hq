@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import copy
 import numbers
 from datetime import datetime, date
@@ -6,6 +7,7 @@ from casexml.apps.case.xml import V2_NAMESPACE
 from dimagi.utils.parsing import json_format_datetime, string_to_datetime
 from collections import namedtuple
 from functools import partial
+import six
 
 # relationship = "child" for index to a parent case (default)
 # relationship = "extension" for index to a host case
@@ -175,9 +177,9 @@ class _DictToXML(object):
                 if value is not CaseBlock.undefined:
                     block.set(key, self.fmt(value))
         if '_text' in dct:
-            block.text = unicode(dct['_text'])
+            block.text = six.text_type(dct['_text'])
 
-        for (key, value) in sorted(dct.items(), key=self.sort_key):
+        for (key, value) in sorted(list(dct.items()), key=self.sort_key):
             if value is not CaseBlock.undefined and not key.startswith('_'):
                 elem = ElementTree.Element(key)
                 block.append(elem)
@@ -199,9 +201,9 @@ class _DictToXML(object):
         if value is None:
             return ''
         if isinstance(value, datetime):
-            return unicode(json_format_datetime(value))
-        elif isinstance(value, (basestring, numbers.Number, date)):
-            return unicode(value)
+            return six.text_type(json_format_datetime(value))
+        elif isinstance(value, six.string_types + (numbers.Number, date)):
+            return six.text_type(value)
         else:
             raise CaseBlockError("Can't transform to XML: {}; unexpected type {}.".format(value, type(value)))
 

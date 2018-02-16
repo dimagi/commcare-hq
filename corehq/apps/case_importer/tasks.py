@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from collections import namedtuple
 
 from celery.schedules import crontab
@@ -8,6 +9,7 @@ from corehq.apps.case_importer.tracking.analytics import \
 from corehq.apps.case_importer.tracking.case_upload_tracker import CaseUpload
 from corehq.apps.case_importer.util import get_importer_error_message
 from corehq.util.datadog.gauges import datadog_gauge_task
+from casexml.apps.case.const import CASE_TAG_DATE_OPENED
 from casexml.apps.case.mock import CaseBlock, CaseBlockError
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.case_importer.const import LookupErrors, ImportErrors
@@ -18,6 +20,7 @@ from corehq.apps.export.tasks import add_inferred_export_properties
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from couchdbkit.exceptions import ResourceNotFound
 from corehq.util.soft_assert import soft_assert
+from corehq.toggles import BULK_UPLOAD_DATE_OPENED
 import uuid
 from soil.progress import set_task_progress
 
@@ -99,7 +102,7 @@ def do_import(spreadsheet, config, domain, task=None, chunksize=CASEBLOCK_CHUNKS
             else:
                 if record_form_callback:
                     record_form_callback(form.form_id)
-                properties = set().union(*map(lambda c: set(c.dynamic_case_properties().keys()), cases))
+                properties = set().union(*[set(c.dynamic_case_properties().keys()) for c in cases])
                 if case_type and len(properties):
                     add_inferred_export_properties.delay(
                         'CaseImporter',
@@ -227,6 +230,12 @@ def do_import(spreadsheet, config, domain, task=None, chunksize=CASEBLOCK_CHUNKS
                 }
 
         case_name = fields_to_update.pop('name', None)
+
+        if BULK_UPLOAD_DATE_OPENED.enabled(domain):
+            date_opened = fields_to_update.pop(CASE_TAG_DATE_OPENED, None)
+            if date_opened:
+                extras['date_opened'] = date_opened
+
         if not case:
             id = uuid.uuid4().hex
 

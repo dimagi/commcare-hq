@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from celery.schedules import crontab
 from celery.task import task, periodic_task
 from celery.utils.log import get_task_logger
@@ -23,6 +24,7 @@ from .dispatcher import EditDataInterfaceDispatcher
 from corehq.util.log import send_HTML_email
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.logging import notify_error
+import six
 
 
 logger = get_task_logger('data_interfaces')
@@ -111,7 +113,7 @@ def check_data_migration_in_progress(domain, last_migration_check_time):
     '{domain}',
     timeout=36 * 60 * 60,
     max_retries=0,
-    queue='background_queue',
+    queue='case_rule_queue',
 )
 def run_case_update_rules_for_domain(domain, now=None):
     now = now or datetime.utcnow()
@@ -128,7 +130,7 @@ def run_case_update_rules_for_domain(domain, now=None):
     all_rules = AutomaticUpdateRule.by_domain(domain, AutomaticUpdateRule.WORKFLOW_CASE_UPDATE)
     rules_by_case_type = AutomaticUpdateRule.organize_rules_by_case_type(all_rules)
 
-    for case_type, rules in rules_by_case_type.iteritems():
+    for case_type, rules in six.iteritems(rules_by_case_type):
         boundary_date = AutomaticUpdateRule.get_boundary_date(rules, now)
         case_ids = list(AutomaticUpdateRule.get_case_ids(domain, case_type, boundary_date))
 

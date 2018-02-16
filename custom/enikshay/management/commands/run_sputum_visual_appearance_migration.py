@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from custom.enikshay.management.commands.utils import (
     BaseEnikshayCaseMigration,
     get_form_path,

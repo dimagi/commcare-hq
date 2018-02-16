@@ -18,3 +18,7 @@ class InvalidMonthlyScheduleConfiguration(Exception):
 
 class ImmediateMessageEditAttempt(Exception):
     pass
+
+
+class UnsupportedScheduleError(Exception):
+    pass

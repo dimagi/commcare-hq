@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import csv
 import io
 import json
@@ -67,7 +68,7 @@ from corehq.apps.users.bulkupload import (
     check_headers,
     UserUploadError,
 )
-from corehq.apps.users.dbaccessors.all_commcare_users import get_mobile_user_ids
+from corehq.apps.users.dbaccessors.all_commcare_users import get_mobile_user_ids, user_exists
 from corehq.apps.users.decorators import require_can_edit_commcare_users
 from corehq.apps.users.forms import (
     CommCareAccountForm, CommCareUserFormSet, CommtrackUserForm,
@@ -89,6 +90,7 @@ from corehq.util.workbook_json.excel import JSONReaderError, HeaderValueError, \
     InvalidExcelFileException
 from soil import DownloadBase
 from .custom_data_fields import UserFieldsView
+import six
 
 BULK_MOBILE_HELP_SITE = ("https://confluence.dimagi.com/display/commcarepublic"
                          "/Create+and+Manage+CommCare+Mobile+Workers#Createand"
@@ -680,7 +682,7 @@ class MobileWorkerListView(HQJSONResponseMixin, BaseUserSettingsView):
         users_data = users_query.run()
         return {
             'response': {
-                'itemList': map(lambda user: self._format_user(user, include_location), users_data.hits),
+                'itemList': [self._format_user(user, include_location) for user in users_data.hits],
                 'total': users_data.total,
                 'page': page,
                 'query': query,
@@ -742,8 +744,13 @@ class MobileWorkerListView(HQJSONResponseMixin, BaseUserSettingsView):
                            'spaces.').format(username)
             }
         full_username = format_username(username, self.domain)
-        if CommCareUser.get_by_username(full_username, strict=True):
-            result = {'error': _(u'Username {} is already taken').format(username)}
+        exists = user_exists(full_username)
+        if exists.exists:
+            if exists.is_deleted:
+                result = {'warning': _(u'Username {} belonged to a user that was deleted.'
+                                       u' Reusing it may have unexpected consequences.').format(username)}
+            else:
+                result = {'error': _(u'Username {} is already taken').format(username)}
         else:
             result = {'success': _(u'Username {} is available').format(username)}
         return result
@@ -764,7 +771,7 @@ class MobileWorkerListView(HQJSONResponseMixin, BaseUserSettingsView):
             form_data = self._construct_form_data(in_data, fields)
         except InvalidMobileWorkerRequest as e:
             return {
-                'error': unicode(e)
+                'error': six.text_type(e)
             }
 
         self.request.POST = form_data
@@ -845,7 +852,7 @@ class MobileWorkerListView(HQJSONResponseMixin, BaseUserSettingsView):
                 form_data[f] = user_data.get(f)
             form_data['domain'] = self.domain
             return form_data
-        except Exception, e:
+        except Exception as e:
             raise InvalidMobileWorkerRequest(_("Check your request: {}".format(e)))
 
 

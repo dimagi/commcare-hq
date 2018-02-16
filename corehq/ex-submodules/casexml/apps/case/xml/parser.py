@@ -2,6 +2,7 @@
 This isn't really a parser, but it's the code that generates case-like
 objects from things from xforms.
 """
+from __future__ import absolute_import
 import os
 import datetime
 
@@ -9,6 +10,8 @@ from casexml.apps.case import const
 from casexml.apps.case.models import CommCareCaseAction
 from casexml.apps.case.xml import DEFAULT_VERSION, V1, V2, NS_REVERSE_LOOKUP_MAP
 from dimagi.utils.parsing import string_to_utc_datetime
+import six
+from six.moves import filter
 
 
 XMLNS_ATTR = "@xmlns"
@@ -186,7 +189,7 @@ class CaseAttachmentAction(CaseActionBase):
             return cls(block, attachments)
 
         for id, data in block.items():
-            if isinstance(data, basestring):
+            if isinstance(data, six.string_types):
                 attachment_from = None
                 attachment_src = None
                 attachment_name = None
@@ -330,7 +333,7 @@ class CaseUpdate(object):
 
     def _filtered_action(self, func):
         # filters the actions, assumes exactly 0 or 1 match.
-        filtered = filter(func, self.actions)
+        filtered = list(filter(func, self.actions))
         if filtered:
             assert(len(filtered) == 1)
             return filtered[0]

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from custom.enikshay.private_sector_datamigration.management.commands.base_cleanup_csv import BaseCleanupCSVCommand
 
 

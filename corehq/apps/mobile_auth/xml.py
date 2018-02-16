@@ -19,6 +19,7 @@
         </key_record>
     </auth_keys>
 """
+from __future__ import absolute_import
 from eulxml.xmlmap import XmlObject, StringField, DateTimeField, NodeListField, NodeField
 
 

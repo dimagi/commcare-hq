@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import print_function
 from itertools import chain
 
 from django.core.management import BaseCommand
@@ -10,6 +12,7 @@ from custom.enikshay.case_utils import (
     CASE_TYPE_PERSON,
     get_first_parent_of_case,
 )
+from six.moves import input
 
 
 def _get_children_cases_by_type(domain, parent_case_id, child_case_type):
@@ -91,7 +94,7 @@ class Command(BaseCommand):
 
     def handle(self, domain, case_type, case_ids, **options):
         if not options.get('noinput'):
-            confirm = raw_input(
+            confirm = input(
                 u"""
                 Are you sure you want to delete all these cases, and their associated
                 person, occurrence, episode, and drtb-hiv-referral cases?

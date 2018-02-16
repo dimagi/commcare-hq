@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import uuid
 import os
 from datetime import datetime, timedelta
@@ -12,6 +13,7 @@ from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from casexml.apps.case.tests.util import delete_all_xforms
 from casexml.apps.case.const import CASE_ATTR_ID
 from casexml.apps.case.xform import extract_case_blocks
+from six.moves import range
 
 CREATE_XFORM_ID = "6RGAZTETE3Z2QC0PE2DKM88MO"
 TEST_DOMAIN_NAME = 'test-domain'

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from dimagi.utils.couch import CriticalSection
 from corehq import privileges
 from corehq.apps.accounting.utils import domain_has_privilege
@@ -7,6 +8,7 @@ from corehq.apps.users.models import CommCareUser
 from corehq.apps.sms import messages
 from corehq.apps.sms.mixin import apply_leniency, PhoneNumberInUseException
 from corehq.apps.sms.models import MessagingEvent, SQLMobileBackend, PhoneNumber
+import six
 
 
 VERIFICATION__ALREADY_IN_USE = 1
@@ -137,7 +139,7 @@ def process_verification(v, msg, verification_keywords=None, create_subevent_for
 
 
 def verification_response_ok(text, verification_keywords):
-    if not isinstance(text, basestring):
+    if not isinstance(text, six.string_types):
         return False
 
     text = text.lower()

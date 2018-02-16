@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.db import models
 
 from dimagi.utils.decorators.memoized import memoized
@@ -658,14 +659,11 @@ class Agency_Jul7(models.Model):
 
     @property
     def name(self):
-        return ' '.join(filter(
-            None,
-            [
+        return ' '.join([_f for _f in [
                 self._primary_user_detail.firstName,
                 self._primary_user_detail.middleName,
                 self._primary_user_detail.lastName,
-            ]
-        ))
+            ] if _f])
 
     @property
     @memoized

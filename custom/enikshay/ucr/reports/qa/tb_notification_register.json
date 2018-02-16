@@ -4,8 +4,7 @@
         "sheel-enikshay"
     ],
     "server_environment": [
-        "enikshay",
-        "softlayer"
+        "enikshay"
     ],
     "data_source_table": "episode_qa",
     "report_id": "tb_notification_register_qa",

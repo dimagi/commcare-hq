@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import uuid
 from collections import namedtuple
 from datetime import datetime
@@ -12,7 +13,7 @@ from corehq.form_processor.interfaces.processor import ProcessedForms
 from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL, \
     CaseTransaction, CommCareCaseIndexSQL, CaseAttachmentSQL, SupplyPointCaseMixin
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, use_sql_backend
-from corehq.form_processor.tests.test_basic_cases import _submit_case_block
+from corehq.form_processor.tests.test_basics import _submit_case_block
 from corehq.sql_db.routers import db_for_read_write
 
 DOMAIN = 'test-case-accessor'
@@ -63,7 +64,7 @@ class CaseAccessorTestsSQL(TestCase):
         traces = _create_case_transactions(case)
 
         self.assertEqual(
-            set([form_id1] + map(lambda t: t.form_id, filter(lambda t: t.include, traces))),
+            set([form_id1] + [t.form_id for t in [t for t in traces if t.include]]),
             set(CaseAccessorSQL.get_case_xform_ids(case.case_id))
         )
 
@@ -102,11 +103,24 @@ class CaseAccessorTestsSQL(TestCase):
 
     def test_get_reverse_indexed_cases(self):
         referenced_case_ids = [uuid.uuid4().hex, uuid.uuid4().hex]
-        _create_case_with_index(referenced_case_ids[0], case_is_deleted=True)  # case shouldn't be included in results
-        expected_case_ids = [_create_case_with_index(case_id)[0].case_id for case_id in referenced_case_ids]
+        _create_case_with_index(uuid.uuid4().hex, case_is_deleted=True)  # case shouldn't be included in results
+        expected_case_ids = [
+            _create_case_with_index(referenced_case_ids[0], case_type='bambino')[0].case_id,
+            _create_case_with_index(referenced_case_ids[1], case_type='child')[0].case_id,
+        ]
+
         cases = CaseAccessorSQL.get_reverse_indexed_cases(DOMAIN, referenced_case_ids)
         self.assertEqual(2, len(cases))
         self.assertEqual(set(expected_case_ids), {c.case_id for c in cases})
+
+        cases = CaseAccessorSQL.get_reverse_indexed_cases(
+            DOMAIN, referenced_case_ids, case_types=['child'], is_closed=False)
+        self.assertEqual(1, len(cases))
+
+        cases[0].closed = True
+        CaseAccessorSQL.save_case(cases[0])
+        cases = CaseAccessorSQL.get_reverse_indexed_cases(DOMAIN, referenced_case_ids, is_closed=True)
+        self.assertEqual(1, len(cases))
 
     def test_hard_delete_case(self):
         case1 = _create_case()
@@ -218,7 +232,7 @@ class CaseAccessorTestsSQL(TestCase):
         transactions = CaseAccessorSQL.get_transactions(case.case_id)
         self.assertEqual(6, len(transactions))
         self.assertEqual(
-            [form_id] + map(lambda trace: trace.form_id, traces),
+            [form_id] + [trace.form_id for trace in traces],
             [t.form_id for t in transactions],
         )
 
@@ -241,7 +255,7 @@ class CaseAccessorTestsSQL(TestCase):
         transactions = CaseAccessorSQL.get_transactions_for_case_rebuild(case.case_id)
         self.assertEqual(4, len(transactions))
         self.assertEqual(
-            [form_id] + map(lambda t: t.form_id, filter(lambda t: t.include, traces)),
+            [form_id] + [t.form_id for t in [t for t in traces if t.include]],
             [t.form_id for t in transactions],
         )
 
@@ -560,7 +574,7 @@ class CaseAccessorTestsSQL(TestCase):
         case1 = _create_case()
         _create_case_transactions(case1)
         self.assertTrue(
-            CaseAccessorSQL.case_has_transactions_since_sync(case1.case_id, "foo", datetime(1992, 01, 30))
+            CaseAccessorSQL.case_has_transactions_since_sync(case1.case_id, "foo", datetime(1992, 1, 30))
         )
         self.assertFalse(
             CaseAccessorSQL.case_has_transactions_since_sync(case1.case_id, "foo", datetime.utcnow())
@@ -718,8 +732,9 @@ def _create_case(domain=None, form_id=None, case_type=None, user_id=None, closed
 
 
 def _create_case_with_index(referenced_case_id, identifier='parent', referenced_type='mother',
-                            relationship_id=CommCareCaseIndexSQL.CHILD, case_is_deleted=False):
-    case = _create_case()
+                            relationship_id=CommCareCaseIndexSQL.CHILD, case_is_deleted=False,
+                            case_type='child'):
+    case = _create_case(case_type=case_type)
     case.deleted = case_is_deleted
 
     index = CommCareCaseIndexSQL(

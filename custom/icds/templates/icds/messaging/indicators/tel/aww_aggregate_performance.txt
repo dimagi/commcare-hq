@@ -1,11 +1,12 @@
 {# NOTE: Django assumes templates are stored with UTF-8 encoding by default. Be sure to save this template with UTF-8 encoding. #}
 
-పని తీరుపై సగటు నివేదిక:
+గడచిన 30 రోజుల మీ అంగన్వాడీ కేంద్రం(AWC) పనితీరు నివేదిక
 
-గృహ సందర్శనలు: {{ visits }} / 65
+1. మొత్తం చేసిన సందర్శనలు/ మొత్తం చేయవలసిన సందర్శనలు: {{ visits }} / 65
+2. సరైన సమయంలో చేసిన మొత్తం సందర్శనలు / మొత్తం సందర్శనలు: {{ on_time_visits }} / {{ visits }}
 
-టి.హెచ్.ఆర్. (T.H.R.) వితరణ: {{ thr_distribution }}
+THR పంపిణీ: {{ thr_distribution }}
 
-బరువు తూయబడ్డ పిల్లలు: {{ children_weighed }}
+మొత్తం బరువు తీసిన పిల్లల సంఖ్య : {{ children_weighed }}
 
-అంగన్ వాడీ పని చేసిన రోజులు: {{ days_open }} / 25
+ఎన్ని రోజులు అంగన్వాడీ కేంద్రం (AWC) తెర్చి ఉంది / ఎన్ని రోజులు తెర్చి ఉండాలి: {{ days_open }} / 25

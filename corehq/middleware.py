@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import division
 import functools
 import logging
 import mimetypes
@@ -12,6 +14,7 @@ from django.utils.deprecation import MiddlewareMixin
 
 from corehq.apps.domain.models import Domain
 from corehq.const import OPENROSA_DEFAULT_VERSION
+from dimagi.utils.logging import notify_exception
 
 from dimagi.utils.parsing import json_format_datetime, string_to_utc_datetime
 
@@ -75,7 +78,7 @@ class MemoryUsageMiddleware(object):
     def process_response(self, request, response):
         if self._check_psutil() and hasattr(request, '_profile_memory'):
             mem = psutil.Process(os.getpid()).get_memory_info()
-            diff = (mem.rss - request._profile_memory.rss) / 1024
+            diff = (mem.rss - request._profile_memory.rss) // 1024
             profile_logger.info('{} memory usage {} KB'.format(request.path, diff))
         return response
 
@@ -89,6 +92,21 @@ class TimingMiddleware(object):
         if hasattr(request, '_profile_starttime'):
             duration = datetime.datetime.utcnow() - request._profile_starttime
             profile_logger.info('{} time {}'.format(request.path, duration), extra={'duration': duration})
+        return response
+
+
+class LogLongRequestMiddleware(MiddlewareMixin):
+
+    def process_request(self, request):
+        request._profile_starttime = datetime.datetime.utcnow()
+
+    def process_response(self, request, response):
+        if hasattr(request, '_profile_starttime'):
+            duration = datetime.datetime.utcnow() - request._profile_starttime
+            if duration > datetime.timedelta(minutes=10):
+                notify_exception(request, "Request took a very long time.", details={
+                    'duration': duration.total_seconds(),
+                })
         return response
 
 

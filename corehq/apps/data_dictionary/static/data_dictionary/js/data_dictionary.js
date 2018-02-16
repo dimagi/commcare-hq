@@ -1,6 +1,19 @@
-/* globals django, hqDefine, hqImport */
-hqDefine('data_dictionary/js/data_dictionary', function () {
-
+define([
+    "jquery",
+    "knockout",
+    "underscore",
+    "hqwebapp/js/initial_page_data",
+    "hqwebapp/js/main",
+    "analytix/js/google",
+    "hqwebapp/js/knockout_bindings.ko",
+], function(
+    $,
+    ko,
+    _,
+    initialPageData,
+    hqMain,
+    googleAnalytics
+) {
     var CaseType = function (name) {
         var self = this;
         self.name = name;
@@ -54,7 +67,7 @@ hqDefine('data_dictionary/js/data_dictionary', function () {
         self.casePropertyList = ko.observableArray();
         self.showAll = ko.observable(false);
         self.availableDataTypes = typeChoices;
-        self.saveButton = hqImport("hqwebapp/js/main").initSaveButton({
+        self.saveButton = hqMain.initSaveButton({
             unsavedMessage: gettext("You have unsaved changes to your data dictionary."),
             save: function() {
                 var postProperties = [];
@@ -163,7 +176,7 @@ hqDefine('data_dictionary/js/data_dictionary', function () {
             });
             var i = groupIndex + 1;
             var next = self.casePropertyList()[i];
-            while (!next.isGroup) {
+            while (next && !next.isGroup) {
                 next.toggle();
                 i++;
                 next = self.casePropertyList()[i];
@@ -180,14 +193,14 @@ hqDefine('data_dictionary/js/data_dictionary', function () {
     };
 
     $(function() {
-        var dataUrl = hqImport('hqwebapp/js/initial_page_data').reverse('data_dictionary_json'),
-            casePropertyUrl = hqImport('hqwebapp/js/initial_page_data').reverse('update_case_property'),
-            typeChoices = hqImport('hqwebapp/js/initial_page_data').get('typeChoices'),
+        var dataUrl = initialPageData.reverse('data_dictionary_json'),
+            casePropertyUrl = initialPageData.reverse('update_case_property'),
+            typeChoices = initialPageData.get('typeChoices'),
             viewModel = new DataDictionaryModel(dataUrl, casePropertyUrl, typeChoices);
         viewModel.init();
         $('#hq-content').parent().koApplyBindings(viewModel);
         $('#download-dict').click(function() {
-            window.analytics.usage('Data Dictionary', 'downloaded data dictionary');
+            googleAnalytics.track.event('Data Dictionary', 'downloaded data dictionary');
         });
     });
 });

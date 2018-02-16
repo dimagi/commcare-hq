@@ -109,6 +109,7 @@ DEBUG = True
 # log directories must exist and be writeable!
 DJANGO_LOG_FILE = "/tmp/commcare-hq.django.log"
 LOG_FILE = "/tmp/commcare-hq.log"
+SHARED_DRIVE_ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "sharedfiles")
 
 CELERY_SEND_TASK_ERROR_EMAILS = True
 CELERY_PERIODIC_QUEUE = 'celery' # change this to something else if you want a different queue for periodic tasks
@@ -140,7 +141,7 @@ _ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 XFORMS_PLAYER_URL = 'http://127.0.0.1:4444'
 
 # email and password for an admin django user, such as one created with
-# ./manage.py bootstrap <project-name> <email> <password>
+# ./manage.py make_superuser <email>
 TOUCHFORMS_API_USER = 'admin@example.com'
 TOUCHFORMS_API_PASSWORD = 'password'
 
@@ -159,10 +160,13 @@ ANALYTICS_IDS = {
     'GOOGLE_ANALYTICS_API_ID': '',
     'KISSMETRICS_KEY': '',
     'HUBSPOT_API_KEY': '',
+    'FULLSTORY_ID': '',
 }
 
 ANALYTICS_CONFIG = {
-    "HQ_INSTANCE": ''  # e.g. "www", or "india", or "staging"
+    "HQ_INSTANCE": '',  # e.g. "www", or "india", or "staging"
+    "DEBUG": DEBUG,
+    "LOG_LEVEL": "debug",   # "warning", "debug", "verbose", or "" for no logging
 }
 
 # Green house api key
@@ -201,6 +205,7 @@ LOCAL_APPS = (
 #    'testapps.test_pillowtop',
 #    'django_fsm', # Adds the ability to generate state diagrams for models using django-fsm
 #    'kombu.transport.django', # required for celery
+#    'package_monitor',
 )
 
 LOCAL_MIDDLEWARE = [

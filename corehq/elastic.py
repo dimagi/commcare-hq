@@ -1,8 +1,9 @@
+from __future__ import absolute_import
 from collections import namedtuple
 import copy
 import logging
 import time
-from urllib import unquote
+from six.moves.urllib.parse import unquote
 
 from django.conf import settings
 from elasticsearch import Elasticsearch
@@ -23,6 +24,8 @@ from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
 from dimagi.utils.decorators.memoized import memoized
 from pillowtop.processors.elastic import send_to_elasticsearch as send_to_es
+import six
+from six.moves import range
 
 
 def _es_hosts():
@@ -83,7 +86,7 @@ def doc_exists_in_es(index_info, doc_id_or_dict):
     """
     Check if a document exists, by ID or the whole document.
     """
-    if isinstance(doc_id_or_dict, basestring):
+    if isinstance(doc_id_or_dict, six.string_types):
         doc_id = doc_id_or_dict
     else:
         assert isinstance(doc_id_or_dict, dict)
@@ -213,6 +216,9 @@ def run_query(index_name, q, debug_host=None, es_instance_alias=ES_DEFAULT_INSTA
 
 
 def mget_query(index_name, ids, source):
+    if not ids:
+        return []
+
     es_instance = get_es_new()
     es_meta = ES_META[index_name]
     try:
@@ -456,8 +462,8 @@ def generate_sortables_from_facets(results, params=None):
     """
 
     def generate_facet_dict(f_name, ft):
-        if isinstance(ft['term'], unicode): #hack to get around unicode encoding issues. However it breaks this specific facet
-            ft['term'] = ft['term'].encode('ascii','replace')
+        if isinstance(ft['term'], six.text_type): #hack to get around unicode encoding issues. However it breaks this specific facet
+            ft['term'] = ft['term'].encode('ascii', 'replace')
 
         return {'name': ft["term"],
                 'count': ft["count"],
@@ -466,7 +472,7 @@ def generate_sortables_from_facets(results, params=None):
     sortable = []
     res_facets = results.get("facets", [])
     for facet in res_facets:
-        if res_facets[facet].has_key("terms"):
+        if "terms" in res_facets[facet]:
             sortable.append((facet, [generate_facet_dict(facet, ft) for ft in res_facets[facet]["terms"] if ft["term"]]))
 
     return sortable

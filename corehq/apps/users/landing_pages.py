@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from collections import namedtuple
 from django.urls import reverse
 from django.utils.translation import ugettext_noop, ugettext as _

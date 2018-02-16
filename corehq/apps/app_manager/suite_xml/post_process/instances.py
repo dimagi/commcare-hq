@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from collections import defaultdict
 import re
 from corehq import toggles
@@ -5,6 +6,7 @@ from corehq.apps.app_manager.exceptions import DuplicateInstanceIdError
 from corehq.apps.app_manager.suite_xml.contributors import PostProcessor
 from corehq.apps.app_manager.suite_xml.xml_models import Instance
 from dimagi.utils.decorators.memoized import memoized
+import six
 
 
 class EntryInstances(PostProcessor):
@@ -121,7 +123,7 @@ INSTANCE_KWARGS_BY_ID = {
 }
 
 
-@register_factory(*INSTANCE_KWARGS_BY_ID.keys())
+@register_factory(*list(INSTANCE_KWARGS_BY_ID.keys()))
 def preset_instances(domain, instance_name):
     kwargs = INSTANCE_KWARGS_BY_ID.get(instance_name, None)
     if kwargs:
@@ -143,6 +145,18 @@ def enikshay_fixture_instances(domain, instance_name):
 @register_factory('commcare')
 def commcare_fixture_instances(domain, instance_name):
     if instance_name == 'commcare:reports' and toggles.MOBILE_UCR.enabled(domain):
+        return Instance(id=instance_name, src='jr://fixture/{}'.format(instance_name))
+
+
+@register_factory('commcare-reports')
+def commcare_reports_fixture_instances(domain, instance_name):
+    if instance_name.startswith('commcare-reports:') and toggles.MOBILE_UCR.enabled(domain):
+        return Instance(id=instance_name, src='jr://fixture/{}'.format(instance_name))
+
+
+@register_factory('commcare-reports-filters')
+def commcare_reports_filters_instances(domain, instance_name):
+    if instance_name.startswith('commcare-reports-filters:') and toggles.MOBILE_UCR.enabled(domain):
         return Instance(id=instance_name, src='jr://fixture/{}'.format(instance_name))
 
 
@@ -172,7 +186,7 @@ def get_all_instances_referenced_in_xpaths(domain, xpaths):
             if instance:
                 instances.add(instance)
             else:
-                class UnicodeWithContext(unicode):
+                class UnicodeWithContext(six.text_type):
                     pass
                 instance_name = UnicodeWithContext(instance_name)
                 instance_name.xpath = xpath

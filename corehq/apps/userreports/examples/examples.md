@@ -539,6 +539,38 @@ This will return the difference in seconds between two times (i.e. start and end
 }
 ```
 
+## Getting the related case from a case
+
+```json
+{
+    "type": "indexed_case",
+    "case_expression": {
+        "type": "identity",
+        "comment": "This just means the current document for a case based datasource"
+    },
+    "index": "parent"
+}
+```
+
+To access a specific property from the related case, you can do something like:
+```json
+{
+    "type": "nested",
+    "argument_expression": {
+        "type": "indexed_case",
+        "case_expression": {
+            "type": "identity",
+            "comment": "This just means the current document for a case based UCR"
+        },
+        "index": "parent"
+    },
+    "value_expression": {
+        "type": "property_name",
+        "property_name": "some_case_property"
+    }
+}
+```
+
 ## Filter, Map, Reduce, Flatten and Sort expressions
 
 ### Getting number of forms of a particular type

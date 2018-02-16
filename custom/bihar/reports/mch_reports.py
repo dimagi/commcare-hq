@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.utils.translation import ugettext as _
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.standard.cases.basic import CaseListReport

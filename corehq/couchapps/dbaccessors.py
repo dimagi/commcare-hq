@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from couchforms.models import XFormInstance
 from corehq.util.quickcache import quickcache
 

@@ -1,10 +1,12 @@
 # coding=utf-8
+from __future__ import absolute_import
 import json
 
 from django.test import SimpleTestCase
 
 from corehq.util.test_utils import generate_cases
 from pillowtop.utils import prepare_bulk_payloads
+from six.moves import range
 
 
 class BulkTest(SimpleTestCase):

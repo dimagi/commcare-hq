@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DataTablesColumnGroup
 from custom.icds_reports.sqldata import BaseIdentification, BasePopulation, BaseOperationalization

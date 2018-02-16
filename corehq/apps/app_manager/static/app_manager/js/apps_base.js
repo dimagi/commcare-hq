@@ -1,4 +1,4 @@
-/* globals hqImport, hqLayout */
+/* globals hqImport */
 
 $(function () {
     $('#deleted-app-modal').modal({
@@ -9,10 +9,10 @@ $(function () {
         window.location = hqImport('hqwebapp/js/initial_page_data').reverse('default_app');
     });
     var previewApp = hqImport('app_manager/js/preview_app');
-    previewApp.initPreviewWindow(hqLayout);
+    previewApp.initPreviewWindow();
 
     $('.appmanager-content').fadeIn();
     $('.appmanager-loading').fadeOut();
 
-    hqLayout.utils.setIsAppbuilderResizing(true);
+    hqImport("hqwebapp/js/layout").setIsAppbuilderResizing(true);
 });

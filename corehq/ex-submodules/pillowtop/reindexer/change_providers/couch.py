@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from copy import copy
 from corehq.util.couch_helpers import paginate_view, MultiKeyViewArgsProvider
 from corehq.util.pagination import paginate_function

@@ -1,6 +1,8 @@
+from __future__ import absolute_import
 from django.test import TestCase
 from pact.enums import PACT_REGIMEN_CHOICES, DOT_NONART, DOT_ART, CASE_NONART_REGIMEN_PROP, CASE_ART_REGIMEN_PROP
 from pact.regimen import regimen_dict_from_choice, regimen_string_from_doc
+from six.moves import range
 
 art_nonart = [DOT_ART, DOT_NONART]
 
@@ -9,7 +11,7 @@ class RegimenPropertiesTests(TestCase):
 
     def testStringToDictRegimensNum(self):
         #assure that all frequencies line up ok
-        for freq in range(1,5):
+        for freq in range(1, 5):
             regimens = PACT_REGIMEN_CHOICES[freq][1]
             for drug_type in art_nonart:
                 for regimen_tuple in regimens:

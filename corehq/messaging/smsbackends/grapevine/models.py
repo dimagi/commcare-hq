@@ -1,5 +1,4 @@
-import urllib2
-import urlparse
+from __future__ import absolute_import
 from xml.etree import cElementTree as ElementTree
 from django.http import HttpResponse
 from tastypie.authentication import Authentication
@@ -14,6 +13,7 @@ from xml.sax.saxutils import escape, unescape
 from django.conf import settings
 from corehq.apps.sms.api import incoming as incoming_sms
 import logging
+import six
 
 logger = logging.getLogger(__name__)
 
@@ -77,8 +77,8 @@ class SQLGrapevineBackend(SQLSMSBackend):
         )
 
         url = 'http://www.gvi.bms9.vine.co.za/httpInputhandler/ApplinkUpload'
-        req = urllib2.Request(url, data)
-        response = urllib2.urlopen(req, timeout=settings.SMS_GATEWAY_TIMEOUT)
+        req = six.moves.urllib.request.Request(url, data)
+        response = six.moves.urllib.request.urlopen(req, timeout=settings.SMS_GATEWAY_TIMEOUT)
         resp = response.read()
 
 
@@ -110,7 +110,7 @@ class UrlencodedDeserializer(Serializer):
     def from_urlencode(self, data, options=None):
         """ handles basic form encoded url posts """
         qs = dict((k, v if len(v) > 1 else v[0])
-            for k, v in urlparse.parse_qs(data).iteritems())
+            for k, v in six.iteritems(six.moves.urllib.parse.parse_qs(data)))
 
         return qs
 

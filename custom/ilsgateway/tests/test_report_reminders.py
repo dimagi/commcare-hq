@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from datetime import datetime, timedelta
 
 import mock
@@ -15,6 +16,7 @@ from custom.ilsgateway.tests.handlers.utils import TEST_DOMAIN, create_products
 from custom.ilsgateway.utils import make_loc
 from custom.logistics.tests.test_script import TestScript
 from custom.logistics.tests.utils import bootstrap_user
+import six
 
 
 class TestReportGroups(TestCase):
@@ -197,8 +199,8 @@ class TestRandRSummary(TestReportSummaryBase):
                 1234 > test randr_report TEST DISTRICT
                 1234 < %(test_handler_confirm)s
                 1234 < %(report_results)s
-            """ % {"test_handler_confirm": unicode(TEST_HANDLER_CONFIRM),
-                   "report_results": unicode(REMINDER_MONTHLY_RANDR_SUMMARY) % {"submitted": 0,
+            """ % {"test_handler_confirm": six.text_type(TEST_HANDLER_CONFIRM),
+                   "report_results": six.text_type(REMINDER_MONTHLY_RANDR_SUMMARY) % {"submitted": 0,
                                                                                 "total": 3,
                                                                                 "not_submitted": 0,
                                                                                 "not_responding": 3}}
@@ -214,8 +216,8 @@ class TestRandRSummary(TestReportSummaryBase):
                 1234 > test randr_report TEST DISTRICT
                 1234 < %(test_handler_confirm)s
                 1234 < %(report_results)s
-            """ % {"test_handler_confirm": unicode(TEST_HANDLER_CONFIRM),
-                   "report_results": unicode(REMINDER_MONTHLY_RANDR_SUMMARY) % {"submitted": 1,
+            """ % {"test_handler_confirm": six.text_type(TEST_HANDLER_CONFIRM),
+                   "report_results": six.text_type(REMINDER_MONTHLY_RANDR_SUMMARY) % {"submitted": 1,
                                                                                 "total": 3,
                                                                                 "not_submitted": 1,
                                                                                 "not_responding": 1}}
@@ -293,8 +295,8 @@ class TestDeliverySummary(TestReportSummaryBase):
                 1234 > test delivery_report TEST DISTRICT
                 1234 < %(test_handler_confirm)s
                 1234 < %(report_results)s
-            """ % {"test_handler_confirm": unicode(TEST_HANDLER_CONFIRM),
-                   "report_results": unicode(REMINDER_MONTHLY_DELIVERY_SUMMARY) % {"received": 0,
+            """ % {"test_handler_confirm": six.text_type(TEST_HANDLER_CONFIRM),
+                   "report_results": six.text_type(REMINDER_MONTHLY_DELIVERY_SUMMARY) % {"received": 0,
                                                                                    "total": 3,
                                                                                    "not_received": 0,
                                                                                    "not_responding": 3}}
@@ -310,8 +312,8 @@ class TestDeliverySummary(TestReportSummaryBase):
                 1234 > test delivery_report TEST DISTRICT
                 1234 < %(test_handler_confirm)s
                 1234 < %(report_results)s
-            """ % {"test_handler_confirm": unicode(TEST_HANDLER_CONFIRM),
-                   "report_results": unicode(REMINDER_MONTHLY_DELIVERY_SUMMARY) % {"received": 1,
+            """ % {"test_handler_confirm": six.text_type(TEST_HANDLER_CONFIRM),
+                   "report_results": six.text_type(REMINDER_MONTHLY_DELIVERY_SUMMARY) % {"received": 1,
                                                                                    "total": 3,
                                                                                    "not_received": 1,
                                                                                    "not_responding": 1}}
@@ -353,8 +355,8 @@ class TestSoHSummary(TestReportSummaryBase):
                 1234 > test soh_report TEST DISTRICT
                 1234 < %(test_handler_confirm)s
                 1234 < %(report_results)s
-            """ % {"test_handler_confirm": unicode(TEST_HANDLER_CONFIRM),
-                   "report_results": unicode(REMINDER_MONTHLY_SOH_SUMMARY) % {"submitted": 0,
+            """ % {"test_handler_confirm": six.text_type(TEST_HANDLER_CONFIRM),
+                   "report_results": six.text_type(REMINDER_MONTHLY_SOH_SUMMARY) % {"submitted": 0,
                                                                               "total": 3,
                                                                               "not_responding": 3}}
             self.run_script(script)
@@ -369,8 +371,8 @@ class TestSoHSummary(TestReportSummaryBase):
                 1234 > test soh_report TEST DISTRICT
                 1234 < %(test_handler_confirm)s
                 1234 < %(report_results)s
-            """ % {"test_handler_confirm": unicode(TEST_HANDLER_CONFIRM),
-                   "report_results": unicode(REMINDER_MONTHLY_SOH_SUMMARY) % {"submitted": 2,
+            """ % {"test_handler_confirm": six.text_type(TEST_HANDLER_CONFIRM),
+                   "report_results": six.text_type(REMINDER_MONTHLY_SOH_SUMMARY) % {"submitted": 2,
                                                                               "total": 3,
                                                                               "not_responding": 1}}
             self.run_script(script)

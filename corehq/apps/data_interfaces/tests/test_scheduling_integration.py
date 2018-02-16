@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.apps.app_manager.models import (
     AdvancedModule,
     AdvancedForm,
@@ -19,7 +20,13 @@ from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.messaging.scheduling.const import VISIT_WINDOW_START, VISIT_WINDOW_END, VISIT_WINDOW_DUE_DATE
-from corehq.messaging.scheduling.models import AlertSchedule, TimedSchedule, SMSContent
+from corehq.messaging.scheduling.models import (
+    AlertSchedule,
+    TimedSchedule,
+    TimedEvent,
+    CasePropertyTimedEvent,
+    SMSContent,
+)
 from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import (
     get_case_alert_schedule_instances_for_schedule,
     get_case_timed_schedule_instances_for_schedule,
@@ -30,11 +37,13 @@ from corehq.messaging.scheduling.scheduling_partitioned.models import (
     CaseTimedScheduleInstance,
 )
 from corehq.messaging.scheduling.tests.util import delete_alert_schedules, delete_timed_schedules
+from corehq.messaging.tasks import run_messaging_rule
 from corehq.sql_db.util import run_query_across_partitioned_databases
 from datetime import datetime, date, time
 from django.db.models import Q
 from django.test import TestCase
-from mock import patch
+from mock import patch, call
+from six.moves import range
 
 
 def get_visit_scheduler_module_and_form_for_test():
@@ -99,7 +108,7 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
     def test_timed_schedule_instance_creation(self, utcnow_patch):
         schedule = TimedSchedule.create_simple_daily_schedule(
             self.domain,
-            time(9, 0),
+            TimedEvent(time=time(9, 0)),
             SMSContent(message={'en': 'Hello'})
         )
 
@@ -213,10 +222,83 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
 
     @run_with_all_backends
     @patch('corehq.messaging.scheduling.util.utcnow')
+    def test_alert_schedule_reset(self, utcnow_patch):
+        schedule = AlertSchedule.create_simple_alert(
+            self.domain,
+            SMSContent(message={'en': 'Hello'})
+        )
+
+        rule = create_empty_rule(self.domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING)
+
+        rule.add_criteria(
+            MatchPropertyDefinition,
+            property_name='start_sending',
+            property_value='Y',
+            match_type=MatchPropertyDefinition.MATCH_EQUAL,
+        )
+
+        rule.add_action(
+            CreateScheduleInstanceActionDefinition,
+            alert_schedule_id=schedule.schedule_id,
+            recipients=(('CommCareUser', self.user.get_id),),
+            reset_case_property_name='reset_property',
+        )
+
+        AutomaticUpdateRule.clear_caches(self.domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING)
+
+        utcnow_patch.return_value = datetime(2017, 5, 1, 7, 0)
+        with create_case(self.domain, 'person') as case:
+            # Rule does not match, no instances created
+            instances = get_case_alert_schedule_instances_for_schedule(case.case_id, schedule)
+            self.assertEqual(instances.count(), 0)
+
+            # Make the rule match. On the first iteration, the instance is created. On the second,
+            # nothing is changed.
+            for minute in (1, 2):
+                utcnow_patch.return_value = datetime(2017, 5, 1, 7, minute)
+                update_case(self.domain, case.case_id,
+                    case_properties={'start_sending': 'Y', 'reset_property': 'a'})
+
+                instances = get_case_alert_schedule_instances_for_schedule(case.case_id, schedule)
+                self.assertEqual(instances.count(), 1)
+
+                self.assertEqual(instances[0].case_id, case.case_id)
+                self.assertEqual(instances[0].rule_id, rule.pk)
+                self.assertEqual(instances[0].alert_schedule_id, schedule.schedule_id)
+                self.assertEqual(instances[0].domain, self.domain)
+                self.assertEqual(instances[0].recipient_type, 'CommCareUser')
+                self.assertEqual(instances[0].recipient_id, self.user.get_id)
+                self.assertEqual(instances[0].current_event_num, 0)
+                self.assertEqual(instances[0].schedule_iteration_num, 1)
+                self.assertEqual(instances[0].next_event_due, datetime(2017, 5, 1, 7, 1))
+                self.assertEqual(instances[0].last_reset_case_property_value, 'a')
+                self.assertTrue(instances[0].active)
+
+            # Update the reset property, and the instance is reset.
+            utcnow_patch.return_value = datetime(2017, 6, 1, 7, 0)
+            update_case(self.domain, case.case_id, case_properties={'reset_property': 'b'})
+
+            instances = get_case_alert_schedule_instances_for_schedule(case.case_id, schedule)
+            self.assertEqual(instances.count(), 1)
+
+            self.assertEqual(instances[0].case_id, case.case_id)
+            self.assertEqual(instances[0].rule_id, rule.pk)
+            self.assertEqual(instances[0].alert_schedule_id, schedule.schedule_id)
+            self.assertEqual(instances[0].domain, self.domain)
+            self.assertEqual(instances[0].recipient_type, 'CommCareUser')
+            self.assertEqual(instances[0].recipient_id, self.user.get_id)
+            self.assertEqual(instances[0].current_event_num, 0)
+            self.assertEqual(instances[0].schedule_iteration_num, 1)
+            self.assertEqual(instances[0].next_event_due, datetime(2017, 6, 1, 7, 0))
+            self.assertEqual(instances[0].last_reset_case_property_value, 'b')
+            self.assertTrue(instances[0].active)
+
+    @run_with_all_backends
+    @patch('corehq.messaging.scheduling.util.utcnow')
     def test_timed_schedule_reset(self, utcnow_patch):
         schedule = TimedSchedule.create_simple_daily_schedule(
             self.domain,
-            time(9, 0),
+            TimedEvent(time=time(9, 0)),
             SMSContent(message={'en': 'Hello'})
         )
 
@@ -291,12 +373,174 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
             self.assertEqual(instances.count(), 0)
 
     @run_with_all_backends
+    @patch('corehq.messaging.scheduling.util.utcnow')
+    def test_timed_schedule_start_date_case_property(self, utcnow_patch):
+        schedule = TimedSchedule.create_simple_daily_schedule(
+            self.domain,
+            TimedEvent(time=time(9, 0)),
+            SMSContent(message={'en': 'Hello'})
+        )
+
+        rule = create_empty_rule(self.domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING)
+
+        rule.add_criteria(
+            MatchPropertyDefinition,
+            property_name='start_sending',
+            property_value='Y',
+            match_type=MatchPropertyDefinition.MATCH_EQUAL,
+        )
+
+        rule.add_action(
+            CreateScheduleInstanceActionDefinition,
+            timed_schedule_id=schedule.schedule_id,
+            recipients=(('CommCareUser', self.user.get_id),),
+            start_date_case_property='appointment_date',
+        )
+
+        AutomaticUpdateRule.clear_caches(self.domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING)
+
+        utcnow_patch.return_value = datetime(2017, 5, 1, 7, 0)
+        with create_case(self.domain, 'person') as case:
+            # Rule does not match, no instances created
+            instances = get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
+            self.assertEqual(instances.count(), 0)
+
+            # Make the rule match, but don't give a start date. No instances are created.
+            update_case(self.domain, case.case_id, case_properties={'start_sending': 'Y'})
+            instances = get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
+            self.assertEqual(instances.count(), 0)
+
+            # Give a start date. On the first iteration, the instance is created. On the second,
+            # no new instance is created since it already exists.
+            for minute in [1, 2]:
+                utcnow_patch.return_value = datetime(2017, 5, 1, 7, minute)
+                update_case(self.domain, case.case_id, case_properties={'appointment_date': '2017-06-01'})
+
+                instances = get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
+                self.assertEqual(instances.count(), 1)
+
+                self.assertEqual(instances[0].case_id, case.case_id)
+                self.assertEqual(instances[0].rule_id, rule.pk)
+                self.assertEqual(instances[0].timed_schedule_id, schedule.schedule_id)
+                self.assertEqual(instances[0].start_date, date(2017, 6, 1))
+                self.assertEqual(instances[0].domain, self.domain)
+                self.assertEqual(instances[0].recipient_type, 'CommCareUser')
+                self.assertEqual(instances[0].recipient_id, self.user.get_id)
+                self.assertEqual(instances[0].current_event_num, 0)
+                self.assertEqual(instances[0].schedule_iteration_num, 1)
+                self.assertEqual(instances[0].next_event_due, datetime(2017, 6, 1, 13, 0))
+                self.assertTrue(instances[0].active)
+
+            # Update start date. Instance is updated with new start date,
+            update_case(self.domain, case.case_id, case_properties={'appointment_date': '2017-07-01'})
+            instances = get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
+            self.assertEqual(instances.count(), 1)
+
+            self.assertEqual(instances[0].case_id, case.case_id)
+            self.assertEqual(instances[0].rule_id, rule.pk)
+            self.assertEqual(instances[0].timed_schedule_id, schedule.schedule_id)
+            self.assertEqual(instances[0].start_date, date(2017, 7, 1))
+            self.assertEqual(instances[0].domain, self.domain)
+            self.assertEqual(instances[0].recipient_type, 'CommCareUser')
+            self.assertEqual(instances[0].recipient_id, self.user.get_id)
+            self.assertEqual(instances[0].current_event_num, 0)
+            self.assertEqual(instances[0].schedule_iteration_num, 1)
+            self.assertEqual(instances[0].next_event_due, datetime(2017, 7, 1, 13, 0))
+            self.assertTrue(instances[0].active)
+
+            # Give an invalid start date. Instance should no longer exist.
+            update_case(self.domain, case.case_id, case_properties={'appointment_date': 'xyz'})
+            instances = get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
+            self.assertEqual(instances.count(), 0)
+
+    @run_with_all_backends
+    @patch('corehq.messaging.scheduling.util.utcnow')
+    def test_timed_schedule_case_property_timed_event(self, utcnow_patch):
+        schedule = TimedSchedule.create_simple_daily_schedule(
+            self.domain,
+            CasePropertyTimedEvent(case_property_name='reminder_time'),
+            SMSContent(message={'en': 'Hello'})
+        )
+
+        rule = create_empty_rule(self.domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING)
+
+        rule.add_criteria(
+            MatchPropertyDefinition,
+            property_name='start_sending',
+            property_value='Y',
+            match_type=MatchPropertyDefinition.MATCH_EQUAL,
+        )
+
+        rule.add_action(
+            CreateScheduleInstanceActionDefinition,
+            timed_schedule_id=schedule.schedule_id,
+            recipients=(('CommCareUser', self.user.get_id),),
+        )
+
+        AutomaticUpdateRule.clear_caches(self.domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING)
+
+        utcnow_patch.return_value = datetime(2017, 5, 1, 7, 0)
+        with create_case(self.domain, 'person') as case:
+            # Rule does not match, no instances created
+            instances = get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
+            self.assertEqual(instances.count(), 0)
+
+            # Make the rule match, but don't give a preferred time. Default scheduling time is used.
+            update_case(self.domain, case.case_id, case_properties={'start_sending': 'Y'})
+            instances = get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
+            self.assertEqual(instances.count(), 1)
+
+            self.assertEqual(instances[0].case_id, case.case_id)
+            self.assertEqual(instances[0].rule_id, rule.pk)
+            self.assertEqual(instances[0].timed_schedule_id, schedule.schedule_id)
+            self.assertEqual(instances[0].start_date, date(2017, 5, 1))
+            self.assertEqual(instances[0].domain, self.domain)
+            self.assertEqual(instances[0].recipient_type, 'CommCareUser')
+            self.assertEqual(instances[0].recipient_id, self.user.get_id)
+            self.assertEqual(instances[0].current_event_num, 0)
+            self.assertEqual(instances[0].schedule_iteration_num, 1)
+            self.assertEqual(instances[0].next_event_due, datetime(2017, 5, 1, 16, 0))
+            self.assertTrue(instances[0].active)
+
+            # Update the preferred time, and the schedule should recalculate
+            update_case(self.domain, case.case_id, case_properties={'reminder_time': '09:00'})
+            instances = get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
+            self.assertEqual(instances.count(), 1)
+            self.assertEqual(instances[0].case_id, case.case_id)
+            self.assertEqual(instances[0].rule_id, rule.pk)
+            self.assertEqual(instances[0].timed_schedule_id, schedule.schedule_id)
+            self.assertEqual(instances[0].start_date, date(2017, 5, 1))
+            self.assertEqual(instances[0].domain, self.domain)
+            self.assertEqual(instances[0].recipient_type, 'CommCareUser')
+            self.assertEqual(instances[0].recipient_id, self.user.get_id)
+            self.assertEqual(instances[0].current_event_num, 0)
+            self.assertEqual(instances[0].schedule_iteration_num, 1)
+            self.assertEqual(instances[0].next_event_due, datetime(2017, 5, 1, 13, 0))
+            self.assertTrue(instances[0].active)
+
+            # Update the preferred time to a bad value and the default time is used again.
+            update_case(self.domain, case.case_id, case_properties={'reminder_time': 'x'})
+            instances = get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
+            self.assertEqual(instances.count(), 1)
+            self.assertEqual(instances[0].case_id, case.case_id)
+            self.assertEqual(instances[0].rule_id, rule.pk)
+            self.assertEqual(instances[0].timed_schedule_id, schedule.schedule_id)
+            self.assertEqual(instances[0].start_date, date(2017, 5, 1))
+            self.assertEqual(instances[0].domain, self.domain)
+            self.assertEqual(instances[0].recipient_type, 'CommCareUser')
+            self.assertEqual(instances[0].recipient_id, self.user.get_id)
+            self.assertEqual(instances[0].current_event_num, 0)
+            self.assertEqual(instances[0].schedule_iteration_num, 1)
+            self.assertEqual(instances[0].next_event_due, datetime(2017, 5, 1, 16, 0))
+            self.assertTrue(instances[0].active)
+
+    @run_with_all_backends
     @patch('corehq.apps.data_interfaces.models.VisitSchedulerIntegrationHelper.get_visit_scheduler_module_and_form')
     @patch('corehq.messaging.scheduling.util.utcnow')
     def test_visit_scheduler_integration(self, utcnow_patch, module_and_form_patch):
         schedule = TimedSchedule.create_simple_daily_schedule(
             self.domain,
-            time(9, 0),
+            TimedEvent(time=time(9, 0)),
             SMSContent(message={'en': 'Hello'}),
             total_iterations=1,
         )
@@ -430,7 +674,7 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
     def test_start_offset(self, utcnow_patch):
         schedule = TimedSchedule.create_simple_daily_schedule(
             self.domain,
-            time(9, 0),
+            TimedEvent(time=time(9, 0)),
             SMSContent(message={'en': 'Hello'}),
             start_offset=2,
         )
@@ -460,7 +704,7 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
             self.assertEqual(instances[0].current_event_num, 0)
             self.assertEqual(instances[0].schedule_iteration_num, 1)
             self.assertEqual(instances[0].next_event_due, datetime(2017, 8, 3, 13, 0))
-            self.assertEqual(instances[0].schedule_revision, schedule.memoized_schedule_revision)
+            self.assertEqual(instances[0].schedule_revision, schedule.get_schedule_revision())
             self.assertTrue(instances[0].active)
 
             # Change the schedule's start offset and force a case update to reprocess the schedule instance.
@@ -485,7 +729,7 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
             self.assertEqual(instances[0].current_event_num, 0)
             self.assertEqual(instances[0].schedule_iteration_num, 1)
             self.assertEqual(instances[0].next_event_due, datetime(2017, 8, 6, 13, 0))
-            self.assertEqual(instances[0].schedule_revision, schedule.memoized_schedule_revision)
+            self.assertEqual(instances[0].schedule_revision, schedule.get_schedule_revision())
             self.assertTrue(instances[0].active)
 
             # Making another arbitrary update doesn't cause any recalculating to happen
@@ -506,8 +750,37 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
             self.assertEqual(instances[0].current_event_num, 0)
             self.assertEqual(instances[0].schedule_iteration_num, 1)
             self.assertEqual(instances[0].next_event_due, datetime(2017, 8, 6, 13, 0))
-            self.assertEqual(instances[0].schedule_revision, schedule.memoized_schedule_revision)
+            self.assertEqual(instances[0].schedule_revision, schedule.get_schedule_revision())
             self.assertTrue(instances[0].active)
+
+    @run_with_all_backends
+    @patch('corehq.messaging.tasks.sync_case_for_messaging_rule.delay')
+    def test_run_messaging_rule(self, task_patch):
+        schedule = AlertSchedule.create_simple_alert(
+            self.domain,
+            SMSContent(message={'en': 'Hello'})
+        )
+
+        rule = create_empty_rule(self.domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING)
+
+        rule.add_action(
+            CreateScheduleInstanceActionDefinition,
+            alert_schedule_id=schedule.schedule_id,
+            recipients=(('Self', None),),
+        )
+
+        AutomaticUpdateRule.clear_caches(self.domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING)
+
+        with create_case(self.domain, 'person') as case1, create_case(self.domain, 'person') as case2:
+            run_messaging_rule(self.domain, rule.pk)
+            self.assertEqual(task_patch.call_count, 2)
+            task_patch.assert_has_calls(
+                [
+                    call(self.domain, case1.case_id, rule.pk),
+                    call(self.domain, case2.case_id, rule.pk),
+                ],
+                any_order=True
+            )
 
 
 class VisitSchedulerIntegrationHelperTestCase(TestCase):

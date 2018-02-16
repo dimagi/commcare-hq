@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import json
 from django.db.models import Q
 
@@ -9,7 +10,6 @@ from corehq.apps.accounting.models import (
     SoftwarePlan,
     SoftwarePlanVersion,
     SoftwareProductRate,
-    SoftwareProductType,
     Subscriber,
     Subscription,
 )
@@ -138,17 +138,24 @@ class Select2RateAsyncHandler(BaseSelect2AsyncHandler):
             product_rates = product_rates.exclude(name__in=self.existing)
         if self.search_string:
             product_rates = product_rates.filter(name__istartswith=self.search_string)
-        return [(p.id, p.name, SoftwareProductType.COMMCARE) for p in product_rates.all()]
+        return [(p.id, p.name) for p in product_rates.all()]
 
     def _fmt_success(self, response):
-        return json.dumps({
-            'results': [{
+        def _result_from_response(r):
+            result = {
                 'id': r[0],
                 'name': r[1],
-                'rate_type': r[2],
-                'text': '%s (%s)' % (r[1], r[2]),
                 'isExisting': True,
-            } for r in response]
+            }
+            if len(r) == 3:
+                result['rate_type'] = r[2]
+                result['text'] = '%s (%s)' % (r[1], r[2])
+            else:
+                result['text'] = '%s' % r[1]
+            return result
+
+        return json.dumps({
+            'results': [_result_from_response(r) for r in response]
         })
 
 
@@ -299,7 +306,7 @@ class SubscriptionFilterAsyncHandler(BaseSingleOptionFilterAsyncHandler):
 
     @property
     def query(self):
-        query = Subscription.objects
+        query = Subscription.visible_objects
         if self.action == 'contract_id':
             query = query.exclude(
                 salesforce_contract_id=None

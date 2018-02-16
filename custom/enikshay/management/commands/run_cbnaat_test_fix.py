@@ -1,4 +1,5 @@
 from __future__ import print_function
+from __future__ import absolute_import
 from custom.enikshay.management.commands.utils import (
     BaseEnikshayCaseMigration,
     get_result_recorded_form,
@@ -62,10 +63,10 @@ class Command(BaseEnikshayCaseMigration):
                         drug_sensitive_list = ''
                         resistance_display = ''
 
-                    result_summary_display = '\n'.join(filter(None, [
+                    result_summary_display = '\n'.join([_f for _f in [
                         detected,
                         resistance_display,
-                    ]))
+                    ] if _f])
                 elif test_success == 'error':
                     error_code = get_form_path(
                         ['update_test_result', 'cbnaat', 'error_code'],

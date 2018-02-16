@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.apps.accounting.models import BillingAccount, DefaultProductPlan, SoftwarePlanEdition, Subscription
 from corehq.apps.commtrack.models import CommtrackActionConfig
 from corehq.apps.custom_data_fields import CustomDataFieldsDefinition
@@ -12,6 +13,7 @@ from custom.ilsgateway.utils import make_loc
 from custom.logistics.tests.test_script import TestScript
 from custom.logistics.tests.utils import bootstrap_user
 from casexml.apps.stock.models import DocDomainMapping
+from six.moves import range
 
 TEST_DOMAIN = 'ils-test-domain'
 
@@ -72,7 +74,7 @@ class ILSTestScript(TestScript):
         bootstrap_user(cls.district, username='msd_person', domain=domain.name, phone_number='111',
                        first_name='MSD', last_name='Person', user_data={'role': 'MSD'}, language='sw')
 
-        for x in xrange(1, 4):
+        for x in range(1, 4):
             bootstrap_user(
                 cls.facility3,
                 username='person{}'.format(x), domain=domain.name, phone_number=str(32346 + x),

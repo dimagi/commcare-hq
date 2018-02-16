@@ -1,4 +1,5 @@
 from __future__ import print_function
+from __future__ import absolute_import
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CommCareUser
 from dimagi.utils.couch.database import iter_docs

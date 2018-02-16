@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from copy import deepcopy
 import datetime
 import logging
@@ -5,6 +6,7 @@ import pytz
 import uuid
 from corehq.apps.es.es_query import ESQuerySet
 from corehq.apps.es.utils import values_list
+from six.moves import filter
 
 FILTER_TEMPLATE = """
     def {fn}(self, ...):
@@ -57,7 +59,7 @@ class ESQueryFake(object):
         return clone
 
     def _filtered(self, filter_function):
-        return self._clone(result_docs=filter(filter_function, self._result_docs))
+        return self._clone(result_docs=list(filter(filter_function, self._result_docs)))
 
     @classmethod
     def save_doc(cls, doc):

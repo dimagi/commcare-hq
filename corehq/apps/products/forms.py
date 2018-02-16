@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout
 from django import forms

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.conf import settings
 import django.core.exceptions
 from django.template.response import TemplateResponse
@@ -76,14 +77,14 @@ class Enforce2FAMiddleware(MiddlewareMixin):
         ):
             return None
 
-        if not toggles.TWO_FACTOR_SUPERUSER_ROLLOUT.enabled(request.user.username):
+        if (toggles.TWO_FACTOR_SUPERUSER_ROLLOUT.enabled(request.user.username)
+                and not request.couch_user.two_factor_disabled
+                and not request.user.is_verified()
+                and not request.path.startswith('/account/')):
+            return TemplateResponse(
+                request=request,
+                template='two_factor/core/otp_required.html',
+                status=403,
+            )
+        else:
             return None
-        elif request.user.is_staff or request.user.is_superuser and not request.user.is_verified():
-            if request.path.startswith('/account/') or request.couch_user.two_factor_disabled:
-                return None
-            else:
-                return TemplateResponse(
-                    request=request,
-                    template='two_factor/core/otp_required.html',
-                    status=403,
-                )

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from casexml.apps.case.util import get_datetime_case_property_changed
 from custom.enikshay.const import (
     FIRST_PRESCRIPTION_VOUCHER_REDEEMED_DATE,

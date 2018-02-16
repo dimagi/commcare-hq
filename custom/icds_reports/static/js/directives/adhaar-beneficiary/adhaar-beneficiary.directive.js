@@ -1,4 +1,4 @@
-/* global d3 */
+/* global d3, moment */
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function AdhaarController($scope, $routeParams, $location, $filter, demographicsService,
@@ -9,8 +9,9 @@ function AdhaarController($scope, $routeParams, $location, $filter, demographics
     } else {
         storageService.setKey('search', $location.search());
     }
+    vm.userLocationId = userLocationId;
     vm.filtersData = $location.search();
-    vm.label = "Percent Adhaar-seeded Beneficiaries";
+    vm.label = "Percent Aadhaar-seeded Beneficiaries";
     vm.step = $routeParams.step;
     vm.steps = {
         'map': {route: '/adhaar/map', label: 'Map View'},
@@ -22,11 +23,13 @@ function AdhaarController($scope, $routeParams, $location, $filter, demographics
     vm.chartData = null;
     vm.top_five = [];
     vm.bottom_five = [];
+    vm.selectedLocations = [];
+    vm.all_locations = [];
     vm.location_type = null;
     vm.loaded = false;
     vm.filters = ['age', 'gender'];
     vm.rightLegend = {
-        info: 'Percentage of individuals registered using CAS whose Adhaar identification has been captured',
+        info: 'Percentage of individuals registered using CAS whose Aadhaar identification has been captured',
     };
     vm.message = storageService.getKey('message') || false;
 
@@ -50,12 +53,12 @@ function AdhaarController($scope, $routeParams, $location, $filter, demographics
     }, true);
 
     vm.templatePopup = function(loc, row) {
-        var total = row ? $filter('indiaNumbers')(row.all) : 'N/A';
+        var in_month = row ? $filter('indiaNumbers')(row.in_month) : 'N/A';
         var percent = row ? d3.format('.2%')(row.in_month / (row.all || 1)) : "N/A";
-        return '<div class="hoverinfo" style="max-width: 200px !important;">' +
+        return '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
             '<p>' + loc.properties.name + '</p>' +
-            '<div>Total number of ICDS beneficiaries whose Adhaar has been captured: <strong>' + total + '</strong></div>' +
-            '<div>% of individuals registered using CAS whose Adhaar identification has been captured: <strong>' + percent + '</strong></div>';
+            '<div>Total number of ICDS beneficiaries whose Aadhaar has been captured: <strong>' + in_month + '</strong></div>' +
+            '<div>% of ICDS beneficiaries whose Aadhaar has been captured: <strong>' + percent + '</strong></div>';
     };
 
     vm.loadData = function () {
@@ -86,21 +89,29 @@ function AdhaarController($scope, $routeParams, $location, $filter, demographics
                 vm.bottom_five = response.data.report_data.bottom_five;
                 vm.location_type = response.data.report_data.location_type;
                 vm.chartTicks = vm.chartData[0].values.map(function(d) { return d.x; });
+                var max = Math.ceil(d3.max(vm.chartData, function(line) {
+                    return d3.max(line.values, function(d) {
+                        return d.y;
+                    });
+                }) * 100);
+                var min = Math.ceil(d3.min(vm.chartData, function(line) {
+                    return d3.min(line.values, function(d) {
+                        return d.y;
+                    });
+                }) * 100);
+                var range = max - min;
                 vm.chartOptions.chart.forceY = [
-                    0,
-                    Math.ceil(d3.max(vm.chartData, function(line) {
-                        return d3.max(line.values, function(d) {
-                            return d.y;
-                        });
-                    }) * 100) / 100 + 0.01,
+                    parseInt(((min - range/10)/100).toFixed(2)) < 0 ?
+                        0 : parseInt(((min - range/10)/100).toFixed(2)),
+                    parseInt(((max + range/10)/100).toFixed(2)),
                 ];
             }
         });
     };
 
-    var init = function() {
-        var locationId = vm.filtersData.location_id || userLocationId;
-        if (!locationId || locationId === 'all' || locationId === 'null') {
+    vm.init = function() {
+        var locationId = vm.filtersData.location_id || vm.userLocationId;
+        if (!locationId || ["all", "null", "undefined"].indexOf(locationId) >= 0) {
             vm.loadData();
             vm.loaded = true;
             return;
@@ -112,7 +123,7 @@ function AdhaarController($scope, $routeParams, $location, $filter, demographics
         });
     };
 
-    init();
+    vm.init();
 
     $scope.$on('filtersChange', function() {
         vm.loadData();
@@ -121,7 +132,7 @@ function AdhaarController($scope, $routeParams, $location, $filter, demographics
     vm.getDisableIndex = function () {
         var i = -1;
         window.angular.forEach(vm.selectedLocations, function (key, value) {
-            if (key !== null && key.location_id === userLocationId) {
+            if (key !== null && key.location_id === vm.userLocationId) {
                 i = value;
             }
         });
@@ -178,13 +189,8 @@ function AdhaarController($scope, $routeParams, $location, $filter, demographics
             callback: function(chart) {
                 var tooltip = chart.interactiveLayer.tooltip;
                 tooltip.contentGenerator(function (d) {
-
                     var day = _.find(vm.chartData[0].values, function(num) { return d3.time.format('%b %Y')(new Date(num['x'])) === d.value;});
-
-                    var tooltip_content = "<p><strong>" + d.value + "</strong></p><br/>";
-                    tooltip_content += "<p>Total number of ICDS beneficiaries whose Adhaar has been captured: <strong>" + $filter('indiaNumbers')(day.all) + "</strong></p>";
-                    tooltip_content += "<p>% of ICDS beneficiaries whose Adhaar has been captured: <strong>" + d3.format('.2%')(day.y) + "</strong></p>";
-
+                    var tooltip_content = vm.getTooltipContent(d, day);
                     return tooltip_content;
                 });
                 return chart;
@@ -192,13 +198,20 @@ function AdhaarController($scope, $routeParams, $location, $filter, demographics
         },
         caption: {
             enable: true,
-            html: '<i class="fa fa-info-circle"></i> Percentage number of ICDS beneficiaries whose Adhaar identification has been captured',
+            html: '<i class="fa fa-info-circle"></i> Percentage number of ICDS beneficiaries whose Aadhaar identification has been captured',
             css: {
                 'text-align': 'center',
                 'margin': '0 auto',
                 'width': '900px',
             }
         },
+    };
+
+    vm.getTooltipContent = function(val, day) {
+        var content = "<p><strong>" + val.value + "</strong></p><br/>";
+        content += "<div>Total number of ICDS beneficiaries whose Aadhaar has been captured: <strong>" + $filter('indiaNumbers')(day.in_month) + "</strong></div>";
+        content += "<div>% of ICDS beneficiaries whose Aadhaar has been captured: <strong>" + d3.format('.2%')(day.y) + "</strong></div>";
+        return content;
     };
 
     vm.showAllLocations = function () {

@@ -1,6 +1,7 @@
 # encoding: utf-8
+from __future__ import absolute_import
 import json
-from StringIO import StringIO
+from io import BytesIO
 
 from botocore.response import StreamingBody
 from django.test import TestCase
@@ -33,7 +34,7 @@ class FakeDB(object):
     @staticmethod
     def get(blob_id):
         content = 'foo\n'
-        return StreamingBody(StringIO(content), len(content))
+        return StreamingBody(BytesIO(content), len(content))
 
     @staticmethod
     def delete(blob_id):

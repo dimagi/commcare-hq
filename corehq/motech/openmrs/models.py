@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from django.utils.encoding import python_2_unicode_compatible
 from corehq.motech.openmrs.const import IMPORT_FREQUENCY_CHOICES, IMPORT_FREQUENCY_MONTHLY
 from dimagi.ext.couchdbkit import (
     Document,
@@ -23,6 +25,7 @@ class ColumnMapping(DocumentSchema):
     data_type = StringProperty(choices=DATA_TYPES, required=False)
 
 
+@python_2_unicode_compatible
 class OpenmrsImporter(Document):
     """
     Import cases from an OpenMRS instance using a report
@@ -31,6 +34,9 @@ class OpenmrsImporter(Document):
     server_url = StringProperty()  # e.g. "http://www.example.com/openmrs"
     username = StringProperty()
     password = StringProperty()
+
+    # If a domain has multiple OpenmrsImporter instances, for which CommCare location is this one authoritative?
+    location_id = StringProperty()
 
     # How often should cases be imported
     import_frequency = StringProperty(choices=IMPORT_FREQUENCY_CHOICES, default=IMPORT_FREQUENCY_MONTHLY)
@@ -53,12 +59,18 @@ class OpenmrsImporter(Document):
 
     # If report_params includes "{{ location }}" then location_type_name is used to determine which locations to
     # pull the report for. Those locations will need an "openmrs_uuid" param set. Imported cases will be owned by
-    # the first mobile worker assigned to that location.
+    # the first mobile worker assigned to that location. If this OpenmrsImporter.location_id is set, only
+    # sub-locations will be returned
     location_type_name = StringProperty()
 
+    # external_id should always be the OpenMRS UUID of the patient (and not, for example, a national ID number)
+    # because it is immutable. external_id_column is the column that contains the UUID
     external_id_column = StringProperty()
 
     # Space-separated column(s) to be concatenated to create the case name (e.g. "givenName familyName")
     name_columns = StringProperty()
 
     column_map = ListProperty(ColumnMapping)
+
+    def __str__(self):
+        return self.server_url

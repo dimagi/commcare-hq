@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.form_processor.reprocess import reprocess_unfinished_stub
 from corehq.util.celery_utils import no_result_task
 from corehq.util.datadog.gauges import datadog_counter

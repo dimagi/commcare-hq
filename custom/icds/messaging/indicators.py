@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import division
 from collections import defaultdict
 from datetime import datetime, timedelta
 
@@ -63,7 +65,7 @@ def _get_report_fixture_for_user(domain, report_id, ota_user):
     :param report_id: the index to the result from get_report_configs()
     :param ota_user: the OTARestoreCommCareUser for which to get the report fixture
     """
-    xml = ReportFixturesProvider.report_config_to_fixture(
+    xml = ReportFixturesProvider.report_config_to_v1_fixture(
         get_report_configs(domain)[report_id], ota_user
     )
     return etree.tostring(xml)
@@ -200,7 +202,7 @@ class AWWAggregatePerformanceIndicator(AWWIndicator):
                         "Attribute {} not found in restore for AWC {}".format(attribute, location_name)
                     )
 
-        raise IndicatorError("AWC {} not found in the restore".format(location_name))
+        return 0
 
     def get_messages(self, language_code=None):
         if self.supervisor is None:
@@ -209,6 +211,7 @@ class AWWAggregatePerformanceIndicator(AWWIndicator):
         agg_perf = LSAggregatePerformanceIndicator(self.domain, self.supervisor)
 
         visits = self.get_value_from_fixture(agg_perf.visits_fixture, 'count')
+        on_time_visits = self.get_value_from_fixture(agg_perf.visits_fixture, 'visit_on_time')
         thr_gte_21 = self.get_value_from_fixture(agg_perf.thr_fixture, 'open_ccs_thr_gte_21')
         thr_count = self.get_value_from_fixture(agg_perf.thr_fixture, 'open_count')
         num_weigh = self.get_value_from_fixture(agg_perf.weighed_fixture, 'open_weighed')
@@ -217,6 +220,7 @@ class AWWAggregatePerformanceIndicator(AWWIndicator):
 
         context = {
             "visits": visits,
+            "on_time_visits": on_time_visits,
             "thr_distribution": "{} / {}".format(thr_gte_21, thr_count),
             "children_weighed": "{} / {}".format(num_weigh, num_weigh_avail),
             "days_open": num_days_open,
@@ -393,22 +397,24 @@ class LSAggregatePerformanceIndicator(LSIndicator):
             ))
 
     def get_messages(self, language_code=None):
-        visit_on_time = self.get_value_from_fixture(self.visits_fixture, 'visit_on_time')
+        on_time_visits = self.get_value_from_fixture(self.visits_fixture, 'visit_on_time')
         visits = self.get_value_from_fixture(self.visits_fixture, 'count')
         thr_gte_21 = self.get_value_from_fixture(self.thr_fixture, 'open_ccs_thr_gte_21')
         thr_count = self.get_value_from_fixture(self.thr_fixture, 'open_count')
         num_weigh = self.get_value_from_fixture(self.weighed_fixture, 'open_weighed')
         num_weigh_avail = self.get_value_from_fixture(self.weighed_fixture, 'open_count')
         num_days_open = int(self.get_value_from_fixture(self.days_open_fixture, 'awc_opened_count'))
-        num_awc_locations = len(self.days_open_fixture.findall('./rows/row[@is_total_row="False"]'))
+        num_awc_locations = len(self.awc_locations)
         if num_awc_locations:
-            avg_days_open = int(round(1.0 * num_days_open / num_awc_locations))
+            avg_days_open = int(round(num_days_open / num_awc_locations))
         else:
             # catch div by 0
             avg_days_open = 0
 
         context = {
-            "visits": "{} / {}".format(visit_on_time, visits),
+            "on_time_visits": on_time_visits,
+            "visits": visits,
+            "visits_goal": num_awc_locations * 65,
             "thr_distribution": "{} / {}".format(thr_gte_21, thr_count),
             "children_weighed": "{} / {}".format(num_weigh, num_weigh_avail),
             "days_open": "{}".format(avg_days_open),

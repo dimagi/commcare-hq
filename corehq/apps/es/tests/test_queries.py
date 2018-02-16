@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import json
 from unittest import TestCase
 
@@ -51,7 +52,7 @@ class TestQueries(TestCase):
         query = (HQESQuery('forms')
                  .search_string_query("name: foo", default_fields))
         self.assertHasQuery(query, {
-            "query_string": {
+            "simple_query_string": {
                 "query": "name: foo",
                 "default_operator": "AND",
                 "fields": None,

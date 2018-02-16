@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from custom.ilsgateway.slab.views import SLABConfigurationReport
 from custom.ilsgateway.tanzania.reports.alerts import AlertReport
 from custom.ilsgateway.tanzania.reports.dashboard_report import DashboardReport

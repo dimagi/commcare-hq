@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.apps.app_manager.views.translations import (
     upload_bulk_ui_translations,
     download_bulk_ui_translations,
@@ -12,7 +13,6 @@ from corehq.apps.app_manager.views.app_summary import (
     DownloadAppSummaryView,
 )
 from corehq.apps.app_manager.views.apps import (
-    app_from_template,
     app_settings,
     app_source,
     copy_app,
@@ -34,6 +34,7 @@ from corehq.apps.app_manager.views.apps import (
     export_gzip,
     pull_master_app,
     update_linked_whitelist,
+    PatchLinkedAppWhitelist,
 )
 from corehq.apps.app_manager.views.cli import (
     direct_ccz,

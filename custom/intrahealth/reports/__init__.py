@@ -1,4 +1,5 @@
 # coding=utf-8
+from __future__ import absolute_import
 import calendar
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.locations.models import get_location
@@ -9,12 +10,15 @@ from custom.intrahealth.sqldata import NombreData, TauxConsommationData
 from django.utils.translation import ugettext as _
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import json_format_date
+from six.moves import zip
+from six.moves import range
+import six
 
 
 def get_localized_months():
     #Returns chronological list of months in french language
     with localize('fr'):
-        return [(_(calendar.month_name[i])).title() for i in xrange(1, 13)]
+        return [(_(calendar.month_name[i])).title() for i in range(1, 13)]
 
 
 class IntraHealthLocationMixin(object):
@@ -75,11 +79,11 @@ class IntraHealtMixin(IntraHealthLocationMixin, IntraHealthReportConfigMixin):
         else:
             header.add_column(columns[0].data_tables_column)
 
-        self.groups = SQLProduct.objects.filter(domain=self.domain, is_archived=False)
+        self.groups = SQLProduct.objects.filter(domain=self.domain, is_archived=False).order_by('code')
         for group in self.groups:
             if self.model.have_groups:
                 header.add_column(DataTablesColumnGroup(group.name,
-                    *[columns[j].data_tables_column for j in xrange(1, len(columns))]))
+                    *[columns[j].data_tables_column for j in range(1, len(columns))]))
             else:
                 header.add_column(DataTablesColumn(group.name))
 
@@ -99,7 +103,7 @@ class IntraHealtMixin(IntraHealthLocationMixin, IntraHealthReportConfigMixin):
         if isinstance(self.data_source, (NombreData, TauxConsommationData)):
             result = {}
             ppss = set()
-            for k, v in data.iteritems():
+            for k, v in six.iteritems(data):
                 ppss.add(k[-2])
                 if 'region_id' in self.data_source.config:
                     helper_tuple = (k[2], k[1], k[0])
@@ -131,7 +135,7 @@ class IntraHealtMixin(IntraHealthLocationMixin, IntraHealthReportConfigMixin):
         else:
             data = dict(formatter.format(self.model.data, keys=self.model.keys, group_by=self.model.group_by))
 
-        reversed_map = dict(zip(self.PRODUCT_NAMES.values(), self.PRODUCT_NAMES.keys()))
+        reversed_map = dict(zip(list(self.PRODUCT_NAMES.values()), list(self.PRODUCT_NAMES.keys())))
         for localization in localizations:
             row = [localization]
             for group in self.groups:

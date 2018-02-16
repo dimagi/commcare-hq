@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.utils.dateparse import parse_datetime
 
 from dimagi.utils.decorators.memoized import memoized

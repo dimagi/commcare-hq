@@ -1,7 +1,8 @@
 # coding: utf-8
+from __future__ import absolute_import
 from codecs import BOM_UTF8
 from contextlib import closing
-import StringIO
+import io
 import os
 
 from django.test import SimpleTestCase
@@ -73,7 +74,7 @@ class HtmlExportWriterTests(SimpleTestCase):
         table = (headers, row, row, row)
         export_tables = (('Spam', table),)
 
-        with closing(StringIO.StringIO()) as file_:
+        with closing(io.BytesIO()) as file_:
             export_from_tables(export_tables, file_, Format.HTML)
             html_string = file_.getvalue()
 
@@ -92,7 +93,7 @@ class HeaderNameTest(SimpleTestCase):
 
     def test_names_matching_case(self):
         writer = PythonDictWriter()
-        stringio = StringIO.StringIO()
+        stringio = io.StringIO()
         table_index_1 = "case_Sensitive"
         table_index_2 = "case_sensitive"
         table_headers = [[]]
@@ -119,7 +120,7 @@ class HeaderNameTest(SimpleTestCase):
     def test_max_header_length(self):
         writer = PythonDictWriter()
         writer.max_table_name_size = 10
-        stringio = StringIO.StringIO()
+        stringio = io.StringIO()
         table_index = "my_table_index"
         table_headers = [("first header", "second header")]
         writer.open(
@@ -130,3 +131,20 @@ class HeaderNameTest(SimpleTestCase):
         preview = writer.get_preview()
         self.assertGreater(len(table_index), writer.max_table_name_size)
         self.assertLessEqual(len(preview[0]['table_name']), writer.max_table_name_size)
+
+    def test_max_header_length_duplicates(self):
+        writer = PythonDictWriter()
+        writer.max_table_name_size = 7
+        stringio = io.StringIO()
+        table_headers = [("header1", "header2")]
+        writer.open(
+            [
+                ("prefix1: index", table_headers),
+                ("prefix2- index", table_headers),
+            ],
+            stringio
+        )
+        writer.close()
+        preview = writer.get_preview()
+        table_names = {table['table_name'] for table in preview}
+        self.assertEqual(len(table_names), 2)

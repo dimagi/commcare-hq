@@ -1,11 +1,13 @@
-from StringIO import StringIO
+from __future__ import absolute_import
+
+import io
 import datetime
 import re
 import pytz
 import json
 
 from celery.utils.log import get_task_logger
-from django.http import HttpResponse, Http404
+from django.http import HttpResponse, Http404, HttpResponseRedirect
 from django.template.context import RequestContext
 from django.template.loader import render_to_string
 from django.shortcuts import render
@@ -36,7 +38,10 @@ from dimagi.utils.web import json_request, json_response
 from dimagi.utils.parsing import string_to_boolean
 from corehq.apps.reports.cache import request_cache
 from django.utils.translation import ugettext
-from export import get_writer
+from .export import get_writer
+import six
+from six.moves import zip
+from six.moves import range
 
 CHART_SPAN_MAP = {1: '10', 2: '6', 3: '4', 4: '3', 5: '2', 6: '2'}
 
@@ -95,6 +100,7 @@ class GenericReportView(object):
     description = None  # Human-readable description of the report
     report_template_path = None
     report_partial_path = None
+    js_scripts = None
 
     asynchronous = False
     hide_filters = False
@@ -131,6 +137,10 @@ class GenericReportView(object):
     # still include these reports in the list of reports we do access control
     # against.
     parent_report_class = None
+
+    is_deprecated = False
+    deprecation_email_message = ugettext("This report has been deprecated.")
+    deprecation_message = ugettext("This report has been deprecated.")
 
     def __init__(self, request, base_context=None, domain=None, **kwargs):
         if not self.name or not self.section_name or self.slug is None or not self.dispatcher:
@@ -178,7 +188,8 @@ class GenericReportView(object):
                 PATH_INFO=self.request.META.get('PATH_INFO')
             ),
             datespan=self.request.datespan,
-            couch_user=None
+            couch_user=None,
+            can_access_all_locations=self.request.can_access_all_locations,
         )
 
         try:
@@ -209,12 +220,14 @@ class GenericReportView(object):
             META = {}
             couch_user = None
             datespan = None
+            can_access_all_locations = None
 
         request_data = state.get('request')
         request = FakeHttpRequest()
         request.GET = request_data.get('GET', {})
         request.META = request_data.get('META', {})
         request.datespan = request_data.get('datespan')
+        request.can_access_all_locations = request_data.get('can_access_all_locations')
 
         try:
             couch_user = CouchUser.get_by_user_id(request_data.get('couch_user'))
@@ -314,7 +327,7 @@ class GenericReportView(object):
         filters = []
         fields = self.fields
         for field in fields or []:
-            if isinstance(field, basestring):
+            if isinstance(field, six.string_types):
                 klass = to_function(field, failhard=True)
             else:
                 klass = field
@@ -445,7 +458,7 @@ class GenericReportView(object):
         default_config = ReportConfig.default()
 
         def is_editable_datespan(field):
-            field_fn = to_function(field) if isinstance(field, basestring) else field
+            field_fn = to_function(field) if isinstance(field, six.string_types) else field
             return issubclass(field_fn, DatespanFilter) and field_fn.is_editable
 
         has_datespan = any([is_editable_datespan(field) for field in self.fields])
@@ -477,6 +490,7 @@ class GenericReportView(object):
                 report_title=self.report_title or self.rendered_report_title,
                 report_subtitles=self.report_subtitles,
                 export_target=self.export_target,
+                js_scripts=self.js_scripts,
                 js_options=self.js_options,
             ),
             current_config_id=current_config_id,
@@ -555,18 +569,30 @@ class GenericReportView(object):
         self.context.update(self._validate_context_dict(self.report_context))
 
     @property
+    def deprecate_response(self):
+        from django.contrib import messages
+        messages.warning(
+            self.request,
+            self.deprecation_message
+        )
+        return HttpResponseRedirect(self.request.META.get('HTTP_REFERER', '/'))
+
+    @property
     def view_response(self):
         """
             Intention: Not to be overridden in general.
             Renders the general view of the report template.
         """
-        self.update_template_context()
-        template = self.template_base
-        if not self.asynchronous:
-            self.update_filter_context()
-            self.update_report_context()
-            template = self.template_report
-        return render(self.request, template, self.context)
+        if self.is_deprecated:
+            return self.deprecate_response
+        else:
+            self.update_template_context()
+            template = self.template_base
+            if not self.asynchronous:
+                self.update_filter_context()
+                self.update_report_context()
+                template = self.template_report
+            return render(self.request, template, self.context)
 
     @property
     @request_cache()
@@ -626,7 +652,7 @@ class GenericReportView(object):
 
     @property
     def excel_response(self):
-        file = StringIO()
+        file = io.BytesIO()
         export_from_tables(self.export_table, file, self.export_format)
         return file
 
@@ -667,7 +693,7 @@ class GenericReportView(object):
             export_all_rows_task.delay(self.__class__, self.__getstate__())
             return HttpResponse()
         else:
-            temp = StringIO()
+            temp = io.BytesIO()
             export_from_tables(self.export_table, temp, self.export_format)
             return export_response(temp, self.export_format, self.export_name)
 
@@ -942,7 +968,7 @@ class GenericTabularReport(GenericReportView):
         # using regex breaks values then we should use a parser instead, and
         # take the knock. Assuming we won't have values with angle brackets,
         # using regex for now.
-        if isinstance(value, basestring):
+        if isinstance(value, six.string_types):
             return re.sub('<[^>]*?>', '', value)
         return value
 
@@ -1103,7 +1129,7 @@ class SummaryTablularReport(GenericTabularReport):
     def summary_values(self):
         headers = list(self.headers)
         assert (len(self.data) == len(headers))
-        return zip(headers, self.data)
+        return list(zip(headers, self.data))
 
 
 class ProjectInspectionReportParamsMixin(object):

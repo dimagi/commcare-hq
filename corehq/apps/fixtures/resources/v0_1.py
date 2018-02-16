@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from couchdbkit import ResourceNotFound
 from tastypie import fields as tp_f
 from tastypie.resources import Resource

@@ -123,7 +123,7 @@
             {% verbatim %}"{{ getFormModuleLabel(form) }}"{% endverbatim %}
             {% trans "in module" %}
             {% verbatim %}"{{ getFormModuleLabel(form.module) }}"
-            <a href="{{ form.error.edit_url }}">
+            <a href="{{ form.error.edit_url }}" ng-if="!readOnly">
                 <i class="fa fa-pencil"></i>
             </a><br/>
             {{ form.error.details }}
@@ -133,16 +133,21 @@
         <ul>
             <li ng-repeat="module in modules|filter:moduleSearch">
                  <h4>
-                     {% verbatim %}<i class="hq-icon {{ getModuleIcon(module) }}"></i> <a ng-href="{{ getModuleUrl(module.id, lang) }}">{{ getFormModuleLabel(module) }}</a>{% endverbatim %}
+                     {% verbatim %}<i class="hq-icon {{ getModuleIcon(module) }}"></i>
+                     <a ng-href="{{ getModuleUrl(module.id, lang) }}" ng-if="!readOnly">{{ getFormModuleLabel(module) }}</a>
+                     <span ng-if="readOnly">{{ getFormModuleLabel(module) }}</span>
+                     {% endverbatim %}
                      <span class="text-muted" ng-show="showComments"> &nbsp; {{ module.short_comment }}</span>
                  </h4>
 
                 <ul>
                     <li ng-repeat="form in module.forms|filter:formSearch">
                     <h5>
-                        {% verbatim %}<a ng-href="{{ getFormUrl(form.id, lang) }}">
-                            <i class="hq-icon {{ getModuleFormIcon(form) }}"></i> {{ getFormModuleLabel(form) }}
-                        </a>{% endverbatim %}
+                        {% verbatim %}
+                        <i class="hq-icon {{ getModuleFormIcon(form) }}"></i>
+                        <a ng-href="{{ getFormUrl(form.id, lang) }}" ng-if="!readOnly">{{ getFormModuleLabel(form) }}</a>
+                        <span ng-if="readOnly"> {{ getFormModuleLabel(form) }}</span>
+                        {% endverbatim %}
                         <span class="text-muted" ng-show="showComments"> &nbsp; {{ form.short_comment }}</span>
                     </h5>
                         <ol>

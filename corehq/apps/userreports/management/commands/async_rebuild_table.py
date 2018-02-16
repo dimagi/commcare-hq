@@ -1,4 +1,6 @@
 from __future__ import print_function
+from __future__ import absolute_import
+from __future__ import unicode_literals
 import argparse
 from collections import namedtuple
 
@@ -42,7 +44,7 @@ class Command(BaseCommand):
         config_ids = [config._id for config in configs]
         for case_id in self._get_case_ids_to_process():
             change = FakeChange(case_id, fake_change_doc)
-            AsyncIndicator.update_indicators(change, config_ids)
+            AsyncIndicator.update_from_kafka_change(change, config_ids)
 
         for config in configs:
             if not config.is_static:

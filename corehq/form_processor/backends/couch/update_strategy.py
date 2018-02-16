@@ -1,8 +1,9 @@
+from __future__ import absolute_import
 import copy
 from functools import cmp_to_key
 import logging
 from PIL import Image
-from StringIO import StringIO
+from io import BytesIO
 from couchdbkit import BadValueError
 import sys
 from datetime import date, datetime
@@ -17,6 +18,7 @@ from corehq.form_processor.update_strategy_base import UpdateStrategy
 from couchforms.models import XFormInstance
 from dimagi.utils.logging import notify_exception
 from dimagi.ext.couchdbkit import StringProperty
+import six
 
 
 def coerce_to_datetime(v):
@@ -315,7 +317,7 @@ class CouchCaseUpdateStrategy(UpdateStrategy):
             if item not in const.RESTRICTED_PROPERTIES:
                 value = update_action.updated_unknown_properties[item]
                 if isinstance(properties.get(item), StringProperty):
-                    value = unicode(value)
+                    value = six.text_type(value)
                 try:
                     self.case[item] = value
                 except (AttributeError, BadValueError):
@@ -347,7 +349,7 @@ class CouchCaseUpdateStrategy(UpdateStrategy):
                 v.attachment_size = len(attach_data)
 
                 if v.is_image:
-                    img = Image.open(StringIO(attach_data))
+                    img = Image.open(BytesIO(attach_data))
                     img_size = img.size
                     props = dict(width=img_size[0], height=img_size[1])
                     v.attachment_properties = props
@@ -398,7 +400,7 @@ def _action_sort_key_function(case):
                     raise MissingServerDate()
 
                 def form_cmp(form_id):
-                    return form_ids.index(form_id) if form_id in form_ids else sys.maxint
+                    return form_ids.index(form_id) if form_id in form_ids else sys.maxsize
 
                 # if the user is the same you should compare with the special logic below
                 # if the user is not the same you should compare just using received_on

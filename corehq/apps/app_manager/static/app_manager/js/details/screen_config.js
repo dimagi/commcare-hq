@@ -383,7 +383,15 @@ hqDefine('app_manager/js/details/screen_config', function () {
                 }());
 
                 this.saveAttempted = ko.observable(false);
+                var addOns = hqImport("hqwebapp/js/initial_page_data").get("add_ons");
+                this.useXpathExpression = ko.observable(addOns.calc_xpaths && this.original.useXpathExpression);
+                this.useXpathExpression.subscribe(function(){
+                    that.fire('change');
+                });
                 this.showWarning = ko.computed(function() {
+                    if(this.useXpathExpression()) {
+                        return false;
+                    }
                     if (this.isTab) {
                         // Data tab missing its nodeset
                         return this.hasNodeset && !this.nodeset.observableVal();
@@ -396,6 +404,9 @@ hqDefine('app_manager/js/details/screen_config', function () {
                 var menuOptions = DetailScreenConfig.MENU_OPTIONS;
                 if (this.original.format === "graph"){
                     menuOptions = menuOptions.concat([{value: "graph", label: ""}]);
+                }
+                if (this.screen.columnKey === "long") {
+                    menuOptions = menuOptions.concat([{value: "markdown", label: gettext('Markdown')}]);
                 }
 
                 this.format = uiElement.select(menuOptions).val(this.original.format || null);
@@ -502,13 +513,6 @@ hqDefine('app_manager/js/details/screen_config', function () {
                                 that.filter_xpath_extra.value = input.val();
                                 fireChange();
                             });
-                        } else if (this.val() === 'calculate') {
-                            that.format.ui.parent().append(that.calc_xpath_extra.ui);
-                            var input = that.calc_xpath_extra.ui.find('input');
-                            input.change(function() {
-                                that.calc_xpath_extra.value = input.val();
-                                fireChange();
-                            });
                         } else if (this.val() === 'time-ago') {
                             that.format.ui.parent().append(that.time_ago_extra.ui);
                             var select = that.time_ago_extra.ui.find('select');
@@ -524,7 +528,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
                 // because this way the events are not fired during the initialization
                 // of the page.
                 this.format.$edit_view.on("change", function(event){
-                    ga_track_event('Case List Config', 'Display Format', event.target.value);
+                    hqImport('analytix/js/google').track.event('Case List Config', 'Display Format', event.target.value);
                 });
             }
 
@@ -650,10 +654,14 @@ hqDefine('app_manager/js/details/screen_config', function () {
                     column.on('change', that.fireChange);
 
                     column.field.on('change', function () {
-                        column.header.val(getPropertyTitle(this.val()));
-                        column.header.fire("change");
+                        if(!column.useXpathExpression()) {
+                            column.header.val(getPropertyTitle(this.val()));
+                            column.header.fire("change");
+                        }
                     });
-                    if (column.original.hasAutocomplete) {
+                    if (column.original.hasAutocomplete || (
+                        column.original.useXpathExpression && !column.useXpathExpression()
+                    )) {
                         module.CC_DETAIL_SCREEN.setUpAutocomplete(column.field, that.properties);
                     }
                     return column;
@@ -885,6 +893,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
                     } else {
                         this.columns.splice(index, 0, column);
                     }
+                    column.useXpathExpression(!!columnConfiguration.useXpathExpression);
                 },
                 pasteCallback: function (data, index) {
                     try {
@@ -899,14 +908,14 @@ hqDefine('app_manager/js/details/screen_config', function () {
                 },
                 addProperty: function () {
                     var type = this.columnKey === "short" ? "List" : "Detail";
-                    ga_track_event('Case Management', 'Module Level Case ' + type, 'Add Property');
+                    hqImport('analytix/js/google').track.event('Case Management', 'Module Level Case ' + type, 'Add Property');
                     this.addItem({hasAutocomplete: true});
-                },
-                addCalculation: function () {
-                    this.addItem({hasAutocomplete: false, format: 'calculate'});
                 },
                 addGraph: function () {
                     this.addItem({hasAutocomplete: false, format: 'graph'});
+                },
+                addXpathExpression: function () {
+                    this.addItem({hasAutocomplete: false, useXpathExpression: true});
                 }
             };
             return Screen;
@@ -1093,11 +1102,6 @@ hqDefine('app_manager/js/details/screen_config', function () {
         if (addOns.conditional_enum) {
             DetailScreenConfig.MENU_OPTIONS.push(
                 {value: "conditional-enum", label: gettext('Conditional ID Mapping')}
-            );
-        }
-        if (addOns.calc_xpaths) {
-            DetailScreenConfig.MENU_OPTIONS.push(
-                {value: "calculate", label: gettext('Calculate')}
             );
         }
 

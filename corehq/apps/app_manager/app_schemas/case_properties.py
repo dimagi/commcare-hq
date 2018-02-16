@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from collections import defaultdict
 import functools
 from itertools import chain
@@ -10,6 +11,7 @@ from corehq.apps.app_manager.util import is_usercase_in_use, all_apps_by_domain
 from corehq.apps.data_dictionary.models import CaseProperty
 from corehq.util.quickcache import quickcache
 from dimagi.utils.decorators.memoized import memoized
+import six
 
 
 logger = logging.getLogger(__name__)
@@ -194,23 +196,26 @@ def get_usercase_properties(app):
     return {USERCASE_TYPE: []}
 
 
-def all_case_properties_by_domain(domain, include_parent_properties=True):
+def all_case_properties_by_domain(domain, case_types=None, include_parent_properties=True):
     result = {}
     for app in all_apps_by_domain(domain):
         if app.is_remote_app():
             continue
 
-        property_map = get_case_properties(app, app.get_case_types(),
+        if case_types is None:
+            case_types = app.get_case_types()
+
+        property_map = get_case_properties(app, case_types,
             defaults=('name',), include_parent_properties=include_parent_properties)
 
-        for case_type, properties in property_map.iteritems():
+        for case_type, properties in six.iteritems(property_map):
             if case_type in result:
                 result[case_type].extend(properties)
             else:
                 result[case_type] = properties
 
     cleaned_result = {}
-    for case_type, properties in result.iteritems():
+    for case_type, properties in six.iteritems(result):
         properties = list(set(properties))
         properties.sort()
         cleaned_result[case_type] = properties

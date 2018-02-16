@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import division
 import re
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.generic import GenericTabularReport
@@ -71,7 +73,7 @@ class BlockLevelAFReport(GenericTabularReport, DatespanMixin, CustomProjectRepor
         for index, sum in enumerate(sums):
             if index == 10:
                 try:
-                    percent = sum_row_10 * 100 / denom_row_10
+                    percent = sum_row_10 * 100 // denom_row_10
                 except ZeroDivisionError:
                     percent = 0
                 html = "{0}/{1} ({2}%)".format(sum_row_10, denom_row_10, percent)

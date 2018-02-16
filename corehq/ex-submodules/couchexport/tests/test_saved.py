@@ -1,4 +1,5 @@
 # coding=utf-8
+from __future__ import absolute_import
 import datetime
 
 from django.test import TestCase
@@ -7,6 +8,7 @@ from corehq.apps.export.models import ExportInstance
 from corehq.apps.export.models.new import DAILY_SAVED_EXPORT_ATTACHMENT_NAME
 from couchexport.groupexports import get_saved_export_and_delete_copies
 from couchexport.models import SavedBasicExport, ExportConfiguration
+from six.moves import range
 
 
 class DailySavedExportSavingTest(TestCase):

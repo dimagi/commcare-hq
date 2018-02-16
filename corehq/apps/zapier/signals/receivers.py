@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.db.models.signals import pre_save, post_delete
 from django.dispatch import receiver
 from tastypie.exceptions import ImmediateHttpResponse

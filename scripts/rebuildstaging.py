@@ -24,8 +24,10 @@ Where staging.yaml looks as follows:
 When not specified, a submodule's trunk and name inherit from the parent
 """
 from __future__ import print_function
+from __future__ import absolute_import
 
 from gevent import monkey
+import six
 monkey.patch_all(time=False, select=False)
 
 import os
@@ -48,7 +50,7 @@ from gitutils import (
 class BranchConfig(jsonobject.JsonObject):
     trunk = jsonobject.StringProperty()
     name = jsonobject.StringProperty()
-    branches = jsonobject.ListProperty(unicode)
+    branches = jsonobject.ListProperty(six.text_type)
     submodules = jsonobject.DictProperty(lambda: BranchConfig)
 
     def normalize(self):
@@ -313,7 +315,7 @@ def main():
     config = yaml.load(stdin)
     config = BranchConfig.wrap(config)
     config.normalize()
-    args = set(sys.argv[1:])
+    args = set(sys.argv[2:])
     verbose = '-v' in args
     do_push = '--no-push' not in args
     args.discard('-v')

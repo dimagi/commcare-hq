@@ -20,7 +20,7 @@
 
     var exportsControllers = {};
     exportsControllers.ListExportsController = function (
-        $scope, djangoRMI, bulk_download_url, legacy_bulk_download_url, $rootScope
+        $scope, djangoRMI, bulk_download_url, legacy_bulk_download_url, $rootScope, modelType
     ) {
         /**
          * This controller fetches a list of saved exports from
@@ -109,7 +109,7 @@
             $scope.updateBulkStatus();
         };
         $scope.sendExportAnalytics = function() {
-            window.analytics.workflow("Clicked Export button");
+            hqImport('analytix/js/kissmetrix').track.event("Clicked Export button");
         };
         $scope.updateEmailedExportData = function (component, exp) {
             $('#modalRefreshExportConfirm-' + exp.id + '-' + (component.groupId ? component.groupId : '')).modal('hide');
@@ -121,7 +121,7 @@
                 .success(function (data) {
                     if (data.success) {
                         var exportType = hqImport('export/js/utils').capitalize(exp.exportType);
-                        window.analytics.usage("Update Saved Export", exportType, "Saved");
+                        hqImport('analytix/js/google').track.event(exportType + " Exports", "Update Saved Export", "Saved");
                         component.updatingData = false;
                         component.updatedDataTriggered = true;
                     }
@@ -138,7 +138,7 @@
                     if (data.success) {
                         var exportType = hqImport('export/js/utils').capitalize(exp.exportType);
                         var event = (exp.isAutoRebuildEnabled ? "Disable": "Enable") + " Saved Export";
-                        window.analytics.usage(event, exportType, "Saved");
+                        hqImport('analytix/js/google').track.event(exportType + " Exports", event, "Saved");
                         exp.isAutoRebuildEnabled = data.isAutoRebuildEnabled;
                         component.savingAutoRebuildChange = false;
                     }
@@ -151,6 +151,24 @@
         $scope.isLocationSafeForUser = function(export_) {
             return (!export_.emailedExport) || export_.emailedExport.isLocationSafeForUser;
         };
+
+        trackExportPageEnter();
+
+        /**
+         * Send a Kissmetrics event, depending on model type
+         */
+        function trackExportPageEnter() {
+            switch (modelType) {
+                case 'form':
+                    hqImport('analytix/js/kissmetrix').track.event('Visited Export Forms Page');
+                    break;
+                case 'case':
+                    hqImport('analytix/js/kissmetrix').track.event('Visited Export Cases Page');
+                    break;
+                default:
+                    break;
+            }
+        }
     };
     exportsControllers.FeedFilterFormController = function (
         $scope, $rootScope, djangoRMI, filterFormElements, filterFormModalElement

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from collections import namedtuple
 import logging
 from itertools import groupby
@@ -98,7 +99,7 @@ class CaseProcessingResult(object):
                 # only update the flags that are already in the database
                 flags_to_update = OwnershipCleanlinessFlag.objects.filter(
                     Q(domain=self.domain),
-                    Q(owner_id__in=flags_to_save.keys()),
+                    Q(owner_id__in=list(flags_to_save)),
                     Q(is_clean=True) | Q(hint__isnull=True)
                 )
                 for flag in flags_to_update:
@@ -180,7 +181,7 @@ def _get_or_update_cases(xforms, case_db):
     touched_cases = FormProcessorInterface(domain).get_cases_from_forms(case_db, xforms)
     _validate_indices(case_db, [case_update_meta.case for case_update_meta in touched_cases.values()])
     dirtiness_flags = _get_all_dirtiness_flags_from_cases(case_db, touched_cases)
-    extensions_to_close = get_all_extensions_to_close(domain, touched_cases.values())
+    extensions_to_close = get_all_extensions_to_close(domain, list(touched_cases.values()))
     return CaseProcessingResult(
         domain,
         [update.case for update in touched_cases.values()],
@@ -191,7 +192,7 @@ def _get_or_update_cases(xforms, case_db):
 
 def _get_all_dirtiness_flags_from_cases(case_db, touched_cases):
     # process the temporary dirtiness flags first so that any hints for real dirtiness get overridden
-    dirtiness_flags = list(_get_dirtiness_flags_for_reassigned_case(touched_cases.values()))
+    dirtiness_flags = list(_get_dirtiness_flags_for_reassigned_case(list(touched_cases.values())))
     for case_update_meta in touched_cases.values():
         dirtiness_flags += list(_get_dirtiness_flags_for_outgoing_indices(case_db, case_update_meta.case))
     dirtiness_flags += list(_get_dirtiness_flags_for_child_cases(
@@ -398,6 +399,8 @@ def _extract_case_blocks(data, path=None, form_id=Ellipsis):
 
 
 def get_case_updates(xform):
+    if not xform:
+        return []
     updates = sorted(
         [case_update_from_block(cb) for cb in extract_case_blocks(xform)],
         key=lambda update: update.id

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import datetime
 from dimagi.utils.decorators.memoized import Memoized
 from dimagi.utils.chunked import chunked

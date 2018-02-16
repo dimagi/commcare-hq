@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from datetime import datetime
 
 import jsonfield
@@ -39,7 +40,7 @@ class ILSGatewayConfig(Document):
     @classmethod
     def get_all_enabled_domains(cls):
         configs = cls.get_all_configs()
-        return [c.domain for c in filter(lambda config: config.enabled, configs)]
+        return [c.domain for c in [config for config in configs if config.enabled]]
 
     @classmethod
     def get_all_steady_sync_configs(cls):
@@ -385,21 +386,21 @@ class DeliveryGroups(object):
             facs = self.facs
         if not facs:
             return []
-        return filter(lambda f: self.current_delivering_group(month) == f.metadata.get('group', None), facs)
+        return [f for f in facs if self.current_delivering_group(month) == f.metadata.get('group', None)]
 
     def processing(self, facs=None, month=None):
         if not facs:
             facs = self.facs
         if not facs:
             return []
-        return filter(lambda f: self.current_processing_group(month) == f.metadata.get('group', None), facs)
+        return [f for f in facs if self.current_processing_group(month) == f.metadata.get('group', None)]
 
     def submitting(self, facs=None, month=None):
         if not facs:
             facs = self.facs
         if not facs:
             return []
-        return filter(lambda f: self.current_submitting_group(month) == f.metadata.get('group', None), facs)
+        return [f for f in facs if self.current_submitting_group(month) == f.metadata.get('group', None)]
 
 
 # Ported from:
