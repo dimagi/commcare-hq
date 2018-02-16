@@ -1,4 +1,12 @@
-hqDefine('sms/js/manage_registration_invitations', function() {
+hqDefine('sms/js/manage_registration_invitations', [
+    'jquery',
+    'knockout',
+    'hqwebapp/js/crud_paginated_list_init',
+],
+function(
+    $,
+    ko
+) {
     $(function () {
         var RegistrationModel = function() {
             var self = this;

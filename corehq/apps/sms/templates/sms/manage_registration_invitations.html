@@ -2,6 +2,7 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 {% load crispy_forms_tags %}
+{% requirejs_main 'sms/js/manage_registration_invitations' %}
 
 {% block pagination_templates %}
 <script type="text/html" id="invitations-template">
@@ -12,7 +13,6 @@
     <td><a data-bind="text: app_name, attr: {href: app_link, target: '_blank'}"></a></td>
     <td data-bind="text: phone_type"></td>
 </script>
-<script src="{% static 'hqwebapp/js/crud_paginated_list_init.js' %}"></script>
 {% endblock %}
 
 {% block page_breadcrumbs %}
@@ -25,9 +25,6 @@
     </ol>
 {% endblock %}
 
-{% block js %}{{ block.super }}
-    <script src="{% static 'sms/js/manage_registration_invitations.js' %}"></script>
-{% endblock %}
 
 {% block page_content %}
 {% if sms_mobile_worker_registration_enabled %}
