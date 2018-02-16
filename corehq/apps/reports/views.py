@@ -11,10 +11,13 @@ from dimagi.utils.couch import CriticalSection
 from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
 from corehq.apps.data_dictionary.util import get_all_case_properties
 from corehq.apps.domain.views import BaseDomainView
+from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
 from corehq.apps.locations.permissions import conditionally_location_safe, \
     report_class_is_location_safe
 from corehq.apps.reports.display import xmlns_to_name
+from corehq.apps.reports.formdetails.readable import get_readable_data_for_submission
+from corehq.apps.reports.templatetags.xform_tags import _get_cases_changed_context, _get_form_metadata_context, _get_display_options, _get_edit_info    # TODO
 from corehq.apps.users.permissions import FORM_EXPORT_PERMISSION, CASE_EXPORT_PERMISSION, \
     DEID_EXPORT_PERMISSION
 from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors
@@ -169,7 +172,6 @@ from .tasks import (
     rebuild_export_task,
     send_delayed_report,
 )
-from .templatetags.xform_tags import render_form
 from .util import (
     create_export_filter,
     get_all_users_by_domain,
@@ -1869,7 +1871,44 @@ def _get_form_context(request, domain, instance):
         "user": request.couch_user,
         "request": request,
     }
-    context['form_render_options'] = context
+    return context
+
+
+# jls
+def _get_form_render_context(request, domain, instance, case_id=None):
+    context = _get_form_context(request, domain, instance)
+    user = context['user']
+    timezone = context['timezone']
+    support_enabled = toggle_enabled(request, toggles.SUPPORT)
+
+    form_data, question_list_not_found = get_readable_data_for_submission(instance)
+    context.update({
+        "context_case_id": case_id,
+        "instance": instance,
+        "is_archived": instance.is_archived,
+        "edit_info": _get_edit_info(instance),
+        "domain": domain,
+        'question_list_not_found': question_list_not_found,
+        "form_data": form_data,
+        "tz_abbrev": timezone.localize(datetime.utcnow()).tzname(),
+    })
+
+    context.update(_get_cases_changed_context(domain, instance, case_id))
+    context.update(_get_form_metadata_context(domain, instance, timezone, support_enabled))
+    context.update(_get_display_options(request, domain, user, instance, support_enabled))
+    context.update(_get_edit_info(instance))
+
+    instance_history = []
+    if instance.history:
+        for operation in instance.history:
+            user_date = ServerTime(operation.date).user_time(timezone).done()
+            instance_history.append({
+                'readable_date': user_date.strftime("%Y-%m-%d %H:%M"),
+                'readable_action': FORM_OPERATIONS.get(operation.operation, operation.operation),
+                'user_info': get_doc_info_by_id(domain, operation.user),
+            })
+    context['instance_history'] = instance_history
+
     return context
 
 
@@ -1945,24 +1984,11 @@ class FormDataView(BaseProjectReportSectionView):
 
     @property
     def page_context(self):
-        timezone = get_timezone_for_user(self.request.couch_user, self.domain)
-        display = self.request.project.get_form_display(self.xform_instance)
-        page_context = {
-            "display": display,
-            "timezone": timezone,
-            "instance": self.xform_instance,
-            "user": self.request.couch_user,
-        }
-        form_render_options = {
-            'domain': self.domain,
-            'request': self.request,
-        }
-        form_render_options.update(page_context)
+        page_context = _get_form_render_context(self.request, self.domain, self.xform_instance)
         page_context.update({
             "slug": inspect.SubmitHistory.slug,
             "form_name": self.form_name,
             "form_received_on": self.xform_instance.received_on,
-            'form_render_options': form_render_options,
         })
         return page_context
 
@@ -1972,10 +1998,8 @@ class FormDataView(BaseProjectReportSectionView):
 @require_GET
 def case_form_data(request, domain, case_id, xform_id):
     instance = _get_form_or_404(domain, xform_id)
-    context = _get_form_context(request, domain, instance)
-    context['case_id'] = case_id
-    context['side_pane'] = True
-    return HttpResponse(render_form(instance, domain, options=context))
+    context = _get_form_render_context(request, domain, instance, case_id)
+    return render(request, "reports/form/partials/single_form.html", context)
 
 
 @require_form_view_permission

@@ -1,5 +1,4 @@
 {% extends "hqwebapp/base_section.html" %}
-{% load xform_tags %}
 {% load case_tags %}
 {% load timezone_tags %}
 {% load hq_shared_tags %}
@@ -20,5 +19,5 @@
         <strong>{{ instance.problem }}</strong>
     </div>
     {% endif %}
-    {% render_form instance domain form_render_options %}
+    {% include "reports/form/partials/single_form.html" %}
 {% endblock %}

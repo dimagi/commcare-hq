@@ -120,24 +120,26 @@ requires proptable.css to be included in the main template
 {% if is_archived %}
 <div class="alert alert-info alert-full alert-block">
     {% blocktrans %}
-    This form is archived and will not be included in reports. 
+        This form is archived and will not be included in reports. 
     {% endblocktrans %}
-{% if user.can_edit_data %}
-    {% blocktrans %}
-    To unarchive this form, click the "Restore this form" button.
-    This will also restore case data associated with the form.
-    {% endblocktrans %}
-{% endif %}
+    {% if user.can_edit_data %}
+        {% blocktrans %}
+            To unarchive this form, click the "Restore this form" button.
+            This will also restore case data associated with the form.
+        {% endblocktrans %}
+    {% endif %}
 </div>
 {% endif %}
+
 {% if edit_info.was_edited %}
 <div class="alert alert-info alert-full alert-block">
     {% url "render_form_data" domain edit_info.latest_version as latest_version_url %}
     {% blocktrans %}
-    This form has been edited. The latest version can be viewed <a href="{{ latest_version_url }}">here</a>.
+        This form has been edited. The latest version can be viewed <a href="{{ latest_version_url }}">here</a>.
     {% endblocktrans %}
 </div>
 {% endif %}
+
 {% if edit_info.is_edit %}
 <div class="alert alert-warning alert-full alert-block">
     {% url "render_form_data" domain edit_info.previous_version as previous_version_url %}
@@ -146,6 +148,7 @@ requires proptable.css to be included in the main template
     {% endblocktrans %}
 </div>
 {% endif %}
+
 <div class="clearfix">
     <div class="pull-right">
         {% if auth_context.authenticated %}

@@ -78,52 +78,6 @@ def sorted_form_metadata_keys(keys):
     return sorted(keys, cmp=mycmp)
 
 
-@register.simple_tag
-def render_form(form, domain, options):
-    """
-    Uses options since Django 1.3 doesn't seem to support templatetag kwargs.
-    Change to kwargs when we're on a version of Django that does.
-
-    """
-    case_id = options.get('case_id')
-    side_pane = options.get('side_pane', False)
-    user = options.get('user', None)
-    request = options.get('request', None)
-    support_enabled = toggle_enabled(request, toggles.SUPPORT)
-
-    form_data, question_list_not_found = get_readable_data_for_submission(form)
-
-    timezone = get_timezone_for_request()
-
-    context = {
-        "context_case_id": case_id,
-        "instance": form,
-        "is_archived": form.is_archived,
-        "edit_info": _get_edit_info(form),
-        "domain": domain,
-        'question_list_not_found': question_list_not_found,
-        "form_data": form_data,
-        "side_pane": side_pane,
-        "tz_abbrev": timezone.localize(datetime.utcnow()).tzname(),
-    }
-
-    context.update(_get_cases_changed_context(domain, form, case_id))
-    context.update(_get_form_metadata_context(domain, form, timezone, support_enabled))
-    context.update(_get_display_options(request, domain, user, form, support_enabled))
-    context.update(_get_edit_info(form))
-    instance_history = []
-    if form.history:
-        for operation in form.history:
-            user_date = ServerTime(operation.date).user_time(timezone).done()
-            instance_history.append({
-                'readable_date': user_date.strftime("%Y-%m-%d %H:%M"),
-                'readable_action': FORM_OPERATIONS.get(operation.operation, operation.operation),
-                'user_info': get_doc_info_by_id(domain, operation.user),
-            })
-    context['instance_history'] = instance_history
-    return render_to_string("reports/form/partials/single_form.html", context, request=request)
-
-
 def _get_edit_info(instance):
     info = {
         'was_edited': False,
