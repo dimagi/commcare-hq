@@ -54,7 +54,8 @@
                                 <span ng-show="isMultimediaDownload">{% trans "Collecting Multimedia" %}</span>
                         </button>
                         <button type="button"
-                                title="{% trans 'For exports that may take a while to prepare' %}"
+                                title="{% trans 'For exports that may take a while to prepare, email a link when download is ready' %}"
+                                style="margin-top: 5px;"
                                 ng-show="!isDownloadReady"
                                 ng-init="sendEmailFlag = false;"
                                 ng-class="'btn btn-' + (sendEmailFlag ? 'default' : 'primary') + ' btn-full-width'"
