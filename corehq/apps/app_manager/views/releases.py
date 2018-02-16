@@ -5,6 +5,7 @@ import uuid
 from django.db.models import Count
 from django.http import HttpResponse, Http404
 from django.http import HttpResponseRedirect
+from django_prbac.utils import has_privilege
 from django.views.generic import View
 from django.utils.decorators import method_decorator
 
@@ -129,6 +130,7 @@ def get_releases_context(request, domain, app_id):
     context.update({
         'release_manager': True,
         'can_send_sms': can_send_sms,
+        'can_view_cloudcare': has_privilege(request, privileges.CLOUDCARE),
         'has_mobile_workers': get_doc_count_in_domain_by_class(domain, CommCareUser) > 0,
         'sms_contacts': (
             get_sms_autocomplete_context(request, domain)['sms_contacts']
