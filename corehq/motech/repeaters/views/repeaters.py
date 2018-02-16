@@ -35,7 +35,7 @@ from corehq.motech.repeaters.utils import get_all_repeater_types
 class DomainForwardingOptionsView(BaseAdminProjectSettingsView):
     urlname = 'domain_forwarding'
     page_title = ugettext_lazy("Data Forwarding")
-    template_name = 'domain/admin/domain_forwarding.html'
+    template_name = 'repeaters/repeaters.html'
 
     @method_decorator(require_permission(Permissions.edit_motech))
     def dispatch(self, request, *args, **kwargs):
@@ -66,7 +66,7 @@ class DomainForwardingOptionsView(BaseAdminProjectSettingsView):
 class BaseRepeaterView(BaseAdminProjectSettingsView):
     page_title = ugettext_lazy("Forward Data")
     repeater_form_class = GenericRepeaterForm
-    template_name = 'domain/admin/add_form_repeater.html'
+    template_name = 'repeaters/add_form_repeater.html'
 
     @method_decorator(require_permission(Permissions.edit_motech))
     def dispatch(self, request, *args, **kwargs):
@@ -229,7 +229,7 @@ class AddCustomSOAPLocationRepeaterView(AddRepeaterView):
 
 class EditRepeaterView(BaseRepeaterView):
     urlname = 'edit_repeater'
-    template_name = 'domain/admin/add_form_repeater.html'
+    template_name = 'repeaters/add_form_repeater.html'
 
     @property
     def repeater_id(self):
