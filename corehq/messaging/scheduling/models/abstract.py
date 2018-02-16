@@ -4,7 +4,7 @@ import uuid
 from dimagi.utils.decorators.memoized import memoized
 from django.db import models, transaction
 from corehq.apps.reminders.util import get_one_way_number_for_recipient
-from corehq.apps.sms.api import MessageMetadata, send_sms_with_backend_name, send_sms
+from corehq.apps.sms.api import MessageMetadata, send_sms
 from corehq.apps.translations.models import StandaloneTranslationDoc
 from corehq.apps.users.models import CommCareUser
 from corehq.messaging.scheduling.exceptions import (
@@ -41,10 +41,6 @@ class Schedule(models.Model):
     # If None, the list of languages defined in the project for messaging will be
     # inspected and the default language there will be used.
     default_language_code = models.CharField(max_length=126, null=True)
-
-    # If True, the framework looks for a backend named TEST to send messages for
-    # this schedule.
-    is_test = models.BooleanField(default=True)
 
     # This metadata will be passed to any messages generated from this schedule.
     custom_metadata = jsonfield.JSONField(null=True, default=None)
@@ -311,11 +307,7 @@ class Content(models.Model):
             return
 
         metadata = self.get_sms_message_metadata(logged_subevent)
-
-        if self.schedule_instance and self.schedule_instance.memoized_schedule.is_test:
-            send_sms_with_backend_name(domain, phone_number, message, 'TEST', metadata=metadata)
-        else:
-            send_sms(domain, recipient, phone_number, message, metadata=metadata)
+        send_sms(domain, recipient, phone_number, message, metadata=metadata)
 
 
 class Broadcast(models.Model):
