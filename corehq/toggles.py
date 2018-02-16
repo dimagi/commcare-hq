@@ -1461,13 +1461,6 @@ MOBILE_LOGIN_LOCKOUT = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-EMAIL_EXPORT_WHEN_DONE_BUTTON = StaticToggle(
-    'email_export_when_done_button',
-    "Show button that emails when export is done",
-    TAG_PRODUCT,
-    [NAMESPACE_DOMAIN],
-)
-
 SHOW_ALL_SCHEDULED_REPORT_EMAILS = StaticToggle(
     'show_all_scheduled_report_emails',
     "In the 'My Scheduled Reports' tab, show all reports the user is part of (if the user is an "
