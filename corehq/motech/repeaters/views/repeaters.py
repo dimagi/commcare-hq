@@ -199,6 +199,12 @@ class AddCaseRepeaterView(AddRepeaterView):
         return repeater
 
 
+class AddOpenmrsRepeaterView(AddCaseRepeaterView):
+    urlname = 'new_openmrs_repeater$'
+    page_title = ugettext_lazy("Forward to OpenMRS")
+    page_name = ugettext_lazy("Forward to OpenMRS")
+
+
 class AddCustomSOAPCaseRepeaterView(AddCaseRepeaterView):
     repeater_form_class = SOAPCaseRepeaterForm
 
@@ -224,6 +230,17 @@ class AddCustomSOAPLocationRepeaterView(AddRepeaterView):
 class EditRepeaterView(BaseRepeaterView):
     urlname = 'edit_repeater'
     template_name = 'domain/admin/add_form_repeater.html'
+
+    @property
+    def repeater_id(self):
+        return self.kwargs['repeater_id']
+
+    @property
+    def page_url(self):
+        # The EditRepeaterView url routes to the correct edit form for its subclasses. It does this with
+        # `repeater_type` in r'^forwarding/(?P<repeater_type>\w+)/edit/(?P<repeater_id>\w+)/$'
+        # See corehq/apps/domain/urls.py for details.
+        return reverse(EditRepeaterView.urlname, args=[self.domain, self.repeater_type, self.repeater_id])
 
     @property
     @memoized
@@ -280,6 +297,11 @@ class EditFormRepeaterView(EditRepeaterView, AddFormRepeaterView):
     @property
     def page_url(self):
         return reverse(AddFormRepeaterView.urlname, args=[self.domain])
+
+
+class EditOpenmrsRepeaterView(EditRepeaterView, AddOpenmrsRepeaterView):
+    urlname = 'edit_openmrs_repeater'
+    page_title = ugettext_lazy("Edit OpenMRS Repeater")
 
 
 @require_POST

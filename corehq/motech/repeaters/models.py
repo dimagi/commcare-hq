@@ -301,14 +301,14 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
         return attempt
 
     @property
-    def is_form_repeater(self):
-        # check if any of parent class is FormRepeater
-        return isinstance(self, FormRepeater)
+    def form_class_name(self):
+        """
+        Return the name of the class whose edit form this class uses.
 
-    @property
-    def is_case_repeater(self):
-        # check if any of parent class is CaseRepeater
-        return isinstance(self, CaseRepeater)
+        (Most classes that extend CaseRepeater, and all classes that
+        extend FormRepeater, use the same form.)
+        """
+        return self.__class__.__name__
 
 
 class FormRepeater(Repeater):
@@ -326,6 +326,13 @@ class FormRepeater(Repeater):
     @memoized
     def payload_doc(self, repeat_record):
         return FormAccessors(repeat_record.domain).get_form(repeat_record.payload_id)
+
+    @property
+    def form_class_name(self):
+        """
+        FormRepeater and its subclasses use the same form for editing
+        """
+        return 'FormRepeater'
 
     def allowed_to_forward(self, payload):
         return (
@@ -388,6 +395,13 @@ class CaseRepeater(Repeater):
     @memoized
     def payload_doc(self, repeat_record):
         return CaseAccessors(repeat_record.domain).get_case(repeat_record.payload_id)
+
+    @property
+    def form_class_name(self):
+        """
+        CaseRepeater and most of its subclasses use the same form for editing
+        """
+        return 'CaseRepeater'
 
     def get_headers(self, repeat_record):
         headers = super(CaseRepeater, self).get_headers(repeat_record)
