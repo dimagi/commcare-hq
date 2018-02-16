@@ -8,6 +8,14 @@ skipDirOptimize: true   # could turn this off to minify everything
 generateSourceMaps: true
 fileExclusionRegExp: ^\.|\.css$
 modules:
+  # The build_requirejs script creates a bundle in each javascript directory that is
+  # named bundle.js and includes all files in that directory. The modules below are
+  # for additional bundles and bundles that don't fit that logic.
+
+  # Any bundle that appears in a javascript module's dependency list must map to an actual file.
+  # Otherwise, development environments will break.
+
+  # Bundle of "global" libraries, included in hqwebapp/templates/base.html
   - name: hqwebapp/js/common
     include:
       - jquery
@@ -19,6 +27,8 @@ modules:
       - hqwebapp/js/django
       - jquery.cookie/jquery.cookie
 
+  # Limited set of common libraries in hqwebapp/js that are used, leaving off
+  # a bunch of lesser-used libraries in the same directory.
   - name: hqwebapp/js/bundle
     exclude:
       - hqwebapp/js/common
@@ -30,6 +40,7 @@ modules:
       - hqwebapp/js/layout
       - hqwebapp/js/hq-bug-report
 
+  # Bundle of the jQuery UI components we actually use. Excludes components like effect-*.js
   - name: hqwebapp/js/jquery-ui
     exclude:
       - hqwebapp/js/common
@@ -46,11 +57,17 @@ modules:
       - jquery-ui/ui/droppable
       - jquery-ui/ui/sortable
 
-  # App-specific modules
+  # App manager bundle, which currently contains nothing because form_designer.js contains
+  # the RequireJS config for vellum, which doesn't play well with HQ's RequireJS. This
+  # will be removed once app manager is migrated to RequireJS.
   - name: app_manager/js/forms/bundle
     exclude:
       - hqwebapp/js/common
 
+  # Limited bundle for reports, containing only the modules that are used outside of reports
+  # (currently, by fixtures, since that's the only area that depends on reports and has been
+  # migrated to RequireJS). Once reports are migrated to RequireJS, we'll probably want to keep this
+  # bundle and then have a second bundle with the reports-specific modules.
   - name: reports/js/bundle
     include:
       - reports/js/config.dataTables.bootstrap
