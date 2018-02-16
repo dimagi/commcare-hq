@@ -220,7 +220,8 @@ def percent_increase(prop, data, prev_data):
         previous = prev_data[0][prop]
 
     if previous:
-        return ((current or 0) - (previous or 0)) / float(previous or 1) * 100
+        tenths_of_promils = (((current or 0) - (previous or 0)) * 10000) / float(previous or 1)
+        return tenths_of_promils / 100 if (tenths_of_promils < -1 or 1 < tenths_of_promils) else 0
     else:
         return "Data in the previous reporting period was 0"
 
@@ -242,7 +243,8 @@ def percent_diff(property, current_data, prev_data, all):
     prev_percent = prev / float(prev_all) * 100
 
     if prev_percent:
-        return ((current_percent - prev_percent) / (prev_percent or 1.0)) * 100
+        tenths_of_promils = ((current_percent - prev_percent) * 10000) / (prev_percent or 1.0)
+        return tenths_of_promils / 100 if (tenths_of_promils < -1 or 1 < tenths_of_promils) else 0
     else:
         return "Data in the previous reporting period was 0"
 

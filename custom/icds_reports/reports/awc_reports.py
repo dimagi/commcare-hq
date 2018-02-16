@@ -825,6 +825,12 @@ def get_awc_report_demographics(domain, config, now_date, month, show_test=False
                         prev_data,
                         'all_persons'
                     ),
+                    'color': 'green' if percent_diff(
+                        'person_aadhaar',
+                        data,
+                        prev_data,
+                        'all_persons'
+                    ) > 0 else 'red',
                     'value': get_value(data, 'person_aadhaar'),
                     'all': get_value(data, 'all_persons'),
                     'format': 'percent_and_div',
