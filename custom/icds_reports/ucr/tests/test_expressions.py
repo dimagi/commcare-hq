@@ -235,6 +235,36 @@ class TestGetAppVersion(SimpleTestCase):
                                   "CommCare Version 2.36. Build 433756, built on: 2017-06-23"}))
 
 
+class TestBooleanChoiceQuestion(SimpleTestCase):
+    def _expression(self, nullable):
+        return {
+            "type": "icds_boolean",
+            "boolean_property": {
+                "type": "property_path",
+                "property_path": ["child", "test"]
+            },
+            "true_values": ["1", "yes"],
+            "false_values": ["0"],
+            "nullable": nullable
+        }
+
+    def test_nullable(self):
+        expression = ExpressionFactory.from_spec(self._expression(True))
+        self.assertIsNone(expression({}))
+        self.assertIsNone(expression({"child": {"test": "something crazy"}}))
+        self.assertEqual(0, expression({"child": {"test": "0"}}))
+        self.assertEqual(1, expression({"child": {"test": "1"}}))
+        self.assertEqual(1, expression({"child": {"test": "yes"}}))
+
+    def test_non_nullable(self):
+        expression = ExpressionFactory.from_spec(self._expression(False))
+        self.assertEqual(0, expression({}))
+        self.assertEqual(0, expression({"child": {"test": "something crazy"}}))
+        self.assertEqual(0, expression({"child": {"test": "0"}}))
+        self.assertEqual(1, expression({"child": {"test": "1"}}))
+        self.assertEqual(1, expression({"child": {"test": "yes"}}))
+
+
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
 class TestICDSRelatedDocs(TestCase):
     @classmethod
