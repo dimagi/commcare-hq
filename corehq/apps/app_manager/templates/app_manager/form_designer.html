@@ -49,7 +49,7 @@
     {% if request.guided_tour %}{% include request.guided_tour.template %}{% endif %}
 {% endblock %}
 
-{% block title %}{{ form.name|clean_trans:langs }} - {% trans 'Edit Form' %}{% endblock %}
+{% block title %}✎ {{ form.name|clean_trans:langs }} - {% trans 'Edit Form' %}{% endblock %}
 
 {% block form-view %}
     {% initial_page_data 'CKEDITOR_BASEPATH' CKEDITOR_BASEPATH|static %}

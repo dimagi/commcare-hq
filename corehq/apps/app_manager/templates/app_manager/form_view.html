@@ -4,7 +4,7 @@
 {% load compress %}
 {% load i18n %}
 
-{% block title %}{{ form.name|clean_trans:langs }} - {% trans 'Form Settings' %}{% endblock %}
+{% block title %}⚙ {{ form.name|clean_trans:langs }} - {% trans 'Form Settings' %}{% endblock %}
 
 {% block stylesheets %}{{ block.super }}
     <link rel="stylesheet" href="{% static 'syntaxhighlighter/styles/shCoreDefault.css' %}"/>
