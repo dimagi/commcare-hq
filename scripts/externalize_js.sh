@@ -4,9 +4,23 @@
 # Externalizing JS is a fairly manual process that has to happen
 # on a couple hundred files. Hopefully this will simplify that process
 
-# For now, it creates the new file, places whatever was in the js-inline
+# It creates a new file, places whatever was in the js-inline
 # script tags in the new file, and adds the new necessary static import
-# to the html file.
+# to the html file. This is then committed.
+# Afterwards it checks for django template tags, deletes and replaces them
+# with a few functions and prints out the newly needed initial_page_data tags
+
+# TODOS:
+#   auto indent the moved javascript
+
+# USAGE:
+# From the base level of this repo, run `./scripts/externalize_js.sh <app> <module>
+# The first argument is the django app the module is located in.
+# The second is the file name of the module.
+# ex. `$ ./scripts/externalize_js.sh sms add_gateway`
+# It isn't perfect, definitely check for lint and adjust the names around as desired.
+# There are also a few lines printed by the script that may need to be placed in the code as directed
+# Also make sure to visit the page(s) the module is used on to make sure they aren't borked!.
 
 # TODOS:
 #   auto indent the moved javascript
@@ -58,8 +72,8 @@ if [[ $branch == 'master' ]]; then
     echo "Create a new branch?"
 
     function branch() {
-        read -p "What are your initials?" initials
-        git checkout -b $initials/ejs/$APP-$MODULE
+        read -p "What are your initials?" INITIALS
+        git checkout -b $INITIALS/ejs/$APP-$MODULE
     }
     select yn in "Yes" "No"; do
         case $yn in
@@ -98,19 +112,19 @@ echo "});" >> $NEW_MODULE_LOCATION
 
 
 # add import to the html
-script_import="<script src=\"{% static '$NEW_MODULE_NAME.js' %}\"></script>"
+SCRIPT_IMPORT="<script src=\"{% static '$NEW_MODULE_NAME.js' %}\"></script>"
 count=$(sed -n "/{% block js %}/p" $HTML_FILE_LOCATION | wc -l)
 # if there is a block js, add it inside at the end
 if [ "$count" -gt 0 ]; then
     sed -i "/{% block js %}/,/{% endblock/ {
         /{% endblock/ i \\
-        $script_import
+        $SCRIPT_IMPORT
     }" $HTML_FILE_LOCATION
 # otherwise, just tell them to add one somewhere on the page
 else
     echo "----------------------------"
     echo "Please add this static import somewhere in the html file"
-    echo "{% block js %}{{ block.super }}\n\t<script src=\"{% static '$NEW_MODULE_NAME'.js %}\"></script>\n{% endblock %}"
+    echo "{% block js %}{{ block.super }}\n\t$SCRIPT_IMPORT\n{% endblock %}"
     echo "----------------------------"
 fi
 
