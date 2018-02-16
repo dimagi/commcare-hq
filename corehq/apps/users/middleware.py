@@ -80,9 +80,15 @@ class Enforce2FAMiddleware(MiddlewareMixin):
         return self.enforce_two_factor(toggles, request)
 
     def enforce_two_factor(self, toggles, request):
-        if toggles.TWO_FACTOR_SUPERUSER_ROLLOUT.enabled(request.user.username):
-            if not request.couch_user.two_factor_disabled:
-                if not request.user.is_verified():
+        if not toggles.TWO_FACTOR_SUPERUSER_ROLLOUT.enabled(request.user.username):
+            return None
+        else:
+            if request.couch_user.two_factor_disabled:
+                return None
+            else:
+                if request.user.is_verified():
+                    return None
+                else:
                     if not request.path.startswith('/account/'):
                         return TemplateResponse(
                             request=request,
@@ -91,9 +97,3 @@ class Enforce2FAMiddleware(MiddlewareMixin):
                         )
                     else:
                         return None
-                else:
-                    return None
-            else:
-                return None
-        else:
-            return None
