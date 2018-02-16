@@ -70,14 +70,4 @@
   </div>
 </div>
 
-<script type="text/javascript">
-$.getScript("{% static 'sms/js/phone_number_filter.js' %}", function() {
-  var initial_value = {{ initial_value|JSON }},
-  model = new SMSPhoneNumberFilterViewModel(initial_value, {{ groups|JSON }});
-  $('#{{ css_id }}').koApplyBindings(model);
-  $('[name=selected_group]').select2({
-      allowClear: true,
-      placeholder: '{% trans "Select a group" %}',
-  });
-});
-</script>
+<script src="{% static 'sms/js/phone_number_filter.js' %}"></script>
