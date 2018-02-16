@@ -77,9 +77,6 @@ class Enforce2FAMiddleware(MiddlewareMixin):
         ):
             return None
 
-        return self.enforce_two_factor(toggles, request)
-
-    def enforce_two_factor(self, toggles, request):
         if (toggles.TWO_FACTOR_SUPERUSER_ROLLOUT.enabled(request.user.username)
                 and not request.couch_user.two_factor_disabled
                 and not request.user.is_verified()
