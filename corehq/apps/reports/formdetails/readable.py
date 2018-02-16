@@ -40,6 +40,7 @@ class FormQuestion(JsonObject):
     relevant = StringProperty()
     required = BooleanProperty()
     comment = StringProperty()
+    setvalue = StringProperty()
 
     @property
     def icon(self):
