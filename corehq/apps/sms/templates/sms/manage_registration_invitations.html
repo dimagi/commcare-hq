@@ -25,6 +25,9 @@
     </ol>
 {% endblock %}
 
+{% block js %}{{ block.super }}
+    <script src="{% static 'sms/js/manage_registration_invitations.js' %}"></script>
+{% endblock %}
 
 {% block page_content %}
 {% if sms_mobile_worker_registration_enabled %}
