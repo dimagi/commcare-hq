@@ -44,11 +44,13 @@ hqDefine("sms/js/phone_number_filter", function() {
         });
     }
 
-    var initialValue = initialPageData.get('initial_value'),
-        model = new SMSPhoneNumberFilterViewModel(initialValue, initialPageData.get('groups'));
-    $('#' + initialPageData.get("css_id")).koApplyBindings(model);
-    $('[name=selected_group]').select2({
-        allowClear: true,
-        placeholder: gettext("Select a group"),
+    $(function() {
+        var initialValue = initialPageData.get('initial_value'),
+            model = new SMSPhoneNumberFilterViewModel(initialValue, initialPageData.get('groups'));
+        $('#' + initialPageData.get("css_id")).koApplyBindings(model);
+        $('[name=selected_group]').select2({
+            allowClear: true,
+            placeholder: gettext("Select a group"),
+        });
     });
 });
