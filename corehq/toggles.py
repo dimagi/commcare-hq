@@ -1129,6 +1129,14 @@ NEW_REMINDERS_MIGRATOR = StaticToggle(
 )
 
 
+REMINDERS_MIGRATION_IN_PROGRESS = StaticToggle(
+    'reminders_migration_in_progress',
+    "Disables editing of reminders so that the migration to the new framework can happen.",
+    TAG_INTERNAL,
+    [NAMESPACE_DOMAIN]
+)
+
+
 PHONE_NUMBERS_REPORT = StaticToggle(
     'phone_numbers_report',
     "Report related to the phone numbers owned by a project's contacts",

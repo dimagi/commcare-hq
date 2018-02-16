@@ -119,6 +119,10 @@ class BaseMessagingSectionView(BaseDomainView):
     section_name = ugettext_noop("Messaging")
 
     @cached_property
+    def reminders_migration_in_progress(self):
+        return toggles.REMINDERS_MIGRATION_IN_PROGRESS.enabled(self.domain)
+
+    @cached_property
     def can_use_inbound_sms(self):
         return has_privilege(self.request, privileges.INBOUND_SMS)
 
