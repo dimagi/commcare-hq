@@ -1,7 +1,7 @@
 # coding: utf-8
 from __future__ import print_function
 from __future__ import absolute_import
-import getpass
+
 from django.core.management.base import BaseCommand, CommandError
 from email_validator import validate_email, EmailSyntaxError
 
