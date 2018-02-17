@@ -1,5 +1,8 @@
 hqDefine("domain/js/add_form_repeater", function() {
     $(function() {
+        var $testLinkButton = $('#test-forward-link'),
+            $testResult = $('#test-forward-result');
+
         var handleSuccess = function(resp) {
             /*
              * Handles a successful attempt to test the link. Note, just gets run when HQ returns
@@ -35,9 +38,6 @@ hqDefine("domain/js/add_form_repeater", function() {
                 .addClass("text-danger");
             $testResult.text(gettext('HQ was unable to make the request: ') + resp.statusText);
         };
-
-        var $testLinkButton = $('#test-forward-link'),
-            $testResult = $('#test-forward-result');
 
         $testLinkButton.click(function () {
             var data = {
