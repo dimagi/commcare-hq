@@ -26,7 +26,7 @@ class BootstrapCheckboxInput(CheckboxInput):
         self.inline_label = inline_label
 
     def render(self, name, value, attrs=None):
-        extra_attrs={'type': 'checkbox', 'name': name}
+        extra_attrs = {'type': 'checkbox', 'name': name}
         extra_attrs.update(self.attrs)
         final_attrs = self.build_attrs(attrs, extra_attrs=extra_attrs)
         try:
