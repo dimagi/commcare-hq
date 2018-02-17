@@ -1,5 +1,4 @@
 hqDefine("app_manager/js/apps_base", function() {
-    console.log("pretend");
     $(function () {
         $('#deleted-app-modal').modal({
             backdrop: 'static',
