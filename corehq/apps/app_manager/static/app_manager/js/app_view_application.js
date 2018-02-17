@@ -1,4 +1,3 @@
-/* globals mk_translation_ui */
 /* Behavior for app_view.html, specific to Application documents (i.e., not remote apps) */
 hqDefine("app_manager/js/app_view_application", function() {
     $(function() {
@@ -8,7 +7,7 @@ hqDefine("app_manager/js/app_view_application", function() {
         // Languages: CommCare Translations
         var $translation_ui = $("#translations_ui");
         if ($translation_ui.length) {
-            mk_translation_ui({
+            hqImport("translations/js/translations").makeTranslationUI({
                 translations: initial_page_data("translations"),
                 url: reverse("edit_app_ui_translations"),
                 suggestion_url: reverse("get_app_ui_translations"),
