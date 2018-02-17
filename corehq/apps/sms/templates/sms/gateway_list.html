@@ -3,6 +3,8 @@
 {% load hq_shared_tags %}
 {% load crispy_forms_tags %}
 
+{% requirejs_main "hqwebapp/js/crud_paginated_list_init" %}
+
 {% block pagination_footer %}
     <div>
         {% blocktrans %}

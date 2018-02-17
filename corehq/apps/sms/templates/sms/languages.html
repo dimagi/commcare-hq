@@ -10,6 +10,7 @@
     <script src="{% static 'hqwebapp/js/bulk_upload_file.js' %}"></script>
     <script src="{% static 'langcodes/js/langcodes.js' %}"></script>
     <script src="{% static 'app_manager/js/supported_languages.js' %}"></script>
+    <script src="{% static 'sms/js/languages.js' %}"></script>
 {% endblock %}
 
 {% block stylesheets %}{{ block.super }}
@@ -24,26 +25,11 @@
     </style>
 {% endblock %}
 
-{% block js-inline %}{{ block.super }}
-<script>
-    $(function () {
-        var langs = {{ sms_langs|JSON }};
-        var saveURL = "{% url "edit_sms_languages" domain %}";
-        var edit = true;
-        var validate = true;
-        var SupportedLanguages = hqImport('app_manager/js/supported_languages').SupportedLanguages;
-        var sl = new SupportedLanguages({
-            langs: langs,
-            saveURL: saveURL,
-            edit: edit,
-            validate: validate
-        });
-        $("#supported-languages").koApplyBindings(sl);
-    });
-</script>
-{% endblock %}
 
 {% block page_content %}
+    {% initial_page_data 'sms_langs' sms_langs %}
+    {% registerurl "edit_sms_languages" domain %}
+
     <div class="tab-pane">
         <div class="tabbable">
             <ul class="nav nav-tabs">
