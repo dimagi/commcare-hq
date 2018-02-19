@@ -6,8 +6,8 @@ if (typeof require !== 'undefined' && typeof exports !== 'undefined') {
 var XPATH_CONFIG = (function () {
     function getAllowedHashtags(allowCaseHashtags) {
         var replacements = {
-        '#session': "ok",
-        '#user': "ok"
+            '#session': "ok",
+            '#user': "ok"
         };
         if (allowCaseHashtags) {
             replacements['#case'] = 'ok';

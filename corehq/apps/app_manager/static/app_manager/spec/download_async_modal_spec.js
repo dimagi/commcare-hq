@@ -15,10 +15,16 @@ describe('Async Download Modal', function() {
         });
 
         var test_done = [
-            {input: 'progress ready_' + download_poll_id, expected: true},
-            {input: 'ready_' + download_poll_id, expected: true},
-            {input: 'progress error_' + download_poll_id, expected: true}
-
+            {
+                input: 'progress ready_' + download_poll_id,
+                expected: true
+            }, {
+                input: 'ready_' + download_poll_id,
+                expected: true
+            }, {
+                input: 'progress error_' + download_poll_id,
+                expected: true
+            }
         ];
 
         test_done.forEach(function(test) {
@@ -28,11 +34,19 @@ describe('Async Download Modal', function() {
         });
 
         var test_not_done = [
-            {input: null, expected: false},
-            {input: undefined, expected: false},
-            {input: '', expected: false},
-            {input: 'progress', expected: false}
-
+            {
+                input: null,
+                expected: false
+            }, {
+                input: undefined,
+                expected: false
+            }, {
+                input: '',
+                expected: false
+            }, {
+                input: 'progress',
+                expected: false
+            }
         ];
 
         test_not_done.forEach(function(test) {
@@ -54,7 +68,7 @@ describe('Async Download Modal', function() {
         });
 
         after(function() {
-           clock.restore();
+            clock.restore();
         });
 
         beforeEach(function() {
@@ -93,10 +107,11 @@ describe('Async Download Modal', function() {
             assert.equal(ajax_stub.thirdCall.args[0].url, pollUrl);
         }
 
-        var tests_state = [
-            {state: 'ready_'},
-            {state: 'error_'}
-        ];
+        var tests_state = [{
+            state: 'ready_'
+        }, {
+            state: 'error_'
+        }];
 
         tests_state.forEach(function(test) {
             it('should poll until ' + test.state, function() {

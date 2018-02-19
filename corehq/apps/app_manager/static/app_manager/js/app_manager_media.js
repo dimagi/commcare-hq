@@ -1,12 +1,12 @@
-hqDefine('app_manager/js/app_manager_media', function () {
-    var AppMenuMediaManager = function (o) {
+hqDefine('app_manager/js/app_manager_media', function() {
+    var AppMenuMediaManager = function(o) {
         /* This interfaces the media reference for a form or module menu
         (as an icon or image) with the upload manager.*/
         'use strict';
         var self = this;
 
         self.ref = ko.observable(new MenuMediaReference(o.ref));
-        self.refHasPath = ko.computed(function () {
+        self.refHasPath = ko.computed(function() {
             return self.ref().path.length > 0;
         });
         self.objectMap = ko.observable(o.objectMap);
@@ -18,60 +18,60 @@ hqDefine('app_manager/js/app_manager_media', function () {
         self.customPath = ko.observable(o.ref.path || '');
         self.useCustomPath = ko.observable(self.customPath() !== self.defaultPath && self.refHasPath());
 
-        self.showCustomPath = ko.computed(function () {
+        self.showCustomPath = ko.computed(function() {
             return self.useCustomPath();
         });
 
-        self.showDefaultPath = ko.computed(function () {
+        self.showDefaultPath = ko.computed(function() {
             return !self.showCustomPath();
         });
 
-        self.savedPath = ko.computed(function () {
+        self.savedPath = ko.computed(function() {
             if (self.useCustomPath()) {
                 return self.customPath();
             }
             return self.ref().path;
         });
 
-        self.currentPath = ko.computed(function () {
+        self.currentPath = ko.computed(function() {
             if (self.savedPath().length === 0) {
                 return self.defaultPath;
             }
             return self.savedPath();
         });
 
-        self.multimediaObject = ko.computed(function () {
+        self.multimediaObject = ko.computed(function() {
             return self.objectMap()[self.currentPath()];
         });
 
-        self.isMediaMatched = ko.computed(function () {
+        self.isMediaMatched = ko.computed(function() {
             return !!self.multimediaObject() && self.refHasPath();
         });
 
-        self.isMediaUnmatched = ko.computed(function () {
+        self.isMediaUnmatched = ko.computed(function() {
             return !self.isMediaMatched();
         });
 
-        self.url = ko.computed(function () {
+        self.url = ko.computed(function() {
             if (self.multimediaObject()) {
                 return self.multimediaObject().url;
             }
         });
 
-        self.thumbnailUrl = ko.computed(function () {
-            if (self.multimediaObject()){
+        self.thumbnailUrl = ko.computed(function() {
+            if (self.multimediaObject()) {
                 return self.url() + "?thumb=50";
             }
             return '#';
         });
 
-        self.objectId = ko.computed(function () {
+        self.objectId = ko.computed(function() {
             if (self.multimediaObject()) {
                 return self.multimediaObject().m_id;
             }
         });
 
-        self.setCustomPath = function () {
+        self.setCustomPath = function() {
             self.useCustomPath(true);
             if (self.customPath().length === 0) {
                 self.customPath(self.defaultPath);
@@ -79,7 +79,7 @@ hqDefine('app_manager/js/app_manager_media', function () {
             self.updateResource();
         };
 
-        self.setDefaultPath = function () {
+        self.setDefaultPath = function() {
             self.useCustomPath(false);
             var newRef = self.ref();
             newRef.path = self.defaultPath;
@@ -87,14 +87,14 @@ hqDefine('app_manager/js/app_manager_media', function () {
             self.updateResource();
         };
 
-        self.removeMedia = function () {
+        self.removeMedia = function() {
             self.ref(new MenuMediaReference({}));
             self.useCustomPath(false);
             self.customPath('');
             self.updateResource();
         };
 
-        self.getUploadParams = function () {
+        self.getUploadParams = function() {
             return {
                 path: interpolatePath(self.currentPath()),
                 media_type: self.ref().mediaType,
@@ -102,7 +102,7 @@ hqDefine('app_manager/js/app_manager_media', function () {
             };
         };
 
-        self.getControllerRef = function () {
+        self.getControllerRef = function() {
             return {
                 path: self.currentPath(),
                 isMediaMatched: self.isMediaMatched,
@@ -111,14 +111,14 @@ hqDefine('app_manager/js/app_manager_media', function () {
             };
         };
 
-        self.passToUploadController = function () {
+        self.passToUploadController = function() {
             self.uploadController.resetUploader();
             self.uploadController.currentReference = self.getControllerRef();
             self.uploadController.uploadParams = self.getUploadParams();
             self.uploadController.updateUploadFormUI();
         };
 
-        self.uploadComplete = function (trigger, event, data) {
+        self.uploadComplete = function(trigger, event, data) {
             if (data.ref) {
                 var ref = data.ref;
                 var obj_map = self.objectMap();
@@ -126,7 +126,7 @@ hqDefine('app_manager/js/app_manager_media', function () {
                 self.ref(new MenuMediaReference(ref));
                 self.objectMap(obj_map);
                 self.updateResource();
-                if (self.currentPath() !== data.ref.path){
+                if (self.currentPath() !== data.ref.path) {
                     //CurrentPath has a different filetype to the
                     //uploaded file
                     self.customPath(data.ref.path);
@@ -134,12 +134,12 @@ hqDefine('app_manager/js/app_manager_media', function () {
             }
         };
 
-        self.updateResource = function () {
+        self.updateResource = function() {
             self.inputElement.trigger('change');
         };
     };
 
-    var MenuMediaReference = function (ref) {
+    var MenuMediaReference = function(ref) {
         'use strict';
         var self = this;
 
@@ -175,7 +175,7 @@ hqDefine('app_manager/js/app_manager_media', function () {
             $mediaImage.koApplyBindings(menuImage);
         }
         if ($mediaAudio.length) {
-          $mediaAudio.koApplyBindings(menuAudio);
+            $mediaAudio.koApplyBindings(menuAudio);
         }
         return {
             menuImage: menuImage,
@@ -188,26 +188,22 @@ hqDefine('app_manager/js/app_manager_media', function () {
         AppMenuMediaManager: AppMenuMediaManager
     };
 
-    function interpolatePath(path){
+    function interpolatePath(path) {
         // app media attributes are interpolated on server side, media uploads should also be interpolated
         // See corehq.apps.app_manager.views.media_utils.process_media_attribute
-        if (!path){
+        if (!path) {
             return path;
         }
 
-        if (path.startsWith('jr://')){
+        if (path.startsWith('jr://')) {
             return path;
-        }
-        else if (path.startsWith('/file/')){
+        } else if (path.startsWith('/file/')) {
             path = 'jr:/' + path;
-        }
-        else if (path.startsWith('file/')){
+        } else if (path.startsWith('file/')) {
             path = 'jr://' + path;
-        }
-        else if (path.startsWith('/')){
+        } else if (path.startsWith('/')) {
             path = 'jr://file' + path;
-        }
-        else {
+        } else {
             path = 'jr://file/' + path;
         }
         return path;

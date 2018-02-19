@@ -1,15 +1,15 @@
 var CustomExportView = {
-    wrap: function (o, translations, has_excel_dashboard_access) {
+    wrap: function(o, translations, has_excel_dashboard_access) {
         var self = ko.mapping.fromJS(o);
         self.utils = {
-            rename: function (field, rename_map) {
+            rename: function(field, rename_map) {
                 if (rename_map.hasOwnProperty(field)) {
                     return rename_map[field];
                 } else {
                     return field;
                 }
             },
-            stripIndex: function (index) {
+            stripIndex: function(index) {
                 var stripped;
                 if (self.custom_export.type() === 'form') {
                     index = ko.utils.unwrapObservable(index);
@@ -24,7 +24,7 @@ var CustomExportView = {
                 stripped = stripped.replace(/.#./g, ' > ');
                 return stripped;
             },
-            tableHeader: function (index) {
+            tableHeader: function(index) {
                 index = ko.utils.unwrapObservable(index);
                 var stripped = self.utils.stripIndex(index);
                 if (self.custom_export.type() === 'form') {
@@ -41,7 +41,7 @@ var CustomExportView = {
                     }[stripped] || stripped;
                 }
             },
-            parseField: function (field, index, field_tag) {
+            parseField: function(field, index, field_tag) {
                 var tags = field_tag ? [field_tag] : [];
                 var stripped;
                 field = ko.utils.unwrapObservable(field);
@@ -54,9 +54,15 @@ var CustomExportView = {
                     initial_processing_complete: 0
                 };
                 if (field in server) {
-                    return {tags: ['server'].concat(tags), field: field};
+                    return {
+                        tags: ['server'].concat(tags),
+                        field: field
+                    };
                 } else if (field === 'id') {
-                    return {tags: ['row'].concat(tags), field: 'number'};
+                    return {
+                        tags: ['row'].concat(tags),
+                        field: 'number'
+                    };
                 }
 
                 var renamed_field = field;
@@ -69,19 +75,32 @@ var CustomExportView = {
                         "_id": "form.meta.formid"
                     };
                     field = self.utils.rename(field, rename_map);
-                    var patterns = [
-                        {regex: /^form\.meta\.(.*)$/, tag: 'info'},
-                        {regex: /^form\.case\.(.*)$/, tag: 'case'},
-                        {regex: /^form\.subcase_\d(.*)$/, tag: 'subcase', no_replace: true},
-                        {regex: /^form\.([#@].*)$/, tag: 'tag'},
-                        {regex: /^form\.(.*)$/, tag: ''}
-                    ];
+                    var patterns = [{
+                        regex: /^form\.meta\.(.*)$/,
+                        tag: 'info'
+                    }, {
+                        regex: /^form\.case\.(.*)$/,
+                        tag: 'case'
+                    }, {
+                        regex: /^form\.subcase_\d(.*)$/,
+                        tag: 'subcase',
+                        no_replace: true
+                    }, {
+                        regex: /^form\.([#@].*)$/,
+                        tag: 'tag'
+                    }, {
+                        regex: /^form\.(.*)$/,
+                        tag: ''
+                    }];
                     var pattern;
                     for (var i = 0; i < patterns.length; i++) {
                         pattern = patterns[i];
                         stripped = !pattern.no_replace ? field.replace(pattern.regex, '$1') : field;
                         if (field !== stripped) {
-                            return {tags: [pattern.tag].concat(tags), field: stripped};
+                            return {
+                                tags: [pattern.tag].concat(tags),
+                                field: stripped
+                            };
                         }
 
                         if (pattern.no_replace && pattern.regex.test(field)) {
@@ -89,7 +108,10 @@ var CustomExportView = {
                         }
                     }
 
-                    return {tags: ['server'].concat(tags), field: renamed_field};
+                    return {
+                        tags: ['server'].concat(tags),
+                        field: renamed_field
+                    };
                 } else if (self.custom_export.type() === 'case') {
 
                     if (index === '#') {
@@ -123,7 +145,10 @@ var CustomExportView = {
                         };
                         renamed_field = self.utils.rename(field, rename_map);
                         if (meta.hasOwnProperty(field)) {
-                            return {tags: ['info'].concat(tags), field: renamed_field};
+                            return {
+                                tags: ['info'].concat(tags),
+                                field: renamed_field
+                            };
                         }
                     } else if (/#\.indices\.#$/.exec(index)) {
                         rename_map = {
@@ -139,13 +164,19 @@ var CustomExportView = {
                             '$1'
                         );
                         if (stripped !== field) {
-                            return {tags: ['update'].concat(tags), field: stripped};
+                            return {
+                                tags: ['update'].concat(tags),
+                                field: stripped
+                            };
                         }
                     }
                 }
-                return {tags: [''].concat(tags), field: renamed_field};
+                return {
+                    tags: [''].concat(tags),
+                    field: renamed_field
+                };
             },
-            showTable: function (table) {
+            showTable: function(table) {
                 var index = table.index();
                 var excluded = index in CustomExportView.excludedTables;
                 var columns = table.column_configuration();
@@ -159,21 +190,23 @@ var CustomExportView = {
                 }
                 return !excluded || table.selected();
             },
-            actuallyShowTable: function (table) {
+            actuallyShowTable: function(table) {
                 if (self.repeatsEnabled()) {
                     return self.utils.showTable(table);
                 } else {
                     return table.index() === '#' || table.selected();
                 }
             },
-            putInDefaultOrder: function (index, columns) {
+            putInDefaultOrder: function(index, columns) {
                 // http://stackoverflow.com/questions/2998784/how-to-output-integers-with-leading-zeros-in-javascript
                 // [11] < [2], so have to pad numbers
-                function pad10(a){return(1e15+a+"").slice(-10);}
+                function pad10(a) {
+                    return (1e15 + a + "").slice(-10);
+                }
 
                 var order = ko.utils.unwrapObservable(self.default_order[index]);
                 var order_index = {};
-                _(order).each(function (index, i) {
+                _(order).each(function(index, i) {
                     order_index[index] = pad10(i);
                 });
                 var tag_order = {
@@ -185,7 +218,7 @@ var CustomExportView = {
                     'tag': 4,
                     'row': 5
                 };
-                return _(columns).sortBy(function (column) {
+                return _(columns).sortBy(function(column) {
                     var key;
                     if (order_index.hasOwnProperty(column.index())) {
                         key = [0, order_index[column.index()]];
@@ -197,34 +230,34 @@ var CustomExportView = {
             }
         };
 
-        self.repeatsEnabled = ko.computed(function () {
+        self.repeatsEnabled = ko.computed(function() {
             var n_tables = _(self.table_configuration()).filter(
-                    self.utils.showTable
+                self.utils.showTable
             ).length;
             if (self.allow_repeats()) {
                 return n_tables > 1;
             } else {
-                return _(self.table_configuration()).filter(function (table) {
+                return _(self.table_configuration()).filter(function(table) {
                     return table.index() !== '#' && table.selected();
                 }).length > 0;
             }
         });
 
-        _(self.table_configuration()).each(function (table) {
+        _(self.table_configuration()).each(function(table) {
             table.show_deleted = ko.observable(false);
             // assumes unselected
             var unselected;
             var columns = table.column_configuration();
             var spliceIdx = 0;
 
-            _(columns).each(function (column, idx) {
+            _(columns).each(function(column, idx) {
                 var niceField = self.utils.parseField(column.index, table.index, column.tag());
                 var special = ko.utils.unwrapObservable(column.special);
                 if (special) {
                     niceField.field = special;
                 }
                 column._niceField = niceField;
-                column.isCaseName = ko.computed(function () {
+                column.isCaseName = ko.computed(function() {
                     return ko.utils.unwrapObservable(column.special) === 'case_name';
                 });
                 column.showOptions = ko.observable(false);
@@ -255,61 +288,61 @@ var CustomExportView = {
             }
         });
 
-        self.showDeidColumn = ko.observable(function () {
-            return _(self.table_configuration()).some(function (table) {
-                return table.selected() && _(table.column_configuration()).some(function (column) {
+        self.showDeidColumn = ko.observable(function() {
+            return _(self.table_configuration()).some(function(table) {
+                return table.selected() && _(table.column_configuration()).some(function(column) {
                     return column.selected() && column.transform() && column.is_sensitive();
                 });
             });
         }());
 
-        self.animateShowDeidColumn = function () {
+        self.animateShowDeidColumn = function() {
             $('html, body').animate({
                 scrollTop: $('#field-select').offset().top + 'px'
-            }, 'slow', undefined, function () {
+            }, 'slow', undefined, function() {
                 self.showDeidColumn(true);
             });
 
         };
 
-        self.setAllSelected = function (table, selected) {
-            _(table.column_configuration()).each(function (column) {
+        self.setAllSelected = function(table, selected) {
+            _(table.column_configuration()).each(function(column) {
                 if (!selected || table.show_deleted() || column.show()) {
                     column.selected(selected);
                 }
             });
         };
-        self.selectAll = function (table) {
+        self.selectAll = function(table) {
             self.setAllSelected(table, true);
         };
-        self.selectNone = function (table) {
+        self.selectNone = function(table) {
             self.setAllSelected(table, false);
         };
 
-        self.make_tables = function () {
-            var tables = _(self.table_configuration()).filter(function (table) {
+        self.make_tables = function() {
+            var tables = _(self.table_configuration()).filter(function(table) {
                 return table.selected();
-            }).map(function (table) {
+            }).map(function(table) {
                 return {
                     display: table.display,
                     index: table.index,
-                    columns: _(table.column_configuration()).filter(function (column) {
+                    columns: _(table.column_configuration()).filter(function(column) {
                         return column.selected() && !(column.isCaseName() && self.custom_export.is_safe());
-                    }).map(function (column) {
-                        var is_sensitive = column.transform() && (column.is_sensitive() || !ko.utils.unwrapObservable(column.special )),
+                    }).map(function(column) {
+                        var is_sensitive = column.transform() && (column.is_sensitive() || !ko.utils.unwrapObservable(column.special)),
                             col = {
                                 index: column.index,
                                 display: column.display,
                                 transform: column.transform() || null, // it doesn't save '' well
                                 is_sensitive: Boolean(is_sensitive)
-                        };
+                            };
                         if (self.export_type() === 'form') {
                             if (self.custom_export.split_multiselects() && column.allOptions()) {
                                 col.doc_type = 'SplitColumn';
                             } else {
                                 col.doc_type = 'ExportColumn';
                             }
-                        } else if (column.doc_type() === 'SplitColumn'){
+                        } else if (column.doc_type() === 'SplitColumn') {
                             col.doc_type = column.doc_type();
                             col.options = column.options();
                         }
@@ -319,10 +352,12 @@ var CustomExportView = {
             });
             tables = ko.mapping.toJS(tables);
             if (tables.length > 1) {
-                _(tables).each(function (table) {
+                _(tables).each(function(table) {
                     if (!_(table.columns).some(
-                                function (column) { return column.index === 'id'; }
-                            )) {
+                            function(column) {
+                                return column.index === 'id';
+                            }
+                        )) {
                         table.columns.splice(0, 0, {
                             index: 'id',
                             display: 'row.number',
@@ -334,7 +369,7 @@ var CustomExportView = {
             return tables;
         };
 
-        self.output = function (preview) {
+        self.output = function(preview) {
             var output = ko.mapping.toJS({
                 custom_export: self.custom_export,
                 presave: self.presave,
@@ -345,11 +380,11 @@ var CustomExportView = {
             return JSON.stringify(output);
         };
 
-        self.save = function (preview) {
-            self.save.state('saving' + (preview ? '-preview': ''));
-            $.post(self.urls.save(), self.output(preview)).done(function (data) {
+        self.save = function(preview) {
+            self.save.state('saving' + (preview ? '-preview' : ''));
+            $.post(self.urls.save(), self.output(preview)).done(function(data) {
 
-                var redirect = function(){
+                var redirect = function() {
                     window.location.href = data.redirect;
                 };
 
@@ -369,7 +404,7 @@ var CustomExportView = {
                     }
                 }
                 redirect();
-            }).fail(function (response) {
+            }).fail(function(response) {
                 var data = JSON.parse(response.responseText);
                 self.save.state('error');
                 alert('There was an error saving: ' + data.error);
@@ -378,7 +413,7 @@ var CustomExportView = {
         self.save.state = ko.observable('save');
 
         self.valid = ko.observable(true);
-        self.custom_export.default_format.subscribe(function (newFormat) {
+        self.custom_export.default_format.subscribe(function(newFormat) {
             if (newFormat === "html") {
                 self.presave(true);
             } else {
@@ -425,12 +460,12 @@ var CustomExportView = {
             return (row === 'no data' || row === 'deleted') ? "label label-warning" : "label label-default";
         };
 
-        setTimeout(function () {
-            _(self.table_configuration()).each(function (table) {
+        setTimeout(function() {
+            _(self.table_configuration()).each(function(table) {
                 if (!table.display()) {
                     table.display(self.utils.tableHeader(table.index));
                 }
-                _(table.column_configuration()).each(function (column) {
+                _(table.column_configuration()).each(function(column) {
                     if (!column.display()) {
                         var parsed = column._niceField;
                         var prefixed_tags = ["case", "meta", "info", "server", "tag", "row"];

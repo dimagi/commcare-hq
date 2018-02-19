@@ -1,5 +1,5 @@
 /* globals hqDefine */
-hqDefine('users/js/edit_commcare_user', function () {
+hqDefine('users/js/edit_commcare_user', function() {
     var initial_page_data = hqImport('hqwebapp/js/initial_page_data').get,
         couch_user_id = initial_page_data('couch_user_id'),
         activeTabCookie = 'active_tab',
@@ -11,7 +11,7 @@ hqDefine('users/js/edit_commcare_user', function () {
     });
 
     $('#add_phone_number').submit(function() {
-        hqImport('analytix/js/google').track.event('Edit Mobile Worker', 'Update phone number', initial_page_data('couch_user_id'), '', {}, function () {
+        hqImport('analytix/js/google').track.event('Edit Mobile Worker', 'Update phone number', initial_page_data('couch_user_id'), '', {}, function() {
             document.getElementById('add_phone_number').submit();
         });
         return false;
@@ -19,25 +19,26 @@ hqDefine('users/js/edit_commcare_user', function () {
 
     if (last_active_tab) {
         $(last_active_tab).addClass('active');
-        $('#user-settings-tabs a[href="'+last_active_tab+'"]').parent().addClass('active');
+        $('#user-settings-tabs a[href="' + last_active_tab + '"]').parent().addClass('active');
     } else {
         var first_tab = $('#user-settings-tabs a[data-toggle="tab"]').first();
         first_tab.parent().addClass('active');
         $(first_tab.attr('href')).addClass('active');
     }
-    $('#user-settings-tabs a[data-toggle="tab"]').on('shown.bs.tab', function () {
-        $.cookie(activeTabCookie, $(this).attr('href'),
-                {path: initial_page_data('path'),
-                expires: 1});
+    $('#user-settings-tabs a[data-toggle="tab"]').on('shown.bs.tab', function() {
+        $.cookie(activeTabCookie, $(this).attr('href'), {
+            path: initial_page_data('path'),
+            expires: 1
+        });
     });
 
     var alert_user = hqImport("hqwebapp/js/alert_user").alert_user;
-    $('#reset-password-form').submit(function(){
+    $('#reset-password-form').submit(function() {
         $(this).ajaxSubmit({
             url: $(this).attr('action'),
             type: 'POST',
             dataType: 'json',
-            success: function (response, status, xhr, form) {
+            success: function(response, status, xhr, form) {
                 form.find('#user-password').html(response.formHTML);
                 if (response.status === "OK") {
                     alert_user(gettext("Password changed successfully"), 'success');
@@ -46,7 +47,7 @@ hqDefine('users/js/edit_commcare_user', function () {
                     var message = gettext('Password was not changed ');
                     if (initial_page_data('hide_password_feedback')) {
                         message += gettext("Password Requirements: 1 special character, " +
-                                          "1 number, 1 capital letter, minimum length of 8 characters.");
+                            "1 number, 1 capital letter, minimum length of 8 characters.");
                     }
                     alert_user(message, 'danger');
                 }
@@ -59,11 +60,11 @@ hqDefine('users/js/edit_commcare_user', function () {
             var self = this;
             self.signOff = ko.observable('');
             self.formDeleteUserSent = ko.observable(false);
-            self.disabled = function () {
+            self.disabled = function() {
                 var understand = self.signOff().toLowerCase() === initial_page_data('couch_user_username');
                 return self.formDeleteUserSent() || !understand;
             };
-            self.submit = function () {
+            self.submit = function() {
                 if (!self.disabled()) {
                     self.formDeleteUserSent(true);
                     return true;
@@ -87,31 +88,31 @@ hqDefine('users/js/edit_commcare_user', function () {
 
     // Groups form
     var multiselect_utils = hqImport('hqwebapp/js/multiselect_utils');
-        multiselect_utils.createFullMultiselectWidget(
-            'id_selected_ids',
-            gettext("Available Groups"),
-            gettext("Groups with this User"),
-            gettext("Search Group...")
-        );
+    multiselect_utils.createFullMultiselectWidget(
+        'id_selected_ids',
+        gettext("Available Groups"),
+        gettext("Groups with this User"),
+        gettext("Search Group...")
+    );
 
     // "are you sure?" stuff
     var unsavedChanges = false;
-    $("#id_selected_ids").change(function () {
+    $("#id_selected_ids").change(function() {
         unsavedChanges = true;
     });
 
-    $(window).on('beforeunload', function () {
+    $(window).on('beforeunload', function() {
         if (unsavedChanges) {
             return gettext("Group membership has changed.");
         }
     });
-    $("#groups").submit(function () {
+    $("#groups").submit(function() {
         $(window).unbind("beforeunload");
     });
 
     // Input handling
-    $('#id_add_phone_number').on('paste', function (event) {
-        var clipboardData = event.clipboardData  ||  event.originalEvent.clipboardData;
+    $('#id_add_phone_number').on('paste', function(event) {
+        var clipboardData = event.clipboardData || event.originalEvent.clipboardData;
         var pasteText = clipboardData.getData("Text");
         var text = pasteText.replace(/\+|\-|\(|\)|\s/g, '');
         if (/^[0-9]*$/.test(text)) {
@@ -135,7 +136,7 @@ hqDefine('users/js/edit_commcare_user', function () {
     }
 
     // Analytics
-    $("button:submit", $userInformationForm).on("click", function(){
+    $("button:submit", $userInformationForm).on("click", function() {
         hqImport('analytix/js/google').track.event("Edit Mobile Worker", "Updated user info", couch_user_id, "", {}, function() {
             $userInformationForm.submit();
         });

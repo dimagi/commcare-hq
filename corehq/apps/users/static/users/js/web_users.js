@@ -11,7 +11,7 @@ hqDefine("users/js/web_users", function() {
         djangoRMIProvider.configure(hqImport("hqwebapp/js/initial_page_data").get("djng_current_rmi"));
     }]);
 
-    $(function () {
+    $(function() {
         function selectText(element) {
             /* copied from http://stackoverflow.com/questions/985272/jquery-selecting-text-in-an-element-akin-to-highlighting-with-your-mouse */
             var doc = document;
@@ -29,48 +29,50 @@ hqDefine("users/js/web_users", function() {
                 selection.addRange(range);
             }
         }
-        $('#adminEmails').on('shown.bs.collapse', function () {
+        $('#adminEmails').on('shown.bs.collapse', function() {
             selectText($('#adminEmails .panel-body'));
             $(window).trigger('scroll');
         });
     });
 
-    $(function () {
+    $(function() {
         var url = hqImport("hqwebapp/js/initial_page_data").reverse;
-        $('#restrict_users').on('change', function () {
+        $('#restrict_users').on('change', function() {
             var $saveButton = $('#save_restrict_option');
             $saveButton
-                    .prop('disabled', false)
-                    .removeClass('disabled btn-default')
-                    .addClass('btn-success')
-                    .text(gettext("Save"));
+                .prop('disabled', false)
+                .removeClass('disabled btn-default')
+                .addClass('btn-success')
+                .text(gettext("Save"));
         });
         $('#save_restrict_option').click(function(e) {
             var post_url = url("location_restriction_for_users");
             $(this).text('Saving ...');
-            $.post(post_url,
-                {restrict_users: $('#restrict_users')[0].checked},
-                function(data, status) {
-                    $('#save_restrict_option')
-                            .text(gettext("Saved"))
-                            .removeClass('btn-success')
-                            .prop('disabled', true)
-                            .addClass('disabled btn-default');
+            $.post(post_url, {
+                restrict_users: $('#restrict_users')[0].checked
+            },
+            function(data, status) {
+                $('#save_restrict_option')
+                    .text(gettext("Saved"))
+                    .removeClass('btn-success')
+                    .prop('disabled', true)
+                    .addClass('disabled btn-default');
             });
             e.preventDefault();
         });
 
-        $('.resend-invite').click(function (e) {
+        $('.resend-invite').click(function(e) {
             $(this).addClass('disabled').prop('disabled', true);
             var post_url = url("reinvite_web_user");
             var doc_id = this.getAttribute('data-invite');
             var self = this;
-            $.post(post_url, {invite: doc_id},
-                function(data) {
-                    $(self).parent().text(data.response);
-                    self.remove();
-                }
-            );
+            $.post(post_url, {
+                invite: doc_id
+            },
+            function(data) {
+                $(self).parent().text(data.response);
+                self.remove();
+            });
             e.preventDefault();
         });
 
@@ -92,16 +94,17 @@ hqDefine("users/js/web_users", function() {
         function handleDeletion($el, title, body, post_url, data) {
             var id = $el.data('id');
             $('#confirm-delete').off('click');
-            $('#confirm-delete').on('click', function () {
+            $('#confirm-delete').on('click', function() {
                 var $button = $(this);
                 $button.addClass('disabled').prop('disabled', true);
-                $.post(post_url, {id: id},
-                    function(data) {
-                        $el.closest("tr").remove();
-                        $button.removeClass('disabled').prop('disabled', false);
-                        $('#modal-deletion').modal('hide');
-                    }
-                );
+                $.post(post_url, {
+                    id: id
+                },
+                function(data) {
+                    $el.closest("tr").remove();
+                    $button.removeClass('disabled').prop('disabled', false);
+                    $('#modal-deletion').modal('hide');
+                });
             });
             $('#modal-deletion').find(".modal-title").html(title);
             $('#modal-deletion').find(".modal-body").html($("<p/>").append(body));
