@@ -1,4 +1,4 @@
-/* global ko, $, hgImport, moment, nv, d3 */
+/* global ko, $, hqImport, moment, nv, d3 */
 
 ko.bindingHandlers.select2 = {
     init: function (element, valueAccessor) {
@@ -15,7 +15,7 @@ ko.bindingHandlers.select2 = {
         } else {
             $(element).select2();
         }
-    }
+    },
 };
 
 var ALL_OPTION = {'id': '', 'text': 'All'};
@@ -333,7 +333,7 @@ function PrecisionVsAchievementsGraphModel() {
                 endDate: defaultEndDate,
                 locale: {
                     format: 'YYYY-MM-DD',
-                }
+                },
             }
         );
     }

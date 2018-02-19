@@ -1,4 +1,4 @@
-/* global ko, $, hgImport, moment, nv, d3 */
+/* global ko, $, hqImport, moment, nv, d3 */
 
 ko.bindingHandlers.select2 = {
     init: function (element, valueAccessor) {

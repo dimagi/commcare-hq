@@ -1,4 +1,4 @@
-/* global ko, $, hgImport, moment */
+/* global ko, $, hqImport, moment */
 
 ko.bindingHandlers.select2 = {
     init: function (element, valueAccessor) {
@@ -139,7 +139,7 @@ function PrecisionVsAchievementsTableModel() {
                 endDate: defaultEndDate,
                 locale: {
                     format: 'YYYY-MM-DD',
-                }
+                },
             }
         );
     }

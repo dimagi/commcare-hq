@@ -34,22 +34,22 @@ class TestServiceUptake(ChampTestCase):
         response = self.view(request, domain=self.domain.name)
         content = json.loads(response.content)
         expected_data_htc_uptake = {
-            "color": "blue", 
-            "values": [{"y": 0.3909327387588257, "x": 1514764800000}], 
+            "color": "blue",
+            "values": [{"y": 0.3909327387588257, "x": 1514764800000}],
             "strokeWidth": 2,
-            "classed": "dashed", 
+            "classed": "dashed",
             "key": "HTC_uptake"
         }
         expected_data_htc_yield = {
-            "color": "orange", 
-            "values": [{"y": 0.09125475285171103, "x": 1514764800000}], 
+            "color": "orange",
+            "values": [{"y": 0.09125475285171103, "x": 1514764800000}],
             "strokeWidth": 2,
-            "classed": "dashed", 
+            "classed": "dashed",
             "key": "HTC_yield"
         }
         expected_data_link_to_care = {
             "color": "gray",
-            "values": [{"y": 2.0208333333333335, "x": 1514764800000}], 
+            "values": [{"y": 2.0208333333333335, "x": 1514764800000}],
             "strokeWidth": 2,
             "classed": "dashed",
             "key": "Link to care"
