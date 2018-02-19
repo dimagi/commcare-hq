@@ -1,5 +1,5 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
+from collections import OrderedDict
 import copy
 from datetime import datetime, timedelta, date
 from functools import partial
@@ -9,21 +9,25 @@ from wsgiref.util import FileWrapper
 from dimagi.utils.couch import CriticalSection
 
 from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
+from corehq.apps.cloudcare import CLOUDCARE_DEVICE_ID
 from corehq.apps.data_dictionary.util import get_all_case_properties
 from corehq.apps.domain.views import BaseDomainView
+from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id, DocInfo
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
 from corehq.apps.locations.permissions import conditionally_location_safe, \
     report_class_is_location_safe
+from corehq.apps.receiverwrapper.auth import AuthContext
 from corehq.apps.reports.display import xmlns_to_name
 from corehq.apps.reports.formdetails.readable import get_readable_data_for_submission
 from corehq.apps.users.permissions import FORM_EXPORT_PERMISSION, CASE_EXPORT_PERMISSION, \
     DEID_EXPORT_PERMISSION
-from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, LedgerAccessors
 from corehq.form_processor.utils.general import use_sqlite_backend
 from corehq.motech.repeaters.dbaccessors import get_repeat_records_by_payload_id
 from corehq.tabs.tabclasses import ProjectReportsTab
 from corehq.util.timezones.conversions import ServerTime
+from corehq.util.timezones.utils import get_timezone_for_request
 import langcodes
 import os
 import pytz
@@ -1898,11 +1902,17 @@ def _get_form_render_context(request, domain, instance, case_id=None):
 
     instance_history = []
     if instance.history:
+        form_opertaions = {
+            'archive': ugettext_lazy('Archive'),
+            'unarchive': ugettext_lazy('Un-Archive'),
+            'edit': ugettext_lazy('Edit'),
+            'uuid_data_fix': ugettext_lazy('Duplicate ID fix')
+        }
         for operation in instance.history:
             user_date = ServerTime(operation.date).user_time(timezone).done()
             instance_history.append({
                 'readable_date': user_date.strftime("%Y-%m-%d %H:%M"),
-                'readable_action': FORM_OPERATIONS.get(operation.operation, operation.operation),
+                'readable_action': form_operations.get(operation.operation, operation.operation),
                 'user_info': get_doc_info_by_id(domain, operation.user),
             })
     context['instance_history'] = instance_history
@@ -1917,6 +1927,11 @@ def _get_cases_changed_context(domain, form, case_id=None):
             case_blocks.pop(i)
             case_blocks.insert(0, block)
     cases = []
+    from corehq.apps.hqwebapp.templatetags.proptable_tags import get_default_definition, get_tables_as_columns
+    def _sorted_case_update_keys(keys):
+        """Put common @ attributes at the bottom"""
+        return sorted(keys, key=lambda k: (k[0] == '@', k))
+
     for b in case_blocks:
         this_case_id = b.get(const.CASE_ATTR_ID)
         try:
@@ -1932,7 +1947,7 @@ def _get_cases_changed_context(domain, form, case_id=None):
             url = "#"
 
         definition = get_default_definition(
-            sorted_case_update_keys(list(b)),
+            _sorted_case_update_keys(list(b)),
             assume_phonetimes=(not form.metadata or
                                (form.metadata.deviceID != CLOUDCARE_DEVICE_ID)),
         )
@@ -1978,7 +1993,8 @@ def _get_form_metadata_context(domain, form, timezone, support_enabled=False):
     if support_enabled:
         meta['last_sync_token'] = form.last_sync_token
 
-    definition = get_default_definition(sorted_form_metadata_keys(list(meta)))
+    from corehq.apps.hqwebapp.templatetags.proptable_tags import get_default_definition, get_tables_as_columns
+    definition = get_default_definition(_sorted_form_metadata_keys(list(meta)))
     form_meta_data = get_tables_as_columns(meta, definition, timezone=timezone)
     if getattr(form, 'auth_context', None):
         auth_context = AuthContext(form.auth_context)
@@ -2012,6 +2028,46 @@ def _get_form_metadata_context(domain, form, timezone, support_enabled=False):
         "auth_user_info": auth_user_info,
         "user_info": user_info,
     }
+
+
+def _top_level_tags(form):
+        """
+        Returns a OrderedDict of the top level tags found in the xml, in the
+        order they are found.
+
+        """
+        to_return = OrderedDict()
+
+        element = form.get_xml_element()
+        if element is None:
+            return OrderedDict(sorted(form.form_data.items()))
+
+        for child in element:
+            # fix {namespace}tag format forced by ElementTree in certain cases (eg, <reg> instead of <n0:reg>)
+            key = child.tag.split('}')[1] if child.tag.startswith("{") else child.tag
+            if key == "Meta":
+                key = "meta"
+            to_return[key] = form.get_data('form/' + key)
+        return to_return
+
+
+def _sorted_form_metadata_keys(keys):
+    def mycmp(x, y):
+        foo = ('timeStart', 'timeEnd')
+        bar = ('username', 'userID')
+
+        if x in foo and y in foo:
+            return -1 if foo.index(x) == 0 else 1
+        elif x in foo or y in foo:
+            return 0
+
+        if x in bar and y in bar:
+            return -1 if bar.index(x) == 0 else 1
+        elif x in bar and y in bar:
+            return 0
+
+        return cmp(x, y)
+    return sorted(keys, cmp=mycmp) 
 
 
 def _get_edit_info(instance):
