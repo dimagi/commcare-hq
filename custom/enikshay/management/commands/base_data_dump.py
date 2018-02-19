@@ -39,6 +39,9 @@ class BaseDataDump(BaseCommand):
                 self.result_file_headers.append(row['Column Name'])
         self.result_file_name = self.setup_result_file_name()
 
+    def include_case_in_dump(self, case):
+        return True
+
     def generate_dump(self):
         with open(self.result_file_name, 'w') as csvfile:
             writer = csv.DictWriter(csvfile, fieldnames=self.result_file_headers)
