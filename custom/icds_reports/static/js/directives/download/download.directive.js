@@ -313,6 +313,9 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
     };
 
     vm.hasErrorsISSNIPExport = function() {
+        if (vm.selectedPDFFormat === 'one') {
+            return vm.isISSNIPMonthlyRegisterSelected() && !vm.isDistrictOrBelowSelected();
+        }
         return vm.isISSNIPMonthlyRegisterSelected() && (!vm.isDistrictOrBelowSelected() || !vm.isAWCsSelected());
     };
 
