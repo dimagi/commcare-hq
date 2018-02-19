@@ -360,7 +360,7 @@ class LocationExcelValidator(object):
 
         # all locations sheets should have correct headers
         location_stubs = []
-        optional_headers = LOCATION_SHEET_HEADERS_OPTIONAL.values()
+        optional_headers = list(LOCATION_SHEET_HEADERS_OPTIONAL.values())
         for sheet_name, sheet_reader in sheets_by_title.items():
             if sheet_name != self.types_sheet_title:
                 actual = set(sheet_reader.fieldnames) - set(optional_headers)

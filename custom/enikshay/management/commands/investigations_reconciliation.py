@@ -13,6 +13,7 @@ from custom.enikshay.management.commands.base_model_reconciliation import (
     get_all_occurrence_case_ids_from_person,
 )
 from corehq.apps.hqcase.utils import bulk_update_cases
+import six
 
 CONFIRMED_DRTB_EPISODE_TYPE = "confirmed_drtb"
 DATE_MODIFIED_FIELD = "modified_on"
@@ -50,7 +51,7 @@ class Command(BaseModelReconciliationCommand):
         self.commit = False
         self.log_progress = options.get('log_progress')
         self.recipient = (options.get('recipient') or 'mkangia@dimagi.com')
-        self.recipient = list(self.recipient) if not isinstance(self.recipient, basestring) else [self.recipient]
+        self.recipient = list(self.recipient) if not isinstance(self.recipient, six.string_types) else [self.recipient]
         self.result_file_name = self.setup_result_file()
         self.case_accessor = CaseAccessors(DOMAIN)
         self.investigation_interval_values = []

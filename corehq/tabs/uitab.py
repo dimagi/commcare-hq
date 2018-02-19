@@ -174,11 +174,11 @@ class UITab(object):
                 for url_prefix_format in self.url_prefix_formats]
 
     def get_url_prefix_formats_suggestion(self):
-        import urlparse
+        import six.moves.urllib.parse
         accepted_urls = []
         # sorted shortest first
         all_urls = sorted(
-            urlparse.urlparse(url).path
+            six.moves.urllib.parse.urlparse(url).path
             # replace the actual domain with {domain}
             .replace('/a/{}'.format(self.domain), '/a/{domain}')
             for url in self._get_inferred_urls

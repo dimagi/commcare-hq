@@ -12,12 +12,16 @@ function MainController($scope, $route, $routeParams, $location, $uibModal, $win
     var current_month = new Date().getMonth() + 1;
     var current_year = new Date().getFullYear();
 
-    if (selected_month === current_month && selected_year === current_year &&
-        (new Date().getDate() === 1 || new Date().getDate() === 2)) {
-        $scope.showInfoMessage = true;
-        $scope.lastDayOfPreviousMonth = moment().set('date', 1).subtract(1, 'days').format('Do MMMM, YYYY');
-        $scope.currentMonth = moment().format("MMMM");
-    }
+    $scope.showInfoMessage = function() {
+        if (!$location.path().startsWith("/fact_sheets") && !$location.path().startsWith("/download") &&
+            selected_month === current_month && selected_year === current_year &&
+            (new Date().getDate() === 1 || new Date().getDate() === 2)) {
+            $scope.lastDayOfPreviousMonth = moment().set('date', 1).subtract(1, 'days').format('Do MMMM, YYYY');
+            $scope.currentMonth = moment().format("MMMM");
+            return true;
+        }
+        return false;
+    };
 
     $scope.reportAnIssue = function() {
         if (reportAnIssueUrl) {

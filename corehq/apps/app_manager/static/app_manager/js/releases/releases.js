@@ -211,6 +211,7 @@ hqDefine('app_manager/js/releases/releases', function () {
         self.savedApps = ko.observableArray();
         self.doneFetching = ko.observable(false);
         self.buildState = ko.observable('');
+        self.onlyShowReleased = ko.observable(false);
         self.fetchState = ko.observable('');
         self.nextVersionToFetch = null;
         self.fetchLimit = o.fetchLimit || 5;
@@ -258,6 +259,14 @@ hqDefine('app_manager/js/releases/releases', function () {
                 arguments[i] = ko.utils.unwrapObservable(arguments[i]);
             }
             return hqImport("hqwebapp/js/initial_page_data").reverse.apply(null, arguments);
+        };
+        self.webAppsUrl = function(idObservable) {
+            var url = hqImport("hqwebapp/js/initial_page_data").reverse("formplayer_main"),
+                data = {
+                    appId: ko.utils.unwrapObservable(idObservable),
+                };
+
+            return url + '#' + encodeURI(JSON.stringify(data));
         };
         self.app_error_url = function(app_id, version) {
             return self.reverse('project_report_dispatcher') + '?app=' + app_id + '&version_number=' + version;
@@ -307,6 +316,11 @@ hqDefine('app_manager/js/releases/releases', function () {
             }
         };
 
+        self.clearSavedApps = function() {
+            self.savedApps.splice(0);
+            self.nextVersionToFetch = null;
+        };
+
         self.getMoreSavedApps = function (scroll) {
             self.fetchState('pending');
             $.ajax({
@@ -314,7 +328,8 @@ hqDefine('app_manager/js/releases/releases', function () {
                 dataType: 'json',
                 data: {
                     start_build: self.nextVersionToFetch,
-                    limit: self.fetchLimit
+                    limit: self.fetchLimit,
+                    only_show_released: self.onlyShowReleased(),
                 },
                 success: function (savedApps) {
                     self.addSavedApps(savedApps);
@@ -362,6 +377,13 @@ hqDefine('app_manager/js/releases/releases', function () {
                 });
             }
         };
+
+        self.toggleLimitToReleased = function() {
+            self.onlyShowReleased(!self.onlyShowReleased());
+            self.clearSavedApps();
+            self.getMoreSavedApps(false);
+        };
+
         self.reload_message = gettext("Sorry, that didn't go through. " +
                 "Please reload your page and try again");
         self.deleteSavedApp = function (savedApp) {

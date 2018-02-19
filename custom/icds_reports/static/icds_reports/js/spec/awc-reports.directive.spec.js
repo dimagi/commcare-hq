@@ -48,39 +48,6 @@ describe('AWC Reports Directive', function () {
         chai.expect(controller).not.to.be.a('undefined');
     });
 
-    it('tests show info message', function () {
-        var fakeDate = new Date(2016, 1, 1);
-        var clock = sinon.useFakeTimers(fakeDate.getTime());
-
-        var expected = true;
-        var result = controller.showInfoMessage();
-
-        assert.equal(expected, result);
-        clock.restore();
-    });
-
-    it('tests show info message for second day also', function () {
-        var fakeDate = new Date(2016, 1, 2);
-        var clock = sinon.useFakeTimers(fakeDate.getTime());
-
-        var expected = true;
-        var result = controller.showInfoMessage();
-
-        assert.equal(expected, result);
-        clock.restore();
-    });
-
-    it('tests not show info message', function () {
-        var fakeDate = new Date(2016, 1, 3);
-        var clock = sinon.useFakeTimers(fakeDate.getTime());
-
-        var expected = false;
-        var result = controller.showInfoMessage();
-
-        assert.equal(expected, result);
-        clock.restore();
-    });
-
     it('tests moveToLocation national', function () {
         controller.moveToLocation('national', -1);
 
@@ -211,26 +178,6 @@ describe('AWC Reports Directive', function () {
         var result = $location.path();
 
         assert.equal(expected, result);
-    });
-
-    it('tests get data for step', function () {
-        controller.filtersData.location_id = 'test-id';
-        controller.selectedLocationLevel = 4;
-        var step = 'beneficiary';
-        var mockBeneficiaryDetails = {
-            "age_in_months": 43, "weight": [50], "wfl": [], "dob": "2014-03-15",
-            "age": "3 years 8 months ", "height": [150], "person_name": "child1HH1-05",
-            "sex": "M", "mother_name": "motherHH1",
-        };
-
-        $httpBackend.expectGET('beneficiary_details?location_id=test-id').respond(200, mockBeneficiaryDetails);
-        controller.getDataForStep(step);
-        $httpBackend.flush();
-
-        var centerExpected = {"lat": 22.1, "lng": 78.22, "zoom": 5};
-        assert.deepEqual(controller.center, centerExpected);
-        assert.equal(controller.message, false);
-        assert.notEqual(controller.markers, null);
     });
 
     it('tests show beneficiary details', function () {

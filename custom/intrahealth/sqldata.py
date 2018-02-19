@@ -1,5 +1,6 @@
 # coding=utf-8
 from __future__ import absolute_import
+from __future__ import division
 import sqlalchemy
 from sqlagg.base import AliasColumn, QueryMeta, CustomQueryColumn, TableNotFoundException
 from sqlagg.columns import SumColumn, MaxColumn, SimpleColumn, CountColumn, CountUniqueColumn, MeanColumn
@@ -570,7 +571,7 @@ class TauxConsommationData(BaseSqlData):
             for i in range(num_cols):
                 if i != 0 and i % 3 == 0:
                     cp = total_row[-2:]
-                    total_row.append("%s%%" % (100 * int(cp[0] or 0) / (cp[1] or 1)))
+                    total_row.append("%s%%" % (100 * int(cp[0] or 0) // (cp[1] or 1)))
                 else:
                     colrows = [cr[i] for cr in rows if isinstance(cr[i], dict)]
                     columns = [

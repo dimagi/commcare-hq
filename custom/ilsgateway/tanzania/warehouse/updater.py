@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import division
 from datetime import datetime, timedelta
 import logging
 import itertools
@@ -104,7 +105,7 @@ def average_lead_time(facility_id, window_date):
         else:
             continue
 
-    return total_time / count if count else None
+    return total_time // count if count else None
 
 
 def needed_status_types(org_summary):

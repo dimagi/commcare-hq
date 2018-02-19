@@ -25,6 +25,7 @@ from corehq.util.workbook_reading import open_any_workbook, Workbook, \
     SpreadsheetFileEncrypted, SpreadsheetFileNotFound, SpreadsheetFileInvalidError
 from couchexport.export import SCALAR_NEVER_WAS
 import six
+from six.moves import filter
 
 
 # Don't allow users to change the case type by accident using a custom field. But do allow users to change

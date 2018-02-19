@@ -2,7 +2,7 @@ from __future__ import absolute_import
 from corehq.motech.repeaters.views import (
     AddCaseRepeaterView,
     AddCustomSOAPCaseRepeaterView,
-    AddCustomSOAPLocationRepaterView,
+    AddCustomSOAPLocationRepeaterView,
 )
 
 
@@ -36,7 +36,7 @@ class RegisterNikshayPrivatePatientRepeaterView(AddCustomSOAPCaseRepeaterView):
     page_name = "Register Nikshay Private Patients"
 
 
-class RegisterNikshayHealthEstablishmentRepeaterView(AddCustomSOAPLocationRepaterView):
+class RegisterNikshayHealthEstablishmentRepeaterView(AddCustomSOAPLocationRepeaterView):
     urlname = 'register_nikshay_health_establishment'
     page_title = "Register Nikshay Health Establishment"
     page_name = "Register Nikshay Health Establishment"

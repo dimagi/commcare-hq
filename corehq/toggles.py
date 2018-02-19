@@ -1077,14 +1077,6 @@ EWS_BROADCAST_BY_ROLE = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
-SMS_PERFORMANCE_FEEDBACK = StaticToggle(
-    'sms_performance_feedback',
-    'Enable SMS-based performance feedback',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN],
-    help_link='https://docs.google.com/document/d/1YvbYLV4auuf8gVdYZ6jFZTsOLfJdxm49XhvWkska4GE/edit#',
-)
-
 LEGACY_SYNC_SUPPORT = StaticToggle(
     'legacy_sync_support',
     "Support mobile sync bugs in older projects (2.9 and below).",
@@ -1126,6 +1118,14 @@ CUSTOM_APP_BASE_URL = StaticToggle(
     'to allow migrating ICDS to a new cluster.',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN]
+)
+
+
+NEW_REMINDERS_MIGRATOR = StaticToggle(
+    'new_reminders_migrator',
+    "Enables features to handle migrating domains to the new reminders framework",
+    TAG_INTERNAL,
+    [NAMESPACE_USER]
 )
 
 
@@ -1270,14 +1270,6 @@ DATA_DICTIONARY = StaticToggle(
     TAG_SOLUTIONS,
     [NAMESPACE_DOMAIN],
     description='Available in the Data section, shows the names of all properties of each case type.',
-)
-
-LINKED_APPS = StaticToggle(
-    'linked_apps',
-    'Allows master and linked apps',
-    TAG_SOLUTIONS,
-    [NAMESPACE_DOMAIN],
-    help_link='https://confluence.dimagi.com/display/ccinternal/Linked+Applications',
 )
 
 LOCATION_USERS = StaticToggle(
@@ -1469,24 +1461,21 @@ MOBILE_LOGIN_LOCKOUT = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-EMAIL_EXPORT_WHEN_DONE_BUTTON = StaticToggle(
-    'email_export_when_done_button',
-    "Show button that emails when export is done",
-    TAG_PRODUCT,
-    [NAMESPACE_DOMAIN],
-)
-
-LOCATION_SEARCH = StaticToggle(
-    'location_search',
-    "Allow search for location in organization structure",
-    TAG_PRODUCT,
-    [NAMESPACE_DOMAIN],
-)
-
 SHOW_ALL_SCHEDULED_REPORT_EMAILS = StaticToggle(
     'show_all_scheduled_report_emails',
     "In the 'My Scheduled Reports' tab, show all reports the user is part of (if the user is an "
     "admin, show all in the current project)",
     TAG_PRODUCT,
     [NAMESPACE_DOMAIN],
+)
+
+LINKED_DOMAINS = StaticToggle(
+    'linked_domains',
+    'Allow linking domains (successor to linked apps)',
+    TAG_INTERNAL,
+    [NAMESPACE_DOMAIN],
+    description=(
+        "Link project spaces to allow syncing apps, lookup tables, organizations etc."
+    ),
+    help_link='https://confluence.dimagi.com/display/ccinternal/Linked+Applications'
 )

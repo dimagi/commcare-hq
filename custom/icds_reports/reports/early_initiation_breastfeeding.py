@@ -34,7 +34,7 @@ def get_early_initiation_breastfeeding_map(domain, config, loc_level, show_test=
             queryset = apply_exclude(domain, queryset)
         return queryset
 
-    data_for_map, in_month_total, birth_total, average = generate_data_for_map(
+    data_for_map, in_month_total, birth_total, average, total = generate_data_for_map(
         get_data_for(config),
         loc_level,
         'birth',
