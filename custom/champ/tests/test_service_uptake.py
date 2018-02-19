@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from custom.champ.tests import ChampTestCase
 from custom.champ.views import ServiceUptakeView
 

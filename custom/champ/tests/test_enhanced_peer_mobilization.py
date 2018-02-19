@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from datetime import date
 from corehq.apps.userreports.specs import EvaluationContext
 from custom.champ.tests.utils import TestDataSourceExpressions
