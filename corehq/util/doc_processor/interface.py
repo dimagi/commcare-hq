@@ -1,5 +1,6 @@
 from __future__ import print_function
 from __future__ import absolute_import
+from __future__ import division
 import weakref
 from abc import ABCMeta, abstractmethod
 from datetime import datetime, timedelta
@@ -171,7 +172,7 @@ class DocumentProcessorController(object):
             remaining = "?"
         else:
             session_remaining = self.session_total - self.session_visited
-            remaining = elapsed / self.session_visited * session_remaining
+            remaining = elapsed // self.session_visited * session_remaining
         return elapsed, remaining
 
     def _setup(self):
