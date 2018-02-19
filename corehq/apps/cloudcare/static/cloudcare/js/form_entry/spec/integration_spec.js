@@ -22,8 +22,8 @@ describe('Integration', function() {
             "caption_video": null,
             "choices": [
                 "Yes",
-                "No"
-            ]
+                "No",
+            ],
         };
         questionJSONString = {
             "caption_audio": null,
@@ -46,7 +46,7 @@ describe('Integration', function() {
             seq_id: 1,
             session_id: '123',
             title: 'My title',
-            langs: ['en']
+            langs: ['en'],
         };
         this.clock = sinon.useFakeTimers();
     });
@@ -158,7 +158,7 @@ describe('Integration', function() {
             "title": "Geo",
             "langs": [
                 "en",
-                "es"
+                "es",
             ],
             "seq_id": 1,
             "tree": [{
@@ -175,8 +175,8 @@ describe('Integration', function() {
                 "answer": null,
                 "datatype": "geo",
                 "style": {},
-                "caption_video": null
-            }]
+                "caption_video": null,
+            }],
         };
 
         var json2 = {
@@ -194,18 +194,18 @@ describe('Integration', function() {
                 "relevant": 1,
                 "help": null,
                 "answer": [
-                    30.000000000000018, -2.109375
+                    30.000000000000018, -2.109375,
                 ],
                 "datatype": "geo",
                 "style": {},
-                "caption_video": null
-            }]
+                "caption_video": null,
+            }],
         };
 
         var f = new Form(json1);
-        var child = f.children()[0]
+        var child = f.children()[0];
         $.publish('session.reconcile', [json2, child]);
-        assert.equal(child.answer()[0], 30.000000000000018)
+        assert.equal(child.answer()[0], 30.000000000000018);
 
 
     });

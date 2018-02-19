@@ -52,7 +52,7 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
             } else {
                 span.removeClass(iconTrue).addClass(iconFalse);
             }
-        }
+        },
     };
 
     ko.bindingHandlers.langcode = {
@@ -78,12 +78,12 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
                         } else {
                             return allBindings.has(key);
                         }
-                    }
+                    },
                 };
             }()));
             $(element).langcodes();
         },
-        update: ko.bindingHandlers.value.update
+        update: ko.bindingHandlers.value.update,
     };
 
     ko.bindingHandlers.sortable = {
@@ -100,7 +100,7 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
             /* this function's logic follows that of ko.bindingHandlers.foreach.makeTemplateValueAccessor */
             var modelValue = valueAccessor(),
                 unwrappedValue = ko.utils.peekObservable(modelValue);
-            if ((!unwrappedValue) || typeof unwrappedValue.length == "number") {
+            if ((!unwrappedValue) || typeof unwrappedValue.length === "number") {
                 return modelValue;
             } else {
                 return unwrappedValue['data'];
@@ -160,7 +160,7 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
                             });
                         }
                     }
-                }
+                },
             });
             return ko.bindingHandlers.foreach.init(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext);
         },
@@ -168,13 +168,13 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
             var list = ko.bindingHandlers.sortable.getList(valueAccessor);
             ko.bindingHandlers.sortable.updateSortableList(list);
             return ko.bindingHandlers.foreach.update(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext);
-        }
+        },
     };
 
     ko.bindingHandlers.saveButton = {
         init: function(element, getSaveButton) {
             getSaveButton().ui.appendTo(element);
-        }
+        },
     };
 
     ko.bindingHandlers.saveButton2 = {
@@ -186,7 +186,7 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
             saveButton = hqImport("hqwebapp/js/main").initSaveButton({
                 save: function() {
                     saveButton.ajax(saveOptions());
-                }
+                },
             });
             $(element).css('vertical-align', 'top').css('display', 'inline-block');
 
@@ -199,7 +199,7 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
         update: function(element, valueAccessor) {
             var state = ko.utils.unwrapObservable(valueAccessor());
             element.saveButton.setStateWhenReady(state);
-        }
+        },
     };
 
     ko.bindingHandlers.deleteButton = {
@@ -211,7 +211,7 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
             deleteButton = hqImport("hqwebapp/js/main").initDeleteButton({
                 save: function() {
                     deleteButton.ajax(saveOptions());
-                }
+                },
             });
             $(element).css('vertical-align', 'top').css('display', 'inline-block');
             deleteButton.ui.appendTo(element);
@@ -223,14 +223,14 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
         update: function(element, valueAccessor) {
             var state = ko.utils.unwrapObservable(valueAccessor());
             element.deleteButton.setStateWhenReady(state);
-        }
+        },
     };
 
     ko.bindingHandlers.modal = {
         init: function(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
             $(element).addClass('modal fade').modal({
                 show: false,
-                backdrop: false
+                backdrop: false,
             });
             //        ko.bindingHandlers['if'].init(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext);
         },
@@ -243,7 +243,7 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
             } else {
                 $(element).modal('hide');
             }
-        }
+        },
     };
 
     ko.bindingHandlers.openModal = {
@@ -263,7 +263,7 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
                     return clickAction;
                 };
             ko.bindingHandlers.click.init(element, newValueAccessor, allBindingsAccessor, viewModel, bindingContext);
-        }
+        },
     };
 
     ko.bindingHandlers.openRemoteModal = {
@@ -280,7 +280,7 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
         },
         update: function(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
             $(element).data('ajaxSource', ko.utils.unwrapObservable(valueAccessor()));
-        }
+        },
     };
 
     ko.bindingHandlers.visibleFade = {
@@ -291,7 +291,7 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
             } else if (!value) {
                 $(element).slideUp();
             }
-        }
+        },
     };
 
     ko.bindingHandlers.starred = {
@@ -323,7 +323,7 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
             $element.removeClass(pending);
             $element.removeClass(error);
             $element.addClass(suffix);
-        }
+        },
     };
 
     ko.bindingHandlers.bootstrapTabs = {
@@ -342,7 +342,7 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
             setTimeout(function() {
                 $('ul.nav > li.active > a', element).each(activate);
             }, 0);
-        }
+        },
     };
 
     ko.bindingHandlers.makeHqHelp = {
@@ -357,9 +357,9 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
                 title: name,
                 content: description,
                 html: format === 'html',
-                placement: placement || 'right'
+                placement: placement || 'right',
             }).appendTo(element);
-        }
+        },
     };
 
     ko.bindingHandlers.optstr = {
@@ -405,9 +405,9 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
                     } else {
                         return allBindings.has(key);
                     }
-                }
+                },
             });
-        }
+        },
     };
 
     ko.bindingHandlers.valueDefault = {
@@ -418,7 +418,7 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
                 value(ko.utils.unwrapObservable(allBindingsAccessor()['default']));
             }
             return ko.bindingHandlers.value.update(element, valueAccessor);
-        }
+        },
     };
 
     ko.bindingHandlers.edit = {
@@ -447,7 +447,7 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
                 }
                 no_edit.text(getValue(element)).removeClass().addClass($(element).attr('class')).addClass('ko-no-edit').addClass('ko-no-edit-' + element.tagName.toLowerCase());
             }
-        }
+        },
     };
 
     /**
@@ -473,7 +473,7 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
                 var id = newItems[i].id || newItems[i];
                 source.push({
                     id: id,
-                    text: text
+                    text: text,
                 });
             }
             return source;
@@ -491,7 +491,7 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
             $el.select2({
                 multiple: false,
                 width: "element",
-                data: $el.data(that.SOURCE_KEY)
+                data: $el.data(that.SOURCE_KEY),
             });
         };
 
@@ -551,7 +551,7 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
             if (newValue && !_.find(source, function(item) { return item.id === newValue; })) {
                 source.unshift({
                     id: newValue,
-                    text: newValue
+                    text: newValue,
                 });
             }
 
@@ -593,9 +593,9 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
         init: function(element, valueAccessor) {
             var contacts = valueAccessor();
             $(element).multiTypeahead({
-                source: contacts
+                source: contacts,
             }).focus();
-        }
+        },
     };
 
     /**
@@ -609,28 +609,28 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
             // which means that whatever controls that element
             // is free to use its own knockout without conflicting
             return {
-                controlsDescendantBindings: true
+                controlsDescendantBindings: true,
             };
         },
         update: function(element, valueAccessor, allBindings, viewModel, bindingContext) {
             $(element).empty();
             $(element).append(ko.unwrap(valueAccessor()));
-        }
+        },
     };
 
     ko.bindingHandlers.__copyPasteSharedInit = function() {
         var offScreen = {
             top: -10000,
-            left: -10000
+            left: -10000,
         };
         var hiddenTextarea = $('<textarea></textarea>').css({
             position: 'absolute',
             width: 0,
-            height: 0
+            height: 0,
         }).css(offScreen).appendTo('body');
         var focusTextarea = function($element, value) {
             hiddenTextarea.css({
-                top: $element.offset().top
+                top: $element.offset().top,
             });
             hiddenTextarea.val(value);
             hiddenTextarea.focus();
@@ -680,7 +680,7 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
         init: function(element, valueAccessor) {
             ko.bindingHandlers.__copyPasteSharedInit();
             $(element).data('copyCallback', valueAccessor());
-        }
+        },
     };
 
     ko.bindingHandlers.paste = {
@@ -688,7 +688,7 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
             ko.bindingHandlers.__copyPasteSharedInit();
             var callback = valueAccessor();
             $(element).data('pasteCallback', valueAccessor());
-        }
+        },
     };
 
     /**
@@ -712,9 +712,9 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
     ko.bindingHandlers.stopBinding = {
         init: function() {
             return {
-                controlsDescendantBindings: true
+                controlsDescendantBindings: true,
             };
-        }
+        },
     };
     ko.virtualElements.allowedBindings.stopBinding = true;
 
@@ -724,7 +724,7 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
             if (options.title || options.context) { // don't show empty popovers
                 $(element).popover(options);
             }
-        }
+        },
     };
 
     ko.bindingHandlers.initializeValue = {
@@ -748,7 +748,7 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
             if (viewModel.onBind) {
                 viewModel.onBind(bindingContext);
             }
-        }
+        },
     };
 
 });

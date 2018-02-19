@@ -43,7 +43,7 @@ hqDefine('app_manager/js/supported_languages', function () {
             },
             write: function () {
                 self._seen(true);
-            }
+            },
         });
         this.saveButton = hqImport("hqwebapp/js/main").initSaveButton({
             unsavedMessage: gettext("You have unsaved changes in your supported languages"),
@@ -87,9 +87,9 @@ hqDefine('app_manager/js/supported_languages', function () {
                         ko.utils.arrayForEach(self.languages(), function (language) {
                             language.originalLangcode(language.langcode());
                         });
-                    }
+                    },
                 });
-            }
+            },
         });
 
         var changeSaveButton = function () {

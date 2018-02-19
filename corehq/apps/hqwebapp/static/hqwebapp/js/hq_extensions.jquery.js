@@ -20,9 +20,9 @@ hqDefine("hqwebapp/js/hq_extensions.jquery", ["jquery"], function($) {
             var
             // Object that holds names => values.
                 params = {},
-            // Get query string pieces (separated by &)
+                // Get query string pieces (separated by &)
                 pieces = value.split('&'),
-            // Temporary variables used in loop.
+                // Temporary variables used in loop.
                 pair, i, l;
 
             // Loop through query string pieces and assign params.
@@ -35,7 +35,7 @@ hqDefine("hqwebapp/js/hq_extensions.jquery", ["jquery"], function($) {
             }
 
             return params;
-        }
+        },
     });
 
     return 1;   // Flag the module as loaded by hqModules.js

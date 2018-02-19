@@ -45,7 +45,7 @@ TaskQueue.prototype.addTask = function(name, fn, parameters, thisArg) {
         name: name,
         fn: fn,
         parameters: parameters,
-        thisArg: thisArg
+        thisArg: thisArg,
     };
     this.queue.push(task);
     return task;
@@ -80,17 +80,17 @@ function WebFormSession(params) {
     if (params.form_uid) {
         self.formSpec = {
             type: 'form-name',
-            val: params.form_uid
+            val: params.form_uid,
         };
     } else if (params.form_content) {
         self.formSpec = {
             type: 'form-content',
-            val: params.form_content
+            val: params.form_content,
         };
     } else if (params.form_url) {
         self.formSpec = {
             type: 'form-url',
-            val: params.form_url
+            val: params.form_url,
         };
     }
 
@@ -184,10 +184,10 @@ WebFormSession.prototype.serverRequest = function(requestParams, callback, block
         contentType: "application/json",
         dataType: "json",
         crossDomain: {
-            crossDomain: true
+            crossDomain: true,
         },
         xhrFields: {
-            withCredentials: true
+            withCredentials: true,
         },
         success: function(resp) {
             self.handleSuccess(resp, requestParams.action, callback);
@@ -219,7 +219,7 @@ WebFormSession.prototype.handleSuccess = function(resp, action, callback) {
         } catch (err) {
             console.error(err);
             self.onerror({
-                message: Formplayer.Utils.touchformsError(err)
+                message: Formplayer.Utils.touchformsError(err),
             });
         }
     }
@@ -249,7 +249,7 @@ WebFormSession.prototype.handleFailure = function(resp, action, textStatus, fail
         failureCallback();
     }
     this.onerror({
-        human_readable_message: errorMessage
+        human_readable_message: errorMessage,
     });
     this.onLoadingComplete();
     //    $.publish('session.block', false);
@@ -329,7 +329,7 @@ WebFormSession.prototype.loadForm = function($form, initLang) {
 
 WebFormSession.prototype.resumeForm = function($form, session_id) {
     var args = {
-        "action": Formplayer.Const.CURRENT
+        "action": Formplayer.Const.CURRENT,
     };
 
     this.initForm(args, $form);
@@ -401,7 +401,7 @@ WebFormSession.prototype.evaluateXPath = function(xpath, callback) {
     this.serverRequest(
         {
             'action': Formplayer.Const.EVALUATE_XPATH,
-            'xpath': xpath
+            'xpath': xpath,
         },
         function(resp) {
             callback(resp);
@@ -422,7 +422,7 @@ WebFormSession.prototype.newRepeat = function(repeat) {
     this.serverRequest(
         {
             'action': Formplayer.Const.NEW_REPEAT,
-            'ix': getIx(repeat)
+            'ix': getIx(repeat),
         },
         function(resp) {
             $.publish('session.reconcile', [resp, repeat]);
@@ -437,7 +437,7 @@ WebFormSession.prototype.deleteRepeat = function(repetition) {
         {
             'action': Formplayer.Const.DELETE_REPEAT,
             'ix': rep_ix,
-            'form_ix': juncture
+            'form_ix': juncture,
         },
         function(resp) {
             $.publish('session.reconcile', [resp, repetition]);
@@ -449,7 +449,7 @@ WebFormSession.prototype.switchLanguage = function(lang) {
     this.serverRequest(
         {
             'action': Formplayer.Const.SET_LANG,
-            'lang': lang
+            'lang': lang,
         },
         function(resp) {
             $.publish('session.reconcile', [resp, lang]);
@@ -484,7 +484,7 @@ WebFormSession.prototype.submitForm = function(form) {
         {
             'action': Formplayer.Const.SUBMIT,
             'answers': answers,
-            'prevalidated': prevalidated
+            'prevalidated': prevalidated,
         },
         function(resp) {
             if (resp.status == 'success') {

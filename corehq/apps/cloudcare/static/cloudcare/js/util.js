@@ -7,7 +7,7 @@ hqDefine('cloudcare/js/util', function () {
     }
 
     NProgress.configure({
-        showSpinner: false
+        showSpinner: false,
     });
 
     var getFormUrl = function(urlRoot, appId, moduleId, formId, instanceId) {
@@ -60,9 +60,9 @@ hqDefine('cloudcare/js/util', function () {
         $alertDialog
             .prepend(
                 $("<a />")
-                .addClass("close")
-                .attr("data-dismiss", "alert")
-                .html("&times;")
+                    .addClass("close")
+                    .attr("data-dismiss", "alert")
+                    .html("&times;")
             );
         $el.append($container);
         if (autoHideTime) {

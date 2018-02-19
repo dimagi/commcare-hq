@@ -98,7 +98,7 @@ hqDefine('app_manager/js/app_manager_media', function() {
             return {
                 path: interpolatePath(self.currentPath()),
                 media_type: self.ref().mediaType,
-                replace_attachment: true
+                replace_attachment: true,
             };
         };
 
@@ -107,7 +107,7 @@ hqDefine('app_manager/js/app_manager_media', function() {
                 path: self.currentPath(),
                 isMediaMatched: self.isMediaMatched,
                 getUrl: self.url,
-                m_id: self.objectId
+                m_id: self.objectId,
             };
         };
 
@@ -160,7 +160,7 @@ hqDefine('app_manager/js/app_manager_media', function() {
             objectMap: objectMap,
             uploadController: uploaders.iconUploader,
             defaultPath: 'jr://file/commcare/image/' + defaultFileName + '.png',
-            inputElement: $mediaImage
+            inputElement: $mediaImage,
         });
 
         var menuAudio = new AppMenuMediaManager({
@@ -168,7 +168,7 @@ hqDefine('app_manager/js/app_manager_media', function() {
             objectMap: objectMap,
             uploadController: uploaders.audioUploader,
             defaultPath: 'jr://file/commcare/audio/' + defaultFileName + '.mp3',
-            inputElement: $mediaAudio
+            inputElement: $mediaAudio,
         });
 
         if ($mediaImage.length) {
@@ -179,13 +179,13 @@ hqDefine('app_manager/js/app_manager_media', function() {
         }
         return {
             menuImage: menuImage,
-            menuAudio: menuAudio
+            menuAudio: menuAudio,
         };
     }
 
     return {
         initNavMenuMedia: initNavMenuMedia,
-        AppMenuMediaManager: AppMenuMediaManager
+        AppMenuMediaManager: AppMenuMediaManager,
     };
 
     function interpolatePath(path) {

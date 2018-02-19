@@ -105,7 +105,7 @@ hqDefine("sms/js/settings.ko", function() {
                 $(this).timepicker({
                     showMeridian: false,
                     showSeconds: false,
-                    defaultTime: $(this).val() || false
+                    defaultTime: $(this).val() || false,
                 });
             });
         };

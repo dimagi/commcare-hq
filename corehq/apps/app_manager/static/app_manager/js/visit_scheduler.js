@@ -37,14 +37,14 @@ hqDefine('app_manager/js/visit_scheduler', function() {
                     url: params.saveUrl,
                     data: {
                         phases: JSON.stringify(self.serializePhases()),
-                        has_schedule: self.hasSchedule()
+                        has_schedule: self.hasSchedule(),
                     },
                     dataType: 'json',
                     success: function(data) {
                         app_manager.updateDOM(data.update);
-                    }
+                    },
                 });
-            }
+            },
         });
 
         var Phase = function(id, anchor, forms) {
@@ -94,7 +94,7 @@ hqDefine('app_manager/js/visit_scheduler', function() {
             return _.map(self.phases(), function(phase) {
                 return {
                     id: phase.id,
-                    anchor: phase.anchor.val()
+                    anchor: phase.anchor.val(),
                 };
             });
         };
@@ -117,15 +117,15 @@ hqDefine('app_manager/js/visit_scheduler', function() {
                         type: 'post',
                         url: self.save_url,
                         data: {
-                            schedule: schedule
+                            schedule: schedule,
                         },
                         dataType: 'json',
                         success: function(data) {
                             app_manager.updateDOM(data.update);
-                        }
+                        },
                     });
                 }
-            }
+            },
         });
 
         self.getQuestions = function(filter, excludeHidden, includeRepeat) {
@@ -203,7 +203,7 @@ hqDefine('app_manager/js/visit_scheduler', function() {
                 include: [
                     'starts',
                     'expires',
-                ]
+                ],
             };
         },
         wrap: function(data) {
@@ -218,7 +218,7 @@ hqDefine('app_manager/js/visit_scheduler', function() {
         },
         unwrap: function(self) {
             return ko.mapping.toJS(self, ScheduleRelevancy.mapping(self));
-        }
+        },
     };
 
     var ScheduleVisit = {
@@ -231,12 +231,12 @@ hqDefine('app_manager/js/visit_scheduler', function() {
                     'expires',
                     'repeats',
                     'increment',
-                ]
+                ],
             };
         },
         wrap: function(data, config) {
             var self = {
-                config: config
+                config: config,
             };
             ko.mapping.fromJS(data, ScheduleVisit.mapping(self), self);
             if (self.repeats()) {
@@ -249,7 +249,7 @@ hqDefine('app_manager/js/visit_scheduler', function() {
 
         unwrap: function(self) {
             return ko.mapping.toJS(self, ScheduleVisit.mapping(self));
-        }
+        },
     };
 
     var SchedulePhase = {
@@ -257,14 +257,14 @@ hqDefine('app_manager/js/visit_scheduler', function() {
             return {
                 include: [
                     'anchor',
-                ]
+                ],
             };
         },
         wrap: function(data, config) {
             var self = {};
             ko.mapping.fromJS(data, SchedulePhase.mapping(self), self);
             return self;
-        }
+        },
     };
 
     var FormSchedule = {
@@ -275,22 +275,22 @@ hqDefine('app_manager/js/visit_scheduler', function() {
                     'allow_unscheduled',
                     'transition_condition',
                     'termination_condition',
-                    'schedule_form_id'
+                    'schedule_form_id',
                 ],
                 visits: {
                     create: function(options) {
                         options.data.type = options.data.due < 0 ? 'before' : 'after';
                         options.data.due = Math.abs(options.data.due);
                         return ScheduleVisit.wrap(options.data, self);
-                    }
-                }
+                    },
+                },
             };
         },
         wrap: function(data, config, phase) {
             var self = {
                 config: config,
                 all_schedule_phase_anchors: data.all_schedule_phase_anchors,
-                phase: phase
+                phase: phase,
             };
             ko.mapping.fromJS(data.schedule, FormSchedule.mapping(self), self);
 
@@ -298,7 +298,7 @@ hqDefine('app_manager/js/visit_scheduler', function() {
             self.allow = {
                 repeats: function() {
                     return false;
-                }
+                },
             };
 
             self.scheduleEnabled = ko.observable(data.schedule.enabled);
@@ -327,7 +327,7 @@ hqDefine('app_manager/js/visit_scheduler', function() {
                     starts: null,
                     expires: null,
                     increment: null,
-                    repeats: false
+                    repeats: false,
                 }));
             };
 
@@ -351,7 +351,7 @@ hqDefine('app_manager/js/visit_scheduler', function() {
                 write: function(value) {
                     condition.type(value ? 'always' : 'never');
                     config.saveButton.fire('change');
-                }
+                },
             };
         },
 
@@ -385,16 +385,16 @@ hqDefine('app_manager/js/visit_scheduler', function() {
                     starts: visit.starts * -1,
                     expires: visit.expires,
                     repeats: repeats,
-                    increment: repeats ? visit.due : null
+                    increment: repeats ? visit.due : null,
                 };
             });
             return schedule;
-        }
+        },
     };
 
     return {
         Scheduler: Scheduler,
-        ModuleScheduler: ModuleScheduler
+        ModuleScheduler: ModuleScheduler,
     };
 });
 
@@ -415,9 +415,9 @@ ko.bindingHandlers.sortableList = {
                     list.splice(position, 0, item);
                 }
                 ui.item.remove();
-            }
+            },
         });
-    }
+    },
 };
 
 // Verbatim from http://www.knockmeout.net/2011/05/dragging-dropping-and-sorting-with.html
@@ -430,5 +430,5 @@ ko.bindingHandlers.visibleAndSelect = {
                 $(element).focus().select();
             });
         }
-    }
+    },
 };

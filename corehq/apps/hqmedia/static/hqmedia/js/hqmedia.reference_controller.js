@@ -172,7 +172,7 @@ function FormReferences(name, obj_map, group_id) {
         } else if (ref.media_class == "CommCareVideo") {
             self.video.push(ref_obj);
         }
-    }
+    };
 }
 
 FormReferences.prototype = Object.create(BaseReferenceGroup.prototype);
@@ -258,7 +258,7 @@ function BaseMediaReference(ref) {
                 originalPath: self.path,
                 media_type: self.media_class,
                 old_ref: self.m_id || "",
-                replace_attachment: true
+                replace_attachment: true,
             };
         }
         self.upload_controller.updateUploadFormUI();
@@ -338,12 +338,12 @@ function MediaOption(mediaRef, data) {
         $.post(chooseImageUrl, {
             media_type: self.mediaRef.type(),
             path: self.mediaRef.path(),
-            id: self.m_id
+            id: self.m_id,
         }, function(res) {
             if (self.mediaRef.type() == "Image")
                 self.mediaRef.foundNewImage(null, res);
             else if (self.mediaRef.type() == "Audio")
                 self.mediaRef.foundNewAudio(null, res);
         }, 'json');
-    }
+    };
 }

@@ -67,7 +67,7 @@ var CRUDAdminControl = function(options) {
                             $('#js-add-crud-success').removeClass('hide');
                         },
                         error: resetSubmitButton,
-                        dataType: 'json'
+                        dataType: 'json',
                     });
                 }
                 e.preventDefault();
@@ -85,7 +85,7 @@ var CRUDAdminControl = function(options) {
                     dataType: 'json',
                     url: overrideFormTypeInUrl(submit_url, self.currentItemFormType) + self.currentItemID + '/',
                     success: self.refreshUpdateItemForm,
-                    error: resetSubmitButton
+                    error: resetSubmitButton,
                 });
                 e.preventDefault();
                 return false;
@@ -100,7 +100,7 @@ var CRUDAdminControl = function(options) {
             url: overrideFormTypeInUrl(self.newFormSubmitURL, self.overrideNewFormType),
             method: 'GET',
             success: self.refreshAddItemForm,
-            error: resetSubmitButton
+            error: resetSubmitButton,
         });
     };
 
@@ -112,7 +112,7 @@ var CRUDAdminControl = function(options) {
             url: overrideFormTypeInUrl(self.updateFormSubmitURL, self.currentItemFormType) + self.currentItemID + '/',
             method: 'GET',
             success: self.refreshUpdateItemForm,
-            error: resetSubmitButton
+            error: resetSubmitButton,
         });
     };
 

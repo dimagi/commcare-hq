@@ -54,7 +54,7 @@
                 data.restoreAs = options.restoreAs;
                 var sess = new WebFormSession(data);
                 sess.load($target, options.lang);
-            }
+            },
         });
     };
 
@@ -93,7 +93,7 @@
                 onload: function () {
                     $this.html("<i class='icon-remove'></i> Cancel")
                         .data('state', 'open');
-                }
+                },
             });
         } else {
             $this.html($this.data('original-html'));

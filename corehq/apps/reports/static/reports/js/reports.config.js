@@ -89,7 +89,7 @@ var HQReport = function(options) {
         $(reportDatatable.dataTableElem).on('hqreport.tabular.lengthChange', function(event, value) {
             $.cookie(defaultRowsCookieName, value, {
                 path: savedPath,
-                expires: 2
+                expires: 2,
             });
         });
     };
@@ -99,11 +99,11 @@ var HQReport = function(options) {
         if (self.datespan && validDate.test(self.datespan.startdate) && validDate.test(self.datespan.enddate)) {
             $.cookie(self.datespanCookie + '.startdate', self.datespan.startdate, {
                 path: self.urlRoot,
-                expires: 1
+                expires: 1,
             });
             $.cookie(self.datespanCookie + '.enddate', self.datespan.enddate, {
                 path: self.urlRoot,
-                expires: 1
+                expires: 1,
             });
         }
     };
@@ -202,7 +202,7 @@ var HQReport = function(options) {
 
         self.unwrap = function() {
             var data = ko.mapping.toJS(self, {
-                ignore: ['sendEmail', 'unwrap', 'resetModal']
+                ignore: ['sendEmail', 'unwrap', 'resetModal'],
             });
 
             for (var i in data) {

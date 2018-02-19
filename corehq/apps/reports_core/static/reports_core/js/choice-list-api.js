@@ -7,7 +7,7 @@ var choiceListUtils = (function() {
         return {
             q: term, // search term
             page: page,
-            limit: pageSize
+            limit: pageSize,
         };
     };
     module.formatValueForSelect2 = function (val) {
@@ -18,7 +18,7 @@ var choiceListUtils = (function() {
         var formattedData = _.map(data, module.formatValueForSelect2);
         return {
             results: formattedData,
-            more: data.length === pageSize
+            more: data.length === pageSize,
         };
     };
     return module;

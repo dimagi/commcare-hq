@@ -19,9 +19,9 @@ function init_preloaders(preloaders) {
                     url: PRELOADER_URL,
                     type: 'GET',
                     data: {
-                        "param": val
+                        "param": val,
                     },
-                    async: false
+                    async: false,
                 }).responseText;
                 preload_data[type][key] = valback;
             } else {

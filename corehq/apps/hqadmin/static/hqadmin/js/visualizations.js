@@ -17,7 +17,7 @@ hqDefine("hqadmin/js/visualizations", function() {
             b[p[0]] = decodeURIComponent(p[1].replace(/\+/g, " "));
         }
         return b;
-    }
+    };
 
     var HQVisualizations = function (options) {
         var self = {};
@@ -148,7 +148,7 @@ hqDefine("hqadmin/js/visualizations", function() {
                     var startdate = new Date(Date.UTC(d.startdate[0], d.startdate[1]-1, d.startdate[2]));
                     var enddate = new Date(Date.UTC(d.enddate[0], d.enddate[1]-1, d.enddate[2]));
                     self.charts = loadCharts(self.chart_name, self.xaxis_label, d.histo_data, d.initial_values,
-                            startdate.getTime(), enddate.getTime(), self.interval);
+                        startdate.getTime(), enddate.getTime(), self.interval);
                     $loading.hide();
                     $charts.show().removeClass('hidden');
                     $(window).trigger('resize');  // redraw graph

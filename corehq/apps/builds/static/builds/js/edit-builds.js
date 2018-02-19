@@ -15,8 +15,8 @@ hqDefine('builds/js/edit-builds', function () {
         // property and hence the checkbox in view
         self.version.subscribe(function(newValue){
             self.j2me_enabled(buildsMenu.j2me_enabled_versions.
-                              includes(newValue)
-                             );
+                includes(newValue)
+            );
         });
     }
 
@@ -69,8 +69,8 @@ hqDefine('builds/js/edit-builds', function () {
                 'build': {
                     'version': version.version(),
                     'build_number': null,
-                    'latest': true
-                }
+                    'latest': true,
+                },
             });
         });
         doc.defaults = [];
@@ -78,7 +78,7 @@ hqDefine('builds/js/edit-builds', function () {
             doc.defaults.push({
                 'version': deflt(),
                 'build_number': null,
-                'latest': true
+                'latest': true,
             });
         });
         return doc;

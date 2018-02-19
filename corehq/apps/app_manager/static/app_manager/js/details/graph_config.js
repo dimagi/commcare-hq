@@ -156,7 +156,7 @@ hqDefine('app_manager/js/details/graph_config', function() {
 
                 series.selectedSource = {
                     'text': 'custom',
-                    'value': 'custom'
+                    'value': 'custom',
                 };
                 series.dataPath = s.data_path;
                 series.dataPathPlaceholder = s.data_path_placeholder;
@@ -172,14 +172,14 @@ hqDefine('app_manager/js/details/graph_config', function() {
                         'lang': moduleOptions.lang,
                         'langs': moduleOptions.langs,
                         'property': pair[0],
-                        'values': pair[1]
+                        'values': pair[1],
                     };
                 });
                 series.localeSpecificConfigurations = _.sortBy(series.localeSpecificConfigurations, 'property');
                 series.configPairs = _.map(_.pairs(s.config), function(pair) {
                     return {
                         'property': pair[0],
-                        'value': pair[1]
+                        'value': pair[1],
                     };
                 });
                 return series;
@@ -196,13 +196,13 @@ hqDefine('app_manager/js/details/graph_config', function() {
                     'lang': moduleOptions.lang,
                     'langs': moduleOptions.langs,
                     'property': pair[0],
-                    'values': pair[1]
+                    'values': pair[1],
                 };
             });
             ret.configPairs = _.map(_.pairs(serverGraphObject.config), function(pair) {
                 return {
                     'property': pair[0],
-                    'value': pair[1]
+                    'value': pair[1],
                 };
             });
             ret.childCaseTypes = moduleOptions.childCaseTypes;
@@ -254,7 +254,7 @@ hqDefine('app_manager/js/details/graph_config', function() {
         // Make the value for the current language observable
         self.values[self.lang] = ko.observable(
             self.values[self.lang] === undefined ? null :
-            ko.unwrap(self.values[self.lang])
+                ko.unwrap(self.values[self.lang])
         );
 
         /**
@@ -273,7 +273,7 @@ hqDefine('app_manager/js/details/graph_config', function() {
         self.getBackup = function() {
             var backup = {
                 'value': null,
-                'lang': null
+                'lang': null,
             };
             var modLangs = [self.lang].concat(self.langs);
             for (var i = 0; i < modLangs.length; i++) {
@@ -281,7 +281,7 @@ hqDefine('app_manager/js/details/graph_config', function() {
                 if (possibleBackup !== undefined && possibleBackup !== null) {
                     backup = {
                         'value': possibleBackup,
-                        'lang': modLangs[i]
+                        'lang': modLangs[i],
                     };
                     break;
                 }
@@ -323,7 +323,7 @@ hqDefine('app_manager/js/details/graph_config', function() {
                 return new LocalizedConfigPropertyValuePair({
                     'property': s,
                     'lang': self.lang,
-                    'langs': self.langs
+                    'langs': self.langs,
                 });
             }
         ));
@@ -407,7 +407,7 @@ hqDefine('app_manager/js/details/graph_config', function() {
             var theOrder = {
                 'x-title': 0,
                 'y-title': 1,
-                'secondary-y-title': 2
+                'secondary-y-title': 2,
             };
             self.axisTitleConfigurations.sort(function(a, b) {
                 return theOrder[a.property] - theOrder[b.property];
@@ -450,7 +450,7 @@ hqDefine('app_manager/js/details/graph_config', function() {
         self.addAnnotation = function() {
             self.annotations.push(new Annotation({
                 lang: self.lang,
-                langs: self.langs
+                langs: self.langs,
             }));
         };
     };
@@ -509,20 +509,20 @@ hqDefine('app_manager/js/details/graph_config', function() {
                     'text': "Child case: " + s,
                     'value': {
                         'type': 'case',
-                        'name': s
-                    }
+                        'name': s,
+                    },
                 };
             }).concat(_.map(fixtures, function(s) {
                 return {
                     'text': "Lookup table: " + s,
                     'value': {
                         type: 'fixture',
-                        name: s
-                    }
+                        name: s,
+                    },
                 };
             })).concat([{
                 'text': 'custom',
-                'value': 'custom'
+                'value': 'custom',
             }])
         ));
 
@@ -549,7 +549,7 @@ hqDefine('app_manager/js/details/graph_config', function() {
             var $button = $(e.currentTarget);
             var clipboard = new Clipboard($button[0]);
             $button.tooltip({
-                title: gettext('Copied!')
+                title: gettext('Copied!'),
             });
             clipboard.on('success', function() {
                 $button.tooltip('show');
@@ -675,6 +675,6 @@ hqDefine('app_manager/js/details/graph_config', function() {
     BubbleGraphSeries.prototype = new GraphSeries();
     BubbleGraphSeries.prototype.constructor = BubbleGraphSeries;
     return {
-        GraphConfigurationUiElement: GraphConfigurationUiElement
+        GraphConfigurationUiElement: GraphConfigurationUiElement,
     };
 });

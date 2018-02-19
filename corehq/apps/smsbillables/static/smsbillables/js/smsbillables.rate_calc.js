@@ -105,7 +105,7 @@ hqDefine("smsbillables/js/smsbillables.rate_calc", function() {
                     self.calculatingRate(false);
                     self.hasError(true);
                     self.rateErrorText(gettext("There was an error fetching the SMS rate."));
-                }
+                },
             });
         };
         self.country_code.subscribe(updateRate);

@@ -100,8 +100,8 @@ EntrySingleAnswer = function(question, options) {
         self.answer.extend({
             rateLimit: {
                 timeout: Formplayer.Const.KO_ENTRY_TIMEOUT,
-                method: "notifyWhenChangesStop"
-            }
+                method: "notifyWhenChangesStop",
+            },
         });
     }
 };
@@ -319,7 +319,7 @@ function DropdownEntry(question, options) {
         return _.map(question.choices(), function(choice, idx) {
             return {
                 text: choice,
-                idx: idx + 1
+                idx: idx + 1,
             };
         });
     });
@@ -357,7 +357,7 @@ function ComboboxEntry(question, options) {
         return _.map(question.choices(), function(choice, idx) {
             return {
                 name: choice,
-                id: idx + 1
+                id: idx + 1,
             };
         });
     });
@@ -620,7 +620,7 @@ function GeoPointEntry(question, options) {
         lat: 30,
         lon: 0,
         zoom: 1,
-        anszoom: 6
+        anszoom: 6,
     };
 
     self.onClear = function() {
@@ -632,7 +632,7 @@ function GeoPointEntry(question, options) {
         self.map = new google.maps.Map($('#' + self.entryId)[0], {
             mapTypeId: google.maps.MapTypeId.ROADMAP,
             center: new google.maps.LatLng(self.DEFAULT.lat, self.DEFAULT.lon),
-            zoom: self.DEFAULT.zoom
+            zoom: self.DEFAULT.zoom,
         });
         if (self.rawAnswer().length) {
             self.map.setCenter(new google.maps.LatLng(self.rawAnswer()[0], self.rawAnswer()[1]));
@@ -677,7 +677,7 @@ function GeoPointEntry(question, options) {
     self.search = function(form) {
         var query = $(form).find('.query').val();
         self.geocoder.geocode({
-            'address': query
+            'address': query,
         }, function(results, status) {
             if (status === google.maps.GeocoderStatus.OK) {
                 self.map.fitBounds(results[0].geometry.viewport);
@@ -716,28 +716,28 @@ function getEntry(question) {
             isNumeric = style === Formplayer.Const.NUMERIC;
             if (isNumeric) {
                 entry = new PhoneEntry(question, {
-                    enableAutoUpdate: isPhoneMode
+                    enableAutoUpdate: isPhoneMode,
                 });
             } else {
                 entry = new FreeTextEntry(question, {
-                    enableAutoUpdate: isPhoneMode
+                    enableAutoUpdate: isPhoneMode,
                 });
             }
             break;
         case Formplayer.Const.INT:
             entry = new IntEntry(question, {
-                enableAutoUpdate: isPhoneMode
+                enableAutoUpdate: isPhoneMode,
             });
             break;
         case Formplayer.Const.LONGINT:
             entry = new IntEntry(question, {
                 lengthLimit: 15,
-                enableAutoUpdate: isPhoneMode
+                enableAutoUpdate: isPhoneMode,
             });
             break;
         case Formplayer.Const.FLOAT:
             entry = new FloatEntry(question, {
-                enableAutoUpdate: isPhoneMode
+                enableAutoUpdate: isPhoneMode,
             });
             break;
         case Formplayer.Const.SELECT:

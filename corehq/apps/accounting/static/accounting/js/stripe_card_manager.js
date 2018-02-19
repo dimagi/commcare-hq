@@ -4,7 +4,7 @@ hqDefine("accounting/js/stripe_card_manager", function() {
         'use strict';
         var self = this;
         var mapping = {
-            observe: ['number', 'cvc', 'expMonth','expYear', 'isAutopay', 'token']
+            observe: ['number', 'cvc', 'expMonth','expYear', 'isAutopay', 'token'],
         };
 
         self.wrap = function(data){
@@ -60,7 +60,7 @@ hqDefine("accounting/js/stripe_card_manager", function() {
                 number: self.number(),
                 cvc: self.cvc(),
                 exp_month: self.expMonth(),
-                exp_year: self.expYear()
+                exp_year: self.expYear(),
             }, handleStripeResponse);
         };
 
@@ -77,7 +77,7 @@ hqDefine("accounting/js/stripe_card_manager", function() {
         var self = this;
         var mapping = {
             include: ['brand', 'last4', 'exp_month','exp_year', 'is_autopay'],
-            copy: ['url', 'token']
+            copy: ['url', 'token'],
         };
 
         self.wrap = function(data){
@@ -151,8 +151,8 @@ hqDefine("accounting/js/stripe_card_manager", function() {
             'cards':{
                 create: function(card){
                     return new StripeCard(card.data, data.url);
-                }
-            }
+                },
+            },
         };
 
         self.wrap = function(data){

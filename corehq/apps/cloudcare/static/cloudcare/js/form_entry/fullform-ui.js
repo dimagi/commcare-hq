@@ -3,7 +3,7 @@ var Formplayer = {
     Utils: {},
     Const: {},
     ViewModels: {},
-    Errors: {}
+    Errors: {},
 };
 var markdowner = window.markdownit();
 
@@ -125,12 +125,12 @@ Container.prototype.fromJS = function(json) {
         caption: {
             update: function(options) {
                 return options.data ? DOMPurify.sanitize(options.data.replace(/\n/g, '<br/>')) : null;
-            }
+            },
         },
         caption_markdown: {
             update: function(options) {
                 return options.data ? markdowner.render(options.data) : null;
-            }
+            },
         },
         children: {
             create: function(options) {
@@ -172,8 +172,8 @@ Container.prototype.fromJS = function(json) {
             },
             key: function(data) {
                 return ko.utils.unwrapObservable(data.uuid) || ko.utils.unwrapObservable(data.ix);
-            }
-        }
+            },
+        },
     };
     ko.mapping.fromJS(json, mapping, self);
 };
@@ -202,7 +202,7 @@ function Form(json) {
 
     self.showInFormNavigation = ko.computed(function () {
         return self.displayOptions.oneQuestionPerScreen !== undefined
-        && self.displayOptions.oneQuestionPerScreen() === true
+        && self.displayOptions.oneQuestionPerScreen() === true;
     });
 
     self.isCurrentRequiredSatisfied = ko.computed(function () {
@@ -406,7 +406,7 @@ function Question(json, parent) {
     // pendingAnswer is a copy of an answer being submitted, so that we know not to reconcile a new answer
     // until the question has received a response from the server.
     self.pendingAnswer = ko.observable(Formplayer.Const.NO_PENDING_ANSWER);
-    self.pendingAnswer.subscribe(function() { self.hasAnswered = true });
+    self.pendingAnswer.subscribe(function() { self.hasAnswered = true; });
     self.dirty = ko.computed(function() {
         return self.pendingAnswer() !== Formplayer.Const.NO_PENDING_ANSWER;
     });
@@ -438,7 +438,7 @@ function Question(json, parent) {
     self.mediaSrc = function(resourceType) {
         if (!resourceType || !_.isFunction(Formplayer.resourceMap)) { return ''; }
         return Formplayer.resourceMap(resourceType);
-    }
+    };
 }
 
 /**
@@ -452,17 +452,17 @@ Question.prototype.fromJS = function(json) {
         caption: {
             update: function(options) {
                 return options.data ? DOMPurify.sanitize(options.data.replace(/\n/g, '<br/>')) : null;
-            }
+            },
         },
         caption_markdown: {
             update: function(options) {
                 return options.data ? markdowner.render(options.data) : null;
-            }
+            },
         },
     };
 
     ko.mapping.fromJS(json, mapping, self);
-}
+};
 
 
 /**
@@ -476,7 +476,7 @@ var cmpkey = function(e) {
     } else {
         return 'ix-' + (ix ? ix : getIx(e));
     }
-}
+};
 
 /**
  * Given an element Question, Group, or Repeat, this will determine the index of the element in the set of
@@ -488,7 +488,7 @@ var ixElementSet = function(e, set) {
     return $.map(set, function(val) {
         return cmpkey(val);
     }).indexOf(cmpkey(e));
-}
+};
 
 /**
  * Given an element Question, Group, or Repeat, this will return the element in the set of
@@ -499,7 +499,7 @@ var ixElementSet = function(e, set) {
 var inElementSet = function(e, set) {
     var ix = ixElementSet(e, set);
     return (ix !== -1 ? set[ix] : null);
-}
+};
 
 
 function scroll_pin(pin_threshold, $container, $elem) {

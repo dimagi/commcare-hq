@@ -84,7 +84,7 @@ hqDefine('app_manager/js/details/screen_config', function() {
                 $elem.fire('change');
             });
             return $elem;
-        }
+        },
 
     };
 
@@ -206,7 +206,7 @@ hqDefine('app_manager/js/details/screen_config', function() {
 
     var filterViewModel = function(filterText, saveButton) {
         var self = this;
-        self.filterText = ko.observable(typeof filterText == "string" && filterText.length > 0 ? filterText : "");
+        self.filterText = ko.observable(typeof filterText === "string" && filterText.length > 0 ? filterText : "");
         self.showing = ko.observable(self.filterText() !== "");
 
         self.filterText.subscribe(function() {
@@ -227,7 +227,7 @@ hqDefine('app_manager/js/details/screen_config', function() {
     module.ParentSelect = function(init) {
         var self = this;
         var defaultModule = _(init.parentModules).findWhere({
-            is_parent: true
+            is_parent: true,
         });
         self.moduleId = ko.observable(init.moduleId || (defaultModule ? defaultModule.unique_id : null));
         self.active = ko.observable(init.active);
@@ -248,7 +248,7 @@ hqDefine('app_manager/js/details/screen_config', function() {
                 var marker = (module.is_parent ? STAR : SPACE);
                 return {
                     value: module.unique_id,
-                    label: marker + ' ' + getTranslation(module.name, [self.lang()].concat(self.langs()))
+                    label: marker + ' ' + getTranslation(module.name, [self.lang()].concat(self.langs())),
                 };
             });
         });
@@ -329,7 +329,7 @@ hqDefine('app_manager/js/details/screen_config', function() {
                 this.lang = screen.lang;
                 this.model = uiElement.select([{
                     label: "Case",
-                    value: "case"
+                    value: "case",
                 }]).val(this.original.model);
 
                 var icon = (module.CC_DETAIL_SCREEN.isAttachmentProperty(this.original.field) ?
@@ -414,13 +414,13 @@ hqDefine('app_manager/js/details/screen_config', function() {
                 if (this.original.format === "graph") {
                     menuOptions = menuOptions.concat([{
                         value: "graph",
-                        label: ""
+                        label: "",
                     }]);
                 }
                 if (this.screen.columnKey === "long") {
                     menuOptions = menuOptions.concat([{
                         value: "markdown",
-                        label: gettext('Markdown')
+                        label: gettext('Markdown'),
                     }]);
                 }
 
@@ -445,7 +445,7 @@ hqDefine('app_manager/js/details/screen_config', function() {
                     fixtures: this.screen.fixtures,
                     lang: this.lang,
                     langs: this.screen.langs,
-                    name: this.header.val()
+                    name: this.header.val(),
                 }, this.original.graph_configuration);
                 this.header.on("change", function() {
                     // The graph should always have the same name as the Column
@@ -464,25 +464,25 @@ hqDefine('app_manager/js/details/screen_config', function() {
 
                 this.time_ago_extra = uiElement.select([{
                     label: gettext('Years since date'),
-                    value: DetailScreenConfig.TIME_AGO.year
+                    value: DetailScreenConfig.TIME_AGO.year,
                 }, {
                     label: gettext('Months since date'),
-                    value: DetailScreenConfig.TIME_AGO.month
+                    value: DetailScreenConfig.TIME_AGO.month,
                 }, {
                     label: gettext('Weeks since date'),
-                    value: DetailScreenConfig.TIME_AGO.week
+                    value: DetailScreenConfig.TIME_AGO.week,
                 }, {
                     label: gettext('Days since date'),
-                    value: DetailScreenConfig.TIME_AGO.day
+                    value: DetailScreenConfig.TIME_AGO.day,
                 }, {
                     label: gettext('Days until date'),
-                    value: -DetailScreenConfig.TIME_AGO.day
+                    value: -DetailScreenConfig.TIME_AGO.day,
                 }, {
                     label: gettext('Weeks until date'),
-                    value: -DetailScreenConfig.TIME_AGO.week
+                    value: -DetailScreenConfig.TIME_AGO.week,
                 }, {
                     label: gettext('Months until date'),
-                    value: -DetailScreenConfig.TIME_AGO.month
+                    value: -DetailScreenConfig.TIME_AGO.month,
                 }]).val(this.original.time_ago_interval.toString());
                 this.time_ago_extra.ui.prepend($('<div/>').text(gettext(' Measuring ')));
 
@@ -501,7 +501,7 @@ hqDefine('app_manager/js/details/screen_config', function() {
                     'late_flag_extra',
                     'filter_xpath_extra',
                     'calc_xpath_extra',
-                    'time_ago_extra'
+                    'time_ago_extra',
                 ], function(element) {
                     that[element].on('change', fireChange);
                 });
@@ -596,9 +596,9 @@ hqDefine('app_manager/js/details/screen_config', function() {
                     // add a marker that this is copied for this purpose
                     return JSON.stringify({
                         type: 'detail-screen-config:Column',
-                        contents: column
+                        contents: column,
                     });
-                }
+                },
             };
             return Column;
         }());
@@ -689,8 +689,8 @@ hqDefine('app_manager/js/details/screen_config', function() {
                         }
                     });
                     if (column.original.hasAutocomplete || (
-                            column.original.useXpathExpression && !column.useXpathExpression()
-                        )) {
+                        column.original.useXpathExpression && !column.useXpathExpression()
+                    )) {
                         module.CC_DETAIL_SCREEN.setUpAutocomplete(column.field, that.properties);
                     }
                     return column;
@@ -735,7 +735,7 @@ hqDefine('app_manager/js/details/screen_config', function() {
                     unsavedMessage: gettext('You have unsaved detail screen configurations.'),
                     save: function() {
                         that.save();
-                    }
+                    },
                 });
                 this.on('change', function() {
                     this.saveButton.fire('change');
@@ -815,7 +815,7 @@ hqDefine('app_manager/js/details/screen_config', function() {
                             success: function(data) {
                                 var app_manager = hqImport('app_manager/js/app_manager');
                                 app_manager.updateDOM(data.update);
-                            }
+                            },
                         });
                     }
                 },
@@ -828,7 +828,7 @@ hqDefine('app_manager/js/details/screen_config', function() {
                 serialize: function() {
                     var columns = this.columns();
                     var data = {
-                        type: JSON.stringify(this.type)
+                        type: JSON.stringify(this.type),
                     };
 
                     // Add columns
@@ -875,7 +875,7 @@ hqDefine('app_manager/js/details/screen_config', function() {
                             parentSelect = {
                                 module_id: this.config.parentSelect.moduleId(),
                                 relationship: 'parent',
-                                active: this.config.parentSelect.active()
+                                active: this.config.parentSelect.active(),
                             };
                         }
                         data.parent_select = JSON.stringify(parentSelect);
@@ -889,7 +889,7 @@ hqDefine('app_manager/js/details/screen_config', function() {
                                 display_column: this.config.fixtureSelect.displayColumn(),
                                 localize: this.config.fixtureSelect.localize(),
                                 variable_column: this.config.fixtureSelect.variableColumn(),
-                                xpath: this.config.fixtureSelect.xpath()
+                                xpath: this.config.fixtureSelect.xpath(),
                             };
                         }
                         data.fixture_select = JSON.stringify(fixtureSelect);
@@ -947,21 +947,21 @@ hqDefine('app_manager/js/details/screen_config', function() {
                     var type = this.columnKey === "short" ? "List" : "Detail";
                     hqImport('analytix/js/google').track.event('Case Management', 'Module Level Case ' + type, 'Add Property');
                     this.addItem({
-                        hasAutocomplete: true
+                        hasAutocomplete: true,
                     });
                 },
                 addGraph: function() {
                     this.addItem({
                         hasAutocomplete: false,
-                        format: 'graph'
+                        format: 'graph',
                     });
                 },
                 addXpathExpression: function() {
                     this.addItem({
                         hasAutocomplete: false,
-                        useXpathExpression: true
+                        useXpathExpression: true,
                     });
-                }
+                },
             };
             return Screen;
         }());
@@ -981,7 +981,7 @@ hqDefine('app_manager/js/details/screen_config', function() {
                         moduleId: spec.parentSelect.module_id,
                         parentModules: spec.parentModules,
                         lang: this.lang,
-                        langs: this.langs
+                        langs: this.langs,
                     });
                 }
 
@@ -1027,7 +1027,7 @@ hqDefine('app_manager/js/details/screen_config', function() {
                             containsSearchConfiguration: (columnType === "short" && hqImport('hqwebapp/js/toggles').toggleEnabled('SYNC_SEARCH_CASE_CLAIM')),
                             containsCustomXMLConfiguration: columnType == "short",
                             allowsTabs: columnType == 'long',
-                            allowsEmptyColumns: columnType == 'long'
+                            allowsEmptyColumns: columnType == 'long',
                         }
                     );
                     that.screens.push(screen);
@@ -1056,7 +1056,7 @@ hqDefine('app_manager/js/details/screen_config', function() {
                     }
                     this.customXMLViewModel = {
                         enabled: hqImport('hqwebapp/js/toggles').toggleEnabled('CASE_LIST_CUSTOM_XML'),
-                        xml: ko.observable(spec.state.short.custom_xml || "")
+                        xml: ko.observable(spec.state.short.custom_xml || ""),
                     };
                     this.customXMLViewModel.xml.subscribe(function(v) {
                         that.shortScreen.saveButton.fire("change");
@@ -1114,45 +1114,45 @@ hqDefine('app_manager/js/details/screen_config', function() {
             year: 365.25,
             month: 365.25 / 12,
             week: 7,
-            day: 1
+            day: 1,
         };
 
         DetailScreenConfig.MENU_OPTIONS = [{
             value: "plain",
-            label: gettext('Plain')
+            label: gettext('Plain'),
         }, {
             value: "date",
-            label: gettext('Date')
+            label: gettext('Date'),
         }, {
             value: "time-ago",
-            label: gettext('Time Since or Until Date')
+            label: gettext('Time Since or Until Date'),
         }, {
             value: "phone",
-            label: gettext('Phone Number')
+            label: gettext('Phone Number'),
         }, {
             value: "enum",
-            label: gettext('ID Mapping')
+            label: gettext('ID Mapping'),
         }, {
             value: "late-flag",
-            label: gettext('Late Flag')
+            label: gettext('Late Flag'),
         }, {
             value: "invisible",
-            label: gettext('Search Only')
+            label: gettext('Search Only'),
         }, {
             value: "address",
-            label: gettext('Address')
+            label: gettext('Address'),
         }, {
             value: "distance",
-            label: gettext('Distance from current location')
+            label: gettext('Distance from current location'),
         }];
 
         if (hqImport('hqwebapp/js/toggles').toggleEnabled('MM_CASE_PROPERTIES')) {
             DetailScreenConfig.MENU_OPTIONS.push({
                 value: "picture",
-                label: gettext('Picture')
+                label: gettext('Picture'),
             }, {
                 value: "audio",
-                label: gettext('Audio')
+                label: gettext('Audio'),
             });
         }
 
@@ -1160,13 +1160,13 @@ hqDefine('app_manager/js/details/screen_config', function() {
         if (addOns.enum_image) {
             DetailScreenConfig.MENU_OPTIONS.push({
                 value: "enum-image",
-                label: gettext('Icon')
+                label: gettext('Icon'),
             });
         }
         if (addOns.conditional_enum) {
             DetailScreenConfig.MENU_OPTIONS.push({
                 value: "conditional-enum",
-                label: gettext('Conditional ID Mapping')
+                label: gettext('Conditional ID Mapping'),
             });
         }
 
@@ -1181,7 +1181,7 @@ hqDefine('app_manager/js/details/screen_config', function() {
 
     /* for sharing variables between essentially separate parts of the ui */
     module.state = {
-        requires_case_details: ko.observable()
+        requires_case_details: ko.observable(),
     };
     return module;
 
@@ -1195,13 +1195,13 @@ ko.bindingHandlers.DetailScreenConfig_notifyShortScreenOnChange = {
                 $root.shortScreen.fire('change');
             });
         }, 0);
-    }
+    },
 };
 
 ko.bindingHandlers.addSaveButtonListener = {
     init: function(element, valueAccessor, allBindings, viewModel, bindingContext) {
         bindingContext.$parent.initSaveButtonListeners($(element).parent());
-    }
+    },
 };
 
 // http://www.knockmeout.net/2011/05/dragging-dropping-and-sorting-with.html
@@ -1224,7 +1224,7 @@ ko.bindingHandlers.sortableList = {
                 }
                 ui.item.remove();
                 item.notifyButton();
-            }
+            },
         });
-    }
+    },
 };

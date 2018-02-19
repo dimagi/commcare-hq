@@ -11,7 +11,7 @@
         'ngResource',
         'ngRoute',
         'ng.django.rmi',
-        'ngMessages'
+        'ngMessages',
     ]);
 
     list_exports.config(['$httpProvider', function($httpProvider) {
@@ -116,7 +116,7 @@
             component.updatingData = true;
             djangoRMI.update_emailed_export_data({
                 'component': component,
-                'export': exp
+                'export': exp,
             })
                 .success(function (data) {
                     if (data.success) {

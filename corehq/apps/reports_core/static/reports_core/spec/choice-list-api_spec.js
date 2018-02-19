@@ -3,22 +3,22 @@ describe('choiceListUtils', function() {
         result = choiceListUtils.formatPageForSelect2([
             {
                 value: '123',
-                display: 'Ben'
+                display: 'Ben',
             },
             {
                 value: '456',
-                display: null
-            }
+                display: null,
+            },
         ]);
         assert(result, [
             {
                 id: '123',
-                text: 'Ben'
+                text: 'Ben',
             },
             {
                 id: '456',
-                text: ''
-            }
+                text: '',
+            },
         ]);
     });
 });

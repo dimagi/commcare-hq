@@ -53,8 +53,8 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
     };
 
     var CreateScheduleViewModel = function (initial_values, select2_user_recipients,
-            select2_user_group_recipients, select2_user_organization_recipients,
-            select2_case_group_recipients, current_visit_scheduler_form) {
+        select2_user_group_recipients, select2_user_organization_recipients,
+        select2_case_group_recipients, current_visit_scheduler_form) {
         var self = this;
 
         self.timestamp = new Date().getTime();

@@ -8,7 +8,7 @@ hqDefine("translations/js/translations", function() {
                 lang: spec.lang,
                 doc_id: spec.doc_id,
                 edit: spec.edit,
-                allow_autofill: spec.allow_autofill
+                allow_autofill: spec.allow_autofill,
             },
             suggestionURL = spec.suggestion_url,
             suggestionCache = {},
@@ -24,7 +24,7 @@ hqDefine("translations/js/translations", function() {
                         $(this).remove();
                         translation_ui.deleteTranslation(that.key.val());
                     }).css({
-                        cursor: 'pointer'
+                        cursor: 'pointer',
                     }).attr('title', gettext("Delete Translation"));
 
                     this.$add = $('<button class="btn btn-default"><i></i></button>').addClass(hqImport('hqwebapp/js/main').icons.ADD).click(function() {
@@ -39,7 +39,7 @@ hqDefine("translations/js/translations", function() {
                             that.key.$edit_view.focus();
                         }
                     }).css({
-                        cursor: 'pointer'
+                        cursor: 'pointer',
                     }).attr('title', gettext("Add Translation")).hide();
                     this.$error = $('<span></span>').addClass('label label-danger');
                     this.ui = $('<div/>').addClass("row").addClass("form-group");
@@ -116,7 +116,7 @@ hqDefine("translations/js/translations", function() {
                             this.$delete.hide();
                             this.$add.show();
                         }
-                    }
+                    },
                 };
                 return Translation;
             }()),
@@ -132,7 +132,7 @@ hqDefine("translations/js/translations", function() {
                 dataType: "json",
                 data: {
                     lang: translation_ui.lang,
-                    one: true
+                    one: true,
                 },
                 success: function(data) {
                     var key;
@@ -141,7 +141,7 @@ hqDefine("translations/js/translations", function() {
                             translation_ui.addTranslation(Translation.init(key, data[key]));
                         }
                     }
-                }
+                },
             });
         });
         var $autoFillHelp = "<span class='auto-fill-help hq-help-template' data-placement='right' " +
@@ -160,7 +160,7 @@ hqDefine("translations/js/translations", function() {
             unsavedMessage: gettext("You have unsaved user interface translations."),
             save: function() {
                 translation_ui.save();
-            }
+            },
         });
         translation_ui.$home.prepend(translation_ui.saveButton.ui);
         translation_ui.$home.append($home);
@@ -192,12 +192,12 @@ hqDefine("translations/js/translations", function() {
                     data: {
                         doc_id: JSON.stringify(translation_ui.doc_id),
                         lang: JSON.stringify(translation_ui.lang),
-                        translations: JSON.stringify(data)
+                        translations: JSON.stringify(data),
                     },
                     context: this,
                     success: function(data) {
                         hqImport("hqwebapp/js/main").updateDOM(data.update);
-                    }
+                    },
                 });
             }
         };
@@ -277,7 +277,7 @@ hqDefine("translations/js/translations", function() {
                 }
             }
             return error;
-        }
+        };
         translation_ui.render();
     };
 

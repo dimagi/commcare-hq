@@ -14,7 +14,7 @@ function setMapHeight(map, animate) {
     height = Math.max(height, 300);
     if (animate) {
         $map.animate({
-            height: height
+            height: height,
         }, null, null, function() {
             map.invalidateSize();
         });
@@ -26,7 +26,7 @@ function setMapHeight(map, animate) {
 
 function forEachDimension(metric, callback) {
     $.each(DISPLAY_DIMENSIONS, function(i, e) {
-        if (typeof metric[e] == 'object') {
+        if (typeof metric[e] === 'object') {
             callback(e, metric[e]);
         }
     });
@@ -52,7 +52,7 @@ function MetricsViewModel(control) {
     this.load = function(metrics) {
         this.root(new MetricModel({
             title: '_root',
-            children: metrics
+            children: metrics,
         }, null, this));
         this.root().expanded(true);
 
@@ -61,11 +61,11 @@ function MetricsViewModel(control) {
         } else {
             this.renderMetric(null);
         }
-    }
+    };
 
     this.renderMetric = function(metric) {
         control.render(metric);
-    }
+    };
 
     this.unselectAll = function() {
         var unselect = function(node) {
@@ -73,9 +73,9 @@ function MetricsViewModel(control) {
                 unselect(e);
             });
             node.selected(false);
-        }
+        };
         unselect(this.root());
-    }
+    };
 }
 
 function MetricModel(data, parent, root) {
@@ -132,7 +132,7 @@ function MetricModel(data, parent, root) {
 
 LegendControl = L.Control.extend({
     options: {
-        position: 'bottomright'
+        position: 'bottomright',
     },
 
     onAdd: function(map) {
@@ -150,12 +150,12 @@ LegendControl = L.Control.extend({
         this.$div.show();
         this.$div.empty();
         renderLegend(this.$div, metric, this.options.config);
-    }
+    },
 });
 
 HeadsUpControl = L.Control.extend({
     options: {
-        position: 'bottomright'
+        position: 'bottomright',
     },
 
     onAdd: function(map) {
@@ -187,13 +187,13 @@ HeadsUpControl = L.Control.extend({
         var content = template(context);
         this.$div.html(content);
         this.$div.show();
-    }
+    },
 });
 
 // a control button that will fit the map viewport to the currently displayed data
 ZoomToFitControl = L.Control.extend({
     options: {
-        position: 'topright'
+        position: 'topright',
     },
 
     onAdd: function(map) {
@@ -202,13 +202,13 @@ ZoomToFitControl = L.Control.extend({
             zoomToAll(map);
         });
         return this.$div[0];
-    }
+    },
 });
 
 // a control button to scroll table into view
 ToggleTableControl = L.Control.extend({
     options: {
-        position: 'topright'
+        position: 'topright',
     },
 
     onAdd: function(map) {
@@ -218,7 +218,7 @@ ToggleTableControl = L.Control.extend({
             setMapHeight(map, true);
         });
         return this.$div[0];
-    }
+    },
 });
 
 function load(context, iconPath) {
@@ -282,7 +282,7 @@ function initMetrics(map, table, data, config) {
         config.metrics = ([]).concat([{
             title: 'Auto',
             group: true,
-            children: config.metrics
+            children: config.metrics,
         }]);
     }
     // set sensible defaults for metric parameters (if omitted)
@@ -324,19 +324,19 @@ function initMetrics(map, table, data, config) {
     });
 
     var l = new LegendControl({
-        config: config
+        config: config,
     }).addTo(map);
     var h = new HeadsUpControl({
-        config: config
+        config: config,
     }).addTo(map);
     var metrics = {
         metrics: config.metrics,
         data: data,
         legend: l,
-        info: h
-    }
+        info: h,
+    };
     if (table !== undefined) {
-        metrics.table = table
+        metrics.table = table;
     }
     var m = new MetricsControl(metrics).addTo(map);
 
@@ -348,16 +348,16 @@ function initLayers(map, layers_spec) {
         'fallback': {
             url_template: 'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
             args: {
-                attribution: '<a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-            }
+                attribution: '<a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+            },
         },
         'mapbox': {
             url_template: 'http://api.tiles.mapbox.com/v3/{apikey}/{z}/{x}/{y}.png',
             args: {
-                attribution: '<a href="http://www.mapbox.com/about/maps/">MapBox</a>'
-            }
-        }
-    }
+                attribution: '<a href="http://www.mapbox.com/about/maps/">MapBox</a>',
+            },
+        },
+    };
 
     var mkLayer = function(spec) {
         if (spec.family) {
@@ -369,7 +369,7 @@ function initLayers(map, layers_spec) {
             });
         }
         return L.tileLayer(spec.url_template, spec.args);
-    }
+    };
 
     var layers = {};
     var defaultLayer = null;
@@ -402,7 +402,7 @@ function zoomToAll(map) {
             var bounds = map.activeOverlay.getBounds();
             if (bounds.isValid()) {
                 map.fitBounds(map.activeOverlay.getBounds(), {
-                    padding: [60, 60]
+                    padding: [60, 60],
                 });
             }
         }, 0); // run at next tick to avoid race condition and freeze
@@ -440,7 +440,7 @@ function makeDisplayContext(metric, setActiveFeature) {
             // popup
             layer.bindPopup(feature.popupContent, {
                 maxWidth: 600,
-                autoPanPadding: [200, 100]
+                autoPanPadding: [200, 100],
             });
             var tableEnabled = feature.$tr; // todo: might want to make this more explicit
 
@@ -470,7 +470,7 @@ function makeDisplayContext(metric, setActiveFeature) {
                 layer.on('popupclose', function() {
                     selectRow(null);
                 });
-            }
+            };
 
 
             if (tableEnabled) {
@@ -510,14 +510,14 @@ function makeDisplayContext(metric, setActiveFeature) {
             };
             layer.on({
                 mouseover: hoverOn,
-                mouseout: hoverOff
+                mouseout: hoverOff,
             });
             if (tableEnabled) {
                 feature.$tr.hover(hoverOn, hoverOff);
             }
 
-        }
-    }
+        },
+    };
 }
 
 function markerFactory(metric, props) {
@@ -555,7 +555,7 @@ function featureStyle(metric, props) {
             weight: 1,
             opacity: 1,
             fillColor: fill.color,
-            fillOpacity: fill.alpha
+            fillOpacity: fill.alpha,
         };
     } catch (err) {
         // marker cannot be rendered due to data error
@@ -568,7 +568,7 @@ function featureStyle(metric, props) {
 ACTIVE_STYLE = {
     color: '#ff0',
     weight: 2,
-    opacity: 1
+    opacity: 1,
 };
 
 function mkMarker(latlng, options) {
@@ -596,7 +596,7 @@ function defaultFeatureStyle() {
         weight: 1,
         opacity: .8,
         fillColor: '#888',
-        fillOpacity: .3
+        fillOpacity: .3,
     };
 }
 
@@ -614,7 +614,7 @@ function circleMarker(metric, props) {
             opacity: 1,
             radius: size,
             fillColor: fill.color,
-            fillOpacity: fill.alpha
+            fillOpacity: fill.alpha,
         };
         var marker = L.circleMarker(latlng, style);
         marker._activate = function() {
@@ -637,20 +637,20 @@ function iconMarker(metric, props) {
         var marker = mkMarker(latlng, {
             icon: L.icon({
                 iconUrl: icon.url,
-            })
+            }),
         });
         var img = new Image();
         img.onload = function() {
             // leaflet needs explicit icon dimensions
             marker.setIcon(L.icon({
                 iconUrl: icon.url,
-                iconSize: [this.width, this.height]
+                iconSize: [this.width, this.height],
             }));
         };
         img.src = icon.url;
 
         return marker;
-    }
+    };
 }
 
 DEFAULT_SIZE = 10;
@@ -684,7 +684,7 @@ function getColor(meta, props) {
     var c = (function() {
         if (meta == null) {
             return DEFAULT_COLOR;
-        } else if (typeof meta == 'string') {
+        } else if (typeof meta === 'string') {
             return meta;
         } else {
             var val = getPropValue(props, meta);
@@ -708,7 +708,7 @@ function getColor(meta, props) {
     c = $.Color(c);
     return {
         color: c.toHexString(),
-        alpha: c.alpha()
+        alpha: c.alpha(),
     };
 }
 
@@ -717,7 +717,7 @@ DEFAULT_ICON_URL = '/static/reports/css/leaflet/images/default_custom.png';
 function getIcon(meta, props) {
     //TODO support css sprites
     var icon = (function() {
-        if (typeof meta == 'string') {
+        if (typeof meta === 'string') {
             return meta;
         } else {
             var val = getPropValue(props, meta);
@@ -728,7 +728,7 @@ function getIcon(meta, props) {
         return null;
     }
     return {
-        url: icon
+        url: icon,
     };
 }
 
@@ -774,7 +774,7 @@ function infoContext(feature, config, mode) {
         }
 
         var fallback = {
-            _null: '\u2014'
+            _null: '\u2014',
         };
         fallback[datum] = formatValue(col, datum, config);
         return getEnumCaption(col, datum, config, fallback);
@@ -795,7 +795,7 @@ function infoContext(feature, config, mode) {
         raw: rawProperties,
         titles: propTitles,
         name: (config.name_column ? feature.properties[config.name_column] : null),
-        info: []
+        info: [],
     };
     $.each(info_cols, function(i, e) {
         context.info.push({
@@ -839,14 +839,14 @@ function setMetricDefaults(metric, data, config) {
         }).join(' / ');
     }
 
-    if (typeof metric.size == 'object') {
+    if (typeof metric.size === 'object') {
         if (!metric.size.baseline) {
             var stats = summarizeColumn(metric.size, data);
             metric.size.baseline = (stats.mean || 1);
         }
     }
 
-    if (typeof metric.color == 'object') {
+    if (typeof metric.color === 'object') {
         if (!metric.color.categories && !metric.color.colorstops) {
             var stats = summarizeColumn(metric.color, data);
             var numeric_data = (!metric.color.thresholds && !stats.nonnumeric);
@@ -878,10 +878,10 @@ function setMetricDefaults(metric, data, config) {
         }
     }
 
-    if (typeof metric.icon == 'object') {
+    if (typeof metric.icon === 'object') {
         if (!metric.icon.categories) {
             metric.icon.categories = {
-                _other: DEFAULT_ICON_URL
+                _other: DEFAULT_ICON_URL,
             };
         }
     }
@@ -911,23 +911,23 @@ function getAllCols(config, data) {
 function autoConfiguration(config, data) {
     var metrics = $.map(getAllCols(config, data), function(e) {
         return {
-            auto: e
+            auto: e,
         };
     });
     // metrics may already exist if we're in debug mode
     config.metrics = (config.metrics || []).concat([{
         title: 'Auto',
         group: true,
-        children: metrics
+        children: metrics,
     }]);
 }
 
 function autoMetricForColumn(col, data) {
     var meta = {
-        column: col
+        column: col,
     };
     var stats = summarizeColumn(meta, data);
-    var metric = {}
+    var metric = {};
     if (stats.nonnumeric || !magnitude_based_field(stats) || stats.nonpoint) {
         metric.color = meta;
     } else {
@@ -971,7 +971,7 @@ function _summarizeColumn(meta, data) {
             }
             callback(val, numeric, polygon);
         });
-    }
+    };
 
     iterate(function(val, numeric, polygon) {
         _uniq[val] = true;
@@ -1039,7 +1039,7 @@ function getEnumValues(meta) {
     var labelFallbacks = {};
     var toLabel = function(e) {
         return meta._enumCaption(e, labelFallbacks);
-    }
+    };
 
     if (meta.thresholds) {
         var enums = meta.thresholds.slice(0);
@@ -1081,7 +1081,7 @@ function getEnumValues(meta) {
     return $.map(enums, function(e, i) {
         return {
             label: toLabel(e),
-            value: e
+            value: e,
         };
     });
 }
@@ -1099,7 +1099,7 @@ function getEnumCaption(column, value, config, fallbacks) {
     fallbacks = fallbacks || {};
     $.each({
         '_other': OTHER_LABEL,
-        '_null': NULL_LABEL
+        '_null': NULL_LABEL,
     }, function(k, v) {
         fallbacks[k] = fallbacks[k] || v;
     });
@@ -1158,7 +1158,7 @@ function renderLegend($e, metric, config) {
         ({
             size: sizeLegend,
             color: colorLegend,
-            icon: iconLegend
+            icon: iconLegend,
         })[type]($div, meta);
         $e.append($div);
     });
@@ -1175,7 +1175,7 @@ function sizeLegend($e, meta) {
     });
 
     var $rendered = $(_.template($('#legend_size').text())({
-        entries: rows
+        entries: rows,
     }));
 
     $.each(rows, function(i, e) {
@@ -1214,10 +1214,10 @@ function colorScaleLegend($e, meta) {
     var EPOCH2000 = 946684800;
     var fromDate = function(s) {
         return s / 1000. - EPOCH2000;
-    }
+    };
     var toDate = function(s) {
         return new Date((s + EPOCH2000) * 1000.);
-    }
+    };
 
     var min = meta.colorstops[0][0];
     var max = meta.colorstops.slice(-1)[0][0];
@@ -1256,12 +1256,12 @@ function colorScaleLegend($e, meta) {
     var ticks = $.map(tickvals, function(e) {
         return {
             label: meta._formatNum(dateScale ? toDate(e) : e),
-            coord: (1. - (e - min) / range) * SCALEBAR_HEIGHT
+            coord: (1. - (e - min) / range) * SCALEBAR_HEIGHT,
         };
     });
 
     var $rendered = $(_.template($('#legend_colorscale').text())({
-        ticks: ticks
+        ticks: ticks,
     }));
     $rendered.find('#scalebar').append($canvas);
     $e.append($rendered);
@@ -1271,7 +1271,7 @@ function enumLegend($e, meta, renderValue) {
     var enums = getEnumValues(meta);
 
     var $rendered = $(_.template($('#legend_enum').text())({
-        enums: enums
+        enums: enums,
     }));
 
     $.each(enums, function(i, e) {
@@ -1311,7 +1311,7 @@ function typecast(x) {
     }
 
     return x;
-};
+}
 
 
 
@@ -1395,7 +1395,7 @@ function blendColor(a, b, k) {
             channels[i] *= channels[3];
         }
         return channels;
-    }
+    };
 
     // reverse toLinear()
     var fromLinear = function(channels) {
@@ -1404,7 +1404,7 @@ function blendColor(a, b, k) {
             channels[i] = Math.floor(256. * Math.pow(channels[i], 1. / GAMMA));
         }
         return $.Color(channels);
-    }
+    };
 
     lA = toLinear(a);
     lB = toLinear(b);
@@ -1426,7 +1426,7 @@ function niceRoundNumber(x, stops, orderOfMagnitude) {
 
     var getStop = function(i) {
         return (i == stops.length ? orderOfMagnitude * stops[0] : stops[i]);
-    }
+    };
     var cutoffs = $.map(stops, function(e, i) {
         var multiplier = getStop(i + 1);
         var cutoff = Math.sqrt(e * multiplier);
@@ -1436,7 +1436,7 @@ function niceRoundNumber(x, stops, orderOfMagnitude) {
         }
         return {
             cutoff: cutoff,
-            mult: multiplier
+            mult: multiplier,
         };
     });
     cutoffs = _.sortBy(cutoffs, function(co) {
@@ -1464,7 +1464,7 @@ function niceRoundInterval(seconds) {
         return niceRoundNumber(seconds, [1, // needed for wraparound
             HOUR, 3 * HOUR, 6 * HOUR, 12 * HOUR,
             DAY, 3 * DAY, 7 * DAY,
-            0.5 * MONTH, MONTH, 3 * MONTH, 6 * MONTH
+            0.5 * MONTH, MONTH, 3 * MONTH, 6 * MONTH,
         ], YEAR);
     } else {
         return YEAR * niceRoundNumber(seconds / YEAR);
@@ -1482,7 +1482,7 @@ function testNiceRoundNumber() {
                 test([Math.pow(10., OoM) * e, stops]);
             });
         }
-    }
+    };
 
     testStops([1.5, 3, 6], [1, 1.5, 2.1, 2.2, 3, 4.2, 4.3, 6, 9.4, 9.5]);
     testStops([3, 8], [1, 1.5, 1.6, 3, 4.8, 4.9, 8]);
@@ -1505,7 +1505,7 @@ function testNiceRoundInterval() {
             i = 0;
         }
         return (x / units[i]).toFixed(2) + labels[i];
-    }
+    };
     var test = function(x) {
         var result = niceRoundInterval(x);
         console.log(format(x), format(result));
@@ -1519,7 +1519,7 @@ function testNiceRoundInterval() {
         D, 1.7 * D, 1.8 * D, 3 * D, 4.5 * D, 4.6 * D, 7 * D, 10 * D, 11 * D, 0.5 * MO, 0.7 * MO, 0.71 * MO,
         MO, 1.7 * MO, 1.8 * MO, 3 * MO, 4.2 * MO, 4.3 * MO, 6 * MO, 8.4 * MO, 8.5 * MO,
         Y, 1.4 * Y, 1.5 * Y, 2 * Y, 3.1 * Y, 3.2 * Y, 5 * Y, 7 * Y, 7.1 * Y,
-        10 * Y, 14 * Y, 15 * Y, 20 * Y, 31 * Y, 32 * Y, 50 * Y, 70 * Y, 71 * Y, 100 * Y
+        10 * Y, 14 * Y, 15 * Y, 20 * Y, 31 * Y, 32 * Y, 50 * Y, 70 * Y, 71 * Y, 100 * Y,
     ], test);
 }
 

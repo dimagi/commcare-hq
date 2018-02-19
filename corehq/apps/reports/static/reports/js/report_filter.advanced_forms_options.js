@@ -36,5 +36,5 @@ ko.bindingHandlers.hideKnownForms = {
         var value = valueAccessor();
         var known_form = $(element).attr('data-known');
         ko.utils.unwrapObservable(value) ? $(known_form).hide() : $(known_form).show();
-    }
+    },
 };

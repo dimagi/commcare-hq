@@ -3,7 +3,7 @@ hqDefine("app_manager/js/apps_base", function() {
         $('#deleted-app-modal').modal({
             backdrop: 'static',
             keyboard: false,
-            show: true
+            show: true,
         }).on('hide.bs.modal', function () {
             window.location = hqImport('hqwebapp/js/initial_page_data').reverse('default_app');
         });

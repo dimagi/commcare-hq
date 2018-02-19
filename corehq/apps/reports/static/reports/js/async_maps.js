@@ -2,7 +2,7 @@
 // and allows you to select and display them
 MetricsControl = L.Control.extend({
     options: {
-        position: 'bottomleft'
+        position: 'bottomleft',
     },
 
     onAdd: function(map) {
@@ -52,7 +52,7 @@ MetricsControl = L.Control.extend({
         }));
 
         this.options.legend.render(metric);
-    }
+    },
 });
 
 function clearMap() {

@@ -37,7 +37,7 @@ var CustomExportView = {
                         '#': translations.cases,
                         'actions': translations.case_history,
                         'actions > indices': translations.history_to_parents,
-                        'indices': translations.parent_cases
+                        'indices': translations.parent_cases,
                     }[stripped] || stripped;
                 }
             },
@@ -51,17 +51,17 @@ var CustomExportView = {
                     doc_type: 0,
                     '-deletion_id': 0,
                     '-deletion_date': 0,
-                    initial_processing_complete: 0
+                    initial_processing_complete: 0,
                 };
                 if (field in server) {
                     return {
                         tags: ['server'].concat(tags),
-                        field: field
+                        field: field,
                     };
                 } else if (field === 'id') {
                     return {
                         tags: ['row'].concat(tags),
-                        field: 'number'
+                        field: 'number',
                     };
                 }
 
@@ -72,25 +72,25 @@ var CustomExportView = {
                         "form.case.@case_id": "form.meta.caseid",
                         "form.meta.timeEnd": "form.meta.completed_time",
                         "form.meta.timeStart": "form.meta.started_time",
-                        "_id": "form.meta.formid"
+                        "_id": "form.meta.formid",
                     };
                     field = self.utils.rename(field, rename_map);
                     var patterns = [{
                         regex: /^form\.meta\.(.*)$/,
-                        tag: 'info'
+                        tag: 'info',
                     }, {
                         regex: /^form\.case\.(.*)$/,
-                        tag: 'case'
+                        tag: 'case',
                     }, {
                         regex: /^form\.subcase_\d(.*)$/,
                         tag: 'subcase',
-                        no_replace: true
+                        no_replace: true,
                     }, {
                         regex: /^form\.([#@].*)$/,
-                        tag: 'tag'
+                        tag: 'tag',
                     }, {
                         regex: /^form\.(.*)$/,
-                        tag: ''
+                        tag: '',
                     }];
                     var pattern;
                     for (var i = 0; i < patterns.length; i++) {
@@ -99,7 +99,7 @@ var CustomExportView = {
                         if (field !== stripped) {
                             return {
                                 tags: [pattern.tag].concat(tags),
-                                field: stripped
+                                field: stripped,
                             };
                         }
 
@@ -110,7 +110,7 @@ var CustomExportView = {
 
                     return {
                         tags: ['server'].concat(tags),
-                        field: renamed_field
+                        field: renamed_field,
                     };
                 } else if (self.custom_export.type() === 'case') {
 
@@ -130,7 +130,7 @@ var CustomExportView = {
                             user_id: 0,
                             type: 0,
                             version: 0,
-                            external_id: 0
+                            external_id: 0,
                         };
                         rename_map = {
                             '_id': 'case_id',
@@ -141,20 +141,20 @@ var CustomExportView = {
                             'opened_by': 'opened_by_user_id',
                             'opened_on': 'opened_date',
                             'closed_by': 'closed_by_user_id',
-                            'closed_on': 'closed_date'
+                            'closed_on': 'closed_date',
                         };
                         renamed_field = self.utils.rename(field, rename_map);
                         if (meta.hasOwnProperty(field)) {
                             return {
                                 tags: ['info'].concat(tags),
-                                field: renamed_field
+                                field: renamed_field,
                             };
                         }
                     } else if (/#\.indices\.#$/.exec(index)) {
                         rename_map = {
                             'identifier': 'relationship',
                             'referenced_id': 'case_id',
-                            'referenced_type': 'case_type'
+                            'referenced_type': 'case_type',
                         };
                         renamed_field = self.utils.rename(field, rename_map);
 
@@ -166,14 +166,14 @@ var CustomExportView = {
                         if (stripped !== field) {
                             return {
                                 tags: ['update'].concat(tags),
-                                field: stripped
+                                field: stripped,
                             };
                         }
                     }
                 }
                 return {
                     tags: [''].concat(tags),
-                    field: renamed_field
+                    field: renamed_field,
                 };
             },
             showTable: function(table) {
@@ -216,7 +216,7 @@ var CustomExportView = {
                     'update': 2.5, // for case history only
                     'server': 3,
                     'tag': 4,
-                    'row': 5
+                    'row': 5,
                 };
                 return _(columns).sortBy(function(column) {
                     var key;
@@ -227,7 +227,7 @@ var CustomExportView = {
                     }
                     return key;
                 });
-            }
+            },
         };
 
         self.repeatsEnabled = ko.computed(function() {
@@ -298,7 +298,7 @@ var CustomExportView = {
 
         self.animateShowDeidColumn = function() {
             $('html, body').animate({
-                scrollTop: $('#field-select').offset().top + 'px'
+                scrollTop: $('#field-select').offset().top + 'px',
             }, 'slow', undefined, function() {
                 self.showDeidColumn(true);
             });
@@ -334,7 +334,7 @@ var CustomExportView = {
                                 index: column.index,
                                 display: column.display,
                                 transform: column.transform() || null, // it doesn't save '' well
-                                is_sensitive: Boolean(is_sensitive)
+                                is_sensitive: Boolean(is_sensitive),
                             };
                         if (self.export_type() === 'form') {
                             if (self.custom_export.split_multiselects() && column.allOptions()) {
@@ -347,21 +347,21 @@ var CustomExportView = {
                             col.options = column.options();
                         }
                         return col;
-                    })
+                    }),
                 };
             });
             tables = ko.mapping.toJS(tables);
             if (tables.length > 1) {
                 _(tables).each(function(table) {
                     if (!_(table.columns).some(
-                            function(column) {
-                                return column.index === 'id';
-                            }
-                        )) {
+                        function(column) {
+                            return column.index === 'id';
+                        }
+                    )) {
                         table.columns.splice(0, 0, {
                             index: 'id',
                             display: 'row.number',
-                            transform: null
+                            transform: null,
                         });
                     }
                 });
@@ -374,7 +374,7 @@ var CustomExportView = {
                 custom_export: self.custom_export,
                 presave: self.presave,
                 export_stock: self.export_stock,
-                preview: preview
+                preview: preview,
             });
             output.custom_export.tables = self.make_tables();
             return JSON.stringify(output);
@@ -492,6 +492,6 @@ var CustomExportView = {
         '#.export_tag.#': 0,
         '#.location_.#': 0,
         '#.referrals.#': 0,
-        '#.xform_ids.#': 0
-    }
+        '#.xform_ids.#': 0,
+    },
 };

@@ -49,7 +49,7 @@ hqDefine("users/js/web_users", function() {
             var post_url = url("location_restriction_for_users");
             $(this).text('Saving ...');
             $.post(post_url, {
-                restrict_users: $('#restrict_users')[0].checked
+                restrict_users: $('#restrict_users')[0].checked,
             },
             function(data, status) {
                 $('#save_restrict_option')
@@ -67,7 +67,7 @@ hqDefine("users/js/web_users", function() {
             var doc_id = this.getAttribute('data-invite');
             var self = this;
             $.post(post_url, {
-                invite: doc_id
+                invite: doc_id,
             },
             function(data) {
                 $(self).parent().text(data.response);
@@ -98,7 +98,7 @@ hqDefine("users/js/web_users", function() {
                 var $button = $(this);
                 $button.addClass('disabled').prop('disabled', true);
                 $.post(post_url, {
-                    id: id
+                    id: id,
                 },
                 function(data) {
                     $el.closest("tr").remove();
@@ -109,7 +109,7 @@ hqDefine("users/js/web_users", function() {
             $('#modal-deletion').find(".modal-title").html(title);
             $('#modal-deletion').find(".modal-body").html($("<p/>").append(body));
             $('#modal-deletion').modal('show');
-        };
+        }
 
         $('.delete-request').on('click', function(e) {
             handleDeletion($(this),

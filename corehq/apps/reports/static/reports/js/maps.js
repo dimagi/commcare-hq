@@ -2,7 +2,7 @@
 // and allows you to select and display them
 MetricsControl = L.Control.extend({
     options: {
-        position: 'bottomleft'
+        position: 'bottomleft',
     },
 
     onAdd: function(map) {
@@ -54,7 +54,7 @@ MetricsControl = L.Control.extend({
         if (this.options.table) {
             this.options.table.fnDraw();  // update datatables filtering
         }
-    }
+    },
 });
 
 // main entry point
@@ -65,7 +65,7 @@ function mapsInit(context) {
     if (!display) {
         // we can add other things here eventually
         display = {
-            'table': true
+            'table': true,
         };
     }
     if (display.table) {
@@ -138,13 +138,13 @@ function initTableHeader(config, data, mkRow) {
     var cols = getTableColumns(config);
 
     var maxDepth = function(col) {
-        return 1 + (typeof col == 'string' ? 0 :
-                    _.reduce(_.map(col.subcolumns, maxDepth), function(a, b) { return Math.max(a, b); }, 0));
+        return 1 + (typeof col === 'string' ? 0 :
+            _.reduce(_.map(col.subcolumns, maxDepth), function(a, b) { return Math.max(a, b); }, 0));
     };
     var totalMaxDepth = maxDepth({subcolumns: cols}) - 1;
     var breadth = function(col) {
-        return (typeof col == 'string' ? 1 :
-                _.reduce(_.map(col.subcolumns, breadth), function(a, b) { return a + b; }, 0));
+        return (typeof col === 'string' ? 1 :
+            _.reduce(_.map(col.subcolumns, breadth), function(a, b) { return a + b; }, 0));
     };
 
     var headerRows = [];
@@ -155,7 +155,7 @@ function initTableHeader(config, data, mkRow) {
     config._table_columns_flat = [];
 
     var process = function(col, depth) {
-        if (typeof col == 'string') {
+        if (typeof col === 'string') {
             var entry = {title: getColumnTitle(col, config), terminal: true};
             config._table_columns_flat.push(col); // a bit hacky
         } else {
@@ -185,7 +185,7 @@ function initTableHeader(config, data, mkRow) {
 
     var sortColumnAs = function(datatype) {
         return {
-            'numeric': {sType: 'title-numeric'}
+            'numeric': {sType: 'title-numeric'},
         }[datatype];
     };
     return _.map(getTableColumns(config, true), function(col) {

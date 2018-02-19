@@ -26,7 +26,7 @@ hqDefine('app_manager/js/app_manager_utils', function () {
             "W": "Whiskey",
             "X": "X-ray",
             "Y": "Yankee",
-            "Z": "Zulu"
+            "Z": "Zulu",
         };
         var bitly_to_phonetic = {
             '0': 'zero',
@@ -38,7 +38,7 @@ hqDefine('app_manager/js/app_manager_utils', function () {
             '6': 'six',
             '7': 'seven',
             '8': 'eight',
-            '9': 'nine'
+            '9': 'nine',
         };
         bitly_to_phonetic = _(bitly_to_phonetic).extend(_.object(_(nato_phonetic).map(function (v, k) {
             return [k.toLowerCase(), v.toLowerCase()];

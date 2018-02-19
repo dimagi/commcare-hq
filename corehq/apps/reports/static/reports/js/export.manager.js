@@ -74,7 +74,7 @@ var ExportManager = function(o) {
                                     xmlns: params.xmlns,
                                     isBulkDownload: params.isBulkDownload,
                                     exportName: params.exportName,
-                                    isMultimedia: params.isMultimedia
+                                    isMultimedia: params.isMultimedia,
                                 });
                                 if (autoRefresh) {
                                     setTimeout(pollDownloader, 2000);
@@ -206,10 +206,10 @@ var ExportManager = function(o) {
                         xmlns: params.xmlns,
                         isBulkDownload: params.isBulkDownload,
                         isMultimedia: params.isMultimedia,
-                        exportName: params.exportName
+                        exportName: params.exportName,
                     });
                 },
-                error: displayDownloadError
+                error: displayDownloadError,
             });
         };
 
@@ -229,10 +229,10 @@ var ExportManager = function(o) {
                     updateModal({
                         data: respData,
                         xmlns: null,
-                        isBulkDownload: true
+                        isBulkDownload: true,
                     });
                 },
-                error: displayDownloadError
+                error: displayDownloadError,
             });
         };
 
@@ -260,7 +260,7 @@ var ExportManager = function(o) {
                             xmlns: xmlns,
                             sheet_name: sheetName,
                             export_id: _id,
-                            export_type: export_type
+                            export_type: export_type,
                         };
                     else
                         export_tag = [self.domain, xmlns, sheetName];
@@ -302,7 +302,7 @@ var ExportManager = function(o) {
                             xmlns: xmlns,
                             sheet_name: sheetName,
                             export_id: _id,
-                            export_type: export_type
+                            export_type: export_type,
                         };
                     else
                         export_tag = [self.domain, xmlns, sheetName];
@@ -330,7 +330,7 @@ var ExportManager = function(o) {
             var params = {
                 'export_tags': JSON.stringify(prepareExport),
                 'is_custom': self.is_custom,
-                'async': true
+                'async': true,
             };
 
             for (var filter in self.jsonExportFilters) {
@@ -369,7 +369,7 @@ var ExportManager = function(o) {
                 downloadUrl: downloadUrl,
                 xmlns: xmlns,
                 isBulkDownload: options.isBulkDownload,
-                exportName: formName || xmlns
+                exportName: formName || xmlns,
             });
         };
 
@@ -387,7 +387,7 @@ var ExportManager = function(o) {
             return self._requestDownload(event, {
                 modalTitle: modalTitle,
                 downloadParams: downloadParams,
-                isBulkDownload: false
+                isBulkDownload: false,
             });
         };
 
@@ -395,9 +395,9 @@ var ExportManager = function(o) {
             return self._requestDownload(event, {
                 modalTitle: "Case List",
                 downloadParams: {
-                    include_closed: $('#include-closed-select').val()
+                    include_closed: $('#include-closed-select').val(),
                 },
-                isBulkDownload: true
+                isBulkDownload: true,
             });
         };
 
@@ -414,7 +414,7 @@ var ExportManager = function(o) {
                 downloadUrl: downloadUrl,
                 xmlns: xmlns,
                 isMultimedia: true,
-                exportName: xmlns
+                exportName: xmlns,
             });
         };
 
@@ -444,14 +444,14 @@ var ExportManager = function(o) {
                     $.each($(check_class), function() {
                         $(this).prop('checked', true);
                         self.updateSelectedExports({}, {
-                            srcElement: this
+                            srcElement: this,
                         });
                     });
                 else
                     $.each($(check_class), function() {
                         $(this).prop('checked', false);
                         self.updateSelectedExports({}, {
-                            srcElement: this
+                            srcElement: this,
                         });
                     });
             };
@@ -463,14 +463,14 @@ var ExportManager = function(o) {
                     $.each($(check_class), function() {
                         $(this).prop('checked', true);
                         self.updateSelectedExports({}, {
-                            srcElement: this
+                            srcElement: this,
                         });
                     });
                 } else {
                     $.each($(check_class), function() {
                         $(this).prop('checked', false);
                         self.updateSelectedExports({}, {
-                            srcElement: this
+                            srcElement: this,
                         });
                     });
                 }
@@ -495,7 +495,7 @@ ko.bindingHandlers.showBulkExportNotice = {
             $(element).fadeIn();
         else
             $(element).fadeOut();
-    }
+    },
 };
 
 ko.bindingHandlers.checkForUniqueSheetName = {
@@ -514,7 +514,7 @@ ko.bindingHandlers.checkForUniqueSheetName = {
             $parentCol.removeClass('error');
             $(element).data('duplicate', false);
         }
-    }
+    },
 };
 
 ko.bindingHandlers.updateCustomSheetName = {
@@ -555,5 +555,5 @@ ko.bindingHandlers.updateCustomSheetName = {
             if (exportID)
                 delete allSheetNames()[exportID];
         }
-    }
+    },
 };
