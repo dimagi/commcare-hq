@@ -1,3 +1,5 @@
+/* global ko, $, hgImport, moment */
+
 ko.bindingHandlers.select2 = {
     init: function (element, valueAccessor) {
         $(element).select2(valueAccessor());
@@ -19,7 +21,7 @@ ko.bindingHandlers.select2 = {
 var ALL_OPTION = {'id': '', 'text': 'All'};
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
-function PrecisionVsAcievementsTableModel() {
+function PrecisionVsAchievementsTableModel() {
     var self = this;
     var currentYear = new Date().getFullYear();
 
@@ -97,8 +99,6 @@ function PrecisionVsAcievementsTableModel() {
         })
     };
 
-    self.getData();
-
     self.onSelectOption = function(event, property) {
         if (event.added !== void(0)) {
             var $item = event.added;
@@ -132,13 +132,16 @@ function PrecisionVsAcievementsTableModel() {
     
     self.getTableData();
 
-    $('.date-picker').daterangepicker(
-        {
-            startDate: defaultStartDate,
-            endDate: defaultEndDate,
-            locale: {
-                format: 'YYYY-MM-DD',
+    var pickers = $('.date-picker');
+    if (pickers.length > 0) {
+        pickers.daterangepicker(
+            {
+                startDate: defaultStartDate,
+                endDate: defaultEndDate,
+                locale: {
+                    format: 'YYYY-MM-DD',
+                }
             }
-        }
-    );
+        );
+    }
 }

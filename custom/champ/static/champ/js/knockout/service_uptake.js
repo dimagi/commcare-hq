@@ -1,3 +1,5 @@
+/* global ko, $, hgImport, moment, nv */
+
 ko.bindingHandlers.select2 = {
     init: function (element, valueAccessor) {
         $(element).select2(valueAccessor());

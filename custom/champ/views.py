@@ -211,7 +211,7 @@ class PrevisionVsAchievementsTableView(ChampView):
             'type_visit': self.post_data.get('visit_type', None),
             'activity_type': self.post_data.get('activity_type', None),
             'client_type': self.get_list_property('client_type'),
-            'organization': self.get_list_property('organization'),
+            'user_id': get_user_ids_for_group(self.get_list_property('organization')),
             'fiscal_year': self.post_data.get('fiscal_year', None),
         }
 
@@ -221,20 +221,18 @@ class PrevisionVsAchievementsTableView(ChampView):
         update_date_property(config, self.post_data, 'date_handshake', 'date_handshake')
         update_date_property(config, self.post_data, 'date_last_vl_test', 'date_last_vl_test')
 
-        clienttype = self.get_list_property('target_clienttype')
         target_client_types = []
-        for type in clienttype:
-            if type == 'client_fsw':
-                type = 'cfsw'
-            target_client_types.append(type.lower())
+        for client_type in config['client_type']:
+            if client_type == 'client_fsw':
+                client_type = 'cfsw'
+            target_client_types.append(client_type.lower())
         config.update({'clienttype': target_client_types})
-
-        targets = TargetsDataSource(config=config).data
-        kp_prev = UICFromEPMDataSource(config=config).data
-        htc_tst = UICFromCCDataSource(config=config).data
-        htc_pos = HivStatusDataSource(config=config).data
-        care_new = FormCompletionDataSource(config=config).data
-        tx_new = FirstArtDataSource(config=config).data
+        targets = TargetsDataSource(config=config.copy()).data
+        kp_prev = UICFromEPMDataSource(config=config.copy()).data
+        htc_tst = UICFromCCDataSource(config=config.copy()).data
+        htc_pos = HivStatusDataSource(config=config.copy()).data
+        care_new = FormCompletionDataSource(config=config.copy()).data
+        tx_new = FirstArtDataSource(config=config.copy()).data
         tz_undetect = LastVLTestDataSource(config=config).data
 
         return {
@@ -275,7 +273,7 @@ class ServiceUptakeView(ChampView):
             'type_visit': self.post_data.get('visit_type', None),
             'activity_type': self.post_data.get('activity_type', None),
             'client_type': self.get_list_property('client_type'),
-            'organization': self.get_list_property('organization'),
+            'user_id': get_user_ids_for_group(self.get_list_property('organization')),
             'visit_date_start': start_date,
             'visit_date_end': end_date,
             'posttest_date_start': start_date,
@@ -284,9 +282,9 @@ class ServiceUptakeView(ChampView):
             'date_handshake_end': end_date,
         }
 
-        kp_prev = UICFromEPMDataSource(config=config, replace_group_by='kp_prev_month').data
-        htc_tst = UICFromCCDataSource(config=config, replace_group_by='htc_month').data
-        htc_pos = HivStatusDataSource(config=config, replace_group_by='htc_month').data
+        kp_prev = UICFromEPMDataSource(config=config.copy(), replace_group_by='kp_prev_month').data
+        htc_tst = UICFromCCDataSource(config=config.copy(), replace_group_by='htc_month').data
+        htc_pos = HivStatusDataSource(config=config.copy(), replace_group_by='htc_month').data
         care_new = FormCompletionDataSource(config=config, replace_group_by='care_new_month').data
 
         htc_uptake_chart_data = OrderedDict()
