@@ -26,7 +26,7 @@ function Entry(question, options) {
         self.answer(Formplayer.Const.NO_ANSWER);
     };
     self.afterRender = function() {
-      // Override with any logic that comes after rendering the Entry
+        // Override with any logic that comes after rendering the Entry
     };
     if (self.answer) {
         self.answer.subscribe(self.onAnswerChange.bind(self));
@@ -68,7 +68,9 @@ EntryArrayAnswer.prototype.onPreProcess = function(newValue) {
     var processed;
     if (this.isValid(newValue)) {
         if (newValue.length) {
-            processed = _.map(newValue, function(d) { return +d });
+            processed = _.map(newValue, function(d) {
+                return +d
+            });
         } else {
             processed = Formplayer.Const.NO_ANSWER;
         }
@@ -171,10 +173,10 @@ function FreeTextEntry(question, options) {
             return gettext('Password');
         }
         switch (self.datatype) {
-        case Formplayer.Const.BARCODE:
-            return gettext('Barcode');
-        default:
-            return gettext('Free response');
+            case Formplayer.Const.BARCODE:
+                return gettext('Barcode');
+            default:
+                return gettext('Free response');
         }
     };
 }
@@ -226,7 +228,9 @@ function PhoneEntry(question, options) {
     this.lengthLimit = options.lengthLimit || 15;
 
     this.getErrorMessage = function(rawAnswer) {
-        if (rawAnswer === '') { return null; }
+        if (rawAnswer === '') {
+            return null;
+        }
         return (!(/^[+\-]?\d*(\.\d+)?$/.test(rawAnswer)) ? "This does not appear to be a valid phone/numeric number" : null);
     };
 
@@ -289,8 +293,12 @@ function SingleSelectEntry(question, options) {
     self.choices = question.choices;
     self.templateType = 'select';
     self.isMulti = false;
-    self.onClear = function() { self.rawAnswer(Formplayer.Const.NO_ANSWER); };
-    self.isValid = function() { return true };
+    self.onClear = function() {
+        self.rawAnswer(Formplayer.Const.NO_ANSWER);
+    };
+    self.isValid = function() {
+        return true
+    };
 }
 SingleSelectEntry.prototype = Object.create(EntrySingleAnswer.prototype);
 SingleSelectEntry.prototype.constructor = EntrySingleAnswer;
@@ -311,7 +319,10 @@ function DropdownEntry(question, options) {
 
     self.options = ko.pureComputed(function() {
         return _.map(question.choices(), function(choice, idx) {
-            return { text: choice, idx: idx + 1 };
+            return {
+                text: choice,
+                idx: idx + 1
+            };
         });
     });
 }
@@ -346,22 +357,27 @@ function ComboboxEntry(question, options) {
 
     self.options = ko.computed(function() {
         return _.map(question.choices(), function(choice, idx) {
-            return { name: choice, id: idx + 1 };
+            return {
+                name: choice,
+                id: idx + 1
+            };
         });
     });
-    self.options.subscribe(function () {
+    self.options.subscribe(function() {
         self.renderAtwho();
         if (!self.isValid(self.rawAnswer())) {
             self.question.error(gettext('Not a valid choice'));
         }
     });
-    self.helpText = function() { return 'Combobox'; };
+    self.helpText = function() {
+        return 'Combobox';
+    };
 
     // If there is a prexisting answer, set the rawAnswer to the corresponding text.
     if (question.answer()) {
         initialOption = self.options()[self.answer() - 1];
         self.rawAnswer(
-             initialOption ? initialOption.name : Formplayer.Const.NO_ANSWER
+            initialOption ? initialOption.name : Formplayer.Const.NO_ANSWER
         );
     }
 
@@ -403,7 +419,9 @@ function ComboboxEntry(question, options) {
             return true;
         }
         return _.include(
-            _.map(self.options(), function(option) { return option.name; }),
+            _.map(self.options(), function(option) {
+                return option.name;
+            }),
             value
         );
     };
@@ -465,11 +483,11 @@ ComboboxEntry.prototype.onPreProcess = function(newValue) {
 };
 
 $.datetimepicker.setDateFormatter({
-    parseDate: function (date, format) {
+    parseDate: function(date, format) {
         var d = moment(date, format);
         return d.isValid() ? d.toDate() : false;
     },
-    formatDate: function (date, format) {
+    formatDate: function(date, format) {
         return moment(date).format(format);
     },
 });
@@ -510,7 +528,7 @@ function DateTimeEntryBase(question, options) {
                 }
                 self.answer(moment(newDate).format(self.serverFormat));
             },
-            onGenerate: function () {
+            onGenerate: function() {
                 var $dt = $(this);
                 if ($dt.find('.xdsoft_mounthpicker .xdsoft_prev .fa').length < 1) {
                     $dt.find('.xdsoft_mounthpicker .xdsoft_prev').append($('<i class="fa fa-chevron-left" />'));
@@ -651,7 +669,7 @@ function GeoPointEntry(question, options) {
         return self.formatCoordinate(self.rawAnswer()[1] || null, ['E', 'W']);
     };
     self.formatCoordinate = function(coordinate, cardinalities) {
-        var cardinality = coordinate >= 0 ? cardinalities[0] : cardinalities [1];
+        var cardinality = coordinate >= 0 ? cardinalities[0] : cardinalities[1];
         if (coordinate !== null) {
             return cardinality + intpad(intpad(Math.abs(coordinate).toFixed(5), 8));
         }
@@ -694,69 +712,80 @@ function getEntry(question) {
     var isPhoneMode = ko.utils.unwrapObservable(displayOptions.phoneMode);
 
     switch (question.datatype()) {
-    case Formplayer.Const.STRING:
-    // Barcode uses text box for CloudCare so it's possible to still enter a barcode field
-    case Formplayer.Const.BARCODE:
-        isNumeric = style === Formplayer.Const.NUMERIC;
-        if (isNumeric) {
-            entry = new PhoneEntry(question, { enableAutoUpdate: isPhoneMode });
-        } else {
-            entry = new FreeTextEntry(question, { enableAutoUpdate: isPhoneMode });
-        }
-        break;
-    case Formplayer.Const.INT:
-        entry = new IntEntry(question, { enableAutoUpdate: isPhoneMode });
-        break;
-    case Formplayer.Const.LONGINT:
-        entry = new IntEntry(question, { lengthLimit: 15, enableAutoUpdate: isPhoneMode  });
-        break;
-    case Formplayer.Const.FLOAT:
-        entry = new FloatEntry(question, { enableAutoUpdate: isPhoneMode });
-        break;
-    case Formplayer.Const.SELECT:
-        isMinimal =  style === Formplayer.Const.MINIMAL;
-        if (style) {
-            isCombobox = style.startsWith(Formplayer.Const.COMBOBOX);
-        }
-
-        if (isMinimal) {
-            entry = new DropdownEntry(question, {});
-        } else if (isCombobox) {
-
-            entry = new ComboboxEntry(question, {
-                /*
-                 * The appearance attribute is either:
-                 *
-                 * combobox
-                 * combobox multiword
-                 * combobox fuzzy
-                 *
-                 * The second word designates the matching type
-                 */
-                matchType: question.style.raw().split(' ')[1],
+        case Formplayer.Const.STRING:
+            // Barcode uses text box for CloudCare so it's possible to still enter a barcode field
+        case Formplayer.Const.BARCODE:
+            isNumeric = style === Formplayer.Const.NUMERIC;
+            if (isNumeric) {
+                entry = new PhoneEntry(question, {
+                    enableAutoUpdate: isPhoneMode
+                });
+            } else {
+                entry = new FreeTextEntry(question, {
+                    enableAutoUpdate: isPhoneMode
+                });
+            }
+            break;
+        case Formplayer.Const.INT:
+            entry = new IntEntry(question, {
+                enableAutoUpdate: isPhoneMode
             });
-        } else {
-            entry = new SingleSelectEntry(question, {});
-        }
-        break;
-    case Formplayer.Const.MULTI_SELECT:
-        entry = new MultiSelectEntry(question, {});
-        break;
-    case Formplayer.Const.DATE:
-        entry = new DateEntry(question, {});
-        break;
-    case Formplayer.Const.TIME:
-        entry = new TimeEntry(question, {});
-        break;
-    case Formplayer.Const.GEO:
-        entry = new GeoPointEntry(question, {});
-        break;
-    case Formplayer.Const.INFO:
-        entry = new InfoEntry(question, {});
-        break;
-    default:
-        window.console.warn('No active entry for: ' + question.datatype());
-        entry = new UnsupportedEntry(question, options);
+            break;
+        case Formplayer.Const.LONGINT:
+            entry = new IntEntry(question, {
+                lengthLimit: 15,
+                enableAutoUpdate: isPhoneMode
+            });
+            break;
+        case Formplayer.Const.FLOAT:
+            entry = new FloatEntry(question, {
+                enableAutoUpdate: isPhoneMode
+            });
+            break;
+        case Formplayer.Const.SELECT:
+            isMinimal = style === Formplayer.Const.MINIMAL;
+            if (style) {
+                isCombobox = style.startsWith(Formplayer.Const.COMBOBOX);
+            }
+
+            if (isMinimal) {
+                entry = new DropdownEntry(question, {});
+            } else if (isCombobox) {
+
+                entry = new ComboboxEntry(question, {
+                    /*
+                     * The appearance attribute is either:
+                     *
+                     * combobox
+                     * combobox multiword
+                     * combobox fuzzy
+                     *
+                     * The second word designates the matching type
+                     */
+                    matchType: question.style.raw().split(' ')[1],
+                });
+            } else {
+                entry = new SingleSelectEntry(question, {});
+            }
+            break;
+        case Formplayer.Const.MULTI_SELECT:
+            entry = new MultiSelectEntry(question, {});
+            break;
+        case Formplayer.Const.DATE:
+            entry = new DateEntry(question, {});
+            break;
+        case Formplayer.Const.TIME:
+            entry = new TimeEntry(question, {});
+            break;
+        case Formplayer.Const.GEO:
+            entry = new GeoPointEntry(question, {});
+            break;
+        case Formplayer.Const.INFO:
+            entry = new InfoEntry(question, {});
+            break;
+        default:
+            window.console.warn('No active entry for: ' + question.datatype());
+            entry = new UnsupportedEntry(question, options);
     }
     return entry;
 }
@@ -782,7 +811,7 @@ function _getDisplayOptions(question) {
 
     // logic in case the question is in a group or repeat or nested group, etc.
     while (form.displayOptions === undefined && maxIter > 0) {
-        maxIter --;
+        maxIter--;
         form = parent.parent;
     }
 

@@ -1,4 +1,4 @@
-(function (angular, undefined) {
+(function(angular, undefined) {
     'use strict';
 
     var summaryModule = angular.module('summaryModule', [
@@ -13,62 +13,62 @@
         appLangs: []
     });
 
-    summaryModule.factory('utils', ['$location', 'summaryConfig', function ($location, config) {
-        function Utils () {
+    summaryModule.factory('utils', ['$location', 'summaryConfig', function($location, config) {
+        function Utils() {
             var self = this;
-            self.getTemplate = function (filename) {
+            self.getTemplate = function(filename) {
                 return config.staticRoot + 'app_manager/ng_partials/' + filename;
             };
-            self.getIcon = function (type) {
+            self.getIcon = function(type) {
                 var vtype = config.vellumTypes[type];
                 if (vtype) {
                     return vtype.icon_bs3;
                 }
                 return '';
             };
-            self.translateName = function (names, target_lang, fallback) {
+            self.translateName = function(names, target_lang, fallback) {
                 fallback = fallback ? fallback : '[unknown]';
                 if (!names) {
                     return fallback;
                 }
                 var langs = [target_lang].concat(config.appLangs),
-                    firstLang = _(langs).find(function (lang) {
-                    return names[lang];
-                });
+                    firstLang = _(langs).find(function(lang) {
+                        return names[lang];
+                    });
                 if (!firstLang) {
                     return fallback;
                 }
-                return names[firstLang] + (firstLang === target_lang ? '': ' [' + firstLang + ']');
+                return names[firstLang] + (firstLang === target_lang ? '' : ' [' + firstLang + ']');
             };
-            self.getModuleName = function (formId, target_lang) {
+            self.getModuleName = function(formId, target_lang) {
                 var names = config.formNameMap[formId];
                 if (names) {
                     return self.translateName(names.module_name, target_lang)
                 }
                 return formId;
             };
-            self.getFormName = function (formId, target_lang) {
+            self.getFormName = function(formId, target_lang) {
                 var names = config.formNameMap[formId];
                 if (names) {
                     return self.translateName(names.form_name, target_lang)
                 }
                 return formId;
             };
-            self.getFormUrl = function (formId, target_lang) {
+            self.getFormUrl = function(formId, target_lang) {
                 var names = config.formNameMap[formId];
                 if (names) {
                     return names.form_url
                 }
                 return formId;
             };
-            self.getModuleUrl = function (FormOrModuleId, target_lang) {
+            self.getModuleUrl = function(FormOrModuleId, target_lang) {
                 var names = config.formNameMap[FormOrModuleId];
                 if (names) {
                     return names.module_url
                 }
                 return FormOrModuleId;
             };
-            self.isActive = function (path) {
+            self.isActive = function(path) {
                 return $location.path().substr(0, path.length) === path;
             };
         }
@@ -76,23 +76,23 @@
     }]);
 
     summaryModule.factory('_', function() {
-		return window._; // assumes underscore has already been loaded on the page
-	});
+        return window._; // assumes underscore has already been loaded on the page
+    });
 
-    summaryModule.factory('summaryDataService', ['$q', 'djangoRMI', function ($q, djangoRMI) {
+    summaryModule.factory('summaryDataService', ['$q', 'djangoRMI', function($q, djangoRMI) {
         var self = this,
             service = {};
         self.caseData = null;
         self.formData = null;
 
-        service.getCaseData = function () {
+        service.getCaseData = function() {
             var deferred = $q.defer();
 
             if (self.caseData === null) {
-                djangoRMI.get_case_data({}).success(function (data) {
+                djangoRMI.get_case_data({}).success(function(data) {
                     self.caseData = data;
                     deferred.resolve(data);
-                }).error(function () {
+                }).error(function() {
                     deferred.reject();
                 });
             } else {
@@ -101,14 +101,14 @@
             return deferred.promise;
         };
 
-        service.getFormData = function () {
+        service.getFormData = function() {
             var deferred = $q.defer();
 
             if (self.formData === null) {
-                djangoRMI.get_form_data({}).success(function (data) {
+                djangoRMI.get_form_data({}).success(function(data) {
                     self.formData = data;
                     deferred.resolve(data);
-                }).error(function (error) {
+                }).error(function(error) {
                     deferred.resolve({
                         success: false,
                         error: error
@@ -123,14 +123,18 @@
     }]);
 
     var controllers = {};
-    controllers.FormController = function ($scope, summaryDataService, summaryConfig, utils) {
+    controllers.FormController = function($scope, summaryDataService, summaryConfig, utils) {
         var self = this;
 
         $scope.loading = true;
         $scope.isActive = utils.isActive;
         $scope.modules = [];
-        $scope.formSearch = {id: ''};
-        $scope.moduleSearch = {id: ''};
+        $scope.formSearch = {
+            id: ''
+        };
+        $scope.moduleSearch = {
+            id: ''
+        };
         $scope.lang = 'en';
         $scope.showLabels = true;
         $scope.showCalculations = false;
@@ -147,17 +151,17 @@
         $scope.appName = summaryConfig.appName;
         $scope.readOnly = summaryConfig.readOnly;
 
-        self.init = function () {
+        self.init = function() {
             $scope.loading = true;
-            summaryDataService.getFormData().then(function (data) {
+            summaryDataService.getFormData().then(function(data) {
                 $scope.loading = false;
                 self.updateView(data);
-            }, function () {
+            }, function() {
                 $scope.loading = false;
             });
         };
 
-        self.updateView = function (data) {
+        self.updateView = function(data) {
             if (data.success) {
                 $scope.modules = data.response;
             }
@@ -169,16 +173,16 @@
             }
         };
 
-        $scope.filterList = function (module, form) {
+        $scope.filterList = function(module, form) {
             $scope.moduleSearch.id = module ? module.id : '';
             $scope.formSearch.id = form ? form.id : '';
         };
 
-        $scope.moduleSelected = function (module) {
+        $scope.moduleSelected = function(module) {
             return $scope.moduleSearch.id === module.id && !$scope.formSearch.id;
         };
 
-        $scope.allSelected = function () {
+        $scope.allSelected = function() {
             return !$scope.moduleSearch.id && !$scope.formSearch.id;
         };
 
@@ -221,8 +225,8 @@
         self.init();
     };
 
-    controllers.CaseController = function ($scope, $anchorScroll, $location, _,
-                                           summaryDataService, summaryConfig, utils) {
+    controllers.CaseController = function($scope, $anchorScroll, $location, _,
+        summaryDataService, summaryConfig, utils) {
         var self = this;
 
         $scope.caseTypes = [];
@@ -246,13 +250,15 @@
         $scope.appName = summaryConfig.appName;
         $scope.readOnly = summaryConfig.readOnly;
 
-        $scope.filterCaseTypes = function (caseType) {
-            $scope.typeSearch = caseType ? {'name': caseType} : null;
+        $scope.filterCaseTypes = function(caseType) {
+            $scope.typeSearch = caseType ? {
+                'name': caseType
+            } : null;
         };
 
-        $scope.hasErrors = function (caseTypeName) {
-            var caseType =  _.find($scope.caseTypes, function (caseType) {
-                return caseType.name === caseTypeName ;
+        $scope.hasErrors = function(caseTypeName) {
+            var caseType = _.find($scope.caseTypes, function(caseType) {
+                return caseType.name === caseTypeName;
             });
             return caseType ? caseType.has_errors : false;
         };
@@ -266,17 +272,17 @@
             }
         };
 
-        self.init = function () {
+        self.init = function() {
             $scope.loading = true;
-            summaryDataService.getCaseData().then(function (data) {
+            summaryDataService.getCaseData().then(function(data) {
                 $scope.loading = false;
                 self.updateView(data);
-            }, function () {
+            }, function() {
                 $scope.loading = false;
             });
         };
 
-        self.updateView = function (data) {
+        self.updateView = function(data) {
             if (data.success) {
                 var response = data.response;
                 $scope.caseTypes = response.case_types;
@@ -288,7 +294,7 @@
     };
     summaryModule.controller(controllers);
 
-    summaryModule.directive('openerCloser', ['utils', function (utils) {
+    summaryModule.directive('openerCloser', ['utils', function(utils) {
         return {
             restrict: 'E',
             templateUrl: '/opener_closer.html',
@@ -296,13 +302,13 @@
                 forms: '=',
                 lang: '='
             },
-            controller: function ($scope) {
+            controller: function($scope) {
                 $scope.getFormName = utils.getFormName;
             }
         };
     }]);
 
-    summaryModule.directive('formQuestions', ['utils', function (utils) {
+    summaryModule.directive('formQuestions', ['utils', function(utils) {
         return {
             restrict: 'E',
             templateUrl: '/form_questions.html',
@@ -314,24 +320,24 @@
                 showLabels: '=',
                 lang: '='
             },
-            controller: function ($scope) {
+            controller: function($scope) {
                 $scope.getIcon = utils.getIcon;
                 $scope.getQuestionLabel = function(question) {
                     return utils.translateName(question.translations, $scope.lang, question.label);
                 };
-                $scope.getSelectOptionsLabel = function(option){
+                $scope.getSelectOptionsLabel = function(option) {
                     return utils.translateName(option.translations, $scope.lang, option.label);
                 };
             },
         };
     }]);
-    summaryModule.directive('loading', function () {
+    summaryModule.directive('loading', function() {
         return {
             restrict: 'E',
             replace: true,
             templateUrl: '/loading.html',
-            link: function (scope, element, attr) {
-                scope.$watch('loading', function (val) {
+            link: function(scope, element, attr) {
+                scope.$watch('loading', function(val) {
                     if (val) {
                         $(element).show();
                     } else {
@@ -342,7 +348,7 @@
         };
     });
 
-    summaryModule.directive('hierarchy', function () {
+    summaryModule.directive('hierarchy', function() {
         return {
             restrict: "E",
             replace: true,
@@ -356,7 +362,7 @@
         };
     });
 
-    summaryModule.directive('member', function ($compile) {
+    summaryModule.directive('member', function($compile) {
         return {
             restrict: "E",
             replace: true,
@@ -368,7 +374,7 @@
                 typeSearch: '='
             },
             templateUrl: '/hierarchy_member.html',
-            link: function (scope, element, attrs) {
+            link: function(scope, element, attrs) {
                 var hierarchySt = '<hierarchy ' +
                     'hierarchy="hierarchy" ' +
                     'filter-case-types="filterCaseTypes({casetype: casetype})"' +
@@ -376,7 +382,7 @@
                     'type-search="typeSearch"' +
                     '></hierarchy>';
                 if (angular.isObject(scope.hierarchy) && Object.getOwnPropertyNames(scope.hierarchy).length > 0) {
-                    $compile(hierarchySt)(scope, function(cloned, scope)   {
+                    $compile(hierarchySt)(scope, function(cloned, scope) {
                         element.append(cloned);
                     });
                 }
