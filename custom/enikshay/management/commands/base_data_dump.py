@@ -77,8 +77,7 @@ class BaseDataDump(BaseCommand):
 
     def get_cases(self, case_type):
         case_accessor = CaseAccessors(DOMAIN)
-        for case_id in self.get_case_ids(case_type):
-            yield case_accessor.get_case(case_id)
+        return case_accessor.iter_cases(self.get_case_ids(case_type))
 
     def get_case_ids(self, case_type):
         raise NotImplementedError
