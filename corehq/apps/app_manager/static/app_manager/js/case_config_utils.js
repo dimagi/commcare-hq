@@ -56,7 +56,7 @@ hqDefine('app_manager/js/case_config_utils', function () {
                     questions_observable(data);
                     $el.find('i').removeClass('fa-spin');
                 },
-                error: function(e) {
+                error: function() {
                     $el.removeClass('btn-success').addClass('btn-danger');
                     $el.find('i').removeClass('fa-spin');
                     hqImport("hqwebapp/js/alert_user").alert_user(gettext("Something went wrong refreshing "

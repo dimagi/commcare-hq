@@ -1,3 +1,4 @@
+/* globals DnldExpData */
 describe('DownloadExportFormController - Prepare Download', function() {
     DnldExpData.prepareTests();
     DnldExpData.prepareDownloadController();

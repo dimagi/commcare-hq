@@ -16,7 +16,6 @@ hqDefine('analytix/js/kissmetrix', [
     'use strict';
     var _get = initialAnalytics.getFn('kissmetrics'),
         _allAbTests = {},
-        _init = {},
         _logger = logging.getLoggerForApi('Kissmetrics'),
         _ready = $.Deferred();
 

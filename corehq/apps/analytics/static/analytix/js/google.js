@@ -18,9 +18,6 @@ hqDefine('analytix/js/google', [
 ) {
     'use strict';
     var _get = initialAnalytics.getFn('google'),
-        _global = initialAnalytics.getFn('global'),
-        _data = {},
-        module = {},
         _logger = logging.getLoggerForApi('Google Analytics'),
         _ready = $.Deferred();
 
