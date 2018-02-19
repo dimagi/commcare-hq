@@ -49,6 +49,8 @@ class BaseDataDump(BaseCommand):
                 # that might be needed repeatedly for the same case and is expensive call
                 self.context = {}
                 case_row = {}
+                if not self.include_case_in_dump(case):
+                    continue
                 # iterate columns to be generated
                 # details is a dict with key in [
                 # "N/A" -> not to be populated so ignore it

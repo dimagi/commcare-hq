@@ -1,0 +1,18 @@
+Column Name,Case Reference,Calculation
+Commcare UUID,self,caseid
+eNikshay ID (Person),person,person_id
+eNikshay Episode ID ,self,episode_id
+Nikshay ID ,self,nikshay_id
+Manual Nikshay ID,self,manual_nikshay_id
+Name,person,name
+Episode Type,self,episode_type
+Episode closed?,self,closed
+Episode Close Reason (from Remove Person),self,close_reason
+Episode Active?,self,is_active
+State,N/A,N/A
+District,N/A,N/A
+TU,N/A,N/A
+PHI,N/A,N/A
+Date of Creation of Presumptive TB Episode,self,opened_date
+Created by Username,custom,"if(self.opened_by_username!="""",self.opened_by_username,self.opened_by_username1)"
+Created by User ID,person,opened_by_user_id
