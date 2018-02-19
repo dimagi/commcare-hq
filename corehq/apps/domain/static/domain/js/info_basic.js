@@ -13,11 +13,11 @@ hqDefine("domain/js/info_basic", function() {
                 }
             });
         }
-    
+
         $('#id_default_timezone').select2({
-            placeholder: 'Select a Timezone...',
+            placeholder: gettext('Select a Timezone...'),
         });
-    
+
         $('#id_call_center_enabled').change(function() {
             var type = $('#id_call_center_type').closest('.control-group');
             var case_owner = $('#id_call_center_case_owner').closest('.control-group');
