@@ -17,14 +17,14 @@ describe('Async Download Modal', function() {
         var test_done = [
             {
                 input: 'progress ready_' + download_poll_id,
-                expected: true
+                expected: true,
             }, {
                 input: 'ready_' + download_poll_id,
-                expected: true
+                expected: true,
             }, {
                 input: 'progress error_' + download_poll_id,
-                expected: true
-            }
+                expected: true,
+            },
         ];
 
         test_done.forEach(function(test) {
@@ -36,17 +36,17 @@ describe('Async Download Modal', function() {
         var test_not_done = [
             {
                 input: null,
-                expected: false
+                expected: false,
             }, {
                 input: undefined,
-                expected: false
+                expected: false,
             }, {
                 input: '',
-                expected: false
+                expected: false,
             }, {
                 input: 'progress',
-                expected: false
-            }
+                expected: false,
+            },
         ];
 
         test_not_done.forEach(function(test) {
@@ -92,7 +92,7 @@ describe('Async Download Modal', function() {
             ajax_stub.reset();
             ajax_stub.onFirstCall(0).yieldsTo("success", {
                 download_id: downloadId,
-                download_url: pollUrl
+                download_url: pollUrl,
             });
             ajax_stub.onSecondCall().yieldsTo("success", 'html progress content');
             ajax_stub.onThirdCall().yieldsTo("success", 'html read content ' + state + downloadId);
@@ -108,9 +108,9 @@ describe('Async Download Modal', function() {
         }
 
         var tests_state = [{
-            state: 'ready_'
+            state: 'ready_',
         }, {
-            state: 'error_'
+            state: 'error_',
         }];
 
         tests_state.forEach(function(test) {

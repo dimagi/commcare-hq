@@ -345,7 +345,7 @@ hqDefine('app_manager/js/releases/releases', function () {
                 },
                 error: function () {
                     self.fetchState('error');
-                }
+                },
             });
         };
 
@@ -373,7 +373,7 @@ hqDefine('app_manager/js/releases/releases', function () {
                     error: function () {
                         savedApp.is_released('error');
                         $(event.currentTarget).parent().prev('.js-release-waiting').addClass('hide');
-                    }
+                    },
                 });
             }
         };
@@ -460,11 +460,11 @@ hqDefine('app_manager/js/releases/releases', function () {
     SavedApp.URL_TYPES = {
         SHORT_ODK_URL: 'short_odk_url',
         SHORT_ODK_MEDIA_URL: 'short_odk_media_url',
-        SHORT_URL: 'short_url'
+        SHORT_URL: 'short_url',
     };
 
     return {
         ReleasesMain: ReleasesMain,
-        SavedApp: SavedApp
+        SavedApp: SavedApp,
     };
 });

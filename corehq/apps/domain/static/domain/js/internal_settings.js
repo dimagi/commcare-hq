@@ -49,7 +49,7 @@ hqDefine("domain/js/internal_settings", function() {
             showButtonPanel: true,
             dateFormat: 'yy-mm-dd',
             maxDate: '0',
-            numberOfMonths: 2
+            numberOfMonths: 2,
         });
     });
 

@@ -3,14 +3,14 @@
 
     var summaryModule = angular.module('summaryModule', [
         'ng.django.rmi',
-        'ui.bootstrap'
+        'ui.bootstrap',
     ]);
 
     summaryModule.constant('summaryConfig', {
         staticRoot: '/',
         vellumTypes: {},
         formNameMap: {},
-        appLangs: []
+        appLangs: [],
     });
 
     summaryModule.factory('utils', ['$location', 'summaryConfig', function($location, config) {
@@ -111,7 +111,7 @@
                 }).error(function(error) {
                     deferred.resolve({
                         success: false,
-                        error: error
+                        error: error,
                     });
                 });
             } else {
@@ -130,10 +130,10 @@
         $scope.isActive = utils.isActive;
         $scope.modules = [];
         $scope.formSearch = {
-            id: ''
+            id: '',
         };
         $scope.moduleSearch = {
-            id: ''
+            id: '',
         };
         $scope.lang = 'en';
         $scope.showLabels = true;
@@ -252,7 +252,7 @@
 
         $scope.filterCaseTypes = function(caseType) {
             $scope.typeSearch = caseType ? {
-                'name': caseType
+                'name': caseType,
             } : null;
         };
 
@@ -300,11 +300,11 @@
             templateUrl: '/opener_closer.html',
             scope: {
                 forms: '=',
-                lang: '='
+                lang: '=',
             },
             controller: function($scope) {
                 $scope.getFormName = utils.getFormName;
-            }
+            },
         };
     }]);
 
@@ -318,7 +318,7 @@
                 showCalculations: '=',
                 showConstraints: '=',
                 showLabels: '=',
-                lang: '='
+                lang: '=',
             },
             controller: function($scope) {
                 $scope.getIcon = utils.getIcon;
@@ -344,7 +344,7 @@
                         $(element).hide();
                     }
                 });
-            }
+            },
         };
     });
 
@@ -356,9 +356,9 @@
                 hierarchy: '=',
                 filterCaseTypes: '&',
                 hasErrors: '&',
-                typeSearch: '='
+                typeSearch: '=',
             },
-            templateUrl: '/hierarchy.html'
+            templateUrl: '/hierarchy.html',
         };
     });
 
@@ -371,7 +371,7 @@
                 hierarchy: '=',
                 filterCaseTypes: '&',
                 hasErrors: '&',
-                typeSearch: '='
+                typeSearch: '=',
             },
             templateUrl: '/hierarchy_member.html',
             link: function(scope, element, attrs) {
@@ -386,7 +386,7 @@
                         element.append(cloned);
                     });
                 }
-            }
+            },
         };
     });
 }(window.angular));

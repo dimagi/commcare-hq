@@ -61,8 +61,8 @@ ko.bindingHandlers.xpathValidator = (function () {
             ko.renderTemplate('XPathValidator.template', {
                 xpathValidator: XPathValidator(xpathText, allowCaseHashtags),
                 input: input,
-                errorHtml: errorHtml
+                errorHtml: errorHtml,
             }, {}, element, 'replaceNode');
-        }
+        },
     };
 }());
