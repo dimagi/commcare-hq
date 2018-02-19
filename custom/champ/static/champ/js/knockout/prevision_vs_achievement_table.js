@@ -15,10 +15,9 @@ ko.bindingHandlers.select2 = {
         } else {
             $(element).select2();
         }
-    }
+    },
 };
 
-var ALL_OPTION = {'id': '', 'text': 'All'};
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function PrecisionVsAchievementsTableModel() {
@@ -96,7 +95,7 @@ function PrecisionVsAchievementsTableModel() {
         var group_url = url('group_filter');
         $.getJSON(group_url, function(data) {
             self.groups(data.options);
-        })
+        });
     };
 
     self.onSelectOption = function(event, property) {
@@ -123,11 +122,11 @@ function PrecisionVsAchievementsTableModel() {
             self.target_tx_new(data.target_tx_new);
             self.tx_undetect(data.tx_undetect);
             self.target_tx_undetect(data.target_tx_undetect);
-        })
+        });
     };
 
     self.submit = function () {
-        self.getTableData()
+        self.getTableData();
     };
     
     self.getTableData();

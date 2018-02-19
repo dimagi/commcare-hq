@@ -58,7 +58,7 @@ describe('PrecisionVsAchievementsGraphModel', function() {
         viewModel.clienttypes = clienttypes;
         viewModel.availableDistricts(districts);
         viewModel.availableCbos(cbos);
-        viewModel.availableUserpls(userpls)
+        viewModel.availableUserpls(userpls);
     });
 
     it('test districtOnSelect only district selected', function() {

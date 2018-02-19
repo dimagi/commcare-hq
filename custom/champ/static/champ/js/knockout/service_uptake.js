@@ -1,4 +1,4 @@
-/* global ko, $, hgImport, moment, nv */
+/* global ko, $, hgImport, moment, nv, d3 */
 
 ko.bindingHandlers.select2 = {
     init: function (element, valueAccessor) {
@@ -15,10 +15,9 @@ ko.bindingHandlers.select2 = {
         } else {
             $(element).select2();
         }
-    }
+    },
 };
 
-var ALL_OPTION = {'id': '', 'text': 'All'};
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function ServiceUptakeModel() {
@@ -90,7 +89,7 @@ function ServiceUptakeModel() {
         var group_url = url('group_filter');
         $.getJSON(group_url, function(data) {
             self.groups(data.options);
-        })
+        });
     };
 
     self.getData();
@@ -109,15 +108,15 @@ function ServiceUptakeModel() {
         $.post(get_url, ko.toJSON(self.filters), function(data) {
             self.chart.xAxis.tickValues(data.tickValues);
             d3.select('#chart').datum(data.chart).call(self.chart);
-            nv.utils.windowResize(chart.update);
-        })
+            nv.utils.windowResize(self.chart.update);
+        });
     };
 
     self.submit = function () {
-        self.getChartData()
+        self.getChartData();
     };
 
-     nv.addGraph(function () {
+    nv.addGraph(function () {
         self.chart = nv.models.lineChart().useInteractiveGuideline(true);
 
         self.chart.xAxis.axisLabel('').showMaxMin(true);

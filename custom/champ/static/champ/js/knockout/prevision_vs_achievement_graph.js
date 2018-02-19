@@ -1,4 +1,4 @@
-/* global ko, $, hgImport, moment, nv */
+/* global ko, $, hgImport, moment, nv, d3 */
 
 ko.bindingHandlers.select2 = {
     init: function (element, valueAccessor) {
@@ -151,12 +151,12 @@ function PrecisionVsAchievementsGraphModel() {
             self.clienttypes = data.clienttypes;
             self.availableDistricts(self.districts);
             self.availableCbos(self.cbos);
-            self.availableUserpls(self.userpls)
+            self.availableUserpls(self.userpls);
         });
         var group_url = url('group_filter');
         $.getJSON(group_url, function(data) {
             self.groups(data.options);
-        })
+        });
     };
 
     self.getData();
@@ -303,11 +303,11 @@ function PrecisionVsAchievementsGraphModel() {
         $.post(get_url, ko.toJSON(self.filters), function(data) {
             d3.select('#chart').datum(data.chart).call(chart);
             nv.utils.windowResize(chart.update);
-        })
+        });
     };
 
     self.submit = function () {
-        self.getChartData(self.chart)
+        self.getChartData(self.chart);
     };
 
     nv.addGraph(function () {
@@ -322,7 +322,7 @@ function PrecisionVsAchievementsGraphModel() {
         self.chart.margin(20, 20, 60, 100);
         self.getChartData(self.chart);
         nv.utils.windowResize(self.chart.update);
-        return self.chart
+        return self.chart;
     });
 
     var pickers = $('.date-picker');
