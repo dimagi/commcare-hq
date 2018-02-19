@@ -15,7 +15,7 @@ hqDefine("domain/js/info_basic", function() {
         }
     
         $('#id_default_timezone').select2({
-            placeholder: 'Select a Timezone...'
+            placeholder: 'Select a Timezone...',
         });
     
         $('#id_call_center_enabled').change(function() {

@@ -43,28 +43,28 @@
             self.getModuleName = function (formId, target_lang) {
                 var names = config.formNameMap[formId];
                 if (names) {
-                    return self.translateName(names.module_name, target_lang)
+                    return self.translateName(names.module_name, target_lang);
                 }
                 return formId;
             };
             self.getFormName = function (formId, target_lang) {
                 var names = config.formNameMap[formId];
                 if (names) {
-                    return self.translateName(names.form_name, target_lang)
+                    return self.translateName(names.form_name, target_lang);
                 }
                 return formId;
             };
             self.getFormUrl = function (formId, target_lang) {
                 var names = config.formNameMap[formId];
                 if (names) {
-                    return names.form_url
+                    return names.form_url;
                 }
                 return formId;
             };
             self.getModuleUrl = function (FormOrModuleId, target_lang) {
                 var names = config.formNameMap[FormOrModuleId];
                 if (names) {
-                    return names.module_url
+                    return names.module_url;
                 }
                 return FormOrModuleId;
             };
@@ -202,7 +202,7 @@
                 formIcon = 'fcc fcc-app-updateform appnav-primary-icon appnav-primary-icon-lg';
             }
             return formIcon;
-        }
+        };
 
         $scope.getModuleIcon = function(form_module) {
             var moduleIcon = 'fa fa-folder-open';

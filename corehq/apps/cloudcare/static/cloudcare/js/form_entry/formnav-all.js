@@ -25,7 +25,7 @@ function init_preloaders(preloaders) {
                 }).responseText;
                 preload_data[type][key] = valback;
             } else {
-                preload_data[type][key] = val
+                preload_data[type][key] = val;
             }
         }
     }

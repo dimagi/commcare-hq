@@ -44,7 +44,7 @@ var mk_translation_ui = function (spec) {
                 $('<div/>').addClass("col-sm-1").append(this.$delete).append(this.$add).appendTo(this.ui);
                 $('<div/>').addClass("col-sm-5").append(this.$error).appendTo(this.ui);
                 this.ui = $('<div/>').append(this.ui);
-                this.$error.hide()
+                this.$error.hide();
 
                 var helperFunction = function () {
                     if (that.solid) {
@@ -155,7 +155,7 @@ var mk_translation_ui = function (spec) {
     translation_ui.saveButton = hqImport("hqwebapp/js/main").initSaveButton({
         unsavedMessage: gettext("You have unsaved user interface translations."),
         save: function () {
-            translation_ui.save()
+            translation_ui.save();
         }
     });
     translation_ui.$home.prepend(translation_ui.saveButton.ui);
@@ -272,7 +272,7 @@ var mk_translation_ui = function (spec) {
                 }
             }
         }
-        return error
-    }
+        return error;
+    };
     translation_ui.render();
 };

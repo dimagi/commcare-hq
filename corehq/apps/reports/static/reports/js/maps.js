@@ -66,7 +66,7 @@ function mapsInit(context) {
         // we can add other things here eventually
         display = {
             'table': true
-        }
+        };
     }
     if (display.table) {
         var table = initTable(context.data, context.config);
@@ -167,7 +167,7 @@ function initTableHeader(config, data, mkRow) {
         if (depth >= 0) {
             headerRows[depth].push(entry);
         }
-    }
+    };
     process({subcolumns: cols}, -1);
 
     $.each(headerRows, function(depth, row) {
