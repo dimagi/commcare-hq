@@ -513,9 +513,7 @@ hqDefine('app_manager/js/forms/case_config_ui_advanced', function() {
                 return gettext("Case Tag: only letters, numbers, '-', and '_' allowed");
             }
             var tags = self.caseConfig.caseConfigViewModel.getCaseTags('all');
-            if (_.where(tags, {
-                    value: case_tag
-                }).length > 1) {
+            if (_.where(tags, { value: case_tag }).length > 1) {
                 return gettext("Case Tag already in use");
             }
             return null;

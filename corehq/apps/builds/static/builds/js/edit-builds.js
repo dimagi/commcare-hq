@@ -75,13 +75,11 @@ hqDefine('builds/js/edit-builds', function () {
         });
         doc.defaults = [];
         _.each([menu.default_one, menu.default_two], function(deflt) {
-            doc.defaults.push(
-                {
+            doc.defaults.push({
                 'version': deflt(),
                 'build_number': null,
                 'latest': true
-                }
-            )
+            });
         });
         return doc
     }

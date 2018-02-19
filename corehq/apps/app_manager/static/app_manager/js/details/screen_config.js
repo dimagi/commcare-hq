@@ -59,9 +59,7 @@ hqDefine('app_manager/js/details/screen_config', function() {
                 },
                 // Allow manually entered text in drop down, which is not supported by legacy select2.
                 createSearchChoice: function(term, data) {
-                    if (!_.find(data, function(d) {
-                            return d.text === term;
-                        })) {
+                    if (!_.find(data, function(d) { return d.text === term; })) {
                         return {
                             id: term,
                             text: term,

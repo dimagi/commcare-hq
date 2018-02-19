@@ -124,7 +124,7 @@ hqDefine('app_manager/js/supported_languages', function () {
         this.languages.subscribe(changeSaveButton);
 
         this.canSortLanguages = ko.computed(function () {
-             return self.languages().length > 1;
+            return self.languages().length > 1;
         });
 
         this.validateGeneral = function () {
