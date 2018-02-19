@@ -1083,7 +1083,7 @@ hqDefine('app_manager/js/forms/case_config_ui_advanced', function() {
                 return !self.value_source() && !self.value_key();
             });
 
-            self.mode.subscribe(function(value) {
+            self.mode.subscribe(function() {
                 self.value_source('');
                 self.value_key('');
             });

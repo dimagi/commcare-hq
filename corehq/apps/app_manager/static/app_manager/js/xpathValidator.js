@@ -1,3 +1,4 @@
+/* globals XPATH_CONFIG */
 ko.bindingHandlers.xpathValidator = (function () {
     /*
      * usage:

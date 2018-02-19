@@ -1,8 +1,7 @@
 /* globals hqDefine */
 hqDefine('builds/js/edit-builds', function () {
     var initial_page_data = hqImport('hqwebapp/js/initial_page_data').get,
-        doc = initial_page_data('doc'),
-        pretty_doc = JSON.stringify(doc, undefined, 2);
+        doc = initial_page_data('doc');
 
     function Version(version, label, superuser_only, j2me_enabled) {
         var self = this;
@@ -99,8 +98,8 @@ hqDefine('builds/js/edit-builds', function () {
         $form.submit();
     }
 
-    $('#menu-form .btn-primary').click(function(e) {
-        var response = postGo(
+    $('#menu-form .btn-primary').click(function() {
+        postGo(
             $('#menu-form')[0].action,
             {'doc': JSON.stringify(outputJSON(buildsMenu))}
         );

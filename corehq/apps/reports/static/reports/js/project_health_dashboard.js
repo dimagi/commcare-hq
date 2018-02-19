@@ -81,7 +81,7 @@ hqDefine("reports/js/project_health_dashboard", function() {
                 .tickFormat(function(d){
                     return moment(d).format("MMM YYYY");
                 });
-            chart.tooltipContent(function(key, x, y, e, graph){
+            chart.tooltipContent(function(key, x, y, e){
                 var d = e.series.values[e.pointIndex];
                 return '<h3>' + key + '</h3>' +
                        '<p>' +  y + ' in ' + x + '</p>' +
