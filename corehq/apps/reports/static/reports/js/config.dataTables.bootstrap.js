@@ -156,7 +156,7 @@ hqDefine("reports/js/config.dataTables.bootstrap", [
                                     self.successCallbacks[i](data);
                                 }
                             }
-                            return result
+                            return result;
                         };
                         oSettings.jqXHR = $.ajax( {
                             "url": sSource.url,
@@ -281,7 +281,7 @@ hqDefine("reports/js/config.dataTables.bootstrap", [
                 });
             });
         };
-    }
+    };
 
     $.extend( $.fn.dataTableExt.oStdClasses, {
         "sSortAsc": "header headerSortDown",

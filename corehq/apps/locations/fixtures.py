@@ -3,12 +3,14 @@ from itertools import groupby
 from collections import defaultdict
 from xml.etree.cElementTree import Element
 
+import six
+
 from casexml.apps.phone.fixtures import FixtureProvider
 from corehq.apps.custom_data_fields.dbaccessors import get_by_domain_and_type
 from corehq.apps.fixtures.utils import get_index_schema_node
 from corehq.apps.locations.models import SQLLocation, LocationType, LocationFixtureConfiguration
+from corehq.apps.locations.queryutil import ComparedQuerySet, TimingContext
 from corehq import toggles
-import six
 
 
 class LocationSet(object):
@@ -208,11 +210,16 @@ def get_location_fixture_queryset(user):
     if toggles.SYNC_ALL_LOCATIONS.enabled(user.domain):
         return SQLLocation.active_objects.filter(domain=user.domain).prefetch_related('location_type')
 
-    all_locations = SQLLocation.objects.none()
+    timing = TimingContext("get_location_fixture_queryset")
+    with timing("mptt"):
+        mptt_set = mptt_get_location_fixture_queryset(user)
+    return ComparedQuerySet(mptt_set, timing)
 
+
+def mptt_get_location_fixture_queryset(user):
     user_locations = user.get_sql_locations(user.domain).prefetch_related('location_type')
 
-    all_locations |= _get_include_without_expanding_locations(user.domain, user_locations)
+    all_locations = _get_include_without_expanding_locations(user.domain, user_locations)
 
     for user_location in user_locations:
         location_type = user_location.location_type
@@ -221,7 +228,7 @@ def get_location_fixture_queryset(user):
         expand_from_locations = _get_locs_to_expand_from(user.domain, user_location, expand_from_level)
         locs_below_expand_from = _get_children(expand_from_locations, expand_to_level)
         locs_at_or_above_expand_from = (SQLLocation.active_objects
-                                        .get_queryset_ancestors(expand_from_locations, include_self=True))
+                                        .mptt_get_queryset_ancestors(expand_from_locations, include_self=True))
         locations_to_sync = locs_at_or_above_expand_from | locs_below_expand_from
         if location_type.include_only.exists():
             locations_to_sync = locations_to_sync.filter(location_type__in=location_type.include_only.all())
@@ -248,7 +255,7 @@ def _get_locs_to_expand_from(domain, user_location, expand_from):
     else:
         ancestors = (
             user_location
-            .get_ancestors(include_self=True)
+            .mptt_get_ancestors(include_self=True)
             .filter(location_type=expand_from, is_archived=False)
             .prefetch_related('location_type')
         )
@@ -259,7 +266,7 @@ def _get_children(expand_from_locations, expand_to_level):
     """From the topmost location, get all the children we want to sync
     """
     children = (SQLLocation.active_objects
-                .get_queryset_descendants(expand_from_locations)
+                .mptt_get_queryset_descendants(expand_from_locations)
                 .prefetch_related('location_type'))
     if expand_to_level is not None:
         children = children.filter(level__lte=expand_to_level)

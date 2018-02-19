@@ -107,7 +107,7 @@ ko.bindingHandlers.casePropertyAutocomplete = {
                     return {name: text, content: html};
                 }
                 return {name: value, content: value};
-            })
+            });
         }
         ko.bindingHandlers.autocompleteAtwho.update(element, wrappedValueAccessor, allBindingsAccessor);
     },

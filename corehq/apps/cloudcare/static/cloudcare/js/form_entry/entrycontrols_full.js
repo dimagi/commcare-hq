@@ -20,7 +20,7 @@ function Entry(question, options) {
     // Returns an error message given the answer. null if no error
     self.getErrorMessage = function(rawAnswer) {
         return null;
-    }
+    };
 
     self.clear = function() {
         self.answer(Formplayer.Const.NO_ANSWER);
@@ -52,9 +52,9 @@ EntryArrayAnswer = function(question, options) {
     self.rawAnswer = ko.observableArray(_.clone(question.answer()));
 
     self.rawAnswer.subscribe(self.onPreProcess.bind(self));
-    self.previousAnswer = self.answer()
+    self.previousAnswer = self.answer();
 
-}
+};
 EntryArrayAnswer.prototype = Object.create(Entry.prototype);
 EntryArrayAnswer.prototype.constructor = Entry;
 EntryArrayAnswer.prototype.onAnswerChange = function(newValue) {
@@ -68,9 +68,7 @@ EntryArrayAnswer.prototype.onPreProcess = function(newValue) {
     var processed;
     if (this.isValid(newValue)) {
         if (newValue.length) {
-            processed = _.map(newValue, function(d) {
-                return +d
-            });
+            processed = _.map(newValue, function(d) { return +d; });
         } else {
             processed = Formplayer.Const.NO_ANSWER;
         }
@@ -106,7 +104,7 @@ EntrySingleAnswer = function(question, options) {
             }
         });
     }
-}
+};
 EntrySingleAnswer.prototype = Object.create(Entry.prototype);
 EntrySingleAnswer.prototype.constructor = Entry;
 EntrySingleAnswer.prototype.onAnswerChange = function(newValue) {
@@ -252,11 +250,11 @@ function FloatEntry(question, options) {
 
     this.getErrorMessage = function(rawAnswer) {
         return (isNaN(+rawAnswer) ? "Not a valid number" : null);
-    }
+    };
 
     this.helpText = function() {
         return 'Decimal';
-    }
+    };
 }
 FloatEntry.prototype = Object.create(IntEntry.prototype);
 FloatEntry.prototype.constructor = IntEntry;
@@ -278,7 +276,7 @@ function MultiSelectEntry(question, options) {
 
     self.isValid = function(rawAnswer) {
         return _.isArray(rawAnswer);
-    }
+    };
 }
 MultiSelectEntry.prototype = Object.create(EntryArrayAnswer.prototype);
 MultiSelectEntry.prototype.constructor = EntryArrayAnswer;
@@ -297,7 +295,7 @@ function SingleSelectEntry(question, options) {
         self.rawAnswer(Formplayer.Const.NO_ANSWER);
     };
     self.isValid = function() {
-        return true
+        return true;
     };
 }
 SingleSelectEntry.prototype = Object.create(EntrySingleAnswer.prototype);

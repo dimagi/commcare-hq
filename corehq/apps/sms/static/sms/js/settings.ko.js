@@ -15,7 +15,7 @@ hqDefine("sms/js/settings.ko", function() {
             } else {
                 return "BETWEEN";
             }
-        }
+        };
 
         self.time_input_relationship = ko.observable(
             time_input_relationship || self.time_input_relationship_initial()

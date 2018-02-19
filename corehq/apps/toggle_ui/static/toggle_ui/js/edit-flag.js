@@ -20,7 +20,7 @@ hqDefine('toggle_ui/js/edit-flag', [
 
         self.init = function (config) {
             self.padded_ns = {};
-            var max_ns_len = Math.max.apply(Math, _.map(config.namespaces, function (ns) { return ns.length }));
+            var max_ns_len = Math.max.apply(Math, _.map(config.namespaces, function (ns) { return ns.length; }));
             _(config.namespaces).each(function (namespace) {
                 var diff = max_ns_len - namespace.length,
                     pad = new Array(diff + 1).join(PAD_CHAR);
@@ -42,7 +42,7 @@ hqDefine('toggle_ui/js/edit-flag', [
                 self.items.push({
                     namespace: ko.observable(self.padded_ns[namespace]),
                     value: ko.observable(value),
-                    last_used: ko.observable(last_used[value])
+                    last_used: ko.observable(last_used[value]),
                 });
             });
         };
@@ -51,7 +51,7 @@ hqDefine('toggle_ui/js/edit-flag', [
             self.items.push({
                 namespace: ko.observable(self.padded_ns[namespace]),
                 value: ko.observable(),
-                last_used: ko.observable()
+                last_used: ko.observable(),
             });
             self.change();
         };
@@ -84,9 +84,9 @@ hqDefine('toggle_ui/js/edit-flag', [
                     dataType: 'json',
                     success: function (data) {
                         self.init_items(data);
-                    }
+                    },
                 });
-            }
+            },
         });
 
         var projectInfoUrl = '<a href="' + initialPageData.reverse('domain_internal_settings') + '">domain</a>';

@@ -43,7 +43,7 @@ hqDefine('app_manager/js/settings/commcare_settings', function () {
                         visibleValue: function () {
                             return initialValues.$parent[attrib];
                         }
-                    }
+                    };
                 })(attr);
             }
         };
@@ -99,7 +99,7 @@ hqDefine('app_manager/js/settings/commcare_settings', function () {
                             return false;
                         }
                     } else {
-                        return true
+                        return true;
                     }
 
                     return true;
@@ -164,8 +164,8 @@ hqDefine('app_manager/js/settings/commcare_settings', function () {
                         });
                         uniqueNames = names.filter(function(elem, pos) {
                             return names.indexOf(elem) == pos;
-                        })
-                        return gettext('Auto-set by ') + uniqueNames.join(', ')
+                        });
+                        return gettext('Auto-set by ') + uniqueNames.join(', ');
                     }
                 } else {
                     return '';
@@ -342,8 +342,8 @@ hqDefine('app_manager/js/settings/commcare_settings', function () {
                     value: values[i]
                 });
             }
-            self.options(options)
-        }
+            self.options(options);
+        };
         self.options = ko.observable([]);
         self.updateOptions();
         self.selectOption = function (selectedOption) {
