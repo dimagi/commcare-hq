@@ -38,8 +38,8 @@ describe('App Releases', function() {
                 registerUrl = hqImport("hqwebapp/js/initial_page_data").registerUrl;
             registerUrl("odk_install", "/a/test-domain/apps/odk/---/install/");
             registerUrl("odk_media_install", "/a/test-domain/apps/odk/---/media_install/");
-            registerUrl("download_ccz", "/a/text-domain/apps/download/---/CommCare.ccz")
-            registerUrl("download_multimedia_zip", "/a/test-domain/apps/download/---/multimedia/commcare.zip")
+            registerUrl("download_ccz", "/a/text-domain/apps/download/---/CommCare.ccz");
+            registerUrl("download_multimedia_zip", "/a/test-domain/apps/download/---/multimedia/commcare.zip");
             ajax_stub = sinon.stub($, 'ajax');
             releases = new ReleasesMain(options);
             releases.addSavedApps(get_saved_apps(releases.fetchLimit));

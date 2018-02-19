@@ -329,7 +329,7 @@ hqDefine("fixtures/js/lookup-manage", [
         };
 
         self.downloadError = function () {
-            var error_message = "Sorry, something went wrong with the download. If you see this repeatedly please report an issue."
+            var error_message = gettext("Sorry, something went wrong with the download. If you see this repeatedly please report an issue.");
             $("#fixture-download").modal("hide");
             $("#FailText").text(error_message);
             $("#editFailure").removeClass('hide');

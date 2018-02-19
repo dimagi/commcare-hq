@@ -113,7 +113,7 @@ var CRUDAdminControl = function(options) {
             method: 'GET',
             success: self.refreshUpdateItemForm,
             error: resetSubmitButton
-        })
+        });
     };
 
     self.refreshAddItemForm = function(data) {
