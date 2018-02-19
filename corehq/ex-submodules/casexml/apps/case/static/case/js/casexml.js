@@ -128,7 +128,6 @@ var casexml = (function () {
                     requiredForCreate = {
                         case_type: true,
                         case_name: true,
-
                     };
                     if (user_id === undefined) {
                         throw {
@@ -179,7 +178,6 @@ var casexml = (function () {
                         date_modified: date_modified,
                         user_id: user_id,
                         xmlns: XMLNS,
-
                     };
                     $case = $('<case/>').attr(attrib);
                     $create = $('<create/>');
