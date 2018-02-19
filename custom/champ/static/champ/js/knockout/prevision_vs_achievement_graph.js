@@ -21,6 +21,7 @@ ko.bindingHandlers.select2 = {
 var ALL_OPTION = {'id': '', 'text': 'All'};
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
+// eslint-disable-next-line no-unused-vars
 function PrecisionVsAchievementsGraphModel() {
     var self = this;
     var currentYear = new Date().getFullYear();

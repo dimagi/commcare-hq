@@ -20,6 +20,7 @@ ko.bindingHandlers.select2 = {
 
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
+// eslint-disable-next-line no-unused-vars
 function PrecisionVsAchievementsTableModel() {
     var self = this;
     var currentYear = new Date().getFullYear();
