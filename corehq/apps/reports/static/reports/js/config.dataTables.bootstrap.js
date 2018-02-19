@@ -76,11 +76,11 @@ hqDefine("reports/js/config.dataTables.bootstrap", [
                 });
                 return;
             }
-            
+
             self.rendered = true;
 
             $('[data-datatable-highlight-closest]').each(function () {
-               $(this).closest($(this).attr('data-datatable-highlight-closest')).addClass('active');
+                 $(this).closest($(this).attr('data-datatable-highlight-closest')).addClass('active');
             });
             function applyBootstrapMagic() {
                 $('[data-datatable-tooltip]').each(function () {
@@ -144,7 +144,7 @@ hqDefine("reports/js/config.dataTables.bootstrap", [
                             }
                             if ('statistics_rows' in data) {
                                 for (i = 0; i < data.statistics_rows.length; i++){
-                                   self.render_footer_row('ajax_stat_row-' + i, data.statistics_rows[i]);
+                                    self.render_footer_row('ajax_stat_row-' + i, data.statistics_rows[i]);
                                 }
                             }
                             applyBootstrapMagic();

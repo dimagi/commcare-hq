@@ -70,9 +70,7 @@ hqDefine("translations/js/translations", function() {
                             });
                         },
                         createSearchChoice: function(term, data) {
-                            if (term !== "" && !_.find(data, function(d) {
-                                    return d.text === term;
-                                })) {
+                            if (term !== "" && !_.find(data, function(d) { return d.text === term; })) {
                                 return {
                                     id: term,
                                     text: term,
