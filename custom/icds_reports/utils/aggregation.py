@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import hashlib
 
 from dateutil.relativedelta import relativedelta
