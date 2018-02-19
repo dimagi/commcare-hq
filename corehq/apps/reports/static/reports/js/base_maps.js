@@ -3,7 +3,7 @@ ICON_PATH = "";
 hqDefine("reports/js/base_maps", function() {
     var done = false;
 
-    $(document).ajaxComplete(function(e, xhr, options) {
+    $(document).ajaxComplete(function() {
         var $data = $(".base-maps-data");
         if ($data.length && !done) {
             var context = $data.data("context");

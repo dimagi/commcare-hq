@@ -23,10 +23,10 @@ var casexml = (function () {
             return casexml.iso(new Date());
         },
         versions: {
-            V2: '2.0'
+            V2: '2.0',
         },
         versionToXMLNS: {
-            '2.0': 'http://commcarehq.org/case/transaction/v2'
+            '2.0': 'http://commcarehq.org/case/transaction/v2',
         },
         cloudcareEditXMLNS: "http://commcarehq.org/cloudcare/custom-edit",
         makeSerializableXML: function (jQueryObj) {
@@ -41,7 +41,7 @@ var casexml = (function () {
                 o.minus = function (that) {
                     var diff = {
                             properties: {},
-                            indices: {}
+                            indices: {},
                         },
                         property,
                         index;
@@ -94,7 +94,7 @@ var casexml = (function () {
                     return casexml.CaseDelta.wrap(diff);
                 };
                 return o;
-            }
+            },
         },
         CaseDelta: {
             wrap: function (o) {
@@ -112,7 +112,7 @@ var casexml = (function () {
                             case_type: undefined,
                             case_name: undefined,
                             owner_id: undefined,
-                            date_opened: undefined
+                            date_opened: undefined,
                         },
                         requiredForCreate,
                         XMLNS,
@@ -127,18 +127,19 @@ var casexml = (function () {
                         key;
                     requiredForCreate = {
                         case_type: true,
-                        case_name: true
+                        case_name: true,
+
                     };
                     if (user_id === undefined) {
                         throw {
                             type: 'missingArg',
-                            arg: 'user_id'
+                            arg: 'user_id',
                         };
                     }
                     if (case_id === undefined) {
                         throw {
                             type: 'missingArg',
-                            arg: 'case_id'
+                            arg: 'case_id',
                         };
                     }
                     if (create) {
@@ -146,7 +147,7 @@ var casexml = (function () {
                             if (requiredForCreate.hasOwnProperty(key) && o.properties[key] === undefined) {
                                 throw {
                                     type: 'missingArg',
-                                    arg: key
+                                    arg: key,
                                 };
                             }
                         }
@@ -169,7 +170,7 @@ var casexml = (function () {
                     create_or_update = {
                         case_type: keywords.case_type,
                         case_name: keywords.case_name,
-                        owner_id: keywords.owner_id
+                        owner_id: keywords.owner_id,
                     };
 
                     /* things that will end up as case block attributes */
@@ -177,7 +178,8 @@ var casexml = (function () {
                         case_id: case_id,
                         date_modified: date_modified,
                         user_id: user_id,
-                        xmlns: XMLNS
+                        xmlns: XMLNS,
+
                     };
                     $case = $('<case/>').attr(attrib);
                     $create = $('<create/>');
@@ -210,7 +212,7 @@ var casexml = (function () {
                                 case_id = indices[key][1];
                                 if (case_id !== undefined) {
                                     $('<' + key + '/>').attr({
-                                        case_type: case_type
+                                        case_type: case_type,
                                     }).text(case_id).appendTo($index);
                                 }
                             }
@@ -250,8 +252,8 @@ var casexml = (function () {
                     return xform;
                 };
                 return o;
-            }
-        }
+            },
+        },
     };
     return casexml;
 }());

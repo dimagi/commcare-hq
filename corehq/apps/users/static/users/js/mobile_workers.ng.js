@@ -5,7 +5,7 @@
         'ngResource',
         'ngRoute',
         'ng.django.rmi',
-        'ngMessages'
+        'ngMessages', 
     ]);
 
     var $formElements = {
@@ -94,7 +94,7 @@
         PENDING: 'pending',
         WARNING: 'warning',
         SUCCESS: 'success',
-        RETRIED: 'retried'
+        RETRIED: 'retried',
     };
 
     var USERNAME_STATUS = {
@@ -102,7 +102,7 @@
         TAKEN: 'taken',
         AVAILABLE: 'available',
         AVAILABLE_WARNING: 'warning',
-        ERROR: 'error'
+        ERROR: 'error', 
     };
 
     mobileWorkers.constant('customFields', []);
@@ -243,7 +243,7 @@
                 mobileWorker.creationStatus = STATUS.RETRIED;
                 $scope.mobileWorker = new MobileWorker({
                     customFields: mobileWorker.customFields,
-                    username: mobileWorker.username
+                    username: mobileWorker.username,
                 });
             } else {
                 $(".select2multiplechoicewidget").select2('data', null);
@@ -286,7 +286,7 @@
                 newWorker.password = (new hex_parser()).encode(newWorker.password);
             }
             djangoRMI.create_mobile_worker({
-                mobileWorker: newWorker
+                mobileWorker: newWorker, 
             })
             .success(function (data) {
                 if (data.success) {
@@ -326,7 +326,7 @@
                         $scope.usernameAvailabilityStatus = USERNAME_STATUS.PENDING;
                         visualFormCtrl.usernamePending();
                         djangoRMI.check_username({
-                            username: username
+                            username: username, 
                         })
                         .success(function (data) {
                             if (data.success) {
@@ -381,7 +381,7 @@
 
                     return goodEnough;
                 };
-            }
+            },
         };
     };
 
@@ -483,7 +483,7 @@
                 .error(function () {
                     user.action_error = gettext("Issue communicating with server. Try again.");
                 });
-        }
+        },
     });
     mobileWorkerApp.constant('generateStrongPasswords', initial_page_data('strong_mobile_passwords'));
     mobileWorkerApp.constant('location_url', initial_page_data('location_url'));

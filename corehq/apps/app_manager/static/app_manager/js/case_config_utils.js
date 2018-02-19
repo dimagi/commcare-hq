@@ -75,7 +75,7 @@ hqDefine('app_manager/js/case_config_utils', function () {
                 return {
                     path: !keyIsPath ? value : key,
                     key: !keyIsPath ? key : value,
-                    required: false
+                    required: false,
                 };
             });
             property_array = _(property_array).sortBy(function (property) {
@@ -107,6 +107,6 @@ hqDefine('app_manager/js/case_config_utils', function () {
                     function (i) { return [i.path, i.key]; }
                 )
             );
-        }
+        },
     };
 });

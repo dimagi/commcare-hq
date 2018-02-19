@@ -7,7 +7,7 @@ hqDefine('app_manager/js/forms/case_config_ui_advanced', function() {
             type: type,
             question: null,
             answer: null,
-            operator: null
+            operator: null,
         };
     };
 
@@ -48,7 +48,7 @@ hqDefine('app_manager/js/forms/case_config_ui_advanced', function() {
                     type: 'post',
                     url: self.save_url,
                     data: {
-                        actions: actions
+                        actions: actions,
                     },
                     dataType: 'json',
                     success: function(data) {
@@ -57,9 +57,9 @@ hqDefine('app_manager/js/forms/case_config_ui_advanced', function() {
                         self.caseConfigViewModel.ensureBlankProperties();
                         self.setPropertiesMap(data.propertiesMap);
                         self.requires(self.caseConfigViewModel.load_update_cases().length > 0 ? 'case' : 'none');
-                    }
+                    },
                 });
-            }
+            },
         });
 
         var questionScores = {};
@@ -76,21 +76,21 @@ hqDefine('app_manager/js/forms/case_config_ui_advanced', function() {
             var index = self.caseConfigViewModel.load_update_cases.indexOf(action);
             var modes = [{
                 label: gettext('Raw'),
-                value: 'raw'
+                value: 'raw',
             }, {
                 label: gettext('User Data'),
-                value: 'user'
+                value: 'user',
             }, {
                 label: gettext('Lookup Table'),
-                value: 'fixture'
+                value: 'fixture',
             }, {
                 label: gettext('User Properties'),
-                value: 'usercase'
+                value: 'usercase',
             }];
             if (index > 0) {
                 modes.push({
                     label: gettext('Case Index'),
-                    value: 'case'
+                    value: 'case',
                 });
             }
             return modes;
@@ -107,7 +107,7 @@ hqDefine('app_manager/js/forms/case_config_ui_advanced', function() {
 
         self.module = (function() {
             var mod = _.findWhere(self.moduleCaseTypes, {
-                id: self.module_id
+                id: self.module_id,
             });
             mod.module_name = '* ' + mod.module_name;
             return mod;
@@ -115,7 +115,7 @@ hqDefine('app_manager/js/forms/case_config_ui_advanced', function() {
 
         self.getModulesForCaseType = function(caseType, supportProducts) {
             var filter = {
-                case_type: caseType
+                case_type: caseType,
             };
             if (supportProducts) {
                 filter.module_type = 'AdvancedModule';
@@ -258,7 +258,7 @@ hqDefine('app_manager/js/forms/case_config_ui_advanced', function() {
                 if (tag) {
                     tags.push({
                         value: tag,
-                        label: tag
+                        label: tag,
                     });
                 }
             }
@@ -299,7 +299,7 @@ hqDefine('app_manager/js/forms/case_config_ui_advanced', function() {
             var required_properties = [{
                 key: 'name',
                 path: a.name_path,
-                required: true
+                required: true,
             }];
             var case_properties = caseConfigUtils.propertyDictToArray(required_properties, a.case_properties, caseConfig);
             a.case_properties = [];
@@ -314,14 +314,14 @@ hqDefine('app_manager/js/forms/case_config_ui_advanced', function() {
 
         var _actions = [{
             display: gettext('Load / Update / Close a case'),
-            value: 'load'
+            value: 'load',
         }, {
             display: gettext('Automatic Case Selection'),
-            value: 'auto_select'
+            value: 'auto_select',
         }, {
             display: gettext('Load Case From Fixture'),
-            value: 'load_case_from_fixture'
-        }, ];
+            value: 'load_case_from_fixture',
+        } ];
         if (!self.caseConfig.isShadowForm) {
             _actions = _actions.concat([{
                 display: '---',
@@ -329,7 +329,7 @@ hqDefine('app_manager/js/forms/case_config_ui_advanced', function() {
             }, {
                 display: gettext('Open a Case'),
                 value: 'open',
-            }, ]);
+            } ]);
         }
         self.actionOptions = ko.observableArray(_actions);
 
@@ -366,18 +366,18 @@ hqDefine('app_manager/js/forms/case_config_ui_advanced', function() {
             for (var i = 0; i < actions.length; i++) {
                 items.push({
                     properties: actions[i].preload(),
-                    addProperty: actions[i].addPreload
+                    addProperty: actions[i].addPreload,
                 });
                 items.push({
                     properties: actions[i].case_properties(),
-                    addProperty: actions[i].addProperty
+                    addProperty: actions[i].addProperty,
                 });
             }
             actions = self.open_cases();
             for (i = 0; i < actions.length; i++) {
                 items.push({
                     properties: actions[i].case_properties(),
-                    addProperty: actions[i].addProperty
+                    addProperty: actions[i].addProperty,
                 });
             }
             _(items).each(function(item) {
@@ -415,7 +415,7 @@ hqDefine('app_manager/js/forms/case_config_ui_advanced', function() {
                     action_data.auto_select = {
                         mode: '',
                         value_source: '',
-                        value_key: ''
+                        value_key: '',
                     };
                 } else if (action.value === 'load_case_from_fixture') {
                     action_data.load_case_from_fixture = {
@@ -439,12 +439,12 @@ hqDefine('app_manager/js/forms/case_config_ui_advanced', function() {
                     case_properties: [{
                         path: '',
                         key: 'name',
-                        required: true
+                        required: true,
                     }],
                     repeat_context: '',
                     case_indices: [],
                     open_condition: DEFAULT_CONDITION('always'),
-                    close_condition: DEFAULT_CONDITION('never')
+                    close_condition: DEFAULT_CONDITION('never'),
                 }, self.caseConfig));
                 self.caseConfig.applyAccordion('open', index);
             }
@@ -477,14 +477,14 @@ hqDefine('app_manager/js/forms/case_config_ui_advanced', function() {
         self.unwrap = function() {
             return {
                 load_update_cases: _(self.load_update_cases()).map(LoadUpdateAction.unwrap),
-                open_cases: _(self.open_cases()).map(OpenCaseAction.unwrap)
+                open_cases: _(self.open_cases()).map(OpenCaseAction.unwrap),
             };
         };
     };
 
     var CaseIndex = {
         mapping: {
-            include: ['tag', 'reference_id', 'relationship']
+            include: ['tag', 'reference_id', 'relationship'],
         },
         wrap: function(data) {
             var self = ko.mapping.fromJS(data, CaseIndex.mapping);
@@ -496,7 +496,7 @@ hqDefine('app_manager/js/forms/case_config_ui_advanced', function() {
                 }
             });
             return self;
-        }
+        },
     };
 
     var ActionBase = {
@@ -530,7 +530,7 @@ hqDefine('app_manager/js/forms/case_config_ui_advanced', function() {
                 write: function(value) {
                     self.close_condition.type(value ? 'always' : 'never');
                     self.caseConfig.saveButton.fire('change');
-                }
+                },
             };
         },
         propertyCounts: function(self) {
@@ -563,8 +563,8 @@ hqDefine('app_manager/js/forms/case_config_ui_advanced', function() {
                     '<% if (action.parent_tags()) { %> : ' +
                     gettext('subcase of') + '<span style="font-weight: bold;"><%= action.parent_tags() %></span>' +
                     '<% } %>' + closeSnip + "</span>")({
-                        action: action
-                    });
+                    action: action,
+                });
             } else {
                 if (action.auto_select) {
                     nameSnip = "<i class=\"fa fa-tag\"></i> <%= action.case_tag() %> (" + gettext("autoselect mode: ") + "<%= action.auto_select.mode() %>)";
@@ -576,8 +576,8 @@ hqDefine('app_manager/js/forms/case_config_ui_advanced', function() {
                     "<% if (action.hasPreload()) { %> : load<% } %>" +
                     "<% if (action.hasCaseProperties()) { %> : update<% } %>" +
                     closeSnip + "</span>")({
-                        action: action
-                    });
+                    action: action,
+                });
             }
         },
         suggestedProperties: function(action, allow_parent) {
@@ -591,7 +591,7 @@ hqDefine('app_manager/js/forms/case_config_ui_advanced', function() {
             }
             return properties;
         },
-        relationshipTypes: ['child', 'extension']
+        relationshipTypes: ['child', 'extension'],
     };
 
     var LoadUpdateAction = {
@@ -603,17 +603,17 @@ hqDefine('app_manager/js/forms/case_config_ui_advanced', function() {
                     'case_tag',
                     'close_condition',
                     'show_product_stock',
-                    'product_program'
+                    'product_program',
                 ],
                 preload: {
                     create: function(options) {
                         return CasePreloadProperty.wrap(options.data, self);
-                    }
+                    },
                 },
                 case_properties: {
                     create: function(options) {
                         return CaseProperty.wrap(options.data, self);
-                    }
+                    },
                 },
                 auto_select: {
                     create: function(options) {
@@ -622,7 +622,7 @@ hqDefine('app_manager/js/forms/case_config_ui_advanced', function() {
                         } else {
                             return null;
                         }
-                    }
+                    },
                 },
                 load_case_from_fixture: {
                     create: function(options) {
@@ -631,19 +631,19 @@ hqDefine('app_manager/js/forms/case_config_ui_advanced', function() {
                         } else {
                             return null;
                         }
-                    }
+                    },
                 },
                 case_index: {
                     create: function(options) {
                         return CaseIndex.wrap(options.data);
-                    }
-                }
+                    },
+                },
             };
         },
         wrap: function(data, caseConfig) {
             var self = {
                 caseConfig: caseConfig,
-                actionType: 'load'
+                actionType: 'load',
             };
             ko.mapping.fromJS(data, LoadUpdateAction.mapping(self), self);
 
@@ -652,7 +652,7 @@ hqDefine('app_manager/js/forms/case_config_ui_advanced', function() {
             self.allow = {
                 repeats: function() {
                     return false;
-                }
+                },
             };
 
             self.available_modules = ko.computed(function() {
@@ -688,7 +688,7 @@ hqDefine('app_manager/js/forms/case_config_ui_advanced', function() {
                     } else {
                         self.product_program('');
                     }
-                }
+                },
             });
 
             self.subcase = ko.computed({
@@ -705,11 +705,11 @@ hqDefine('app_manager/js/forms/case_config_ui_advanced', function() {
                     } else {
                         self.case_index.tag('');
                     }
-                }
+                },
             });
 
             self.case_tag.extend({
-                withPrevious: 1
+                withPrevious: 1,
             });
             self.case_tag.subscribe(function(tag) {
                 self.caseConfig.caseConfigViewModel.renameCaseTag(self.case_tag.previous(), tag, true);
@@ -769,7 +769,7 @@ hqDefine('app_manager/js/forms/case_config_ui_advanced', function() {
                 self.case_properties.push(CaseProperty.wrap({
                     key: '',
                     path: '',
-                    required: false
+                    required: false,
                 }, self));
             };
 
@@ -782,7 +782,7 @@ hqDefine('app_manager/js/forms/case_config_ui_advanced', function() {
                 self.preload.push(CasePreloadProperty.wrap({
                     key: '',
                     path: '',
-                    required: false
+                    required: false,
                 }, self));
             };
 
@@ -871,7 +871,7 @@ hqDefine('app_manager/js/forms/case_config_ui_advanced', function() {
             action.preload = caseConfigUtils.preloadArrayToDict(action.preload);
             action.case_properties = caseConfigUtils.propertyArrayToDict([], action.case_properties)[0];
             return action;
-        }
+        },
     };
 
     var OpenCaseAction = {
@@ -882,24 +882,24 @@ hqDefine('app_manager/js/forms/case_config_ui_advanced', function() {
                     'name_path',
                     'case_tag',
                     'open_condition',
-                    'close_condition'
+                    'close_condition',
                 ],
                 case_properties: {
                     create: function(options) {
                         return CaseProperty.wrap(options.data, self);
-                    }
+                    },
                 },
                 case_indices: {
                     create: function(options) {
                         return CaseIndex.wrap(options.data, self);
-                    }
-                }
+                    },
+                },
             };
         },
         wrap: function(data, caseConfig) {
             var self = {
                 caseConfig: caseConfig,
-                actionType: 'open'
+                actionType: 'open',
             };
             ko.mapping.fromJS(data, OpenCaseAction.mapping(self), self);
 
@@ -908,7 +908,7 @@ hqDefine('app_manager/js/forms/case_config_ui_advanced', function() {
             self.allow = {
                 repeats: function() {
                     return true;
-                }
+                },
             };
 
             self.disable_tag = ko.computed(function() {
@@ -943,12 +943,12 @@ hqDefine('app_manager/js/forms/case_config_ui_advanced', function() {
                         self.case_indices.push(CaseIndex.wrap({
                             tag: gettext('Select parent'),
                             reference_id: 'parent',
-                            relationship: 'child'
+                            relationship: 'child',
                         }));
                     } else {
                         self.case_indices.removeAll();
                     }
-                }
+                },
             });
 
             self.addCaseIndex = function() {
@@ -962,7 +962,7 @@ hqDefine('app_manager/js/forms/case_config_ui_advanced', function() {
                 self.case_indices.push(CaseIndex.wrap({
                     tag: '',
                     reference_id: 'parent',
-                    relationship: 'child'
+                    relationship: 'child',
                 }));
             };
 
@@ -971,7 +971,7 @@ hqDefine('app_manager/js/forms/case_config_ui_advanced', function() {
             };
 
             self.case_tag.extend({
-                withPrevious: 1
+                withPrevious: 1,
             });
             self.case_tag.subscribe(function(tag) {
                 self.caseConfig.caseConfigViewModel.renameCaseTag(self.case_tag.previous(), tag, true);
@@ -1003,7 +1003,7 @@ hqDefine('app_manager/js/forms/case_config_ui_advanced', function() {
                 self.case_properties.push(CaseProperty.wrap({
                     key: '',
                     path: '',
-                    required: false
+                    required: false,
                 }, self));
             };
 
@@ -1069,12 +1069,12 @@ hqDefine('app_manager/js/forms/case_config_ui_advanced', function() {
             action.name_path = x[1].name;
             action.repeat_context = self.repeat_context();
             return action;
-        }
+        },
     };
 
     var AutoSelect = {
         mapping: {
-            include: ['mode', 'value_source', 'value_key']
+            include: ['mode', 'value_source', 'value_key'],
         },
         wrap: function(data, action) {
             var self = ko.mapping.fromJS(data, AutoSelect.mapping);
@@ -1088,7 +1088,7 @@ hqDefine('app_manager/js/forms/case_config_ui_advanced', function() {
                 self.value_key('');
             });
             return self;
-        }
+        },
     };
 
     var LoadCaseFromFixture = {
@@ -1135,12 +1135,12 @@ hqDefine('app_manager/js/forms/case_config_ui_advanced', function() {
             });
 
             return self;
-        }
+        },
     };
 
     var CasePropertyBase = {
         mapping: {
-            include: ['key', 'path', 'required']
+            include: ['key', 'path', 'required'],
         },
         wrap: function(data, action) {
             var self = ko.mapping.fromJS(data, CaseProperty.mapping);
@@ -1168,7 +1168,7 @@ hqDefine('app_manager/js/forms/case_config_ui_advanced', function() {
                 },
             });
             return self;
-        }
+        },
     };
 
     var CaseProperty = {
@@ -1182,7 +1182,7 @@ hqDefine('app_manager/js/forms/case_config_ui_advanced', function() {
                 allow: {
                     repeats: function() {
                         return action.allow.repeats();
-                    }
+                    },
                 },
                 // template: case-config:case-transaction:case-properties
                 suggestedSaveProperties: ko.computed(function() {
@@ -1190,7 +1190,7 @@ hqDefine('app_manager/js/forms/case_config_ui_advanced', function() {
                         self.action.suggestedProperties(),
                         self.action.case_properties()
                     );
-                })
+                }),
             };
 
             self.defaultKey = ko.computed(function() {
@@ -1218,7 +1218,7 @@ hqDefine('app_manager/js/forms/case_config_ui_advanced', function() {
             });
 
             return self;
-        }
+        },
     };
 
     var CasePreloadProperty = {
@@ -1231,7 +1231,7 @@ hqDefine('app_manager/js/forms/case_config_ui_advanced', function() {
                 allow: {
                     repeats: function() {
                         return action.allow.repeats();
-                    }
+                    },
                 },
                 // template: case-config:case-transaction:case-preload
                 suggestedPreloadProperties: ko.computed(function() {
@@ -1239,7 +1239,7 @@ hqDefine('app_manager/js/forms/case_config_ui_advanced', function() {
                         self.action.suggestedProperties(),
                         self.action.preload()
                     );
-                })
+                }),
             };
             self.defaultKey = ko.computed(function() {
                 return '';
@@ -1264,7 +1264,7 @@ hqDefine('app_manager/js/forms/case_config_ui_advanced', function() {
             });
 
             return self;
-        }
+        },
     };
 
     $(function() {

@@ -51,7 +51,7 @@
             })) {
                 var option = {
                     label: 'Unidentified Question (' + value + ')',
-                    value: value
+                    value: value,
                 };
                 optionObjects = [option].concat(optionObjects);
                 $warning.show().text('We cannot find this question in the allowed questions for this field. ' +
@@ -66,7 +66,7 @@
                     data: {
                         results: _(optionObjects).map(function (o) {
                             return {id: o.value, text: utils.getDisplay(o), question: o};
-                        })
+                        }),
                     },
                     formatSelection: function (o) {
                         return utils.getTruncatedDisplay(o.question);
@@ -74,11 +74,11 @@
                     formatResult: function (o) {
                         return utils.getTruncatedDisplay(o.question, 90);
                     },
-                    dropdownCssClass: 'bigdrop'
+                    dropdownCssClass: 'bigdrop',
                 });
             });
             allBindings.optstrText = utils.getLabel;
-        }
+        },
     };
 }());
 
@@ -138,9 +138,9 @@ ko.bindingHandlers.numericValue = {
                 } else if (value === '') {
                     underlyingObservable(null);
                 }
-            }
+            },
         });
         ko.bindingHandlers.value.init(element, function() { return interceptor; }, allBindingsAccessor);
     },
-    update : ko.bindingHandlers.value.update
+    update : ko.bindingHandlers.value.update,
 };

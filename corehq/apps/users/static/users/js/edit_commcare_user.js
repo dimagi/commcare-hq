@@ -28,7 +28,7 @@ hqDefine('users/js/edit_commcare_user', function() {
     $('#user-settings-tabs a[data-toggle="tab"]').on('shown.bs.tab', function() {
         $.cookie(activeTabCookie, $(this).attr('href'), {
             path: initial_page_data('path'),
-            expires: 1
+            expires: 1,
         });
     });
 
