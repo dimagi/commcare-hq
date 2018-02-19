@@ -45,6 +45,9 @@ class BaseDataDump(BaseCommand):
             writer.writeheader()
             # iterate cases
             for case in self.get_cases(self.case_type):
+                # store any references like last_episode or any data point
+                # that might be needed repeatedly for the same case and is expensive call
+                self.context = {}
                 case_row = {}
                 # iterate columns to be generated
                 # details is a dict with key in [

@@ -19,8 +19,15 @@ class Command(BaseDataDump):
     data dumps for person cases
     https://docs.google.com/spreadsheets/d/1OPp0oFlizDnIyrn7Eiv11vUp8IBmc73hES7qqT-mKKA/edit#gid=1039030624
     """
-    @staticmethod
-    def get_custom_value(column_name, case):
+
+    def get_last_episode(self, case):
+        self.context['last_episode'] = (
+            self.context['last_episode'] or
+            get_last_episode(case)
+        )
+        return self.context['last_episode']
+
+    def get_custom_value(self, column_name, case):
         if column_name == 'Reason for "Remove a Person" / Closure':
             if case.closed:
                 return "closed"
@@ -32,7 +39,7 @@ class Command(BaseDataDump):
                 return "active"
         elif column_name == 'Latest Episode - Date Closed (If any)':
             try:
-                last_episode_case = get_last_episode(case)
+                last_episode_case = self.get_last_episode(case)
                 if last_episode_case.closed:
                     return "closed"
                 else:
@@ -43,8 +50,7 @@ class Command(BaseDataDump):
     def get_case_reference_value(self, case_reference, case, calculation):
         if case_reference == 'last_episode':
             try:
-                last_episode_case = get_last_episode(case)
-                return last_episode_case.get_case_property(calculation)
+                return self.get_last_episode(case).get_case_property(calculation)
             except Exception as e:
                 return str(e)
         return Exception("unknown case reference %s" % case_reference)
