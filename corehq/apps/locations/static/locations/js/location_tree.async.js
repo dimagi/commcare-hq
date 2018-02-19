@@ -3,7 +3,7 @@
 
 function api_get_children(loc_uuid, callback) {
     var params = (loc_uuid ? {
-        parent_id: loc_uuid
+        parent_id: loc_uuid,
     } : {});
     // show_inactive comes from global state
     params.include_inactive = show_inactive;
@@ -21,7 +21,7 @@ function LocationTreeViewModel(hierarchy) {
     this.location_types = $.map(hierarchy, function(e) {
         return {
             type: e[0],
-            allowed_parents: e[1]
+            allowed_parents: e[1],
         };
     });
 
@@ -51,7 +51,7 @@ function LocationTreeViewModel(hierarchy) {
             name: '_root',
             children: locs,
             can_edit: can_edit_root,
-            expanded: true
+            expanded: true,
         }, this)); // eslint-disable-line no-undef
     };
 }
@@ -75,7 +75,7 @@ function LocationSearchViewModel(tree_model) { // eslint-disable-line no-unused-
         return new LocationModel({
             uuid: model.selected_location_id(),
             can_edit: can_edit_root,
-            is_archived: show_inactive
+            is_archived: show_inactive,
         }, this); // eslint-disable-line no-undef
     });
 
@@ -121,7 +121,7 @@ function LocationSearchViewModel(tree_model) { // eslint-disable-line no-unused-
                         name: '_root',
                         children: root_children,
                         can_edit: can_edit_root,
-                        expanded: 'semi'
+                        expanded: 'semi',
                     }, model.selected_location_tree); // eslint-disable-line no-undef
                     return level;
                 };
@@ -159,7 +159,7 @@ function LocationModel(data, root, depth) {
         } else {
             this.expanded(!this.expanded() && this.can_have_children());
         }
-    }
+    };
 
     this.load = function(data) {
         this.name(data.name);
@@ -174,7 +174,7 @@ function LocationModel(data, root, depth) {
         if (data.children != null) {
             this.set_children(data.children);
         }
-    }
+    };
 
     this.set_children = function(data) {
         var children = [];
@@ -208,7 +208,7 @@ function LocationModel(data, root, depth) {
         } else if (this.expanded() === 'semi') {
             this.children_status('semi_loaded');
         }
-    }
+    };
 
     this.load_children_async = function(callback) {
         this.children_status('loading');
@@ -218,7 +218,7 @@ function LocationModel(data, root, depth) {
                 callback(loc);
             }
         });
-    }
+    };
 
     this.allowed_child_types = function() {
         var loc = this;
@@ -240,7 +240,7 @@ function LocationModel(data, root, depth) {
     this.allowed_child_type = function() {
         var types = this.allowed_child_types();
         return (types.length == 1 ? types[0] : null);
-    }
+    };
 
     this.new_child_caption = ko.computed(function() {
         var child_type = this.allowed_child_type();
@@ -321,7 +321,7 @@ function LocationModel(data, root, depth) {
                 error: 'error',
                 success: function() {
                     alert_user(loc.archive_success_message({
-                        "name": name
+                        "name": name,
                     }), "success");
                     loc.remove_elements_after_action(button);
                     reloadLocationSearchSelect();
@@ -374,7 +374,7 @@ function LocationModel(data, root, depth) {
                     success: function(response) {
                         if (response.success) {
                             alert_user(loc.delete_success_message({
-                                "name": name
+                                "name": name,
                             }), "success");
                             loc.remove_elements_after_action(button);
                             reloadLocationSearchSelect();

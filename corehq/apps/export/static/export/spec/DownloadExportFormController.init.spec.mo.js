@@ -7,7 +7,7 @@ describe('DownloadExportFormController - Initialization', function() {
             .when('POST', DnldExpData.mockBackendUrls.HAS_MULTIMEDIA)
             .respond({
                 success: true,
-                hasMultimedia: true
+                hasMultimedia: true,
             });
     });
 
@@ -21,12 +21,12 @@ describe('DownloadExportFormController - Initialization', function() {
             .when('POST', DnldExpData.mockBackendUrls.GET_GROUP_OPTIONS)
             .respond({
                 success: true,
-                groups: DnldExpData.groupList
+                groups: DnldExpData.groupList,
             });
         DnldExpData.$httpBackend.expectPOST(DnldExpData.mockBackendUrls.HAS_MULTIMEDIA);
         DnldExpData.$httpBackend.expectPOST(DnldExpData.mockBackendUrls.GET_GROUP_OPTIONS);
         DnldExpData.createController([
-            DnldExpData.simpleFormExport
+            DnldExpData.simpleFormExport,
         ], true);
         DnldExpData.$httpBackend.flush();
         assert.isTrue(DnldExpData.currentScope.hasMultimedia);
@@ -37,10 +37,10 @@ describe('DownloadExportFormController - Initialization', function() {
             .when('POST', DnldExpData.mockBackendUrls.GET_GROUP_OPTIONS)
             .respond({
                 success: true,
-                groups: DnldExpData.groupList
+                groups: DnldExpData.groupList,
             });
         DnldExpData.createController([
-            DnldExpData.simpleFormExport
+            DnldExpData.simpleFormExport,
         ], true);
         DnldExpData.$httpBackend.expectPOST(DnldExpData.mockBackendUrls.HAS_MULTIMEDIA);
         DnldExpData.$httpBackend.expectPOST(DnldExpData.mockBackendUrls.GET_GROUP_OPTIONS);
@@ -54,10 +54,10 @@ describe('DownloadExportFormController - Initialization', function() {
         DnldExpData.$httpBackend
             .when('POST', DnldExpData.mockBackendUrls.GET_GROUP_OPTIONS)
             .respond({
-                error: 'error fetching groups in test'
+                error: 'error fetching groups in test',
             });
         DnldExpData.createController([
-            DnldExpData.simpleFormExport
+            DnldExpData.simpleFormExport,
         ], true);
         DnldExpData.$httpBackend.expectPOST(DnldExpData.mockBackendUrls.HAS_MULTIMEDIA);
         DnldExpData.$httpBackend.expectPOST(DnldExpData.mockBackendUrls.GET_GROUP_OPTIONS);

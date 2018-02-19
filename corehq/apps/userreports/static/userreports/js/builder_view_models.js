@@ -306,16 +306,16 @@ hqDefine('userreports/js/builder_view_models', function () {
     };
 
     var ConfigForm = function (
-            reportType,
-            sourceType,
-            columns,
-            userFilters,
-            defaultFilters,
-            dataSourceIndicators,
-            reportColumnOptions,
-            dateRangeOptions,
-            isGroupByRequired,
-            groupByInitialValue
+        reportType,
+        sourceType,
+        columns,
+        userFilters,
+        defaultFilters,
+        dataSourceIndicators,
+        reportColumnOptions,
+        dateRangeOptions,
+        isGroupByRequired,
+        groupByInitialValue
     ) {
         var self = this;
         var constants = hqImport('userreports/js/constants');

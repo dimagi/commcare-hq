@@ -244,7 +244,7 @@ var casexml = (function () {
                             $('<timeEnd/>').text(timeEnd),
                             $('<userID/>').text(options.user_id),
                             $('<username/>').text(options.username)
-//                            $('<deviceID/>')
+                            //                            $('<deviceID/>')
                         )
                     ).append(o.toXML(options));
                     return xform;

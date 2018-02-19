@@ -139,7 +139,7 @@ hqDefine('registration/js/new_user.ko', function () {
                         }
                     },
                     message: django.gettext("There is already a user with this email."),
-                }
+                },
             });
         if (defaults.email) {
             // triggers validation check on pre-filled emails

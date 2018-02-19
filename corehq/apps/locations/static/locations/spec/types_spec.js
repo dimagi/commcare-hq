@@ -38,9 +38,9 @@ describe('Location Types', function() {
         describe('expand_from_options', function() {
             it('Provides all levels down to the current one, including root', function() {
                 var returned_loc_types = _.map(
-                    this.block_model.expand_from_options(),
-                    extract_name
-                ),
+                        this.block_model.expand_from_options(),
+                        extract_name
+                    ),
                     desired_loc_types_returned = _.map([this.state_model, this.district_model], extract_name);
                 desired_loc_types_returned.push('root');
                 assert.sameMembers(desired_loc_types_returned, returned_loc_types);
@@ -79,9 +79,9 @@ describe('Location Types', function() {
         describe('include_without_expanding_options', function(){
             it('Provides all levels', function(){
                 var returned_loc_types = _.map(
-                    this.block_model.include_without_expanding_options(),
-                    extract_name
-                ),
+                        this.block_model.include_without_expanding_options(),
+                        extract_name
+                    ),
                     desired_loc_types_returned = _.map([this.state_model, this.district_model, this.block_model, this.supervisor_model], extract_name);
                 assert.sameMembers(desired_loc_types_returned, returned_loc_types);
             });
@@ -157,9 +157,9 @@ describe('Location Types', function() {
         describe('include_without_expanding_options', function(){
             it('Provides all levels', function(){
                 var returned_loc_types = _.map(
-                    this.region_model.include_without_expanding_options(),
-                    extract_name
-                ),
+                        this.region_model.include_without_expanding_options(),
+                        extract_name
+                    ),
                     desired_loc_types_returned = ['state', 'county | region', 'city | town'];
                 assert.sameMembers(desired_loc_types_returned, returned_loc_types);
             });

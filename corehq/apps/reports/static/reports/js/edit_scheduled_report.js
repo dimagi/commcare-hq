@@ -19,8 +19,8 @@ hqDefine("reports/js/edit_scheduled_report", function() {
             var $day_select = $('<select id="id_day" class="select form-control" name="day" />');
             $day_select = add_options_to_select($day_select, opts, day_value);
             var $day_control_group = $('<div id="div_id_day" class="form-group" />')
-                    .append($('<label for="id_day" class="control-label col-sm-3 col-md-2 requiredField">Day<span class="asteriskField">*</span></label>'))
-                    .append($('<div class="controls col-sm-9 col-md-8 col-lg-6" />').append($day_select));
+                .append($('<label for="id_day" class="control-label col-sm-3 col-md-2 requiredField">Day<span class="asteriskField">*</span></label>'))
+                .append($('<div class="controls col-sm-9 col-md-8 col-lg-6" />').append($day_select));
             $interval.closest('.form-group').after($day_control_group);
         }
     };

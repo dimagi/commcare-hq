@@ -69,7 +69,7 @@ hqDefine("fixtures/js/lookup-manage", [
                     original_tag: ko.observable(o.tag),
                     is_new: ko.observable(false),
                     remove: ko.observable(false),
-                    editing: ko.observable(false)
+                    editing: ko.observable(false),
                 };
             } else {
                 field = {
@@ -78,7 +78,7 @@ hqDefine("fixtures/js/lookup-manage", [
                     original_tag: ko.observable(""),
                     is_new: ko.observable(true),
                     remove: ko.observable(false),
-                    editing: ko.observable(true)
+                    editing: ko.observable(true),
                 };
             }
             field.isDuplicate = ko.computed(function() {
@@ -112,7 +112,7 @@ hqDefine("fixtures/js/lookup-manage", [
             var with_props = (raw_fields[i].properties().length == 0) ? false : true;
             self.addField(undefined, undefined, {
                 tag: tag,
-                with_props: with_props
+                with_props: with_props,
             });
         }
 
@@ -166,7 +166,7 @@ hqDefine("fixtures/js/lookup-manage", [
                         }
                     }
                     self.fields(keptFields);
-                }
+                },
             });
             self.saveState('saving');
         };
@@ -208,17 +208,17 @@ hqDefine("fixtures/js/lookup-manage", [
                         if (field.is_new() == true) {
                             if (field.remove() == true) continue;
                             patch = {
-                                "is_new": 1
+                                "is_new": 1,
                             };
                             fields[field.tag()] = patch;
                         } else if (field.remove() === true) {
                             patch = {
-                                "remove": 1
+                                "remove": 1,
                             };
                             fields[field.original_tag()] = patch;
                         } else if (field.tag() !== field.original_tag()) {
                             patch = {
-                                "update": field.tag()
+                                "update": field.tag(),
                             };
                             fields[field.original_tag()] = patch;
                         } else {
@@ -227,7 +227,7 @@ hqDefine("fixtures/js/lookup-manage", [
                         }
                     }
                     return fields;
-                }())
+                }()),
             });
         };
         return self;
@@ -289,7 +289,7 @@ hqDefine("fixtures/js/lookup-manage", [
                     url: initialPageData.reverse('download_fixtures'),
                     type: 'POST',
                     data: {
-                        'table_ids': tables
+                        'table_ids': tables,
                     },
                     dataType: 'json',
                     success: function(response) {
@@ -297,7 +297,7 @@ hqDefine("fixtures/js/lookup-manage", [
                     },
                     error: function(response) {
                         self.downloadError();
-                    }
+                    },
                 });
             }
         };
@@ -326,7 +326,7 @@ hqDefine("fixtures/js/lookup-manage", [
                         error: function() {
                             self.downloadError();
                             keep_polling = false;
-                        }
+                        },
                     });
                 }
             }
@@ -350,7 +350,7 @@ hqDefine("fixtures/js/lookup-manage", [
             var dataType = makeDataType({
                 tag: "",
                 fields: ko.observableArray([]),
-                is_global: true
+                is_global: true,
             }, self);
             dataType.editing(true);
             self.data_types.push(dataType);
@@ -375,7 +375,7 @@ hqDefine("fixtures/js/lookup-manage", [
                         dataType = self.data_types()[i];
                     }
                     self.loading(self.loading() - 1);
-                }
+                },
             });
         };
     }

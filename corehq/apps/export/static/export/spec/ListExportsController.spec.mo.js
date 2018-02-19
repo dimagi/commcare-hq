@@ -31,7 +31,7 @@ describe('ListExportsController Unit Tests', function() {
                         'DjNg-Remote-Method': 'toggle_saved_export_enabled_state',
                     },
                     method: 'auto',
-                }
+                },
             });
         }]);
         listExportsTestApp.constant('bulk_download_url', "/fake/bulk/download/url");
@@ -65,7 +65,7 @@ describe('ListExportsController Unit Tests', function() {
                 .when('POST', mockBackendUrls.GET_EXPORTS_LIST)
                 .respond({
                     success: true,
-                    exports: [ListExportsTestData.exportSimple]
+                    exports: [ListExportsTestData.exportSimple],
                 });
             createController();
             assert.equal(currentScope.exports.length, 0);
@@ -81,7 +81,7 @@ describe('ListExportsController Unit Tests', function() {
             $httpBackend
                 .when('POST', mockBackendUrls.GET_EXPORTS_LIST)
                 .respond({
-                    error: serverErrorMsg
+                    error: serverErrorMsg,
                 });
             createController();
             assert.equal(currentScope.exports.length, 0);
@@ -117,8 +117,8 @@ describe('ListExportsController Unit Tests', function() {
                     exports: [
                         ListExportsTestData.exportWithFileData,
                         ListExportsTestData.exportDeId,
-                        ListExportsTestData.exportSimple
-                    ]
+                        ListExportsTestData.exportSimple,
+                    ],
                 });
         });
 
@@ -158,10 +158,10 @@ describe('ListExportsController Unit Tests', function() {
 
             beforeEach(function () {
                 $httpBackend
-                .when('POST', mockBackendUrls.UPDATE_EMAILED_EXPORT_DATA)
-                .respond({
-                    success: true
-                });
+                    .when('POST', mockBackendUrls.UPDATE_EMAILED_EXPORT_DATA)
+                    .respond({
+                        success: true,
+                    });
                 createController();
                 $httpBackend.expectPOST(mockBackendUrls.GET_EXPORTS_LIST);
                 $httpBackend.flush();
@@ -188,11 +188,11 @@ describe('ListExportsController Unit Tests', function() {
 
             beforeEach(function () {
                 $httpBackend
-                .when('POST', mockBackendUrls.TOGGLE_SAVED_EXPORT_ENABLED_STATE)
-                .respond({
-                    success: true,
-                    isAutoRebuildEnabled: false,
-                });
+                    .when('POST', mockBackendUrls.TOGGLE_SAVED_EXPORT_ENABLED_STATE)
+                    .respond({
+                        success: true,
+                        isAutoRebuildEnabled: false,
+                    });
                 createController();
                 $httpBackend.expectPOST(mockBackendUrls.GET_EXPORTS_LIST);
                 $httpBackend.flush();

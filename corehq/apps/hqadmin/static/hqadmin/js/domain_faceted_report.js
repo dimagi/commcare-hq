@@ -3,7 +3,7 @@ hqDefine('hqadmin/js/domain_faceted_report', function () {
         forms: {name: "forms", xaxis_label: "# form submissions", viz: null},
         cases: {name: "cases", xaxis_label: "# case creations", viz: null},
         users: {name: "users", xaxis_label: "# mobile workers created", viz: null},
-        domains: {name: "domains", xaxis_label: "# domains created", viz: null }
+        domains: {name: "domains", xaxis_label: "# domains created", viz: null },
     };
 
     function parse_url_params() {

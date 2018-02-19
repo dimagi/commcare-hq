@@ -187,8 +187,8 @@
     var mobileWorkerControllers = {};
 
     mobileWorkerControllers.MobileWorkerCreationController = function (
-            $scope, workerCreationFactory, djangoRMI, customFields,
-            customFieldNames, generateStrongPasswords, location_url, $http
+        $scope, workerCreationFactory, djangoRMI, customFields,
+        customFieldNames, generateStrongPasswords, location_url, $http
     ) {
         $scope._ = _;  // make underscore available
         $scope.mobileWorker = {};
@@ -288,22 +288,22 @@
             djangoRMI.create_mobile_worker({
                 mobileWorker: newWorker, 
             })
-            .success(function (data) {
-                if (data.success) {
-                    newWorker.creationStatus = STATUS.SUCCESS;
-                    newWorker.editUrl = data.editUrl;
-                    deferred.resolve(data);
-                } else {
+                .success(function (data) {
+                    if (data.success) {
+                        newWorker.creationStatus = STATUS.SUCCESS;
+                        newWorker.editUrl = data.editUrl;
+                        deferred.resolve(data);
+                    } else {
+                        newWorker.creationStatus = STATUS.WARNING;
+                        deferred.reject(data);
+                    }
+                })
+                .error(function () {
                     newWorker.creationStatus = STATUS.WARNING;
-                    deferred.reject(data);
-                }
-            })
-            .error(function () {
-                newWorker.creationStatus = STATUS.WARNING;
-                deferred.reject(
-                    gettext("Sorry, there was an issue communicating with the server.")
-                );
-            });
+                    deferred.reject(
+                        gettext("Sorry, there was an issue communicating with the server.")
+                    );
+                });
 
             return deferred.promise;
         };
@@ -328,30 +328,30 @@
                         djangoRMI.check_username({
                             username: username, 
                         })
-                        .success(function (data) {
-                            if (data.success) {
-                                visualFormCtrl.usernameSuccess();
-                                $scope.usernameAvailabilityStatus = USERNAME_STATUS.AVAILABLE;
-                                deferred.resolve(data.success);
-                                $scope.usernameStatusMessage = data.success;
-                            } else if (data.warning) {
-                                visualFormCtrl.usernameWarning();
-                                $scope.usernameAvailabilityStatus = USERNAME_STATUS.AVAILABLE_WARNING;
-                                deferred.resolve(data.warning);
-                                $scope.usernameStatusMessage = data.warning;
-                            } else {
-                                visualFormCtrl.usernameError();
-                                $scope.usernameAvailabilityStatus = USERNAME_STATUS.TAKEN;
-                                deferred.reject(data.error);
-                                $scope.usernameStatusMessage = data.error;
-                            }
-                        })
-                        .error(function () {
-                            $scope.usernameAvailabilityStatus = USERNAME_STATUS.ERROR;
-                            deferred.reject(
-                                gettext("Sorry, there was an issue communicating with the server.")
-                            );
-                        });
+                            .success(function (data) {
+                                if (data.success) {
+                                    visualFormCtrl.usernameSuccess();
+                                    $scope.usernameAvailabilityStatus = USERNAME_STATUS.AVAILABLE;
+                                    deferred.resolve(data.success);
+                                    $scope.usernameStatusMessage = data.success;
+                                } else if (data.warning) {
+                                    visualFormCtrl.usernameWarning();
+                                    $scope.usernameAvailabilityStatus = USERNAME_STATUS.AVAILABLE_WARNING;
+                                    deferred.resolve(data.warning);
+                                    $scope.usernameStatusMessage = data.warning;
+                                } else {
+                                    visualFormCtrl.usernameError();
+                                    $scope.usernameAvailabilityStatus = USERNAME_STATUS.TAKEN;
+                                    deferred.reject(data.error);
+                                    $scope.usernameStatusMessage = data.error;
+                                }
+                            })
+                            .error(function () {
+                                $scope.usernameAvailabilityStatus = USERNAME_STATUS.ERROR;
+                                deferred.reject(
+                                    gettext("Sorry, there was an issue communicating with the server.")
+                                );
+                            });
                     }
                     return deferred.promise;
                 };

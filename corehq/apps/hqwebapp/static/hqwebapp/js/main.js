@@ -187,7 +187,7 @@ hqDefine('hqwebapp/js/main', [
                             // request was aborted
                             that.setState('save');
                         }
-                    }
+                    },
                 };
                 eventize(button);
                 button.setState('saved');
@@ -219,9 +219,9 @@ hqDefine('hqwebapp/js/main', [
                                 type: 'POST',
                                 dataType: 'json',
                                 data: $form.serialize(),
-                                success: options.success
+                                success: options.success,
                             });
-                        }
+                        },
                     }),
                     fireChange = function () {
                         button.fire('change');
@@ -232,7 +232,7 @@ hqDefine('hqwebapp/js/main', [
                 });
                 return button;
             },
-            message: messageStrings
+            message: messageStrings,
         };
 
         return SaveButton;
@@ -243,7 +243,7 @@ hqDefine('hqwebapp/js/main', [
         SAVING: django.gettext("Saving..."),
         SAVED: django.gettext("Saved"),
         RETRY: django.gettext("Try Again"),
-        ERROR_SAVING: django.gettext("There was an error saving")
+        ERROR_SAVING: django.gettext("There was an error saving"),
     }, 'btn btn-success');
 
     var DeleteButton = makeSaveButton({
@@ -251,7 +251,7 @@ hqDefine('hqwebapp/js/main', [
         SAVING: django.gettext("Deleting..."),
         SAVED: django.gettext("Deleted"),
         RETRY: django.gettext("Try Again"),
-        ERROR_SAVING: django.gettext("There was an error deleting")
+        ERROR_SAVING: django.gettext("There was an error deleting"),
     }, 'btn btn-danger', 'savebtn-bar-danger');
 
     var beforeUnload = [];

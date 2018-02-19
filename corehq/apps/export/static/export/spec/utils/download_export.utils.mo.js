@@ -10,13 +10,13 @@
             sheet_name: 'Simple Form Export',
             export_id: 'uuid-simpleFormExport',
             edit_url: '/a/test-export/data/export/custom/form/edit/uuid-simpleFormExport/',
-            filename: 'simpleformexport'
+            filename: 'simpleformexport',
         },
         groupList: [
             {
                 test: 'A Group',
-                id: 'uuid-agroup'
-            }
+                id: 'uuid-agroup',
+            },
         ],
         getPollResponseProgress: function (downloadId) {
             return {
@@ -32,8 +32,8 @@
                     error: false,
                     error_message: "",
                     percent: 10,
-                    total: 10
-                }
+                    total: 10,
+                },
             };
         },
         getPollResponseCeleryError: function (downloadId) {
@@ -50,8 +50,8 @@
                     error: false,
                     error_message: "",
                     percent: 10,
-                    total: 10
-                }
+                    total: 10,
+                },
             };
         },
         getPollResponseProgressError: function (downloadId) {
@@ -68,8 +68,8 @@
                     error: true,
                     error_message: "error during progress",
                     percent: 10,
-                    total: 10
-                }
+                    total: 10,
+                },
             };
         },
         getPollResponseError: function (downloadId) {
@@ -86,9 +86,9 @@
                     error: false,
                     error_message: "",
                     percent: 10,
-                    total: 10
+                    total: 10,
                 },
-                error: "error during poll response"
+                error: "error during poll response",
             };
         },
         getPollResponseSuccess: function (downloadId) {
@@ -107,9 +107,9 @@
                     error: false,
                     error_message: "",
                     percent: null,
-                    total: null
+                    total: null,
                 },
-                result: null
+                result: null,
             };
         },
         mockBackendUrls: {
@@ -117,8 +117,8 @@
             GET_GROUP_OPTIONS: '/fake/exports/groups',
             PREPARE_CUSTOM_EXPORT: '/fake/exports/prepare',
             PREPARE_FORM_MULTIMEDIA: '/fake/exports/prepare/multimedia',
-            POLL_EXPORT_DOWNLOAD: '/fake/exports/poll/download'
-        }
+            POLL_EXPORT_DOWNLOAD: '/fake/exports/poll/download',
+        },
     };
 
     window.DnldExpData.prepareTests = function () {
@@ -129,38 +129,38 @@
                     has_multimedia: {
                         url: DnldExpData.mockBackendUrls.HAS_MULTIMEDIA,
                         headers: {
-                            'DjNg-Remote-Method': 'has_multimedia'
+                            'DjNg-Remote-Method': 'has_multimedia',
                         },
-                        method: 'auto'
+                        method: 'auto',
                     },
                     get_group_options: {
                         url: DnldExpData.mockBackendUrls.GET_GROUP_OPTIONS,
                         headers: {
-                            'DjNg-Remote-Method': 'get_group_options'
+                            'DjNg-Remote-Method': 'get_group_options',
                         },
-                        method: 'auto'
+                        method: 'auto',
                     },
                     prepare_custom_export: {
                         url: DnldExpData.mockBackendUrls.PREPARE_CUSTOM_EXPORT,
                         headers: {
-                            'DjNg-Remote-Method': 'prepare_custom_export'
+                            'DjNg-Remote-Method': 'prepare_custom_export',
                         },
-                        method: 'auto'
+                        method: 'auto',
                     },
                     prepare_form_multimedia: {
                         url: DnldExpData.mockBackendUrls.PREPARE_FORM_MULTIMEDIA,
                         headers: {
-                            'DjNg-Remote-Method': 'prepare_form_multimedia'
+                            'DjNg-Remote-Method': 'prepare_form_multimedia',
                         },
-                        method: 'auto'
+                        method: 'auto',
                     },
                     poll_custom_export_download: {
                         url: DnldExpData.mockBackendUrls.POLL_EXPORT_DOWNLOAD,
                         headers: {
-                            'DjNg-Remote-Method': 'poll_custom_export_download'
+                            'DjNg-Remote-Method': 'poll_custom_export_download',
                         },
-                        method: 'auto'
-                    }
+                        method: 'auto',
+                    },
                 });
             }]);
             module('ngtest.DownloadExportApp');
@@ -185,7 +185,7 @@
                 return $controller('DownloadExportFormController', {
                     '$scope': DnldExpData.currentScope,
                     checkForMultimedia: checkForMultimedia || false,
-                    exportList: exportList
+                    exportList: exportList,
                 });
             };
 
@@ -200,7 +200,7 @@
             DnldExpData.createProgressController = function () {
                 DnldExpData.currentScope = DnldExpData.$rootScope.$new();
                 return $controller('DownloadProgressController', {
-                    '$scope': DnldExpData.currentScope
+                    '$scope': DnldExpData.currentScope,
                 });
             };
 
@@ -213,13 +213,13 @@
                 .when('POST', DnldExpData.mockBackendUrls.HAS_MULTIMEDIA)
                 .respond({
                     success: true,
-                    hasMultimedia: true
+                    hasMultimedia: true,
                 });
             DnldExpData.$httpBackend
                 .when('POST', DnldExpData.mockBackendUrls.GET_GROUP_OPTIONS)
                 .respond({
                     success: true,
-                    groups: DnldExpData.groupList
+                    groups: DnldExpData.groupList,
                 });
             DnldExpData.$httpBackend.expectPOST(DnldExpData.mockBackendUrls.HAS_MULTIMEDIA);
             DnldExpData.$httpBackend.expectPOST(DnldExpData.mockBackendUrls.GET_GROUP_OPTIONS);

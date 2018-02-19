@@ -174,7 +174,7 @@ hqDefine('app_manager/js/forms/form_workflow', function() {
             self.datums.removeAll();
         };
 
-       // initialize
+        // initialize
         self.autoLink(self.get_form_by_id(self.formId()).autoLink);
         self.datums(self.wrap_datums(datums));
         self.manualDatums(self.datums().length && self.autoLink());
