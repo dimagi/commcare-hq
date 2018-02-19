@@ -563,8 +563,8 @@ hqDefine('app_manager/js/forms/case_config_ui_advanced', function() {
                     '<% if (action.parent_tags()) { %> : ' +
                     gettext('subcase of') + '<span style="font-weight: bold;"><%= action.parent_tags() %></span>' +
                     '<% } %>' + closeSnip + "</span>")({
-                    action: action
-                });
+                        action: action
+                    });
             } else {
                 if (action.auto_select) {
                     nameSnip = "<i class=\"fa fa-tag\"></i> <%= action.case_tag() %> (" + gettext("autoselect mode: ") + "<%= action.auto_select.mode() %>)";
@@ -576,8 +576,8 @@ hqDefine('app_manager/js/forms/case_config_ui_advanced', function() {
                     "<% if (action.hasPreload()) { %> : load<% } %>" +
                     "<% if (action.hasCaseProperties()) { %> : update<% } %>" +
                     closeSnip + "</span>")({
-                    action: action
-                });
+                        action: action
+                    });
             }
         },
         suggestedProperties: function(action, allow_parent) {
@@ -1127,9 +1127,7 @@ hqDefine('app_manager/js/forms/case_config_ui_advanced', function() {
                         return gettext("Case Tag: only letters, numbers, '-', and '_' allowed");
                     }
                     var tags = self.caseConfig.caseConfigViewModel.getCaseTags('all');
-                    if (_.where(tags, {
-                            value: case_tag
-                        }).length > 1) {
+                    if (_.where(tags, { value: case_tag }).length > 1) {
                         return gettext("Case Tag already in use");
                     }
                 }

@@ -14,7 +14,8 @@ describe('Async Download Modal', function() {
             downloader.download_poll_id = download_poll_id;
         });
 
-        var test_done = [{
+        var test_done = [
+            {
                 input: 'progress ready_' + download_poll_id,
                 expected: true
             }, {
@@ -24,7 +25,6 @@ describe('Async Download Modal', function() {
                 input: 'progress error_' + download_poll_id,
                 expected: true
             }
-
         ];
 
         test_done.forEach(function(test) {
@@ -33,7 +33,8 @@ describe('Async Download Modal', function() {
             });
         });
 
-        var test_not_done = [{
+        var test_not_done = [
+            {
                 input: null,
                 expected: false
             }, {
@@ -46,7 +47,6 @@ describe('Async Download Modal', function() {
                 input: 'progress',
                 expected: false
             }
-
         ];
 
         test_not_done.forEach(function(test) {

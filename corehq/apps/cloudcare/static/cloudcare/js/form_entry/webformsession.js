@@ -341,7 +341,8 @@ WebFormSession.prototype.answerQuestion = function(q) {
     var answer = q.answer();
     var oneQuestionPerScreen = self.isOneQuestionPerScreen();
 
-    this.serverRequest({
+    this.serverRequest(
+        {
             'action': Formplayer.Const.ANSWER,
             'ix': ix,
             'answer': answer,
@@ -352,7 +353,8 @@ WebFormSession.prototype.answerQuestion = function(q) {
             if (self.answerCallback !== undefined) {
                 self.answerCallback(self.session_id);
             }
-        }, false,
+        },
+        false,
         function() {
             q.serverError(
                 gettext("We were unable to save this answer. Please try again later."));
@@ -361,7 +363,8 @@ WebFormSession.prototype.answerQuestion = function(q) {
 };
 
 WebFormSession.prototype.nextQuestion = function(opts) {
-    this.serverRequest({
+    this.serverRequest(
+        {
             'action': Formplayer.Const.NEXT_QUESTION,
         },
         function(resp) {
@@ -372,7 +375,8 @@ WebFormSession.prototype.nextQuestion = function(opts) {
 };
 
 WebFormSession.prototype.prevQuestion = function(opts) {
-    this.serverRequest({
+    this.serverRequest(
+        {
             'action': Formplayer.Const.PREV_QUESTION,
         },
         function(resp) {
@@ -383,7 +387,8 @@ WebFormSession.prototype.prevQuestion = function(opts) {
 };
 
 WebFormSession.prototype.getQuestionsForIndex = function(index) {
-    this.serverRequest({
+    this.serverRequest(
+        {
             'action': Formplayer.Const.QUESTIONS_FOR_INDEX,
             'ix': index,
         },
@@ -393,7 +398,8 @@ WebFormSession.prototype.getQuestionsForIndex = function(index) {
 };
 
 WebFormSession.prototype.evaluateXPath = function(xpath, callback) {
-    this.serverRequest({
+    this.serverRequest(
+        {
             'action': Formplayer.Const.EVALUATE_XPATH,
             'xpath': xpath
         },
@@ -403,7 +409,8 @@ WebFormSession.prototype.evaluateXPath = function(xpath, callback) {
 };
 
 WebFormSession.prototype.getFormattedQuestions = function(callback) {
-    this.serverRequest({
+    this.serverRequest(
+        {
             'action': Formplayer.Const.FORMATTED_QUESTIONS,
         },
         function(resp) {
@@ -412,7 +419,8 @@ WebFormSession.prototype.getFormattedQuestions = function(callback) {
 };
 
 WebFormSession.prototype.newRepeat = function(repeat) {
-    this.serverRequest({
+    this.serverRequest(
+        {
             'action': Formplayer.Const.NEW_REPEAT,
             'ix': getIx(repeat)
         },
@@ -425,7 +433,8 @@ WebFormSession.prototype.newRepeat = function(repeat) {
 WebFormSession.prototype.deleteRepeat = function(repetition) {
     var juncture = getIx(repetition.parent);
     var rep_ix = +(repetition.rel_ix().replace('_', ':').split(":").slice(-1)[0]);
-    this.serverRequest({
+    this.serverRequest(
+        {
             'action': Formplayer.Const.DELETE_REPEAT,
             'ix': rep_ix,
             'form_ix': juncture
@@ -437,7 +446,8 @@ WebFormSession.prototype.deleteRepeat = function(repetition) {
 };
 
 WebFormSession.prototype.switchLanguage = function(lang) {
-    this.serverRequest({
+    this.serverRequest(
+        {
             'action': Formplayer.Const.SET_LANG,
             'lang': lang
         },
@@ -470,7 +480,8 @@ WebFormSession.prototype.submitForm = function(form) {
         }
     };
     accumulate_answers(form);
-    this.serverRequest({
+    this.serverRequest(
+        {
             'action': Formplayer.Const.SUBMIT,
             'answers': answers,
             'prevalidated': prevalidated
