@@ -56,7 +56,9 @@ class Command(BaseDataDump):
         return self.context['occurrence']
 
     def get_case_reference_value(self, case_reference, episode, calculation):
-        if case_reference == 'occurrence':
+        if case_reference == 'person':
+            return self.get_person(episode).get_case_property(calculation)
+        elif case_reference == 'occurrence':
             return self.get_occurrence(episode).get_case_property(calculation)
         return Exception("unknown case reference %s" % case_reference)
 
