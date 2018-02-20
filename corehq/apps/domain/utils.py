@@ -125,7 +125,8 @@ def send_repeater_payloads(repeater_id, payload_ids, email_id):
     repeater_type = repeater.doc_type
     payloads = dict()
     headers = ['note']
-    result_file_name = "bulk-payloads-%s-%s-%s.csv" % (repeater.doc_type, repeater.get_id, datetime.datetime.utcnow())
+    result_file_name = "bulk-payloads-%s-%s-%s.csv" % (
+        repeater.doc_type, repeater.get_id, datetime.datetime.utcnow())
 
     def get_payload(payload_id):
         dummy_repeat_record = RepeatRecord(
@@ -149,7 +150,7 @@ def send_repeater_payloads(repeater_id, payload_ids, email_id):
                 payloads[payload_id] = payload
                 headers = list(set(headers + payload.keys()))
             except Exception as e:
-                payloads[payload_id] = {'note': 'Could not generate payload, %s' % e.message}
+                payloads[payload_id] = {'note': 'Could not generate payload, %s' % str(e)}
 
     def create_result_file():
         with open(result_file_name, 'w') as csvfile:
