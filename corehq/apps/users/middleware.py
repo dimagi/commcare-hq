@@ -65,8 +65,8 @@ class Enforce2FAMiddleware(MiddlewareMixin):
     def __init__(self, get_response=None):
         super(Enforce2FAMiddleware, self).__init__(get_response)
 
-        if settings.DEBUG:
-            raise django.core.exceptions.MiddlewareNotUsed
+        # if settings.DEBUG:
+        #     raise django.core.exceptions.MiddlewareNotUsed
 
     def process_view(self, request, view_func, view_args, view_kwargs):
         if not (
@@ -75,13 +75,13 @@ class Enforce2FAMiddleware(MiddlewareMixin):
             and request.user
             and request.couch_user
         ):
-            return None
+            return "didnt even reach"
 
         if not toggles.TWO_FACTOR_SUPERUSER_ROLLOUT.enabled(request.user.username):
-            return None
+            return "not enabled"
         elif not request.user.is_verified():
             if request.path.startswith('/account/') or request.couch_user.two_factor_disabled:
-                return None
+                return "account or disabled"
             else:
                 return TemplateResponse(
                     request=request,
