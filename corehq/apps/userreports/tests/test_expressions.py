@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import copy
 import uuid
 from datetime import date, datetime
@@ -107,7 +108,7 @@ class PropertyExpressionTest(SimpleTestCase):
             (Decimal("5.3"), "decimal", "5.3"),
             ("5", "string", "5"),
             ("5", "string", 5),
-            (u"fo\u00E9", "string", u"fo\u00E9"),
+            ("fo\u00E9", "string", "fo\u00E9"),
             (date(2015, 9, 30), "date", "2015-09-30"),
             (None, "date", "09/30/2015"),
             (datetime(2015, 9, 30, 19, 4, 27), "datetime", "2015-09-30T19:04:27Z"),

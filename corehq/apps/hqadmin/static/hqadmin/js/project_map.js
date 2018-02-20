@@ -265,7 +265,7 @@ hqDefine('hqadmin/js/project_map', function () {
     
                         });
                         $('#modal').modal();
-                    };
+                    }
                 },
             });
         }

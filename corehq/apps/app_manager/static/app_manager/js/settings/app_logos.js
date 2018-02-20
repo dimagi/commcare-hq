@@ -40,7 +40,7 @@ hqDefine("app_manager/js/settings/app_logos", function() {
         $.post(
             hqImport("hqwebapp/js/initial_page_data").reverse("hqmedia_remove_logo"),
             {
-              logo_slug: slug
+                logo_slug: slug,
             },
             function(data, status) {
                 if (status === 'success') {

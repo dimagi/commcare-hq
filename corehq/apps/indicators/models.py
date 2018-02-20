@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import division
 import logging
 import calendar
 import copy
@@ -652,7 +653,7 @@ class CombinedCouchViewIndicatorDefinition(DynamicIndicatorDefinition):
             debug_data["numerator"] = numerator[1]
             numerator = numerator[0]
 
-        ratio = float(numerator)/float(denominator) if denominator > 0 else None
+        ratio = float(numerator) / float(denominator) if denominator > 0 else None
         value = {
             'numerator': numerator,
             'denominator': denominator,
@@ -676,7 +677,7 @@ class CombinedCouchViewIndicatorDefinition(DynamicIndicatorDefinition):
             numerator = numerator_retro[i]
             n_val = numerator.get('value', 0)
             d_val = denominator.get('value', 0)
-            ratio = float(n_val)/float(d_val) if d_val else None
+            ratio = float(n_val) / float(d_val) if d_val else None
 
             monthly_combined = {
                 'date': denominator.get('date'),

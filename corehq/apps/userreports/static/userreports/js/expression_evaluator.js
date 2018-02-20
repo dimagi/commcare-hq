@@ -31,7 +31,7 @@ hqDefine('userreports/js/expression_evaluator', function () {
             var newParams = {
                 'id': self.documentId(),
                 'type': self.documentType(),
-            }
+            };
             if (self.dataSourceId()) {
                 newParams['data_source'] = self.dataSourceId();
             }
@@ -65,7 +65,7 @@ hqDefine('userreports/js/expression_evaluator', function () {
                         self.updateUrl();
                     },
                     error: function (data) {
-                        self.uiFeedback("<strong>Failure!:</strong> " + data.responseJSON.error);
+                        self.uiFeedback("<strong>Failure!:</strong> " + data.responseJSON ? data.responseJSON.error : "Unknown error");
                     },
                 });
             }

@@ -90,7 +90,8 @@ An overview of the design, API and data structures used here.
             - [Round to the nearest whole number](#round-to-the-nearest-whole-number)
             - [Always round to 3 decimal places](#always-round-to-3-decimal-places)
         - [Date formatting](#date-formatting)
-        - [Converting an ethiopian date string to a gregorian date](#ethiopian-transform)
+        - [Converting an ethiopian date string to a gregorian date](#converting-an-ethiopian-date-string-to-a-gregorian-date)
+        - [Converting a gregorian date string to an ethiopian date](#converting-a-gregorian-date-string-to-an-ethiopian-date)
     - [Charts](#charts)
         - [Pie charts](#pie-charts)
         - [Aggregate multibar charts](#aggregate-multibar-charts)
@@ -958,7 +959,7 @@ Similar to the boolean indicators - expression indicators leverage the expressio
 
 Property        | Description
 --------------- | -----------
-datatype        | The datatype of the indicator. Current valid choices are: "date", "datetime", "string", "decimal", and "integer".
+datatype        | The datatype of the indicator. Current valid choices are: "date", "datetime", "string", "decimal", "integer", and "small_integer".
 is_nullable     | Whether the database column should allow null values.
 is_primary_key  | Whether the database column should be (part of?) the primary key. (TODO: this needs to be confirmed)
 create_index    | Creates an index on this column. Only applicable if using the SQL backend
@@ -1747,13 +1748,25 @@ If there is an error formatting the date, the transform is not applied to that v
 
 ### Converting an ethiopian date string to a gregorian date
 Converts a string in the YYYY-MM-DD format to a gregorian date. For example,
-2009-09-11 is converted date(2017, 5, 19). If it is unable to convert the date,
+2009-09-11 is converted to date(2017, 5, 19). If it is unable to convert the date,
 it will return an empty string.
 
 ```json
 {
    "type": "custom",
    "custom_type": "ethiopian_date_to_gregorian_date"
+}
+```
+
+### Converting a gregorian date string to an ethiopian date
+Converts a string in the YYYY-MM-DD format to an ethiopian date. For example,
+2017-05-19 is converted to date(2009, 09, 11). If it is unable to convert the date,
+it will return an empty string.
+
+```json
+{
+   "type": "custom",
+   "custom_type": "gregorian_date_to_ethiopian_date"
 }
 ```
 

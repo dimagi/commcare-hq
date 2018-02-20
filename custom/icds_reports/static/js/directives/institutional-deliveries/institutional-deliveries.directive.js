@@ -1,4 +1,4 @@
-/* global d3 */
+/* global d3, moment */
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function InstitutionalDeliveriesController($scope, $routeParams, $location, $filter, maternalChildService,
@@ -33,16 +33,6 @@ function InstitutionalDeliveriesController($scope, $routeParams, $location, $fil
     };
     vm.message = storageService.getKey('message') || false;
 
-    vm.prevDay = moment().subtract(1, 'days').format('Do MMMM, YYYY');
-    vm.currentMonth = moment().format("MMMM");
-    vm.showInfoMessage = function () {
-        var selected_month = parseInt($location.search()['month']) ||new Date().getMonth() + 1;
-        var selected_year =  parseInt($location.search()['year']) || new Date().getFullYear();
-        var current_month = new Date().getMonth() + 1;
-        var current_year = new Date().getFullYear();
-        return selected_month === current_month && selected_year === current_year && new Date().getDate() === 1;
-    };
-
     $scope.$watch(function() {
         return vm.selectedLocations;
     }, function (newValue, oldValue) {
@@ -66,7 +56,7 @@ function InstitutionalDeliveriesController($scope, $routeParams, $location, $fil
         var total = row ? $filter('indiaNumbers')(row.all) : 'N/A';
         var children =row ? $filter('indiaNumbers')(row.children) : 'N/A';
         var percent = row ? d3.format('.2%')(row.children / (row.all || 1)) : 'N/A';
-        return '<div class="hoverinfo" style="max-width: 200px !important;">' +
+        return '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
             '<p>' + loc.properties.name + '</p>' +
             '<div>Total number of pregnant women who delivered in the last month: <strong>' + total + '</strong></div>' +
             '<div>Total number of pregnant women who delivered in a public/private medical facilitiy in the last month: <strong>' + children + '</strong></div>' +
@@ -113,8 +103,9 @@ function InstitutionalDeliveriesController($scope, $routeParams, $location, $fil
                 }) * 100);
                 var range = max - min;
                 vm.chartOptions.chart.forceY = [
-                    ((min - range/10)/100).toFixed(2) < 0 ? 0 : ((min - range/10)/100).toFixed(2),
-                    ((max + range/10)/100).toFixed(2),
+                    parseInt(((min - range/10)/100).toFixed(2)) < 0 ?
+                        0 : parseInt(((min - range/10)/100).toFixed(2)),
+                    parseInt(((max + range/10)/100).toFixed(2)),
                 ];
             }
         });
@@ -122,7 +113,7 @@ function InstitutionalDeliveriesController($scope, $routeParams, $location, $fil
 
     vm.init = function() {
         var locationId = vm.filtersData.location_id || vm.userLocationId;
-        if (!locationId || locationId === 'all' || locationId === 'null') {
+        if (!locationId || ["all", "null", "undefined"].indexOf(locationId) >= 0) {
             vm.loadData();
             vm.loaded = true;
             return;
@@ -223,9 +214,9 @@ function InstitutionalDeliveriesController($scope, $routeParams, $location, $fil
 
     vm.tooltipContent = function (monthName, dataInMonth) {
         return "<p><strong>" + monthName + "</strong></p><br/>"
-            + "<p>Total number of pregnant women who delivered in the last month: <strong>" + $filter('indiaNumbers')(dataInMonth.all) + "</strong></p>"
-            + "<p>Total number of pregnant women who delivered in a public/private medical facilitiy in the last month: <strong>" + $filter('indiaNumbers')(dataInMonth.in_month) + "</strong></p>"
-            + "<p>% pregnant women who delivered in a public or private medical facility in the last month: <strong>" + d3.format('.2%')(dataInMonth.y) + "</strong></p>";
+            + "<div>Total number of pregnant women who delivered in the last month: <strong>" + $filter('indiaNumbers')(dataInMonth.all) + "</strong></div>"
+            + "<div>Total number of pregnant women who delivered in a public/private medical facilitiy in the last month: <strong>" + $filter('indiaNumbers')(dataInMonth.in_month) + "</strong></div>"
+            + "<div>% pregnant women who delivered in a public or private medical facility in the last month: <strong>" + d3.format('.2%')(dataInMonth.y) + "</strong></div>";
     };
 
     vm.showAllLocations = function () {

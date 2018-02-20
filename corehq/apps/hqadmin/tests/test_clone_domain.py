@@ -92,12 +92,23 @@ class TestCloneDomain(TestCase):
         # Make sure the locations are only related to locations in the same domain
         for domain in (self.old_domain, self.new_domain):
             locs_in_domain = SQLLocation.objects.filter(domain=domain)
-            related_locs = (SQLLocation.objects.get_queryset_descendants(locs_in_domain, include_self=True)
-                            | SQLLocation.objects.get_queryset_ancestors(locs_in_domain, include_self=True))
-            self.assertItemsEqual(
-                related_locs.order_by('domain').distinct('domain').values_list('domain', flat=True),
-                [domain]
+            related_to_other_domain = (
+                SQLLocation.objects
+                .get_queryset_ancestors(locs_in_domain)
+                # exclude here instead of at end (on union queryset) because
+                # django discards filters on union queries?? (django bug?)
+                .exclude(domain=domain)
+                .order_by()  # discard ORDER BY
+                .union(
+                    SQLLocation.objects
+                    .get_queryset_descendants(locs_in_domain)
+                    .exclude(domain=domain)  # exclude here instead of at end...
+                    .order_by(),  # discard ORDER BY
+                    all=True,
+                )
             )
+            if related_to_other_domain.exists():
+                self.assertTrue(False, repr(list(related_to_other_domain)))
 
     def test_clone_repeaters(self):
         from corehq.motech.repeaters.models import Repeater

@@ -50,6 +50,7 @@ from corehq.apps.app_manager.const import AMPLIFIES_NO, AMPLIFIES_NOT_SET, AMPLI
 
 from .project_access.models import SuperuserProjectEntryRecord  # noqa
 from functools import reduce
+from six import unichr
 
 lang_lookup = defaultdict(str)
 
@@ -322,6 +323,9 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
     enable_registration_welcome_sms_for_case = BooleanProperty(default=False)
     enable_registration_welcome_sms_for_mobile_worker = BooleanProperty(default=False)
     sms_survey_date_format = StringProperty()
+
+    # Allowed outbound SMS per day
+    daily_outbound_sms_limit = IntegerProperty(default=5000)
 
     # exchange/domain copying stuff
     is_snapshot = BooleanProperty(default=False)

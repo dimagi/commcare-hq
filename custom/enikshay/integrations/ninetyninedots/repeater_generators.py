@@ -218,3 +218,52 @@ class TreatmentOutcomePayloadGenerator(NinetyNineDotsBasePayloadGenerator):
                     ),
                 }
             )
+
+
+class UnenrollPatientPayloadGenerator(NinetyNineDotsBasePayloadGenerator):
+    deprecated_format_names = ('case_json',)
+
+    def get_payload(self, repeat_record, episode_case):
+        domain = episode_case.domain
+        person_case = get_person_case_from_occurrence(
+            domain, get_occurrence_case_from_episode(
+                domain, episode_case.case_id
+            ).case_id
+        )
+
+        if episode_case.closed:
+            reason = episode_case.get_case_property('close_reason')
+        elif episode_case.get_case_property('dots_99_enabled') == 'false':
+            reason = 'source_changed'
+        else:
+            reason = 'unknown'
+
+        payload = {
+            'beneficiary_id': person_case.case_id,
+            'reason': reason,
+        }
+        return json.dumps(payload)
+
+    def handle_success(self, response, episode_case, repeat_record):
+        if response.status_code == 200:
+            update_case(
+                episode_case.domain,
+                episode_case.case_id,
+                {
+                    "dots_99_registered": "false",
+                    "dots_99_error": ""
+                }
+            )
+
+    def handle_failure(self, response, episode_case, repeat_record):
+        if 400 <= response.status_code <= 500:
+            update_case(
+                episode_case.domain,
+                episode_case.case_id,
+                {
+                    "dots_99_error": "{}: {}".format(
+                        response.status_code,
+                        response.json().get('error')
+                    ),
+                }
+            )

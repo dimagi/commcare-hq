@@ -7,7 +7,7 @@ hqDefine('reports_core/js/maps', function () {
         return L.tileLayer('https://api.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}', {
             id: layerId,
             accessToken: accessToken,
-            maxZoom: 17
+            maxZoom: 17,
         });
     };
 
@@ -20,7 +20,7 @@ hqDefine('reports_core/js/maps', function () {
 
             privates.map = L.map(mapContainer[0], {
                 trackResize: false,
-                layers: [streets]
+                layers: [streets],
             }).setView([0, 0], 3);
 
             L.control.scale().addTo(privates.map);

@@ -31,7 +31,7 @@ class Command(BaseCommand):
             response = server.res.post('/_replicate', payload={
                 'replication_id': replication_id,
                 'cancel': True
-            })
+            }).json_body
             if response['ok']:
                 print('Replication cancelled')
             else:

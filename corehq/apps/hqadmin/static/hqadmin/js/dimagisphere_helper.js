@@ -8,7 +8,7 @@ hqDefine('hqadmin/js/dimagisphere_helper', function () {
             recentFormsByCountry: {},  // keeps track of "active" per country - from the last second
             maxFormsByCountry: 0, // most forms that any single country has submitted
             totalFormsByDomain: {}, // keeps track of totals per domain
-            domainToCountry: {}
+            domainToCountry: {},
         };
     
         self.addData = function (dataItem) {
@@ -41,7 +41,7 @@ hqDefine('hqadmin/js/dimagisphere_helper', function () {
             'mvp': 'Ethiopia',
             'dsi': 'India',
             'icds': 'India',
-            'tula': 'Guatemala'
+            'tula': 'Guatemala',
         };
     
         self.generateRandomItem = function () {
@@ -51,7 +51,7 @@ hqDefine('hqadmin/js/dimagisphere_helper', function () {
             var randomDomain = domains[domains.length * Math.random() << 0];
             return {
                 domain: randomDomain,
-                country: FAKE_DOMAINS[randomDomain]
+                country: FAKE_DOMAINS[randomDomain],
             };
         };
         return self;
@@ -116,12 +116,12 @@ hqDefine('hqadmin/js/dimagisphere_helper', function () {
         var chart, chartData;
         nv.addGraph(function() {
             chart = nv.models.discreteBarChart()
-              .x(function(d) { return d.domain })
-              .y(function(d) { return d.count })
-              .staggerLabels(true)
-              .tooltips(false)
-              .showValues(true)
-              .transitionDuration(350)
+                .x(function(d) { return d.domain; })
+                .y(function(d) { return d.count; })
+                .staggerLabels(true)
+                .tooltips(false)
+                .showValues(true)
+                .transitionDuration(350)
             ;
             chartData = d3.select('#chart svg').datum(formatChartData(chartSourceData));
             chartData.call(chart);
@@ -143,7 +143,7 @@ hqDefine('hqadmin/js/dimagisphere_helper', function () {
             // values.sort(function (a, b) { return b.count - a.count; });
             return [{
                 key: "Submissions by Domain",
-                values: values
+                values: values,
             }];
         }
     
@@ -172,7 +172,7 @@ hqDefine('hqadmin/js/dimagisphere_helper', function () {
             else {
                 // these values are adjusted slightly to use all 5 colors, not leaving out the first color
                 var activeIndex = Math.min(activeCount, COUNTRY_ACTIVE_COLORS.length);
-                return COUNTRY_ACTIVE_COLORS[activeIndex - 1]
+                return COUNTRY_ACTIVE_COLORS[activeIndex - 1];
             }
         }
     
@@ -198,7 +198,7 @@ hqDefine('hqadmin/js/dimagisphere_helper', function () {
                 opacity: 1,
                 color: 'white',
                 dashArray: '3',
-                fillOpacity: getOpacity(feature.properties.name)
+                fillOpacity: getOpacity(feature.properties.name),
             };
         }
     
@@ -208,7 +208,7 @@ hqDefine('hqadmin/js/dimagisphere_helper', function () {
             layer.setStyle({
                 weight: 4,
                 color: '#002c5f',
-                dashArray: ''
+                dashArray: '',
             });
             if (!L.Browser.ie && !L.Browser.opera) {
                 layer.bringToFront();
@@ -235,7 +235,7 @@ hqDefine('hqadmin/js/dimagisphere_helper', function () {
                     }
                     chartData.datum(formatChartData(chartSourceData)).call(chart);
                     countriesGeo.setStyle(style);
-                }
+                },
             });
         }
     
@@ -315,7 +315,7 @@ hqDefine('hqadmin/js/dimagisphere_helper', function () {
                     activeCountValues[i] + (activeCountValues[i + 1] ? '<br>' : "+");
             }
     
-            div.innerHTML += '<div class="padding"></div>'
+            div.innerHTML += '<div class="padding"></div>';
     
             div.innerHTML += '<p>All Forms Since Opening</p>' +
                              '<i style="background:' + 'black' + '"></i> ' + '0' + '<br>'; 
@@ -325,10 +325,10 @@ hqDefine('hqadmin/js/dimagisphere_helper', function () {
                 div.innerHTML += '<i style="background:' + colors[i] + '"></i> ';
                 if (countValues[i-1] !==  undefined) {
                     if (countValues[i-1] +1 < countValues[i]) {
-                        div.innerHTML += (countValues[i-1] + 1) + '&ndash;'
+                        div.innerHTML += (countValues[i-1] + 1) + '&ndash;';
                     }
                 } else if (countValues[i] > 1) {
-                    div.innerHTML += '1&ndash;'
+                    div.innerHTML += '1&ndash;';
                 }
                 div.innerHTML += countValues[i] + '<br>';
             }
@@ -357,7 +357,7 @@ hqDefine('hqadmin/js/dimagisphere_helper', function () {
         controlButton.click(function () {
             if (!simulationOn) {
                 simulationOn = true;
-                setPauseButton()
+                setPauseButton();
                 simulateForms();
             } else {
                 simulationOn = false;

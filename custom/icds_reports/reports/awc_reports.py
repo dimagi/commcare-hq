@@ -432,8 +432,8 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
                     'label': _('Underweight (Weight-for-Age)'),
                     'help_text': _((
                         """
-                        Percentage of children between 0-5 years enrolled for ICDS services with weight-for-age
-                        less than -2 standard deviations of the WHO Child Growth Standards median.
+                        Percentage of children between 0-5 years enrolled for Anganwadi Services with
+                        weight-for-age less than -2 standard deviations of the WHO Child Growth Standards median.
                         Children who are moderately or severely underweight have a higher risk of mortality.
                         """
                     )),
@@ -459,7 +459,7 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
                     'help_text': _((
                         """
                         Percentage of children between 6 - 60 months enrolled for
-                        ICDS services with weight-for-height
+                        Anganwadi Services with weight-for-height
                         below -2 standard deviations of the WHO Child Growth Standards median.
 
                         Severe Acute Malnutrition (SAM) or wasting in children is a symptom of acute
@@ -518,7 +518,7 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
                     'help_text': _((
                         """
                         Percentage of children (0-5 years) who
-                        have been weighed of total children enrolled for ICDS services
+                        have been weighed of total children enrolled for Anganwadi Services
                         """
                     )),
                     'percent': percent_diff(
@@ -757,14 +757,8 @@ def get_awc_report_demographics(domain, config, now_date, month, show_test=False
             ccs_pregnant_all=Sum('cases_ccs_pregnant_all'),
             css_lactating=Sum('cases_ccs_lactating'),
             css_lactating_all=Sum('cases_ccs_lactating_all'),
-            person_adolescent=(
-                Sum('cases_person_adolescent_girls_11_14') +
-                Sum('cases_person_adolescent_girls_15_18')
-            ),
-            person_adolescent_all=(
-                Sum('cases_person_adolescent_girls_11_14_all') +
-                Sum('cases_person_adolescent_girls_15_18_all')
-            ),
+            person_adolescent=Sum('cases_person_adolescent_girls_11_14'),
+            person_adolescent_all=Sum('cases_person_adolescent_girls_11_14_all'),
             person_aadhaar=Sum(person_has_aadhaar_column(beta)),
             all_persons=Sum(person_is_beneficiary_column(beta))
         )
@@ -831,6 +825,12 @@ def get_awc_report_demographics(domain, config, now_date, month, show_test=False
                         prev_data,
                         'all_persons'
                     ),
+                    'color': 'green' if percent_diff(
+                        'person_aadhaar',
+                        data,
+                        prev_data,
+                        'all_persons'
+                    ) > 0 else 'red',
                     'value': get_value(data, 'person_aadhaar'),
                     'all': get_value(data, 'all_persons'),
                     'format': 'percent_and_div',
@@ -839,9 +839,9 @@ def get_awc_report_demographics(domain, config, now_date, month, show_test=False
             ],
             [
                 {
-                    'label': _('Percent children (0-6 years) enrolled for ICDS services'),
+                    'label': _('Percent children (0-6 years) enrolled for Anganwadi Services'),
                     'help_text': _('Percentage of children registered between '
-                                   '0-6 years old who are enrolled for ICDS services'),
+                                   '0-6 years old who are enrolled for Anganwadi Services'),
                     'percent': percent_diff('child_health', data, prev_data, 'child_health_all'),
                     'color': 'green' if percent_diff(
                         'child_health_all',
@@ -853,8 +853,9 @@ def get_awc_report_demographics(domain, config, now_date, month, show_test=False
                     'frequency': frequency,
                 },
                 {
-                    'label': _('Percent pregnant women enrolled for ICDS services'),
-                    'help_text': _('Percentage of pregnant women registered who are enrolled for ICDS services'),
+                    'label': _('Percent pregnant women enrolled for Anganwadi Services'),
+                    'help_text': _('Percentage of pregnant women registered who are enrolled for Anganwadi '
+                                   'Services'),
                     'percent': percent_diff('ccs_pregnant', data, prev_data, 'ccs_pregnant_all'),
                     'color': 'green' if percent_diff(
                         'ccs_pregnant',
@@ -871,8 +872,9 @@ def get_awc_report_demographics(domain, config, now_date, month, show_test=False
             [
 
                 {
-                    'label': _('Percent lactating women enrolled for ICDS services'),
-                    'help_text': _('Percentage of lactating women registered who are enrolled for ICDS services'),
+                    'label': _('Percent lactating women enrolled for Anganwadi Services'),
+                    'help_text': _('Percentage of lactating women registered who are enrolled for Anganwadi '
+                                   'Services'),
                     'percent': percent_diff('css_lactating', data, prev_data, 'css_lactating_all'),
                     'color': 'green' if percent_diff(
                         'css_lactating',
@@ -886,10 +888,10 @@ def get_awc_report_demographics(domain, config, now_date, month, show_test=False
                     'frequency': frequency
                 },
                 {
-                    'label': _('Percent adolescent girls (11-18 years) enrolled for ICDS services'),
+                    'label': _('Percent adolescent girls (11-14 years) enrolled for Anganwadi Services'),
                     'help_text': _((
-                        "Percentage of adolescent girls registered between 11-18 years"
-                        " old who are enrolled for ICDS services"
+                        "Percentage of adolescent girls registered between 11-14 years"
+                        " old who are enrolled for Anganwadi Services"
                     )),
                     'percent': percent_diff(
                         'person_adolescent',
@@ -1013,6 +1015,7 @@ def get_awc_report_beneficiary(start, length, draw, order, awc_id, month, two_be
         age_in_months__lte=60
     )
 
+    data_count = data.count()
     if 'current_month_nutrition_status' in order:
         sort_order = {
             'Severely underweight': 1,
@@ -1035,7 +1038,6 @@ def get_awc_report_beneficiary(start, length, draw, order, awc_id, month, two_be
     else:
         data = data.order_by('-month', order)
 
-    data_count = len(data)
     data = data[start:(start + length)]
 
     config = {
@@ -1070,12 +1072,12 @@ def get_awc_report_beneficiary(start, length, draw, order, awc_id, month, two_be
             current_month_stunting=get_status(
                 row_data.current_month_stunting,
                 'stunted',
-                'Normal weight for height'
+                'Normal height for age'
             ),
             current_month_wasting=get_status(
                 row_data.current_month_wasting,
                 'wasted',
-                'Normal height for age'
+                'Normal weight for height'
             ),
             pse_days_attended=row_data.pse_days_attended
         )

@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from collections import namedtuple
 from copy import copy, deepcopy
 import json
@@ -124,7 +125,7 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
         string_conversions = ()
 
     def __unicode__(self):
-        return u'{} - {}'.format(self.domain, self.display_name)
+        return '{} - {}'.format(self.domain, self.display_name)
 
     def save(self, **params):
         self.last_modified = datetime.utcnow()
@@ -413,7 +414,7 @@ class ReportConfiguration(UnicodeMixIn, QuickCachedDocumentMixin, Document):
     report_meta = SchemaProperty(ReportMeta)
 
     def __unicode__(self):
-        return u'{} - {}'.format(self.domain, self.title)
+        return '{} - {}'.format(self.domain, self.title)
 
     def save(self, *args, **kwargs):
         self.report_meta.last_modified = datetime.utcnow()

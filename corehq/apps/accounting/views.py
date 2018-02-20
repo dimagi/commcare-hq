@@ -275,7 +275,7 @@ class NewSubscriptionView(AccountingSectionView, AsyncHandlerMixin):
             try:
                 subscription = self.subscription_form.create_subscription()
                 return HttpResponseRedirect(
-                    reverse(ManageBillingAccountView.urlname, args=(subscription.account.id,))
+                    reverse(EditSubscriptionView.urlname, args=(subscription.id,))
                 )
             except NewSubscriptionError as e:
                 errors = ErrorList()
@@ -580,8 +580,8 @@ class EditSoftwarePlanView(AccountingSectionView, AsyncHandlerMixin):
             if self.software_plan_version_form.is_valid():
                 self.software_plan_version_form.save(request)
             else:
-                for errors in self.software_plan_version_form.errors:
-                    for error in errors:
+                for error_list in self.software_plan_version_form.errors.values():
+                    for error in error_list:
                         messages.error(request, error)
         elif self.plan_info_form.is_valid():
             self.plan_info_form.update_plan(request, self.plan)

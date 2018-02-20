@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2018-01-16 20:26+0000\n"
+"POT-Creation-Date: 2018-02-13 22:38+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: Dimagi Dev <devops@dimagi.com>, 2017\n"
 "Language-Team: Hindi (https://www.transifex.com/dimagi/teams/9388/hi/)\n"
@@ -18,8 +18,8 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: corehq/apps/accounting/static/accounting/js/accounting.billing_info_handler.js:56
-#: corehq/apps/domain/static/domain/js/pro-bono.js:25
+#: corehq/apps/accounting/static/accounting/js/widgets.js:64
+#: corehq/apps/domain/static/domain/js/pro-bono.js:29
 msgid "Please enter a valid email."
 msgstr ""
 
@@ -104,119 +104,119 @@ msgstr ""
 msgid "Select One"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:431
-msgid " Days late "
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:440
-msgid "Years since date"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:441
-msgid "Months since date"
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:409
+msgid "Markdown"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:442
+msgid " Days late "
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:451
+msgid "Years since date"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:452
+msgid "Months since date"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:453
 msgid "Weeks since date"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:443
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:454
 msgid "Days since date"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:444
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:455
 msgid "Days until date"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:445
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:456
 msgid "Weeks until date"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:446
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:457
 msgid "Months until date"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:448
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:459
 msgid " Measuring "
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:698
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:706
 msgid "You have unsaved detail screen configurations."
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:745
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:753
 msgid "There are errors in your property names"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:750
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:758
 msgid "There are errors in your tabs"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:758
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:766
 msgid "All properties must be below a tab"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1069
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1078
 msgid "Plain"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1070
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1079
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:11
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:21
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:24
 msgid "Date"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1071
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1080
 msgid "Time Since or Until Date"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1072
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1081
 msgid "Phone Number"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1073
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1082
 msgid "ID Mapping"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1074
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1083
 msgid "Late Flag"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1075
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1084
 msgid "Search Only"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1076
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1085
 msgid "Address"
 msgstr "संपूर्ण पता "
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1077
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1086
 msgid "Distance from current location"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1082
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1091
 msgid "Picture"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1083
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1092
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:33
 msgid "Audio"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1090
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1099
 msgid "Icon"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1095
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1104
 msgid "Conditional ID Mapping"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1100
-msgid "Calculate"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1104
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1108
 msgid ""
 "Must begin with a letter and contain only letters, numbers, '-', and '_'"
 msgstr ""
@@ -236,10 +236,12 @@ msgid "You have unchanged user properties settings"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js:693
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui_advanced.js:1204
 msgid "Property updated by two questions"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js:697
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui_advanced.js:1208
 msgid "Inside the wrong repeat!"
 msgstr ""
 
@@ -248,7 +250,126 @@ msgid "Property uses unrecognized prefix <strong>"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js:729
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui_advanced.js:1256
 msgid "Two properties load to the same question"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui_advanced.js:79
+msgid "Raw"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui_advanced.js:83
+msgid "User Data"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui_advanced.js:87
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:22
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:23
+msgid "Lookup Table"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui_advanced.js:91
+msgid "User Properties"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui_advanced.js:97
+msgid "Case Index"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui_advanced.js:318
+msgid "Load / Update / Close a case"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui_advanced.js:322
+msgid "Automatic Case Selection"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui_advanced.js:326
+msgid "Load Case From Fixture"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui_advanced.js:337
+msgid "Open a Case"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui_advanced.js:516
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui_advanced.js:1119
+msgid "Case Type required"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui_advanced.js:518
+msgid "Case Tag required"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui_advanced.js:521
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui_advanced.js:1123
+msgid "Case Tag: only letters, numbers, '-', and '_' allowed"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui_advanced.js:525
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui_advanced.js:1127
+msgid "Case Tag already in use"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui_advanced.js:572
+msgid "subcase of"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui_advanced.js:576
+msgid "autoselect mode: "
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui_advanced.js:579
+msgid " (from fixture)"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui_advanced.js:728
+msgid "Autoselect mode required"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui_advanced.js:730
+msgid "Property required"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui_advanced.js:733
+msgid "Case required"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui_advanced.js:735
+msgid "Lookup table tag required"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui_advanced.js:739
+msgid "Expected case type required"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui_advanced.js:834
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui_advanced.js:1028
+msgid "Subcase parent reference is missing"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui_advanced.js:836
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui_advanced.js:1030
+msgid "Parent reference ID required for subcases: "
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui_advanced.js:843
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui_advanced.js:1037
+msgid "Subcase must be in same repeat context as parent \""
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui_advanced.js:942
+msgid "Select parent"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui_advanced.js:1206
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui_advanced.js:1246
+msgid "Reserved word: "
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui_advanced.js:1210
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui_advanced.js:1248
+msgid "Parent property references not allowed for subcases"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/form_designer.js:136
@@ -292,27 +413,27 @@ msgstr ""
 msgid "Unrecognized value"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:8
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:9
 msgid "Module Settings"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:78
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:79
 msgid "Case type is required."
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:85
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:86
 msgid "Case types can only include the characters a-z, 0-9, '-' and '_'"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:90
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:91
 msgid "'commcare-user' is a reserved case type. Please change the case type"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:115
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:114
 msgid "Go back to case list"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:116
+#: corehq/apps/app_manager/static/app_manager/js/modules/module_view.js:115
 msgid "Proceed with registered case"
 msgstr ""
 
@@ -1450,11 +1571,6 @@ msgstr ""
 msgid "Loading..."
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:22
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:23
-msgid "Lookup Table"
-msgstr ""
-
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:23
 msgid "{attr} was not found in the lookup table"
 msgstr ""
@@ -2208,6 +2324,10 @@ msgstr ""
 msgid "You have unsaved changes to your data dictionary."
 msgstr ""
 
+#: corehq/apps/data_interfaces/static/data_interfaces/js/manage_case_groups.js:49
+msgid "Sorry, it looks like the upload failed."
+msgstr ""
+
 #: corehq/apps/domain/static/domain/js/add_form_repeater.js:23
 msgid "Success! Response is: "
 msgstr ""
@@ -2218,6 +2338,15 @@ msgstr ""
 
 #: corehq/apps/domain/static/domain/js/add_form_repeater.js:38
 msgid "HQ was unable to make the request: "
+msgstr ""
+
+#: corehq/apps/domain/static/domain/js/billing_statements.js:32
+#: corehq/apps/domain/static/domain/js/billing_statements.js:51
+msgid "Submit Payment"
+msgstr ""
+
+#: corehq/apps/domain/static/domain/js/billing_statements.js:41
+msgid "Submit Invoice Request"
 msgstr ""
 
 #: corehq/apps/domain/static/domain/js/internal_settings.js:58
@@ -2333,11 +2462,11 @@ msgstr ""
 msgid "Please wait and do not navigate away..."
 msgstr ""
 
-#: corehq/apps/hqadmin/static/hqadmin/js/system_info.js:225
+#: corehq/apps/hqadmin/static/hqadmin/js/system_info.js:236
 msgid "Stop"
 msgstr ""
 
-#: corehq/apps/hqadmin/static/hqadmin/js/system_info.js:225
+#: corehq/apps/hqadmin/static/hqadmin/js/system_info.js:236
 msgid "Start"
 msgstr ""
 
@@ -2387,11 +2516,11 @@ msgstr ""
 msgid "There was an error deleting"
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/multiselect_utils.js:58
+#: corehq/apps/hqwebapp/static/hqwebapp/js/multiselect_utils.js:64
 msgid "Add All"
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/multiselect_utils.js:63
+#: corehq/apps/hqwebapp/static/hqwebapp/js/multiselect_utils.js:69
 msgid "Remove All"
 msgstr ""
 
@@ -2409,7 +2538,7 @@ msgstr ""
 msgid "We could not turn off the new feature. Please try again later."
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/select2_handler.js:74
+#: corehq/apps/hqwebapp/static/hqwebapp/js/select2_handler.js:80
 msgid ""
 "There was an issue communicating with the server. Please try back later."
 msgstr ""
@@ -2469,46 +2598,72 @@ msgstr ""
 msgid "Not a valid email"
 msgstr ""
 
+#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:82
+msgid ""
+"Something unexpected happened.\n"
+"Please try again, or report an issue if the problem persists."
+msgstr ""
+
 #: corehq/apps/locations/static/locations/js/location.js:41
 msgid "Error saving user"
 msgstr ""
 
-#: corehq/apps/registration/static/registration/js/new_user.ko.js:106
+#: corehq/apps/locations/static/locations/js/location_tree.async.js:255
+msgid "You have successfully archived the location <%=name%>"
+msgstr ""
+
+#: corehq/apps/locations/static/locations/js/location_tree.async.js:258
+msgid ""
+"You have successfully deleted the location <%=name%> and all of its child "
+"locations"
+msgstr ""
+
+#: corehq/apps/locations/static/locations/js/location_tree.async.js:262
+msgid ""
+"An error occurred while deleting your location. If the problem persists, "
+"please report an issue"
+msgstr ""
+
+#: corehq/apps/registration/static/registration/js/new_user.ko.js:105
 msgid "Please enter your name."
 msgstr ""
 
-#: corehq/apps/registration/static/registration/js/new_user.ko.js:115
+#: corehq/apps/registration/static/registration/js/new_user.ko.js:114
 msgid "Please specify an email."
 msgstr ""
 
-#: corehq/apps/registration/static/registration/js/new_user.ko.js:142
+#: corehq/apps/registration/static/registration/js/new_user.ko.js:141
 msgid "There is already a user with this email."
 msgstr ""
 
-#: corehq/apps/registration/static/registration/js/new_user.ko.js:150
+#: corehq/apps/registration/static/registration/js/new_user.ko.js:149
 msgid "Checking email..."
 msgstr ""
 
-#: corehq/apps/registration/static/registration/js/new_user.ko.js:160
+#: corehq/apps/registration/static/registration/js/new_user.ko.js:159
 msgid "Please specify a password."
 msgstr ""
 
-#: corehq/apps/registration/static/registration/js/new_user.ko.js:180
+#: corehq/apps/registration/static/registration/js/new_user.ko.js:179
 msgid "Please specify a project name."
 msgstr ""
 
+#: corehq/apps/registration/static/registration/js/new_user.ko.js:196
+msgid "Please specify."
+msgstr ""
+
 #: corehq/apps/registration/static/registration/js/password.js:25
-#: corehq/apps/users/static/users/js/mobile_workers.ng.js:67
+#: corehq/apps/users/static/users/js/mobile_workers.ng.js:72
 msgid "Your password is too weak! Try adding numbers or symbols!"
 msgstr ""
 
 #: corehq/apps/registration/static/registration/js/password.js:27
-#: corehq/apps/users/static/users/js/mobile_workers.ng.js:58
+#: corehq/apps/users/static/users/js/mobile_workers.ng.js:63
 msgid "Your password is almost strong enough!"
 msgstr ""
 
 #: corehq/apps/registration/static/registration/js/password.js:29
-#: corehq/apps/users/static/users/js/mobile_workers.ng.js:49
+#: corehq/apps/users/static/users/js/mobile_workers.ng.js:54
 msgid "Good Job! Your password is strong!"
 msgstr ""
 
@@ -2554,6 +2709,10 @@ msgstr ""
 msgid "You can email a saved version<br />of this report."
 msgstr ""
 
+#: corehq/apps/reports/static/reports/js/case_details.js:182
+msgid "Unknown"
+msgstr ""
+
 #: corehq/apps/reports/static/reports/js/config.dataTables.bootstrap.js:23
 msgid "Loading"
 msgstr ""
@@ -2578,15 +2737,20 @@ msgid ""
 "Your search query is invalid, please adjust the formatting and try again."
 msgstr ""
 
-#: corehq/apps/reports/static/reports/js/edit_scheduled_report.js:97
+#: corehq/apps/reports/static/reports/js/edit_scheduled_report.js:93
+#: corehq/apps/users/static/users/js/edit_commcare_user.js:10
+msgid "Select a language..."
+msgstr ""
+
+#: corehq/apps/reports/static/reports/js/edit_scheduled_report.js:109
 msgid "Available Reports"
 msgstr ""
 
-#: corehq/apps/reports/static/reports/js/edit_scheduled_report.js:98
+#: corehq/apps/reports/static/reports/js/edit_scheduled_report.js:110
 msgid "Included Reports"
 msgstr ""
 
-#: corehq/apps/reports/static/reports/js/edit_scheduled_report.js:99
+#: corehq/apps/reports/static/reports/js/edit_scheduled_report.js:111
 msgid "Search Reports..."
 msgstr ""
 
@@ -2607,11 +2771,6 @@ msgstr ""
 msgid ""
 "No valid sheets were available for Custom Bulk Export. Please check for "
 "duplicate sheet names."
-msgstr ""
-
-#: corehq/apps/reports/static/reports/js/language_field.js:3
-#: corehq/apps/users/static/users/js/edit_commcare_user.js:10
-msgid "Select a language..."
 msgstr ""
 
 #: corehq/apps/reports/static/reports/js/project_health_dashboard.js:126
@@ -2690,6 +2849,7 @@ msgid "Success!"
 msgstr ""
 
 #: corehq/apps/reports/static/reports/js/submission_error_report.js:17
+#: corehq/ex-submodules/casexml/apps/case/static/case/js/repeat_records.js:17
 msgid "Failed"
 msgstr ""
 
@@ -2761,20 +2921,20 @@ msgstr ""
 
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js:360
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js:375
-#: corehq/apps/userreports/static/userreports/js/report_config.js:275
-#: corehq/apps/userreports/static/userreports/js/report_config.js:303
+#: corehq/apps/userreports/static/userreports/js/report_config.js:283
+#: corehq/apps/userreports/static/userreports/js/report_config.js:311
 msgid "Choose the property you would like to add as a filter to this report."
 msgstr ""
 
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js:361
-#: corehq/apps/userreports/static/userreports/js/report_config.js:276
+#: corehq/apps/userreports/static/userreports/js/report_config.js:284
 msgid ""
 "Web users viewing the report will see this display text instead of the "
 "property name. Name your filter something easy for users to understand."
 msgstr ""
 
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js:362
-#: corehq/apps/userreports/static/userreports/js/report_config.js:277
+#: corehq/apps/userreports/static/userreports/js/report_config.js:285
 msgid ""
 "What type of property is this filter?<br/><br/><strong>Date</strong>: Select "
 "this if the property is a date.<br/><strong>Choice</strong>: Select this if "
@@ -2782,7 +2942,7 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js:376
-#: corehq/apps/userreports/static/userreports/js/report_config.js:304
+#: corehq/apps/userreports/static/userreports/js/report_config.js:312
 msgid ""
 "What type of property is this filter?<br/><br/><strong>Date</strong>: Select "
 "this to filter the property by a date range.<br/><strong>Value</strong>: "
@@ -2790,7 +2950,7 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js:377
-#: corehq/apps/userreports/static/userreports/js/report_config.js:305
+#: corehq/apps/userreports/static/userreports/js/report_config.js:313
 msgid "What value or date range must the property be equal to?"
 msgstr ""
 
@@ -2816,7 +2976,7 @@ msgid "Password was not changed "
 msgstr ""
 
 #: corehq/apps/users/static/users/js/edit_commcare_user.js:48
-#: corehq/apps/users/static/users/js/mobile_workers.ng.js:398
+#: corehq/apps/users/static/users/js/mobile_workers.ng.js:409
 msgid ""
 "Password Requirements: 1 special character, 1 number, 1 capital letter, "
 "minimum length of 8 characters."
@@ -2845,55 +3005,55 @@ msgid_plural "Download %s Users"
 msgstr[0] ""
 msgstr[1] ""
 
-#: corehq/apps/users/static/users/js/mobile_workers.ng.js:76
+#: corehq/apps/users/static/users/js/mobile_workers.ng.js:81
 msgid ""
 "This password is automatically generated. Please copy it or create your own. "
 "It will not be shown again."
 msgstr ""
 
-#: corehq/apps/users/static/users/js/mobile_workers.ng.js:267
+#: corehq/apps/users/static/users/js/mobile_workers.ng.js:273
 msgid "Username is available."
 msgstr ""
 
-#: corehq/apps/users/static/users/js/mobile_workers.ng.js:298
-#: corehq/apps/users/static/users/js/mobile_workers.ng.js:341
+#: corehq/apps/users/static/users/js/mobile_workers.ng.js:304
+#: corehq/apps/users/static/users/js/mobile_workers.ng.js:352
 msgid "Sorry, there was an issue communicating with the server."
 msgstr ""
 
-#: corehq/apps/users/static/users/js/mobile_workers.ng.js:455
-#: corehq/apps/users/static/users/js/mobile_workers.ng.js:473
+#: corehq/apps/users/static/users/js/mobile_workers.ng.js:466
+#: corehq/apps/users/static/users/js/mobile_workers.ng.js:484
 msgid "Issue communicating with server. Try again."
 msgstr ""
 
-#: corehq/apps/users/static/users/js/mobile_workers.ng.js:483
+#: corehq/apps/users/static/users/js/mobile_workers.ng.js:494
 msgid "Username"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/mobile_workers.ng.js:484
+#: corehq/apps/users/static/users/js/mobile_workers.ng.js:495
 msgid "First Name"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/mobile_workers.ng.js:485
+#: corehq/apps/users/static/users/js/mobile_workers.ng.js:496
 msgid "Last Name"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/mobile_workers.ng.js:486
+#: corehq/apps/users/static/users/js/mobile_workers.ng.js:497
 msgid "Status"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/mobile_workers.ng.js:491
+#: corehq/apps/users/static/users/js/mobile_workers.ng.js:502
 msgid "Show 10 Mobile Workers"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/mobile_workers.ng.js:492
+#: corehq/apps/users/static/users/js/mobile_workers.ng.js:503
 msgid "Show 25 Mobile Workers"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/mobile_workers.ng.js:493
+#: corehq/apps/users/static/users/js/mobile_workers.ng.js:504
 msgid "Show 50 Mobile Workers"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/mobile_workers.ng.js:494
+#: corehq/apps/users/static/users/js/mobile_workers.ng.js:505
 msgid "Show 100 Mobile Workers"
 msgstr ""
 
@@ -2929,47 +3089,51 @@ msgstr ""
 msgid "Are you sure you want to delete this invitation?"
 msgstr ""
 
+#: corehq/ex-submodules/casexml/apps/case/static/case/js/repeat_records.js:12
+msgid "Requeued"
+msgstr ""
+
 #: corehq/messaging/scheduling/static/scheduling/js/broadcasts_list.js:21
 #: corehq/messaging/scheduling/static/scheduling/js/broadcasts_list.js:22
-#: corehq/messaging/scheduling/static/scheduling/js/broadcasts_list.js:93
-#: corehq/messaging/scheduling/static/scheduling/js/broadcasts_list.js:94
+#: corehq/messaging/scheduling/static/scheduling/js/broadcasts_list.js:97
+#: corehq/messaging/scheduling/static/scheduling/js/broadcasts_list.js:98
 msgid "There are no messages to display."
 msgstr ""
 
 #: corehq/messaging/scheduling/static/scheduling/js/broadcasts_list.js:23
-#: corehq/messaging/scheduling/static/scheduling/js/broadcasts_list.js:95
+#: corehq/messaging/scheduling/static/scheduling/js/broadcasts_list.js:99
 msgid "Show _MENU_ messages per page"
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/broadcasts_list.js:52
-#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:56
+#: corehq/messaging/scheduling/static/scheduling/js/broadcasts_list.js:57
+#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:57
 msgid "Active"
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/broadcasts_list.js:54
-#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:58
+#: corehq/messaging/scheduling/static/scheduling/js/broadcasts_list.js:59
+#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:59
 msgid "Inactive"
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/broadcasts_list.js:68
-#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:82
+#: corehq/messaging/scheduling/static/scheduling/js/broadcasts_list.js:72
+#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:80
 msgid "Deactivate"
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/broadcasts_list.js:73
-#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:88
+#: corehq/messaging/scheduling/static/scheduling/js/broadcasts_list.js:77
+#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:86
 msgid "Activate"
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/broadcasts_list.js:96
+#: corehq/messaging/scheduling/static/scheduling/js/broadcasts_list.js:100
 msgid "Showing _START_ to _END_ of _TOTAL_ messages"
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/broadcasts_list.js:97
+#: corehq/messaging/scheduling/static/scheduling/js/broadcasts_list.js:101
 msgid "(filtered from _MAX_ total messages)"
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/broadcasts_list.js:146
+#: corehq/messaging/scheduling/static/scheduling/js/broadcasts_list.js:153
 msgid "Are you sure you want to delete this scheduled message?"
 msgstr ""
 
@@ -2982,35 +3146,35 @@ msgstr ""
 msgid "Showing _START_ to _END_ of _TOTAL_ alerts"
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:63
+#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:64
 msgid "Rule is processing"
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:138
+#: corehq/messaging/scheduling/static/scheduling/js/conditional_alert_list.js:136
 msgid "Are you sure you want to delete this conditional message?"
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js:94
+#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js:101
 msgid "last"
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js:96
+#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js:103
 msgid "last - 1"
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js:98
+#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js:105
 msgid "last - 2"
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js:127
+#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js:134
 msgid "After occurrences:"
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js:129
+#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js:136
 msgid "After weeks:"
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js:131
+#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js:138
 msgid "After months:"
 msgstr ""
 

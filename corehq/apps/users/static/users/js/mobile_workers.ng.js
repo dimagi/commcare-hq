@@ -5,7 +5,7 @@
         'ngResource',
         'ngRoute',
         'ng.django.rmi',
-        'ngMessages'
+        'ngMessages', 
     ]);
 
     var $formElements = {
@@ -23,21 +23,26 @@
     var visualFormCtrl = {
         usernameClear: function () {
             $formElements.username()
-                .removeClass('has-error has-pending has-success');
+                .removeClass('has-error has-pending has-success has-warning');
         },
         usernameSuccess: function () {
             $formElements.username()
-                .removeClass('has-error has-pending')
+                .removeClass('has-error has-pending has-warning')
                 .addClass('has-success');
+        },
+        usernameWarning: function () {
+            $formElements.username()
+                .removeClass('has-error has-pending has-success')
+                .addClass('has-warning');
         },
         usernamePending: function () {
             $formElements.username()
-                .removeClass('has-error has-success')
+                .removeClass('has-error has-success has-warning')
                 .addClass('has-pending');
         },
         usernameError: function () {
             $formElements.username()
-                .removeClass('has-success has-pending')
+                .removeClass('has-success has-pending has-warning')
                 .addClass('has-error');
         },
         passwordSuccess: function () {
@@ -89,14 +94,15 @@
         PENDING: 'pending',
         WARNING: 'warning',
         SUCCESS: 'success',
-        RETRIED: 'retried'
+        RETRIED: 'retried',
     };
 
     var USERNAME_STATUS = {
         PENDING: 'pending',
         TAKEN: 'taken',
         AVAILABLE: 'available',
-        ERROR: 'error'
+        AVAILABLE_WARNING: 'warning',
+        ERROR: 'error', 
     };
 
     mobileWorkers.constant('customFields', []);
@@ -181,8 +187,8 @@
     var mobileWorkerControllers = {};
 
     mobileWorkerControllers.MobileWorkerCreationController = function (
-            $scope, workerCreationFactory, djangoRMI, customFields,
-            customFieldNames, generateStrongPasswords, location_url, $http
+        $scope, workerCreationFactory, djangoRMI, customFields,
+        customFieldNames, generateStrongPasswords, location_url, $http
     ) {
         $scope._ = _;  // make underscore available
         $scope.mobileWorker = {};
@@ -237,7 +243,7 @@
                 mobileWorker.creationStatus = STATUS.RETRIED;
                 $scope.mobileWorker = new MobileWorker({
                     customFields: mobileWorker.customFields,
-                    username: mobileWorker.username
+                    username: mobileWorker.username,
                 });
             } else {
                 $(".select2multiplechoicewidget").select2('data', null);
@@ -280,24 +286,24 @@
                 newWorker.password = (new hex_parser()).encode(newWorker.password);
             }
             djangoRMI.create_mobile_worker({
-                mobileWorker: newWorker
+                mobileWorker: newWorker, 
             })
-            .success(function (data) {
-                if (data.success) {
-                    newWorker.creationStatus = STATUS.SUCCESS;
-                    newWorker.editUrl = data.editUrl;
-                    deferred.resolve(data);
-                } else {
+                .success(function (data) {
+                    if (data.success) {
+                        newWorker.creationStatus = STATUS.SUCCESS;
+                        newWorker.editUrl = data.editUrl;
+                        deferred.resolve(data);
+                    } else {
+                        newWorker.creationStatus = STATUS.WARNING;
+                        deferred.reject(data);
+                    }
+                })
+                .error(function () {
                     newWorker.creationStatus = STATUS.WARNING;
-                    deferred.reject(data);
-                }
-            })
-            .error(function () {
-                newWorker.creationStatus = STATUS.WARNING;
-                deferred.reject(
-                    gettext("Sorry, there was an issue communicating with the server.")
-                );
-            });
+                    deferred.reject(
+                        gettext("Sorry, there was an issue communicating with the server.")
+                    );
+                });
 
             return deferred.promise;
         };
@@ -320,27 +326,32 @@
                         $scope.usernameAvailabilityStatus = USERNAME_STATUS.PENDING;
                         visualFormCtrl.usernamePending();
                         djangoRMI.check_username({
-                            username: username
+                            username: username, 
                         })
-                        .success(function (data) {
-                            if (!!data.success) {
-                                visualFormCtrl.usernameSuccess();
-                                $scope.usernameAvailabilityStatus = USERNAME_STATUS.AVAILABLE;
-                                deferred.resolve(data.success);
-                                $scope.usernameStatusMessage = data.success;
-                            } else {
-                                visualFormCtrl.usernameError();
-                                $scope.usernameAvailabilityStatus = USERNAME_STATUS.TAKEN;
-                                deferred.reject(data.error);
-                                $scope.usernameStatusMessage = data.error;
-                            }
-                        })
-                        .error(function () {
-                            $scope.usernameAvailabilityStatus = USERNAME_STATUS.ERROR;
-                            deferred.reject(
-                                gettext("Sorry, there was an issue communicating with the server.")
-                            );
-                        });
+                            .success(function (data) {
+                                if (data.success) {
+                                    visualFormCtrl.usernameSuccess();
+                                    $scope.usernameAvailabilityStatus = USERNAME_STATUS.AVAILABLE;
+                                    deferred.resolve(data.success);
+                                    $scope.usernameStatusMessage = data.success;
+                                } else if (data.warning) {
+                                    visualFormCtrl.usernameWarning();
+                                    $scope.usernameAvailabilityStatus = USERNAME_STATUS.AVAILABLE_WARNING;
+                                    deferred.resolve(data.warning);
+                                    $scope.usernameStatusMessage = data.warning;
+                                } else {
+                                    visualFormCtrl.usernameError();
+                                    $scope.usernameAvailabilityStatus = USERNAME_STATUS.TAKEN;
+                                    deferred.reject(data.error);
+                                    $scope.usernameStatusMessage = data.error;
+                                }
+                            })
+                            .error(function () {
+                                $scope.usernameAvailabilityStatus = USERNAME_STATUS.ERROR;
+                                deferred.reject(
+                                    gettext("Sorry, there was an issue communicating with the server.")
+                                );
+                            });
                     }
                     return deferred.promise;
                 };
@@ -370,7 +381,7 @@
 
                     return goodEnough;
                 };
-            }
+            },
         };
     };
 
@@ -472,7 +483,7 @@
                 .error(function () {
                     user.action_error = gettext("Issue communicating with server. Try again.");
                 });
-        }
+        },
     });
     mobileWorkerApp.constant('generateStrongPasswords', initial_page_data('strong_mobile_passwords'));
     mobileWorkerApp.constant('location_url', initial_page_data('location_url'));

@@ -270,27 +270,35 @@ class IcdsDynamicTemplateView(TemplateView):
         return ['icds_reports/icds_app/%s.html' % self.kwargs['template']]
 
 
-@method_decorator([login_and_domain_required], name='dispatch')
-class ProgramSummaryView(View):
-
-    def get(self, request, *args, **kwargs):
+class BaseReportView(View):
+    def get_settings(self, request, *args, **kwargs):
         step = kwargs.get('step')
-
         now = datetime.utcnow()
-
         month = int(request.GET.get('month', now.month))
         year = int(request.GET.get('year', now.year))
 
-        if now.day == 1 and now.month == month and now.year == year:
+        if (now.day == 1 or now.day == 2) and now.month == month and now.year == year:
             month = (now - relativedelta(months=1)).month
             year = now.year
 
         include_test = request.GET.get('include_test', False)
-
         domain = self.kwargs['domain']
-
         current_month = datetime(year, month, 1)
         prev_month = current_month - relativedelta(months=1)
+        location = request.GET.get('location_id')
+        if location == 'null' or location == 'undefined':
+            location = None
+        selected_month = current_month
+
+        return step, now, month, year, include_test, domain, current_month, prev_month, location, selected_month
+
+
+@method_decorator([login_and_domain_required], name='dispatch')
+class ProgramSummaryView(BaseReportView):
+
+    def get(self, request, *args, **kwargs):
+        step, now, month, year, include_test, domain, current_month, prev_month, location, selected_month = \
+            self.get_settings(request, *args, **kwargs)
 
         config = {
             'month': tuple(current_month.timetuple())[:3],
@@ -298,7 +306,6 @@ class ProgramSummaryView(View):
             'aggregation_level': 1
         }
 
-        location = request.GET.get('location_id', '')
         config.update(get_location_filter(location, domain))
 
         data = {}
@@ -325,24 +332,11 @@ class ProgramSummaryView(View):
 
 
 @method_decorator([login_and_domain_required], name='dispatch')
-class PrevalenceOfUndernutritionView(View):
+class PrevalenceOfUndernutritionView(BaseReportView):
 
     def get(self, request, *args, **kwargs):
-        step = kwargs.get('step')
-        now = datetime.utcnow()
-
-        month = int(request.GET.get('month', now.month))
-        year = int(request.GET.get('year', now.year))
-
-        if now.day == 1 and now.month == month and now.year == year:
-            month = (now - relativedelta(months=1)).month
-            year = now.year
-
-        selected_month = datetime(year, month, 1)
-
-        include_test = request.GET.get('include_test', False)
-
-        domain = self.kwargs['domain']
+        step, now, month, year, include_test, domain, current_month, prev_month, location, selected_month = \
+            self.get_settings(request, *args, **kwargs)
 
         config = {
             'month': tuple(selected_month.timetuple())[:3],
@@ -356,7 +350,6 @@ class PrevalenceOfUndernutritionView(View):
         if age:
             config.update(get_age_filter(age))
 
-        location = request.GET.get('location_id', '')
         config.update(get_location_filter(location, domain))
         loc_level = get_location_level(config.get('aggregation_level'))
 
@@ -384,8 +377,10 @@ class PrevalenceOfUndernutritionView(View):
 class LocationView(View):
 
     def get(self, request, *args, **kwargs):
-        if 'location_id' in request.GET and request.GET['location_id'] and request.GET['location_id'] != 'null':
-            location_id = request.GET['location_id']
+        location_id = request.GET.get('location_id')
+        if location_id == 'null' or location_id == 'undefined':
+            location_id = None
+        if location_id:
             if not user_can_access_location_id(self.kwargs['domain'], request.couch_user, location_id):
                 return JsonResponse({})
             location = get_object_or_404(
@@ -438,6 +433,8 @@ class LocationView(View):
 class LocationAncestorsView(View):
     def get(self, request, *args, **kwargs):
         location_id = request.GET.get('location_id')
+        if location_id == 'null' or location_id == 'undefined':
+            location_id = None
         show_test = request.GET.get('include_test', False)
         selected_location = get_object_or_404(SQLLocation, location_id=location_id, domain=self.kwargs['domain'])
         parents = list(SQLLocation.objects.get_queryset_ancestors(
@@ -474,6 +471,8 @@ class LocationAncestorsView(View):
 class AWCLocationView(View):
     def get(self, request, *args, **kwargs):
         location_id = request.GET.get('location_id')
+        if location_id == 'null' or location_id == 'undefined':
+            location_id = None
         selected_location = get_object_or_404(SQLLocation, location_id=location_id, domain=self.kwargs['domain'])
         awcs = selected_location.get_descendants().filter(
             location_type__code=AWC_LOCATION_TYPE_CODE
@@ -491,27 +490,16 @@ class AWCLocationView(View):
 
 @location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
-class AwcReportsView(View):
+class AwcReportsView(BaseReportView):
     def get(self, request, *args, **kwargs):
-        step = kwargs.get('step')
-        include_test = request.GET.get('include_test', False)
+        step, now, month, year, include_test, domain, current_month, prev_month, location, selected_month = \
+            self.get_settings(request, *args, **kwargs)
 
-        now = datetime.utcnow()
-
-        month_param = int(request.GET.get('month', now.month))
-        year_param = int(request.GET.get('year', now.year))
-
-        if now.day == 1 and now.month == month_param and now.year == year_param:
-            month_param = (now - relativedelta(months=1)).month
-            year_param = now.year
-
-        month = datetime(year_param, month_param, 1)
-        prev_month = month - relativedelta(months=1)
-        two_before = month - relativedelta(months=2)
-        location = request.GET.get('location_id', None)
+        two_before = current_month - relativedelta(months=2)
+        location = request.GET.get('location_id')
+        if location == 'null' or location == 'undefined':
+            location = None
         aggregation_level = 5
-
-        domain = self.kwargs['domain']
 
         config = {
             'aggregation_level': aggregation_level
@@ -533,7 +521,7 @@ class AwcReportsView(View):
             data = get_awc_reports_system_usage(
                 domain,
                 config,
-                tuple(month.timetuple())[:3],
+                tuple(current_month.timetuple())[:3],
                 tuple(prev_month.timetuple())[:3],
                 tuple(two_before.timetuple())[:3],
                 'aggregation_level',
@@ -542,7 +530,7 @@ class AwcReportsView(View):
         elif step == 'pse':
             data = get_awc_reports_pse(
                 config,
-                tuple(month.timetuple())[:3],
+                tuple(current_month.timetuple())[:3],
                 self.kwargs.get('domain'),
                 include_test
             )
@@ -550,7 +538,7 @@ class AwcReportsView(View):
             data = get_awc_reports_maternal_child(
                 domain,
                 config,
-                tuple(month.timetuple())[:3],
+                tuple(current_month.timetuple())[:3],
                 tuple(prev_month.timetuple())[:3],
                 include_test
             )
@@ -559,7 +547,7 @@ class AwcReportsView(View):
                 domain,
                 config,
                 tuple(now.date().timetuple())[:3],
-                tuple(month.timetuple())[:3],
+                tuple(current_month.timetuple())[:3],
                 include_test,
                 beta=icds_pre_release_features(request.couch_user)
             )
@@ -567,7 +555,7 @@ class AwcReportsView(View):
             data = get_awc_report_infrastructure(
                 domain,
                 config,
-                tuple(month.timetuple())[:3],
+                tuple(current_month.timetuple())[:3],
                 include_test
             )
         elif step == 'beneficiary':
@@ -589,7 +577,7 @@ class AwcReportsView(View):
                     draw,
                     order,
                     config['awc_id'],
-                    tuple(month.timetuple())[:3],
+                    tuple(current_month.timetuple())[:3],
                     tuple(two_before.timetuple())[:3],
                 )
         elif step == 'beneficiary_details':
@@ -703,24 +691,15 @@ class ExportIndicatorView(View):
 
 
 @method_decorator([login_and_domain_required], name='dispatch')
-class FactSheetsView(View):
+class FactSheetsView(BaseReportView):
     def get(self, request, *args, **kwargs):
-        include_test = request.GET.get('include_test', False)
-        now = datetime.utcnow()
-        month = int(request.GET.get('month', now.month))
-        year = int(request.GET.get('year', now.year))
+        step, now, month, year, include_test, domain, current_month, prev_month, location, selected_month = \
+            self.get_settings(request, *args, **kwargs)
 
-        if now.day == 1 and now.month == month and now.year == year:
-            month = (now - relativedelta(months=1)).month
-            year = now.year
-
-        location = request.GET.get('location_id', None)
         aggregation_level = 1
 
         this_month = datetime(year, month, 1).date()
         two_before = this_month - relativedelta(months=2)
-
-        domain = self.kwargs['domain']
 
         config = {
             'aggregation_level': aggregation_level,
@@ -742,21 +721,11 @@ class FactSheetsView(View):
 
 
 @method_decorator([login_and_domain_required], name='dispatch')
-class PrevalenceOfSevereView(View):
+class PrevalenceOfSevereView(BaseReportView):
 
     def get(self, request, *args, **kwargs):
-        include_test = request.GET.get('include_test', False)
-        step = kwargs.get('step')
-        now = datetime.utcnow()
-        month = int(request.GET.get('month', now.month))
-        year = int(request.GET.get('year', now.year))
-
-        if now.day == 1 and now.month == month and now.year == year:
-            month = (now - relativedelta(months=1)).month
-            year = now.year
-        selected_month = datetime(year, month, 1)
-
-        domain = self.kwargs['domain']
+        step, now, month, year, include_test, domain, current_month, prev_month, location, selected_month = \
+            self.get_settings(request, *args, **kwargs)
 
         config = {
             'month': tuple(selected_month.timetuple())[:3],
@@ -769,8 +738,6 @@ class PrevalenceOfSevereView(View):
             config.update({'gender': gender})
         if age:
             config.update(get_age_filter(age))
-
-        location = request.GET.get('location_id', '')
 
         config.update(get_location_filter(location, self.kwargs['domain']))
         loc_level = get_location_level(config.get('aggregation_level'))
@@ -795,21 +762,11 @@ class PrevalenceOfSevereView(View):
 
 
 @method_decorator([login_and_domain_required], name='dispatch')
-class PrevalenceOfStuntingView(View):
+class PrevalenceOfStuntingView(BaseReportView):
 
     def get(self, request, *args, **kwargs):
-        include_test = request.GET.get('include_test', False)
-        step = kwargs.get('step')
-        now = datetime.utcnow()
-        month = int(request.GET.get('month', now.month))
-        year = int(request.GET.get('year', now.year))
-
-        if now.day == 1 and now.month == month and now.year == year:
-            month = (now - relativedelta(months=1)).month
-            year = now.year
-        selected_month = datetime(year, month, 1)
-
-        domain = self.kwargs['domain']
+        step, now, month, year, include_test, domain, current_month, prev_month, location, selected_month = \
+            self.get_settings(request, *args, **kwargs)
 
         config = {
             'month': tuple(selected_month.timetuple())[:3],
@@ -822,8 +779,6 @@ class PrevalenceOfStuntingView(View):
             config.update({'gender': gender})
         if age:
             config.update(get_age_filter(age))
-
-        location = request.GET.get('location_id', '')
 
         config.update(get_location_filter(location, self.kwargs['domain']))
         loc_level = get_location_level(config.get('aggregation_level'))
@@ -848,21 +803,11 @@ class PrevalenceOfStuntingView(View):
 
 
 @method_decorator([login_and_domain_required], name='dispatch')
-class NewbornsWithLowBirthWeightView(View):
+class NewbornsWithLowBirthWeightView(BaseReportView):
 
     def get(self, request, *args, **kwargs):
-        include_test = request.GET.get('include_test', False)
-        step = kwargs.get('step')
-        now = datetime.utcnow()
-        month = int(request.GET.get('month', now.month))
-        year = int(request.GET.get('year', now.year))
-
-        if now.day == 1 and now.month == month and now.year == year:
-            month = (now - relativedelta(months=1)).month
-            year = now.year
-        selected_month = datetime(year, month, 1)
-
-        domain = self.kwargs['domain']
+        step, now, month, year, include_test, domain, current_month, prev_month, location, selected_month = \
+            self.get_settings(request, *args, **kwargs)
 
         config = {
             'month': tuple(selected_month.timetuple())[:3],
@@ -872,8 +817,6 @@ class NewbornsWithLowBirthWeightView(View):
         gender = self.request.GET.get('gender', None)
         if gender:
             config.update({'gender': gender})
-
-        location = request.GET.get('location_id', '')
 
         config.update(get_location_filter(location, self.kwargs['domain']))
         loc_level = get_location_level(config.get('aggregation_level'))
@@ -898,21 +841,11 @@ class NewbornsWithLowBirthWeightView(View):
 
 
 @method_decorator([login_and_domain_required], name='dispatch')
-class EarlyInitiationBreastfeeding(View):
+class EarlyInitiationBreastfeeding(BaseReportView):
 
     def get(self, request, *args, **kwargs):
-        include_test = request.GET.get('include_test', False)
-        step = kwargs.get('step')
-        now = datetime.utcnow()
-        month = int(request.GET.get('month', now.month))
-        year = int(request.GET.get('year', now.year))
-
-        if now.day == 1 and now.month == month and now.year == year:
-            month = (now - relativedelta(months=1)).month
-            year = now.year
-        selected_month = datetime(year, month, 1)
-
-        domain = self.kwargs['domain']
+        step, now, month, year, include_test, domain, current_month, prev_month, location, selected_month = \
+            self.get_settings(request, *args, **kwargs)
 
         config = {
             'month': tuple(selected_month.timetuple())[:3],
@@ -923,7 +856,6 @@ class EarlyInitiationBreastfeeding(View):
         if gender:
             config.update({'gender': gender})
 
-        location = request.GET.get('location_id', '')
         config.update(get_location_filter(location, self.kwargs['domain']))
         loc_level = get_location_level(config.get('aggregation_level'))
 
@@ -947,20 +879,10 @@ class EarlyInitiationBreastfeeding(View):
 
 
 @method_decorator([login_and_domain_required], name='dispatch')
-class ExclusiveBreastfeedingView(View):
+class ExclusiveBreastfeedingView(BaseReportView):
     def get(self, request, *args, **kwargs):
-        include_test = request.GET.get('include_test', False)
-        step = kwargs.get('step')
-        now = datetime.utcnow()
-        month = int(request.GET.get('month', now.month))
-        year = int(request.GET.get('year', now.year))
-
-        if now.day == 1 and now.month == month and now.year == year:
-            month = (now - relativedelta(months=1)).month
-            year = now.year
-        selected_month = datetime(year, month, 1)
-
-        domain = self.kwargs['domain']
+        step, now, month, year, include_test, domain, current_month, prev_month, location, selected_month = \
+            self.get_settings(request, *args, **kwargs)
 
         config = {
             'month': tuple(selected_month.timetuple())[:3],
@@ -971,7 +893,6 @@ class ExclusiveBreastfeedingView(View):
         if gender:
             config.update({'gender': gender})
 
-        location = request.GET.get('location_id', '')
         config.update(get_location_filter(location, self.kwargs['domain']))
         loc_level = get_location_level(config.get('aggregation_level'))
 
@@ -995,20 +916,10 @@ class ExclusiveBreastfeedingView(View):
 
 
 @method_decorator([login_and_domain_required], name='dispatch')
-class ChildrenInitiatedView(View):
+class ChildrenInitiatedView(BaseReportView):
     def get(self, request, *args, **kwargs):
-        include_test = request.GET.get('include_test', False)
-        step = kwargs.get('step')
-        now = datetime.utcnow()
-        month = int(request.GET.get('month', now.month))
-        year = int(request.GET.get('year', now.year))
-
-        if now.day == 1 and now.month == month and now.year == year:
-            month = (now - relativedelta(months=1)).month
-            year = now.year
-        selected_month = datetime(year, month, 1)
-
-        domain = self.kwargs['domain']
+        step, now, month, year, include_test, domain, current_month, prev_month, location, selected_month = \
+            self.get_settings(request, *args, **kwargs)
 
         config = {
             'month': tuple(selected_month.timetuple())[:3],
@@ -1019,7 +930,6 @@ class ChildrenInitiatedView(View):
         if gender:
             config.update({'gender': gender})
 
-        location = request.GET.get('location_id', '')
         config.update(get_location_filter(location, self.kwargs['domain']))
         loc_level = get_location_level(config.get('aggregation_level'))
 
@@ -1043,20 +953,10 @@ class ChildrenInitiatedView(View):
 
 
 @method_decorator([login_and_domain_required], name='dispatch')
-class InstitutionalDeliveriesView(View):
+class InstitutionalDeliveriesView(BaseReportView):
     def get(self, request, *args, **kwargs):
-        include_test = request.GET.get('include_test', False)
-        step = kwargs.get('step')
-        now = datetime.utcnow()
-        month = int(request.GET.get('month', now.month))
-        year = int(request.GET.get('year', now.year))
-
-        if now.day == 1 and now.month == month and now.year == year:
-            month = (now - relativedelta(months=1)).month
-            year = now.year
-        selected_month = datetime(year, month, 1)
-
-        domain = self.kwargs['domain']
+        step, now, month, year, include_test, domain, current_month, prev_month, location, selected_month = \
+            self.get_settings(request, *args, **kwargs)
 
         config = {
             'month': tuple(selected_month.timetuple())[:3],
@@ -1067,7 +967,6 @@ class InstitutionalDeliveriesView(View):
         if gender:
             config.update({'gender': gender})
 
-        location = request.GET.get('location_id', '')
         config.update(get_location_filter(location, self.kwargs['domain']))
         loc_level = get_location_level(config.get('aggregation_level'))
 
@@ -1091,20 +990,10 @@ class InstitutionalDeliveriesView(View):
 
 
 @method_decorator([login_and_domain_required], name='dispatch')
-class ImmunizationCoverageView(View):
+class ImmunizationCoverageView(BaseReportView):
     def get(self, request, *args, **kwargs):
-        include_test = request.GET.get('include_test', False)
-        step = kwargs.get('step')
-        now = datetime.utcnow()
-        month = int(request.GET.get('month', now.month))
-        year = int(request.GET.get('year', now.year))
-
-        if now.day == 1 and now.month == month and now.year == year:
-            month = (now - relativedelta(months=1)).month
-            year = now.year
-        selected_month = datetime(year, month, 1)
-
-        domain = self.kwargs['domain']
+        step, now, month, year, include_test, domain, current_month, prev_month, location, selected_month = \
+            self.get_settings(request, *args, **kwargs)
 
         config = {
             'month': tuple(selected_month.timetuple())[:3],
@@ -1114,7 +1003,6 @@ class ImmunizationCoverageView(View):
         if gender:
             config.update({'gender': gender})
 
-        location = request.GET.get('location_id', '')
         config.update(get_location_filter(location, self.kwargs['domain']))
         loc_level = get_location_level(config.get('aggregation_level'))
 
@@ -1151,6 +1039,8 @@ class AWCDailyStatusView(View):
             'aggregation_level': 1,
         }
         location = request.GET.get('location_id', '')
+        if location == 'null' or location == 'undefined':
+            location = None
         config.update(get_location_filter(location, self.kwargs['domain']))
         loc_level = get_location_level(config.get('aggregation_level'))
 
@@ -1174,26 +1064,15 @@ class AWCDailyStatusView(View):
 
 
 @method_decorator([login_and_domain_required], name='dispatch')
-class AWCsCoveredView(View):
+class AWCsCoveredView(BaseReportView):
     def get(self, request, *args, **kwargs):
-        include_test = request.GET.get('include_test', False)
-        step = kwargs.get('step')
-        now = datetime.utcnow()
-        month = int(request.GET.get('month', now.month))
-        year = int(request.GET.get('year', now.year))
-
-        if now.day == 1 and now.month == month and now.year == year:
-            month = (now - relativedelta(months=1)).month
-            year = now.year
-        selected_month = datetime(year, month, 1)
-
-        domain = self.kwargs['domain']
+        step, now, month, year, include_test, domain, current_month, prev_month, location, selected_month = \
+            self.get_settings(request, *args, **kwargs)
 
         config = {
             'month': tuple(selected_month.timetuple())[:3],
             'aggregation_level': 1,
         }
-        location = request.GET.get('location_id', '')
         config.update(get_location_filter(location, self.kwargs['domain']))
         loc_level = get_location_level(config.get('aggregation_level'))
 
@@ -1217,26 +1096,15 @@ class AWCsCoveredView(View):
 
 
 @method_decorator([login_and_domain_required], name='dispatch')
-class RegisteredHouseholdView(View):
+class RegisteredHouseholdView(BaseReportView):
     def get(self, request, *args, **kwargs):
-        include_test = request.GET.get('include_test', False)
-        step = kwargs.get('step')
-        now = datetime.utcnow()
-        month = int(request.GET.get('month', now.month))
-        year = int(request.GET.get('year', now.year))
-
-        if now.day == 1 and now.month == month and now.year == year:
-            month = (now - relativedelta(months=1)).month
-            year = now.year
-        selected_month = datetime(year, month, 1)
-
-        domain = self.kwargs['domain']
+        step, now, month, year, include_test, domain, current_month, prev_month, location, selected_month = \
+            self.get_settings(request, *args, **kwargs)
 
         config = {
             'month': tuple(selected_month.timetuple())[:3],
             'aggregation_level': 1,
         }
-        location = request.GET.get('location_id', '')
         config.update(get_location_filter(location, self.kwargs['domain']))
         loc_level = get_location_level(config.get('aggregation_level'))
 
@@ -1260,20 +1128,10 @@ class RegisteredHouseholdView(View):
 
 
 @method_decorator([login_and_domain_required], name='dispatch')
-class EnrolledChildrenView(View):
+class EnrolledChildrenView(BaseReportView):
     def get(self, request, *args, **kwargs):
-        include_test = request.GET.get('include_test', False)
-        step = kwargs.get('step')
-        now = datetime.utcnow()
-        month = int(request.GET.get('month', now.month))
-        year = int(request.GET.get('year', now.year))
-
-        if now.day == 1 and now.month == month and now.year == year:
-            month = (now - relativedelta(months=1)).month
-            year = now.year
-        selected_month = datetime(year, month, 1)
-
-        domain = self.kwargs['domain']
+        step, now, month, year, include_test, domain, current_month, prev_month, location, selected_month = \
+            self.get_settings(request, *args, **kwargs)
 
         config = {
             'month': tuple(selected_month.timetuple())[:3],
@@ -1287,7 +1145,6 @@ class EnrolledChildrenView(View):
         if age:
             config.update(get_age_filter(age))
 
-        location = request.GET.get('location_id', '')
         config.update(get_location_filter(location, self.kwargs['domain']))
         loc_level = get_location_level(config.get('aggregation_level'))
 
@@ -1313,27 +1170,16 @@ class EnrolledChildrenView(View):
 
 
 @method_decorator([login_and_domain_required], name='dispatch')
-class EnrolledWomenView(View):
+class EnrolledWomenView(BaseReportView):
     def get(self, request, *args, **kwargs):
-        include_test = request.GET.get('include_test', False)
-        step = kwargs.get('step')
-        now = datetime.utcnow()
-        month = int(request.GET.get('month', now.month))
-        year = int(request.GET.get('year', now.year))
-
-        if now.day == 1 and now.month == month and now.year == year:
-            month = (now - relativedelta(months=1)).month
-            year = now.year
-        selected_month = datetime(year, month, 1)
-
-        domain = self.kwargs['domain']
+        step, now, month, year, include_test, domain, current_month, prev_month, location, selected_month = \
+            self.get_settings(request, *args, **kwargs)
 
         config = {
             'month': tuple(selected_month.timetuple())[:3],
             'aggregation_level': 1,
         }
 
-        location = request.GET.get('location_id', '')
         config.update(get_location_filter(location, self.kwargs['domain']))
         loc_level = get_location_level(config.get('aggregation_level'))
 
@@ -1357,26 +1203,15 @@ class EnrolledWomenView(View):
 
 
 @method_decorator([login_and_domain_required], name='dispatch')
-class LactatingEnrolledWomenView(View):
+class LactatingEnrolledWomenView(BaseReportView):
     def get(self, request, *args, **kwargs):
-        include_test = request.GET.get('include_test', False)
-        step = kwargs.get('step')
-        now = datetime.utcnow()
-        month = int(request.GET.get('month', now.month))
-        year = int(request.GET.get('year', now.year))
-
-        if now.day == 1 and now.month == month and now.year == year:
-            month = (now - relativedelta(months=1)).month
-            year = now.year
-        selected_month = datetime(year, month, 1)
-
-        domain = self.kwargs['domain']
+        step, now, month, year, include_test, domain, current_month, prev_month, location, selected_month = \
+            self.get_settings(request, *args, **kwargs)
 
         config = {
             'month': tuple(selected_month.timetuple())[:3],
             'aggregation_level': 1,
         }
-        location = request.GET.get('location_id', '')
         config.update(get_location_filter(location, self.kwargs['domain']))
         loc_level = get_location_level(config.get('aggregation_level'))
 
@@ -1400,26 +1235,15 @@ class LactatingEnrolledWomenView(View):
 
 
 @method_decorator([login_and_domain_required], name='dispatch')
-class AdolescentGirlsView(View):
+class AdolescentGirlsView(BaseReportView):
     def get(self, request, *args, **kwargs):
-        include_test = request.GET.get('include_test', False)
-        step = kwargs.get('step')
-        now = datetime.utcnow()
-        month = int(request.GET.get('month', now.month))
-        year = int(request.GET.get('year', now.year))
-
-        if now.day == 1 and now.month == month and now.year == year:
-            month = (now - relativedelta(months=1)).month
-            year = now.year
-        selected_month = datetime(year, month, 1)
-
-        domain = self.kwargs['domain']
+        step, now, month, year, include_test, domain, current_month, prev_month, location, selected_month = \
+            self.get_settings(request, *args, **kwargs)
 
         config = {
             'month': tuple(selected_month.timetuple())[:3],
             'aggregation_level': 1,
         }
-        location = request.GET.get('location_id', '')
         config.update(get_location_filter(location, self.kwargs['domain']))
         loc_level = get_location_level(config.get('aggregation_level'))
 
@@ -1443,26 +1267,15 @@ class AdolescentGirlsView(View):
 
 
 @method_decorator([login_and_domain_required], name='dispatch')
-class AdhaarBeneficiariesView(View):
+class AdhaarBeneficiariesView(BaseReportView):
     def get(self, request, *args, **kwargs):
-        include_test = request.GET.get('include_test', False)
-        step = kwargs.get('step')
-        now = datetime.utcnow()
-        month = int(request.GET.get('month', now.month))
-        year = int(request.GET.get('year', now.year))
-
-        if now.day == 1 and now.month == month and now.year == year:
-            month = (now - relativedelta(months=1)).month
-            year = now.year
-        selected_month = datetime(year, month, 1)
-
-        domain = self.kwargs['domain']
+        step, now, month, year, include_test, domain, current_month, prev_month, location, selected_month = \
+            self.get_settings(request, *args, **kwargs)
 
         config = {
             'month': tuple(selected_month.timetuple())[:3],
             'aggregation_level': 1,
         }
-        location = request.GET.get('location_id', '')
         config.update(get_location_filter(location, self.kwargs['domain']))
         loc_level = get_location_level(config.get('aggregation_level'))
 
@@ -1485,25 +1298,15 @@ class AdhaarBeneficiariesView(View):
 
 
 @method_decorator([login_and_domain_required], name='dispatch')
-class CleanWaterView(View):
+class CleanWaterView(BaseReportView):
     def get(self, request, *args, **kwargs):
-        include_test = request.GET.get('include_test', False)
-        step = kwargs.get('step')
-        now = datetime.utcnow()
-        month = int(request.GET.get('month', now.month))
-        year = int(request.GET.get('year', now.year))
-
-        if now.day == 1 and now.month == month and now.year == year:
-            month = (now - relativedelta(months=1)).month
-            year = now.year
-        selected_month = datetime(year, month, 1)
-        domain = self.kwargs['domain']
+        step, now, month, year, include_test, domain, current_month, prev_month, location, selected_month = \
+            self.get_settings(request, *args, **kwargs)
 
         config = {
             'month': tuple(selected_month.timetuple())[:3],
             'aggregation_level': 1,
         }
-        location = request.GET.get('location_id', '')
         config.update(get_location_filter(location, self.kwargs['domain']))
         loc_level = get_location_level(config.get('aggregation_level'))
 
@@ -1527,26 +1330,15 @@ class CleanWaterView(View):
 
 
 @method_decorator([login_and_domain_required], name='dispatch')
-class FunctionalToiletView(View):
+class FunctionalToiletView(BaseReportView):
     def get(self, request, *args, **kwargs):
-        include_test = request.GET.get('include_test', False)
-        step = kwargs.get('step')
-        now = datetime.utcnow()
-        month = int(request.GET.get('month', now.month))
-        year = int(request.GET.get('year', now.year))
-
-        if now.day == 1 and now.month == month and now.year == year:
-            month = (now - relativedelta(months=1)).month
-            year = now.year
-        selected_month = datetime(year, month, 1)
-
-        domain = self.kwargs['domain']
+        step, now, month, year, include_test, domain, current_month, prev_month, location, selected_month = \
+            self.get_settings(request, *args, **kwargs)
 
         config = {
             'month': tuple(selected_month.timetuple())[:3],
             'aggregation_level': 1,
         }
-        location = request.GET.get('location_id', '')
         config.update(get_location_filter(location, self.kwargs['domain']))
         loc_level = get_location_level(config.get('aggregation_level'))
 
@@ -1570,26 +1362,15 @@ class FunctionalToiletView(View):
 
 
 @method_decorator([login_and_domain_required], name='dispatch')
-class MedicineKitView(View):
+class MedicineKitView(BaseReportView):
     def get(self, request, *args, **kwargs):
-        include_test = request.GET.get('include_test', False)
-        step = kwargs.get('step')
-        now = datetime.utcnow()
-        month = int(request.GET.get('month', now.month))
-        year = int(request.GET.get('year', now.year))
-
-        if now.day == 1 and now.month == month and now.year == year:
-            month = (now - relativedelta(months=1)).month
-            year = now.year
-        selected_month = datetime(year, month, 1)
-
-        domain = self.kwargs['domain']
+        step, now, month, year, include_test, domain, current_month, prev_month, location, selected_month = \
+            self.get_settings(request, *args, **kwargs)
 
         config = {
             'month': tuple(selected_month.timetuple())[:3],
             'aggregation_level': 1,
         }
-        location = request.GET.get('location_id', '')
         config.update(get_location_filter(location, self.kwargs['domain']))
         loc_level = get_location_level(config.get('aggregation_level'))
 
@@ -1613,26 +1394,15 @@ class MedicineKitView(View):
 
 
 @method_decorator([login_and_domain_required], name='dispatch')
-class InfantsWeightScaleView(View):
+class InfantsWeightScaleView(BaseReportView):
     def get(self, request, *args, **kwargs):
-        include_test = request.GET.get('include_test', False)
-        step = kwargs.get('step')
-        now = datetime.utcnow()
-        month = int(request.GET.get('month', now.month))
-        year = int(request.GET.get('year', now.year))
-
-        if now.day == 1 and now.month == month and now.year == year:
-            month = (now - relativedelta(months=1)).month
-            year = now.year
-        selected_month = datetime(year, month, 1)
-
-        domain = self.kwargs['domain']
+        step, now, month, year, include_test, domain, current_month, prev_month, location, selected_month = \
+            self.get_settings(request, *args, **kwargs)
 
         config = {
             'month': tuple(selected_month.timetuple())[:3],
             'aggregation_level': 1,
         }
-        location = request.GET.get('location_id', '')
         config.update(get_location_filter(location, self.kwargs['domain']))
         loc_level = get_location_level(config.get('aggregation_level'))
 
@@ -1656,26 +1426,15 @@ class InfantsWeightScaleView(View):
 
 
 @method_decorator([login_and_domain_required], name='dispatch')
-class AdultWeightScaleView(View):
+class AdultWeightScaleView(BaseReportView):
     def get(self, request, *args, **kwargs):
-        include_test = request.GET.get('include_test', False)
-        step = kwargs.get('step')
-        now = datetime.utcnow()
-        month = int(request.GET.get('month', now.month))
-        year = int(request.GET.get('year', now.year))
-
-        if now.day == 1 and now.month == month and now.year == year:
-            month = (now - relativedelta(months=1)).month
-            year = now.year
-        selected_month = datetime(year, month, 1)
-
-        domain = self.kwargs['domain']
+        step, now, month, year, include_test, domain, current_month, prev_month, location, selected_month = \
+            self.get_settings(request, *args, **kwargs)
 
         config = {
             'month': tuple(selected_month.timetuple())[:3],
             'aggregation_level': 1,
         }
-        location = request.GET.get('location_id', '')
         config.update(get_location_filter(location, self.kwargs['domain']))
         loc_level = get_location_level(config.get('aggregation_level'))
 

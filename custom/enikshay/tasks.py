@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import division
 import datetime
 import io
 from dimagi.utils.csv import UnicodeWriter
@@ -48,6 +49,7 @@ from .const import (
     DATE_FULFILLED,
     DAILY_SCHEDULE_FIXTURE_NAME,
     DAILY_SCHEDULE_ID,
+    ENROLLED_IN_PRIVATE,
     SCHEDULE_ID_FIXTURE,
     HISTORICAL_CLOSURE_REASON,
     ENIKSHAY_TIMEZONE,
@@ -217,6 +219,11 @@ class EpisodeUpdater(object):
         case_accessor = CaseAccessors(self.domain)
         episode_cases = case_accessor.iter_cases(case_ids)
         for episode_case in episode_cases:
+
+            # only run on private sector
+            if episode_case.get_case_property(ENROLLED_IN_PRIVATE) != 'true':
+                continue
+
             # if this episode is part of a deleted or archived person, don't update
             try:
                 person_case = get_person_case_from_episode(self.domain, episode_case.case_id)
@@ -374,7 +381,7 @@ class EpisodeAdherenceUpdate(object):
             return len([
                 status
                 for date, status in six.iteritems(dose_status_by_date)
-                if start_date <= date <= end_date and getattr(status, dose_type)
+                if start_date < date <= end_date and getattr(status, dose_type)
             ])
 
     @staticmethod
@@ -523,7 +530,7 @@ class EpisodeAdherenceUpdate(object):
         # (i.e. the earlier of (30 days ago, latest_adherence_date))
         # this property should actually have been called "aggregated_score_count_expected"
         num_days = (update['aggregated_score_date_calculated'] - adherence_schedule_date_start).days + 1
-        update['expected_doses_taken'] = int(doses_per_week * num_days / 7.0)
+        update['expected_doses_taken'] = int(doses_per_week * num_days / 7)
 
         return update
 

@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import division
 from collections import defaultdict, namedtuple
 from datetime import datetime
 
@@ -20,7 +21,7 @@ from corehq.apps.es.cases import (
     closed_range as closed_range_filter,
     case_type as case_type_filter,
 )
-from corehq.apps.hqcase.utils import SYSTEM_FORM_XMLNS
+from corehq.apps.hqcase.utils import SYSTEM_FORM_XMLNS_MAP
 from corehq.util.quickcache import quickcache
 from dimagi.utils.parsing import string_to_datetime
 import six
@@ -255,7 +256,9 @@ def get_completed_counts_by_user(domain, datespan, user_ids=None):
 
 
 def _get_form_counts_by_user(domain, datespan, is_submission_time, user_ids=None):
-    form_query = FormES().domain(domain).filter(filters.NOT(xmlns_filter(SYSTEM_FORM_XMLNS)))
+    form_query = FormES().domain(domain)
+    for xmlns in SYSTEM_FORM_XMLNS_MAP.keys():
+        form_query = form_query.filter(filters.NOT(xmlns_filter(xmlns)))
 
     if is_submission_time:
         form_query = (form_query
@@ -286,8 +289,9 @@ def get_completed_counts_by_date(domain, user_ids, datespan, timezone):
 def _get_form_counts_by_date(domain, user_ids, datespan, timezone, is_submission_time):
     form_query = (FormES()
                   .domain(domain)
-                  .user_id(user_ids)
-                  .filter(filters.NOT(xmlns_filter(SYSTEM_FORM_XMLNS))))
+                  .user_id(user_ids))
+    for xmlns in SYSTEM_FORM_XMLNS_MAP.keys():
+        form_query = form_query.filter(filters.NOT(xmlns_filter(xmlns)))
 
     if is_submission_time:
         form_query = (form_query
@@ -305,11 +309,11 @@ def _get_form_counts_by_date(domain, user_ids, datespan, timezone, is_submission
 
     results = form_query.run().aggregations.date_histogram.buckets_list
 
-    # Convert timestamp into timezone aware dateime. Must divide timestamp by 1000 since python's
+    # Convert timestamp into timezone aware datetime. Must divide timestamp by 1000 since python's
     # fromtimestamp takes a timestamp in seconds, whereas elasticsearch's timestamp is in milliseconds
     results = list(map(
         lambda result:
-            (datetime.fromtimestamp(result.key / 1000).date().isoformat(), result.doc_count),
+            (datetime.fromtimestamp(result.key // 1000).date().isoformat(), result.doc_count),
         results,
     ))
     return dict(results)

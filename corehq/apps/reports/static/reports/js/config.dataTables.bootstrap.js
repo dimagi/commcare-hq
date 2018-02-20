@@ -76,17 +76,17 @@ hqDefine("reports/js/config.dataTables.bootstrap", [
                 });
                 return;
             }
-            
+
             self.rendered = true;
 
             $('[data-datatable-highlight-closest]').each(function () {
-               $(this).closest($(this).attr('data-datatable-highlight-closest')).addClass('active');
+                $(this).closest($(this).attr('data-datatable-highlight-closest')).addClass('active');
             });
             function applyBootstrapMagic() {
                 $('[data-datatable-tooltip]').each(function () {
                     $(this).tooltip({
                         placement: $(this).attr('data-datatable-tooltip'),
-                        title: $(this).attr('data-datatable-tooltip-text')
+                        title: $(this).attr('data-datatable-tooltip-text'),
                     });
                 });
             }
@@ -102,7 +102,7 @@ hqDefine("reports/js/config.dataTables.bootstrap", [
                     bAutoWidth: self.autoWidth,
                     sScrollX: "100%",
                     bSort: self.defaultSort,
-                    bFilter: self.includeFilter
+                    bFilter: self.includeFilter,
                 };
                 if (self.aaSorting !== null || self.customSort !== null) {
                     params.aaSorting = self.aaSorting || self.customSort;
@@ -125,7 +125,7 @@ hqDefine("reports/js/config.dataTables.bootstrap", [
                                     for (var j=0; j < currentParam.value.length; j++) {
                                         defParams.push({
                                             name: currentParam.name,
-                                            value: currentParam.value[j]
+                                            value: currentParam.value[j],
                                         });
                                     }
                                 } else {
@@ -144,7 +144,7 @@ hqDefine("reports/js/config.dataTables.bootstrap", [
                             }
                             if ('statistics_rows' in data) {
                                 for (i = 0; i < data.statistics_rows.length; i++){
-                                   self.render_footer_row('ajax_stat_row-' + i, data.statistics_rows[i]);
+                                    self.render_footer_row('ajax_stat_row-' + i, data.statistics_rows[i]);
                                 }
                             }
                             applyBootstrapMagic();
@@ -156,7 +156,7 @@ hqDefine("reports/js/config.dataTables.bootstrap", [
                                     self.successCallbacks[i](data);
                                 }
                             }
-                            return result
+                            return result;
                         };
                         oSettings.jqXHR = $.ajax( {
                             "url": sSource.url,
@@ -176,14 +176,14 @@ hqDefine("reports/js/config.dataTables.bootstrap", [
                                         self.errorCallbacks[i](jqXHR, textStatus, errorThrown);
                                     }
                                 }
-                            }
+                            },
                         } );
                     };
                 }
                 params.oLanguage = {
                     sProcessing: self.loadingText,
                     sLoadingRecords: self.loadingText,
-                    sZeroRecords: self.emptyText
+                    sZeroRecords: self.emptyText,
                 };
 
                 params.fnDrawCallback = function (a,b,c) {
@@ -203,7 +203,7 @@ hqDefine("reports/js/config.dataTables.bootstrap", [
                 if (self.fixColumns) {
                     new $.fn.dataTable.FixedColumns(datatable, {
                         iLeftColumns: self.fixColsNumLeft,
-                        iLeftWidth: self.fixColsWidth
+                        iLeftWidth: self.fixColsWidth,
                     });
                 }
                 // only resize the window once every 5 seconds to avoid making
@@ -281,12 +281,12 @@ hqDefine("reports/js/config.dataTables.bootstrap", [
                 });
             });
         };
-    }
+    };
 
     $.extend( $.fn.dataTableExt.oStdClasses, {
         "sSortAsc": "header headerSortDown",
         "sSortDesc": "header headerSortUp",
-        "sSortable": "header"
+        "sSortable": "header",
     } );
 
     // For sorting rows

@@ -17,9 +17,6 @@
         </div>
     </div>
     <div class="report-content" cg-busy="$ctrl.myPromise">
-        <div class="alert alert-info" ng-if="$ctrl.showInfoMessage()">
-            <strong>Info!</strong> Data shown is for {$ $ctrl.prevDay $}. Data for {$ $ctrl.currentMonth $} will be displayed beginning tomorrow.
-        </div>
         <kpi data="$ctrl.data"></kpi>
     </div>
     <div class="row fixed-dots">

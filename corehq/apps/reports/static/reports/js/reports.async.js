@@ -70,7 +70,7 @@ var HQAsyncReport = function (o) {
             url: window.location.pathname.replace(self.standardReport.urlRoot,
                 self.standardReport.urlRoot+'filters/')+"?"+form_params+"&"+self.additionalParams,
             dataType: 'json',
-            success: loadFilters
+            success: loadFilters,
         });
     };
 
@@ -168,7 +168,7 @@ var HQAsyncReport = function (o) {
                     self.hqLoading.fadeIn();
                 }
 
-            }
+            },
         });
     };
 
@@ -182,7 +182,7 @@ var HQAsyncReport = function (o) {
             self.hqLoading = $(self.loaderClass);
             self.hqLoading.find('.js-loading-spinner').addClass('hide');
             self.hqLoading.find('h4').text(gettext('We were unsuccessful loading the report:'))
-                                     .attr('style', 'margin-bottom: 10px;');
+                .attr('style', 'margin-bottom: 10px;');
         }
     });
 

@@ -6,8 +6,8 @@
 
 {% block js %}
     {% javascript_libraries underscore=True %}
-    <script src="{% static 'hqwebapp/js/lib/nvd3/lib/d3.v3.js' %}"></script>
-    <script src="{% static 'hqwebapp/js/lib/nvd3/nv.d3.min.js' %}"></script>
+    <script src="{% static 'nvd3/lib/d3.v3.js' %}"></script>
+    <script src="{% static 'nvd3/nv.d3.min.js' %}"></script>
     <script src="{% static 'select2-3.4.5-legacy/select2.min.js' %}"></script>
     {{ block.super }}
 {% endblock %}
@@ -37,7 +37,7 @@
 {% endblock %}
 
 {% block reportcontent %}
-    <link href="{% static 'hqwebapp/js/lib/nvd3/nv.d3.css' %}" rel="stylesheet">
+    <link href="{% static 'nvd3/src/nv.d3.css' %}" rel="stylesheet">
     <link href="{% static 'select2-3.4.5-legacy/select2.css' %}" rel="stylesheet"/>
     <style>
             button {

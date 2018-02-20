@@ -16,12 +16,12 @@ from casexml.apps.case.models import CommCareCase
 from corehq.motech.repeaters.dbaccessors import (
     iter_repeat_records_by_domain,
     get_repeat_record_count,
-    get_repeat_records_by_payload_id
+    get_repeat_records_by_payload_id,
+    get_repeaters_by_domain,
 )
-from corehq.apps.domain.views import DomainForwardingRepeatRecords
+from corehq.motech.repeaters.views import DomainForwardingRepeatRecords
 from corehq.apps.es import CaseSearchES
 from corehq.apps.reports.generic import GenericTabularReport
-from corehq.motech.repeaters.dbaccessors import get_repeaters_by_domain
 from corehq.apps.reports.filters.select import RepeaterFilter
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 

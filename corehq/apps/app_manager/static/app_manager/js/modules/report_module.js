@@ -5,7 +5,7 @@ hqDefine('app_manager/js/modules/report_module', function () {
     var select2Separator = "\u001F";
 
     function GraphConfig(reportId, reportName, availableReportIds, reportCharts, graph_configs,
-                         columnXpathTemplate, dataPathPlaceholders, lang, langs, changeSaveButton) {
+        columnXpathTemplate, dataPathPlaceholders, lang, langs, changeSaveButton) {
         var self = this,
             columnTemplate = _.template(columnXpathTemplate);
 
@@ -105,7 +105,7 @@ hqDefine('app_manager/js/modules/report_module', function () {
                     filter.selectedValue.doc_type = ko.observable(filter.selectedValue.doc_type);
                 } else {
                     filter.selectedValue = {
-                        doc_type: ko.observable(null)
+                        doc_type: ko.observable(null),
                     };
                 }
                 var filterFields = [
@@ -119,7 +119,7 @@ hqDefine('app_manager/js/modules/report_module', function () {
                     'date_number2',
                     'start_of_month',
                     'period',
-                    'ancestor_location_type_name'
+                    'ancestor_location_type_name',
                 ];
                 for(var filterFieldsIndex = 0; filterFieldsIndex < filterFields.length; filterFieldsIndex++) {
                     startVal = filter.selectedValue[filterFields[filterFieldsIndex]];
@@ -193,11 +193,11 @@ hqDefine('app_manager/js/modules/report_module', function () {
     }
 
     function ReportConfig(report_id, display,
-                          localizedDescription, xpathDescription, useXpathDescription,
-                          showDataTable, syncDelay, uuid, availableReportIds,
-                          reportCharts, graph_configs, columnXpathTemplate, dataPathPlaceholders,
-                          filterValues, reportFilters,
-                          language, languages, changeSaveButton) {
+        localizedDescription, xpathDescription, useXpathDescription,
+        showDataTable, syncDelay, uuid, availableReportIds,
+        reportCharts, graph_configs, columnXpathTemplate, dataPathPlaceholders,
+        filterValues, reportFilters,
+        language, languages, changeSaveButton) {
         var self = this;
         this.lang = language;
         this.fullDisplay = display || {};
@@ -222,8 +222,8 @@ hqDefine('app_manager/js/modules/report_module', function () {
         this.syncDelay.subscribe(changeSaveButton);
 
         self.graphConfig = new GraphConfig(this.reportId, this.display(), availableReportIds, reportCharts,
-                                           graph_configs, columnXpathTemplate, dataPathPlaceholders,
-                                           this.lang, languages, changeSaveButton);
+            graph_configs, columnXpathTemplate, dataPathPlaceholders,
+            this.lang, languages, changeSaveButton);
         this.display.subscribe(function(newValue) {
             self.graphConfig.name(newValue);
         });
@@ -331,10 +331,10 @@ hqDefine('app_manager/js/modules/report_module', function () {
                         name: JSON.stringify(self.moduleName),
                         module_filter: self.moduleFilter,
                         reports: JSON.stringify(_.map(self.reports(), function (r) { return r.toJSON(); })),
-                        multimedia: JSON.stringify(self.multimedia())
-                    }
+                        multimedia: JSON.stringify(self.multimedia()),
+                    },
                 });
-            }
+            },
         });
 
         self.changeSaveButton = function () {
@@ -399,7 +399,7 @@ hqDefine('app_manager/js/modules/report_module', function () {
     return {
         ReportModule: ReportModule,
         StaticFilterData: StaticFilterData,
-        select2Separator: select2Separator
+        select2Separator: select2Separator,
     };
 });
 

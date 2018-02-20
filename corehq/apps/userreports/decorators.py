@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import hashlib
 import inspect
 from functools import wraps
@@ -50,7 +51,7 @@ def ucr_context_cache(vary_on=()):
     which will be used by this decorator to store the cache.
     """
     def decorator(fn):
-        assert 'context' in fn.func_code.co_varnames
+        assert 'context' in fn.__code__.co_varnames
         assert isinstance(vary_on, tuple)
 
         @wraps(fn)

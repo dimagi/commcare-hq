@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import division
 import mock
 import datetime
 from django.test import TestCase, override_settings
@@ -18,6 +19,7 @@ from custom.enikshay.const import (
     DOSE_TAKEN_INDICATORS as DTIndicators,
     DOSE_UNKNOWN,
     DAILY_SCHEDULE_FIXTURE_NAME,
+    ENROLLED_IN_PRIVATE,
     SCHEDULE_ID_FIXTURE,
     HISTORICAL_CLOSURE_REASON,
 )
@@ -36,6 +38,7 @@ from custom.enikshay.tests.utils import (
     get_episode_case_structure
 )
 import six
+from six.moves import range
 
 MOCK_FIXTURE_ITEMS = {
     '99DOTS': {
@@ -272,7 +275,7 @@ class TestAdherenceUpdater(TestCase):
 
         occurrence = get_occurrence_case_structure(self.occurrence_id, person)
 
-        episode_structure = get_episode_case_structure(self.episode_id, occurrence)
+        episode_structure = get_episode_case_structure(self.episode_id, occurrence, {ENROLLED_IN_PRIVATE: 'true'})
         self.factory.create_or_update_case(episode_structure)
 
         archived_person = get_person_case_structure("person_2", self.user.user_id, owner_id="_archive_")
@@ -976,11 +979,11 @@ class TestAdherenceUpdater(TestCase):
             output={
                 'three_day_score_count_taken': 1,
                 'one_week_score_count_taken': 1,
-                'two_week_score_count_taken': 3,
+                'two_week_score_count_taken': 2,
                 'month_score_count_taken': 4,
                 'three_day_adherence_score': 33.33,
                 'one_week_adherence_score': 14.29,
-                'two_week_adherence_score': 21.43,
+                'two_week_adherence_score': 14.29,
                 'month_adherence_score': 13.33,
             },
             date_today_in_india=datetime.date(2016, 1, 31)
@@ -1168,12 +1171,12 @@ class TestAdherenceUpdater(TestCase):
         expected = {
             'three_day_score_count_taken': 1,
             'one_week_score_count_taken': 2,
-            'two_week_score_count_taken': 3,
+            'two_week_score_count_taken': 2,
             'month_score_count_taken': 4,
 
             'three_day_unknown_count': 3 - 2,
             'one_week_unknown_count': 7 - 3,
-            'two_week_unknown_count': 14 - 4,
+            'two_week_unknown_count': 14 - 3,
             'month_unknown_count': 30 - 6,
 
             'three_day_missed_count': 1,
@@ -1183,7 +1186,7 @@ class TestAdherenceUpdater(TestCase):
 
             'three_day_unknown_score': 33.33,
             'one_week_unknown_score': 57.14,
-            'two_week_unknown_score': 71.43,
+            'two_week_unknown_score': 78.57,
             'month_unknown_score': 80.0,
 
             'three_day_missed_score': 33.33,

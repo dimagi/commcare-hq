@@ -37,7 +37,7 @@ hqDefine('hqadmin/js/system_info', [
     function number_fix(num) {
         if (num !== null) {
             if (num.toFixed) {
-                return num.toFixed(2)
+                return num.toFixed(2);
             }
             if (num.toPrecision) {
                 return num.toPrecision(2);
@@ -79,25 +79,25 @@ hqDefine('hqadmin/js/system_info', [
                     return new model(item);
                 });
                 if (sort_by) {
-                    objects = _(objects).sortBy(function (x) { return x[sort_by]; })
+                    objects = _(objects).sortBy(function (x) { return x[sort_by]; });
                 }
                 self.models(objects);
                 if (self.autoRefresh()) {
                     self.timer = setTimeout(self.refresh, self.interval);
                 }
             })
-            .fail(function (jqxhr, textStatus, error) {
-                var err = 'Unknown server error';
-                try {
-                    err = JSON.parse(jqxhr.responseText).error;
-                } catch (e) {}
-                self.error("Error: " + err);
-                self.autoRefresh(false);
-                self.timer = null;
-            })
-            .always(function (){
-                self.loading(false);
-            });
+                .fail(function (jqxhr, textStatus, error) {
+                    var err = 'Unknown server error';
+                    try {
+                        err = JSON.parse(jqxhr.responseText).error;
+                    } catch (e) {}
+                    self.error("Error: " + err);
+                    self.autoRefresh(false);
+                    self.timer = null;
+                })
+                .always(function (){
+                    self.loading(false);
+                });
         };
     }
     
@@ -145,7 +145,7 @@ hqDefine('hqadmin/js/system_info', [
     
         this.toggleArgs = function () {
             $('#' + self.uuid()).toggle();
-        }
+        };
     }
     
     function PillowOperationViewModel(pillow_model, operation) {
@@ -156,7 +156,7 @@ hqDefine('hqadmin/js/system_info', [
     
         self.go = function () {
             self.pillow_model.perform_operation(operation);
-        }
+        };
     }
 
     function PillowProgress(name, db_offset, seq) {
@@ -219,7 +219,7 @@ hqDefine('hqadmin/js/system_info', [
                         value = self.seq()[key];
                     }
                     self.progress.push(new PillowProgress(key, db_offset, value));
-                })
+                });
             } else {
                 var key = _.keys(self.offsets())[0];
                 self.progress.push(new PillowProgress(key, self.offsets()[key], self.seq()));
@@ -287,7 +287,7 @@ hqDefine('hqadmin/js/system_info', [
             $('#pillow_operation_modal').modal({
                 backdrop: 'static',
                 keyboard: false,
-                show: true
+                show: true,
             });
         };
     
@@ -307,7 +307,7 @@ hqDefine('hqadmin/js/system_info', [
             self.operation_in_progress(true);
             $.post(initialPageData.reverse("pillow_operation_api"), {
                 'pillow_name': self.name,
-                'operation': operation
+                'operation': operation,
             }, function( data ) {
                 self.operation_in_progress(false);
                 self.update(data);
@@ -317,19 +317,19 @@ hqDefine('hqadmin/js/system_info', [
                             + data.pillow_name + ', ' + data.message, 'danger');
                 }
             }, "json")
-            .fail(function (jqxhr, textStatus, error) {
-                var err = 'Unknown server error';
-                try {
-                    err = JSON.parse(jqxhr.responseText).error;
-                } catch (e) {}
-                self.operation_in_progress(false);
-                self.supervisor_state('(unavailable)');
-                self.supervisor_message(err);
-            }).always(function() {
-                $('#pillow_operation_modal').modal('hide');
-                $("#" + self.name() +" td").fadeTo( "fast" , 0.5).fadeTo( "fast" , 1);
-            });
-        }
+                .fail(function (jqxhr, textStatus, error) {
+                    var err = 'Unknown server error';
+                    try {
+                        err = JSON.parse(jqxhr.responseText).error;
+                    } catch (e) {}
+                    self.operation_in_progress(false);
+                    self.supervisor_state('(unavailable)');
+                    self.supervisor_message(err);
+                }).always(function() {
+                    $('#pillow_operation_modal').modal('hide');
+                    $("#" + self.name() +" td").fadeTo( "fast" , 0.5).fadeTo( "fast" , 1);
+                });
+        };
     }
     
     function DbComparisons(data) {

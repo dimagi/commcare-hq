@@ -19,8 +19,8 @@ hqDefine("reports/js/edit_scheduled_report", function() {
             var $day_select = $('<select id="id_day" class="select form-control" name="day" />');
             $day_select = add_options_to_select($day_select, opts, day_value);
             var $day_control_group = $('<div id="div_id_day" class="form-group" />')
-                    .append($('<label for="id_day" class="control-label col-sm-3 col-md-2 requiredField">Day<span class="asteriskField">*</span></label>'))
-                    .append($('<div class="controls col-sm-9 col-md-8 col-lg-6" />').append($day_select));
+                .append($('<label for="id_day" class="control-label col-sm-3 col-md-2 requiredField">Day<span class="asteriskField">*</span></label>'))
+                .append($('<div class="controls col-sm-9 col-md-8 col-lg-6" />').append($day_select));
             $interval.closest('.form-group').after($day_control_group);
         }
     };
@@ -45,6 +45,7 @@ hqDefine("reports/js/edit_scheduled_report", function() {
     var isConfigurableMap = initial_page_data('is_configurable_map');
     var languagesMap = initial_page_data('languages_map');
     var languagesForSelect = initial_page_data('languages_for_select');
+    var isOwner = initial_page_data('is_owner');
 
     var updateUcrElements = function(selectedConfigs){
         var showUcrElements = _.any(
@@ -88,16 +89,28 @@ hqDefine("reports/js/edit_scheduled_report", function() {
         }
     };
 
+    $('#id_language').select2({
+        placeholder: gettext("Select a language..."),
+    });
     $("#id_config_ids").change(function(){
         updateUcrElements($(this).val());
     });
-    var multiselect_utils = hqImport('hqwebapp/js/multiselect_utils');
-    multiselect_utils.createFullMultiselectWidget(
-        'id_config_ids',
-        django.gettext("Available Reports"),
-        django.gettext("Included Reports"),
-        django.gettext("Search Reports...")
-    );
+    if (!isOwner) {
+        $('#id_config_ids').hide().after(
+            $('#id_config_ids').children().map(function () {
+                return $("<div>").text($(this).text()).get(0);
+            })
+        );
+    }
+    else {
+        var multiselect_utils = hqImport('hqwebapp/js/multiselect_utils');
+        multiselect_utils.createFullMultiselectWidget(
+            'id_config_ids',
+            django.gettext("Available Reports"),
+            django.gettext("Included Reports"),
+            django.gettext("Search Reports...")
+        );
+    }
     updateUcrElements($("#id_config_ids").val());
 
     var scheduled_report_form_helper = new ScheduledReportFormHelper({

@@ -2,6 +2,7 @@ from __future__ import absolute_import, division
 from django.conf import settings
 from django.urls import reverse
 from django.http import HttpResponseRedirect
+from django.http.response import Http404
 from django.utils.translation import ugettext_noop, ugettext as _
 from djangular.views.mixins import allow_remote_invocation
 
@@ -11,6 +12,7 @@ from corehq import privileges
 from corehq.apps.app_manager.dbaccessors import domain_has_apps, get_brief_apps_in_domain
 from corehq.apps.dashboard.models import (
     AppsPaginator,
+    DataPaginator,
     ReportsPaginator,
     Tile,
     Tile,
@@ -49,19 +51,30 @@ def default_dashboard_url(request, domain):
     return reverse(DomainDashboardView.urlname, args=[domain])
 
 
-def dashboard_tile(request, domain, slug):
+def _get_tile(request, slug):
     try:
         tile = [t for t in _get_default_tiles(request) if t.slug == slug][0]
     except IndexError:
-        return json_response(
-            {'message': _("Tile not found: {}").format(slug)},
-            status_code=404,
-        )
+        raise Http404()
 
+    return tile
+
+
+@login_and_domain_required
+@location_safe
+def dashboard_tile(request, domain, slug):
+    tile = _get_tile(request, slug)
     current_page = int(request.GET.get('currentPage', 1))
     items_per_page = int(request.GET.get('itemsPerPage', 5))
     items = list(tile.paginator.paginated_items(current_page, items_per_page))
     return json_response({'items': items})
+
+
+@login_and_domain_required
+@location_safe
+def dashboard_tile_total(request, domain, slug):
+    tile = _get_tile(request, slug)
+    return json_response({'total': tile.paginator.total})
 
 
 @location_safe
@@ -97,10 +110,7 @@ class DomainDashboardView(LoginAndDomainMixin, BasePageView, DomainViewMixin):
                 if tile.paginator_class:
                     items_per_page = 5
                     tile_context.update({
-                        'pagination': {
-                            'items_per_page': items_per_page,
-                            'pages': int(math.ceil(float(tile.paginator.total) / items_per_page)),
-                        },
+                        'has_item_list': True,
                     })
                 tile_contexts.append(tile_context)
         return {'dashboard_tiles': tile_contexts}
@@ -176,6 +186,7 @@ def _get_default_tiles(request):
             title=_('Data'),
             slug='data',
             icon='fcc fcc-data',
+            paginator_class=DataPaginator,
             urlname="data_interfaces_default",
             visibility_check=can_edit_data,
             help_text=_('Export and manage data'),

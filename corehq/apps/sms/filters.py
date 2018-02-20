@@ -1,6 +1,5 @@
 from __future__ import absolute_import
 from django.utils.translation import ugettext_noop, ugettext_lazy
-from corehq import toggles
 from corehq.apps.es.groups import GroupES
 from corehq.apps.reports.filters.base import BaseMultipleOptionFilter, BaseSingleOptionFilter, BaseReportFilter
 from corehq.apps.reports.filters.base import BaseSimpleFilter
@@ -9,7 +8,6 @@ from corehq.apps.sms.models import (
     WORKFLOW_KEYWORD,
     WORKFLOW_BROADCAST,
     WORKFLOW_CALLBACK,
-    WORKFLOW_PERFORMANCE,
     WORKFLOW_DEFAULT,
     MessagingEvent,
 )
@@ -33,8 +31,6 @@ class MessageTypeFilter(BaseMultipleOptionFilter):
             (WORKFLOW_DEFAULT, ugettext_noop('Default')),
             (self.OPTION_OTHER, ugettext_noop('Other')),
         ]
-        if toggles.SMS_PERFORMANCE_FEEDBACK.enabled(self.domain):
-            options_var.insert(4, (WORKFLOW_PERFORMANCE, ugettext_noop('Performance messages'))),
         return options_var
 
 

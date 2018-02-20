@@ -18,8 +18,7 @@
         <div class="alert alert-info col-md-12" ng-if="$ctrl.isISSNIPMonthlyRegisterSelected() && $ctrl.hasErrorsISSNIPExport()">
             <strong>Please make the following selections before you can export:</strong>
             <ul>
-                <li ng-if="!$ctrl.isDistrictOrBelowSelected()" style="padding: 5px;">Select at least a district-level location to enable AWCs filter</li>
-                <li ng-if="!$ctrl.isAWCsSelected()" style="padding: 5px;">Select at least a one AWCs</li>
+                <li ng-if="!$ctrl.isDistrictOrBelowSelected()" style="padding: 5px;">Select at least a district-level location</li>
             </ul>
         </div>
         <div class="form-horizontal black">
@@ -162,7 +161,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="form-group" style="margin-bottom: 0px !important;">
+                <div class="form-group" ng-if="$ctrl.selectedPDFFormat !== 'one'" style="margin-bottom: 0px !important;" >
                     <label class="control-label col-sm-2" for="location">Select AWCs: <i class="fa fa-info-circle" uib-popover="Select the AWC(s) for which you want to download the report"
                            popover-placement="top-right"
                            popover-trigger="'mouseenter'"></i></label>
@@ -213,7 +212,7 @@
                         <input type="hidden" name="indicator" ng-value="$ctrl.selectedIndicator" />
                         <input type="hidden" name="format" ng-value="$ctrl.selectedFormat" />
                         <input type="hidden" name="pdfformat" ng-value="$ctrl.selectedPDFFormat" />
-                        <input type="hidden" name="selected_awcs" ng-value="$ctrl.selectedAWCs" />
+                        <input type="hidden" name="selected_awcs" ng-value="$ctrl.selectedPDFFormat === 'one' ? 'all' : $ctrl.selectedAWCs" />
                         <input ng-if="$ctrl.isChildBeneficiaryListSelected()" type="hidden" ng-repeat="filter in $ctrl.selectedFilterOptions()" name="filter[]" ng-value="filter.id"/>
                         <button type="submit"
                                 class="btn btn-default normalButton orangeButton"
@@ -223,7 +222,7 @@
                     </form>
                 </div>
             </div>
-            <div class="issnip-spinner-container" ng-if="$ctrl.showProgressBar() || $ctrl.readyToDownload()">
+            <div class="issnip-spinner-container" ng-if="($ctrl.showProgressBar() || $ctrl.readyToDownload()) && !$ctrl.downloaded">
                 <i ng-if="$ctrl.showProgressBar()" class="fa fa-circle-o-notch fa-spin"></i>
                 <span ng-if="$ctrl.showProgressBar()">Preparing your ISSNIP report...</span>
                 <span ng-if="$ctrl.readyToDownload()">Your ISSNIP report is ready to be downloaded</span>

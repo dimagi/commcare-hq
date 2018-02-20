@@ -6,8 +6,8 @@ if (typeof require !== 'undefined' && typeof exports !== 'undefined') {
 var XPATH_CONFIG = (function () {
     function getAllowedHashtags(allowCaseHashtags) {
         var replacements = {
-        '#session': "ok",
-        '#user': "ok"
+            '#session': "ok",
+            '#user': "ok",
         };
         if (allowCaseHashtags) {
             replacements['#case'] = 'ok';
@@ -36,7 +36,7 @@ var XPATH_CONFIG = (function () {
             },
             toHashtag: function (xpath_) {
                 throw new Error("toHashtag not implemented");
-            }
+            },
         }));
         return p;
     }

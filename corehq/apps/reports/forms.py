@@ -18,12 +18,6 @@ from .models import (
 from six.moves import range
 
 
-class LanguageSelect(forms.Select):
-
-    class Media:
-        js = ('reports/js/language_field.js',)
-
-
 class SavedReportConfigForm(forms.Form):
     name = forms.CharField()
     description = forms.CharField(
@@ -126,7 +120,7 @@ class ScheduledReportForm(forms.Form):
         choices=ReportNotification.hour_choices())
 
     send_to_owner = forms.BooleanField(
-        label='Send to me',
+        label='Send to owner',
         required=False)
 
     attach_excel = forms.BooleanField(
@@ -148,7 +142,7 @@ class ScheduledReportForm(forms.Form):
         label='Language',
         required=False,
         choices=[('', '')] + langcodes.get_all_langs_for_select(),
-        widget=LanguageSelect()
+        widget=forms.Select()
     )
 
     def __init__(self, *args, **kwargs):

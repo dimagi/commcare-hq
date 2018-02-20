@@ -99,5 +99,5 @@ var cheapxml = {
         return function (tag) {
             return new Node(tag);
         };
-    }())
+    }()),
 };

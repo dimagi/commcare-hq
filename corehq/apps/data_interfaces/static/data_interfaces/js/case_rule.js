@@ -1,7 +1,7 @@
 hqDefine("data_interfaces/js/case_rule", function() {
 
     $(function() {
-        $("#rule-definition-form").submit(function(event) {
+        $("#rule-definition-form").submit(function() {
             var result = true;
             var criteria_model = hqImport('data_interfaces/js/case_rule_criteria').get_criteria_model();
 

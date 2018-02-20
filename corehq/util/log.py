@@ -1,5 +1,7 @@
 from __future__ import print_function
 from __future__ import absolute_import
+from __future__ import division
+import six
 import sys
 from collections import defaultdict
 from itertools import islice
@@ -292,7 +294,7 @@ def with_progress_bar(iterable, length=None, prefix='Processing', oneline=True):
         sys.stdout.flush()
 
     print("Started at {:%Y-%m-%d %H:%M:%S}".format(start))
-    checkpoints = {length*i/granularity for i in range(length)}
+    checkpoints = {length * i // granularity for i in range(length)}
     for i, x in enumerate(iterable):
         yield x
         if i in checkpoints:
@@ -302,6 +304,17 @@ def with_progress_bar(iterable, length=None, prefix='Processing', oneline=True):
     end = datetime.now()
     print("Finished at {:%Y-%m-%d %H:%M:%S}".format(end))
     print("Elapsed time: {}".format(display_seconds((end - start).total_seconds())))
+
+
+def get_traceback_string():
+    if six.PY3:
+        from io import StringIO
+        f = StringIO()
+    else:
+        from cStringIO import StringIO
+        f = StringIO()
+    traceback.print_exc(file=f)
+    return f.getvalue()
 
 
 def send_HTML_email(subject, recipient, html_content, *args, **kwargs):

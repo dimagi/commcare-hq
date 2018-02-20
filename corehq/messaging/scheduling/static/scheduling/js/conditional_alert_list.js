@@ -119,9 +119,9 @@ hqDefine("scheduling/js/conditional_alert_list", function() {
                 rule_id: rule_id,
             },
         })
-        .always(function() {
-            table.fnDraw(false);
-        });
+            .always(function() {
+                table.fnDraw(false);
+            });
     }
 
     function activateAlert(rule_id) {
