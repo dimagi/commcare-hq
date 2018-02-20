@@ -176,6 +176,7 @@ def send_repeater_payloads(repeater_id, payload_ids, email_id):
             email.attach(filename=result_file_name, content=csvfile.read())
             csvfile.close()
             email.send()
+            os.remove(result_file_name)
 
     populate_payloads()
     email_payloads()
