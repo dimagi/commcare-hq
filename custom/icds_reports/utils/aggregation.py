@@ -8,6 +8,14 @@ from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_da
 from corehq.apps.userreports.util import get_table_name
 
 
+def transform_day_to_month(day):
+    return day.replace(day=1)
+
+
+def month_formatter(day):
+    return transform_day_to_month(day).strftime('%Y-%m-%d')
+
+
 class BaseICDSAggregationHelper(object):
     """Defines an interface for aggregating data from UCRs to specific tables
     for the dashboard.
@@ -25,7 +33,7 @@ class BaseICDSAggregationHelper(object):
 
     def __init__(self, state_id, month):
         self.state_id = state_id
-        self.month = month
+        self.month = transform_day_to_month(month)
 
     @property
     def domain(self):
@@ -40,13 +48,13 @@ class BaseICDSAggregationHelper(object):
 
     def generate_child_tablename(self, month=None):
         month = month or self.month
-        month_string = month.strftime('%Y-%m')
+        month_string = month_formatter(month)
         hash_for_table = hashlib.md5(self.state_id + month_string).hexdigest()[8:]
         return self.aggregate_child_table_prefix + hash_for_table
 
     def create_table_query(self, month=None):
         month = month or self.month
-        month_string = month.strftime('%Y-%m-%d')
+        month_string = month_formatter(month)
         tablename = self.generate_child_tablename(month)
 
         return """
@@ -99,8 +107,8 @@ class ComplementaryFormsAggregationHelper(BaseICDSAggregationHelper):
         return get_table_name(self.domain, config.table_id)
 
     def data_from_ucr_query(self):
-        current_month_start = self.month.replace(day=1)
-        next_month_start = current_month_start + relativedelta(months=1)
+        current_month_start = month_formatter(self.month)
+        next_month_start = month_formatter(self.month + relativedelta(months=1))
 
         return """
         SELECT child_health_case_id AS case_id,
@@ -132,7 +140,7 @@ class ComplementaryFormsAggregationHelper(BaseICDSAggregationHelper):
 
         ucr_query, ucr_query_params = self.data_from_ucr_query()
         query_params = {
-            "month": month.strftime('%Y-%m-%d'),
+            "month": month_formatter(month),
             "state_id": self.state_id
         }
         query_params.update(ucr_query_params)
