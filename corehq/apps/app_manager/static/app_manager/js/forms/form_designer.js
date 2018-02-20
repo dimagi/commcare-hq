@@ -66,7 +66,7 @@ hqDefine("app_manager/js/forms/form_designer", function() {
                 }
                 var appcues = hqImport('analytix/js/appcues');
                 appcues.trackEvent(
-                    appcues.EVENT_TYPE.FORM_SAVE, { formType: formType() }
+                    appcues.EVENT_TYPES.FORM_SAVE, { formType: formType() }
                 );
             },
             onReady: function() {
@@ -94,7 +94,7 @@ hqDefine("app_manager/js/forms/form_designer", function() {
                     kissmetrixTrack();
                     var appcues = hqImport('analytix/js/appcues');
                     appcues.trackEvent(
-                        appcues.EVENT_TYPE.QUESTION_CREATE, { formType: formType() }
+                        appcues.EVENT_TYPES.QUESTION_CREATE, { formType: formType() }
                     );
                 });
             },
