@@ -20,6 +20,8 @@ hqDefine('analytix/js/appcues', [
         _ready = $.Deferred(),
         EVENT_TYPES = {
             FORM_SAVE: "form-save",
+            FORM_SUBMIT_FAILURE: "form-submit-failure",
+            FORM_SUBMIT_SUCCESS: "form-submit-success",
             QUESTION_CREATE: "question-create",
         };
 

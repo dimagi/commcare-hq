@@ -13,6 +13,7 @@ var formplayerLoading = hqImport('cloudcare/js/util').formplayerLoading;
 var formplayerLoadingComplete = hqImport('cloudcare/js/util').formplayerLoadingComplete;
 var formplayerSyncComplete = hqImport('cloudcare/js/util').formplayerSyncComplete;
 var clearUserDataComplete = hqImport('cloudcare/js/util').clearUserDataComplete;
+var appcues = hqImport('analytix/js/appcues');
 
 FormplayerFrontend.on("before:start", function () {
     var RegionContainer = Marionette.LayoutView.extend({
@@ -185,6 +186,7 @@ FormplayerFrontend.on('startForm', function (data) {
             if (user.environment === FormplayerFrontend.Constants.PREVIEW_APP_ENVIRONMENT) {
                 hqImport('analytix/js/kissmetrix').track.event("[app-preview] User submitted a form");
                 hqImport('analytix/js/google').track.event("App Preview", "User submitted a form");
+                appcues.trackEvent(appcues.EVENT_TYPES.FORM_SUBMIT_SUCCESS);
             }
 
             // After end of form nav, we want to clear everything except app and sesson id
@@ -200,6 +202,9 @@ FormplayerFrontend.on('startForm', function (data) {
                 FormplayerFrontend.navigate('/apps', { trigger: true });
             }
         } else {
+            if (user.environment === FormplayerFrontend.Constants.PREVIEW_APP_ENVIRONMENT) {
+                appcues.trackEvent(appcues.EVENT_TYPES.FORM_SUBMIT_FAILURE);
+            }
             showError(resp.output, $("#cloudcare-notifications"));
         }
     };
