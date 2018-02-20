@@ -78,11 +78,21 @@ hqDefine("app_manager/js/forms/form_designer", function() {
                 if (initial_page_data('guided_tour')) {
                     form_tour_start();
                 }
+                var kissmetrixTrack = function() {};
                 if (initial_page_data('days_since_created') === 0) {
-                    $("#formdesigner").vellum("get").data.core.form.on("question-create", function() {
-                        hqImport('analytix/js/kissmetrix').track.event('Added question in Form Builder within first 24 hours');
-                    });
+                    kissmetrixTrack = function() {
+                        hqImport('analytix/js/kissmetrix').track.event(
+                            'Added question in Form Builder within first 24 hours'
+                        );
+                    };
                 }
+                $("#formdesigner").vellum("get").data.core.form.on("question-create", function() {
+                    kissmetrixTrack();
+                    var appcues = hqImport('analytix/js/appcues');
+                    appcues.trackEvent(
+                        appcues.EVENT_TYPE.QUESTION_CREATE, { formType: formType() }
+                    );
+                });
             },
         });
 

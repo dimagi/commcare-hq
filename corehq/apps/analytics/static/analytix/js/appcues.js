@@ -17,7 +17,10 @@ hqDefine('analytix/js/appcues', [
     'use strict';
     var _get = initialAnalytics.getFn('appcues'),
         _logger = logging.getLoggerForApi('Appcues'),
-        _ready = $.Deferred();
+        _ready = $.Deferred(),
+        EVENT_TYPES = {
+            QUESTION_CREATE: "question-create",
+        };
 
     $(function () {
         var apiId = _get('apiId'),
@@ -48,5 +51,6 @@ hqDefine('analytix/js/appcues', [
     return {
         logger: _logger,
         trackEvent: trackEvent,
+        EVENT_TYPES: EVENT_TYPES,
     };
 });
