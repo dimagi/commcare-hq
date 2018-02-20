@@ -134,8 +134,12 @@ hqDefine('app_manager/js/preview_app', function() {
     };
 
     module.forceShowPreview = function () {
+        $(window).trigger(module.EVENTS.RESIZE);
         _private.showAppPreview(false);
         localStorage.setItem(module.DATA.OPEN, module.DATA.OPEN);
+        setTimeout(function () {
+            $(window).trigger('resize');
+        }, 501);
     };
 
     module.initPreviewWindow = function () {

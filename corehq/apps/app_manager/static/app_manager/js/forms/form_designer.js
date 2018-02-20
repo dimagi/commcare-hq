@@ -1,20 +1,21 @@
 /* globals hqDefine, hqImport, define, require, form_tour_start, WS4Redis, django */
 hqDefine("app_manager/js/forms/form_designer", function() {
-    var initial_page_data = hqImport("hqwebapp/js/initial_page_data").get;
-    var FORM_TYPES = {
-        REGISTRATION: "registration",
-        SURVEY: "survey",
-        FOLLOWUP: "followup",
-    };
-    var formType = function () {
-        if (initial_page_data("is_registration_form")) {
-            return FORM_TYPES.REGISTRATION;
-        }
-        if (initial_page_data("is_survey")) {
-            return FORM_TYPES.SURVEY;
-        }
-        return FORM_TYPES.FOLLOWUP;
-    };
+    var initial_page_data = hqImport("hqwebapp/js/initial_page_data").get,
+        FORM_TYPES = {
+            REGISTRATION: "registration",
+            SURVEY: "survey",
+            FOLLOWUP: "followup",
+        },
+        formType = function () {
+            if (initial_page_data("is_registration_form")) {
+                return FORM_TYPES.REGISTRATION;
+            }
+            if (initial_page_data("is_survey")) {
+                return FORM_TYPES.SURVEY;
+            }
+            return FORM_TYPES.FOLLOWUP;
+        },
+        popupFormPreviewTimeout;
 
     $(function() {
         var VELLUM_OPTIONS = _.extend({}, initial_page_data("vellum_options"), {
@@ -209,5 +210,16 @@ hqDefine("app_manager/js/forms/form_designer", function() {
         $("#edit-form-name-modal button[type='submit']").click(function() {
             hqImport('analytix/js/kissmetrix').track.event("Renamed form from form builder");
         });
+
+        // if they are in the guided tour, the preview should pop out after 3 minutes
+        // TODO: improve usage.
+        // Should perhaps be 3 minutes in session rather than 3 minutes on page?
+        if (initial_page_data("guided_tour")) {
+            popupFormPreviewTimeout = setTimeout(function () {
+                hqImport("app_manager/js/preview_app").forceShowPreview();
+                var appcues = hqImport('analytix/js/appcues');
+                appcues.trackEvent(appcues.EVENT_TYPES.POPPED_OUT_PREVIEW);
+            }, 1000 * 60 * 3);  // 3 minutes
+        }
     });
 });

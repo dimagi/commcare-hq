@@ -22,6 +22,7 @@ hqDefine('analytix/js/appcues', [
             FORM_SAVE: "form-save",
             FORM_SUBMIT_FAILURE: "form-submit-failure",
             FORM_SUBMIT_SUCCESS: "form-submit-success",
+            POPPED_OUT_PREVIEW: "popped-out-preview",
             QUESTION_CREATE: "question-create",
         };
 
