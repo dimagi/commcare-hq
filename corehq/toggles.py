@@ -1330,8 +1330,8 @@ VIEW_APP_CHANGES = StaticToggle(
 
 COUCH_SQL_MIGRATION_BLACKLIST = StaticToggle(
     'couch_sql_migration_blacklist',
-    "Domains to exclude from migrating to SQL backend. Includes the following "
-    "by default: 'ews-ghana', 'ils-gateway', 'ils-gateway-train'",
+    "Domains to exclude from migrating to SQL backend because the reference legacy models in custom code. "
+    "Includes the following by default: 'ews-ghana', 'ils-gateway', 'ils-gateway-train'",
     TAG_INTERNAL,
     [NAMESPACE_DOMAIN],
     always_enabled={
