@@ -630,19 +630,23 @@ class AggregateComplementaryFeedingForms(models.Model):
     @classmethod
     def aggregate(cls, state_id, month):
         helper = ComplementaryFormsAggregationHelper(state_id, month)
+        prev_month_query, prev_month_params = helper.create_table_query(month - relativedelta(months=1))
+        curr_month_query, curr_month_params = helper.create_table_query()
+        agg_query, agg_params = helper.aggregation_query()
+
         with get_cursor(cls) as cursor:
-            cursor.execute(helper.create_table_query(month - relativedelta(months=1)))
+            cursor.execute(prev_month_query, prev_month_params)
             cursor.execute(helper.drop_table_query())
-            cursor.execute(helper.create_table_query())
-            cursor.execute(helper.aggregation_query())
+            cursor.execute(curr_month_query, curr_month_params)
+            cursor.execute(agg_query, agg_params)
 
     @classmethod
     def compare_with_old_data(cls, state_id, month):
         from corehq.form_processor.utils.sql import fetchall_as_namedtuple
         helper = ComplementaryFormsAggregationHelper(state_id, month)
-        query = helper.compare_with_old_data_query()
+        query, params = helper.compare_with_old_data_query()
 
         with get_cursor(AggregateComplementaryFeedingForms) as cursor:
-            cursor.execute(query)
+            cursor.execute(query, params)
             rows = fetchall_as_namedtuple(cursor)
             return [row.child_health_case_id for row in rows]
