@@ -126,7 +126,9 @@ def send_repeater_payloads(repeater_id, payload_ids, email_id):
     payloads = dict()
     headers = ['note']
     result_file_name = "bulk-payloads-%s-%s-%s.csv" % (
-        repeater.doc_type, repeater.get_id, datetime.datetime.utcnow())
+        repeater.doc_type, repeater.get_id,
+        datetime.datetime.utcnow().strftime("%Y-%m-%d--%H-%M-%S")
+    )
 
     def get_payload(payload_id):
         dummy_repeat_record = RepeatRecord(
