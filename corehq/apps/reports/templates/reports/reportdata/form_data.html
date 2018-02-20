@@ -11,6 +11,8 @@
 {% block title %}Form: {{ form_name }}{% if form_received_on %} ({% utc_to_timezone form_received_on timezone %}){% endif %}{% endblock %}
 
 {% block page_content %}
+    {% initial_page_data 'clipboardScript' "clipboard/dist/clipboard.js"|static %}
+
     {% if not instance.initial_processing_complete and request|toggle_enabled:'SUPPORT' %}
     <div class="alert alert-danger">
         {% blocktrans %}

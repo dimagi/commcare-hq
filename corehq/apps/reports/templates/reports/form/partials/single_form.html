@@ -37,10 +37,12 @@ requires proptable.css to be included in the main template
 <script>
     $(function () {
         function _analytics_usage(action, callback) {
-            var label = 'standalone_form', extra = {};
-            {% if context_case_id %}
-            label = 'case';
-            {% endif %}
+            var label = 'standalone_form',
+                extra = {},
+                caseId = hqImport("hqwebapp/js/initial_page_data").get("context_case_id");
+            if (caseId) {
+                label = 'case';
+            }
             hqImport('analytix/js/google').track.event('Edit Data', action, label, '', extra, callback);
         }
 
@@ -81,12 +83,12 @@ requires proptable.css to be included in the main template
         });
 
         $.when(
-            $.getScript('{% static "clipboard/dist/clipboard.js" %}')
+            $.getScript(hqImport("hqwebapp/js/initial_page_data").get("clipboardScript"))
         ).done(function () {
             var clipboard = new Clipboard('.copy-xml', { text: function() { return $('#form-xml pre').text(); } }),
                 $copyBtn = $('.copy-xml');
             $copyBtn.tooltip({
-                title: '{% trans "Copied!"|escapejs %}'
+                title: gettext("Copied!"),
             });
             clipboard.on('success', function() {
                 $copyBtn.tooltip('show');
