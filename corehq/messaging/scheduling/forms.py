@@ -35,6 +35,7 @@ from corehq.apps.reminders.util import get_form_list
 from corehq.apps.sms.util import get_or_create_translation_doc
 from corehq.apps.smsforms.models import SQLXFormsSession
 from corehq.apps.users.models import CommCareUser
+from corehq.messaging.scheduling.async_handlers import get_combined_id
 from corehq.messaging.scheduling.const import (
     VISIT_WINDOW_START,
     VISIT_WINDOW_END,
@@ -437,14 +438,12 @@ class ScheduleForm(Form):
         return form, app
 
     @memoized
-    def get_latest_released_form_and_app(self, form_unique_id):
+    def get_latest_released_form_and_app(self, app_id, form_unique_id):
         """
         Returns the form and app associated with the latest released
         build of an app.
         """
-        form, app = self.get_form_and_app(form_unique_id)
-
-        latest_released_app = get_latest_released_app(app.domain, app.get_id)
+        latest_released_app = get_latest_released_app(self.domain, app_id)
         if latest_released_app is None:
             raise ValidationError(_("Please make a released build of the application"))
 
@@ -1529,7 +1528,8 @@ class ConditionalAlertScheduleForm(ScheduleForm):
         required=False,
     )
 
-    visit_scheduler_form_unique_id = CharField(
+    # The app id and form unique id of a visit scheduler form, separated by '|'
+    visit_scheduler_app_and_form_unique_id = CharField(
         label=ugettext_lazy("Scheduler: Form"),
         required=False,
     )
@@ -1607,18 +1607,22 @@ class ConditionalAlertScheduleForm(ScheduleForm):
                 (self.CONTENT_CUSTOM_SMS, _("Custom SMS")),
             ]
 
+    def split_app_and_form_unique_id(self, value):
+        return value.split('|')
+
     @property
     def current_visit_scheduler_form(self):
-        value = self['visit_scheduler_form_unique_id'].value()
+        value = self['visit_scheduler_app_and_form_unique_id'].value()
         if not value:
             return {}
 
+        app_id, form_unique_id = self.split_app_and_form_unique_id(value)
         try:
-            form, app = self.get_latest_released_form_and_app(value)
+            form, app = self.get_latest_released_form_and_app(app_id, form_unique_id)
         except:
             return {}
 
-        return {'id': form.unique_id, 'text': form.full_path_name}
+        return {'id': value, 'text': form.full_path_name}
 
     @property
     def scheduling_fieldset_legend(self):
@@ -1743,7 +1747,10 @@ class ConditionalAlertScheduleForm(ScheduleForm):
                 result['start_date_type'] = self.START_DATE_CASE_PROPERTY
                 result['start_date_case_property'] = action_definition.start_date_case_property
             elif scheduler_module_info.enabled:
-                result['visit_scheduler_form_unique_id'] = scheduler_module_info.form_unique_id
+                result['visit_scheduler_app_and_form_unique_id'] = get_combined_id(
+                    scheduler_module_info.app_id,
+                    scheduler_module_info.form_unique_id
+                )
                 result['start_date_type'] = self.START_DATE_FROM_VISIT_SCHEDULER
 
                 # Convert to 1-based index for display as in the form builder
@@ -1779,7 +1786,7 @@ class ConditionalAlertScheduleForm(ScheduleForm):
                 data_bind='visible: showStartDateInput',
             ),
             crispy.Div(
-                crispy.Field('visit_scheduler_form_unique_id'),
+                crispy.Field('visit_scheduler_app_and_form_unique_id'),
                 hqcrispy.B3MultiField(
                     _("Scheduler: Visit"),
                     crispy.Div(
@@ -2002,35 +2009,23 @@ class ConditionalAlertScheduleForm(ScheduleForm):
             allow_parent_case_references=False,
         )
 
-    def clean_visit_scheduler_form_unique_id(self):
+    def clean_visit_scheduler_app_and_form_unique_id(self):
         if self.cleaned_data.get('start_date_type') != self.START_DATE_FROM_VISIT_SCHEDULER:
             return None
 
-        value = self.cleaned_data.get('visit_scheduler_form_unique_id')
+        value = self.cleaned_data.get('visit_scheduler_app_and_form_unique_id')
         if not value:
             raise ValidationError(_("This field is required"))
 
-        form, app = self.get_latest_released_form_and_app(value)
+        app_id, form_unique_id = self.split_app_and_form_unique_id(value)
+        form, app = self.get_latest_released_form_and_app(app_id, form_unique_id)
+
         if isinstance(form, AdvancedForm) and form.schedule and form.schedule.enabled:
             return value
 
         raise ValidationError(_("Please select a visit scheduler form"))
 
-    def clean_visit_number(self):
-        if self.cleaned_data.get('start_date_type') != self.START_DATE_FROM_VISIT_SCHEDULER:
-            return None
-
-        form_unique_id = self.cleaned_data.get('visit_scheduler_form_unique_id')
-        if not form_unique_id:
-            raise ValidationError(_("Please first select a visit scheduler form"))
-
-        value = self.cleaned_data.get('visit_number')
-        if value is None or value <= 0:
-            raise ValidationError(_("Please enter a number greater than 0"))
-
-        visit_index = value - 1
-
-        form, app = self.get_latest_released_form_and_app(form_unique_id)
+    def validate_visit(self, form, visit_index):
         try:
             visit = form.schedule.visits[visit_index]
         except IndexError:
@@ -2049,6 +2044,22 @@ class ConditionalAlertScheduleForm(ScheduleForm):
                 _("The referenced visit in the latest released app build does not have a window end date. "
                   "Visits which do not have a window end date are not supported")
             )
+
+    def clean_visit_number(self):
+        if self.cleaned_data.get('start_date_type') != self.START_DATE_FROM_VISIT_SCHEDULER:
+            return None
+
+        visit_scheduler_app_and_form_unique_id = self.cleaned_data.get('visit_scheduler_app_and_form_unique_id')
+        if not visit_scheduler_app_and_form_unique_id:
+            raise ValidationError(_("Please first select a visit scheduler form"))
+
+        value = self.cleaned_data.get('visit_number')
+        if value is None or value <= 0:
+            raise ValidationError(_("Please enter a number greater than 0"))
+
+        app_id, form_unique_id = self.split_app_and_form_unique_id(visit_scheduler_app_and_form_unique_id)
+        form, app = self.get_latest_released_form_and_app(app_id, form_unique_id)
+        self.validate_visit(form, value - 1)
 
         return value
 
@@ -2110,12 +2121,14 @@ class ConditionalAlertScheduleForm(ScheduleForm):
         if self.cleaned_data.get('start_date_type') != self.START_DATE_FROM_VISIT_SCHEDULER:
             return CreateScheduleInstanceActionDefinition.SchedulerModuleInfo(enabled=False)
 
-        form_unique_id = self.cleaned_data['visit_scheduler_form_unique_id']
-        form, app = self.get_form_and_app(form_unique_id)
+        app_id, form_unique_id = self.split_app_and_form_unique_id(
+            self.cleaned_data['visit_scheduler_app_and_form_unique_id']
+        )
+
         return CreateScheduleInstanceActionDefinition.SchedulerModuleInfo(
             enabled=True,
             # The id of the primary application doc
-            app_id=app.get_id,
+            app_id=app_id,
             form_unique_id=form_unique_id,
             # Convert to 0-based index
             visit_number=self.cleaned_data['visit_number'] - 1,
