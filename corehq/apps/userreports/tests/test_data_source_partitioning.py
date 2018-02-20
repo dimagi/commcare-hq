@@ -15,6 +15,9 @@ from corehq.apps.userreports.tests.utils import (
 from corehq.apps.userreports.util import get_indicator_adapter
 
 
+EXPECTED_UCR_CHILD_TABLE_PREFIX = 'tbl_80f005a0bdc2f0d0ff6f8293daee8f33_'
+
+
 class DataSourceConfigurationPartitionTest(TestCase):
     column = None
     subtype = None
@@ -64,11 +67,11 @@ class DataSourcePartitionByDay(DataSourceConfigurationPartitionTest):
 
         # ensure docs are in separate databases
         result = self.adapter.engine.execute(
-            'SELECT COUNT(*) FROM "config_report_user-reports_sample_7554612a_y2018d001";')
+            'SELECT COUNT(*) FROM "{}y2018d001";'.format(EXPECTED_UCR_CHILD_TABLE_PREFIX))
         result = result.fetchone()[0]
         self.assertEqual(1, result)
         result = self.adapter.engine.execute(
-            'SELECT COUNT(*) FROM "config_report_user-reports_sample_7554612a_y2018d002";')
+            'SELECT COUNT(*) FROM "{}y2018d002";'.format(EXPECTED_UCR_CHILD_TABLE_PREFIX))
         result = result.fetchone()[0]
         self.assertEqual(1, result)
 
@@ -93,12 +96,12 @@ class DataSourcePartitionByMonth(DataSourceConfigurationPartitionTest):
 
         # ensure docs are in separate databases
         result = self.adapter.engine.execute(
-            'SELECT COUNT(*) FROM "config_report_user-reports_sample_7554612a_y2018m01";')
+            'SELECT COUNT(*) FROM "{}y2018m01";'.format(EXPECTED_UCR_CHILD_TABLE_PREFIX))
         result = result.fetchone()[0]
 
         self.assertEqual(1, result)
         result = self.adapter.engine.execute(
-            'SELECT COUNT(*) FROM "config_report_user-reports_sample_7554612a_y2018m02";')
+            'SELECT COUNT(*) FROM "{}y2018m02";'.format(EXPECTED_UCR_CHILD_TABLE_PREFIX))
         result = result.fetchone()[0]
         self.assertEqual(2, result)
 
@@ -125,11 +128,11 @@ class DataSourcePartitionByOwner(DataSourceConfigurationPartitionTest):
 
         # ensure docs are in separate databases
         result = self.adapter.engine.execute(
-            'SELECT COUNT(*) FROM "config_report_user-reports_sample_7554612a_abcdefghij";')
+            'SELECT COUNT(*) FROM "{}abcdefghij";'.format(EXPECTED_UCR_CHILD_TABLE_PREFIX))
         result = result.fetchone()[0]
 
         self.assertEqual(2, result)
         result = self.adapter.engine.execute(
-            'SELECT COUNT(*) FROM "config_report_user-reports_sample_7554612a_abcdefhijk";')
+            'SELECT COUNT(*) FROM "{}abcdefhijk";'.format(EXPECTED_UCR_CHILD_TABLE_PREFIX))
         result = result.fetchone()[0]
         self.assertEqual(1, result)
