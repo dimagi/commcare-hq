@@ -52,7 +52,7 @@ hqDefine("users/js/web_users", function() {
             $.post(post_url, {
                 restrict_users: $('#restrict_users')[0].checked,
             },
-            function(data) {
+            function() {
                 $('#save_restrict_option')
                     .text(gettext("Saved"))
                     .removeClass('btn-success')
