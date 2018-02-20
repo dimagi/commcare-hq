@@ -3,9 +3,13 @@ from __future__ import absolute_import
 import json
 import os
 
+from django.test.testcases import TestCase
+from django.test.client import RequestFactory
 from django.test.testcases import SimpleTestCase
 from fakecouch import FakeCouchDb
+from corehq.apps.users.models import WebUser
 
+from corehq.apps.domain.models import Domain
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.userreports.expressions import ExpressionFactory
 from corehq.apps.userreports.filters.factory import FilterFactory
@@ -13,6 +17,24 @@ from corehq.apps.userreports.models import DataSourceConfiguration
 from corehq.apps.userreports.specs import FactoryContext
 from corehq.apps.users.models import CommCareUser
 from couchforms.models import XFormInstance
+
+
+class ChampTestCase(TestCase):
+
+    def setUp(self):
+        self.factory = RequestFactory()
+        domain = Domain.get_or_create_with_name('champ-cameroon')
+        domain.is_active = True
+        domain.save()
+        self.domain = domain
+        user = WebUser.all().first()
+        if not user:
+            user = WebUser.create(domain.name, 'test', 'passwordtest')
+        user.is_authenticated = True
+        user.is_superuser = True
+        user.is_authenticated = True
+        user.is_active = True
+        self.user = user
 
 
 class TestDataSourceExpressions(SimpleTestCase):
