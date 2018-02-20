@@ -244,7 +244,9 @@ hqDefine("reports/js/case_details", function() {
                 "type": "GET",
                 "url": hqImport("hqwebapp/js/initial_page_data").reverse('case_form_data', xform_id),
                 "success": function(data) {
-                    $("#xform_data_panel").html(data);
+                    var $panel = $("#xform_data_panel");
+                    $panel.html(data);
+                    hqImport("reports/js/single_form").initSingleForm($panel);
                 },
             });
         };
