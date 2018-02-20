@@ -19,6 +19,7 @@ hqDefine('analytix/js/appcues', [
         _logger = logging.getLoggerForApi('Appcues'),
         _ready = $.Deferred(),
         EVENT_TYPES = {
+            FORM_SAVE: "form-save",
             QUESTION_CREATE: "question-create",
         };
 

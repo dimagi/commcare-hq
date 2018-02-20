@@ -61,9 +61,13 @@ hqDefine("app_manager/js/forms/form_designer", function() {
                 var app_manager = hqImport('app_manager/js/app_manager');
                 app_manager.updateDOM(data.update);
                 $('.js-preview-toggle').removeAttr('disabled');
-                if (initial_page_data("days_since_created")) {
+                if (initial_page_data("days_since_created") === 0) {
                     hqImport('analytix/js/kissmetrix').track.event('Saved the Form Builder within first 24 hours');
                 }
+                var appcues = hqImport('analytix/js/appcues');
+                appcues.trackEvent(
+                    appcues.EVENT_TYPE.FORM_SAVE, { formType: formType() }
+                );
             },
             onReady: function() {
                 if (initial_page_data('vellum_debug') === 'dev') {
