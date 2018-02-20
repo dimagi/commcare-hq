@@ -14,8 +14,7 @@ hqDefine("app_manager/js/forms/form_designer", function() {
                 return FORM_TYPES.SURVEY;
             }
             return FORM_TYPES.FOLLOWUP;
-        },
-        popupFormPreviewTimeout;
+        };
 
     $(function() {
         var VELLUM_OPTIONS = _.extend({}, initial_page_data("vellum_options"), {
@@ -215,7 +214,7 @@ hqDefine("app_manager/js/forms/form_designer", function() {
         // TODO: improve usage.
         // Should perhaps be 3 minutes in session rather than 3 minutes on page?
         if (initial_page_data("guided_tour")) {
-            popupFormPreviewTimeout = setTimeout(function () {
+            setTimeout(function () {
                 hqImport("app_manager/js/preview_app").forceShowPreview();
                 var appcues = hqImport('analytix/js/appcues');
                 appcues.trackEvent(appcues.EVENT_TYPES.POPPED_OUT_PREVIEW);
