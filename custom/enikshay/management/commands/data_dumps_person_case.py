@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+import os
 from __future__ import print_function
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.apps.es.case_search import CaseSearchES
@@ -6,6 +7,7 @@ from corehq.apps.es import queries
 
 from custom.enikshay.case_utils import (
     CASE_TYPE_EPISODE,
+    CASE_TYPE_PERSON,
     get_all_occurrence_cases_from_person,
 )
 from custom.enikshay.const import ENROLLED_IN_PRIVATE
@@ -19,6 +21,11 @@ class Command(BaseDataDump):
     data dumps for person cases
     https://docs.google.com/spreadsheets/d/1OPp0oFlizDnIyrn7Eiv11vUp8IBmc73hES7qqT-mKKA/edit#gid=1039030624
     """
+    def __init__(self, *args, **kwargs):
+        super(Command, self).__init__(*args, **kwargs)
+        self.case_type = CASE_TYPE_PERSON
+        self.input_file_name = os.path.join(os.path.dirname(__file__),
+                                            'data_dumps_person_case.csv')
 
     def get_last_episode(self, case):
         self.context['last_episode'] = (
@@ -55,9 +62,7 @@ class Command(BaseDataDump):
                 return str(e)
         return Exception("unknown case reference %s" % case_reference)
 
-    def handle(self, case_type, input_file_name, *args, **options):
-        self.case_type = case_type
-        self.input_file_name = input_file_name
+    def handle(self, *args, **options):
         self.setup()
         self.generate_dump()
 

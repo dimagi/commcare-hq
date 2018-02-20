@@ -18,10 +18,6 @@ class BaseDataDump(BaseCommand):
         self.report = {}
         self.result_file_headers = []
 
-    def add_arguments(self, parser):
-        parser.add_argument('case_type')
-        parser.add_argument('input_file_name')
-
     def setup_result_file_name(self):
         result_file_name = "data_dumps_{case_type}_{timestamp}.csv".format(
             case_type=self.case_type,
