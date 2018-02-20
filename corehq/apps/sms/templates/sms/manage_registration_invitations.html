@@ -2,6 +2,7 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 {% load crispy_forms_tags %}
+{% requirejs_main 'sms/js/manage_registration_invitations' %}
 
 {% block pagination_templates %}
 <script type="text/html" id="invitations-template">
@@ -24,21 +25,6 @@
     </ol>
 {% endblock %}
 
-{% block js-inline %}{{ block.super }}
-<script>
-$(function () {
-    var RegistrationModel = function() {
-        var self = this;
-        self.registration_message_type = ko.observable();
-        self.showCustomRegistrationMessage = ko.computed(function() {
-            return self.registration_message_type() == 'CUSTOM';
-        });
-    };
-    var registrationModel = new RegistrationModel();
-    ko.applyBindings(registrationModel, $('#registration-modal').get(0));
-});
-</script>
-{% endblock %}
 
 {% block page_content %}
 {% if sms_mobile_worker_registration_enabled %}

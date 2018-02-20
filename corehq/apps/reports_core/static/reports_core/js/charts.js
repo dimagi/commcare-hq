@@ -14,7 +14,7 @@ hqDefine('reports_core/js/charts', function() {
                 if (!aggregatedDataDict.hasOwnProperty(aggregation)) {
                     record = {
                         x: aggregation,
-                        y: 0
+                        y: 0,
                     };
                     aggregatedDataDict[aggregation] = record;
                     aggregatedData.push(record);
@@ -69,7 +69,7 @@ hqDefine('reports_core/js/charts', function() {
             for (primary in transformedDataDict) {
                 record = {
                     "key": primary,
-                    "values": []
+                    "values": [],
                 };
                 if (transformedDataDict.hasOwnProperty(primary)) {
                     for (secondary in secondaryValues) {
@@ -81,7 +81,7 @@ hqDefine('reports_core/js/charts', function() {
                             }
                             record.values.push({
                                 'x': secondary,
-                                'y': value
+                                'y': value,
                             });
                         }
                     }
@@ -114,7 +114,7 @@ hqDefine('reports_core/js/charts', function() {
             for (i = 0; i < config.y_axis_columns.length; i++) {
                 record = {
                     key: config.y_axis_columns[i].display,
-                    values: []
+                    values: [],
                 };
                 valuesDict[config.y_axis_columns[i].column_id] = record;
                 chartData.push(record);
@@ -126,7 +126,7 @@ hqDefine('reports_core/js/charts', function() {
                     record = valuesDict[config.y_axis_columns[j].column_id];
                     record.values.push({
                         x: current[config.x_axis_column] || '',
-                        y: parseFloat(current[config.y_axis_columns[j].column_id])
+                        y: parseFloat(current[config.y_axis_columns[j].column_id]),
                     });
                 }
             }
@@ -152,7 +152,7 @@ hqDefine('reports_core/js/charts', function() {
     var chartMap = {
         'pie': renderPie,
         'multibar': renderMultibar,
-        'multibar-aggregate': renderMultibarAggregate
+        'multibar-aggregate': renderMultibarAggregate,
     };
 
     fn.render = function (configs, data, chartContainer) {

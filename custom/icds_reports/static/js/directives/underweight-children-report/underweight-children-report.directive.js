@@ -48,19 +48,6 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
     };
     vm.message = storageService.getKey('message') || false;
 
-    vm.prevDay = moment().subtract(1, 'days').format('Do MMMM, YYYY');
-    vm.lastDayOfPreviousMonth = moment().set('date', 1).subtract(1, 'days').format('Do MMMM, YYYY');
-    vm.currentMonth = moment().format("MMMM");
-    vm.showInfoMessage = function () {
-        var selected_month = parseInt($location.search()['month']) || new Date().getMonth() + 1;
-        var selected_year = parseInt($location.search()['year']) || new Date().getFullYear();
-        var current_month = new Date().getMonth() + 1;
-        var current_year = new Date().getFullYear();
-        return selected_month === current_month && selected_year === current_year &&
-            (new Date().getDate() === 1 || new Date().getDate() === 2);
-    };
-
-
     $scope.$watch(function() {
         return vm.selectedLocations;
     }, function (newValue, oldValue) {
@@ -88,15 +75,15 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
     };
 
     vm.templatePopup = function(loc, row) {
-        var total = row ? $filter('indiaNumbers')(row.total) : 'N/A';
-        var unrweighed = row ? $filter('indiaNumbers')(row.eligible - row.total) : "N/A";
-        var severely_underweight = row ? d3.format(".2%")(row.severely_underweight / (row.total || 1)) : 'N/A';
-        var moderately_underweight = row ? d3.format(".2%")(row.moderately_underweight / (row.total || 1)) : 'N/A';
-        var normal = row ? d3.format(".2%")(row.normal / (row.total || 1)) : 'N/A';
+        var total = row ? $filter('indiaNumbers')(row.weighed) : 'N/A';
+        var unweighed = row ? $filter('indiaNumbers')(row.total - row.weighed) : "N/A";
+        var severely_underweight = row ? d3.format(".2%")(row.severely_underweight / (row.weighed || 1)) : 'N/A';
+        var moderately_underweight = row ? d3.format(".2%")(row.moderately_underweight / (row.weighed || 1)) : 'N/A';
+        var normal = row ? d3.format(".2%")(row.normal / (row.weighed || 1)) : 'N/A';
         return '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
             '<p>' + loc.properties.name + '</p>' +
             '<div>Total Children '+ vm.chosenFilters() +' weighed in given month: <strong>' + total + '</strong></div>' +
-            '<div>Number of children unweighed '+ vm.chosenFilters() +': <strong>' + unrweighed + '</strong></div>' +
+            '<div>Number of children unweighed '+ vm.chosenFilters() +': <strong>' + unweighed + '</strong></div>' +
             '<div>% Severely Underweight '+ vm.chosenFilters() +': <strong>' + severely_underweight + '</strong></div>' +
             '<div>% Moderately Underweight '+ vm.chosenFilters() +': <strong>' + moderately_underweight +'</strong></div>' +
             '<div>% Normal '+ vm.chosenFilters() +': <strong>' + normal + '</strong></div>';
@@ -152,7 +139,7 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
 
     vm.init = function() {
         var locationId = vm.filtersData.location_id || vm.userLocationId;
-        if (!vm.userLocationId || !locationId || locationId === 'all' || locationId === 'null') {
+        if (!locationId || ["all", "null", "undefined"].indexOf(locationId) >= 0) {
             vm.loadData();
             vm.loaded = true;
             return;
@@ -252,7 +239,7 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
                     var moderately = findValue(vm.chartData[1].values, d.value).y;
                     var severely = findValue(vm.chartData[2].values, d.value).y;
                     var unweighed = findValue(vm.chartData[0].values, d.value).unweighed;
-                    var weighed = findValue(vm.chartData[0].values, d.value).all;
+                    var weighed = findValue(vm.chartData[0].values, d.value).weighed;
                     return vm.tooltipContent(d.value, normal, moderately, severely, unweighed, weighed);
                 });
                 return chart;

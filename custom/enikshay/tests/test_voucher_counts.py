@@ -5,6 +5,7 @@ from django.test import TestCase, override_settings
 from casexml.apps.case.mock import CaseStructure
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from ..tasks import EpisodeVoucherUpdate, EpisodeUpdater
+from ..const import ENROLLED_IN_PRIVATE
 from .utils import ENikshayCaseStructureMixin, get_voucher_case_structure
 import six
 
@@ -15,6 +16,7 @@ class TestVoucherCounts(ENikshayCaseStructureMixin, TestCase):
 
     def setUp(self):
         super(TestVoucherCounts, self).setUp()
+        self.episode.attrs['update'][ENROLLED_IN_PRIVATE] = 'true'
         self.cases = self.create_case_structure()
 
     def make_voucher(self, prescription, final_prescription_num_days=5,

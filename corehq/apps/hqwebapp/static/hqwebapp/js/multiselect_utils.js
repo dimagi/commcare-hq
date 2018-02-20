@@ -77,36 +77,36 @@ hqDefine('hqwebapp/js/multiselect_utils', [
                     selectionSearchString = '#'+that.$container.attr('id')+' .ms-elem-selection.ms-selected';
 
                 that.search_left = $selectableSearch.quicksearch(selectableSearchString)
-                .on('keydown', function (e) {
-                    if (e.which === 40) {  // down arrow, was recommended by loudev docs
-                        that.$selectableUl.focus();
-                        return false;
-                    }
-                })
-                .on('keyup change search input', function () {
+                    .on('keydown', function (e) {
+                        if (e.which === 40) {  // down arrow, was recommended by loudev docs
+                            that.$selectableUl.focus();
+                            return false;
+                        }
+                    })
+                    .on('keyup change search input', function () {
                     // disable add all functionality so that user is not confused
-                    if (that.search_left.val().length > 0) {
-                        $('#' + selectAllId).addClass('disabled').prop('disabled', true);
-                    } else {
-                        $('#' + selectAllId).removeClass('disabled').prop('disabled', false);
-                    }
-                });
+                        if (that.search_left.val().length > 0) {
+                            $('#' + selectAllId).addClass('disabled').prop('disabled', true);
+                        } else {
+                            $('#' + selectAllId).removeClass('disabled').prop('disabled', false);
+                        }
+                    });
 
                 that.search_right = $selectionSearch.quicksearch(selectionSearchString)
-                .on('keydown', function (e) {
-                    if (e.which === 40) {  // down arrow, was recommended by loudev docs
-                        that.$selectionUl.focus();
-                        return false;
-                    }
-                })
-                .on('keyup change search input', function () {
+                    .on('keydown', function (e) {
+                        if (e.which === 40) {  // down arrow, was recommended by loudev docs
+                            that.$selectionUl.focus();
+                            return false;
+                        }
+                    })
+                    .on('keyup change search input', function () {
                     // disable remove all functionality so that user is not confused
-                    if (that.search_right.val().length > 0) {
-                        $('#' + removeAllId).addClass('disabled').prop('disabled', true);
-                    } else {
-                        $('#' + removeAllId).removeClass('disabled').prop('disabled', false);
-                    }
-                });
+                        if (that.search_right.val().length > 0) {
+                            $('#' + removeAllId).addClass('disabled').prop('disabled', true);
+                        } else {
+                            $('#' + removeAllId).removeClass('disabled').prop('disabled', false);
+                        }
+                    });
             },
             afterSelect: function(){
                 this.search_left.cache();

@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from datetime import datetime, timedelta
 import six.moves.urllib.request, six.moves.urllib.parse, six.moves.urllib.error
-import urlparse
+import six.moves.urllib.parse
 import warnings
 
 from django.utils.translation import ugettext_lazy as _
@@ -301,14 +301,14 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
         return attempt
 
     @property
-    def is_form_repeater(self):
-        # check if any of parent class is FormRepeater
-        return isinstance(self, FormRepeater)
+    def form_class_name(self):
+        """
+        Return the name of the class whose edit form this class uses.
 
-    @property
-    def is_case_repeater(self):
-        # check if any of parent class is CaseRepeater
-        return isinstance(self, CaseRepeater)
+        (Most classes that extend CaseRepeater, and all classes that
+        extend FormRepeater, use the same form.)
+        """
+        return self.__class__.__name__
 
 
 class FormRepeater(Repeater):
@@ -327,6 +327,13 @@ class FormRepeater(Repeater):
     def payload_doc(self, repeat_record):
         return FormAccessors(repeat_record.domain).get_form(repeat_record.payload_id)
 
+    @property
+    def form_class_name(self):
+        """
+        FormRepeater and its subclasses use the same form for editing
+        """
+        return 'FormRepeater'
+
     def allowed_to_forward(self, payload):
         return (
             payload.xmlns != DEVICE_LOG_XMLNS and
@@ -339,14 +346,14 @@ class FormRepeater(Repeater):
             return url
         else:
             # adapted from http://stackoverflow.com/a/2506477/10840
-            url_parts = list(urlparse.urlparse(url))
-            query = urlparse.parse_qsl(url_parts[4])
+            url_parts = list(six.moves.urllib.parse.urlparse(url))
+            query = six.moves.urllib.parse.parse_qsl(url_parts[4])
             try:
                 query.append(("app_id", self.payload_doc(repeat_record).app_id))
             except (XFormNotFound, ResourceNotFound):
                 return None
             url_parts[4] = six.moves.urllib.parse.urlencode(query)
-            return urlparse.urlunparse(url_parts)
+            return six.moves.urllib.parse.urlunparse(url_parts)
 
     def get_headers(self, repeat_record):
         headers = super(FormRepeater, self).get_headers(repeat_record)
@@ -388,6 +395,13 @@ class CaseRepeater(Repeater):
     @memoized
     def payload_doc(self, repeat_record):
         return CaseAccessors(repeat_record.domain).get_case(repeat_record.payload_id)
+
+    @property
+    def form_class_name(self):
+        """
+        CaseRepeater and most of its subclasses use the same form for editing
+        """
+        return 'CaseRepeater'
 
     def get_headers(self, repeat_record):
         headers = super(CaseRepeater, self).get_headers(repeat_record)

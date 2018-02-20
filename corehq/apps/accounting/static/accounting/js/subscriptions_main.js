@@ -16,7 +16,7 @@ hqDefine('accounting/js/subscriptions_main', [
             return {
                 'edition': $('#id_new_plan_edition').val(),
                 'current_version': initialPageData.get('current_version'),
-            }
+            };
         };
 
         var deselectPlanVersion = function () {

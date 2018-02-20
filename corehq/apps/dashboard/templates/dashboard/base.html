@@ -23,6 +23,7 @@
 {% block content %}
 {% initial_page_data 'dashboard_tiles' dashboard_tiles %}
 {% registerurl 'dashboard_tile' domain '---' %}
+{% registerurl 'dashboard_tile_total' domain '---' %}
 <div class="container" id="hq-content">
     <div class="page-header">
         <h1>
@@ -56,7 +57,7 @@
                         <i class="fa fa-spinner fa-spin fa-5x" data-bind="visible: showSpinner"></i>
 
                         <!-- List of items, with pagination if there are multiple pages -->
-                        <!-- ko if: hasItemList -->
+                        <!-- ko if: hasItemList() -->
                             <div data-bind="visible: showItemList">
                                 <div class="list-group" data-bind="foreach: items">
                                     <div class="list-group-item"
@@ -71,7 +72,7 @@
                                     </div>
                                 </div>
 
-                                <ul class="pagination" data-bind="visible: totalPages > 1">
+                                <ul class="pagination" data-bind="visible: totalPages() > 1">
                                     <li><a data-bind="click: function() { incrementPage(-1); }">&laquo;</a></li>
                                     <!-- ko foreach: pageList -->
                                         <li data-bind="css: {active: $parent.currentPage() == $data}">

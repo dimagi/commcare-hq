@@ -15,7 +15,7 @@ hqDefine("sms/js/settings.ko", function() {
             } else {
                 return "BETWEEN";
             }
-        }
+        };
 
         self.time_input_relationship = ko.observable(
             time_input_relationship || self.time_input_relationship_initial()
@@ -105,7 +105,7 @@ hqDefine("sms/js/settings.ko", function() {
                 $(this).timepicker({
                     showMeridian: false,
                     showSeconds: false,
-                    defaultTime: $(this).val() || false
+                    defaultTime: $(this).val() || false,
                 });
             });
         };

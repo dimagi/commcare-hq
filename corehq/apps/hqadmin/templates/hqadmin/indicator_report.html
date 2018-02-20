@@ -47,7 +47,7 @@
 
         for (var key in visualizations) {
             if (visualizations.hasOwnProperty(key)) {
-                visualizations[key].viz = new HQVisualizations({
+                visualizations[key].viz = new hqImport("hqadmin/js/visualizations").HQVisualizations({
                     chart_name: visualizations[key].chart_name,
                     histogram_type: visualizations[key].histogram_type,
                     xaxis_label: visualizations[key].xaxis_label,

@@ -1,8 +1,7 @@
 /* globals hqDefine */
 hqDefine('builds/js/edit-builds', function () {
     var initial_page_data = hqImport('hqwebapp/js/initial_page_data').get,
-        doc = initial_page_data('doc'),
-        pretty_doc = JSON.stringify(doc, undefined, 2);
+        doc = initial_page_data('doc');
 
     function Version(version, label, superuser_only, j2me_enabled) {
         var self = this;
@@ -15,9 +14,9 @@ hqDefine('builds/js/edit-builds', function () {
         // property and hence the checkbox in view
         self.version.subscribe(function(newValue){
             self.j2me_enabled(buildsMenu.j2me_enabled_versions.
-                              includes(newValue)
-                             );
-        })
+                includes(newValue)
+            );
+        });
     }
 
     function Menu() {
@@ -25,7 +24,7 @@ hqDefine('builds/js/edit-builds', function () {
 
         self.available_versions = initial_page_data('available_versions');
         self.j2me_enabled_versions = initial_page_data('j2me_enabled_versions');
-        self.versions = ko.observableArray([])
+        self.versions = ko.observableArray([]);
         self.available_ones = [];
         self.available_twos = [];
         self.default_one = ko.observable();
@@ -34,7 +33,7 @@ hqDefine('builds/js/edit-builds', function () {
         self.addVersion = function() {
             self.versions.push(new Version('', '', false));
         };
-        self.removeVersion = function(version) { self.versions.remove(version) };
+        self.removeVersion = function(version) { self.versions.remove(version); };
 
         _.each(doc.menu, function(version) {
             self.versions.push(new Version(
@@ -69,21 +68,19 @@ hqDefine('builds/js/edit-builds', function () {
                 'build': {
                     'version': version.version(),
                     'build_number': null,
-                    'latest': true
-                }
+                    'latest': true,
+                },
             });
         });
         doc.defaults = [];
         _.each([menu.default_one, menu.default_two], function(deflt) {
-            doc.defaults.push(
-                {
+            doc.defaults.push({
                 'version': deflt(),
                 'build_number': null,
-                'latest': true
-                }
-            )
+                'latest': true,
+            });
         });
-        return doc
+        return doc;
     }
 
     var buildsMenu = new Menu();
@@ -101,8 +98,8 @@ hqDefine('builds/js/edit-builds', function () {
         $form.submit();
     }
 
-    $('#menu-form .btn-primary').click(function(e) {
-        var response = postGo(
+    $('#menu-form .btn-primary').click(function() {
+        postGo(
             $('#menu-form')[0].action,
             {'doc': JSON.stringify(outputJSON(buildsMenu))}
         );

@@ -110,12 +110,16 @@ def render_form(form, domain, options):
     context.update(_get_form_metadata_context(domain, form, timezone, support_enabled))
     context.update(_get_display_options(request, domain, user, form, support_enabled))
     context.update(_get_edit_info(form))
+    instance_history = []
     if form.history:
         for operation in form.history:
             user_date = ServerTime(operation.date).user_time(timezone).done()
-            operation.readable_date = user_date.strftime("%Y-%m-%d %H:%M")
-            operation.readable_action = FORM_OPERATIONS.get(operation.operation, operation.operation)
-            operation.user_info = get_doc_info_by_id(domain, operation.user)
+            instance_history.append({
+                'readable_date': user_date.strftime("%Y-%m-%d %H:%M"),
+                'readable_action': FORM_OPERATIONS.get(operation.operation, operation.operation),
+                'user_info': get_doc_info_by_id(domain, operation.user),
+            })
+    context['instance_history'] = instance_history
     return render_to_string("reports/form/partials/single_form.html", context, request=request)
 
 

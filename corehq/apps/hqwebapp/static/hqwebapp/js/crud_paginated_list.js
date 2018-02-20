@@ -33,7 +33,7 @@ hqDefine("hqwebapp/js/crud_paginated_list", [
 
         self.alertHtml = ko.observable();
         self.isAlertVisible = ko.computed(function () {
-            return Boolean(self.alertHtml())
+            return Boolean(self.alertHtml());
         });
 
         self.isLoadingVisible = ko.computed(function () {
@@ -115,13 +115,13 @@ hqDefine("hqwebapp/js/crud_paginated_list", [
                     self.deletedList([]);
                     self.newList([]);
                 }
-            }
+            },
         };
 
         // Error & Success Handling
         self.statusCodeText = options.statusCodeText || {
             '404': "Sorry, not found",
-            '500': "Server error."
+            '500': "Server error.",
         };
 
         self.handleStatusCode = {};
@@ -138,7 +138,7 @@ hqDefine("hqwebapp/js/crud_paginated_list", [
                 if (self.isCreateItemVisible()) {
                     self.initCreateForm();
                 }
-            })
+            });
         };
 
         self.initCreateForm = function () {
@@ -150,7 +150,7 @@ hqDefine("hqwebapp/js/crud_paginated_list", [
                     type: 'post',
                     dataType: 'json',
                     data: {
-                        'action': 'create'
+                        'action': 'create',
                     },
                     statusCode: self.handleStatusCode,
                     success: function (data) {
@@ -163,7 +163,7 @@ hqDefine("hqwebapp/js/crud_paginated_list", [
                                 self.newList.push(new self.PaginatedItem(data.newItem, self.initRow));
                             }
                         }
-                    }
+                    },
                 });
             });
         };
@@ -180,13 +180,13 @@ hqDefine("hqwebapp/js/crud_paginated_list", [
                         page: page,
                         limit: self.pageLimit(),
                         sortBy: self.sortBy,
-                        additionalData: self.getAdditionalData()
+                        additionalData: self.getAdditionalData(),
                     },
                     statusCode: self.handleStatusCode,
                     success: function (data) {
                         self.utils.reloadList(data);
-                    }
-                })
+                    },
+                });
             }
         };
 
@@ -207,7 +207,7 @@ hqDefine("hqwebapp/js/crud_paginated_list", [
                 dataType: 'json',
                 data: {
                     action: 'delete',
-                    itemId: paginatedItem.itemId
+                    itemId: paginatedItem.itemId,
                 },
                 statusCode: self.handleStatusCode,
                 success: function (data) {
@@ -217,7 +217,7 @@ hqDefine("hqwebapp/js/crud_paginated_list", [
                     if (data.deletedItem) {
                         paginatedItem.updateItemSpec(data.deletedItem);
                     }
-                }
+                },
             });
         };
 
@@ -228,16 +228,16 @@ hqDefine("hqwebapp/js/crud_paginated_list", [
                 dataType: 'json',
                 data: {
                     action: 'refresh',
-                    itemId: (!!paginatedItem) ? paginatedItem.itemId : null,
+                    itemId: (paginatedItem) ? paginatedItem.itemId : null,
                     page: self.currentPage(),
                     limit: self.pageLimit(),
                     sortBy: self.sortBy,
-                    additionalData: self.getAdditionalData()
+                    additionalData: self.getAdditionalData(),
                 },
                 statusCode: self.handleStatusCode,
                 success: function (data) {
                     self.utils.reloadList(data);
-                }
+                },
             });
         };
 
@@ -302,7 +302,7 @@ hqDefine("hqwebapp/js/crud_paginated_list", [
                         type: 'post',
                         dataType: 'json',
                         data: {
-                            action: 'update'
+                            action: 'update',
                         },
                         success: function (data) {
                             if (data.updatedItem) {
@@ -314,7 +314,7 @@ hqDefine("hqwebapp/js/crud_paginated_list", [
                                     $updateForm.html($(data.form).html());
                                 }
                             }
-                        }
+                        },
                     });
                 });
             }
@@ -346,7 +346,7 @@ hqDefine("hqwebapp/js/crud_paginated_list", [
             } else {
                 $(element).removeClass('disabled');
             }
-        }
+        },
     };
 
     ko.bindingHandlers.activeOnSimilar = {
@@ -358,7 +358,7 @@ hqDefine("hqwebapp/js/crud_paginated_list", [
             } else {
                 $(element).removeClass('active');
             }
-        }
+        },
     };
 
     return {

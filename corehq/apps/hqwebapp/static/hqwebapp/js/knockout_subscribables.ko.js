@@ -11,6 +11,6 @@ ko.subscribable.fn.snakeCase = function(re) {
             this(value.replace(re, '_'));
             this.valueHasMutated();
         },
-        owner: this
+        owner: this,
     }).extend({ notify: 'always' });
 };

@@ -11,7 +11,7 @@ from corehq.apps.userreports.transforms.factory import TransformFactory
 from corehq.apps.userreports.util import add_tabbed_text
 
 
-DATA_TYPE_CHOICES = ['date', 'datetime', 'string', 'integer', 'decimal', 'array']
+DATA_TYPE_CHOICES = ['date', 'datetime', 'string', 'integer', 'decimal', 'array', 'small_integer']
 
 
 def DataTypeProperty(**kwargs):

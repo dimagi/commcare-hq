@@ -11,9 +11,13 @@ from corehq.form_processor.models import CommCareCaseSQL
 from corehq.motech.repeaters.models import CaseRepeater
 from corehq.motech.repeaters.signals import create_repeat_records
 from casexml.apps.case.signals import case_post_save
-from custom.enikshay.integrations.ninetyninedots.repeater_generators import \
-    RegisterPatientPayloadGenerator, UpdatePatientPayloadGenerator, AdherencePayloadGenerator, \
-    TreatmentOutcomePayloadGenerator
+from custom.enikshay.integrations.ninetyninedots.repeater_generators import (
+    AdherencePayloadGenerator,
+    RegisterPatientPayloadGenerator,
+    TreatmentOutcomePayloadGenerator,
+    UnenrollPatientPayloadGenerator,
+    UpdatePatientPayloadGenerator,
+)
 
 from custom.enikshay.integrations.utils import (
     is_valid_person_submission,
@@ -219,6 +223,44 @@ class NinetyNineDotsTreatmentOutcomeRepeater(Base99DOTSRepeater):
         )
 
 
+class NinetyNineDotsUnenrollPatientRepeater(Base99DOTSRepeater):
+    """Unenroll patients from 99DOTS
+    Case Type: Episode
+    Trigger: When a case is closed, or switched to a different type of adherence management
+    Endpoint: https://www.99dots.org/Dimagi99DOTSAPI/unenrollPatient
+
+    """
+    friendly_name = _("99DOTS Unenroll Patient (episode case type)")
+
+    payload_generator_classes = (UnenrollPatientPayloadGenerator,)
+
+    @classmethod
+    def get_custom_url(cls, domain):
+        from custom.enikshay.integrations.ninetyninedots.views import UnenrollPatientRepeaterView
+        return reverse(UnenrollPatientRepeaterView.urlname, args=[domain])
+
+    def allowed_to_forward(self, episode_case):
+        allowed_case_types_and_users = (
+            self._allowed_case_type(episode_case) and self._allowed_user(episode_case)
+        )
+        if not allowed_case_types_and_users:
+            return False
+
+        episode_case_properties = episode_case.dynamic_case_properties()
+        registered = episode_case_properties.get('dots_99_registered') == 'true'
+        unenabled = (episode_case_properties.get('dots_99_enabled') == 'false'
+                     and case_properties_changed(episode_case, ['dots_99_enabled']))
+
+        closed = episode_case_properties.get('close_reason') in [
+            'invalid_episode', 'duplicate', 'invalid_registration'
+        ]
+        return (
+            registered
+            and (unenabled or closed)
+            and is_valid_episode_submission(episode_case)
+        )
+
+
 def episode_registered_with_99dots(episode):
     return episode.dynamic_case_properties().get('dots_99_registered', False) == 'true'
 
@@ -230,5 +272,7 @@ def create_99DOTS_case_repeat_records(sender, case, **kwargs):
     create_repeat_records(NinetyNineDotsUpdatePatientRepeater, case)
     create_repeat_records(NinetyNineDotsAdherenceRepeater, case)
     create_repeat_records(NinetyNineDotsTreatmentOutcomeRepeater, case)
+    create_repeat_records(NinetyNineDotsUnenrollPatientRepeater, case)
+
 
 case_post_save.connect(create_99DOTS_case_repeat_records, CommCareCaseSQL)

@@ -29,6 +29,7 @@ from dimagi.utils.dates import DateSpan
 from django.db.models import Case, When, Q, F, IntegerField
 import six
 import uuid
+from six.moves import range
 
 OPERATORS = {
     "==": operator.eq,
@@ -219,7 +220,8 @@ def percent_increase(prop, data, prev_data):
         previous = prev_data[0][prop]
 
     if previous:
-        return ((current or 0) - (previous or 0)) / float(previous or 1) * 100
+        tenths_of_promils = (((current or 0) - (previous or 0)) * 10000) / float(previous or 1)
+        return tenths_of_promils / 100 if (tenths_of_promils < -1 or 1 < tenths_of_promils) else 0
     else:
         return "Data in the previous reporting period was 0"
 
@@ -241,7 +243,8 @@ def percent_diff(property, current_data, prev_data, all):
     prev_percent = prev / float(prev_all) * 100
 
     if prev_percent:
-        return ((current_percent - prev_percent) / (prev_percent or 1.0)) * 100
+        tenths_of_promils = ((current_percent - prev_percent) * 10000) / (prev_percent or 1.0)
+        return tenths_of_promils / 100 if (tenths_of_promils < -1 or 1 < tenths_of_promils) else 0
     else:
         return "Data in the previous reporting period was 0"
 
@@ -356,15 +359,24 @@ def exclude_records_by_age_for_column(exclude_config, column):
     )
 
 
-def generate_data_for_map(data, loc_level, num_prop, denom_prop, fill_key_lower, fill_key_bigger):
+def generate_data_for_map(data, loc_level, num_prop, denom_prop, fill_key_lower, fill_key_bigger, all_property=None):
     data_for_map = defaultdict(lambda: {
         num_prop: 0,
         denom_prop: 0,
         'original_name': []
     })
 
+    if all_property:
+        data_for_map = defaultdict(lambda: {
+            num_prop: 0,
+            denom_prop: 0,
+            'original_name': [],
+            all_property: 0
+        })
+
     valid_total = 0
     in_month_total = 0
+    total = 0
     values_to_calculate_average = []
 
     for row in data:
@@ -378,7 +390,10 @@ def generate_data_for_map(data, loc_level, num_prop, denom_prop, fill_key_lower,
 
         valid_total += valid
         in_month_total += in_month
-
+        if all_property:
+            all_data = row[all_property] or 0
+            data_for_map[on_map_name][all_property] += all_data
+            total += all_data
         data_for_map[on_map_name][num_prop] += in_month
         data_for_map[on_map_name][denom_prop] += valid
         data_for_map[on_map_name]['original_name'].append(name)
@@ -394,7 +409,7 @@ def generate_data_for_map(data, loc_level, num_prop, denom_prop, fill_key_lower,
             data_for_location.update({'fillKey': (fill_format % (fill_key_bigger, 100))})
 
     average = sum(values_to_calculate_average) / float(len(values_to_calculate_average) or 1)
-    return data_for_map, valid_total, in_month_total, average
+    return data_for_map, valid_total, in_month_total, average, total
 
 
 def calculate_date_for_age(dob, date):

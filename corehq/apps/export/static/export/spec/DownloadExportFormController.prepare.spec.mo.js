@@ -1,3 +1,4 @@
+/* globals DnldExpData */
 describe('DownloadExportFormController - Prepare Download', function() {
     DnldExpData.prepareTests();
     DnldExpData.prepareDownloadController();
@@ -10,14 +11,14 @@ describe('DownloadExportFormController - Prepare Download', function() {
                 .when('POST', DnldExpData.mockBackendUrls.PREPARE_CUSTOM_EXPORT)
                 .respond({
                     success: true,
-                    download_id: downloadId
+                    download_id: downloadId,
                 });
             DnldExpData.$httpBackend.expectPOST(DnldExpData.mockBackendUrls.PREPARE_CUSTOM_EXPORT);
         });
 
         it('trigger downloadInProgress', function() {
             DnldExpData.createController([
-                DnldExpData.simpleFormExport
+                DnldExpData.simpleFormExport,
             ], true);
             DnldExpData.currentScope.prepareExport();
             assert.equal(DnldExpData.currentScope.prepareExportError, null);
@@ -34,7 +35,7 @@ describe('DownloadExportFormController - Prepare Download', function() {
 
         it('user type analytics', function () {
             DnldExpData.createController([
-                DnldExpData.simpleFormExport
+                DnldExpData.simpleFormExport,
             ], true);
             var testUserTypes = ['mobile', 'demo', 'admin'];
             DnldExpData.currentScope.formData.user_types = testUserTypes;
@@ -52,7 +53,7 @@ describe('DownloadExportFormController - Prepare Download', function() {
         it('bulk form analytics', function () {
             DnldExpData.createController([
                 DnldExpData.simpleFormExport,
-                DnldExpData.simpleFormExport
+                DnldExpData.simpleFormExport,
             ], true);
             DnldExpData.currentScope.prepareExport();
             DnldExpData.$httpBackend.flush();
@@ -62,7 +63,7 @@ describe('DownloadExportFormController - Prepare Download', function() {
 
         it('start exportDownloadService', function () {
             DnldExpData.createController([
-                DnldExpData.simpleFormExport
+                DnldExpData.simpleFormExport,
             ], true);
             DnldExpData.currentScope.prepareExport();
             assert.isFalse(DnldExpData.exportDownloadService.showDownloadStatus);
@@ -77,7 +78,7 @@ describe('DownloadExportFormController - Prepare Download', function() {
 
         it('poll download progress', function () {
             DnldExpData.createController([
-                DnldExpData.simpleFormExport
+                DnldExpData.simpleFormExport,
             ], true);
             DnldExpData.currentScope.prepareExport();
             DnldExpData.$httpBackend.flush();
@@ -94,7 +95,7 @@ describe('DownloadExportFormController - Prepare Download', function() {
             var successfulResponse = DnldExpData.getPollResponseSuccess(downloadId);
             beforeEach(function () {
                 DnldExpData.createController([
-                    DnldExpData.simpleFormExport
+                    DnldExpData.simpleFormExport,
                 ], true);
                 DnldExpData.currentScope.prepareExport();
                 DnldExpData.$httpBackend.flush();
@@ -147,12 +148,12 @@ describe('DownloadExportFormController - Prepare Download', function() {
         it('registers server error', function () {
             var errorMsg = 'server error test';
             DnldExpData.createController([
-                DnldExpData.simpleFormExport
+                DnldExpData.simpleFormExport,
             ], true);
             DnldExpData.$httpBackend
                 .when('POST', DnldExpData.mockBackendUrls.PREPARE_CUSTOM_EXPORT)
                 .respond({
-                    error: errorMsg
+                    error: errorMsg,
                 });
             DnldExpData.$httpBackend.expectPOST(DnldExpData.mockBackendUrls.PREPARE_CUSTOM_EXPORT);
             DnldExpData.currentScope.prepareExport();
@@ -166,7 +167,7 @@ describe('DownloadExportFormController - Prepare Download', function() {
 
         it('registers HTTP error', function () {
             DnldExpData.createController([
-                DnldExpData.simpleFormExport
+                DnldExpData.simpleFormExport,
             ], true);
             DnldExpData.$httpBackend
                 .when('POST', DnldExpData.mockBackendUrls.PREPARE_CUSTOM_EXPORT)

@@ -67,7 +67,7 @@ hqDefine("userreports/js/configurable_report", function() {
             emailDefaultSubject: initial_page_data('title'),
             emailSuccessMessage: gettext('Report successfully emailed'),
             emailErrorMessage: gettext('An error occurred emailing you report. Please try again.'),
-            getReportRenderUrl: function(renderType, additionalParams) {
+            getReportRenderUrl: function(renderType) {
                 var params = urlSerialize($('#paramSelectorForm'), ['format']);
                 return window.location.pathname + "?format=" + renderType + "&" + params;
             },
@@ -117,8 +117,8 @@ hqDefine("userreports/js/configurable_report", function() {
 
         if (initial_page_data("created_by_builder")) {
             hqImport('userreports/js/report_analytix').track.event(
-                    initial_page_data("builder_report_type"),
-                    'Load a report that was built in report builder'
+                initial_page_data("builder_report_type"),
+                'Load a report that was built in report builder'
             );
         }
     });

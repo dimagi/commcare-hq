@@ -16,6 +16,7 @@ from corehq.apps.app_manager.exceptions import AppEditingError, \
     ModuleNotFoundException, FormNotFoundException, AppLinkError
 from corehq.apps.app_manager.models import Application, ReportModule, enable_usercase_if_necessary, CustomIcon
 from corehq.apps.linked_domain.exceptions import RemoteRequestError, RemoteAuthError, ActionNotPermitted
+from corehq.apps.linked_domain.models import AppLinkDetail
 from corehq.apps.linked_domain.remote_accessors import pull_missing_multimedia_for_app
 
 from corehq.apps.app_manager.util import update_form_unique_ids
@@ -158,7 +159,8 @@ def get_default_followup_form_xml(context):
 def overwrite_app(app, master_build, report_map=None):
     excluded_fields = set(Application._meta_fields).union([
         'date_created', 'build_profiles', 'copy_history', 'copy_of',
-        'name', 'comment', 'doc_type', '_LAZY_ATTACHMENTS', 'practice_mobile_worker_id'
+        'name', 'comment', 'doc_type', '_LAZY_ATTACHMENTS', 'practice_mobile_worker_id',
+        'custom_base_url'
     ])
     master_json = master_build.to_json()
     app_json = app.to_json()
@@ -286,7 +288,12 @@ def handle_custom_icon_edits(request, form_or_module, lang):
             form_or_module.custom_icons = []
 
 
-def update_linked_app(app):
+def update_linked_app(app, user_id):
+    if not app.domain_link:
+        raise AppLinkError(_(
+            'This project is not authorized to update from the master application. '
+            'Please contact the maintainer of the master app if you believe this is a mistake. '
+        ))
     try:
         master_version = app.get_master_version()
     except RemoteRequestError:
@@ -333,3 +340,5 @@ def update_linked_app(app):
             raise AppLinkError(_(
                 'Error fetching multimedia from remote server. Please try again later.'
             ))
+
+    app.domain_link.update_last_pull('app', user_id, model_details=AppLinkDetail(app_id=app._id))

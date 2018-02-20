@@ -60,14 +60,13 @@
         <br/>
     </fieldset>
     <fieldset>
-        <legend>{% trans "New Phone" %}</legend>
+        <legend>{% trans "Reset Two-Factor Authentication" %}</legend>
         <p>{% blocktrans %}
-            If you would like to enable a new phone as your primary device you can do so.
-            Clicking below will disable your current default device so make sure you have a backup device or
-            tokens available in case you are unable to complete the process.
+            Clicking below will disable your current two-factor authentication and rerun Two-Factor Authentication setup,
+            so make sure you have a backup device or tokens available in case you are unable to complete the process.
         {% endblocktrans %}</p>
-        <p><a class="btn btn-default" href="{% url 'new_phone' %}">
-          {% trans "Set Up New Phone" %}</a></p>
+        <p><a class="btn btn-default" href="{% url 'reset' %}">
+          {% trans "Reset Two-Factor Authentication" %}</a></p>
         <br/>
     </fieldset>
       {% else %}

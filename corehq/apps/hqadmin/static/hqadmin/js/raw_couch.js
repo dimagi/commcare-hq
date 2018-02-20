@@ -14,7 +14,7 @@ hqDefine('hqadmin/js/raw_couch', function () {
                     mode: {name: "javascript", json: true},
                     viewportMargin: Infinity,
                     foldGutter: true,
-                    gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"]
+                    gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"],
                 });
             }
         }

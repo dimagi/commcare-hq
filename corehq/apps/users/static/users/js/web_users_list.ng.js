@@ -6,7 +6,7 @@
         'ui.bootstrap',
         'ngResource',
         'ngRoute',
-        'ng.django.rmi'
+        'ng.django.rmi',
     ]);
 
     var WebUser = function (data) {
@@ -68,7 +68,7 @@
             djangoRMI.get_users({
                 limit: $scope.limit,
                 page: $scope.currentPage,
-                query: $scope.query
+                query: $scope.query,
             })
                 .success(self.updateUserList)
                 .error(self.retry);

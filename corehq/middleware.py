@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import division
 import functools
 import logging
 import mimetypes
@@ -77,7 +78,7 @@ class MemoryUsageMiddleware(object):
     def process_response(self, request, response):
         if self._check_psutil() and hasattr(request, '_profile_memory'):
             mem = psutil.Process(os.getpid()).get_memory_info()
-            diff = (mem.rss - request._profile_memory.rss) / 1024
+            diff = (mem.rss - request._profile_memory.rss) // 1024
             profile_logger.info('{} memory usage {} KB'.format(request.path, diff))
         return response
 

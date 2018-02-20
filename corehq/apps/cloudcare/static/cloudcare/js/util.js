@@ -7,7 +7,7 @@ hqDefine('cloudcare/js/util', function () {
     }
 
     NProgress.configure({
-        showSpinner: false
+        showSpinner: false,
     });
 
     var getFormUrl = function(urlRoot, appId, moduleId, formId, instanceId) {
@@ -39,11 +39,11 @@ hqDefine('cloudcare/js/util', function () {
         _show(message, $el, autoHideTime, "", true);
     };
 
-    var showSuccess = function (message, $el, autoHideTime) {
+    var showSuccess = function (message, $el, autoHideTime, isHTML) {
         if (message === undefined) {
             message = "Success";
         }
-        _show(message, $el, autoHideTime, "alert alert-success");
+        _show(message, $el, autoHideTime, "alert alert-success", isHTML);
     };
 
     var _show = function (message, $el, autoHideTime, classes, isHTML) {
@@ -52,18 +52,17 @@ hqDefine('cloudcare/js/util', function () {
         $container.addClass(classes);
         if (isHTML) {
             $container.html(message);
-            // HTML errors already have an alert dialog
-            $alertDialog = $container.find('.alert');
         } else {
             $container.text(message);
-            $alertDialog = $container;
         }
+        // HTML errors may already have an alert dialog
+        $alertDialog = $container.hasClass("alert") ? $container : $container.find('.alert');
         $alertDialog
             .prepend(
                 $("<a />")
-                .addClass("close")
-                .attr("data-dismiss", "alert")
-                .html("&times;")
+                    .addClass("close")
+                    .attr("data-dismiss", "alert")
+                    .html("&times;")
             );
         $el.append($container);
         if (autoHideTime) {

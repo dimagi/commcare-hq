@@ -19,8 +19,13 @@
             </small>
         </p>
     </div>
-    <p class="pull-right auto-release-notes">
-        {% trans 'What are Released Versions?' %}
+    <p class="pull-right auto-release-notes" data-bind="visible: savedApps().length || onlyShowReleased()">
+        <a href="#" data-bind="click: toggleLimitToReleased"><span data-bind="visible: !onlyShowReleased()">{% trans 'Show only released versions' %}</span></a>
+        <span data-bind="visible: onlyShowReleased()">
+            {% trans 'Released versions only' %}
+        </span>
+        <a href="#" data-bind="click: toggleLimitToReleased, visible: onlyShowReleased()" class="label label-info">{% trans 'show all' %}</a>
+
         <span class="hq-help-template"
             data-title="Released Versions"
             data-container="body"

@@ -38,9 +38,9 @@ hqDefine('app_manager/js/forms/edit_form_details', function () {
                     data: { comment: module.comment() },
                     success: function (data){
                         _updateCallbackFn(module.name(), module.comment());
-                    }
+                    },
                 });
-            }
+            },
         });
     };
 

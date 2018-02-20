@@ -75,7 +75,7 @@ hqDefine("reminders/js/reminders.list", function() {
                             $(target_button).button('error');
                         }
                     }
-                }
+                },
             });
         };
     };

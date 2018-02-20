@@ -2355,6 +2355,7 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
             if location.location_id in membership.assigned_location_ids:
                 return
             membership.assigned_location_ids.append(location.location_id)
+            self.get_sql_locations.reset_cache(self)
             self.save()
         else:
             self.set_location(domain, location)
@@ -2373,6 +2374,7 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
         membership.location_id = location_id
         if self.location_id not in membership.assigned_location_ids:
             membership.assigned_location_ids.append(location_id)
+            self.get_sql_locations.reset_cache(self)
         self.get_sql_location.reset_cache(self)
         self.save()
 
@@ -2385,6 +2387,7 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
         old_location_id = membership.location_id
         if old_location_id:
             membership.assigned_location_ids.remove(old_location_id)
+            self.get_sql_locations.reset_cache(self)
         if membership.assigned_location_ids and fall_back_to_next:
             membership.location_id = membership.assigned_location_ids[0]
         else:
@@ -2403,6 +2406,7 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
             self.unset_location(domain, fall_back_to_next)
         else:
             membership.assigned_location_ids.remove(location_id)
+            self.get_sql_locations.reset_cache(self)
             self.save()
 
     def reset_locations(self, domain, location_ids):
@@ -2414,6 +2418,7 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
         membership.assigned_location_ids = location_ids
         if not membership.location_id and location_ids:
             membership.location_id = location_ids[0]
+        self.get_sql_locations.reset_cache(self)
         self.save()
 
     @memoized

@@ -36,7 +36,7 @@ hqDefine('domain/js/media_manager', function () {
                 ko.utils.arrayForEach(self.media, function(m) {
                     m.shared(value);
                 });
-            }
+            },
         });
     };
 

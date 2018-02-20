@@ -13,7 +13,9 @@ function setMapHeight(map, animate) {
     }
     height = Math.max(height, 300);
     if (animate) {
-        $map.animate({height: height}, null, null, function() {
+        $map.animate({
+            height: height,
+        }, null, null, function() {
             map.invalidateSize();
         });
     } else {
@@ -24,7 +26,7 @@ function setMapHeight(map, animate) {
 
 function forEachDimension(metric, callback) {
     $.each(DISPLAY_DIMENSIONS, function(i, e) {
-        if (typeof metric[e] == 'object') {
+        if (typeof metric[e] === 'object') {
             callback(e, metric[e]);
         }
     });
@@ -48,7 +50,10 @@ function MetricsViewModel(control) {
     this.defaultMetric = null;
 
     this.load = function(metrics) {
-        this.root(new MetricModel({title: '_root', children: metrics}, null, this));
+        this.root(new MetricModel({
+            title: '_root',
+            children: metrics,
+        }, null, this));
         this.root().expanded(true);
 
         if (this.defaultMetric) {
@@ -56,11 +61,11 @@ function MetricsViewModel(control) {
         } else {
             this.renderMetric(null);
         }
-    }
+    };
 
     this.renderMetric = function(metric) {
         control.render(metric);
-    }
+    };
 
     this.unselectAll = function() {
         var unselect = function(node) {
@@ -68,9 +73,9 @@ function MetricsViewModel(control) {
                 unselect(e);
             });
             node.selected(false);
-        }
+        };
         unselect(this.root());
-    }
+    };
 }
 
 function MetricModel(data, parent, root) {
@@ -127,7 +132,7 @@ function MetricModel(data, parent, root) {
 
 LegendControl = L.Control.extend({
     options: {
-        position: 'bottomright'
+        position: 'bottomright',
     },
 
     onAdd: function(map) {
@@ -145,12 +150,12 @@ LegendControl = L.Control.extend({
         this.$div.show();
         this.$div.empty();
         renderLegend(this.$div, metric, this.options.config);
-    }
+    },
 });
 
 HeadsUpControl = L.Control.extend({
     options: {
-        position: 'bottomright'
+        position: 'bottomright',
     },
 
     onAdd: function(map) {
@@ -182,13 +187,13 @@ HeadsUpControl = L.Control.extend({
         var content = template(context);
         this.$div.html(content);
         this.$div.show();
-    }
+    },
 });
 
 // a control button that will fit the map viewport to the currently displayed data
 ZoomToFitControl = L.Control.extend({
     options: {
-        position: 'topright'
+        position: 'topright',
     },
 
     onAdd: function(map) {
@@ -197,13 +202,13 @@ ZoomToFitControl = L.Control.extend({
             zoomToAll(map);
         });
         return this.$div[0];
-    }
+    },
 });
 
 // a control button to scroll table into view
 ToggleTableControl = L.Control.extend({
     options: {
-        position: 'topright'
+        position: 'topright',
     },
 
     onAdd: function(map) {
@@ -213,7 +218,7 @@ ToggleTableControl = L.Control.extend({
             setMapHeight(map, true);
         });
         return this.$div[0];
-    }
+    },
 });
 
 function load(context, iconPath) {
@@ -274,7 +279,11 @@ function initMetrics(map, table, data, config) {
     }
 
     if (config.metrics) {
-        config.metrics = ([]).concat([{title: 'Auto', group: true, children: config.metrics}]);
+        config.metrics = ([]).concat([{
+            title: 'Auto',
+            group: true,
+            children: config.metrics,
+        }]);
     }
     // set sensible defaults for metric parameters (if omitted)
     forEachMetric(config.metrics, function(metric) {
@@ -288,7 +297,9 @@ function initMetrics(map, table, data, config) {
                 meta.thresholds = _.map(meta.thresholds, typecast);
             }
             if (meta.colorstops) {
-                meta.colorstops = _.map(meta.colorstops, function(e) { return [typecast(e[0]), e[1]]; });
+                meta.colorstops = _.map(meta.colorstops, function(e) {
+                    return [typecast(e[0]), e[1]];
+                });
             }
             if (meta.categories) {
                 var _cat = {};
@@ -312,16 +323,20 @@ function initMetrics(map, table, data, config) {
         });
     });
 
-    var l = new LegendControl({config: config}).addTo(map);
-    var h = new HeadsUpControl({config: config}).addTo(map);
+    var l = new LegendControl({
+        config: config,
+    }).addTo(map);
+    var h = new HeadsUpControl({
+        config: config,
+    }).addTo(map);
     var metrics = {
         metrics: config.metrics,
         data: data,
         legend: l,
-        info: h
-    }
-    if(table !== undefined) {
-        metrics.table = table
+        info: h,
+    };
+    if (table !== undefined) {
+        metrics.table = table;
     }
     var m = new MetricsControl(metrics).addTo(map);
 
@@ -333,16 +348,16 @@ function initLayers(map, layers_spec) {
         'fallback': {
             url_template: 'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
             args: {
-                attribution: '<a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-            }
+                attribution: '<a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+            },
         },
         'mapbox': {
             url_template: 'http://api.tiles.mapbox.com/v3/{apikey}/{z}/{x}/{y}.png',
             args: {
-                attribution: '<a href="http://www.mapbox.com/about/maps/">MapBox</a>'
-            }
-        }
-    }
+                attribution: '<a href="http://www.mapbox.com/about/maps/">MapBox</a>',
+            },
+        },
+    };
 
     var mkLayer = function(spec) {
         if (spec.family) {
@@ -354,7 +369,7 @@ function initLayers(map, layers_spec) {
             });
         }
         return L.tileLayer(spec.url_template, spec.args);
-    }
+    };
 
     var layers = {};
     var defaultLayer = null;
@@ -386,10 +401,12 @@ function zoomToAll(map) {
         setTimeout(function() {
             var bounds = map.activeOverlay.getBounds();
             if (bounds.isValid()) {
-                map.fitBounds(map.activeOverlay.getBounds(), {padding: [60, 60]});
+                map.fitBounds(map.activeOverlay.getBounds(), {
+                    padding: [60, 60],
+                });
             }
         }, 0); // run at next tick to avoid race condition and freeze
-               // (https://github.com/Leaflet/Leaflet/issues/2021)
+        // (https://github.com/Leaflet/Leaflet/issues/2021)
     }
 }
 
@@ -406,7 +423,7 @@ function makeDisplayContext(metric, setActiveFeature) {
             // store visibility on the feature object so datatables can access it
             feature.visible = (feature._conf != null);
             if (!feature.visible) {
-                if(!feature.$tr){
+                if (!feature.$tr) {
                     return feature.visible;
                 }
                 feature.$tr.addClass('inactive-row');
@@ -416,18 +433,18 @@ function makeDisplayContext(metric, setActiveFeature) {
         style: function(feature) {
             return feature._conf;
         },
-        pointToLayer: function (feature, latlng) {
+        pointToLayer: function(feature, latlng) {
             return feature._conf(latlng);
         },
         onEachFeature: function(feature, layer) {
             // popup
             layer.bindPopup(feature.popupContent, {
                 maxWidth: 600,
-                autoPanPadding: [200, 100]
+                autoPanPadding: [200, 100],
             });
-            var tableEnabled = feature.$tr;  // todo: might want to make this more explicit
+            var tableEnabled = feature.$tr; // todo: might want to make this more explicit
 
-            var handlePopups = function () {
+            var handlePopups = function() {
                 // open popup on table row click / highlight table row on popup open
                 var selectRow = function($tr) {
                     $('#tabular tr').removeClass('selected-row');
@@ -453,7 +470,7 @@ function makeDisplayContext(metric, setActiveFeature) {
                 layer.on('popupclose', function() {
                     selectRow(null);
                 });
-            }
+            };
 
 
             if (tableEnabled) {
@@ -493,14 +510,14 @@ function makeDisplayContext(metric, setActiveFeature) {
             };
             layer.on({
                 mouseover: hoverOn,
-                mouseout: hoverOff
+                mouseout: hoverOff,
             });
             if (tableEnabled) {
                 feature.$tr.hover(hoverOn, hoverOff);
             }
 
-        }
-    }
+        },
+    };
 }
 
 function markerFactory(metric, props) {
@@ -538,7 +555,7 @@ function featureStyle(metric, props) {
             weight: 1,
             opacity: 1,
             fillColor: fill.color,
-            fillOpacity: fill.alpha
+            fillOpacity: fill.alpha,
         };
     } catch (err) {
         // marker cannot be rendered due to data error
@@ -551,7 +568,7 @@ function featureStyle(metric, props) {
 ACTIVE_STYLE = {
     color: '#ff0',
     weight: 2,
-    opacity: 1
+    opacity: 1,
 };
 
 function mkMarker(latlng, options) {
@@ -579,7 +596,7 @@ function defaultFeatureStyle() {
         weight: 1,
         opacity: .8,
         fillColor: '#888',
-        fillOpacity: .3
+        fillOpacity: .3,
     };
 }
 
@@ -597,7 +614,7 @@ function circleMarker(metric, props) {
             opacity: 1,
             radius: size,
             fillColor: fill.color,
-            fillOpacity: fill.alpha
+            fillOpacity: fill.alpha,
         };
         var marker = L.circleMarker(latlng, style);
         marker._activate = function() {
@@ -620,24 +637,25 @@ function iconMarker(metric, props) {
         var marker = mkMarker(latlng, {
             icon: L.icon({
                 iconUrl: icon.url,
-            })
+            }),
         });
         var img = new Image();
         img.onload = function() {
             // leaflet needs explicit icon dimensions
             marker.setIcon(L.icon({
                 iconUrl: icon.url,
-                iconSize: [this.width, this.height]
+                iconSize: [this.width, this.height],
             }));
         };
         img.src = icon.url;
 
         return marker;
-    }
+    };
 }
 
 DEFAULT_SIZE = 10;
 DEFAULT_MIN_SIZE = 3;
+
 function getSize(meta, props) {
     if (meta == null) {
         return DEFAULT_SIZE;
@@ -661,11 +679,12 @@ function markerSize(val, baseline) {
 }
 
 DEFAULT_COLOR = 'rgba(255, 120, 0, .8)';
+
 function getColor(meta, props) {
     var c = (function() {
         if (meta == null) {
             return DEFAULT_COLOR;
-        } else if (typeof meta == 'string') {
+        } else if (typeof meta === 'string') {
             return meta;
         } else {
             var val = getPropValue(props, meta);
@@ -687,14 +706,18 @@ function getColor(meta, props) {
     }
 
     c = $.Color(c);
-    return {color: c.toHexString(), alpha: c.alpha()};
+    return {
+        color: c.toHexString(),
+        alpha: c.alpha(),
+    };
 }
 
 DEFAULT_ICON_URL = '/static/reports/css/leaflet/images/default_custom.png';
+
 function getIcon(meta, props) {
     //TODO support css sprites
     var icon = (function() {
-        if (typeof meta == 'string') {
+        if (typeof meta === 'string') {
             return meta;
         } else {
             var val = getPropValue(props, meta);
@@ -704,7 +727,9 @@ function getIcon(meta, props) {
     if (icon == null) {
         return null;
     }
-    return {url: icon};
+    return {
+        url: icon,
+    };
 }
 
 function getPropValue(props, meta) {
@@ -748,7 +773,9 @@ function infoContext(feature, config, mode) {
             return feature.properties[displayOverrideCol];
         }
 
-        var fallback = {_null: '\u2014'};
+        var fallback = {
+            _null: '\u2014',
+        };
         fallback[datum] = formatValue(col, datum, config);
         return getEnumCaption(col, datum, config, fallback);
     };
@@ -768,7 +795,7 @@ function infoContext(feature, config, mode) {
         raw: rawProperties,
         titles: propTitles,
         name: (config.name_column ? feature.properties[config.name_column] : null),
-        info: []
+        info: [],
     };
     $.each(info_cols, function(i, e) {
         context.info.push({
@@ -807,30 +834,32 @@ function setMetricDefaults(metric, data, config) {
                 varcols.push(col);
             }
         });
-        metric.title = $.map(varcols, function(e) { return getColumnTitle(e, config); }).join(' / ');
+        metric.title = $.map(varcols, function(e) {
+            return getColumnTitle(e, config);
+        }).join(' / ');
     }
 
-    if (typeof metric.size == 'object') {
+    if (typeof metric.size === 'object') {
         if (!metric.size.baseline) {
             var stats = summarizeColumn(metric.size, data);
             metric.size.baseline = (stats.mean || 1);
         }
     }
 
-    if (typeof metric.color == 'object') {
+    if (typeof metric.color === 'object') {
         if (!metric.color.categories && !metric.color.colorstops) {
             var stats = summarizeColumn(metric.color, data);
             var numeric_data = (!metric.color.thresholds && !stats.nonnumeric);
             if (numeric_data) {
                 metric.color.colorstops = (magnitude_based_field(stats) ?
-                                           [
-                                               [0, 'rgba(20, 20, 20, .8)'],
-                                               [stats.max || 1, DEFAULT_COLOR],
-                                           ] :
-                                           [
-                                               [stats.min, 'rgba(0, 0, 255, .8)'],
-                                               [stats.min == stats.max ? 0 : stats.max, 'rgba(255, 0, 0, .8)'],
-                                           ]);
+                    [
+                        [0, 'rgba(20, 20, 20, .8)'],
+                        [stats.max || 1, DEFAULT_COLOR],
+                    ] :
+                    [
+                        [stats.min, 'rgba(0, 0, 255, .8)'],
+                        [stats.min == stats.max ? 0 : stats.max, 'rgba(255, 0, 0, .8)'],
+                    ]);
             } else {
                 if (metric.color.thresholds) {
                     var enums = metric.color.thresholds.slice(0);
@@ -849,9 +878,11 @@ function setMetricDefaults(metric, data, config) {
         }
     }
 
-    if (typeof metric.icon == 'object') {
+    if (typeof metric.icon === 'object') {
         if (!metric.icon.categories) {
-            metric.icon.categories = {_other: DEFAULT_ICON_URL};
+            metric.icon.categories = {
+                _other: DEFAULT_ICON_URL,
+            };
         }
     }
 }
@@ -861,7 +892,7 @@ function getAllCols(config, data) {
         var ignoreCols = [config.name_column];
         var ignorePrefix = '__disp_';
         return (ignoreCols.indexOf(col) != -1 ||
-                col.indexOf(ignorePrefix) == 0);
+            col.indexOf(ignorePrefix) == 0);
     };
 
     var _cols = {};
@@ -872,21 +903,31 @@ function getAllCols(config, data) {
             }
         });
     });
-    return _.sortBy(_.keys(_cols), function(e) { return getColumnTitle(e, config); });
+    return _.sortBy(_.keys(_cols), function(e) {
+        return getColumnTitle(e, config);
+    });
 }
 
 function autoConfiguration(config, data) {
     var metrics = $.map(getAllCols(config, data), function(e) {
-        return {auto: e};
+        return {
+            auto: e,
+        };
     });
     // metrics may already exist if we're in debug mode
-    config.metrics = (config.metrics || []).concat([{title: 'Auto', group: true, children: metrics}]);
+    config.metrics = (config.metrics || []).concat([{
+        title: 'Auto',
+        group: true,
+        children: metrics,
+    }]);
 }
 
 function autoMetricForColumn(col, data) {
-    var meta = {column: col};
+    var meta = {
+        column: col,
+    };
     var stats = summarizeColumn(meta, data);
-    var metric = {}
+    var metric = {};
     if (stats.nonnumeric || !magnitude_based_field(stats) || stats.nonpoint) {
         metric.color = meta;
     } else {
@@ -930,7 +971,7 @@ function _summarizeColumn(meta, data) {
             }
             callback(val, numeric, polygon);
         });
-    }
+    };
 
     iterate(function(val, numeric, polygon) {
         _uniq[val] = true;
@@ -998,7 +1039,7 @@ function getEnumValues(meta) {
     var labelFallbacks = {};
     var toLabel = function(e) {
         return meta._enumCaption(e, labelFallbacks);
-    }
+    };
 
     if (meta.thresholds) {
         var enums = meta.thresholds.slice(0);
@@ -1021,8 +1062,12 @@ function getEnumValues(meta) {
         }
     } else {
         var enums = _.keys(meta.categories);
-        var special = _.filter(enums, function(e) { return e[0] == '_'; });
-        enums = _.filter(enums, function(e) { return e[0] != '_'; });
+        var special = _.filter(enums, function(e) {
+            return e[0] == '_';
+        });
+        enums = _.filter(enums, function(e) {
+            return e[0] != '_';
+        });
 
         enums = _.sortBy(enums, toLabel);
         // move special categories to the end
@@ -1033,12 +1078,18 @@ function getEnumValues(meta) {
         });
     }
 
-    return $.map(enums, function(e, i) { return {label: toLabel(e), value: e}; });
+    return $.map(enums, function(e, i) {
+        return {
+            label: toLabel(e),
+            value: e,
+        };
+    });
 }
 
 // FIXME i18n
 OTHER_LABEL = 'Other';
 NULL_LABEL = 'No Data';
+
 function getEnumCaption(column, value, config, fallbacks) {
     if (isNull(value)) {
         value = '_null';
@@ -1046,7 +1097,10 @@ function getEnumCaption(column, value, config, fallbacks) {
     var captions = (config.enum_captions || {})[column] || {};
 
     fallbacks = fallbacks || {};
-    $.each({'_other': OTHER_LABEL, '_null': NULL_LABEL}, function(k, v) {
+    $.each({
+        '_other': OTHER_LABEL,
+        '_null': NULL_LABEL,
+    }, function(k, v) {
         fallbacks[k] = fallbacks[k] || v;
     });
     var fallback = fallbacks[value] || value;
@@ -1104,7 +1158,7 @@ function renderLegend($e, metric, config) {
         ({
             size: sizeLegend,
             color: colorLegend,
-            icon: iconLegend
+            icon: iconLegend,
         })[type]($div, meta);
         $e.append($div);
     });
@@ -1120,7 +1174,9 @@ function sizeLegend($e, meta) {
         };
     });
 
-    var $rendered = $(_.template($('#legend_size').text())({entries: rows}));
+    var $rendered = $(_.template($('#legend_size').text())({
+        entries: rows,
+    }));
 
     $.each(rows, function(i, e) {
         var $r = $rendered.find('#sizerow-' + i);
@@ -1158,10 +1214,10 @@ function colorScaleLegend($e, meta) {
     var EPOCH2000 = 946684800;
     var fromDate = function(s) {
         return s / 1000. - EPOCH2000;
-    }
+    };
     var toDate = function(s) {
         return new Date((s + EPOCH2000) * 1000.);
-    }
+    };
 
     var min = meta.colorstops[0][0];
     var max = meta.colorstops.slice(-1)[0][0];
@@ -1198,10 +1254,15 @@ function colorScaleLegend($e, meta) {
     }
 
     var ticks = $.map(tickvals, function(e) {
-        return {label: meta._formatNum(dateScale ? toDate(e) : e), coord: (1. - (e - min) / range) * SCALEBAR_HEIGHT};
+        return {
+            label: meta._formatNum(dateScale ? toDate(e) : e),
+            coord: (1. - (e - min) / range) * SCALEBAR_HEIGHT,
+        };
     });
 
-    var $rendered = $(_.template($('#legend_colorscale').text())({ticks: ticks}));
+    var $rendered = $(_.template($('#legend_colorscale').text())({
+        ticks: ticks,
+    }));
     $rendered.find('#scalebar').append($canvas);
     $e.append($rendered);
 }
@@ -1209,7 +1270,9 @@ function colorScaleLegend($e, meta) {
 function enumLegend($e, meta, renderValue) {
     var enums = getEnumValues(meta);
 
-    var $rendered = $(_.template($('#legend_enum').text())({enums: enums}));
+    var $rendered = $(_.template($('#legend_enum').text())({
+        enums: enums,
+    }));
 
     $.each(enums, function(i, e) {
         var $r = $rendered.find('#enumrow-' + i);
@@ -1248,7 +1311,7 @@ function typecast(x) {
     }
 
     return x;
-};
+}
 
 
 
@@ -1292,7 +1355,9 @@ function matchCategories(val, categories) {
 function matchSpline(val, stops, blendfunc) {
     blendfunc = blendfunc || blendLinear;
 
-    stops = _.sortBy(stops, function(e) { return e[0]; });
+    stops = _.sortBy(stops, function(e) {
+        return e[0];
+    });
     var x = [];
     var y = [];
     $.each(stops, function(i, e) {
@@ -1330,7 +1395,7 @@ function blendColor(a, b, k) {
             channels[i] *= channels[3];
         }
         return channels;
-    }
+    };
 
     // reverse toLinear()
     var fromLinear = function(channels) {
@@ -1339,7 +1404,7 @@ function blendColor(a, b, k) {
             channels[i] = Math.floor(256. * Math.pow(channels[i], 1. / GAMMA));
         }
         return $.Color(channels);
-    }
+    };
 
     lA = toLinear(a);
     lB = toLinear(b);
@@ -1361,7 +1426,7 @@ function niceRoundNumber(x, stops, orderOfMagnitude) {
 
     var getStop = function(i) {
         return (i == stops.length ? orderOfMagnitude * stops[0] : stops[i]);
-    }
+    };
     var cutoffs = $.map(stops, function(e, i) {
         var multiplier = getStop(i + 1);
         var cutoff = Math.sqrt(e * multiplier);
@@ -1369,11 +1434,18 @@ function niceRoundNumber(x, stops, orderOfMagnitude) {
             multiplier /= orderOfMagnitude;
             cutoff /= orderOfMagnitude;
         }
-        return {cutoff: cutoff, mult: multiplier};
+        return {
+            cutoff: cutoff,
+            mult: multiplier,
+        };
     });
-    cutoffs = _.sortBy(cutoffs, function(co) { return co.cutoff; });
+    cutoffs = _.sortBy(cutoffs, function(co) {
+        return co.cutoff;
+    });
 
-    var bucket = matchThresholds(xNorm, $.map(cutoffs, function(co) { return co.cutoff; }), true);
+    var bucket = matchThresholds(xNorm, $.map(cutoffs, function(co) {
+        return co.cutoff;
+    }), true);
     var multiplier = (bucket == -1 ? cutoffs.slice(-1)[0].mult / orderOfMagnitude : cutoffs[bucket].mult);
     return Math.pow(orderOfMagnitude, exponent) * multiplier;
 }
@@ -1392,7 +1464,7 @@ function niceRoundInterval(seconds) {
         return niceRoundNumber(seconds, [1, // needed for wraparound
             HOUR, 3 * HOUR, 6 * HOUR, 12 * HOUR,
             DAY, 3 * DAY, 7 * DAY,
-            0.5 * MONTH, MONTH, 3 * MONTH, 6 * MONTH
+            0.5 * MONTH, MONTH, 3 * MONTH, 6 * MONTH,
         ], YEAR);
     } else {
         return YEAR * niceRoundNumber(seconds / YEAR);
@@ -1406,9 +1478,11 @@ function testNiceRoundNumber() {
     };
     var testStops = function(stops, vals) {
         for (var OoM = -2; OoM < 3; OoM++) {
-            $.each(vals, function(i, e) { test([Math.pow(10., OoM) * e, stops]); });
+            $.each(vals, function(i, e) {
+                test([Math.pow(10., OoM) * e, stops]);
+            });
         }
-    }
+    };
 
     testStops([1.5, 3, 6], [1, 1.5, 2.1, 2.2, 3, 4.2, 4.3, 6, 9.4, 9.5]);
     testStops([3, 8], [1, 1.5, 1.6, 3, 4.8, 4.9, 8]);
@@ -1431,7 +1505,7 @@ function testNiceRoundInterval() {
             i = 0;
         }
         return (x / units[i]).toFixed(2) + labels[i];
-    }
+    };
     var test = function(x) {
         var result = niceRoundInterval(x);
         console.log(format(x), format(result));
@@ -1440,12 +1514,12 @@ function testNiceRoundInterval() {
     _.map([
         0.1, 0.14, 0.15, 0.2, 0.31, 0.32, 0.5, 0.7, 0.71,
         1, 1.4, 1.5, 2, 3.1, 3.2, 5, 7, 7.1, 10, 17, 18, 30, 42, 43,
-        M, 1.4*M, 1.5*M, 2*M, 3.1*M, 3.2*M, 5*M, 7*M, 7.1*M, 10*M, 17*M, 18*M, 30*M, 42*M, 43*M,
-        H, 1.7*H, 1.8*H, 3*H, 4.2*H, 4.3*H, 6*H, 8.4*H, 8.5*H, 12*H, 16*H, 17*H,
-        D, 1.7*D, 1.8*D, 3*D, 4.5*D, 4.6*D, 7*D, 10*D, 11*D, 0.5*MO, 0.7*MO, 0.71*MO,
-        MO, 1.7*MO, 1.8*MO, 3*MO, 4.2*MO, 4.3*MO, 6*MO, 8.4*MO, 8.5*MO,
-        Y, 1.4*Y, 1.5*Y, 2*Y, 3.1*Y, 3.2*Y, 5*Y, 7*Y, 7.1*Y,
-        10*Y, 14*Y, 15*Y, 20*Y, 31*Y, 32*Y, 50*Y, 70*Y, 71*Y, 100*Y
+        M, 1.4 * M, 1.5 * M, 2 * M, 3.1 * M, 3.2 * M, 5 * M, 7 * M, 7.1 * M, 10 * M, 17 * M, 18 * M, 30 * M, 42 * M, 43 * M,
+        H, 1.7 * H, 1.8 * H, 3 * H, 4.2 * H, 4.3 * H, 6 * H, 8.4 * H, 8.5 * H, 12 * H, 16 * H, 17 * H,
+        D, 1.7 * D, 1.8 * D, 3 * D, 4.5 * D, 4.6 * D, 7 * D, 10 * D, 11 * D, 0.5 * MO, 0.7 * MO, 0.71 * MO,
+        MO, 1.7 * MO, 1.8 * MO, 3 * MO, 4.2 * MO, 4.3 * MO, 6 * MO, 8.4 * MO, 8.5 * MO,
+        Y, 1.4 * Y, 1.5 * Y, 2 * Y, 3.1 * Y, 3.2 * Y, 5 * Y, 7 * Y, 7.1 * Y,
+        10 * Y, 14 * Y, 15 * Y, 20 * Y, 31 * Y, 32 * Y, 50 * Y, 70 * Y, 71 * Y, 100 * Y,
     ], test);
 }
 
@@ -1492,4 +1566,3 @@ function render_marker(draw, w, h, anchor) {
     );
 }
 */
-

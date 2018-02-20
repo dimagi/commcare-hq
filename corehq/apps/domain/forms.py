@@ -5,7 +5,7 @@ import logging
 import re
 import sys
 import uuid
-from urlparse import urlparse, parse_qs
+from six.moves.urllib.parse import urlparse, parse_qs
 
 from captcha.fields import CaptchaField
 
@@ -92,6 +92,7 @@ from corehq.util.timezones.forms import TimeZoneChoiceField
 from dimagi.utils.decorators.memoized import memoized
 import six
 from six.moves import range
+from six import unichr
 
 # used to resize uploaded custom logos, aspect ratio is preserved
 LOGO_SIZE = (211, 32)

@@ -4,7 +4,8 @@ hqDefine("reminders/js/broadcasts_list", function() {
     $(function() {
         var past_table,
             list_broadcasts_url = hqImport("hqwebapp/js/initial_page_data").reverse("list_broadcasts"),
-            loader_src = hqImport("hqwebapp/js/initial_page_data").get("loader_src");
+            loader_src = hqImport("hqwebapp/js/initial_page_data").get("loader_src"),
+            reminders_migration_in_progress = hqImport("hqwebapp/js/initial_page_data").get("reminders_migration_in_progress");
 
         upcoming_table = $("#upcoming-broadcasts-table").dataTable({
             "lengthChange": false,
@@ -36,7 +37,8 @@ hqDefine("reminders/js/broadcasts_list", function() {
                 {
                     "targets": [3],
                     "render": function(data) {
-                        return '<button class="btn btn-danger" onClick="delete_broadcast(\'' + data + '\');">'
+                        return '<button class="btn btn-danger" onClick="delete_broadcast(\'' + data + '\');" '
+                                    + (reminders_migration_in_progress ? 'disabled' : '') + '>'
                                     + gettext('Delete') + '</button>';
                     },
                 },

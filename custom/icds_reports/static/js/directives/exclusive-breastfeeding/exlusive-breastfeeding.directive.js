@@ -41,18 +41,6 @@ function ExclusiveBreasfeedingController($scope, $routeParams, $location, $filte
     };
     vm.message = storageService.getKey('message') || false;
 
-    vm.prevDay = moment().subtract(1, 'days').format('Do MMMM, YYYY');
-    vm.lastDayOfPreviousMonth = moment().set('date', 1).subtract(1, 'days').format('Do MMMM, YYYY');
-    vm.currentMonth = moment().format("MMMM");
-    vm.showInfoMessage = function () {
-        var selected_month = parseInt($location.search()['month']) || new Date().getMonth() + 1;
-        var selected_year = parseInt($location.search()['year']) || new Date().getFullYear();
-        var current_month = new Date().getMonth() + 1;
-        var current_year = new Date().getFullYear();
-        return selected_month === current_month && selected_year === current_year &&
-            (new Date().getDate() === 1 || new Date().getDate() === 2);
-    };
-
     $scope.$watch(function() {
         return vm.selectedLocations;
     }, function (newValue, oldValue) {
@@ -135,7 +123,7 @@ function ExclusiveBreasfeedingController($scope, $routeParams, $location, $filte
 
     vm.init = function() {
         var locationId = vm.filtersData.location_id || vm.userLocationId;
-        if (!vm.userLocationId || !locationId || locationId === 'all' || locationId === 'null') {
+        if (!locationId || ["all", "null", "undefined"].indexOf(locationId) >= 0) {
             vm.loadData();
             vm.loaded = true;
             return;

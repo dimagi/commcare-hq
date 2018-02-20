@@ -1152,10 +1152,10 @@ class ChildrenExport(ExportableMixin, SqlData):
                 percent,
                 [
                     SumColumn('wasting_normal', filters=self.filters + [
-                        OR([
-                            RawFilter("age_tranche = '0'"),
-                            RawFilter("age_tranche = '6'"),
-                            RawFilter("age_tranche = '72'")
+                        AND([
+                            NOT(EQ('age_tranche', 'age_0')),
+                            NOT(EQ('age_tranche', 'age_6')),
+                            NOT(EQ('age_tranche', 'age_72'))
                         ])
                     ]),
                     AliasColumn('weighed_and_height_measured_in_month')
@@ -1216,6 +1216,15 @@ class ChildrenExport(ExportableMixin, SqlData):
                     AliasColumn('height_measured_in_month')
                 ],
                 slug='percent_normal_stunting'
+            ),
+            AggregateColumn(
+                'Percent of newborns with low birth weight',
+                percent,
+                [
+                    SumColumn('low_birth_weight_in_month'),
+                    SumColumn('weighed_and_born_in_month')
+                ],
+                slug='newborn_low_birth_weight'
             ),
             AggregateColumn(
                 'Percentage of children with completed 1 year immunizations',

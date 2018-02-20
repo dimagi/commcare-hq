@@ -52,22 +52,22 @@ class TestPrevalenceOfUndernutrition(TestCase):
             data['data'],
             {
                 'st1': {
-                    'total': 1585,
+                    'weighed': 1585,
                     'severely_underweight': 40,
                     'moderately_underweight': 320,
                     'fillKey': '20%-35%',
                     'original_name': ["st1"],
                     'normal': 1225,
-                    'eligible': 2375
+                    'total': 2375
                 },
                 'st2': {
-                    'total': 1895,
+                    'weighed': 1895,
                     'severely_underweight': 60,
                     'moderately_underweight': 330,
                     'original_name': ["st2"],
                     'fillKey': '20%-35%',
                     'normal': 1505,
-                    'eligible': 2570
+                    'total': 2570
                 }
             }
         )
@@ -174,8 +174,8 @@ class TestPrevalenceOfUndernutrition(TestCase):
                     'severely_underweight': 8,
                     'moderately_underweight': 64,
                     'normal': 245,
-                    'total': 317,
-                    'eligible': 475,
+                    'weighed': 317,
+                    'total': 475,
                     'original_name': ['b1', 'b2'],
                     'fillKey': '20%-35%'
                 }
@@ -287,25 +287,25 @@ class TestPrevalenceOfUndernutrition(TestCase):
                     {
                         "y": 0.0,
                         "x": 1485907200000,
-                        "all": 0,
+                        "weighed": 0,
                         "unweighed": 0
                     },
                     {
                         "y": 0.0,
                         "x": 1488326400000,
-                        "all": 0,
+                        "weighed": 0,
                         "unweighed": 0
                     },
                     {
                         "y": 0.7467438494934877,
                         "x": 1491004800000,
-                        "all": 3455,
+                        "weighed": 3455,
                         "unweighed": 1655
                     },
                     {
                         "y": 0.7844827586206896,
                         "x": 1493596800000,
-                        "all": 3480,
+                        "weighed": 3480,
                         "unweighed": 1465
                     }
                 ],
@@ -331,25 +331,25 @@ class TestPrevalenceOfUndernutrition(TestCase):
                     {
                         "y": 0.0,
                         "x": 1485907200000,
-                        "all": 0,
+                        "weighed": 0,
                         "unweighed": 0
                     },
                     {
                         "y": 0.0,
                         "x": 1488326400000,
-                        "all": 0,
+                        "weighed": 0,
                         "unweighed": 0
                     },
                     {
                         "y": 0.23154848046309695,
                         "x": 1491004800000,
-                        "all": 3455,
+                        "weighed": 3455,
                         "unweighed": 1655
                     },
                     {
                         "y": 0.1867816091954023,
                         "x": 1493596800000,
-                        "all": 3480,
+                        "weighed": 3480,
                         "unweighed": 1465
                     }
                 ],
@@ -375,25 +375,25 @@ class TestPrevalenceOfUndernutrition(TestCase):
                     {
                         "y": 0.0,
                         "x": 1485907200000,
-                        "all": 0,
+                        "weighed": 0,
                         "unweighed": 0
                     },
                     {
                         "y": 0.0,
                         "x": 1488326400000,
-                        "all": 0,
+                        "weighed": 0,
                         "unweighed": 0
                     },
                     {
                         "y": 0.02170767004341534,
                         "x": 1491004800000,
-                        "all": 3455,
+                        "weighed": 3455,
                         "unweighed": 1655
                     },
                     {
                         "y": 0.028735632183908046,
                         "x": 1493596800000,
-                        "all": 3480,
+                        "weighed": 3480,
                         "unweighed": 1465
                     }
                 ],
@@ -473,25 +473,25 @@ class TestPrevalenceOfUndernutrition(TestCase):
             data['tooltips_data'],
             {
                 u"s2": {
-                    "total": 182,
+                    "weighed": 182,
                     "severely_underweight": 4,
                     "moderately_underweight": 54,
                     "normal": 124,
-                    "eligible": 326
+                    "total": 326
                 },
                 u"s1": {
-                    "total": 134,
+                    "weighed": 134,
                     "severely_underweight": 8,
                     "moderately_underweight": 36,
                     "normal": 90,
-                    "eligible": 144
+                    "total": 144
                 },
                 None: {
-                    "total": 158,
+                    "weighed": 158,
                     "severely_underweight": 6,
                     "moderately_underweight": 45,
                     "normal": 107,
-                    "eligible": 235
+                    "total": 235
                 }
             }
         )

@@ -48,7 +48,8 @@ from custom.enikshay.integrations.bets.repeaters import (
     BETSBeneficiaryRepeater,
     BETSUserRepeater,
 )
-from custom.enikshay.integrations.ninetyninedots.tests.test_repeaters import ENikshayRepeaterTestBase, MockResponse
+from custom.enikshay.integrations.ninetyninedots.tests.test_repeaters import ENikshayRepeaterTestBase
+from custom.enikshay.integrations.ninetyninedots.tests.test_payload_generators import MockResponse
 
 from custom.enikshay.tests.utils import (
     ENikshayLocationStructureMixin, get_person_case_structure, setup_enikshay_locations)

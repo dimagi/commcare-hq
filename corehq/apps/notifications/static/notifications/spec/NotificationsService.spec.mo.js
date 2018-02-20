@@ -14,7 +14,7 @@ describe('NotificationsService Unit Tests', function() {
                     fail: function (errorCallback) {
                         self.errorCallback = errorCallback;
                         return fakePromise.mock(options);
-                    }
+                    },
                 };
             };
         };
@@ -49,7 +49,7 @@ describe('NotificationsService Unit Tests', function() {
                     type: "alert",
                     date: "Today",
                     activated: "2016-07-12T10:21:30.105",
-                }
+                },
             ],
             lastSeenNotification: "2016-07-12T10:21:30.105",
         });

@@ -25,60 +25,48 @@
         return template.replace('-locid-', loc_id);
     }
 
+    var enableLocationSearchSelect = function() {
 
-    {% if request|toggle_enabled:'LOCATION_SEARCH' %}
-
-        var enableLocationSearchSelect = function() {
-
-            $('#location_search_select').select2({
-                ajax: {
-                    url: '{% url 'location_search' domain %}',
-                    dataType: 'json',
-                    data: function (params) {
-                        return {
-                            q: params.term,
-                            page_limit: 10,
-                            page: params.page,
-                            show_inactive: show_inactive,
-                        };
-                    },
-                    processResults: function (data, params) {
-                        var more = data.more || (params.page * 10) < data.total;
-                        return {results: data.results, more: more};
-                    }
+        $('#location_search_select').select2({
+            ajax: {
+                url: '{% url 'location_search' domain %}',
+                dataType: 'json',
+                data: function (params) {
+                    return {
+                        q: params.term,
+                        page_limit: 10,
+                        page: params.page,
+                        show_inactive: show_inactive,
+                    };
                 },
-            });
-        };
+                processResults: function (data, params) {
+                    var more = data.more || (params.page * 10) < data.total;
+                    return {results: data.results, more: more};
+                }
+            },
+        });
+    };
 
-        var tree_model = new LocationTreeViewModel(hierarchy);
+    var tree_model = new LocationTreeViewModel(hierarchy);
 
-        var reloadLocationSearchSelect = function() {
-            $('#location_search_select').select2('val', null);
-            enableLocationSearchSelect();
-        };
-
-        var clearLocationSelection = function() {
-            reloadLocationSearchSelect();
-            tree_model.load(locs);
-        };
-
+    var reloadLocationSearchSelect = function() {
+        $('#location_search_select').select2('val', null);
         enableLocationSearchSelect();
+    };
 
-        $(function() {
-            $('#location_tree').koApplyBindings(tree_model);
-            tree_model.load(locs);
-            var model = new LocationSearchViewModel(tree_model);
-            $('#location_search').koApplyBindings(model);
-        });
+    var clearLocationSelection = function() {
+        reloadLocationSearchSelect();
+        tree_model.load(locs);
+    };
 
-    {% else %}
-        $(function() {
-            var model = new LocationTreeViewModel(hierarchy);
-            $('#location_tree').koApplyBindings(model);
-            model.load(locs);
-        });
+    enableLocationSearchSelect();
 
-    {% endif %}
+    $(function() {
+        $('#location_tree').koApplyBindings(tree_model);
+        tree_model.load(locs);
+        var model = new LocationSearchViewModel(tree_model);
+        $('#location_search').koApplyBindings(model);
+    });
 </script>
 {% endblock %}
 
@@ -158,8 +146,6 @@
 
 <hr />
 
-{% if request|toggle_enabled:'LOCATION_SEARCH' %}
-
 <div class="col-xs-12 col-md-12 col-lg-12 loc_search" id="location_search">
     <label for="location_search" class="col-xs-2 col-md-1 col-lg-1 control-label">Location</label>
 
@@ -185,12 +171,6 @@
     </div>
 
 </div>
-
-
-<link href="{% static 'select2/dist/css/select2.min.css' %}" rel="stylesheet"/>
-<script src="{% static 'select2/dist/js/select2.full.min.js' %}"></script>
-
-{% endif %}
 
 {% if has_location_types %}
     <script type="text/html" id="location-template">

@@ -17,7 +17,7 @@ describe('Fullform UI', function() {
     beforeEach(function() {
         formSpec = {
             "type": "url",
-            "val": "http://dummy/dummy.xml"
+            "val": "http://dummy/dummy.xml",
         };
         questionJSON = {
             "caption_audio": null,
@@ -36,8 +36,8 @@ describe('Fullform UI', function() {
             "caption_video": null,
             "choices": [
                 "Yes",
-                "No"
-            ]
+                "No",
+            ],
         };
 
         repeatJSON = {
@@ -51,7 +51,7 @@ describe('Fullform UI', function() {
             "main-header": "Repeater",
             "children": [],
             "add-choice": "None - Add Repeater",
-            "caption_video": null
+            "caption_video": null,
         };
 
         repeatNestJSON = {
@@ -81,13 +81,13 @@ describe('Fullform UI', function() {
                     "answer": null,
                     "datatype": "str",
                     "style": {},
-                    "caption_video": null
+                    "caption_video": null,
                 }],
-                "repeatable": 1
+                "repeatable": 1,
             }],
             "add-choice": "Add another Repeat Simple",
             "header": "Repeat Simple",
-            "caption_video": null
+            "caption_video": null,
         };
 
         groupJSON = {
@@ -135,13 +135,13 @@ describe('Fullform UI', function() {
             seq_id: 1,
             session_id: '123',
             title: 'My title',
-            langs: ['en']
+            langs: ['en'],
         };
 
         sessionData = {
             "username": "ben",
             "additional_filters": {
-                "footprint": true
+                "footprint": true,
             },
             "domain": "mydomain",
             "user_id": "123",
@@ -150,7 +150,7 @@ describe('Fullform UI', function() {
             "session_name": "SUCCEED CM app > CM4 - Clinic Visit - Benjamin",
             "app_version": "2.0",
             "device_id": "cloudcare",
-            "host": "http://dummy"
+            "host": "http://dummy",
         };
         spy = sinon.spy();
         $.subscribe('formplayer.' + Formplayer.Const.ANSWER, spy);
@@ -219,7 +219,7 @@ describe('Fullform UI', function() {
 
         questionJSON.answer = [3,3];
         form = new Form(_.clone(formJSON)),
-            question = form.children()[0];
+        question = form.children()[0];
         $.publish('session.reconcile', [_.clone(formJSON), question]);
         assert.sameMembers(question.answer(), [3,3]);
     });
@@ -279,7 +279,7 @@ describe('Fullform UI', function() {
             "reason": null,
             "type": "constraint",
             "seq_id": 2,
-            "status": "validation-error"
+            "status": "validation-error",
         }, question]);
 
         assert.isOk(question.serverError());

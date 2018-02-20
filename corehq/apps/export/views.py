@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+from __future__ import division
 from datetime import datetime, date, timedelta
 from wsgiref.util import FileWrapper
 
@@ -1545,7 +1546,7 @@ class DataFileDownloadList(BaseProjectDataView):
         if request.FILES['file'].size > MAX_DATA_FILE_SIZE:
             messages.warning(
                 request,
-                _('The data file exceeds the maximum size of {} MB.').format(MAX_DATA_FILE_SIZE / (1024 * 1024))
+                _('The data file exceeds the maximum size of {} MB.').format(MAX_DATA_FILE_SIZE // (1024 * 1024))
             )
             return self.get(request, *args, **kwargs)
 
@@ -1558,7 +1559,7 @@ class DataFileDownloadList(BaseProjectDataView):
                 request,
                 _('Uploading this data file would exceed the total allowance of {} GB for this project space. '
                   'Please remove some files in order to upload new files.').format(
-                    MAX_DATA_FILE_SIZE_TOTAL / (1024 * 1024 * 1024))
+                    MAX_DATA_FILE_SIZE_TOTAL // (1024 * 1024 * 1024))
             )
             return self.get(request, *args, **kwargs)
 

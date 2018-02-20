@@ -2,7 +2,7 @@
 // and allows you to select and display them
 MetricsControl = L.Control.extend({
     options: {
-        position: 'bottomleft'
+        position: 'bottomleft',
     },
 
     onAdd: function(map) {
@@ -52,7 +52,7 @@ MetricsControl = L.Control.extend({
         }));
 
         this.options.legend.render(metric);
-    }
+    },
 });
 
 function clearMap() {
@@ -86,11 +86,11 @@ function mapsInit(context) {
     try {
         map = initMap($('#map'), context.layers, [30., 0.], 2);
     } catch(e) {
-        map = map_obj
+        map = map_obj;
     }
     initData(context.data, context.config);
     $.each(context.data.features, function(i, e) {
-        e.$tr = $($(".tabular tbody tr")[i])
+        e.$tr = $($(".tabular tbody tr")[i]);
     });
 
     initMetrics(map, undefined, context.data, context.config);
