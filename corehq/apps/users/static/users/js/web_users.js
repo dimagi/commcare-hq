@@ -14,16 +14,17 @@ hqDefine("users/js/web_users", function() {
     $(function() {
         function selectText(element) {
             /* copied from http://stackoverflow.com/questions/985272/jquery-selecting-text-in-an-element-akin-to-highlighting-with-your-mouse */
-            var doc = document;
-            var text = element[0];
+            var doc = document,
+                text = element[0],
+                range;
 
             if (doc.body.createTextRange) { // ms
-                var range = doc.body.createTextRange();
+                range = doc.body.createTextRange();
                 range.moveToElementText(text);
                 range.select();
             } else if (window.getSelection) { // moz, opera, webkit
                 var selection = window.getSelection();
-                var range = doc.createRange();
+                range = doc.createRange();
                 range.selectNodeContents(text);
                 selection.removeAllRanges();
                 selection.addRange(range);
@@ -51,7 +52,7 @@ hqDefine("users/js/web_users", function() {
             $.post(post_url, {
                 restrict_users: $('#restrict_users')[0].checked,
             },
-            function(data, status) {
+            function(data) {
                 $('#save_restrict_option')
                     .text(gettext("Saved"))
                     .removeClass('btn-success')
@@ -91,7 +92,7 @@ hqDefine("users/js/web_users", function() {
         });
         $userRolesTable.show();
 
-        function handleDeletion($el, title, body, post_url, data) {
+        function handleDeletion($el, title, body, post_url) {
             var id = $el.data('id');
             $('#confirm-delete').off('click');
             $('#confirm-delete').on('click', function() {
@@ -100,7 +101,7 @@ hqDefine("users/js/web_users", function() {
                 $.post(post_url, {
                     id: id,
                 },
-                function(data) {
+                function() {
                     $el.closest("tr").remove();
                     $button.removeClass('disabled').prop('disabled', false);
                     $('#modal-deletion').modal('hide');
