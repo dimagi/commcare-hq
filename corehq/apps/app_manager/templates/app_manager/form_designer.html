@@ -58,12 +58,15 @@
     {% initial_page_data 'form_name' form.name|trans:app.langs %}
     {% initial_page_data 'form_comment' form.comment %}
     {% initial_page_data 'form_uses_cases' form.uses_cases %}
+    {% initial_page_data 'is_registration_form' form.is_registration_form %}
+    {% initial_page_data 'is_survey' module.is_surveys %}
     {% initial_page_data 'notification_options' notification_options %}
     {% initial_page_data 'requirejs_args' requirejs_args %}
     {% initial_page_data 'requirejs_url' requirejs_url|static %}
     {% initial_page_data 'vellum_debug' vellum_debug %}
     {% initial_page_data 'vellum_options' vellum_options %}
     {% registerurl 'edit_form_attr' app.domain app.id form.unique_id '---' %}
+
     <div id="formdesigner" class="clearfix loading"></div>
 
     <script type="text/html" id="js-fd-manage-case">

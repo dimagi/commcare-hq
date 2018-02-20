@@ -1,7 +1,22 @@
 /* globals hqDefine, hqImport, define, require, form_tour_start, WS4Redis, django */
 hqDefine("app_manager/js/forms/form_designer", function() {
+    var initial_page_data = hqImport("hqwebapp/js/initial_page_data").get;
+    var FORM_TYPES = {
+        REGISTRATION: "registration",
+        SURVEY: "survey",
+        FOLLOWUP: "followup",
+    };
+    var formType = function () {
+        if (initial_page_data("is_registration_form")) {
+            return FORM_TYPES.REGISTRATION;
+        }
+        if (initial_page_data("is_survey")) {
+            return FORM_TYPES.SURVEY;
+        }
+        return FORM_TYPES.FOLLOWUP;
+    };
+
     $(function() {
-        var initial_page_data = hqImport("hqwebapp/js/initial_page_data").get;
         var VELLUM_OPTIONS = _.extend({}, initial_page_data("vellum_options"), {
             itemset: {
                 dataSourcesFilter: function (sources) {
