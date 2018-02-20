@@ -1,3 +1,4 @@
+/* global interpolate */
 hqDefine('users/js/filtered_download', function () {
     $(function () {
         var prevFilters = {
@@ -16,11 +17,11 @@ hqDefine('users/js/filtered_download', function () {
                     data: currentFilters,
                     success: function(data) {
                         var count = data['count'];
-                        var text = django.ngettext("Download %s User", "Download %s Users", count);
+                        var text = ngettext("Download %s User", "Download %s Users", count);
                         text = interpolate(text, [count]);
                         $('.submit_button').text(text);
                     },
-                    error: function(e) {
+                    error: function() {
                         alert("Error determining number of matching users");
                     },
                 });
