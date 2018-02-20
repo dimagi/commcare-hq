@@ -59,7 +59,7 @@ class TestDataSourceExpressions(SimpleTestCase):
     def tearDown(self):
         CommCareCase.set_db(self.case_orig_db)
         XFormInstance.set_db(self.form_orig_db)
-        XFormInstance.set_db(self.user_orig_db)
+        CommCareUser.set_db(self.user_orig_db)
 
     def get_column(self, column_id):
         return [
