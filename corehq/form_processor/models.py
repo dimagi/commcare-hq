@@ -367,9 +367,6 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
         data = dict(serializer.data)
         data['history'] = [dict(op) for op in data['history']]
         data['backend_id'] = 'sql'
-        # Remove these additional SQL only fields from JSON
-        for field in ['time_end', 'time_start', 'commcare_version', 'build_version']:
-            data.pop(field, None)
         return data
 
     def _get_attachment_from_db(self, attachment_name):
