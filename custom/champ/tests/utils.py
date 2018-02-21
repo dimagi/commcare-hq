@@ -28,31 +28,6 @@ from corehq.sql_db.connections import connection_manager, UCR_ENGINE_ID
 
 class ChampTestCase(TestCase):
 
-    @classmethod
-    def setUpClass(cls):
-        super(ChampTestCase, cls).setUpClass()
-        _call_center_domain_mock = mock.patch(
-            'corehq.apps.callcenter.data_source.call_center_data_source_configuration_provider'
-        )
-        _call_center_domain_mock.start()
-        with override_settings(SERVER_ENVIRONMENT='production'):
-            configs = StaticDataSourceConfiguration.by_domain('champ-cameroon')
-            adapters = [get_indicator_adapter(config) for config in configs]
-
-            for adapter in adapters:
-                adapter.build_table()
-
-            engine = connection_manager.get_engine(UCR_ENGINE_ID)
-            metadata = sqlalchemy.MetaData(bind=engine)
-            metadata.reflect(bind=engine, extend_existing=True)
-            path = os.path.join(os.path.dirname(__file__), 'fixtures')
-            for file_name in os.listdir(path):
-                with open(os.path.join(path, file_name)) as f:
-                    table_name = get_table_name('champ-cameroon', file_name[:-4])
-                    table = metadata.tables[table_name]
-                    postgres_copy.copy_from(f, table, engine, format='csv', null='', header=True)
-        _call_center_domain_mock.stop()
-
     def setUp(self):
         self.factory = RequestFactory()
         domain = Domain.get_or_create_with_name('champ-cameroon')
@@ -67,19 +42,6 @@ class ChampTestCase(TestCase):
         user.is_authenticated = True
         user.is_active = True
         self.user = user
-
-    @classmethod
-    def tearDownClass(cls):
-        _call_center_domain_mock = mock.patch(
-            'corehq.apps.callcenter.data_source.call_center_data_source_configuration_provider'
-        )
-        _call_center_domain_mock.start()
-        with override_settings(SERVER_ENVIRONMENT='production'):
-            configs = StaticDataSourceConfiguration.by_domain('champ-cameroon')
-            adapters = [get_indicator_adapter(config) for config in configs]
-            for adapter in adapters:
-                adapter.drop_table()
-        _call_center_domain_mock.stop()
 
 
 class TestDataSourceExpressions(SimpleTestCase):
