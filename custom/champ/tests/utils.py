@@ -15,15 +15,7 @@ from corehq.apps.userreports.models import DataSourceConfiguration
 from corehq.apps.userreports.specs import FactoryContext
 from corehq.apps.users.models import CommCareUser
 from couchforms.models import XFormInstance
-import postgres_copy
-import sqlalchemy
 import os
-import mock
-
-from django.test.utils import override_settings
-from corehq.apps.userreports.models import StaticDataSourceConfiguration
-from corehq.apps.userreports.util import get_indicator_adapter, get_table_name
-from corehq.sql_db.connections import connection_manager, UCR_ENGINE_ID
 
 
 class ChampTestCase(TestCase):
