@@ -5,6 +5,7 @@ import os
 from django.test.utils import override_settings
 from casexml.apps.phone.tests.utils import deprecated_generate_restore_payload
 from casexml.apps.phone.utils import get_restore_config
+from casexml.apps.phone.models import SyncLogSQL, properly_wrap_sync_log
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from casexml.apps.case.tests.util import check_xml_line_by_line, delete_all_cases, delete_all_sync_logs, \
     delete_all_xforms
@@ -16,6 +17,7 @@ from casexml.apps.phone.tests import const
 from casexml.apps.phone.tests.utils import create_restore_user
 from casexml.apps.case import const as case_const
 from casexml.apps.phone.tests.dummy import dummy_restore_xml, dummy_user_xml
+from casexml.apps.phone.dbaccessors.sync_logs_by_user import get_last_synclog_for_user
 from corehq.apps.users.util import normalize_username
 from corehq.util.test_utils import TestFileMixin
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
@@ -105,19 +107,17 @@ class BaseOtaRestoreTest(TestCase, TestFileMixin):
 @override_settings(CASEXML_FORCE_DOMAIN_CHECK=False)
 class OtaRestoreTest(BaseOtaRestoreTest):
 
+    def _get_the_first_synclog(self):
+        return properly_wrap_sync_log(SyncLogSQL.objects.first().doc)
+
+    def _get_synclog_count(self):
+        return SyncLogSQL.objects.count()
+
     def test_user_restore(self):
-        self.assertEqual(0, SyncLog.view(
-            "phone/sync_logs_by_user",
-            include_docs=True,
-            reduce=False,
-        ).count())
+        self.assertEqual(0, self._get_synclog_count())
         restore_payload = deprecated_generate_restore_payload(
             self.project, self.restore_user, items=True)
-        sync_log = SyncLog.view(
-            "phone/sync_logs_by_user",
-            include_docs=True,
-            reduce=False,
-        ).one()
+        sync_log = self._get_the_first_synclog()
         check_xml_line_by_line(
             self,
             dummy_restore_xml(sync_log.get_id, items=3, user=self.restore_user),
@@ -210,11 +210,7 @@ class OtaRestoreTest(BaseOtaRestoreTest):
             user=self.restore_user,
             items=True,
         )
-        sync_log_id = SyncLog.view(
-            "phone/sync_logs_by_user",
-            include_docs=True,
-            reduce=False,
-        ).one().get_id
+        sync_log_id = self._get_the_first_synclog().get_id
         check_xml_line_by_line(
             self,
             dummy_restore_xml(sync_log_id, expected_case_block, items=4, user=self.restore_user),
@@ -231,6 +227,9 @@ class OtaRestoreTest(BaseOtaRestoreTest):
         """
         Tests sync token / sync mode support
         """
+        def get_all_syncslogs():
+            return [properly_wrap_sync_log(log.doc) for log in SyncLogSQL.objects.all()]
+
         xml_data = self.get_xml('create_short')
         xml_data = xml_data.format(user_id=self.restore_user.user_id)
         submit_form_locally(xml_data, domain=self.project.name)
@@ -238,11 +237,7 @@ class OtaRestoreTest(BaseOtaRestoreTest):
         restore_payload = deprecated_generate_restore_payload(
             self.project, self.restore_user, items=items)
 
-        sync_log_id = SyncLog.view(
-            "phone/sync_logs_by_user",
-            include_docs=True,
-            reduce=False
-        ).one().get_id
+        sync_log_id = get_last_synclog_for_user(self.restore_user.user_id).get_id
         expected_restore_payload = dummy_restore_xml(
             sync_log_id,
             const.CREATE_SHORT.format(user_id=self.restore_user.user_id),
@@ -257,11 +252,8 @@ class OtaRestoreTest(BaseOtaRestoreTest):
             restore_id=sync_log_id,
             items=items,
         )
-        all_sync_logs = SyncLog.view(
-            "phone/sync_logs_by_user",
-            include_docs=True,
-            reduce=False,
-        ).all()
+        all_sync_logs = get_all_syncslogs()
+
         [latest_log] = [log for log in all_sync_logs
                         if log.get_id != sync_log_id]
 
@@ -287,11 +279,7 @@ class OtaRestoreTest(BaseOtaRestoreTest):
             restore_id=latest_log.get_id,
             items=items,
         )
-        all_sync_logs = SyncLog.view(
-            "phone/sync_logs_by_user",
-            include_docs=True,
-            reduce=False,
-        ).all()
+        all_sync_logs = get_all_syncslogs()
         [even_latest_log] = [log for log in all_sync_logs
                              if log.get_id != sync_log_id and
                              log.get_id != latest_log.get_id]
