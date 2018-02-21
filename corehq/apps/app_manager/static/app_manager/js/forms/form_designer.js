@@ -66,7 +66,10 @@ hqDefine("app_manager/js/forms/form_designer", function() {
                 }
                 var appcues = hqImport('analytix/js/appcues');
                 appcues.trackEvent(
-                    appcues.EVENT_TYPES.FORM_SAVE, { formType: formType() }
+                    appcues.EVENT_TYPES.FORM_SAVE, {
+                        formType: formType(),
+                        previewOpen: hqImport("app_manager/js/preview_app").isOpen(),
+                    }
                 );
             },
             onReady: function() {
@@ -207,16 +210,5 @@ hqDefine("app_manager/js/forms/form_designer", function() {
         $("#edit-form-name-modal button[type='submit']").click(function() {
             hqImport('analytix/js/kissmetrix').track.event("Renamed form from form builder");
         });
-
-        // if they are in the guided tour, the preview should pop out after 3 minutes
-        // TODO: improve usage.
-        // Should perhaps be 3 minutes in session rather than 3 minutes on page?
-        if (initial_page_data("guided_tour")) {
-            setTimeout(function () {
-                hqImport("app_manager/js/preview_app").forceShowPreview();
-                var appcues = hqImport('analytix/js/appcues');
-                appcues.trackEvent(appcues.EVENT_TYPES.POPPED_OUT_PREVIEW);
-            }, 1000 * 60 * 3);  // 3 minutes
-        }
     });
 });

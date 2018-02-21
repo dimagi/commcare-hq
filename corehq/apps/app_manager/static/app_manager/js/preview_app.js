@@ -133,6 +133,10 @@ hqDefine('app_manager/js/preview_app', function() {
 
     };
 
+    module.isOpen = function () {
+        return localStorage.getItem(module.DATA.OPEN);
+    };
+
     module.forceShowPreview = function () {
         $(window).trigger(module.EVENTS.RESIZE);
         _private.showAppPreview(false);
