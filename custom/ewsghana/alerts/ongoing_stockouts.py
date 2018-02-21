@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from datetime import datetime, timedelta
 from django.db.models.aggregates import Max
 from casexml.apps.stock.models import StockTransaction
