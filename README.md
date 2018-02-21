@@ -246,7 +246,13 @@ $ java -jar formplayer.jar --spring.config.name=formplayer
 ```
 
 This starts a process in the foreground, so you'll need to keep it open as long
-as you plan on using formplayer.
+as you plan on using formplayer. If formplayer stops working, you can try
+re-fetching it using the same command above. Feel free to add it to your
+`hammer` command or wherever.
+
+```bash
+$ curl https://jenkins.dimagi.com/job/formplayer/lastSuccessfulBuild/artifact/build/libs/formplayer.jar -o formplayer.jar
+```
 
 
 Running CommCare HQ
