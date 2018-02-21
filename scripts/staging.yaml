@@ -58,7 +58,6 @@ branches:
   - dmr/celery-queues  # Danny 2/12
   - nh/omrs/repeater_format  # Norman 2/15
   - jr/ejs/sms-chat # Jordan 2/16
-  - jls/lint-accounting # Jenny 2/21
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
