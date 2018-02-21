@@ -110,8 +110,8 @@
           "boolean_property": {
             "type": "root_doc",
             "expression": {
-              "type": "property_name",
-              "property_name": "play_comp_feeding_vid"
+              "type": "property_path",
+              "property_path": ["form", "play_comp_feeding_vid"]
             }
           },
           "true_values": ["yes"],
