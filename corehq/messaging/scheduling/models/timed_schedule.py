@@ -13,6 +13,7 @@ from datetime import timedelta, datetime, date, time
 from dateutil.parser import parse
 from dimagi.utils.decorators.memoized import memoized
 from django.db import models, transaction
+from six.moves import range
 
 
 class TimedSchedule(Schedule):

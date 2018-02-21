@@ -42,7 +42,7 @@ def get_awc_daily_status_data_map(domain, config, loc_level, show_test=False):
         config['date'] = (date - relativedelta(days=1)).date()
         data = get_data_for(config)
 
-    data_for_map, valid_total, in_day_total, average = generate_data_for_map(
+    data_for_map, valid_total, in_day_total, average, total = generate_data_for_map(
         data,
         loc_level,
         'in_day',

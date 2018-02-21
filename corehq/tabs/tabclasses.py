@@ -912,7 +912,7 @@ class MessagingTab(UITab):
     def reminders_urls(self):
         reminders_urls = []
 
-        if self.can_access_reminders and not self.project.uses_new_reminders:
+        if self.can_access_reminders and self.show_old_reminders_pages:
             from corehq.apps.reminders.views import (
                 EditScheduledReminderView,
                 CreateScheduledReminderView,
@@ -979,10 +979,26 @@ class MessagingTab(UITab):
 
     @property
     @memoized
+    def show_new_reminders_pages(self):
+        return (
+            self.project.uses_new_reminders or
+            toggles.NEW_REMINDERS_MIGRATOR.enabled(self.couch_user.username)
+        )
+
+    @property
+    @memoized
+    def show_old_reminders_pages(self):
+        return (
+            not self.project.uses_new_reminders or
+            toggles.NEW_REMINDERS_MIGRATOR.enabled(self.couch_user.username)
+        )
+
+    @property
+    @memoized
     def messages_urls(self):
         messages_urls = []
 
-        if self.can_use_outbound_sms and not self.project.uses_new_reminders:
+        if self.can_use_outbound_sms and self.show_old_reminders_pages:
             messages_urls.extend([
                 {
                     'title': _('Compose SMS Message'),
@@ -991,7 +1007,7 @@ class MessagingTab(UITab):
             ])
 
         if self.can_access_reminders:
-            if self.project.uses_new_reminders:
+            if self.show_new_reminders_pages:
                 from corehq.messaging.scheduling.views import (
                     BroadcastListView as NewBroadcastListView,
                     CreateScheduleView,
@@ -1032,7 +1048,7 @@ class MessagingTab(UITab):
                         'show_in_dropdown': True,
                     },
                 ])
-            else:
+            if self.show_old_reminders_pages:
                 from corehq.apps.reminders.views import (
                     BroadcastListView as OldBroadcastListView,
                     CreateBroadcastView,
@@ -1062,20 +1078,6 @@ class MessagingTab(UITab):
                 ])
 
         return messages_urls
-
-    @property
-    @memoized
-    def performance_urls(self):
-        performance_urls = []
-        if self.can_access_reminders and toggles.SMS_PERFORMANCE_FEEDBACK.enabled(self.domain):
-            performance_urls.append(
-                {
-                    'title': _('Configure Performance Messages'),
-                    'url': reverse('performance_sms.list_performance_configs', args=[self.domain]),
-                    'show_in_dropdown': True,
-                }
-            )
-        return performance_urls
 
     @property
     @memoized
@@ -1166,7 +1168,6 @@ class MessagingTab(UITab):
         for title, urls in (
             (_("Messages"), self.messages_urls),
             (_("Data Collection and Reminders"), self.reminders_urls),
-            (_("Performance Messaging"), self.performance_urls),
             (_("CommCare Supply"), self.supply_urls),
             (_("Contacts"), self.contacts_urls),
             (_("Settings"), self.settings_urls)
@@ -1596,6 +1597,16 @@ def _get_feature_flag_items(domain):
         feature_flag_items.append({
             'title': _('Location Fixture'),
             'url': reverse(LocationFixtureConfigView.urlname, args=[domain])
+        })
+
+    if toggles.LINKED_DOMAINS.enabled(domain):
+        feature_flag_items.append({
+            'title': _('Linked Projects'),
+            'url': reverse('domain_links', args=[domain])
+        })
+        feature_flag_items.append({
+            'title': _('Linked Project History'),
+            'url': reverse('domain_report_dispatcher', args=[domain, 'project_link_report'])
         })
     return feature_flag_items
 

@@ -68,11 +68,11 @@ def get_enrolled_women_data_map(domain, config, loc_level, show_test=False):
             "average": sum(average) / float(len(average) or 1),
             "average_format": 'number',
             "info": _((
-                "Total number of pregnant women who are enrolled for ICDS services."
+                "Total number of pregnant women who are enrolled for Anganwadi Services."
             )),
             "extended_info": [
                 {
-                    'indicator': 'Number of pregnant women who are enrolled for ICDS services:',
+                    'indicator': 'Number of pregnant women who are enrolled for Anganwadi Services:',
                     'value': indian_formatted_number(total_valid)
                 },
                 {
@@ -83,7 +83,7 @@ def get_enrolled_women_data_map(domain, config, loc_level, show_test=False):
                 },
                 {
                     'indicator': (
-                        'Percentage of registered pregnant women who are enrolled for ICDS services:'
+                        'Percentage of registered pregnant women who are enrolled for Anganwadi Services:'
                     ),
                     'value': '%.2f%%' % (total_valid * 100 / float(total or 1))
                 }
@@ -149,7 +149,7 @@ def get_enrolled_women_sector_data(domain, config, loc_level, location_id, show_
         "tooltips_data": dict(tooltips_data),
         "format": "number",
         "info": _((
-            "Total number of pregnant women who are enrolled for ICDS services."
+            "Total number of pregnant women who are enrolled for Anganwadi Services."
         )),
         "chart_data": [
             {
@@ -227,7 +227,7 @@ def get_enrolled_women_data_chart(domain, config, loc_level, show_test=False):
                         'all': value['all']
                     } for key, value in six.iteritems(data['blue'])
                 ],
-                "key": "Total number of pregnant women who are enrolled for ICDS services",
+                "key": "Total number of pregnant women who are enrolled for Anganwadi Services",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": ChartColors.BLUE

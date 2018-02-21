@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import division
 from collections import namedtuple
 
 from corehq.apps.callcenter.data_source import get_sql_adapters_for_domain
@@ -60,7 +61,7 @@ def _compile_stats(name, ucr_count, es_count):
     total = ucr_count + es_count
 
     def _percent(count):
-        return 0 if total == 0 else int(100 * count / total)
+        return 0 if total == 0 else 100 * count // total
 
     ucr_percent = _percent(ucr_count)
     es_percent = _percent(es_count)

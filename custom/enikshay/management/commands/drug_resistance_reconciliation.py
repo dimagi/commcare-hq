@@ -21,6 +21,8 @@ from custom.enikshay.const import (
     DRUG_RESISTANCE_SENSITIVITY_RESISTANT,
     DRUG_RESISTANCE_SENSITIVITY_SENSITIVE,
 )
+from six.moves import map
+import six
 
 
 class Command(BaseModelReconciliationCommand):
@@ -40,7 +42,7 @@ class Command(BaseModelReconciliationCommand):
         self.commit = options.get('commit')
         self.log_progress = options.get('log_progress')
         self.recipient = (options.get('recipient') or 'mkangia@dimagi.com')
-        self.recipient = list(self.recipient) if not isinstance(self.recipient, basestring) else [self.recipient]
+        self.recipient = list(self.recipient) if not isinstance(self.recipient, six.string_types) else [self.recipient]
         self.result_file_name = self.setup_result_file()
         self.drug_id_values = []
         self.sensitivity_values = []

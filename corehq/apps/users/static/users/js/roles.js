@@ -172,6 +172,6 @@ hqDefine('users/js/roles', function () {
             $element.each(function () {
                 $element.koApplyBindings(new RolesViewModel(o));
             });
-        }
+        },
     };
 });

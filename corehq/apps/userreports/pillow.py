@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 
 from __future__ import division
+from __future__ import unicode_literals
 import hashlib
 from collections import defaultdict, Counter
 from datetime import datetime, timedelta
@@ -56,7 +57,7 @@ def time_ucr_process_change(method):
         if seconds > LONG_UCR_LOGGING_THRESHOLD:
             table = args[2]
             doc = args[3]
-            log_message = u"UCR data source {} on doc_id {} took {} seconds to process".format(
+            log_message = "UCR data source {} on doc_id {} took {} seconds to process".format(
                 table.config._id, doc['_id'], seconds
             )
             pillow_logging.warning(log_message)

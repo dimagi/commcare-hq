@@ -4,6 +4,7 @@ Reporting REST API to import cases on a regular basis (like weekly), or
 its Atom Feed (daily or more) to track changes.
 """
 from __future__ import absolute_import
+from __future__ import division
 import uuid
 from collections import namedtuple
 from datetime import datetime

@@ -15,7 +15,6 @@ import sys
 from django.views.generic.base import TemplateView, View
 from djangular.views.mixins import allow_remote_invocation, JSONResponseMixin
 
-from corehq import toggles
 from corehq.apps.analytics import ab_tests
 from corehq.apps.analytics.tasks import (
     track_workflow,
@@ -102,19 +101,7 @@ class NewUserNumberAbTestMixin__Disabled(object):
 NewUserNumberAbTestMixin = NewUserNumberAbTestMixin__NoAbEnabled
 
 
-class NewUserProfileFieldAbTestMixin(object):
-    @property
-    @memoized
-    def ab_persona_field(self):
-        return ab_tests.ABTest(ab_tests.NEW_USER_PERSONA_FIELD, self.request)
-
-    @property
-    def ab_show_persona(self):
-        return self.ab_persona_field.version == ab_tests.NEW_USER_PERSONA_OPTION_SHOW
-
-
-class ProcessRegistrationView(JSONResponseMixin, NewUserNumberAbTestMixin,
-                              NewUserProfileFieldAbTestMixin, View):
+class ProcessRegistrationView(JSONResponseMixin, NewUserNumberAbTestMixin, View):
     urlname = 'process_registration'
 
     def get(self, request, *args, **kwargs):
@@ -138,7 +125,6 @@ class ProcessRegistrationView(JSONResponseMixin, NewUserNumberAbTestMixin,
         reg_form = RegisterWebUserForm(
             data['data'],
             show_number=self.ab_show_number,
-            show_persona=self.ab_show_persona,
         )
         if reg_form.is_valid():
             self._create_new_account(reg_form)
@@ -177,8 +163,7 @@ class ProcessRegistrationView(JSONResponseMixin, NewUserNumberAbTestMixin,
         }
 
 
-class UserRegistrationView(NewUserNumberAbTestMixin,
-                           NewUserProfileFieldAbTestMixin, BasePageView):
+class UserRegistrationView(NewUserNumberAbTestMixin, BasePageView):
     urlname = 'register_user'
     template_name = 'registration/register_new_user.html'
 
@@ -195,7 +180,6 @@ class UserRegistrationView(NewUserNumberAbTestMixin,
                 return redirect("homepage")
         response = super(UserRegistrationView, self).dispatch(request, *args, **kwargs)
         self.ab_show_number_update_response(response)
-        self.ab_persona_field.update_response(response)
         return response
 
     def post(self, request, *args, **kwargs):
@@ -222,14 +206,12 @@ class UserRegistrationView(NewUserNumberAbTestMixin,
             'reg_form': RegisterWebUserForm(
                 initial=prefills,
                 show_number=self.ab_show_number,
-                show_persona=self.ab_show_persona,
             ),
             'reg_form_defaults': prefills,
             'hide_password_feedback': settings.ENABLE_DRACONIAN_SECURITY_FEATURES,
             'implement_password_obfuscation': settings.OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE,
             'show_number': self.ab_show_number,
             'ab_show_number': self.ab_show_number_context,
-            'ab_persona_field': self.ab_persona_field.context,
         }
 
     @property
@@ -269,44 +251,52 @@ class RegisterDomainView(TemplateView):
         nextpage = request.POST.get('next')
         form = DomainRegistrationForm(request.POST)
         context = self.get_context_data(form=form)
-        if form.is_valid():
-            reqs_today = RegistrationRequest.get_requests_today()
-            max_req = settings.DOMAIN_MAX_REGISTRATION_REQUESTS_PER_DAY
-            if reqs_today >= max_req:
-                context.update({
-                    'current_page': {'page_name': _('Oops!')},
-                    'error_msg': _(
-                        'Number of domains requested today exceeds limit (%d) - contact Dimagi'
-                    ) % max_req,
-                    'show_homepage_link': 1
-                })
-                return render(request, 'error.html', context)
+        if not form.is_valid():
+            return self.render_to_response(context)
 
-            try:
-                domain_name = request_new_domain(request, form, is_new_user=self.is_new_user)
-            except NameUnavailableException:
-                context.update({
-                    'current_page': {'page_name': _('Oops!')},
-                    'error_msg': _('Project name already taken - please try another'),
-                    'show_homepage_link': 1
-                })
-                return render(request, 'error.html', context)
+        if settings.RESTRICT_DOMAIN_CREATION and not request.user.is_superuser:
+            context.update({
+                'current_page': {'page_name': _('Oops!')},
+                'error_msg': _('Your organization has requested that project creation be restricted. '
+                               'For more information, please speak to your administrator.'),
+            })
+            return render(request, 'error.html', context)
 
-            if self.is_new_user:
-                context.update({
-                    'requested_domain': domain_name,
-                    'current_page': {'page_name': _('Confirm Account')},
-                })
-                track_workflow(self.request.user.email, "Created new project")
-                return render(request, 'registration/confirmation_sent.html', context)
-            else:
-                if nextpage:
-                    return HttpResponseRedirect(nextpage)
-                if referer_url:
-                    return redirect(referer_url)
-                return HttpResponseRedirect(reverse("domain_homepage", args=[domain_name]))
+        reqs_today = RegistrationRequest.get_requests_today()
+        max_req = settings.DOMAIN_MAX_REGISTRATION_REQUESTS_PER_DAY
+        if reqs_today >= max_req:
+            context.update({
+                'current_page': {'page_name': _('Oops!')},
+                'error_msg': _(
+                    'Number of projects requested today exceeds limit (%d) - contact Dimagi'
+                ) % max_req,
+                'show_homepage_link': 1
+            })
+            return render(request, 'error.html', context)
 
-        return self.render_to_response(context)
+        try:
+            domain_name = request_new_domain(request, form, is_new_user=self.is_new_user)
+        except NameUnavailableException:
+            context.update({
+                'current_page': {'page_name': _('Oops!')},
+                'error_msg': _('Project name already taken - please try another'),
+                'show_homepage_link': 1
+            })
+            return render(request, 'error.html', context)
+
+        if self.is_new_user:
+            context.update({
+                'requested_domain': domain_name,
+                'current_page': {'page_name': _('Confirm Account')},
+            })
+            track_workflow(self.request.user.email, "Created new project")
+            return render(request, 'registration/confirmation_sent.html', context)
+
+        if nextpage:
+            return HttpResponseRedirect(nextpage)
+        if referer_url:
+            return redirect(referer_url)
+        return HttpResponseRedirect(reverse("domain_homepage", args=[domain_name]))
 
     def get_context_data(self, **kwargs):
         request = self.request

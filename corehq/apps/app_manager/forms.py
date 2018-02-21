@@ -9,7 +9,7 @@ from django.utils.translation import ugettext as _, ugettext_lazy
 from corehq.apps.builds.models import BuildSpec
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp import crispy as hqcrispy
-from corehq.toggles import LINKED_APPS
+from corehq.toggles import LINKED_DOMAINS
 
 from .dbaccessors import get_all_built_app_ids_and_versions
 from .models import LATEST_APK_VALUE, LATEST_APP_VALUE
@@ -42,7 +42,7 @@ class CopyApplicationForm(forms.Form):
         if export_zipped_apps_enabled:
             self.fields['gzip'] = forms.FileField(required=False)
             fields.append('gzip')
-        if LINKED_APPS.enabled(from_domain):
+        if LINKED_DOMAINS.enabled(from_domain):
             fields.append(PrependedText('linked', ''))
 
         self.helper = FormHelper()
@@ -69,7 +69,7 @@ class CopyApplicationForm(forms.Form):
     def clean(self):
         domain = self.cleaned_data.get('domain')
         if self.cleaned_data.get('linked'):
-            if not LINKED_APPS.enabled(domain):
+            if not LINKED_DOMAINS.enabled(domain):
                 raise forms.ValidationError("The target project space does not have linked apps enabled.")
         return self.cleaned_data
 

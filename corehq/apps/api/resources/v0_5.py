@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.http import Http404
 from django.forms import ValidationError
 from tastypie import http
@@ -860,7 +861,7 @@ class DomainForms(Resource):
         for form_object in forms_objects:
             form = form_object['form']
             module = form_object['module']
-            form_name = u'{} > {} > {}'.format(application.name, module.default_name(), form.default_name())
+            form_name = '{} > {} > {}'.format(application.name, module.default_name(), form.default_name())
             results.append(Form(form_xmlns=form.xmlns, form_name=form_name))
         return results
 

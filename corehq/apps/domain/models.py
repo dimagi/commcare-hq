@@ -50,6 +50,7 @@ from corehq.apps.app_manager.const import AMPLIFIES_NO, AMPLIFIES_NOT_SET, AMPLI
 
 from .project_access.models import SuperuserProjectEntryRecord  # noqa
 from functools import reduce
+from six import unichr
 
 lang_lookup = defaultdict(str)
 

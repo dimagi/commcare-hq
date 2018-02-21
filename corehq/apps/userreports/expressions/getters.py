@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from datetime import date, datetime, time
 from decimal import Decimal, InvalidOperation
 from six import string_types
@@ -170,6 +171,7 @@ def transform_from_datatype(datatype):
         'datetime': transform_datetime,
         'decimal': transform_decimal,
         'integer': transform_int,
+        'small_integer': transform_int,
         'string': transform_unicode,
         'array': transform_array,
     }.get(datatype) or identity

@@ -22,24 +22,25 @@ class TestAdolescentGirls(TestCase):
             ),
             {
                 "rightLegend": {
-                    "info": "Total number of adolescent girls who are enrolled for ICDS services",
-                    "average": 23.5,
+                    "info": "Total number of adolescent girls who are enrolled for Anganwadi Services",
+                    "average": 17.0,
                     "average_format": "number",
                     'extended_info': [
                         {
                             'indicator': (
-                                'Number of adolescent girls (11 - 18 years) who are enrolled for ICDS services:'
+                                'Number of adolescent girls (11 - 14 years) who are enrolled for Anganwadi '
+                                'Services:'
                             ),
-                            'value': "47"
+                            'value': "34"
                         },
                         {
-                            'indicator': 'Total number of adolescent girls (11 - 18 years) who are registered:',
-                            'value': "47"
+                            'indicator': 'Total number of adolescent girls (11 - 14 years) who are registered:',
+                            'value': "34"
                         },
                         {
                             'indicator': (
-                                'Percentage of registered adolescent girls (11 - 18 years) '
-                                'who are enrolled for ICDS services:'
+                                'Percentage of registered adolescent girls (11 - 14 years) '
+                                'who are enrolled for Anganwadi Services:'
                             ),
                             'value': '100.00%'
                         }
@@ -51,14 +52,14 @@ class TestAdolescentGirls(TestCase):
                 },
                 "data": {
                     "st1": {
-                        "valid": 22,
-                        "all": 22,
+                        "valid": 17,
+                        "all": 17,
                         'original_name': ["st1"],
                         "fillKey": "Adolescent Girls"
                     },
                     "st2": {
-                        "valid": 25,
-                        "all": 25,
+                        "valid": 17,
+                        "all": 17,
                         'original_name': ["st2"],
                         "fillKey": "Adolescent Girls"
                     }
@@ -82,24 +83,25 @@ class TestAdolescentGirls(TestCase):
             ),
             {
                 "rightLegend": {
-                    "info": "Total number of adolescent girls who are enrolled for ICDS services",
-                    "average": 11.0,
+                    "info": "Total number of adolescent girls who are enrolled for Anganwadi Services",
+                    "average": 8.5,
                     "average_format": "number",
                     'extended_info': [
                         {
                             'indicator': (
-                                'Number of adolescent girls (11 - 18 years) who are enrolled for ICDS services:'
+                                'Number of adolescent girls (11 - 14 years) who are enrolled for Anganwadi '
+                                'Services:'
                             ),
-                            'value': "22"
+                            'value': "17"
                         },
                         {
-                            'indicator': 'Total number of adolescent girls (11 - 18 years) who are registered:',
-                            'value': "22"
+                            'indicator': 'Total number of adolescent girls (11 - 14 years) who are registered:',
+                            'value': "17"
                         },
                         {
                             'indicator': (
-                                'Percentage of registered adolescent girls (11 - 18 years) '
-                                'who are enrolled for ICDS services:'
+                                'Percentage of registered adolescent girls (11 - 14 years) '
+                                'who are enrolled for Anganwadi Services:'
                             ),
                             'value': '100.00%'
                         }
@@ -111,8 +113,8 @@ class TestAdolescentGirls(TestCase):
                 },
                 "data": {
                     'block_map': {
-                        'valid': 22,
-                        'all': 22,
+                        'valid': 17,
+                        'all': 17,
                         'original_name': ['b1', 'b2'],
                         'fillKey': 'Adolescent Girls'}
                 },
@@ -135,22 +137,22 @@ class TestAdolescentGirls(TestCase):
                 "location_type": "State",
                 "bottom_five": [
                     {
-                        "loc_name": "st2",
-                        "value": 25
+                        "loc_name": "st1",
+                        "value": 17.0
                     },
                     {
-                        "loc_name": "st1",
-                        "value": 22
+                        "loc_name": "st2",
+                        "value": 17.0
                     }
                 ],
                 "top_five": [
                     {
-                        "loc_name": "st2",
-                        "value": 25
+                        "loc_name": "st1",
+                        "value": 17.0
                     },
                     {
-                        "loc_name": "st1",
-                        "value": 22
+                        "loc_name": "st2",
+                        "value": 17.0
                     }
                 ],
                 "chart_data": [
@@ -170,27 +172,27 @@ class TestAdolescentGirls(TestCase):
                                 "all": 0
                             },
                             {
-                                "y": 57,
+                                "y": 38,
                                 "x": 1491004800000,
-                                "all": 57
+                                "all": 38
                             },
                             {
-                                "y": 47,
+                                "y": 34,
                                 "x": 1493596800000,
-                                "all": 47
+                                "all": 34
                             }
                         ],
-                        "key": "Total number of adolescent girls who are enrolled for ICDS services"
+                        "key": "Total number of adolescent girls who are enrolled for Anganwadi Services"
                     }
                 ],
                 "all_locations": [
                     {
-                        "loc_name": "st2",
-                        "value": 25
+                        "loc_name": "st1",
+                        "value": 17.0
                     },
                     {
-                        "loc_name": "st1",
-                        "value": 22
+                        "loc_name": "st2",
+                        "value": 17.0
                     }
                 ]
             }
@@ -211,15 +213,15 @@ class TestAdolescentGirls(TestCase):
                 loc_level='supervisor'
             ),
             {
-                "info": "Total number of adolescent girls who are enrolled for ICDS services",
+                "info": "Total number of adolescent girls who are enrolled for Anganwadi Services",
                 "tooltips_data": {
                     "s2": {
-                        "all": 6,
-                        "valid": 6
+                        "all": 5,
+                        "valid": 5
                     },
                     "s1": {
-                        "valid": 5,
-                        "all": 5
+                        "valid": 3,
+                        "all": 3
                     },
                 },
                 "chart_data": [
@@ -230,11 +232,11 @@ class TestAdolescentGirls(TestCase):
                         "values": [
                             [
                                 "s1",
-                                5
+                                3
                             ],
                             [
                                 "s2",
-                                6
+                                5
                             ]
                         ],
                         "key": "Number Of Girls"

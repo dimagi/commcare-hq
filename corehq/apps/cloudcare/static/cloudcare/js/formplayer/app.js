@@ -154,7 +154,34 @@ FormplayerFrontend.on('startForm', function (data) {
     };
     data.onsubmit = function (resp) {
         if (resp.status === "success") {
-            showSuccess(gettext("Form successfully saved"), $("#cloudcare-notifications"), 10000);
+            var inTest = hqImport('analytix/js/kissmetrix').getAbTest('Data Feedback Loop') === 'data_feedback_loop_on';
+            if (inTest && resp.submitResponseMessage && user.environment === FormplayerFrontend.Constants.PREVIEW_APP_ENVIRONMENT) {
+                var markdowner = window.markdownit(),
+                    reverse = hqImport("hqwebapp/js/initial_page_data").reverse,
+                    analyticsLinks = [
+                        { url: reverse('list_case_exports'), text: '[Data Feedback Loop Test] Clicked on Export Cases Link' },
+                        { url: reverse('list_form_exports'), text: '[Data Feedback Loop Test] Clicked on Export Forms Link' },
+                        { url: reverse('case_details', '.*'), text: '[Data Feedback Loop Test] Clicked on Case Data Link' },
+                        { url: reverse('render_form_data', '.*'), text: '[Data Feedback Loop Test] Clicked on Form Data Link' },
+                    ],
+                    dataFeedbackLoopAnalytics = function(e) {
+                        var $target = $(e.target);
+                        if ($target.is("a")) {
+                            var href = $target.attr("href") || '';
+                            _.each(analyticsLinks, function(link) {
+                                if (href.match(RegExp(link.url))) {
+                                    $target.attr("target", "_blank");
+                                    hqImport('analytix/js/kissmetrix').track.event(link.text);
+                                }
+                            });
+                        }
+                    };
+                $("#cloudcare-notifications").off('click').on('click', dataFeedbackLoopAnalytics);
+                showSuccess(markdowner.render(resp.submitResponseMessage), $("#cloudcare-notifications"), 10000, true);
+            } else {
+                showSuccess(gettext("Form successfully saved!"), $("#cloudcare-notifications"), 10000);
+            }
+
             if (user.environment === FormplayerFrontend.Constants.PREVIEW_APP_ENVIRONMENT) {
                 hqImport('analytix/js/kissmetrix').track.event("[app-preview] User submitted a form");
                 hqImport('analytix/js/google').track.event("App Preview", "User submitted a form");

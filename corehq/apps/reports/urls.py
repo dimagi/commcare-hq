@@ -33,6 +33,7 @@ from .views import (
     CaseAttachmentsView,
     MySavedReportsView,
     ScheduledReportsView,
+    ReportNotificationUnsubscribeView,
     default,
     old_saved_reports,
     case_forms,

@@ -1,25 +1,23 @@
 {% load i18n %}
 <ul class="dropdown-menu dropdown-menu-right" role="menu">
     {% if domain_list %}
-    <li class="dropdown-header nav-header">{% trans 'Change Project' %}</li>
-    {% for d in domain_list %}
-        <li><a href="{{ d.url }}">{{ d.name }}</a></li>
-    {% endfor %}
-    {% if not enterprise_mode %}
-     <li class="divider"></li>
-    {% endif %}
+        <li class="dropdown-header nav-header">{% trans 'Change Project' %}</li>
+        {% for d in domain_list %}
+            <li><a href="{{ d.url }}">{{ d.name }}</a></li>
+        {% endfor %}
     {% endif %}
 
-    {% if not enterprise_mode %}
-    <li>
-        <a href="{% url 'registration_domain' %}">
-            <i class="fa fa-plus icon-plus dropdown-icon"></i> {% trans 'Add Project' %}
-        </a>
-    </li>
-    <li>
-        <a href="{% url 'appstore' %}">
-            <i class="fa fa-exchange icon-exchange dropdown-icon"></i> {% trans 'CommCare Exchange' %}
-        </a>
-    </li>
+    {% if not restrict_domain_creation or request.user.is_superuser %}
+        <li class="divider" />
+        <li>
+            <a href="{% url 'registration_domain' %}">
+                <i class="fa fa-plus icon-plus dropdown-icon"></i> {% trans 'Add Project' %}
+            </a>
+        </li>
+        <li>
+            <a href="{% url 'appstore' %}">
+                <i class="fa fa-exchange icon-exchange dropdown-icon"></i> {% trans 'CommCare Exchange' %}
+            </a>
+        </li>
     {% endif %}
 </ul>

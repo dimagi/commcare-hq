@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from collections import OrderedDict
+from django.core.validators import RegexValidator
 from django.urls import reverse
 from django.utils.translation import ugettext as _
 from django import forms
@@ -86,7 +87,11 @@ class CustomDataEditor(object):
         return dict(cleaned_data, **system_data)
 
     def _make_field(self, field):
-        if field.choices:
+        if field.regex:
+            validator = RegexValidator(field.regex, field.regex_msg)
+            return forms.CharField(label=field.label, required=field.is_required,
+                                   validators=[validator])
+        elif field.choices:
             if not field.is_multiple_choice:
                 choice_field = forms.ChoiceField(
                     label=field.label,
@@ -101,7 +106,8 @@ class CustomDataEditor(object):
                     widget=Select2MultipleChoiceWidget
                 )
             return choice_field
-        return forms.CharField(label=field.label, required=field.is_required)
+        else:
+            return forms.CharField(label=field.label, required=field.is_required)
 
     @property
     @memoized

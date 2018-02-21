@@ -30,7 +30,7 @@ hqDefine('commtrack/js/products_and_programs.async', function () {
                             'to fetch the data. Please, try again in a little bit.'));
                         view_model.currently_searching(false);
                     },
-                    success: reloadList
+                    success: reloadList,
                 });
             }
 
@@ -80,7 +80,7 @@ hqDefine('commtrack/js/products_and_programs.async', function () {
             } else {
                 $(element).parent().removeClass('disabled');
             }
-        }
+        },
     };
 
     ko.bindingHandlers.isPaginationActive = {
@@ -92,7 +92,7 @@ hqDefine('commtrack/js/products_and_programs.async', function () {
             } else {
                 $(element).parent().removeClass('active');
             }
-        }
+        },
     };
 
     $(function(){

@@ -6,7 +6,7 @@ import logging
 import re
 import sys
 import uuid
-from urlparse import urlparse, parse_qs
+from six.moves.urllib.parse import urlparse, parse_qs
 
 from captcha.fields import CaptchaField
 
@@ -93,6 +93,7 @@ from corehq.util.timezones.forms import TimeZoneChoiceField
 from dimagi.utils.decorators.memoized import memoized
 import six
 from six.moves import range
+from six import unichr
 
 # used to resize uploaded custom logos, aspect ratio is preserved
 LOGO_SIZE = (211, 32)
@@ -1413,7 +1414,7 @@ class EditBillingAccountInfoForm(forms.ModelForm):
             'company_name',
             'first_name',
             'last_name',
-            crispy.Field('email_list', css_class='input-xxlarge ko-email-select2'),
+            crispy.Field('email_list', css_class='input-xxlarge accounting-email-select2'),
             'phone_number'
         ]
 
@@ -1460,7 +1461,7 @@ class EditBillingAccountInfoForm(forms.ModelForm):
                 'city',
                 'state_province_region',
                 'postal_code',
-                crispy.Field('country', css_class="input-large ko-country-select2",
+                crispy.Field('country', css_class="input-large accounting-country-select2",
                              data_countryname=COUNTRIES.get(self.current_country, '')),
             ),
             hqcrispy.FormActions(
@@ -1525,7 +1526,7 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                 'company_name',
                 'first_name',
                 'last_name',
-                crispy.Field('email_list', css_class='input-xxlarge ko-email-select2'),
+                crispy.Field('email_list', css_class='input-xxlarge accounting-email-select2'),
                 'phone_number',
             ),
             crispy.Fieldset(
@@ -1535,7 +1536,7 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                 'city',
                 'state_province_region',
                 'postal_code',
-                crispy.Field('country', css_class="input-large ko-country-select2",
+                crispy.Field('country', css_class="input-large accounting-country-select2",
                              data_countryname=COUNTRIES.get(self.current_country, ''))
             ),
             hqcrispy.FormActions(
@@ -1623,7 +1624,7 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
                 'company_name',
                 'first_name',
                 'last_name',
-                crispy.Field('email_list', css_class='input-xxlarge ko-email-select2'),
+                crispy.Field('email_list', css_class='input-xxlarge accounting-email-select2'),
                 'phone_number',
             ),
             crispy.Fieldset(
@@ -1633,7 +1634,7 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
                 'city',
                 'state_province_region',
                 'postal_code',
-                crispy.Field('country', css_class="input-large ko-country-select2",
+                crispy.Field('country', css_class="input-large accounting-country-select2",
                              data_countryname=COUNTRIES.get(self.current_country, ''))
             ),
             crispy.Fieldset(

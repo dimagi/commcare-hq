@@ -94,6 +94,7 @@ for each case, then convert these to CaseStructure objects.
 
 from __future__ import absolute_import
 from __future__ import print_function
+from __future__ import division
 import csv
 import decimal
 import logging

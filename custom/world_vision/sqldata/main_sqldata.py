@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import division
 from sqlagg import CountUniqueColumn
 from sqlagg.filters import LTE, AND, EQ, OR, GTE
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
@@ -139,7 +140,7 @@ class ImmunizationOverview(BaseSqlData):
     def rows(self):
         from custom.world_vision import CHILD_INDICATOR_TOOLTIPS
         result = []
-        rg = len(self.columns) / 2
+        rg = len(self.columns) // 2
         for i in range(0, rg):
             dropout = self.data[self.columns[i + rg].slug] - self.data[self.columns[i].slug]
             result.append([{'sort_key': self.columns[i].header, 'html': self.columns[i].header,

@@ -1,9 +1,11 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from datetime import datetime
 
 from django.test import SimpleTestCase
 
 from corehq.apps.userreports.tasks import time_in_range
+from six.moves import range
 
 
 TEST_SETTINGS = {

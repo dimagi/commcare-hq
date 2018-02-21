@@ -18,6 +18,9 @@ import six
 
 
 # These example types and trees mirror the information available in the upload files
+from corehq.apps.locations.util import get_location_data_model
+
+NOT_PROVIDED = LocationStub.NOT_PROVIDED
 
 FLAT_LOCATION_TYPES = [
     # name, code, parent_code, do_delete, shares_cases, view_descendants, index
@@ -46,8 +49,8 @@ CYCLIC_LOCATION_TYPES = [
 ]
 
 
-# external_id, latitude, longitude, custom_data, uncategorized_data, index
-extra_stub_args = ('', '', '', {}, {}, 0)
+# external_id, latitude, longitude, custom_data, index, location_data_model
+extra_stub_args = ('', '', '', NOT_PROVIDED, 0, None)
 
 BASIC_LOCATION_TREE = [
     # (name, site_code, location_type, parent_code, location_id,
@@ -395,8 +398,8 @@ class TestBulkManagement(TestCase):
 
     def create_locations(self, locations, lt_by_code):
         def _make_loc(name, site_code, location_type, parent_code, location_id,
-                      do_delete, external_id, latitude, longitude, custom_data, uncategorized_data,
-                      index, parent=None):
+                      do_delete, external_id, latitude, longitude, custom_data,
+                      index, location_data_model, parent=None):
             _type = lt_by_code.get(location_type)
             loc = SQLLocation(
                 site_code=site_code, name=name, domain=self.domain.name, location_type=_type,
@@ -505,8 +508,8 @@ class TestBulkManagement(TestCase):
 
     def test_int_datatype(self):
         data = [
-            ('S1', 1, 'state', '', '', False, '12', '', '2345', {}, {}, 0),
-            ('S2', 2, 'state', '', '', False, '12', '', '2345', {}, {}, 0),
+            ('S1', 1, 'state', '', '', False, '12', '', '2345', NOT_PROVIDED, 0, None),
+            ('S2', 2, 'state', '', '', False, '12', '', '2345', NOT_PROVIDED, 0, None),
         ]
 
         result = self.bulk_update_locations(
@@ -519,8 +522,8 @@ class TestBulkManagement(TestCase):
 
     def test_data_format(self):
         data = [
-            ('S1', '1', 'state', '', '', False, '12', 'not-lat', '2345', {}, {}, 0),
-            ('S2', '2', 'state', '', '', False, '12', '3434', '2345', {}, {}, 0),
+            ('S1', '1', 'state', '', '', False, '12', 'not-lat', '2345', NOT_PROVIDED, 0, None),
+            ('S2', '2', 'state', '', '', False, '12', '3434', '2345', NOT_PROVIDED, 0, None),
         ]
         result = self.bulk_update_locations(
             FLAT_LOCATION_TYPES,
@@ -857,9 +860,10 @@ class TestBulkManagement(TestCase):
         self.assertLocationsMatch(self.as_pairs(swap_parents))
 
     def test_custom_data(self):
+        data_model = get_location_data_model(self.domain.name)
         tree = [
-            ('State 1', 's1', 'state', '', '', False, '', '', '', {u'a': 1}, {}, 0),
-            ('County 11', 'c1', 'county', 's1', '', False, '', '', '', {u'b': u'test'}, {}, 0),
+            ('State 1', 's1', 'state', '', '', False, '', '', '', {u'a': 1}, 0, data_model, False),
+            ('County 11', 'c1', 'county', 's1', '', False, '', '', '', {u'b': u'test'}, 0, data_model, False),
         ]
         result = self.bulk_update_locations(
             FLAT_LOCATION_TYPES,
@@ -872,6 +876,36 @@ class TestBulkManagement(TestCase):
         locations = SQLLocation.objects.all()
         self.assertEqual(locations[0].metadata, {u'a': u'1'})  # test that ints are coerced to strings
         self.assertEqual(locations[1].metadata, {u'b': u'test'})
+
+    def test_custom_data_delete_uncategorized(self):
+        data_model = get_location_data_model(self.domain.name)
+
+        # setup some metadata
+        tree = [
+            ('State 1', 's1', 'state', '', '', False, '', '', '', {u'a': 1}, 0, data_model, False),
+            ('County 11', 'c1', 'county', 's1', '', False, '', '', '', {u'b': u'test'}, 0, data_model, False),
+        ]
+        self.bulk_update_locations(
+            FLAT_LOCATION_TYPES,
+            tree
+        )
+
+        locations = SQLLocation.objects.all()
+        self.assertEqual(locations[0].metadata, {u'a': u'1'})
+        self.assertEqual(locations[1].metadata, {u'b': u'test'})
+
+        tree = [
+            ('State 1', 's1', 'state', '', '', False, '', '', '', {u'a': 1}, 0, data_model, True),
+            ('County 11', 'c1', 'county', 's1', '', False, '', '', '', {}, 0, data_model, False),
+        ]
+        self.bulk_update_locations(
+            FLAT_LOCATION_TYPES,
+            tree
+        )
+
+        locations = SQLLocation.objects.all()
+        self.assertEqual(locations[0].metadata, {})  # uncategorized data get's removed
+        self.assertEqual(locations[1].metadata, {u'b': u'test'})  # uncategorized data get's kept
 
     def test_case_sensitivity(self):
         # site-codes are automatically converted to lower-case

@@ -48,7 +48,8 @@ from custom.enikshay.integrations.bets.repeaters import (
     BETSBeneficiaryRepeater,
     BETSUserRepeater,
 )
-from custom.enikshay.integrations.ninetyninedots.tests.test_repeaters import ENikshayRepeaterTestBase, MockResponse
+from custom.enikshay.integrations.ninetyninedots.tests.test_repeaters import ENikshayRepeaterTestBase
+from custom.enikshay.integrations.ninetyninedots.tests.test_payload_generators import MockResponse
 
 from custom.enikshay.tests.utils import (
     ENikshayLocationStructureMixin, get_person_case_structure, setup_enikshay_locations)
@@ -56,7 +57,7 @@ from custom.enikshay.case_utils import update_case
 import six
 
 
-@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True, SERVER_ENVIRONMENT='enikshay')
 class TestBetsResponseHandling(ENikshayLocationStructureMixin, ENikshayRepeaterTestBase):
     def setUp(self):
         super(TestBetsResponseHandling, self).setUp()
@@ -132,7 +133,7 @@ class TestBetsResponseHandling(ENikshayLocationStructureMixin, ENikshayRepeaterT
         self.assertTrue(attempt.failure_reason)
 
 
-@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True, SERVER_ENVIRONMENT='enikshay')
 class TestVoucherRepeater(ENikshayLocationStructureMixin, ENikshayRepeaterTestBase):
 
     def setUp(self):
@@ -173,7 +174,7 @@ class TestVoucherRepeater(ENikshayLocationStructureMixin, ENikshayRepeaterTestBa
         self.assertEqual(1, len(self.repeat_records().all()))
 
 
-@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True, SERVER_ENVIRONMENT='enikshay')
 class TestVoucherPayload(ENikshayLocationStructureMixin, ENikshayRepeaterTestBase):
 
     def test_prescription_get_payload(self):
@@ -256,7 +257,7 @@ class TestVoucherPayload(ENikshayLocationStructureMixin, ENikshayRepeaterTestBas
         )
 
 
-@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True, SERVER_ENVIRONMENT='enikshay')
 class TestIncentivePayload(ENikshayLocationStructureMixin, ENikshayRepeaterTestBase):
     def setUp(self):
         super(TestIncentivePayload, self).setUp()
@@ -427,7 +428,7 @@ class TestIncentivePayload(ENikshayLocationStructureMixin, ENikshayRepeaterTestB
         )
 
 
-@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True, SERVER_ENVIRONMENT='enikshay')
 class TestBETS180TreatmentRepeater(ENikshayLocationStructureMixin, ENikshayRepeaterTestBase):
     def setUp(self):
         super(TestBETS180TreatmentRepeater, self).setUp()
@@ -466,7 +467,7 @@ class TestBETS180TreatmentRepeater(ENikshayLocationStructureMixin, ENikshayRepea
         self.assertEqual(1, len(self.repeat_records().all()))
 
 
-@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True, SERVER_ENVIRONMENT='enikshay')
 class BETSDrugRefillRepeaterTest(ENikshayLocationStructureMixin, ENikshayRepeaterTestBase):
     def setUp(self):
         super(BETSDrugRefillRepeaterTest, self).setUp()
@@ -522,7 +523,7 @@ class BETSDrugRefillRepeaterTest(ENikshayLocationStructureMixin, ENikshayRepeate
         self.assertEqual(2, len(self.repeat_records().all()))
 
 
-@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True, SERVER_ENVIRONMENT='enikshay')
 class BETSSuccessfulTreatmentRepeaterTest(ENikshayLocationStructureMixin, ENikshayRepeaterTestBase):
     def setUp(self):
         super(BETSSuccessfulTreatmentRepeaterTest, self).setUp()
@@ -588,7 +589,7 @@ class BETSSuccessfulTreatmentRepeaterTest(ENikshayLocationStructureMixin, ENiksh
         self.assertEqual(1, len(self.repeat_records().all()))
 
 
-@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True, SERVER_ENVIRONMENT='enikshay')
 class BETSDiagnosisAndNotificationRepeaterTest(ENikshayLocationStructureMixin, ENikshayRepeaterTestBase):
     def setUp(self):
         super(BETSDiagnosisAndNotificationRepeaterTest, self).setUp()
@@ -625,7 +626,7 @@ class BETSDiagnosisAndNotificationRepeaterTest(ENikshayLocationStructureMixin, E
         self.assertEqual(1, len(self.repeat_records().all()))
 
 
-@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True, SERVER_ENVIRONMENT='enikshay')
 class BETSAYUSHReferralRepeaterTest(ENikshayLocationStructureMixin, ENikshayRepeaterTestBase):
     def setUp(self):
         super(BETSAYUSHReferralRepeaterTest, self).setUp()
@@ -665,7 +666,7 @@ class BETSAYUSHReferralRepeaterTest(ENikshayLocationStructureMixin, ENikshayRepe
         self.assertEqual(1, len(self.repeat_records().all()))
 
 
-@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True, SERVER_ENVIRONMENT='enikshay')
 class UserRepeaterTest(TestCase):
     domain = 'bets-user-repeater'
 
@@ -786,7 +787,7 @@ class UserRepeaterTest(TestCase):
         self.assertEqual(1, len(self.repeat_records().all()))
 
 
-@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True, SERVER_ENVIRONMENT='enikshay')
 class LocationRepeaterTest(ENikshayLocationStructureMixin, TestCase):
     domain = 'bets-location-repeater'
     maxDiff = None
@@ -900,7 +901,7 @@ class LocationRepeaterTest(ENikshayLocationStructureMixin, TestCase):
         self.assertEqual(2, len(self.repeat_records().all()))
 
 
-@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True, SERVER_ENVIRONMENT='enikshay')
 class BETSBeneficiaryRepeaterTest(ENikshayRepeaterTestBase):
     def setUp(self):
         super(BETSBeneficiaryRepeaterTest, self).setUp()

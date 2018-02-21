@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import hashlib
 import json
 from exceptions import NotImplementedError
@@ -104,7 +105,7 @@ class NamedExpressionSpec(JsonObject):
 
     def configure(self, context):
         if self.name not in context.named_expressions:
-            raise BadSpecError(u'Name {} not found in list of named expressions!'.format(self.name))
+            raise BadSpecError('Name {} not found in list of named expressions!'.format(self.name))
         self._context = context
 
     def _context_cache_key(self, item):
@@ -257,7 +258,7 @@ class RelatedDocExpressionSpec(JsonObject):
         non_couch_doc_types = (LOCATION_DOC_TYPE,)
         if (self.related_doc_type not in non_couch_doc_types
                 and get_db_by_doc_type(self.related_doc_type) is None):
-            raise BadSpecError(u'Cannot determine database for document type {}!'.format(self.related_doc_type))
+            raise BadSpecError('Cannot determine database for document type {}!'.format(self.related_doc_type))
 
         self._doc_id_expression = doc_id_expression
         self._value_expression = value_expression

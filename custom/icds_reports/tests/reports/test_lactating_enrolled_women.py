@@ -70,7 +70,7 @@ class TestLactatingEnrolledWomen(TestCase):
                                 "all": 166
                             }
                         ],
-                        "key": "Total number of lactating women who are enrolled for ICDS services"
+                        "key": "Total number of lactating women who are enrolled for Anganwadi Services"
                     }
                 ],
                 "all_locations": [
@@ -101,7 +101,7 @@ class TestLactatingEnrolledWomen(TestCase):
                 loc_level='supervisor'
             ),
             {
-                "info": "Lactating Mothers enrolled for ICDS services.",
+                "info": "Lactating Mothers enrolled for Anganwadi Services.",
                 "tooltips_data": {
                     "s2": {
                         "valid": 24,
@@ -146,18 +146,18 @@ class TestLactatingEnrolledWomen(TestCase):
             ),
             {
                 "rightLegend": {
-                    "info": "Lactating Mothers enrolled for ICDS services.",
+                    "info": "Lactating Mothers enrolled for Anganwadi Services.",
                     "average": 83.0,
                     "average_format": "number",
                     'extended_info': [
                         {
-                            'indicator': 'Number of pregnant women who are enrolled for ICDS services:',
+                            'indicator': 'Number of pregnant women who are enrolled for Anganwadi Services:',
                             'value': "166"
                         },
                         {'indicator': 'Total number of pregnant women who are registered:', 'value': "166"},
                         {
                             'indicator': (
-                                'Percentage of registered pregnant women who are enrolled for ICDS services:'
+                                'Percentage of registered pregnant women who are enrolled for Anganwadi Services:'
                             ),
                             'value': '100.00%'
                         }
@@ -200,18 +200,18 @@ class TestLactatingEnrolledWomen(TestCase):
             ),
             {
                 "rightLegend": {
-                    "info": "Lactating Mothers enrolled for ICDS services.",
+                    "info": "Lactating Mothers enrolled for Anganwadi Services.",
                     "average": 43.5,
                     "average_format": "number",
                     'extended_info': [
                         {
-                            'indicator': 'Number of pregnant women who are enrolled for ICDS services:',
+                            'indicator': 'Number of pregnant women who are enrolled for Anganwadi Services:',
                             'value': "87"
                         },
                         {'indicator': 'Total number of pregnant women who are registered:', 'value': "87"},
                         {
                             'indicator': (
-                                'Percentage of registered pregnant women who are enrolled for ICDS services:'
+                                'Percentage of registered pregnant women who are enrolled for Anganwadi Services:'
                             ),
                             'value': '100.00%'
                         }

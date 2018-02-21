@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import json
 import uuid
 
@@ -170,10 +171,10 @@ class ConfigurableReportViewTest(ConfigurableReportTestMixin, TestCase):
 
         expected = [
             [
-                u'foo',
+                'foo',
                 [
-                    [u'report_column_display_fruit', u'report_column_display_percent'],
-                    [u'apple', '150%']
+                    ['report_column_display_fruit', 'report_column_display_percent'],
+                    ['apple', '150%']
                 ]
             ]
         ]
@@ -190,10 +191,10 @@ class ConfigurableReportViewTest(ConfigurableReportTestMixin, TestCase):
 
         expected = [
             [
-                u'foo',
+                'foo',
                 [
-                    [u'report_column_display_fruit', u'report_column_display_percent'],
-                    [u'apple', '150%']
+                    ['report_column_display_fruit', 'report_column_display_percent'],
+                    ['apple', '150%']
                 ]
             ]
         ]

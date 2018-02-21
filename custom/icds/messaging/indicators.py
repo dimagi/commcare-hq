@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import division
 from collections import defaultdict
 from datetime import datetime, timedelta
 
@@ -405,7 +406,7 @@ class LSAggregatePerformanceIndicator(LSIndicator):
         num_days_open = int(self.get_value_from_fixture(self.days_open_fixture, 'awc_opened_count'))
         num_awc_locations = len(self.awc_locations)
         if num_awc_locations:
-            avg_days_open = int(round(1.0 * num_days_open / num_awc_locations))
+            avg_days_open = int(round(num_days_open / num_awc_locations))
         else:
             # catch div by 0
             avg_days_open = 0

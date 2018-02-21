@@ -108,6 +108,7 @@ from corehq import privileges, toggles
 from corehq.apps.accounting.decorators import requires_privilege_json_response
 from corehq.apps.app_manager.const import USERCASE_TYPE, USERCASE_ID
 from corehq.apps.app_manager.models import Application, ShadowForm
+from corehq.apps.cloudcare.const import DEVICE_ID as FORMPLAYER_DEVICE_ID
 from corehq.apps.cloudcare.touchforms_api import get_user_contributions_to_touchforms_session
 from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher
 from corehq.apps.domain.decorators import (
@@ -322,7 +323,7 @@ class MySavedReportsView(BaseProjectReportSectionView):
 
     @property
     def others_scheduled_reports(self):
-        if not toggles.SHOW_ALL_SCHEDULED_REPORT_EMAILS.enabled(self.request.couch_user.username):
+        if not toggles.SHOW_ALL_SCHEDULED_REPORT_EMAILS.enabled(self.domain):
             return []
 
         def _is_valid(rn):
@@ -365,6 +366,14 @@ class MySavedReportsView(BaseProjectReportSectionView):
             num_unlisted_scheduled_reports = max(0, cur_len - self.default_scheduled_report_length)
             others_scheduled_reports = others_scheduled_reports[:min(self.default_scheduled_report_length,
                                                                      cur_len)]
+
+        class OthersScheduledReportWrapper(ReportNotification):
+            @property
+            def context_secret(self):
+                return self.get_secret(user.get_email())
+
+        for other_report in others_scheduled_reports:
+            other_report.__class__ = OthersScheduledReportWrapper
         return {
             'couch_user': user,
             'user_email': user.get_email(),
@@ -747,7 +756,7 @@ class AddSavedReportConfigView(View):
             errors = self.saved_report_config_form.errors.get('__all__', [])
             return HttpResponseBadRequest(', '.join(errors))
 
-        update_config_data = copy(self.saved_report_config_form.cleaned_data)
+        update_config_data = copy.copy(self.saved_report_config_form.cleaned_data)
         del update_config_data['_id']
         update_config_data.update({
             'filters': self.filters,
@@ -808,7 +817,7 @@ class AddSavedReportConfigView(View):
 
     @property
     def filters(self):
-        filters = copy(self.post_data.get('filters', {}))
+        filters = copy.copy(self.post_data.get('filters', {}))
         for field in ['startdate', 'enddate']:
             if field in filters:
                 del filters[field]
@@ -2022,7 +2031,7 @@ class EditFormInstance(View):
         context = _get_form_context(request, domain, instance)
         if not instance.app_id or not instance.build_id:
             deviceID = instance.metadata.deviceID
-            if deviceID and deviceID == 'Formplayer':
+            if deviceID and deviceID == FORMPLAYER_DEVICE_ID:
                 return _error(_(
                     "Could not detect the application or form for this submission. "
                     "A common cause is that the form was submitted via App or Form preview"

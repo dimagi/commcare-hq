@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import division
 from datetime import date, timedelta
 import re
 from corehq.apps.reports.standard.cases.data_sources import CaseDisplay
@@ -254,7 +255,7 @@ class MCHMotherDisplay(MCHDisplay):
                     mother_dob = mother_dob["#value"]
                 days = (date.today() - CaseDisplay.parse_date(self, mother_dob).date()).days
                 mother_dob = self.parse_date(mother_dob)
-                return "%s, %s" % (mother_dob, days/365)
+                return "%s, %s" % (mother_dob, days // 365)
             except AttributeError:
                 return _("Bad date format!")
         else:
@@ -632,7 +633,7 @@ class MCHChildDisplay(MCHDisplay):
                     dob = dob["#value"]
                 days = (date.today() - CaseDisplay.parse_date(self, dob).date()).days
                 dob = self.parse_date(dob)
-                return "%s, %s" % (dob, int(days/365.25))
+                return "%s, %s" % (dob, int(days / 365.25))
             except AttributeError:
                 return _("Bad date format!")
         else:

@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from collections import namedtuple, OrderedDict
 from itertools import chain
 import json
@@ -110,11 +111,11 @@ class Select2(Widget):
         final_attrs = self.build_attrs(attrs, extra_attrs={'name': name})
 
         return format_html(
-            u'<input{final_attrs} type="text" value="{value}" data-bind="select2: {choices}, {ko_binding}">',
+            '<input{final_attrs} type="text" value="{value}" data-bind="select2: {choices}, {ko_binding}">',
             final_attrs=flatatt(final_attrs),
             value=self.value,
             choices=json.dumps(self._choices_for_binding(choices)),
-            ko_binding=u"value: {}".format(self.ko_value) if self.ko_value else "",
+            ko_binding="value: {}".format(self.ko_value) if self.ko_value else "",
         )
 
     def _choices_for_binding(self, choices):
@@ -137,7 +138,7 @@ class QuestionSelect(Widget):
         final_attrs = self.build_attrs(attrs, extra_attrs={'name': name})
 
         return format_html(
-            u"""
+            """
             <input{final_attrs} value="{value}" data-bind='
                questionsSelect: {choices},
                optionsCaption: " ",
@@ -597,9 +598,9 @@ class DataSourceBuilder(object):
     @memoized
     def data_source_name(self):
         if self.source_type == 'form':
-            return u"{} (v{})".format(self.source_form.default_name(), self.app.version)
+            return "{} (v{})".format(self.source_form.default_name(), self.app.version)
         if self.source_type == 'case':
-            return u"{} (v{})".format(self.source_id, self.app.version)
+            return "{} (v{})".format(self.source_id, self.app.version)
 
     def _ds_config_kwargs(self, indicators, is_multiselect_chart_report=False, multiselect_field=None):
         if is_multiselect_chart_report:

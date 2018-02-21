@@ -1,4 +1,4 @@
-/* global _ */
+/* global _, moment */
 
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
@@ -21,17 +21,6 @@ function ProgressReportController($scope, $location, progressReportService,
     vm.now = new Date().getMonth() + 1;
     vm.showWarning = storageService.getKey('search')['month'] === void(0) || vm.now === parseInt(storageService.getKey('search')['month']);
     vm.report = $routeParams.report;
-
-    vm.prevDay = moment().subtract(1, 'days').format('Do MMMM, YYYY');
-    vm.currentMonth = moment().format("MMMM");
-
-    vm.showInfoMessage = function () {
-        var selected_month = parseInt($location.search()['month']) || new Date().getMonth() + 1;
-        var selected_year =  parseInt($location.search()['year']) || new Date().getFullYear();
-        var current_month = new Date().getMonth() + 1;
-        var current_year = new Date().getFullYear();
-        return selected_month === current_month && selected_year === current_year && new Date().getDate() === 1;
-    };
 
     vm.dtOptions = DTOptionsBuilder
         .newOptions()

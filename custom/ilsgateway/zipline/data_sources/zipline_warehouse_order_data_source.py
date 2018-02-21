@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import division
 from django.utils.translation import ugettext as _
 
 from corehq.apps.reports.datatables import DataTablesColumn

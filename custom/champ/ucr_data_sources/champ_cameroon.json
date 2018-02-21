@@ -48,30 +48,10 @@
       {
         "type": "expression",
         "expression": {
-          "type": "conditional",
-          "test": {
-            "type": "boolean_expression",
-            "expression": {
-              "type": "property_name",
-              "property_name": "xmlns",
-              "datatype": "string"
-            },
-            "operator": "not_eq",
-            "property_value": "http://openrosa.org/formdesigner/7C8BC256-0E79-4A96-9ECB-D6D8C50CD69E"
-          },
-          "expression_if_true": {
-            "type": "property_path",
-            "property_path": [
-              "form",
-              "district"
-            ]
-          },
-          "expression_if_false": {
-              "type": "root_doc",
-              "expression": {
-                "type": "property_name",
-                "property_name": "district"
-            }
+          "type": "root_doc",
+          "expression": {
+            "type": "property_name",
+            "property_name": "district"
           }
         },
         "column_id": "district",

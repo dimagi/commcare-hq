@@ -35,5 +35,6 @@ class SQLTestSMSBackend(SQLSMSBackend):
             print("Message To:      %s" % msg.phone_number)
             print("Message Content: %s" % msg.text)
             print("***************************************************")
-        # Simulate latency
-        sleep(1)
+
+            # Simulate latency
+            sleep(1)

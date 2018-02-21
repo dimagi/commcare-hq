@@ -46,6 +46,7 @@ describe('Medicine Kit Directive', function () {
 
     it('tests supervisor location', function () {
         controller.filtersData.location_id = 'test-id';
+        controller.userLocationId = 'test-id';
 
         $httpBackend.expectGET('icds_locations?location_id=test-id').respond(200, {location_type: 'supervisor'});
         $httpBackend.expectGET('medicine_kit?location_id=test-id').respond(200, {
@@ -60,6 +61,7 @@ describe('Medicine Kit Directive', function () {
 
     it('tests non supervisor location', function () {
         controller.filtersData.location_id = 'test-id';
+        controller.userLocationId = 'test-id';
 
         $httpBackend.expectGET('icds_locations?location_id=test-id').respond(200, {location_type: 'non supervisor'});
         $httpBackend.expectGET('medicine_kit?location_id=test-id').respond(200, {
@@ -74,7 +76,7 @@ describe('Medicine Kit Directive', function () {
 
     it('tests template popup', function () {
         var result = controller.templatePopup({properties: {name: 'test'}}, {all: 10, in_month: 5});
-        assert.equal(result, '<div class="hoverinfo" style="max-width: 200px !important;"><p>test</p>' +
+        assert.equal(result, '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;"><p>test</p>' +
             '<div>Total number of AWCs that reported having a Medicine Kit: <strong>5</strong></div>' +
             '<div>Percentage of AWCs that reported having a Medicine Kit: <strong>50.00%</strong></div>');
     });
@@ -178,8 +180,9 @@ describe('Medicine Kit Directive', function () {
         var data = {in_month: 5, y: 0.72};
         var month = {value: "Jul 2017", series: []};
 
-        var expected = '<p><strong>Jul 2017</strong></p><br/><p>Number of AWCs that reported having a Medicine Kit:' +
-            ' <strong>5</strong></p><p>Percentage of AWCs that reported having a Medicine Kit: <strong>72.00%</strong></p>';
+        var expected = '<p><strong>Jul 2017</strong></p><br/>' +
+            '<div>Number of AWCs that reported having a Medicine Kit: <strong>5</strong></div>' +
+            '<div>Percentage of AWCs that reported having a Medicine Kit: <strong>72.00%</strong></div>';
 
         var result = controller.tooltipContent(month.value, data);
         assert.equal(expected, result);

@@ -664,8 +664,12 @@ class FormAccessorSQL(AbstractFormAccessor):
         assert form.is_saved(), "this method doesn't support creating unsaved forms"
         assert getattr(form, 'unsaved_attachments', None) is None, \
             'Adding attachments to saved form not supported'
-        assert not form.has_tracked_models(), 'Adding other models to saved form not supported by this method'
+        assert not form.has_tracked_models_to_delete(), 'Deleting other models not supported by this method'
+        assert not form.has_tracked_models_to_update(), 'Updating other models not supported by this method'
+        assert not form.has_tracked_models_to_create(XFormAttachmentSQL), \
+            'Adding new attachments not supported by this method'
 
+        new_operations = form.get_tracked_models_to_create(XFormOperationSQL)
         db_name = form.db
         if form.orig_id:
             old_db_name = get_db_alias_for_partitioned_doc(form.orig_id)
@@ -674,7 +678,7 @@ class FormAccessorSQL(AbstractFormAccessor):
         with transaction.atomic(using=db_name):
             if form.form_id_updated():
                 attachments = form.original_attachments
-                operations = form.original_operations
+                operations = form.original_operations + new_operations
                 with transaction.atomic(db_name):
                     form.save()
                     for model in itertools.chain(attachments, operations):

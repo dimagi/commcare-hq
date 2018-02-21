@@ -11,7 +11,7 @@ hqDefine("hqwebapp/js/hq.helpers", [
 ) {
     var clearAnnouncement = function (announcementID) {
         $.ajax({
-            url: '/announcements/clear/' + announcementID
+            url: '/announcements/clear/' + announcementID,
         });
     };
 
@@ -131,7 +131,7 @@ hqDefine("hqwebapp/js/hq.helpers", [
 
     $.fn.disableButtonNoSpinner = function () {
         $(this).prop('disabled', 'disabled')
-               .addClass('disabled');
+            .addClass('disabled');
     };
 
 
@@ -144,7 +144,7 @@ hqDefine("hqwebapp/js/hq.helpers", [
     $.fn.enableButton = function () {
         $(this).removeSpinnerFromButton();
         $(this).removeClass('disabled')
-               .prop('disabled', false);
+            .prop('disabled', false);
     };
 
     $.fn.koApplyBindings = function (context) {

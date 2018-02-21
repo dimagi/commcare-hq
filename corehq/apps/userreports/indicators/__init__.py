@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from collections import defaultdict
 
 from corehq.apps.userreports.util import truncate_value
