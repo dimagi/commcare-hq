@@ -184,7 +184,7 @@
         "datatype": "string",
         "is_primary_key": false,
         "is_nullable": true,
-        "create_index": true,
+        "create_index": false,
         "column_id": "sex",
         "type": "raw",
         "property_name": "sex"
@@ -2271,7 +2271,7 @@
         "type": "expression",
         "is_nullable": true,
         "is_primary_key": false,
-        "create_index": true,
+        "create_index": false,
         "datatype": "date",
         "expression": {
           "type": "conditional",
@@ -2742,20 +2742,8 @@
       },
       {
         "column_ids": [
-          "block_id",
-          "owner_id"
-        ]
-      },
-      {
-        "column_ids": [
           "district_id",
           "dob"
-        ]
-      },
-      {
-        "column_ids": [
-          "district_id",
-          "owner_id"
         ]
       },
       {
