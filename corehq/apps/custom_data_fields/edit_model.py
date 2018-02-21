@@ -59,7 +59,7 @@ class XmlSlugField(forms.SlugField):
     default_validators = [
         validate_slug,
         validate_reserved_words,
-        RegexValidator(r'^[a-zA-Z]', ''),
+        RegexValidator(r'\D', ''),
     ]
 
 
