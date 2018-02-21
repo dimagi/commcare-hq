@@ -1,6 +1,6 @@
 /* global Stripe */
 hqDefine("accounting/js/stripe_card_manager", function() {
-    var NewStripeCard = function(data){
+    var NewStripeCard = function(data, cardManager){
         'use strict';
         var self = this;
         var mapping = {
@@ -72,7 +72,7 @@ hqDefine("accounting/js/stripe_card_manager", function() {
         return self;
     };
 
-    var StripeCard = function(card, baseUrl){
+    var StripeCard = function(card, baseUrl, cardManager){
         'use strict';
         var self = this;
         var mapping = {
@@ -150,7 +150,7 @@ hqDefine("accounting/js/stripe_card_manager", function() {
         var mapping = {
             'cards':{
                 create: function(card){
-                    return new StripeCard(card.data, data.url);
+                    return new StripeCard(card.data, data.url, self);
                 },
             },
         };
@@ -161,7 +161,7 @@ hqDefine("accounting/js/stripe_card_manager", function() {
         self.wrap(data);
 
         self.autoPayButtonEnabled = ko.observable(true);
-        self.newCard = new NewStripeCard({url: data.url});
+        self.newCard = new NewStripeCard({url: data.url}, self);
 
         return self;
     };
