@@ -59,7 +59,7 @@ class SubmissionTest(TestCase):
 
         return expected
 
-    def _test(self, form, xmlns):
+    def _test(self, form, xmlns, extra_meta={}):
         response = self._submit(form, HTTP_DATE='Mon, 11 Apr 2011 18:24:43 GMT')
         xform_id = response['X-CommCareHQ-FormID']
         foo = FormAccessors(self.domain.name).get_form(xform_id).to_json()
@@ -72,12 +72,18 @@ class SubmissionTest(TestCase):
         # normalize the json
         foo = json.loads(json.dumps(foo))
         expected = self._get_expected_json(xform_id, xmlns)
+        if self.use_sql:
+            expected.update(extra_meta)
         self.assertEqual(foo, expected)
 
     def test_submit_simple_form(self):
         self._test(
             form='simple_form.xml',
             xmlns='http://commcarehq.org/test/submit',
+            extra_meta={
+                'time_start': '2010-06-29T13:42:50.137000Z',
+                'time_end': '2010-06-29T13:55:50.137000Z'
+            }
         )
 
     def test_submit_bare_form(self):
@@ -96,12 +102,20 @@ class SubmissionTest(TestCase):
         self._test(
             form='form_with_case.xml',
             xmlns='http://commcarehq.org/test/submit',
+            extra_meta={
+                'time_start': '2010-06-29T13:42:50.137000Z',
+                'time_end': '2010-06-29T13:55:50.137000Z'
+            }
         )
 
     def test_submit_with_namespaced_meta(self):
         self._test(
             form='namespace_in_meta.xml',
             xmlns='http://bihar.commcarehq.org/pregnancy/new',
+            extra_meta={
+                'time_start': '2012-03-02T21:34:21.533000Z',
+                'time_end': '2012-03-02T21:34:35.025000Z'
+            }
         )
 
     def test_submit_deprecated_form(self):
