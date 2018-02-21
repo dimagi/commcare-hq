@@ -75,14 +75,22 @@ class Enforce2FAMiddleware(MiddlewareMixin):
             and request.user
             and request.couch_user
         ):
-            return "didnt even reach"
+            # print("has user: {}".format(hasattr(request, 'user')))
+            # print("has couch user: {}".format(hasattr(request, 'couch_user')))
+            # print("request user: {}".format(request.user))
+            # print("request couch user: {}".format(request.couch_user))
+            print("didnt even reach")
+            return None
 
         if not toggles.TWO_FACTOR_SUPERUSER_ROLLOUT.enabled(request.user.username):
-            return "not enabled"
+            print("not enabled")
+            return None
         elif not request.user.is_verified():
             if request.path.startswith('/account/') or request.couch_user.two_factor_disabled:
-                return "account or disabled"
+                print("account or disabled")
+                return None
             else:
+                print("IT WORKEDD!")
                 return TemplateResponse(
                     request=request,
                     template='two_factor/core/otp_required.html',
