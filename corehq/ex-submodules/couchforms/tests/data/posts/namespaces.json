@@ -52,5 +52,9 @@
     "last_sync_token": null,
     "openrosa_headers": {},
     "path": null,
-    "submit_ip": null
+    "submit_ip": null,
+    "commcare_version": "",
+    "build_version": "",
+    "time_end": "",
+    "time_start": ""
 }
