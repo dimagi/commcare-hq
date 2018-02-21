@@ -79,9 +79,7 @@ hqDefine("app_manager/js/forms/form_designer", function() {
                         less_error.hide();
                     }
                 }
-                if (initial_page_data('guided_tour')) {
-                    form_tour_start();
-                }
+
                 var kissmetrixTrack = function() {};
                 if (initial_page_data('days_since_created') === 0) {
                     kissmetrixTrack = function() {
