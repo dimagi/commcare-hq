@@ -43,7 +43,37 @@ class Command(BaseDataDump):
         return person and person.get_case_property('dataset') == 'real'
 
     def get_custom_value(self, column_name, episode):
-        raise NotImplementedError
+        if column_name == "Current Treating Facility - District":
+            if not episode.closed and episode.get_case_property('is_active', '') == 'yes':
+                return self.get_person(episode).get_case_property('dto_id')
+            else:
+                return ''
+        elif column_name == "Current Treating Facility - District Name":
+            if not episode.closed and episode.get_case_property('is_active', '') == 'yes':
+                return self.get_person(episode).get_case_property('dto_name')
+            else:
+                return ''
+        elif column_name == "Current Treating Facility - TU":
+            if not episode.closed and episode.get_case_property('is_active', '') == 'yes':
+                return self.get_person(episode).get_case_property('tu_id')
+            else:
+                return ''
+        elif column_name == "Current Treating Facility- TU Name":
+            if not episode.closed and episode.get_case_property('is_active', '') == 'yes':
+                return self.get_person(episode).get_case_property('tu_name')
+            else:
+                return ''
+        elif column_name == "Current Treating Facility - PHI":
+            if not episode.closed and episode.get_case_property('is_active', '') == 'yes':
+                return self.get_person(episode).owner_id
+            else:
+                return ''
+        elif column_name == "Current Treating Facility - PHI Name":
+            if episode.closed and episode.get_case_property('is_active', '') == 'yes':
+                return self.get_person(episode).get_case_property('phi_name')
+            else:
+                return ''
+        return Exception("unknown custom column %s" % column_name)
 
     def get_person(self, episode):
         if 'person' not in self.context:
