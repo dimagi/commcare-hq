@@ -50,11 +50,7 @@ class TestTwoFactorMiddleware(TestCase):
     @flag_enabled('TWO_FACTOR_SUPERUSER_ROLLOUT')
     def test_process_view_permission_denied(self):
         request = self.non_account_request
-        with mock.patch('corehq.apps.users.models.CouchUser.two_factor_disabled',
-                        new_callable=mock.PropertyMock,
-                        return_value=False):
-            response = Enforce2FAMiddleware().process_view(request, "test_view_func",
-                                                           "test_view_args", "test_view_kwargs")
+        response = self.call_process_view_with_couch_mock(request, disable_two_factor=False)
         self.assertEqual(response.status_code, 403)
         self.assertEqual(response._request, request)
         self.assertEqual(response.template_name, 'two_factor/core/otp_required.html')
