@@ -59,7 +59,7 @@ class XmlSlugField(forms.SlugField):
     default_validators = [
         validate_slug,
         validate_reserved_words,
-        RegexValidator(r'\D', ''),
+        RegexValidator(r'\D', ''),  # disallow property names that are just numbers, which breaks
     ]
 
 
