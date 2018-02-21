@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from __future__ import print_function
 import os
-from corehq.apps.es.case_search import CaseSearchES
+from corehq.apps.es import case_search
 from corehq.apps.es import queries
 
 from custom.enikshay.case_utils import (
@@ -28,14 +28,16 @@ class Command(BaseDataDump):
     def get_case_ids(self, case_type):
         """
         All open and closed episode cases whose host/host = a person case (open
-        or closed) with person.dataset = 'real' and person.enrolled_in_private
-        != 'true'
+        or closed) with person.dataset = 'real' and self.enrolled_in_private !=
+        'true' and self.episode_type = 'presumptive_tb'
         """
-        return (CaseSearchES()
+        return (case_search.CaseSearchES()
                 .domain(DOMAIN)
                 .case_type(case_type)
-                .case_property_query(ENROLLED_IN_PRIVATE, 'true', clause=queries.MUST_NOT)
-                .get_ids()[0:10])
+                .NOT(case_search.case_property_filter(ENROLLED_IN_PRIVATE, 'true'))
+                .case_property_filter('episode_type', 'presumptive_tb')
+                .size(10)  # FIXME size limited for debugging
+                .get_ids())
 
     def include_case_in_dump(self, episode):
         person = self.get_person(episode)
