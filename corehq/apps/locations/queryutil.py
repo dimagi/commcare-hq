@@ -120,6 +120,7 @@ for _make_method, name in [
     (_make_qs_method, "order_by"),
     (_make_qs_method, "values"),
     (_make_qs_method, "values_list"),
+    (_make_qs_method, "distinct"),
     # from subclasses of QuerySet
     (_make_qs_method, "location_ids"),
 ]:
