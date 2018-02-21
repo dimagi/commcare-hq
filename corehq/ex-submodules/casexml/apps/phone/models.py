@@ -13,6 +13,7 @@ from corehq.toggles import ENABLE_LOADTEST_USERS
 from corehq.apps.domain.models import Domain
 from dimagi.ext.couchdbkit import *
 from django.db import models
+from django.conf import settings
 from django.contrib.postgres.fields import JSONField
 from django.core.exceptions import ValidationError
 from dimagi.utils.decorators.memoized import memoized
@@ -417,7 +418,20 @@ def synclog_to_sql_object(synclog_json_object):
     return synclog
 
 
+class SyncLogsDBManager(models.Manager):
+
+    def get_queryset(self, *args, **kwargs):
+        base_queryset = super(SyncLogsDBManager, self).get_queryset(*args, **kwargs)
+        if self._db:
+            error = "Synclogs should be queried from only synclgos db"
+            assert self._db == settings.SYNCLOGS_SQL_DB, error
+        else:
+            base_queryset.using(settings.SYNCLOGS_SQL_DB)
+
+
 class SyncLogSQL(models.Model):
+    objects = SyncLogsDBManager()
+
     synclog_id = models.UUIDField(unique=True, primary_key=True, default=uuid.uuid1().hex)
     domain = models.CharField(max_length=255, null=True, blank=True, default=None, db_index=True)
     user_id = models.CharField(max_length=255, default=None, db_index=True)
@@ -439,6 +453,19 @@ class SyncLogSQL(models.Model):
     had_state_error = models.BooleanField(default=False)
     error_date = models.DateTimeField(db_index=True, null=True, blank=True)
     error_hash = models.CharField(max_length=255, null=True, blank=True)
+
+    def _assert_custom_db(self, kwargs):
+        error_message = "You can't specify a different synclogs DB than the configured one"
+        assert not kwargs.pop('using', None), error_message
+        kwargs.update({'using': settings.SYNCLOGS_SQL_DB})
+
+    def save(self, *args, **kwargs):
+        self._assert(self, kwargs)
+        super(SyncLogSQL, self).save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        self._assert(self, kwargs)
+        super(SyncLogSQL, self).delete(*args, **kwargs)
 
 
 class SyncLog(AbstractSyncLog):
