@@ -113,3 +113,5 @@ ELASTICSEARCH_DEBUG_HOSTS = {
     'staging': 'hqes0-staging.internal-va.commcarehq.org',
     'india': '10.162.36.221',
 }
+
+FORMPLAYER_INTERNAL_AUTH_KEY = "secretkey"

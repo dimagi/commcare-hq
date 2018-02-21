@@ -219,11 +219,35 @@ the following contents:
 URL_ROOT = 'http://localhost:8000/a/{{DOMAIN}}'
 ```
 
-If you are on Mac, don't bother trying to run this in Docker. There seems to be some kind of bug.
-Check out the install instructions under "[Building and Running]
-(https://github.com/dimagi/formplayer#building-and-running)".
+##### Running Formplayer in Docker
 
-Otherwise, please refer to FormPlayer's install instructions under "[Running in Docker](https://github.com/dimagi/formplayer#running-in-docker)".
+Please refer to FormPlayer's install instructions under "[Running in Docker](https://github.com/dimagi/formplayer#running-in-docker)".
+
+If you are on Mac, don't bother trying to run this in Docker. There seems to be some kind of bug.
+Instead, try running formplayer from a .jar file
+
+##### Running formplayer.jar
+
+Prerequisite: install Java (left as an exercise for the reader)
+
+To get set up, download the settings file and `formplayer.jar`. You may run this
+in the commcare-hq repo root.
+
+```bash
+$ curl https://raw.githubusercontent.com/dimagi/formplayer/master/config/application.example.properties -o formplayer.properties
+$ curl https://jenkins.dimagi.com/job/formplayer/lastSuccessfulBuild/artifact/build/libs/formplayer.jar -o formplayer.jar
+```
+
+Thereafter, to run formplayer, navigate to the dir where you installed them
+above (probably the repo root), and run:
+
+```bash
+$ java -jar formplayer.jar --spring.config.name=formplayer
+```
+
+This starts a process in the foreground, so you'll need to keep it open as long
+as you plan on using formplayer.
+
 
 Running CommCare HQ
 -------------------
