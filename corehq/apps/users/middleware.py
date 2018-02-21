@@ -77,6 +77,10 @@ class Enforce2FAMiddleware(MiddlewareMixin):
         ):
             return None
 
+        print("request.couch_user.two_factor_disabled: {}".format(request.couch_user.two_factor_disabled))
+        print("request.user.is_verified(): {}".format(request.user.is_verified()))
+        print("request.path.startswith('/account/')): {}".format(request.path.startswith('/account/')))
+
         if (toggles.TWO_FACTOR_SUPERUSER_ROLLOUT.enabled(request.user.username)
                 and not request.couch_user.two_factor_disabled
                 and not request.user.is_verified()
