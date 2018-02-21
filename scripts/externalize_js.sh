@@ -135,7 +135,7 @@ OPEN_BRACKET_REGEX="{\(%\|{\)"
 CLOSE_BRACKET_REGEX="\(%\|}\)}"
 QUOTE="\('\|\"\)"
 TEMPLATE_TAGS=`sed -n "/$OPEN_BRACKET_REGEX/=" $NEW_MODULE_LOCATION`
-TEMPLATE_TAG_COUNT=`echo $TEMPLATE_TAGS | wc -l`
+TEMPLATE_TAG_COUNT=`echo $TEMPLATE_TAGS | wc -w`
 if [ "$TEMPLATE_TAG_COUNT" -gt 0 ]; then
     echo "----------------------------"
     echo "Please check template tags on these lines."
@@ -153,7 +153,7 @@ if [ "$TEMPLATE_TAG_COUNT" -gt 0 ]; then
 
     INITIAL_PAGE_DATA_TAGS=`sed -n "s/.*$OPEN_BRACKET_REGEX//; s/ $CLOSE_BRACKET_REGEX.*//p" $NEW_MODULE_LOCATION`
     INITIAL_PAGE_DATA_TAG_LINES=`sed -n "/$OPEN_BRACKET_REGEX/=" $NEW_MODULE_LOCATION`
-    TAG_COUNT=`echo $INITIAL_PAGE_DATA_TAGS | wc -l`
+    TAG_COUNT=`echo $INITIAL_PAGE_DATA_TAGS | wc -w`
     if [ "$TAG_COUNT" -gt 0 ]; then
         sed -i "s/$OPEN_BRACKET_REGEX /$INITIALPAGEDATA_OPEN/; \
                 s/ $CLOSE_BRACKET_REGEX/$INITIAL_PAGE_DATA_CLOSE/" $NEW_MODULE_LOCATION
