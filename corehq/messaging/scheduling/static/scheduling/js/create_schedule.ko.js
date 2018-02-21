@@ -96,9 +96,10 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
             hqImport("hqwebapp/js/initial_page_data").get("language_list"),
             initial_values.message
         );
-        self.visit_scheduler_form_unique_id = new FormSelect2Handler(current_visit_scheduler_form,
-            'schedule-visit_scheduler_form_unique_id', self.timestamp);
-        self.visit_scheduler_form_unique_id.init();
+        self.visit_scheduler_app_and_form_unique_id = new FormSelect2Handler(current_visit_scheduler_form,
+            'schedule-visit_scheduler_app_and_form_unique_id', self.timestamp);
+        self.visit_scheduler_app_and_form_unique_id.init();
+
         self.capture_custom_metadata_item = ko.observable(initial_values.capture_custom_metadata_item);
 
         self.create_day_of_month_choice = function(value) {
