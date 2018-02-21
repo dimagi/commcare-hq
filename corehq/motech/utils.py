@@ -1,5 +1,9 @@
 from __future__ import absolute_import
+
+import json
 from base64 import b64decode, b64encode
+
+import six
 from Crypto.Cipher import AES
 from django.conf import settings
 
@@ -58,3 +62,17 @@ def b64_aes_decrypt(message):
     ciphertext = b64decode(message)
     plaintext = aes.decrypt(ciphertext)
     return plaintext.rstrip(PAD_CHAR)
+
+
+def pformat_json(data):
+    """
+    Pretty-formats `data` for readability, or returns the original
+    value if it can't be parsed as JSON.
+
+    :return: A 2-space-indented string with sorted keys.
+    """
+    try:
+        json_data = json.loads(data) if isinstance(data, six.string_types) else data
+        return json.dumps(json_data, indent=2, sort_keys=True)
+    except ValueError:
+        return data
