@@ -424,7 +424,7 @@ class SyncLogsDBManager(models.Manager):
         base_queryset = super(SyncLogsDBManager, self).get_queryset(*args, **kwargs)
         if self._db:
             error = "Synclogs should be queried from only synclgos db"
-            assert self._db == SYNCLOGS_SQL_DB, error
+            assert self._db == settings.SYNCLOGS_SQL_DB, error
         else:
             base_queryset.using(settings.SYNCLOGS_SQL_DB)
 
