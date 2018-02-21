@@ -91,6 +91,8 @@ class CaseSessionDataHelper(BaseSessionDataHelper):
                 session_data["case_id"] = self._case_parent_id
             else:
                 session_data[self.case_session_variable_name] = self.case_id
+        if self.app:
+            session_data["app_id"] = self.app.get_id
         return session_data
 
     @property

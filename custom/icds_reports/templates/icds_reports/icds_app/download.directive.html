@@ -201,7 +201,7 @@
                     </div>
                 </div>
             </div>
-            <div class="form-group">
+            <div class="form-group" ng-if="!$ctrl.isISSNIPMonthlyRegisterSelected()">
                 <div class="col-sm-offset-2 col-sm-6">
                     <form action="{% url 'icds_export_indicator' domain %}" method="POST">
                         {% csrf_token %}
@@ -219,12 +219,31 @@
                                 ng-disabled="$ctrl.hasErrors() || $ctrl.hasErrorsISSNIPExport()">
                             Export
                         </button>
+                        <button type="button" ng-click="$ctrl.resetForm()"
+                                class="btn btn-default normalButton orangeButton">
+                            Reset
+                        </button>
                     </form>
                 </div>
             </div>
-            <div class="issnip-spinner-container" ng-if="($ctrl.showProgressBar() || $ctrl.readyToDownload()) && !$ctrl.downloaded">
-                <i ng-if="$ctrl.showProgressBar()" class="fa fa-circle-o-notch fa-spin"></i>
-                <span ng-if="$ctrl.showProgressBar()">Preparing your ISSNIP report...</span>
+            <div class="form-group" ng-if="$ctrl.isISSNIPMonthlyRegisterSelected()">
+                <div class="col-sm-offset-2 col-sm-6">
+                    <form action="{% url 'icds_export_indicator' domain %}" method="POST">
+                        <button type="button" ng-click="$ctrl.submitISSNIPForm('{{ csrf_token }}')"
+                                class="btn btn-default normalButton orangeButton"
+                                ng-disabled="$ctrl.hasErrors() || $ctrl.hasErrorsISSNIPExport()">
+                            Export
+                        </button>
+                        <button type="button" ng-click="$ctrl.resetForm()"
+                                class="btn btn-default normalButton orangeButton">
+                            Reset
+                        </button>
+                    </form>
+                </div>
+            </div>
+            <div class="issnip-spinner-container" ng-if="($ctrl.showProgressBar() || $ctrl.readyToDownload() || $ctrl.queuedISSNIPTask) && !$ctrl.downloaded">
+                <i ng-if="$ctrl.showProgressBar() || $ctrl.queuedISSNIPTask" class="fa fa-circle-o-notch fa-spin"></i>
+                <span ng-if="$ctrl.showProgressBar() || $ctrl.queuedISSNIPTask">Preparing your ISSNIP report...</span>
                 <span ng-if="$ctrl.readyToDownload()">Your ISSNIP report is ready to be downloaded</span>
                 <a class="btn btn-primary" ng-click="$ctrl.goToLink()"
                    ng-disabled="!$ctrl.readyToDownload()"><span>Download</span></a>
