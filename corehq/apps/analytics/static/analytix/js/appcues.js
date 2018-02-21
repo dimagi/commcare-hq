@@ -16,7 +16,6 @@ hqDefine('analytix/js/appcues', [
 ) {
     'use strict';
     var _get = initialAnalytics.getFn('appcues'),
-        _logger = logging.getLoggerForApi('Appcues'),
         _ready = $.Deferred(),
         EVENT_TYPES = {
             FORM_SAVE: "form-save",
@@ -53,7 +52,6 @@ hqDefine('analytix/js/appcues', [
         });
     }
     return {
-        logger: _logger,
         trackEvent: trackEvent,
         EVENT_TYPES: EVENT_TYPES,
     };
