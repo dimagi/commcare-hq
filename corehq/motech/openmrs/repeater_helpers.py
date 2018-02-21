@@ -50,6 +50,10 @@ ADDRESS_PROPERTIES = (
     'startDate',
     'endDate',
 )
+# To match cases against their OpenMRS Person UUID, set the IdMatcher's identifier_type_id to the value of
+# PERSON_UUID_IDENTIFIER_TYPE_ID. To match against any other OpenMRS identifier, set the IdMatcher's
+# identifier_type_id to the UUID of the OpenMRS Identifier Type.
+PERSON_UUID_IDENTIFIER_TYPE_ID = 'uuid'
 
 
 class Requests(object):
@@ -179,7 +183,7 @@ def get_patient_by_uuid(requests, uuid):
 
 
 def get_patient_by_id(requests, patient_identifier_type, patient_identifier):
-    if patient_identifier_type == 'uuid':
+    if patient_identifier_type == PERSON_UUID_IDENTIFIER_TYPE_ID:
         patient = get_patient_by_uuid(requests, patient_identifier)
         return patient
     else:
