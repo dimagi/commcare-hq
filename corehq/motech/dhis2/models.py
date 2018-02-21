@@ -1,11 +1,10 @@
 from __future__ import absolute_import
-import json
+
 from itertools import chain
 
 import jsonfield
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
-import six
 
 from corehq.motech.dhis2.utils import (
     get_date_filter,
@@ -15,6 +14,7 @@ from corehq.motech.dhis2.utils import (
     get_previous_quarter,
 )
 from corehq.motech.dhis2.const import SEND_FREQUENCY_MONTHLY, SEND_FREQUENCY_QUARTERLY, SEND_FREQUENCIES
+from corehq.motech.utils import pformat_json
 from corehq.util.quickcache import quickcache
 from dimagi.ext.couchdbkit import (
     Document,
@@ -184,44 +184,30 @@ class JsonApiLog(models.Model):
             response_body=response_body,
         )
 
-    @staticmethod
-    def pformat_json(data):
-        """
-        Pretty-formats `data` for readability, or returns the original
-        value if it can't be parsed as JSON.
-
-        :return: A 2-space-indented string with sorted keys.
-        """
-        try:
-            json_data = json.loads(data) if isinstance(data, six.string_types) else data
-            return json.dumps(json_data, indent=2, sort_keys=True)
-        except ValueError:
-            return data
-
     @property
     def pp_request_headers(self):
         """
         Pretty-print the request headers
         """
-        return self.pformat_json(self.request_headers)
+        return pformat_json(self.request_headers)
 
     @property
     def pp_request_params(self):
         """
         Pretty-print the request params
         """
-        return self.pformat_json(self.request_params)
+        return pformat_json(self.request_params)
 
     @property
     def pp_request_body(self):
         """
         Pretty-print the request body
         """
-        return self.pformat_json(self.request_body)
+        return pformat_json(self.request_body)
 
     @property
     def pp_response_body(self):
         """
         Pretty-print the response body
         """
-        return self.pformat_json(self.response_body)
+        return pformat_json(self.response_body)
