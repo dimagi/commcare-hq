@@ -18,11 +18,10 @@ hqDefine('analytix/js/appcues', [
     var _get = initialAnalytics.getFn('appcues'),
         _ready = $.Deferred(),
         EVENT_TYPES = {
-            FORM_SAVE: "form-save",
-            FORM_SUBMIT_FAILURE: "form-submit-failure",
-            FORM_SUBMIT_SUCCESS: "form-submit-success",
-            POPPED_OUT_PREVIEW: "popped-out-preview",
-            QUESTION_CREATE: "question-create",
+            FORM_SAVE: "Saved a form",
+            FORM_SUBMIT: "Submitted a form",
+            POPPED_OUT_PREVIEW: "Popped out preview",
+            QUESTION_CREATE: "Added a question to a form",
         };
 
     $(function () {

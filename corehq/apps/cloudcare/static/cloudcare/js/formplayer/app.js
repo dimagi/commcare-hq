@@ -186,7 +186,7 @@ FormplayerFrontend.on('startForm', function (data) {
             if (user.environment === FormplayerFrontend.Constants.PREVIEW_APP_ENVIRONMENT) {
                 hqImport('analytix/js/kissmetrix').track.event("[app-preview] User submitted a form");
                 hqImport('analytix/js/google').track.event("App Preview", "User submitted a form");
-                appcues.trackEvent(appcues.EVENT_TYPES.FORM_SUBMIT_SUCCESS);
+                appcues.trackEvent(appcues.EVENT_TYPES.FORM_SUBMIT, { success: true });
             }
 
             // After end of form nav, we want to clear everything except app and sesson id
@@ -203,7 +203,7 @@ FormplayerFrontend.on('startForm', function (data) {
             }
         } else {
             if (user.environment === FormplayerFrontend.Constants.PREVIEW_APP_ENVIRONMENT) {
-                appcues.trackEvent(appcues.EVENT_TYPES.FORM_SUBMIT_FAILURE);
+                appcues.trackEvent(appcues.EVENT_TYPES.FORM_SUBMIT, { success: false });
             }
             showError(resp.output, $("#cloudcare-notifications"));
         }
