@@ -9,7 +9,10 @@ from custom.enikshay.case_utils import (
     get_person_case_from_episode,
     get_occurrence_case_from_episode,
 )
-from custom.enikshay.const import ENROLLED_IN_PRIVATE
+from custom.enikshay.const import (
+    ENROLLED_IN_PRIVATE,
+    DSTB_EPISODE_TYPE,
+)
 from custom.enikshay.management.commands.base_data_dump import BaseDataDump
 
 DOMAIN = "enikshay"
@@ -36,6 +39,7 @@ class Command(BaseDataDump):
                 .domain(DOMAIN)
                 .case_type(case_type)
                 .case_property_query(ENROLLED_IN_PRIVATE, 'true', clause=queries.MUST_NOT)
+                .case_property_query("episode_type", DSTB_EPISODE_TYPE, clause=queries.MUST)
                 .get_ids()[0:10])
 
     def include_case_in_dump(self, episode):
