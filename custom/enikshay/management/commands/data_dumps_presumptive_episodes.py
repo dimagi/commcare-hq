@@ -2,7 +2,6 @@ from __future__ import absolute_import
 from __future__ import print_function
 import os
 from corehq.apps.es import case_search
-from corehq.apps.es import queries
 
 from custom.enikshay.case_utils import (
     CASE_TYPE_EPISODE,
