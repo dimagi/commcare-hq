@@ -686,8 +686,7 @@ class ExportIndicatorView(View):
                 year
             )
             task_id = task.task_id
-            url = redirect('icds_dashboard', domain=self.kwargs['domain'])
-            return redirect(url.url + '#/download?task_id=' + task_id)
+            return JsonResponse(data={'task_id': task_id})
 
 
 @method_decorator([login_and_domain_required], name='dispatch')
