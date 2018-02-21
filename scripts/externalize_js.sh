@@ -10,9 +10,6 @@
 # Afterwards it checks for django template tags, deletes and replaces them
 # with a few functions and prints out the newly needed initial_page_data tags
 
-# TODOS:
-#   auto indent the moved javascript
-
 # USAGE:
 # From the base level of this repo, run `./scripts/externalize_js.sh <app> <module>
 # The first argument is the django app the module is located in.
@@ -21,9 +18,6 @@
 # It isn't perfect, definitely check for lint and adjust the names around as desired.
 # There are also a few lines printed by the script that may need to be placed in the code as directed
 # Also make sure to visit the page(s) the module is used on to make sure they aren't borked!.
-
-# TODOS:
-#   auto indent the moved javascript
 
 
 # strict mode --> kill it if something fails
@@ -127,6 +121,10 @@ else
     echo "{% block js %}{{ block.super }}\n\t$SCRIPT_IMPORT\n{% endblock %}"
     echo "----------------------------"
 fi
+
+# fix eslint issues
+echo "Fixing lint issues"
+eslint --fix $NEW_MODULE_NAME
 
 # commit the blob movement
 git add $NEW_MODULE_LOCATION $HTML_FILE_LOCATION
