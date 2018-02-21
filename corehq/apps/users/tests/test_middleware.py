@@ -18,7 +18,10 @@ class TestTwoFactorMiddleware(TestCase):
 
     def setUp(self):
         self.account_request = Client().get("/account/").wsgi_request
+        self.create_and_login_user(self.account_request)
+
         self.non_account_request = Client().get("/not_account/").wsgi_request
+        self.create_and_login_user(self.non_account_request)
 
     def create_and_login_user(self, request, username='test@example.com', password='secret'):
         # Create user and couch user
@@ -35,7 +38,7 @@ class TestTwoFactorMiddleware(TestCase):
     @flag_enabled('TWO_FACTOR_SUPERUSER_ROLLOUT')
     def test_process_view(self):
         request = self.account_request
-        self.create_and_login_user(request)
+        # self.create_and_login_user(request)
         self.enable_two_factor_for_user(request)
         with mock.patch('corehq.apps.users.models.CouchUser.two_factor_disabled', new_callable=mock.PropertyMock,
                         return_value=68):
