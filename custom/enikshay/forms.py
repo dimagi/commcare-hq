@@ -3,6 +3,7 @@ from django import forms
 from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
 from crispy_forms.layout import Layout, ButtonHolder, Fieldset, Submit
+from custom.enikshay.management.commands.data_dumps_person_case import Command as data_dumps_person_case
 
 
 class ReconciliationTaskForm(forms.Form):
@@ -44,13 +45,14 @@ class ReconciliationTaskForm(forms.Form):
 
 
 class DataDumpTaskForm(forms.Form):
-    permitted_tasks = ['fill these in']
+    permitted_tasks = [data_dumps_person_case.TASK_NAME]
 
     email = forms.EmailField(label='Your email or email to send confirmation to')
     task = forms.ChoiceField(label='Task', choices=(
         [('all', 'All')] + [(choice, choice.capitalize().replace('_', ' '))
                             for choice in permitted_tasks]
     ))
+    case_type = forms.CharField(label="Case Type")
 
     def __init__(self, *args, **kwargs):
         super(DataDumpTaskForm, self).__init__(*args, **kwargs)
@@ -63,6 +65,7 @@ class DataDumpTaskForm(forms.Form):
                 "Details",
                 crispy.Field('email'),
                 crispy.Field('task'),
+                crispy.Field('case_type'),
             ),
             ButtonHolder(
                 Submit(

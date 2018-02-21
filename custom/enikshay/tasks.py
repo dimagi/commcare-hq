@@ -898,6 +898,14 @@ def run_model_reconciliation(command_name, email, person_case_ids=None, commit=F
                      commit=commit)
 
 
+@task(queue='background_queue', ignore_result=True)
+def run_custom_export_tasks(command_name, email, case_type, input_file_name):
+    if settings.SERVER_ENVIRONMENT == "enikshay":
+        call_command(command_name,
+                     recipient=email,
+                     case_type=case_type)
+
+
 @task
 def update_single_episode(domain, episode_case):
     updater = EpisodeAdherenceUpdate(domain, episode_case)

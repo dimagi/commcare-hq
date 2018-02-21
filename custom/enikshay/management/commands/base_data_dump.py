@@ -9,6 +9,8 @@ DOMAIN = "enikshay"
 
 
 class BaseDataDump(BaseCommand):
+    TASK_NAME = ""
+
     def __init__(self, *args, **kwargs):
         super(BaseDataDump, self).__init__(*args, **kwargs)
         self.log_progress = None
@@ -20,7 +22,6 @@ class BaseDataDump(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('case_type')
-        parser.add_argument('input_file_name')
 
     def setup_result_file_name(self):
         result_file_name = "data_dumps_{case_type}_{timestamp}.csv".format(

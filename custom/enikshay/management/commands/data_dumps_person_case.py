@@ -20,6 +20,9 @@ class Command(BaseDataDump):
     https://docs.google.com/spreadsheets/d/1OPp0oFlizDnIyrn7Eiv11vUp8IBmc73hES7qqT-mKKA/edit#gid=1039030624
     """
 
+    TASK_NAME = "data_dumps_person_case"
+    INPUT_FILE_NAME = 'data_dumps_person_case.csv'
+
     def get_last_episode(self, case):
         self.context['last_episode'] = (
             self.context['last_episode'] or
@@ -55,9 +58,9 @@ class Command(BaseDataDump):
                 return str(e)
         return Exception("unknown case reference %s" % case_reference)
 
-    def handle(self, case_type, input_file_name, *args, **options):
+    def handle(self, case_type, *args, **options):
         self.case_type = case_type
-        self.input_file_name = input_file_name
+        self.input_file_name = self.INPUT_FILE_NAME
         self.setup()
         self.generate_dump()
 

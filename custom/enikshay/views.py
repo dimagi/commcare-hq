@@ -15,7 +15,7 @@ from soil import MultipleTaskDownload
 from .exceptions import EnikshayTaskException
 from .tasks import EpisodeAdherenceUpdate, CACHE_KEY
 
-from custom.enikshay.tasks import run_model_reconciliation
+from custom.enikshay.tasks import run_model_reconciliation, run_custom_export_tasks
 from custom.enikshay.forms import ReconciliationTaskForm, DataDumpTaskForm
 
 
@@ -128,7 +128,11 @@ class DataDumpTaskView(TemplateView):
     @method_decorator(require_superuser)
     def post(self, request, *args, **kwargs):
         def run_task(task_name):
-            assert task_name
+            run_custom_export_tasks(
+                task_name,
+                request.POST.get('email'),
+                request.POST.get('case_type')
+            )
         task_requested = request.POST.get('task')
         message = 'Invalid task. How did you manage that?'  # should never stay in this state
         if task_requested == 'all':
