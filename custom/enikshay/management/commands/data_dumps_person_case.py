@@ -28,7 +28,7 @@ class Command(BaseDataDump):
         return self.context['last_episode']
 
     def get_custom_value(self, column_name, case):
-        if column_name == 'Reason for "Remove a Person" / Closure':
+        if column_name == 'Status':
             if case.closed:
                 return "closed"
             elif case.owner_id == "_invalid_":
@@ -37,7 +37,7 @@ class Command(BaseDataDump):
                 return "archived"
             else:
                 return "active"
-        elif column_name == 'Latest Episode - Date Closed (If any)':
+        elif column_name == 'Latest Episode Status - Open/ Closed':
             try:
                 last_episode_case = self.get_last_episode(case)
                 if last_episode_case.closed:
