@@ -6,6 +6,7 @@ from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition, Cu
 from ..util import LocationExporter
 from ..views import LocationFieldsView
 from .util import LocationHierarchyTestCase
+from six.moves import zip
 
 
 class MockExportWriter(object):
