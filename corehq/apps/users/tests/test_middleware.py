@@ -25,7 +25,6 @@ class TestTwoFactorMiddleware(TestCase):
         request = Client().get(request_url).wsgi_request
         # Create user
         request.user = get_user_model().objects.create_user(username=username, email=username, password=password)
-        username = request.user.get_username()
         # Create couch user
         request.couch_user = CouchUser()
         # Login
