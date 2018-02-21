@@ -1021,6 +1021,9 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
 
     @property
     def two_factor_disabled(self):
+        print("@&(@#*&$(*@#&$ IN COUCH CODE")
+        print("self.two_factor_auth_disabled_until: ".format(self.two_factor_auth_disabled_until))
+        print("datetime.utcnow(): {}".format(datetime.utcnow()))
         return (
             self.two_factor_auth_disabled_until
             and datetime.utcnow() < self.two_factor_auth_disabled_until

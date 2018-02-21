@@ -11,6 +11,8 @@ from corehq.apps.users.tests.utils import UserMixin as test_utils
 from two_factor.utils import default_device
 from django_otp import DEVICE_ID_SESSION_KEY
 
+import mock
+
 
 class TestTwoFactorMiddleware(TestCase):
 
@@ -39,6 +41,10 @@ class TestTwoFactorMiddleware(TestCase):
 
         request = Client().get(self.account_url).wsgi_request
         request.couch_user = CouchUser()
+
+        with mock.patch('corehq.apps.users.models.CouchUser.two_factor_disabled', new_callable=mock.PropertyMock) as couch_mock:
+            couch_mock.return_value = 55
+            print("COUCH 2FA DISABLED?: {}".format(request.couch_user.two_factor_disabled))
         request.user = my_test_utils.create_user() #User.objects.create_user(username="test_username", email="test@example.com", password="123")
         my_test_utils.enable_otp(request.user)
 
