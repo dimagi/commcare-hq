@@ -51,12 +51,13 @@ DEFAULT_VALUE = "Data not Entered"
 
 DATA_NOT_ENTERED = "Data Not Entered"
 
+
 class MPRData(object):
-    resource_file = 'resources/block_mpr.json'
+    resource_file = '../resources/block_mpr.json'
 
 
 class ASRData(object):
-    resource_file = 'resources/block_asr.json'
+    resource_file = '../resources/block_asr.json'
 
 
 class ICDSData(object):
