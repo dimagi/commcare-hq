@@ -464,6 +464,12 @@ class ConfigureReport(ReportBuilderView):
             self.source_type = self.request.GET['source_type']
             self.source_id = self.request.GET['source']
 
+        if not self.app_id:
+            raise BadBuilderConfigError(_(
+                "Report builder data source doesn't reference an application. "
+                "It is likely this report has been customized and it is no longer editable. "
+            ))
+
         try:
             data_source_builder = DataSourceBuilder(self.domain, self.app, self.source_type, self.source_id)
         except ResourceNotFound:
