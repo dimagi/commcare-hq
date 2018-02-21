@@ -1,18 +1,18 @@
-Column Name,Case Reference,Calculation
-Commcare UUID,self,caseid
-eNikshay ID (Person),person,person_id
-eNikshay Episode ID ,self,episode_id
-Nikshay ID ,self,nikshay_id
-Manual Nikshay ID,self,manual_nikshay_id
-Name,person,name
-Episode Type,self,episode_type
-Episode closed?,self,closed
-Episode Close Reason (from Remove Person),self,close_reason
-Episode Active?,self,is_active
-State,N/A,N/A
-District,N/A,N/A
-TU,N/A,N/A
-PHI,N/A,N/A
-Date of Creation of Presumptive TB Episode,self,opened_date
-Created by Username,custom,"if(self.opened_by_username!="""",self.opened_by_username,self.opened_by_username1)"
-Created by User ID,person,opened_by_user_id
+Column Name,Type,Case Reference,Calculation
+Commcare UUID,Primary Case,self,caseid
+eNikshay ID (Person),Related Case,person,person_id
+eNikshay Episode ID ,Primary Case,self,episode_id
+Nikshay ID ,Primary Case,self,nikshay_id
+Manual Nikshay ID,Primary Case,self,manual_nikshay_id
+Name,Related Case,person,name
+Episode Type,Primary Case,self,episode_type
+Episode closed?,Primary Case,self,closed
+Episode Close Reason (from Remove Person),Primary Case,self,close_reason
+Episode Active?,Primary Case,self,is_active
+State,N/A,N/A,N/A
+District,N/A,N/A,N/A
+TU,N/A,N/A,N/A
+PHI,N/A,N/A,N/A
+Date of Creation of Presumptive TB Episode,Primary Case,self,opened_date
+Created by Username,Custom,custom,"if(self.opened_by_username!="""",self.opened_by_username,self.opened_by_username1)"
+Created by User ID,Related Case,person,opened_by_user_id
