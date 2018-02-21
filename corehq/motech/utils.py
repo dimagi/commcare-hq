@@ -70,6 +70,20 @@ def pformat_json(data):
     value if it can't be parsed as JSON.
 
     :return: A 2-space-indented string with sorted keys.
+
+    >>> print(pformat_json('{"ham": "spam", "eggs": "spam"}'))
+    {
+      "eggs": "spam", 
+      "ham": "spam"
+    }
+    >>> print(pformat_json({'ham': 'spam', 'eggs': 'spam'}))
+    {
+      "eggs": "spam", 
+      "ham": "spam"
+    }
+    >>> print(pformat_json('ham spam eggs spam'))
+    ham spam eggs spam
+
     """
     try:
         json_data = json.loads(data) if isinstance(data, six.string_types) else data
