@@ -30,7 +30,6 @@
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
-    {% if request.guided_tour %}{% include request.guided_tour.template %}{% endif %}
     {% compress js %}
     <script src="{% static 'app_manager/js/forms/case_knockout_bindings.js' %}"></script>
     <script src="{% static 'app_manager/js/case_config_utils.js' %}"></script>

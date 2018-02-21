@@ -60,9 +60,6 @@ hqDefine("app_manager/js/forms/form_designer", function() {
                         less_error.hide();
                     }
                 }
-                if (initial_page_data('guided_tour')) {
-                    form_tour_start();
-                }
                 if (initial_page_data('days_since_created') === 0) {
                     $("#formdesigner").vellum("get").data.core.form.on("question-create", function() {
                         hqImport('analytix/js/kissmetrix').track.event('Added question in Form Builder within first 24 hours');
