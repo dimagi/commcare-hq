@@ -19,7 +19,7 @@ from ..sqlreport import SqlTabularReport, DatabaseColumn, AggregateColumn
 def combine_indicator(num, denom):
     if isinstance(num, Number) and isinstance(denom, Number):
         if denom != 0:
-            return num * 100 / denom
+            return num * 100 // denom
         else:
             return 0
     else:
