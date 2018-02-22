@@ -13,6 +13,7 @@ from corehq.toggles import ENABLE_LOADTEST_USERS
 from corehq.apps.domain.models import Domain
 from dimagi.ext.couchdbkit import *
 from django.db import models
+from django.conf import settings
 from django.contrib.postgres.fields import JSONField
 from django.core.exceptions import ValidationError
 from dimagi.utils.decorators.memoized import memoized
@@ -417,7 +418,20 @@ def synclog_to_sql_object(synclog_json_object):
     return synclog
 
 
+class PhoneAppDBManager(models.Manager):
+
+    def get_queryset(self, *args, **kwargs):
+        base_queryset = super(PhoneAppDBManager, self).get_queryset(*args, **kwargs)
+        if self._db:
+            error = "Synclogs/phone-app should be queried from only synclogs db"
+            assert self._db == settings.SYNCLOGS_SQL_DB_ALIAS, error
+        else:
+            return base_queryset.using(settings.SYNCLOGS_SQL_DB_ALIAS)
+
+
 class SyncLogSQL(models.Model):
+    objects = PhoneAppDBManager()
+
     synclog_id = models.UUIDField(unique=True, primary_key=True, default=uuid.uuid1().hex)
     domain = models.CharField(max_length=255, null=True, blank=True, default=None, db_index=True)
     user_id = models.CharField(max_length=255, default=None, db_index=True)
@@ -1329,6 +1343,8 @@ class OwnershipCleanlinessFlag(models.Model):
 
     We use this field to optimize restores.
     """
+    objects = PhoneAppDBManager()
+
     domain = models.CharField(max_length=100, db_index=True)
     owner_id = models.CharField(max_length=100, db_index=True)
     is_clean = models.BooleanField(default=False)
