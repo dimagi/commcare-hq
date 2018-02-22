@@ -116,8 +116,18 @@
       },
       {
         "display_name": "Count",
-        "type": "count",
-        "column_id": "count"
+        "column_id": "count",
+        "type": "boolean",
+        "filter": {
+          "type": "boolean_expression",
+          "operator": "eq",
+          "expression": {
+            "type": "constant",
+            "constant": 1
+          },
+          "property_value": 1
+        }
+
       }
     ],
     "named_expressions": {},
