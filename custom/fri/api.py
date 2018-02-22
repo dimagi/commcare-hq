@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import division
 import random
 import re
 from dateutil.parser import parse
@@ -282,7 +283,7 @@ def get_num_missed_windows(case):
     if current_time < window_time:
         return 0
 
-    window_interval = (WINDOWS[day_of_week][1] - 60) / 5
+    window_interval = (WINDOWS[day_of_week][1] - 60) // 5
     for i in range(1, 5):
         window_time += timedelta(minutes=window_interval)
         if current_time < window_time:
@@ -351,7 +352,7 @@ def shift_custom_content_handler(reminder, handler, recipient):
     is_closing = message_type == 0
     is_closed = message_type == 1
     # Monday=0, Sunday=6
-    curr_day_num = (reminder.current_event_sequence_num + 1) / 3
+    curr_day_num = (reminder.current_event_sequence_num + 1) // 3
     curr_day_num = (curr_day_num + 5) % 7
     next_day_num = (curr_day_num + 1) % 7
 
@@ -359,7 +360,7 @@ def shift_custom_content_handler(reminder, handler, recipient):
     start_date, end_date = get_valid_date_range(case)
 
     # current_date is the date that the shift began in
-    date_offset = (reminder.current_event_sequence_num - 2) / 3
+    date_offset = (reminder.current_event_sequence_num - 2) // 3
     date_offset += (reminder.schedule_iteration_num - 1) * 7
     current_date = get_date(case, "previous_sunday")
     if current_date:
@@ -408,7 +409,7 @@ def format_day(day):
         2: "nd",
         3: "rd",
     }
-    if (day / 10) == 1:
+    if (day // 10) == 1:
         suffix = "th"
     else:
         suffix = suffixes.get(day % 10, "th")

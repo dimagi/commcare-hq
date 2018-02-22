@@ -53,8 +53,8 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
     };
 
     var CreateScheduleViewModel = function (initial_values, select2_user_recipients,
-            select2_user_group_recipients, select2_user_organization_recipients,
-            select2_case_group_recipients, current_visit_scheduler_form) {
+        select2_user_group_recipients, select2_user_organization_recipients,
+        select2_case_group_recipients, current_visit_scheduler_form) {
         var self = this;
 
         self.timestamp = new Date().getTime();
@@ -96,9 +96,10 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
             hqImport("hqwebapp/js/initial_page_data").get("language_list"),
             initial_values.message
         );
-        self.visit_scheduler_form_unique_id = new FormSelect2Handler(current_visit_scheduler_form,
-            'schedule-visit_scheduler_form_unique_id', self.timestamp);
-        self.visit_scheduler_form_unique_id.init();
+        self.visit_scheduler_app_and_form_unique_id = new FormSelect2Handler(current_visit_scheduler_form,
+            'schedule-visit_scheduler_app_and_form_unique_id', self.timestamp);
+        self.visit_scheduler_app_and_form_unique_id.init();
+
         self.capture_custom_metadata_item = ko.observable(initial_values.capture_custom_metadata_item);
 
         self.create_day_of_month_choice = function(value) {

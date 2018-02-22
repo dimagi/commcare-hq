@@ -9,7 +9,7 @@ hqDefine('toggle_ui/js/flags', [
 ) {
     var dataTableElem = '.datatable';
     var viewModel = {
-        tagFilter: ko.observable(null)
+        tagFilter: ko.observable(null),
     };
     $.fn.dataTableExt.afnFiltering.push(
         function( oSettings, aData, iDataIndex ) {

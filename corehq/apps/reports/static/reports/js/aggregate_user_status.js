@@ -7,11 +7,11 @@ hqDefine("reports/js/aggregate_app_status", function() {
     function setupCharts(data, div, customTooltip) {
         nv.addGraph(function() {
             var chart = nv.models.multiBarChart()
-              .transitionDuration(100)
-              .showControls(false)
-              .reduceXTicks(true)
-              .rotateLabels(0)
-              .groupSpacing(0.1)
+                .transitionDuration(100)
+                .showControls(false)
+                .reduceXTicks(true)
+                .rotateLabels(0)
+                .groupSpacing(0.1)
             ;
 
             chart.yAxis.tickFormat(d3.format(',f'));

@@ -91,10 +91,11 @@ def get_demographics_data(domain, now_date, config, show_test=False, beta=False)
                         prev_data,
                         'all_persons'
                     ),
-                    'color': 'green' if percent_increase(
+                    'color': 'green' if percent_diff(
                         'person_aadhaar',
                         data,
-                        prev_data) > 0 else 'red',
+                        prev_data,
+                        'all_persons') > 0 else 'red',
                     'value': get_value(data, 'person_aadhaar'),
                     'all': get_value(data, 'all_persons'),
                     'format': 'percent_and_div',

@@ -70,6 +70,20 @@ class SQLColumnIndexes(DocumentSchema):
     column_ids = StringListProperty()
 
 
+class SQLPartition(DocumentSchema):
+    """Uses architect library to partition
+
+    http://architect.readthedocs.io/features/partition/index.html
+    """
+    column = StringProperty()
+    subtype = StringProperty(choices=['date', 'string_firstchars'])
+    constraint = StringProperty()
+
+
+class SQLSettings(DocumentSchema):
+    partition_config = SchemaListProperty(SQLPartition)
+
+
 class DataSourceBuildInformation(DocumentSchema):
     """
     A class to encapsulate meta information about the process through which
@@ -119,6 +133,7 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
     sql_column_indexes = SchemaListProperty(SQLColumnIndexes)
     icds_rebuild_related_docs = BooleanProperty(default=False)
     disable_destructive_rebuild = BooleanProperty(default=False)
+    sql_settings = SchemaProperty(SQLSettings)
 
     class Meta(object):
         # prevent JsonObject from auto-converting dates etc.

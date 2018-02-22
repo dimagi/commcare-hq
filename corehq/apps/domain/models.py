@@ -327,6 +327,10 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
     # Allowed outbound SMS per day
     daily_outbound_sms_limit = IntegerProperty(default=5000)
 
+    # Allowed number of case updates or closes from automatic update rules in the daily rule run.
+    # If this value is None, the value in settings.MAX_RULE_UPDATES_IN_ONE_RUN is used.
+    auto_case_update_limit = IntegerProperty()
+
     # exchange/domain copying stuff
     is_snapshot = BooleanProperty(default=False)
     is_approved = BooleanProperty(default=False)

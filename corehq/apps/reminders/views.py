@@ -81,6 +81,16 @@ survey_reminders_permission = lambda *args, **kwargs: (
 )
 
 
+def add_migration_in_progress_message(request):
+    messages.warning(
+        request,
+        _("Maintenance is underway to upgrade your experience with "
+          "messaging reminders. As a result, pages which create or "
+          "edit reminders are currently unavailable. Please check "
+          "back soon.")
+    )
+
+
 def get_project_time_info(domain):
     timezone = get_timezone_for_user(None, domain)
     now = pytz.utc.localize(datetime.utcnow())
@@ -166,6 +176,8 @@ class CreateScheduledReminderView(BaseMessagingSectionView):
     @use_timepicker
     @use_select2
     def dispatch(self, request, *args, **kwargs):
+        if self.reminders_migration_in_progress:
+            return HttpResponseRedirect(reverse(RemindersListView.urlname, args=[self.domain]))
         return super(CreateScheduledReminderView, self).dispatch(request, *args, **kwargs)
 
     @property
@@ -715,6 +727,8 @@ class CreateBroadcastView(BaseMessagingSectionView):
     @use_timepicker
     @use_select2
     def dispatch(self, *args, **kwargs):
+        if self.reminders_migration_in_progress:
+            return HttpResponseRedirect(reverse(BroadcastListView.urlname, args=[self.domain]))
         return super(BaseMessagingSectionView, self).dispatch(*args, **kwargs)
 
     @property
@@ -881,8 +895,8 @@ class RemindersListView(BaseMessagingSectionView):
     @method_decorator(requires_old_reminder_framework())
     @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
     @use_datatables
-    def dispatch(self, *args, **kwargs):
-        return super(BaseMessagingSectionView, self).dispatch(*args, **kwargs)
+    def dispatch(self, request, *args, **kwargs):
+        return super(BaseMessagingSectionView, self).dispatch(request, *args, **kwargs)
 
     @property
     def page_url(self):
@@ -905,6 +919,7 @@ class RemindersListView(BaseMessagingSectionView):
     def page_context(self):
         return {
             'reminders': list(self.reminders),
+            'reminders_migration_in_progress': self.reminders_migration_in_progress,
         }
 
     @property
@@ -954,9 +969,20 @@ class RemindersListView(BaseMessagingSectionView):
                 'success': False,
             }
 
+    def get(self, *args, **kwargs):
+        if self.reminders_migration_in_progress:
+            add_migration_in_progress_message(self.request)
+
+        return super(RemindersListView, self).get(*args, **kwargs)
+
     def post(self, *args, **kwargs):
         action = self.request.POST.get('action')
         if action in [ACTION_ACTIVATE, ACTION_DEACTIVATE, ACTION_DELETE]:
+            if self.reminders_migration_in_progress:
+                return HttpResponse(
+                    "Cannot complete action because reminders migration is in progress.",
+                    status=400
+                )
             return HttpResponse(json.dumps(self.get_action_response(action)))
         return HttpResponse(status=400)
 
@@ -973,8 +999,14 @@ class BroadcastListView(BaseMessagingSectionView, DataTablesAJAXPaginationMixin)
     @method_decorator(requires_old_reminder_framework())
     @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
     @use_datatables
-    def dispatch(self, *args, **kwargs):
-        return super(BroadcastListView, self).dispatch(*args, **kwargs)
+    def dispatch(self, request, *args, **kwargs):
+        return super(BroadcastListView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    def page_context(self):
+        return {
+            'reminders_migration_in_progress': self.reminders_migration_in_progress,
+        }
 
     @property
     @memoized
@@ -1050,11 +1082,18 @@ class BroadcastListView(BaseMessagingSectionView, DataTablesAJAXPaginationMixin)
             upcoming = (action == self.LIST_UPCOMING)
             return self.get_broadcast_ajax_response(upcoming)
         else:
+            if self.reminders_migration_in_progress:
+                add_migration_in_progress_message(self.request)
             return super(BroadcastListView, self).get(*args, **kwargs)
 
     def post(self, *args, **kwargs):
         action = self.request.POST.get('action')
         if action == self.DELETE_BROADCAST:
+            if self.reminders_migration_in_progress:
+                return HttpResponse(
+                    "Cannot complete action because reminders migration is in progress.",
+                    status=400
+                )
             return self.delete_broadcast(self.request.POST.get('broadcast_id', None))
         else:
             return HttpResponse(status=400)

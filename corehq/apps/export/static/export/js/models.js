@@ -322,7 +322,7 @@ hqDefine('export/js/models', function () {
                         path: [{
                             doc_type: 'PathNode',
                             name: 'number',
-                        }]
+                        }],
                     },
                     selected: true,
                     is_advanced: false,
@@ -532,7 +532,7 @@ hqDefine('export/js/models', function () {
         }
     };
 
-     /**
+    /**
      * ExportColumn
      * @class
      *

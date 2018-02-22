@@ -354,9 +354,13 @@ class AggChildHealthMonthlyDataSource(ProgressReportSqlData):
                 '% Height measurement efficiency (Children <5 measured)',
                 percent_num,
                 [
-                    SumColumn('height_measured_in_month', filters=self.filters + [
-                        NOT(EQ('age_tranche', 'age_72'))
-                    ]),
+                    SumColumn(
+                        'height_measured_in_month',
+                        alias='height_measured_in_month_less_5',
+                        filters=self.filters + [
+                            NOT(EQ('age_tranche', 'age_72'))
+                        ]
+                    ),
                     SumColumn('height_eligible', alias='height_eligible', filters=self.filters + [
                         AND([
                             NOT(EQ('age_tranche', 'age_0')),
@@ -1050,7 +1054,7 @@ class ChildrenExport(ExportableMixin, SqlData):
                 'Height measurement efficiency (in month)',
                 percent,
                 [
-                    SumColumn('height_measured_in_month'),
+                    SumColumn('height_measured_in_month', alias='height_measured_in_month_all'),
                     SumColumn('height_eligible', filters=self.filters + [
                         AND([
                             NOT(EQ('age_tranche', 'age_0')),

@@ -31,7 +31,7 @@ hqDefine('userreports/js/expression_evaluator', function () {
             var newParams = {
                 'id': self.documentId(),
                 'type': self.documentType(),
-            }
+            };
             if (self.dataSourceId()) {
                 newParams['data_source'] = self.dataSourceId();
             }

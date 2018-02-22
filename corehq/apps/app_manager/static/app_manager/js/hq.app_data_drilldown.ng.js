@@ -12,7 +12,7 @@
         'ngResource',
         'ngRoute',
         'ng.django.rmi',
-        'ngMessages'
+        'ngMessages',
     ]);
 
     // defaults
@@ -22,7 +22,7 @@
         application: 'application',
         module: 'module',
         form: 'form',
-        case_type: 'case_type'
+        case_type: 'case_type',
     });
     app_drilldown.constant('formDefaults', {
         model_type: '',
@@ -30,7 +30,7 @@
         application: null,
         module: null,
         form: null,
-        case_type: null
+        case_type: null,
     });
     app_drilldown.constant('djangoRMICallbackName', 'submit_app_data_drilldown_form');
     app_drilldown.constant('processApplicationDataFormSuccessCallback', function (data) {
@@ -91,7 +91,7 @@
                     if ($formElem.length > 0) {
                         $formElem.select2({
                             data: field_data || [],
-                            triggerChange: true
+                            triggerChange: true,
                         }).select2('val', formDefaults[fieldSlug]).trigger('change');
                         $('#s2id_id_' + fieldSlug)
                             .find('.select2-choice').addClass('select2-default')
@@ -100,7 +100,7 @@
                     self._select2Test[fieldSlug] = {
                         data: field_data,
                         placeholder: self._placeholders[fieldSlug],
-                        defaults: formDefaults[fieldSlug]
+                        defaults: formDefaults[fieldSlug],
                     };
                 }
             };
@@ -114,19 +114,19 @@
                 if ($formElem.length > 0) {
                     $formElem.select2({
                         data: self._app_types || [],
-                        triggerChange: true
+                        triggerChange: true,
                     }).select2('val', formDefaults.app_type).trigger('change');
                 }
                 self._select2Test.app_type = {
                     data: self._app_types || [],
                     placeholder: null,
-                    defaults: formDefaults.app_type
+                    defaults: formDefaults.app_type,
                 };
             },
             setApps: _formSelect2Setter(formFieldSlugs.application),
             setModules: _formSelect2Setter(formFieldSlugs.module),
             setForms: _formSelect2Setter(formFieldSlugs.form),
-            setCaseTypes: _formSelect2Setter(formFieldSlugs.case_type)
+            setCaseTypes: _formSelect2Setter(formFieldSlugs.case_type),
         };
 
         $scope.resetForm = function () {
@@ -228,20 +228,20 @@
             var formData = _.clone($scope.formData);
 
             djangoRMI[djangoRMICallbackName]({
-                formData: formData
+                formData: formData,
             })
-            .success(function (data) {
-                if (data.success) {
-                    processApplicationDataFormSuccessCallback(data);
-                } else {
+                .success(function (data) {
+                    if (data.success) {
+                        processApplicationDataFormSuccessCallback(data);
+                    } else {
+                        $scope.isSubmittingForm = false;
+                        $scope.formSubmissionError = data.error;
+                    }
+                })
+                .error(function () {
                     $scope.isSubmittingForm = false;
-                    $scope.formSubmissionError = data.error;
-                }
-            })
-            .error(function () {
-                $scope.isSubmittingForm = false;
-                $scope.formSubmissionError = 'default';
-            });
+                    $scope.formSubmissionError = 'default';
+                });
         };
 
         $scope.selectedAppData = {};

@@ -12,6 +12,16 @@ from corehq.util.quickcache import quickcache
 from django.utils.translation import ugettext as _
 
 
+def get_combined_id(app_id, form_unique_id):
+    if '|' in app_id:
+        raise ValueError("Unexpected token '|' in app_id '%s'" % app_id)
+
+    if '|' in form_unique_id:
+        raise ValueError("Unexpected token '|' in form_unique_id '%s'" % form_unique_id)
+
+    return '%s|%s' % (app_id, form_unique_id)
+
+
 @quickcache(['domain', 'timestamp'], timeout=10 * 60)
 def get_visit_scheduler_forms(domain, timestamp):
     """
@@ -26,7 +36,10 @@ def get_visit_scheduler_forms(domain, timestamp):
             for module in app.get_modules():
                 for form in module.get_forms():
                     if isinstance(form, AdvancedForm) and form.schedule and form.schedule.enabled:
-                        result.append({'id': form.unique_id, 'text': form.full_path_name})
+                        result.append({
+                            'id': get_combined_id(app_id, form.unique_id),
+                            'text': form.full_path_name,
+                        })
     return result
 
 
@@ -119,11 +132,11 @@ class ConditionalAlertAsyncHandler(MessagingRecipientHandler):
         'schedule_user_group_recipients',
         'schedule_user_organization_recipients',
         'schedule_case_group_recipients',
-        'schedule_visit_scheduler_form_unique_id',
+        'schedule_visit_scheduler_app_and_form_unique_id',
     ]
 
     @property
-    def schedule_visit_scheduler_form_unique_id_response(self):
+    def schedule_visit_scheduler_app_and_form_unique_id_response(self):
         domain = self.request.domain
         timestamp = self.data.get('timestamp')
         if not timestamp:
