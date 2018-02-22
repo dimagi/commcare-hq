@@ -22,7 +22,7 @@ class Command(BaseDataDump):
 
     def get_last_episode(self, case):
         self.context['last_episode'] = (
-            self.context['last_episode'] or
+            self.context.get('last_episode') or
             get_last_episode(case)
         )
         if not self.context['last_episode']:
