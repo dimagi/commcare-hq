@@ -67,6 +67,7 @@
         "transform": {},
         "is_nullable": true,
         "is_primary_key": false,
+        "create_index": true,
         "column_id": "supervisor_id",
         "expression": {
           "location_id_expression": {
@@ -128,14 +129,6 @@
     "named_expressions": {},
     "named_filters": {},
     "engine_id": "icds-ucr",
-    "sql_column_indexes": [
-      {
-        "column_ids": [
-          "supervisor_id",
-          "submitted_on"
-        ]
-      }
-    ],
     "sql_settings": {
       "partition_config": [
         {
