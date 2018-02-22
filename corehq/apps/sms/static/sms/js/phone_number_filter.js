@@ -43,7 +43,6 @@ hqDefine("sms/js/phone_number_filter", function() {
     }
 
     $(function() {
-        debugger
         $(".report-filter-phone-number").each(function(i, el) {
             var $el = $(el),
                 data = $el.data();
