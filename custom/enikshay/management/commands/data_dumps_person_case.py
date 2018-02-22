@@ -1,5 +1,7 @@
 from __future__ import absolute_import
 from __future__ import print_function
+
+import os
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.apps.es.case_search import CaseSearchES
 from corehq.apps.es import queries
@@ -21,7 +23,8 @@ class Command(BaseDataDump):
     """
 
     TASK_NAME = "data_dumps_person_case"
-    INPUT_FILE_NAME = 'data_dumps_person_case.csv'
+    INPUT_FILE_NAME = ('%s/data_dumps_person_case.csv' %
+                       os.path.dirname(os.path.realpath(__file__)))
 
     def get_last_episode(self, case):
         self.context['last_episode'] = (
