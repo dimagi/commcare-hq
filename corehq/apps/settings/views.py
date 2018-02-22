@@ -33,6 +33,7 @@ from corehq.util.quickcache import quickcache
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import json_response
 from dimagi.utils.couch import CriticalSection
+from django.shortcuts import redirect
 
 from tastypie.models import ApiKey
 from two_factor.utils import default_device
@@ -171,7 +172,7 @@ class MyAccountSettingsView(BaseMyAccountView):
             user = self.request.couch_user
             user.add_phone_number(self.phone_number)
             user.save()
-            messages.success(self.request, _("Phone number added."))
+            messages.success(self.request, _("Phone number added!"))
         else:
             messages.error(self.request, _("Invalid phone number format entered. "
                 "Please enter number, including country code, in digits only."))
@@ -373,6 +374,7 @@ class TwoFactorPhoneSetupView(BaseMyAccountView, PhoneSetupView):
     urlname = 'two_factor_phone_setup'
     template_name = 'two_factor/core/phone_register.html'
     success_url = "/account/two_factor/"
+
     page_title = ugettext_lazy("Two Factor Authentication Phone Setup")
 
     form_list = (
@@ -384,6 +386,14 @@ class TwoFactorPhoneSetupView(BaseMyAccountView, PhoneSetupView):
     def dispatch(self, request, *args, **kwargs):
         # this is only here to add the login_required decorator
         return super(TwoFactorPhoneSetupView, self).dispatch(request, *args, **kwargs)
+
+    def done(self, form_list, **kwargs):
+        """
+        Store the device and reload the page.
+        """
+        self.get_device(user=self.request.user, name='backup').save()
+        messages.add_message(self.request, messages.SUCCESS, "Phone number added!")
+        return redirect(self.success_url)
 
 
 class TwoFactorResetView(TwoFactorSetupView):
