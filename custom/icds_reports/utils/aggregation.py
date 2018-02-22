@@ -145,9 +145,12 @@ class ComplementaryFormsAggregationHelper(BaseICDSAggregationHelper):
         }
         query_params.update(ucr_query_params)
 
-        # data from the UCR will already be filtered for data from this month so
-        # all data from the UCR is from a later time than the previous month and
-        # we can safely use COALESCE instead of a larger CASE WHEN
+        # GREATEST calculations are for when we want to know if a thing has
+        # ever happened to a case.
+        # CASE WHEN calculations are for when we want to know if a case
+        # happened during the last form for this case. We must use CASE WHEN
+        # and not COALESCE as when questions are skipped they will be NULL
+        # and we want NULL in the aggregate table
         return """
         INSERT INTO "{tablename}" (
           state_id, month, case_id, latest_time_end_processed, comp_feeding_ever,
@@ -163,10 +166,18 @@ class ComplementaryFormsAggregationHelper(BaseICDSAggregationHelper):
             GREATEST(ucr.demo_comp_feeding, prev_month.demo_comp_feeding) AS demo_comp_feeding,
             GREATEST(ucr.counselled_pediatric_ifa, prev_month.counselled_pediatric_ifa) AS counselled_pediatric_ifa,
             GREATEST(ucr.play_comp_feeding_vid, prev_month.play_comp_feeding_vid) AS play_comp_feeding_vid,
-            COALESCE(ucr.comp_feeding_latest, prev_month.comp_feeding_latest) AS comp_feeding_latest,
-            COALESCE(ucr.diet_diversity, prev_month.diet_diversity) AS diet_diversity,
-            COALESCE(ucr.diet_quantity, prev_month.diet_quantity) AS diet_quantity,
-            COALESCE(ucr.hand_wash, prev_month.hand_wash) AS hand_wash
+            CASE WHEN ucr.latest_time_end IS NOT NULL
+                 THEN ucr.comp_feeding_latest ELSE prev_month.comp_feeding_latest
+            END AS comp_feeding_latest,
+            CASE WHEN ucr.latest_time_end IS NOT NULL
+                 THEN ucr.diet_diversity ELSE prev_month.diet_diversity
+            END AS diet_diversity,
+            CASE WHEN ucr.latest_time_end IS NOT NULL
+                 THEN ucr.diet_quantity ELSE prev_month.diet_quantity
+            END AS diet_quantity,
+            CASE WHEN ucr.latest_time_end IS NOT NULL
+                 THEN ucr.hand_wash ELSE prev_month.hand_wash
+            END AS hand_wash
           FROM ({ucr_table_query}) ucr
           FULL OUTER JOIN "{previous_month_tablename}" prev_month
           ON ucr.case_id = prev_month.case_id
