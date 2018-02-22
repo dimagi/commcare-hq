@@ -41,7 +41,7 @@ class Command(BaseDataDump):
                 .case_type(case_type)
                 .case_property_query(ENROLLED_IN_PRIVATE, 'true', clause=queries.MUST_NOT)
                 .case_property_query("episode_type", DSTB_EPISODE_TYPE, clause=queries.MUST)
-                .get_ids()[0:10])
+                .get_ids())
 
     def include_case_in_dump(self, episode):
         person = self.get_person(episode)
@@ -98,5 +98,6 @@ class Command(BaseDataDump):
         return Exception("unknown case reference %s" % case_reference)
 
     def handle(self, *args, **options):
+        self.full = options.get('full')
         self.setup()
         self.generate_dump()

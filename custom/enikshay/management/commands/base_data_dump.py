@@ -20,6 +20,10 @@ class BaseDataDump(BaseCommand):
         self.input_file_name = None
         self.report = {}
         self.result_file_headers = []
+        self.full = False
+
+    def add_argument(self, parser):
+        parser.add_argument('--full', action='store_true', dest='full', default=False)
 
     def setup_result_file_name(self):
         result_file_name = "data_dumps_{dump_title}_{timestamp}.csv".format(
@@ -79,7 +83,10 @@ class BaseDataDump(BaseCommand):
 
     def get_cases(self, case_type):
         case_accessor = CaseAccessors(DOMAIN)
-        return case_accessor.iter_cases(self.get_case_ids(case_type))
+        case_ids = self.get_case_ids(case_type)
+        if not self.full:
+            case_ids = case_ids[0:500]
+        return case_accessor.iter_cases(case_ids)
 
     def get_case_ids(self, case_type):
         raise NotImplementedError
