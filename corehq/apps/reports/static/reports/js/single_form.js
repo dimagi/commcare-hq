@@ -33,9 +33,12 @@ hqDefine("reports/js/single_form", function() {
             $("#edit-properties-trigger").click(function() {
                 $editPropertiesModal.modal();
             });
+            var properties = {};
+            _.each(hqImport("hqwebapp/js/initial_page_data").get("form_data"), function(q) {
+                properties[q.hashtagValue] = q.response;    // there's also q.label and q.value (which uses /data/)
+            });
             $editPropertiesModal.koApplyBindings(new hqImport("reports/js/edit_properties_model").EditPropertiesModel({
-                properties: {'abc': '123'},
-                url: "TODO",
+                properties: properties,
             }));
         }
 

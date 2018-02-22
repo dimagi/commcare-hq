@@ -18,6 +18,7 @@
 
 {% block page_content %}
     {% initial_page_data 'clipboardScript' "clipboard/dist/clipboard.js"|static %}
+    {% initial_page_data 'form_data' form_data %}
 
     {% if not instance.initial_processing_complete and request|toggle_enabled:'SUPPORT' %}
     <div class="alert alert-danger">

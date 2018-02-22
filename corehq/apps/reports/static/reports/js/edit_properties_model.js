@@ -155,20 +155,25 @@ hqDefine("reports/js/edit_properties_model", function() {
             self.render();
         };
 
-        $.get({
-            url: self.url,
-            success: function(names) {
-                _.each(names, function(name) {
-                    self.propertyNames.push(name);
-                });
-                self.showSpinner(false);
-                self.init();
-            },
-            error: function() {
-                self.showSpinner(false);
-                self.showError(true);
-            },
-        });
+        var _success = function(names) {
+            _.each(names, function(name) {
+                self.propertyNames.push(name);
+            });
+            self.showSpinner(false);
+            self.init();
+        };
+        if (self.url) {
+            $.get({
+                url: self.url,
+                success: _success,
+                error: function() {
+                    self.showSpinner(false);
+                    self.showError(true);
+                },
+            });
+        } else {
+            _success(_.keys(options.properties));
+        }
 
         return self;
     };
