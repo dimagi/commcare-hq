@@ -39,15 +39,6 @@ class Command(BaseDataDump):
                 return "archived"
             else:
                 return "active"
-        elif column_name == 'Latest Episode Status - Open/ Closed':
-            try:
-                last_episode_case = self.get_last_episode(case)
-                if last_episode_case.closed:
-                    return "closed"
-                else:
-                    return "open"
-            except Exception as e:
-                return str(e)
         return Exception("unknown custom column %s" % column_name)
 
     def get_case_reference_value(self, case_reference, case, calculation):
