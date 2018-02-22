@@ -3,13 +3,18 @@ import csv
 import tempfile
 from datetime import datetime
 
-from couchexport.models import Format
 from django.core.management.base import BaseCommand
-from soil.util import expose_blob_download
+from django.urls import reverse
+
+from couchexport.models import Format
 
 from corehq.blobs import get_blob_db
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.files import safe_filename_header
+
+from dimagi.utils.django.email import send_HTML_email
+
+from soil.util import expose_blob_download
 
 DOMAIN = "enikshay"
 
@@ -26,16 +31,19 @@ class BaseDataDump(BaseCommand):
         self.input_file_name = None
         self.report = {}
         self.result_file_headers = []
+        self.email = []
 
     def add_arguments(self, parser):
         parser.add_argument('case_type')
+        parser.add_argument('email')
 
     def handle(self, case_type, *args, **options):
         self.case_type = case_type
         self.input_file_name = self.INPUT_FILE_NAME
         self.setup()
         temp_file_path = self.generate_dump()
-        self.save_dump_to_blob(temp_file_path)
+        download_id = self.save_dump_to_blob(temp_file_path)
+        self.email_result(download_id)
 
     def setup_result_file_name(self):
         result_file_name = "data_dumps_{case_type}_{timestamp}.csv".format(
@@ -102,11 +110,19 @@ class BaseDataDump(BaseCommand):
             blob_db.put(file_, self.result_file_name, timeout=60 * 48)  # 48 hours
 
             file_format = Format.from_format(Format.CSV)
-            expose_blob_download(
+            blob_dl_object = expose_blob_download(
                 self.result_file_name,
                 mimetype=file_format.mimetype,
                 content_disposition=safe_filename_header(self.result_file_name, file_format.extension),
             )
+        return blob_dl_object.download_id
+
+    def email_result(self, blob_ref):
+        url = reverse('ajax_job_poll', kwargs={'download_id': blob_ref.download_id})
+        send_HTML_email('%s Download for %s Finished' % (DOMAIN, self.case_type),
+                        self.email,
+                        'Simple email, just to let you know that there is a '
+                        'download waiting for you at %s' % url)
 
     def get_cases(self, case_type):
         case_accessor = CaseAccessors(DOMAIN)
