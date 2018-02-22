@@ -1,15 +1,22 @@
 from __future__ import absolute_import
 import csv
+import tempfile
 from datetime import datetime
 
+from couchexport.models import Format
 from django.core.management.base import BaseCommand
+from soil.util import expose_blob_download
+
+from corehq.blobs import get_blob_db
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.util.files import safe_filename_header
 
 DOMAIN = "enikshay"
 
 
 class BaseDataDump(BaseCommand):
     TASK_NAME = ""
+    INPUT_FILE_NAME = ""
 
     def __init__(self, *args, **kwargs):
         super(BaseDataDump, self).__init__(*args, **kwargs)
@@ -22,6 +29,13 @@ class BaseDataDump(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('case_type')
+
+    def handle(self, case_type, *args, **options):
+        self.case_type = case_type
+        self.input_file_name = self.INPUT_FILE_NAME
+        self.setup()
+        temp_file_path = self.generate_dump()
+        self.save_dump_to_blob(temp_file_path)
 
     def setup_result_file_name(self):
         result_file_name = "data_dumps_{case_type}_{timestamp}.csv".format(
@@ -41,7 +55,8 @@ class BaseDataDump(BaseCommand):
         self.result_file_name = self.setup_result_file_name()
 
     def generate_dump(self):
-        with open(self.result_file_name, 'w') as csvfile:
+        _, temp_path = tempfile.mkstemp()
+        with open(temp_path, 'w') as csvfile:
             writer = csv.DictWriter(csvfile, fieldnames=self.result_file_headers)
             writer.writeheader()
             # iterate cases
@@ -79,9 +94,29 @@ class BaseDataDump(BaseCommand):
 
                 writer.writerow(case_row)
 
+        return temp_path
+
+    def save_dump_to_blob(self, temp_path):
+        with open(temp_path, 'rb') as file_:
+            blob_db = get_blob_db()
+            blob_db.put(file_, self.result_file_name, timeout=60 * 48)  # 48 hours
+
+            file_format = Format.from_format(Format.CSV)
+            expose_blob_download(
+                self.result_file_name,
+                mimetype=file_format.mimetype,
+                content_disposition=safe_filename_header(self.result_file_name, file_format.extension),
+            )
+
     def get_cases(self, case_type):
         case_accessor = CaseAccessors(DOMAIN)
         return case_accessor.iter_cases(self.get_case_ids(case_type))
 
     def get_case_ids(self, case_type):
+        raise NotImplementedError
+
+    def get_custom_value(self, column_name, case):
+        raise NotImplementedError
+
+    def get_case_reference_value(self, case_reference, case, calculation):
         raise NotImplementedError

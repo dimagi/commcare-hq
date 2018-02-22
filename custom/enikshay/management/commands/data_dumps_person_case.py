@@ -15,8 +15,8 @@ DOMAIN = "enikshay"
 
 
 class Command(BaseDataDump):
-    """
-    data dumps for person cases
+    """ data dumps for person cases
+
     https://docs.google.com/spreadsheets/d/1OPp0oFlizDnIyrn7Eiv11vUp8IBmc73hES7qqT-mKKA/edit#gid=1039030624
     """
 
@@ -57,12 +57,6 @@ class Command(BaseDataDump):
             except Exception as e:
                 return str(e)
         return Exception("unknown case reference %s" % case_reference)
-
-    def handle(self, case_type, *args, **options):
-        self.case_type = case_type
-        self.input_file_name = self.INPUT_FILE_NAME
-        self.setup()
-        self.generate_dump()
 
     def get_case_ids(self, case_type):
         """
