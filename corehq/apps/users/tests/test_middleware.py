@@ -15,8 +15,12 @@ class TestTwoFactorMiddleware(TestCase):
         self.account_request = self.create_request(request_url="/account/",
                                                    username="test_1@test.com",
                                                    password="123")
+        # The logout url begins with '/accounts/'
+        self.logout_request = self.create_request(request_url="/accounts/",
+                                                   username="test_2@test.com",
+                                                   password="123")
         self.non_account_request = self.create_request(request_url="/not_account/",
-                                                       username="test_2@test.com",
+                                                       username="test_3@test.com",
                                                        password="123")
 
     @classmethod
@@ -70,5 +74,11 @@ class TestTwoFactorMiddleware(TestCase):
     @flag_enabled('TWO_FACTOR_SUPERUSER_ROLLOUT')
     def test_process_view_account_url(self):
         request = self.account_request
+        response = self.call_process_view_with_couch_mock(request, disable_two_factor=False)
+        self.assertEqual(response, None)
+
+    @flag_enabled('TWO_FACTOR_SUPERUSER_ROLLOUT')
+    def test_process_view_logout_url(self):
+        request = self.logout_request
         response = self.call_process_view_with_couch_mock(request, disable_two_factor=False)
         self.assertEqual(response, None)
