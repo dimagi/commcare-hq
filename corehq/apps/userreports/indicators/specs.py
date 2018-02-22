@@ -73,6 +73,10 @@ class BooleanIndicatorSpec(IndicatorSpecBase):
         return str(filter_object)
 
 
+class SmallBooleanIndicatorSpec(BooleanIndicatorSpec):
+    type = TypeProperty('small_boolean')
+
+
 class RawIndicatorSpec(PropertyReferenceIndicatorSpecBase):
     type = TypeProperty('raw')
     datatype = DataTypeProperty(required=True)
