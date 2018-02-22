@@ -80,7 +80,8 @@ class Enforce2FAMiddleware(MiddlewareMixin):
         if (toggles.TWO_FACTOR_SUPERUSER_ROLLOUT.enabled(request.user.username)
                 and not request.couch_user.two_factor_disabled
                 and not request.user.is_verified()
-                and not request.path.startswith('/account/')):
+                and not request.path.startswith('/account/')
+                and not request.path.startswith('/accounts/')):
             return TemplateResponse(
                 request=request,
                 template='two_factor/core/otp_required.html',
