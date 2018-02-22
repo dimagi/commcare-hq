@@ -1,3 +1,4 @@
+# coding: utf-8
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
@@ -31,9 +32,12 @@ class TestLocationsExport(LocationHierarchyTestCase):
         ]),
         ('California', [
             ('Los Angeles', []),
+        ]),
+        ('四川', [
+            ('成都', []),
         ])
     ]
-    custom_fields = ['is_test', 'favorite_color', 'secret_code', 'foo', 'bar', 'baz']
+    custom_fields = ['is_test', 'favorite_color', 'secret_code', 'foo', '酒吧', 'baz']
 
     @classmethod
     def setUpClass(cls):
@@ -45,7 +49,7 @@ class TestLocationsExport(LocationHierarchyTestCase):
 
         cls.boston = cls.locations['Boston']
         cls.boston.metadata = {
-            field: field for field in cls.custom_fields
+            field: '{}-试验'.format(field) for field in cls.custom_fields + ['不知道']
         }
         cls.boston.save()
 
@@ -75,7 +79,7 @@ class TestLocationsExport(LocationHierarchyTestCase):
                 'data: favorite_color',
                 'data: secret_code',
                 'data: foo',
-                'data: bar',
+                'data: 酒吧',
                 'data: baz',
                 'uncategorized_data',
                 'Delete Uncategorized Data(Y/N)',
@@ -86,4 +90,4 @@ class TestLocationsExport(LocationHierarchyTestCase):
         # Boston was set up with location data values that match the keys
         for header, value in zip(self.city_headers, self.boston_data):
             if header.startswith("data: "):
-                self.assertEqual(header, "data: {}".format(value))
+                self.assertEqual("{}-试验".format(header), "data: {}".format(value))
