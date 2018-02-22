@@ -31,11 +31,11 @@ class BaseDataDump(BaseCommand):
         self.input_file_name = None
         self.report = {}
         self.result_file_headers = []
-        self.email = []
+        self.recipient = None
 
     def add_arguments(self, parser):
-        parser.add_argument('case_type')
-        parser.add_argument('email')
+        parser.add_argument('--case_type', action='store_true')
+        parser.add_argument('--recipient', type=str)
 
     def handle(self, case_type, *args, **options):
         self.case_type = case_type
@@ -118,9 +118,11 @@ class BaseDataDump(BaseCommand):
         return blob_dl_object.download_id
 
     def email_result(self, blob_ref):
+        if not self.recipient:
+            return
         url = reverse('ajax_job_poll', kwargs={'download_id': blob_ref.download_id})
         send_HTML_email('%s Download for %s Finished' % (DOMAIN, self.case_type),
-                        self.email,
+                        self.recipient,
                         'Simple email, just to let you know that there is a '
                         'download waiting for you at %s' % url)
 
