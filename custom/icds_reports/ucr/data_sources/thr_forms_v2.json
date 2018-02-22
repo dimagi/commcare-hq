@@ -117,17 +117,12 @@
       {
         "display_name": "Count",
         "column_id": "count",
-        "type": "boolean",
-        "filter": {
-          "type": "boolean_expression",
-          "operator": "eq",
-          "expression": {
-            "type": "constant",
-            "constant": 1
-          },
-          "property_value": 1
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "constant",
+          "constant": 1
         }
-
       }
     ],
     "named_expressions": {},
