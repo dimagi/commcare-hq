@@ -1,3 +1,4 @@
+/* globals XPATH_CONFIG */
 ko.bindingHandlers.xpathValidator = (function () {
     /*
      * usage:
@@ -61,8 +62,8 @@ ko.bindingHandlers.xpathValidator = (function () {
             ko.renderTemplate('XPathValidator.template', {
                 xpathValidator: XPathValidator(xpathText, allowCaseHashtags),
                 input: input,
-                errorHtml: errorHtml
+                errorHtml: errorHtml,
             }, {}, element, 'replaceNode');
-        }
+        },
     };
 }());

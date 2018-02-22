@@ -1,3 +1,4 @@
+/* globals AppDrill */
 describe("DrilldownToFormController - Initialization", function () {
     AppDrill.prepareTests();
 

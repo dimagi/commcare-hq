@@ -1,3 +1,4 @@
+# coding: utf-8
 from __future__ import absolute_import
 from collections import namedtuple, defaultdict
 
@@ -862,8 +863,8 @@ class TestBulkManagement(TestCase):
     def test_custom_data(self):
         data_model = get_location_data_model(self.domain.name)
         tree = [
-            ('State 1', 's1', 'state', '', '', False, '', '', '', {u'a': 1}, 0, data_model, False),
-            ('County 11', 'c1', 'county', 's1', '', False, '', '', '', {u'b': u'test'}, 0, data_model, False),
+            (u'省 1', 's1', 'state', '', '', False, '', '', '', {u'a': 1}, 0, data_model, False),
+            ('County 11', 'c1', 'county', 's1', '', False, '', '', '', {u'国际字幕': u'试验'}, 0, data_model, False),
         ]
         result = self.bulk_update_locations(
             FLAT_LOCATION_TYPES,
@@ -875,7 +876,7 @@ class TestBulkManagement(TestCase):
 
         locations = SQLLocation.objects.all()
         self.assertEqual(locations[0].metadata, {u'a': u'1'})  # test that ints are coerced to strings
-        self.assertEqual(locations[1].metadata, {u'b': u'test'})
+        self.assertEqual(locations[1].metadata, {u'国际字幕': u'试验'})
 
     def test_custom_data_delete_uncategorized(self):
         data_model = get_location_data_model(self.domain.name)

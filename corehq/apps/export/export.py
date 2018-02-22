@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import division
 import contextlib
 import os
 import tempfile
@@ -433,13 +434,13 @@ def __record_datadog_export(duration, doc_bytes, n_rows, metric, tags):
     if doc_bytes:
         datadog_histogram(
             '{}_normalized_by_size'.format(metric),
-            duration / doc_bytes,
+            duration // doc_bytes,
             tags=tags,
         )
     if n_rows:
         datadog_histogram(
             '{}_normalized_by_rows'.format(metric),
-            duration / n_rows,
+            duration // n_rows,
             tags=tags,
         )
 

@@ -89,7 +89,7 @@ hqDefine("hqwebapp/js/select2_handler", [
                         var data = self.getInitialData(element);
                         if (data) callback(data);
                     }
-                }
+                },
             });
             if (self.onSelect2Change) {
                 fieldInput.on("change", self.onSelect2Change);

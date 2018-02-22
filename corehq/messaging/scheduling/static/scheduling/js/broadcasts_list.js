@@ -136,9 +136,9 @@ hqDefine("scheduling/js/broadcasts_list", function() {
                 broadcast_id: broadcast_id,
             },
         })
-        .always(function() {
-            scheduledTable.fnDraw(false);
-        });
+            .always(function() {
+                scheduledTable.fnDraw(false);
+            });
     }
 
     function activateScheduledBroadcast(broadcast_id) {
