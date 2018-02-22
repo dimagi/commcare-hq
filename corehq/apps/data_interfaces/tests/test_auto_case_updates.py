@@ -1435,11 +1435,11 @@ class CaseRuleEndToEndTests(BaseCaseRuleTest):
 
     def setUpClass(cls):
         super(CaseRuleEndToEndTests, cls).setUpClass()
-        self.domain_object = Domain(name=self.domain)
-        self.domain_object.save()
+        cls.domain_object = Domain(name=cls.domain)
+        cls.domain_object.save()
 
     def tearDownClass(cls):
-        self.domain_object.delete()
+        cls.domain_object.delete()
         super(CaseRuleEndToEndTests, cls).tearDownClass()
 
     def test_get_rules_from_domain(self):
