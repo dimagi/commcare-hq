@@ -22,7 +22,6 @@ hqDefine("reports/js/single_form", function() {
             hqImport("hqwebapp/js/main").transformHelpTemplate($(this), true);
         });
 
-        // TODO: put this wherever
         $('#edit-form', $container).click(function() {
             _analytics_usage('Edit Form Submission')
         });

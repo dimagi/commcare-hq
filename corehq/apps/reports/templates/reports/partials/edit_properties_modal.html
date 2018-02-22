@@ -30,6 +30,18 @@
                 </h4>
             </div>
             <div class="modal-body" data-bind="css: { 'text-center': showSpinner }">
+                {% if instance %}{# This is a form, not a case #}
+                    <div class='alert alert-info'>
+                        {% blocktrans %}
+                            Data Corrections is replacing the old "Edit this form" functionality, which will be removed
+                            in the next few months.
+                        {% endblocktrans %}
+
+                        <a href="{% url 'edit_form_instance' domain instance.form_id %}" target="_blank" id="edit-form">
+                            {% trans 'Click here to access the old "edit this form" page.' %}
+                        </a>
+                    </div>
+                {% endif %}
                 <div class='alert alert-danger' data-bind="visible: showError">
                     {% blocktrans %}
                         Something unexpected happened.
