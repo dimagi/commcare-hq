@@ -13,14 +13,17 @@ class BaseDataDump(BaseCommand):
         super(BaseDataDump, self).__init__(*args, **kwargs)
         self.log_progress = None
         self.result_file_name = None
+        # title to differentiate multiple dumps for the same case type
+        # if present, this would be added in the final file name instead of case type
+        self.dump_title = None
         self.case_type = None
         self.input_file_name = None
         self.report = {}
         self.result_file_headers = []
 
     def setup_result_file_name(self):
-        result_file_name = "data_dumps_{case_type}_{timestamp}.csv".format(
-            case_type=self.case_type,
+        result_file_name = "data_dumps_{dump_title}_{timestamp}.csv".format(
+            dump_title=(self.dump_title or self.case_type),
             timestamp=datetime.now().strftime("%Y-%m-%d--%H-%M-%S"),
         )
         return result_file_name
