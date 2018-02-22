@@ -200,14 +200,15 @@ hqDefine("reports/js/case_details", function() {
             return false;
         });
 
-        var initial_page_data = hqImport("hqwebapp/js/initial_page_data").get,
+        var initial_page_data = hqImport("hqwebapp/js/initial_page_data"),
             $editPropertiesModal = $("#edit-dynamic-properties");
         if ($editPropertiesModal.length) {
             $("#edit-dynamic-properties-trigger").click(function() {
                 $editPropertiesModal.modal();
             });
             $editPropertiesModal.koApplyBindings(new hqImport("reports/js/edit_properties_model").EditPropertiesModel({
-                properties: initial_page_data('dynamic_properties'),
+                properties: initial_page_data.get('dynamic_properties'),
+                url: initial_page_data.reverse('case_property_names'),
             }));
         }
 

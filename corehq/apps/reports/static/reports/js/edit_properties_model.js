@@ -9,6 +9,7 @@ hqDefine("reports/js/edit_properties_model", function() {
     var EditPropertiesModel = function(options) {
         var self = this;
 
+        self.url = options.url;
         self.propertyNames = ko.observableArray();  // ordered list of names, populated by ajax call because it's slow
         self.properties = {};                       // map of name => PropertyModel, populated in init
 
@@ -155,7 +156,7 @@ hqDefine("reports/js/edit_properties_model", function() {
         };
 
         $.get({
-            url: hqImport("hqwebapp/js/initial_page_data").reverse('case_property_names'),
+            url: self.url,
             success: function(names) {
                 _.each(names, function(name) {
                     self.propertyNames.push(name);

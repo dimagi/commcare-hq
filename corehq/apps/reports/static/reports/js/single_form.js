@@ -7,10 +7,11 @@ hqDefine("reports/js/single_form", function() {
     var initSingleForm = function($container) {
         $container = $container || $("body");
 
+        var initial_page_data = hqImport("hqwebapp/js/initial_page_data").get;
         var _analytics_usage = function(action, callback) {
             var label = 'standalone_form',
                 extra = {},
-                caseId = hqImport("hqwebapp/js/initial_page_data").get("context_case_id");
+                caseId = initial_page_data("context_case_id");
             if (caseId) {
                 label = 'case';
             }
@@ -21,9 +22,22 @@ hqDefine("reports/js/single_form", function() {
             hqImport("hqwebapp/js/main").transformHelpTemplate($(this), true);
         });
 
+        // TODO: put this wherever
         $('#edit-form', $container).click(function() {
             _analytics_usage('Edit Form Submission')
         });
+
+        // TODO: move to edit_properties_model.js? duplicated in case_details.js
+        var $editPropertiesModal = $("#edit-dynamic-properties");
+        if ($editPropertiesModal.length) {
+            $("#edit-properties-trigger").click(function() {
+                $editPropertiesModal.modal();
+            });
+            $editPropertiesModal.koApplyBindings(new hqImport("reports/js/edit_properties_model").EditPropertiesModel({
+                properties: {'abc': '123'},
+                url: "TODO",
+            }));
+        }
 
         $("#archive-form", $container).submit(function() {
             document.getElementById('archive-form-btn').disabled=true;

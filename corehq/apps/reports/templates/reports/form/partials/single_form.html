@@ -168,9 +168,10 @@
             {% endif %}
             {% if show_edit_options %}
                 {% if show_edit_submission %}
-                    <a href="{% url 'edit_form_instance' domain instance.form_id %}" target="_blank" class="btn btn-default" id="edit-form">
-                        <i class="fa fa-edit"></i> {% trans "Edit this form" %}
-                    </a>
+                    <button type="button" class="btn btn-default pull-left" id="edit-properties-trigger">
+                        <i class="fa fa-edit"></i>
+                        {% trans 'Data Corrections' %}
+                    </button>
                 {% endif %}
                 {% if not is_archived and not edit_info.was_edited %}
                 <form action="{% url "archive_form" domain instance.form_id %}" method="POST" id="archive-form">{% csrf_token %}
