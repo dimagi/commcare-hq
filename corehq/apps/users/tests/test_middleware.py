@@ -17,8 +17,8 @@ class TestTwoFactorMiddleware(TestCase):
                                                    password="123")
         # The logout url begins with '/accounts/'
         self.logout_request = self.create_request(request_url="/accounts/",
-                                                   username="test_2@test.com",
-                                                   password="123")
+                                                  username="test_2@test.com",
+                                                  password="123")
         self.non_account_request = self.create_request(request_url="/not_account/",
                                                        username="test_3@test.com",
                                                        password="123")
