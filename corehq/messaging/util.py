@@ -35,8 +35,12 @@ class MessagingRuleProgressHelper(object):
     def set_rule_complete(self):
         self.client.set(self.in_progress_key, 0)
 
-    def increment_current_case_count(self):
-        self.client.incr(self.current_key)
+    def increment_current_case_count(self, fail_hard=False):
+        try:
+            self.client.incr(self.current_key)
+        except:
+            if fail_hard:
+                raise
 
     def set_total_case_count(self, value):
         self.client.set(self.total_key, value)
