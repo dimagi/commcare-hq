@@ -19,6 +19,7 @@ from django.views.decorators.http import require_POST
 from corehq.mobile_flags import MULTIPLE_APPS_UNLIMITED
 from corehq.mobile_flags import ADVANCED_SETTINGS_ACCESS
 import langcodes
+from django.shortcuts import resolve_url
 
 from django.http import HttpResponseRedirect, HttpResponse
 from django.utils.decorators import method_decorator
@@ -38,7 +39,7 @@ from tastypie.models import ApiKey
 from two_factor.utils import default_device
 from two_factor.views import (
     ProfileView, SetupView, SetupCompleteView,
-    BackupTokensView, DisableView, PhoneSetupView
+    BackupTokensView, DisableView, PhoneSetupView, PhoneDeleteView
 )
 import six
 
@@ -383,6 +384,19 @@ class TwoFactorPhoneSetupView(BaseMyAccountView, PhoneSetupView):
     def dispatch(self, request, *args, **kwargs):
         # this is only here to add the login_required decorator
         return super(TwoFactorPhoneSetupView, self).dispatch(request, *args, **kwargs)
+
+
+class TwoFactorPhoneDeleteView(BaseMyAccountView, PhoneDeleteView):
+    success_url = "/account/two_factor/"
+
+    def get_success_url(self):
+        messages.add_message(self.request, messages.SUCCESS, "Phone number added!")
+        return resolve_url(self.success_url)
+
+    @method_decorator(login_required)
+    def dispatch(self, request, *args, **kwargs):
+        # this is only here to add the login_required decorator
+        return super(PhoneDeleteView, self).dispatch(request, *args, **kwargs)
 
 
 class TwoFactorResetView(TwoFactorSetupView):
