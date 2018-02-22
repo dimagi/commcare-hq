@@ -49,27 +49,15 @@ class UnicodeReader:
 
 class UnicodeWriter:
     """
-    A CSV writer which will write rows to CSV file "f",
-    which is encoded in the given encoding.
+    A CSV writer which will write rows to CSV file "f" using utf-8.
     """
-    def __init__(self, f, dialect=csv.excel, encoding="utf-8", **kwds):
+    def __init__(self, f, dialect=csv.excel, **kwds):
         # Redirect output to a queue
         self.queue = io.BytesIO()
-        self.writer = csv.writer(self.queue, dialect=dialect, **kwds)
-        self.stream = f
-        self.encoder = codecs.getincrementalencoder(encoding)()
+        self.writer = csv.writer(f, dialect=dialect, **kwds)
 
     def writerow(self, row):
         self.writer.writerow([six.text_type(s).encode("utf-8") for s in row])
-        # Fetch UTF-8 output from the queue ...
-        data = self.queue.getvalue()
-        data = data.decode("utf-8")
-        # ... and reencode it into the target encoding
-        data = self.encoder.encode(data)
-        # write to the target stream
-        self.stream.write(data)
-        # empty queue
-        self.queue.truncate(0)
 
     def writerows(self, rows):
         for row in rows:
