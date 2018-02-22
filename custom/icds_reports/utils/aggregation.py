@@ -111,7 +111,7 @@ class ComplementaryFormsAggregationHelper(BaseICDSAggregationHelper):
         next_month_start = month_formatter(self.month + relativedelta(months=1))
 
         return """
-        SELECT child_health_case_id AS case_id,
+        SELECT DISTINCT child_health_case_id AS case_id,
         LAST_VALUE(timeend) OVER w AS latest_time_end,
         MAX(play_comp_feeding_vid) OVER w AS play_comp_feeding_vid,
         MAX(comp_feeding) OVER w AS comp_feeding_ever,
