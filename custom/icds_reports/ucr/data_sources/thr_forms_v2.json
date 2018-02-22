@@ -136,6 +136,15 @@
         ]
       }
     ],
+    "sql_settings": {
+      "partition_config": [
+        {
+          "column": "submitted_on",
+          "subtype": "date",
+          "constraint": "day"
+        }
+      ]
+    },
     "disable_destructive_rebuild": true
   }
 }
