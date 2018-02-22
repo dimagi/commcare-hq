@@ -50,8 +50,13 @@ hqDefine('analytix/js/appcues', [
             }
         });
     }
+    function then(callback) {
+        _ready.then(callback, callback);
+    }
+
     return {
         trackEvent: trackEvent,
         EVENT_TYPES: EVENT_TYPES,
+        then: then,
     };
 });

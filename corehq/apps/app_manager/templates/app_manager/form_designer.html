@@ -37,7 +37,6 @@
         define = undefined;
     </script>
     {% compress js %}
-    <script src="{% static 'requirejs/require.js' %}"></script>
     <script src="{% static 'app_manager/js/forms/app_notifications.js' %}"></script>
     <script src="{% static 'js/ws4redis.js' %}"></script>
     <script src="{% static 'app_manager/js/forms/edit_form_details.js' %}"></script>
@@ -61,6 +60,7 @@
     {% initial_page_data 'vellum_debug' vellum_debug %}
     {% initial_page_data 'vellum_options' vellum_options %}
     {% registerurl 'edit_form_attr' app.domain app.id form.unique_id '---' %}
+    {% initial_page_data 'requirejs_static_url' 'requirejs/require.js'|static %}
 
     <div id="formdesigner" class="clearfix loading"></div>
 
