@@ -1,31 +1,31 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-from collections import namedtuple
-from datetime import datetime
-import uuid
+
 from copy import copy
+from datetime import datetime
 from decimal import Decimal
-from django.db.models.signals import post_save
-from mock import patch
+import uuid
+
 from django.test import SimpleTestCase, TestCase
+from mock import patch
+
 from casexml.apps.case.tests.util import delete_all_ledgers, delete_all_xforms
 from casexml.apps.stock.const import REPORT_TYPE_BALANCE
 from casexml.apps.stock.models import StockReport, StockTransaction
-from corehq.apps.commtrack.models import StockState, update_domain_mapping
+
 from corehq.apps.commtrack.processing import StockProcessingResult
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.products.models import SQLProduct
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.indicators import LedgerBalancesIndicator
 from corehq.apps.userreports.indicators.factory import IndicatorFactory
 from corehq.apps.userreports.specs import EvaluationContext
-from corehq.apps.products.models import SQLProduct
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.parsers.ledgers.helpers import StockReportHelper, StockTransactionHelper
 from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.form_processor.utils import get_simple_wrapped_form
 from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.form_processor.utils.xform import TestFormMetadata
-from corehq.util.context_managers import drop_connected_signals
 
 
 class SingleIndicatorTestBase(SimpleTestCase):
@@ -36,10 +36,11 @@ class SingleIndicatorTestBase(SimpleTestCase):
 
 
 class BooleanIndicatorTest(SingleIndicatorTestBase):
+    indicator_type = 'boolean'
 
     def setUp(self):
         self.indicator = IndicatorFactory.from_spec({
-            'type': 'boolean',
+            'type': self.indicator_type,
             'column_id': 'col',
             'filter': {
                 'type': 'property_match',
@@ -53,7 +54,7 @@ class BooleanIndicatorTest(SingleIndicatorTestBase):
     def testNoColumnId(self):
         with self.assertRaises(BadSpecError):
             IndicatorFactory.from_spec({
-                'type': 'boolean',
+                'type': self.indicator_type,
                 'filter': {
                     'type': 'property_match',
                     'property_name': 'foo',
@@ -64,7 +65,7 @@ class BooleanIndicatorTest(SingleIndicatorTestBase):
     def testEmptyColumnId(self):
         with self.assertRaises(BadSpecError):
             IndicatorFactory.from_spec({
-                'type': 'boolean',
+                'type': self.indicator_type,
                 'column_id': '',
                 'filter': {
                     'type': 'property_match',
@@ -76,14 +77,14 @@ class BooleanIndicatorTest(SingleIndicatorTestBase):
     def testNoFilter(self):
         with self.assertRaises(BadSpecError):
             IndicatorFactory.from_spec({
-                'type': 'boolean',
+                'type': self.indicator_type,
                 'column_id': 'col',
             })
 
     def testEmptyFilter(self):
         with self.assertRaises(BadSpecError):
             IndicatorFactory.from_spec({
-                'type': 'boolean',
+                'type': self.indicator_type,
                 'column_id': 'col',
                 'filter': None,
             })
@@ -91,7 +92,7 @@ class BooleanIndicatorTest(SingleIndicatorTestBase):
     def testBadFilterType(self):
         with self.assertRaises(BadSpecError):
             IndicatorFactory.from_spec({
-                'type': 'boolean',
+                'type': self.indicator_type,
                 'column_id': 'col',
                 'filter': 'wrong type',
             })
@@ -99,7 +100,7 @@ class BooleanIndicatorTest(SingleIndicatorTestBase):
     def testInvalidFilter(self):
         with self.assertRaises(BadSpecError):
             IndicatorFactory.from_spec({
-                'type': 'boolean',
+                'type': self.indicator_type,
                 'column_id': 'col',
                 'filter': {
                     'type': 'property_match',
@@ -120,7 +121,7 @@ class BooleanIndicatorTest(SingleIndicatorTestBase):
         # in slightly more compact format:
         # ((foo=bar) or (foo1=bar1 and foo2=bar2 and (foo3=bar3 or foo4=bar4)))
         indicator = IndicatorFactory.from_spec({
-            "type": "boolean",
+            "type": self.indicator_type,
             "column_id": "col",
             "filter": {
                 "type": "or",
@@ -198,7 +199,7 @@ class BooleanIndicatorTest(SingleIndicatorTestBase):
                     },
                     "type": "not"
                 },
-                "type": "boolean",
+                "type": self.indicator_type,
                 "display_name": None,
                 "column_id": "prop1_not_null"
             }
@@ -208,6 +209,10 @@ class BooleanIndicatorTest(SingleIndicatorTestBase):
         self._check_result(indicator, {}, 0, EvaluationContext(root_doc=dict(ccs_opened_date='')))
         self._check_result(indicator, {}, 0, EvaluationContext(root_doc=dict(ccs_opened_date=None)))
         self._check_result(indicator, {}, 0, EvaluationContext(root_doc=dict()))
+
+
+class SmallBooleanIndicatorTest(BooleanIndicatorTest):
+    indicator_type = 'small_boolean'
 
 
 class CountIndicatorTest(SingleIndicatorTestBase):
