@@ -1,7 +1,7 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-<div id="{{ css_id }}">
+<div class="report-filter-phone-number" data-initial-value='{{ initial_value|JSON }}' data-groups='{{ groups|JSON }}'>
   <div class="form-group">
     <label class="control-label {{ css_label_class }}">{% trans "Filter Type" %}</label>
     <div class="{{ css_field_class }}">
@@ -71,6 +71,3 @@
 </div>
 
 <script src="{% static 'sms/js/phone_number_filter.js' %}"></script>
-{% initial_page_data "initial_value" initial_value %}
-{% initial_page_data "groups" groups %}
-{% initial_page_data "css_id" css_id %}
