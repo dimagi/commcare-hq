@@ -112,22 +112,25 @@ sed -i "/{% block js-inline %}/, /{% endblock\( js-inline\)\? %}/ d" $HTML_FILE_
 echo "});" >> $NEW_MODULE_LOCATION
 
 
-# add import to the html
-SCRIPT_IMPORT="<script src=\"{% static '$NEW_MODULE_NAME.js' %}\"></script>"
-count=$(sed -n "/{% block js %}/p" $HTML_FILE_LOCATION | wc -l)
-# if there is a block js, add it inside at the end
-if [ "$count" -gt 0 ]; then
-    sed -i "/{% block js %}/,/{% endblock/ {
-        /{% endblock/ i \\
-        $SCRIPT_IMPORT
-    }" $HTML_FILE_LOCATION
-# otherwise, just tell them to add one somewhere on the page
-else
-    echo "----------------------------"
-    echo "Please add this static import somewhere in the html file"
-    echo "{% block js %}{{ block.super }}\n\t$SCRIPT_IMPORT\n{% endblock %}"
-    echo "----------------------------"
+if [ "$EXISTENT_MODULE" == false ]; then
+    # add import to the html
+    SCRIPT_IMPORT="<script src=\"{% static '$NEW_MODULE_NAME.js' %}\"></script>"
+    count=$(sed -n "/{% block js %}/p" $HTML_FILE_LOCATION | wc -l)
+    # if there is a block js, add it inside at the end
+    if [ "$count" -gt 0 ]; then
+        sed -i "/{% block js %}/,/{% endblock/ {
+            /{% endblock/ i \\
+            $SCRIPT_IMPORT
+        }" $HTML_FILE_LOCATION
+    # otherwise, just tell them to add one somewhere on the page
+    else
+        echo "----------------------------"
+        echo "Please add this static import somewhere in the html file"
+        echo "{% block js %}{{ block.super }}\n\t$SCRIPT_IMPORT\n{% endblock %}"
+        echo "----------------------------"
+    fi
 fi
+
 
 # fix eslint issues
 echo "Fixing lint issues"
