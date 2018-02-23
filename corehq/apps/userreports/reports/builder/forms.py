@@ -272,7 +272,7 @@ class DataSourceProperty(object):
         """
         filter_format = self._get_filter_format(configuration)
         agg = self._get_agg_type_for_filter_format(filter_format)
-        column_id = self.to_report_column_option().get_indicator(agg)['column_id']
+        column_id = self.to_report_column_option().get_indicators(agg)[0]['column_id']
 
         filter = {
             "field": column_id,
@@ -1256,7 +1256,7 @@ class ConfigureListReportForm(ConfigureNewReportBase):
             data_source_field=(
                 self.data_source_properties['name']
                     .to_report_column_option()
-                    .get_indicator(UI_AGG_COUNT_PER_CHOICE)['column_id']),
+                    .get_indicators(UI_AGG_COUNT_PER_CHOICE)[0]['column_id']),
             calculation=UI_AGG_COUNT_PER_CHOICE
         ))
         cols.append(ColumnViewModel(
@@ -1266,7 +1266,7 @@ class ConfigureListReportForm(ConfigureNewReportBase):
             data_source_field=(
                 self.data_source_properties[COMPUTED_OWNER_NAME_PROPERTY_ID]
                     .to_report_column_option()
-                    .get_indicator(UI_AGG_COUNT_PER_CHOICE)['column_id']),
+                    .get_indicators(UI_AGG_COUNT_PER_CHOICE)[0]['column_id']),
             calculation=UI_AGG_COUNT_PER_CHOICE
         ))
         case_props_found = 0
@@ -1279,7 +1279,9 @@ class ConfigureListReportForm(ConfigureNewReportBase):
                     display_text=prop.get_text(),
                     exists_in_current_version=True,
                     property=prop.get_id(),
-                    data_source_field=prop.to_report_column_option().get_indicator(UI_AGG_COUNT_PER_CHOICE)['column_id'],
+                    data_source_field=(
+                        prop.to_report_column_option()
+                            .get_indicators(UI_AGG_COUNT_PER_CHOICE)[0]['column_id']),
                     calculation=UI_AGG_COUNT_PER_CHOICE,
                 ))
                 if case_props_found == 3:
@@ -1293,7 +1295,9 @@ class ConfigureListReportForm(ConfigureNewReportBase):
             display_text=prop.get_text(),
             exists_in_current_version=True,
             property=prop.get_id(),
-            data_source_field=prop.to_report_column_option().get_indicator(UI_AGG_COUNT_PER_CHOICE)['column_id'],
+            data_source_field=(
+                prop.to_report_column_option()
+                    .get_indicators(UI_AGG_COUNT_PER_CHOICE)[0]['column_id']),
             calculation=UI_AGG_COUNT_PER_CHOICE
         ))
         questions = [p for p in self.data_source_properties.values()
@@ -1388,7 +1392,7 @@ class ConfigureTableReportForm(ConfigureListReportForm):
     @memoized
     def _report_aggregation_cols(self):
         return [
-            self.ds_builder.report_column_options[conf['property']].get_indicator("Group By")['column_id']
+            self.ds_builder.report_column_options[conf['property']].get_indicators("Group By")[0]['column_id']
             for conf in self.cleaned_data['columns'] if conf['calculation'] == "Group By"
         ]
 
@@ -1436,8 +1440,7 @@ class ConfigureMapReportForm(ConfigureListReportForm):
 
         if self.location_field:
             loc_column = self.data_source_properties[self.location_field].to_report_column_option()
-            loc_indicator = loc_column.get_indicator("simple")
-            loc_field_id = loc_indicator['column_id']
+            loc_field_id = loc_column.get_indicators("simple")[0]['column_id']
             loc_field_text = loc_column.get_default_display()
 
             displaying_loc_column = False

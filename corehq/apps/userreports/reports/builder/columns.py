@@ -96,12 +96,14 @@ class ColumnOption(object):
         :param display_text: The label for this column
         :param aggregation: What sort of aggregation the user selected for this column in the UI
         :param is_aggregated_on: True if the user chose to "group by" this column
-        :return:
         """
+        # Use get_indicators() instead of get_indicator() to find column_id because otherwise this will break
+        # for MultiselectQuestionColumnOption instances when aggregation != "Group By"
+        column_id = self.get_indicators(aggregation)[0]['column_id']
         return [{
             "format": "default",
             "aggregation": self._get_aggregation_config(aggregation),
-            "field": self.get_indicator(aggregation)['column_id'],
+            "field": column_id,
             "column_id": "column_{}".format(index),
             "type": "field",
             "display": display_text,
@@ -216,7 +218,8 @@ class MultiselectQuestionColumnOption(QuestionColumnOption):
         Return the data source indicator that will be used for displaying this question in the report (but not
         filtering or aggregation)
         """
-        # TODO: Is it a problem that this is the same as the filter/agg indicator id?
+        # column_id must match that used in _get_filter_and_agg_indicator() because the data will come from the
+        # same data source column
         column_id = get_column_name(self._property.strip("/"))
         return make_multiselect_question_indicator(self._question_source, column_id)
 
