@@ -10,6 +10,31 @@
       <sync_token>aedc8e424183dcdf50530d89094ff7d7</sync_token>
     </user>
   </user_subreport>
+  <log_subreport>
+    <log date="2018-02-22T17:21:43.608-05">
+      <type>forceclose</type>
+      <msg>java.lang.RuntimeException: Unable to start activity ComponentInfo{org.commcare.dalvik.debug/org.commcare.activities.MenuActivity}: java.lang.RuntimeException
+	    at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2416)
+	    at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:2476)
+	    at android.app.ActivityThread.-wrap11(ActivityThread.java)
+	    at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1344)
+	    at android.os.Handler.dispatchMessage(Handler.java:102)
+	    at android.os.Looper.loop(Looper.java:148)
+	    at android.app.ActivityThread.main(ActivityThread.java:5417)
+	    at java.lang.reflect.Method.invoke(Native Method)
+	    at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:726)
+	    at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:616)
+      Caused by: java.lang.RuntimeException
+	    at org.commcare.activities.MenuActivity.onCreateSessionSafe(MenuActivity.java:35)
+	    at org.commcare.activities.SessionAwareHelper.onCreateHelper(SessionAwareHelper.java:21)
+	    at org.commcare.activities.SessionAwareCommCareActivity.onCreate(SessionAwareCommCareActivity.java:20)
+	    at android.app.Activity.performCreate(Activity.java:6251)
+	    at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1107)
+	    at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2369)
+	    ... 9 more
+      </msg>
+    </log>
+  </log_subreport>
   <force_close_subreport>
     <force_close date="2018-02-22T17:21:21.232-05">
       <type>forceclose</type>

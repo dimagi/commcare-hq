@@ -219,7 +219,7 @@ class SumoLogicLog(object):
 
     def _log_subreport(self):
         logs = _get_logs(self.xform.form_data, 'log_subreport', 'log')
-        sumlogic_logs = [self._fill_base_template(log) for log in logs]
+        sumlogic_logs = [self._fill_base_template(log) for log in logs if log.get('type') != 'forceclose']
         return u"\n".join(sumlogic_logs)
 
     def _usererror_subreport(self):
