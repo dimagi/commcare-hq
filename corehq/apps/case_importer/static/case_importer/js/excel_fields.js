@@ -1,4 +1,5 @@
 hqDefine('case_importer/js/excel_fields', function () {
+var initialPageData = hqImport('hqwebapp/js/initial_page_data');
     function ExcelFieldRows(excelFields, caseFieldSpecs) {
         var self = {
             excelFields: excelFields,
@@ -102,14 +103,10 @@ hqDefine('case_importer/js/excel_fields', function () {
         value = value.replace(/^xml/i, "");
         return value;
     };
-    return {
-        ExcelFieldRows: ExcelFieldRows,
-        sanitizeCaseField: sanitizeCaseField,
-    };
         $(function() {
             var excelfields = hqImport('case_importer/js/excel_fields');
-            var excelFields = {{ excel_fields|JSON }};
-            var caseFieldSpecs = {{ case_field_specs|JSON }};
+            var excelFields = initialPageData.get('excel_fields');
+            var caseFieldSpecs = initialPageData.get('case_field_specs');
             var excelFieldRows = excelfields.ExcelFieldRows(excelFields, caseFieldSpecs);
             $('#excel-field-rows').koApplyBindings(excelFieldRows);
 
@@ -151,4 +148,9 @@ hqDefine('case_importer/js/excel_fields', function () {
                 return false;
             });
         });
+
+    return {
+        ExcelFieldRows: ExcelFieldRows,
+        sanitizeCaseField: sanitizeCaseField,
+    };
 });
