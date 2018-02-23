@@ -117,10 +117,6 @@ class DataDumpTaskView(TemplateView):
     def get(self, request, *args, **kwargs):
         return super(DataDumpTaskView, self).get(request, *args, **kwargs)
 
-    @staticmethod
-    def permitted_tasks():
-        return [choice[0] for choice in DataDumpTaskForm().fields['task'].choices]
-
     def get_context_data(self, **kwargs):
         kwargs['data_dump_task_form'] = DataDumpTaskForm()
         return super(DataDumpTaskView, self).get_context_data(**kwargs)
