@@ -6,7 +6,6 @@ from __future__ import absolute_import
 
 import csv
 import codecs
-import io
 import six
 
 
@@ -53,7 +52,6 @@ class UnicodeWriter(object):
     """
     def __init__(self, f, dialect=csv.excel, **kwds):
         # Redirect output to a queue
-        self.queue = io.BytesIO()
         self.writer = csv.writer(f, dialect=dialect, **kwds)
 
     def writerow(self, row):
