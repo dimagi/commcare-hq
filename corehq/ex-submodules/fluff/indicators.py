@@ -402,5 +402,5 @@ class IndicatorDocument(six.with_metaclass(IndicatorDocumentMeta, schema.Documen
             for calc_name, calc in cls._calculators.items()
         )
 
-    class Meta:
+    class Meta(object):
         app_label = 'fluff'

@@ -2518,7 +2518,7 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
         raise IncompatibleFormTypeException()
 
 
-class ModuleDetailsMixin():
+class ModuleDetailsMixin(object):
 
     @classmethod
     def wrap_details(cls, data):

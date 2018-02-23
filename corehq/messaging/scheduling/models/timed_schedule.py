@@ -367,7 +367,7 @@ class TimedSchedule(Schedule):
 
 
 class AbstractTimedEvent(Event):
-    class Meta:
+    class Meta(object):
         abstract = True
 
     schedule = models.ForeignKey('scheduling.TimedSchedule', on_delete=models.CASCADE)

@@ -628,7 +628,7 @@ class MockIndicators(fluff.IndicatorDocument):
 
     value_week = ValueCalculator(window=WEEK)
 
-    class Meta:
+    class Meta(object):
         app_label = 'fluff'
 
 
@@ -646,7 +646,7 @@ class MockIndicatorsWithGetters(fluff.IndicatorDocument):
 
     value_week = ValueCalculator(window=WEEK)
 
-    class Meta:
+    class Meta(object):
         app_label = 'fluff'
 
 
@@ -660,7 +660,7 @@ class MockIndicatorsSql(fluff.IndicatorDocument):
 
     value_week = ValueCalculator(window=WEEK)
 
-    class Meta:
+    class Meta(object):
         app_label = 'fluff'
 
 
@@ -675,5 +675,5 @@ class MockIndicatorsSqlWithFlatFields(fluff.IndicatorDocument):
     closed_on = flat_field(lambda case: case['closed_on'])
     value_week = ValueCalculator(window=WEEK)
 
-    class Meta:
+    class Meta(object):
         app_label = 'fluff'

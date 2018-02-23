@@ -65,7 +65,7 @@ DIRECTION_CHOICES = (
 
 class Log(models.Model):
 
-    class Meta:
+    class Meta(object):
         abstract = True
         app_label = "sms"
 
@@ -241,7 +241,7 @@ class SMSBase(UUIDGeneratorMixin, Log):
     # Holds any custom metadata for this SMS
     custom_metadata = jsonfield.JSONField(null=True, default=None)
 
-    class Meta:
+    class Meta(object):
         abstract = True
         app_label = 'sms'
 
@@ -292,7 +292,7 @@ class SMS(SMSBase):
 
 class QueuedSMS(SMSBase):
 
-    class Meta:
+    class Meta(object):
         db_table = 'sms_queued'
 
     @classmethod
@@ -304,7 +304,7 @@ class QueuedSMS(SMSBase):
 
 class SQLLastReadMessage(UUIDGeneratorMixin, models.Model):
 
-    class Meta:
+    class Meta(object):
         db_table = 'sms_lastreadmessage'
         app_label = 'sms'
         index_together = [
@@ -369,7 +369,7 @@ class SQLLastReadMessage(UUIDGeneratorMixin, models.Model):
 
 class ExpectedCallback(UUIDGeneratorMixin, models.Model):
 
-    class Meta:
+    class Meta(object):
         app_label = 'sms'
         index_together = [
             ['domain', 'date'],
@@ -450,7 +450,7 @@ class PhoneBlacklist(models.Model):
     last_sms_opt_in_timestamp = models.DateTimeField(null=True)
     last_sms_opt_out_timestamp = models.DateTimeField(null=True)
 
-    class Meta:
+    class Meta(object):
         app_label = 'sms'
 
     @classmethod
@@ -1016,7 +1016,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
     recipient_type = models.CharField(max_length=3, choices=RECIPIENT_CHOICES, null=True, db_index=True)
     recipient_id = models.CharField(max_length=126, null=True, db_index=True)
 
-    class Meta:
+    class Meta(object):
         app_label = 'sms'
 
     @classmethod
@@ -1456,7 +1456,7 @@ class MessagingSubEvent(models.Model, MessagingStatusMixin):
     error_code = models.CharField(max_length=126, null=True)
     additional_error_text = models.TextField(null=True)
 
-    class Meta:
+    class Meta(object):
         app_label = 'sms'
 
     def save(self, *args, **kwargs):
@@ -1522,7 +1522,7 @@ class SelfRegistrationInvitation(models.Model):
     # when it is created
     custom_user_data = jsonfield.JSONField(default=dict)
 
-    class Meta:
+    class Meta(object):
         app_label = 'sms'
 
     @property
@@ -1897,7 +1897,7 @@ class SQLMobileBackend(UUIDGeneratorMixin, models.Model):
     # to this backend
     reply_to_phone_number = models.CharField(max_length=126, null=True)
 
-    class Meta:
+    class Meta(object):
         db_table = 'messaging_mobilebackend'
         app_label = 'sms'
 
@@ -2330,7 +2330,7 @@ class SQLMobileBackend(UUIDGeneratorMixin, models.Model):
 
 class SQLSMSBackend(SQLMobileBackend):
 
-    class Meta:
+    class Meta(object):
         proxy = True
         app_label = 'sms'
 
@@ -2440,7 +2440,7 @@ class SQLMobileBackendMapping(models.Model):
     A SQLMobileBackendMapping instance is used to map SMS or IVR traffic
     to a given backend based on phone prefix.
     """
-    class Meta:
+    class Meta(object):
         db_table = 'messaging_mobilebackendmapping'
         app_label = 'sms'
         unique_together = ('domain', 'backend_type', 'prefix')
@@ -2537,7 +2537,7 @@ class SQLMobileBackendMapping(models.Model):
 
 class MobileBackendInvitation(models.Model):
 
-    class Meta:
+    class Meta(object):
         db_table = 'messaging_mobilebackendinvitation'
         app_label = 'sms'
         unique_together = ('backend', 'domain')
@@ -2563,7 +2563,7 @@ class MigrationStatus(models.Model):
     MIGRATION_PHONE_NUMBERS = 'phone_numbers'
     MIGRATION_KEYWORDS = 'keywords'
 
-    class Meta:
+    class Meta(object):
         db_table = 'messaging_migrationstatus'
         app_label = "sms"
 
@@ -2595,7 +2595,7 @@ class Keyword(UUIDGeneratorMixin, models.Model):
     """
     UUIDS_TO_GENERATE = ['couch_id']
 
-    class Meta:
+    class Meta(object):
         index_together = (
             ('domain', 'keyword')
         )
@@ -2769,7 +2769,7 @@ class DailyOutboundSMSLimitReached(models.Model):
     # The UTC date representing the 24-hour window in which the limit was reached
     date = models.DateField()
 
-    class Meta:
+    class Meta(object):
         unique_together = (
             ('domain', 'date')
         )

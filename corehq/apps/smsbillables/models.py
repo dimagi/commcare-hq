@@ -42,7 +42,7 @@ class SmsGatewayFeeCriteria(models.Model):
     country_code = models.IntegerField(null=True, blank=True, db_index=True)
     prefix = models.CharField(max_length=10, blank=True, default="", db_index=True)
 
-    class Meta:
+    class Meta(object):
         app_label = 'smsbillables'
 
     @classmethod
@@ -115,7 +115,7 @@ class SmsGatewayFee(models.Model):
     currency = models.ForeignKey(accounting.Currency, on_delete=models.PROTECT)
     date_created = models.DateTimeField(auto_now_add=True)
 
-    class Meta:
+    class Meta(object):
         app_label = 'smsbillables'
 
     @classmethod
@@ -183,7 +183,7 @@ class SmsUsageFeeCriteria(models.Model):
     direction = models.CharField(max_length=10, db_index=True, choices=DIRECTION_CHOICES)
     domain = models.CharField(max_length=25, db_index=True, null=True)
 
-    class Meta:
+    class Meta(object):
         app_label = 'smsbillables'
 
     @classmethod
@@ -224,7 +224,7 @@ class SmsUsageFee(models.Model):
     amount = models.DecimalField(default=0.0, max_digits=10, decimal_places=4)
     date_created = models.DateTimeField(auto_now_add=True)
 
-    class Meta:
+    class Meta(object):
         app_label = 'smsbillables'
 
     @classmethod
@@ -280,7 +280,7 @@ class SmsBillable(models.Model):
     date_sent = models.DateTimeField()
     date_created = models.DateTimeField(auto_now_add=True)
 
-    class Meta:
+    class Meta(object):
         app_label = 'smsbillables'
 
     @property

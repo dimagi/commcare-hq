@@ -84,7 +84,7 @@ class HttpBackendForm(BackendForm):
 
 class SQLHttpBackend(SQLSMSBackend):
 
-    class Meta:
+    class Meta(object):
         app_label = 'sms'
         proxy = True
 

@@ -28,7 +28,7 @@ class AwcLocation(models.Model):
     district_map_location_name = models.TextField(blank=True, null=True)
     state_map_location_name = models.TextField(blank=True, null=True)
 
-    class Meta:
+    class Meta(object):
         app_label = 'icds_model'
         managed = False
         db_table = 'awc_location'
@@ -83,7 +83,7 @@ class AggAwcDailyView(models.Model):
     cases_person_has_aadhaar_v2 = models.IntegerField(blank=True, null=True)
     cases_person_beneficiary_v2 = models.IntegerField(blank=True, null=True)
 
-    class Meta:
+    class Meta(object):
         app_label = 'icds_model'
         managed = False
         db_table = 'agg_awc_daily_view'
@@ -233,7 +233,7 @@ class AggAwcMonthly(models.Model):
     cases_person_has_aadhaar_v2 = models.IntegerField(blank=True, null=True)
     cases_person_beneficiary_v2 = models.IntegerField(blank=True, null=True)
 
-    class Meta:
+    class Meta(object):
         app_label = 'icds_model'
         managed = False
         db_table = 'agg_awc_monthly'
@@ -309,7 +309,7 @@ class AggCcsRecordMonthly(models.Model):
     counsel_immediate_conception = models.IntegerField(blank=True, null=True)
     counsel_accessible_postpartum_fp = models.IntegerField(blank=True, null=True)
 
-    class Meta:
+    class Meta(object):
         app_label = 'icds_model'
         managed = False
         db_table = 'agg_ccs_record_monthly'
@@ -390,7 +390,7 @@ class AggChildHealthMonthly(models.Model):
     weighed_and_height_measured_in_month = models.IntegerField(blank=True, null=True)
     weighed_and_born_in_month = models.IntegerField(blank=True, null=True)
 
-    class Meta:
+    class Meta(object):
         app_label = 'icds_model'
         managed = False
         db_table = 'agg_child_health_monthly'
@@ -419,7 +419,7 @@ class AwcLocationMonths(models.Model):
     month = models.DateField(blank=True, null=True)
     month_display = models.TextField(blank=True, null=True)
 
-    class Meta:
+    class Meta(object):
         app_label = 'icds_model'
         managed = False
         db_table = 'awc_location_months'
@@ -458,7 +458,7 @@ class DailyAttendanceView(models.Model):
     form_location_long = models.DecimalField(max_digits=65535, decimal_places=65535, blank=True, null=True)
     image_name = models.TextField(blank=True, null=True)
 
-    class Meta:
+    class Meta(object):
         app_label = 'icds_model'
         managed = False
         db_table = 'daily_attendance_view'
@@ -502,7 +502,7 @@ class ChildHealthMonthlyView(models.Model):
     current_month_wasting = models.TextField(blank=True, null=True)
     fully_immunized = models.IntegerField(blank=True, null=True)
 
-    class Meta:
+    class Meta(object):
         app_label = 'icds_model'
         managed = False
         db_table = 'child_health_monthly_view'
@@ -557,7 +557,7 @@ class CcsRecordMonthly(models.Model):
     lactating_all = models.IntegerField(blank=True, null=True)
     institutional_delivery_in_month = models.IntegerField(blank=True, null=True)
 
-    class Meta:
+    class Meta(object):
         app_label = 'icds_model'
         managed = False
         db_table = 'ccs_record_monthly'
@@ -624,7 +624,7 @@ class AggregateComplementaryFeedingForms(models.Model):
         help_text="Hand washing occurred for this case in the latest form"
     )
 
-    class Meta:
+    class Meta(object):
         db_table = 'icds_dashboard_comp_feed_form'
 
     @classmethod

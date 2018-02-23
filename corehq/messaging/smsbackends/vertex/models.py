@@ -21,7 +21,7 @@ from corehq.apps.sms.util import strip_plus
 
 
 class VertexBackend(SQLSMSBackend):
-    class Meta:
+    class Meta(object):
         app_label = 'sms'
         proxy = True
 

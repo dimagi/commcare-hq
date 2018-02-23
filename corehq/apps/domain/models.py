@@ -103,7 +103,7 @@ def cached_property(method):
     return find_cached
 
 
-class UpdatableSchema():
+class UpdatableSchema(object):
 
     def update(self, new_dict):
         for kw in new_dict:
@@ -1110,7 +1110,7 @@ class TransferDomainRequest(models.Model):
     DIMAGI_CONFIRM_EMAIL = 'domain/email/domain_transfer_confirm'
     DIMAGI_CONFIRM_ADDRESS = 'commcarehq-support@dimagi.com'
 
-    class Meta:
+    class Meta(object):
         app_label = 'domain'
 
     @property

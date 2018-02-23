@@ -104,7 +104,7 @@ class SerialIdBucket(models.Model):
     bucket_id = models.CharField(max_length=255)
     current_value = models.IntegerField(default=-1)
 
-    class Meta:
+    class Meta(object):
         index_together = ('domain', 'bucket_id',)
         unique_together = ('domain', 'bucket_id',)
 

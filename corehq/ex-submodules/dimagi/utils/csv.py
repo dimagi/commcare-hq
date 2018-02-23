@@ -10,7 +10,7 @@ import io
 import six
 
 
-class UTF8Recoder:
+class UTF8Recoder(object):
     """
     Iterator that reads an encoded stream and reencodes the input to UTF-8
     """
@@ -27,7 +27,7 @@ class UTF8Recoder:
     next = __next__  # For Py2 compatibility
 
 
-class UnicodeReader:
+class UnicodeReader(object):
     """
     A CSV reader which will iterate over lines in the CSV file "f",
     which is encoded in the given encoding.
@@ -47,7 +47,7 @@ class UnicodeReader:
         return self
 
 
-class UnicodeWriter:
+class UnicodeWriter(object):
     """
     A CSV writer which will write rows to CSV file "f" using utf-8.
     """
