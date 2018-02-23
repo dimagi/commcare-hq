@@ -106,4 +106,49 @@ hqDefine('case_importer/js/excel_fields', function () {
         ExcelFieldRows: ExcelFieldRows,
         sanitizeCaseField: sanitizeCaseField,
     };
+        $(function() {
+            var excelfields = hqImport('case_importer/js/excel_fields');
+            var excelFields = {{ excel_fields|JSON }};
+            var caseFieldSpecs = {{ case_field_specs|JSON }};
+            var excelFieldRows = excelfields.ExcelFieldRows(excelFields, caseFieldSpecs);
+            $('#excel-field-rows').koApplyBindings(excelFieldRows);
+
+            function autofillProperties() {
+                excelFieldRows.autoFill();
+            }
+
+            $('#js-add-mapping').click(function(e) {
+                excelFieldRows.addRow();
+                e.preventDefault();
+            });
+
+            $('.custom_field').on('change, keypress, keydown, keyup', function() {
+                var original_value = $(this).val();
+                var value = excelfields.sanitizeCaseField(original_value);
+                if (value !== original_value) {
+                    $(this).val(value);
+                }
+            });
+
+            $('#field_form').submit(function() {
+                $('[disabled]').each(function() {
+                    $(this).prop('disabled', false);
+                });
+
+                return true;
+            });
+
+            $('#back_button').click(function() {
+                history.back();
+                return false;
+            });
+
+            $('#autofill').click(autofillProperties);
+
+            $('#back_breadcrumb').click(function(e) {
+                e.preventDefault();
+                history.back();
+                return false;
+            });
+        });
 });
