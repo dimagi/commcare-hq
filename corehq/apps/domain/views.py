@@ -2457,7 +2457,7 @@ def set_published_snapshot(request, domain, snapshot_name=''):
     return redirect('domain_snapshot_settings', domain.name)
 
 
-class ProBonoMixin():
+class ProBonoMixin(object):
     page_title = ugettext_lazy("Pro-Bono Application")
     is_submitted = False
 

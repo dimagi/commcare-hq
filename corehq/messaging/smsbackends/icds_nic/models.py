@@ -65,7 +65,7 @@ class ICDSBackendForm(BackendForm):
 
 class SQLICDSBackend(SQLSMSBackend):
 
-    class Meta:
+    class Meta(object):
         app_label = 'sms'
         proxy = True
 

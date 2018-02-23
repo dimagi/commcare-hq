@@ -408,7 +408,7 @@ class TransferDomainFormErrors(object):
 
 class TransferDomainForm(forms.ModelForm):
 
-    class Meta:
+    class Meta(object):
         model = TransferDomainRequest
         fields = ['domain', 'to_username']
 
@@ -455,7 +455,7 @@ class TransferDomainForm(forms.ModelForm):
         return username
 
 
-class SubAreaMixin():
+class SubAreaMixin(object):
 
     def clean_sub_area(self):
         area = self.cleaned_data['area']
@@ -1418,7 +1418,7 @@ class EditBillingAccountInfoForm(forms.ModelForm):
         help_text=BillingContactInfo._meta.get_field('email_list').help_text,
     )
 
-    class Meta:
+    class Meta(object):
         model = BillingContactInfo
         fields = ['first_name', 'last_name', 'phone_number', 'company_name', 'first_line',
                   'second_line', 'city', 'state_province_region', 'postal_code', 'country']

@@ -8,7 +8,7 @@ from crispy_forms.bootstrap import StrictButton
 
 
 class CalendarFixtureForm(forms.ModelForm):
-    class Meta:
+    class Meta(object):
         model = CalendarFixtureSettings
         fields = ['days_before', 'days_after']
 

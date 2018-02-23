@@ -15,7 +15,7 @@ class MegamobileException(Exception):
 
 class SQLMegamobileBackend(SQLSMSBackend):
 
-    class Meta:
+    class Meta(object):
         app_label = 'sms'
         proxy = True
 

@@ -739,7 +739,7 @@ RESTORE_SEGMENTS = {
 }
 
 
-class NoClose:
+class NoClose(object):
     """HACK file object with no-op `close()` to avoid close by S3Transfer
 
     https://github.com/boto/s3transfer/issues/80

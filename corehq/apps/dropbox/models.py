@@ -26,7 +26,7 @@ class DropboxUploadHelper(models.Model):
 
     initiated = False
 
-    class Meta:
+    class Meta(object):
         app_label = 'dropbox'
 
     @classmethod

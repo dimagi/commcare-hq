@@ -106,7 +106,7 @@ def run_task(updater, case_ids):
     return updater.run_batch(case_ids)
 
 
-class Timer:
+class Timer(object):
     def __enter__(self):
         self.start = datetime.datetime.now()
         self.end = None

@@ -155,7 +155,7 @@ class SupplyPointStatus(models.Model):
     def name(self):
         return SupplyPointStatusTypes.get_display_name(self.status_type, self.status_value)
 
-    class Meta:
+    class Meta(object):
         app_label = 'ilsgateway'
         verbose_name = "Facility Status"
         verbose_name_plural = "Facility Statuses"
@@ -172,7 +172,7 @@ class DeliveryGroupReport(models.Model):
     delivery_group = models.CharField(max_length=1)
     external_id = models.PositiveIntegerField(null=True, db_index=True)
 
-    class Meta:
+    class Meta(object):
         app_label = 'ilsgateway'
         ordering = ('-report_date',)
 
@@ -189,7 +189,7 @@ class ReportingModel(models.Model):
     update_date = models.DateTimeField(editable=False)
     external_id = models.PositiveIntegerField(db_index=True, null=True)
 
-    class Meta:
+    class Meta(object):
         app_label = 'ilsgateway'
 
     def save(self, *args, **kwargs):
@@ -198,7 +198,7 @@ class ReportingModel(models.Model):
         self.update_date = datetime.utcnow()
         super(ReportingModel, self).save(*args, **kwargs)
 
-    class Meta:
+    class Meta(object):
         abstract = True
 
 
@@ -208,7 +208,7 @@ class OrganizationSummary(ReportingModel):
     total_orgs = models.PositiveIntegerField(default=0)
     average_lead_time_in_days = models.FloatField(default=0)
 
-    class Meta:
+    class Meta(object):
         app_label = 'ilsgateway'
 
     def __unicode__(self):
@@ -230,7 +230,7 @@ class GroupSummary(models.Model):
     complete = models.PositiveIntegerField(default=0)  # "complete" = submitted or responded
     external_id = models.PositiveIntegerField(db_index=True, null=True)
 
-    class Meta:
+    class Meta(object):
         app_label = 'ilsgateway'
 
     @classmethod
@@ -311,7 +311,7 @@ class ProductAvailabilityData(ReportingModel):
     without_stock = models.PositiveIntegerField(default=0)
     without_data = models.PositiveIntegerField(default=0)
 
-    class Meta:
+    class Meta(object):
         app_label = 'ilsgateway'
 
     def __str__(self):
@@ -335,7 +335,7 @@ class ProductAvailabilityDashboardChart(object):
     xaxistitle = "Products"
     yaxistitle = "Facilities"
 
-    class Meta:
+    class Meta(object):
         app_label = 'ilsgateway'
 
 
@@ -348,7 +348,7 @@ class Alert(ReportingModel):
     url = models.CharField(max_length=100, blank=True, null=True)
     expires = models.DateTimeField()
 
-    class Meta:
+    class Meta(object):
         app_label = 'ilsgateway'
 
 
@@ -419,7 +419,7 @@ class ReportRun(models.Model):
     domain = models.CharField(max_length=60)
     location = models.ForeignKey(SQLLocation, null=True, on_delete=models.PROTECT)
 
-    class Meta:
+    class Meta(object):
         app_label = 'ilsgateway'
 
     @classmethod
@@ -441,7 +441,7 @@ class RequisitionReport(models.Model):
     submitted = models.BooleanField(default=False)
     report_date = models.DateTimeField(default=datetime.utcnow)
 
-    class Meta:
+    class Meta(object):
         app_label = 'ilsgateway'
 
 
@@ -451,7 +451,7 @@ class SupervisionDocument(models.Model):
     name = models.CharField(max_length=100)
     data_type = models.CharField(max_length=100)
 
-    class Meta:
+    class Meta(object):
         app_label = 'ilsgateway'
 
 
@@ -464,7 +464,7 @@ class ILSNotes(models.Model):
     date = models.DateTimeField()
     text = models.TextField()
 
-    class Meta:
+    class Meta(object):
         app_label = 'ilsgateway'
 
 
@@ -474,7 +474,7 @@ class PendingReportingDataRecalculation(models.Model):
     type = models.CharField(max_length=128)
     data = jsonfield.JSONField()
 
-    class Meta:
+    class Meta(object):
         app_label = 'ilsgateway'
 
 
@@ -483,7 +483,7 @@ class SLABConfig(models.Model):
     sql_location = models.OneToOneField(SQLLocation, null=False, on_delete=models.CASCADE)
     closest_supply_points = models.ManyToManyField(SQLLocation, related_name='+')
 
-    class Meta:
+    class Meta(object):
         app_label = 'ilsgateway'
 
 
@@ -495,7 +495,7 @@ class OneOffTaskProgress(models.Model):
     progress = models.IntegerField(default=0)
     total = models.IntegerField(default=0)
 
-    class Meta:
+    class Meta(object):
         app_label = 'ilsgateway'
 
 

@@ -118,7 +118,7 @@ class LocationType(models.Model):
 
     objects = LocationTypeManager()
 
-    class Meta:
+    class Meta(object):
         app_label = 'locations'
         unique_together = (
             ('domain', 'code'),
@@ -563,7 +563,7 @@ class SQLLocation(MPTTModel):
                 user.active = True
                 user.save()
 
-    class Meta:
+    class Meta(object):
         app_label = 'locations'
         unique_together = ('domain', 'site_code',)
         index_together = [
