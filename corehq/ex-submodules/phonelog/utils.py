@@ -201,6 +201,7 @@ class SumoLogicLog(object):
     def compile(self):
         log = [self._log_subreport()]
         log.append(self._usererror_subreport())
+        log.append(self._forceclose_subreport())
         return u"\n".join(l for l in log if l)
 
     def _fill_base_template(self, log):
@@ -232,5 +233,19 @@ class SumoLogicLog(object):
                 user_id=log.get('user_id'),
                 session=log.get('session'),
                 expr=log.get('expr'),
+            ))
+        return u"\n".join(sumologic_logs)
+
+    def _forceclose_subreport(self):
+        logs = _get_logs(self.xform.form_data, 'force_close_subreport', 'force_close')
+        log_additions_template = (u" [app_id={app_id}] [user_id={user_id}] [session={session}] [device_model={device_model}]")
+        sumologic_logs = []
+        for log in logs:
+            base = self._fill_base_template(log)
+            sumologic_logs.append(base + log_additions_template.format(
+                app_id=log.get('app_id'),
+                user_id=log.get('user_id'),
+                session=log.get('session_readable'),
+                device_model=log.get('device_model'),
             ))
         return u"\n".join(sumologic_logs)

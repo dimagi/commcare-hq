@@ -47,3 +47,33 @@ class TestSumologic(SimpleTestCase, TestXmlMixin):
         ).format(domain=self.domain, received=self.received_on)
 
         self.assertEqual(expected_log, compiled_log)
+
+    def test_forceclose(self):
+        xform = self._get_xform('forceclose_subreport')
+        compiled_log = SumoLogicLog(self.domain, xform).compile()
+        expected_log = (
+            "[log_date=2018-02-22T17:21:21.232-05] [log_submission_date={received}] [log_type=forceclose] "
+            "[domain={domain}] [username=t1] [device_id=014915000230428] [app_version=260] "
+            "[cc_version=2.43] "
+            """[msg=java.lang.RuntimeException: Unable to start activity ComponentInfo{{org.commcare.dalvik.debug/org.commcare.activities.MenuActivity}}: java.lang.RuntimeException
+	    at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2416)
+	    at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:2476)
+	    at android.app.ActivityThread.-wrap11(ActivityThread.java)
+	    at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1344)
+	    at android.os.Handler.dispatchMessage(Handler.java:102)
+	    at android.os.Looper.loop(Looper.java:148)
+	    at android.app.ActivityThread.main(ActivityThread.java:5417)
+	    at java.lang.reflect.Method.invoke(Native Method)
+	    at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:726)
+	    at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:616)
+      Caused by: java.lang.RuntimeException
+	    at org.commcare.activities.MenuActivity.onCreateSessionSafe(MenuActivity.java:35)
+	    at org.commcare.activities.SessionAwareHelper.onCreateHelper(SessionAwareHelper.java:21)
+	    at org.commcare.activities.SessionAwareCommCareActivity.onCreate(SessionAwareCommCareActivity.java:20)
+	    at android.app.Activity.performCreate(Activity.java:6251)
+	    at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1107)
+	    at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2369)
+	    ... 9 more] [app_id=73d5f08b9d55fe48602906a89672c214] """
+            "[user_id=37cc2dcdb1abf5c16bab0763f435e6b7] [session=readable_session] [device_model=Nexus 7]"
+        ).format(domain=self.domain, received=self.received_on)
+        self.assertEqual(expected_log, compiled_log)
