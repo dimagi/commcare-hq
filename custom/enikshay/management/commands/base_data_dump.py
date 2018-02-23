@@ -16,6 +16,7 @@ class BaseDataDump(BaseCommand):
         self.case_type = None
         self.input_file_name = None
         self.report = {}
+        self.notes = {}
         self.result_file_headers = []
 
     def add_arguments(self, parser):
@@ -36,6 +37,7 @@ class BaseDataDump(BaseCommand):
                 self.report[row['Column Name']] = {
                     row['Case Reference']: row['Calculation']
                 }
+                self.notes[row['Column Name']] = row.get('Notes')
                 self.result_file_headers.append(row['Column Name'])
         self.result_file_name = self.setup_result_file_name()
 
@@ -43,6 +45,7 @@ class BaseDataDump(BaseCommand):
         with open(self.result_file_name, 'w') as csvfile:
             writer = csv.DictWriter(csvfile, fieldnames=self.result_file_headers)
             writer.writeheader()
+            writer.writerow(self.notes)
             # iterate cases
             for case in self.get_cases(self.case_type):
                 # store any references like last_episode or any data point
