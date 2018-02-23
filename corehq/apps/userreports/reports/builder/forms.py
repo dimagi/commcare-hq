@@ -261,7 +261,7 @@ class DataSourceProperty(object):
         if filter_format == "numeric":
             return UI_AGG_SUM  # This could also be UI_AGG_AVERAGE, just needs to force numeric
         else:
-            return "simple"
+            return UI_AGG_GROUP_BY
 
     def to_report_filter(self, configuration, index):
         """
