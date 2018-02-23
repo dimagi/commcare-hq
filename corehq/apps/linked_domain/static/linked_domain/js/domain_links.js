@@ -41,7 +41,7 @@ hqDefine("linked_domain/js/domain_links", [
                 self.hasSuccess(true);
                 self.showSpinner(false);
             })
-                .fail(function (jqXHR, textStatus, errorThrown) {
+                .fail(function() {
                     self.hasError(true);
                     self.showSpinner(false);
                 });
@@ -76,7 +76,7 @@ hqDefine("linked_domain/js/domain_links", [
                 .done(function () {
                     self.linked_domains.remove(link);
                 })
-                .fail(function (jqXHR, textStatus, errorThrown) {
+                .fail(function() {
                     alert_user.alert_user(gettext('Something unexpected happened.\n' +
                         'Please try again, or report an issue if the problem persists.'), 'danger');
                 });
