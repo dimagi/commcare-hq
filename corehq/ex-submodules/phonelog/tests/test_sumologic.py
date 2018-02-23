@@ -35,3 +35,15 @@ class TestSumologic(SimpleTestCase, TestXmlMixin):
         ).format(domain=self.domain, received=self.received_on)
 
         self.assertEqual(expected_log, compiled_log)
+
+    def test_usererror(self):
+        xform = self._get_xform('usererror_subreport')
+        compiled_log = SumoLogicLog(self.domain, xform).compile()
+        expected_log = (
+            "[log_date=2018-02-22T17:21:21.201-05] [log_submission_date={received}] [log_type=error-config] "
+            "[domain={domain}] [username=t1] [device_id=014915000230428] [app_version=260] "
+            "[cc_version=2.43] [msg=This is a test user error] [app_id=73d5f08b9d55fe48602906a89672c214] "
+            "[user_id=37cc2dcdb1abf5c16bab0763f435e6b7] [session=session] [expr=an expression]"
+        ).format(domain=self.domain, received=self.received_on)
+
+        self.assertEqual(expected_log, compiled_log)

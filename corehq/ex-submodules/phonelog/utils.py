@@ -189,7 +189,6 @@ class SumoLogicLog(object):
         appversion_text = self.xform.form_data.get('app_version')
         self.app_version = get_version_from_appversion_text(appversion_text)
         self.commcare_version = get_commcare_version_from_appversion_text(appversion_text)
-        self.log = []
 
     def get_user_info(self, log):
         username, user_id = _get_user_info_from_log(self.domain, log)
@@ -200,20 +199,38 @@ class SumoLogicLog(object):
         return username, user_id
 
     def compile(self):
-        self.log.append(self._log_subreport())
-        return u"\n".join(self.log)
+        log = [self._log_subreport()]
+        log.append(self._usererror_subreport())
+        return u"\n".join(l for l in log if l)
 
-    def _log_subreport(self):
-        logs = _get_logs(self.xform.form_data, 'log_subreport', 'log')
-        sumlogic_logs = [self.LOG_TEMPLATE.format(
-            log_date=log["@date"],
+    def _fill_base_template(self, log):
+        return self.LOG_TEMPLATE.format(
+            log_date=log.get("@date"),
             log_submission_date=self.xform.received_on if self.xform.received_on else None,
-            log_type=log["type"],
+            log_type=log.get("type"),
             domain=self.domain,
             username=self.get_user_info(log)[0],
             device_id=self.xform.form_data.get('device_id'),
             app_version=self.app_version,
             cc_version=self.commcare_version,
             msg=log["msg"],
-        ) for log in logs]
+        )
+
+    def _log_subreport(self):
+        logs = _get_logs(self.xform.form_data, 'log_subreport', 'log')
+        sumlogic_logs = [self._fill_base_template(log) for log in logs]
         return u"\n".join(sumlogic_logs)
+
+    def _usererror_subreport(self):
+        logs = _get_logs(self.xform.form_data, 'user_error_subreport', 'user_error')
+        log_additions_template = (u" [app_id={app_id}] [user_id={user_id}] [session={session}] [expr={expr}]")
+        sumologic_logs = []
+        for log in logs:
+            base = self._fill_base_template(log)
+            sumologic_logs.append(base + log_additions_template.format(
+                app_id=log.get('app_id'),
+                user_id=log.get('user_id'),
+                session=log.get('session'),
+                expr=log.get('expr'),
+            ))
+        return u"\n".join(sumologic_logs)
