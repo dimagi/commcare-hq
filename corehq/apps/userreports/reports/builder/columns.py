@@ -66,12 +66,14 @@ class ColumnOption(object):
         :param ui_aggregation: UI aggregation value
         :return: UCR config aggregation value
         """
+        assert ui_aggregation in UI_AGGREGATIONS, (
+            '"{}" is not recognised as a Report Builder UI aggregation'.format(ui_aggregation)
+        )
         aggregation_map = {
             UI_AGG_AVERAGE: UCR_AGG_AVG,
             UI_AGG_COUNT_PER_CHOICE: UCR_AGG_EXPAND,
             UI_AGG_GROUP_BY: UCR_AGG_SIMPLE,
             UI_AGG_SUM: UCR_AGG_SUM,
-            UCR_AGG_SIMPLE: UCR_AGG_SIMPLE,  # TODO: Why would a RB UI use a UCR agg?
             None: UCR_AGG_SIMPLE,
         }
         return aggregation_map[ui_aggregation]
