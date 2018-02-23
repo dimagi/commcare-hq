@@ -190,16 +190,13 @@ class ReportingModel(models.Model):
     external_id = models.PositiveIntegerField(db_index=True, null=True)
 
     class Meta(object):
-        app_label = 'ilsgateway'
+        abstract = True
 
     def save(self, *args, **kwargs):
         if not self.id:
             self.create_date = datetime.utcnow()
         self.update_date = datetime.utcnow()
         super(ReportingModel, self).save(*args, **kwargs)
-
-    class Meta(object):
-        abstract = True
 
 
 # Ported from:
