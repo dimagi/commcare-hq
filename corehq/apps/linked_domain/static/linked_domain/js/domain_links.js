@@ -42,7 +42,6 @@ hqDefine("linked_domain/js/domain_links", [
                 self.showSpinner(false);
             })
                 .fail(function (jqXHR, textStatus, errorThrown) {
-                    console.log(errorThrown);
                     self.hasError(true);
                     self.showSpinner(false);
                 });
@@ -74,11 +73,10 @@ hqDefine("linked_domain/js/domain_links", [
 
         self.deleteLink = function(link) {
             _private.RMI("delete_domain_link", {"linked_domain": link.linked_domain()})
-                .done(function (data) {
+                .done(function () {
                     self.linked_domains.remove(link);
                 })
                 .fail(function (jqXHR, textStatus, errorThrown) {
-                    console.log(errorThrown);
                     alert_user.alert_user(gettext('Something unexpected happened.\n' +
                         'Please try again, or report an issue if the problem persists.'), 'danger');
                 });
