@@ -259,7 +259,7 @@ class DataSourceProperty(object):
         create the correct type of indicator.
         """
         if filter_format == "numeric":
-            return "Sum"  # This could also be "Avg", just needs to force numeric
+            return UI_AGG_SUM  # This could also be UI_AGG_AVERAGE, just needs to force numeric
         else:
             return "simple"
 
@@ -1384,7 +1384,7 @@ class ConfigureTableReportForm(ConfigureListReportForm):
                     index=i,
                     display_text=conf['display_text'],
                     ui_aggregation=conf['calculation'],
-                    is_aggregated_on=conf.get('calculation') == "Group By",
+                    is_aggregated_on=conf.get('calculation') == UI_AGG_GROUP_BY,
                 ))
         return columns
 
@@ -1392,8 +1392,8 @@ class ConfigureTableReportForm(ConfigureListReportForm):
     @memoized
     def _report_aggregation_cols(self):
         return [
-            self.ds_builder.report_column_options[conf['property']].get_indicators("Group By")[0]['column_id']
-            for conf in self.cleaned_data['columns'] if conf['calculation'] == "Group By"
+            self.ds_builder.report_column_options[conf['property']].get_indicators(UI_AGG_GROUP_BY)[0]['column_id']
+            for conf in self.cleaned_data['columns'] if conf['calculation'] == UI_AGG_GROUP_BY
         ]
 
 
