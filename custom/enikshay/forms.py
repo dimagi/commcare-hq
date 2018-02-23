@@ -53,6 +53,7 @@ class DataDumpTaskForm(forms.Form):
                             for choice in permitted_tasks]
     ))
     case_type = forms.CharField(label="Case Type")
+    dump_title = forms.CharField(label="Dump Title")
 
     def __init__(self, *args, **kwargs):
         super(DataDumpTaskForm, self).__init__(*args, **kwargs)
@@ -66,6 +67,7 @@ class DataDumpTaskForm(forms.Form):
                 crispy.Field('email'),
                 crispy.Field('task'),
                 crispy.Field('case_type'),
+                crispy.Field('dump_title')
             ),
             ButtonHolder(
                 Submit(
