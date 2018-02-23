@@ -110,10 +110,10 @@ class ReconciliationTaskView(TemplateView):
         return JsonResponse({'message': 'Task queued. You would get an email shortly.'})
 
 
+@method_decorator(require_superuser, name="dispatch")
 class DataDumpTaskView(TemplateView):
     template_name = "enikshay/data_dumps_task.html"
 
-    @method_decorator(require_superuser)
     def get(self, request, *args, **kwargs):
         return super(DataDumpTaskView, self).get(request, *args, **kwargs)
 
@@ -125,7 +125,6 @@ class DataDumpTaskView(TemplateView):
         kwargs['data_dump_task_form'] = DataDumpTaskForm()
         return super(DataDumpTaskView, self).get_context_data(**kwargs)
 
-    @method_decorator(require_superuser)
     def post(self, request, *args, **kwargs):
         def run_task(task_name):
             run_custom_export_tasks(
