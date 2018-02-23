@@ -383,7 +383,6 @@ class AccessAudit(AuditEvent):
 
     failures_since_start = IntegerProperty()
 
-
     class Meta(object):
         app_label = 'auditcare'
 
