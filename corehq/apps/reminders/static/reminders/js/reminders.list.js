@@ -88,12 +88,11 @@ hqDefine("reminders/js/reminders.list", function() {
 
         $("#reminder-list-table").dataTable({
             "paginateType": "bootstrap",
-            "lengthChange": false,
             "filter": true,
             "oLanguage": {"emptyTable": gettext('There are no reminders to display.'), "infoEmpty" : ""},
             "sort": true,
             "sorting": [[0, "asc"]],
-            "displayLength": 5,
+            "lengthMenu": [[10, 50, -1], [10, 50, "All"]]
         });
     });
 });
