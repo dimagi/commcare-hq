@@ -41,7 +41,7 @@ class Command(BaseDataDump):
         return (CaseSearchES()
                 .domain(DOMAIN)
                 .case_type(case_type)
-                .case_property_query("test_type_value", ["microscopy-fluorescent", "microscopy-zn"], clause=queries.MUST)
+                .case_property_filter("test_type_value", ["microscopy-fluorescent", "microscopy-zn"])
                 .get_ids()[0:10])
 
     def include_case_in_dump(self, test_case):
