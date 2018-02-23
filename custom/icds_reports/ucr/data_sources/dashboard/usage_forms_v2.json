@@ -115,7 +115,7 @@
         }
       },
       {
-        "type": "boolean",
+        "type": "small_boolean",
         "column_id": "pse",
         "filter": {
           "operator": "eq",
@@ -128,7 +128,7 @@
         }
       },
       {
-        "type": "boolean",
+        "type": "small_boolean",
         "column_id": "gmp",
         "filter": {
           "operator": "eq",
@@ -141,7 +141,7 @@
         }
       },
       {
-        "type": "boolean",
+        "type": "small_boolean",
         "column_id": "thr",
         "filter": {
           "operator": "eq",
@@ -154,7 +154,7 @@
         }
       },
       {
-        "type": "boolean",
+        "type": "small_boolean",
         "column_id": "add_household",
         "filter": {
           "operator": "eq",
@@ -167,7 +167,7 @@
         }
       },
       {
-        "type": "boolean",
+        "type": "small_boolean",
         "column_id": "add_person",
         "filter": {
           "operator": "eq",
@@ -180,7 +180,7 @@
         }
       },
       {
-        "type": "boolean",
+        "type": "small_boolean",
         "column_id": "add_pregnancy",
         "filter": {
           "operator": "eq",
@@ -193,7 +193,7 @@
         }
       },
       {
-        "type": "boolean",
+        "type": "small_boolean",
         "column_id": "home_visit",
         "filter": {
           "operator": "in",
@@ -212,7 +212,7 @@
         }
       },
       {
-        "type": "boolean",
+        "type": "small_boolean",
         "column_id": "bp_tri1",
         "filter": {
           "type": "and",
@@ -253,7 +253,7 @@
         }
       },
       {
-        "type": "boolean",
+        "type": "small_boolean",
         "column_id": "bp_tri2",
         "filter": {
           "type": "and",
@@ -317,7 +317,7 @@
         }
       },
       {
-        "type": "boolean",
+        "type": "small_boolean",
         "column_id": "bp_tri3",
         "filter": {
           "type": "and",
@@ -358,7 +358,7 @@
         }
       },
       {
-        "type": "boolean",
+        "type": "small_boolean",
         "column_id": "delivery",
         "filter": {
           "operator": "eq",
@@ -371,7 +371,7 @@
         }
       },
       {
-        "type": "boolean",
+        "type": "small_boolean",
         "column_id": "pnc",
         "filter": {
           "operator": "eq",
@@ -384,7 +384,7 @@
         }
       },
       {
-        "type": "boolean",
+        "type": "small_boolean",
         "column_id": "ebf",
         "filter": {
           "operator": "eq",
@@ -397,7 +397,7 @@
         }
       },
       {
-        "type": "boolean",
+        "type": "small_boolean",
         "column_id": "cf",
         "filter": {
           "operator": "eq",
@@ -410,7 +410,7 @@
         }
       },
       {
-        "type": "boolean",
+        "type": "small_boolean",
         "column_id": "due_list_ccs",
         "filter": {
           "type": "and",
@@ -440,7 +440,7 @@
         }
       },
       {
-        "type": "boolean",
+        "type": "small_boolean",
         "column_id": "due_list_child",
         "filter": {
           "type": "and",
