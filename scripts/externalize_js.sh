@@ -131,7 +131,7 @@ fi
 
 # fix eslint issues
 echo "Fixing lint issues"
-eslint --fix $NEW_MODULE_NAME
+eslint --fix $NEW_MODULE_LOCATION
 
 # commit the blob movement
 git add $NEW_MODULE_LOCATION $HTML_FILE_LOCATION
