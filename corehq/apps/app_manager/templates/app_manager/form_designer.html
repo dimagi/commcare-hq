@@ -45,16 +45,11 @@
     {% endcompress %}
 {% endblock %}
 
-{% block js-inline %}{{ block.super }}
-    {% if request.guided_tour %}{% include request.guided_tour.template %}{% endif %}
-{% endblock %}
-
 {% block title %}✎ {{ form.name|clean_trans:langs }} - {% trans 'Edit Form' %}{% endblock %}
 
 {% block form-view %}
     {% initial_page_data 'CKEDITOR_BASEPATH' CKEDITOR_BASEPATH|static %}
     {% initial_page_data 'days_since_created' request.couch_user.days_since_created %}
-    {% initial_page_data 'guided_tour' request.guided_tour %}
     {% initial_page_data 'form_name' form.name|trans:app.langs %}
     {% initial_page_data 'form_comment' form.comment %}
     {% initial_page_data 'form_uses_cases' form.uses_cases %}

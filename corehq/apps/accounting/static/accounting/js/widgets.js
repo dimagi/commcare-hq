@@ -61,7 +61,7 @@ hqDefine('accounting/js/widgets', [
         'use strict';
         var self = this;
         self.fieldName = field;
-        self.validEmailText = django.gettext("Please enter a valid email.");
+        self.validEmailText = gettext("Please enter a valid email.");
 
         self.init = function () {
             $('form [name="' + self.fieldName + '"]').select2({
@@ -90,7 +90,7 @@ hqDefine('accounting/js/widgets', [
         self.utils = {
             validateEmail: function (email) {
                 // from http://stackoverflow.com/questions/46155/validate-email-address-in-javascript
-                var re = /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+                var re = /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/; // eslint-disable-line no-useless-escape
                 return re.test(email);
             },
         };
@@ -129,7 +129,7 @@ hqDefine('accounting/js/widgets', [
             handler.init();
         });
 
-        _.each($(".accounting-country-select2"), function(form) {
+        _.each($(".accounting-country-select2"), function() {
             var country = new AsyncSelect2Handler('country');
             country.initSelection = function (element, callback) {
                 var data = {

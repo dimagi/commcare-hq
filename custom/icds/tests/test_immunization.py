@@ -75,6 +75,11 @@ class ImmunizationUtilTestCase(BaseICDSTest):
             cls.domain
         )
 
+    def tearDown(self):
+        super(ImmunizationUtilTestCase, self).tearDown()
+        get_immunization_products.clear(self.domain, 'pregnancy')
+        get_immunization_products.clear(self.domain, 'child')
+
     @classmethod
     def create_product(cls, code, schedule, valid, expires, predecessor_id='', days_after_previous='',
             schedule_flag=''):

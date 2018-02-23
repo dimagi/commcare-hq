@@ -56,7 +56,7 @@ hqDefine('users/js/edit_commcare_user', function() {
         return false;
     });
     if (!initial_page_data('is_currently_logged_in_user')) {
-        function DeleteUserButtonModel() {
+        var DeleteUserButtonModel = function() {
             var self = this;
             self.signOff = ko.observable('');
             self.formDeleteUserSent = ko.observable(false);
@@ -70,7 +70,7 @@ hqDefine('users/js/edit_commcare_user', function() {
                     return true;
                 }
             };
-        }
+        };
         if ($('#delete_user_' + couch_user_id).get(0)) {
             $('#delete_user_' + couch_user_id).koApplyBindings(new DeleteUserButtonModel());
         }
@@ -114,7 +114,7 @@ hqDefine('users/js/edit_commcare_user', function() {
     $('#id_add_phone_number').on('paste', function(event) {
         var clipboardData = event.clipboardData || event.originalEvent.clipboardData;
         var pasteText = clipboardData.getData("Text");
-        var text = pasteText.replace(/\+|\-|\(|\)|\s/g, '');
+        var text = pasteText.replace(/\+|-|\(|\)|\s/g, '');
         if (/^[0-9]*$/.test(text)) {
             $("#phone_number_paste_error").css("display", "none");
             $('#id_add_phone_number').val(text);

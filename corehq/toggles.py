@@ -1129,6 +1129,14 @@ NEW_REMINDERS_MIGRATOR = StaticToggle(
 )
 
 
+REMINDERS_MIGRATION_IN_PROGRESS = StaticToggle(
+    'reminders_migration_in_progress',
+    "Disables editing of reminders so that the migration to the new framework can happen.",
+    TAG_INTERNAL,
+    [NAMESPACE_DOMAIN]
+)
+
+
 PHONE_NUMBERS_REPORT = StaticToggle(
     'phone_numbers_report',
     "Report related to the phone numbers owned by a project's contacts",
@@ -1322,8 +1330,8 @@ VIEW_APP_CHANGES = StaticToggle(
 
 COUCH_SQL_MIGRATION_BLACKLIST = StaticToggle(
     'couch_sql_migration_blacklist',
-    "Domains to exclude from migrating to SQL backend. Includes the following "
-    "by default: 'ews-ghana', 'ils-gateway', 'ils-gateway-train'",
+    "Domains to exclude from migrating to SQL backend because the reference legacy models in custom code. "
+    "Includes the following by default: 'ews-ghana', 'ils-gateway', 'ils-gateway-train'",
     TAG_INTERNAL,
     [NAMESPACE_DOMAIN],
     always_enabled={

@@ -699,8 +699,6 @@ class DomainSubscriptionView(DomainAccountingSettings):
             'plan': self.plan,
             'change_plan_url': reverse(SelectPlanView.urlname, args=[self.domain]),
             'can_purchase_credits': self.can_purchase_credits,
-            'credit_card_url': reverse(CreditsStripePaymentView.urlname, args=[self.domain]),
-            'wire_url': reverse(CreditsWireInvoiceView.urlname, args=[self.domain]),
             'stripe_public_key': settings.STRIPE_PUBLIC_KEY,
             'payment_error_messages': PAYMENT_ERROR_MESSAGES,
             'sms_rate_calc_url': reverse(SMSRatesView.urlname,
@@ -1542,16 +1540,20 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
             return self.async_response
         if self.is_form_post and self.billing_account_info_form.is_valid():
             is_saved = self.billing_account_info_form.save()
-            software_plan_name = DESC_BY_EDITION[self.selected_plan_version.plan.edition]['name'].encode('utf-8')
+            software_plan_name = DESC_BY_EDITION[self.selected_plan_version.plan.edition]['name']
             if not is_saved:
                 messages.error(
-                    request, _("It appears there was an issue subscribing your project to the %s Software Plan. You "
-                               "may try resubmitting, but if that doesn't work, rest assured someone will be "
-                               "contacting you shortly.") % software_plan_name)
+                    request, _(
+                        u"It appears there was an issue subscribing your project to the %s Software Plan. You "
+                        "may try resubmitting, but if that doesn't work, rest assured someone will be "
+                        "contacting you shortly."
+                    ) % software_plan_name
+                )
             else:
                 messages.success(
-                    request, _("Your project has been successfully subscribed to the %s Software Plan."
-                               % software_plan_name)
+                    request, _(
+                        u"Your project has been successfully subscribed to the %s Software Plan."
+                    ) % software_plan_name
                 )
                 return HttpResponseRedirect(reverse(DomainSubscriptionView.urlname, args=[self.domain]))
         return super(ConfirmBillingAccountInfoView, self).post(request, *args, **kwargs)
@@ -2244,6 +2246,8 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
         initial = {
             'countries': self.domain_object.deployment.countries,
             'is_test': self.domain_object.is_test,
+            'use_custom_auto_case_update_limit': 'Y' if self.domain_object.auto_case_update_limit else 'N',
+            'auto_case_update_limit': self.domain_object.auto_case_update_limit,
         }
         internal_attrs = [
             'sf_contract_id',

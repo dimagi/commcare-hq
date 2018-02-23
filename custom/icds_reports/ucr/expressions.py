@@ -31,6 +31,7 @@ CUSTOM_UCR_EXPRESSIONS = [
     ('icds_get_case_forms_in_date', 'custom.icds_reports.ucr.expressions.get_forms_in_date_expression'),
     ('icds_get_app_version', 'custom.icds_reports.ucr.expressions.get_app_version'),
     ('icds_datetime_now', 'custom.icds_reports.ucr.expressions.datetime_now'),
+    ('icds_boolean', 'custom.icds_reports.ucr.expressions.boolean_question'),
 ]
 
 
@@ -302,6 +303,14 @@ class DateTimeNow(JsonObject):
 
     def __str__(self):
         return "datetime.now"
+
+
+class BooleanChoiceQuestion(JsonObject):
+    type = TypeProperty('icds_boolean')
+    boolean_property = DefaultProperty(required=True)
+    true_values = ListProperty(required=True)
+    false_values = ListProperty(required=True)
+    nullable = BooleanProperty(default=True)
 
 
 def _datetime_now():
@@ -737,6 +746,28 @@ def get_app_version(spec, context):
 
 def datetime_now(spec, context):
     return DateTimeNow.wrap(spec)
+
+
+def boolean_question(spec, context):
+    BooleanChoiceQuestion.wrap(spec)
+    case_tuples = [(case, 1) for case in spec['true_values']]
+    case_tuples.extend([(case, 0) for case in spec['false_values']])
+    spec = {
+        "type": "switch",
+        "switch_on": spec['boolean_property'],
+        "cases": {
+            case: {
+                "type": "constant",
+                "constant": value
+            }
+            for case, value in case_tuples
+        },
+        "default": {
+            "type": "constant",
+            "constant": None if spec['nullable'] else 0
+        }
+    }
+    return ExpressionFactory.from_spec(spec, context)
 
 
 def icds_get_related_docs_ids(case_id):
