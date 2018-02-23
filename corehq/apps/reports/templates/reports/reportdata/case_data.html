@@ -17,7 +17,7 @@
     {% include 'cloudcare/includes/formplayer-inline.html' %}
     <script src="{% static "hqwebapp/js/lib/bootstrap-tab-hashes.js" %}"></script>
     <script src="{% static "hqwebapp/js/lib/jquery.cachedAjax.js" %}"></script>
-    <script src="{% static "reports/js/edit_properties_model.js" %}"></script>
+    <script src="{% static "reports/js/data_corrections.js" %}"></script>
     <script src="{% static "reports/js/case_details.js" %}"></script>
     <script src="{% static "reports/js/single_form.js" %}"></script>
 {% endblock %}
@@ -212,20 +212,13 @@
     </div> {# end tabbed-content-container div #}
     </div> {# end report-container #}
 
-    {% if show_properties_edit %}
-        {% include 'reports/partials/edit_properties_modal.html' %}
-    {% endif %}
-
     {% if can_edit_data %}
     {# Only show section if it's going to contain at least one button #}
     {% if show_properties_edit or show_case_rebuild or not case.closed and not is_usercase %}
     <div id="case-actions" class="clearfix form-actions">
         <div class="col-sm-12">
         {% if show_properties_edit %}
-            <button type="button" class="btn btn-default pull-left" id="edit-dynamic-properties-trigger">
-                <i class="fa fa-edit"></i>
-                {% trans 'Data Corrections' %}
-            </button>
+            {% include 'reports/partials/data_corrections.html' %}
         {% endif %}
         {% if show_case_rebuild %}
             <form action="{% url 'resave_case' domain case_id %}" method="post" class="pull-left">{% csrf_token %}

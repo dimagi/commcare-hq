@@ -72,8 +72,8 @@ hqDefine("reports/js/case_details", function() {
                 "url": hqImport("hqwebapp/js/initial_page_data").reverse('case_form_data', xform_id),
                 "success": function(data) {
                     var $panel = $("#xform_data_panel");
-                    $panel.html(data);
-                    hqImport("reports/js/single_form").initSingleForm($panel);
+                    $panel.html(data.html);
+                    hqImport("reports/js/single_form").initSingleForm(data.question_response_map, $panel);
                 },
             });
         };
@@ -200,17 +200,11 @@ hqDefine("reports/js/case_details", function() {
             return false;
         });
 
-        var initial_page_data = hqImport("hqwebapp/js/initial_page_data"),
-            $editPropertiesModal = $("#edit-dynamic-properties");
-        if ($editPropertiesModal.length) {
-            $("#edit-dynamic-properties-trigger").click(function() {
-                $editPropertiesModal.modal();
-            });
-            $editPropertiesModal.koApplyBindings(new hqImport("reports/js/edit_properties_model").EditPropertiesModel({
-                properties: initial_page_data.get('dynamic_properties'),
-                url: initial_page_data.reverse('case_property_names'),
-            }));
-        }
+        var initial_page_data = hqImport("hqwebapp/js/initial_page_data");
+        hqImport("reports/js/data_corrections").init($("#case-actions"), {
+            properties: initial_page_data.get('dynamic_properties'),
+            url: initial_page_data.reverse('case_property_names'),
+        });
 
         $("#history").koApplyBindings(new XFormListViewModel());
 

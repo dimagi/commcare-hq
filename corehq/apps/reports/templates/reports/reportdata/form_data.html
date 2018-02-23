@@ -9,7 +9,7 @@
 {% endblock %}
 
 {% block js %}{{ block.super }}
-    <script src="{% static "reports/js/edit_properties_model.js" %}"></script>
+    <script src="{% static "reports/js/data_corrections.js" %}"></script>
     <script src="{% static "reports/js/single_form.js" %}"></script>
     <script src="{% static "reports/js/form_data_main.js" %}"></script>
 {% endblock %}
@@ -18,7 +18,7 @@
 
 {% block page_content %}
     {% initial_page_data 'clipboardScript' "clipboard/dist/clipboard.js"|static %}
-    {% initial_page_data 'form_data' form_data %}
+    {% initial_page_data 'question_response_map' question_response_map %}
 
     {% if not instance.initial_processing_complete and request|toggle_enabled:'SUPPORT' %}
     <div class="alert alert-danger">

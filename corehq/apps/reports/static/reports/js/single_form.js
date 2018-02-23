@@ -4,7 +4,7 @@
     form" button when looking at a form in case history.
 */
 hqDefine("reports/js/single_form", function() {
-    var initSingleForm = function($container) {
+    var initSingleForm = function(form_question_map, $container) {
         $container = $container || $("body");
 
         var initial_page_data = hqImport("hqwebapp/js/initial_page_data").get;
@@ -26,20 +26,9 @@ hqDefine("reports/js/single_form", function() {
             _analytics_usage('Edit Form Submission')
         });
 
-        // TODO: move to edit_properties_model.js? duplicated in case_details.js
-        var $editPropertiesModal = $("#edit-dynamic-properties");
-        if ($editPropertiesModal.length) {
-            $("#edit-properties-trigger").click(function() {
-                $editPropertiesModal.modal();
-            });
-            var properties = {};
-            _.each(hqImport("hqwebapp/js/initial_page_data").get("form_data"), function(q) {
-                properties[q.hashtagValue] = q.response;    // there's also q.label and q.value (which uses /data/)
-            });
-            $editPropertiesModal.koApplyBindings(new hqImport("reports/js/edit_properties_model").EditPropertiesModel({
-                properties: properties,
-            }));
-        }
+        hqImport("reports/js/data_corrections").init($("#form-actions-toolbar", $container), {
+            properties: form_question_map,
+        });
 
         $("#archive-form", $container).submit(function() {
             document.getElementById('archive-form-btn').disabled=true;

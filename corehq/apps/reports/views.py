@@ -50,9 +50,11 @@ from django.http import (
 from django.http.response import (
     HttpResponse,
     HttpResponseNotFound,
+    JsonResponse,
     StreamingHttpResponse,
 )
 from django.shortcuts import render
+from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _, ugettext_lazy, ugettext_noop, get_language
@@ -1892,6 +1894,7 @@ def _get_form_render_context(request, domain, instance, case_id=None):
         "domain": domain,
         'question_list_not_found': question_list_not_found,
         "form_data": form_data,
+        "question_response_map": {q.hashtagValue: q.response for q in form_data},
         "tz_abbrev": timezone.localize(datetime.utcnow()).tzname(),
     })
 
@@ -2201,7 +2204,10 @@ class FormDataView(BaseProjectReportSectionView):
 def case_form_data(request, domain, case_id, xform_id):
     instance = _get_form_or_404(domain, xform_id)
     context = _get_form_render_context(request, domain, instance, case_id)
-    return render(request, "reports/form/partials/single_form.html", context)
+    return JsonResponse({
+        'html': render_to_string("reports/form/partials/single_form.html", context, request=request),
+        'question_response_map': context['question_response_map'],
+    })
 
 
 @require_form_view_permission

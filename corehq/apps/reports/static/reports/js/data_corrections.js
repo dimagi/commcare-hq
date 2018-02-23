@@ -1,4 +1,4 @@
-hqDefine("reports/js/edit_properties_model", function() {
+hqDefine("reports/js/data_corrections", function() {
     var PropertyModel = function(options) {
         var self = this;
         self.name = options.name;
@@ -6,7 +6,7 @@ hqDefine("reports/js/edit_properties_model", function() {
         self.dirty = ko.observable(false);
     };
 
-    var EditPropertiesModel = function(options) {
+    var DataCorrectionsModel = function(options) {
         var self = this;
 
         self.url = options.url;
@@ -178,7 +178,17 @@ hqDefine("reports/js/edit_properties_model", function() {
         return self;
     };
 
+    var init = function($container, options) {
+        var $modal = $container.find(".modal");
+        if ($modal.length) {
+            $container.find(".data-corrections-trigger").click(function() {
+                $modal.modal();
+            });
+            $modal.koApplyBindings(new DataCorrectionsModel(options));
+        }
+    };
+
     return {
-        EditPropertiesModel: EditPropertiesModel,
+        init: init,
     };
 });
