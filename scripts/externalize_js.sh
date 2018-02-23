@@ -82,17 +82,24 @@ fi
 HTML_FILE_LOCATION="./corehq/apps/$APP/templates/$APP/$MODULE.html"
 NEW_MODULE_NAME="$APP/js/$MODULE"
 NEW_MODULE_LOCATION="./corehq/apps/$APP/static/$APP/js/$MODULE.js"
+EXISTENT_MODULE=false
 
 if [ -f $NEW_MODULE_LOCATION ]; then
     echo "The new module has already been created.\nDo you want to continue?"
     should_continue
+    EXISTENT_MODULE=true
 fi
 
-# create file
-touch $NEW_MODULE_LOCATION
+if [ "$EXISTENT_MODULE" == true ]; then
+    # delete the last line, opening up the module for more code
+    sed -i "$ d" $NEW_MODULE_LOCATION
+else
+    # create file
+    touch $NEW_MODULE_LOCATION
 
-# add boilerplate
-echo "hqDefine('$NEW_MODULE_NAME', function() {" >> $NEW_MODULE_LOCATION
+    # add boilerplate
+    echo "hqDefine('$NEW_MODULE_NAME', function() {" >> $NEW_MODULE_LOCATION
+fi
 
 # pull inline js from file, removes the script tags, and places it into the new file
 sed -n "/{% block js-inline %}/, /{% endblock\( js-inline\)\? %}/ p" $HTML_FILE_LOCATION | \
