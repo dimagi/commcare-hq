@@ -76,7 +76,7 @@ class ColumnOption(object):
         }
         return aggregation_map[agg]
 
-    def get_indicator(self, aggregation, is_multiselect_chart_report=False):
+    def _get_indicator(self, aggregation, is_multiselect_chart_report=False):
         """
         Get the indicator corresponding to this column option. This function will raise an exception if more than
         one indicator corresponds to this column.
@@ -87,7 +87,7 @@ class ColumnOption(object):
         """
         Return the indicators corresponding to this column option.
         """
-        return [self.get_indicator(aggregation)]
+        return [self._get_indicator(aggregation)]
 
     def to_column_dicts(self, index, display_text, aggregation, is_aggregated_on=False):
         """
@@ -97,7 +97,7 @@ class ColumnOption(object):
         :param aggregation: What sort of aggregation the user selected for this column in the UI
         :param is_aggregated_on: True if the user chose to "group by" this column
         """
-        # Use get_indicators() instead of get_indicator() to find column_id because otherwise this will break
+        # Use get_indicators() instead of _get_indicator() to find column_id because otherwise this will break
         # for MultiselectQuestionColumnOption instances when aggregation != "Group By"
         column_id = self.get_indicators(aggregation)[0]['column_id']
         return [{
@@ -125,7 +125,7 @@ class QuestionColumnOption(ColumnOption):
         ret['question_source'] = self._question_source
         return ret
 
-    def get_indicator(self, aggregation, is_multiselect_chart_report=False):
+    def _get_indicator(self, aggregation, is_multiselect_chart_report=False):
         """
         Return the report config snippet for the data source indicator for this form question column option
         """
@@ -153,7 +153,7 @@ class FormMetaColumnOption(ColumnOption):
         super(FormMetaColumnOption, self).__init__(property, data_types, default_display)
         self._meta_property_spec = meta_property_spec
 
-    def get_indicator(self, aggregation, is_multiselect_chart_report=False):
+    def _get_indicator(self, aggregation, is_multiselect_chart_report=False):
         # aggregation parameter is never used because we need not infer the data type
         # self._question_source is a tuple of (identifier, datatype)
         identifier = self._meta_property_spec[0]
@@ -230,7 +230,7 @@ class MultiselectQuestionColumnOption(QuestionColumnOption):
         """
         return [self._get_filter_and_agg_indicator(), self._get_choice_indicator()]
 
-    def get_indicator(self, aggregation, is_multiselect_chart_report=False):
+    def _get_indicator(self, aggregation, is_multiselect_chart_report=False):
         """
         Validate that this is being called with aggregation == "Group By" (i.e. not actually aggregating).
 
@@ -241,7 +241,7 @@ class MultiselectQuestionColumnOption(QuestionColumnOption):
             'Column options for multi-select questions have multiple indicators for all aggregations except '
             '"group by". For "{}" aggregation you need to use get_indicators() instead.'.format(aggregation)
         )
-        return super(MultiselectQuestionColumnOption, self).get_indicator(
+        return super(MultiselectQuestionColumnOption, self)._get_indicator(
             aggregation, is_multiselect_chart_report)
 
 
@@ -260,13 +260,13 @@ class CasePropertyColumnOption(ColumnOption):
         }
         return map[self._get_aggregation_config(aggregation)]
 
-    def get_indicator(self, aggregation, is_multiselect_chart_report=False):
+    def _get_indicator(self, aggregation, is_multiselect_chart_report=False):
         column_id = get_column_name(self._property, suffix=self._get_datatype(aggregation))
         return make_case_property_indicator(self._property, column_id, datatype=self._get_datatype(aggregation))
 
 
 class UsernameComputedCasePropertyOption(ColumnOption):
-    def get_indicator(self, aggregation, is_multiselect_chart_report=False):
+    def _get_indicator(self, aggregation, is_multiselect_chart_report=False):
         column_id = get_column_name(self._property)
         expression = {
             'type': 'property_name',
@@ -294,7 +294,7 @@ class UsernameComputedCasePropertyOption(ColumnOption):
 
 
 class OwnernameComputedCasePropertyOption(ColumnOption):
-    def get_indicator(self, aggregation, is_multiselect_chart_report=False):
+    def _get_indicator(self, aggregation, is_multiselect_chart_report=False):
         column_id = get_column_name(self._property)
         expression = {
             'type': 'property_name',
@@ -334,7 +334,7 @@ class CountColumn(ColumnOption):
         """
         return UCR_AGG_SUM
 
-    def get_indicator(self, aggregation, is_multiselect_chart_report=False):
+    def _get_indicator(self, aggregation, is_multiselect_chart_report=False):
         return {
             "column_id": "count",
             "display_name": "Count",

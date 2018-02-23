@@ -254,7 +254,7 @@ class DataSourceProperty(object):
 
     def _get_agg_type_for_filter_format(self, filter_format):
         """
-        ColumnOption.get_indicator(aggregation) uses the aggregation type to determine what data type the indicator
+        ColumnOption._get_indicator(aggregation) uses the aggregation type to determine what data type the indicator
         should be. Therefore, we need to convert filter formats to aggregation types so that we can create the
         correct type of indicator.
         """
@@ -300,7 +300,7 @@ class DataSourceProperty(object):
         """
         filter_format = self._get_filter_format(configuration)
         agg = self._get_agg_type_for_filter_format(filter_format)
-        return self.to_report_column_option().get_indicator(agg)
+        return self.to_report_column_option()._get_indicator(agg)
 
 
 class DataSourceBuilder(object):
