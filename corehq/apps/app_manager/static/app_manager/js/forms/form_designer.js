@@ -103,6 +103,13 @@ hqDefine("app_manager/js/forms/form_designer", function() {
 
         CKEDITOR_BASEPATH = initial_page_data('CKEDITOR_BASEPATH');
 
+        // This unfortunate chain of import callbacks was required because
+        // appcues appears to make an attempt to use the same requirejs
+        // as the host app. Because we only use requirejs for some parts
+        // of the app, appcues gets very confused and throws errors, likely
+        // corrupting or invalidating the data in some way. By requiring
+        // appcues to have completed it's init prior to importing requirejs
+        // or using it to incorporate vellum, these issues disappear.
         hqImport("analytix/js/appcues").then(function() {
             $.getScript(initial_page_data("requirejs_static_url"), function() {
                 define("jquery", [], function () { return window.jQuery; });
