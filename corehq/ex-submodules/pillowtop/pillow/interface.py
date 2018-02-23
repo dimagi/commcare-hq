@@ -5,6 +5,7 @@ from datetime import datetime
 import sys
 
 from django.db.utils import DatabaseError, InterfaceError
+import six
 
 from corehq.util.datadog.gauges import datadog_counter, datadog_gauge, datadog_histogram
 from corehq.util.timer import TimingContext
@@ -15,7 +16,6 @@ from pillowtop.dao.exceptions import DocumentMissingError
 from pillowtop.utils import force_seq_int
 from pillowtop.exceptions import PillowtopCheckpointReset
 from pillowtop.logger import pillow_logging
-import six
 
 
 def _topic_for_ddog(topic):
@@ -34,7 +34,8 @@ class PillowRuntimeContext(object):
     so that other functions can use it without maintaining global state on the class.
     """
 
-    def __init__(self, changes_seen=0):
+    def __init__(self, pillow, changes_seen=0):
+        self.pillow = pillow
         self.changes_seen = changes_seen
 
 
@@ -102,7 +103,7 @@ class PillowBase(six.with_metaclass(ABCMeta, object)):
         """
         Process changes from the changes stream.
         """
-        context = PillowRuntimeContext(changes_seen=0)
+        context = PillowRuntimeContext(self)
         try:
             for change in self.get_change_feed().iter_changes(since=since or None, forever=forever):
                 if change:
@@ -205,6 +206,9 @@ class PillowBase(six.with_metaclass(ABCMeta, object)):
             if timer:
                 datadog_histogram('commcare.change_feed.processing_time', timer.duration, tags=tags)
 
+    def commit_changes(self):
+        pass
+
 
 class ChangeEventHandler(six.with_metaclass(ABCMeta, object)):
     """
@@ -262,6 +266,21 @@ class ConstructedPillow(PillowBase):
         if self._change_processed_event_handler is not None:
             return self._change_processed_event_handler.fire_change_processed(change, context)
         return False
+
+    def commit_changes(self):
+        errors = {}
+        for processor in self.processors:
+            errors = processor.commit_changes()
+            if errors:
+                errors.update(errors)
+
+        if errors:
+            handle_bulk_pillow_error(self, errors)
+
+
+def handle_bulk_pillow_error(pillow, errors):
+    for doc_id, change_error_tuple in six.iteritems(errors):
+        handle_pillow_error(pillow, change_error_tuple[0], change_error_tuple[1])
 
 
 def handle_pillow_error(pillow, change, exception):

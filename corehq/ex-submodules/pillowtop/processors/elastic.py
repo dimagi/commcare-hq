@@ -1,11 +1,14 @@
 from __future__ import absolute_import
+from collections import namedtuple
+from datetime import datetime
 import math
 import time
 
 from elasticsearch.exceptions import RequestError, ConnectionError, NotFoundError, ConflictError
+import six
 
-from pillowtop.dao.exceptions import DocumentNotFoundError
-from pillowtop.utils import ensure_matched_revisions, ensure_document_exists
+from pillowtop.utils import (
+        ensure_matched_revisions, ensure_document_exists, prepare_bulk_payloads)
 from pillowtop.exceptions import PillowtopIndexingError
 from pillowtop.logger import pillow_logging
 from .interface import PillowProcessor
@@ -34,6 +37,20 @@ class ElasticProcessor(PillowProcessor):
             self._delete_doc_if_exists(change.id)
             return
 
+        doc = self._doc_to_save(change)
+        if doc:
+            # send it across
+            send_to_elasticsearch(
+                index=self.index_info.index,
+                doc_type=self.index_info.type,
+                doc_id=change.id,
+                es_getter=self.es_getter,
+                name=pillow_instance.get_name(),
+                data=doc,
+                update=self._doc_exists(change.id),
+            )
+
+    def _doc_to_save(self, change):
         doc = change.get_document()
 
         ensure_document_exists(change)
@@ -43,17 +60,7 @@ class ElasticProcessor(PillowProcessor):
             return
 
         # prepare doc for es
-        doc_ready_to_save = self.doc_transform_fn(doc)
-        # send it across
-        send_to_elasticsearch(
-            index=self.index_info.index,
-            doc_type=self.index_info.type,
-            doc_id=change.id,
-            es_getter=self.es_getter,
-            name=pillow_instance.get_name(),
-            data=doc_ready_to_save,
-            update=self._doc_exists(change.id),
-        )
+        return self.doc_transform_fn(doc)
 
     def _doc_exists(self, doc_id):
         return self.elasticsearch.exists(self.index_info.index, self.index_info.type, doc_id)
@@ -61,6 +68,95 @@ class ElasticProcessor(PillowProcessor):
     def _delete_doc_if_exists(self, doc_id):
         if self._doc_exists(doc_id):
             self.elasticsearch.delete(self.index_info.index, self.index_info.type, doc_id)
+
+
+DocAndChange = namedtuple('DocAndChange', ['doc', 'change'])
+
+
+class BulkElasticProcessor(ElasticProcessor):
+    def __init__(self, elasticsearch, index_info, doc_prep_fn=None, doc_filter_fn=None):
+        super(BulkElasticProcessor, self).__init__(elasticsearch, index_info, doc_prep_fn, doc_filter_fn)
+        self.docs_and_changes = {}
+
+    def process_change(self, pillow_instance, change):
+        if not change.id:
+            return
+
+        if change.deleted:
+            self.docs_and_changes[change.id] = DocAndChange(doc=None, change=change)
+
+        doc = self._doc_to_save(change)
+        if doc:
+            self.docs_and_changes[change.id] = DocAndChange(doc=doc, change=change)
+
+    def commit_changes(self):
+        # pretty similar to build_bulk_payload, but that uses changes and doesn't ensure revisions
+        payload = []
+        for doc_and_change in six.itervalues(self.docs_and_changes):
+            change = doc_and_change.change
+            doc_id = change.id
+            if change.deleted and change.id:
+                payload.append({
+                    "delete": {
+                        "_index": self.index_info.index,
+                        "_type": self.index_info.type,
+                        "_id": doc_id
+                    }
+                })
+                continue
+
+            errors = dict()
+            try:
+                doc = doc_and_change.doc
+                if doc:
+                    payload.append({
+                        "index": {
+                            "_index": self.index_info.index,
+                            "_type": self.index_info.type,
+                            "_id": doc_id
+                        }
+                    })
+                    payload.append(doc)
+            except Exception as e:
+                errors[doc_id] = (self.docs_and_changes[doc_id].change, e)
+
+        payloads = prepare_bulk_payloads(payload, 10 ** 7)
+
+        for payload in payloads:
+            # aggregate results and return docs with errors to be put in pillow error
+            results = self._send_payload_with_retries(payload)
+            errors.update(results)
+
+        return errors
+
+    def _send_payload_with_retries(self, payload):
+        pillow_logging.info("Sending payload to ES")
+
+        retries = 0
+        bulk_start = datetime.utcnow()
+        while retries < 3:
+            if retries:
+                retry_time = (datetime.utcnow() - bulk_start).seconds + retries * 15
+                pillow_logging.warning("\tRetrying in %s seconds" % retry_time)
+                time.sleep(retry_time)
+                pillow_logging.warning("\tRetrying now ...")
+                # reset timestamp when looping again
+                bulk_start = datetime.utcnow()
+
+            try:
+                res = self.elasticsearch.bulk(payload)
+            except Exception:
+                retries += 1
+                pillow_logging.exception("\tException sending payload to ES")
+            else:
+                return {
+                    value['_id']: (self.docs_and_changes[value['_id']].change, value['error'])
+                    for doc_result in res['items']
+                    for value in doc_result.values()
+                    if value.get('error')
+                }
+
+        return False
 
 
 def send_to_elasticsearch(index, doc_type, doc_id, es_getter, name, data=None, retries=MAX_RETRIES,
