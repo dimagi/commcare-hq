@@ -5,7 +5,6 @@ from datetime import datetime
 
 from django.test import SimpleTestCase
 
-from dimagi.utils.parsing import string_to_utc_datetime
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.utils import convert_xform_to_json
