@@ -218,7 +218,7 @@
     <div id="case-actions" class="clearfix form-actions">
         <div class="col-sm-12">
         {% if show_properties_edit %}
-            {% include 'reports/partials/data_corrections.html' %}
+            {% include 'reports/partials/data_corrections_trigger.html' %}
         {% endif %}
         {% if show_case_rebuild %}
             <form action="{% url 'resave_case' domain case_id %}" method="post" class="pull-left">{% csrf_token %}
@@ -247,4 +247,10 @@
     {% endif %}
     {% endif %}
 </div>
+{% endblock %}
+
+{% block modals %}{{ block.super }}
+    {% if show_properties_edit %}
+        {% include 'reports/partials/data_corrections_modal.html' %}
+    {% endif %}
 {% endblock %}

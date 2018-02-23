@@ -26,7 +26,7 @@ hqDefine("reports/js/single_form", function() {
             _analytics_usage('Edit Form Submission')
         });
 
-        hqImport("reports/js/data_corrections").init($("#form-actions-toolbar", $container), {
+        hqImport("reports/js/data_corrections").init($container.find(".data-corrections-trigger"), $container.find(".data-corrections-modal"), {
             properties: form_question_map,
         });
 

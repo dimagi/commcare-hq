@@ -168,7 +168,7 @@
             {% endif %}
             {% if show_edit_options %}
                 {% if show_edit_submission %}
-                    {% include 'reports/partials/data_corrections.html' %}
+                    {% include 'reports/partials/data_corrections_trigger.html' %}
                 {% endif %}
                 {% if not is_archived and not edit_info.was_edited %}
                 <form action="{% url "archive_form" domain instance.form_id %}" method="POST" id="archive-form">{% csrf_token %}
@@ -334,3 +334,9 @@
         {% render_form_xml instance %}
     </div>
 </div>
+
+{% if show_edit_options %}
+    {% if show_edit_submission %}
+        {% include 'reports/partials/data_corrections_modal.html' %}
+    {% endif %}
+{% endif %}

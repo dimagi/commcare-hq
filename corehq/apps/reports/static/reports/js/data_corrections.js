@@ -178,10 +178,9 @@ hqDefine("reports/js/data_corrections", function() {
         return self;
     };
 
-    var init = function($container, options) {
-        var $modal = $container.find(".modal");
-        if ($modal.length) {
-            $container.find(".data-corrections-trigger").click(function() {
+    var init = function($trigger, $modal, options) {
+        if ($trigger.length && $modal.length) {
+            $trigger.click(function() {
                 $modal.modal();
             });
             $modal.koApplyBindings(new DataCorrectionsModel(options));
