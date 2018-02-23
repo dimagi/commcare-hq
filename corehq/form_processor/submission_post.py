@@ -43,6 +43,7 @@ from couchforms.util import legacy_notification_assert
 from couchforms.openrosa_response import OpenRosaResponse, ResponseNature
 from dimagi.utils.logging import notify_exception, log_signal_errors
 from phonelog.utils import process_device_log
+from phonelog.tasks import send_device_logs_to_sumologic
 
 from celery.task.control import revoke as revoke_celery_task
 import six
@@ -248,6 +249,7 @@ class SubmissionPost(object):
                     submission_type = 'device_log'
                     try:
                         process_device_log(self.domain, instance)
+                        send_device_logs_to_sumologic.delay(self.domain, instance)
                     except Exception:
                         notify_exception(None, "Error processing device log", details={
                             'xml': self.instance,
