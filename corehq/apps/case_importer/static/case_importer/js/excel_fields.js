@@ -1,5 +1,5 @@
 hqDefine('case_importer/js/excel_fields', function () {
-var initialPageData = hqImport('hqwebapp/js/initial_page_data');
+    var initialPageData = hqImport('hqwebapp/js/initial_page_data');
     function ExcelFieldRows(excelFields, caseFieldSpecs) {
         var self = {
             excelFields: excelFields,
