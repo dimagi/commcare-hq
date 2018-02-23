@@ -121,7 +121,7 @@ hqDefine('case_importer/js/excel_fields', function () {
 
         $('.custom_field').on('change, keypress, keydown, keyup', function() {
             var original_value = $(this).val();
-            var value = excelfields.sanitizeCaseField(original_value);
+            var value = sanitizeCaseField(original_value);
             if (value !== original_value) {
                 $(this).val(value);
             }
@@ -148,9 +148,4 @@ hqDefine('case_importer/js/excel_fields', function () {
             return false;
         });
     });
-
-    return {
-        ExcelFieldRows: ExcelFieldRows,
-        sanitizeCaseField: sanitizeCaseField,
-    };
 });
