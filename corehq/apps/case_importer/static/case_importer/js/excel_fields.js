@@ -148,4 +148,6 @@ hqDefine('case_importer/js/excel_fields', function () {
             return false;
         });
     });
+
+    return { sanitizeCaseField: sanitizeCaseField };
 });
