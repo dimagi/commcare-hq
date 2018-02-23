@@ -63,6 +63,9 @@ class BaseDataDump(BaseCommand):
                 self.result_file_headers.append(row['Column Name'])
         self.result_file_name = self.setup_result_file_name()
 
+    def include_case_in_dump(self, case):
+        return True
+
     def generate_dump(self):
         _, temp_path = tempfile.mkstemp()
         with open(temp_path, 'w') as csvfile:
@@ -74,6 +77,8 @@ class BaseDataDump(BaseCommand):
                 # that might be needed repeatedly for the same case and is expensive call
                 self.context = {}
                 case_row = {}
+                if not self.include_case_in_dump(case):
+                    continue
                 # iterate columns to be generated
                 # details is a dict with key in [
                 # "N/A" -> not to be populated so ignore it
