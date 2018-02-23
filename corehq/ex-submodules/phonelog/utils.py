@@ -174,10 +174,6 @@ class SumoLogicLog(object):
         self.domain = domain
         self.xform = xform
 
-    def compile(self):
-        log = [self._log_subreport(), self._usererror_subreport(), self._forceclose_subreport()]
-        return u"\n".join(l for l in log if l)
-
     def _fill_base_template(self, log):
         from corehq.apps.receiverwrapper.util import (
             get_version_from_appversion_text,
@@ -216,12 +212,12 @@ class SumoLogicLog(object):
             user_id = user_subreport[0].get('user_id')
         return username, user_id
 
-    def _log_subreport(self):
+    def log_subreport(self):
         logs = _get_logs(self.xform.form_data, 'log_subreport', 'log')
         sumlogic_logs = [self._fill_base_template(log) for log in logs if log.get('type') != 'forceclose']
         return u"\n".join(sumlogic_logs)
 
-    def _usererror_subreport(self):
+    def user_error_subreport(self):
         logs = _get_logs(self.xform.form_data, 'user_error_subreport', 'user_error')
         log_additions_template = u" [app_id={app_id}] [user_id={user_id}] [session={session}] [expr={expr}]"
 
@@ -234,7 +230,7 @@ class SumoLogicLog(object):
             ) for log in logs
         )
 
-    def _forceclose_subreport(self):
+    def force_close_subreport(self):
         logs = _get_logs(self.xform.form_data, 'force_close_subreport', 'force_close')
         log_additions_template = (
             u" [app_id={app_id}] [user_id={user_id}] [session={session}] "

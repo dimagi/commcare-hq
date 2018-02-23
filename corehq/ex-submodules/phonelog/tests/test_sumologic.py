@@ -27,7 +27,7 @@ class TestSumologic(SimpleTestCase, TestXmlMixin):
 
     def test_log_error(self):
         xform = self._get_xform('log_subreport')
-        compiled_log = SumoLogicLog(self.domain, xform).compile()
+        compiled_log = SumoLogicLog(self.domain, xform).log_subreport()
         expected_log = (
             "[log_date=2018-02-13T15:19:30.622-05] [log_submission_date={received}] [log_type=maintenance] "
             "[domain={domain}] [username=t1] [device_id=014915000230428] [app_version=260] "
@@ -38,7 +38,7 @@ class TestSumologic(SimpleTestCase, TestXmlMixin):
 
     def test_usererror(self):
         xform = self._get_xform('usererror_subreport')
-        compiled_log = SumoLogicLog(self.domain, xform).compile()
+        compiled_log = SumoLogicLog(self.domain, xform).user_error_subreport()
         expected_log = (
             "[log_date=2018-02-22T17:21:21.201-05] [log_submission_date={received}] [log_type=error-config] "
             "[domain={domain}] [username=t1] [device_id=014915000230428] [app_version=260] "
@@ -50,7 +50,7 @@ class TestSumologic(SimpleTestCase, TestXmlMixin):
 
     def test_forceclose(self):
         xform = self._get_xform('forceclose_subreport')
-        compiled_log = SumoLogicLog(self.domain, xform).compile()
+        compiled_log = SumoLogicLog(self.domain, xform).force_close_subreport()
         expected_log = (
             "[log_date=2018-02-22T17:21:21.232-05] [log_submission_date={received}] [log_type=forceclose] "
             "[domain={domain}] [username=t1] [device_id=014915000230428] [app_version=260] "
