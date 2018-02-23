@@ -4,22 +4,6 @@
 {% load i18n %}
 
 
-{% block js-inline %}{{ block.super }}
-    <script>
-        $(function() {
-            $('#back_button').click(function() {
-                history.back();
-                return false;
-            });
-
-            $('#back_breadcrumb').click(function(e) {
-                e.preventDefault();
-                history.back();
-                return false;
-            });
-        });
-    </script>
-{% endblock %}
 
 {% block page_breadcrumbs %}
     <ol id="hq-breadcrumbs" class="breadcrumb breadcrumb-hq-section">
