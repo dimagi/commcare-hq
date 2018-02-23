@@ -58,12 +58,12 @@ class ColumnOption(object):
         else:
             return (UI_AGG_GROUP_BY, UI_AGG_COUNT_PER_CHOICE)
 
-    def _get_aggregation_config(self, agg):
+    def _get_ucr_aggregation(self, ui_aggregation):
         """
         Convert an aggregation value selected in the UI to an aggregation value to be used in the UCR
         configuration.
 
-        :param agg: UI aggregation value
+        :param ui_aggregation: UI aggregation value
         :return: UCR config aggregation value
         """
         aggregation_map = {
@@ -74,35 +74,35 @@ class ColumnOption(object):
             UCR_AGG_SIMPLE: UCR_AGG_SIMPLE,  # TODO: Why would a RB UI use a UCR agg?
             None: UCR_AGG_SIMPLE,
         }
-        return aggregation_map[agg]
+        return aggregation_map[ui_aggregation]
 
-    def _get_indicator(self, aggregation, is_multiselect_chart_report=False):
+    def _get_indicator(self, ui_aggregation, is_multiselect_chart_report=False):
         """
         Get the indicator corresponding to this column option. This function will raise an exception if more than
         one indicator corresponds to this column.
         """
         raise NotImplementedError
 
-    def get_indicators(self, aggregation, is_multiselect_chart_report=False):
+    def get_indicators(self, ui_aggregation, is_multiselect_chart_report=False):
         """
         Return the indicators corresponding to this column option.
         """
-        return [self._get_indicator(aggregation)]
+        return [self._get_indicator(ui_aggregation)]
 
-    def to_column_dicts(self, index, display_text, aggregation, is_aggregated_on=False):
+    def to_column_dicts(self, index, display_text, ui_aggregation, is_aggregated_on=False):
         """
         Return a UCR report column configuration dictionary
         :param index: The index of the column in the list of columns, e.g. 0, 1, 2, etc.
         :param display_text: The label for this column
-        :param aggregation: What sort of aggregation the user selected for this column in the UI
+        :param ui_aggregation: What sort of aggregation the user selected for this column in the UI
         :param is_aggregated_on: True if the user chose to "group by" this column
         """
         # Use get_indicators() instead of _get_indicator() to find column_id because otherwise this will break
-        # for MultiselectQuestionColumnOption instances when aggregation != "Group By"
-        column_id = self.get_indicators(aggregation)[0]['column_id']
+        # for MultiselectQuestionColumnOption instances when ui_aggregation != "Group By"
+        column_id = self.get_indicators(ui_aggregation)[0]['column_id']
         return [{
             "format": "default",
-            "aggregation": self._get_aggregation_config(aggregation),
+            "aggregation": self._get_ucr_aggregation(ui_aggregation),
             "field": column_id,
             "column_id": "column_{}".format(index),
             "type": "field",
@@ -125,14 +125,14 @@ class QuestionColumnOption(ColumnOption):
         ret['question_source'] = self._question_source
         return ret
 
-    def _get_indicator(self, aggregation, is_multiselect_chart_report=False):
+    def _get_indicator(self, ui_aggregation, is_multiselect_chart_report=False):
         """
         Return the report config snippet for the data source indicator for this form question column option
         """
-        assert aggregation in UI_AGGREGATIONS, (
-            '"{}" is not an aggregation recognised by the Report Builder interface.'.format(aggregation)
+        assert ui_aggregation in UI_AGGREGATIONS, (
+            '"{}" is not an aggregation recognised by the Report Builder interface.'.format(ui_aggregation)
         )
-        if aggregation in (UI_AGG_SUM, UI_AGG_AVERAGE):
+        if ui_aggregation in (UI_AGG_SUM, UI_AGG_AVERAGE):
             data_type = "decimal"
         else:
             data_type = None  # use the default
@@ -153,8 +153,8 @@ class FormMetaColumnOption(ColumnOption):
         super(FormMetaColumnOption, self).__init__(property, data_types, default_display)
         self._meta_property_spec = meta_property_spec
 
-    def _get_indicator(self, aggregation, is_multiselect_chart_report=False):
-        # aggregation parameter is never used because we need not infer the data type
+    def _get_indicator(self, ui_aggregation, is_multiselect_chart_report=False):
+        # ui_aggregation parameter is never used because we need not infer the data type
         # self._question_source is a tuple of (identifier, datatype)
         identifier = self._meta_property_spec[0]
         if isinstance(identifier, six.string_types):
@@ -178,13 +178,13 @@ class MultiselectQuestionColumnOption(QuestionColumnOption):
             property, ["string"], default_display, question_source
         )
 
-    def to_column_dicts(self, index, display_text, aggregation, is_aggregated_on=False):
-        assert aggregation in (UI_AGG_COUNT_PER_CHOICE, UCR_AGG_SIMPLE)  # TODO: Why UCR_AGG_SIMPLE and not UI_AGG_GROUP_BY?
+    def to_column_dicts(self, index, display_text, ui_aggregation, is_aggregated_on=False):
+        assert ui_aggregation in (UI_AGG_COUNT_PER_CHOICE, UCR_AGG_SIMPLE)  # TODO: Why UCR_AGG_SIMPLE and not UI_AGG_GROUP_BY?
 
         if is_aggregated_on:
             return [{
                 "format": "default",
-                "aggregation": self._get_aggregation_config(aggregation),
+                "aggregation": self._get_ucr_aggregation(ui_aggregation),
                 "field": self._get_filter_and_agg_indicator()['column_id'],
                 "column_id": "column_{}".format(index),
                 "type": "field",
@@ -223,31 +223,31 @@ class MultiselectQuestionColumnOption(QuestionColumnOption):
         column_id = get_column_name(self._property.strip("/"))
         return make_multiselect_question_indicator(self._question_source, column_id)
 
-    def get_indicators(self, aggregation, is_multiselect_chart_report=False):
+    def get_indicators(self, ui_aggregation, is_multiselect_chart_report=False):
         """
         Return the report config snippets that specify the data source indicator that will be used for
         aggregating this question, and the data source indicator for the multi-select question's choices.
         """
         return [self._get_filter_and_agg_indicator(), self._get_choice_indicator()]
 
-    def _get_indicator(self, aggregation, is_multiselect_chart_report=False):
+    def _get_indicator(self, ui_aggregation, is_multiselect_chart_report=False):
         """
-        Validate that this is being called with aggregation == "Group By" (i.e. not actually aggregating).
+        Validate that this is being called with ui_aggregation == "Group By" (i.e. not actually aggregating).
 
         (Aggregations of MultiselectQuestionColumnOption can aggregate either of two indicators; its value or its
         choices, so self.get_indicators() must be used instead.)
         """
-        assert aggregation == UI_AGG_GROUP_BY, (
+        assert ui_aggregation == UI_AGG_GROUP_BY, (
             'Column options for multi-select questions have multiple indicators for all aggregations except '
-            '"group by". For "{}" aggregation you need to use get_indicators() instead.'.format(aggregation)
+            '"group by". For "{}" aggregation you need to use get_indicators() instead.'.format(ui_aggregation)
         )
         return super(MultiselectQuestionColumnOption, self)._get_indicator(
-            aggregation, is_multiselect_chart_report)
+            ui_aggregation, is_multiselect_chart_report)
 
 
 class CasePropertyColumnOption(ColumnOption):
 
-    def _get_datatype(self, aggregation):
+    def _get_datatype(self, ui_aggregation):
         """
         Return the data type that should be used for this property's indicator, given the aggregation that the
         user selected in the UI.
@@ -258,15 +258,15 @@ class CasePropertyColumnOption(ColumnOption):
             UCR_AGG_SUM: "decimal",
             UCR_AGG_AVG: "decimal",
         }
-        return map[self._get_aggregation_config(aggregation)]
+        return map[self._get_ucr_aggregation(ui_aggregation)]
 
-    def _get_indicator(self, aggregation, is_multiselect_chart_report=False):
-        column_id = get_column_name(self._property, suffix=self._get_datatype(aggregation))
-        return make_case_property_indicator(self._property, column_id, datatype=self._get_datatype(aggregation))
+    def _get_indicator(self, ui_aggregation, is_multiselect_chart_report=False):
+        column_id = get_column_name(self._property, suffix=self._get_datatype(ui_aggregation))
+        return make_case_property_indicator(self._property, column_id, datatype=self._get_datatype(ui_aggregation))
 
 
 class UsernameComputedCasePropertyOption(ColumnOption):
-    def _get_indicator(self, aggregation, is_multiselect_chart_report=False):
+    def _get_indicator(self, ui_aggregation, is_multiselect_chart_report=False):
         column_id = get_column_name(self._property)
         expression = {
             'type': 'property_name',
@@ -282,9 +282,9 @@ class UsernameComputedCasePropertyOption(ColumnOption):
             'expression': expression
         }
 
-    def to_column_dicts(self, index, display_text, aggregation, is_aggregated_on=False):
+    def to_column_dicts(self, index, display_text, ui_aggregation, is_aggregated_on=False):
         column_dicts = super(UsernameComputedCasePropertyOption, self).to_column_dicts(
-            index, display_text, aggregation
+            index, display_text, ui_aggregation
         )
         column_dicts[0]['transform'] = {
             'type': 'custom',
@@ -294,7 +294,7 @@ class UsernameComputedCasePropertyOption(ColumnOption):
 
 
 class OwnernameComputedCasePropertyOption(ColumnOption):
-    def _get_indicator(self, aggregation, is_multiselect_chart_report=False):
+    def _get_indicator(self, ui_aggregation, is_multiselect_chart_report=False):
         column_id = get_column_name(self._property)
         expression = {
             'type': 'property_name',
@@ -310,9 +310,9 @@ class OwnernameComputedCasePropertyOption(ColumnOption):
             'expression': expression
         }
 
-    def to_column_dicts(self, index, display_text, aggregation, is_aggregated_on=False):
+    def to_column_dicts(self, index, display_text, ui_aggregation, is_aggregated_on=False):
         column_dicts = super(OwnernameComputedCasePropertyOption, self).to_column_dicts(
-            index, display_text, aggregation
+            index, display_text, ui_aggregation
         )
         column_dicts[0]['transform'] = {
             'type': 'custom',
@@ -325,16 +325,16 @@ class CountColumn(ColumnOption):
     def __init__(self, default_display):
         super(CountColumn, self).__init__('computed/count', ["decimal"], default_display)
 
-    def _get_aggregation_config(self, agg):
+    def _get_ucr_aggregation(self, ui_aggregation):
         """
         Convert an aggregation value selected in the UI to and aggregation value to be used in the UCR
         configuration.
-        :param agg: UI aggregation value
+        :param ui_aggregation: UI aggregation value
         :return: UCR config aggregation value
         """
         return UCR_AGG_SUM
 
-    def _get_indicator(self, aggregation, is_multiselect_chart_report=False):
+    def _get_indicator(self, ui_aggregation, is_multiselect_chart_report=False):
         return {
             "column_id": "count",
             "display_name": "Count",
@@ -350,8 +350,8 @@ class CountColumn(ColumnOption):
             }
         }
 
-    def to_column_dicts(self, index, display_text, aggregation, is_aggregated_on=False):
-        column_dicts = super(CountColumn, self).to_column_dicts(index, display_text, aggregation)
+    def to_column_dicts(self, index, display_text, ui_aggregation, is_aggregated_on=False):
+        column_dicts = super(CountColumn, self).to_column_dicts(index, display_text, ui_aggregation)
         del column_dicts[0]['transform']
         return column_dicts
 

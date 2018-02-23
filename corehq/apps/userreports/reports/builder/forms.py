@@ -252,11 +252,11 @@ class DataSourceProperty(object):
             filter_format = REPORT_BUILDER_FILTER_TYPE_MAP[selected_filter_type]
         return filter_format
 
-    def _get_agg_type_for_filter_format(self, filter_format):
+    def _get_ui_aggregation_for_filter_format(self, filter_format):
         """
-        ColumnOption._get_indicator(aggregation) uses the aggregation type to determine what data type the indicator
-        should be. Therefore, we need to convert filter formats to aggregation types so that we can create the
-        correct type of indicator.
+        ColumnOption._get_indicator(aggregation) uses the aggregation type to determine what data type the
+        indicator should be. Therefore, we need to convert filter formats to aggregation types so that we can
+        create the correct type of indicator.
         """
         if filter_format == "numeric":
             return "Sum"  # This could also be "Avg", just needs to force numeric
@@ -271,8 +271,8 @@ class DataSourceProperty(object):
         :return:
         """
         filter_format = self._get_filter_format(configuration)
-        agg = self._get_agg_type_for_filter_format(filter_format)
-        column_id = self.to_report_column_option().get_indicators(agg)[0]['column_id']
+        ui_aggregation = self._get_ui_aggregation_for_filter_format(filter_format)
+        column_id = self.to_report_column_option().get_indicators(ui_aggregation)[0]['column_id']
 
         filter = {
             "field": column_id,
@@ -299,8 +299,8 @@ class DataSourceProperty(object):
         Return the indicator that would correspond to the given filter configuration
         """
         filter_format = self._get_filter_format(configuration)
-        agg = self._get_agg_type_for_filter_format(filter_format)
-        return self.to_report_column_option()._get_indicator(agg)
+        ui_aggregation = self._get_ui_aggregation_for_filter_format(filter_format)
+        return self.to_report_column_option()._get_indicator(ui_aggregation)
 
 
 class DataSourceBuilder(object):
@@ -1383,7 +1383,7 @@ class ConfigureTableReportForm(ConfigureListReportForm):
                 column.to_column_dicts(
                     index=i,
                     display_text=conf['display_text'],
-                    aggregation=conf['calculation'],
+                    ui_aggregation=conf['calculation'],
                     is_aggregated_on=conf.get('calculation') == "Group By",
                 ))
         return columns
