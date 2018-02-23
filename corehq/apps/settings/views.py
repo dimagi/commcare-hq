@@ -390,7 +390,7 @@ class TwoFactorPhoneDeleteView(BaseMyAccountView, PhoneDeleteView):
     success_url = "/account/two_factor/"
 
     def get_success_url(self):
-        messages.add_message(self.request, messages.SUCCESS, "Phone number added!")
+        messages.add_message(self.request, messages.SUCCESS, ugettext_lazy("Phone number added."))
         return resolve_url(self.success_url)
 
     @method_decorator(login_required)
