@@ -1,23 +1,5 @@
 /* global ko, $, hqImport, moment, nv, d3 */
 
-ko.bindingHandlers.select2 = {
-    init: function (element, valueAccessor) {
-        $(element).select2(valueAccessor());
-        ko.utils.domNodeDisposal.addDisposeCallback(element, function () {
-            $(element).select2('destroy');
-        });
-    },
-    update: function (element, valueAccessor, allBindingsAccessor) {
-        var allBindings = allBindingsAccessor(),
-            value = ko.utils.unwrapObservable(allBindings.value || allBindings.selectedOptions);
-        if (value) {
-            $(element).select2('val', value).trigger('change');
-        } else {
-            $(element).select2();
-        }
-    },
-};
-
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 // eslint-disable-next-line no-unused-vars
