@@ -39,13 +39,12 @@
     },
     "configured_indicators": [
       {
-        "display_name": null,
+        "column_id": "awc_id",
         "datatype": "string",
         "type": "expression",
         "transform": {},
         "is_nullable": true,
         "is_primary_key": false,
-        "column_id": "awc_id",
         "expression": {
           "value_expression": {
             "datatype": null,
@@ -69,24 +68,6 @@
               ]
             }
           }
-        }
-      },
-      {
-        "display_name": null,
-        "transform": {},
-        "datatype": "date",
-        "type": "expression",
-        "is_primary_key": false,
-        "is_nullable": true,
-        "column_id": "form_date",
-        "expression": {
-          "datatype": "date",
-          "type": "property_path",
-          "property_path": [
-            "form",
-            "meta",
-            "timeEnd"
-          ]
         }
       },
       {
