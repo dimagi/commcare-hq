@@ -247,9 +247,8 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
     def should_edit(attribute):
         return attribute in request.POST
 
-    sha1_checksum = request.POST.get('sha1', None)
-    if sha1_checksum is not None and (should_edit("xform") or "xform" in request.FILES):
-        conflict = _get_xform_conflict_response(form, sha1_checksum)
+    if 'sha1' in request.POST and (should_edit("xform") or "xform" in request.FILES):
+        conflict = _get_xform_conflict_response(form, request.POST['sha1'])
         if conflict is not None:
             return conflict
 
