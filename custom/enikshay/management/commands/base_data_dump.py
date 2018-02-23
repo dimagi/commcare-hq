@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from __future__ import absolute_import
 import csv
 import tempfile
@@ -93,7 +94,10 @@ class BaseDataDump(BaseCommand):
                             if calculation == 'caseid':
                                 case_row[column_name] = case.case_id
                             else:
-                                case_row[column_name] = case.get_case_property(calculation)
+                                column_value = case.get_case_property(calculation)
+                                if column_value:
+                                    column_value = column_value.encode("utf-8")
+                                case_row[column_name] = column_value
                         elif case_reference == 'custom':
                             try:
                                 case_row[column_name] = self.get_custom_value(column_name, case)
