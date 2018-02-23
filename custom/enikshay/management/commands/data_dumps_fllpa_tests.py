@@ -54,10 +54,13 @@ class Command(BaseDataDump):
 
     def get_custom_value(self, column_name, test_case):
         if column_name == "Criteria for Testing":
-            # TODo
-            # coalesce (self.rft_drtb_diagnosis, self.rft_drtb_diagnosis_ext_dst,
-            # self.rft_drtb_follow_up, self.rft_dstb_diagnosis, self.rft_dstb_followup)
-            return ''
+            return (
+                test_case.get_case_property('rft_drtb_diagnosis') or
+                test_case.get_case_property('rft_drtb_diagnosis_ext_dst') or
+                test_case.get_case_property('rft_drtb_follow_up') or
+                test_case.get_case_property('rft_dstb_diagnosis') or
+                test_case.get_case_property('rft_dstb_followup')
+            )
         elif column_name == "RIF Resistance Result":
             if test_case.get_case_property('drug_resistance_list') == 'r':
                 return 'resistant'
