@@ -41,14 +41,6 @@ def get_released_app(domain, app_id, linked_domain, remote_details):
     return _convert_app_from_remote_linking_source(response)
 
 
-def whilelist_app_on_remote(domain, app_id, linked_domain, remote_details):
-    url = reverse('patch_linked_app_whitelist', args=[domain, app_id])
-    params = {
-        'whitelist_item': absolute_reverse('domain_homepage', args=[linked_domain])
-    }
-    _do_request_to_remote_hq(url, remote_details, None, params, method='patch')
-
-
 def _convert_app_from_remote_linking_source(app_json):
     attachments = app_json.pop('_LAZY_ATTACHMENTS', {})
     app = wrap_app(app_json)
