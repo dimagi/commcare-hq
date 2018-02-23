@@ -58,7 +58,8 @@ def _convert_app_from_remote_linking_source(app_json):
 
 def pull_missing_multimedia_for_app(app):
     missing_media = _get_missing_multimedia(app)
-    _fetch_remote_media(app.domain, missing_media, app.remote_app_details)
+    remote_details = app.domain_link.remote_details
+    _fetch_remote_media(app.domain, missing_media, remote_details)
 
 
 def _get_missing_multimedia(app):
