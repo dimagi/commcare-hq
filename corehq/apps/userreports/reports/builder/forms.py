@@ -420,8 +420,7 @@ class DataSourceBuilder(object):
             # Property is only set if the column exists in report_column_options
             if column['property']:
                 column_option = self.report_column_options[column['property']]
-                for indicator in column_option.get_indicators(column['calculation'],
-                                                              is_multiselect_chart_report):
+                for indicator in column_option.get_indicators(column['calculation'], is_multiselect_chart_report):
                     indicators.setdefault(str(indicator), indicator)
 
         for filter_ in filters:
@@ -816,7 +815,7 @@ class ConfigureNewReportBase(forms.Form):
         if location:
             configured_columns += [{
                 "property": location,
-                "calculation": "simple"  # Not aggregated
+                "calculation": UI_AGG_GROUP_BY  # Not aggregated
             }]
         return configured_columns
 
@@ -1145,6 +1144,9 @@ class ConfigureNewReportBase(forms.Form):
 
     @property
     def _report_columns(self):
+        """
+        Returns column dicts for columns posted from the UI
+        """
         return []
 
     @property
@@ -1440,7 +1442,7 @@ class ConfigureMapReportForm(ConfigureListReportForm):
 
         if self.location_field:
             loc_column = self.data_source_properties[self.location_field].to_report_column_option()
-            loc_field_id = loc_column.get_indicators("simple")[0]['column_id']
+            loc_field_id = loc_column.get_indicators(UI_AGG_GROUP_BY)[0]['column_id']
             loc_field_text = loc_column.get_default_display()
 
             displaying_loc_column = False

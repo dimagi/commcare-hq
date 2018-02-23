@@ -92,6 +92,7 @@ class ColumnOption(object):
     def to_column_dicts(self, index, display_text, ui_aggregation, is_aggregated_on=False):
         """
         Return a UCR report column configuration dictionary
+
         :param index: The index of the column in the list of columns, e.g. 0, 1, 2, etc.
         :param display_text: The label for this column
         :param ui_aggregation: What sort of aggregation the user selected for this column in the UI
@@ -102,7 +103,7 @@ class ColumnOption(object):
         column_id = self.get_indicators(ui_aggregation)[0]['column_id']
         return [{
             "format": "default",
-            "aggregation": self._get_ucr_aggregation(ui_aggregation),
+            "aggregation": self._get_ucr_aggregation(ui_aggregation),  # NOTE: "aggregation" is a UCR aggregation
             "field": column_id,
             "column_id": "column_{}".format(index),
             "type": "field",
@@ -179,7 +180,7 @@ class MultiselectQuestionColumnOption(QuestionColumnOption):
         )
 
     def to_column_dicts(self, index, display_text, ui_aggregation, is_aggregated_on=False):
-        assert ui_aggregation in (UI_AGG_COUNT_PER_CHOICE, UCR_AGG_SIMPLE)  # TODO: Why UCR_AGG_SIMPLE and not UI_AGG_GROUP_BY?
+        assert ui_aggregation in (UI_AGG_COUNT_PER_CHOICE, UI_AGG_GROUP_BY)
 
         if is_aggregated_on:
             return [{
