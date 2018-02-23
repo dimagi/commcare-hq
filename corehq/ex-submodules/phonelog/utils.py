@@ -166,56 +166,55 @@ def _process_force_close_subreport(domain, xform):
 
 
 class SumoLogicLog(object):
-    LOG_TEMPLATE = (
-        u"[log_date={log_date}] "
-        u"[log_submission_date={log_submission_date}] "
-        u"[log_type={log_type}] "
-        u"[domain={domain}] "
-        u"[username={username}] "
-        u"[device_id={device_id}] "
-        u"[app_version={app_version}] "
-        u"[cc_version={cc_version}] "
-        u"[msg={msg}]")
+    """Compiles devicelog data to be sent to sumologic
 
+    More info here: https://docs.google.com/document/d/18sSwv2GRGepOIHthC6lxQAh_aUYgDcTou6w9jL2976o/edit
+    """
     def __init__(self, domain, xform):
+        self.domain = domain
+        self.xform = xform
+
+    def compile(self):
+        log = [self._log_subreport(), self._usererror_subreport(), self._forceclose_subreport()]
+        return u"\n".join(l for l in log if l)
+
+    def _fill_base_template(self, log):
         from corehq.apps.receiverwrapper.util import (
             get_version_from_appversion_text,
             get_commcare_version_from_appversion_text,
         )
-
-        self.domain = domain
-        self.xform = xform
-        self.user_subreport = _get_logs(xform.form_data, 'user_subreport', 'user')
+        template = (
+            u"[log_date={log_date}] "
+            u"[log_submission_date={log_submission_date}] "
+            u"[log_type={log_type}] "
+            u"[domain={domain}] "
+            u"[username={username}] "
+            u"[device_id={device_id}] "
+            u"[app_version={app_version}] "
+            u"[cc_version={cc_version}] "
+            u"[msg={msg}]"
+        )
         appversion_text = self.xform.form_data.get('app_version')
-        self.app_version = get_version_from_appversion_text(appversion_text)
-        self.commcare_version = get_commcare_version_from_appversion_text(appversion_text)
-
-    def get_user_info(self, log):
-        username, user_id = _get_user_info_from_log(self.domain, log)
-        if username is None:
-            username = self.user_subreport[0].get('username')  # use the first user subreport to infer username
-        if user_id is None:
-            user_id = self.user_subreport[0].get('user_id')  # use the first user subreport to infer username
-        return username, user_id
-
-    def compile(self):
-        log = [self._log_subreport()]
-        log.append(self._usererror_subreport())
-        log.append(self._forceclose_subreport())
-        return u"\n".join(l for l in log if l)
-
-    def _fill_base_template(self, log):
-        return self.LOG_TEMPLATE.format(
+        return template.format(
             log_date=log.get("@date"),
             log_submission_date=self.xform.received_on if self.xform.received_on else None,
             log_type=log.get("type"),
             domain=self.domain,
-            username=self.get_user_info(log)[0],
+            username=self._get_user_info(log)[0],
             device_id=self.xform.form_data.get('device_id'),
-            app_version=self.app_version,
-            cc_version=self.commcare_version,
+            app_version=get_version_from_appversion_text(appversion_text),
+            cc_version=get_commcare_version_from_appversion_text(appversion_text),
             msg=log["msg"],
         )
+
+    def _get_user_info(self, log):
+        user_subreport = _get_logs(self.xform.form_data, 'user_subreport', 'user')
+        username, user_id = _get_user_info_from_log(self.domain, log)
+        if username is None:
+            username = user_subreport[0].get('username')  # use the first user subreport to infer username
+        if user_id is None:
+            user_id = user_subreport[0].get('user_id')
+        return username, user_id
 
     def _log_subreport(self):
         logs = _get_logs(self.xform.form_data, 'log_subreport', 'log')
@@ -224,28 +223,28 @@ class SumoLogicLog(object):
 
     def _usererror_subreport(self):
         logs = _get_logs(self.xform.form_data, 'user_error_subreport', 'user_error')
-        log_additions_template = (u" [app_id={app_id}] [user_id={user_id}] [session={session}] [expr={expr}]")
-        sumologic_logs = []
-        for log in logs:
-            base = self._fill_base_template(log)
-            sumologic_logs.append(base + log_additions_template.format(
+        log_additions_template = u" [app_id={app_id}] [user_id={user_id}] [session={session}] [expr={expr}]"
+
+        return u"\n".join(
+            self._fill_base_template(log) + log_additions_template.format(
                 app_id=log.get('app_id'),
                 user_id=log.get('user_id'),
                 session=log.get('session'),
                 expr=log.get('expr'),
-            ))
-        return u"\n".join(sumologic_logs)
+            ) for log in logs
+        )
 
     def _forceclose_subreport(self):
         logs = _get_logs(self.xform.form_data, 'force_close_subreport', 'force_close')
-        log_additions_template = (u" [app_id={app_id}] [user_id={user_id}] [session={session}] [device_model={device_model}]")
-        sumologic_logs = []
-        for log in logs:
-            base = self._fill_base_template(log)
-            sumologic_logs.append(base + log_additions_template.format(
+        log_additions_template = (
+            u" [app_id={app_id}] [user_id={user_id}] [session={session}] "
+            u"[device_model={device_model}]"
+        )
+        return u"\n".join(
+            self._fill_base_template(log) + log_additions_template.format(
                 app_id=log.get('app_id'),
                 user_id=log.get('user_id'),
                 session=log.get('session_readable'),
                 device_model=log.get('device_model'),
-            ))
-        return u"\n".join(sumologic_logs)
+            ) for log in logs
+        )
