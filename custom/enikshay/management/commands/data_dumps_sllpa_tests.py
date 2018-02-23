@@ -119,6 +119,8 @@ class Command(BaseDataDump):
     def get_episode(self, test_case):
         if 'episode' not in self.context:
             episode_case_id = test_case.get_case_property('episode_case_id')
+            if not episode_case_id:
+                raise Exception("episode case id not set for test %s" % test_case.case_id)
             self.context['episode'] = self.case_accessor.get_case(episode_case_id)
         if not self.context['episode']:
             raise Exception("could not find episode for test %s" % test_case.case_id)
