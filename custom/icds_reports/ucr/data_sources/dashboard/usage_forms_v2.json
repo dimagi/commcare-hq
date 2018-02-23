@@ -1,10 +1,7 @@
 {
   "domains": [
     "icds-dashboard-qa",
-    "icds-sql",
-    "icds-test",
-    "icds-cas",
-    "icds-cas-sandbox"
+    "icds-cas"
   ],
   "server_environment": [
     "softlayer",
@@ -12,8 +9,8 @@
     "icds"
   ],
   "config": {
-    "table_id": "static-usage_forms",
-    "display_name": "Forms - Usage (Static)",
+    "table_id": "static-usage_forms_v2",
+    "display_name": "Forms - Usage (Static) (Dashboard)",
     "referenced_doc_type": "XFormInstance",
     "description": "",
     "base_item_expression": {},
