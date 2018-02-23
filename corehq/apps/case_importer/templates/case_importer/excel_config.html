@@ -3,7 +3,9 @@
 {% load report_tags %}
 {% load i18n %}
 
-
+{% block js %}{{ block.super }}
+    <script src="{% static 'case_importer/js/excel_config.js' %}"></script>
+{% endblock %}
 
 {% block page_breadcrumbs %}
     <ol id="hq-breadcrumbs" class="breadcrumb breadcrumb-hq-section">
