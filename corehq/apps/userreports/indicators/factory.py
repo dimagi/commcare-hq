@@ -12,6 +12,7 @@ from corehq.apps.userreports.indicators import (
     CompoundIndicator,
     LedgerBalancesIndicator,
     RawIndicator,
+    SmallBooleanIndicator,
 )
 from corehq.apps.userreports.indicators.specs import (
     BooleanIndicatorSpec,
@@ -20,6 +21,7 @@ from corehq.apps.userreports.indicators.specs import (
     IndicatorSpecBase,
     LedgerBalancesIndicatorSpec,
     RawIndicatorSpec,
+    SmallBooleanIndicatorSpec,
 )
 
 
@@ -63,6 +65,16 @@ def _build_expression_indicator(spec, context):
         wrapped.display_name,
         column,
         getter=wrapped.parsed_expression(context),
+        wrapped_spec=wrapped,
+    )
+
+
+def _build_small_boolean_indicator(spec, context):
+    wrapped = SmallBooleanIndicatorSpec.wrap(spec)
+    return SmallBooleanIndicator(
+        wrapped.display_name,
+        wrapped.column_id,
+        FilterFactory.from_spec(wrapped.filter, context),
         wrapped_spec=wrapped,
     )
 
@@ -137,6 +149,7 @@ def _build_inserted_at(spec, context):
 
 class IndicatorFactory(object):
     constructor_map = {
+        'small_boolean': _build_small_boolean_indicator,
         'boolean': _build_boolean_indicator,
         'choice_list': _build_choice_list_indicator,
         'count': _build_count_indicator,
