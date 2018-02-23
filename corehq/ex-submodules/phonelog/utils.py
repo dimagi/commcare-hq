@@ -74,17 +74,7 @@ def _process_log_subreport(domain, xform):
     for i, log in enumerate(logs):
         if not log:
             continue
-        if log["type"] == 'login':
-            # j2me log = user_id_prefix-username
-            logged_in_username = log["msg"].split('-')[1]
-            cc_username = format_username(logged_in_username, domain)
-            logged_in_user_id = get_user_id_by_username(cc_username)
-        elif log["type"] == 'user' and log["msg"][:5] == 'login':
-            # android log = login|username|user_id
-            msg_split = log["msg"].split('|')
-            logged_in_username = msg_split[1]
-            logged_in_user_id = msg_split[2]
-
+        logged_in_username, logged_in_user_id = _get_user_info_from_log(domain, log)
         to_save.append(DeviceReportEntry(
             xform_id=xform.form_id,
             i=i,
@@ -100,6 +90,23 @@ def _process_log_subreport(domain, xform):
             user_id=logged_in_user_id,
         ))
     DeviceReportEntry.objects.bulk_create(to_save)
+
+
+def _get_user_info_from_log(domain, log):
+    logged_in_username = None
+    logged_in_user_id = None
+    if log["type"] == 'login':
+        # j2me log = user_id_prefix-username
+        logged_in_username = log["msg"].split('-')[1]
+        cc_username = format_username(logged_in_username, domain)
+        logged_in_user_id = get_user_id_by_username(cc_username)
+    elif log["type"] == 'user' and log["msg"][:5] == 'login':
+        # android log = login|username|user_id
+        msg_split = log["msg"].split('|')
+        logged_in_username = msg_split[1]
+        logged_in_user_id = msg_split[2]
+
+    return logged_in_username, logged_in_user_id
 
 
 def _process_user_error_subreport(domain, xform):
@@ -156,3 +163,57 @@ def _process_force_close_subreport(domain, xform):
         )
         to_save.append(entry)
     ForceCloseEntry.objects.bulk_create(to_save)
+
+
+class SumoLogicLog(object):
+    LOG_TEMPLATE = (
+        u"[log_date={log_date}] "
+        u"[log_submission_date={log_submission_date}] "
+        u"[log_type={log_type}] "
+        u"[domain={domain}] "
+        u"[username={username}] "
+        u"[device_id={device_id}] "
+        u"[app_version={app_version}] "
+        u"[cc_version={cc_version}] "
+        u"[msg={msg}]")
+
+    def __init__(self, domain, xform):
+        from corehq.apps.receiverwrapper.util import (
+            get_version_from_appversion_text,
+            get_commcare_version_from_appversion_text,
+        )
+
+        self.domain = domain
+        self.xform = xform
+        self.user_subreport = _get_logs(xform.form_data, 'user_subreport', 'user')
+        appversion_text = self.xform.form_data.get('app_version')
+        self.app_version = get_version_from_appversion_text(appversion_text)
+        self.commcare_version = get_commcare_version_from_appversion_text(appversion_text)
+        self.log = []
+
+    def get_user_info(self, log):
+        username, user_id = _get_user_info_from_log(self.domain, log)
+        if username is None:
+            username = self.user_subreport[0].get('username')  # use the first user subreport to infer username
+        if user_id is None:
+            user_id = self.user_subreport[0].get('user_id')  # use the first user subreport to infer username
+        return username, user_id
+
+    def compile(self):
+        self.log.append(self._log_subreport())
+        return u"\n".join(self.log)
+
+    def _log_subreport(self):
+        logs = _get_logs(self.xform.form_data, 'log_subreport', 'log')
+        sumlogic_logs = [self.LOG_TEMPLATE.format(
+            log_date=log["@date"],
+            log_submission_date=self.xform.received_on if self.xform.received_on else None,
+            log_type=log["type"],
+            domain=self.domain,
+            username=self.get_user_info(log)[0],
+            device_id=self.xform.form_data.get('device_id'),
+            app_version=self.app_version,
+            cc_version=self.commcare_version,
+            msg=log["msg"],
+        ) for log in logs]
+        return u"\n".join(sumlogic_logs)
