@@ -125,4 +125,3 @@ class Command(BaseDataDump):
     def handle(self, *args, **options):
         self.setup()
         self.generate_dump()
-
