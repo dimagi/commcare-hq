@@ -60,8 +60,9 @@ class ColumnOption(object):
 
     def _get_aggregation_config(self, agg):
         """
-        Convert an aggregation value selected in the UI to and aggregation value to be used in the UCR
+        Convert an aggregation value selected in the UI to an aggregation value to be used in the UCR
         configuration.
+
         :param agg: UI aggregation value
         :return: UCR config aggregation value
         """
@@ -123,6 +124,9 @@ class QuestionColumnOption(ColumnOption):
         return ret
 
     def get_indicator(self, aggregation, is_multiselect_chart_report=False):
+        """
+        Return the report config snippet for the data source indicator for this form question column option
+        """
         if aggregation in (UI_AGG_SUM, UI_AGG_AVERAGE):
             data_type = "decimal"
         elif aggregation in ("sum", "avg"):
@@ -216,9 +220,19 @@ class MultiselectQuestionColumnOption(QuestionColumnOption):
         return make_multiselect_question_indicator(self._question_source, column_id)
 
     def get_indicators(self, aggregation, is_multiselect_chart_report=False):
+        """
+        Return the report config snippets that specify the data source indicator that will be used for
+        aggregating this question, and the data source indicator for the multi-select question's choices.
+        """
         return [self._get_filter_and_agg_indicator(), self._get_choice_indicator()]
 
     def get_indicator(self, aggregation, is_multiselect_chart_report=False):
+        """
+        Validate that this is being called with aggregation == "Group By" (i.e. not actually aggregating).
+
+        (Aggregations of MultiselectQuestionColumnOption can aggregate either of two indicators; its value or its
+        choices, so self.get_indicators() must be used instead.)
+        """
         if aggregation == UI_AGG_GROUP_BY:
             return super(MultiselectQuestionColumnOption, self).get_indicator(
                 aggregation, is_multiselect_chart_report)
