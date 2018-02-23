@@ -71,6 +71,7 @@
         }
       },
       {
+        "comment": "Month the form was submitted in. Currently used in aggregation script, but should be able to be removed soon",
         "display_name": null,
         "transform": {},
         "datatype": "date",
@@ -932,6 +933,15 @@
     "named_expressions": {},
     "named_filters": {},
     "engine_id": "icds-ucr",
+    "sql_settings": {
+      "partition_config": [
+        {
+          "column": "form_time",
+          "subtype": "date",
+          "constraint": "month"
+        }
+      ]
+    },
     "disable_destructive_rebuild": true
   }
 }
