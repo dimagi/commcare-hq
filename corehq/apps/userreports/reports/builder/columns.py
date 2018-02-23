@@ -127,10 +127,11 @@ class QuestionColumnOption(ColumnOption):
         """
         Return the report config snippet for the data source indicator for this form question column option
         """
+        assert aggregation in UI_AGGREGATIONS, (
+            '"{}" is not an aggregation recognised by the Report Builder interface.'.format(aggregation)
+        )
         if aggregation in (UI_AGG_SUM, UI_AGG_AVERAGE):
             data_type = "decimal"
-        elif aggregation in ("sum", "avg"):
-            raise Exception("I think this should be Sum or Avg, where did you find this?...")
         else:
             data_type = None  # use the default
 
@@ -233,14 +234,12 @@ class MultiselectQuestionColumnOption(QuestionColumnOption):
         (Aggregations of MultiselectQuestionColumnOption can aggregate either of two indicators; its value or its
         choices, so self.get_indicators() must be used instead.)
         """
-        if aggregation == UI_AGG_GROUP_BY:
-            return super(MultiselectQuestionColumnOption, self).get_indicator(
-                aggregation, is_multiselect_chart_report)
-        else:
-            raise Exception(
-                "This column option is represented by multiple indicators when not being aggreated by, "
-                "use get_indicators() instead (aggregation was {})".format(aggregation)
-            )
+        assert aggregation == UI_AGG_GROUP_BY, (
+            'Column options for multi-select questions have multiple indicators for all aggregations except '
+            '"group by". For "{}" aggregation you need to use get_indicators() instead.'.format(aggregation)
+        )
+        return super(MultiselectQuestionColumnOption, self).get_indicator(
+            aggregation, is_multiselect_chart_report)
 
 
 class CasePropertyColumnOption(ColumnOption):
