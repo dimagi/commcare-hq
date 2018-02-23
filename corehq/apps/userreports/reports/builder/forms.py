@@ -1322,7 +1322,9 @@ class ConfigureListReportForm(ConfigureNewReportBase):
         for i, conf in enumerate(self.cleaned_data['columns']):
             columns.extend(
                 self.ds_builder.report_column_options[conf['property']].to_column_dicts(
-                    i, conf.get('display_text', conf['property']), UCR_AGG_SIMPLE
+                    index=i,
+                    display_text=conf.get('display_text', conf['property']),
+                    ui_aggregation=UI_AGG_GROUP_BY
                 )
             )
         return columns
