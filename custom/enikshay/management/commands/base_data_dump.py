@@ -28,15 +28,20 @@ class BaseDataDump(BaseCommand):
         super(BaseDataDump, self).__init__(*args, **kwargs)
         self.log_progress = None
         self.result_file_name = None
+        # title to differentiate multiple dumps for the same case type
+        # if present, this would be added in the final file name instead of case type
+        self.dump_title = None
         self.case_type = None
         self.input_file_name = None
         self.report = {}
         self.result_file_headers = []
         self.recipient = None
+        self.full = False
 
     def add_arguments(self, parser):
         parser.add_argument('--case-type', action='store_true')
         parser.add_argument('--recipient', type=str)
+        parser.add_argument('--full', action='store_true', dest='full', default=False)
 
     def handle(self, case_type, recipient, *args, **options):
         self.case_type = case_type
@@ -48,8 +53,8 @@ class BaseDataDump(BaseCommand):
         self.email_result(download_id)
 
     def setup_result_file_name(self):
-        result_file_name = "data_dumps_{case_type}_{timestamp}.csv".format(
-            case_type=self.case_type,
+        result_file_name = "data_dumps_{dump_title}_{timestamp}.csv".format(
+            dump_title=(self.dump_title or self.case_type),
             timestamp=datetime.now().strftime("%Y-%m-%d--%H-%M-%S"),
         )
         return result_file_name
@@ -138,7 +143,10 @@ class BaseDataDump(BaseCommand):
 
     def get_cases(self, case_type):
         case_accessor = CaseAccessors(DOMAIN)
-        return case_accessor.iter_cases(self.get_case_ids(case_type))
+        case_ids = self.get_case_ids(case_type)
+        if not self.full:
+            case_ids = case_ids[0:500]
+        return case_accessor.iter_cases(case_ids)
 
     def get_case_ids(self, case_type):
         raise NotImplementedError
