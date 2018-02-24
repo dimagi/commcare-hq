@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 from __future__ import print_function
-import os
+
 from corehq.apps.es.case_search import CaseSearchES
 from corehq.apps.es import queries
 
