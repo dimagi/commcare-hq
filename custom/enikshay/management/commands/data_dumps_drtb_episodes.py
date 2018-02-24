@@ -29,7 +29,7 @@ class Command(BaseDataDump):
         super(Command, self).__init__(*args, **kwargs)
         self.case_type = CASE_TYPE_EPISODE
 
-    def get_case_ids(self, case_type):
+    def get_case_ids_query(self, case_type):
         """
         All open and closed episode cases whose host/host = a person case (open
         or closed) with person.dataset = 'real' and person.enrolled_in_private
@@ -40,7 +40,7 @@ class Command(BaseDataDump):
                 .case_type(case_type)
                 .case_property_query(ENROLLED_IN_PRIVATE, 'true', clause=queries.MUST_NOT)
                 .case_property_query("episode_type", "confirmed_drtb", clause=queries.MUST)
-                .get_ids()[0:10])
+                )
 
     def include_case_in_dump(self, episode):
         person = self.get_person(episode)

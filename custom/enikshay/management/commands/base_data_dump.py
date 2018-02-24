@@ -19,6 +19,7 @@ from dimagi.utils.django.email import send_HTML_email
 from soil.util import expose_blob_download
 
 DOMAIN = "enikshay"
+LIMITED_TEST_DUMP_SIZE = 500
 
 
 class BaseDataDump(BaseCommand):
@@ -150,12 +151,13 @@ class BaseDataDump(BaseCommand):
 
     def get_cases(self, case_type):
         case_accessor = CaseAccessors(DOMAIN)
-        case_ids = self.get_case_ids(case_type)
+        case_ids_query = self.get_case_ids_query(case_type)
         if not self.full:
-            case_ids = case_ids[0:500]
+            case_ids_query = case_ids_query.size(LIMITED_TEST_DUMP_SIZE)
+        case_ids = case_ids_query.get_ids()
         return case_accessor.iter_cases(case_ids)
 
-    def get_case_ids(self, case_type):
+    def get_case_ids_query(self, case_type):
         raise NotImplementedError
 
     def get_custom_value(self, column_name, case):

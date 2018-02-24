@@ -30,7 +30,7 @@ class Command(BaseDataDump):
         self.case_type = CASE_TYPE_TEST
         self.case_accessor = CaseAccessors(DOMAIN)
 
-    def get_case_ids(self, case_type):
+    def get_case_ids_query(self, case_type):
         """
         All open and closed test cases
         1) whose host/host = a person case (open or closed)
@@ -42,7 +42,7 @@ class Command(BaseDataDump):
                 .domain(DOMAIN)
                 .case_type(case_type)
                 .case_property_filter("test_type_value", ["microscopy-fluorescent", "microscopy-zn"])
-                .get_ids()[0:10])
+                )
 
     def include_case_in_dump(self, test_case):
         person = self.get_person(test_case)

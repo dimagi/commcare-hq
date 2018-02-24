@@ -25,7 +25,7 @@ class Command(BaseDataDump):
         super(Command, self).__init__(*args, **kwargs)
         self.case_type = CASE_TYPE_EPISODE
 
-    def get_case_ids(self, case_type):
+    def get_case_ids_query(self, case_type):
         """
         All open and closed episode cases whose host/host = a person case (open
         or closed) with person.dataset = 'real' and self.enrolled_in_private !=
@@ -36,8 +36,7 @@ class Command(BaseDataDump):
                 .case_type(case_type)
                 .NOT(case_search.case_property_filter(ENROLLED_IN_PRIVATE, 'true'))
                 .case_property_filter('episode_type', 'presumptive_tb')
-                .size(10)  # FIXME size limited for debugging
-                .get_ids())
+                )
 
     def include_case_in_dump(self, episode):
         person = self.get_person(episode)

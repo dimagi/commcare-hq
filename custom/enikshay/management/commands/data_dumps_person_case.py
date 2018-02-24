@@ -62,7 +62,7 @@ class Command(BaseDataDump):
                 return str(e)
         return Exception("unknown case reference %s" % case_reference)
 
-    def get_case_ids(self, case_type):
+    def get_case_ids_query(self, case_type):
         """
         All open and closed person cases with person.dataset = 'real' and person.enrolled_in_private != 'true'
         """
@@ -71,7 +71,7 @@ class Command(BaseDataDump):
                 .case_type(case_type)
                 .case_property_query(ENROLLED_IN_PRIVATE, 'true', clause=queries.MUST_NOT)
                 .case_property_query("dataset", 'real')
-                .get_ids()[0:10])
+                )
 
 
 def get_recently_closed_case(person_case, all_cases):
