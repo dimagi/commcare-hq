@@ -141,8 +141,6 @@ class BaseDataDump(BaseCommand):
         return blob_dl_object.download_id
 
     def email_result(self, download_id):
-        if not self.recipient:
-            return
         url = reverse('ajax_job_poll', kwargs={'download_id': download_id})
         send_HTML_email('%s Download for %s Finished' % (DOMAIN, self.case_type),
                         self.recipient,
