@@ -28,7 +28,6 @@ class Command(BaseDataDump):
 
     def __init__(self, *args, **kwargs):
         super(Command, self).__init__(*args, **kwargs)
-        self.dump_title = "dstb_episodes"
         self.case_type = CASE_TYPE_EPISODE
 
     def get_case_ids_query(self, case_type):
@@ -97,8 +96,3 @@ class Command(BaseDataDump):
         elif case_reference == 'occurrence':
             return self.get_occurrence(episode).get_case_property(calculation)
         return Exception("unknown case reference %s" % case_reference)
-
-    def handle(self, *args, **options):
-        self.full = options.get('full')
-        self.setup()
-        self.generate_dump()

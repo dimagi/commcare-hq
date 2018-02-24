@@ -57,7 +57,3 @@ class Command(BaseDataDump):
         if case_reference == 'person':
             return self.get_person(episode).get_case_property(calculation)
         return Exception("unknown case reference %s" % case_reference)
-
-    def handle(self, *args, **options):
-        self.setup()
-        self.generate_dump()

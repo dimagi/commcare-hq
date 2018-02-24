@@ -44,10 +44,12 @@ class BaseDataDump(BaseCommand):
 
     def handle(self, recipient, *args, **options):
         self.recipient = recipient
+        self.full = options.get('full')
         self.setup()
         temp_file_path = self.generate_dump()
         download_id = self.save_dump_to_blob(temp_file_path)
-        self.email_result(download_id)
+        if self.recipient:
+            self.email_result(download_id)
 
     def setup_result_file_name(self):
         result_file_name = "{dump_title}_{timestamp}.csv".format(

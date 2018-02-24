@@ -133,7 +133,3 @@ class Command(BaseDataDump):
         elif case_reference == 'episode':
             return self.get_episode(test_case).get_case_property(calculation)
         raise Exception("unknown case reference %s" % case_reference)
-
-    def handle(self, *args, **options):
-        self.setup()
-        self.generate_dump()

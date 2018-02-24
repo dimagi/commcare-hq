@@ -95,7 +95,3 @@ class Command(BaseDataDump):
         elif case_reference == 'occurrence':
             return self.get_occurrence(episode).get_case_property(calculation)
         return Exception("unknown case reference %s" % case_reference)
-
-    def handle(self, *args, **options):
-        self.setup()
-        self.generate_dump()
