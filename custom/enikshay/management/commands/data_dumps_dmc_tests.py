@@ -22,11 +22,12 @@ class Command(BaseDataDump):
     1. DMC Test
     https://docs.google.com/spreadsheets/d/1OPp0oFlizDnIyrn7Eiv11vUp8IBmc73hES7qqT-mKKA/edit#gid=1810278446
     """
+    TASK_NAME = "data_dumps_dmc_tests"
+    INPUT_FILE_NAME = "data_dumps_dmc_tests.csv"
+
     def __init__(self, *args, **kwargs):
         super(Command, self).__init__(*args, **kwargs)
         self.case_type = CASE_TYPE_TEST
-        self.input_file_name = os.path.join(os.path.dirname(__file__),
-                                            'data_dumps_dmc_tests.csv')
         self.case_accessor = CaseAccessors(DOMAIN)
 
     def get_case_ids(self, case_type):

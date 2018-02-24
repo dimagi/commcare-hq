@@ -24,15 +24,14 @@ class Command(BaseDataDump):
 
     https://docs.google.com/spreadsheets/d/1OPp0oFlizDnIyrn7Eiv11vUp8IBmc73hES7qqT-mKKA/edit#gid=1039030624
     """
+    TASK_NAME = "data_dumps_person_case"
+    INPUT_FILE_NAME = "data_dumps_person_case.csv"
+
     def __init__(self, *args, **kwargs):
         super(Command, self).__init__(*args, **kwargs)
         self.case_type = CASE_TYPE_PERSON
         self.input_file_name = os.path.join(os.path.dirname(__file__),
                                             'data_dumps_person_case.csv')
-
-    TASK_NAME = "data_dumps_person_case"
-    INPUT_FILE_NAME = ('%s/data_dumps_person_case.csv' %
-                       os.path.dirname(os.path.realpath(__file__)))
 
     def get_last_episode(self, case):
         self.context['last_episode'] = (
