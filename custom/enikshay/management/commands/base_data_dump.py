@@ -31,7 +31,6 @@ class BaseDataDump(BaseCommand):
         self.log_progress = None
         self.result_file_name = None
         self.case_type = None
-        self.input_file_name = None
         self.report = {}
         self.notes = {}
         self.column_statuses = {}
@@ -45,7 +44,6 @@ class BaseDataDump(BaseCommand):
 
     def handle(self, recipient, *args, **options):
         self.recipient = recipient
-        self.input_file_name = self.INPUT_FILE_NAME
         self.setup()
         temp_file_path = self.generate_dump()
         download_id = self.save_dump_to_blob(temp_file_path)
