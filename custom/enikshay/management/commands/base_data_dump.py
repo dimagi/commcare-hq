@@ -105,7 +105,7 @@ class BaseDataDump(BaseCommand):
                                 case_row[column_name] = case.case_id
                             else:
                                 column_value = case.get_case_property(calculation)
-                                if column_value:
+                                if column_value and not isinstance(column_value, bool):
                                     column_value = column_value.encode("utf-8")
                                 case_row[column_name] = column_value
                         elif case_reference == 'custom':
