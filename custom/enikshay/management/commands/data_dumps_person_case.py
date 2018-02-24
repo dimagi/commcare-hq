@@ -40,7 +40,7 @@ class Command(BaseDataDump):
         return self.context['last_episode']
 
     def get_custom_value(self, column_name, case):
-        if column_name == 'Status':
+        if column_name == 'Person Status':
             if case.closed:
                 return "closed"
             elif case.owner_id == "_invalid_":
