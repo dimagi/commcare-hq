@@ -190,7 +190,7 @@ class TempCommCareUser(CommCareUser):
     def raw_username(self):
         return self.username
 
-    class Meta:
+    class Meta(object):
         app_label = 'reports'
 
 

@@ -1,6 +1,7 @@
 # coding=utf-8
 from __future__ import absolute_import
 from __future__ import unicode_literals
+from __future__ import division
 from numbers import Number
 from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.apps.reports.standard import DatespanMixin, CustomProjectReport
@@ -18,7 +19,7 @@ from ..sqlreport import SqlTabularReport, DatabaseColumn, AggregateColumn
 def combine_indicator(num, denom):
     if isinstance(num, Number) and isinstance(denom, Number):
         if denom != 0:
-            return num * 100 / denom
+            return num * 100 // denom
         else:
             return 0
     else:

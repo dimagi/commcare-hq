@@ -16,6 +16,7 @@
 
 {% block page_content %}
     {% initial_page_data 'areas' areas %}
+    {% initial_page_data 'current_values' form.current_values %}
     <form id="update-project-info" class="form-horizontal disable-on-submit" method="post">
         {% crispy form %}
     </form>

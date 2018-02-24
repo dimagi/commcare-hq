@@ -9,6 +9,7 @@ from corehq.apps.data_interfaces.models import (
     AUTO_UPDATE_XMLNS,
 )
 from corehq.apps.domain_migration_flags.api import any_migrations_in_progress
+from corehq.apps.domain.models import Domain
 from corehq.util.decorators import serial_task
 from datetime import datetime, timedelta
 
@@ -116,6 +117,9 @@ def check_data_migration_in_progress(domain, last_migration_check_time):
     queue='case_rule_queue',
 )
 def run_case_update_rules_for_domain(domain, now=None):
+    domain_obj = Domain.get_by_name(domain)
+    max_allowed_updates = domain_obj.auto_case_update_limit or settings.MAX_RULE_UPDATES_IN_ONE_RUN
+
     now = now or datetime.utcnow()
     start_run = datetime.utcnow()
     last_migration_check_time = None
@@ -141,7 +145,7 @@ def run_case_update_rules_for_domain(domain, now=None):
             time_elapsed = datetime.utcnow() - start_run
             if (
                 time_elapsed.seconds > HALT_AFTER or
-                case_update_result.total_updates >= settings.MAX_RULE_UPDATES_IN_ONE_RUN or
+                case_update_result.total_updates >= max_allowed_updates or
                 migration_in_progress
             ):
                 run_record.done(DomainCaseRuleRun.STATUS_HALTED, cases_checked, case_update_result)

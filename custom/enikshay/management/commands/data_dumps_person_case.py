@@ -1,11 +1,16 @@
-from __future__ import absolute_import
-from __future__ import print_function
+from __future__ import (
+    absolute_import,
+    print_function,
+)
+
+import os
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.apps.es.case_search import CaseSearchES
 from corehq.apps.es import queries
 
 from custom.enikshay.case_utils import (
     CASE_TYPE_EPISODE,
+    CASE_TYPE_PERSON,
     get_all_occurrence_cases_from_person,
 )
 from custom.enikshay.const import ENROLLED_IN_PRIVATE
@@ -15,20 +20,31 @@ DOMAIN = "enikshay"
 
 
 class Command(BaseDataDump):
-    """
-    data dumps for person cases
+    """ data dumps for person cases
+
     https://docs.google.com/spreadsheets/d/1OPp0oFlizDnIyrn7Eiv11vUp8IBmc73hES7qqT-mKKA/edit#gid=1039030624
     """
+    def __init__(self, *args, **kwargs):
+        super(Command, self).__init__(*args, **kwargs)
+        self.case_type = CASE_TYPE_PERSON
+        self.input_file_name = os.path.join(os.path.dirname(__file__),
+                                            'data_dumps_person_case.csv')
+
+    TASK_NAME = "data_dumps_person_case"
+    INPUT_FILE_NAME = ('%s/data_dumps_person_case.csv' %
+                       os.path.dirname(os.path.realpath(__file__)))
 
     def get_last_episode(self, case):
         self.context['last_episode'] = (
-            self.context['last_episode'] or
+            self.context.get('last_episode') or
             get_last_episode(case)
         )
+        if not self.context['last_episode']:
+            return Exception("could not find last episode for person %s" % case.case_id)
         return self.context['last_episode']
 
     def get_custom_value(self, column_name, case):
-        if column_name == 'Reason for "Remove a Person" / Closure':
+        if column_name == 'Status':
             if case.closed:
                 return "closed"
             elif case.owner_id == "_invalid_":
@@ -37,15 +53,7 @@ class Command(BaseDataDump):
                 return "archived"
             else:
                 return "active"
-        elif column_name == 'Latest Episode - Date Closed (If any)':
-            try:
-                last_episode_case = self.get_last_episode(case)
-                if last_episode_case.closed:
-                    return "closed"
-                else:
-                    return "open"
-            except Exception as e:
-                return str(e)
+        return Exception("unknown custom column %s" % column_name)
 
     def get_case_reference_value(self, case_reference, case, calculation):
         if case_reference == 'last_episode':
@@ -54,12 +62,6 @@ class Command(BaseDataDump):
             except Exception as e:
                 return str(e)
         return Exception("unknown case reference %s" % case_reference)
-
-    def handle(self, case_type, input_file_name, *args, **options):
-        self.case_type = case_type
-        self.input_file_name = input_file_name
-        self.setup()
-        self.generate_dump()
 
     def get_case_ids(self, case_type):
         """
@@ -73,7 +75,7 @@ class Command(BaseDataDump):
                 .get_ids()[0:10])
 
 
-def get_recently_closed_case(all_cases):
+def get_recently_closed_case(person_case, all_cases):
     recently_closed_case = None
     recently_closed_time = None
     for case in all_cases:
@@ -87,7 +89,12 @@ def get_recently_closed_case(all_cases):
                 recently_closed_case = case
             elif recently_closed_time and recently_closed_time == case_closed_time:
                 raise Exception("This looks like a super edge case that can be looked at. "
-                                "Not blocking as of now. Case id: {case_id}".format(case_id=case.case_id))
+                                "Two episodes closed at the same time. Case id: {case_id}"
+                                .format(case_id=case.case_id))
+
+    if not recently_closed_case:
+        return Exception("Could not find recently closed episode case for person %s" %
+                         person_case.case_id)
 
     return recently_closed_case
 
@@ -125,4 +132,4 @@ def get_last_episode(person_case):
     elif len(open_episode_cases) > 0:
         raise Exception("Open inactive episode cases found for %s" % person_case.case_id)
     else:
-        return get_recently_closed_case(episode_cases)
+        return get_recently_closed_case(person_case, episode_cases)

@@ -1654,8 +1654,8 @@ AVAILABLE_CUSTOM_SCHEDULING_RECIPIENTS = {
 }
 
 AVAILABLE_CUSTOM_RULE_CRITERIA = {
-    'ICDS_CONSIDER_CASE_FOR_DPT3_AND_MEASLES_REMINDER':
-        'custom.icds.rules.custom_criteria.consider_case_for_dpt3_and_measles_reminder',
+    'ICDS_PERSON_CASE_IS_UNDER_6_YEARS_OLD':
+        'custom.icds.rules.custom_criteria.person_case_is_under_6_years_old',
 }
 
 AVAILABLE_CUSTOM_RULE_ACTIONS = {
@@ -1991,9 +1991,11 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'tasks_cases.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'tech_issue_cases.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'thr_forms.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'thr_forms_v2.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'usage_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'vhnd_form.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'visitorbook_forms.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'complementary_feeding_forms.json'),
 
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'adherence.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_for_cc_outbound.json'),

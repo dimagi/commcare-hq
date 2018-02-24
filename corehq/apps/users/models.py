@@ -478,7 +478,7 @@ class DomainMembership(Membership):
     def viewable_reports(self):
         return self.permissions.view_report_list
 
-    class Meta:
+    class Meta(object):
         app_label = 'users'
 
 
@@ -2473,7 +2473,7 @@ class DomainRequest(models.Model):
     is_approved = models.BooleanField(default=False)
     domain = models.CharField(max_length=255, db_index=True)
 
-    class Meta:
+    class Meta(object):
         app_label = "users"
 
     @classmethod

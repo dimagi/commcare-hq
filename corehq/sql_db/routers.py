@@ -80,7 +80,7 @@ def db_for_read_write(model, write=True):
         error_msg = 'Cannot read/write to warehouse db without warehouse database defined'
         assert hasattr(settings, "WAREHOUSE_DATABASE_ALIAS"), error_msg
         return settings.WAREHOUSE_DATABASE_ALIAS
-    elif app_label == ICDS_MODEL:
+    elif app_label in (ICDS_MODEL, ICDS_REPORTS_APP):
         engine_id = ICDS_UCR_ENGINE_ID
         if not write:
             engine_id = connection_manager.get_load_balanced_read_engine_id(ICDS_UCR_ENGINE_ID)

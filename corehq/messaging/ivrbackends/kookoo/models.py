@@ -8,6 +8,6 @@ class SQLKooKooBackend(SQLIVRBackend):
     in order to preserve foreign key references in the Call model history.
     """
 
-    class Meta:
+    class Meta(object):
         app_label = 'sms'
         proxy = True

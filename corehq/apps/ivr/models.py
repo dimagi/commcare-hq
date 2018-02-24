@@ -10,7 +10,7 @@ class SQLIVRBackend(SQLMobileBackend):
     IVR Functionality has been removed, but this model is being kept
     in order to preserve foreign key references in the Call model history.
     """
-    class Meta:
+    class Meta(object):
         app_label = 'sms'
         proxy = True
 
@@ -75,5 +75,5 @@ class Call(UUIDGeneratorMixin, Log):
     # The form unique id of the form that plays the survey for the call
     form_unique_id = models.CharField(max_length=126, null=True)
 
-    class Meta:
+    class Meta(object):
         app_label = 'ivr'

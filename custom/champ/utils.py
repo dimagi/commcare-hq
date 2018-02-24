@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 ENHANCED_PEER_MOBILIZATION = 'enhanced_peer_mobilization'
 CHAMP_CAMEROON = 'champ_client_forms'
 

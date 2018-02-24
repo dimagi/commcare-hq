@@ -16,10 +16,10 @@ from sniffer.api import runnable, select_runnable, file_validator
 @file_validator
 def python_test_files(filename):
     return (
-        filename.endswith('.py') or
-        filename.endswith('.json') or
-        filename.endswith('.xml') and
-        not os.path.basename(filename).startswith('.')
+        (filename.endswith('.py') or
+         filename.endswith('.json') or
+         filename.endswith('.xml'))
+        and not os.path.basename(filename).startswith('.')
     )
 
 
