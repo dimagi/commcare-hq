@@ -49,7 +49,7 @@ class Command(BaseDataDump):
         return (
             person and
             person.get_case_property('dataset') == 'real' and
-            person.get_case_property(ENROLLED_IN_PRIVATE) == 'true'
+            person.get_case_property(ENROLLED_IN_PRIVATE) != 'true'
         )
 
     def get_custom_value(self, column_name, test_case):
