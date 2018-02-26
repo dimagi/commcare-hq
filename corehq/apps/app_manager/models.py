@@ -2518,7 +2518,7 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
         raise IncompatibleFormTypeException()
 
 
-class ModuleDetailsMixin():
+class ModuleDetailsMixin(object):
 
     @classmethod
     def wrap_details(cls, data):
@@ -6135,7 +6135,7 @@ class RemoteApp(ApplicationBase):
     manage_urls = BooleanProperty(default=False)
 
     questions_map = DictProperty(required=False)
-    
+
     def is_remote_app(self):
         return True
 

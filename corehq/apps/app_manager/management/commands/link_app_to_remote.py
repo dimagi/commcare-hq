@@ -6,7 +6,6 @@ from django.core.management import BaseCommand
 from corehq.apps.app_manager.models import LinkedApplication
 from corehq.apps.linked_domain.applications import link_app
 from corehq.apps.linked_domain.models import RemoteLinkDetails
-from corehq.apps.linked_domain.remote_accessors import whilelist_app_on_remote
 
 
 class Command(BaseCommand):

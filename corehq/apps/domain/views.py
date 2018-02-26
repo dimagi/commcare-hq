@@ -2246,6 +2246,8 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
         initial = {
             'countries': self.domain_object.deployment.countries,
             'is_test': self.domain_object.is_test,
+            'use_custom_auto_case_update_limit': 'Y' if self.domain_object.auto_case_update_limit else 'N',
+            'auto_case_update_limit': self.domain_object.auto_case_update_limit,
         }
         internal_attrs = [
             'sf_contract_id',
@@ -2455,7 +2457,7 @@ def set_published_snapshot(request, domain, snapshot_name=''):
     return redirect('domain_snapshot_settings', domain.name)
 
 
-class ProBonoMixin():
+class ProBonoMixin(object):
     page_title = ugettext_lazy("Pro-Bono Application")
     is_submitted = False
 

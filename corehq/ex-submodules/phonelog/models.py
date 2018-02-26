@@ -54,7 +54,7 @@ class UserErrorEntry(models.Model):
     session = models.TextField()
     type = models.CharField(max_length=32, db_index=True)
 
-    class Meta:
+    class Meta(object):
         app_label = 'phonelog'
         unique_together = [('xform_id', 'i')]
         index_together = [
@@ -73,7 +73,7 @@ class UserEntry(models.Model):
     username = models.CharField(max_length=100, db_index=True)
     server_date = models.DateTimeField(null=True, db_index=True)
 
-    class Meta:
+    class Meta(object):
         app_label = 'phonelog'
         unique_together = [('xform_id', 'i')]
 
@@ -101,7 +101,7 @@ class ForceCloseEntry(models.Model):
     session_readable = models.TextField()
     session_serialized = models.TextField()
 
-    class Meta:
+    class Meta(object):
         app_label = 'phonelog'
         index_together = [
             ("domain", "server_date"),

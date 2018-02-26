@@ -50,9 +50,21 @@ from corehq.apps.userreports.reports.builder import (
     get_filter_format_from_question_type,
 )
 from corehq.apps.userreports.exceptions import BadBuilderConfigError
-from corehq.apps.userreports.reports.builder.const import COMPUTED_USER_NAME_PROPERTY_ID, \
-    COMPUTED_OWNER_NAME_PROPERTY_ID, PROPERTY_TYPE_QUESTION, PROPERTY_TYPE_CASE_PROP, PROPERTY_TYPE_META, \
-    COUNT_PER_CHOICE
+from corehq.apps.userreports.reports.builder.const import (
+    COMPUTED_OWNER_NAME_PROPERTY_ID,
+    COMPUTED_USER_NAME_PROPERTY_ID,
+    PROPERTY_TYPE_CASE_PROP,
+    PROPERTY_TYPE_META,
+    PROPERTY_TYPE_QUESTION,
+    UCR_AGG_AVG,
+    UCR_AGG_EXPAND,
+    UCR_AGG_SIMPLE,
+    UCR_AGG_SUM,
+    UI_AGG_AVERAGE,
+    UI_AGG_COUNT_PER_CHOICE,
+    UI_AGG_GROUP_BY,
+    UI_AGG_SUM,
+)
 from corehq.apps.userreports.sql import get_column_name
 from corehq.apps.userreports.ui.fields import JsonField
 from corehq.apps.userreports.util import has_report_builder_access
@@ -240,16 +252,16 @@ class DataSourceProperty(object):
             filter_format = REPORT_BUILDER_FILTER_TYPE_MAP[selected_filter_type]
         return filter_format
 
-    def _get_agg_type_for_filter_format(self, filter_format):
+    def _get_ui_aggregation_for_filter_format(self, filter_format):
         """
-        ColumnOption.get_indicator(aggregation) uses the aggregation type to determine what data type the indicator
-        should be. Therefore, we need to convert filter formats to aggregation types so that we can create the
-        correct type of indicator.
+        ColumnOption._get_indicator(aggregation) uses the aggregation type to determine what data type the
+        indicator should be. Therefore, we need to convert filter formats to aggregation types so that we can
+        create the correct type of indicator.
         """
         if filter_format == "numeric":
-            return "Sum"  # This could also be "Avg", just needs to force numeric
+            return UI_AGG_SUM  # This could also be UI_AGG_AVERAGE, just needs to force numeric
         else:
-            return "simple"
+            return UI_AGG_GROUP_BY
 
     def to_report_filter(self, configuration, index):
         """
@@ -259,8 +271,8 @@ class DataSourceProperty(object):
         :return:
         """
         filter_format = self._get_filter_format(configuration)
-        agg = self._get_agg_type_for_filter_format(filter_format)
-        column_id = self.to_report_column_option().get_indicator(agg)['column_id']
+        ui_aggregation = self._get_ui_aggregation_for_filter_format(filter_format)
+        column_id = self.to_report_column_option().get_indicators(ui_aggregation)[0]['column_id']
 
         filter = {
             "field": column_id,
@@ -287,8 +299,8 @@ class DataSourceProperty(object):
         Return the indicator that would correspond to the given filter configuration
         """
         filter_format = self._get_filter_format(configuration)
-        agg = self._get_agg_type_for_filter_format(filter_format)
-        return self.to_report_column_option().get_indicator(agg)
+        ui_aggregation = self._get_ui_aggregation_for_filter_format(filter_format)
+        return self.to_report_column_option()._get_indicator(ui_aggregation)
 
 
 class DataSourceBuilder(object):
@@ -408,8 +420,7 @@ class DataSourceBuilder(object):
             # Property is only set if the column exists in report_column_options
             if column['property']:
                 column_option = self.report_column_options[column['property']]
-                for indicator in column_option.get_indicators(column['calculation'],
-                                                              is_multiselect_chart_report):
+                for indicator in column_option.get_indicators(column['calculation'], is_multiselect_chart_report):
                     indicators.setdefault(str(indicator), indicator)
 
         for filter_ in filters:
@@ -804,7 +815,7 @@ class ConfigureNewReportBase(forms.Form):
         if location:
             configured_columns += [{
                 "property": location,
-                "calculation": "simple"  # Not aggregated
+                "calculation": UI_AGG_GROUP_BY  # Not aggregated
             }]
         return configured_columns
 
@@ -1133,6 +1144,9 @@ class ConfigureNewReportBase(forms.Form):
 
     @property
     def _report_columns(self):
+        """
+        Returns column dicts for columns posted from the UI
+        """
         return []
 
     @property
@@ -1187,10 +1201,10 @@ class ConfigureListReportForm(ConfigureNewReportBase):
     def initial_columns(self):
         if self.existing_report:
             reverse_agg_map = {
-                'simple': 'Group By',
-                'avg': 'Average',
-                'sum': 'Sum',
-                'expand': COUNT_PER_CHOICE,
+                UCR_AGG_SIMPLE: UI_AGG_GROUP_BY,
+                UCR_AGG_AVG: UI_AGG_AVERAGE,
+                UCR_AGG_SUM: UI_AGG_SUM,
+                UCR_AGG_EXPAND: UI_AGG_COUNT_PER_CHOICE,
             }
             added_multiselect_columns = set()
             cols = []
@@ -1209,7 +1223,7 @@ class ConfigureListReportForm(ConfigureNewReportBase):
                         display = MultiselectQuestionColumnOption.LABEL_DIVIDER.join(
                             display.split(MultiselectQuestionColumnOption.LABEL_DIVIDER)[:-1]
                         )
-                        agg = COUNT_PER_CHOICE
+                        agg = UI_AGG_COUNT_PER_CHOICE
                     else:
                         continue
 
@@ -1222,7 +1236,7 @@ class ConfigureListReportForm(ConfigureNewReportBase):
                             if exists else None
                         ),
                         data_source_field=indicator_id if not exists else None,
-                        calculation=reverse_agg_map.get(agg, COUNT_PER_CHOICE)
+                        calculation=reverse_agg_map.get(agg, UI_AGG_COUNT_PER_CHOICE)
                     )
                 )
             return cols
@@ -1244,8 +1258,8 @@ class ConfigureListReportForm(ConfigureNewReportBase):
             data_source_field=(
                 self.data_source_properties['name']
                     .to_report_column_option()
-                    .get_indicator(COUNT_PER_CHOICE)['column_id']),
-            calculation=COUNT_PER_CHOICE
+                    .get_indicators(UI_AGG_COUNT_PER_CHOICE)[0]['column_id']),
+            calculation=UI_AGG_COUNT_PER_CHOICE
         ))
         cols.append(ColumnViewModel(
             display_text="Owner",
@@ -1254,8 +1268,8 @@ class ConfigureListReportForm(ConfigureNewReportBase):
             data_source_field=(
                 self.data_source_properties[COMPUTED_OWNER_NAME_PROPERTY_ID]
                     .to_report_column_option()
-                    .get_indicator(COUNT_PER_CHOICE)['column_id']),
-            calculation=COUNT_PER_CHOICE
+                    .get_indicators(UI_AGG_COUNT_PER_CHOICE)[0]['column_id']),
+            calculation=UI_AGG_COUNT_PER_CHOICE
         ))
         case_props_found = 0
 
@@ -1267,8 +1281,10 @@ class ConfigureListReportForm(ConfigureNewReportBase):
                     display_text=prop.get_text(),
                     exists_in_current_version=True,
                     property=prop.get_id(),
-                    data_source_field=prop.to_report_column_option().get_indicator(COUNT_PER_CHOICE)['column_id'],
-                    calculation=COUNT_PER_CHOICE,
+                    data_source_field=(
+                        prop.to_report_column_option()
+                            .get_indicators(UI_AGG_COUNT_PER_CHOICE)[0]['column_id']),
+                    calculation=UI_AGG_COUNT_PER_CHOICE,
                 ))
                 if case_props_found == 3:
                     break
@@ -1281,8 +1297,10 @@ class ConfigureListReportForm(ConfigureNewReportBase):
             display_text=prop.get_text(),
             exists_in_current_version=True,
             property=prop.get_id(),
-            data_source_field=prop.to_report_column_option().get_indicator(COUNT_PER_CHOICE)['column_id'],
-            calculation=COUNT_PER_CHOICE
+            data_source_field=(
+                prop.to_report_column_option()
+                    .get_indicators(UI_AGG_COUNT_PER_CHOICE)[0]['column_id']),
+            calculation=UI_AGG_COUNT_PER_CHOICE
         ))
         questions = [p for p in self.data_source_properties.values()
                      if p.get_type() == PROPERTY_TYPE_QUESTION]
@@ -1294,7 +1312,7 @@ class ConfigureListReportForm(ConfigureNewReportBase):
                 exists_in_current_version=True,
                 property=q.get_id(),
                 data_source_field=q.get_id(),
-                calculation=COUNT_PER_CHOICE,
+                calculation=UI_AGG_COUNT_PER_CHOICE,
             ))
         return cols
 
@@ -1304,7 +1322,9 @@ class ConfigureListReportForm(ConfigureNewReportBase):
         for i, conf in enumerate(self.cleaned_data['columns']):
             columns.extend(
                 self.ds_builder.report_column_options[conf['property']].to_column_dicts(
-                    i, conf.get('display_text', conf['property']), "simple"
+                    index=i,
+                    display_text=conf.get('display_text', conf['property']),
+                    ui_aggregation=UI_AGG_GROUP_BY
                 )
             )
         return columns
@@ -1322,10 +1342,10 @@ class ConfigureTableReportForm(ConfigureListReportForm):
     def _report_charts(self):
 
         def get_non_agged_columns():
-            return [c for c in self._report_columns if c['aggregation'] != "simple"]
+            return [c for c in self._report_columns if c['aggregation'] != UCR_AGG_SIMPLE]
 
         def get_agged_columns():
-            return [c for c in self._report_columns if c['aggregation'] == "simple"]
+            return [c for c in self._report_columns if c['aggregation'] == UCR_AGG_SIMPLE]
 
         if get_non_agged_columns():
             if self.cleaned_data['chart'] == "bar":
@@ -1367,8 +1387,8 @@ class ConfigureTableReportForm(ConfigureListReportForm):
                 column.to_column_dicts(
                     index=i,
                     display_text=conf['display_text'],
-                    aggregation=conf['calculation'],
-                    is_aggregated_on=conf.get('calculation') == "Group By",
+                    ui_aggregation=conf['calculation'],
+                    is_aggregated_on=conf.get('calculation') == UI_AGG_GROUP_BY,
                 ))
         return columns
 
@@ -1376,8 +1396,8 @@ class ConfigureTableReportForm(ConfigureListReportForm):
     @memoized
     def _report_aggregation_cols(self):
         return [
-            self.ds_builder.report_column_options[conf['property']].get_indicator("Group By")['column_id']
-            for conf in self.cleaned_data['columns'] if conf['calculation'] == "Group By"
+            self.ds_builder.report_column_options[conf['property']].get_indicators(UI_AGG_GROUP_BY)[0]['column_id']
+            for conf in self.cleaned_data['columns'] if conf['calculation'] == UI_AGG_GROUP_BY
         ]
 
 
@@ -1424,8 +1444,7 @@ class ConfigureMapReportForm(ConfigureListReportForm):
 
         if self.location_field:
             loc_column = self.data_source_properties[self.location_field].to_report_column_option()
-            loc_indicator = loc_column.get_indicator("simple")
-            loc_field_id = loc_indicator['column_id']
+            loc_field_id = loc_column.get_indicators(UI_AGG_GROUP_BY)[0]['column_id']
             loc_field_text = loc_column.get_default_display()
 
             displaying_loc_column = False

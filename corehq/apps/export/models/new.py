@@ -654,7 +654,7 @@ class ExportInstance(BlobMixin, Document):
     last_updated = DateTimeProperty()
     last_accessed = DateTimeProperty()
 
-    class Meta:
+    class Meta(object):
         app_label = 'export'
 
     @property
@@ -1318,7 +1318,7 @@ class InferredSchema(Document):
     # that all schema duck types have this property.
     last_app_versions = DictProperty()
 
-    class Meta:
+    class Meta(object):
         app_label = 'export'
 
     def put_group_schema(self, path):
@@ -1377,7 +1377,7 @@ class ExportDataSchema(Document):
     # A map of app_id to app_version. Represents the last time it saw an app and at what version
     last_app_versions = DictProperty()
 
-    class Meta:
+    class Meta(object):
         app_label = 'export'
 
     def get_number_of_apps_to_process(self):
@@ -2592,7 +2592,7 @@ class ExportMigrationMeta(Document):
 
     migration_date = DateTimeProperty()
 
-    class Meta:
+    class Meta(object):
         app_label = 'export'
 
     @property

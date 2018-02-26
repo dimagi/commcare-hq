@@ -39,7 +39,7 @@ from tastypie.models import ApiKey
 from two_factor.utils import default_device
 from two_factor.views import (
     ProfileView, SetupView, SetupCompleteView,
-    BackupTokensView, DisableView, PhoneSetupView
+    BackupTokensView, DisableView, PhoneSetupView, PhoneDeleteView
 )
 import six
 
@@ -392,6 +392,18 @@ class TwoFactorPhoneSetupView(BaseMyAccountView, PhoneSetupView):
         self.get_device(user=self.request.user, name='backup').save()
         messages.add_message(self.request, messages.SUCCESS, _("Phone number added."))
         return redirect(reverse(TwoFactorProfileView.urlname))
+
+
+class TwoFactorPhoneDeleteView(BaseMyAccountView, PhoneDeleteView):
+
+    def get_success_url(self):
+        messages.add_message(self.request, messages.SUCCESS, ugettext_lazy("Phone number removed."))
+        return reverse(TwoFactorProfileView.urlname)
+
+    @method_decorator(login_required)
+    def dispatch(self, request, *args, **kwargs):
+        # this is only here to add the login_required decorator
+        return super(PhoneDeleteView, self).dispatch(request, *args, **kwargs)
 
 
 class TwoFactorResetView(TwoFactorSetupView):

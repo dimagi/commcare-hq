@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import datetime
 from custom.bihar import getters, BIHAR_DOMAINS
 from custom.bihar.calculations.homevisit import DateRangeFilter
@@ -36,7 +37,7 @@ class BiharCase(CommCareCase):
             self._forms_cache = dict((f._id, f) for f in self._forms)
         return self._forms
 
-    class Meta:
+    class Meta(object):
         app_label = 'case'
 
 
@@ -133,7 +134,7 @@ class CareBiharFluff(fluff.IndicatorDocument):
     still_birth_home = mortality.StillBirthPlace(at='home')
     live_birth = mortality.LiveBirth()
 
-    class Meta:
+    class Meta(object):
         app_label = 'bihar'
 
 CareBiharFluffPillow = CareBiharFluff.pillow()

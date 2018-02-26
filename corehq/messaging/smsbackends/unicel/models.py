@@ -44,7 +44,7 @@ UNICODE_PARAMS = [("udhi", 0),
 
 class SQLUnicelBackend(SQLSMSBackend):
 
-    class Meta:
+    class Meta(object):
         app_label = 'sms'
         proxy = True
 

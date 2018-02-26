@@ -106,7 +106,7 @@ def run_task(updater, case_ids):
     return updater.run_batch(case_ids)
 
 
-class Timer:
+class Timer(object):
     def __enter__(self):
         self.start = datetime.datetime.now()
         self.end = None
@@ -896,6 +896,14 @@ def run_model_reconciliation(command_name, email, person_case_ids=None, commit=F
                      recipient=email,
                      person_case_ids=person_case_ids,
                      commit=commit)
+
+
+@task(queue='background_queue', ignore_result=True)
+def run_custom_export_tasks(command_name, email, case_type):
+    if settings.SERVER_ENVIRONMENT == "enikshay":
+        call_command(command_name,
+                     recipient=email,
+                     case_type=case_type)
 
 
 @task

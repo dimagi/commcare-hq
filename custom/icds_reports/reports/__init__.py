@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from dateutil.relativedelta import relativedelta
 
 from corehq.apps.reports.generic import GenericTabularReport

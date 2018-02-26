@@ -1,15 +1,14 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
 import os
-import six
-from django.test import TestCase, SimpleTestCase
-from mock import patch
+from django.test import TestCase
 
 from corehq.apps.app_manager.models import Application, Module
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.userreports.dbaccessors import delete_all_report_configs
 from corehq.apps.userreports.models import DataSourceConfiguration, ReportConfiguration
-from corehq.apps.userreports.reports.builder.columns import CountColumn, MultiselectQuestionColumnOption
+from corehq.apps.userreports.reports.builder.columns import MultiselectQuestionColumnOption
 from corehq.apps.userreports.reports.builder.forms import (
     ConfigureListReportForm,
     ConfigureTableReportForm,
@@ -242,3 +241,23 @@ class MultiselectQuestionTest(ReportBuilderDBTest):
         self.assertEqual(len(mselect_indicators), 1)
         mselect_indicator = mselect_indicators[0]
         self.assertEqual(set(mselect_indicator['choices']), {'MA', 'MN', 'VT'})
+
+    def test_multiselect_aggregation(self):
+        """
+        Check report column aggregation for multi-select questions set to "group by"
+        """
+        builder_form = ConfigureTableReportForm(
+            "My Report",
+            self.app._id,
+            "form",
+            self.form.unique_id,
+            data={
+                'user_filters': '[]',
+                'default_filters': '[]',
+                'columns': '[{"property": "/data/state", "display_text": "state", "calculation": "Group By"}]',
+                'chart': 'pie',
+            }
+        )
+        self.assertTrue(builder_form.is_valid())
+        report = builder_form.create_report()
+        self.assertEqual(report.columns[0]['aggregation'], 'simple')

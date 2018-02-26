@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from sqlagg.columns import CountUniqueColumn, SumColumn, SimpleColumn
 from sqlagg.filters import EQ, NOT, BETWEEN, IN, OR
 
@@ -77,11 +78,14 @@ class UICFromEPMDataSource(ChampSqlData):
         if 'activity_type' in self.config and self.config['activity_type']:
             filters.append(EQ('activity_type', 'activity_type'))
         if 'client_type' in self.config and self.config['client_type']:
-            filters.append(IN('client_type', get_INFilter_bindparams('client_type', self.config['client_type'])))
+            filters.append(
+                IN('client_type', get_INFilter_bindparams('client_type', self.config['client_type']))
+            )
         if 'user_id' in self.config and self.config['user_id']:
             filters.append(IN('user_id', get_INFilter_bindparams('user_id', self.config['user_id'])))
         if 'organization' in self.config and self.config['organization']:
-            filters.append(EQ('organization', 'organization'))
+            filters.append(
+                IN('organization', get_INFilter_bindparams('organization', self.config['organization'])))
         if 'want_hiv_test' in self.config and self.config['want_hiv_test']:
             filters.append(EQ('want_hiv_test', 'want_hiv_test'))
         return filters
@@ -132,11 +136,15 @@ class UICFromCCDataSource(ChampSqlData):
         if 'district' in self.config and self.config['district']:
             filters.append(IN('district', get_INFilter_bindparams('district', self.config['district'])))
         if 'client_type' in self.config and self.config['client_type']:
-            filters.append(IN('client_type', get_INFilter_bindparams('client_type', self.config['client_type'])))
+            filters.append(
+                IN('client_type', get_INFilter_bindparams('client_type', self.config['client_type']))
+            )
         if 'user_id' in self.config and self.config['user_id']:
             filters.append(IN('user_id', get_INFilter_bindparams('user_id', self.config['user_id'])))
         if 'organization' in self.config and self.config['organization']:
-            filters.append(EQ('organization', 'organization'))
+            filters.append(
+                IN('organization', get_INFilter_bindparams('organization', self.config['organization']))
+            )
         return filters
 
     @property
@@ -171,8 +179,6 @@ class TargetsDataSource(ChampSqlData):
             filters.append(IN('userpl', get_INFilter_bindparams('userpl', self.config['userpl'])))
         if 'fiscal_year' in self.config and self.config['fiscal_year']:
             filters.append(EQ('fiscal_year', 'fiscal_year'))
-        if 'organization' in self.config and self.config['organization']:
-            filters.append(EQ('organization', 'organization'))
         return filters
 
     @property
@@ -235,8 +241,6 @@ class HivStatusDataSource(ChampSqlData):
             filters.append(IN('client_type', get_INFilter_bindparams('client_type', self.config['client_type'])))
         if 'user_id' in self.config and self.config['user_id']:
             filters.append(IN('user_id', get_INFilter_bindparams('user_id', self.config['user_id'])))
-        if 'organization' in self.config and self.config['organization']:
-            filters.append(EQ('organization', 'organization'))
         return filters
 
     @property
@@ -287,8 +291,6 @@ class FormCompletionDataSource(ChampSqlData):
             filters.append(BETWEEN('date_handshake', 'date_handshake_start', 'date_handshake_end'))
         if 'user_id' in self.config and self.config['user_id']:
             filters.append(IN('user_id', get_INFilter_bindparams('user_id', self.config['user_id'])))
-        if 'organization' in self.config and self.config['organization']:
-            filters.append(EQ('organization', 'organization'))
         return filters
 
     @property
@@ -337,8 +339,6 @@ class FirstArtDataSource(ChampSqlData):
             filters.append(BETWEEN('first_art_date', 'first_art_date_start', 'first_art_date_end'))
         if 'user_id' in self.config and self.config['user_id']:
             filters.append(IN('user_id', get_INFilter_bindparams('user_id', self.config['user_id'])))
-        if 'organization' in self.config and self.config['organization']:
-            filters.append(EQ('organization', 'organization'))
         return filters
 
     @property
@@ -387,8 +387,6 @@ class LastVLTestDataSource(ChampSqlData):
             filters.append(EQ('undetect_vl', 'undetect_vl'))
         if 'user_id' in self.config and self.config['user_id']:
             filters.append(IN('user_id', get_INFilter_bindparams('user_id', self.config['user_id'])))
-        if 'organization' in self.config and self.config['organization']:
-            filters.append(EQ('organization', 'organization'))
         return filters
 
     @property

@@ -55,7 +55,7 @@ class IndicatorDocument(object):
 
 class IndicatorXForm(IndicatorDocument, XFormInstance):
 
-    class Meta:
+    class Meta(object):
         app_label = 'mvp_docs'
 
     def save(self, **kwargs):
@@ -70,7 +70,7 @@ class IndicatorXForm(IndicatorDocument, XFormInstance):
 
 class IndicatorCase(IndicatorDocument, CommCareCase):
 
-    class Meta:
+    class Meta(object):
         app_label = 'mvp_docs'
 
     def save(self, **kwargs):

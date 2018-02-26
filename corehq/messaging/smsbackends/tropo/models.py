@@ -9,7 +9,7 @@ from django.conf import settings
 
 class SQLTropoBackend(SQLSMSBackend):
 
-    class Meta:
+    class Meta(object):
         app_label = 'sms'
         proxy = True
 

@@ -38,6 +38,7 @@ from dimagi.ext.couchdbkit import (
     DateProperty
 )
 from couchdbkit.resource import ResourceNotFound
+from corehq.util.dates import get_timestamp
 from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch import CriticalSection
@@ -478,7 +479,7 @@ class DomainMembership(Membership):
     def viewable_reports(self):
         return self.permissions.view_report_list
 
-    class Meta:
+    class Meta(object):
         app_label = 'users'
 
 
@@ -1102,6 +1103,10 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
     def days_since_created(self):
         # Note this does not round, but returns the floor of days since creation
         return (datetime.utcnow() - self.created_on).days
+
+    @property
+    def timestamp_created(self):
+        return get_timestamp(self.created_on)
 
     formatted_name = full_name
     name = full_name
@@ -2473,7 +2478,7 @@ class DomainRequest(models.Model):
     is_approved = models.BooleanField(default=False)
     domain = models.CharField(max_length=255, db_index=True)
 
-    class Meta:
+    class Meta(object):
         app_label = "users"
 
     @classmethod

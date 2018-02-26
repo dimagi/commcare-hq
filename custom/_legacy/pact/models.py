@@ -69,13 +69,13 @@ class DOTSubmission(XFormInstance):
             return "#"
         pass
 
-    class Meta:
+    class Meta(object):
         app_label = 'pact'
 
 
 class PactPatientCase(CommCareCase):
 
-    class Meta:
+    class Meta(object):
         app_label = 'pact'
 
     @property
@@ -411,7 +411,7 @@ class CDotWeeklySchedule(OldDocument):
         now = datetime.utcnow()
         return self.started <= now and (self.ended is None or self.ended > now)
 
-    class Meta:
+    class Meta(object):
         app_label = 'pact'
 
 
@@ -477,7 +477,7 @@ class CObservation(OldDocument):
         """helper function to concatenate adherence and method to check for conflicts"""
         return ((self.is_art, self.dose_number, self.total_doses), "%s" % (self.adherence))
 
-    class Meta:
+    class Meta(object):
         app_label = 'pact'
 
     def __unicode__(self):
@@ -498,7 +498,7 @@ class CObservationAddendum(OldDocument):
     created_date = OldDateTimeProperty()
     notes = StringProperty()  # placeholder if need be
 
-    class Meta:
+    class Meta(object):
         app_label = 'pact'
 
 
