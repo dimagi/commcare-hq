@@ -1,4 +1,6 @@
 from __future__ import absolute_import
+import requests
+from django.conf import settings
 from django.db import transaction
 from corehq.apps.users.util import format_username
 from corehq.apps.users.dbaccessors import get_user_id_by_username
@@ -174,6 +176,29 @@ class SumoLogicLog(object):
         self.domain = domain
         self.xform = xform
 
+    def send_data(self, url):
+        requests.post(url, data=self.log_subreport(), headers=self._get_header('log'))
+        requests.post(url, data=self.user_error_subreport(), headers=self._get_header('user_error'))
+        requests.post(url, data=self.force_close_subreport(), headers=self._get_header('force_close'))
+
+    def _get_header(self, fmt):
+        """
+        https://docs.google.com/document/d/18sSwv2GRGepOIHthC6lxQAh_aUYgDcTou6w9jL2976o/edit#bookmark=id.ao4j7x5tjvt7
+        """
+        environment = 'test-env'
+        if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:
+            environment = 'cas'
+        if settings.SERVER_ENVIRONMENT == 'softlayer':
+            environment = 'india'
+        if settings.SERVER_ENVIRONMENT == 'production':
+            environment = 'prod'
+
+        return {"X-Sumo-Category": "{env}/{domain}/{fmt}".format(
+            env=environment,
+            domain=self.domain,
+            fmt=fmt,
+        )}
+
     def _fill_base_template(self, log):
         from corehq.apps.receiverwrapper.util import (
             get_version_from_appversion_text,
@@ -214,8 +239,7 @@ class SumoLogicLog(object):
 
     def log_subreport(self):
         logs = _get_logs(self.xform.form_data, 'log_subreport', 'log')
-        sumlogic_logs = [self._fill_base_template(log) for log in logs if log.get('type') != 'forceclose']
-        return u"\n".join(sumlogic_logs)
+        return u"\n".join([self._fill_base_template(log) for log in logs if log.get('type') != 'forceclose'])
 
     def user_error_subreport(self):
         logs = _get_logs(self.xform.form_data, 'user_error_subreport', 'user_error')
