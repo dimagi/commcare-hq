@@ -14,22 +14,6 @@
     {% include 'hqwebapp/includes/ui_element_js.html' %}
 {% endblock %}
 
-{% block js-inline %}{{ block.super }}
-    <script>
-        // Multiselect widget
-        $(function () {
-            var multiselect_utils = hqImport('hqwebapp/js/multiselect_utils');
-
-            multiselect_utils.createFullMultiselectWidget(
-                'id_products-selected_ids',
-                django.gettext("Available Products"),
-                django.gettext("Products at Location"),
-                django.gettext("Search Products...")
-            );
-        });
-    </script>
-{% endblock %}
-
 {% block page_content %}
     <div>
       {# can't go in js-inline, because needs to initialize stuff that the field templates reference #}

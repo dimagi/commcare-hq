@@ -1,6 +1,6 @@
-/* globals TEMPLATE_STRINGS */
+/* globals TEMPLATE_STRINGS django */
 // for product and user per location selection
-hqDefine("locations/js/locations", function() {
+hqDefine("locations/js/location", function() {
     var insert_new_user = function(user) {
         var $select = $('#id_users-selected_ids');
         $select.multiSelect('addOption', { value: user.user_id, text: user.text });
@@ -42,5 +42,15 @@ hqDefine("locations/js/locations", function() {
                 },
             });
         });
+
+        // Multiselect widget
+        var multiselect_utils = hqImport('hqwebapp/js/multiselect_utils');
+
+        multiselect_utils.createFullMultiselectWidget(
+            'id_products-selected_ids',
+            django.gettext("Available Products"),
+            django.gettext("Products at Location"),
+            django.gettext("Search Products...")
+        );
     });
 });
