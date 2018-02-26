@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import json
 import mock
 from custom.champ.tests.utils import ChampTestCase
@@ -221,7 +222,7 @@ class TestPVAChart(ChampTestCase):
         request.user = self.user
         response = self.view(request, domain=self.domain.name)
         content = json.loads(response.content)
-        expected_data = {u'y': 2, u'x': u'KP_PREV'}
+        expected_data = {'y': 2, 'x': 'KP_PREV'}
         self.assertDictEqual(expected_data, content['chart'][1]['values'][0])
 
     def test_kp_prev_indicator_district(self):
@@ -241,7 +242,7 @@ class TestPVAChart(ChampTestCase):
         request.user = self.user
         response = self.view(request, domain=self.domain.name)
         content = json.loads(response.content)
-        expected_data = {u'y': 400, u'x': u'KP_PREV'}
+        expected_data = {'y': 400, 'x': 'KP_PREV'}
         self.assertDictEqual(expected_data, content['chart'][1]['values'][0])
 
     def test_kp_prev_indicator_activity_type(self):
@@ -261,7 +262,7 @@ class TestPVAChart(ChampTestCase):
         request.user = self.user
         response = self.view(request, domain=self.domain.name)
         content = json.loads(response.content)
-        expected_data = {u'y': 2343, u'x': u'KP_PREV'}
+        expected_data = {'y': 2343, 'x': 'KP_PREV'}
         self.assertDictEqual(expected_data, content['chart'][1]['values'][0])
 
     def test_kp_prev_indicator_type_visit(self):
@@ -281,7 +282,7 @@ class TestPVAChart(ChampTestCase):
         request.user = self.user
         response = self.view(request, domain=self.domain.name)
         content = json.loads(response.content)
-        expected_data = {u'y': 2058, u'x': u'KP_PREV'}
+        expected_data = {'y': 2058, 'x': 'KP_PREV'}
         self.assertDictEqual(expected_data, content['chart'][1]['values'][0])
 
     def test_kp_prev_indicator_client_type(self):
@@ -301,7 +302,7 @@ class TestPVAChart(ChampTestCase):
         request.user = self.user
         response = self.view(request, domain=self.domain.name)
         content = json.loads(response.content)
-        expected_data = {u'y': 1302, u'x': u'KP_PREV'}
+        expected_data = {'y': 1302, 'x': 'KP_PREV'}
         self.assertDictEqual(expected_data, content['chart'][1]['values'][0])
 
     def test_kp_prev_indicator_visit_date(self):
@@ -321,7 +322,7 @@ class TestPVAChart(ChampTestCase):
         request.user = self.user
         response = self.view(request, domain=self.domain.name)
         content = json.loads(response.content)
-        expected_data = {u'y': 145, u'x': u'KP_PREV'}
+        expected_data = {'y': 145, 'x': 'KP_PREV'}
         self.assertDictEqual(expected_data, content['chart'][1]['values'][0])
 
     def test_kp_prev_indicator_user_group(self):
@@ -345,7 +346,7 @@ class TestPVAChart(ChampTestCase):
         ):
             response = self.view(request, domain=self.domain.name)
         content = json.loads(response.content)
-        expected_data = {u'y': 53, u'x': u'KP_PREV'}
+        expected_data = {'y': 53, 'x': 'KP_PREV'}
         self.assertDictEqual(expected_data, content['chart'][1]['values'][0])
 
     def test_kp_prev_indicator_want_hiv_test(self):
@@ -365,7 +366,7 @@ class TestPVAChart(ChampTestCase):
         request.user = self.user
         response = self.view(request, domain=self.domain.name)
         content = json.loads(response.content)
-        expected_data = {u'y': 682, u'x': u'KP_PREV'}
+        expected_data = {'y': 682, 'x': 'KP_PREV'}
         self.assertDictEqual(expected_data, content['chart'][1]['values'][0])
 
     def test_htc_tst_indicator_age_range(self):
@@ -385,7 +386,7 @@ class TestPVAChart(ChampTestCase):
         request.user = self.user
         response = self.view(request, domain=self.domain.name)
         content = json.loads(response.content)
-        expected_data = {u'y': 169, u'x': u'HTC_TST'}
+        expected_data = {'y': 169, 'x': 'HTC_TST'}
         self.assertDictEqual(expected_data, content['chart'][1]['values'][1])
 
     def test_htc_tst_indicator_district(self):
@@ -405,7 +406,7 @@ class TestPVAChart(ChampTestCase):
         request.user = self.user
         response = self.view(request, domain=self.domain.name)
         content = json.loads(response.content)
-        expected_data = {u'y': 3, u'x': u'HTC_TST'}
+        expected_data = {'y': 3, 'x': 'HTC_TST'}
         self.assertDictEqual(expected_data, content['chart'][1]['values'][1])
 
     def test_htc_tst_indicator_client_type(self):
@@ -425,7 +426,7 @@ class TestPVAChart(ChampTestCase):
         request.user = self.user
         response = self.view(request, domain=self.domain.name)
         content = json.loads(response.content)
-        expected_data = {u'y': 596, u'x': u'HTC_TST'}
+        expected_data = {'y': 596, 'x': 'HTC_TST'}
         self.assertDictEqual(expected_data, content['chart'][1]['values'][1])
 
     def test_htc_tst_indicator_user_group(self):
@@ -448,7 +449,7 @@ class TestPVAChart(ChampTestCase):
         ):
             response = self.view(request, domain=self.domain.name)
         content = json.loads(response.content)
-        expected_data = {u'y': 30, u'x': u'HTC_TST'}
+        expected_data = {'y': 30, 'x': 'HTC_TST'}
         self.assertDictEqual(expected_data, content['chart'][1]['values'][1])
 
     def test_htc_tst_indicator_posttest_date(self):
@@ -468,7 +469,7 @@ class TestPVAChart(ChampTestCase):
         request.user = self.user
         response = self.view(request, domain=self.domain.name)
         content = json.loads(response.content)
-        expected_data = {u'y': 678, u'x': u'HTC_TST'}
+        expected_data = {'y': 678, 'x': 'HTC_TST'}
         self.assertDictEqual(expected_data, content['chart'][1]['values'][1])
 
     def test_htc_tst_indicator_hiv_test_date(self):
@@ -488,7 +489,7 @@ class TestPVAChart(ChampTestCase):
         request.user = self.user
         response = self.view(request, domain=self.domain.name)
         content = json.loads(response.content)
-        expected_data = {u'y': 606, u'x': u'HTC_TST'}
+        expected_data = {'y': 606, 'x': 'HTC_TST'}
         self.assertDictEqual(expected_data, content['chart'][1]['values'][1])
 
     def test_htc_pos_indicator_age_range(self):
@@ -508,7 +509,7 @@ class TestPVAChart(ChampTestCase):
         request.user = self.user
         response = self.view(request, domain=self.domain.name)
         content = json.loads(response.content)
-        expected_data = {u'y': 6, u'x': u'HTC_POS'}
+        expected_data = {'y': 6, 'x': 'HTC_POS'}
         self.assertDictEqual(expected_data, content['chart'][1]['values'][2])
 
     def test_htc_pos_indicator_district(self):
@@ -528,7 +529,7 @@ class TestPVAChart(ChampTestCase):
         request.user = self.user
         response = self.view(request, domain=self.domain.name)
         content = json.loads(response.content)
-        expected_data = {u'y': 3, u'x': u'HTC_POS'}
+        expected_data = {'y': 3, 'x': 'HTC_POS'}
         self.assertDictEqual(expected_data, content['chart'][1]['values'][2])
 
     def test_htc_pos_indicator_client_type(self):
@@ -548,7 +549,7 @@ class TestPVAChart(ChampTestCase):
         request.user = self.user
         response = self.view(request, domain=self.domain.name)
         content = json.loads(response.content)
-        expected_data = {u'y': 72, u'x': u'HTC_POS'}
+        expected_data = {'y': 72, 'x': 'HTC_POS'}
         self.assertDictEqual(expected_data, content['chart'][1]['values'][2])
 
     def test_htc_pos_indicator_user_group(self):
@@ -571,7 +572,7 @@ class TestPVAChart(ChampTestCase):
         ):
             response = self.view(request, domain=self.domain.name)
         content = json.loads(response.content)
-        expected_data = {u'y': 4, u'x': u'HTC_POS'}
+        expected_data = {'y': 4, 'x': 'HTC_POS'}
         self.assertDictEqual(expected_data, content['chart'][1]['values'][2])
 
     def test_htc_pos_indicator_posttest_date(self):
@@ -591,7 +592,7 @@ class TestPVAChart(ChampTestCase):
         request.user = self.user
         response = self.view(request, domain=self.domain.name)
         content = json.loads(response.content)
-        expected_data = {u'y': 33, u'x': u'HTC_POS'}
+        expected_data = {'y': 33, 'x': 'HTC_POS'}
         self.assertDictEqual(expected_data, content['chart'][1]['values'][2])
 
     def test_htc_pos_indicator_hiv_test_date(self):
@@ -611,7 +612,7 @@ class TestPVAChart(ChampTestCase):
         request.user = self.user
         response = self.view(request, domain=self.domain.name)
         content = json.loads(response.content)
-        expected_data = {u'y': 34, u'x': u'HTC_POS'}
+        expected_data = {'y': 34, 'x': 'HTC_POS'}
         self.assertDictEqual(expected_data, content['chart'][1]['values'][2])
 
     def test_care_new_indicator_age_range(self):
@@ -631,7 +632,7 @@ class TestPVAChart(ChampTestCase):
         request.user = self.user
         response = self.view(request, domain=self.domain.name)
         content = json.loads(response.content)
-        expected_data = {u'y': 18, u'x': u'CARE_NEW'}
+        expected_data = {'y': 18, 'x': 'CARE_NEW'}
         self.assertDictEqual(expected_data, content['chart'][1]['values'][3])
 
     def test_care_new_indicator_district(self):
@@ -651,7 +652,7 @@ class TestPVAChart(ChampTestCase):
         request.user = self.user
         response = self.view(request, domain=self.domain.name)
         content = json.loads(response.content)
-        expected_data = {u'y': 4, u'x': u'CARE_NEW'}
+        expected_data = {'y': 4, 'x': 'CARE_NEW'}
         self.assertDictEqual(expected_data, content['chart'][1]['values'][3])
 
     def test_care_new_indicator_client_type(self):
@@ -671,7 +672,7 @@ class TestPVAChart(ChampTestCase):
         request.user = self.user
         response = self.view(request, domain=self.domain.name)
         content = json.loads(response.content)
-        expected_data = {u'y': 53, u'x': u'CARE_NEW'}
+        expected_data = {'y': 53, 'x': 'CARE_NEW'}
         self.assertDictEqual(expected_data, content['chart'][1]['values'][3])
 
     def test_care_new_indicator_user_group(self):
@@ -694,7 +695,7 @@ class TestPVAChart(ChampTestCase):
         ):
             response = self.view(request, domain=self.domain.name)
         content = json.loads(response.content)
-        expected_data = {u'y': 62, u'x': u'CARE_NEW'}
+        expected_data = {'y': 62, 'x': 'CARE_NEW'}
         self.assertDictEqual(expected_data, content['chart'][1]['values'][3])
 
     def test_care_new_indicator_hiv_status(self):
@@ -714,7 +715,7 @@ class TestPVAChart(ChampTestCase):
         request.user = self.user
         response = self.view(request, domain=self.domain.name)
         content = json.loads(response.content)
-        expected_data = {u'y': 210, u'x': u'CARE_NEW'}
+        expected_data = {'y': 210, 'x': 'CARE_NEW'}
         self.assertDictEqual(expected_data, content['chart'][1]['values'][3])
 
     def test_care_new_indicator_date_handshake(self):
@@ -734,7 +735,7 @@ class TestPVAChart(ChampTestCase):
         request.user = self.user
         response = self.view(request, domain=self.domain.name)
         content = json.loads(response.content)
-        expected_data = {u'y': 116, u'x': u'CARE_NEW'}
+        expected_data = {'y': 116, 'x': 'CARE_NEW'}
         self.assertDictEqual(expected_data, content['chart'][1]['values'][3])
 
     def test_tx_new_indicator_age_range(self):
@@ -754,7 +755,7 @@ class TestPVAChart(ChampTestCase):
         request.user = self.user
         response = self.view(request, domain=self.domain.name)
         content = json.loads(response.content)
-        expected_data = {u'y': 6, u'x': u'TX_NEW'}
+        expected_data = {'y': 6, 'x': 'TX_NEW'}
         self.assertDictEqual(expected_data, content['chart'][1]['values'][4])
 
     def test_tx_new_indicator_district(self):
@@ -774,7 +775,7 @@ class TestPVAChart(ChampTestCase):
         request.user = self.user
         response = self.view(request, domain=self.domain.name)
         content = json.loads(response.content)
-        expected_data = {u'y': 5, u'x': u'TX_NEW'}
+        expected_data = {'y': 5, 'x': 'TX_NEW'}
         self.assertDictEqual(expected_data, content['chart'][1]['values'][4])
 
     def test_tx_new_indicator_client_type(self):
@@ -794,7 +795,7 @@ class TestPVAChart(ChampTestCase):
         request.user = self.user
         response = self.view(request, domain=self.domain.name)
         content = json.loads(response.content)
-        expected_data = {u'y': 33, u'x': u'TX_NEW'}
+        expected_data = {'y': 33, 'x': 'TX_NEW'}
         self.assertDictEqual(expected_data, content['chart'][1]['values'][4])
 
     def test_tx_new_indicator_user_group(self):
@@ -817,7 +818,7 @@ class TestPVAChart(ChampTestCase):
         ):
             response = self.view(request, domain=self.domain.name)
         content = json.loads(response.content)
-        expected_data = {u'y': 3, u'x': u'TX_NEW'}
+        expected_data = {'y': 3, 'x': 'TX_NEW'}
         self.assertDictEqual(expected_data, content['chart'][1]['values'][4])
 
     def test_tx_new_indicator_hiv_status(self):
@@ -837,7 +838,7 @@ class TestPVAChart(ChampTestCase):
         request.user = self.user
         response = self.view(request, domain=self.domain.name)
         content = json.loads(response.content)
-        expected_data = {u'y': 91, u'x': u'TX_NEW'}
+        expected_data = {'y': 91, 'x': 'TX_NEW'}
         self.assertDictEqual(expected_data, content['chart'][1]['values'][4])
 
     def test_tx_new_indicator_first_art_date(self):
@@ -857,7 +858,7 @@ class TestPVAChart(ChampTestCase):
         request.user = self.user
         response = self.view(request, domain=self.domain.name)
         content = json.loads(response.content)
-        expected_data = {u'y': 2, u'x': u'TX_NEW'}
+        expected_data = {'y': 2, 'x': 'TX_NEW'}
         self.assertDictEqual(expected_data, content['chart'][1]['values'][4])
 
     def test_tx_undetect_indicator_age_range(self):
@@ -877,7 +878,7 @@ class TestPVAChart(ChampTestCase):
         request.user = self.user
         response = self.view(request, domain=self.domain.name)
         content = json.loads(response.content)
-        expected_data = {u'y': 1, u'x': u'TX_UNDETECT'}
+        expected_data = {'y': 1, 'x': 'TX_UNDETECT'}
         self.assertDictEqual(expected_data, content['chart'][1]['values'][5])
 
     def test_tx_undetect_indicator_district(self):
@@ -897,7 +898,7 @@ class TestPVAChart(ChampTestCase):
         request.user = self.user
         response = self.view(request, domain=self.domain.name)
         content = json.loads(response.content)
-        expected_data = {u'y': 7, u'x': u'TX_UNDETECT'}
+        expected_data = {'y': 7, 'x': 'TX_UNDETECT'}
         self.assertDictEqual(expected_data, content['chart'][1]['values'][5])
 
     def test_tx_undetect_indicator_client_type(self):
@@ -917,7 +918,7 @@ class TestPVAChart(ChampTestCase):
         request.user = self.user
         response = self.view(request, domain=self.domain.name)
         content = json.loads(response.content)
-        expected_data = {u'y': 90, u'x': u'TX_UNDETECT'}
+        expected_data = {'y': 90, 'x': 'TX_UNDETECT'}
         self.assertDictEqual(expected_data, content['chart'][1]['values'][5])
 
     def test_tx_undetect_indicator_user_group(self):
@@ -940,7 +941,7 @@ class TestPVAChart(ChampTestCase):
         ):
             response = self.view(request, domain=self.domain.name)
         content = json.loads(response.content)
-        expected_data = {u'y': 9, u'x': u'TX_UNDETECT'}
+        expected_data = {'y': 9, 'x': 'TX_UNDETECT'}
         self.assertDictEqual(expected_data, content['chart'][1]['values'][5])
 
     def test_tx_undetect_indicator_hiv_status(self):
@@ -960,7 +961,7 @@ class TestPVAChart(ChampTestCase):
         request.user = self.user
         response = self.view(request, domain=self.domain.name)
         content = json.loads(response.content)
-        expected_data = {u'y': 141, u'x': u'TX_UNDETECT'}
+        expected_data = {'y': 141, 'x': 'TX_UNDETECT'}
         self.assertDictEqual(expected_data, content['chart'][1]['values'][5])
 
     def test_tx_undetect_indicator_date_last_vl_test(self):
@@ -980,7 +981,7 @@ class TestPVAChart(ChampTestCase):
         request.user = self.user
         response = self.view(request, domain=self.domain.name)
         content = json.loads(response.content)
-        expected_data = {u'y': 29, u'x': u'TX_UNDETECT'}
+        expected_data = {'y': 29, 'x': 'TX_UNDETECT'}
         self.assertDictEqual(expected_data, content['chart'][1]['values'][5])
 
     def test_tx_undetect_indicator_undetect_vl(self):
@@ -1000,5 +1001,5 @@ class TestPVAChart(ChampTestCase):
         request.user = self.user
         response = self.view(request, domain=self.domain.name)
         content = json.loads(response.content)
-        expected_data = {u'y': 141, u'x': u'TX_UNDETECT'}
+        expected_data = {'y': 141, 'x': 'TX_UNDETECT'}
         self.assertDictEqual(expected_data, content['chart'][1]['values'][5])
