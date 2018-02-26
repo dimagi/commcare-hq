@@ -11,7 +11,7 @@ from couchexport.models import Format
 
 from corehq.blobs import get_blob_db
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.util.files import safe_filename, safe_filename_header
+from corehq.util.files import safe_filename_header
 
 from dimagi.utils.django.email import send_HTML_email
 from dimagi.utils.web import get_url_base
