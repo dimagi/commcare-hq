@@ -1,5 +1,5 @@
 /* globals REQUIRED */
-hqDefine('locations/js/location_select_view', function () {
+hqDefine('locations/js/location_drilldown', function () {
     function api_get_children(loc_uuid, callback, loc_url) {
         var params = (loc_uuid ? {parent_id: loc_uuid} : {});
         $('#loc_ajax').show().removeClass('hide');
@@ -236,5 +236,8 @@ hqDefine('locations/js/location_select_view', function () {
         this.load(data);
     }
 
-    return { LocationSelectViewModel: LocationSelectViewModel };
+    return {
+        LocationSelectViewModel: LocationSelectViewModel,
+        LocationModel: LocationModel
+    };
 });

@@ -11,7 +11,7 @@ hqDefine("locations/js/location", function() {
         new_user_success: _.template(gettext("User " + initialPageData.get('user_name') +
                                              " added successfully.  A validation message has been sent to the phone number provided."))
     };
-    var LocationSelectViewModel = hqImport('locations/js/location_select_view').LocationSelectViewModel;
+    var LocationSelectViewModel = hqImport('locations/js/location_drilldown').LocationSelectViewModel;
 
     $(function() {
         var form_node = $('#add_commcare_account_form');

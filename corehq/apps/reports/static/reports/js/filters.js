@@ -205,6 +205,31 @@ hqDefine("reports/js/filters", [
             allowClear: true,
             placeholder: gettext("Select a group"),
         });
+
+        // location filter
+        $(".report-filter-location-intrahealth").each(function(i, el) {
+            var $el = $(el),
+                data = $el.data();
+
+            var locs = data.locations;
+            var selected = data.loc_id;
+            var hierarchy = data.hierarchy;
+            var location_url = data.location_url;
+
+            var LocationSelectViewModel = hqImport('locations/js/location_drilldown').LocationSelectViewModel;
+            var IntrahealthLocModel = hqImport('intrahealth/js/location_drilldown').IntrahealthLocModel;
+
+            var model = new LocationSelectViewModel({
+                "hierarchy": hierarchy,
+                "default_caption": false,
+                "auto_drill": null,
+                "loc_filter": false,
+                "loc_url": location_url,
+                "func": IntrahealthLocModel,
+            });
+            $el.koApplyBindings(model);
+            model.load(locs, selected);
+        });
     };
 
     return {
