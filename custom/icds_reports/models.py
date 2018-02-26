@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 from dateutil.relativedelta import relativedelta
 from django.db import connections, models
 
+from corehq.form_processor.utils.sql import fetchall_as_namedtuple
 from corehq.sql_db.routers import db_for_read_write
 from custom.icds_reports.utils.aggregation import ComplementaryFormsAggregationHelper
 
@@ -643,7 +644,6 @@ class AggregateComplementaryFeedingForms(models.Model):
 
     @classmethod
     def compare_with_old_data(cls, state_id, month):
-        from corehq.form_processor.utils.sql import fetchall_as_namedtuple
         helper = ComplementaryFormsAggregationHelper(state_id, month)
         query, params = helper.compare_with_old_data_query()
 
