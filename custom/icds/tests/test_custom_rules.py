@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule, CustomMatchDefinition, CustomActionDefinition
 from corehq.apps.data_interfaces.tests.test_auto_case_updates import (
     BaseCaseRuleTest,
@@ -6,9 +7,18 @@ from corehq.apps.data_interfaces.tests.test_auto_case_updates import (
     _with_case,
 )
 from corehq.apps.data_interfaces.tests.util import create_case, create_empty_rule
+from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.hqcase.utils import update_case
+from corehq.apps.locations.tests.util import (
+    LocationStructure,
+    LocationTypeStructure,
+    setup_location_types_with_structure,
+    setup_locations_with_structure,
+)
+from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.tests.utils import use_sql_backend
+from custom.icds.const import AWC_LOCATION_TYPE_CODE, SUPERVISOR_LOCATION_TYPE_CODE
 from custom.icds.rules.util import todays_date
 from datetime import datetime, date
 
@@ -131,6 +141,41 @@ class AutoEscalationTest(BaseCaseRuleTest):
 class CustomCriteriaTestCase(BaseCaseRuleTest):
     domain = 'icds-custom-criteria-test'
 
+    @classmethod
+    def setUpClass(cls):
+        super(CustomCriteriaTestCase, cls).setUpClass()
+
+        cls.domain_obj = create_domain(cls.domain)
+
+        location_type_structure = [
+            LocationTypeStructure(SUPERVISOR_LOCATION_TYPE_CODE, [
+                LocationTypeStructure(AWC_LOCATION_TYPE_CODE, [])
+            ])
+        ]
+
+        location_structure = [
+            LocationStructure('LS1', SUPERVISOR_LOCATION_TYPE_CODE, [
+                LocationStructure('AWC1', AWC_LOCATION_TYPE_CODE, []),
+            ])
+        ]
+
+        cls.loc_types = setup_location_types_with_structure(cls.domain, location_type_structure)
+        cls.locs = setup_locations_with_structure(cls.domain, location_structure)
+
+        cls.ls = cls._make_user('ls', cls.locs['LS1'])
+        cls.aww = cls._make_user('aww', cls.locs['AWC1'])
+
+    @classmethod
+    def _make_user(cls, name, location):
+        user = CommCareUser.create(cls.domain, name, 'password')
+        user.set_location(location)
+        return user
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.domain_obj.delete()
+        super(CustomCriteriaTestCase, cls).tearDownClass()
+
     def test_todays_date(self):
         # Test the boundary between today and tomorrow IST, expressed in UTC timestamps
         self.assertEqual(todays_date(datetime(2018, 2, 22, 18, 29)), date(2018, 2, 22))
@@ -170,3 +215,23 @@ class CustomCriteriaTestCase(BaseCaseRuleTest):
         with _with_case(self.domain, 'x', datetime.utcnow()) as case:
             case = self._set_dob(case, '2018-02-22')
             self.assertFalse(rule.criteria_match(case, datetime(2018, 5, 22, 12, 0)))
+
+    def test_is_usercase_of_aww(self):
+        rule = _create_empty_rule(self.domain, case_type=USERCASE_TYPE)
+        rule.add_criteria(CustomMatchDefinition, name='ICDS_IS_USERCASE_OF_AWW')
+
+        with _with_case(self.domain, USERCASE_TYPE, datetime.utcnow(), owner_id=self.aww.get_id) as aww_uc,\
+                _with_case(self.domain, USERCASE_TYPE, datetime.utcnow(), owner_id=self.ls.get_id) as ls_uc:
+
+            self.assertTrue(rule.criteria_match(aww_uc, datetime.utcnow()))
+            self.assertFalse(rule.criteria_match(ls_uc, datetime.utcnow()))
+
+    def test_is_usercase_of_ls(self):
+        rule = _create_empty_rule(self.domain, case_type=USERCASE_TYPE)
+        rule.add_criteria(CustomMatchDefinition, name='ICDS_IS_USERCASE_OF_LS')
+
+        with _with_case(self.domain, USERCASE_TYPE, datetime.utcnow(), owner_id=self.aww.get_id) as aww_uc,\
+                _with_case(self.domain, USERCASE_TYPE, datetime.utcnow(), owner_id=self.ls.get_id) as ls_uc:
+
+            self.assertFalse(rule.criteria_match(aww_uc, datetime.utcnow()))
+            self.assertTrue(rule.criteria_match(ls_uc, datetime.utcnow()))
