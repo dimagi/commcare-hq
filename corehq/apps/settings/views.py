@@ -373,7 +373,6 @@ class TwoFactorDisableView(BaseMyAccountView, DisableView):
 class TwoFactorPhoneSetupView(BaseMyAccountView, PhoneSetupView):
     urlname = 'two_factor_phone_setup'
     template_name = 'two_factor/core/phone_register.html'
-
     page_title = ugettext_lazy("Two Factor Authentication Phone Setup")
 
     form_list = (
