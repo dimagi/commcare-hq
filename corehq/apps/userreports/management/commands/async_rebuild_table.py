@@ -6,12 +6,13 @@ from collections import namedtuple
 
 from django.core.management.base import BaseCommand
 
-from corehq.form_processor.models import CommCareCaseSQL
+from corehq.form_processor.models import CommCareCaseSQL, XFormInstanceSQL
 from corehq.apps.userreports.models import AsyncIndicator, get_datasource_config
 from corehq.apps.userreports.util import get_indicator_adapter
 
 FakeChange = namedtuple('FakeChange', ['id', 'document'])
 CASE_DOC_TYPE = 'CommCareCase'
+XFORM_DOC_TYPE = 'XFormInstance'
 
 
 class Command(BaseCommand):
@@ -19,18 +20,22 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('domain')
-        parser.add_argument('case_type')
+        parser.add_argument('type', help="either xform or case")
+        parser.add_argument('case_type_or_xmlns')
         parser.add_argument('data_source_ids', nargs=argparse.REMAINDER)
 
-    def handle(self, domain, case_type, data_source_ids, **options):
+    def handle(self, domain, type_, case_type_or_xmlns, data_source_ids, **options):
+        assert type_ in ('xform', 'case')
+        self.referenced_type = CASE_DOC_TYPE if type_ == 'case' else XFORM_DOC_TYPE
+
         configs = []
         for data_source_id in data_source_ids:
             config, _ = get_datasource_config(data_source_id, domain)
             assert config.asynchronous
-            assert config.referenced_doc_type == CASE_DOC_TYPE
+            assert config.referenced_doc_type == self.referenced_type
             configs.append(config)
 
-        fake_change_doc = {'doc_type': CASE_DOC_TYPE, 'domain': domain}
+        fake_change_doc = {'doc_type': self.referenced_type, 'domain': domain}
 
         for config in configs:
             adapter = get_indicator_adapter(config, can_handle_laboratory=True)
@@ -39,11 +44,14 @@ class Command(BaseCommand):
             adapter.after_table_build()
 
         self.domain = domain
-        self.case_type = case_type
+        if self.referenced_type == CASE_DOC_TYPE:
+            self.case_type = case_type_or_xmlns
+        else:
+            self.xmlns = case_type_or_xmlns
 
         config_ids = [config._id for config in configs]
-        for case_id in self._get_case_ids_to_process():
-            change = FakeChange(case_id, fake_change_doc)
+        for id_ in self._get_ids_to_process():
+            change = FakeChange(id_, fake_change_doc)
             AsyncIndicator.update_from_kafka_change(change, config_ids)
 
         for config in configs:
@@ -51,6 +59,27 @@ class Command(BaseCommand):
                 config.meta.build.rebuilt_asynchronously = True
                 config.save()
 
+    def _get_ids_to_process(self):
+        if self.referenced_type == CASE_DOC_TYPE:
+            return self._get_case_ids_to_process()
+        return self._get_form_ids_to_process()
+
+    def _get_form_ids_to_process(self):
+        from corehq.sql_db.util import get_db_aliases_for_partitioned_query
+        dbs = get_db_aliases_for_partitioned_query()
+        for db in dbs:
+            form_ids = (
+                XFormInstanceSQL.objects
+                .using(db)
+                .filter(domain=self.domain, xmlns=self.xmlns)
+                .values_list('form_id', flat=True)
+            )
+            num_ids = len(form_ids)
+            print("processing %d docs from db %s" % (num_ids, db))
+            for i, id_ in enumerate(num_ids):
+                yield id_
+                if i % 1000 == 0:
+                    print("processed %d / %d docs from db %s" % (i, num_ids, db))
 
     def _get_case_ids_to_process(self):
         from corehq.sql_db.util import get_db_aliases_for_partitioned_query
