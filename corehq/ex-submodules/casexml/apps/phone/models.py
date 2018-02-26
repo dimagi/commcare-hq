@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from collections import defaultdict, namedtuple
 from copy import copy
 from datetime import datetime
+import architect
 import uuid
 import json
 from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
@@ -11,10 +12,9 @@ from corehq.util.global_request import get_request_domain
 from corehq.util.soft_assert import soft_assert
 from corehq.toggles import ENABLE_LOADTEST_USERS
 from corehq.apps.domain.models import Domain
-from corehq.sql_db.models import PartitionedModel
 from dimagi.ext.couchdbkit import *
-from django.db import models
 from django.conf import settings
+from django.db import models
 from django.contrib.postgres.fields import JSONField
 from django.core.exceptions import ValidationError
 from dimagi.utils.decorators.memoized import memoized
@@ -419,7 +419,8 @@ def synclog_to_sql_object(synclog_json_object):
     return synclog
 
 
-class SyncLogSQL(PartitionedModel):
+@architect.install('partition', type='range', subtype='date', constraint='day', column='date')
+class SyncLogSQL(models.Model):
 
     synclog_id = models.UUIDField(unique=True, primary_key=True, default=uuid.uuid1().hex)
     domain = models.CharField(max_length=255, null=True, blank=True, default=None, db_index=True)
@@ -1325,7 +1326,7 @@ def get_sync_log_class_by_format(format):
     }.get(format, SyncLog)
 
 
-class OwnershipCleanlinessFlag(PartitionedModel):
+class OwnershipCleanlinessFlag(models.Model):
     """
     Stores whether an owner_id is "clean" aka has a case universe only belonging
     to that ID.
