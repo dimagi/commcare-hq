@@ -139,7 +139,7 @@ class BaseDataDump(BaseCommand):
 
     def email_result(self, download_id):
         url = "%s%s" % (get_url_base(),
-                        reverse('ajax_job_poll', kwargs={'download_id': download_id}))
+                        reverse('retrieve_download', kwargs={'download_id': download_id}))
         send_HTML_email('%s Download for %s Finished' % (DOMAIN, self.case_type),
                         self.recipient,
                         'Simple email, just to let you know that there is a '
