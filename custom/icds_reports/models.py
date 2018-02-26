@@ -9,6 +9,7 @@ from corehq.sql_db.routers import db_for_read_write
 from custom.icds_reports.utils.aggregation import (
     ComplementaryFormsAggregationHelper,
     PostnatalCareFormsChildHealthAggregationHelper,
+    PostnatalCareFormsCcsRecordAggregationHelper,
 )
 
 
@@ -733,6 +734,58 @@ class AggregateChildHealthPostnatalCareForms(models.Model):
     @classmethod
     def compare_with_old_data(cls, state_id, month):
         helper = PostnatalCareFormsChildHealthAggregationHelper(state_id, month)
+        query, params = helper.compare_with_old_data_query()
+
+        with get_cursor(AggregateComplementaryFeedingForms) as cursor:
+            cursor.execute(query, params)
+            rows = fetchall_as_namedtuple(cursor)
+            return [row.child_health_case_id for row in rows]
+
+
+class AggregateCcsRecordPostnatalCareForms(models.Model):
+    """Aggregated data for ccs record cases based on
+    AWW App, Home Visit Scheduler module,
+    Post Natal Care and Exclusive Breastfeeding forms.
+
+    A child table exists for each state_id and month.
+
+    A row exists for every case that has ever had a Complementary Feeding Form
+    submitted against it.
+    """
+
+    # partitioned based on these fields
+    state_id = models.CharField(max_length=40)
+    month = models.DateField(help_text="Will always be YYYY-MM-01")
+
+    # primary key as it's unique for every partition
+    case_id = models.CharField(max_length=40, primary_key=True)
+
+    latest_time_end_processed = models.DateTimeField(
+        help_text="The latest form.meta.timeEnd that has been processed for this case"
+    )
+    counsel_methods = models.PositiveSmallIntegerField(
+        help_text="Counseling about family planning methods has ever occurred"
+    )
+
+    class Meta(object):
+        db_table = 'icds_dashboard_ccs_record_postnatal_forms'
+
+    @classmethod
+    def aggregate(cls, state_id, month):
+        helper = PostnatalCareFormsCcsRecordAggregationHelper(state_id, month)
+        prev_month_query, prev_month_params = helper.create_table_query(month - relativedelta(months=1))
+        curr_month_query, curr_month_params = helper.create_table_query()
+        agg_query, agg_params = helper.aggregation_query()
+
+        with get_cursor(cls) as cursor:
+            cursor.execute(prev_month_query, prev_month_params)
+            cursor.execute(helper.drop_table_query())
+            cursor.execute(curr_month_query, curr_month_params)
+            cursor.execute(agg_query, agg_params)
+
+    @classmethod
+    def compare_with_old_data(cls, state_id, month):
+        helper = PostnatalCareFormsCcsRecordAggregationHelper(state_id, month)
         query, params = helper.compare_with_old_data_query()
 
         with get_cursor(AggregateComplementaryFeedingForms) as cursor:
