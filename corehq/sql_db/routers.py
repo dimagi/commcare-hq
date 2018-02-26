@@ -43,12 +43,6 @@ class MonolithRouter(object):
 
 
 def allow_migrate(db, app_label):
-    if app_label == ICDS_REPORTS_APP:
-        db_alias = get_icds_ucr_db_alias()
-        return db_alias and db_alias == db
-    elif app_label == SYNCLOGS_APP:
-        return hasattr(settings, "SYNCLOGS_SQL_DB_ALIAS") and db == settings.SYNCLOGS_SQL_DB_ALIAS
-
     if not settings.USE_PARTITIONED_DATABASE:
         return app_label != PROXY_APP
 
@@ -63,6 +57,12 @@ def allow_migrate(db, app_label):
         return db in partition_config.get_form_processing_dbs()
     elif app_label == WAREHOUSE_APP:
         return hasattr(settings, "WAREHOUSE_DATABASE_ALIAS") and db == settings.WAREHOUSE_DATABASE_ALIAS
+    elif app_label == ICDS_REPORTS_APP:
+        db_alias = get_icds_ucr_db_alias()
+        return db_alias and db_alias == db
+    elif app_label == SYNCLOGS_APP:
+        return hasattr(settings, "SYNCLOGS_SQL_DB_ALIAS") and db == settings.SYNCLOGS_SQL_DB_ALIAS
+
     else:
         return db == partition_config.get_main_db()
 
@@ -75,16 +75,6 @@ def db_for_read_write(model, write=True):
     """
     app_label = model._meta.app_label
 
-    if len(settings.DATABASES) > 1:
-        if app_label == WAREHOUSE_APP:
-            error_msg = 'Cannot read/write to warehouse db without warehouse database defined'
-            assert hasattr(settings, "WAREHOUSE_DATABASE_ALIAS"), error_msg
-            return settings.WAREHOUSE_DATABASE_ALIAS
-        elif app_label == SYNCLOGS_APP:
-            error_msg = 'A synclogs SQL db must be defined to store/query synclogs'
-            assert hasattr(settings, "SYNCLOGS_SQL_DB_ALIAS"), error_msg
-            return settings.SYNCLOGS_SQL_DB_ALIAS
-
     if not settings.USE_PARTITIONED_DATABASE:
         return 'default'
 
@@ -95,5 +85,13 @@ def db_for_read_write(model, write=True):
         if not write:
             engine_id = connection_manager.get_load_balanced_read_engine_id(ICDS_UCR_ENGINE_ID)
         return connection_manager.get_django_db_alias(engine_id)
+    elif app_label == WAREHOUSE_APP:
+        error_msg = 'Cannot read/write to warehouse db without warehouse database defined'
+        assert hasattr(settings, "WAREHOUSE_DATABASE_ALIAS"), error_msg
+        return settings.WAREHOUSE_DATABASE_ALIAS
+    elif app_label == SYNCLOGS_APP:
+        error_msg = 'A synclogs SQL db must be defined to store/query synclogs'
+        assert hasattr(settings, "SYNCLOGS_SQL_DB_ALIAS"), error_msg
+        return settings.SYNCLOGS_SQL_DB_ALIAS
     else:
         return partition_config.get_main_db()
