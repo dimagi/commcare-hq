@@ -1,10 +1,15 @@
 /* globals TEMPLATE_STRINGS django */
 // for product and user per location selection
 hqDefine("locations/js/location", function() {
+    var initialPageData = hqImport('hqwebapp/js/initial_page_data');
     var insert_new_user = function(user) {
         var $select = $('#id_users-selected_ids');
         $select.multiSelect('addOption', { value: user.user_id, text: user.text });
         $select.multiSelect('select', user.user_id);
+    };
+    var TEMPLATE_STRINGS = {
+        new_user_success: _.template(gettext("User " + initialPageData.get('user_name') +
+                                             " added successfully.  A validation message has been sent to the phone number provided."))
     };
 
     $(function() {
@@ -53,15 +58,12 @@ hqDefine("locations/js/location", function() {
             django.gettext("Search Products...")
         );
     });
-        var TEMPLATE_STRINGS = {
-            new_user_success: _.template('{% trans "User <%= name %> added successfully.  A validation message has been sent to the phone number provided." %}')
-        };
         $(function() {
 
-          var location_url = '{{ api_root }}';
-          var loc_id = {{ location.get_id|JSON }};
-          var hierarchy = {{ hierarchy|JSON }};
-          var loc_types_with_users = {{ loc_types_with_users|JSON }};
+          var location_url = initialPageData.get('api_root');
+          var loc_id = initialPageData.get('location.get_id');
+          var hierarchy = initialPageData.get('hierarchy');
+          var loc_types_with_users = initialPageData.get('loc_types_with_users');
 
           model = new LocationSelectViewModel({
               "hierarchy": hierarchy,
@@ -95,8 +97,8 @@ hqDefine("locations/js/location", function() {
               return loc_types_with_users.indexOf(loc_type) !== -1;
           });
 
-          var locs = {{ locations|JSON }};
-          var selected_parent = '{{ location.parent.get_id }}';
+          var locs = initialPageData.get('locations');
+          var selected_parent = initialPageData.get('location_parent_get_id');
           model.load(locs, selected_parent);
           model.orig_parent_id = model.selected_locid();
 
