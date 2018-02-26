@@ -41,7 +41,7 @@ def setUpModule():
             with open(os.path.join(path, file_name)) as f:
                 table_name = get_table_name(domain.name, file_name[:-4])
                 table = metadata.tables[table_name]
-                postgres_copy.copy_from(f, table, engine, format='csv', null='', header=True)
+                postgres_copy.copy_from(f, table, engine, format=b'csv', null=b'', header=True)
     _call_center_domain_mock.stop()
 
 
