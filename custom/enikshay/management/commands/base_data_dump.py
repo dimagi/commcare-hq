@@ -138,8 +138,9 @@ class BaseDataDump(BaseCommand):
         return blob_dl_object.download_id
 
     def email_result(self, download_id):
-        url = "%s%s" % (get_url_base(),
-                        reverse('retrieve_download', kwargs={'download_id': download_id}))
+        url = "%s%s?%s" % (get_url_base(),
+                           reverse('retrieve_download', kwargs={'download_id': download_id}),
+                           "get_file")  # downloads immediately, rather than rendering page
         send_HTML_email('%s Download for %s Finished' % (DOMAIN, self.case_type),
                         self.recipient,
                         'Simple email, just to let you know that there is a '
