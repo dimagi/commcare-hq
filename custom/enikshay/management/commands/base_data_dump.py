@@ -99,7 +99,7 @@ class BaseDataDump(BaseCommand):
                 for column_name, details in self.report.items():
                     for case_reference, calculation in details.items():
                         if case_reference == "N/A":
-                            case_row[column_name] = "N/A"
+                            case_row[column_name] = ""
                         elif case_reference == 'self':
                             if calculation == 'caseid':
                                 case_row[column_name] = case.case_id
