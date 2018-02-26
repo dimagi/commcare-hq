@@ -140,20 +140,6 @@ class XFormInstance(DeferredBlobMixin, SafeSaveDocument, UnicodeMixIn,
     class Meta:
         app_label = 'couchforms'
 
-    def to_json(self, *args, **kwargs):
-        doc = super(XFormInstance, self).to_json(*args, **kwargs)
-        if const.TAG_META in self.form:
-            metadata = Metadata.wrap(clean_metadata(doc[const.TAG_FORM][const.TAG_META]))
-
-        metadata = None
-        doc.update({
-            'commcare_version': getattr(metadata, 'commcare_version', None),
-            'build_version': self.build_version,
-            'time_end': getattr(metadata, 'time_end', None),
-            'time_start': getattr(metadata, 'time_start', None)
-        })
-        return doc
-
     @classmethod
     def get(cls, docid, rev=None, db=None, dynamic_properties=True):
         # copied and tweaked from the superclass's method
@@ -244,15 +230,15 @@ class XFormInstance(DeferredBlobMixin, SafeSaveDocument, UnicodeMixIn,
 
     @property
     def time_start(self):
-        return self.to_json().get('timeStart', None)
+        return self.metadata.timeStart
 
     @property
     def time_end(self):
-        return self.to_json().get('timeEnd', None)
+        return self.metadata.timeEnd
 
     @property
     def commcare_version(self):
-        return self.to_json().get('commcare_version', None)
+        return self.metadata.commcare_version
 
     @property
     def build_version(self):
