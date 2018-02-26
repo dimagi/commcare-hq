@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+from __future__ import unicode_literals
 from custom.icds_reports.models import AggAwcMonthly, ChildHealthMonthlyView, CcsRecordMonthly, \
     AggChildHealthMonthly
 from django.db.models.aggregates import Sum, Count

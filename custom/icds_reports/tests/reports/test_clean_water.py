@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+from __future__ import unicode_literals
 from django.test.utils import override_settings
 
 from custom.icds_reports.reports.clean_water import get_clean_water_data_map, get_clean_water_data_chart, \

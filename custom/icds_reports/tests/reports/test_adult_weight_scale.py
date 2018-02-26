@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+from __future__ import unicode_literals
 from django.test.utils import override_settings
 
 from custom.icds_reports.reports.adult_weight_scale import get_adult_weight_scale_data_map, \

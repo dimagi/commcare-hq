@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+from __future__ import unicode_literals
 from django.test.utils import override_settings
 
 from custom.icds_reports.const import ChartColors, MapColors
@@ -81,11 +82,11 @@ class TestPrevalenceOfUndernutrition(TestCase):
             loc_level='state'
         )
         expected = (
-            u'Percentage of children between 0 - 5 years enrolled for Anganwadi Services'
-            u' with weight-for-age less than -2 standard deviations'
-            u' of the WHO Child Growth Standards median.'
-            u' <br/><br/>Children who are moderately or severely underweight'
-            u' have a higher risk of mortality'
+            'Percentage of children between 0 - 5 years enrolled for Anganwadi Services'
+            ' with weight-for-age less than -2 standard deviations'
+            ' of the WHO Child Growth Standards median.'
+            ' <br/><br/>Children who are moderately or severely underweight'
+            ' have a higher risk of mortality'
         )
         self.assertEquals(data['rightLegend']['info'], expected)
 
@@ -472,14 +473,14 @@ class TestPrevalenceOfUndernutrition(TestCase):
         self.assertDictEqual(
             data['tooltips_data'],
             {
-                u"s2": {
+                "s2": {
                     "weighed": 182,
                     "severely_underweight": 4,
                     "moderately_underweight": 54,
                     "normal": 124,
                     "total": 326
                 },
-                u"s1": {
+                "s1": {
                     "weighed": 134,
                     "severely_underweight": 8,
                     "moderately_underweight": 36,
