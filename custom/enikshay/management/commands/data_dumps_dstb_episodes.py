@@ -78,7 +78,7 @@ class Command(BaseDataDump):
             else:
                 return ''
         elif column_name == "Current Treating Facility - PHI Name":
-            if episode.closed and episode.get_case_property('is_active') == 'yes':
+            if not episode.closed and episode.get_case_property('is_active') == 'yes':
                 return self.get_person(episode).get_case_property('phi_name')
             else:
                 return ''
