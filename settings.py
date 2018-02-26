@@ -1326,6 +1326,8 @@ else:
 if helper.is_testing():
     helper.assign_test_db_names(DATABASES)
 
+SYNCLOGS_SQL_DB_ALIAS = 'default'
+
 if USE_PARTITIONED_DATABASE:
     DATABASE_ROUTERS = ['corehq.sql_db.routers.PartitionRouter']
 else:
