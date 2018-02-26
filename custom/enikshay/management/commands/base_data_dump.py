@@ -32,9 +32,9 @@ class BaseDataDump(BaseCommand):
         self.result_file_name = None
         self.case_type = None
         self.report = {}
-        self.notes = {}
-        self.column_statuses = {}
-        self.result_file_headers = []
+        self.notes = {"Column Name": "Notes"}
+        self.column_statuses = {"Column Name": "Column Status"}
+        self.result_file_headers = ["Column Name"]
         self.recipient = None
         self.full = False
 
@@ -82,6 +82,7 @@ class BaseDataDump(BaseCommand):
             writer.writeheader()
             writer.writerow(self.notes)
             writer.writerow(self.column_statuses)
+            writer.writerow({"Column Name": "Data begins after this row"})
             # iterate cases
             for case in self.get_cases(self.case_type):
                 # store any references like last_episode or any data point
