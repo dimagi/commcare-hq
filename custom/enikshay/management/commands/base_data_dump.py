@@ -14,6 +14,7 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.files import safe_filename_header
 
 from dimagi.utils.django.email import send_HTML_email
+from dimagi.utils.web import get_url_base
 
 from soil.util import expose_blob_download
 
@@ -126,12 +127,13 @@ class BaseDataDump(BaseCommand):
             blob_dl_object = expose_blob_download(
                 self.result_file_name,
                 mimetype=file_format.mimetype,
-                content_disposition=safe_filename_header(self.result_file_name, file_format.extension),
+                content_disposition=safe_filename_header(self.result_file_name, file_format.extension)
             )
         return blob_dl_object.download_id
 
     def email_result(self, download_id):
-        url = reverse('ajax_job_poll', kwargs={'download_id': download_id})
+        url = "%s%s" % (get_url_base(),
+                        reverse('ajax_job_poll', kwargs={'download_id': download_id}))
         send_HTML_email('%s Download for %s Finished' % (DOMAIN, self.case_type),
                         self.recipient,
                         'Simple email, just to let you know that there is a '
