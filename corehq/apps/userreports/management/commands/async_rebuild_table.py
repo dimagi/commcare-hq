@@ -23,6 +23,8 @@ class Command(BaseCommand):
         parser.add_argument('type', help="either xform or case")
         parser.add_argument('case_type_or_xmlns')
         parser.add_argument('data_source_ids', nargs=argparse.REMAINDER)
+        parser.add_argument('--bulk', action='store_true', dest='bulk',
+                            help='bulk create. Only use if you know the implications')
 
     def handle(self, domain, type_, case_type_or_xmlns, data_source_ids, **options):
         assert type_ in ('xform', 'case')
@@ -35,8 +37,6 @@ class Command(BaseCommand):
             assert config.referenced_doc_type == self.referenced_type
             configs.append(config)
 
-        fake_change_doc = {'doc_type': self.referenced_type, 'domain': domain}
-
         for config in configs:
             adapter = get_indicator_adapter(config, can_handle_laboratory=True)
             adapter.build_table()
@@ -45,16 +45,32 @@ class Command(BaseCommand):
 
         self.domain = domain
         self.case_type_or_xmlns = case_type_or_xmlns
+        self.bulk = options['bulk']
 
-        config_ids = [config._id for config in configs]
+        self.config_ids = [config._id for config in configs]
+        ids = []
         for id_ in self._get_ids_to_process():
-            change = FakeChange(id_, fake_change_doc)
-            AsyncIndicator.update_from_kafka_change(change, config_ids)
+            ids.append(id_)
+            if len(ids) > 999:
+                self._save_ids(ids)
+                ids = []
 
         for config in configs:
             if not config.is_static:
                 config.meta.build.rebuilt_asynchronously = True
                 config.save()
+
+    @property
+    def fake_change_doc(self):
+        return {'doc_type': self.referenced_type, 'domain': self.domain}
+
+    def _save_ids(self, ids):
+        if self.bulk:
+            AsyncIndicator.bulk_creation(ids, self.referenced_type, self.domain, self.config_ids)
+        else:
+            for id_ in ids:
+                change = FakeChange(id_, self.fake_change_doc)
+                AsyncIndicator.update_from_kafka_change(change, self.config_ids)
 
     def _get_ids_to_process(self):
         from corehq.sql_db.util import get_db_aliases_for_partitioned_query
