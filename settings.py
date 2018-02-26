@@ -1656,6 +1656,10 @@ AVAILABLE_CUSTOM_SCHEDULING_RECIPIENTS = {
 AVAILABLE_CUSTOM_RULE_CRITERIA = {
     'ICDS_PERSON_CASE_IS_UNDER_6_YEARS_OLD':
         'custom.icds.rules.custom_criteria.person_case_is_under_6_years_old',
+    'ICDS_IS_USERCASE_OF_AWW':
+        'custom.icds.rules.custom_criteria.is_usercase_of_aww',
+    'ICDS_IS_USERCASE_OF_LS':
+        'custom.icds.rules.custom_criteria.is_usercase_of_ls',
 }
 
 AVAILABLE_CUSTOM_RULE_ACTIONS = {
