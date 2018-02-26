@@ -373,7 +373,6 @@ class TwoFactorDisableView(BaseMyAccountView, DisableView):
 class TwoFactorPhoneSetupView(BaseMyAccountView, PhoneSetupView):
     urlname = 'two_factor_phone_setup'
     template_name = 'two_factor/core/phone_register.html'
-    success_url = "/account/two_factor/"
 
     page_title = ugettext_lazy("Two Factor Authentication Phone Setup")
 
@@ -393,7 +392,7 @@ class TwoFactorPhoneSetupView(BaseMyAccountView, PhoneSetupView):
         """
         self.get_device(user=self.request.user, name='backup').save()
         messages.add_message(self.request, messages.SUCCESS, _("Phone number added."))
-        return redirect(self.success_url)
+        return redirect(reverse(TwoFactorProfileView.urlname))
 
 
 class TwoFactorResetView(TwoFactorSetupView):
