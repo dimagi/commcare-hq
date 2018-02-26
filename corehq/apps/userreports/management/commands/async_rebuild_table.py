@@ -25,6 +25,8 @@ class Command(BaseCommand):
         parser.add_argument('data_source_ids', nargs=argparse.REMAINDER)
         parser.add_argument('--bulk', action='store_true', dest='bulk',
                             help='bulk create. Only use if you know the implications')
+        parser.add_argument('--database', action='store', dest='database',
+                            help='Only retrieve from one database')
 
     def handle(self, domain, type_, case_type_or_xmlns, data_source_ids, **options):
         assert type_ in ('xform', 'case')
@@ -46,6 +48,7 @@ class Command(BaseCommand):
         self.domain = domain
         self.case_type_or_xmlns = case_type_or_xmlns
         self.bulk = options['bulk']
+        self.database = options['database']
 
         self.config_ids = [config._id for config in configs]
         ids = []
@@ -75,6 +78,8 @@ class Command(BaseCommand):
     def _get_ids_to_process(self):
         from corehq.sql_db.util import get_db_aliases_for_partitioned_query
         dbs = get_db_aliases_for_partitioned_query()
+        if self.database:
+            dbs = [db for db in dbs if db == self.database]
         for db in dbs:
             ids_ = self._get_ids(db)
             num_ids = len(ids_)
