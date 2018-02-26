@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from custom.enikshay.const import (
     PRIVATE_HEALTH_ESTABLISHMENT_SECTOR,
     NOT_AVAILABLE_VALUE,

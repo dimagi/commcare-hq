@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from datetime import datetime, date
 import json
 import jsonobject
@@ -360,7 +361,7 @@ class BETSBasePayloadGenerator(BasePayloadGenerator):
     def handle_exception(self, exception, repeat_record):
         if isinstance(exception, RequestConnectionError):
             update_case(repeat_record.domain, repeat_record.payload_id, {
-                "bets_{}_error".format(self.event_id): u"RequestConnectionError: {}".format(six.text_type(exception))
+                "bets_{}_error".format(self.event_id): "RequestConnectionError: {}".format(six.text_type(exception))
             })
 
     def handle_success(self, response, case, repeat_record):

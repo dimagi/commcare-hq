@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+from __future__ import unicode_literals
 import json
 
 import six
@@ -30,7 +31,7 @@ class NinetyNineDotsBasePayloadGenerator(BasePayloadGenerator):
     def handle_exception(self, exception, repeat_record):
         if isinstance(exception, RequestConnectionError):
             update_case(repeat_record.domain, repeat_record.payload_id, {
-                "dots_99_error": u"RequestConnectionError: {}".format(six.text_type(exception))
+                "dots_99_error": "RequestConnectionError: {}".format(six.text_type(exception))
             })
 
 

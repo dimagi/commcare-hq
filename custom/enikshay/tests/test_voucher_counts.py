@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from datetime import date
 from mock import patch, MagicMock
 from django.test import TestCase, override_settings
@@ -221,9 +222,9 @@ class TestVoucherCounts(ENikshayCaseStructureMixin, TestCase):
 
         self.assertDictEqual(
             {
-                'first_voucher_generation_date': u'2012-01-01',
-                'first_voucher_drugs': u"Happy Pills, Sad Pills, Buggy Pillz",
-                'first_voucher_validation_date': u'2014-01-02',
+                'first_voucher_generation_date': '2012-01-01',
+                'first_voucher_drugs': "Happy Pills, Sad Pills, Buggy Pillz",
+                'first_voucher_validation_date': '2014-01-02',
             },
             EpisodeVoucherUpdate(self.domain, self.cases[self.episode_id]).get_first_voucher_details()
         )
