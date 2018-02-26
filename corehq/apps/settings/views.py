@@ -392,7 +392,7 @@ class TwoFactorPhoneSetupView(BaseMyAccountView, PhoneSetupView):
         Store the device and reload the page.
         """
         self.get_device(user=self.request.user, name='backup').save()
-        messages.add_message(self.request, messages.SUCCESS, "Phone number added.")
+        messages.add_message(self.request, messages.SUCCESS, _("Phone number added."))
         return redirect(self.success_url)
 
 
