@@ -110,12 +110,7 @@ def get_language_code(user_id, telugu_user_ids, marathi_user_ids):
         return HINDI
 
 
-@periodic_task(
-    run_every=crontab(hour=9, minute=0),
-    queue=settings.CELERY_PERIODIC_QUEUE,
-    ignore_result=True
-)
-def run_user_indicators(phased_rollout=True):
+def run_user_indicators(phased_rollout=True, run_weekly=False, run_monthly=False):
     """
     Runs the weekly / monthly user SMS indicators at 9am IST.
     This task is run every day and the following logic is applied:
@@ -123,13 +118,6 @@ def run_user_indicators(phased_rollout=True):
         - if it's the first of the month, the monthly indicators are sent
         - if it's neither, nothing happens
     """
-    current_date = get_current_date()
-    is_first_of_month = current_date.day == 1
-    is_monday = current_date.weekday() == 0
-
-    if not (is_first_of_month or is_monday):
-        return
-
     for domain in settings.ICDS_SMS_INDICATOR_DOMAINS:
         telugu_user_ids = get_user_ids_under_location(domain, ANDHRA_PRADESH_SITE_CODE)
         marathi_user_ids = get_user_ids_under_location(domain, MAHARASHTRA_SITE_CODE)
@@ -147,10 +135,10 @@ def run_user_indicators(phased_rollout=True):
                 continue
             language_code = get_language_code(user_id, telugu_user_ids, marathi_user_ids)
 
-            if is_first_of_month:
+            if run_monthly:
                 run_indicator.delay(domain, user_id, AWWAggregatePerformanceIndicator, language_code)
 
-            if is_monday:
+            if run_weekly:
                 run_indicator.delay(domain, user_id, AWWSubmissionPerformanceIndicator, language_code)
 
         for user_id in generate_user_ids_from_primary_location_ids_from_couch(domain,
@@ -159,10 +147,10 @@ def run_user_indicators(phased_rollout=True):
                 continue
             language_code = get_language_code(user_id, telugu_user_ids, marathi_user_ids)
 
-            if is_first_of_month:
+            if run_monthly:
                 run_indicator.delay(domain, user_id, LSAggregatePerformanceIndicator, language_code)
 
-            if is_monday:
+            if run_weekly:
                 run_indicator.delay(domain, user_id, LSSubmissionPerformanceIndicator, language_code)
                 run_indicator.delay(domain, user_id, LSVHNDSurveyIndicator, language_code)
 
