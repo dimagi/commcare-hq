@@ -13,7 +13,6 @@ from corehq.util.soft_assert import soft_assert
 from corehq.toggles import ENABLE_LOADTEST_USERS
 from corehq.apps.domain.models import Domain
 from dimagi.ext.couchdbkit import *
-from django.conf import settings
 from django.db import models
 from django.contrib.postgres.fields import JSONField
 from django.core.exceptions import ValidationError
