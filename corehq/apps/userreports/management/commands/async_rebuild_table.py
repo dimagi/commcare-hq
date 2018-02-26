@@ -20,7 +20,7 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('domain')
-        parser.add_argument('type', help="either xform or case")
+        parser.add_argument('type_', help="either xform or case")
         parser.add_argument('case_type_or_xmlns')
         parser.add_argument('data_source_ids', nargs=argparse.REMAINDER)
         parser.add_argument('--bulk', action='store_true', dest='bulk',
@@ -57,6 +57,8 @@ class Command(BaseCommand):
             if len(ids) > 999:
                 self._save_ids(ids)
                 ids = []
+
+        self._save_ids(ids)
 
         for config in configs:
             if not config.is_static:
