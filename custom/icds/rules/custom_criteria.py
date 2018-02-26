@@ -1,8 +1,7 @@
 from __future__ import absolute_import
 from corehq.apps.app_manager.const import USERCASE_TYPE
-from corehq.apps.users.cases import get_owner_id, get_wrapped_owner
-from corehq.apps.users.models import CommCareUser
 from custom.icds.const import AWC_LOCATION_TYPE_CODE, SUPERVISOR_LOCATION_TYPE_CODE
+from custom.icds.messaging.custom_content import get_user_from_usercase
 from custom.icds.rules.util import get_date, todays_date
 from dateutil.relativedelta import relativedelta
 
@@ -49,13 +48,9 @@ def person_case_is_under_6_years_old(case, now):
 
 
 def check_user_location_type(usercase, location_type_code):
-    user = get_wrapped_owner(get_owner_id(usercase))
-    if not isinstance(user, CommCareUser):
-        return False
-
-    location = user.location
-    if location:
-        return location.location_type.code == location_type_code
+    user = get_user_from_usercase(usercase)
+    if user and user.location:
+        return user.location.location_type.code == location_type_code
 
     return False
 

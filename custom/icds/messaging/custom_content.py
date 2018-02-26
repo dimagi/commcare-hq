@@ -1,4 +1,6 @@
 from __future__ import absolute_import
+from corehq.apps.app_manager.const import USERCASE_TYPE
+from corehq.apps.users.cases import get_owner_id, get_wrapped_owner
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.form_processor.models import XFormInstanceSQL
@@ -9,9 +11,18 @@ from custom.icds.case_relationships import (
     mother_person_case_from_ccs_record_case,
 )
 from custom.icds.const import (STATE_TYPE_CODE, ANDHRA_PRADESH_SITE_CODE, MAHARASHTRA_SITE_CODE,
-    HINDI, TELUGU, MARATHI)
+    HINDI, TELUGU, MARATHI, AWC_LOCATION_TYPE_CODE, SUPERVISOR_LOCATION_TYPE_CODE)
 from custom.icds.exceptions import CaseRelationshipError
-from custom.icds.messaging.indicators import DEFAULT_LANGUAGE
+from custom.icds.messaging.indicators import (
+    DEFAULT_LANGUAGE,
+    AWWIndicator,
+    LSIndicator,
+    AWWSubmissionPerformanceIndicator,
+    AWWAggregatePerformanceIndicator,
+    LSAggregatePerformanceIndicator
+    LSVHNDSurveyIndicator,
+    LSSubmissionPerformanceIndicator,
+)
 from custom.icds.rules.immunization import (
     get_immunization_products,
     get_immunization_anchor_date,
@@ -127,9 +138,21 @@ def static_negative_growth_indicator(recipient, schedule_instance):
     return [render_message(language_code, template, context)]
 
 
-def render_content_for_user(user, template, context):
+def get_user_from_usercase(usercase):
+    user = get_wrapped_owner(get_owner_id(usercase))
+    if not isinstance(user, CommCareUser):
+        return None
+
+    return user
+
+
+def get_language_code_for_user(user):
     state_code = get_state_code(user.location)
-    language_code = get_language_code_for_state(state_code)
+    return get_language_code_for_state(state_code)
+
+
+def render_content_for_user(user, template, context):
+    language_code = get_language_code_for_user(user)
     return render_message(language_code, template, context)
 
 
@@ -267,3 +290,52 @@ def child_vaccinations_complete(recipient, case_schedule_instance):
         'child_name': child_person_case.name,
     }
     return [render_content_for_user(recipient, 'child_vaccinations_complete.txt', context)]
+
+
+def validate_user_location_and_indicator(user, indicator_class):
+    if issubclass(indicator_class, AWWIndicator):
+        if user.location.location_type != AWC_LOCATION_TYPE_CODE:
+            raise TypeError("Expected AWWIndicator to be called for an AWW, got %s instead" % user.get_id)
+    elif issubclass(indicator_class, LSIndicator):
+        if user.location.location_type != SUPERVISOR_LOCATION_TYPE_CODE:
+            raise TypeError("Expected LSIndicator to be called for an LS, got %s instead" % user.get_id)
+    else:
+        raise TypeError("Expected AWWIndicator or LSIndicator")
+
+
+def run_indicator_for_user(user):
+    validate_user_location_and_indicator(user, indicator_class)
+    language_code = get_language_code_for_user(user)
+    indicator = indicator_class(user.domain, user)
+    return indicator.get_messages(language_code=language_code)
+
+
+def run_indicator_for_usercase(usercase, indicator_class):
+    if usercase.type != USERCASE_TYPE:
+        raise ValueError("Expected '%s' case" % USERCASE_TYPE)
+
+    user = get_user_from_usercase(usercase)
+    if user and user.location:
+        return run_indicator_for_user(user)
+
+    return []
+
+
+def aww_1(recipient, case_schedule_instance):
+    return run_indicator_for_usercase(case_schedule_instance.case, AWWSubmissionPerformanceIndicator)
+
+
+def aww_2(recipient, case_schedule_instance):
+    return run_indicator_for_usercase(case_schedule_instance.case, AWWAggregatePerformanceIndicator)
+
+
+def ls_1(recipient, case_schedule_instance):
+    return run_indicator_for_usercase(case_schedule_instance.case, LSAggregatePerformanceIndicator)
+
+
+def ls_2(recipient, case_schedule_instance):
+    return run_indicator_for_usercase(case_schedule_instance.case, LSVHNDSurveyIndicator)
+
+
+def ls_6(recipient, case_schedule_instance):
+    return run_indicator_for_usercase(case_schedule_instance.case, LSSubmissionPerformanceIndicator)

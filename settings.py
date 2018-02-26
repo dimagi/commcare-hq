@@ -1616,6 +1616,21 @@ AVAILABLE_CUSTOM_SCHEDULING_CONTENT = {
     "ICDS_CHILD_VACCINATIONS_COMPLETE":
         ["custom.icds.messaging.custom_content.child_vaccinations_complete",
          "ICDS: Child vaccinations complete"],
+    "ICDS_AWW_1":
+        ["custom.icds.messaging.custom_content.aww_1",
+         "ICDS: Weekly AWC Submission Performance to AWW"],
+    "ICDS_AWW_2":
+        ["custom.icds.messaging.custom_content.aww_2",
+         "ICDS: Monthly AWC Aggregate Performance to AWW"],
+    "ICDS_LS_1":
+        ["custom.icds.messaging.custom_content.ls_1",
+         "ICDS: Monthly AWC Aggregate Performance to LS"],
+    "ICDS_LS_2":
+        ["custom.icds.messaging.custom_content.ls_2",
+         "ICDS: Weekly AWC VHND Performance to LS"],
+    "ICDS_LS_6":
+        ["custom.icds.messaging.custom_content.ls_6",
+         "ICDS: Weekly AWC Submission Performance to LS"],
 }
 
 # Used by the old reminders framework
