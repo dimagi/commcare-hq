@@ -299,7 +299,7 @@ class ChangeMyPasswordView(BaseMyAccountView):
     def post(self, request, *args, **kwargs):
         if self.password_change_form.is_valid():
             self.password_change_form.save()
-            messages.success(request, _("Your password was successfully changed."))
+            messages.success(request, _("Your password was successfully changed!"))
         return self.get(request, *args, **kwargs)
 
 
