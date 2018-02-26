@@ -42,7 +42,7 @@ def form_ids_by_received_on(from_date, to_date):
 def set_meta_fields(from_date, to_date, failfast):
     all_form_ids = form_ids_by_received_on(from_date, to_date)
     if not all_form_ids:
-        print "No remaining forms to be migrated!"
+        print("No remaining forms to be migrated!")
         return
     total_count = len(all_form_ids)
     updated_count = 0
