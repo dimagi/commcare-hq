@@ -1,4 +1,4 @@
-/* globals TEMPLATE_STRINGS django */
+/* globals django */
 // for product and user per location selection
 hqDefine("locations/js/location", function() {
     var initialPageData = hqImport('hqwebapp/js/initial_page_data');
@@ -11,6 +11,7 @@ hqDefine("locations/js/location", function() {
         new_user_success: _.template(gettext("User " + initialPageData.get('user_name') +
                                              " added successfully.  A validation message has been sent to the phone number provided."))
     };
+    var LocationSelectViewModel = hqImport('locations/js/location_select_view').LocationSelectViewModel;
 
     $(function() {
         var form_node = $('#add_commcare_account_form');
@@ -70,9 +71,9 @@ hqDefine("locations/js/location", function() {
             "default_caption": "\u2026",
             "auto_drill": false,
             "loc_filter": function(loc) {
-                return loc.uuid() != loc_id && loc.can_have_children();
+                return loc.uuid() !== loc_id && loc.can_have_children();
             },
-            "loc_url": location_url
+            "loc_url": location_url,
         });
 
         model.editing = ko.observable(false);
@@ -86,14 +87,15 @@ hqDefine("locations/js/location", function() {
             $.each(subforms, function(i, e) {
                 var $e = $(e);
                 var loc_type = $e.attr('loctype');
-                $e[loc_type == val ? 'show' : 'hide']();
+                $e[loc_type === val ? 'show' : 'hide']();
             });
         });
 
         model.has_user = ko.computed(function() {
-            var loc_type = model.allowed_child_types().length === 1 ?
-                            model.allowed_child_types()[0] :
-                            model.loc_type();
+            var loc_type = (
+                model.allowed_child_types().length === 1 ?
+                    model.allowed_child_types()[0] :
+                    model.loc_type());
             return loc_types_with_users.indexOf(loc_type) !== -1;
         });
 
