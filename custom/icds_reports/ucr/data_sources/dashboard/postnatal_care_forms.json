@@ -1,0 +1,325 @@
+{
+  "domains": [
+    "icds-dashboard-qa",
+    "icds-cas"
+  ],
+  "server_environment": [
+    "softlayer",
+    "icds-new",
+    "localdev"
+  ],
+  "config": {
+    "table_id": "static-postnatal_care_forms",
+    "display_name": "Forms - Postnatal Care Forms (Static) (Dashboard)",
+    "referenced_doc_type": "XFormInstance",
+    "description": "Postnatal Care and Exclusive Breastfeeding Form Data Used by the Dashboard",
+    "base_item_expression": {
+      "type": "property_path",
+      "property_path": ["form", "child", "item"]
+    },
+    "configured_filter": {
+      "operator": "in",
+      "type": "boolean_expression",
+      "expression": {
+        "datatype": null,
+        "type": "property_name",
+        "property_name": "xmlns"
+      },
+      "property_value": [
+        "http://openrosa.org/formdesigner/D4A7ABD2-A7B8-431B-A88B-38245173B0AE",
+        "http://openrosa.org/formdesigner/89097FB1-6C08-48BA-95B2-67BCF0C5091D"
+      ]
+    },
+    "configured_indicators": [
+      {
+        "column_id": "timeend",
+        "datatype": "datetime",
+        "type": "expression",
+        "expression": {
+          "type": "root_doc",
+          "expression": {
+            "type": "property_path",
+            "datatype": "datetime",
+            "property_path": [
+              "form",
+              "meta",
+              "timeEnd"
+            ]
+          }
+        }
+      },
+      {
+        "column_id": "state_id",
+        "datatype": "string",
+        "type": "expression",
+        "expression": {
+          "type": "nested",
+          "value_expression": {
+            "type": "property_name",
+            "property_name": "_id"
+          },
+          "argument_expression": {
+            "type": "ancestor_location",
+            "location_id": {
+              "value_expression": {
+                "datatype": null,
+                "type": "property_path",
+                "property_path": [
+                  "user_data",
+                  "commcare_location_id"
+                ]
+              },
+              "type": "related_doc",
+              "related_doc_type": "CommCareUser",
+              "doc_id_expression": {
+                "expression": {
+                  "datatype": null,
+                  "type": "property_path",
+                  "property_path": [
+                    "form",
+                    "meta",
+                    "userID"
+                  ]
+                },
+                "type": "root_doc"
+              }
+            },
+            "location_type": "state"
+          }
+        },
+        "create_index": true
+      },
+      {
+        "column_id": "received_on",
+        "datatype": "datetime",
+        "type": "expression",
+        "expression": {
+          "type": "root_doc",
+          "expression": {
+            "type": "property_name",
+            "datatype": "datetime",
+            "property_name": "received_on"
+          }
+        }
+      },
+      {
+        "column_id": "ccs_record_case_id",
+        "datatype": "string",
+        "type": "expression",
+        "expression": {
+          "type": "root_doc",
+          "expression": {
+            "type": "property_path",
+            "property_path": ["form", "case_load_ccs_record0","case", "@case_id"]
+
+          }
+        }
+      },
+      {
+        "column_id": "child_health_case_id",
+        "datatype": "string",
+        "type": "expression",
+        "expression": {
+          "type": "property_name",
+          "property_name": "child_health_case_id"
+        }
+      },
+      {
+        "column_id": "counsel_adequate_bf",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "icds_boolean",
+          "boolean_property": {
+            "type": "property_name",
+            "property_name": "counsel_adequate_bf"
+          },
+          "true_values": ["yes"],
+          "false_values": ["no"]
+        }
+      },
+      {
+        "column_id": "counsel_breast",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "icds_boolean",
+          "boolean_property": {
+            "type": "root_doc",
+            "expression": {
+              "type": "property_path",
+              "property_path": ["form", "counsel_breast"]
+            }
+          },
+          "true_values": ["yes"],
+          "false_values": ["no"]
+        }
+      },
+      {
+        "column_id": "counsel_exclusive_bf",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "icds_boolean",
+          "boolean_property": {
+            "type": "property_name",
+            "property_name": "counsel_exclusive_bf"
+          },
+          "true_values": ["yes"],
+          "false_values": ["no"]
+        }
+      },
+      {
+        "column_id": "counsel_increase_food_bf",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "icds_boolean",
+          "boolean_property": {
+            "type": "root_doc",
+            "expression": {
+              "type": "property_path",
+              "property_path": ["form", "counsel_increase_food_bf"]
+            }
+          },
+          "true_values": ["yes"],
+          "false_values": ["no"]
+        }
+      },
+      {
+        "column_id": "counsel_methods",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "icds_boolean",
+          "boolean_property": {
+            "type": "root_doc",
+            "expression": {
+              "type": "property_path",
+              "property_path": ["form", "counsel_methods"]
+            }
+          },
+          "true_values": ["yes"],
+          "false_values": ["no"]
+        }
+      },
+      {
+        "column_id": "counsel_only_milk",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "icds_boolean",
+          "boolean_property": {
+            "type": "property_name",
+            "property_name": "counsel_only_milk"
+          },
+          "true_values": ["yes"],
+          "false_values": ["no"]
+        }
+      },
+      {
+        "column_id": "skin_to_skin",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "icds_boolean",
+          "boolean_property": {
+            "type": "property_name",
+            "property_name": "skin_to_skin"
+          },
+          "true_values": ["yes"],
+          "false_values": ["no"]
+        }
+      },
+      {
+        "column_id": "is_ebf",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "icds_boolean",
+          "boolean_property": {
+            "type": "property_name",
+            "property_name": "is_ebf"
+          },
+          "true_values": ["yes"],
+          "false_values": ["no"]
+        }
+      },
+      {
+        "column_id": "water_or_milk",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "icds_boolean",
+          "boolean_property": {
+            "type": "property_name",
+            "property_name": "water_or_milk"
+          },
+          "true_values": ["yes"],
+          "false_values": ["no"]
+        }
+      },
+      {
+        "column_id": "other_milk_to_child",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "icds_boolean",
+          "boolean_property": {
+            "type": "property_name",
+            "property_name": "other_milk_to_child"
+          },
+          "true_values": ["yes"],
+          "false_values": ["no"]
+        }
+      },
+      {
+        "column_id": "tea_other",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "icds_boolean",
+          "boolean_property": {
+            "type": "property_name",
+            "property_name": "tea_other"
+          },
+          "true_values": ["yes"],
+          "false_values": ["no"]
+        }
+      },
+      {
+        "column_id": "eating",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "icds_boolean",
+          "boolean_property": {
+            "type": "property_name",
+            "property_name": "eating"
+          },
+          "true_values": ["yes"],
+          "false_values": ["no"]
+        }
+      },
+      {
+        "column_id": "not_breastfeeding",
+        "datatype": "string",
+        "type": "property_name",
+        "property_name": "not_breastfeeding"
+      }
+    ],
+    "named_expressions": {},
+    "named_filters": {},
+    "engine_id": "icds-ucr",
+    "sql_settings": {
+      "partition_config": [
+        {
+          "column": "timeend",
+          "subtype": "date",
+          "constraint": "day"
+        }
+      ]
+    },
+    "disable_destructive_rebuild": true
+  }
+}
