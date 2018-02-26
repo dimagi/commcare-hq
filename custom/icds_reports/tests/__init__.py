@@ -86,7 +86,7 @@ def setUpModule():
             with open(os.path.join(path, file_name)) as f:
                 table_name = FILE_NAME_TO_TABLE_MAPPING[file_name[:-4]]
                 table = metadata.tables[table_name]
-                postgres_copy.copy_from(f, table, engine, format='csv', null='', header=True)
+                postgres_copy.copy_from(f, table, engine, format=b'csv', null=b'', header=True)
 
         try:
             move_ucr_data_into_aggregation_tables(datetime(2017, 5, 28), intervals=2)
