@@ -123,7 +123,7 @@ class DataDumpTaskView(TemplateView):
 
     def post(self, request, *args, **kwargs):
         def run_task(task_name):
-            run_custom_export_tasks(
+            run_custom_export_tasks.delay(
                 task_name,
                 request.POST.get('email')
             )
