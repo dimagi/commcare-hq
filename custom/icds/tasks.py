@@ -111,13 +111,6 @@ def get_language_code(user_id, telugu_user_ids, marathi_user_ids):
 
 
 def run_user_indicators(phased_rollout=True, run_weekly=False, run_monthly=False):
-    """
-    Runs the weekly / monthly user SMS indicators at 9am IST.
-    This task is run every day and the following logic is applied:
-        - if it's Monday, the weekly indicators are sent
-        - if it's the first of the month, the monthly indicators are sent
-        - if it's neither, nothing happens
-    """
     for domain in settings.ICDS_SMS_INDICATOR_DOMAINS:
         telugu_user_ids = get_user_ids_under_location(domain, ANDHRA_PRADESH_SITE_CODE)
         marathi_user_ids = get_user_ids_under_location(domain, MAHARASHTRA_SITE_CODE)
