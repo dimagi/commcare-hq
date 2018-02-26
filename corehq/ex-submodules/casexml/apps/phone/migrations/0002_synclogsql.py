@@ -3,8 +3,14 @@
 from __future__ import unicode_literals
 
 import uuid
+from architect.commands import partition
 import django.contrib.postgres.fields.jsonb
 from django.db import migrations, models
+from corehq.sql_db.operations import HqRunPython
+
+
+def add_partitions(apps, schema_editor):
+    partition.run({'module': 'casexml.apps.phone.models'})
 
 
 class Migration(migrations.Migration):
@@ -34,4 +40,5 @@ class Migration(migrations.Migration):
                 ('error_hash', models.CharField(max_length=255, null=True, blank=True)),
             ],
         ),
+        HqRunPython(add_partitions),
     ]
