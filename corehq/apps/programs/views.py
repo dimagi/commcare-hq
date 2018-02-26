@@ -102,7 +102,7 @@ class NewProgramView(BaseCommTrackManageView):
     def post(self, request, *args, **kwargs):
         if self.new_program_form.is_valid():
             self.new_program_form.save()
-            messages.success(request, _("Program saved!"))
+            messages.success(request, _("Program saved."))
             return HttpResponseRedirect(reverse(ProgramListView.urlname, args=[self.domain]))
         return self.get(request, *args, **kwargs)
 

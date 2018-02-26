@@ -172,7 +172,7 @@ class MyAccountSettingsView(BaseMyAccountView):
             user = self.request.couch_user
             user.add_phone_number(self.phone_number)
             user.save()
-            messages.success(self.request, _("Phone number added!"))
+            messages.success(self.request, _("Phone number added."))
         else:
             messages.error(self.request, _("Invalid phone number format entered. "
                 "Please enter number, including country code, in digits only."))
@@ -299,7 +299,7 @@ class ChangeMyPasswordView(BaseMyAccountView):
     def post(self, request, *args, **kwargs):
         if self.password_change_form.is_valid():
             self.password_change_form.save()
-            messages.success(request, _("Your password was successfully changed!"))
+            messages.success(request, _("Your password was successfully changed."))
         return self.get(request, *args, **kwargs)
 
 
@@ -392,7 +392,7 @@ class TwoFactorPhoneSetupView(BaseMyAccountView, PhoneSetupView):
         Store the device and reload the page.
         """
         self.get_device(user=self.request.user, name='backup').save()
-        messages.add_message(self.request, messages.SUCCESS, "Phone number added!")
+        messages.add_message(self.request, messages.SUCCESS, "Phone number added.")
         return redirect(self.success_url)
 
 
