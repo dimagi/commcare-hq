@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from collections import defaultdict, namedtuple
 from copy import copy
 from datetime import datetime
+import architect
 import uuid
 import json
 from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
@@ -417,7 +418,9 @@ def synclog_to_sql_object(synclog_json_object):
     return synclog
 
 
+@architect.install('partition', type='range', subtype='date', constraint='day', column='date')
 class SyncLogSQL(models.Model):
+
     synclog_id = models.UUIDField(unique=True, primary_key=True, default=uuid.uuid1().hex)
     domain = models.CharField(max_length=255, null=True, blank=True, default=None, db_index=True)
     user_id = models.CharField(max_length=255, default=None, db_index=True)
