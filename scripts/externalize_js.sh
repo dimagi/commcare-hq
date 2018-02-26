@@ -82,17 +82,24 @@ fi
 HTML_FILE_LOCATION="./corehq/apps/$APP/templates/$APP/$MODULE.html"
 NEW_MODULE_NAME="$APP/js/$MODULE"
 NEW_MODULE_LOCATION="./corehq/apps/$APP/static/$APP/js/$MODULE.js"
+EXISTENT_MODULE=false
 
 if [ -f $NEW_MODULE_LOCATION ]; then
     echo "The new module has already been created.\nDo you want to continue?"
     should_continue
+    EXISTENT_MODULE=true
 fi
 
-# create file
-touch $NEW_MODULE_LOCATION
+if [ "$EXISTENT_MODULE" == true ]; then
+    # delete the last line, opening up the module for more code
+    sed -i "$ d" $NEW_MODULE_LOCATION
+else
+    # create file
+    touch $NEW_MODULE_LOCATION
 
-# add boilerplate
-echo "hqDefine('$NEW_MODULE_NAME', function() {" >> $NEW_MODULE_LOCATION
+    # add boilerplate
+    echo "hqDefine('$NEW_MODULE_NAME', function() {" >> $NEW_MODULE_LOCATION
+fi
 
 # pull inline js from file, removes the script tags, and places it into the new file
 sed -n "/{% block js-inline %}/, /{% endblock\( js-inline\)\? %}/ p" $HTML_FILE_LOCATION | \
@@ -105,26 +112,29 @@ sed -i "/{% block js-inline %}/, /{% endblock\( js-inline\)\? %}/ d" $HTML_FILE_
 echo "});" >> $NEW_MODULE_LOCATION
 
 
-# add import to the html
-SCRIPT_IMPORT="<script src=\"{% static '$NEW_MODULE_NAME.js' %}\"></script>"
-count=$(sed -n "/{% block js %}/p" $HTML_FILE_LOCATION | wc -l)
-# if there is a block js, add it inside at the end
-if [ "$count" -gt 0 ]; then
-    sed -i "/{% block js %}/,/{% endblock/ {
-        /{% endblock/ i \\
-        $SCRIPT_IMPORT
-    }" $HTML_FILE_LOCATION
-# otherwise, just tell them to add one somewhere on the page
-else
-    echo "----------------------------"
-    echo "Please add this static import somewhere in the html file"
-    echo "{% block js %}{{ block.super }}\n\t$SCRIPT_IMPORT\n{% endblock %}"
-    echo "----------------------------"
+if [ "$EXISTENT_MODULE" == false ]; then
+    # add import to the html
+    SCRIPT_IMPORT="<script src=\"{% static '$NEW_MODULE_NAME.js' %}\"></script>"
+    count=$(sed -n "/{% block js %}/p" $HTML_FILE_LOCATION | wc -l)
+    # if there is a block js, add it inside at the end
+    if [ "$count" -gt 0 ]; then
+        sed -i "/{% block js %}/,/{% endblock/ {
+            /{% endblock/ i \\
+            $SCRIPT_IMPORT
+        }" $HTML_FILE_LOCATION
+    # otherwise, just tell them to add one somewhere on the page
+    else
+        echo "----------------------------"
+        echo "Please add this static import somewhere in the html file"
+        echo "{% block js %}{{ block.super }}\n\t$SCRIPT_IMPORT\n{% endblock %}"
+        echo "----------------------------"
+    fi
 fi
+
 
 # fix eslint issues
 echo "Fixing lint issues"
-eslint --fix $NEW_MODULE_NAME
+eslint --fix $NEW_MODULE_LOCATION || true
 
 # commit the blob movement
 git add $NEW_MODULE_LOCATION $HTML_FILE_LOCATION
