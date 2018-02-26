@@ -71,6 +71,24 @@
         }
       },
       {
+        "display_name": null,
+        "transform": {},
+        "datatype": "date",
+        "type": "expression",
+        "is_primary_key": false,
+        "is_nullable": true,
+        "column_id": "form_date",
+        "expression": {
+          "datatype": "date",
+          "type": "property_path",
+          "property_path": [
+            "form",
+            "meta",
+            "timeEnd"
+          ]
+        }
+      },
+      {
         "comment": "Month the form was submitted in. Currently used in aggregation script, but should be able to be removed soon",
         "display_name": null,
         "transform": {},
