@@ -58,9 +58,8 @@ hqDefine("locations/js/location", function() {
             django.gettext("Products at Location"),
             django.gettext("Search Products...")
         );
-    });
-    $(function() {
 
+        // Location Select View Model
         var location_url = initialPageData.get('api_root');
         var loc_id = initialPageData.get('location.get_id');
         var hierarchy = initialPageData.get('hierarchy');
