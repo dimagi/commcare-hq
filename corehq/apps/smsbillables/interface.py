@@ -217,7 +217,8 @@ class SMSGatewayFeeCriteriaInterface(GenericTabularReport):
             DataTablesColumn("Direction"),
             DataTablesColumn("Country Code"),
             DataTablesColumn("Prefix"),
-            DataTablesColumn("Fee (Amount, Currency)")
+            DataTablesColumn("Fee (Amount, Currency)"),
+            DataTablesColumn("Is Active"),
         )
 
     @property
@@ -241,6 +242,7 @@ class SMSGatewayFeeCriteriaInterface(GenericTabularReport):
                     'amount': str(gateway_fee.amount),
                     'currency': gateway_fee.currency.code,
                 },
+                criteria.is_active,
             ])
         return rows
 
