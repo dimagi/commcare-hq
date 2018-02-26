@@ -53,7 +53,11 @@ def check_user_location_type(usercase, location_type_code):
     if not isinstance(user, CommCareUser):
         return False
 
-    return user.location.location_type.code == location_type_code
+    location = user.location
+    if location:
+        return location.location_type.code == location_type_code
+
+    return False
 
 
 def is_usercase_of_aww(case, now):
