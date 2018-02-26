@@ -56,7 +56,11 @@ class SmsGatewayFeeCriteria(models.Model):
         - backend_instance (optional)
         - country_code and prefix (optional)
         """
-        all_possible_criteria = cls.objects.filter(backend_api_id=backend_api_id, direction=direction)
+        all_possible_criteria = cls.objects.filter(
+            backend_api_id=backend_api_id,
+            direction=direction,
+            is_active=True,
+        )
 
         if all_possible_criteria.count() == 0:
             return None
