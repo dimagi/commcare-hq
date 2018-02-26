@@ -40,7 +40,11 @@ class Command(BaseDataDump):
 
     def include_case_in_dump(self, episode):
         person = self.get_person(episode)
-        return person and person.get_case_property('dataset') == 'real'
+        return (
+            person and
+            person.get_case_property('dataset') == 'real' and
+            person.get_case_property(ENROLLED_IN_PRIVATE) != 'true'
+        )
 
     def get_custom_value(self, column_name, episode):
         if column_name == 'Created by Username':
