@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import datetime
 from custom.bihar import getters, BIHAR_DOMAINS
 from custom.bihar.calculations.homevisit import DateRangeFilter
