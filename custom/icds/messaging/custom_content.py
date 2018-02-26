@@ -19,7 +19,7 @@ from custom.icds.messaging.indicators import (
     LSIndicator,
     AWWSubmissionPerformanceIndicator,
     AWWAggregatePerformanceIndicator,
-    LSAggregatePerformanceIndicator
+    LSAggregatePerformanceIndicator,
     LSVHNDSurveyIndicator,
     LSSubmissionPerformanceIndicator,
 )
@@ -294,18 +294,18 @@ def child_vaccinations_complete(recipient, case_schedule_instance):
 
 def validate_user_location_and_indicator(user, indicator_class):
     if issubclass(indicator_class, AWWIndicator):
-        if user.location.location_type != AWC_LOCATION_TYPE_CODE:
+        if user.location.location_type.code != AWC_LOCATION_TYPE_CODE:
             raise TypeError("Expected AWWIndicator to be called for an AWW, got %s instead" % user.get_id)
     elif issubclass(indicator_class, LSIndicator):
-        if user.location.location_type != SUPERVISOR_LOCATION_TYPE_CODE:
+        if user.location.location_type.code != SUPERVISOR_LOCATION_TYPE_CODE:
             raise TypeError("Expected LSIndicator to be called for an LS, got %s instead" % user.get_id)
     else:
         raise TypeError("Expected AWWIndicator or LSIndicator")
 
 
-def run_indicator_for_user(user):
+def run_indicator_for_user(user, indicator_class, language_code=None):
     validate_user_location_and_indicator(user, indicator_class)
-    language_code = get_language_code_for_user(user)
+    language_code = language_code or get_language_code_for_user(user)
     indicator = indicator_class(user.domain, user)
     return indicator.get_messages(language_code=language_code)
 
@@ -316,7 +316,7 @@ def run_indicator_for_usercase(usercase, indicator_class):
 
     user = get_user_from_usercase(usercase)
     if user and user.location:
-        return run_indicator_for_user(user)
+        return run_indicator_for_user(user, indicator_class)
 
     return []
 
