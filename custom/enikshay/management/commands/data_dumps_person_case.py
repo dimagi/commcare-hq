@@ -87,11 +87,6 @@ def get_recently_closed_case(person_case, all_cases):
                 raise Exception("This looks like a super edge case that can be looked at. "
                                 "Two episodes closed at the same time. Case id: {case_id}"
                                 .format(case_id=case.case_id))
-
-    if not recently_closed_case:
-        return Exception("Could not find recently closed episode case for person %s" %
-                         person_case.case_id)
-
     return recently_closed_case
 
 
@@ -105,12 +100,12 @@ def get_all_episode_cases_from_person(domain, person_case_id):
 
 def get_last_episode(person_case):
     """
-    For all episode cases under the person (the host of the host of the episode is the primary person case)
-    If count(open episode cases with episode.is_active = 'yes') > 1, report error
-    If count(open episode cases with episode.is_active = 'yes') = 1, pick this case
-    If count(open episode cases with episode.is_active = 'yes') = 0:
-        If count(open episode cases) > 0, report error
-    Else, pick the episode with the latest episode.closed_date
+    For all episode cases under the person (the host of the host of the episode is the primary person case):
+        If count(open episode cases with episode.is_active = 'yes') > 1, report error
+        If count(open episode cases with episode.is_active = 'yes') = 1, pick this case
+        If count(open episode cases with episode.is_active = 'yes') = 0:
+            pick the episode with the latest episode.closed_date if there is one
+            Else report 'No episodes'
     """
     episode_cases = get_all_episode_cases_from_person(person_case.domain, person_case.case_id)
     open_episode_cases = [
@@ -125,7 +120,9 @@ def get_last_episode(person_case):
         raise Exception("Multiple active open episode cases found for %s" % person_case.case_id)
     elif len(active_open_episode_cases) == 1:
         return active_open_episode_cases[0]
-    elif len(open_episode_cases) > 0:
-        raise Exception("Open inactive episode cases found for %s" % person_case.case_id)
     else:
-        return get_recently_closed_case(person_case, episode_cases)
+        recently_closed_case = get_recently_closed_case(person_case, episode_cases)
+        if recently_closed_case:
+            return recently_closed_case
+        else:
+            raise Exception("No episodes for %s" % person_case.case_id)
