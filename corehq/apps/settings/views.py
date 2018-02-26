@@ -19,7 +19,6 @@ from django.views.decorators.http import require_POST
 from corehq.mobile_flags import MULTIPLE_APPS_UNLIMITED
 from corehq.mobile_flags import ADVANCED_SETTINGS_ACCESS
 import langcodes
-from django.shortcuts import resolve_url
 
 from django.http import HttpResponseRedirect, HttpResponse
 from django.utils.decorators import method_decorator
