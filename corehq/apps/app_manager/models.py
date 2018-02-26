@@ -6135,7 +6135,7 @@ class RemoteApp(ApplicationBase):
     manage_urls = BooleanProperty(default=False)
 
     questions_map = DictProperty(required=False)
-    
+
     def is_remote_app(self):
         return True
 
