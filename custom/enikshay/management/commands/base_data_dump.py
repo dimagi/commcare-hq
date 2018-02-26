@@ -49,6 +49,7 @@ class BaseDataDump(BaseCommand):
         self.setup()
         temp_file_path = self.generate_dump()
         download_id = self.save_dump_to_blob(temp_file_path)
+
         self.email_result(download_id)
 
     def setup_result_file_name(self):
@@ -120,21 +121,20 @@ class BaseDataDump(BaseCommand):
 
     def save_dump_to_blob(self, temp_path):
         with open(temp_path, 'rb') as file_:
-
             blob_db = get_blob_db()
             blob_db.put(
                 file_,
                 self.result_file_name,
                 timeout=60 * 48)  # 48 hours
 
-            file_format = Format.from_format(Format.CSV)
-            file_name_header = safe_filename_header(
-                self.result_file_name, file_format.extension)
-            blob_dl_object = expose_blob_download(
-                self.result_file_name,
-                mimetype=file_format.mimetype,
-                content_disposition=file_name_header
-            )
+        file_format = Format.from_format(Format.CSV)
+        file_name_header = safe_filename_header(
+            self.result_file_name, file_format.extension)
+        blob_dl_object = expose_blob_download(
+            self.result_file_name,
+            mimetype=file_format.mimetype,
+            content_disposition=file_name_header
+        )
         return blob_dl_object.download_id
 
     def email_result(self, download_id):
