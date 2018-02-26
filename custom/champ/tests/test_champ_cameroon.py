@@ -32,6 +32,9 @@ class TestEnhancedPeerMobilization(TestDataSourceExpressions):
                     'userID': 'user_id',
                     'timeEnd': '2017-01-31 20:00'
                 },
+                'seropostive_group': {
+                    'first_art_date': '2017-02-03',
+                },
                 'load': {
                     'uic': 'test uic',
                     'first_art_date': '2017-02-03',
@@ -156,7 +159,7 @@ class TestEnhancedPeerMobilization(TestDataSourceExpressions):
                     'userID': 'user_id',
                     'timeEnd': '2017-01-31 20:00'
                 },
-                'load': {
+                'seropostive_group': {
                     'first_art_date': '2017-02-03',
                 },
                 'viral_load_group': {
@@ -280,8 +283,10 @@ class TestEnhancedPeerMobilization(TestDataSourceExpressions):
                     'userID': 'user_id',
                     'timeEnd': '2017-01-31 20:00'
                 },
-                'load': {
+                'seropostive_group': {
                     'first_art_date': '2017-02-03',
+                },
+                'load': {
                     'client_type': 'test client',
                     'hiv_status': 'positive',
                 },
