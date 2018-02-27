@@ -84,7 +84,7 @@ class PromptUpdateSettingsForm(forms.Form):
         ),
         help_text=ugettext_lazy(
             "If enabled, users will receive in-app prompts to update "
-            "to update to the selected version of the app, if they are not "
+            "to the selected version of the app, if they are not "
             "already on it. (Selecting 'Forced' will make it so that users "
             "cannot continue to use CommCare until they update)"
         )
@@ -99,7 +99,7 @@ class PromptUpdateSettingsForm(forms.Form):
         ),
         help_text=ugettext_lazy(
             "If enabled, users will receive in-app prompts to update "
-            "to update to the selected version of CommCare, if they are not already "
+            "to the selected version of CommCare, if they are not already "
             "on it. (Selecting 'Forced' will make it so that users cannot "
             "continue to use CommCare until they upgrade)"
         )
