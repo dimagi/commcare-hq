@@ -71,7 +71,7 @@ class Command(BaseDataDump):
         elif column_name == "Latest Episode Closed?":
             return get_last_episode(case).closed
         elif column_name == "Latest Episode - Date Closed (If any)":
-            return get_last_episode(case).closed_date
+            return get_last_episode(case).closed_on
         raise Exception("unknown custom column %s" % column_name)
 
     def get_case_reference_value(self, case_reference, case, calculation):
