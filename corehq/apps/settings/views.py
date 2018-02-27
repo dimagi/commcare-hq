@@ -33,6 +33,7 @@ from corehq.util.quickcache import quickcache
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import json_response
 from dimagi.utils.couch import CriticalSection
+from django.shortcuts import redirect
 
 from tastypie.models import ApiKey
 from two_factor.utils import default_device
@@ -383,6 +384,14 @@ class TwoFactorPhoneSetupView(BaseMyAccountView, PhoneSetupView):
     def dispatch(self, request, *args, **kwargs):
         # this is only here to add the login_required decorator
         return super(TwoFactorPhoneSetupView, self).dispatch(request, *args, **kwargs)
+
+    def done(self, form_list, **kwargs):
+        """
+        Store the device and reload the page.
+        """
+        self.get_device(user=self.request.user, name='backup').save()
+        messages.add_message(self.request, messages.SUCCESS, _("Phone number added."))
+        return redirect(reverse(TwoFactorProfileView.urlname))
 
 
 class TwoFactorPhoneDeleteView(BaseMyAccountView, PhoneDeleteView):
