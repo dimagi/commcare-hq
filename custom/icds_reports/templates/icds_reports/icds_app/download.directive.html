@@ -243,8 +243,8 @@
             </div>
             <div class="issnip-spinner-container" ng-if="($ctrl.showProgressBar() || $ctrl.readyToDownload() || $ctrl.queuedISSNIPTask) && !$ctrl.downloaded">
                 <i ng-if="$ctrl.showProgressBar() || $ctrl.queuedISSNIPTask" class="fa fa-circle-o-notch fa-spin"></i>
-                <span ng-if="$ctrl.showProgressBar() || $ctrl.queuedISSNIPTask">Preparing your ICDS-CAS montlhy register report...</span>
-                <span ng-if="$ctrl.readyToDownload()">Your ICDS-CAS montlhy register report is ready to be downloaded</span>
+                <span ng-if="$ctrl.showProgressBar() || $ctrl.queuedISSNIPTask">Preparing your ICDS-CAS monthly register report...</span>
+                <span ng-if="$ctrl.readyToDownload()">Your ICDS-CAS monthly register report is ready to be downloaded</span>
                 <a class="btn btn-primary" ng-click="$ctrl.goToLink()"
                    ng-disabled="!$ctrl.readyToDownload()"><span>Download</span></a>
             </div>
