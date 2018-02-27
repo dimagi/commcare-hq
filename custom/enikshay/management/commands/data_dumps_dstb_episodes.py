@@ -52,7 +52,9 @@ class Command(BaseDataDump):
         )
 
     def get_custom_value(self, column_name, episode):
-        if column_name == "Current Treating Facility - District":
+        if column_name == "Commcare UUID":
+            return episode.case_id
+        elif column_name == "Current Treating Facility - District":
             if not episode.closed and episode.get_case_property('is_active') == 'yes':
                 return self.get_person(episode).get_case_property('dto_id')
             else:
