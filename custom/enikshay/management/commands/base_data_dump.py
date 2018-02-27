@@ -17,6 +17,7 @@ from corehq.util.files import safe_filename_header
 from dimagi.utils.django.email import send_HTML_email
 
 from soil.util import expose_blob_download
+from casexml.apps.case.util import get_all_changes_to_case_property
 
 DOMAIN = "enikshay"
 LIMITED_TEST_DUMP_SIZE = 500
@@ -164,3 +165,21 @@ class BaseDataDump(BaseCommand):
 
     def get_case_reference_value(self, case_reference, case, calculation):
         raise NotImplementedError
+
+    @staticmethod
+    def case_property_change_info(test_case, case_property_name, case_property_value):
+        all_changes = get_all_changes_to_case_property(test_case, case_property_name)
+
+        changes_for_value = [change for change in all_changes
+                             if change.new_value == case_property_value]
+
+        if len(changes_for_value) > 1:
+            raise Exception("Case Property %s set as %s by multiple users on case %s" % (
+                case_property_name, case_property_value, test_case.case_id
+            ))
+        elif len(changes_for_value) == 1:
+            return changes_for_value[0]
+        else:
+            raise Exception("Case Property not %s set as %s by any user on case %s" % (
+                case_property_name, case_property_value, test_case.case_id
+            ))

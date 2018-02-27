@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import print_function
 
 from corehq.apps.es.case_search import CaseSearchES
+from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 
@@ -53,7 +54,11 @@ class Command(BaseDataDump):
         )
 
     def get_custom_value(self, column_name, test_case):
-        if column_name == "Criteria for Testing":
+        if column_name == "Commcare UUID":
+            return test_case.case_id
+        elif column_name == "Date of Episode Creation":
+            return self.get_episode(test_case).opened_on
+        elif column_name == "Criteria for Testing":
             return (
                 test_case.get_case_property('rft_drtb_diagnosis') or
                 test_case.get_case_property('rft_drtb_diagnosis_ext_dst') or
@@ -61,30 +66,31 @@ class Command(BaseDataDump):
                 test_case.get_case_property('rft_dstb_diagnosis') or
                 test_case.get_case_property('rft_dstb_followup')
             )
+        elif column_name == "Test Requested Form submitted By - ID":
+            return test_case.opened_by
+        elif column_name == "Test Requested Form submitted By - User Name":
+            user_id = None
+            try:
+                user_id = test_case.opened_by
+                return CommCareUser.get_by_user_id(user_id, DOMAIN).username
+            except Exception as e:
+                return Exception("Could not get username. case opened by %s, %s" % (user_id, e))
+        elif column_name == "Test Requested Form Submission Date":
+            return test_case.opened_on
         elif column_name == "Test Resulted Form Submitted by (Name)":
             if test_case.get_case_property('result_recorded') == 'yes':
-                if (test_case.get_case_property('last_modified_by_user_username') and
-                        test_case.get_case_property('last_modified_by_user_username') != SYSTEM_USER_ID):
-                    return test_case.get_case_property('last_modified_by_user_username')
-                else:
-                    return "Overwritten due to bulk changes"
+                user_id = self.case_property_change_info(test_case, "result_recorded", "yes").transaction.user_id
+                return CommCareUser.get_by_user_id(user_id, DOMAIN).username
             else:
                 return ''
         elif column_name == "Test Resulted Form Submitted by (ID)":
             if test_case.get_case_property('result_recorded') == 'yes':
-                if (test_case.get_case_property('last_modified_by_user_id') and
-                        test_case.get_case_property('last_modified_by_user_id') != SYSTEM_USER_ID):
-                    return test_case.get_case_property('last_modified_by_user_id')
-                else:
-                    return "Overwritten due to bulk changes"
+                return self.case_property_change_info(test_case, "result_recorded", "yes").transaction.user_id
             else:
                 return ''
         elif column_name == "Test Resulted Form Submission Date":
             if test_case.get_case_property('result_recorded') == 'yes':
-                if test_case.get_case_property('last_modified_by_user_id') != SYSTEM_USER_ID:
-                    return test_case.get_case_property('last_modified_date')
-                else:
-                    return "Overwritten due to bulk changes"
+                return self.case_property_change_info(test_case, "result_recorded", "yes").modified_on
             else:
                 return ''
         return Exception("unknown custom column %s" % column_name)
