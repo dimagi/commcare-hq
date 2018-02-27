@@ -72,6 +72,7 @@ class Command(BaseDataDump):
                 .case_type(case_type)
                 .case_property_query(ENROLLED_IN_PRIVATE, 'true', clause=queries.MUST_NOT)
                 .case_property_query("dataset", 'real')
+                .set_request_param("request_timeout", 60)
                 .get_ids()[0:10])
 
 
