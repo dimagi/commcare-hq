@@ -14,7 +14,7 @@ hqDefine('reports/js/drillable_async', function() {
             $('#fdi_ajax').addClass('hide');
             callback(allData.objects);
         });
-    };
+    }
 
     $(function() {
         var fdis = initialPageData.get('fdis');
@@ -54,7 +54,7 @@ hqDefine('reports/js/drillable_async', function() {
         // add a new level of drill-down to the tree
         this.path_push = function(fixt) {
             this.selected_path.push(fixt);
-            if (fixt.num_children() == 1) {
+            if (fixt.num_children() === 1) {
                 fixt.selected_child(fixt.get_child(0));
             }
         };
@@ -63,7 +63,7 @@ hqDefine('reports/js/drillable_async', function() {
         this.find_fixt = function(uuid, fixt) {
             fixt = fixt || this.root();
 
-            if (fixt.uuid() == uuid) {
+            if (fixt.uuid() === uuid) {
                 return [fixt];
             } else {
                 var path = null;
@@ -109,13 +109,13 @@ hqDefine('reports/js/drillable_async', function() {
         this.children_loaded = false;
 
         this.display_name = ko.computed(function() {
-            return this.name() == '_all' ? 'All' : this.name();
+            return this.name() === '_all' ? 'All' : this.name();
         }, this);
 
         this.selected_child = ko.observable();
         // when a fixture is selected, update the drill-down tree
         this.selected_child.subscribe(function(val) {
-            if (val == null || val.depth >= hierarchy.length) {
+            if (val === null || val.depth >= hierarchy.length) {
                 return;
             }
 
@@ -131,30 +131,30 @@ hqDefine('reports/js/drillable_async', function() {
                 }
             };
 
-            if (val.uuid() != null && !val.children_loaded) {
+            if (val.uuid() !== null && !val.children_loaded) {
                 val.load_children_async(post_children_loaded);
             } else {
                 post_children_loaded(val);
             }
         }, this);
         this.selected_is_valid = ko.computed(function() {
-            return this.selected_child() && this.selected_child().name() != '_all';
+            return this.selected_child() && this.selected_child().name() !== '_all';
         }, this);
 
         // helpers to account for the 'all' meta-entry
         this.num_children = ko.computed(function() {
-            return (this.children().length == 0 ? 0 : this.children().length - 1);
+            return (this.children().length === 0 ? 0 : this.children().length - 1);
         }, this);
         this.get_child = function(i) {
             return this.children()[i + 1];
         };
 
         this.load = function(data) {
-            if (data.fields.name == '_all') this.name('_all');
+            if (data.fields.name === '_all') this.name('_all');
             else if (this.depth > 0) this.name(data.fields[hierarchy[this.depth-1]["display"]] || null);
             this.type(data.fixture_type);
             this.uuid(data.id || null);
-            if (data.children != null) {
+            if (data.children !== null) {
                 this.set_children(data.children);
             }
         };
