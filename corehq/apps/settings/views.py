@@ -36,7 +36,7 @@ from dimagi.utils.couch import CriticalSection
 from django.shortcuts import redirect
 
 from tastypie.models import ApiKey
-from two_factor.models import PhoneDevice, get_available_phone_methods
+from two_factor.models import PhoneDevice
 from two_factor.utils import default_device
 from two_factor.views import (
     ProfileView, SetupView, SetupCompleteView,
