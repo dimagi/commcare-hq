@@ -2,6 +2,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import csv
+import os
 import tempfile
 from zipfile import ZipFile
 from datetime import datetime
@@ -57,7 +58,7 @@ class BaseDataDump(BaseCommand):
         temp_file_path = self.generate_dump()
         temp_zip_path = self.zip_dump(temp_file_path)
         download_id = self.save_dump_to_blob(temp_zip_path)
-
+        self.clean_temp_files(temp_file_path, temp_zip_path)
         self.email_result(download_id)
 
     def setup_result_file_name(self):
@@ -150,6 +151,10 @@ class BaseDataDump(BaseCommand):
             content_disposition=file_name_header
         )
         return blob_dl_object.download_id
+
+    def clean_temp_files(self, *temp_file_paths):
+        for file_path in temp_file_paths:
+            os.remove(file_path)
 
     def email_result(self, download_id):
         url = "%s%s?%s" % (get_url_base(),
