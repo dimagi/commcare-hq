@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django import forms
 from corehq.apps.indicators.admin.forms import BaseDynamicIndicatorForm, CouchIndicatorForm
 from mvp.models import MVPDaysSinceLastTransmission, MVPActiveCasesIndicatorDefinition, MVPChildCasesByAgeIndicatorDefinition
