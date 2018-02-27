@@ -18,7 +18,6 @@ from six.moves import range
 
 class TimedSchedule(Schedule):
     REPEAT_INDEFINITELY = -1
-    MONTHLY = -1
 
     ANY_DAY = -1
     MONDAY = 0
@@ -33,7 +32,15 @@ class TimedSchedule(Schedule):
     EVENT_RANDOM_TIME = 'RANDOM_TIME'
     EVENT_CASE_PROPERTY_TIME = 'CASE_PROPERTY_TIME'
 
-    schedule_length = models.IntegerField()
+    # If repeat_every is positive, it represents the number of days
+    # after which to repeat all the schedule's events.
+    # If repeat_every is negative, it represents the number of months
+    # after which to repeat all the schedule's events.
+    repeat_every = models.IntegerField()
+
+    # total_iterations represents the total number of times to iterate
+    # through the schedule's events; a value of 1 means the events do
+    # not repeat
     total_iterations = models.IntegerField()
     start_offset = models.IntegerField(default=0)
     start_day_of_week = models.IntegerField(default=ANY_DAY)
@@ -47,7 +54,7 @@ class TimedSchedule(Schedule):
         when a TimedScheduleInstance should recalculate its schedule.
         """
         schedule_info = json.dumps([
-            self.schedule_length,
+            self.repeat_every,
             self.total_iterations,
             self.start_offset,
             self.start_day_of_week,
@@ -75,6 +82,16 @@ class TimedSchedule(Schedule):
         else:
             raise ValueError("Unexpected value for event_type: %s" % self.event_type)
 
+    @property
+    def is_monthly(self):
+        """
+        For the purposes of repeat_every, the schedule can really be considered to
+        be either "daily" or "monthly", since "weekly" is a special case of "daily"
+        which repeats every 7 days, and "yearly" is a special case of "monthly"
+        which repeats every 12 months.
+        """
+        return self.repeat_every < 0
+
     def set_first_event_due_timestamp(self, instance, start_date=None):
         """
         If start_date is None, we set it automatically ensuring that
@@ -89,7 +106,7 @@ class TimedSchedule(Schedule):
         self.set_next_event_due_timestamp(instance)
 
         if (
-            self.schedule_length != self.MONTHLY and
+            not self.is_monthly and
             not start_date and
             instance.next_event_due < util.utcnow()
         ):
@@ -122,10 +139,13 @@ class TimedSchedule(Schedule):
         return None
 
     def get_local_next_event_due_timestamp(self, instance):
+        if self.repeat_every <= 0:
+            raise ValueError("Expected positive value for repeat_every in a daily or weekly schedule")
+
         current_event = self.memoized_events[instance.current_event_num]
 
         days_since_start_date = (
-            ((instance.schedule_iteration_num - 1) * self.schedule_length) + current_event.day
+            ((instance.schedule_iteration_num - 1) * self.repeat_every) + current_event.day
         )
 
         local_time, additional_day_offset = current_event.get_time(case=self.get_case_or_none(instance))
@@ -136,6 +156,9 @@ class TimedSchedule(Schedule):
         )
 
     def get_local_next_event_due_timestamp_for_monthly_schedule(self, instance):
+        if self.repeat_every >= 0:
+            raise ValueError("Expected negative value for repeat_every in a monthly schedule")
+
         target_date = None
         start_date_with_offset = instance.start_date + timedelta(days=self.start_offset)
 
@@ -150,11 +173,13 @@ class TimedSchedule(Schedule):
                 # always schedule a negative day.
                 raise InvalidMonthlyScheduleConfiguration("Day must be between -28 and 31, and not be 0")
 
-            year_offset = (instance.schedule_iteration_num - 1) // 12
-            month_offset = (instance.schedule_iteration_num - 1) % 12
+            months_since_start_date = (instance.schedule_iteration_num - 1) * (-1 * self.repeat_every)
+            year = start_date_with_offset.year
+            month = start_date_with_offset.month + months_since_start_date
 
-            year = start_date_with_offset.year + year_offset
-            month = start_date_with_offset.month + month_offset
+            while month > 12:
+                year += 1
+                month -= 12
 
             days_in_month = calendar.monthrange(year, month)[1]
             if current_event.day > 0:
@@ -174,7 +199,7 @@ class TimedSchedule(Schedule):
         return datetime.combine(target_date + timedelta(days=additional_day_offset), local_time)
 
     def set_next_event_due_timestamp(self, instance):
-        if self.schedule_length == self.MONTHLY:
+        if self.is_monthly:
             user_timestamp = self.get_local_next_event_due_timestamp_for_monthly_schedule(instance)
         else:
             user_timestamp = self.get_local_next_event_due_timestamp(instance)
@@ -248,7 +273,7 @@ class TimedSchedule(Schedule):
             self.event_type = self.get_event_type_from_model_event(model_event)
             self.start_offset = start_offset
             self.start_day_of_week = start_day_of_week
-            self.schedule_length = 1
+            self.repeat_every = 1
             self.total_iterations = total_iterations
             self.ui_type = Schedule.UI_TYPE_DAILY
             self.set_extra_scheduling_options(extra_options)
@@ -297,7 +322,7 @@ class TimedSchedule(Schedule):
 
             self.event_type = self.get_event_type_from_model_event(model_event)
             self.start_day_of_week = start_day_of_week
-            self.schedule_length = 7
+            self.repeat_every = 7
             self.total_iterations = total_iterations
             self.ui_type = Schedule.UI_TYPE_WEEKLY
             self.start_offset = 0
@@ -341,7 +366,7 @@ class TimedSchedule(Schedule):
             self.delete_related_events()
 
             self.event_type = self.get_event_type_from_model_event(model_event)
-            self.schedule_length = self.MONTHLY
+            self.repeat_every = -1
             self.total_iterations = total_iterations
             self.ui_type = Schedule.UI_TYPE_MONTHLY
             self.start_offset = 0
