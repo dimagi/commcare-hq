@@ -148,8 +148,34 @@ def get_last_episode(person_case):
     elif len(active_open_episode_cases) == 1:
         return active_open_episode_cases[0]
     else:
-        recently_modified_case = get_case_recently_modified_on_phone(episode_cases, False)
+        # look for case recently modified by a user
+        recently_modified_case_on_phone = get_case_recently_modified_on_phone(episode_cases, False)
+        if recently_modified_case_on_phone:
+            return recently_modified_case_on_phone
+
+        # else look for the case recently modified ever
+        # for ex cases that were created and then closed by the system itself
+        recently_modified_case = get_case_recently_modified(episode_cases)
         if recently_modified_case:
             return recently_modified_case
-        else:
-            raise Exception("No episodes for %s" % person_case.case_id)
+
+        raise Exception("No episodes for %s" % person_case.case_id)
+
+
+def get_case_recently_modified(all_cases):
+    recently_modified_case = None
+    recently_modified_time = None
+    for case in all_cases:
+        last_edit = case.modified_on
+        if last_edit:
+            if recently_modified_time is None:
+                recently_modified_time = last_edit
+                recently_modified_case = case
+            elif recently_modified_time and recently_modified_time < last_edit:
+                recently_modified_time = last_edit
+                recently_modified_case = case
+            elif recently_modified_time and recently_modified_time == last_edit:
+                print("This looks like a super edge case that can be looked at. "
+                      "Not blocking as of now. Case id: {case_id}".format(case_id=case.case_id))
+
+    return recently_modified_case
