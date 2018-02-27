@@ -712,6 +712,7 @@ class AggregateChildHealthPostnatalCareForms(models.Model):
         help_text="Counseling about adequate breastfeeding has ever occurred"
     )
     not_breastfeeding = models.CharField(
+        max_length=126,
         help_text="The reason the mother is not able to breastfeed"
     )
 
