@@ -132,8 +132,7 @@ class BaseDataDump(BaseCommand):
                 file_,
                 self.result_file_name,
                 timeout=60 * 48)  # 48 hours
-
-        file_format = Format.from_format(Format.CSV)
+        file_format = Format.from_format(Format.UNZIPPED_CSV)
         file_name_header = safe_filename_header(
             self.result_file_name, file_format.extension)
         blob_dl_object = expose_blob_download(
