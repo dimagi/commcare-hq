@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import print_function
 import os
 from corehq.apps.es import case_search
+from corehq.apps.users.models import CommCareUser
 
 from custom.enikshay.case_utils import (
     CASE_TYPE_EPISODE,
@@ -47,9 +48,22 @@ class Command(BaseDataDump):
         )
 
     def get_custom_value(self, column_name, episode):
-        if column_name == 'Created by Username':
-            return (episode.get_case_property('opened_by_username')
-                    or episode.get_case_property('opened_by_username1'))
+        if column_name == "Commcare UUID":
+            return episode.case_id
+        elif column_name == "Episode closed?":
+            return episode.closed
+        elif column_name == "Date of Creation of Presumptive TB Episode":
+            return episode.opened_on
+        elif column_name == 'Created by Username':
+            user_id = None
+            try:
+                user_id = episode.opened_by
+                user = CommCareUser.get_by_user_id(user_id, DOMAIN)
+                return user.username
+            except Exception as e:
+                return Exception("Could not get username. case opened by %s, %s" % (user_id, e))
+        elif column_name == "Created by User ID":
+            return episode.opened_by
         raise Exception("No custom calculation found for {}".format(column_name))
 
     def get_person(self, episode):
