@@ -94,13 +94,15 @@ FAILURE_RESPONSE = (
     'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">'
     '<soap:Body><InsertHFIDPatient_UATBCResponse xmlns="http://tempuri.org/"><InsertHFIDPatient_UATBCResult>'
     'Invalid data format</InsertHFIDPatient_UATBCResult></InsertHFIDPatient_UATBCResponse></soap:Body>'
-    '</soap:Envelope>')
+    '</soap:Envelope>'
+).encode('utf-8')
 
 SUCCESSFUL_SOAP_RESPONSE = (
     '<?xml version="1.0" encoding="utf-8"?><soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" '
     'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">'
     '<soap:Body><InsertHFIDPatient_UATBCResponse xmlns="http://tempuri.org/"><InsertHFIDPatient_UATBCResult>'
-    '000001</InsertHFIDPatient_UATBCResult></InsertHFIDPatient_UATBCResponse></soap:Body></soap:Envelope>')
+    '000001</InsertHFIDPatient_UATBCResult></InsertHFIDPatient_UATBCResponse></soap:Body></soap:Envelope>'
+).encode('utf-8')
 
 DUMMY_HEALTH_ESTABLISHMENT_ID = '125344'
 DUMMY_REGISTERED_HEALTH_ESTABLISHMENT_ID = '987654'
@@ -124,7 +126,7 @@ SUCCESSFUL_HEALTH_ESTABLISHMENT_RESPONSE = (
             '</HE_RegistrationResponse>'
         '</soap:Body>'
     '</soap:Envelope>'
-).format(dummy_id=DUMMY_HEALTH_ESTABLISHMENT_ID)
+).format(dummy_id=DUMMY_HEALTH_ESTABLISHMENT_ID).encode('utf-8')
 
 ALREADY_REGISTERED_ESTABLISHMENT_RESPONSE = (
     '<?xml version="1.0" encoding="utf-8"?>'
@@ -159,7 +161,7 @@ ALREADY_REGISTERED_ESTABLISHMENT_RESPONSE = (
             '</HE_RegistrationResponse>'
         '</soap:Body>'
     '</soap:Envelope>'
-).format(dummy_id=DUMMY_REGISTERED_HEALTH_ESTABLISHMENT_ID)
+).format(dummy_id=DUMMY_REGISTERED_HEALTH_ESTABLISHMENT_ID).encode('utf-8')
 
 
 class NikshayRepeaterTestBase(ENikshayCaseStructureMixin, TestCase):
