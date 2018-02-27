@@ -220,7 +220,7 @@ describe('Download Directive', function () {
             clock.restore();
         }));
 
-        it('tests not visible option to download issnip report', function () {
+        it('tests not visible option to download ICDS-CAS monthly register report', function () {
             var length = controller.indicators.length;
             assert.equal(7, length);
         });
@@ -268,7 +268,7 @@ describe('Download Directive', function () {
             clock.restore();
         }));
 
-        it('tests not visible option to download issnip report', function () {
+        it('tests not visible option to download ICDS-CAS monthly register report', function () {
             var length = controller.indicators.length;
             assert.equal(6, length);
         });

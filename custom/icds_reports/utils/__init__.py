@@ -466,7 +466,7 @@ def zip_folder(pdf_files):
     zip_file = zipfile.ZipFile(in_memory, 'w', zipfile.ZIP_DEFLATED)
     for pdf_file in pdf_files:
         file = client.get(pdf_file['uuid'])
-        zip_file.writestr('ISSNIP_monthly_register_{}.pdf'.format(pdf_file['location_name']), file)
+        zip_file.writestr('ICDS_CAS_monthly_register_{}.pdf'.format(pdf_file['location_name']), file)
     zip_file.close()
     client.set(zip_hash, in_memory.getvalue())
     client.expire(zip_hash, 24 * 60 * 60)

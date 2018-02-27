@@ -1505,11 +1505,11 @@ class DownloadPDFReport(View):
         client = get_redis_client()
         if format == 'one':
             response = HttpResponse(client.get(uuid), content_type='application/pdf')
-            response['Content-Disposition'] = 'attachment; filename="ISSNIP_monthly_register_cumulative.pdf"'
+            response['Content-Disposition'] = 'attachment; filename="ICDS_CAS_monthly_register_cumulative.pdf"'
             return response
         else:
             response = HttpResponse(client.get(uuid), content_type='application/zip')
-            response['Content-Disposition'] = 'attachment; filename="ISSNIP_monthly_register.zip"'
+            response['Content-Disposition'] = 'attachment; filename="ICDS_CAS_monthly_register.zip"'
             return response
 
 
