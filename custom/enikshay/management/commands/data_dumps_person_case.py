@@ -15,6 +15,10 @@ from custom.enikshay.case_utils import (
 )
 from custom.enikshay.const import ENROLLED_IN_PRIVATE
 from custom.enikshay.management.commands.base_data_dump import BaseDataDump
+from custom.enikshay.management.commands.duplicate_occurrences_and_episodes_reconciliation import (
+    get_case_recently_modified_on_phone,
+)
+
 
 DOMAIN = "enikshay"
 
@@ -144,8 +148,8 @@ def get_last_episode(person_case):
     elif len(active_open_episode_cases) == 1:
         return active_open_episode_cases[0]
     else:
-        recently_closed_case = get_recently_closed_case(person_case, episode_cases)
-        if recently_closed_case:
-            return recently_closed_case
+        recently_modified_case = get_case_recently_modified_on_phone(episode_cases, False)
+        if recently_modified_case:
+            return recently_modified_case
         else:
             raise Exception("No episodes for %s" % person_case.case_id)
