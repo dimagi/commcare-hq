@@ -153,13 +153,6 @@ class HQTwoFactorMethodForm(MethodForm):
             ),
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(
-                    _('Back'),
-                    css_class='btn-default',
-                    type='submit',
-                    value='welcome',
-                    name='wizard_goto_step',
-                ),
-                twbscrispy.StrictButton(
                     _('Next'),
                     css_class='btn-primary',
                     type='submit',

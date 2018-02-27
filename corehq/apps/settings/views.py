@@ -321,7 +321,7 @@ class TwoFactorSetupView(BaseMyAccountView, SetupView):
     page_title = ugettext_lazy("Two Factor Authentication Setup")
 
     form_list = (
-        ('welcome', HQEmptyForm),
+        ('welcome_setup', HQEmptyForm),
         ('method', HQTwoFactorMethodForm),
         ('generator', HQTOTPDeviceForm),
         ('sms', HQPhoneNumberForm),
@@ -419,6 +419,7 @@ class TwoFactorResetView(TwoFactorSetupView):
     urlname = 'reset'
 
     form_list = (
+        ('welcome_reset', HQEmptyForm),
         ('method', HQTwoFactorMethodForm),
         ('generator', HQTOTPDeviceForm),
         ('sms', HQPhoneNumberForm),
