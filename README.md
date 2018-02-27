@@ -235,7 +235,7 @@ in the commcare-hq repo root.
 
 ```bash
 $ curl https://raw.githubusercontent.com/dimagi/formplayer/master/config/application.example.properties -o formplayer.properties
-$ curl https://jenkins.dimagi.com/job/formplayer/lastSuccessfulBuild/artifact/build/libs/formplayer.jar -o formplayer.jar
+$ curl https://s3.amazonaws.com/dimagi-formplayer-jars/latest-successful/formplayer.jar -o formplayer.jar
 ```
 
 Thereafter, to run formplayer, navigate to the dir where you installed them
@@ -251,7 +251,7 @@ re-fetching it using the same command above. Feel free to add it to your
 `hammer` command or wherever.
 
 ```bash
-$ curl https://jenkins.dimagi.com/job/formplayer/lastSuccessfulBuild/artifact/build/libs/formplayer.jar -o formplayer.jar
+$ curl https://s3.amazonaws.com/dimagi-formplayer-jars/latest-successful/formplayer.jar -o formplayer.jar
 ```
 
 
