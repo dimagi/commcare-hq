@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.http import HttpResponse
 from django.http.response import JsonResponse
 from django.shortcuts import redirect

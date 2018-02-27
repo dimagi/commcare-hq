@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from datetime import datetime
 import uuid
 from nose.tools import nottest
@@ -38,9 +39,9 @@ def get_person_case_structure(case_id, user_id, extra_update=None, owner_id=None
     extra_update = extra_update or {}
     owner_id = owner_id or uuid.uuid4().hex
     update = {
-        'name': u"Peregrine เՇร ค Շгคק",
-        PERSON_FIRST_NAME: u"Peregrine",
-        PERSON_LAST_NAME: u"เՇร ค Շгคק",
+        'name': "Peregrine เՇร ค Շгคק",
+        PERSON_FIRST_NAME: "Peregrine",
+        PERSON_LAST_NAME: "เՇร ค Շгคק",
         'aadhaar_number': "499118665246",
         'dob': "1987-08-15",
         'age': '20',
@@ -49,7 +50,7 @@ def get_person_case_structure(case_id, user_id, extra_update=None, owner_id=None
         'secondary_contact_name_address': 'Mrs. Everestie',
         'previous_tb_treatment': 'yes',
         'nikshay_registered': "false",
-        'husband_father_name': u"Mr. Peregrine เՇร ค Շгคק Kumar",
+        'husband_father_name': "Mr. Peregrine เՇร ค Շгคק Kumar",
         'current_address_postal_code': '110088',
         'person_id': 'THX-1138',
     }
@@ -98,13 +99,13 @@ def get_episode_case_structure(case_id, indexed_occurrence_case, extra_update=No
         'occupation': 'engineer',
         'opened_on': datetime(1989, 6, 11, 0, 0),
         'patient_type_choice': 'treatment_after_lfu',
-        'person_name': u'Peregrine เՇร ค Շгคק',
+        'person_name': 'Peregrine เՇร ค Շгคק',
         'site_choice': 'pleural_effusion',
         'treatment_supporter_designation': 'ngo_volunteer',
         'treatment_initiated': TREATMENT_INITIATED_IN_PHI,
         TREATMENT_START_DATE: "2015-03-03",
-        TREATMENT_SUPPORTER_FIRST_NAME: u"𝔊𝔞𝔫𝔡𝔞𝔩𝔣",
-        TREATMENT_SUPPORTER_LAST_NAME: u"𝔗𝔥𝔢 𝔊𝔯𝔢𝔶",
+        TREATMENT_SUPPORTER_FIRST_NAME: "𝔊𝔞𝔫𝔡𝔞𝔩𝔣",
+        TREATMENT_SUPPORTER_LAST_NAME: "𝔗𝔥𝔢 𝔊𝔯𝔢𝔶",
         MERM_ID: "123456789",
         'treatment_initiation_status': 'F',
         'dst_status': 'pending',
@@ -305,11 +306,11 @@ class ENikshayCaseStructureMixin(object):
             first_name="Jon",
             last_name="Snow",
         )
-        self.person_id = u"person"
-        self.occurrence_id = u"occurrence"
-        self.episode_id = u"episode"
-        self.test_id = u"test"
-        self.lab_referral_id = u"lab_referral"
+        self.person_id = "person"
+        self.occurrence_id = "occurrence"
+        self.episode_id = "episode"
+        self.test_id = "test"
+        self.lab_referral_id = "lab_referral"
         self.prescription_id = "prescription_id"
         self.prescription_item_id = 'prescription_item_id'
         self.referral_id = 'referal'

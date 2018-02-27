@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import json
 import os
 
@@ -93,13 +94,15 @@ FAILURE_RESPONSE = (
     'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">'
     '<soap:Body><InsertHFIDPatient_UATBCResponse xmlns="http://tempuri.org/"><InsertHFIDPatient_UATBCResult>'
     'Invalid data format</InsertHFIDPatient_UATBCResult></InsertHFIDPatient_UATBCResponse></soap:Body>'
-    '</soap:Envelope>')
+    '</soap:Envelope>'
+).encode('utf-8')
 
 SUCCESSFUL_SOAP_RESPONSE = (
     '<?xml version="1.0" encoding="utf-8"?><soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" '
     'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">'
     '<soap:Body><InsertHFIDPatient_UATBCResponse xmlns="http://tempuri.org/"><InsertHFIDPatient_UATBCResult>'
-    '000001</InsertHFIDPatient_UATBCResult></InsertHFIDPatient_UATBCResponse></soap:Body></soap:Envelope>')
+    '000001</InsertHFIDPatient_UATBCResult></InsertHFIDPatient_UATBCResponse></soap:Body></soap:Envelope>'
+).encode('utf-8')
 
 DUMMY_HEALTH_ESTABLISHMENT_ID = '125344'
 DUMMY_REGISTERED_HEALTH_ESTABLISHMENT_ID = '987654'
@@ -123,7 +126,7 @@ SUCCESSFUL_HEALTH_ESTABLISHMENT_RESPONSE = (
             '</HE_RegistrationResponse>'
         '</soap:Body>'
     '</soap:Envelope>'
-).format(dummy_id=DUMMY_HEALTH_ESTABLISHMENT_ID)
+).format(dummy_id=DUMMY_HEALTH_ESTABLISHMENT_ID).encode('utf-8')
 
 ALREADY_REGISTERED_ESTABLISHMENT_RESPONSE = (
     '<?xml version="1.0" encoding="utf-8"?>'
@@ -158,7 +161,7 @@ ALREADY_REGISTERED_ESTABLISHMENT_RESPONSE = (
             '</HE_RegistrationResponse>'
         '</soap:Body>'
     '</soap:Envelope>'
-).format(dummy_id=DUMMY_REGISTERED_HEALTH_ESTABLISHMENT_ID)
+).format(dummy_id=DUMMY_REGISTERED_HEALTH_ESTABLISHMENT_ID).encode('utf-8')
 
 
 class NikshayRepeaterTestBase(ENikshayCaseStructureMixin, TestCase):
@@ -343,7 +346,7 @@ class TestNikshayRegisterPatientPayloadGenerator(ENikshayLocationStructureMixin,
         self.assertEqual(payload['regBy'], "tbu-dmdmo01")
 
         # From Person
-        self.assertEqual(payload['pname'], u"Peregrine เՇร ค Շгคק")
+        self.assertEqual(payload['pname'], "Peregrine เՇร ค Շгคק")
         self.assertEqual(payload['page'], '20')
         self.assertEqual(payload['pgender'], 'M')
         self.assertEqual(payload['paddress'], 'Mt. Everest')
@@ -357,7 +360,7 @@ class TestNikshayRegisterPatientPayloadGenerator(ENikshayLocationStructureMixin,
         self.assertEqual(payload['sitedetail'], 2)
         self.assertEqual(payload['Ptype'], '4')
         self.assertEqual(payload['poccupation'], 4)
-        self.assertEqual(payload['dotname'], u'𝔊𝔞𝔫𝔡𝔞𝔩𝔣 𝔗𝔥𝔢 𝔊𝔯𝔢𝔶')
+        self.assertEqual(payload['dotname'], '𝔊𝔞𝔫𝔡𝔞𝔩𝔣 𝔗𝔥𝔢 𝔊𝔯𝔢𝔶')
         self.assertEqual(payload['dotmob'], '066000666')
         self.assertEqual(payload['disease_classification'], 'EP')
         self.assertEqual(payload['pregdate'], '2014-09-09')
@@ -487,7 +490,7 @@ class TestNikshayRegisterPatientPayloadGenerator(ENikshayLocationStructureMixin,
             "Results": [
                 {
                     "FieldName": "NikshayId",
-                    "Fieldvalue": "The INSERT statement conflicted with the FOREIGN KEY constraint \"FK_PatientsDetails_TBUnits\". The conflict occurred in database \"nikshay\", table \"dbo.TBUnits\".\u000d\u000a \u000d\u000aDM-ABC-01-16-0001\u000d\u000aThe statement has been terminated."  # noqa. yes, this is a real response.
+                    "Fieldvalue": "The INSERT statement conflicted with the FOREIGN KEY constraint \"FK_PatientsDetails_TBUnits\". The conflict occurred in database \"nikshay\", table \"dbo.TBUnits\".\\u000d\\u000a \\u000d\\u000aDM-ABC-01-16-0001\\u000d\\u000aThe statement has been terminated."  # noqa. yes, this is a real response.
                 }
             ]
         }
@@ -811,7 +814,7 @@ class TestNikshayTreatmentOutcomePayload(ENikshayLocationStructureMixin, Nikshay
         self.assertEqual(payload['PatientID'], self.person_id)
         self.assertEqual(payload['regBy'], "tbu-dmdmo01")
         self.assertEqual(payload['OutcomeDate'], "1990-01-01")
-        self.assertEqual(payload['MO'], u"𝔊𝔞𝔫𝔡𝔞𝔩𝔣 𝔗𝔥𝔢 𝔊𝔯𝔢𝔶")
+        self.assertEqual(payload['MO'], "𝔊𝔞𝔫𝔡𝔞𝔩𝔣 𝔗𝔥𝔢 𝔊𝔯𝔢𝔶")
         self.assertEqual(payload['MORemark'], 'None Collected in eNikshay')
         self.assertEqual(payload['Outcome'], '2')
 

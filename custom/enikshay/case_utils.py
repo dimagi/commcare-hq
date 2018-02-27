@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import pytz
 from collections import namedtuple, defaultdict
 from django.utils.dateparse import (
@@ -526,7 +527,7 @@ def get_person_case(domain, case_id):
     elif case_type == CASE_TYPE_TRAIL:
         return get_person_case_from_trail(domain, case.case_id)
     else:
-        raise ENikshayCaseTypeNotFound(u"Unknown case type: {}".format(case_type))
+        raise ENikshayCaseTypeNotFound("Unknown case type: {}".format(case_type))
 
 
 def _get_voucher_parent(domain, voucher_case_id):
