@@ -72,7 +72,8 @@ class HQPasswordChangeForm(EncodedPasswordChangeFormMixin, PasswordChangeForm):
 
 
 class HQPhoneNumberMethodForm(PhoneNumberMethodForm):
-    number = forms.CharField(label=_('Phone Number'),
+    number = forms.CharField(required=False,
+                             label=_('Phone Number'),
                              validators=[validate_international_phonenumber],
                              widget=forms.TextInput(
                                  attrs={'placeholder': _('Start with +, followed by Country Code.')}))
@@ -206,7 +207,8 @@ class HQTOTPDeviceForm(TOTPDeviceForm):
 
 
 class HQPhoneNumberForm(PhoneNumberForm):
-    number = forms.CharField(label=_('Phone Number'),
+    number = forms.CharField(required=False,
+                             label=_('Phone Number'),
                              validators=[validate_international_phonenumber],
                              widget=forms.TextInput(
                                  attrs={'placeholder': _('Start with +, followed by Country Code.')}))
