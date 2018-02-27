@@ -55,7 +55,6 @@ def get_case_and_descendants(domain, case_id):
 
 
 @mobile_auth
-@WEBAPPS_CASE_MIGRATION.required_decorator()
 def migration_restore(request, domain, case_id):
     """Restore endpoint used in bulk case migrations
 

@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import division
 import six.moves.html_parser
 import json
 import socket
@@ -293,7 +294,7 @@ def system_ajax(request):
                 meta['design_document'] = dd[len('_design/'):]
                 total_changes = sum(task['total_changes'] for task in meta['tasks'])
                 for task in meta['tasks']:
-                    task['progress_contribution'] = task['changes_done'] * 100 / total_changes
+                    task['progress_contribution'] = task['changes_done'] * 100 // total_changes
 
                 design_docs.append(meta)
             return json_response(design_docs)

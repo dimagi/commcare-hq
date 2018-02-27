@@ -42,18 +42,6 @@ function NewbornWithLowBirthController($scope, $routeParams, $location, $filter,
 
     vm.message = storageService.getKey('message') || false;
 
-    vm.prevDay = moment().subtract(1, 'days').format('Do MMMM, YYYY');
-    vm.lastDayOfPreviousMonth = moment().set('date', 1).subtract(1, 'days').format('Do MMMM, YYYY');
-    vm.currentMonth = moment().format("MMMM");
-    vm.showInfoMessage = function () {
-        var selected_month = parseInt($location.search()['month']) || new Date().getMonth() + 1;
-        var selected_year = parseInt($location.search()['year']) || new Date().getFullYear();
-        var current_month = new Date().getMonth() + 1;
-        var current_year = new Date().getFullYear();
-        return selected_month === current_month && selected_year === current_year &&
-            (new Date().getDate() === 1 || new Date().getDate() === 2);
-    };
-
     $scope.$watch(function() {
         return vm.selectedLocations;
     }, function (newValue, oldValue) {
@@ -76,16 +64,16 @@ function NewbornWithLowBirthController($scope, $routeParams, $location, $filter,
     vm.templatePopup = function(loc, row) {
         var gender = genderIndex > 0 ? genders[genderIndex].name : '';
         var chosenFilters = gender ? ' (' + gender + ') ' : '';
-        var total = row ? $filter('indiaNumbers')(row.in_month) : 'N/A';
+        var total = row ? $filter('indiaNumbers')(row.all) : 'N/A';
         var low_birth = row ? $filter('indiaNumbers')(row.low_birth) : 'N/A';
         var percent = row ? d3.format('.2%')(row.low_birth / (row.in_month || 1)) : 'N/A';
-        var unweighed_percent = row ? d3.format('.2%')((row.in_month - row.low_birth) / (row.in_month || 1)) : 'N/A';
+        var unweighed_percent = row ? d3.format('.2%')(row.in_month / (row.all || 1)) : 'N/A';
         return '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
             '<p>' + loc.properties.name + '</p>' +
             '<div>' + chosenFilters + 'Total Number of Newborns born in given month: <strong>' + total + '</strong></div>' +
             '<div>' + chosenFilters + 'Number of Newborns with LBW in given month: <strong>' + low_birth + '</strong></div>' +
             '<div>% newborns with LBW in given month' + chosenFilters + ': <strong>' + percent + '</strong></div>' +
-            '<div>% Unweighed' + chosenFilters + ': <strong>' + unweighed_percent + '</strong></div>';
+            '<div>% Unweighted' + chosenFilters + ': <strong>' + unweighed_percent + '</strong></div>';
     };
 
     vm.loadData = function () {
@@ -223,7 +211,7 @@ function NewbornWithLowBirthController($scope, $routeParams, $location, $filter,
             + "<div>Total Number of Newborns born in given month: <strong>" + $filter('indiaNumbers')(dataInMonth.all) + "</strong></div>"
             + "<div>Number of Newborns with LBW in given month: <strong>" + $filter('indiaNumbers')(dataInMonth.low_birth) + "</strong></div>"
             + "<div>% newborns with LBW in given month: <strong>" + d3.format('.2%')(dataInMonth.y) + "</strong></div>"
-            + "<div>% Unweighed: <strong>" + d3.format('.2%')(1 - dataInMonth.y) + "</strong></div>";
+            + "<div>% Unweighted: <strong>" + d3.format('.2%')(dataInMonth.in_month / (dataInMonth.all || 1)) + "</strong></div>";
     };
 
     vm.getDisableIndex = function () {

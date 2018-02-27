@@ -6,11 +6,11 @@
         'ngResource',
         'ngRoute',
         'ngCookies',
-        'ng.django.rmi'
+        'ng.django.rmi',
     ]);
 
     pagination.constant('paginationLimits', [
-        [10, "Limit 10"]
+        [10, "Limit 10"],
     ]);
 
     pagination.constant('paginationLimitCookieName', 'hq.ngPaginationLimit');
@@ -31,7 +31,7 @@
         $scope.paginationLimits = _.map(paginationLimits, function (l) {
             return {
                 value: l[0],
-                key: l[1]
+                key: l[1],
             };
         });
 
@@ -91,7 +91,7 @@
             var paginationData = {
                 limit: $scope.limit,
                 page: $scope.currentPage,
-                query: $scope.query
+                query: $scope.query,
             };
             _.each($scope.paginationCustomData, function (val, key) {
                 paginationData[key] = $scope[key];

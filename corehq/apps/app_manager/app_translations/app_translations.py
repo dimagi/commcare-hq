@@ -348,9 +348,6 @@ def expected_bulk_app_sheet_rows(app):
                             )
 
             for form_index, form in enumerate(module.get_forms()):
-                if form.form_type == 'shadow_form':
-                    continue
-
                 form_string = module_string + "_form" + str(form_index + 1)
                 xform = form.wrapped_xform()
 
@@ -368,6 +365,9 @@ def expected_bulk_app_sheet_rows(app):
 
                 # Add form to the first street
                 rows["Modules_and_forms"].append(first_sheet_row)
+
+                if form.form_type == 'shadow_form':
+                    continue
 
                 # Populate form sheet
                 rows[form_string] = []

@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import re
 import uuid
 from corehq.apps.locations.models import SQLLocation
@@ -22,7 +23,7 @@ DISTRICT_PREFIXES = [
 
 def generate_username(domain, first_name, last_name):
     if first_name and last_name:
-        username = u'%s_%s' % (first_name, last_name)
+        username = '%s_%s' % (first_name, last_name)
     elif first_name:
         username = first_name
     else:
@@ -33,7 +34,7 @@ def generate_username(domain, first_name, last_name):
 
     if CouchUser.username_exists(format_username(username, domain)):
         for i in range(2, 10000):
-            tmp_username = u'%s-%s' % (username, i)
+            tmp_username = '%s-%s' % (username, i)
             if not CouchUser.username_exists(format_username(tmp_username, domain)):
                 username = tmp_username
                 break
@@ -125,7 +126,7 @@ class RegisterHandler(KeywordHandler):
             first_name = split_name[0]
 
         if not self.user:
-            key = u'generating ils username for %s, %s, %s' % (self.domain, first_name, last_name)
+            key = 'generating ils username for %s, %s, %s' % (self.domain, first_name, last_name)
             with CriticalSection([key]):
                 username = generate_username(self.domain, first_name, last_name)
                 password = uuid.uuid4().hex

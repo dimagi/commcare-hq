@@ -3,7 +3,7 @@ from couchdbkit import ResourceNotFound
 from corehq.blobs.mixin import BlobHelper
 
 
-class DocumentTransform():
+class DocumentTransform(object):
     # for coupling reasons, we have to bundle the original document
     # with its attachments so that we can properly deal with it
     # across databases.

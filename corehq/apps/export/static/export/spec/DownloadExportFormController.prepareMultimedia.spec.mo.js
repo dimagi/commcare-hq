@@ -10,14 +10,14 @@ describe('DownloadExportFormController - Prepare Multimedia Download', function(
                 .when('POST', DnldExpData.mockBackendUrls.PREPARE_FORM_MULTIMEDIA)
                 .respond({
                     success: true,
-                    download_id: downloadId
+                    download_id: downloadId,
                 });
             DnldExpData.$httpBackend.expectPOST(DnldExpData.mockBackendUrls.PREPARE_FORM_MULTIMEDIA);
         });
 
         it('trigger downloadInProgresd, register multimedia export, send analytics', function () {
             DnldExpData.createController([
-                DnldExpData.simpleFormExport
+                DnldExpData.simpleFormExport,
             ], true);
             DnldExpData.currentScope.prepareMultimediaExport();
             assert.equal(DnldExpData.currentScope.prepareExportError, null);
@@ -35,7 +35,7 @@ describe('DownloadExportFormController - Prepare Multimedia Download', function(
 
         it('start exportDownloadService with isMultimediaDownload == true', function () {
             DnldExpData.createController([
-                DnldExpData.simpleFormExport
+                DnldExpData.simpleFormExport,
             ], true);
             DnldExpData.currentScope.prepareMultimediaExport();
             assert.isFalse(DnldExpData.exportDownloadService.showDownloadStatus);
@@ -49,7 +49,7 @@ describe('DownloadExportFormController - Prepare Multimedia Download', function(
 
         it('poll download progress for multimedia', function () {
             DnldExpData.createController([
-                DnldExpData.simpleFormExport
+                DnldExpData.simpleFormExport,
             ], true);
             DnldExpData.currentScope.prepareMultimediaExport();
             DnldExpData.$httpBackend.flush();
@@ -66,7 +66,7 @@ describe('DownloadExportFormController - Prepare Multimedia Download', function(
             var successfulResponse = DnldExpData.getPollResponseSuccess(downloadId);
             beforeEach(function () {
                 DnldExpData.createController([
-                    DnldExpData.simpleFormExport
+                    DnldExpData.simpleFormExport,
                 ], true);
                 DnldExpData.currentScope.prepareMultimediaExport();
                 DnldExpData.$httpBackend.flush();
@@ -118,12 +118,12 @@ describe('DownloadExportFormController - Prepare Multimedia Download', function(
         it('registers server error', function () {
             var errorMsg = 'server error test multimedia';
             DnldExpData.createController([
-                DnldExpData.simpleFormExport
+                DnldExpData.simpleFormExport,
             ], true);
             DnldExpData.$httpBackend
                 .when('POST', DnldExpData.mockBackendUrls.PREPARE_FORM_MULTIMEDIA)
                 .respond({
-                    error: errorMsg
+                    error: errorMsg,
                 });
             DnldExpData.$httpBackend.expectPOST(DnldExpData.mockBackendUrls.PREPARE_FORM_MULTIMEDIA);
             DnldExpData.currentScope.prepareMultimediaExport();
@@ -139,7 +139,7 @@ describe('DownloadExportFormController - Prepare Multimedia Download', function(
 
         it('registers HTTP error', function () {
             DnldExpData.createController([
-                DnldExpData.simpleFormExport
+                DnldExpData.simpleFormExport,
             ], true);
             DnldExpData.$httpBackend
                 .when('POST', DnldExpData.mockBackendUrls.PREPARE_FORM_MULTIMEDIA)

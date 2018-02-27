@@ -8,8 +8,6 @@ hqDefine('accounting/js/credits', function () {
         self.features = ko.observableArray();
         self.prepayments = ko.observable();
 
-        can_purchase_credits = can_purchase_credits;
-
         self.init = function () {
             _.each(products, function (product) {
                 self.products.push(new CreditItem('product', product, paymentHandler, can_purchase_credits));

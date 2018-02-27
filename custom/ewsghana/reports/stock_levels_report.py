@@ -1,4 +1,6 @@
 from __future__ import absolute_import
+from __future__ import division
+from __future__ import unicode_literals
 import collections
 from collections import OrderedDict
 from datetime import timedelta
@@ -192,7 +194,7 @@ class InventoryManagementData(EWSData):
             if not daily_consumption:
                 return 0
             consumption = round(float(daily_consumption) * 30.0)
-            quantity = float(state.stock_on_hand) - int((date - state.report.date).days / 7.0) * consumption
+            quantity = float(state.stock_on_hand) - ((date - state.report.date).days // 7) * consumption
             if consumption and consumption > 0 and quantity > 0:
                 return quantity / consumption
             return 0
@@ -217,7 +219,7 @@ class InventoryManagementData(EWSData):
         ).select_related('report', 'sql_product').order_by('report__date')
 
         rows = OrderedDict()
-        weeks = ceil((enddate - startdate).days / 7.0)
+        weeks = ceil((enddate - startdate).days / 7)
 
         for state in st:
             product_name = '{0} ({1})'.format(state.sql_product.name, state.sql_product.code)
@@ -270,12 +272,12 @@ class InputStock(EWSData):
         if has_input_stock_permissions(self.config['user'],
                                        SQLLocation.objects.get(location_id=self.config['location_id']),
                                        self.domain):
-            rows.append([u"<a href='{}'>INPUT STOCK for {}</a>".format(link, self.location.name)])
+            rows.append(["<a href='{}'>INPUT STOCK for {}</a>".format(link, self.location.name)])
 
         try:
             rows.append(
                 [
-                    u'The last report received was at <b>{}.</b>'.format(
+                    'The last report received was at <b>{}.</b>'.format(
                         StockState.objects.filter(case_id=self.location.supply_point_id)
                         .values('last_modified_date')
                         .latest('last_modified_date')['last_modified_date']

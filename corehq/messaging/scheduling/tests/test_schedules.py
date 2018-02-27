@@ -30,6 +30,7 @@ from corehq.messaging.scheduling.tasks import (
 from datetime import datetime, date, time
 from django.test import TestCase
 from mock import patch
+from six.moves import range
 
 
 class BaseScheduleTest(TestCase):

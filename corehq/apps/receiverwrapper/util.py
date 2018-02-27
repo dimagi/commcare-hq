@@ -157,7 +157,7 @@ def _first_group_match(text, patterns):
                 return match.groups()[0]
 
 
-class BuildVersionSource:
+class BuildVersionSource(object):
     BUILD_ID = object()
     APPVERSION_TEXT = object()
     XFORM_VERSION = object()

@@ -79,7 +79,6 @@ domain_specific = [
     url(r'^', include('custom.uth.urls')),
     url(r'^dashboard/', include('corehq.apps.dashboard.urls')),
     url(r'^configurable_reports/', include('corehq.apps.userreports.urls')),
-    url(r'^performance_messaging/', include('corehq.apps.performance_sms.urls')),
     url(r'^', include('custom.icds.urls')),
     url(r'^', include('custom.icds_reports.urls')),
     url(r'^', include('custom.enikshay.urls')),
@@ -90,7 +89,7 @@ domain_specific = [
     )),
     url(r'^zapier/', include('corehq.apps.zapier.urls')),
     url(r'^zipline/', include('custom.zipline.urls')),
-    url(r'^remote_link/', include('corehq.apps.linked_domain.urls', namespace='remote'))
+    url(r'^remote_link/', include('corehq.apps.linked_domain.urls'))
 ]
 
 urlpatterns = [

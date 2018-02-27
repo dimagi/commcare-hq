@@ -108,6 +108,7 @@ from corehq import privileges, toggles
 from corehq.apps.accounting.decorators import requires_privilege_json_response
 from corehq.apps.app_manager.const import USERCASE_TYPE, USERCASE_ID
 from corehq.apps.app_manager.models import Application, ShadowForm
+from corehq.apps.cloudcare.const import DEVICE_ID as FORMPLAYER_DEVICE_ID
 from corehq.apps.cloudcare.touchforms_api import get_user_contributions_to_touchforms_session
 from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher
 from corehq.apps.domain.decorators import (
@@ -1126,9 +1127,9 @@ class ScheduledReportsView(BaseProjectReportSectionView):
             self.report_notification.save()
             ProjectReportsTab.clear_dropdown_cache(self.domain, self.request.couch_user.get_id)
             if self.is_new:
-                messages.success(request, "Scheduled report added!")
+                messages.success(request, _("Scheduled report added."))
             else:
-                messages.success(request, "Scheduled report updated!")
+                messages.success(request, _("Scheduled report updated."))
 
             touch_saved_reports_views(request.couch_user, self.domain)
             return HttpResponseRedirect(reverse('reports_home', args=(self.domain,)))
@@ -2030,7 +2031,7 @@ class EditFormInstance(View):
         context = _get_form_context(request, domain, instance)
         if not instance.app_id or not instance.build_id:
             deviceID = instance.metadata.deviceID
-            if deviceID and deviceID == 'Formplayer':
+            if deviceID and deviceID == FORMPLAYER_DEVICE_ID:
                 return _error(_(
                     "Could not detect the application or form for this submission. "
                     "A common cause is that the form was submitted via App or Form preview"

@@ -48,7 +48,7 @@ def test_tee_output_with_SystemExit():
 
 @contextmanager
 def stdfake():
-    class fake:
+    class fake(object):
         stdout = StringIO()
         stderr = StringIO()
     with replattr((sys, "stdout", fake.stdout), (sys, "stderr", fake.stderr)):

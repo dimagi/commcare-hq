@@ -1347,6 +1347,6 @@ class OwnershipCleanlinessFlag(models.Model):
     def get_for_owner(cls, domain, owner_id):
         return cls.objects.get_or_create(domain=domain, owner_id=owner_id)[0]
 
-    class Meta:
+    class Meta(object):
         app_label = 'phone'
         unique_together = [('domain', 'owner_id')]

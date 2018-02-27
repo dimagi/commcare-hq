@@ -111,18 +111,18 @@ define([
 
         self.init = function () {
             $.getJSON(dataUrl)
-            .done(function (data) {
-                _.each(data.case_types, function (caseType) {
-                    var caseTypeObj = new CaseType(caseType.name);
-                    var groupDict = _.groupBy(caseType.properties, function(prop) {return prop.group;});
-                    caseTypeObj.init(groupDict, changeSaveButton);
-                    self.caseTypes.push(caseTypeObj);
+                .done(function (data) {
+                    _.each(data.case_types, function (caseType) {
+                        var caseTypeObj = new CaseType(caseType.name);
+                        var groupDict = _.groupBy(caseType.properties, function(prop) {return prop.group;});
+                        caseTypeObj.init(groupDict, changeSaveButton);
+                        self.caseTypes.push(caseTypeObj);
+                    });
+                    if (self.caseTypes().length) {
+                        self.goToCaseType(self.caseTypes()[0]);
+                    }
+                    self.casePropertyList.subscribe(changeSaveButton);
                 });
-                if (self.caseTypes().length) {
-                    self.goToCaseType(self.caseTypes()[0]);
-                }
-                self.casePropertyList.subscribe(changeSaveButton);
-            });
         };
 
         this.getActiveCaseType = function () {

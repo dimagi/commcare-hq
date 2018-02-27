@@ -1,4 +1,5 @@
 from __future__ import absolute_import, division
+from __future__ import unicode_literals
 from collections import OrderedDict, defaultdict
 from datetime import datetime
 
@@ -33,7 +34,7 @@ def get_adhaar_data_map(domain, config, loc_level, show_test=False, beta=False):
             queryset = apply_exclude(domain, queryset)
         return queryset
 
-    data_for_map, valid_total, in_month_total, average = generate_data_for_map(
+    data_for_map, valid_total, in_month_total, average, total = generate_data_for_map(
         get_data_for(config),
         loc_level,
         'in_month',

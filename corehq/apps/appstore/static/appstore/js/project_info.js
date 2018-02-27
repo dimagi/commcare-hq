@@ -20,7 +20,7 @@ hqDefine('appstore/js/project_info', function () {
         });
         $('#agree-button').click(function() {
             $('#agree-button').unbind()
-                              .addClass('disabled');
+                .addClass('disabled');
             $('#download-new-project').removeProp('data-toggle');
             $('#download-new-project').removeProp('href');
             $('#import-into-button').removeProp('data-toggle');

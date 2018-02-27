@@ -316,6 +316,7 @@ api_params:
       - other
       # legacy
       - unmarried
+      - widowed
 - api_param_name: occupation
   direction: 1
   case_type:

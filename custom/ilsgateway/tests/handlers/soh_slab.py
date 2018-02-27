@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from corehq.apps.commtrack.models import CommtrackConfig, ConsumptionConfig
 from corehq.apps.consumption.shortcuts import set_default_consumption_for_supply_point
 from corehq.util.translation import localize
@@ -41,7 +42,7 @@ class SOHSLABTest(ILSTestScript):
         self.run_script(script)
 
         stock_state = overstocked_products(self.facility.sql_location)
-        self.assertListEqual([(u'dp', 900, 600), (u'ip', 678, 600)], stock_state)
+        self.assertListEqual([('dp', 900, 600), ('ip', 678, 600)], stock_state)
 
         script = """
             5551234 > Hmk Id 400 Dp 900 Ip 678

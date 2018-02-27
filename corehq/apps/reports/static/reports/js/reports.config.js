@@ -1,4 +1,4 @@
-var HQReport = function (options) {
+var HQReport = function(options) {
     'use strict';
     var self = this;
     self.domain = options.domain;
@@ -27,12 +27,12 @@ var HQReport = function (options) {
     self.getReportBaseUrl = options.getReportBaseUrl || getReportBaseUrl;
     self.getReportParams = options.getReportParams || getReportParams;
 
-    self.datespanCookie = self.domain+".hqreport.filterSetting.test.datespan";
+    self.datespanCookie = self.domain + ".hqreport.filterSetting.test.datespan";
 
     self.initialLoad = true;
 
-    self.init = function () {
-        $(function () {
+    self.init = function() {
+        $(function() {
             checkFilterAccordionToggleState();
 
             self.resetFilterState();
@@ -47,7 +47,7 @@ var HQReport = function (options) {
             if (self.slug) {
                 if (self.isExportable) {
                     var alert_user = hqImport("hqwebapp/js/alert_user").alert_user;
-                    $(self.exportReportButton).click(function (e) {
+                    $(self.exportReportButton).click(function(e) {
                         e.preventDefault();
                         if (self.isExportAll) {
                             $.ajax({
@@ -56,7 +56,7 @@ var HQReport = function (options) {
                                 type: "POST",
                                 success: function() {
                                     alert_user(gettext("Your requested excel report will be sent to the email " +
-                                               "address defined in your account settings."), "success");
+                                        "address defined in your account settings."), "success");
                                 },
                             });
                         } else {
@@ -70,40 +70,48 @@ var HQReport = function (options) {
                     $(self.emailReportModal).koApplyBindings(self.emailReportViewModel);
                 }
 
-                $(self.printReportButton).click(function (e) {
+                $(self.printReportButton).click(function(e) {
                     e.preventDefault();
                     window.open(self.getReportRenderUrl("print"));
                 });
+
+                trackReportPageEnter();
             }
         });
     };
 
-    self.handleTabularReportCookies = function (reportDatatable) {
-        var defaultRowsCookieName = self.domain+'.hqreport.tabularSetting.defaultRows',
+    self.handleTabularReportCookies = function(reportDatatable) {
+        var defaultRowsCookieName = self.domain + '.hqreport.tabularSetting.defaultRows',
             savedPath = window.location.pathname;
-        var defaultRowsCookie = ''+$.cookie(defaultRowsCookieName);
+        var defaultRowsCookie = '' + $.cookie(defaultRowsCookieName);
         reportDatatable.defaultRows = parseInt(defaultRowsCookie) || reportDatatable.defaultRows;
 
-        $(reportDatatable.dataTableElem).on('hqreport.tabular.lengthChange', function (event, value) {
-            $.cookie(defaultRowsCookieName, value,
-                {path: savedPath, expires: 2});
+        $(reportDatatable.dataTableElem).on('hqreport.tabular.lengthChange', function(event, value) {
+            $.cookie(defaultRowsCookieName, value, {
+                path: savedPath,
+                expires: 2,
+            });
         });
     };
 
-    self.saveDatespanToCookie = function () {
+    self.saveDatespanToCookie = function() {
         var validDate = /^\d{4}-\d{2}-\d{2}$/;
         if (self.datespan && validDate.test(self.datespan.startdate) && validDate.test(self.datespan.enddate)) {
-            $.cookie(self.datespanCookie+'.startdate', self.datespan.startdate,
-                {path: self.urlRoot, expires: 1});
-            $.cookie(self.datespanCookie+'.enddate', self.datespan.enddate,
-                {path: self.urlRoot, expires: 1});
+            $.cookie(self.datespanCookie + '.startdate', self.datespan.startdate, {
+                path: self.urlRoot,
+                expires: 1,
+            });
+            $.cookie(self.datespanCookie + '.enddate', self.datespan.enddate, {
+                path: self.urlRoot,
+                expires: 1,
+            });
         }
     };
 
-    self.loadDatespanFromCookie = function () {
+    self.loadDatespanFromCookie = function() {
         if (self.datespan) {
-            var cookie_startdate = $.cookie(self.datespanCookie+'.startdate'),
-                cookie_enddate = $.cookie(self.datespanCookie+'.enddate'),
+            var cookie_startdate = $.cookie(self.datespanCookie + '.startdate'),
+                cookie_enddate = $.cookie(self.datespanCookie + '.enddate'),
                 load_success = false;
 
             if (cookie_enddate && cookie_startdate) {
@@ -115,11 +123,11 @@ var HQReport = function (options) {
         return load_success;
     };
 
-    var checkFilterAccordionToggleState = function () {
+    var checkFilterAccordionToggleState = function() {
         $(self.filterAccordion).addClass('in');
         $(self.toggleFiltersButton).button('close');
 
-        var hiddenFilterButtonStatus = function (data) {
+        var hiddenFilterButtonStatus = function(data) {
             if (!(data.target && $(data.target).hasClass('modal'))) {
                 $(self.toggleFiltersButton).button('open');
             }
@@ -127,7 +135,7 @@ var HQReport = function (options) {
 
         $(self.filterAccordion).on('hidden.bs.collapse', hiddenFilterButtonStatus);
 
-        var showFilterButtonStatus = function () {
+        var showFilterButtonStatus = function() {
             $(self.toggleFiltersButton).button('close');
         };
 
@@ -143,7 +151,7 @@ var HQReport = function (options) {
         self.datespan.enddate = value;
     });
 
-    self.resetFilterState = function () {
+    self.resetFilterState = function() {
         $('#paramSelectorForm fieldset button, #paramSelectorForm fieldset span[data-dropdown="dropdown"]').click(function() {
             $(self.filterSubmitSelector)
                 .button('reset')
@@ -151,7 +159,7 @@ var HQReport = function (options) {
                 .removeClass('disabled')
                 .prop('disabled', false);
         });
-        $('#paramSelectorForm fieldset').on('change apply', function () {
+        $('#paramSelectorForm fieldset').on('change apply', function() {
             $(self.filterSubmitSelector)
                 .button('reset')
                 .addClass('btn-primary')
@@ -164,8 +172,8 @@ var HQReport = function (options) {
         var params = window.location.search.substr(1);
         if (params.length <= 1) {
             if (self.loadDatespanFromCookie()) {
-                params = "startdate="+self.datespan.startdate+
-                    "&enddate="+self.datespan.enddate;
+                params = "startdate=" + self.datespan.startdate +
+                    "&enddate=" + self.datespan.enddate;
             }
         }
         params += (additionalParams ? "&" + additionalParams : "");
@@ -174,7 +182,7 @@ var HQReport = function (options) {
     }
 
     function getReportBaseUrl(renderType) {
-        return window.location.pathname.replace(self.urlRoot, self.urlRoot+renderType+"/");
+        return window.location.pathname.replace(self.urlRoot, self.urlRoot + renderType + "/");
     }
 
     function getReportRenderUrl(renderType, additionalParams) {
@@ -192,9 +200,9 @@ var HQReport = function (options) {
         self.notes = ko.observable();
         self.getReportRenderUrl = hqReport.getReportRenderUrl;
 
-        self.unwrap = function () {
+        self.unwrap = function() {
             var data = ko.mapping.toJS(self, {
-                ignore: ['sendEmail', 'unwrap', 'resetModal']
+                ignore: ['sendEmail', 'unwrap', 'resetModal'],
             });
 
             for (var i in data) {
@@ -203,9 +211,9 @@ var HQReport = function (options) {
             return data;
         };
 
-        self.sendEmail = function () {
-             var $sendButton = $(hqReport.emailReportModal).find('.send-button');
-             $sendButton.button('loading');
+        self.sendEmail = function() {
+            var $sendButton = $(hqReport.emailReportModal).find('.send-button');
+            $sendButton.button('loading');
 
             $.get(self.getReportRenderUrl("email_onceoff", $.param(self.unwrap())))
                 .done(function() {
@@ -220,8 +228,24 @@ var HQReport = function (options) {
                 });
         };
 
-        self.resetModal = function () {
+        self.resetModal = function() {
             $(hqReport.emailReportModal).find('.send-button').button('reset');
         };
+    }
+
+    /**
+     * Send a Kissmetrics event, depending on report page slug
+     */
+    function trackReportPageEnter() {
+        switch (self.slug) {
+            case 'submit_history':
+                hqImport('analytix/js/kissmetrix').track.event('Visited Submit History Page');
+                break;
+            case 'case_list':
+                hqImport('analytix/js/kissmetrix').track.event('Visited Case List Page');
+                break;
+            default:
+                break;
+        }
     }
 };

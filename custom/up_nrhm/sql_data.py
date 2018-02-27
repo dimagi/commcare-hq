@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import division
 from sqlagg.base import CustomQueryColumn, QueryMeta, AliasColumn, TableNotFoundException
 from sqlagg.columns import CountUniqueColumn, SumWhen, SimpleColumn
 from sqlagg.filters import BETWEEN, EQ, LTE
@@ -204,7 +205,7 @@ class ASHAFacilitatorsData(SqlData):
                 _("<b>Total number of ASHAs who are functional on at least %s of the tasks</b>") % "60%",
                 aggregate_fn=lambda x, y: {
                     'sort_key': ((x or 0) * 100 / (y or 1)),
-                    'html': '{0}/{1} ({2}%)'.format((x or 0), y, ((x or 0) * 100 / (y or 1)))
+                    'html': '{0}/{1} ({2}%)'.format((x or 0), y, ((x or 0) * 100 // (y or 1)))
                 },
                 columns=[
                     FunctionalityChecklistColumn(

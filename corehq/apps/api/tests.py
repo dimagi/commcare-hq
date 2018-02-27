@@ -1077,14 +1077,14 @@ class ToManySourceResource(Resource):
             'pk': get_obj(bundle_or_obj).other_model_ids
         }
 
-    class Meta:
+    class Meta(object):
         model_class = ToManySourceModel
 
 
 class ToManyDestResource(Resource):
     id = fields.CharField(attribute='id')
 
-    class Meta:
+    class Meta(object):
         model_class = ToManyDestModel
 
     def detail_uri_kwargs(self, bundle_or_obj):
@@ -1157,7 +1157,7 @@ class ToManyDictSourceResource(Resource):
             'pk': get_obj(bundle_or_obj).other_model_ids
         }
 
-    class Meta:
+    class Meta(object):
         model_class = ToManyDictSourceModel
 
 
@@ -1169,7 +1169,7 @@ class ToManyDictDestResource(Resource):
             'pk': get_obj(bundle_or_obj).id
         }
 
-    class Meta:
+    class Meta(object):
         model_class = ToManyDictDestModel
 
 
@@ -1239,7 +1239,7 @@ class ToOneSourceResource(Resource):
             'pk': get_obj(bundle_or_obj).other_model_id
         }
 
-    class Meta:
+    class Meta(object):
         model_class = ToOneSourceModel
 
 
@@ -1251,7 +1251,7 @@ class ToOneDestResource(Resource):
             'pk': get_obj(bundle_or_obj).id
         }
 
-    class Meta:
+    class Meta(object):
         model_class = ToOneDestModel
 
 
@@ -1306,7 +1306,7 @@ class UseIfRequestedTestResource(Resource):
             'pk': get_obj(bundle_or_obj).id
         }
 
-    class Meta:
+    class Meta(object):
         model_class = UseIfRequestedModel
 
 

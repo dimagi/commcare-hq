@@ -9,6 +9,7 @@ from __future__ import unicode_literals
 from collections import Counter
 import six
 
+from corehq.apps.cloudcare.const import DEVICE_ID as FORMPLAYER_DEVICE_ID
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
@@ -68,7 +69,7 @@ def _add_user_info_to_cases(bad_cases):
         if user_dict:
             case['username'] = user_dict['username']
             device_id = case['form_device_id']
-            if device_id == 'Formplayer':
+            if device_id == FORMPLAYER_DEVICE_ID:
                 # Hazard a guess as to what device ID was used in the restore
                 if case['form_user_id'] == case['auth_user_id']:
                     device_id = "WebAppsLogin"

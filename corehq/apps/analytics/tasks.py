@@ -562,7 +562,7 @@ def _track_periodic_data_on_kiss(submit_json):
             ] + [prop['value'] for prop in webuser['properties']]
             csvwriter.writerow(row)
 
-    if settings.S3_ACCESS_KEY and settings.S3_SECRET_KEY:
+    if settings.S3_ACCESS_KEY and settings.S3_SECRET_KEY and settings.ANALYTICS_IDS.get('KISSMETRICS_KEY', None):
         s3_connection = tinys3.Connection(settings.S3_ACCESS_KEY, settings.S3_SECRET_KEY, tls=True)
         f = open(filename, 'rb')
         s3_connection.upload(filename, f, 'kiss-uploads')

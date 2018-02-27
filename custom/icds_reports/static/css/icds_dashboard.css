@@ -389,19 +389,12 @@ h4 {
     text-align: center;
 }
 
-@media (min-width: 992px) {
-    .see-more-content {
-        min-height: 145px;
-    }
-}
-
 .see-more-content {
     padding-left: 0;
 }
 
 .see-more {
-    position: absolute;
-    bottom: 0;
+    float: right;
 }
 
 .see-more > a {
@@ -506,10 +499,10 @@ h4 {
     flex-direction: column;
     justify-content: space-between;
     align-content: center;
+    padding: 0 15px;
 }
 
 .kpi-justify-center {
-    width: 100%;
     display: flex;
     justify-content: center;
     flex-grow: 1;

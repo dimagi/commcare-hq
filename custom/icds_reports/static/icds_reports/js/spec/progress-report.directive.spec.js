@@ -37,39 +37,6 @@ describe('Progress Report Directive', function () {
         assert.deepEqual(controller.filtersData, {});
     });
 
-    it('tests show info message', function () {
-        var fakeDate = new Date(2016, 1, 1);
-        var clock = sinon.useFakeTimers(fakeDate.getTime());
-
-        var expected = true;
-        var result = controller.showInfoMessage();
-
-        assert.equal(expected, result);
-        clock.restore();
-    });
-
-    it('tests show info message for second day also', function () {
-        var fakeDate = new Date(2016, 1, 2);
-        var clock = sinon.useFakeTimers(fakeDate.getTime());
-
-        var expected = true;
-        var result = controller.showInfoMessage();
-
-        assert.equal(expected, result);
-        clock.restore();
-    });
-
-    it('tests not show info message', function () {
-        var fakeDate = new Date(2016, 1, 3);
-        var clock = sinon.useFakeTimers(fakeDate.getTime());
-
-        var expected = false;
-        var result = controller.showInfoMessage();
-
-        assert.equal(expected, result);
-        clock.restore();
-    });
-
     it('tests location change', function () {
         controller.loadData();
         controller.selectedLocations.push(

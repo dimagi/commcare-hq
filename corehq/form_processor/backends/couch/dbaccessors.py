@@ -88,6 +88,9 @@ class FormAccessorCouch(AbstractFormAccessor):
                         content_type=meta.content_type,
                         content_length=meta.content_length,
                     )
+        else:
+            # xforms are expected to at least have the XML attachment
+            raise ResourceNotFound(msg="XForm attachment missing: {}".format(form_id))
         return doc
 
     @staticmethod

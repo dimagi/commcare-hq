@@ -17,7 +17,7 @@ class DynamicPropertiesTest(SimpleTestCase):
         class CaseWithNewProperty(CommCareCase):
             new_property = StringProperty()
 
-            class Meta:
+            class Meta(object):
                 # For some reason this is necessary for travis
                 app_label = "case"
 

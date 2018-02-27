@@ -4,7 +4,7 @@ from collections import defaultdict
 
 from corehq.apps.userreports.util import truncate_value
 from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors
-from fluff import TYPE_INTEGER
+from fluff import TYPE_INTEGER, TYPE_SMALL_INTEGER
 
 
 class Column(object):
@@ -68,16 +68,21 @@ class BooleanIndicator(SingleColumnIndicator):
     A boolean indicator leverages the filter logic and returns "1" if
     the filter is true, or "0" if it is false.
     """
+    column_datatype = TYPE_INTEGER
 
     def __init__(self, display_name, column_id, filter, wrapped_spec):
         super(BooleanIndicator, self).__init__(display_name,
-                                               Column(column_id, datatype=TYPE_INTEGER),
+                                               Column(column_id, datatype=self.column_datatype),
                                                wrapped_spec)
         self.filter = filter
 
     def get_values(self, item, context=None):
         value = 1 if self.filter(item, context) else 0
         return [ColumnValue(self.column, value)]
+
+
+class SmallBooleanIndicator(BooleanIndicator):
+    column_datatype = TYPE_SMALL_INTEGER
 
 
 class RawIndicator(SingleColumnIndicator):

@@ -38,7 +38,7 @@ class BlobMeta(DocumentSchema):
 
 class BlobMixin(Document):
 
-    class Meta:
+    class Meta(object):
         abstract = True
 
     external_blobs = DictProperty(BlobMeta)
@@ -356,7 +356,7 @@ class DeferredBlobMixin(BlobMixin):
     recommended to use this in new code.
     """
 
-    class Meta:
+    class Meta(object):
         abstract = True
 
     _deferred_blobs = None

@@ -87,5 +87,5 @@ class HistoricalPillowCheckpoint(models.Model):
         except IndexError:
             return None
 
-    class Meta:
+    class Meta(object):
         ordering = ['-date_updated']

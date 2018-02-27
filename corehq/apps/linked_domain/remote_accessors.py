@@ -13,15 +13,20 @@ from dimagi.utils.logging import notify_exception
 
 
 def get_toggles_previews(domain_link):
-    return _do_simple_request('remote:toggles', domain_link)
+    return _do_simple_request('linked_domain:toggles', domain_link)
 
 
-def get_custom_data_models(domain_link):
-    return _do_simple_request('remote:custom_data_models', domain_link)
+def get_custom_data_models(domain_link, limit_types=None):
+    url = reverse('linked_domain:custom_data_models', args=[domain_link.linked_domain])
+    params = None
+    if limit_types:
+        params = [('type', type_) for type_ in limit_types]
+    _do_request_to_remote_hq(url, domain_link.remote_details, domain_link.linked_domain, params)
+    return _do_simple_request('linked_domain:custom_data_models', domain_link)
 
 
 def get_user_roles(domain_link):
-    return _do_simple_request('remote:user_roles', domain_link)['user_roles']
+    return _do_simple_request('linked_domain:user_roles', domain_link)['user_roles']
 
 
 def get_released_app_version(domain, app_id, remote_details):
@@ -31,17 +36,9 @@ def get_released_app_version(domain, app_id, remote_details):
 
 
 def get_released_app(domain, app_id, linked_domain, remote_details):
-    url = reverse('remote:latest_released_app_source', args=[domain, app_id])
+    url = reverse('linked_domain:latest_released_app_source', args=[domain, app_id])
     response = _do_request_to_remote_hq_json(url, remote_details, linked_domain)
     return _convert_app_from_remote_linking_source(response)
-
-
-def whilelist_app_on_remote(domain, app_id, linked_domain, remote_details):
-    url = reverse('patch_linked_app_whitelist', args=[domain, app_id])
-    params = {
-        'whitelist_item': absolute_reverse('domain_homepage', args=[linked_domain])
-    }
-    _do_request_to_remote_hq(url, remote_details, None, params, method='patch')
 
 
 def _convert_app_from_remote_linking_source(app_json):
@@ -53,7 +50,8 @@ def _convert_app_from_remote_linking_source(app_json):
 
 def pull_missing_multimedia_for_app(app):
     missing_media = _get_missing_multimedia(app)
-    _fetch_remote_media(app.domain, missing_media, app.remote_app_details)
+    remote_details = app.domain_link.remote_details
+    _fetch_remote_media(app.domain, missing_media, remote_details)
 
 
 def _get_missing_multimedia(app):
@@ -105,7 +103,7 @@ def _do_request_to_remote_hq(relative_url, remote_details, linked_domain, params
     :param remote_details: RemoteDetails object containing remote URL base and auth details
     :param linked_domain: Used for permission check on remote system
     :param params: GET/POST params to include
-    :param method: 'get' or 'post'
+    :param method:
     :return:
     """
     url_base = remote_details.url_base

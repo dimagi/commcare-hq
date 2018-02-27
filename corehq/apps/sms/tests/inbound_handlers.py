@@ -32,6 +32,8 @@ class KeywordTestCase(TouchformsTestCase):
     """
 
     def setUp(self):
+        from django.core.management import call_command
+        call_command('cchq_prbac_bootstrap')
         super(KeywordTestCase, self).setUp()
         self.app = self.load_app("app_source.json")
         self.create_survey_keyword("REG", self.app.modules[0].forms[0].unique_id, override_open_sessions=False)
@@ -766,6 +768,8 @@ class PartialFormSubmissionTestCase(TouchformsTestCase):
     """
 
     def setUp(self):
+        from django.core.management import call_command
+        call_command('cchq_prbac_bootstrap')
         super(PartialFormSubmissionTestCase, self).setUp()
         self.app = self.load_app("app_source.json")
         self.create_structured_sms_keyword(

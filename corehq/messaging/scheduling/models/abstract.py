@@ -4,7 +4,7 @@ import uuid
 from dimagi.utils.decorators.memoized import memoized
 from django.db import models, transaction
 from corehq.apps.reminders.util import get_one_way_number_for_recipient
-from corehq.apps.sms.api import MessageMetadata, send_sms_with_backend_name, send_sms
+from corehq.apps.sms.api import MessageMetadata, send_sms
 from corehq.apps.translations.models import StandaloneTranslationDoc
 from corehq.apps.users.models import CommCareUser
 from corehq.messaging.scheduling.exceptions import (
@@ -42,10 +42,6 @@ class Schedule(models.Model):
     # inspected and the default language there will be used.
     default_language_code = models.CharField(max_length=126, null=True)
 
-    # If True, the framework looks for a backend named TEST to send messages for
-    # this schedule.
-    is_test = models.BooleanField(default=True)
-
     # This metadata will be passed to any messages generated from this schedule.
     custom_metadata = jsonfield.JSONField(null=True, default=None)
 
@@ -53,7 +49,7 @@ class Schedule(models.Model):
     # to edit this schedule.
     ui_type = models.CharField(max_length=1, default=UI_TYPE_UNKNOWN)
 
-    class Meta:
+    class Meta(object):
         abstract = True
 
     def set_first_event_due_timestamp(self, instance, start_date=None):
@@ -139,7 +135,7 @@ class ContentForeignKeyMixin(models.Model):
     ivr_survey_content = models.ForeignKey('scheduling.IVRSurveyContent', null=True, on_delete=models.CASCADE)
     custom_content = models.ForeignKey('scheduling.CustomContent', null=True, on_delete=models.CASCADE)
 
-    class Meta:
+    class Meta(object):
         abstract = True
 
     @property
@@ -197,7 +193,7 @@ class Event(ContentForeignKeyMixin):
     # it doesn't matter as long as it sorts the events properly.
     order = models.IntegerField()
 
-    class Meta:
+    class Meta(object):
         abstract = True
 
 
@@ -210,7 +206,7 @@ class Content(models.Model):
     # (i.e., this was scheduled content), this is the ScheduleInstance.
     schedule_instance = None
 
-    class Meta:
+    class Meta(object):
         abstract = True
 
     def set_context(self, case=None, schedule_instance=None):
@@ -311,11 +307,7 @@ class Content(models.Model):
             return
 
         metadata = self.get_sms_message_metadata(logged_subevent)
-
-        if self.schedule_instance and self.schedule_instance.memoized_schedule.is_test:
-            send_sms_with_backend_name(domain, phone_number, message, 'TEST', metadata=metadata)
-        else:
-            send_sms(domain, recipient, phone_number, message, metadata=metadata)
+        send_sms(domain, recipient, phone_number, message, metadata=metadata)
 
 
 class Broadcast(models.Model):
@@ -327,7 +319,7 @@ class Broadcast(models.Model):
     # A List of [recipient_type, recipient_id]
     recipients = jsonfield.JSONField(default=list)
 
-    class Meta:
+    class Meta(object):
         abstract = True
 
     def soft_delete(self):

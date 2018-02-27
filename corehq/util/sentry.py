@@ -1,5 +1,6 @@
 from __future__ import absolute_import, unicode_literals
 from six import string_types
+from six.moves import filter
 import re
 from django.conf import settings
 from raven.contrib.django import DjangoClient

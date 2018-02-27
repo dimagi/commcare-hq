@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import division
+from __future__ import unicode_literals
 from collections import OrderedDict
 from io import BytesIO
 import datetime
@@ -354,9 +355,13 @@ class AggChildHealthMonthlyDataSource(ProgressReportSqlData):
                 '% Height measurement efficiency (Children <5 measured)',
                 percent_num,
                 [
-                    SumColumn('height_measured_in_month', filters=self.filters + [
-                        NOT(EQ('age_tranche', 'age_72'))
-                    ]),
+                    SumColumn(
+                        'height_measured_in_month',
+                        alias='height_measured_in_month_less_5',
+                        filters=self.filters + [
+                            NOT(EQ('age_tranche', 'age_72'))
+                        ]
+                    ),
                     SumColumn('height_eligible', alias='height_eligible', filters=self.filters + [
                         AND([
                             NOT(EQ('age_tranche', 'age_0')),
@@ -1050,7 +1055,7 @@ class ChildrenExport(ExportableMixin, SqlData):
                 'Height measurement efficiency (in month)',
                 percent,
                 [
-                    SumColumn('height_measured_in_month'),
+                    SumColumn('height_measured_in_month', alias='height_measured_in_month_all'),
                     SumColumn('height_eligible', filters=self.filters + [
                         AND([
                             NOT(EQ('age_tranche', 'age_0')),
@@ -1152,10 +1157,10 @@ class ChildrenExport(ExportableMixin, SqlData):
                 percent,
                 [
                     SumColumn('wasting_normal', filters=self.filters + [
-                        OR([
-                            RawFilter("age_tranche = '0'"),
-                            RawFilter("age_tranche = '6'"),
-                            RawFilter("age_tranche = '72'")
+                        AND([
+                            NOT(EQ('age_tranche', 'age_0')),
+                            NOT(EQ('age_tranche', 'age_6')),
+                            NOT(EQ('age_tranche', 'age_72'))
                         ])
                     ]),
                     AliasColumn('weighed_and_height_measured_in_month')
@@ -1216,6 +1221,15 @@ class ChildrenExport(ExportableMixin, SqlData):
                     AliasColumn('height_measured_in_month')
                 ],
                 slug='percent_normal_stunting'
+            ),
+            AggregateColumn(
+                'Percent of newborns with low birth weight',
+                percent,
+                [
+                    SumColumn('low_birth_weight_in_month'),
+                    SumColumn('weighed_and_born_in_month')
+                ],
+                slug='newborn_low_birth_weight'
             ),
             AggregateColumn(
                 'Percentage of children with completed 1 year immunizations',
