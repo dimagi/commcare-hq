@@ -16,6 +16,7 @@ from custom.enikshay.case_utils import (
 )
 from custom.enikshay.const import ENROLLED_IN_PRIVATE
 from custom.enikshay.management.commands.base_data_dump import BaseDataDump
+from corehq.elastic import ES_EXPORT_INSTANCE
 
 DOMAIN = "enikshay"
 
@@ -68,7 +69,7 @@ class Command(BaseDataDump):
         """
         All open and closed person cases with person.dataset = 'real' and person.enrolled_in_private != 'true'
         """
-        return (CaseSearchES()
+        return (CaseSearchES(es_instance_alias=ES_EXPORT_INSTANCE)
                 .domain(DOMAIN)
                 .case_type(case_type)
                 .case_property_query(ENROLLED_IN_PRIVATE, 'true', clause=queries.MUST_NOT)
