@@ -1,7 +1,8 @@
 hqDefine('reports/js/drillable_async', function() {
+    var initialPageData = hqImport('hqwebapp/js/initial_page_data');
 
-    var LOAD_FDIS_URL = '{{ api_root }}';
-    var hierarchy = {{ hierarchy|JSON }};
+    var LOAD_FDIS_URL = initialPageData.get('api_root');
+    var hierarchy = initialPageData.get('hierarchy');
 
     function api_get_children(fdi_uuid, depth, callback) {
         var params = (fdi_uuid ? {parent_id: fdi_uuid} : {});
@@ -16,11 +17,11 @@ hqDefine('reports/js/drillable_async', function() {
     };
 
     $(function() {
-        var fdis = {{ fdis|safe }};
-        var selected = '{{ selected_fdi_id|safe }}';
+        var fdis = initialPageData.get('fdis');
+        var selected = initialPageData.get('selected_fdi_id');
 
         var model = new FixtureSelectViewModel();
-        $('#group_{{ control_slug }}').koApplyBindings(model);
+        $('#group_' + initialPageData.get('control_slug')).koApplyBindings(model);
         model.load(fdis, selected);
 
     });

@@ -12,3 +12,9 @@
         <input name="fixture_id" type="hidden" data-bind="value: selected_fixtid" />
     </div>
 </div>
+
+{% initial_page_data 'api_root' api_root %}
+{% initial_page_data 'hierarchy' hierarchy %}
+{% initial_page_data 'fdis' fdis|safe %}
+{% initial_page_data 'selected_fdi_id' selected_fdi_id|safe %}
+{% initial_page_data 'control_slug' control_slug %}
