@@ -139,7 +139,7 @@
                         </table>
                     </div>
                     <div class="row">
-                        <p>*ECCE material available at AWC(Y/N): {{ data.report.infrastructure_data|icds_material_available }}</p>
+                        <p>ECCE material available at AWC(Y/N): {{ data.report.infrastructure_data|icds_material_available }}</p>
                     </div>
                     <div class="row">
                         <table>
@@ -162,7 +162,7 @@
                                     <td>{{ data.report.child_health_monthly_data|icds_format:"normal_children_thr" }}</td>
                                 </tr>
                                 <tr>
-                                    <td>*Severely underweight Children</td>
+                                    <td>Severely underweight Children</td>
                                     <td>{{ data.report.child_health_monthly_data|icds_format:"severely_underweight_children_breakfast_and_hcm" }}</td>
                                     <td>{{ data.report.child_health_monthly_data|icds_format:"severely_underweight_children_breakfast_and_hcm" }}</td>
                                     <td>{{ data.report.child_health_monthly_data|icds_format:"severely_underweight_children_thr" }}</td>
@@ -205,8 +205,8 @@
                                 <tr>
                                     <th colspan="1">Boys</th>
                                     <th colspan="1">Girls</th>
-                                    <th colspan="1">Boys</th>
-                                    <th colspan="1">Girls</th>
+                                    <th colspan="1">* Boys</th>
+                                    <th colspan="1">* Girls</th>
                                     <th colspan="1">Pregnant</th>
                                     <th colspan="1">Lactating</th>
                                     <th colspan="1">Boys</th>
@@ -229,8 +229,8 @@
                                     <td>SC</td>
                                     <td>{{ data.report.agg_child_health_monthly|icds_format_def_zero:"sc_boys_6_36" }}</td>
                                     <td>{{ data.report.agg_child_health_monthly|icds_format_def_zero:"sc_girls_6_36" }}</td>
-                                    <td>*</td>
-                                    <td>*</td>
+                                    <td>-</td>
+                                    <td>-</td>
                                     <td>{{ data.report.ccs_record_monthly_ucr|icds_format_def_zero:"sc_pregnant" }}</td>
                                     <td>{{ data.report.ccs_record_monthly_ucr|icds_format_def_zero:"sc_lactating" }}</td>
                                     <td>{{ data.report.child_health_monthly_ucr|icds_format_def_zero:"pre_sc_boys_36_72" }}</td>
@@ -240,8 +240,8 @@
                                     <td>ST</td>
                                     <td>{{ data.report.agg_child_health_monthly|icds_format_def_zero:"st_boys_6_36" }}</td>
                                     <td>{{ data.report.agg_child_health_monthly|icds_format_def_zero:"st_girls_6_36" }}</td>
-                                    <td>*</td>
-                                    <td>*</td>
+                                    <td>-</td>
+                                    <td>-</td>
                                     <td>{{ data.report.ccs_record_monthly_ucr|icds_format_def_zero:"st_pregnant" }}</td>
                                     <td>{{ data.report.ccs_record_monthly_ucr|icds_format_def_zero:"st_lactating" }}</td>
                                     <td>{{ data.report.child_health_monthly_ucr|icds_format_def_zero:"pre_st_boys_36_72" }}</td>
@@ -251,8 +251,8 @@
                                     <td>OBC</td>
                                     <td>{{ data.report.agg_child_health_monthly|icds_format_def_zero:"obc_boys_6_36" }}</td>
                                     <td>{{ data.report.agg_child_health_monthly|icds_format_def_zero:"obc_girls_6_36" }}</td>
-                                    <td>*</td>
-                                    <td>*</td>
+                                    <td>-</td>
+                                    <td>-</td>
                                     <td>{{ data.report.ccs_record_monthly_ucr|icds_format_def_zero:"obc_pregnant" }}</td>
                                     <td>{{ data.report.ccs_record_monthly_ucr|icds_format_def_zero:"obc_lactating" }}</td>
                                     <td>{{ data.report.child_health_monthly_ucr|icds_format_def_zero:"pre_obc_boys_36_72" }}</td>
@@ -262,8 +262,8 @@
                                     <td>General</td>
                                     <td>{{ data.report.agg_child_health_monthly|icds_format_def_zero:"general_boys_6_36" }}</td>
                                     <td>{{ data.report.agg_child_health_monthly|icds_format_def_zero:"general_girls_6_36" }}</td>
-                                    <td>*</td>
-                                    <td>*</td>
+                                    <td>-</td>
+                                    <td>-</td>
                                     <td>{{ data.report.ccs_record_monthly_ucr|icds_format_def_zero:"general_pregnant" }}</td>
                                     <td>{{ data.report.ccs_record_monthly_ucr|icds_format_def_zero:"general_lactating" }}</td>
                                     <td>{{ data.report.child_health_monthly_ucr|icds_format_def_zero:"pre_general_boys_36_72" }}</td>
@@ -273,8 +273,8 @@
                                     <td>Total</td>
                                     <td>{{ data.report.agg_child_health_monthly|icds_format_def_zero:"total_boys_6_36" }}</td>
                                     <td>{{ data.report.agg_child_health_monthly|icds_format_def_zero:"total_girls_6_36" }}</td>
-                                    <td>*</td>
-                                    <td>*</td>
+                                    <td>-</td>
+                                    <td>-</td>
                                     <td>{{ data.report.ccs_record_monthly_ucr|icds_format_def_zero:"total_pregnant" }}</td>
                                     <td>{{ data.report.ccs_record_monthly_ucr|icds_format_def_zero:"total_lactating" }}</td>
                                     <td>{{ data.report.child_health_monthly_ucr|icds_format_def_zero:"pre_total_boys_36_72" }}</td>
@@ -370,11 +370,11 @@
                                     <td>{{ data.report.vhnd_data.aww_present|icds_yesno }}</td>
                                 </tr>
                                 <tr>
-                                    <td>Number of antenatal check- ups conducted during the Month </td>
+                                    <td>* Number of antenatal check- ups conducted during the Month </td>
                                     <td></td>
                                 </tr>
                                 <tr>
-                                    <td>Total children Immunized during Month</td>
+                                    <td>* Total children Immunized during Month</td>
                                     <td></td>
                                 </tr>
                                 <tr>
@@ -442,10 +442,10 @@
                 </div>
                 <br/>
                 <br/>
-                <p>*fields are not be updated by AWW</p>
+                <p>* fields are not be updated by AWW</p>
                 <br/>
                 <br/>
-                <p style="text-align: right; padding-right: 100px;">Signature of AWW</p>
+                <p style="text-align: right; padding-right: 100px;">* Signature of AWW</p>
                 <div class="row" style="bottom: 0;">
                     <img src="data:image/png;base64,{{ data.qrcode_64 }}" width="150" alt="QR Code"/>
                 </div>
