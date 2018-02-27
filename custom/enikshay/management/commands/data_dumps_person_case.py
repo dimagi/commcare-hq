@@ -3,6 +3,7 @@ from __future__ import (
     print_function,
 )
 
+from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.apps.es.case_search import CaseSearchES
 from corehq.apps.es import queries
@@ -40,7 +41,23 @@ class Command(BaseDataDump):
         return self.context['last_episode']
 
     def get_custom_value(self, column_name, case):
-        if column_name == 'Person Status':
+        if column_name == "Commcare UUID":
+            return case.case_id
+        elif column_name == "Created by Username":
+            user_id = None
+            try:
+                user_id = case.opened_by
+                user = CommCareUser.get_by_user_id(user_id, DOMAIN)
+                return user.username
+            except Exception as e:
+                return Exception("Could not get username. case opened by %s, %s" % (user_id, e))
+        elif column_name == "Created by User ID":
+            return case.opened_by
+        elif column_name == "Date of creation":
+            return case.opened_on
+        elif column_name == "Current Owner - PHI":
+            return case.owner_id
+        elif column_name == 'Person Status':
             if case.closed:
                 return "closed"
             elif case.owner_id == "_invalid_":
@@ -49,7 +66,13 @@ class Command(BaseDataDump):
                 return "archived"
             else:
                 return "active"
-        return Exception("unknown custom column %s" % column_name)
+        elif column_name == "Latest Episode creation Date":
+            return get_last_episode(case).opened_on
+        elif column_name == "Latest Episode Closed?":
+            return get_last_episode(case).closed
+        elif column_name == "Latest Episode - Date Closed (If any)":
+            return get_last_episode(case).closed_date
+        raise Exception("unknown custom column %s" % column_name)
 
     def get_case_reference_value(self, case_reference, case, calculation):
         if case_reference == 'last_episode':
