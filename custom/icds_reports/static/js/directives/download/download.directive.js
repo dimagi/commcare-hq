@@ -311,6 +311,8 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
     };
 
     vm.submitISSNIPForm = function(csrf_token) {
+        $rootScope.issnip_report_link = '';
+        var awcs = vm.selectedPDFFormat === 'one' ? ['all'] : vm.selectedAWCs;
         issnipService.createTask({
             'csrfmiddlewaretoken': csrf_token,
             'location': vm.selectedLocationId,
@@ -320,7 +322,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
             'indicator': vm.selectedIndicator,
             'format': vm.selectedFormat,
             'pdfformat': vm.selectedPDFFormat,
-            'selected_awcs': vm.selectedPDFFormat === 'one' ? 'all' : vm.selectedAWCs,
+            'selected_awcs': awcs.join(',')
         }).then(function(data) {
             vm.task_id = data.task_id;
             if (vm.task_id) {
@@ -394,6 +396,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
     vm.goToLink = function () {
         window.open($rootScope.issnip_report_link);
         vm.downloaded = true;
+        $rootScope.issnip_report_link = '';
     };
 
 }
