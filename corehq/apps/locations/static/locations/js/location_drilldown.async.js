@@ -238,6 +238,6 @@ hqDefine('locations/js/location_drilldown', function () {
 
     return {
         LocationSelectViewModel: LocationSelectViewModel,
-        LocationModel: LocationModel
+        LocationModel: LocationModel,
     };
 });
