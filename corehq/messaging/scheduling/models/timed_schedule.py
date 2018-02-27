@@ -11,6 +11,7 @@ from corehq.messaging.scheduling import util
 from corehq.util.timezones.conversions import UserTime
 from datetime import timedelta, datetime, date, time
 from dateutil.parser import parse
+from dateutil.relativedelta import relativedelta
 from dimagi.utils.decorators.memoized import memoized
 from django.db import models, transaction
 from six.moves import range
@@ -105,17 +106,31 @@ class TimedSchedule(Schedule):
 
         self.set_next_event_due_timestamp(instance)
 
+        # If there was no specific start date for the schedule, we
+        # start it today. But that can cause us to put the first event
+        # in the past if it has already passed for the day. So if that
+        # happens, push the schedule out by 1 day for daily schedules,
+        # 1 week for weekly schedules, or 1 month for monthly schedules.
         if (
-            not self.is_monthly and
             not start_date and
             instance.next_event_due < util.utcnow()
         ):
-            if self.start_day_of_week == self.ANY_DAY:
+            if self.is_monthly:
+                # Monthly
+                new_start_date = instance.start_date += relativedelta(months=1)
+                instance.start_date = date(new_start_date.year, new_start_date.month, 1)
+                # Current event and schedule iteration might be updated
+                # in the call to set_next_event_due_timestamp, so reset them
+                instance.current_event_num = 0
+                instance.schedule_iteration_num = 1
+            elif self.start_day_of_week == self.ANY_DAY:
+                # Daily
                 instance.start_date += timedelta(days=1)
-                instance.next_event_due += timedelta(days=1)
             else:
+                # Weekly
                 instance.start_date += timedelta(days=7)
-                instance.next_event_due += timedelta(days=7)
+
+            self.set_next_event_due_timestamp(instance)
 
     def get_start_date_with_start_offsets(self, instance):
         start_date_with_start_offsets = instance.start_date + timedelta(days=self.start_offset)
