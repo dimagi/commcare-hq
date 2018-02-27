@@ -101,6 +101,7 @@ class HQPhoneNumberMethodForm(PhoneNumberMethodForm):
 
 
 class HQDeviceValidationForm(DeviceValidationForm):
+    token = forms.IntegerField(required=False, label=_("Token"), min_value=1, max_value=int('9' * totp_digits()))
 
     def __init__(self, **kwargs):
         super(HQDeviceValidationForm, self).__init__(**kwargs)
@@ -161,6 +162,7 @@ class HQTwoFactorMethodForm(MethodForm):
 
 
 class HQTOTPDeviceForm(TOTPDeviceForm):
+    token = forms.IntegerField(required=False, label=_("Token"), min_value=1, max_value=int('9' * totp_digits()))
 
     def __init__(self, **kwargs):
         super(HQTOTPDeviceForm, self).__init__(**kwargs)
