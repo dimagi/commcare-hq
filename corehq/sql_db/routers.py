@@ -86,12 +86,8 @@ def db_for_read_write(model, write=True):
             engine_id = connection_manager.get_load_balanced_read_engine_id(ICDS_UCR_ENGINE_ID)
         return connection_manager.get_django_db_alias(engine_id)
     elif app_label == WAREHOUSE_APP:
-        error_msg = 'Cannot read/write to warehouse db without warehouse database defined'
-        assert hasattr(settings, "WAREHOUSE_DATABASE_ALIAS"), error_msg
         return settings.WAREHOUSE_DATABASE_ALIAS
     elif app_label == SYNCLOGS_APP:
-        error_msg = 'A synclogs SQL db must be defined to store/query synclogs'
-        assert hasattr(settings, "SYNCLOGS_SQL_DB_ALIAS"), error_msg
         return settings.SYNCLOGS_SQL_DB_ALIAS
     else:
         return partition_config.get_main_db()
