@@ -390,10 +390,10 @@ def get_payload_properties(sector):
     return properties
 
 
-PublicPatientPayload = type('PublicPatientPayload', (BasePublicPatientPayload,),
+PublicPatientPayload = type(b'PublicPatientPayload', (BasePublicPatientPayload,),
                             get_payload_properties('public'))
 
-PrivatePatientPayload = type('PublicPatientPayload', (BasePrivatePatientPayload,),
+PrivatePatientPayload = type(b'PublicPatientPayload', (BasePrivatePatientPayload,),
                              get_payload_properties('private'))
 
 
