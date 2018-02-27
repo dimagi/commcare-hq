@@ -130,6 +130,12 @@ class HQDeviceValidationForm(DeviceValidationForm):
             )
         )
 
+    def clean_token(self):
+        token = self.cleaned_data['token']
+        if not token or not self.device.verify_token(token):
+            raise forms.ValidationError(self.error_messages['invalid_token'])
+        return token
+
 
 class HQTwoFactorMethodForm(MethodForm):
 
