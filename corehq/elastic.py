@@ -189,7 +189,11 @@ class ESError(Exception):
     pass
 
 
-def run_query(index_name, q, debug_host=None, es_instance_alias=ES_DEFAULT_INSTANCE):
+def run_query(index_name,
+              q,
+              debug_host=None,
+              es_instance_alias=ES_DEFAULT_INSTANCE,
+              request_params=None):
     # the debug_host parameter allows you to query another env for testing purposes
     if debug_host:
         if not settings.DEBUG:
@@ -210,7 +214,7 @@ def run_query(index_name, q, debug_host=None, es_instance_alias=ES_DEFAULT_INSTA
         else:
             raise
     try:
-        return es_instance.search(es_meta.index, es_meta.type, body=q)
+        return es_instance.search(es_meta.index, es_meta.type, body=q, params=request_params)
     except ElasticsearchException as e:
         raise ESError(e)
 

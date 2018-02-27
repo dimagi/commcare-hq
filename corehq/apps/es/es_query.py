@@ -172,6 +172,7 @@ class ESQuery(object):
                 "query": queries.match_all()
             }
         }}
+        self.request_params = {}
 
     @property
     def builtin_filters(self):
@@ -224,6 +225,7 @@ class ESQuery(object):
             query.raw_query,
             debug_host=query.debug_host,
             es_instance_alias=self.es_instance_alias,
+            request_params=self.request_params
         )
         return ESQuerySet(raw, deepcopy(query))
 
@@ -440,6 +442,10 @@ class ESQuery(object):
     def count(self):
         """Performs a minimal query to get the count of matching documents"""
         return self.size(0).run().total
+
+    def set_request_param(self, param, value):
+        self.request_params[param] = value
+        return self
 
     def get_ids(self):
         """Performs a minimal query to get the ids of the matching documents"""
