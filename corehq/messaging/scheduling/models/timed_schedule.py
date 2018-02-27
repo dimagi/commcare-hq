@@ -117,7 +117,7 @@ class TimedSchedule(Schedule):
         ):
             if self.is_monthly:
                 # Monthly
-                new_start_date = instance.start_date += relativedelta(months=1)
+                new_start_date = instance.start_date + relativedelta(months=1)
                 instance.start_date = date(new_start_date.year, new_start_date.month, 1)
                 # Current event and schedule iteration might be updated
                 # in the call to set_next_event_due_timestamp, so reset them
