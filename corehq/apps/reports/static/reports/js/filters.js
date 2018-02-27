@@ -206,6 +206,18 @@ hqDefine("reports/js/filters", [
             placeholder: gettext("Select a group"),
         });
 
+        $(".report-filter-drillable-async").each(function (i, el) {
+            var $el = $(el),
+                data = $el.data();
+
+            var fdis = data['fdis'];
+            var selected = data['selected_fdi_id'];
+
+            var model = new hqImport('reports/js/drillable_async').FixtureSelectViewModel();
+            $el.koApplyBindings(model);
+            model.load(fdis, selected);
+        });
+
         // location filter
         $(".report-filter-location-async").each(function (i, el) {
             var $el = $(el),

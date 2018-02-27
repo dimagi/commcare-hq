@@ -16,17 +16,6 @@ hqDefine('reports/js/drillable_async', function() {
         });
     }
 
-    $(function() {
-        var fdis = initialPageData.get('fdis');
-        var selected = initialPageData.get('selected_fdi_id');
-
-        var model = new FixtureSelectViewModel();
-        $('#group_' + initialPageData.get('control_slug')).koApplyBindings(model);
-        model.load(fdis, selected);
-
-    });
-
-
     function FixtureSelectViewModel() {
         var model = this;
 
@@ -185,4 +174,5 @@ hqDefine('reports/js/drillable_async', function() {
         this.load(data);
     }
 
+    return { FixtureSelectViewModel: FixtureSelectViewModel };
 });

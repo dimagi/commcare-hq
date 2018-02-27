@@ -1,20 +1,20 @@
 {% load hq_shared_tags %}
-<div class="form-group">
-    <label class="{{ css_label_class }}">{{ control_name }}</label>
-    <div class="{{ css_field_class }}">
-        <div data-bind="foreach: selected_path">
-            <select class="form-control"
-                    data-bind="options: children,
-                               optionsText: 'display_name',
-                               value: selected_child"></select>
+<div class="report-filter-drillable-async" data-fdis="{{fdis|safe}}"
+                                           data-selected-fdi-id="{{selected_fdi_id|safe}}">
+    <div class="form-group">
+        <label class="{{ css_label_class }}">{{ control_name }}</label>
+        <div class="{{ css_field_class }}">
+            <div data-bind="foreach: selected_path">
+                <select class="form-control"
+                        data-bind="options: children,
+                                optionsText: 'display_name',
+                                value: selected_child"></select>
+            </div>
+            <i class="fa fa-spin fa-spinner hide" id="fdi_ajax"></i>
+            <input name="fixture_id" type="hidden" data-bind="value: selected_fixtid" />
         </div>
-        <i class="fa fa-spin fa-spinner hide" id="fdi_ajax"></i>
-        <input name="fixture_id" type="hidden" data-bind="value: selected_fixtid" />
     </div>
 </div>
 
-{% initial_page_data 'api_root' api_root %}
-{% initial_page_data 'hierarchy' hierarchy %}
-{% initial_page_data 'fdis' fdis|safe %}
-{% initial_page_data 'selected_fdi_id' selected_fdi_id|safe %}
-{% initial_page_data 'control_slug' control_slug %}
+{% initial_page_data "api_root" api_root %}
+{% initial_page_data "hierarchy" hierarchy %}
