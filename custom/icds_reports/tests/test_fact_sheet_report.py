@@ -299,7 +299,8 @@ class TestFactSheetReportMaternalAndChildNutrition(TestCase):
                 'data_source': 'AggChildHealthMonthlyDataSource',
                 'format': 'percent',
                 'header': 'Percent of children born in month with low birth weight',
-                'slug': 'low_birth_weight'
+                'slug': 'low_birth_weight',
+                'reverseColors': True,
             }
         )
 

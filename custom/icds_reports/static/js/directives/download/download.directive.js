@@ -322,7 +322,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
             'indicator': vm.selectedIndicator,
             'format': vm.selectedFormat,
             'pdfformat': vm.selectedPDFFormat,
-            'selected_awcs': awcs.join(',')
+            'selected_awcs': awcs.join(','),
         }).then(function(data) {
             vm.task_id = data.task_id;
             if (vm.task_id) {
