@@ -900,11 +900,10 @@ def run_model_reconciliation(command_name, email, person_case_ids=None, commit=F
 
 
 @task(queue='background_queue', ignore_result=True)
-def run_custom_export_tasks(command_name, email, case_type):
+def run_custom_export_tasks(command_name, email):
     if settings.SERVER_ENVIRONMENT == "enikshay":
         call_command(command_name,
-                     recipient=email,
-                     case_type=case_type)
+                     recipient=email)
 
 
 @task

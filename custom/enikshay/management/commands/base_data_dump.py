@@ -15,6 +15,7 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.files import safe_filename_header
 
 from dimagi.utils.django.email import send_HTML_email
+from dimagi.utils.web import get_url_base
 
 from soil.util import expose_blob_download
 
@@ -47,10 +48,14 @@ class BaseDataDump(BaseCommand):
     def handle(self, case_type, recipient, *args, **options):
         self.case_type = case_type
         self.recipient = recipient
+        if not self.recipient:
+            return
+
         self.input_file_name = self.INPUT_FILE_NAME
         self.setup()
         temp_file_path = self.generate_dump()
         download_id = self.save_dump_to_blob(temp_file_path)
+
         self.email_result(download_id)
 
     def setup_result_file_name(self):
@@ -123,24 +128,29 @@ class BaseDataDump(BaseCommand):
     def save_dump_to_blob(self, temp_path):
         with open(temp_path, 'rb') as file_:
             blob_db = get_blob_db()
-            blob_db.put(file_, self.result_file_name, timeout=60 * 48)  # 48 hours
-
-            file_format = Format.from_format(Format.CSV)
-            blob_dl_object = expose_blob_download(
+            blob_db.put(
+                file_,
                 self.result_file_name,
-                mimetype=file_format.mimetype,
-                content_disposition=safe_filename_header(self.result_file_name, file_format.extension),
-            )
+                timeout=60 * 48)  # 48 hours
+
+        file_format = Format.from_format(Format.CSV)
+        file_name_header = safe_filename_header(
+            self.result_file_name, file_format.extension)
+        blob_dl_object = expose_blob_download(
+            self.result_file_name,
+            mimetype=file_format.mimetype,
+            content_disposition=file_name_header
+        )
         return blob_dl_object.download_id
 
     def email_result(self, download_id):
-        if not self.recipient:
-            return
-        url = reverse('ajax_job_poll', kwargs={'download_id': download_id})
+        url = "%s%s?%s" % (get_url_base(),
+                           reverse('retrieve_download', kwargs={'download_id': download_id}),
+                           "get_file")  # downloads immediately, rather than rendering page
         send_HTML_email('%s Download for %s Finished' % (DOMAIN, self.case_type),
                         self.recipient,
                         'Simple email, just to let you know that there is a '
-                        'download waiting for you at %s' % url)
+                        'download waiting for you at %s. It will expire in 48 hours' % url)
 
     def get_cases(self, case_type):
         case_accessor = CaseAccessors(DOMAIN)
