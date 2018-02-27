@@ -1,5 +1,7 @@
 from __future__ import absolute_import
-from custom.enikshay.messaging.custom_content import person_case_from_voucher_case
+from custom.enikshay.messaging.custom_recipients import person_case_from_voucher_case
+from django.template import TemplateDoesNotExist
+from django.template.loader import render_to_string
 
 
 def render_message(language_code, default_language_code, template, context):
