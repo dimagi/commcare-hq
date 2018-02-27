@@ -5,7 +5,8 @@ from two_factor.forms import (
     PhoneNumberMethodForm, DeviceValidationForm, MethodForm,
     TOTPDeviceForm, PhoneNumberForm
 )
-from two_factor.validators import validate_international_phonenumber
+from corehq.apps.settings.validators import validate_international_phonenumber, run_validators
+from two_factor.utils import totp_digits
 
 from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
@@ -75,10 +76,9 @@ class HQPhoneNumberMethodForm(PhoneNumberMethodForm):
                              validators=[validate_international_phonenumber],
                              widget=forms.TextInput(
                                  attrs={'placeholder': _('Start with +, followed by Country Code.')}))
+    forms.CharField.run_validators = run_validators
 
     def __init__(self, **kwargs):
-        validate_international_phonenumber.message = _("Make sure to enter a valid phone number "
-                                                       "starting with a +, followed by your country code.")
         super(HQPhoneNumberMethodForm, self).__init__(**kwargs)
         self.helper = FormHelper()
         self.helper.form_class = 'form form-horizontal'
@@ -198,6 +198,11 @@ class HQTOTPDeviceForm(TOTPDeviceForm):
 
 
 class HQPhoneNumberForm(PhoneNumberForm):
+    number = forms.CharField(label=_("Phone Number"),
+                             validators=[validate_international_phonenumber],
+                             widget=forms.TextInput(
+                                 attrs={'placeholder': _('Start with +, followed by Country Code.')}))
+    forms.CharField.run_validators = run_validators
 
     def __init__(self, **kwargs):
         super(HQPhoneNumberForm, self).__init__(**kwargs)
