@@ -134,7 +134,7 @@ var DrilldownOption = function (select, drilldown_map) {
         if (!(self.control_options().length)) {
             self.selected.removeAll();
         }
-        
+
         if (self.selected.length === 0){
             self.selected.push(0);
         }
