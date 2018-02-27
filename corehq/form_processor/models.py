@@ -212,7 +212,7 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
     time_end = models.DateTimeField(null=True, blank=True)
     time_start = models.DateTimeField(null=True, blank=True)
     commcare_version = models.CharField(max_length=8, blank=True, null=True)
-    build_version = models.PositiveIntegerField(null=True, blank=True)
+    app_version = models.PositiveIntegerField(null=True, blank=True)
 
     def __init__(self, *args, **kwargs):
         super(XFormInstanceSQL, self).__init__(*args, **kwargs)
@@ -354,7 +354,7 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
         app_version_info = get_app_version_info(self.domain, self.build_id, None, self.metadata)
 
         self.commcare_version = app_version_info.commcare_version
-        self.build_version = app_version_info.build_version
+        self.app_version = app_version_info.build_version
 
     def soft_delete(self):
         from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
@@ -367,9 +367,6 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
         data = dict(serializer.data)
         data['history'] = [dict(op) for op in data['history']]
         data['backend_id'] = 'sql'
-        # Remove these additional SQL only fields from JSON
-        for field in ['time_end', 'time_start', 'commcare_version', 'build_version']:
-            data.pop(field, None)
         return data
 
     def _get_attachment_from_db(self, attachment_name):

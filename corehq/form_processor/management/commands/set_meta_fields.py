@@ -14,7 +14,7 @@ from dimagi.utils.chunked import chunked
 logger = logging.getLogger('set_meta_fields')
 logger.setLevel('DEBUG')
 
-META_FIELDS = ("time_end", "time_start", "commcare_version", "build_version")
+META_FIELDS = ("time_end", "time_start", "commcare_version", "app_version")
 
 
 def sql_iter_forms(form_ids):
@@ -31,7 +31,7 @@ def form_ids_by_received_on(from_date, to_date):
         Q(time_end__isnull=True) &
         Q(time_start__isnull=True) &
         Q(commcare_version__isnull=True) &
-        Q(build_version__isnull=True)
+        Q(app_version__isnull=True)
     )
     q_expr = q_expr & needs_update_q
     return list(run_query_across_partitioned_databases(

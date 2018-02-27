@@ -64,7 +64,7 @@ def form_adapter(form):
         form.time_start,
         form.time_end,
         form.commcare_version,
-        form.build_version
+        form.app_version
     ]
     return ObjectAdapter(fields, XFormInstanceSQL_DB_TABLE)
 

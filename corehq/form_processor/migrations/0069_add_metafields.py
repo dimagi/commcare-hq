@@ -14,7 +14,7 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AddField(
             model_name='xforminstancesql',
-            name='build_version',
+            name='app_version',
             field=models.PositiveIntegerField(blank=True, null=True),
         ),
         migrations.AddField(
