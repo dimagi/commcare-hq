@@ -6,6 +6,11 @@ from django.db import connections, models
 
 from corehq.form_processor.utils.sql import fetchall_as_namedtuple
 from corehq.sql_db.routers import db_for_read_write
+from custom.icds_reports.const import (
+    AGG_COMP_FEEDING_TABLE,
+    AGG_CCS_RECORD_PNC_TABLE,
+    AGG_CHILD_HEALTH_PNC_TABLE,
+)
 from custom.icds_reports.utils.aggregation import (
     ComplementaryFormsAggregationHelper,
     PostnatalCareFormsChildHealthAggregationHelper,
@@ -631,7 +636,7 @@ class AggregateComplementaryFeedingForms(models.Model):
     )
 
     class Meta(object):
-        db_table = 'icds_dashboard_comp_feed_form'
+        db_table = AGG_COMP_FEEDING_TABLE
 
     @classmethod
     def aggregate(cls, state_id, month):
@@ -717,7 +722,7 @@ class AggregateChildHealthPostnatalCareForms(models.Model):
     )
 
     class Meta(object):
-        db_table = 'icds_dashboard_child_health_postnatal_forms'
+        db_table = AGG_CHILD_HEALTH_PNC_TABLE
 
     @classmethod
     def aggregate(cls, state_id, month):
@@ -769,7 +774,7 @@ class AggregateCcsRecordPostnatalCareForms(models.Model):
     )
 
     class Meta(object):
-        db_table = 'icds_dashboard_ccs_record_postnatal_forms'
+        db_table = AGG_CCS_RECORD_PNC_TABLE
 
     @classmethod
     def aggregate(cls, state_id, month):

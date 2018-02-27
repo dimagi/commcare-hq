@@ -7,6 +7,11 @@ from toggle.models import Toggle
 
 from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_datasource_config
 from corehq.apps.userreports.util import get_table_name
+from custom.icds_reports.const import (
+    AGG_COMP_FEEDING_TABLE,
+    AGG_CCS_RECORD_PNC_TABLE,
+    AGG_CHILD_HEALTH_PNC_TABLE,
+)
 
 
 def transform_day_to_month(day):
@@ -99,7 +104,7 @@ class BaseICDSAggregationHelper(object):
 
 class ComplementaryFormsAggregationHelper(BaseICDSAggregationHelper):
     ucr_data_source_id = 'static-complementary_feeding_forms'
-    aggregate_parent_table = 'icds_dashboard_comp_feed_form'
+    aggregate_parent_table = AGG_COMP_FEEDING_TABLE
     aggregate_child_table_prefix = 'icds_db_child_cf_form_'
 
     @property
@@ -223,7 +228,7 @@ class ComplementaryFormsAggregationHelper(BaseICDSAggregationHelper):
 
 class PostnatalCareFormsChildHealthAggregationHelper(BaseICDSAggregationHelper):
     ucr_data_source_id = 'static-postnatal_care_forms'
-    aggregate_parent_table = 'icds_dashboard_child_health_postnatal_forms'
+    aggregate_parent_table = AGG_CHILD_HEALTH_PNC_TABLE
     aggregate_child_table_prefix = 'icds_db_child_pnc_form_'
 
     @property
@@ -348,7 +353,7 @@ class PostnatalCareFormsChildHealthAggregationHelper(BaseICDSAggregationHelper):
 
 class PostnatalCareFormsCcsRecordAggregationHelper(BaseICDSAggregationHelper):
     ucr_data_source_id = 'static-postnatal_care_forms'
-    aggregate_parent_table = 'icds_dashboard_ccs_record_postnatal_forms'
+    aggregate_parent_table = AGG_CCS_RECORD_PNC_TABLE
     aggregate_child_table_prefix = 'icds_db_ccs_pnc_form_'
 
     @property
