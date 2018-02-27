@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from base64 import b64decode
 from collections import namedtuple
 from datetime import datetime, date, time

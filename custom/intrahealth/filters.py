@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import calendar
 import json
 from django.urls import reverse
@@ -65,7 +66,7 @@ class RecapPassageLocationFilter(LocationFilter):
 
 
 class FRYearFilter(YearFilter):
-    label = ugettext_noop(u"Ann\xe9e")
+    label = ugettext_noop("Ann\xe9e")
 
 
 class FRMonthFilter(MonthFilter):

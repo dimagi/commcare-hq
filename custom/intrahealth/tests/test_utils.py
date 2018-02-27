@@ -1,5 +1,6 @@
 # coding=utf-8
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.test.testcases import TestCase
 
 from casexml.apps.case.tests.util import delete_all_xforms
@@ -29,17 +30,17 @@ class IntraHealthTestCase(TestCase):
         cls.engine = connection_manager.get_engine('default')
 
         cls.domain = create_domain(TEST_DOMAIN)
-        cls.region_type = LocationType.objects.create(domain=TEST_DOMAIN, name=u'Région')
-        cls.district_type = LocationType.objects.create(domain=TEST_DOMAIN, name=u'District')
-        cls.pps_type = LocationType.objects.create(domain=TEST_DOMAIN, name=u'PPS')
+        cls.region_type = LocationType.objects.create(domain=TEST_DOMAIN, name='Région')
+        cls.district_type = LocationType.objects.create(domain=TEST_DOMAIN, name='District')
+        cls.pps_type = LocationType.objects.create(domain=TEST_DOMAIN, name='PPS')
 
-        cls.region = make_location(domain=TEST_DOMAIN, name='Test region', location_type=u'Région')
+        cls.region = make_location(domain=TEST_DOMAIN, name='Test region', location_type='Région')
         cls.region.save()
         cls.district = make_location(
-            domain=TEST_DOMAIN, name='Test district', location_type=u'District', parent=cls.region
+            domain=TEST_DOMAIN, name='Test district', location_type='District', parent=cls.region
         )
         cls.district.save()
-        cls.pps = make_location(domain=TEST_DOMAIN, name='Test PPS', location_type=u'PPS', parent=cls.district)
+        cls.pps = make_location(domain=TEST_DOMAIN, name='Test PPS', location_type='PPS', parent=cls.district)
         cls.pps.save()
 
         cls.mobile_worker = create_mobile_worker(
@@ -48,9 +49,9 @@ class IntraHealthTestCase(TestCase):
         cls.mobile_worker.location_id = cls.pps.get_id
         cls.mobile_worker.save()
 
-        cls.product = Product(_id=u'81457658bdedd663f8b0bdadb19d8f22', name=u'ASAQ Nourisson', domain=TEST_DOMAIN)
+        cls.product = Product(_id='81457658bdedd663f8b0bdadb19d8f22', name='ASAQ Nourisson', domain=TEST_DOMAIN)
         cls.product2 = Product(
-            _id=u'81457658bdedd663f8b0bdadb19d83d8', name=u'ASAQ Petit Enfant', domain=TEST_DOMAIN
+            _id='81457658bdedd663f8b0bdadb19d83d8', name='ASAQ Petit Enfant', domain=TEST_DOMAIN
         )
 
         cls.product.save()

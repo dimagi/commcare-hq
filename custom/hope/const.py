@@ -1,4 +1,5 @@
 
+from __future__ import unicode_literals
 MOTHER_OTHER_PROPERTIES = [
     ('mother_name', '_HOPE_mother_mother_name'),
     ('husband_name', '_HOPE_mother_husband_name'),

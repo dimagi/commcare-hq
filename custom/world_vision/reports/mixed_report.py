@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from custom.world_vision.filters import LocationFilter, WVDatespanFilter
 from custom.world_vision.reports import TTCReport
 from custom.world_vision.sqldata.child_sqldata import ChildRegistrationDetails, ClosedChildCasesBreakdown, \
