@@ -24,7 +24,7 @@ from custom.nic_compliance.forms import EncodedPasswordChangeFormMixin
 
 class HQPasswordChangeForm(EncodedPasswordChangeFormMixin, PasswordChangeForm):
 
-    new_password1 = forms.CharField(label=_("New password"),
+    new_password1 = forms.CharField(label=_('New password'),
                                     widget=forms.PasswordInput(),
                                     help_text=mark_safe("""
                                     <span data-bind="text: passwordHelp, css: color">
@@ -46,7 +46,7 @@ class HQPasswordChangeForm(EncodedPasswordChangeFormMixin, PasswordChangeForm):
                     data_bind="value: password, valueUpdate: 'input'",
                 ),
                 'new_password2',
-                css_class="check-password",
+                css_class='check-password',
             ),
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(
@@ -72,7 +72,7 @@ class HQPasswordChangeForm(EncodedPasswordChangeFormMixin, PasswordChangeForm):
 
 
 class HQPhoneNumberMethodForm(PhoneNumberMethodForm):
-    number = forms.CharField(label=_("Phone Number"),
+    number = forms.CharField(label=_('Phone Number'),
                              validators=[validate_international_phonenumber],
                              widget=forms.TextInput(
                                  attrs={'placeholder': _('Start with +, followed by Country Code.')}))
@@ -115,11 +115,11 @@ class HQDeviceValidationForm(DeviceValidationForm):
             ),
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(
-                    _("Back"),
+                    _('Back'),
                     css_class='btn-default',
                     type='submit',
                     value='method',
-                    name="wizard_goto_step",
+                    name='wizard_goto_step',
                 ),
                 twbscrispy.StrictButton(
                     _('Next'),
@@ -145,11 +145,11 @@ class HQTwoFactorMethodForm(MethodForm):
             ),
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(
-                    _("Back"),
+                    _('Back'),
                     css_class='btn-default',
                     type='submit',
                     value='welcome',
-                    name="wizard_goto_step",
+                    name='wizard_goto_step',
                 ),
                 twbscrispy.StrictButton(
                     _('Next'),
@@ -175,11 +175,11 @@ class HQTOTPDeviceForm(TOTPDeviceForm):
             ),
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(
-                    _("Back"),
+                    _('Back'),
                     css_class='btn-default',
                     type='submit',
                     value='method',
-                    name="wizard_goto_step",
+                    name='wizard_goto_step',
                 ),
                 twbscrispy.StrictButton(
                     _('Next'),
@@ -198,7 +198,7 @@ class HQTOTPDeviceForm(TOTPDeviceForm):
 
 
 class HQPhoneNumberForm(PhoneNumberForm):
-    number = forms.CharField(label=_("Phone Number"),
+    number = forms.CharField(label=_('Phone Number'),
                              validators=[validate_international_phonenumber],
                              widget=forms.TextInput(
                                  attrs={'placeholder': _('Start with +, followed by Country Code.')}))
@@ -217,11 +217,11 @@ class HQPhoneNumberForm(PhoneNumberForm):
             ),
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(
-                    _("Back"),
+                    _('Back'),
                     css_class='btn-default',
                     type='submit',
                     value='method',
-                    name="wizard_goto_step",
+                    name='wizard_goto_step',
                 ),
                 twbscrispy.StrictButton(
                     _('Next'),
