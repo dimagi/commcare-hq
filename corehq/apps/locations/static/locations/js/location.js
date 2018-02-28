@@ -1,4 +1,4 @@
-/* globals TEMPLATE_STRINGS django */
+/* globals django */
 // for product and user per location selection
 hqDefine("locations/js/location", function() {
     var initialPageData = hqImport('hqwebapp/js/initial_page_data');
@@ -65,7 +65,7 @@ hqDefine("locations/js/location", function() {
         var hierarchy = initialPageData.get('hierarchy');
         var loc_types_with_users = initialPageData.get('loc_types_with_users');
 
-        var model = new LocationSelectViewModel({
+        var model = new hqImport('location/js/location_drilldown').LocationSelectViewModel({
             "hierarchy": hierarchy,
             "default_caption": "\u2026",
             "auto_drill": false,
