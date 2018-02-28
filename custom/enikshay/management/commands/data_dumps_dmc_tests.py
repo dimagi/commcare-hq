@@ -3,7 +3,6 @@ from __future__ import print_function
 
 from corehq.apps.es.case_search import CaseSearchES
 from corehq.apps.users.models import CommCareUser
-from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 
 from custom.enikshay.case_utils import (
