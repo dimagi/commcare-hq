@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import six.moves.urllib.request, six.moves.urllib.parse, six.moves.urllib.error
 from collections import namedtuple, OrderedDict
 import datetime
@@ -239,7 +240,7 @@ class BaseEditConfigReportView(BaseUserConfigReportsView):
     def post(self, request, *args, **kwargs):
         if self.edit_form.is_valid():
             self.edit_form.save(commit=True)
-            messages.success(request, _(u'Report "{}" saved!').format(self.config.title))
+            messages.success(request, _('Report "{}" saved!').format(self.config.title))
             return HttpResponseRedirect(reverse(
                 'edit_configurable_report', args=[self.domain, self.config._id])
             )
@@ -729,7 +730,7 @@ def delete_report(request, domain, report_id):
 
     messages.success(
         request,
-        _(u'Report "{name}" has been deleted. <a href="{url}" class="post-link">Undo</a>').format(
+        _('Report "{name}" has been deleted. <a href="{url}" class="post-link">Undo</a>').format(
             name=config.title,
             url=reverse('undo_delete_configurable_report', args=[domain, config._id]),
         ),
@@ -738,7 +739,7 @@ def delete_report(request, domain, report_id):
     if did_purge_something:
         messages.warning(
             request,
-            _(u"This report was used in one or more applications. "
+            _("This report was used in one or more applications. "
               "It has been removed from there too.")
         )
     ProjectReportsTab.clear_dropdown_cache(domain, request.couch_user.get_id)
@@ -757,10 +758,10 @@ def undelete_report(request, domain, report_id):
         undo_delete(config)
         messages.success(
             request,
-            _(u'Successfully restored report "{name}"').format(name=config.title)
+            _('Successfully restored report "{name}"').format(name=config.title)
         )
     else:
-        messages.info(request, _(u'Report "{name}" not deleted.').format(name=config.title))
+        messages.info(request, _('Report "{name}" not deleted.').format(name=config.title))
     return HttpResponseRedirect(reverse(ConfigurableReport.slug, args=[request.domain, report_id]))
 
 
@@ -922,13 +923,13 @@ class CreateDataSourceFromAppView(BaseUserConfigReportsView):
             if app_source.source_type == 'case':
                 data_source = get_case_data_source(app, app_source.source)
                 data_source.save()
-                messages.success(request, _(u"Data source created for '{}'".format(app_source.source)))
+                messages.success(request, _("Data source created for '{}'".format(app_source.source)))
             else:
                 assert app_source.source_type == 'form'
                 xform = Form.get_form(app_source.source)
                 data_source = get_form_data_source(app, xform)
                 data_source.save()
-                messages.success(request, _(u"Data source created for '{}'".format(xform.default_name())))
+                messages.success(request, _("Data source created for '{}'".format(xform.default_name())))
 
             return HttpResponseRedirect(reverse(
                 EditDataSourceView.urlname, args=[self.domain, data_source._id]
@@ -994,7 +995,7 @@ class BaseEditDataSourceView(BaseUserConfigReportsView):
     def post(self, request, *args, **kwargs):
         if self.edit_form.is_valid():
             config = self.edit_form.save(commit=True)
-            messages.success(request, _(u'Data source "{}" saved!').format(
+            messages.success(request, _('Data source "{}" saved!').format(
                 config.display_name
             ))
             if self.config_id is None:
@@ -1043,7 +1044,7 @@ class EditDataSourceView(BaseEditDataSourceView):
 
     @property
     def page_name(self):
-        return u"Edit {}".format(self.config.display_name)
+        return "Edit {}".format(self.config.display_name)
 
 
 @toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
@@ -1061,7 +1062,7 @@ def delete_data_source_shared(domain, config_id, request=None):
     if request:
         messages.success(
             request,
-            _(u'Data source "{name}" has been deleted. <a href="{url}" class="post-link">Undo</a>').format(
+            _('Data source "{name}" has been deleted. <a href="{url}" class="post-link">Undo</a>').format(
                 name=config.display_name,
                 url=reverse('undo_delete_data_source', args=[domain, config._id]),
             ),
@@ -1079,10 +1080,10 @@ def undelete_data_source(request, domain, config_id):
         undo_delete(config)
         messages.success(
             request,
-            _(u'Successfully restored data source "{name}"').format(name=config.display_name)
+            _('Successfully restored data source "{name}"').format(name=config.display_name)
         )
     else:
-        messages.info(request, _(u'Data source "{name}" not deleted.').format(name=config.display_name))
+        messages.info(request, _('Data source "{name}" not deleted.').format(name=config.display_name))
     return HttpResponseRedirect(reverse(
         EditDataSourceView.urlname, args=[domain, config._id]
     ))
@@ -1116,22 +1117,22 @@ def resume_building_data_source(request, domain, config_id):
     if not is_static and config.meta.build.finished:
         messages.warning(
             request,
-            _(u'Table "{}" has already finished building. Rebuild table to start over.').format(
+            _('Table "{}" has already finished building. Rebuild table to start over.').format(
                 config.display_name
             )
         )
     elif not DataSourceResumeHelper(config).has_resume_info():
         messages.warning(
             request,
-            _(u'Table "{}" did not finish building but resume information is not available. '
-              u'Unfortunately, this means you need to rebuild the table.').format(
+            _('Table "{}" did not finish building but resume information is not available. '
+              'Unfortunately, this means you need to rebuild the table.').format(
                 config.display_name
             )
         )
     else:
         messages.success(
             request,
-            _(u'Resuming rebuilding table "{}".').format(config.display_name)
+            _('Resuming rebuilding table "{}".').format(config.display_name)
         )
         resume_building_indicators.delay(config_id, request.user.username)
     return HttpResponseRedirect(reverse(
@@ -1336,7 +1337,7 @@ def _get_report_filter(domain, report_id, filter_id):
     report = get_report_config_or_404(report_id, domain)[0]
     report_filter = report.get_ui_filter(filter_id)
     if report_filter is None:
-        raise Http404(_(u'Filter {} not found!').format(filter_id))
+        raise Http404(_('Filter {} not found!').format(filter_id))
     return report_filter
 
 
@@ -1394,7 +1395,7 @@ class DataSourceSummaryView(BaseUserConfigReportsView):
 
     @property
     def page_name(self):
-        return u"Summary - {}".format(self.config.display_name)
+        return "Summary - {}".format(self.config.display_name)
 
     @property
     def page_context(self):

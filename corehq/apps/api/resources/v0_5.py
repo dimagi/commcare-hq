@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.http import Http404
 from django.forms import ValidationError
 from tastypie import http
@@ -521,7 +522,7 @@ class NoCountingPaginator(Paginator):
 
 class DeviceReportResource(HqBaseResource, ModelResource):
 
-    class Meta:
+    class Meta(object):
         queryset = DeviceReportEntry.objects.all()
         list_allowed_methods = ['get']
         detail_allowed_methods = ['get']
@@ -543,7 +544,7 @@ class DeviceReportResource(HqBaseResource, ModelResource):
 
 class StockTransactionResource(HqBaseResource, ModelResource):
 
-    class Meta:
+    class Meta(object):
         queryset = StockTransaction.objects.all()
         list_allowed_methods = ['get']
         detail_allowed_methods = ['get']
@@ -785,7 +786,7 @@ class UserDomainsResource(Resource):
     domain_name = fields.CharField(attribute='domain_name')
     project_name = fields.CharField(attribute='project_name')
 
-    class Meta:
+    class Meta(object):
         resource_name = 'user_domains'
         authentication = ApiKeyAuthentication()
         object_class = UserDomain
@@ -832,7 +833,7 @@ class DomainForms(Resource):
     form_xmlns = fields.CharField(attribute='form_xmlns')
     form_name = fields.CharField(attribute='form_name')
 
-    class Meta:
+    class Meta(object):
         resource_name = 'domain_forms'
         authentication = ApiKeyAuthentication()
         object_class = Form
@@ -860,7 +861,7 @@ class DomainForms(Resource):
         for form_object in forms_objects:
             form = form_object['form']
             module = form_object['module']
-            form_name = u'{} > {} > {}'.format(application.name, module.default_name(), form.default_name())
+            form_name = '{} > {} > {}'.format(application.name, module.default_name(), form.default_name())
             results.append(Form(form_xmlns=form.xmlns, form_name=form_name))
         return results
 
@@ -878,7 +879,7 @@ class DomainCases(Resource):
     placeholder = fields.CharField(attribute='placeholder')
     case_type = fields.CharField(attribute='case_type')
 
-    class Meta:
+    class Meta(object):
         resource_name = 'domain_cases'
         authentication = ApiKeyAuthentication()
         object_class = CaseType
@@ -909,7 +910,7 @@ class DomainUsernames(Resource):
     user_id = fields.CharField(attribute='user_id')
     user_name = fields.CharField(attribute='user_name')
 
-    class Meta:
+    class Meta(object):
         resource_name = 'domain_usernames'
         authentication = ApiKeyAuthentication()
         object_class = User

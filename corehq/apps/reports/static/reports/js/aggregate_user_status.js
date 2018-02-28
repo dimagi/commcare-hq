@@ -7,11 +7,11 @@ hqDefine("reports/js/aggregate_app_status", function() {
     function setupCharts(data, div, customTooltip) {
         nv.addGraph(function() {
             var chart = nv.models.multiBarChart()
-              .transitionDuration(100)
-              .showControls(false)
-              .reduceXTicks(true)
-              .rotateLabels(0)
-              .groupSpacing(0.1)
+                .transitionDuration(100)
+                .showControls(false)
+                .reduceXTicks(true)
+                .rotateLabels(0)
+                .groupSpacing(0.1)
             ;
 
             chart.yAxis.tickFormat(d3.format(',f'));
@@ -40,6 +40,10 @@ hqDefine("reports/js/aggregate_app_status", function() {
                 // update data
                 var tooltipFunction = $(this).data('is-aggregate') ? aggregateTooltip : undefined;
                 setupCharts($("#" + $(this).data('chart-data')).data("value"), $(this).data('chart-div'), tooltipFunction);
+            });
+            var mainJs = hqImport("hqwebapp/js/main");
+            $('.hq-help-template').each(function () {
+                mainJs.transformHelpTemplate($(this), true);
             });
         }
     });

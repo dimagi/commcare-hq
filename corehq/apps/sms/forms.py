@@ -290,6 +290,15 @@ class SettingsForm(Form):
         min_value=1000,
     )
 
+    uses_new_reminders = ChoiceField(
+        label=ugettext_lazy("New Reminders Framework"),
+        required=False,
+        choices=(
+            ('Y', ugettext_lazy("Enabled")),
+            ('N', ugettext_lazy("Disabled")),
+        ),
+    )
+
     @property
     def section_general(self):
         fields = [
@@ -554,6 +563,14 @@ class SettingsForm(Form):
         if self._cchq_is_previewer:
             result.append(self.section_internal)
 
+        if self.new_reminders_migrator:
+            result.append(
+                crispy.Fieldset(
+                    _("New Reminders"),
+                    crispy.Field('uses_new_reminders')
+                )
+            )
+
         result.append(
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(
@@ -566,9 +583,11 @@ class SettingsForm(Form):
 
         return result
 
-    def __init__(self, data=None, cchq_domain=None, cchq_is_previewer=False, *args, **kwargs):
+    def __init__(self, data=None, cchq_domain=None, cchq_is_previewer=False, new_reminders_migrator=False,
+            *args, **kwargs):
         self._cchq_domain = cchq_domain
         self._cchq_is_previewer = cchq_is_previewer
+        self.new_reminders_migrator = new_reminders_migrator
         super(SettingsForm, self).__init__(data, *args, **kwargs)
 
         self.helper = FormHelper()
@@ -833,6 +852,9 @@ class SettingsForm(Form):
             raise ValidationError(_("This field is required"))
 
         return value
+
+    def clean_uses_new_reminders(self):
+        return self.cleaned_data.get('uses_new_reminders') == 'Y'
 
 
 class BackendForm(Form):

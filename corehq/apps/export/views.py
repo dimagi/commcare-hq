@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+from __future__ import division
 from datetime import datetime, date, timedelta
 from wsgiref.util import FileWrapper
 
@@ -1545,7 +1546,7 @@ class DataFileDownloadList(BaseProjectDataView):
         if request.FILES['file'].size > MAX_DATA_FILE_SIZE:
             messages.warning(
                 request,
-                _('The data file exceeds the maximum size of {} MB.').format(MAX_DATA_FILE_SIZE / (1024 * 1024))
+                _('The data file exceeds the maximum size of {} MB.').format(MAX_DATA_FILE_SIZE // (1024 * 1024))
             )
             return self.get(request, *args, **kwargs)
 
@@ -1558,7 +1559,7 @@ class DataFileDownloadList(BaseProjectDataView):
                 request,
                 _('Uploading this data file would exceed the total allowance of {} GB for this project space. '
                   'Please remove some files in order to upload new files.').format(
-                    MAX_DATA_FILE_SIZE_TOTAL / (1024 * 1024 * 1024))
+                    MAX_DATA_FILE_SIZE_TOTAL // (1024 * 1024 * 1024))
             )
             return self.get(request, *args, **kwargs)
 
@@ -2488,19 +2489,19 @@ def can_download_daily_saved_export(export, domain, couch_user):
 def add_export_email_request(request, domain):
     download_id = request.POST.get('download_id')
     user_id = request.couch_user.user_id
+    if download_id is None or user_id is None:
+        return HttpResponseBadRequest(ugettext_lazy('Download ID or User ID blank/not provided'))
     try:
         download_context = get_download_context(download_id)
     except TaskFailedError:
         return HttpResponseServerError(ugettext_lazy('Export failed'))
-    if download_id is None or user_id is None:
-        return HttpResponseBadRequest(ugettext_lazy('Download ID or User ID blank/not provided'))
     if download_context.get('is_ready', False):
         try:
             couch_user = CouchUser.get_by_user_id(user_id, domain=domain)
         except CouchUser.AccountTypeError:
             return HttpResponseBadRequest(ugettext_lazy('Invalid user'))
         if couch_user is not None:
-            process_email_request(download_id, couch_user.get_email())
+            process_email_request(domain, download_id, couch_user.get_email())
     else:
         EmailExportWhenDoneRequest.objects.create(domain=domain, download_id=download_id, user_id=user_id)
     return HttpResponse(ugettext_lazy('Export e-mail request sent.'))

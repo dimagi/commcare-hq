@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from datetime import date
 from django.urls import reverse
 from django.utils.safestring import mark_safe
@@ -230,7 +231,7 @@ class McctProjectReview(BaseReport):
             if xmlnss:
                 q["filter"]["and"].append({"terms": {"xmlns.exact": xmlnss}})
 
-            modify_close = [_f for _f in [u'Modify/Close Client'] if _f]
+            modify_close = [_f for _f in ['Modify/Close Client'] if _f]
             q["filter"]["and"].append({"not": {"terms": {"form.@name": modify_close}}})
 
             q["sort"] = self.get_sorting_block() \
@@ -435,7 +436,7 @@ class McctClientLogPage(McctProjectReview):
             if xmlnss:
                 q["filter"]["and"].append({"terms": {"xmlns.exact": xmlnss}})
 
-            modify_close = [_f for _f in [u'Modify/Close Client'] if _f]
+            modify_close = [_f for _f in ['Modify/Close Client'] if _f]
             q["filter"]["and"].append({"not": {"terms": {"form.@name": modify_close}}})
 
             q["sort"] = self.get_sorting_block() \

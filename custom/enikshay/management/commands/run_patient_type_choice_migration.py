@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from custom.enikshay.management.commands.utils import BaseEnikshayCaseMigration
 from custom.enikshay.nikshay_datamigration.models import PatientDetail
 

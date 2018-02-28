@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import division
 from datetime import datetime
 from django.test import SimpleTestCase, TestCase
 from corehq.apps.domain.shortcuts import create_domain
@@ -55,7 +56,7 @@ class ScheduledReportTest(TestCase):
     def testDefaultValue(self):
         now = datetime.utcnow()
         # This line makes sure that the date of the ReportNotification is an increment of 15 minutes
-        ReportNotification(hour=now.hour, minute=(now.minute / 15) * 15, interval='daily').save()
+        ReportNotification(hour=now.hour, minute=(now.minute // 15) * 15, interval='daily').save()
         if now.minute % 15 <= 5:
             self._check('daily', None, 1)
         else:

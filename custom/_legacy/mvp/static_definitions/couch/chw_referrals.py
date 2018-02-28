@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 APP_NAME = "mvp_chw_referrals"
 
 CHW_REFERRAL_INDICATORS = dict(

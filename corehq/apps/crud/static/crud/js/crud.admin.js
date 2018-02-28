@@ -8,45 +8,45 @@ var CRUDAdminControl = function(options) {
     var self = this;
     self.actionButton = $('<a href="#crud_add_modal" class="btn btn-primary" ' +
         'data-toggle="modal" style="margin-left:2px" />').html('<i class="fa fa-plus"/> ').append(
-        "Add New "+options.itemType);
+        "Add New " + options.itemType);
     self.formSubmitPath = options.formSubmitPath;
     self.formType = options.formType;
-    self.formSubmitURL = self.formSubmitPath+self.formType+'/';
+    self.formSubmitURL = self.formSubmitPath + self.formType + '/';
     self.hideButton = options.hideButton;
-    self.newFormSubmitURL = self.formSubmitURL+'new/';
-    self.updateFormSubmitURL = self.formSubmitURL+'update/';
+    self.newFormSubmitURL = self.formSubmitURL + 'new/';
+    self.updateFormSubmitURL = self.formSubmitURL + 'update/';
     self.overrideNewFormType = null;
     self.overrideNewFormDiv = '#crud_add_modal .modal-body';
 
     var refreshForm = function(modal, data, formBodyDiv) {
-        var prepend = "";
-        $(formBodyDiv).html(data.form_update).prepend(prepend);
-        modal.find('form button[type="submit"]').button('reset');
-        if (data.success)
-            modal.modal('hide');
-    },
-    updateRow = function (rowElem, rowData) {
-        $('.datatable tbody tr').removeClass('active');
-        $.each($(rowElem).children(), function (ind) {
-            $(this).html(rowData[ind]);
-        });
-        $(rowElem).addClass('active');
-    },
-    overrideFormTypeInUrl = function (url, form_type) {
-        if (form_type)
-            url = url.replace(self.formType, form_type);
-        return url;
-    },
-    resetSubmitButton = function (data) {
-        $('button[type="submit"]').button('reset');
-    };
+            var prepend = "";
+            $(formBodyDiv).html(data.form_update).prepend(prepend);
+            modal.find('form button[type="submit"]').button('reset');
+            if (data.success)
+                modal.modal('hide');
+        },
+        updateRow = function(rowElem, rowData) {
+            $('.datatable tbody tr').removeClass('active');
+            $.each($(rowElem).children(), function(ind) {
+                $(this).html(rowData[ind]);
+            });
+            $(rowElem).addClass('active');
+        },
+        overrideFormTypeInUrl = function(url, form_type) {
+            if (form_type)
+                url = url.replace(self.formType, form_type);
+            return url;
+        },
+        resetSubmitButton = function(data) {
+            $('button[type="submit"]').button('reset');
+        };
 
-    self.init = function () {
+    self.init = function() {
         $(function() {
-            if(!self.hideButton) {
+            if (!self.hideButton) {
                 $('#reportFiltersAccordion .row .col-xs-8').append(self.actionButton);
             }
-            self.actionButton.click(function () {
+            self.actionButton.click(function() {
                 $('#js-add-crud-success').addClass('hide');
             });
             self.addItemModal = $('#crud_add_modal');
@@ -54,38 +54,38 @@ var CRUDAdminControl = function(options) {
 
             self.init_new_form();
 
-            $('#crud_add_modal form').submit(function (e) {
+            $('#crud_add_modal form').submit(function(e) {
                 var $submitBtn = $('#js-crud-add-submit');
-                if (! $submitBtn.hasClass('disabled')) {
+                if (!$submitBtn.hasClass('disabled')) {
                     $submitBtn.button('loading');
                     $(this).ajaxSubmit({
                         method: 'POST',
                         url: overrideFormTypeInUrl(self.newFormSubmitURL, self.overrideNewFormType),
-                        success: function (data) {
+                        success: function(data) {
                             self.refreshAddItemForm(data);
                             reportTables.datatable.fnAddData(data.rows);
                             $('#js-add-crud-success').removeClass('hide');
                         },
                         error: resetSubmitButton,
-                            dataType: 'json'
+                        dataType: 'json',
                     });
                 }
                 e.preventDefault();
                 return false;
             });
 
-            $('#crud_update_modal button').click(function (e) {
+            $('#crud_update_modal button').click(function(e) {
                 var submit_url = self.updateFormSubmitURL;
                 if ($(this).hasClass('btn-danger')) {
-                    submit_url = self.formSubmitURL+'delete/';
+                    submit_url = self.formSubmitURL + 'delete/';
                 }
                 self.updateItemModal.find('input[disabled="disabled"]').removeProp('disabled');
 
                 self.updateItemModal.find('form').ajaxSubmit({
                     dataType: 'json',
-                    url: overrideFormTypeInUrl(submit_url, self.currentItemFormType)+self.currentItemID+'/',
+                    url: overrideFormTypeInUrl(submit_url, self.currentItemFormType) + self.currentItemID + '/',
                     success: self.refreshUpdateItemForm,
-                    error: resetSubmitButton
+                    error: resetSubmitButton,
                 });
                 e.preventDefault();
                 return false;
@@ -94,13 +94,13 @@ var CRUDAdminControl = function(options) {
         });
     };
 
-    self.init_new_form = function () {
+    self.init_new_form = function() {
         $.ajax({
             dataType: 'json',
             url: overrideFormTypeInUrl(self.newFormSubmitURL, self.overrideNewFormType),
             method: 'GET',
             success: self.refreshAddItemForm,
-            error: resetSubmitButton
+            error: resetSubmitButton,
         });
     };
 
@@ -109,11 +109,11 @@ var CRUDAdminControl = function(options) {
         self.currentItemFormType = $(button).data('form_class');
         $.ajax({
             dataType: 'json',
-            url: overrideFormTypeInUrl(self.updateFormSubmitURL, self.currentItemFormType)+self.currentItemID+'/',
+            url: overrideFormTypeInUrl(self.updateFormSubmitURL, self.currentItemFormType) + self.currentItemID + '/',
             method: 'GET',
             success: self.refreshUpdateItemForm,
-            error: resetSubmitButton
-        })
+            error: resetSubmitButton,
+        });
     };
 
     self.refreshAddItemForm = function(data) {
@@ -121,7 +121,7 @@ var CRUDAdminControl = function(options) {
     };
 
     self.refreshUpdateItemForm = function(data) {
-        var row = $('[data-item_id="'+self.currentItemID+'"]').parent().parent()[0];
+        var row = $('[data-item_id="' + self.currentItemID + '"]').parent().parent()[0];
         if (data.deleted)
             reportTables.datatable.fnDeleteRow(reportTables.datatable.fnGetPosition(row));
         if (data.success && !data.deleted && data.rows)

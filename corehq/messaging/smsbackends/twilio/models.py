@@ -11,7 +11,7 @@ ERROR_INVALID_TO_PHONE_NUMBER = 21211
 
 class SQLTwilioBackend(SQLSMSBackend, PhoneLoadBalancingMixin):
 
-    class Meta:
+    class Meta(object):
         app_label = 'sms'
         proxy = True
 

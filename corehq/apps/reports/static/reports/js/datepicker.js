@@ -7,7 +7,7 @@ function shiftDates(days) {
     $("#startdate").datepicker('setDate', start);
     $("#enddate").datepicker('setDate', end);
     $("#paramSelectorForm").submit();
-};
+}
 
 $(function() {
     $('.date-picker').datepicker({
@@ -15,7 +15,7 @@ $(function() {
         changeYear: true,
         showButtonPanel: true,
         dateFormat: 'yy-mm-dd',
-        numberOfMonths: 2
+        numberOfMonths: 2,
     });
     $('#startdate').change(function(){
         $("#enddate").datepicker('option', 'minDate', $('#startdate').val());

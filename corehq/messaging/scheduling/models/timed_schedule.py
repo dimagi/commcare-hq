@@ -13,6 +13,7 @@ from datetime import timedelta, datetime, date, time
 from dateutil.parser import parse
 from dimagi.utils.decorators.memoized import memoized
 from django.db import models, transaction
+from six.moves import range
 
 
 class TimedSchedule(Schedule):
@@ -366,7 +367,7 @@ class TimedSchedule(Schedule):
 
 
 class AbstractTimedEvent(Event):
-    class Meta:
+    class Meta(object):
         abstract = True
 
     schedule = models.ForeignKey('scheduling.TimedSchedule', on_delete=models.CASCADE)

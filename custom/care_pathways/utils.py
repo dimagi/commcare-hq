@@ -1,4 +1,6 @@
 from __future__ import absolute_import
+from __future__ import division
+from __future__ import unicode_literals
 from collections import OrderedDict
 import re
 import os
@@ -182,7 +184,7 @@ class TableCardDataGroupsFormatter(DataFormatter):
 
         for group in range_groups:
             for idx, row in enumerate(group[1:], 1):
-                percent = 100 * float(group[idx]) / float(len(data))
+                percent = 100 * float(group[idx]) / len(data)
                 group[idx] = "%.2f%%" % percent
         return range_groups
 
@@ -267,7 +269,7 @@ class TableCardDataGroupsIndividualFormatter(TableCardDataIndividualFormatter):
         id_to_name = {}
         for row in sorted(data.keys()):
             groups.add(row[0])
-            id_to_name[row[0]] = u'{} ({})'.format(row[1].title(), row[2])
+            id_to_name[row[0]] = '{} ({})'.format(row[1].title(), row[2])
 
         groups = sorted(list(groups), key=lambda r: id_to_name[r])
         result = OrderedDict()
@@ -277,7 +279,7 @@ class TableCardDataGroupsIndividualFormatter(TableCardDataIndividualFormatter):
         for key, row in six.iteritems(data):
             formatted_row = self._format.format_row(row)
             result[key[0]][row['practices']] = formatted_row[1]
-            id_to_name[key[0]] = u'{} ({})'.format(key[1], key[2])
+            id_to_name[key[0]] = '{} ({})'.format(key[1], key[2])
 
         for key, row in result.items():
             formatted_row = []

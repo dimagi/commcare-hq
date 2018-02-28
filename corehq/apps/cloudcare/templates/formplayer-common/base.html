@@ -140,6 +140,11 @@
         {% include 'formplayer/dependencies.html' %}
         {% include 'formplayer/query_view.html' %}
 
+        <div class="commcarehq-urls" class="hide">
+        {% block registered_urls %}
+            {# do not override this block, use registerurl template tag to populate #}
+        {% endblock %}
+        </div>
         {% include 'analytics/initial/all.html' %}
         <div class="initial-analytics-data hide">
         {% block initial_analytics_data %}

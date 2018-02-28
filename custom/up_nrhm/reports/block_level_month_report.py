@@ -1,4 +1,6 @@
 from __future__ import absolute_import
+from __future__ import division
+from __future__ import unicode_literals
 import calendar
 import datetime
 import re
@@ -99,4 +101,4 @@ class BlockLevelMonthReport(GenericTabularReport, DatespanMixin, CustomProjectRe
 
         rows.append([_("<b>Total number of ASHAs who did not report/not known</b>")] + not_reporting +
                     [avg(not_reporting)])
-        return rows, sum(total) / len(total)
+        return rows, sum(total) // len(total)

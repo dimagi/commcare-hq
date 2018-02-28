@@ -57,7 +57,7 @@ def populate_export_download_task(export_instances, filters, download_id, filena
             pass
         else:
             if couch_user is not None:
-                process_email_request(download_id, couch_user.get_email())
+                process_email_request(domain, download_id, couch_user.get_email())
     email_requests.delete()
 
 

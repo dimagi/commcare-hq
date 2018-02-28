@@ -12,6 +12,7 @@ from corehq.apps.app_manager.models import (
 from corehq.apps.app_manager.util import LatestAppInfo
 from corehq.apps.app_manager.views.utils import overwrite_app
 from corehq.apps.domain.models import Domain
+from corehq.apps.app_manager.views.utils import get_default_followup_form_xml
 
 
 class TestGetFormData(SimpleTestCase):
@@ -29,6 +30,27 @@ class TestGetFormData(SimpleTestCase):
 
         modules, errors = util.get_form_data('domain', app)
         self.assertEqual(modules[0]['forms'][0]['action_type'], 'load (load_0)')
+
+
+class TestGetDefaultFollowupForm(SimpleTestCase):
+    def test_default_followup_form(self):
+        app = Application.new_app('domain', "Untitled Application")
+
+        parent_module = app.add_module(AdvancedModule.new_module('parent', None))
+        parent_module.case_type = 'parent'
+        parent_module.unique_id = 'id_parent_module'
+
+        context = {
+            'lang': None,
+            'default_label': "Default label message"
+        }
+        attachment = get_default_followup_form_xml(context=context)
+        followup = app.new_form(0, "Followup Form", None, attachment=attachment)
+
+        modules, _ = util.get_form_data('domain', app)
+        self.assertEqual(followup.name['en'], "Followup Form")
+        self.assertEqual(modules[0]['forms'][0]['name']['en'], "Followup Form")
+        self.assertEqual(modules[0]['forms'][0]['questions'][0]['label'], " Default label message ")
 
 
 class TestLatestAppInfo(TestCase):

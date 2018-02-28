@@ -79,7 +79,6 @@ def fmt_product_rate_dict(product_name, product_rate=None):
             product_rate = SoftwareProductRate.objects.create(name=product_name, is_active=True)
     return {
         'name': product_rate.name,
-        'product_type': 'CommCare',  # TODO - kill product_type
         'rate_id': product_rate.id,
         'monthly_fee': product_rate.monthly_fee.__str__(),
     }

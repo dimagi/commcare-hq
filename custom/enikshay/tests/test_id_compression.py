@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from ..user_setup import compress_id
 from six.moves import range
 

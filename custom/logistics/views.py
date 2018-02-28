@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import json
 from corehq import toggles
 from corehq.apps.commtrack.models import CommtrackConfig

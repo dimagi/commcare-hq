@@ -1,7 +1,7 @@
 /* global moment */
 
 function DownloadController($rootScope, $location, locationHierarchy, locationsService, userLocationId, haveAccessToFeatures,
-                            issnipStatusService) {
+                            issnipService) {
     var vm = this;
 
     vm.months = [];
@@ -10,11 +10,12 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
     $rootScope.issnip_report_link = '';
 
     var getISSNIPStatus = function () {
-        issnipStatusService.getStatus(vm.task_id).then(function (resp) {
+        issnipService.getStatus(vm.task_id).then(function (resp) {
             if (resp.task_ready) {
-                clearInterval(statusCheck);
+                clearInterval(vm.statusCheck);
                 $rootScope.issnip_task_id = '';
                 $rootScope.issnip_report_link = resp.task_result.link;
+                vm.queuedISSNIPTask = false;
             }
         });
     };
@@ -22,7 +23,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
     if (vm.task_id) {
         $rootScope.issnip_task_id = vm.task_id;
         $location.search('task_id', null);
-        var statusCheck = setInterval(getISSNIPStatus, 5 * 1000);
+        vm.statusCheck = setInterval(getISSNIPStatus, 5 * 1000);
     }
 
     vm.filterOptions = [
@@ -54,6 +55,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
             id: year,
         });
     }
+    vm.queuedISSNIPTask = false;
     vm.selectedMonth = new Date().getMonth() + 1;
     vm.selectedYear = new Date().getFullYear();
     vm.selectedIndicator = 1;
@@ -81,6 +83,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         {id: 'many', name: 'One PDF per AWC'},
         {id: 'one', name: 'One Combined PDF for all AWCs'},
     ];
+    vm.downloaded = false;
 
     vm.awcLocations = [];
     vm.selectedAWCs = [];
@@ -96,7 +99,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
     ];
 
     if (haveAccessToFeatures) {
-        vm.indicators.push({id: 7, name: 'ISSNIP Monthly Register'});
+        vm.indicators.push({id: 7, name: 'ICDS-CAS Monthly Register'});
     }
 
     var ALL_OPTION = {name: 'All', location_id: 'all'};
@@ -307,11 +310,52 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         }
     };
 
+    vm.submitISSNIPForm = function(csrf_token) {
+        $rootScope.issnip_report_link = '';
+        var awcs = vm.selectedPDFFormat === 'one' ? ['all'] : vm.selectedAWCs;
+        issnipService.createTask({
+            'csrfmiddlewaretoken': csrf_token,
+            'location': vm.selectedLocationId,
+            'aggregation_level': vm.selectedLevel,
+            'month': vm.selectedMonth,
+            'year': vm.selectedYear,
+            'indicator': vm.selectedIndicator,
+            'format': vm.selectedFormat,
+            'pdfformat': vm.selectedPDFFormat,
+            'selected_awcs': awcs.join(','),
+        }).then(function(data) {
+            vm.task_id = data.task_id;
+            if (vm.task_id) {
+                $rootScope.issnip_task_id = vm.task_id;
+                $location.search('task_id', null);
+                vm.statusCheck = setInterval(getISSNIPStatus, 5 * 1000);
+            }
+        });
+        vm.queuedISSNIPTask = true;
+        vm.downloaded = false;
+    };
+
+    vm.resetForm = function() {
+        vm.hierarchy = [];
+        vm.selectedLocations = [];
+        vm.selectedLocationId = userLocationId;
+        vm.selectedLevel = 1;
+        vm.selectedMonth = new Date().getMonth() + 1;
+        vm.selectedYear = new Date().getFullYear();
+        vm.selectedIndicator = 1;
+        vm.selectedFormat = 'xls';
+        vm.selectedPDFFormat = 'many';
+        initHierarchy();
+    };
+
     vm.hasErrors = function() {
         return vm.isChildBeneficiaryListSelected() && (vm.selectedFilterOptions().length === 0 || !vm.isDistrictOrBelowSelected());
     };
 
     vm.hasErrorsISSNIPExport = function() {
+        if (vm.selectedPDFFormat === 'one') {
+            return vm.isISSNIPMonthlyRegisterSelected() && !vm.isDistrictOrBelowSelected();
+        }
         return vm.isISSNIPMonthlyRegisterSelected() && (!vm.isDistrictOrBelowSelected() || !vm.isAWCsSelected());
     };
 
@@ -351,12 +395,14 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
 
     vm.goToLink = function () {
         window.open($rootScope.issnip_report_link);
+        vm.downloaded = true;
+        $rootScope.issnip_report_link = '';
     };
 
 }
 
 DownloadController.$inject = ['$rootScope', '$location', 'locationHierarchy', 'locationsService', 'userLocationId',
-    'haveAccessToFeatures', 'issnipStatusService'];
+    'haveAccessToFeatures', 'issnipService'];
 
 window.angular.module('icdsApp').directive("download", function() {
     var url = hqImport('hqwebapp/js/initial_page_data').reverse;

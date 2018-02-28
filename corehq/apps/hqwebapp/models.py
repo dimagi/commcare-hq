@@ -22,7 +22,7 @@ class MaintenanceAlert(models.Model):
 
     text = models.TextField()
 
-    class Meta:
+    class Meta(object):
         app_label = 'hqwebapp'
 
     @property

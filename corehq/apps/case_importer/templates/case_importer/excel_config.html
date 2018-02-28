@@ -3,22 +3,8 @@
 {% load report_tags %}
 {% load i18n %}
 
-
-{% block js-inline %}{{ block.super }}
-    <script>
-        $(function() {
-            $('#back_button').click(function() {
-                history.back();
-                return false;
-            });
-
-            $('#back_breadcrumb').click(function(e) {
-                e.preventDefault();
-                history.back();
-                return false;
-            });
-        });
-    </script>
+{% block js %}{{ block.super }}
+    <script src="{% static 'case_importer/js/excel_config.js' %}"></script>
 {% endblock %}
 
 {% block page_breadcrumbs %}

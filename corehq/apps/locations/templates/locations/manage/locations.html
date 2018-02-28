@@ -25,50 +25,48 @@
         return template.replace('-locid-', loc_id);
     }
 
+    var enableLocationSearchSelect = function() {
+
+        $('#location_search_select').select2({
+            ajax: {
+                url: '{% url 'location_search' domain %}',
+                dataType: 'json',
+                data: function (params) {
+                    return {
+                        q: params.term,
+                        page_limit: 10,
+                        page: params.page,
+                        show_inactive: show_inactive,
+                    };
+                },
+                processResults: function (data, params) {
+                    var more = data.more || (params.page * 10) < data.total;
+                    return {results: data.results, more: more};
+                }
+            },
+        });
+    };
+
+    var tree_model = new LocationTreeViewModel(hierarchy);
+
+    var reloadLocationSearchSelect = function() {
+        $('#location_search_select').select2('val', null);
+        enableLocationSearchSelect();
+    };
+
+    var clearLocationSelection = function() {
+        reloadLocationSearchSelect();
+        tree_model.load(locs);
+    };
+
+    enableLocationSearchSelect();
 
     $(function() {
-        var model = new LocationTreeViewModel(hierarchy);
-        $('#location_tree').koApplyBindings(model);
-        model.load(locs);
+        $('#location_tree').koApplyBindings(tree_model);
+        tree_model.load(locs);
+        var model = new LocationSearchViewModel(tree_model);
+        $('#location_search').koApplyBindings(model);
     });
-    {% if request|toggle_enabled:'LOCATION_SEARCH' %}
-
-        var enableLocationSearchSelect = function() {
-
-            $('#location_search_select').select2({
-                ajax: {
-                    url: '{% url 'location_search' domain %}',
-                        dataType: 'json',
-                        data: function (params) {
-                            console.log(params);
-                            return {
-                                q: params.term,
-                                page_limit: 10,
-                                page: params.page,
-                                show_inactive: show_inactive,
-                            };
-                        },
-                        processResults: function (data, params) {
-                            var more = data.more || (params.page * 10) < data.total;
-                            return {results: data.results, more: more};
-                        }
-                    },
-                });
-            };
-
-            var reloadLocationSearchSelect = function() {
-                $('#location_search_select').select2('val', null);
-                enableLocationSearchSelect();
-            };
-
-            enableLocationSearchSelect();
-
-        $(function() {
-            var model = new LocationSearchViewModel();
-            $('#location_search').koApplyBindings(model);
-        });
-
-        {% endif %}
 </script>
 {% endblock %}
 
@@ -76,6 +74,7 @@
     {% registerurl 'archive_location' domain '-locid-' %}
     {% registerurl 'unarchive_location' domain '-locid-' %}
     {% registerurl 'delete_location' domain '-locid-' %}
+    {% registerurl 'location_lineage' domain '-locid-' %}
     {% registerurl 'location_descendants_count' domain '-locid-'%}
 
 <header>
@@ -147,8 +146,6 @@
 
 <hr />
 
-{% if request|toggle_enabled:'LOCATION_SEARCH' %}
-
 <div class="col-xs-12 col-md-12 col-lg-12 loc_search" id="location_search">
     <label for="location_search" class="col-xs-2 col-md-1 col-lg-1 control-label">Location</label>
 
@@ -162,6 +159,10 @@
             name="location_search"
             style="max-width:80%;"></select>
 
+        <button type="button" class="btn btn-secondary" style="display:inline; cursor:pointer;" data-bind="visible: selected_location_id(), click: clearLocationSelection">
+            <i class="fa fa-times" aria-hidden="true"></i>
+        </button>
+
         <span class="help-block">
             <i class="fa fa-info-circle"></i>
             To quick search for a location, write your query as "parent"/descendant. For more info, see the <a href="https://confluence.dimagi.com/display/commcarepublic/Exact+Search+for+Locations" target="_blank">Location Search</a> help page.
@@ -169,16 +170,7 @@
 
     </div>
 
-    <div class="button_section">
-        <div data-bind="template: { name: 'button-template', if: selected_location_id(), data: selected_location}"></div>
-    </div>
 </div>
-
-
-<link href="{% static 'select2/dist/css/select2.min.css' %}" rel="stylesheet"/>
-<script src="{% static 'select2/dist/js/select2.full.min.js' %}"></script>
-
-{% endif %}
 
 {% if has_location_types %}
     <script type="text/html" id="location-template">
@@ -214,7 +206,7 @@
                 <!-- want to make entire row clickable, but overrides click on 'edit' button -->
                 <span data-bind="click: toggle, style: { cursor: (can_have_children() ? 'pointer' : 'default') }">
                     <span data-bind="if: can_have_children">
-                        <i class="fa" data-bind="css: { 'fa-plus-square': !expanded(), 'fa-minus-square': expanded() }"></i>
+                        <i class="fa" data-bind="css: { 'fa-plus-square': !expanded(), 'fa-minus-square': expanded()==true, 'fa-plus-square-o': expanded()=='semi' }"></i>
                     </span>
                     <span class="loc_name" data-bind="text: name"></span>
                     <span class="loc_type">(<span data-bind="text: type"></span>)</span>
@@ -232,7 +224,7 @@
                 </div>
 
                 <!-- ajax content -->
-                <div data-bind="fadeVisible: children_status() == 'loaded'">
+                <div data-bind="fadeVisible: children_status() == 'loaded' || children_status() == 'semi_loaded'">
 
                     <!-- child entries -->
                     <div data-bind="foreach: children">

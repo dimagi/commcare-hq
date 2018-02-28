@@ -2,3 +2,5 @@ djtables
 xlutils
 github3.py
 mocker
+ethiopian-date
+architect

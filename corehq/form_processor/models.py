@@ -217,6 +217,11 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
         return self.__original_form_id != self.form_id
 
     @property
+    def original_form_id(self):
+        """Form ID before it was updated"""
+        return self.__original_form_id
+
+    @property
     @memoized
     def original_attachments(self):
         """
@@ -327,6 +332,7 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
         return form_json
 
     @property
+    @memoized
     def history(self):
         """:returns: List of XFormOperationSQL objects"""
         from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
@@ -408,7 +414,7 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
             "domain='{f.domain}')"
         ).format(f=self)
 
-    class Meta:
+    class Meta(object):
         db_table = XFormInstanceSQL_DB_TABLE
         app_label = "form_processor"
         index_together = [
@@ -493,7 +499,7 @@ class AbstractAttachment(PartitionedModel, models.Model, SaveStateMixin):
             raise AttachmentNotFound("cannot manipulate attachment on unidentified document")
         return os.path.join(self._attachment_prefix, self.attachment_id.hex)
 
-    class Meta:
+    class Meta(object):
         abstract = True
         app_label = "form_processor"
 
@@ -523,7 +529,7 @@ class XFormAttachmentSQL(AbstractAttachment, IsImageMixin):
             "properties='{a.properties}', "
         ).format(a=self)
 
-    class Meta:
+    class Meta(object):
         db_table = XFormAttachmentSQL_DB_TABLE
         app_label = "form_processor"
         index_together = [
@@ -554,7 +560,7 @@ class XFormOperationSQL(PartitionedModel, SaveStateMixin, models.Model):
     def user(self):
         return self.user_id
 
-    class Meta:
+    class Meta(object):
         app_label = "form_processor"
         db_table = XFormOperationSQL_DB_TABLE
 
@@ -929,7 +935,7 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
             "server_modified_on='{c.server_modified_on}')"
         ).format(c=self)
 
-    class Meta:
+    class Meta(object):
         index_together = [
             ["owner_id", "server_modified_on"],
             ["domain", "owner_id", "closed"],
@@ -1007,7 +1013,7 @@ class CaseAttachmentSQL(AbstractAttachment, CaseAttachmentMixin):
             "attachment_from='{a.attachment_from}')"
         ).format(a=self)
 
-    class Meta:
+    class Meta(object):
         app_label = "form_processor"
         db_table = CaseAttachmentSQL_DB_TABLE
         index_together = [
@@ -1089,7 +1095,7 @@ class CommCareCaseIndexSQL(PartitionedModel, models.Model, SaveStateMixin):
             "relationship='{i.relationship})"
         ).format(i=self)
 
-    class Meta:
+    class Meta(object):
         index_together = [
             ["domain", "case"],
             ["domain", "referenced_id"],
@@ -1314,7 +1320,7 @@ class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
             "revoked='{self.revoked}')"
         ).format(self=self)
 
-    class Meta:
+    class Meta(object):
         unique_together = ("case", "form_id", "type")
         ordering = ['server_date']
         db_table = CaseTransaction_DB_TABLE
@@ -1442,7 +1448,7 @@ class LedgerValue(PartitionedModel, SaveStateMixin, models.Model, TrackRelatedCh
                "entry_id={s.entry_id}, " \
                "balance={s.balance}".format(s=self)
 
-    class Meta:
+    class Meta(object):
         app_label = "form_processor"
         db_table = LedgerValue_DB_TABLE
         unique_together = ("case", "section_id", "entry_id")
@@ -1544,7 +1550,7 @@ class LedgerTransaction(PartitionedModel, SaveStateMixin, models.Model):
             "updated_balance='{self.updated_balance}')"
         ).format(self=self)
 
-    class Meta:
+    class Meta(object):
         db_table = LedgerTransaction_DB_TABLE
         app_label = "form_processor"
         # note: can't put a unique constraint here (case_id, form_id, section_id, entry_id)

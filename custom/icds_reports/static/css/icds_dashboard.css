@@ -271,6 +271,10 @@ nvd3#sectorChart > div.title.h4 {
     right: 0;
 }
 
+.alert-container {
+    margin-top: 130px;
+}
+
 .crop {
     overflow:hidden;
     white-space:nowrap;
@@ -280,7 +284,6 @@ nvd3#sectorChart > div.title.h4 {
 
 .report-content {
     color: #ffffff !important;
-    margin-top: 110px;
     padding: 20px 20px 80px;
 }
 
@@ -386,10 +389,12 @@ h4 {
     text-align: center;
 }
 
+.see-more-content {
+    padding-left: 0;
+}
+
 .see-more {
-    margin-right: 20px;
-    flex: 0 1 auto;
-    margin-left: auto;
+    float: right;
 }
 
 .see-more > a {
@@ -485,7 +490,7 @@ h4 {
 }
 
 .kpi {
-    height: 170px;
+    min-height: 170px;
 }
 
 .kpi-content {
@@ -494,10 +499,10 @@ h4 {
     flex-direction: column;
     justify-content: space-between;
     align-content: center;
+    padding: 0 15px;
 }
 
 .kpi-justify-center {
-    width: 100%;
     display: flex;
     justify-content: center;
     flex-grow: 1;
@@ -510,7 +515,6 @@ h4 {
 
 .kpi-percents-text {
     display: flex;
-    position: absolute;
     align-items: center;
 }
 
@@ -591,6 +595,8 @@ h4 {
 
 .nvtooltip {
     max-width: 300px !important;
+    white-space: normal;
+    padding: 5px;
 }
 
 .carousel-control.left {

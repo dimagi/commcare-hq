@@ -50,6 +50,7 @@ from corehq.apps.app_manager.const import AMPLIFIES_NO, AMPLIFIES_NOT_SET, AMPLI
 
 from .project_access.models import SuperuserProjectEntryRecord  # noqa
 from functools import reduce
+from six import unichr
 
 lang_lookup = defaultdict(str)
 
@@ -102,7 +103,7 @@ def cached_property(method):
     return find_cached
 
 
-class UpdatableSchema():
+class UpdatableSchema(object):
 
     def update(self, new_dict):
         for kw in new_dict:
@@ -325,6 +326,10 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
 
     # Allowed outbound SMS per day
     daily_outbound_sms_limit = IntegerProperty(default=5000)
+
+    # Allowed number of case updates or closes from automatic update rules in the daily rule run.
+    # If this value is None, the value in settings.MAX_RULE_UPDATES_IN_ONE_RUN is used.
+    auto_case_update_limit = IntegerProperty()
 
     # exchange/domain copying stuff
     is_snapshot = BooleanProperty(default=False)
@@ -1105,7 +1110,7 @@ class TransferDomainRequest(models.Model):
     DIMAGI_CONFIRM_EMAIL = 'domain/email/domain_transfer_confirm'
     DIMAGI_CONFIRM_ADDRESS = 'commcarehq-support@dimagi.com'
 
-    class Meta:
+    class Meta(object):
         app_label = 'domain'
 
     @property

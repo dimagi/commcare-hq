@@ -1956,7 +1956,7 @@ class EmailUsage(models.Model):
     month = models.IntegerField()
     count = models.IntegerField(default=0)
 
-    class Meta:
+    class Meta(object):
         unique_together = ('domain', 'year', 'month')
         app_label = "reminders"
 

@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import json
 import pytz
 from django.views.decorators.http import require_POST
@@ -43,6 +44,12 @@ class UpdateTreatmentOutcomeRepeaterView(AddCaseRepeaterView):
     urlname = 'update_99dots_treatment_outcome'
     page_title = "Update 99DOTS Treatment Outcome"
     page_name = "Update 99DOTS Treatment Outcome"
+
+
+class UnenrollPatientRepeaterView(AddCaseRepeaterView):
+    urlname = 'unenroll_99dots_patient'
+    page_title = "Unenroll 99DOTS Patients"
+    page_name = "Unenroll 99DOTS Patients"
 
 
 @toggles.NINETYNINE_DOTS.required_decorator()

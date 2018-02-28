@@ -30,12 +30,15 @@
     <div class="col-sm-4">
     </div>
     <div class="col-sm-4">
-        <aside class="well">
-            <h3>{% trans "Have a new idea?" %}</h3>
-            <a class="btn btn-primary" href="{% url "registration_domain" %}">{% trans "Create a Blank Project" %}</a>
-            <div>{% trans "or" %}</div>
-            <a class="btn btn-primary" href="{% url "appstore" %}">{% trans "Copy from CommCare Exchange" %}</a>
-        </aside>
+
+        {% if not restrict_domain_creation or request.user.is_superuser %}
+            <aside class="well">
+                <h3>{% trans "Have a new idea?" %}</h3>
+                <a class="btn btn-primary" href="{% url "registration_domain" %}">{% trans "Create a Blank Project" %}</a>
+                <div>{% trans "or" %}</div>
+                <a class="btn btn-primary" href="{% url "appstore" %}">{% trans "Copy from CommCare Exchange" %}</a>
+            </aside>
+        {% endif %}
         <aside class="well">
             <h3>{% trans "Need ideas?" %}</h3>
             <p>

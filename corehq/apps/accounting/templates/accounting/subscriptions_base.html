@@ -2,13 +2,7 @@
 {% load crispy_forms_tags %}
 {% load hq_shared_tags %}
 
-{% block js %} {{ block.super }}
-    <script src="{% static 'accounting/js/credits_tab.js' %}"></script>
-    <script src="{% static 'hqwebapp/js/stay-on-tab.js' %}"></script>
-    <script src="{% static 'accounting/js/billing_info_handler.js' %}"></script>
-    <script src="{% static 'accounting/js/subscription_info_handler.js' %}"></script>
-    <script src="{% static 'accounting/js/invoices.js' %}"></script>
-{% endblock %}
+{% requirejs_main 'accounting/js/base_subscriptions_main' %}
 
 {% block page_content %}
     <form class="form form-horizontal" method="post">

@@ -274,7 +274,7 @@ class EditCommCareUserView(BaseEditUserView):
             if re.match(r'\d+$', phone_number):
                 self.editable_user.add_phone_number(phone_number)
                 self.editable_user.save()
-                messages.success(request, _("Phone number added!"))
+                messages.success(request, _("Phone number added."))
             else:
                 messages.error(request, _("Please enter digits only."))
         return super(EditCommCareUserView, self).post(request, *args, **kwargs)

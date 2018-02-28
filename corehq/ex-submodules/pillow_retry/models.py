@@ -51,7 +51,7 @@ class PillowError(models.Model):
         change.document = None
         return change
 
-    class Meta:
+    class Meta(object):
         app_label = 'pillow_retry'
         unique_together = ('doc_id', 'pillow',)
 

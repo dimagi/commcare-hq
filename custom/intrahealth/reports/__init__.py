@@ -1,5 +1,6 @@
 # coding=utf-8
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import calendar
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.locations.models import get_location
@@ -62,9 +63,9 @@ class IntraHealtMixin(IntraHealthLocationMixin, IntraHealthReportConfigMixin):
     no_value = {'sort_key': 0, 'html': 0}
 
     PRODUCT_NAMES = {
-        'Preservatif Feminin': u'Préservatif Féminin',
-        'Preservatif Masculin': u'Préservatif Masculin',
-        'Depo-Provera': u'Dépo-Provera',
+        'Preservatif Feminin': 'Préservatif Féminin',
+        'Preservatif Masculin': 'Préservatif Masculin',
+        'Depo-Provera': 'Dépo-Provera',
     }
 
     def _safe_get(self, dictionary, element):

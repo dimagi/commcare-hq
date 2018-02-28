@@ -2,6 +2,7 @@
 
 # Patients: Cash transfer on successful treatment completion
 # (* trigger - updating of 'Treatment Outcome' for an episode)
+from __future__ import unicode_literals
 SUCCESSFUL_TREATMENT_EVENT = '104'
 
 # e-Voucher payout to chemists (reimbursement of drug cost + additional x% top up)

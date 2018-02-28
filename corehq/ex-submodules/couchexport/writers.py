@@ -155,6 +155,9 @@ class ExportWriter(object):
     def open(self, header_table, file, max_column_size=2000, table_titles=None, archive_basepath=''):
         """
         Create any initial files, headings, etc necessary.
+        :param header_table: tuple of one of the following formats
+            tuple(sheet_name, [['col1header', 'col2header', ....]])
+            tuple(sheet_name, [FormattedRow])
         """
         table_titles = table_titles or {}
 
@@ -243,6 +246,12 @@ class ExportWriter(object):
 
     def _close(self):
         raise NotImplementedError
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self._close()
 
 
 class OnDiskExportWriter(ExportWriter):

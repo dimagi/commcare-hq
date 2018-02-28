@@ -1,4 +1,6 @@
 from __future__ import absolute_import
+from __future__ import division
+from __future__ import unicode_literals
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DataTablesColumnGroup
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import CustomProjectReport
@@ -90,7 +92,7 @@ class ASHAFunctionalityChecklistReport(GenericTabularReport, NRHMDatespanMixin, 
                 else:
                     default_row_data[idx].append(data[p] if data[p] != 88 else 'NA')
             try:
-                percent = total * 100 / denominator
+                percent = total * 100 // denominator
             except ZeroDivisionError:
                 percent = 0
             if percent >= 60:

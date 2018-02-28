@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from custom.ilsgateway.models import SupplyPointStatusTypes, DeliveryGroups
 from custom.ilsgateway.tanzania.reminders import REMINDER_R_AND_R_FACILITY, REMINDER_R_AND_R_DISTRICT
 from custom.ilsgateway.tanzania.reminders.reminder import GroupReminder

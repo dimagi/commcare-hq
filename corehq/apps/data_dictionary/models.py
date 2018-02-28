@@ -24,7 +24,7 @@ class CaseType(models.Model):
     description = models.TextField(default='', blank=True)
     fully_generated = models.BooleanField(default=False)
 
-    class Meta:
+    class Meta(object):
         unique_together = ('domain', 'name')
 
     @classmethod
@@ -58,7 +58,7 @@ class CaseProperty(models.Model):
     )
     group = models.TextField(default='', blank=True)
 
-    class Meta:
+    class Meta(object):
         unique_together = ('case_type', 'name')
 
     @classmethod

@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import division
 from collections import namedtuple
 import datetime
 from django.utils.translation import ugettext as _, ugettext_lazy
@@ -143,8 +144,7 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
     def delta_high_performing_pct(self):
         if (self.delta_high_performing and self._previous_summary and
            self._previous_summary.number_of_performing_users):
-            return float(self.delta_high_performing /
-                         float(self._previous_summary.number_of_performing_users)) * 100.
+            return self.delta_high_performing / float(self._previous_summary.number_of_performing_users) * 100
 
     @property
     def delta_low_performing(self):
@@ -157,8 +157,7 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
     def delta_low_performing_pct(self):
         if self.delta_low_performing and self._previous_summary \
                 and self._previous_summary.number_of_low_performing_users:
-            return float(self.delta_low_performing /
-                         float(self._previous_summary.number_of_low_performing_users)) * 100.
+            return self.delta_low_performing / float(self._previous_summary.number_of_low_performing_users) * 100
 
     @property
     def delta_active(self):
@@ -167,7 +166,7 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
     @property
     def delta_active_pct(self):
         if self.delta_active and self._previous_summary and self._previous_summary.active:
-            return float(self.delta_active / float(self._previous_summary.active)) * 100.
+            return self.delta_active / float(self._previous_summary.active) * 100
 
     @property
     def delta_inactive(self):
@@ -178,7 +177,7 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
         if self.delta_inactive and self._previous_summary:
             if self._previous_summary.inactive == 0:
                 return self.delta_inactive * 100.
-            return float(self.delta_inactive / float(self._previous_summary.inactive)) * 100.
+            return self.delta_inactive / float(self._previous_summary.inactive) * 100
 
     def _get_all_user_stubs(self):
         return {

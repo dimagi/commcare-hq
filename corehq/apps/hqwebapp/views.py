@@ -8,7 +8,7 @@ import sys
 import traceback
 import uuid
 from datetime import datetime
-from urlparse import urlparse
+from six.moves.urllib.parse import urlparse
 
 import functools
 from django.conf import settings

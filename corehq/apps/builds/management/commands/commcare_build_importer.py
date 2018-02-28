@@ -2,8 +2,8 @@ from __future__ import absolute_import
 from __future__ import print_function
 import logging
 import requests
+from io import BytesIO, StringIO
 
-from cStringIO import StringIO
 from jenkinsapi.jenkins import Jenkins
 
 from corehq.apps.builds.models import CommCareBuild
@@ -75,7 +75,7 @@ class Command(BaseCommand):
             print(artifacts_url)
             return
 
-        self.add_build(StringIO(zip_file.content), version_number, selected_build_number)
+        self.add_build(BytesIO(zip_file.content), version_number, selected_build_number)
 
     @property
     @memoized
@@ -107,7 +107,6 @@ class Command(BaseCommand):
              352366: 2.22.0}
         """
         from lxml import etree
-        from StringIO import StringIO
 
         to_ret = {}
         count = 0

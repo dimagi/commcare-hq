@@ -1,4 +1,6 @@
 from __future__ import absolute_import
+from __future__ import division
+from __future__ import unicode_literals
 import re
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.generic import GenericTabularReport
@@ -18,7 +20,7 @@ class BlockLevelAFReport(GenericTabularReport, DatespanMixin, CustomProjectRepor
         afs = []
         for location in HierarchySqlData(config={'domain': self.domain}).get_data():
             if location['block'] == self.report_config['block']:
-                afs.append([(u"%s %s" % (location['first_name'] or '', location['last_name'] or '')).strip(),
+                afs.append([("%s %s" % (location['first_name'] or '', location['last_name'] or '')).strip(),
                             location['doc_id']])
         return afs
 
@@ -72,7 +74,7 @@ class BlockLevelAFReport(GenericTabularReport, DatespanMixin, CustomProjectRepor
         for index, sum in enumerate(sums):
             if index == 10:
                 try:
-                    percent = sum_row_10 * 100 / denom_row_10
+                    percent = sum_row_10 * 100 // denom_row_10
                 except ZeroDivisionError:
                     percent = 0
                 html = "{0}/{1} ({2}%)".format(sum_row_10, denom_row_10, percent)

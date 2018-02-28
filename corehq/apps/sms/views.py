@@ -119,6 +119,10 @@ class BaseMessagingSectionView(BaseDomainView):
     section_name = ugettext_noop("Messaging")
 
     @cached_property
+    def reminders_migration_in_progress(self):
+        return toggles.REMINDERS_MIGRATION_IN_PROGRESS.enabled(self.domain)
+
+    @cached_property
     def can_use_inbound_sms(self):
         return has_privilege(self.request, privileges.INBOUND_SMS)
 
@@ -1837,10 +1841,19 @@ class SMSSettingsView(BaseMessagingSectionView, AsyncHandlerMixin):
 
     @property
     @memoized
+    def new_reminders_migrator(self):
+        return toggles.NEW_REMINDERS_MIGRATOR.enabled(self.request.couch_user.username)
+
+    @property
+    @memoized
     def form(self):
         if self.request.method == "POST":
-            form = SettingsForm(self.request.POST, cchq_domain=self.domain,
-                cchq_is_previewer=self.previewer)
+            form = SettingsForm(
+                self.request.POST,
+                cchq_domain=self.domain,
+                cchq_is_previewer=self.previewer,
+                new_reminders_migrator=self.new_reminders_migrator,
+            )
         else:
             domain_obj = Domain.get_by_name(self.domain, strict=True)
             enabled_disabled = lambda b: (ENABLED if b else DISABLED)
@@ -1899,9 +1912,15 @@ class SMSSettingsView(BaseMessagingSectionView, AsyncHandlerMixin):
                     self.get_welcome_message_recipient(domain_obj),
                 "daily_outbound_sms_limit":
                     domain_obj.daily_outbound_sms_limit,
+                "uses_new_reminders":
+                    'Y' if domain_obj.uses_new_reminders else 'N',
             }
-            form = SettingsForm(initial=initial, cchq_domain=self.domain,
-                cchq_is_previewer=self.previewer)
+            form = SettingsForm(
+                initial=initial,
+                cchq_domain=self.domain,
+                cchq_is_previewer=self.previewer,
+                new_reminders_migrator=self.new_reminders_migrator,
+            )
         return form
 
     @property
@@ -1947,6 +1966,11 @@ class SMSSettingsView(BaseMessagingSectionView, AsyncHandlerMixin):
                      "custom_chat_template"),
                     ("daily_outbound_sms_limit",
                      "daily_outbound_sms_limit"),
+                ])
+            if self.new_reminders_migrator:
+                field_map.extend([
+                    ("uses_new_reminders",
+                     "uses_new_reminders"),
                 ])
             for (model_field_name, form_field_name) in field_map:
                 setattr(domain_obj, model_field_name,

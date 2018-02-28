@@ -24,6 +24,7 @@ from corehq.util.test_utils import unit_testing_only
 from django.contrib.sites.models import Site
 from dateutil.parser import parse
 import uuid
+from corehq.apps.sms.api import process_username
 from casexml.apps.case.mock import CaseBlock
 
 
@@ -94,7 +95,8 @@ class TouchformsTestCase(LiveServerTestCase, DomainSubscriptionMixin):
         return domain_obj
 
     def create_mobile_worker(self, username, password, phone_number, save_vn=True):
-        user = CommCareUser.create(self.domain, username, password,
+        processed_username = process_username(username, self.domain)
+        user = CommCareUser.create(self.domain, processed_username, password,
             phone_number=phone_number)
         if save_vn:
             entry = user.get_or_create_phone_entry(phone_number)

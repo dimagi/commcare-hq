@@ -92,9 +92,9 @@ STATICFILES_FINDERS = (
     'compressor.finders.CompressorFinder',
 )
 
-STATICFILES_DIRS = (
+STATICFILES_DIRS = [
     BOWER_COMPONENTS,
-)
+]
 
 # bleh, why did this submodule have to be removed?
 # deploy fails if this item is present and the path does not exist
@@ -113,6 +113,8 @@ UCR_DIFF_FILE = "%s/%s" % (FILEPATH, "ucr.diff.log")
 UCR_EXCEPTION_FILE = "%s/%s" % (FILEPATH, "ucr.exception.log")
 NIKSHAY_DATAMIGRATION = "%s/%s" % (FILEPATH, "nikshay_datamigration.log")
 PRIVATE_SECTOR_DATAMIGRATION = "%s/%s" % (FILEPATH, "private_sector_datamigration.log")
+FORMPLAYER_TIMING_FILE = "%s/%s" % (FILEPATH, "formplayer.timing.log")
+FORMPLAYER_DIFF_FILE = "%s/%s" % (FILEPATH, "formplayer.diff.log")
 SOFT_ASSERTS_LOG_FILE = "%s/%s" % (FILEPATH, "soft_asserts.log")
 DEBUG_USER_SAVE_LOG_FILE = "%s/%s" % (FILEPATH, "debug_user_save.log")
 
@@ -233,6 +235,7 @@ HQ_APPS = (
     'corehq.apps.hqcase',
     'corehq.apps.hqwebapp',
     'corehq.apps.hqmedia',
+    'corehq.apps.linked_domain',
     'corehq.apps.locations',
     'corehq.apps.products',
     'corehq.apps.prelogin',
@@ -289,7 +292,6 @@ HQ_APPS = (
     'corehq.messaging.smsbackends.push',
     'corehq.messaging.smsbackends.apposit',
     'corehq.messaging.smsbackends.test',
-    'corehq.apps.performance_sms',
     'corehq.apps.registration',
     'corehq.messaging.smsbackends.unicel',
     'corehq.messaging.smsbackends.icds_nic',
@@ -569,28 +571,11 @@ CELERY_ANNOTATIONS = {
 }
 
 CELERY_MAIN_QUEUE = 'celery'
-
-# this is the default celery queue
-# for periodic tasks on a separate queue override this to something else
-CELERY_PERIODIC_QUEUE = CELERY_MAIN_QUEUE
-
-# This is the celery queue to use for running reminder rules.
-# It's set to the main queue here and can be overridden to put it
-# on its own queue.
-CELERY_REMINDER_RULE_QUEUE = CELERY_MAIN_QUEUE
-
-# This is the celery queue to use for running reminder case updates.
-# It's set to the main queue here and can be overridden to put it
-# on its own queue.
-CELERY_REMINDER_CASE_UPDATE_QUEUE = CELERY_MAIN_QUEUE
-
-
-# This is the celery queue to use for sending repeat records.
-# It's set to the main queue here and can be overridden to put it
-# on its own queue.
-CELERY_REPEAT_RECORD_QUEUE = CELERY_MAIN_QUEUE
-
-ENIKSHAY_QUEUE = CELERY_MAIN_QUEUE
+CELERY_PERIODIC_QUEUE = 'celery_periodic'
+CELERY_REMINDER_RULE_QUEUE = 'reminder_rule_queue'
+CELERY_REMINDER_CASE_UPDATE_QUEUE = 'reminder_case_update_queue'
+CELERY_REPEAT_RECORD_QUEUE = 'repeat_record_queue'
+ENIKSHAY_QUEUE = 'enikshay_queue'
 
 # Will cause a celery task to raise a SoftTimeLimitExceeded exception if
 # time limit is exceeded.
@@ -735,6 +720,8 @@ ANALYTICS_IDS = {
     'HUBSPOT_API_ID': '',
     'GTM_ID': '',
     'DRIFT_ID': '',
+    'APPCUES_ID': '',
+    'APPCUES_KEY': '',
 }
 
 ANALYTICS_CONFIG = {
@@ -773,6 +760,9 @@ PRELOGIN_APPS = (
 LOGSTASH_DEVICELOG_PORT = 10777
 LOGSTASH_AUDITCARE_PORT = 10999
 LOGSTASH_HOST = 'localhost'
+
+# Sumologic log aggregator
+SUMOLOGIC_URL = None
 
 # on both a single instance or distributed setup this should assume localhost
 ELASTICSEARCH_HOST = 'localhost'
@@ -896,11 +886,11 @@ COMMCARE_NAME = "CommCare"
 
 ENTERPRISE_MODE = False
 
+RESTRICT_DOMAIN_CREATION = False
+
 CUSTOM_LANDING_PAGE = False
 
 TABLEAU_URL_ROOT = "https://icds.commcarehq.org/"
-
-HQ_INSTANCE = 'development'
 
 SENTRY_PUBLIC_KEY = None
 SENTRY_PRIVATE_KEY = None
@@ -1058,6 +1048,12 @@ LOGGING = {
         'couch-request-formatter': {
             'format': '%(asctime)s [%(username)s:%(domain)s] %(hq_url)s %(database)s %(method)s %(status_code)s %(content_length)s %(path)s %(duration)s'
         },
+        'formplayer_timing': {
+            'format': '%(asctime)s, %(action)s, %(control_duration)s, %(candidate_duration)s'
+        },
+        'formplayer_diff': {
+            'format': '%(asctime)s, %(action)s, %(request)s, %(control)s, %(candidate)s'
+        },
         'ucr_timing': {
             'format': '%(asctime)s\t%(domain)s\t%(report_config_id)s\t%(filter_values)s\t%(control_duration)s\t%(candidate_duration)s'
         },
@@ -1117,6 +1113,22 @@ LOGGING = {
             'class': 'logging.handlers.RotatingFileHandler',
             'formatter': 'verbose',
             'filename': ANALYTICS_LOG_FILE,
+            'maxBytes': 10 * 1024 * 1024,  # 10 MB
+            'backupCount': 20  # Backup 200 MB of logs
+        },
+        'formplayer_diff': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'formatter': 'formplayer_diff',
+            'filename': FORMPLAYER_DIFF_FILE,
+            'maxBytes': 10 * 1024 * 1024,  # 10 MB
+            'backupCount': 20  # Backup 200 MB of logs
+        },
+        'formplayer_timing': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'formatter': 'formplayer_timing',
+            'filename': FORMPLAYER_TIMING_FILE,
             'maxBytes': 10 * 1024 * 1024,  # 10 MB
             'backupCount': 20  # Backup 200 MB of logs
         },
@@ -1251,6 +1263,16 @@ LOGGING = {
             'handlers': ['file'],
             'level': 'ERROR',
             'propagate': True,
+        },
+        'formplayer_timing': {
+            'handlers': ['formplayer_timing'],
+            'level': 'INFO',
+            'propogate': True,
+        },
+        'formplayer_diff': {
+            'handlers': ['formplayer_diff'],
+            'level': 'INFO',
+            'propogate': True,
         },
         'ucr_timing': {
             'handlers': ['ucr_timing'],
@@ -1420,7 +1442,6 @@ COUCHDB_APPS = [
     'ilsgateway',
     'ewsghana',
     ('auditcare', 'auditcare'),
-    ('performance_sms', META_DB),
     ('repeaters', 'receiverwrapper'),
     ('userreports', META_DB),
     ('custom_data_fields', META_DB),
@@ -1572,26 +1593,50 @@ ALLOWED_CUSTOM_CONTENT_HANDLERS = {
     "UCLA_SEXUAL_HEALTH": "custom.ucla.api.sexual_health_message_bank_content",
     "UCLA_MED_ADHERENCE": "custom.ucla.api.med_adherence_message_bank_content",
     "UCLA_SUBSTANCE_USE": "custom.ucla.api.substance_use_message_bank_content",
+    "ENIKSHAY_PRESCRIPTION_VOUCHER_ALERT": "custom.enikshay.messaging.custom_content.prescription_voucher_alert",
 }
 
 # Used by the new reminders framework
 AVAILABLE_CUSTOM_SCHEDULING_CONTENT = {
     "ICDS_STATIC_NEGATIVE_GROWTH_MESSAGE":
-        "custom.icds.messaging.custom_content.static_negative_growth_indicator",
+        ["custom.icds.messaging.custom_content.static_negative_growth_indicator",
+         "ICDS: Static/Negative Growth Indicator"],
     "ICDS_MISSED_CF_VISIT_TO_AWW":
-        "custom.icds.messaging.custom_content.missed_cf_visit_to_aww",
+        ["custom.icds.messaging.custom_content.missed_cf_visit_to_aww",
+         "ICDS: Missed CF Visit for AWW recipient"],
     "ICDS_MISSED_CF_VISIT_TO_LS":
-        "custom.icds.messaging.custom_content.missed_cf_visit_to_ls",
+        ["custom.icds.messaging.custom_content.missed_cf_visit_to_ls",
+         "ICDS: Missed CF Visit for LS recipient"],
     "ICDS_MISSED_PNC_VISIT_TO_LS":
-        "custom.icds.messaging.custom_content.missed_pnc_visit_to_ls",
+        ["custom.icds.messaging.custom_content.missed_pnc_visit_to_ls",
+         "ICDS: Missed PNC Visit for LS recipient"],
     "ICDS_CHILD_ILLNESS_REPORTED":
-        "custom.icds.messaging.custom_content.child_illness_reported",
+        ["custom.icds.messaging.custom_content.child_illness_reported",
+         "ICDS: Child Illness Reported"],
     "ICDS_CF_VISITS_COMPLETE":
-        "custom.icds.messaging.custom_content.cf_visits_complete",
+        ["custom.icds.messaging.custom_content.cf_visits_complete",
+         "ICDS: CF Visits Complete"],
     "ICDS_DPT3_AND_MEASLES_ARE_DUE":
-        "custom.icds.messaging.custom_content.dpt3_and_measles_are_due",
+        ["custom.icds.messaging.custom_content.dpt3_and_measles_are_due",
+         "ICDS: DPT3 and Measles Due"],
     "ICDS_CHILD_VACCINATIONS_COMPLETE":
-        "custom.icds.messaging.custom_content.child_vaccinations_complete",
+        ["custom.icds.messaging.custom_content.child_vaccinations_complete",
+         "ICDS: Child vaccinations complete"],
+    "ICDS_AWW_1":
+        ["custom.icds.messaging.custom_content.aww_1",
+         "ICDS: Weekly AWC Submission Performance to AWW"],
+    "ICDS_AWW_2":
+        ["custom.icds.messaging.custom_content.aww_2",
+         "ICDS: Monthly AWC Aggregate Performance to AWW"],
+    "ICDS_LS_1":
+        ["custom.icds.messaging.custom_content.ls_1",
+         "ICDS: Monthly AWC Aggregate Performance to LS"],
+    "ICDS_LS_2":
+        ["custom.icds.messaging.custom_content.ls_2",
+         "ICDS: Weekly AWC VHND Performance to LS"],
+    "ICDS_LS_6":
+        ["custom.icds.messaging.custom_content.ls_6",
+         "ICDS: Weekly AWC Submission Performance to LS"],
 }
 
 # Used by the old reminders framework
@@ -1630,8 +1675,12 @@ AVAILABLE_CUSTOM_SCHEDULING_RECIPIENTS = {
 }
 
 AVAILABLE_CUSTOM_RULE_CRITERIA = {
-    'ICDS_CONSIDER_CASE_FOR_DPT3_AND_MEASLES_REMINDER':
-        'custom.icds.rules.custom_criteria.consider_case_for_dpt3_and_measles_reminder',
+    'ICDS_PERSON_CASE_IS_UNDER_6_YEARS_OLD':
+        'custom.icds.rules.custom_criteria.person_case_is_under_6_years_old',
+    'ICDS_IS_USERCASE_OF_AWW':
+        'custom.icds.rules.custom_criteria.is_usercase_of_aww',
+    'ICDS_IS_USERCASE_OF_LS':
+        'custom.icds.rules.custom_criteria.is_usercase_of_ls',
 }
 
 AVAILABLE_CUSTOM_RULE_ACTIONS = {
@@ -1806,6 +1855,7 @@ ENIKSHAY_REPEATERS = (
     'custom.enikshay.integrations.ninetyninedots.repeaters.NinetyNineDotsUpdatePatientRepeater',
     'custom.enikshay.integrations.ninetyninedots.repeaters.NinetyNineDotsAdherenceRepeater',
     'custom.enikshay.integrations.ninetyninedots.repeaters.NinetyNineDotsTreatmentOutcomeRepeater',
+    'custom.enikshay.integrations.ninetyninedots.repeaters.NinetyNineDotsUnenrollPatientRepeater',
     'custom.enikshay.integrations.nikshay.repeaters.NikshayRegisterPatientRepeater',
     'custom.enikshay.integrations.nikshay.repeaters.NikshayTreatmentOutcomeRepeater',
     'custom.enikshay.integrations.nikshay.repeaters.NikshayHIVTestRepeater',
@@ -1950,12 +2000,10 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'ccs_record_cases.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'ccs_record_cases_monthly_v2.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'ccs_record_cases_monthly_tableau2.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'ccs_record_cases_monthly_tableaunov17.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'child_cases_monthly_v2.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'child_delivery_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'child_health_cases.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'child_health_cases_monthly_tableau2.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'child_health_cases_monthly_tableaunov17.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'daily_feeding_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'gm_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'hardware_cases.json'),
@@ -1968,9 +2016,11 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'tasks_cases.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'tech_issue_cases.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'thr_forms.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'thr_forms_v2.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'usage_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'vhnd_form.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'visitorbook_forms.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'complementary_feeding_forms.json'),
 
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'adherence.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_for_cc_outbound.json'),

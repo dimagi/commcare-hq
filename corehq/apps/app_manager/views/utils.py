@@ -10,14 +10,14 @@ from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
 
 from corehq import toggles
-from corehq.apps.app_manager import add_ons
 from corehq.apps.app_manager.dbaccessors import get_app, wrap_app, get_apps_in_domain
 from corehq.apps.app_manager.decorators import require_deploy_apps
 from corehq.apps.app_manager.exceptions import AppEditingError, \
-    ModuleNotFoundException, FormNotFoundException, RemoteRequestError, AppLinkError, ActionNotPermitted, \
-    RemoteAuthError
+    ModuleNotFoundException, FormNotFoundException, AppLinkError
 from corehq.apps.app_manager.models import Application, ReportModule, enable_usercase_if_necessary, CustomIcon
-from corehq.apps.app_manager.remote_link_accessors import pull_missing_multimedia_from_remote
+from corehq.apps.linked_domain.exceptions import RemoteRequestError, RemoteAuthError, ActionNotPermitted
+from corehq.apps.linked_domain.models import AppLinkDetail
+from corehq.apps.linked_domain.remote_accessors import pull_missing_multimedia_for_app
 
 from corehq.apps.app_manager.util import update_form_unique_ids
 from corehq.apps.userreports.exceptions import BadSpecError
@@ -150,10 +150,17 @@ def get_blank_form_xml(form_name):
     })
 
 
+def get_default_followup_form_xml(context):
+    """Update context and apply in XML file default_followup_form"""
+    context.update({'xmlns_uuid': str(uuid.uuid4()).upper()})
+    return render_to_string("app_manager/default_followup_form.xml", context=context)
+
+
 def overwrite_app(app, master_build, report_map=None):
     excluded_fields = set(Application._meta_fields).union([
         'date_created', 'build_profiles', 'copy_history', 'copy_of',
-        'name', 'comment', 'doc_type', '_LAZY_ATTACHMENTS', 'practice_mobile_worker_id'
+        'name', 'comment', 'doc_type', '_LAZY_ATTACHMENTS', 'practice_mobile_worker_id',
+        'custom_base_url'
     ])
     master_json = master_build.to_json()
     app_json = app.to_json()
@@ -281,7 +288,12 @@ def handle_custom_icon_edits(request, form_or_module, lang):
             form_or_module.custom_icons = []
 
 
-def update_linked_app(app):
+def update_linked_app(app, user_id):
+    if not app.domain_link:
+        raise AppLinkError(_(
+            'This project is not authorized to update from the master application. '
+            'Please contact the maintainer of the master app if you believe this is a mistake. '
+        ))
     try:
         master_version = app.get_master_version()
     except RemoteRequestError:
@@ -323,8 +335,10 @@ def update_linked_app(app):
 
     if app.master_is_remote:
         try:
-            pull_missing_multimedia_from_remote(app)
+            pull_missing_multimedia_for_app(app)
         except RemoteRequestError:
             raise AppLinkError(_(
                 'Error fetching multimedia from remote server. Please try again later.'
             ))
+
+    app.domain_link.update_last_pull('app', user_id, model_details=AppLinkDetail(app_id=app._id))

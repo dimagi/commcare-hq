@@ -5,7 +5,7 @@ import logging
 import re
 import sys
 import uuid
-from urlparse import urlparse, parse_qs
+from six.moves.urllib.parse import urlparse, parse_qs
 
 from captcha.fields import CaptchaField
 
@@ -92,6 +92,7 @@ from corehq.util.timezones.forms import TimeZoneChoiceField
 from dimagi.utils.decorators.memoized import memoized
 import six
 from six.moves import range
+from six import unichr
 
 # used to resize uploaded custom logos, aspect ratio is preserved
 LOGO_SIZE = (211, 32)
@@ -407,7 +408,7 @@ class TransferDomainFormErrors(object):
 
 class TransferDomainForm(forms.ModelForm):
 
-    class Meta:
+    class Meta(object):
         model = TransferDomainRequest
         fields = ['domain', 'to_username']
 
@@ -454,7 +455,7 @@ class TransferDomainForm(forms.ModelForm):
         return username
 
 
-class SubAreaMixin():
+class SubAreaMixin(object):
 
     def clean_sub_area(self):
         area = self.cleaned_data['area']
@@ -1047,6 +1048,19 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
             "Check this box to trigger a hand-off email to the partner when this form is submitted."
         ),
     )
+    use_custom_auto_case_update_limit = forms.ChoiceField(
+        label=ugettext_lazy("Set custom auto case update rule limits"),
+        required=True,
+        choices=(
+            ('N', ugettext_lazy("No")),
+            ('Y', ugettext_lazy("Yes")),
+        ),
+    )
+    auto_case_update_limit = forms.IntegerField(
+        label=ugettext_lazy("Max allowed updates in a daily run"),
+        required=False,
+        min_value=1000,
+    )
 
     def __init__(self, domain, can_edit_eula, *args, **kwargs):
         super(DomainInternalForm, self).__init__(*args, **kwargs)
@@ -1108,6 +1122,17 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
                 'dimagi_contact',
             ),
             crispy.Fieldset(
+                _("Project Limits"),
+                crispy.Field(
+                    'use_custom_auto_case_update_limit',
+                    data_bind='value: use_custom_auto_case_update_limit',
+                ),
+                crispy.Div(
+                    crispy.Field('auto_case_update_limit'),
+                    data_bind="visible: use_custom_auto_case_update_limit() === 'Y'",
+                ),
+            ),
+            crispy.Fieldset(
                 _("Salesforce Details"),
                 'sf_contract_id',
                 'sf_account_id',
@@ -1121,6 +1146,12 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
             ),
         )
 
+    @property
+    def current_values(self):
+        return {
+            'use_custom_auto_case_update_limit': self['use_custom_auto_case_update_limit'].value(),
+        }
+
     def _get_user_or_fail(self, field):
         username = self.cleaned_data[field]
         if not username:
@@ -1133,6 +1164,16 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
             msg = "'{username}' is not the username of a web user in '{domain}'"
             self.add_error(field, msg.format(username=username, domain=self.domain))
         return user
+
+    def clean_auto_case_update_limit(self):
+        if self.cleaned_data.get('use_custom_auto_case_update_limit') != 'Y':
+            return None
+
+        value = self.cleaned_data.get('auto_case_update_limit')
+        if not value:
+            raise forms.ValidationError(_("This field is required"))
+
+        return value
 
     def clean(self):
         send_handoff_email = self.cleaned_data['send_handoff_email']
@@ -1164,6 +1205,7 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
             countries=self.cleaned_data['countries'],
         )
         domain.is_test = self.cleaned_data['is_test']
+        domain.auto_case_update_limit = self.cleaned_data['auto_case_update_limit']
         domain.update_internal(
             sf_contract_id=self.cleaned_data['sf_contract_id'],
             sf_account_id=self.cleaned_data['sf_account_id'],
@@ -1375,7 +1417,7 @@ class EditBillingAccountInfoForm(forms.ModelForm):
         help_text=BillingContactInfo._meta.get_field('email_list').help_text,
     )
 
-    class Meta:
+    class Meta(object):
         model = BillingContactInfo
         fields = ['first_name', 'last_name', 'phone_number', 'company_name', 'first_line',
                   'second_line', 'city', 'state_province_region', 'postal_code', 'country']
@@ -1411,7 +1453,7 @@ class EditBillingAccountInfoForm(forms.ModelForm):
             'company_name',
             'first_name',
             'last_name',
-            crispy.Field('email_list', css_class='input-xxlarge ko-email-select2'),
+            crispy.Field('email_list', css_class='input-xxlarge accounting-email-select2'),
             'phone_number'
         ]
 
@@ -1458,7 +1500,7 @@ class EditBillingAccountInfoForm(forms.ModelForm):
                 'city',
                 'state_province_region',
                 'postal_code',
-                crispy.Field('country', css_class="input-large ko-country-select2",
+                crispy.Field('country', css_class="input-large accounting-country-select2",
                              data_countryname=COUNTRIES.get(self.current_country, '')),
             ),
             hqcrispy.FormActions(
@@ -1523,7 +1565,7 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                 'company_name',
                 'first_name',
                 'last_name',
-                crispy.Field('email_list', css_class='input-xxlarge ko-email-select2'),
+                crispy.Field('email_list', css_class='input-xxlarge accounting-email-select2'),
                 'phone_number',
             ),
             crispy.Fieldset(
@@ -1533,7 +1575,7 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                 'city',
                 'state_province_region',
                 'postal_code',
-                crispy.Field('country', css_class="input-large ko-country-select2",
+                crispy.Field('country', css_class="input-large accounting-country-select2",
                              data_countryname=COUNTRIES.get(self.current_country, ''))
             ),
             hqcrispy.FormActions(
@@ -1621,7 +1663,7 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
                 'company_name',
                 'first_name',
                 'last_name',
-                crispy.Field('email_list', css_class='input-xxlarge ko-email-select2'),
+                crispy.Field('email_list', css_class='input-xxlarge accounting-email-select2'),
                 'phone_number',
             ),
             crispy.Fieldset(
@@ -1631,7 +1673,7 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
                 'city',
                 'state_province_region',
                 'postal_code',
-                crispy.Field('country', css_class="input-large ko-country-select2",
+                crispy.Field('country', css_class="input-large accounting-country-select2",
                              data_countryname=COUNTRIES.get(self.current_country, ''))
             ),
             crispy.Fieldset(
