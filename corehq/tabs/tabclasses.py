@@ -4,8 +4,8 @@ from six.moves.urllib.parse import urlencode
 from django.urls import reverse
 from django.conf import settings
 from django.http import Http404
-from django.utils.html import strip_tags
-from django.utils.safestring import mark_safe, mark_for_escaping
+from django.utils.html import escape, strip_tags
+from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_noop, ugettext as _, ugettext_lazy
 from corehq import privileges, toggles
 from corehq.apps.accounting.dispatcher import AccountingAdminInterfaceDispatcher
@@ -810,8 +810,8 @@ class ApplicationsTab(UITab):
     @classmethod
     def make_app_title(cls, app_name, doc_type):
         return mark_safe("%s%s" % (
-            mark_for_escaping(strip_tags(app_name) or '(Untitled)'),
-            mark_for_escaping(' (Remote)' if doc_type == 'RemoteApp' else ''),
+            escape(strip_tags(app_name)) or '(Untitled)',
+            ' (Remote)' if doc_type == 'RemoteApp' else '',
         ))
 
     @property
