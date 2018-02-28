@@ -57,7 +57,7 @@ class ENikshayCustomContentTest(ENikshayCaseStructureMixin, TestCase):
                 CaseReminderHandler(default_lang='en'),
                 FakeRecipient('hin')
             ),
-            (u"\u0926\u0935\u093e \u0935\u093e\u0909\u091a\u0930 \u0906\u0908\u0921\u0940 012345"
+            ("\u0926\u0935\u093e \u0935\u093e\u0909\u091a\u0930 \u0906\u0908\u0921\u0940 012345"
              " \u0932\u093e\u092d\u093e\u0930\u094d\u0925\u0940 \u0906\u0908\u0921\u0940 123-456-789"
              "  \u0915\u0947 \u0938\u093e\u0925 Joe \u0915\u094b \u091c\u093e\u0930\u0940 "
              "\u0915\u093f\u092f\u093e \u0917\u092f\u093e \u0939\u0948\u0964")
