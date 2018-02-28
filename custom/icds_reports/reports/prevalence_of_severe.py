@@ -30,7 +30,7 @@ def get_prevalence_of_severe_data_map(domain, config, loc_level, show_test=False
             moderate=Sum('wasting_moderate'),
             severe=Sum('wasting_severe'),
             normal=Sum('wasting_normal'),
-            total=Sum('height_eligible'),
+            total=Sum('nutrition_status_weighed'),
             total_measured=Sum('weighed_and_height_measured_in_month'),
         ).order_by('%s_name' % loc_level, '%s_map_location_name' % loc_level)
 
@@ -169,7 +169,7 @@ def get_prevalence_of_severe_data_chart(domain, config, loc_level, show_test=Fal
         severe=Sum('wasting_severe'),
         normal=Sum('wasting_normal'),
         measured=Sum('weighed_and_height_measured_in_month'),
-        total=Sum('height_eligible')
+        total=Sum('nutrition_status_weighed')
     ).order_by('month')
 
     if not show_test:
@@ -286,7 +286,7 @@ def get_prevalence_of_severe_sector_data(domain, config, loc_level, location_id,
     ).annotate(
         moderate=Sum('wasting_moderate'),
         severe=Sum('wasting_severe'),
-        total=Sum('height_eligible'),
+        total=Sum('nutrition_status_weighed'),
         normal=Sum('wasting_normal'),
         total_measured=Sum('weighed_and_height_measured_in_month'),
     ).order_by('%s_name' % loc_level)
