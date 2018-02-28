@@ -123,6 +123,10 @@ class BaseMessagingSectionView(BaseDomainView):
         return toggles.REMINDERS_MIGRATION_IN_PROGRESS.enabled(self.domain)
 
     @cached_property
+    def new_reminders_migrator(self):
+        return toggles.NEW_REMINDERS_MIGRATOR.enabled(self.request.couch_user.username)
+
+    @cached_property
     def can_use_inbound_sms(self):
         return has_privilege(self.request, privileges.INBOUND_SMS)
 
@@ -1838,11 +1842,6 @@ class SMSSettingsView(BaseMessagingSectionView, AsyncHandlerMixin):
             return WELCOME_RECIPIENT_MOBILE_WORKER
         else:
             return WELCOME_RECIPIENT_NONE
-
-    @property
-    @memoized
-    def new_reminders_migrator(self):
-        return toggles.NEW_REMINDERS_MIGRATOR.enabled(self.request.couch_user.username)
 
     @property
     @memoized
