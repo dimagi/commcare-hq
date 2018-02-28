@@ -2,15 +2,30 @@ from __future__ import absolute_import
 from collections import Counter
 import os
 import re
+import datetime
+import json
+import csv
+import tempfile
 
 from couchdbkit import ResourceNotFound
 from django.conf import settings
+from django.urls import reverse
+from celery.task import task
+from zipfile import ZipFile
 
 from corehq import toggles
 from corehq.apps.domain.models import Domain
+from corehq.blobs import get_blob_db
+from corehq.util.files import safe_filename_header
 from corehq.util.quickcache import quickcache
-from dimagi.utils.couch.database import get_db
 from corehq.apps.es import DomainES
+
+from dimagi.utils.couch.database import get_db
+from dimagi.utils.web import get_url_base
+from dimagi.utils.django.email import send_HTML_email
+
+from soil.util import expose_blob_download
+from couchexport.models import Format
 
 
 DOMAIN_MODULE_KEY = 'DOMAIN_MODULE_CONFIG'
@@ -111,3 +126,96 @@ def guess_domain_language(domain_name):
     domain = Domain.get_by_name(domain_name)
     counter = Counter([app.default_language for app in domain.applications() if not app.is_remote_app()])
     return counter.most_common(1)[0][0] if counter else 'en'
+
+
+@task(queue='background_queue')
+def send_repeater_payloads(repeater_id, payload_ids, email_id):
+    from corehq.motech.repeaters.models import Repeater, RepeatRecord
+    repeater = Repeater.get(repeater_id)
+    repeater_type = repeater.doc_type
+    payloads = dict()
+    headers = ['note']
+    result_file_name = "bulk-payloads-%s-%s-%s.csv" % (
+        repeater.doc_type, repeater.get_id,
+        datetime.datetime.utcnow().strftime("%Y-%m-%d--%H-%M-%S")
+    )
+
+    def get_payload(payload_id):
+        dummy_repeat_record = RepeatRecord(
+            domain=repeater.domain,
+            next_check=datetime.datetime.utcnow(),
+            repeater_id=repeater.get_id,
+            repeater_type=repeater_type,
+            payload_id=payload_id,
+        )
+        payload_doc = repeater.payload_doc(dummy_repeat_record)
+        payload = repeater.get_payload(dummy_repeat_record, payload_doc)
+        if isinstance(payload, dict):
+            return payload
+        else:
+            return json.loads(payload)
+
+    def populate_payloads():
+        for payload_id in payload_ids:
+            try:
+                payload = get_payload(payload_id)
+                payloads[payload_id] = payload
+                headers = list(set(headers + payload.keys()))
+            except Exception as e:
+                payloads[payload_id] = {'note': 'Could not generate payload, %s' % str(e)}
+
+    def create_result_file():
+        _, temp_file_path = tempfile.mkstemp()
+        with open(temp_file_path, 'w') as csvfile:
+            headers.append('payload_id')
+            writer = csv.DictWriter(csvfile, fieldnames=headers)
+            writer.writeheader()
+            for payload_id, payload in payloads.items():
+                row = payload
+                row['payload_id'] = payload_id
+                writer.writerow(row)
+        return temp_file_path
+
+    def save_dump_to_blob(temp_path):
+        with open(temp_path, 'rb') as file_:
+            blob_db = get_blob_db()
+            blob_db.put(
+                file_,
+                result_file_name,
+                timeout=60 * 24)  # 24 hours
+        file_format = Format.from_format(Format.CSV)
+        file_name_header = safe_filename_header(
+            result_file_name, file_format.extension)
+        blob_dl_object = expose_blob_download(
+            result_file_name,
+            mimetype=file_format.mimetype,
+            content_disposition=file_name_header
+        )
+        return blob_dl_object.download_id
+
+    def zip_dump(temp_file_path):
+        _, zip_temp_path = tempfile.mkstemp(".zip")
+        with ZipFile(zip_temp_path, 'w') as zip_file_:
+            zip_file_.write(temp_file_path)
+
+        return zip_temp_path
+
+    def clean_temp_files(*temp_file_paths):
+        for file_path in temp_file_paths:
+            os.remove(file_path)
+
+    def email_result(download_id):
+        url = "%s%s?%s" % (get_url_base(),
+                           reverse('retrieve_download', kwargs={'download_id': download_id}),
+                           "get_file")  # downloads immediately, rather than rendering page
+        send_HTML_email('%s Bulk Payload generated for %s' % repeater_type,
+                        email_id,
+                        'This email is to just let you know that there is a '
+                        'download waiting for you at %s. It will expire in 24 hours' % url)
+
+    populate_payloads()
+    temp_file_path = create_result_file()
+    temp_zip_path = zip_dump(temp_file_path)
+    download_id = save_dump_to_blob(temp_zip_path)
+    clean_temp_files(temp_file_path, temp_zip_path)
+    email_result(download_id)
