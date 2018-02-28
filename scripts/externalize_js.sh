@@ -50,10 +50,10 @@ if [[ ! $has_gnu_sed ]]; then
 fi
 
 
-# has_local_changes=`git diff-index HEAD` && true
-# if [[ $has_local_changes ]]; then
-#     abort "You have uncommitted changes in your working tree."
-# fi
+has_local_changes=`git diff-index HEAD` && true
+if [[ $has_local_changes ]]; then
+    abort "You have uncommitted changes in your working tree."
+fi
 
 
 APP=$1
@@ -79,7 +79,7 @@ fi
 
 
 # formulate locations and names
-HTML_FILE_LOCATION="./corehq/apps/$APP/templates/$APP/filters/$MODULE.html"
+HTML_FILE_LOCATION="./corehq/apps/$APP/templates/$APP/$MODULE.html"
 NEW_MODULE_NAME="$APP/js/$MODULE"
 NEW_MODULE_LOCATION="./corehq/apps/$APP/static/$APP/js/$MODULE.js"
 EXISTENT_MODULE=false
