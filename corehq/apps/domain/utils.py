@@ -196,7 +196,7 @@ def send_repeater_payloads(repeater_id, payload_ids, email_id):
     def zip_dump(temp_file_path):
         _, zip_temp_path = tempfile.mkstemp(".zip")
         with ZipFile(zip_temp_path, 'w') as zip_file_:
-            zip_file_.write(temp_file_path)
+            zip_file_.write(temp_file_path, result_file_name)
 
         return zip_temp_path
 
@@ -208,7 +208,7 @@ def send_repeater_payloads(repeater_id, payload_ids, email_id):
         url = "%s%s?%s" % (get_url_base(),
                            reverse('retrieve_download', kwargs={'download_id': download_id}),
                            "get_file")  # downloads immediately, rather than rendering page
-        send_HTML_email('%s Bulk Payload generated for %s' % repeater_type,
+        send_HTML_email('Bulk Payload generated for %s' % repeater_type,
                         email_id,
                         'This email is to just let you know that there is a '
                         'download waiting for you at %s. It will expire in 24 hours' % url)
