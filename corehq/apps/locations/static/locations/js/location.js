@@ -70,7 +70,7 @@ hqDefine("locations/js/location", function() {
             "default_caption": "\u2026",
             "auto_drill": false,
             "loc_filter": function(loc) {
-                return loc.uuid() != loc_id && loc.can_have_children();
+                return loc.uuid() !== loc_id && loc.can_have_children();
             },
             "loc_url": location_url
         });
@@ -86,14 +86,15 @@ hqDefine("locations/js/location", function() {
             $.each(subforms, function(i, e) {
                 var $e = $(e);
                 var loc_type = $e.attr('loctype');
-                $e[loc_type == val ? 'show' : 'hide']();
+                $e[loc_type === val ? 'show' : 'hide']();
             });
         });
 
         model.has_user = ko.computed(function() {
-            var loc_type = model.allowed_child_types().length === 1 ?
-                            model.allowed_child_types()[0] :
-                            model.loc_type();
+            var loc_type = (
+                model.allowed_child_types().length === 1 ?
+                    model.allowed_child_types()[0] :
+                    model.loc_type());
             return loc_types_with_users.indexOf(loc_type) !== -1;
         });
 
@@ -102,7 +103,7 @@ hqDefine("locations/js/location", function() {
         model.load(locs, selected_parent);
         model.orig_parent_id = model.selected_locid();
 
-        $("#loc_form :button[type='submit']").click(function(e) {
+        $("#loc_form :button[type='submit']").click(function() {
             if (this.name === 'update-loc') {
                 hqImport('analytix/js/google').track.event('Organization Structure', 'Edit', 'Update Location');
             } else {
@@ -110,7 +111,7 @@ hqDefine("locations/js/location", function() {
             }
         });
 
-        hqImport('analytix/js/google').track.click($("#edit_users :button[type='submit']"), 'Organization Structure', 'Edit', 'Update Users at this Location')
+        hqImport('analytix/js/google').track.click($("#edit_users :button[type='submit']"), 'Organization Structure', 'Edit', 'Update Users at this Location');
 
         $('#loc_form').koApplyBindings(model);
 

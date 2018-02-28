@@ -15,7 +15,7 @@ hqDefine('locations/js/location_drilldown', function() {
         this.loc_url = options.loc_url;
         this.default_caption = options.default_caption || 'All';
         this.auto_drill = (_.isBoolean(options.auto_drill) ? options.auto_drill : true);
-        this.loc_filter = options.loc_filter || function(loc) { return true; };
+        this.loc_filter = options.loc_filter || function() { return true; };
         this.func = typeof options.func !== 'undefined' ? options.func : LocationModel;
         this.show_location_filter = ko.observable((typeof options.show_location_filter !== 'undefined') ? options.show_location_filter : 'y');
 
