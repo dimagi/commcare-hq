@@ -269,6 +269,7 @@ class TestVoucherPayload(ENikshayLocationStructureMixin, ENikshayRepeaterTestBas
                 "voucher_fulfilled_by_location_id": self.plc.location_id,
                 "date_fulfilled": "2017-08-15",
                 "voucher_id": "ABC-DEF-1123",
+                # If amount_approved is missing, fallback to amount_fulfilled
                 # "amount_approved": 10.0,
                 "amount_fulfilled": 10.0,
                 "investigation_type": "xray",
