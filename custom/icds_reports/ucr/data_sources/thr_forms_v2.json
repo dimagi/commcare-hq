@@ -9,7 +9,7 @@
   ],
   "config": {
     "table_id": "static-thr_forms_v2",
-    "display_name": "Forms - Take Home Ration (Partitioned by day) (Static)",
+    "display_name": "Forms - Take Home Ration (Partitioned by month) (Static)",
     "referenced_doc_type": "XFormInstance",
     "description": "",
     "base_item_expression": {},
@@ -131,7 +131,7 @@
         {
           "column": "submitted_on",
           "subtype": "date",
-          "constraint": "day"
+          "constraint": "month"
         }
       ]
     },
