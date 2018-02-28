@@ -125,4 +125,3 @@ hqDefine('domain/js/repeat_record_report', function() {
         });
     });
 });
-
