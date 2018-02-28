@@ -1127,9 +1127,9 @@ class ScheduledReportsView(BaseProjectReportSectionView):
             self.report_notification.save()
             ProjectReportsTab.clear_dropdown_cache(self.domain, self.request.couch_user.get_id)
             if self.is_new:
-                messages.success(request, "Scheduled report added!")
+                messages.success(request, _("Scheduled report added."))
             else:
-                messages.success(request, "Scheduled report updated!")
+                messages.success(request, _("Scheduled report updated."))
 
             touch_saved_reports_views(request.couch_user, self.domain)
             return HttpResponseRedirect(reverse('reports_home', args=(self.domain,)))

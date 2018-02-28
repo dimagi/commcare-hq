@@ -92,9 +92,9 @@ STATICFILES_FINDERS = (
     'compressor.finders.CompressorFinder',
 )
 
-STATICFILES_DIRS = (
+STATICFILES_DIRS = [
     BOWER_COMPONENTS,
-)
+]
 
 # bleh, why did this submodule have to be removed?
 # deploy fails if this item is present and the path does not exist
@@ -720,6 +720,8 @@ ANALYTICS_IDS = {
     'HUBSPOT_API_ID': '',
     'GTM_ID': '',
     'DRIFT_ID': '',
+    'APPCUES_ID': '',
+    'APPCUES_KEY': '',
 }
 
 ANALYTICS_CONFIG = {
@@ -758,6 +760,9 @@ PRELOGIN_APPS = (
 LOGSTASH_DEVICELOG_PORT = 10777
 LOGSTASH_AUDITCARE_PORT = 10999
 LOGSTASH_HOST = 'localhost'
+
+# Sumologic log aggregator
+SUMOLOGIC_URL = None
 
 # on both a single instance or distributed setup this should assume localhost
 ELASTICSEARCH_HOST = 'localhost'
@@ -1588,6 +1593,7 @@ ALLOWED_CUSTOM_CONTENT_HANDLERS = {
     "UCLA_SEXUAL_HEALTH": "custom.ucla.api.sexual_health_message_bank_content",
     "UCLA_MED_ADHERENCE": "custom.ucla.api.med_adherence_message_bank_content",
     "UCLA_SUBSTANCE_USE": "custom.ucla.api.substance_use_message_bank_content",
+    "ENIKSHAY_PRESCRIPTION_VOUCHER_ALERT": "custom.enikshay.messaging.custom_content.prescription_voucher_alert",
 }
 
 # Used by the new reminders framework
@@ -1616,6 +1622,21 @@ AVAILABLE_CUSTOM_SCHEDULING_CONTENT = {
     "ICDS_CHILD_VACCINATIONS_COMPLETE":
         ["custom.icds.messaging.custom_content.child_vaccinations_complete",
          "ICDS: Child vaccinations complete"],
+    "ICDS_AWW_1":
+        ["custom.icds.messaging.custom_content.aww_1",
+         "ICDS: Weekly AWC Submission Performance to AWW"],
+    "ICDS_AWW_2":
+        ["custom.icds.messaging.custom_content.aww_2",
+         "ICDS: Monthly AWC Aggregate Performance to AWW"],
+    "ICDS_LS_1":
+        ["custom.icds.messaging.custom_content.ls_1",
+         "ICDS: Monthly AWC Aggregate Performance to LS"],
+    "ICDS_LS_2":
+        ["custom.icds.messaging.custom_content.ls_2",
+         "ICDS: Weekly AWC VHND Performance to LS"],
+    "ICDS_LS_6":
+        ["custom.icds.messaging.custom_content.ls_6",
+         "ICDS: Weekly AWC Submission Performance to LS"],
 }
 
 # Used by the old reminders framework
@@ -1654,8 +1675,12 @@ AVAILABLE_CUSTOM_SCHEDULING_RECIPIENTS = {
 }
 
 AVAILABLE_CUSTOM_RULE_CRITERIA = {
-    'ICDS_CONSIDER_CASE_FOR_DPT3_AND_MEASLES_REMINDER':
-        'custom.icds.rules.custom_criteria.consider_case_for_dpt3_and_measles_reminder',
+    'ICDS_PERSON_CASE_IS_UNDER_6_YEARS_OLD':
+        'custom.icds.rules.custom_criteria.person_case_is_under_6_years_old',
+    'ICDS_IS_USERCASE_OF_AWW':
+        'custom.icds.rules.custom_criteria.is_usercase_of_aww',
+    'ICDS_IS_USERCASE_OF_LS':
+        'custom.icds.rules.custom_criteria.is_usercase_of_ls',
 }
 
 AVAILABLE_CUSTOM_RULE_ACTIONS = {
@@ -1991,6 +2016,7 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'tasks_cases.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'tech_issue_cases.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'thr_forms.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'thr_forms_v2.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'usage_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'vhnd_form.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'visitorbook_forms.json'),

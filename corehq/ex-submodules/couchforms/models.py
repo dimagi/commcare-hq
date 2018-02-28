@@ -137,7 +137,7 @@ class XFormInstance(DeferredBlobMixin, SafeSaveDocument, UnicodeMixIn,
     build_id = StringProperty()
     export_tag = DefaultProperty(name='#export_tag')
 
-    class Meta:
+    class Meta(object):
         app_label = 'couchforms'
 
     @classmethod
@@ -489,5 +489,5 @@ class UnfinishedSubmissionStub(models.Model):
             "domain={s.domain})"
         ).format(s=self)
 
-    class Meta:
+    class Meta(object):
         app_label = 'couchforms'

@@ -49,7 +49,7 @@ class Schedule(models.Model):
     # to edit this schedule.
     ui_type = models.CharField(max_length=1, default=UI_TYPE_UNKNOWN)
 
-    class Meta:
+    class Meta(object):
         abstract = True
 
     def set_first_event_due_timestamp(self, instance, start_date=None):
@@ -135,7 +135,7 @@ class ContentForeignKeyMixin(models.Model):
     ivr_survey_content = models.ForeignKey('scheduling.IVRSurveyContent', null=True, on_delete=models.CASCADE)
     custom_content = models.ForeignKey('scheduling.CustomContent', null=True, on_delete=models.CASCADE)
 
-    class Meta:
+    class Meta(object):
         abstract = True
 
     @property
@@ -193,7 +193,7 @@ class Event(ContentForeignKeyMixin):
     # it doesn't matter as long as it sorts the events properly.
     order = models.IntegerField()
 
-    class Meta:
+    class Meta(object):
         abstract = True
 
 
@@ -206,7 +206,7 @@ class Content(models.Model):
     # (i.e., this was scheduled content), this is the ScheduleInstance.
     schedule_instance = None
 
-    class Meta:
+    class Meta(object):
         abstract = True
 
     def set_context(self, case=None, schedule_instance=None):
@@ -319,7 +319,7 @@ class Broadcast(models.Model):
     # A List of [recipient_type, recipient_id]
     recipients = jsonfield.JSONField(default=list)
 
-    class Meta:
+    class Meta(object):
         abstract = True
 
     def soft_delete(self):

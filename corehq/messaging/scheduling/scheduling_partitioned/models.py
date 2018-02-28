@@ -44,7 +44,7 @@ class ScheduleInstance(PartitionedModel):
     RECIPIENT_TYPE_USER_GROUP = 'Group'
     RECIPIENT_TYPE_LOCATION = 'Location'
 
-    class Meta:
+    class Meta(object):
         abstract = True
         index_together = (
             # index for equality comparisons on the leading columns

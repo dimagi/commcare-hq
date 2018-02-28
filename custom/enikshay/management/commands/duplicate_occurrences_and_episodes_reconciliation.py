@@ -1,4 +1,5 @@
 from __future__ import absolute_import, print_function
+from __future__ import unicode_literals
 from django.core.management.base import CommandError
 from django.utils.dateparse import parse_date
 from corehq.apps.hqcase.utils import bulk_update_cases

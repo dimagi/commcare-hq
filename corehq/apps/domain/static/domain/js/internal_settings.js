@@ -2,6 +2,11 @@
 hqDefine("domain/js/internal_settings", function() {
     var areas = hqImport('hqwebapp/js/initial_page_data').get('areas');
 
+    var InternalSettingsViewModel = function(initial_values) {
+        var self = this;
+        self.use_custom_auto_case_update_limit = ko.observable(initial_values.use_custom_auto_case_update_limit);
+    };
+
     function update_subareas() {
         var $subarea = $subarea || $('[name="sub_area"]');
         var chosen_sub_area = $subarea.val();
@@ -40,6 +45,10 @@ hqDefine("domain/js/internal_settings", function() {
             update_workshop_region();
         });
 
+        var internalSettingsViewModel = new InternalSettingsViewModel(
+            hqImport("hqwebapp/js/initial_page_data").get("current_values")
+        );
+        $('#update-project-info').koApplyBindings(internalSettingsViewModel);
     });
 
     $(function() {

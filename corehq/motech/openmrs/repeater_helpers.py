@@ -2,6 +2,7 @@ from __future__ import absolute_import
 
 from collections import namedtuple
 from datetime import timedelta
+import re
 
 from requests import HTTPError
 from six.moves import zip
@@ -52,6 +53,10 @@ ADDRESS_PROPERTIES = (
     'startDate',
     'endDate',
 )
+# To match cases against their OpenMRS Person UUID, set the IdMatcher's identifier_type_id to the value of
+# PERSON_UUID_IDENTIFIER_TYPE_ID. To match against any other OpenMRS identifier, set the IdMatcher's
+# identifier_type_id to the UUID of the OpenMRS Identifier Type.
+PERSON_UUID_IDENTIFIER_TYPE_ID = 'uuid'
 
 
 class Requests(object):
@@ -105,7 +110,6 @@ def url(url_format_string, **kwargs):
 
 
 def create_person_attribute(requests, person_uuid, attribute_type_uuid, value):
-    # todo: not tested against real openmrs instance
     return requests.post('/ws/rest/v1/person/{person_uuid}/attribute'.format(
         person_uuid=person_uuid), json={
             'attributeType': attribute_type_uuid,
@@ -211,10 +215,23 @@ def search_patients(requests, search_string):
     return response.json()
 
 
+def get_patient_by_uuid(requests, uuid):
+    if not uuid:
+        return None
+    if not re.match(r'^[a-fA-F0-9\-]{36}$', uuid):
+        logger.debug('Person UUID "{}" failed validation'.format(uuid))
+        return None
+    return requests.get('/ws/rest/v1/patient/' + uuid, {'v': 'full'}).json()
+
+
 def get_patient_by_id(requests, patient_identifier_type, patient_identifier):
-    response_json = search_patients(requests, patient_identifier)
-    return PatientSearchParser(response_json).get_patient_matching_identifiers(
-        patient_identifier_type, patient_identifier)
+    if patient_identifier_type == PERSON_UUID_IDENTIFIER_TYPE_ID:
+        patient = get_patient_by_uuid(requests, patient_identifier)
+        return patient
+    else:
+        response_json = search_patients(requests, patient_identifier)
+        return PatientSearchParser(response_json).get_patient_matching_identifiers(
+            patient_identifier_type, patient_identifier)
 
 
 def update_person_name(requests, info, openmrs_config, person_uuid, name_uuid):

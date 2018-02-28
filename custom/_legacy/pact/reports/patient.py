@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import logging
 from django.urls import reverse
 from django.http import Http404
@@ -51,7 +52,7 @@ class PactPatientInfoReport(PactDrilldownReportMixin, PactElasticTabularReportMi
             patient_doc = self.get_case()
             has_error = False
         except Exception as ex:
-            logging.exception(u'problem getting pact patient data for patient {}. {}'.format(
+            logging.exception('problem getting pact patient data for patient {}. {}'.format(
                 self.patient_id, ex
             ))
             has_error = True

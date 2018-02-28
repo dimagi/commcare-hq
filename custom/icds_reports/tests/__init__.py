@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import print_function
+from __future__ import unicode_literals
 import os
 from datetime import datetime
 
@@ -56,6 +57,17 @@ def setUpModule():
         location_type=location_type
     )
 
+    state_location_type = LocationType.objects.create(
+        domain=domain.name,
+        name='state',
+    )
+    SQLLocation.objects.create(
+        domain=domain.name,
+        name='st1',
+        location_id='st1',
+        location_type=state_location_type
+    )
+
     awc_location_type = LocationType.objects.create(
         domain=domain.name,
         name='awc',
@@ -85,7 +97,7 @@ def setUpModule():
             with open(os.path.join(path, file_name)) as f:
                 table_name = FILE_NAME_TO_TABLE_MAPPING[file_name[:-4]]
                 table = metadata.tables[table_name]
-                postgres_copy.copy_from(f, table, engine, format='csv', null='', header=True)
+                postgres_copy.copy_from(f, table, engine, format=b'csv', null=b'', header=True)
 
         try:
             move_ucr_data_into_aggregation_tables(datetime(2017, 5, 28), intervals=2)

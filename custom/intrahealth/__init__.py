@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import six
 INTRAHEALTH_DOMAINS = ('ipm-senegal', 'testing-ipm-senegal', 'ct-apr')
 
@@ -23,15 +24,15 @@ RECOUVREMENT_XMLNSES = ('http://openrosa.org/formdesigner/61478ca7d20e8e1fa2fd11
                         'http://openrosa.org/formdesigner/c03317d26979ba4b656fac23ef1f03dfe4337b1d')
 
 _PRODUCT_NAMES = {
-    u'diu': [u"diu"],
-    u'jadelle': [u"jadelle"],
-    u'depo-provera': [u"d\xe9po-provera", u"depo-provera"],
-    u'microlut/ovrette': [u"microlut/ovrette"],
-    u'microgynon/lof.': [u"microgynon/lof."],
-    u'preservatif masculin': [u"pr\xe9servatif masculin", u"preservatif masculin", u"preservatif_masculin"],
-    u'preservatif feminin': [u"pr\xe9servatif f\xe9minin", u"preservatif feminin", u"preservatif_feminin"],
-    u'cu': [u"cu"],
-    u'collier': [u"collier"]
+    'diu': ["diu"],
+    'jadelle': ["jadelle"],
+    'depo-provera': ["d\xe9po-provera", "depo-provera"],
+    'microlut/ovrette': ["microlut/ovrette"],
+    'microgynon/lof.': ["microgynon/lof."],
+    'preservatif masculin': ["pr\xe9servatif masculin", "preservatif masculin", "preservatif_masculin"],
+    'preservatif feminin': ["pr\xe9servatif f\xe9minin", "preservatif feminin", "preservatif_feminin"],
+    'cu': ["cu"],
+    'collier': ["collier"]
 }
 
 PRODUCT_NAMES = {v: k for k, values in six.iteritems(_PRODUCT_NAMES) for v in values}

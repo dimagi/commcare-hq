@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import logging
 from custom.bihar.reports.supervisor import BiharNavReport, MockEmptyReport, \
     url_and_params, BiharSummaryReport, \
@@ -69,7 +70,7 @@ class IndicatorSummaryReport(GroupReferenceMixIn, BiharSummaryReport,
             params = copy(self.request_params)
             params['indicator'] = indicator.slug
             del params['next_report']
-            return format_html(u'{chart}<a href="{next}">{val}</a>',
+            return format_html('{chart}<a href="{next}">{val}</a>',
                 val=self.data_provider.get_indicator_value(indicator),
                 chart=self.data_provider.get_chart(indicator),
                 next=url_and_params(
@@ -110,7 +111,7 @@ class MyPerformanceReport(BiharSummaryReport):
             params = copy(self.request_params)
             params["indicators"] = self.set_slug
             params['indicator'] = indicator.slug
-            return format_html(u'{chart}<a href="{next}">{val}</a>',
+            return format_html('{chart}<a href="{next}">{val}</a>',
                 val=self.data_provider.get_indicator_value(indicator),
                 chart=self.data_provider.get_chart(indicator),
                 next=url_and_params(
@@ -154,7 +155,7 @@ class IndicatorClientSelectNav(GroupReferenceMixIn, BiharSummaryReport,
             params = copy(self.request_params)
             params["indicators"] = self.indicator_set.slug
             params["indicator"] = indicator.slug
-            return format_html(u'<a href="{next}">{val}</a>',
+            return format_html('<a href="{next}">{val}</a>',
                 val=self.count(indicator),
                 next=url_and_params(
                     IndicatorClientList.get_url(domain=self.domain,

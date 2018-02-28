@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import division
+from __future__ import unicode_literals
 import mock
 import datetime
 from django.test import TestCase, override_settings
@@ -79,9 +80,9 @@ class TestAdherenceUpdater(TestCase):
     def setUp(self):
         super(TestAdherenceUpdater, self).setUp()
         self.factory = CaseFactory(domain=self.domain)
-        self.person_id = u"person"
-        self.occurrence_id = u"occurrence"
-        self.episode_id = u"episode"
+        self.person_id = "person"
+        self.occurrence_id = "occurrence"
+        self.episode_id = "episode"
         self.case_updater = EpisodeUpdater(self.domain)
         self.data_store = get_datastore(self.domain)
 

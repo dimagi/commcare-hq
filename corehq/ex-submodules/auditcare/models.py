@@ -67,7 +67,7 @@ class AuditEvent(Document):
         except Exception:
             return ""
 
-    class Meta:
+    class Meta(object):
         app_label = 'auditcare'
 
 
@@ -141,7 +141,7 @@ class ModelActionAudit(AuditEvent):
     def summary(self):
         return "%s ID: %s" % (self.object_type, self.object_uuid)
 
-    class Meta:
+    class Meta(object):
         app_label = 'auditcare'
 
     @classmethod
@@ -317,7 +317,7 @@ class NavigationEventAudit(AuditEvent):
     def summary(self):
         return "%s from %s" % (self.request_path, self.ip_address)
 
-    class Meta:
+    class Meta(object):
         app_label = 'auditcare'
 
     @cached_property
@@ -383,8 +383,7 @@ class AccessAudit(AuditEvent):
 
     failures_since_start = IntegerProperty()
 
-
-    class Meta:
+    class Meta(object):
         app_label = 'auditcare'
 
     @property
@@ -517,7 +516,7 @@ class FieldAccess(models.Model):
     object_type = StringProperty() #String of ContentType, verbose_name='Case linking content type', blank=True, null=True)
     field = StringProperty()
 
-    class Meta:
+    class Meta(object):
         app_label = 'auditcare'
 
 #    class Meta:
@@ -533,6 +532,6 @@ class ModelAuditEvent(models.Model):
     user = StringProperty() # The User's username accessing this
     accessed = DateTimeProperty(default=getdate)
 
-    class Meta:
+    class Meta(object):
         app_label = 'auditcare'
 

@@ -564,7 +564,7 @@ class UsersAtLocationForm(forms.Form):
 
 
 class LocationFixtureForm(forms.ModelForm):
-    class Meta:
+    class Meta(object):
         model = LocationFixtureConfiguration
         fields = ['sync_flat_fixture', 'sync_hierarchical_fixture']
 

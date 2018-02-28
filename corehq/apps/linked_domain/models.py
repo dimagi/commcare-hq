@@ -112,7 +112,7 @@ class DomainLinkHistory(models.Model):
         if self.model_detail:
             return wrap_detail(self.model, self.model_detail)
 
-    class Meta:
+    class Meta(object):
         ordering = ("-date",)
 
 
