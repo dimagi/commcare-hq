@@ -257,6 +257,27 @@ class TestVoucherPayload(ENikshayLocationStructureMixin, ENikshayRepeaterTestBas
             json.loads(ChemistBETSVoucherPayloadGenerator(None).get_payload(None, voucher))
         )
 
+    def test_fallback_to_amount_fulfilled(self):
+        self.create_case_structure()
+        self.assign_person_to_location(self.pcp.location_id)
+        prescription = self.create_prescription_case()
+        voucher = self.create_voucher_case(
+            prescription.case_id, {
+                "voucher_type": "test",
+                "voucher_approved_by_id": self.user.user_id,
+                "voucher_fulfilled_by_id": self.user.user_id,
+                "voucher_fulfilled_by_location_id": self.plc.location_id,
+                "date_fulfilled": "2017-08-15",
+                "voucher_id": "ABC-DEF-1123",
+                # "amount_approved": 10.0,
+                "amount_fulfilled": 10.0,
+                "investigation_type": "xray",
+            }
+        )
+
+        payload = json.loads(ChemistBETSVoucherPayloadGenerator(None).get_payload(None, voucher))
+        self.assertEqual(payload['voucher_details'][0]['Amount'], "10")
+
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True, SERVER_ENVIRONMENT='enikshay')
 class TestIncentivePayload(ENikshayLocationStructureMixin, ENikshayRepeaterTestBase):
