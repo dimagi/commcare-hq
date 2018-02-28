@@ -319,7 +319,7 @@
         {
           "column": "timeend",
           "subtype": "date",
-          "constraint": "day"
+          "constraint": "month"
         }
       ]
     },
