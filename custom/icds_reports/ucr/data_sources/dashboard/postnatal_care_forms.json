@@ -304,8 +304,11 @@
       {
         "column_id": "not_breastfeeding",
         "datatype": "string",
-        "type": "property_name",
-        "property_name": "not_breastfeeding"
+        "type": "expression",
+        "expression": {
+          "type": "property_name",
+          "property_name": "not_breastfeeding"
+        }
       }
     ],
     "named_expressions": {},
