@@ -4,7 +4,7 @@
 
 {% block js %}{{ block.super }}
     <script src="{% static 'locations/js/location_tree.async.js' %}"></script>
-            <script src="{% static 'locations/js/locations.js' %}"></script>
+    <script src="{% static 'locations/js/locations.js' %}"></script>
 {% endblock %}
 
 {% block stylesheets %}{{ block.super }}
@@ -19,15 +19,24 @@
     {% registerurl 'location_lineage' domain '-locid-' %}
     {% registerurl 'location_descendants_count' domain '-locid-'%}
 
+    {% registerurl 'edit_location' domain '-locid-' %}
+    {% registerurl 'location_search' domain %}
+    {% registerurl 'create_location' domain %}
+    {% initial_page_data 'api_root' api_root %}
+    {% initial_page_data 'locations' locations|JSON %}
+    {% initial_page_data 'can_edit_root' can_edit_root|yesno:"true,false" %}
+    {% initial_page_data 'hierarchy' hierarchy %}
+    {% initial_page_data 'show_inactive' show_inactive|yesno:"true,false" %}
+
 <header>
     <div class="row">
         <div class="col-sm-8">
             <h2>{% trans "Manage Organization Structure" %}</h2>
             <p>
                 {% blocktrans %}
-                    The Organization feature allows you to represent the real-world 
-                    structure of your project (districts, facilities, frontline workers, etc.). 
-                    Once this structure has been defined, you can use it for reporting and 
+                    The Organization feature allows you to represent the real-world
+                    structure of your project (districts, facilities, frontline workers, etc.).
+                    Once this structure has been defined, you can use it for reporting and
                     case sharing. Learn more about Organizations on our <a href="https://help.commcarehq.org/display/commcarepublic/Organizations">Help Site</a>.
                 {% endblocktrans %}
             </p>

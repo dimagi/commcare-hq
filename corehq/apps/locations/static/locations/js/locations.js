@@ -1,22 +1,15 @@
 hqDefine('locations/js/locations', function() {
-    var LOAD_LOCS_URL = '{{ api_root }}',
-        NEW_LOC_URL = '{% url "create_location" domain %}';
-
-    var locs = {{ locations|JSON }};
-    var can_edit_root = {{ can_edit_root|yesno:"true,false" }};
-    var hierarchy = {{ hierarchy|JSON }};
-    var show_inactive = {{ show_inactive|yesno:"true,false" }};
+    var initialPageData = hqImport('hqwebapp/js/initial_page_data');
 
     function loc_edit_url(loc_id) {
-        var template = '{% url "edit_location" domain "-locid-" %}';
+        var template = initialPageData.reverse('edit_location');
         return template.replace('-locid-', loc_id);
     }
 
     var enableLocationSearchSelect = function() {
-
         $('#location_search_select').select2({
             ajax: {
-                url: '{% url 'location_search' domain %}',
+                url: initialPageData.reverse('location_search'),
                 dataType: 'json',
                 data: function (params) {
                     return {
@@ -46,9 +39,15 @@ hqDefine('locations/js/locations', function() {
         tree_model.load(locs);
     };
 
-    enableLocationSearchSelect();
-
     $(function() {
+        var LOAD_LOCS_URL = initialPageData.get('api_root'),
+            NEW_LOC_URL = initialPageData.reverse("create_location");
+
+        var locs = initialPageData.get('locations');
+        var can_edit_root = initialPageData.get('can_edit_root');
+        var hierarchy = initialPageData.get('hierarchy');
+        var show_inactive = initialPageData.get('show_inactive');
+
         $('#location_tree').koApplyBindings(tree_model);
         tree_model.load(locs);
         var model = new LocationSearchViewModel(tree_model);
