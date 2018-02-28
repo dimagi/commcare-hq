@@ -9,7 +9,7 @@ hqDefine("locations/js/location", function() {
     };
     var TEMPLATE_STRINGS = {
         new_user_success: _.template(gettext("User " + initialPageData.get('user_name') +
-                                             " added successfully.  A validation message has been sent to the phone number provided."))
+                                             " added successfully.  A validation message has been sent to the phone number provided.")),
     };
 
     $(function() {
@@ -72,7 +72,7 @@ hqDefine("locations/js/location", function() {
             "loc_filter": function(loc) {
                 return loc.uuid() !== loc_id && loc.can_have_children();
             },
-            "loc_url": location_url
+            "loc_url": location_url,
         });
 
         model.editing = ko.observable(false);
