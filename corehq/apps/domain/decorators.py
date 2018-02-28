@@ -286,8 +286,7 @@ def two_factor_check(api_key):
                 elif not match_token(request.user, token):
                     return JsonResponse({"error": "X-CommcareHQ-OTP token is incorrect"}, status=401)
                 else:
-                    return fn(request, *args, **kwargs)
-
+                    return fn(request, domain, *args, **kwargs)
 
             return fn(request, domain, *args, **kwargs)
         return _inner
