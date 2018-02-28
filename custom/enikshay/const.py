@@ -1,4 +1,5 @@
 # Case property names used in integrations
+from __future__ import unicode_literals
 PRIMARY_PHONE_NUMBER = 'phone_number'
 BACKUP_PHONE_NUMBER = 'secondary_contact_phone_number'
 PRIVATE_SECONDARY_PHONE_NUMBER = 'secondary_phone'
@@ -65,6 +66,7 @@ VOUCHER_ID = "voucher_id"
 FULFILLED_BY_ID = "voucher_fulfilled_by_id"
 FULFILLED_BY_LOCATION_ID = "voucher_fulfilled_by_location_id"
 AMOUNT_APPROVED = "amount_approved"
+AMOUNT_FULFILLED = "amount_fulfilled"
 INVESTIGATION_TYPE = "investigation_type"
 
 ENIKSHAY_TIMEZONE = 'Asia/Kolkata'

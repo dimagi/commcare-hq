@@ -113,11 +113,13 @@ for _make_method, name in [
     # methods that return a new QuerySet
     (_make_qs_method, "annotate"),
     (_make_qs_method, "defer"),
+    (_make_qs_method, "distinct"),
     (_make_qs_method, "exclude"),
     (_make_qs_method, "filter"),
     (_make_qs_method, "none"),
     (_make_qs_method, "only"),
     (_make_qs_method, "order_by"),
+    (_make_qs_method, "select_related"),
     (_make_qs_method, "values"),
     (_make_qs_method, "values_list"),
     # from subclasses of QuerySet

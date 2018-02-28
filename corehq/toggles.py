@@ -1487,3 +1487,10 @@ LINKED_DOMAINS = StaticToggle(
     ),
     help_link='https://confluence.dimagi.com/display/ccinternal/Linked+Applications'
 )
+
+SUMOLOGIC_LOGS = DynamicallyPredictablyRandomToggle(
+    'sumologic_logs',
+    'Send logs to sumologic',
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_OTHER],
+)

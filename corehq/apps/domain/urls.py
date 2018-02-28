@@ -84,6 +84,7 @@ from corehq.motech.repeaters.views import (
 
 urlpatterns = [
     url(r'^domain/select/$', select, name='domain_select'),
+    url(r'^domain/select_redirect/$', select, {'do_not_redirect': True}, name='domain_select_redirect'),
     url(r'^domain/autocomplete/(?P<field>[\w-]+)/$', autocomplete_fields, name='domain_autocomplete_fields'),
     url(r'^domain/transfer/(?P<guid>\w+)/activate$',
         ActivateTransferDomainView.as_view(), name='activate_transfer_domain'),

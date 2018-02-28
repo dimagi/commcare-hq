@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from base64 import b64decode
 from collections import namedtuple
 from datetime import datetime, date, time
@@ -35,9 +36,9 @@ def quote_nan(value):
     Returns value in single quotes if value is not a number
 
     >>> quote_nan('foo')
-    "'foo'"
+    u"'foo'"
     >>> quote_nan('1')
-    '1'
+    u'1'
 
     """
     try:
@@ -177,11 +178,11 @@ def mk_oc_username(cc_username):
     Strips off "@domain.name", replaces non-alphanumerics, and pads with "_" if less than 5 characters
 
     >>> mk_oc_username('eric.idle@montypython.com')
-    'eric_idle'
+    u'eric_idle'
     >>> mk_oc_username('eric')
-    'eric_'
+    u'eric_'
     >>> mk_oc_username('I3#')
-    'I3___'
+    u'I3___'
 
     """
     username = cc_username.split('@')[0]
@@ -237,7 +238,7 @@ def oc_format_date(answer):
 
     """
     if isinstance(answer, datetime):
-        return answer.isoformat(sep=' ')
+        return answer.isoformat(sep=b' ')
     if isinstance(answer, (date, time)):
         return answer.isoformat()
     return answer

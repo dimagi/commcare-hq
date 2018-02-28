@@ -10,9 +10,6 @@
 # Afterwards it checks for django template tags, deletes and replaces them
 # with a few functions and prints out the newly needed initial_page_data tags
 
-# TODOS:
-#   auto indent the moved javascript
-
 # USAGE:
 # From the base level of this repo, run `./scripts/externalize_js.sh <app> <module>
 # The first argument is the django app the module is located in.
@@ -21,9 +18,6 @@
 # It isn't perfect, definitely check for lint and adjust the names around as desired.
 # There are also a few lines printed by the script that may need to be placed in the code as directed
 # Also make sure to visit the page(s) the module is used on to make sure they aren't borked!.
-
-# TODOS:
-#   auto indent the moved javascript
 
 
 # strict mode --> kill it if something fails
@@ -88,17 +82,24 @@ fi
 HTML_FILE_LOCATION="./corehq/apps/$APP/templates/$APP/$MODULE.html"
 NEW_MODULE_NAME="$APP/js/$MODULE"
 NEW_MODULE_LOCATION="./corehq/apps/$APP/static/$APP/js/$MODULE.js"
+EXISTENT_MODULE=false
 
 if [ -f $NEW_MODULE_LOCATION ]; then
     echo "The new module has already been created.\nDo you want to continue?"
     should_continue
+    EXISTENT_MODULE=true
 fi
 
-# create file
-touch $NEW_MODULE_LOCATION
+if [ "$EXISTENT_MODULE" == true ]; then
+    # delete the last line, opening up the module for more code
+    sed -i "$ d" $NEW_MODULE_LOCATION
+else
+    # create file
+    touch $NEW_MODULE_LOCATION
 
-# add boilerplate
-echo "hqDefine('$NEW_MODULE_NAME', function() {" >> $NEW_MODULE_LOCATION
+    # add boilerplate
+    echo "hqDefine('$NEW_MODULE_NAME', function() {" >> $NEW_MODULE_LOCATION
+fi
 
 # pull inline js from file, removes the script tags, and places it into the new file
 sed -n "/{% block js-inline %}/, /{% endblock\( js-inline\)\? %}/ p" $HTML_FILE_LOCATION | \
@@ -111,22 +112,29 @@ sed -i "/{% block js-inline %}/, /{% endblock\( js-inline\)\? %}/ d" $HTML_FILE_
 echo "});" >> $NEW_MODULE_LOCATION
 
 
-# add import to the html
-SCRIPT_IMPORT="<script src=\"{% static '$NEW_MODULE_NAME.js' %}\"></script>"
-count=$(sed -n "/{% block js %}/p" $HTML_FILE_LOCATION | wc -l)
-# if there is a block js, add it inside at the end
-if [ "$count" -gt 0 ]; then
-    sed -i "/{% block js %}/,/{% endblock/ {
-        /{% endblock/ i \\
-        $SCRIPT_IMPORT
-    }" $HTML_FILE_LOCATION
-# otherwise, just tell them to add one somewhere on the page
-else
-    echo "----------------------------"
-    echo "Please add this static import somewhere in the html file"
-    echo "{% block js %}{{ block.super }}\n\t$SCRIPT_IMPORT\n{% endblock %}"
-    echo "----------------------------"
+if [ "$EXISTENT_MODULE" == false ]; then
+    # add import to the html
+    SCRIPT_IMPORT="<script src=\"{% static '$NEW_MODULE_NAME.js' %}\"></script>"
+    count=$(sed -n "/{% block js %}/p" $HTML_FILE_LOCATION | wc -l)
+    # if there is a block js, add it inside at the end
+    if [ "$count" -gt 0 ]; then
+        sed -i "/{% block js %}/,/{% endblock/ {
+            /{% endblock/ i \\
+            $SCRIPT_IMPORT
+        }" $HTML_FILE_LOCATION
+    # otherwise, just tell them to add one somewhere on the page
+    else
+        echo "----------------------------"
+        echo "Please add this static import somewhere in the html file"
+        echo "{% block js %}{{ block.super }}\n\t$SCRIPT_IMPORT\n{% endblock %}"
+        echo "----------------------------"
+    fi
 fi
+
+
+# fix eslint issues
+echo "Fixing lint issues"
+eslint --fix $NEW_MODULE_LOCATION || true
 
 # commit the blob movement
 git add $NEW_MODULE_LOCATION $HTML_FILE_LOCATION
@@ -137,7 +145,7 @@ OPEN_BRACKET_REGEX="{\(%\|{\)"
 CLOSE_BRACKET_REGEX="\(%\|}\)}"
 QUOTE="\('\|\"\)"
 TEMPLATE_TAGS=`sed -n "/$OPEN_BRACKET_REGEX/=" $NEW_MODULE_LOCATION`
-TEMPLATE_TAG_COUNT=`echo $TEMPLATE_TAGS | wc -l`
+TEMPLATE_TAG_COUNT=`echo $TEMPLATE_TAGS | wc -w`
 if [ "$TEMPLATE_TAG_COUNT" -gt 0 ]; then
     echo "----------------------------"
     echo "Please check template tags on these lines."
@@ -155,7 +163,7 @@ if [ "$TEMPLATE_TAG_COUNT" -gt 0 ]; then
 
     INITIAL_PAGE_DATA_TAGS=`sed -n "s/.*$OPEN_BRACKET_REGEX//; s/ $CLOSE_BRACKET_REGEX.*//p" $NEW_MODULE_LOCATION`
     INITIAL_PAGE_DATA_TAG_LINES=`sed -n "/$OPEN_BRACKET_REGEX/=" $NEW_MODULE_LOCATION`
-    TAG_COUNT=`echo $INITIAL_PAGE_DATA_TAGS | wc -l`
+    TAG_COUNT=`echo $INITIAL_PAGE_DATA_TAGS | wc -w`
     if [ "$TAG_COUNT" -gt 0 ]; then
         sed -i "s/$OPEN_BRACKET_REGEX /$INITIALPAGEDATA_OPEN/; \
                 s/ $CLOSE_BRACKET_REGEX/$INITIAL_PAGE_DATA_CLOSE/" $NEW_MODULE_LOCATION

@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+from __future__ import unicode_literals
 import requests
 
 from datetime import datetime, date
@@ -686,8 +687,7 @@ class ExportIndicatorView(View):
                 year
             )
             task_id = task.task_id
-            url = redirect('icds_dashboard', domain=self.kwargs['domain'])
-            return redirect(url.url + '#/download?task_id=' + task_id)
+            return JsonResponse(data={'task_id': task_id})
 
 
 @method_decorator([login_and_domain_required], name='dispatch')
@@ -1505,11 +1505,11 @@ class DownloadPDFReport(View):
         client = get_redis_client()
         if format == 'one':
             response = HttpResponse(client.get(uuid), content_type='application/pdf')
-            response['Content-Disposition'] = 'attachment; filename="ISSNIP_monthly_register_cumulative.pdf"'
+            response['Content-Disposition'] = 'attachment; filename="ICDS_CAS_monthly_register_cumulative.pdf"'
             return response
         else:
             response = HttpResponse(client.get(uuid), content_type='application/zip')
-            response['Content-Disposition'] = 'attachment; filename="ISSNIP_monthly_register.zip"'
+            response['Content-Disposition'] = 'attachment; filename="ICDS_CAS_monthly_register.zip"'
             return response
 
 

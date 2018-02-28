@@ -1,4 +1,5 @@
-(function (angular, undefined) {
+/* globals hex_parser, zxcvbn */
+(function (angular) {
     'use strict';
 
     var mobileWorkers = angular.module('hq.mobile_workers', [
@@ -141,7 +142,7 @@
                 return array.join('');
             }
 
-            var specials = '!@#$%^&*()_+{}:"<>?\|[];\',./`~';
+            var specials = '!@#$%^&*()_+{}:"<>?\|[];\',./`~';   // eslint-disable-line no-useless-escape
             var lowercase = 'abcdefghijklmnopqrstuvwxyz';
             var uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
             var numbers = '0123456789';
@@ -199,11 +200,11 @@
         $scope.customFormFieldNames = customFieldNames;
         $scope.generateStrongPasswords = generateStrongPasswords;
 
-        $scope.markNonDefault = function (password) {
+        $scope.markNonDefault = function () {
             visualFormCtrl.markNonDefault();
         };
 
-        $scope.markDefault = function (password) {
+        $scope.markDefault = function () {
             visualFormCtrl.markDefault();
         };
 
@@ -359,7 +360,7 @@
         };
     };
 
-    mobileWorkerDirectives.validatePasswordStandard = function ($http, $q, djangoRMI) {
+    mobileWorkerDirectives.validatePasswordStandard = function () {
         return {
             restrict: 'AE',
             require: 'ngModel',
@@ -385,7 +386,7 @@
         };
     };
 
-    mobileWorkerDirectives.validatePasswordDraconian = function ($http, $q, djangoRMI) {
+    mobileWorkerDirectives.validatePasswordDraconian = function () {
         return {
             restrict: 'AE',
             require: 'ngModel',
@@ -416,7 +417,7 @@
         };
     };
 
-    mobileWorkerDirectives.validateLocation = function ($http, $q, djangoRMI) {
+    mobileWorkerDirectives.validateLocation = function () {
         return {
             restrict: 'AE',
             require: 'ngModel',

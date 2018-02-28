@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from datetime import date
 from custom.world_vision.models import WorldVisionMotherFluff
 from custom.world_vision.tests.utils import WVTest

@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from datetime import datetime
 import pytz
 import os
@@ -158,7 +159,7 @@ class Receiver99DotsTests(ENikshayCaseStructureMixin, TestCase):
             self.assertEqual(e.message, "Beneficiary ID is null")
 
         with self.assertRaises(NinetyNineDotsException) as e:
-            validate_adherence_values(u'123')
+            validate_adherence_values('123')
             self.assertEqual(e.message, "Adherences invalid")
 
 

@@ -522,7 +522,7 @@ class NoCountingPaginator(Paginator):
 
 class DeviceReportResource(HqBaseResource, ModelResource):
 
-    class Meta:
+    class Meta(object):
         queryset = DeviceReportEntry.objects.all()
         list_allowed_methods = ['get']
         detail_allowed_methods = ['get']
@@ -544,7 +544,7 @@ class DeviceReportResource(HqBaseResource, ModelResource):
 
 class StockTransactionResource(HqBaseResource, ModelResource):
 
-    class Meta:
+    class Meta(object):
         queryset = StockTransaction.objects.all()
         list_allowed_methods = ['get']
         detail_allowed_methods = ['get']
@@ -786,7 +786,7 @@ class UserDomainsResource(Resource):
     domain_name = fields.CharField(attribute='domain_name')
     project_name = fields.CharField(attribute='project_name')
 
-    class Meta:
+    class Meta(object):
         resource_name = 'user_domains'
         authentication = ApiKeyAuthentication()
         object_class = UserDomain
@@ -833,7 +833,7 @@ class DomainForms(Resource):
     form_xmlns = fields.CharField(attribute='form_xmlns')
     form_name = fields.CharField(attribute='form_name')
 
-    class Meta:
+    class Meta(object):
         resource_name = 'domain_forms'
         authentication = ApiKeyAuthentication()
         object_class = Form
@@ -879,7 +879,7 @@ class DomainCases(Resource):
     placeholder = fields.CharField(attribute='placeholder')
     case_type = fields.CharField(attribute='case_type')
 
-    class Meta:
+    class Meta(object):
         resource_name = 'domain_cases'
         authentication = ApiKeyAuthentication()
         object_class = CaseType
@@ -910,7 +910,7 @@ class DomainUsernames(Resource):
     user_id = fields.CharField(attribute='user_id')
     user_name = fields.CharField(attribute='user_name')
 
-    class Meta:
+    class Meta(object):
         resource_name = 'domain_usernames'
         authentication = ApiKeyAuthentication()
         object_class = User

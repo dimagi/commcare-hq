@@ -57,6 +57,12 @@ def start_session(session, domain, contact, app, module, form, case_id=None, yie
             "footprint": "true"
         }
 
+    kwargs = {}
+    if is_commcarecase(contact):
+        kwargs['restore_as_case_id'] = contact.case_id
+    else:
+        kwargs['restore_as'] = contact.raw_username
+
     if app and form:
         session_data.update(get_cloudcare_session_data(domain, form, contact))
 
@@ -64,7 +70,8 @@ def start_session(session, domain, contact, app, module, form, case_id=None, yie
     config = XFormsConfig(form_content=form.render_xform(),
                           language=language,
                           session_data=session_data,
-                          auth=AUTH)
+                          auth=AUTH,
+                          **kwargs)
 
     session_start_info = tfsms.start_session(config)
     session.session_id = session_start_info.session_id

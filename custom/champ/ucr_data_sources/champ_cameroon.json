@@ -228,7 +228,7 @@
         "type": "expression",
         "expression": {
           "type": "property_path",
-          "property_path": ["form", "load", "first_art_date"]
+          "property_path": ["form", "seropostive_group", "first_art_date"]
         },
         "column_id": "first_art_date",
         "datatype": "string",

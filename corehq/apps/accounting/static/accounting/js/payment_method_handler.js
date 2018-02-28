@@ -44,7 +44,7 @@ hqDefine('accounting/js/payment_method_handler', function () {
         var self = this;
         opts = opts ? opts : {};
 
-        BillingHandler.apply(this, arguments);
+        BillingHandler.apply(this, [formId, opts]);
         self.paymentMethod = ko.observable(self.WIRE);
 
         self.handleGeneralError = function (response, textStatus, errorThrown) {

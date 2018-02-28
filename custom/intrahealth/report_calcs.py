@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from datetime import datetime
 from corehq.apps.products.models import SQLProduct
 from dimagi.utils.dates import force_to_date
@@ -74,7 +75,7 @@ class PPSRegistered(fluff.Calculator):
 
     @fluff.date_emitter
     def total_for_region(self, form):
-        loc = get_location_by_type(form=form, type=u'r\xe9gion')
+        loc = get_location_by_type(form=form, type='r\xe9gion')
         count = _locations_per_type(form.domain, 'PPS', loc)
         yield {
             'date': form_date(form),
@@ -83,7 +84,7 @@ class PPSRegistered(fluff.Calculator):
 
     @fluff.date_emitter
     def total_for_district(self, form):
-        loc = get_location_by_type(form=form, type=u'district')
+        loc = get_location_by_type(form=form, type='district')
         count = _locations_per_type(form.domain, 'PPS', loc)
         yield {
             'date': form_date(form),

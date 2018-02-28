@@ -246,7 +246,7 @@ class LocationExporter(object):
                     consumption_data = self.get_consumption(loc)
                     row.extend([consumption_data[code] for code in self.product_codes])
 
-                row.append(', '.join('{}: {}'.format(*d) for d in uncategorized_data.items()))
+                row.append(u', '.join(u'{}: {}'.format(*d) for d in uncategorized_data.items()))
 
                 yield row
                 self._increment_progress()

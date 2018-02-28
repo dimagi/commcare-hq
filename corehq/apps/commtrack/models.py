@@ -237,7 +237,7 @@ class SupplyPointCase(CommCareCase):
     """
     location_id = StringProperty()
 
-    class Meta:
+    class Meta(object):
         # This is necessary otherwise couchdbkit will confuse this app with casexml
         app_label = "commtrack"
 
@@ -359,7 +359,7 @@ class StockState(models.Model):
         serializer = StockStateSerializer(self)
         return dict(serializer.data)
 
-    class Meta:
+    class Meta(object):
         app_label = 'commtrack'
         unique_together = ('section_id', 'case_id', 'product_id')
 

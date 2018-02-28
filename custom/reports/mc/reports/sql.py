@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import division
+from __future__ import unicode_literals
 from collections import OrderedDict
 import re
 from sqlagg.base import AliasColumn
@@ -18,7 +19,7 @@ from .definitions import *
 import six
 
 
-NO_VALUE = u'\u2014'
+NO_VALUE = '\u2014'
 
 
 def _int(str):

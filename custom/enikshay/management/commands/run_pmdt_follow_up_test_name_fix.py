@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from custom.enikshay.management.commands.utils import BaseEnikshayCaseMigration
 from custom.enikshay.two_b_datamigration.management.commands.import_drtb_cases import \
     match_facility, ValidationFailure

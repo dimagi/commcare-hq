@@ -48,7 +48,7 @@ class PushException(Exception):
 
 class PushBackend(SQLSMSBackend):
 
-    class Meta:
+    class Meta(object):
         app_label = 'sms'
         proxy = True
 

@@ -35,7 +35,7 @@ class TestAWCReport(TestCase):
         self.assertEqual(data['age_in_months'], 37)
         self.assertEqual(data['sex'], 'F')
         self.assertEqual(data['person_name'], 'Name 3483')
-        self.assertEqual(data['mother_name'], u'रींकीकुँवर')
+        self.assertEqual(data['mother_name'], 'रींकीकुँवर')
 
     def test_awc_reports_system_usage_AWC_days_open(self):
         self.assertDictEqual(

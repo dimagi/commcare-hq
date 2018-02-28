@@ -40,7 +40,7 @@ class DjangoPillowCheckpoint(models.Model):
         else:
             return self.sequence
 
-    class Meta:
+    class Meta(object):
         app_label = "pillowtop"
 
     @staticmethod
@@ -75,7 +75,7 @@ class KafkaCheckpoint(models.Model):
     offset = models.IntegerField()
     last_modified = models.DateTimeField(auto_now=True)
 
-    class Meta:
+    class Meta(object):
         unique_together = ('checkpoint_id', 'topic', 'partition')
 
     @classmethod
