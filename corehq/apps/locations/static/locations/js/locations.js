@@ -50,7 +50,7 @@ hqDefine('locations/js/locations', function() {
 
         $('#location_tree').koApplyBindings(tree_model);
         tree_model.load(locs);
-        var model = new LocationSearchViewModel(tree_model);
+        var model = new hqImport('locations/js/location_tree').LocationSearchViewModel(tree_model);
         $('#location_search').koApplyBindings(model);
     });
 });
