@@ -1770,12 +1770,6 @@ class AdminTab(UITab):
                 )
         except Exception:
             pass
-        try:
-            submenu_context.append(dropdown_dict(
-                mark_for_escaping(_("Old SMS Billing")),
-                url=reverse("billing_default")))
-        except Exception:
-            pass
         submenu_context.extend([
             dropdown_dict(_("SMS Connectivity & Billing"), url=reverse("default_sms_admin_interface")),
             dropdown_dict(_("Feature Flags"), url=reverse("toggle_list")),
