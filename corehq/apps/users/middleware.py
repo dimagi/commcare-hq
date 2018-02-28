@@ -6,6 +6,11 @@ from django.template.response import TemplateResponse
 from django.utils.deprecation import MiddlewareMixin
 
 from corehq import toggles
+from corehq.apps.domain.auth import (
+    BASIC,
+    determine_authtype_from_header,
+    get_username_and_password_from_request,
+)
 from corehq.apps.users.models import CouchUser, InvalidUser, AnonymousCouchUser
 from corehq.apps.users.util import username_to_user_id
 from corehq.toggles import ANONYMOUS_WEB_APPS_USAGE, PUBLISH_CUSTOM_REPORTS
@@ -45,6 +50,12 @@ class UsersMiddleware(MiddlewareMixin):
         if request.user.is_anonymous and 'domain' in view_kwargs:
             if ANONYMOUS_WEB_APPS_USAGE.enabled(view_kwargs['domain']):
                 request.couch_user = CouchUser.get_anonymous_mobile_worker(request.domain)
+        if determine_authtype_from_header(request) == BASIC and 'domain' in view_kwargs:
+            # User is not yet authenticated, but setting request.domain (above) and request.couch_user will allow
+            # us to check location-based permissions before we can check authentication.
+            # See LocationAccessMiddleware.process_view()
+            username, _ = get_username_and_password_from_request(request)
+            request.couch_user = CouchUser.get_by_username(username)
         if request.user and request.user.is_authenticated:
             user_id = username_to_user_id(request.user.username)
             request.couch_user = CouchUser.get_by_user_id(user_id)
