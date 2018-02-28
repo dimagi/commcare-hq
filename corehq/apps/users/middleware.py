@@ -12,7 +12,6 @@ from corehq.apps.domain.auth import (
     get_username_and_password_from_request,
 )
 from corehq.apps.users.models import CouchUser, InvalidUser, AnonymousCouchUser
-from corehq.apps.users.util import username_to_user_id
 from corehq.toggles import ANONYMOUS_WEB_APPS_USAGE, PUBLISH_CUSTOM_REPORTS
 
 SESSION_USER_KEY_PREFIX = "session_user_doc_%s"
@@ -57,8 +56,7 @@ class UsersMiddleware(MiddlewareMixin):
             username, _ = get_username_and_password_from_request(request)
             request.couch_user = CouchUser.get_by_username(username)
         if request.user and request.user.is_authenticated:
-            user_id = username_to_user_id(request.user.username)
-            request.couch_user = CouchUser.get_by_user_id(user_id)
+            request.couch_user = CouchUser.get_by_username(request.user.username)
             if not request.couch_user.analytics_enabled:
                 request.analytics_enabled = False
             if 'domain' in view_kwargs:
