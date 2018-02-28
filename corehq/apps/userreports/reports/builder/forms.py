@@ -424,7 +424,10 @@ class DataSourceBuilder(object):
                     # A column may have multiple indicators. e.g. "Group By" and "Count Per Choice" aggregations
                     # will use one indicator for the field's string value, and "Sum" and "Average" aggregations
                     # will use a second indicator for the field's numerical value. "column_id" includes the
-                    # indicator's data type, so it is unique per indicator.
+                    # indicator's data type, so it is unique per indicator ... except for choice list indicators,
+                    # because they get expanded to one column per choice. The column_id of choice columns will end
+                    # up unique because they will include a slug of the choice value. Here "column_id + type" is
+                    # unique.
                     indicator_key = (indicator['column_id'], indicator['type'])
                     indicators.setdefault(indicator_key, indicator)
 
