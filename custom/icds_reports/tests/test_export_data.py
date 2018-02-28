@@ -888,6 +888,255 @@ class TestExportData(TestCase):
             ]
         )
 
+    def test_demographics_export_flags_being_passed(self):
+        self.assertListEqual(
+            DemographicsExport(
+                config={
+                    'domain': 'icds-cas'
+                },
+                beta=True
+            ).get_excel_data('st1'),
+            [
+                [
+                    'Demographics',
+                    [
+                        [
+                            'State', 'Number of households',
+                            'Total number of beneficiaries (under 6 years old and women between 11 and 49 years '
+                            'old, alive and seeking services) who have an aadhaar ID',
+                            'Total number of beneficiaries (under 6 years old and women between 11 and 49 years '
+                            'old, alive and seeking services)',
+                            'Percent Aadhaar-seeded beneficaries', 'Number of pregnant women',
+                            'Number of pregnant women enrolled for services', 'Number of lactating women',
+                            'Number of lactating women enrolled for services',
+                            'Number of children 0-6 years old',
+                            'Number of children 0-6 years old enrolled for services',
+                            'Number of children 0-6 months old enrolled for services',
+                            'Number of children 6 months to 3 years old enrolled for services',
+                            'Number of children 3 to 6 years old enrolled for services',
+                            'Number of adolescent girls 11 to 14 years old',
+                            'Number of adolescent girls 15 to 18 years old',
+                            'Number of adolescent girls 11 to 14 years old that are enrolled for services',
+                            'Number of adolescent girls 15 to 18 years old that are enrolled for services'
+                        ],
+                        [
+                            u'st1',
+                            7266,
+                            365,
+                            1493,
+                            '24.45 %',
+                            120,
+                            120,
+                            171,
+                            171,
+                            1227,
+                            1227,
+                            56,
+                            244,
+                            927,
+                            36,
+                            12,
+                            36,
+                            12
+                        ],
+                        [
+                            u'st1',
+                            7266,
+                            365,
+                            1493,
+                            '24.45 %',
+                            120,
+                            120,
+                            171,
+                            171,
+                            1227,
+                            1227,
+                            56,
+                            244,
+                            927,
+                            36,
+                            12,
+                            36,
+                            12
+                        ],
+                        [
+                            u'st1',
+                            7266,
+                            365,
+                            1493,
+                            '24.45 %',
+                            120,
+                            120,
+                            171,
+                            171,
+                            1227,
+                            1227,
+                            56,
+                            244,
+                            927,
+                            36,
+                            12,
+                            36,
+                            12
+                        ],
+                        [
+                            u'st1',
+                            7266,
+                            365,
+                            1493,
+                            '24.45 %',
+                            120,
+                            120,
+                            171,
+                            171,
+                            1227,
+                            1227,
+                            56,
+                            244,
+                            927,
+                            36,
+                            12,
+                            36,
+                            12
+                        ],
+                        [
+                            u'st1',
+                            7266,
+                            365,
+                            1493,
+                            '24.45 %',
+                            120,
+                            120,
+                            171,
+                            171,
+                            1227,
+                            1227,
+                            56,
+                            244,
+                            927,
+                            36,
+                            12,
+                            36,
+                            12
+                        ],
+                        [
+                            u'st2',
+                            6662,
+                            269,
+                            1590,
+                            '16.92 %',
+                            139,
+                            139,
+                            154,
+                            154,
+                            1322,
+                            1322,
+                            52,
+                            301,
+                            969,
+                            36,
+                            20,
+                            36,
+                            20
+                        ],
+                        [
+                            u'st2',
+                            6662,
+                            269,
+                            1590,
+                            '16.92 %',
+                            139,
+                            139,
+                            154,
+                            154,
+                            1322,
+                            1322,
+                            52,
+                            301,
+                            969,
+                            36,
+                            20,
+                            36,
+                            20
+                        ],
+                        [
+                            u'st2',
+                            6662,
+                            269,
+                            1590,
+                            '16.92 %',
+                            139,
+                            139,
+                            154,
+                            154,
+                            1322,
+                            1322,
+                            52,
+                            301,
+                            969,
+                            36,
+                            20,
+                            36,
+                            20
+                        ],
+                        [
+                            u'st2',
+                            6662,
+                            269,
+                            1590,
+                            '16.92 %',
+                            139,
+                            139,
+                            154,
+                            154,
+                            1322,
+                            1322,
+                            52,
+                            301,
+                            969,
+                            36,
+                            20,
+                            36,
+                            20
+                        ],
+                        [
+                            u'st2',
+                            6662,
+                            269,
+                            1590,
+                            '16.92 %',
+                            139,
+                            139,
+                            154,
+                            154,
+                            1322,
+                            1322,
+                            52,
+                            301,
+                            969,
+                            36,
+                            20,
+                            36,
+                            20
+                        ]
+                    ]
+                ],
+                [
+                    'Export Info',
+                    [
+                        [
+                            'Generated at',
+                            '16:21:11 15 November 2017'
+                        ],
+                        [
+                            u'State',
+                            u'st1'
+                        ]
+                    ]
+                ]
+            ]
+        )
+
     def test_system_usage_export(self):
         self.assertListEqual(
             SystemUsageExport(
