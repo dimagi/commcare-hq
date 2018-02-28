@@ -176,7 +176,7 @@ class CreateScheduledReminderView(BaseMessagingSectionView):
     @use_timepicker
     @use_select2
     def dispatch(self, request, *args, **kwargs):
-        if self.reminders_migration_in_progress:
+        if self.reminders_migration_in_progress and not self.new_reminders_migrator:
             return HttpResponseRedirect(reverse(RemindersListView.urlname, args=[self.domain]))
         return super(CreateScheduledReminderView, self).dispatch(request, *args, **kwargs)
 
@@ -727,7 +727,7 @@ class CreateBroadcastView(BaseMessagingSectionView):
     @use_timepicker
     @use_select2
     def dispatch(self, *args, **kwargs):
-        if self.reminders_migration_in_progress:
+        if self.reminders_migration_in_progress and not self.new_reminders_migrator:
             return HttpResponseRedirect(reverse(BroadcastListView.urlname, args=[self.domain]))
         return super(BaseMessagingSectionView, self).dispatch(*args, **kwargs)
 
@@ -919,7 +919,9 @@ class RemindersListView(BaseMessagingSectionView):
     def page_context(self):
         return {
             'reminders': list(self.reminders),
-            'reminders_migration_in_progress': self.reminders_migration_in_progress,
+            'reminders_migration_in_progress': (
+                self.reminders_migration_in_progress and not self.new_reminders_migrator
+            ),
         }
 
     @property
@@ -978,7 +980,7 @@ class RemindersListView(BaseMessagingSectionView):
     def post(self, *args, **kwargs):
         action = self.request.POST.get('action')
         if action in [ACTION_ACTIVATE, ACTION_DEACTIVATE, ACTION_DELETE]:
-            if self.reminders_migration_in_progress:
+            if self.reminders_migration_in_progress and not self.new_reminders_migrator:
                 return HttpResponse(
                     "Cannot complete action because reminders migration is in progress.",
                     status=400
@@ -1005,7 +1007,9 @@ class BroadcastListView(BaseMessagingSectionView, DataTablesAJAXPaginationMixin)
     @property
     def page_context(self):
         return {
-            'reminders_migration_in_progress': self.reminders_migration_in_progress,
+            'reminders_migration_in_progress': (
+                self.reminders_migration_in_progress and not self.new_reminders_migrator
+            ),
         }
 
     @property
@@ -1089,7 +1093,7 @@ class BroadcastListView(BaseMessagingSectionView, DataTablesAJAXPaginationMixin)
     def post(self, *args, **kwargs):
         action = self.request.POST.get('action')
         if action == self.DELETE_BROADCAST:
-            if self.reminders_migration_in_progress:
+            if self.reminders_migration_in_progress and not self.new_reminders_migrator:
                 return HttpResponse(
                     "Cannot complete action because reminders migration is in progress.",
                     status=400
