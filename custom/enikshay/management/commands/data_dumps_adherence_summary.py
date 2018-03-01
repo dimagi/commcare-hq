@@ -38,7 +38,7 @@ class Command(BaseDataDump):
                 .domain(DOMAIN)
                 .case_type(case_type)
                 .case_property_query(ENROLLED_IN_PRIVATE, 'true', clause=queries.MUST_NOT)
-                .case_property_query("episode_type", ["confirmed_dstb", "confirmed_drtb"], clause=queries.MUST)
+                .case_property_filter("episode_type", ["confirmed_dstb", "confirmed_drtb"])
                 )
 
     def include_case_in_dump(self, episode):
