@@ -17,7 +17,6 @@
     $.fn.createDateRangePicker = function(
         range_labels, separator, startdate, enddate
     ) {
-        var now = moment();
         var ranges = {};
         ranges[range_labels.last_7_days] = [
             moment().subtract('7', 'days').startOf('days'),
