@@ -193,7 +193,7 @@ def namedtupledict(name, fields):
 
 
 class SimplifiedUserInfo(
-        namedtupledict('SimplifiedUserInfo', (
+        namedtupledict(b'SimplifiedUserInfo', (
             'user_id',
             'username_in_report',
             'raw_username',
