@@ -86,7 +86,7 @@ from corehq.apps.domain.models import Domain
 from corehq.const import SERVER_DATETIME_FORMAT, SERVER_DATE_FORMAT
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from dimagi.utils.parsing import json_format_datetime, string_to_boolean
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.decorators.view import get_file
 from django.utils.functional import cached_property
 from dimagi.utils.logging import notify_exception

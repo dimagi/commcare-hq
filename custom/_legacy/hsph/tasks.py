@@ -13,7 +13,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
 from corehq.apps.hqcase.dbaccessors import get_cases_in_domain
 from corehq.apps.hqcase.utils import submit_case_blocks
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 
 DOMAINS = ["hsph-dev", "hsph-betterbirth", "hsph-learning-sites", "hsph-test"]

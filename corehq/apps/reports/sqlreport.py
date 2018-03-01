@@ -4,7 +4,7 @@ from collections import OrderedDict
 
 from django.template.defaultfilters import slugify
 
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 import sqlagg
 from sqlagg.columns import SimpleColumn
 from sqlagg.filters import RawFilter, SqlFilter

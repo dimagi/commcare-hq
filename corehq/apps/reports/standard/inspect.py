@@ -22,7 +22,7 @@ from corehq.apps.reports.standard.monitoring import MultiFormDrilldownMixin, Com
 from corehq.apps.reports.util import datespan_from_beginning
 from corehq.const import MISSING_APP_ID
 from corehq.toggles import SUPPORT
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 
 class ProjectInspectionReport(ProjectInspectionReportParamsMixin, GenericTabularReport, ProjectReport, ProjectReportParametersMixin):

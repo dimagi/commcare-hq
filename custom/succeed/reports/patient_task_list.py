@@ -17,7 +17,7 @@ from custom.succeed.reports import EMPTY_FIELD, OUTPUT_DATE_FORMAT, \
     CM_APP_UPDATE_VIEW_TASK_MODULE, CM_UPDATE_TASK, TASK_RISK_FACTOR, TASK_ACTIVITY
 from custom.succeed.utils import SUCCEED_CM_APPNAME, get_app_build
 from custom.utils.utils import clean_IN_filter_value
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 
 class PatientTaskListReport(SqlTabularReport, CustomProjectReport, ProjectReportParametersMixin):

@@ -17,7 +17,7 @@ from lxml import etree as ET
 
 from corehq.apps.nimbus_api.exceptions import NimbusAPIException
 from corehq.util.view_utils import get_request
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from .xpath import CaseIDXPath, session_var, QualifiedScheduleFormXPath
 from .exceptions import XFormException, CaseError, XFormValidationError, BindNotFound, XFormValidationFailed
 import collections

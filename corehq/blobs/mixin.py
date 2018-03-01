@@ -21,7 +21,7 @@ from dimagi.ext.couchdbkit import (
     IntegerProperty,
     StringProperty,
 )
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 import six
 
 

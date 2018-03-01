@@ -32,7 +32,7 @@ from custom.enikshay.integrations.ninetyninedots.const import (
 from custom.enikshay.integrations.ninetyninedots.exceptions import \
     NinetyNineDotsException
 from dimagi.ext.jsonobject import StrictJsonObject
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.modules import to_function
 
 DIRECTION_OUTBOUND = 1

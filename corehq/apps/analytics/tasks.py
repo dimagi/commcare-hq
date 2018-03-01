@@ -34,7 +34,7 @@ from corehq.util.datadog.utils import (
 )
 
 from dimagi.utils.logging import notify_exception
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 from corehq.apps.analytics.utils import analytics_enabled_for_email
 

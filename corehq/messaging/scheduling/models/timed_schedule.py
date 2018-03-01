@@ -11,7 +11,7 @@ from corehq.messaging.scheduling import util
 from corehq.util.timezones.conversions import UserTime
 from datetime import timedelta, datetime, date, time
 from dateutil.parser import parse
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from django.db import models, transaction
 from six.moves import range
 

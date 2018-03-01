@@ -7,7 +7,7 @@ from crispy_forms import layout as crispy
 from django import forms
 from django.core.validators import RegexValidator
 from django.utils.translation import ugettext as _
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from corehq import toggles
 from corehq.apps.custom_data_fields import CustomDataEditor
 from corehq.apps.locations.forms import LocationFormSet, LocationForm

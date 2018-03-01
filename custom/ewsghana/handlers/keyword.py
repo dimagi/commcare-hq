@@ -4,7 +4,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.sms.api import send_sms_to_verified_number
 from corehq.util.translation import localize
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 import six
 
 

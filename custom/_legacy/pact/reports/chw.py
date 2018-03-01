@@ -6,7 +6,7 @@ from corehq.apps.api.es import ReportCaseES, ReportXFormES
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.users.models import CommCareUser
 from django.utils.safestring import mark_safe
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from pact.enums import PACT_CASE_TYPE, PACT_DOMAIN
 from . import chw_schedule
 from pact.reports import PactDrilldownReportMixin, PactElasticTabularReportMixin

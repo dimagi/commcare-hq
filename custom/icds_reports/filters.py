@@ -10,7 +10,7 @@ from corehq.apps.reports.filters.base import BaseSingleOptionFilter
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.filters.select import MonthFilter, YearFilter
 from custom.common.filters import RestrictedAsyncLocationFilter
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 
 def location_hierarchy_config(domain, location_types=None):

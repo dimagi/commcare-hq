@@ -6,7 +6,7 @@ from custom.world_vision.sqldata.mother_sqldata import MotherRegistrationDetails
     PregnantMotherBreakdownByTrimester, AnteNatalCareServiceOverviewExtended, DeliveryLiveBirthDetails, \
     DeliveryStillBirthDetails, PostnatalCareOverview, CauseOfMaternalDeaths, FamilyPlanningMethods, \
     DeliveryPlaceMotherDetails, DeliveryPlaceDetailsExtended, NumberOfPNCVisits
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 
 class MotherTTCReport(AccordionTTCReport):

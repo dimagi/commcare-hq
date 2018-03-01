@@ -11,7 +11,7 @@ from django.template.loader import render_to_string
 
 from casexml.apps.phone.models import OTARestoreCommCareUser
 from dimagi.utils.dates import DateSpan
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.parsing import string_to_datetime
 
 from corehq.apps.app_manager.dbaccessors import get_app

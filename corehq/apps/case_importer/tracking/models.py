@@ -4,7 +4,7 @@ from jsonfield import JSONField
 from corehq.apps.case_importer.tracking.task_status import TaskStatus, \
     get_task_status_json
 
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from soil.util import get_task
 
 MAX_COMMENT_LENGTH = 2048

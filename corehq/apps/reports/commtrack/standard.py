@@ -16,7 +16,7 @@ from corehq.apps.reports.filters.commtrack import SelectReportingType
 from corehq.form_processor.utils.general import should_use_sql_backend
 from dimagi.utils.couch.loosechange import map_reduce
 from corehq.apps.locations.models import SQLLocation
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from django.utils.translation import ugettext as _, ugettext_noop
 from corehq.apps.reports.commtrack.util import get_relevant_supply_point_ids, get_product_id_name_mapping, \
     get_product_ids_for_program, get_consumption_helper_from_ledger_value

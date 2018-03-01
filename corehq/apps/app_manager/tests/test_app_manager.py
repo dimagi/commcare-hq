@@ -7,7 +7,7 @@ from mock import patch
 from corehq.apps.app_manager.tests.util import add_build, patch_default_builds
 from corehq.apps.app_manager.util import (add_odk_profile_after_build,
                                           purge_report_from_mobile_ucr)
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 import os
 import codecs
 

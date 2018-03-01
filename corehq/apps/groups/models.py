@@ -6,7 +6,7 @@ from django.conf import settings
 from dimagi.ext.couchdbkit import *
 import re
 from dimagi.utils.couch.database import iter_docs
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
 from corehq.apps.users.models import CouchUser, CommCareUser
 from dimagi.utils.couch.undo import UndoableDocument, DeleteDocRecord, DELETED_SUFFIX

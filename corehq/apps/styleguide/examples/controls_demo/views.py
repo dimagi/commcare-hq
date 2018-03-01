@@ -10,7 +10,7 @@ from corehq.apps.hqwebapp.decorators import use_select2
 from corehq.apps.styleguide.examples.controls_demo.forms import (
     SelectControlDemoForm,
 )
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 
 class BaseControlDemoFormsView(BaseSectionPageView):

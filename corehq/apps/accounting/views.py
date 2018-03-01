@@ -23,7 +23,7 @@ from corehq.apps.hqwebapp.decorators import (
     use_multiselect,
 )
 
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 from corehq.apps.accounting.forms import (
     BillingAccountBasicForm, BillingAccountContactForm, CreditForm,

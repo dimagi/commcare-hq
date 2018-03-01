@@ -23,7 +23,7 @@ from corehq.apps.sms.filters import (
 from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.view_utils import absolute_reverse
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.util import format_datatables_data
