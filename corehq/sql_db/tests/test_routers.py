@@ -29,6 +29,7 @@ class AllowMigrateTest(SimpleTestCase):
 
     @override_settings(
         SYNCLOGS_SQL_DB_ALIAS='default',
+        USE_PARTITIONED_DATABASE=False,
         DATABASES={
             'default': {},
             'synclogs': {
@@ -44,6 +45,7 @@ class AllowMigrateTest(SimpleTestCase):
 
     @override_settings(
         SYNCLOGS_SQL_DB_ALIAS='synclogs',
+        USE_PARTITIONED_DATABASE=True,
         DATABASES={
             'default': {},
             'synclogs': {

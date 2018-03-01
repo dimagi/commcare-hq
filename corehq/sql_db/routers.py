@@ -43,6 +43,12 @@ class MonolithRouter(object):
 
 
 def allow_migrate(db, app_label):
+    if app_label == ICDS_REPORTS_APP:
+        db_alias = get_icds_ucr_db_alias()
+        return db_alias and db_alias == db
+    elif app_label == SYNCLOGS_APP:
+        return hasattr(settings, "SYNCLOGS_SQL_DB_ALIAS") and db == settings.SYNCLOGS_SQL_DB_ALIAS
+
     if not settings.USE_PARTITIONED_DATABASE:
         return app_label != PROXY_APP
 
@@ -57,12 +63,6 @@ def allow_migrate(db, app_label):
         return db in partition_config.get_form_processing_dbs()
     elif app_label == WAREHOUSE_APP:
         return hasattr(settings, "WAREHOUSE_DATABASE_ALIAS") and db == settings.WAREHOUSE_DATABASE_ALIAS
-    elif app_label == ICDS_REPORTS_APP:
-        db_alias = get_icds_ucr_db_alias()
-        return db_alias and db_alias == db
-    elif app_label == SYNCLOGS_APP:
-        return hasattr(settings, "SYNCLOGS_SQL_DB_ALIAS") and db == settings.SYNCLOGS_SQL_DB_ALIAS
-
     else:
         return db == partition_config.get_main_db()
 
