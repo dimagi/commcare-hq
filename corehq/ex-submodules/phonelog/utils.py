@@ -231,10 +231,11 @@ class SumoLogicLog(object):
     def _get_user_info(self, log):
         user_subreport = _get_logs(self.xform.form_data, 'user_subreport', 'user')
         username, user_id = _get_user_info_from_log(self.domain, log)
+        #  Use the first user subreport to infer username and user id, if it's available
         if username is None:
-            username = user_subreport[0].get('username')  # use the first user subreport to infer username
+            username = user_subreport[0].get('username') if len(user_subreport) > 0 else ''
         if user_id is None:
-            user_id = user_subreport[0].get('user_id')
+            user_id = user_subreport[0].get('user_id') if len(user_subreport) > 0 else ''
         return username, user_id
 
     def log_subreport(self):
