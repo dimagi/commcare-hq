@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from memoized import memoized
 from corehq.apps.locations.models import SQLLocation
 from .users import ExpandedMobileWorkerFilter
