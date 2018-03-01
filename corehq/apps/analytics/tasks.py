@@ -33,6 +33,7 @@ from corehq.util.datadog.utils import (
     DATADOG_HUBSPOT_TRACK_DATA_POST_METRIC
 )
 
+from dimagi.utils.chunked import chunked
 from dimagi.utils.logging import notify_exception
 from memoized import memoized
 
@@ -428,69 +429,70 @@ def track_periodic_data():
 
     # For each web user, iterate through their domains and select the max number of form submissions and
     # max number of mobile workers
-    submit = []
-    for user in users_to_domains:
-        email = user.get('email')
-        if not _email_is_valid(email):
-            continue
+    for users in chunked(users_to_domains, 1000):
+        submit = []
+        for user in users:
+            email = user.get('email')
+            if not _email_is_valid(email):
+                continue
 
-        number_of_users += 1
-        date_created = user.get('date_joined')
-        max_forms = 0
-        max_workers = 0
-        max_export = 0
-        max_report = 0
+            number_of_users += 1
+            date_created = user.get('date_joined')
+            max_forms = 0
+            max_workers = 0
+            max_export = 0
+            max_report = 0
 
-        for domain in user['domains']:
-            if domain in domains_to_forms and domains_to_forms[domain] > max_forms:
-                max_forms = domains_to_forms[domain]
-            if domain in domains_to_mobile_users and domains_to_mobile_users[domain] > max_workers:
-                max_workers = domains_to_mobile_users[domain]
-            if _get_export_count(domain) > max_export:
-                max_export = _get_export_count(domain)
-            if _get_report_count(domain) > max_report:
-                max_report = _get_report_count(domain)
+            for domain in user['domains']:
+                if domain in domains_to_forms and domains_to_forms[domain] > max_forms:
+                    max_forms = domains_to_forms[domain]
+                if domain in domains_to_mobile_users and domains_to_mobile_users[domain] > max_workers:
+                    max_workers = domains_to_mobile_users[domain]
+                if _get_export_count(domain) > max_export:
+                    max_export = _get_export_count(domain)
+                if _get_report_count(domain) > max_report:
+                    max_report = _get_report_count(domain)
 
-        project_spaces_created = ", ".join(get_domains_created_by_user(email))
+            project_spaces_created = ", ".join(get_domains_created_by_user(email))
 
-        user_json = {
-            'email': email,
-            'properties': [
-                {
-                    'property': '{}max_form_submissions_in_a_domain'.format(env),
-                    'value': max_forms
-                },
-                {
-                    'property': '{}max_mobile_workers_in_a_domain'.format(env),
-                    'value': max_workers
-                },
-                {
-                    'property': '{}project_spaces_created_by_user'.format(env),
-                    'value': project_spaces_created,
-                },
-                {
-                    'property': '{}over_300_form_submissions'.format(env),
-                    'value': max_forms > HUBSPOT_THRESHOLD
-                },
-                {
-                    'property': '{}date_created'.format(env),
-                    'value': date_created
-                },
-                {
-                    'property': '{}max_exports_in_a_domain'.format(env),
-                    'value': max_export
-                },
-                {
-                    'property': '{}max_custom_reports_in_a_domain'.format(env),
-                    'value': max_report
-                }
-            ]
-        }
-        submit.append(user_json)
+            user_json = {
+                'email': email,
+                'properties': [
+                    {
+                        'property': '{}max_form_submissions_in_a_domain'.format(env),
+                        'value': max_forms
+                    },
+                    {
+                        'property': '{}max_mobile_workers_in_a_domain'.format(env),
+                        'value': max_workers
+                    },
+                    {
+                        'property': '{}project_spaces_created_by_user'.format(env),
+                        'value': project_spaces_created,
+                    },
+                    {
+                        'property': '{}over_300_form_submissions'.format(env),
+                        'value': max_forms > HUBSPOT_THRESHOLD
+                    },
+                    {
+                        'property': '{}date_created'.format(env),
+                        'value': date_created
+                    },
+                    {
+                        'property': '{}max_exports_in_a_domain'.format(env),
+                        'value': max_export
+                    },
+                    {
+                        'property': '{}max_custom_reports_in_a_domain'.format(env),
+                        'value': max_report
+                    }
+                ]
+            }
+            submit.append(user_json)
 
-    submit_json = json.dumps(submit)
+        submit_json = json.dumps(submit)
 
-    submit_data_to_hub_and_kiss(submit_json)
+        submit_data_to_hub_and_kiss(submit_json)
     update_datadog_metrics({
         DATADOG_WEB_USERS_GAUGE: number_of_users,
         DATADOG_DOMAINS_EXCEEDING_FORMS_GAUGE: number_of_domains_with_forms_gt_threshold
