@@ -42,7 +42,7 @@ class Command(BaseDataDump):
         return (CaseSearchES()
                 .domain(DOMAIN)
                 .case_type(case_type)
-                .case_property_query("test_type_value", "clinical", clause=queries.MUST)
+                .case_property_query("test_category", "clinical", clause=queries.MUST)
                 )
 
     def include_case_in_dump(self, test_case):
