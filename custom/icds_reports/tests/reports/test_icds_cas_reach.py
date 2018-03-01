@@ -34,17 +34,15 @@ class TestICDSCASReach(TestCase):
                             )
                         },
                         {
-                            "redirect": "awc_daily_status",
                             "all": 0,
                             "format": "div",
                             "color": "green",
                             "percent": "Data in the previous reporting period was 0",
                             "value": 0,
-                            "label": "Number of AWCs Open yesterday",
+                            "label": "Number of AWCs open for at least one day in month",
                             "frequency": "day",
                             "help_text": (
-                                "Total Number of Angwanwadi Centers that were open yesterday by "
-                                "the AWW or the AWW helper"
+                                "Total Number of AWCs open for at least one day in month"
                             )
                         }
                     ],
