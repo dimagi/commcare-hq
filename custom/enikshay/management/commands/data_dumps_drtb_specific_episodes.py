@@ -7,7 +7,6 @@ from corehq.apps.es import queries
 from custom.enikshay.case_utils import (
     CASE_TYPE_EPISODE,
     get_person_case_from_episode,
-    get_occurrence_case_from_episode,
 )
 from custom.enikshay.const import (
     ENROLLED_IN_PRIVATE,

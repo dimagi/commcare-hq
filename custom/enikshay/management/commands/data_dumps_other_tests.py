@@ -9,7 +9,8 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from custom.enikshay.case_utils import (
     CASE_TYPE_TEST,
     get_occurrence_case_from_test,
-    get_person_case_from_occurrence)
+    get_person_case_from_occurrence,
+)
 from custom.enikshay.const import (
     ENROLLED_IN_PRIVATE,
 )
