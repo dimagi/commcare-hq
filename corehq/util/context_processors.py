@@ -42,8 +42,13 @@ def get_per_domain_context(project, request=None):
     if hasattr(request, 'couch_user') and request.couch_user and project:
         allow_report_an_issue = request.couch_user.has_permission(project.name, 'report_an_issue')
     elif settings.ENTERPRISE_MODE:
-        allow_report_an_issue = (hasattr(request, 'couch_user') and request.couch_user and
-                                 request.couch_user.is_web_user())
+        if not(hasattr(request, 'couch_user') and request.couch_user):
+            allow_report_an_issue = False
+        elif request.couch_user.is_web_user():
+            allow_report_an_issue = True
+        else:
+            domain_name = request.couch_user.domain
+            allow_report_an_issue = request.couch_user.has_permission(domain_name, 'report_an_issue')
     else:
         allow_report_an_issue = True
 
