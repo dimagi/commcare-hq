@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import division
+from __future__ import unicode_literals
 from corehq.apps.domain.models import Domain
 from corehq.apps.reports.analytics.esaccessors import get_wrapped_ledger_values
 from corehq.apps.reports.commtrack.data_sources import (
@@ -320,7 +321,7 @@ class InventoryReport(GenericTabularReport, CommtrackReportMixin):
 
     @property
     def rows(self):
-        def fmt(val, formatter=lambda k: k, default=u'\u2014'):
+        def fmt(val, formatter=lambda k: k, default='\u2014'):
             return formatter(val) if val is not None else default
 
         statuses = {

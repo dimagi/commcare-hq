@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 
 from __future__ import division
+from __future__ import unicode_literals
 import datetime
 import math
 import operator
@@ -1509,7 +1510,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
 
     @staticmethod
     def _html_anchor_tag(href, value):
-        return u'<a href="{}" target="_blank">{}</a>'.format(href, value)
+        return '<a href="{}" target="_blank">{}</a>'.format(href, value)
 
     @staticmethod
     def _make_url(base_url, params):
