@@ -8,6 +8,7 @@
                    id="filter_range"
                    class="date-range-picker form-control report-filter-datespan"
                    value="{{ datespan.startdate|date:'Y-m-d' }} to {{ datespan.enddate|date:'Y-m-d' }}"
+                   placeholder="{% trans "Show All Dates"|escapejs %}"
                    data-init="{% block init_filter %}{% if slug == 'datespan' %}1{% endif %}{% endblock %}"
                    data-separator="{% html_attr separator %}" 
                    data-report-labels="{% html_attr report_labels %}"
