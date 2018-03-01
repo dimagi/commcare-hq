@@ -19,7 +19,22 @@ function ProgressReportController($scope, $location, progressReportService,
     vm.data = [];
     vm.dates = [];
     vm.now = new Date().getMonth() + 1;
-    vm.showWarning = storageService.getKey('search')['month'] === void(0) || vm.now === parseInt(storageService.getKey('search')['month']);
+    vm.previousMonth = moment().set('date', 1).subtract(1, 'days').format('MMMM YYYY');
+    vm.currentMonth = moment().format("MMMM");
+    vm.showPreviousMonthWarning = (
+        storageService.getKey('search')['month'] === void(0) ||
+        (
+            vm.now === parseInt(storageService.getKey('search')['month']) &&
+            new Date().getFullYear() === parseInt(storageService.getKey('search')['year'])
+        )
+    ) && (new Date().getDate() === 1 || new Date().getDate() === 2);
+    vm.showWarning = (
+        storageService.getKey('search')['month'] === void(0) ||
+        (
+            vm.now === parseInt(storageService.getKey('search')['month']) &&
+            new Date().getFullYear() === parseInt(storageService.getKey('search')['year'])
+        )
+    ) && !vm.showPreviousMonthWarning;
     vm.report = $routeParams.report;
 
     vm.dtOptions = DTOptionsBuilder
@@ -42,7 +57,19 @@ function ProgressReportController($scope, $location, progressReportService,
     vm.showTable = true;
 
     $scope.$on('filtersChange', function() {
-        vm.showWarning = vm.now === storageService.getKey('search')['month'];
+        vm.showPreviousMonthWarning = (
+            (
+                vm.now === parseInt(storageService.getKey('search')['month']) &&
+                new Date().getFullYear() === parseInt(storageService.getKey('search')['year'])
+            ) &&
+            (
+                new Date().getDate() === 1 || new Date().getDate() === 2
+            )
+        );
+        vm.showWarning = (
+            vm.now === parseInt(storageService.getKey('search')['month']) &&
+            new Date().getFullYear() === parseInt(storageService.getKey('search')['year'])
+        ) && !vm.showPreviousMonthWarning;
         vm.loadData();
     });
 
