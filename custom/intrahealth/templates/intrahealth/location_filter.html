@@ -23,7 +23,7 @@
         var hierarchy = {{ hierarchy|JSON }};
         var location_url = '{{ api_root }}';
 
-        var model = new LocationSelectViewModel({
+        var model = new hqImport('locations/js/location_drilldown').LocationSelectViewModel({
             "hierarchy": hierarchy,
             "default_caption": false,
             "auto_drill": null,
@@ -37,4 +37,3 @@
     });
 
 </script>
-
