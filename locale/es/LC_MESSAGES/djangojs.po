@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2018-03-01 15:09+0000\n"
+"POT-Creation-Date: 2018-03-01 15:32+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: Gladys Teos <info@enestranslations.com>, 2017\n"
 "Language-Team: Spanish (https://www.transifex.com/dimagi/teams/9388/es/)\n"
@@ -2944,10 +2944,8 @@ msgid "That do not have phone numbers"
 msgstr "Que no tengan números de teléfono"
 
 #: corehq/apps/reports/static/reports/js/filters.js:206
-#, fuzzy
-#| msgid "Select a user"
 msgid "Select a group"
-msgstr "Seleccione un usuario"
+msgstr "Seleccione un grupo"
 
 #: corehq/apps/reports/static/reports/js/project_health_dashboard.js:126
 msgid "Sorry, we couldn't load that."

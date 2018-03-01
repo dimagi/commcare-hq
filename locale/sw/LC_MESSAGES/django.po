@@ -11,8 +11,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: CommCare HQ\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2018-03-01 15:08+0000\n"
-"PO-Revision-Date: 2018-02-20 21:27+0000\n"
+"POT-Creation-Date: 2018-03-01 15:31+0000\n"
+"PO-Revision-Date: 2018-03-01 15:10+0000\n"
 "Last-Translator: Dimagi Dev <devops@dimagi.com>\n"
 "Language-Team: Swahili (http://www.transifex.com/dimagi/commcare-hq/language/"
 "sw/)\n"
@@ -26325,16 +26325,12 @@ msgid "Create a new"
 msgstr ""
 
 #: corehq/apps/reports/views.py:1130
-#, fuzzy
-#| msgid "Scheduled report from CommCare HQ"
 msgid "Scheduled report added."
-msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+msgstr ""
 
 #: corehq/apps/reports/views.py:1132
-#, fuzzy
-#| msgid "Scheduled report from CommCare HQ"
 msgid "Scheduled report updated."
-msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+msgstr ""
 
 #: corehq/apps/reports/views.py:1143
 msgid "Could not find the requested Scheduled Report"
@@ -28987,10 +28983,8 @@ msgid "Technical Details:"
 msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:49
-#, fuzzy
-#| msgid "Saved for Daily Report"
 msgid "Save and View Report"
-msgstr "Casos IRA Tratados"
+msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:60
 msgid "Enter report name here"
@@ -40044,6 +40038,9 @@ msgid ""
 "have problems filling in the rest of your form please report an issue."
 msgstr ""
 
+#~ msgid "Select a group"
+#~ msgstr "Manejo de Casos"
+
 #~ msgid "New Performance Message"
 #~ msgstr "Casos IRA Tratados"
 
@@ -40407,6 +40404,9 @@ msgstr ""
 #~ msgid "Bulk Export:"
 #~ msgstr "Manejo de Casos"
 
+#~ msgid "Saved for Daily Report"
+#~ msgstr "Casos IRA Tratados"
+
 #~ msgid "Create Export"
 #~ msgstr "Manejo de Casos"
 
@@ -40572,6 +40572,9 @@ msgstr ""
 
 #~ msgid "Edit Survey"
 #~ msgstr "Manejo de Casos"
+
+#~ msgid "Scheduled report from CommCare HQ"
+#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #~ msgid "Create Form Export: Select Form"
 #~ msgstr "Manejo de Casos"

@@ -34,9 +34,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: CommCare HQ\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2018-03-01 15:08+0000\n"
-"PO-Revision-Date: 2018-02-20 21:27+0000\n"
-"Last-Translator: patrick keating <pkeating@dimagi.com>\n"
+"POT-Creation-Date: 2018-03-01 15:31+0000\n"
+"PO-Revision-Date: 2018-03-01 15:10+0000\n"
+"Last-Translator: Dimagi Dev <devops@dimagi.com>\n"
 "Language-Team: French (http://www.transifex.com/dimagi/commcare-hq/language/"
 "fr/)\n"
 "Language: fr\n"
@@ -13254,10 +13254,8 @@ msgid "Support Hand-off information"
 msgstr "Soutien les informations \"mains libres\""
 
 #: corehq/apps/domain/forms.py:1126
-#, fuzzy
-#| msgid "Project Stats"
 msgid "Project Limits"
-msgstr "Statistiques de projet"
+msgstr ""
 
 #: corehq/apps/domain/forms.py:1137
 msgid "Salesforce Details"
@@ -15829,16 +15827,10 @@ msgstr ""
 "à deux facteurs."
 
 #: corehq/apps/domain/templates/login_and_password/two_factor/core/setup.html:11
-#, fuzzy
-#| msgid ""
-#| "Follow the steps in this wizard to enable two-factor\n"
-#| "        authentication."
 msgid ""
 "Follow the steps in this wizard to reset two-factor\n"
 "        authentication."
 msgstr ""
-"Suivez les étapes de cet assistant pour activer l’authentification\n"
-"à deux facteurs."
 
 #: corehq/apps/domain/templates/login_and_password/two_factor/core/setup.html:14
 msgid ""
@@ -30193,16 +30185,12 @@ msgid "Create a new"
 msgstr "Créer un nouveau"
 
 #: corehq/apps/reports/views.py:1130
-#, fuzzy
-#| msgid "scheduled report"
 msgid "Scheduled report added."
-msgstr "rapport planifié"
+msgstr ""
 
 #: corehq/apps/reports/views.py:1132
-#, fuzzy
-#| msgid "scheduled report"
 msgid "Scheduled report updated."
-msgstr "rapport planifié"
+msgstr ""
 
 #: corehq/apps/reports/views.py:1143
 msgid "Could not find the requested Scheduled Report"
@@ -30573,10 +30561,8 @@ msgid "Start with +, followed by Country Code."
 msgstr ""
 
 #: corehq/apps/settings/forms.py:105 corehq/apps/settings/forms.py:165
-#, fuzzy
-#| msgid "Auth Token"
 msgid "Token"
-msgstr "Jeton d'autorisation"
+msgstr ""
 
 #: corehq/apps/settings/templates/settings/enable_superuser.html:7
 #: corehq/apps/settings/views.py:470
@@ -30718,10 +30704,8 @@ msgid "Two Factor Authentication Phone Setup"
 msgstr "Configuration du téléphone d'authentification à deux facteurs"
 
 #: corehq/apps/settings/views.py:409
-#, fuzzy
-#| msgid "Phone number deleted."
 msgid "Phone number removed."
-msgstr "Numéro de téléphone supprimé."
+msgstr ""
 
 #: corehq/apps/sms/filters.py:17
 msgid "Message Type"
@@ -33102,10 +33086,8 @@ msgid "Technical Details:"
 msgstr "Détails techniques:"
 
 #: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:49
-#, fuzzy
-#| msgid "Saved Reports"
 msgid "Save and View Report"
-msgstr "Rapports enregistrés"
+msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:60
 msgid "Enter report name here"
@@ -44965,13 +44947,7 @@ msgstr ""
 "problème."
 
 #~ msgid "Select a group"
-#~ msgstr "Sélectionner un groupe"
-
-#~ msgid "Phone number added!"
-#~ msgstr "Numéro de téléphone ajouté !"
-
-#~ msgid "Old SMS Billing"
-#~ msgstr "Ancienne facturation SMS"
+#~ msgstr "Manejo de Casos"
 
 #~ msgid "New Performance Message"
 #~ msgstr "Casos IRA Tratados"
