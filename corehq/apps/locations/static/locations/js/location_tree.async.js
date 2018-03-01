@@ -1,17 +1,25 @@
 /* globals django */
 hqImport('locations/js/location_tree', function() {
-    function api_get_children(loc_uuid, callback) {
+    function api_get_children(loc_uuid, show_inactive, load_locs_url, callback) {
         var params = (loc_uuid ? {
             parent_id: loc_uuid,
         } : {});
         // show_inactive comes from global state
         params.include_inactive = show_inactive;
-        $.getJSON(LOAD_LOCS_URL, params, function(allData) {
+        $.getJSON(load_locs_url, params, function(allData) {
             callback(allData.objects);
         });
     }
 
-    function LocationTreeViewModel(hierarchy) {
+    function LocationTreeViewModel(hierarchy, options) {
+        // options should have properties:
+        //      "can_edit_root"
+        //      "load_locs_url"
+        //      "new_loc_url"
+        //      "reloadLocationSearchSelect"
+        //      "clearLocationSelection"
+        //      "loc_edit_url"
+
         var model = this;
 
         this.root = ko.observable();
@@ -49,13 +57,19 @@ hqImport('locations/js/location_tree', function() {
             this.root(new LocationModel({
                 name: '_root',
                 children: locs,
-                can_edit: can_edit_root,
+                can_edit: options.can_edit_root,
                 expanded: true,
-            }, this)); // eslint-disable-line no-undef
+                reloadLocationSearchSelect: options.reloadLocationSearchSelect,
+                clearLocationSelection: options.clearLocationSelection,
+            }, this));
         };
     }
 
-    function LocationSearchViewModel(tree_model) { // eslint-disable-line no-unused-vars
+    function LocationSearchViewModel(tree_model, options) {
+        // options should have properties:
+        //      "can_edit_root"
+        //      "show_inactive"
+
         var model = this;
         this.selected_location = ko.observable();
         this.l__selected_location_id = ko.observable();
@@ -73,9 +87,11 @@ hqImport('locations/js/location_tree', function() {
             }
             return new LocationModel({
                 uuid: model.selected_location_id(),
-                can_edit: can_edit_root,
-                is_archived: show_inactive,
-            }, this); // eslint-disable-line no-undef
+                can_edit: options.can_edit_root,
+                is_archived: options.show_inactive,
+                reloadLocationSearchSelect: options.reloadLocationSearchSelect,
+                clearLocationSelection: options.clearLocationSelection,
+            }, this);
         });
 
         this.selected_location_tree = tree_model;
@@ -100,28 +116,32 @@ hqImport('locations/js/location_tree', function() {
                                 location_type: location.location_type,
                                 uuid: location.location_id,
                                 is_archived: location.is_archived,
-                                can_edit: can_edit_root, // eslint-disable-line no-undef
+                                can_edit: options.can_edit_root,
                                 children: child,
                                 expanded: child ? 'semi' : false,
                                 children_status: 'semi_loaded',
+                                reloadLocationSearchSelect: options.reloadLocationSearchSelect,
+                                clearLocationSelection: options.clearLocationSelection,
                             };
                             var level = new LocationModel(data, model.selected_location_tree, response.lineage.length - lineage_idx - 1);
                             child = Array.of(Object.assign({}, data));
                         }
                         var root_children = [];
-                        for (var child_idx = 0; child_idx < locs.length; child_idx++) { // eslint-disable-line no-undef
-                            if (locs[child_idx].name === child[0].name) { // eslint-disable-line no-undef
+                        for (var child_idx = 0; child_idx < this.selected_location_tree.locs.length; child_idx++) {
+                            if (this.selected_location_tree.locs[child_idx].name === child[0].name) {
                                 root_children.push(child[0]);
                             } else {
-                                root_children.push(locs[child_idx]); // eslint-disable-line no-undef
+                                root_children.push(this.selected_location_tree.locs[child_idx]);
                             }
                         }
                         level = new LocationModel({
                             name: '_root',
                             children: root_children,
-                            can_edit: can_edit_root,
+                            can_edit: options.can_edit_root,
                             expanded: 'semi',
-                        }, model.selected_location_tree); // eslint-disable-line no-undef
+                            reloadLocationSearchSelect: options.reloadLocationSearchSelect,
+                            clearLocationSelection: options.clearLocationSelection,
+                        }, model.selected_location_tree);
                         return level;
                     };
 
@@ -145,6 +165,10 @@ hqImport('locations/js/location_tree', function() {
         this.depth = depth || 0;
         this.children_status = ko.observable('not_loaded');
         this.expanded = ko.observable(false);
+
+        this.loc_edit_url = data.loc_edit_url;
+        this.reloadLocationSearchSelect = data.reloadLocationSearchSelect;
+        this.clearLocationSelection = data.clearLocationSelection;
 
         this.expanded.subscribe(function(val) {
             if (val === true && (this.children_status() === 'not_loaded' || this.children_status() === 'semi_loaded')) {
@@ -211,7 +235,7 @@ hqImport('locations/js/location_tree', function() {
 
         this.load_children_async = function(callback) {
             this.children_status('loading');
-            api_get_children(this.uuid(), function(resp) {
+            api_get_children(this.uuid(), data.show_inactive, data.load_locs_url, function(resp) {
                 loc.set_children(resp);
                 if (callback) {
                     callback(loc);
@@ -409,6 +433,7 @@ hqImport('locations/js/location_tree', function() {
     }
 
     return {
+        LocationSearchViewModel: LocationSearchViewModel,
         LocationTreeViewModel: LocationTreeViewModel,
         LocationModel: LocationModel,
     };
