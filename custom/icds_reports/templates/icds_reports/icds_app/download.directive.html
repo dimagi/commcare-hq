@@ -5,7 +5,7 @@
         </div>
     </div>
     <div class="report-content">
-        <div class="alert alert-info" ng-show="$ctrl.now === $ctrl.selectedMonth">
+        <div class="alert alert-info" ng-show="$ctrl.showWarning()">
             <strong>Info!</strong> "You are downloading data for the current calendar month. Data for this report is calculated using calendar months (for example, January 1st-January 31st). Data for this month will not be complete until the end of the month."
         </div>
         <div class="alert alert-info col-md-12" ng-if="$ctrl.isChildBeneficiaryListSelected() && $ctrl.hasErrors()">

@@ -33,7 +33,8 @@ describe('Progress Report Directive', function () {
     });
 
     it('tests initial state', function () {
-        assert.equal(controller.showWarning, true);
+        assert.equal(controller.showWarning, false);
+        assert.equal(controller.showPreviousMonthWarning, true);
         assert.deepEqual(controller.filtersData, {});
     });
 

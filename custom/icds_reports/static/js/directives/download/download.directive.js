@@ -64,6 +64,12 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
     vm.selectedLocationId = userLocationId;
     vm.selectedLevel = 1;
     vm.now = new Date().getMonth() + 1;
+    vm.showWarning = function () {
+        return (
+            vm.now === vm.selectedMonth &&
+            new Date().getFullYear() === vm.selectedYear
+        );
+    };
     vm.levels = [
         {id: 1, name: 'State'},
         {id: 2, name: 'District'},
