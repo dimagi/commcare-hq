@@ -11,7 +11,7 @@ from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.standard.cases.filters import CaseSearchFilter
 from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.util.timezones.conversions import PhoneTime
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 from corehq.apps.es import filters, users as user_es, cases as case_es
 from corehq.apps.es.es_query import HQESQuery

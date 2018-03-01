@@ -103,7 +103,7 @@ from collections import namedtuple
 from copy import deepcopy
 import json
 
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 from corehq.elastic import (
     ES_META,

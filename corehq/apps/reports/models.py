@@ -64,7 +64,7 @@ from couchforms.filters import instances
 from dimagi.ext.couchdbkit import *
 from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.couch.database import iter_docs
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.logging import notify_exception
 from django_prbac.exceptions import PermissionDenied
 import six

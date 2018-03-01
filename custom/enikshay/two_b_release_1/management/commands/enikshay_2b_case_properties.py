@@ -10,7 +10,7 @@ import phonenumbers
 import sys
 import uuid
 from dimagi.utils.chunked import chunked
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from django.core.management import BaseCommand
 from casexml.apps.case.const import CASE_INDEX_EXTENSION, CASE_INDEX_CHILD
 from casexml.apps.case.mock import CaseStructure, CaseIndex, CaseFactory

@@ -18,7 +18,7 @@ from soil.exceptions import TaskFailedError
 from soil.util import expose_cached_download, get_download_context
 from dimagi.utils.web import json_response
 from dimagi.utils.couch.database import iter_docs
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from corehq.apps.products.tasks import import_products_async
 from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.products.forms import ProductForm

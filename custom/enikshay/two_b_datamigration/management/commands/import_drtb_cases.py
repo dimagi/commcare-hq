@@ -122,7 +122,7 @@ from custom.enikshay.case_utils import CASE_TYPE_PERSON, CASE_TYPE_OCCURRENCE, C
     CASE_TYPE_DRUG_RESISTANCE, CASE_TYPE_SECONDARY_OWNER
 from custom.enikshay.two_b_datamigration.models import MigratedDRTBCaseCounter
 from custom.enikshay.user_setup import compress_nikshay_id, join_chunked
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 import six
 from six.moves import filter
 from six.moves import range

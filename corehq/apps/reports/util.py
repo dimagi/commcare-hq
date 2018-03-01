@@ -21,7 +21,7 @@ from corehq.apps.reports.const import USER_QUERY_LIMIT
 from couchexport.util import SerializableFunction
 from couchforms.analytics import get_first_form_submission_received
 from dimagi.utils.dates import DateSpan
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.web import json_request
 
 from corehq.apps.reports.exceptions import EditFormValidationError

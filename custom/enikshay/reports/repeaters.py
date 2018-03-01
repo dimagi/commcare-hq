@@ -7,7 +7,7 @@ from dimagi.utils.chunked import chunked
 from django.utils.html import escape
 from django.utils.translation import ugettext as _
 from django.urls import reverse
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 from corehq.elastic import ES_MAX_CLAUSE_COUNT
 from corehq.apps.es.case_search import flatten_result

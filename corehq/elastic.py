@@ -22,7 +22,7 @@ from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_INDEX
 from corehq.pillows.mappings.sms_mapping import SMS_INDEX_INFO
 from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from pillowtop.processors.elastic import send_to_elasticsearch as send_to_es
 import six
 from six.moves import range

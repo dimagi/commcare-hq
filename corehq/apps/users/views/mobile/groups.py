@@ -33,7 +33,7 @@ from corehq.apps.users.decorators import require_can_edit_commcare_users
 from corehq.apps.users.views import BaseUserSettingsView
 from corehq import privileges
 from corehq.util.workbook_json.excel import alphanumeric_sort_key
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 
 class GroupNotFoundException(Exception):

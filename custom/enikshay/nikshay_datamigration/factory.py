@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 from collections import namedtuple
 from datetime import date, datetime
 
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 from casexml.apps.case.const import ARCHIVED_CASE_OWNER_ID, CASE_INDEX_EXTENSION
 from casexml.apps.case.mock import CaseStructure, CaseIndex

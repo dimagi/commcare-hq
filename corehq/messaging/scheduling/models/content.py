@@ -10,7 +10,7 @@ from corehq.messaging.scheduling.models.abstract import Content
 from corehq.apps.reminders.models import EmailUsage
 from corehq.apps.sms.models import MessagingEvent
 from couchdbkit.resource import ResourceNotFound
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.modules import to_function
 from django.conf import settings

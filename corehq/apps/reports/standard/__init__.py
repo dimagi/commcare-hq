@@ -16,7 +16,7 @@ from corehq.apps.users.models import CommCareUser
 from corehq.util.timezones.conversions import ServerTime
 from dimagi.utils.dates import DateSpan
 from django.utils.translation import ugettext_noop
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 
 class ProjectReport(GenericReportView):

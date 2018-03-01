@@ -13,7 +13,7 @@ from corehq.apps.app_manager.dbaccessors import get_apps_in_domain, get_app
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain_es
 from couchforms.analytics import get_exports_by_form
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from six.moves import map
 
 

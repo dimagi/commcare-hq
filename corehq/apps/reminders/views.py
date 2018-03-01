@@ -61,7 +61,7 @@ from corehq.util.timezones.utils import get_timezone_for_user
 from custom.ewsghana.forms import EWSBroadcastForm
 
 from dimagi.utils.couch.cache.cache_core import get_redis_client
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.logging import notify_exception
 
 ACTION_ACTIVATE = 'activate'

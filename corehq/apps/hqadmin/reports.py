@@ -15,7 +15,7 @@ from corehq.apps.hqwebapp.decorators import (
 )
 from corehq.apps.reports.standard import DatespanMixin
 from dimagi.utils.couch.database import iter_docs
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from corehq.apps.accounting.models import (
     SoftwarePlanEdition,
 )

@@ -68,7 +68,7 @@ from corehq.apps.userreports.reports.builder.const import (
 from corehq.apps.userreports.sql import get_column_name
 from corehq.apps.userreports.ui.fields import JsonField
 from corehq.apps.userreports.util import has_report_builder_access
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 import six
 
 # This dict maps filter types from the report builder frontend to UCR filter types

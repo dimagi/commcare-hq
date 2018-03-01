@@ -16,7 +16,7 @@ from couchexport.export import SCALAR_NEVER_WAS
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 from corehq.apps.es import filters
 from dimagi.utils.dates import safe_strftime
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.parsing import string_to_utc_datetime
 from phonelog.models import UserErrorEntry
 

@@ -17,7 +17,7 @@ from custom.world_vision.sqldata.child_sqldata import NutritionBirthWeightDetail
 from custom.world_vision.sqldata.main_sqldata import ImmunizationOverview
 from custom.world_vision.sqldata.mother_sqldata import PostnatalCareOverview, AnteNatalCareServiceOverviewExtended, \
     DeliveryPlaceDetailsExtended
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.parsing import json_format_date
 import six
 

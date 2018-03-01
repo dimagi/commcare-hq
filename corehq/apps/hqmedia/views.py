@@ -41,7 +41,7 @@ from corehq.apps.hqmedia.models import CommCareImage, CommCareAudio, CommCareMul
 from corehq.apps.hqmedia.tasks import process_bulk_upload_zip, build_application_zip
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from soil.util import expose_cached_download
 from django.utils.translation import ugettext as _
 from django_prbac.decorators import requires_privilege_raise404

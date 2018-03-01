@@ -11,7 +11,7 @@ from corehq.util.argparse_types import date_type
 from corehq.util.timezones.conversions import UserTime, ServerTime
 from couchexport.export import export_raw
 from datetime import datetime, timedelta, time
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from django.core.management.base import BaseCommand
 
 

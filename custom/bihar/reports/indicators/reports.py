@@ -9,7 +9,7 @@ from copy import copy
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.reports.generic import GenericTabularReport, summary_context
 from corehq.apps.reports.standard import CustomProjectReport
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from django.utils.html import format_html
 from django.utils.translation import ugettext as _, ugettext_noop
 from custom.bihar.reports.indicators.mixins import IndicatorSetMixIn, IndicatorMixIn

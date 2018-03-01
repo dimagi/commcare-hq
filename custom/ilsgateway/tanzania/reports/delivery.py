@@ -13,7 +13,7 @@ from custom.ilsgateway.models import OrganizationSummary, DeliveryGroups, Supply
 from custom.ilsgateway.tanzania.reports.mixins import DeliverySubmissionData
 from custom.ilsgateway.tanzania.reports.utils import make_url, link_format, latest_status_or_none,\
     get_this_lead_time, get_avg_lead_time
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from django.utils.translation import ugettext as _
 
 

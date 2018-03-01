@@ -8,7 +8,7 @@ from corehq.apps.locations.tasks import make_location_user
 from corehq.apps.users.models import CommCareUser, UserRole
 from custom.enikshay.private_sector_datamigration.models import Agency, UserDetail
 
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 
 class Command(BaseCommand):
