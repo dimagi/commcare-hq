@@ -193,7 +193,7 @@ def namedtupledict(name, fields):
 
 
 class SimplifiedUserInfo(
-        namedtupledict(b'SimplifiedUserInfo', (
+        namedtupledict(b'SimplifiedUserInfo' if six.PY2 else 'SimplifiedUserInfo', (
             'user_id',
             'username_in_report',
             'raw_username',
