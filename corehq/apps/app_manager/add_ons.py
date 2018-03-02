@@ -58,7 +58,7 @@ def _uses_detail_format(module, column_format):
 def _uses_calculated_property(module):
     def _column_is_calculated_property(col):
         return col.useXpathExpression
-    return (
+    return hasattr(module, 'case_details') and (
         any(_column_is_calculated_property(column) for column in module.case_details.short.columns)
         or any(_column_is_calculated_property(column) for column in module.case_details.long.columns)
     )
