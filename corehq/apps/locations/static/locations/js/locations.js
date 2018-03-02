@@ -34,7 +34,7 @@ hqDefine('locations/js/locations', function() {
                     processResults: function (data, params) {
                         var more = data.more || (params.page * 10) < data.total;
                         return { results: data.results, more: more };
-                    }
+                    },
                 },
             });
         };
