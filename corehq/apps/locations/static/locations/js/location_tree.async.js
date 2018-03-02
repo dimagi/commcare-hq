@@ -16,9 +16,9 @@ hqDefine('locations/js/location_tree', function() {
         //      "can_edit_root"
         //      "load_locs_url"
         //      "new_loc_url"
+        //      "loc_edit_url"
         //      "reloadLocationSearchSelect"
         //      "clearLocationSelection"
-        //      "loc_edit_url"
 
         var model = this;
 
@@ -70,7 +70,11 @@ hqDefine('locations/js/location_tree', function() {
     function LocationSearchViewModel(tree_model, options) {
         // options should have properties:
         //      "can_edit_root"
-        //      "show_inactive"
+        //      "load_locs_url"
+        //      "new_loc_url"
+        //      "loc_edit_url"
+        //      "reloadLocationSearchSelect"
+        //      "clearLocationSelection"
 
         var model = this;
         this.selected_location = ko.observable();
@@ -206,7 +210,7 @@ hqDefine('locations/js/location_tree', function() {
             if (data.children_status !== null && data.children_status !== undefined) {
                 this.children_status(data.children_status);
             }
-            if (data.children != null) {
+            if (data.children !== null) {
                 this.set_children(data.children);
             }
         };
@@ -260,7 +264,7 @@ hqDefine('locations/js/location_tree', function() {
             var types = [];
             $.each(root.location_types, function(i, loc_type) {
                 $.each(loc_type.allowed_parents, function(i, parent_type) {
-                    if (loc.type() == parent_type) {
+                    if (loc.type() === parent_type) {
                         types.push(loc_type.type);
                     }
                 });
@@ -274,17 +278,17 @@ hqDefine('locations/js/location_tree', function() {
 
         this.allowed_child_type = function() {
             var types = this.allowed_child_types();
-            return (types.length == 1 ? types[0] : null);
+            return (types.length === 1 ? types[0] : null);
         };
 
         this.new_child_caption = ko.computed(function() {
             var child_type = this.allowed_child_type();
-            var top_level = (this.name() == '_root');
+            var top_level = (this.name() === '_root');
             return 'New ' + (child_type || 'location') + (top_level ? ' at top level' : ' in ' + this.name() + ' ' + this.type());
         }, this);
 
         this.no_children_caption = ko.computed(function() {
-            var top_level = (this.name() == '_root');
+            var top_level = (this.name() === '_root');
 
             // TODO replace 'location' with proper type as applicable (what about pluralization?)
             return (top_level ? 'No locations created in this project yet' : 'No child locations inside ' + this.name());
