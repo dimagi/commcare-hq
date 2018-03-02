@@ -101,25 +101,6 @@ class Command(BaseDataDump):
                 )
 
 
-def get_recently_closed_case(person_case, all_cases):
-    recently_closed_case = None
-    recently_closed_time = None
-    for case in all_cases:
-        case_closed_time = case.closed_on
-        if case_closed_time:
-            if recently_closed_time is None:
-                recently_closed_time = case_closed_time
-                recently_closed_case = case
-            elif recently_closed_time and recently_closed_time < case_closed_time:
-                recently_closed_time = case_closed_time
-                recently_closed_case = case
-            elif recently_closed_time and recently_closed_time == case_closed_time:
-                raise Exception("This looks like a super edge case that can be looked at. "
-                                "Two episodes closed at the same time. Case id: {case_id}"
-                                .format(case_id=case.case_id))
-    return recently_closed_case
-
-
 def get_all_episode_cases_from_person(domain, person_case_id):
     occurrence_cases = get_all_occurrence_cases_from_person(domain, person_case_id)
     return [

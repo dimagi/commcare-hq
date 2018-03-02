@@ -2,7 +2,6 @@ from __future__ import absolute_import
 from __future__ import print_function
 
 from corehq.apps.es.case_search import CaseSearchES
-from corehq.apps.es import queries
 from corehq.apps.users.models import CommCareUser
 
 from custom.enikshay.case_utils import (
@@ -79,4 +78,3 @@ class Command(BaseDataDump):
         elif case_reference == 'episode':
             return self.get_episode(adherence).get_case_property(calculation)
         return Exception("unknown case reference %s" % case_reference)
-

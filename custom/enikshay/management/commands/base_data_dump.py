@@ -50,7 +50,6 @@ class BaseDataDump(BaseCommand):
 
     def handle(self, recipient, *args, **options):
         self.recipient = recipient
-
         if not self.recipient:
             return
 
@@ -129,7 +128,7 @@ class BaseDataDump(BaseCommand):
                             try:
                                 column_value = self.get_case_reference_value(
                                     case_reference, case, calculation)
-                                if column_value:
+                                if column_value and not isinstance(column_value, bool):
                                     column_value = column_value.encode("utf-8")
                                 case_row[column_name] = column_value
                             except Exception as e:
@@ -171,7 +170,6 @@ class BaseDataDump(BaseCommand):
         url = "%s%s?%s" % (get_url_base(),
                            reverse('retrieve_download', kwargs={'download_id': download_id}),
                            "get_file")  # downloads immediately, rather than rendering page
-
         send_HTML_email('%s Download for %s Finished' % (DOMAIN, self.case_type),
                         self.recipient,
                         'Simple email, just to let you know that there is a '
