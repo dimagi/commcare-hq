@@ -144,7 +144,7 @@ class BaseDataDump(BaseCommand):
     def zip_dump(self, temp_file_path):
         _, zip_temp_path = tempfile.mkstemp(".zip")
         with ZipFile(zip_temp_path, 'w') as zip_file_:
-            zip_file_.write(temp_file_path, self.result_file_name + '.csv')
+            zip_file_.write(temp_file_path, self.result_file_name)
 
         return zip_temp_path
 
@@ -173,7 +173,7 @@ class BaseDataDump(BaseCommand):
         url = "%s%s?%s" % (get_url_base(),
                            reverse('retrieve_download', kwargs={'download_id': download_id}),
                            "get_file")  # downloads immediately, rather than rendering page
-        send_HTML_email('%s Download for %s Finished' % (DOMAIN, self.case_type),
+        send_HTML_email('[%s] Export ready for %s.' % (DOMAIN, self.TASK_NAME),
                         self.recipient,
                         'Simple email, just to let you know that there is a '
                         'download waiting for you at %s. It will expire in 48 hours' % url)
