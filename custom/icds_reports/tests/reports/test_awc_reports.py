@@ -2457,10 +2457,9 @@ class TestAWCReport(TestCase):
                     },
                     'case_id': u'339080d4-886a-498e-b359-5a7bcb47ee85',
                     'recorded_height': 0,
-                    'fully_immunized': u'No',
+                    'fully_immunized': 'No',
                     'person_name': 'Name 4418'
-                }
-                ,
+                },
                 cls=DjangoJSONEncoder
             )
         )
