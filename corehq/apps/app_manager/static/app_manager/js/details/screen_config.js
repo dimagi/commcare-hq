@@ -429,7 +429,7 @@ hqDefine('app_manager/js/details/screen_config', function() {
                     for (var i = 0; i < menuOptionsToRemove.length; i++) {
                         for(var j = 0; j < menuOptions.length; j++) {
                             if (
-                                menuOptions[j].value != this.original.format
+                                menuOptions[j].value !== this.original.format
                                 && menuOptions[j].value === menuOptionsToRemove[i]
                             ) {
                                 menuOptions.splice(j, 1);
