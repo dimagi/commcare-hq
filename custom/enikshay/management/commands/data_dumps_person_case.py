@@ -7,7 +7,6 @@ from __future__ import (
 from corehq.apps.users.models import CommCareUser
 
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.apps.es.case_search import CaseSearchES
 from corehq.apps.es import queries
 
 from custom.enikshay.case_utils import (
@@ -20,8 +19,6 @@ from custom.enikshay.management.commands.base_data_dump import BaseDataDump
 from custom.enikshay.management.commands.duplicate_occurrences_and_episodes_reconciliation import (
     get_case_recently_modified_on_phone,
 )
-
-from corehq.elastic import ES_EXPORT_INSTANCE
 
 DOMAIN = "enikshay"
 
@@ -93,8 +90,7 @@ class Command(BaseDataDump):
         """
         All open and closed person cases with person.dataset = 'real' and person.enrolled_in_private != 'true'
         """
-        return (CaseSearchES(es_instance_alias=ES_EXPORT_INSTANCE)
-                .domain(DOMAIN)
+        return (self.case_search_instance
                 .case_type(case_type)
                 .case_property_query(ENROLLED_IN_PRIVATE, 'true', clause=queries.MUST_NOT)
                 .case_property_query("dataset", 'real')

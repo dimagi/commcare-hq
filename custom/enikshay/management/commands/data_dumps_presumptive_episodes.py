@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from __future__ import print_function
 from __future__ import unicode_literals
-import os
+
 from corehq.apps.es import case_search
 from corehq.apps.users.models import CommCareUser
 
@@ -33,8 +33,7 @@ class Command(BaseDataDump):
         or closed) with person.dataset = 'real' and self.enrolled_in_private !=
         'true' and self.episode_type = 'presumptive_tb'
         """
-        return (case_search.CaseSearchES()
-                .domain(DOMAIN)
+        return (self.case_search_instance
                 .case_type(case_type)
                 .NOT(case_search.case_property_filter(ENROLLED_IN_PRIVATE, 'true'))
                 .case_property_filter('episode_type', 'presumptive_tb')

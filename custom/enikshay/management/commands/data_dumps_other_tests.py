@@ -5,7 +5,6 @@ from corehq.apps.es import (
     case_search,
     queries,
 )
-from corehq.apps.es.case_search import CaseSearchES
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 
@@ -52,8 +51,7 @@ class Command(BaseDataDump):
         """
         reject_test_types = ['dst', 'culture', 'sl_line_probe_assay', 'fl_line_probe_assay',
                              'cbnaat', 'microscopy-fluorescent', 'microscopy-zn']
-        return (CaseSearchES()
-                .domain(DOMAIN)
+        return (self.case_search_instance
                 .case_type(case_type)
                 .case_property_query("test_category", "clinical", clause=queries.MUST_NOT)
                 .NOT(case_search.case_property_filter(

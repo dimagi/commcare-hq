@@ -1,7 +1,6 @@
 from __future__ import absolute_import
 from __future__ import print_function
 
-from corehq.apps.es.case_search import CaseSearchES
 from corehq.apps.es import queries
 
 from custom.enikshay.case_utils import (
@@ -34,8 +33,7 @@ class Command(BaseDataDump):
         with person.dataset = 'real' and self.enrolled_in_private != 'true' and
         (self.episode_type = 'confirmed_drtb' OR self.episode_type = 'confirmed_dstb')
         """
-        return (CaseSearchES()
-                .domain(DOMAIN)
+        return (self.case_search_instance
                 .case_type(case_type)
                 .case_property_query(ENROLLED_IN_PRIVATE, 'true', clause=queries.MUST_NOT)
                 .case_property_filter("episode_type", ["confirmed_dstb", "confirmed_drtb"])

@@ -17,6 +17,8 @@ from couchexport.models import Format
 from corehq.blobs import get_blob_db
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.files import safe_filename_header
+from corehq.elastic import ES_EXPORT_INSTANCE
+from corehq.apps.es.case_search import CaseSearchES
 
 from dimagi.utils.django.email import send_HTML_email
 from dimagi.utils.web import get_url_base
@@ -43,6 +45,7 @@ class BaseDataDump(BaseCommand):
         self.result_file_headers = ["Column Name"]
         self.recipient = None
         self.full = False
+        self.case_search_instance = CaseSearchES(es_instance_alias=ES_EXPORT_INSTANCE).domain(DOMAIN)
 
     def add_arguments(self, parser):
         parser.add_argument('--recipient', type=str)

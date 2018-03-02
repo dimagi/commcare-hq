@@ -1,7 +1,6 @@
 from __future__ import absolute_import
 from __future__ import print_function
 
-from corehq.apps.es.case_search import CaseSearchES
 from corehq.apps.users.models import CommCareUser
 
 from custom.enikshay.case_utils import (
@@ -35,10 +34,7 @@ class Command(BaseDataDump):
         with person.dataset = 'real' and
         person.enrolled_in_private != 'true'
         """
-        return (CaseSearchES()
-                .domain(DOMAIN)
-                .case_type(case_type)
-                )
+        return self.case_search_instance.case_type(case_type)
 
     def include_case_in_dump(self, referral):
         person = self.get_person(referral)

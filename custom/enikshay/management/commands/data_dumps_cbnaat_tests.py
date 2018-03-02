@@ -1,7 +1,6 @@
 from __future__ import absolute_import
 from __future__ import print_function
 
-from corehq.apps.es.case_search import CaseSearchES
 from corehq.apps.es import queries
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
@@ -39,8 +38,7 @@ class Command(BaseDataDump):
         2)
         with self.test_type_value = 'microscopy-fluorescent' or self.test_type_value = 'microscopy-zn'
         """
-        return (CaseSearchES()
-                .domain(DOMAIN)
+        return (self.case_search_instance
                 .case_type(case_type)
                 .case_property_query("test_type_value", "cbnaat", clause=queries.MUST)
                 )
