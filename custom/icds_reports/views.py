@@ -570,7 +570,7 @@ class AwcReportsView(BaseReportView):
                 order_dir = request.GET.get('order[0][dir]', 'asc')
                 if order_by_name_column == 'age':  # age and date of birth is stored in database as one value
                     order_by_name_column = 'dob'
-                order = "%s%s" % ('-' if order_dir == 'desc' else '', order_by_name_column)
+                order = "%s %s" % (order_by_name_column, order_dir)
 
                 data = get_awc_report_beneficiary(
                     start,

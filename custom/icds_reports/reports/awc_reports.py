@@ -13,9 +13,9 @@ from corehq.util.quickcache import quickcache
 from corehq.util.view_utils import absolute_reverse
 from custom.icds_reports.models import ChildHealthMonthlyView, AggAwcMonthly, DailyAttendanceView, \
     AggChildHealthMonthly, AggAwcDailyView, AggCcsRecordMonthly
+from custom.icds_reports.queries import get_beneficiary_list, get_beneficiary_list_old
 from custom.icds_reports.utils import apply_exclude, percent_diff, get_value, percent_increase, \
-    match_age, get_status, \
-    current_age, exclude_records_by_age_for_column, calculate_date_for_age, \
+    match_age, current_age, exclude_records_by_age_for_column, calculate_date_for_age, \
     person_has_aadhaar_column, person_is_beneficiary_column
 from custom.icds_reports.const import MapColors
 import six
@@ -1008,38 +1008,9 @@ def get_awc_report_infrastructure(domain, config, month, show_test=False):
 @quickcache(['start', 'length', 'draw', 'order', 'awc_id', 'month', 'two_before'], timeout=30 * 60)
 def get_awc_report_beneficiary(start, length, draw, order, awc_id, month, two_before):
 
-    data = ChildHealthMonthlyView.objects.filter(
-        month=datetime(*month),
-        awc_id=awc_id,
-        open_in_month=1,
-        valid_in_month=1,
-        age_in_months__lte=60
+    data, total_records = get_beneficiary_list(
+        awc_id, month, start, length, 'nutrition_status_sort desc'
     )
-
-    data_count = data.count()
-    if 'current_month_nutrition_status' in order:
-        sort_order = {
-            'Severely underweight': 1,
-            'Moderately underweight': 2,
-            'Normal weight for age': 3,
-            'Data Not Entered': 4
-        }
-        reverse = '-' in order
-        data = sorted(
-            data,
-            key=lambda val: (sort_order[
-                get_status(
-                    val.current_month_nutrition_status,
-                    'underweight',
-                    'Normal weight for age'
-                )['value']
-            ]),
-            reverse=reverse
-        )
-    else:
-        data = data.order_by('-month', order)
-
-    data = data[start:(start + length)]
 
     config = {
         'data': [],
@@ -1053,42 +1024,33 @@ def get_awc_report_beneficiary(start, length, draw, order, awc_id, month, two_be
         'last_month': datetime(*month).strftime("%b %Y"),
     }
 
+    def get_color(value):
+        if value == 1:
+            return 'red'
+        return 'black'
+
     def base_data(row_data):
         return dict(
-            case_id=row_data.case_id,
-            person_name=row_data.person_name,
-            dob=row_data.dob,
-            sex=row_data.sex,
-            age=calculate_date_for_age(row_data.dob, datetime(*month).date()),
-            fully_immunized='Yes' if row_data.fully_immunized else 'No',
-            mother_name=row_data.mother_name,
-            age_in_months=row_data.age_in_months,
-            current_month_nutrition_status=get_status(
-                row_data.current_month_nutrition_status,
-                'underweight',
-                'Normal weight for age'
-            ),
-            recorded_weight=row_data.recorded_weight or 0,
-            recorded_height=row_data.recorded_height or 0,
-            current_month_stunting=get_status(
-                row_data.current_month_stunting,
-                'stunted',
-                'Normal height for age'
-            ),
-            current_month_wasting=get_status(
-                row_data.current_month_wasting,
-                'wasted',
-                'Normal weight for height'
-            ),
-            pse_days_attended=row_data.pse_days_attended
+            case_id=row_data[0],
+            person_name=row_data[1],
+            dob=row_data[2],
+            age=calculate_date_for_age(row_data[2], datetime(*month).date()),
+            fully_immunized='Yes' if row_data[13] else 'No',
+            age_in_months=row_data[3],
+            current_month_nutrition_status={'value': row_data[4], 'color': get_color(row[5])},
+            recorded_weight=row_data[6] or 0,
+            recorded_height=row_data[7] or 0,
+            current_month_stunting={'value': row_data[8], 'color': get_color(row[9])},
+            current_month_wasting={'value': row_data[10], 'color': get_color(row[11])},
+            pse_days_attended=row_data[12]
         )
 
     for row in data:
         config['data'].append(base_data(row))
 
     config["draw"] = draw
-    config["recordsTotal"] = data_count
-    config["recordsFiltered"] = data_count
+    config["recordsTotal"] = total_records
+    config["recordsFiltered"] = total_records
 
     return config
 
