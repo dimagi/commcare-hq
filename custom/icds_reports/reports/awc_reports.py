@@ -11,9 +11,9 @@ from django.utils.translation import ugettext as _
 
 from corehq.util.quickcache import quickcache
 from corehq.util.view_utils import absolute_reverse
-from custom.icds_reports.models import ChildHealthMonthlyView, AggAwcMonthly, DailyAttendanceView, \
+from custom.icds_reports.models import AggAwcMonthly, DailyAttendanceView, \
     AggChildHealthMonthly, AggAwcDailyView, AggCcsRecordMonthly
-from custom.icds_reports.queries import get_beneficiary_list, get_beneficiary_list_old
+from custom.icds_reports.queries import get_beneficiary_list, get_growth_monitoring_details
 from custom.icds_reports.utils import apply_exclude, percent_diff, get_value, percent_increase, \
     match_age, current_age, exclude_records_by_age_for_column, calculate_date_for_age, \
     person_has_aadhaar_column, person_is_beneficiary_column
@@ -1005,11 +1005,11 @@ def get_awc_report_infrastructure(domain, config, month, show_test=False):
     }
 
 
-@quickcache(['start', 'length', 'draw', 'order', 'awc_id', 'month', 'two_before'], timeout=30 * 60)
-def get_awc_report_beneficiary(start, length, draw, order, awc_id, month, two_before):
+@quickcache(['start', 'length', 'draw', 'order', 'awc_id', 'month', 'two_before', 'domain'], timeout=30 * 60)
+def get_awc_report_beneficiary(start, length, draw, order, awc_id, month, two_before, domain):
 
     data, total_records = get_beneficiary_list(
-        awc_id, month, start, length, 'nutrition_status_sort desc'
+        domain, awc_id, month, start, length, order
     )
 
     config = {
@@ -1055,11 +1055,9 @@ def get_awc_report_beneficiary(start, length, draw, order, awc_id, month, two_be
     return config
 
 
-@quickcache(['case_id'], timeout=30 * 60)
-def get_beneficiary_details(case_id):
-    data = ChildHealthMonthlyView.objects.filter(
-        case_id=case_id
-    ).order_by('month')
+@quickcache(['domain', 'case_id'], timeout=30 * 60)
+def get_beneficiary_details(domain, case_id):
+    data = get_growth_monitoring_details(domain, case_id)
 
     min_height = 45
     max_height = 120.0
@@ -1070,29 +1068,31 @@ def get_beneficiary_details(case_id):
         'wfl': []
     }
     for row in data:
+        age_in_months = row[5]
+        recorded_weight = row[6]
+        recorded_height = row[7]
         beneficiary.update({
-            'person_name': row.person_name,
-            'mother_name': row.mother_name,
-            'dob': row.dob,
-            'age': current_age(row.dob, datetime.now().date()),
-            'sex': row.sex,
-            'age_in_months': row.age_in_months,
+            'person_name': row[1],
+            'mother_name': row[2],
+            'dob': row[3],
+            'age': current_age(row[3], datetime.now().date()),
+            'sex': row[4],
+            'age_in_months': row[5],
         })
-        if row.age_in_months <= 60:
-            if row.recorded_weight:
+        if age_in_months <= 60:
+            if recorded_weight:
                 beneficiary['weight'].append({
-                    'x': int(row.age_in_months),
-                    'y': float(row.recorded_weight)
+                    'x': int(age_in_months),
+                    'y': float(recorded_weight)
                 })
-            if row.recorded_height:
+            if recorded_height:
                 beneficiary['height'].append({
-                    'x': int(row.age_in_months),
-                    'y': float(row.recorded_height)
+                    'x': int(age_in_months),
+                    'y': float(recorded_height)
                 })
-        if row.recorded_height and min_height <= row.recorded_height <= max_height:
-            if row.recorded_height:
-                beneficiary['wfl'].append({
-                    'x': float(row.recorded_height),
-                    'y': float(row.recorded_weight) if row.recorded_height else 0
-                })
+        if recorded_height and min_height <= recorded_height <= max_height:
+            beneficiary['wfl'].append({
+                'x': float(row.recorded_height),
+                'y': float(recorded_weight) if row.recorded_height else 0
+            })
     return beneficiary

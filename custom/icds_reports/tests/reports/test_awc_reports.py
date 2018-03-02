@@ -14,15 +14,15 @@ from custom.icds_reports.reports.awc_reports import get_beneficiary_details, get
 
 class TestAWCReport(TestCase):
     def test_beneficiary_details_recorded_weight_none(self):
-        data = get_beneficiary_details(case_id='6b234c5b-883c-4849-9dfd-b1571af8717b')
-        self.assertEqual(data['age_in_months'], 69)
+        data = get_beneficiary_details(domain='icds-cas', case_id='6b234c5b-883c-4849-9dfd-b1571af8717b')
+        self.assertEqual(data['age_in_months'], 68)
         self.assertEqual(data['sex'], 'M')
         self.assertEqual(data['person_name'], 'Name 3342')
         self.assertEqual(data['mother_name'], 'संगीता')
 
     def test_beneficiary_details_recorded_weight_is_not_none(self):
-        data = get_beneficiary_details(case_id='8e226cc6-740f-4146-b017-69d9f6e9651b')
-        self.assertEqual(data['age_in_months'], 54)
+        data = get_beneficiary_details(domain='icds-cas', case_id='8e226cc6-740f-4146-b017-69d9f6e9651b')
+        self.assertEqual(data['age_in_months'], 53)
         self.assertEqual(data['sex'], 'M')
         self.assertEqual(data['person_name'], 'Name 3141')
         self.assertEqual(data['mother_name'], 'शियामु बाई')
@@ -31,8 +31,8 @@ class TestAWCReport(TestCase):
         self.assertEqual(filter(lambda r: r['x'] == 96.0, data['wfl'])[0]['y'], 12.6)
 
     def test_beneficiary_details_have_age_in_month_not_have_recorded_height(self):
-        data = get_beneficiary_details(case_id='411c4234-8475-415a-9c28-911b85868aa5')
-        self.assertEqual(data['age_in_months'], 37)
+        data = get_beneficiary_details(domain='icds-cas', case_id='411c4234-8475-415a-9c28-911b85868aa5')
+        self.assertEqual(data['age_in_months'], 36)
         self.assertEqual(data['sex'], 'F')
         self.assertEqual(data['person_name'], 'Name 3483')
         self.assertEqual(data['mother_name'], 'रींकीकुँवर')
@@ -2124,42 +2124,8 @@ class TestAWCReport(TestCase):
             ['kpi', 'chart']
         )
 
-    def test_awc_report_beneficiary_ca040875_2e42_4ce4_acf7_f96695b370f1(self):
-        data = get_awc_report_beneficiary(0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1))['data'][0]
-        self.assertJSONEqual(
-            json.dumps(data, cls=DjangoJSONEncoder),
-            json.dumps(
-                {
-                    "recorded_weight": "12.8000000000000000",
-                    "age_in_months": 59,
-                    "current_month_stunting": {
-                        "color": "black",
-                        "value": "Moderately stunted"
-                    },
-                    "pse_days_attended": 14,
-                    "dob": "2012-06-03",
-                    "age": "4 years 11 months ",
-                    "current_month_wasting": {
-                        "color": "black",
-                        "value": "Normal weight for height"
-                    },
-                    "current_month_nutrition_status": {
-                        "color": "black",
-                        "value": "Moderately underweight"
-                    },
-                    "case_id": "ca040875-2e42-4ce4-acf7-f96695b370f1",
-                    "recorded_height": "95.0000000000000000",
-                    "fully_immunized": "No",
-                    "person_name": "Name 4416",
-                    "sex": "F",
-                    "mother_name": "रामकन्या"
-                },
-                cls=DjangoJSONEncoder
-            )
-        )
-
     def test_awc_report_beneficiary_82f33fa1_2aec_45ba_8d6c_d3ca9f50ab73(self):
-        data = get_awc_report_beneficiary(0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1))['data'][1]
+        data = get_awc_report_beneficiary(0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1), 'icds-cas')['data'][0]
         self.assertJSONEqual(
             json.dumps(data, cls=DjangoJSONEncoder),
             json.dumps(
@@ -2185,15 +2151,13 @@ class TestAWCReport(TestCase):
                     "recorded_height": 0,
                     "fully_immunized": "No",
                     "person_name": "Name 4445",
-                    "sex": "F",
-                    "mother_name": "किरणबाई"
                 },
                 cls=DjangoJSONEncoder
             )
         )
 
     def test_awc_report_beneficiary_b954eb28_75de_43c8_9ec0_d38b7d246ead(self):
-        data = get_awc_report_beneficiary(0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1))['data'][2]
+        data = get_awc_report_beneficiary(0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1), 'icds-cas')['data'][1]
         self.assertJSONEqual(
             json.dumps(data, cls=DjangoJSONEncoder),
             json.dumps(
@@ -2219,15 +2183,13 @@ class TestAWCReport(TestCase):
                     "recorded_height": 0,
                     "fully_immunized": "No",
                     "person_name": "Name 2617",
-                    "sex": "M",
-                    "mother_name": "ताराकुँवर पति राजेन्द्रसिंह"
                 },
                 cls=DjangoJSONEncoder
             )
         )
 
     def test_awc_report_beneficiary_519720be_4343_41e7_a9f6_cdfad6ecf8d8(self):
-        data = get_awc_report_beneficiary(0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1))['data'][3]
+        data = get_awc_report_beneficiary(0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1), 'icds-cas')['data'][2]
         self.assertJSONEqual(
             json.dumps(data, cls=DjangoJSONEncoder),
             json.dumps(
@@ -2253,15 +2215,13 @@ class TestAWCReport(TestCase):
                     "recorded_height": 0,
                     "fully_immunized": "No",
                     "person_name": "Name 4412",
-                    "sex": "M",
-                    "mother_name": "जशोदा"
                 },
                 cls=DjangoJSONEncoder
             )
         )
 
     def test_awc_report_beneficiary_80099a73_b7ec_4de9_a402_459ed15f6641(self):
-        data = get_awc_report_beneficiary(0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1))['data'][4]
+        data = get_awc_report_beneficiary(0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1), 'icds-cas')['data'][3]
         self.assertJSONEqual(
             json.dumps(data, cls=DjangoJSONEncoder),
             json.dumps(
@@ -2287,15 +2247,13 @@ class TestAWCReport(TestCase):
                     "recorded_height": 0,
                     "fully_immunized": "No",
                     "person_name": "Name 4411",
-                    "sex": "F",
-                    "mother_name": "लक्ष्मी बाई"
                 },
                 cls=DjangoJSONEncoder
             )
         )
 
     def test_awc_report_beneficiary_532f3754_e231_40ec_a861_abbb2a06dff5(self):
-        data = get_awc_report_beneficiary(0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1))['data'][5]
+        data = get_awc_report_beneficiary(0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1), 'icds-cas')['data'][4]
         self.assertJSONEqual(
             json.dumps(data, cls=DjangoJSONEncoder),
             json.dumps(
@@ -2321,15 +2279,14 @@ class TestAWCReport(TestCase):
                     "recorded_height": 0,
                     "fully_immunized": "No",
                     "person_name": "Name 4408",
-                    "sex": "F",
-                    "mother_name": "छनुकुवर पति चोकसिंह"
                 },
                 cls=DjangoJSONEncoder
             )
         )
 
     def test_awc_report_beneficiary_4cd07ebf_abce_4345_a930_f6db7ede8996(self):
-        data = get_awc_report_beneficiary(0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1))['data'][6]
+        data = get_awc_report_beneficiary(0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1), 'icds-cas')['data'][5]
+        print json.dumps(data, cls=DjangoJSONEncoder),
         self.assertJSONEqual(
             json.dumps(data, cls=DjangoJSONEncoder),
             json.dumps(
@@ -2355,15 +2312,13 @@ class TestAWCReport(TestCase):
                     "recorded_height": 0,
                     "fully_immunized": "No",
                     "person_name": "Name 4399",
-                    "sex": "F",
-                    "mother_name": "संगीताबाई पति धनसिंह"
                 },
                 cls=DjangoJSONEncoder
             )
         )
 
     def test_awc_report_beneficiary_c9ee2435_d7fc_4307_9c18_9d5d83d2a691(self):
-        data = get_awc_report_beneficiary(0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1))['data'][7]
+        data = get_awc_report_beneficiary(0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1), 'icds-cas')['data'][6]
         self.assertJSONEqual(
             json.dumps(data, cls=DjangoJSONEncoder),
             json.dumps(
@@ -2389,15 +2344,13 @@ class TestAWCReport(TestCase):
                     "recorded_height": "94.0000000000000000",
                     "fully_immunized": "No",
                     "person_name": "Name 4402",
-                    "sex": "M",
-                    "mother_name": "पोपा बाई"
                 },
                 cls=DjangoJSONEncoder
             )
         )
 
     def test_awc_report_beneficiary_d44f7902_83d4_4f1d_a913_4176cf41094e(self):
-        data = get_awc_report_beneficiary(0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1))['data'][8]
+        data = get_awc_report_beneficiary(0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1), 'icds-cas')['data'][7]
         self.assertJSONEqual(
             json.dumps(data, cls=DjangoJSONEncoder),
             json.dumps(
@@ -2423,15 +2376,13 @@ class TestAWCReport(TestCase):
                     "recorded_height": 0,
                     "fully_immunized": "No",
                     "person_name": "Name 4414",
-                    "sex": "M",
-                    "mother_name": "भूराकुवर पति धर्मेन्द्रसिंह"
                 },
                 cls=DjangoJSONEncoder
             )
         )
 
     def test_awc_report_beneficiary_71230690_c828_4863_b2c1_f61a75aed9d7(self):
-        data = get_awc_report_beneficiary(0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1))['data'][9]
+        data = get_awc_report_beneficiary(0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1), 'icds-cas')['data'][8]
         self.assertJSONEqual(
             json.dumps(data, cls=DjangoJSONEncoder),
             json.dumps(
@@ -2457,22 +2408,53 @@ class TestAWCReport(TestCase):
                     "recorded_height": 0,
                     "fully_immunized": "No",
                     "person_name": "Name 4407",
-                    "sex": "M",
-                    "mother_name": "ममता बाई"
                 },
                 cls=DjangoJSONEncoder
             )
         )
 
+    def test_awc_report_beneficiary_ca040875_2e42_4ce4_acf7_f96695b370f1(self):
+        data = get_awc_report_beneficiary(0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1), 'icds-cas')['data'][9]
+        self.assertJSONEqual(
+            json.dumps(data, cls=DjangoJSONEncoder),
+            json.dumps(
+                {
+                    'recorded_weight': '14.0000000000000000',
+                    'age_in_months': 51,
+                    'current_month_stunting': {
+                        'color': 'black',
+                        'value': 'Data Not Entered'
+                    },
+                    'pse_days_attended': 15,
+                    'dob': '2013-02-13',
+                    'age': u'4 years 3 months ',
+                    'current_month_wasting': {
+                        'color': 'black',
+                        'value': 'Data Not Entered'
+                    },
+                    'current_month_nutrition_status': {
+                        'color': 'black',
+                        'value': 'Normal weight for age'
+                    },
+                    'case_id': u'339080d4-886a-498e-b359-5a7bcb47ee85',
+                    'recorded_height': 0,
+                    'fully_immunized': u'No',
+                    'person_name': 'Name 4418'
+                }
+                ,
+                cls=DjangoJSONEncoder
+            )
+        )
+
     def test_awc_report_beneficiary_data_length(self):
-        data = get_awc_report_beneficiary(0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1))
+        data = get_awc_report_beneficiary(0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1), 'icds-cas')
         self.assertEqual(
             len(data['data']),
             10
         )
 
     def test_awc_report_beneficiary_data_without_data(self):
-        data = get_awc_report_beneficiary(0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1))
+        data = get_awc_report_beneficiary(0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1), 'icds-cas')
         del data['data']
         self.assertJSONEqual(
             json.dumps(data, cls=DjangoJSONEncoder),
@@ -2490,7 +2472,7 @@ class TestAWCReport(TestCase):
         )
 
     def test_awc_report_beneficiary_keys(self):
-        data = get_awc_report_beneficiary(0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1))
+        data = get_awc_report_beneficiary(0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1), 'icds-cas')
         self.assertJSONEqual(
             json.dumps(list(data.keys()), cls=DjangoJSONEncoder),
             json.dumps(
