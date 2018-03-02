@@ -272,23 +272,38 @@ class TimedSchedule(Schedule):
         else:
             raise TypeError("Unexpected type: %s" % type(model_event))
 
+    def check_positive_repeat_every(self, repeat_every):
+        """
+        The value that gets stored to this model for repeat_every can be
+        negative to represent monthly schedules (see comment on repeat_every).
+
+        But when using util methods to create and edit schedules,
+        we always use a positive value for repeat_every param to make it
+        easier to setup schedules.
+        """
+        if repeat_every <= 0:
+            raise ValueError("Expected positive value, got %s" % repeat_every)
+
     @classmethod
     def create_simple_daily_schedule(cls, domain, model_event, content, total_iterations=REPEAT_INDEFINITELY,
-            start_offset=0, start_day_of_week=ANY_DAY, extra_options=None):
+            start_offset=0, start_day_of_week=ANY_DAY, extra_options=None, repeat_every=1):
         schedule = cls(domain=domain)
         schedule.set_simple_daily_schedule(model_event, content, total_iterations=total_iterations,
-            start_offset=start_offset, start_day_of_week=start_day_of_week, extra_options=extra_options)
+            start_offset=start_offset, start_day_of_week=start_day_of_week, extra_options=extra_options,
+            repeat_every=repeat_every)
         return schedule
 
     def set_simple_daily_schedule(self, model_event, content, total_iterations=REPEAT_INDEFINITELY, start_offset=0,
-            start_day_of_week=ANY_DAY, extra_options=None):
+            start_day_of_week=ANY_DAY, extra_options=None, repeat_every=1):
+        self.check_positive_repeat_every(repeat_every)
+
         with transaction.atomic():
             self.delete_related_events()
 
             self.event_type = self.get_event_type_from_model_event(model_event)
             self.start_offset = start_offset
             self.start_day_of_week = start_day_of_week
-            self.repeat_every = 1
+            self.repeat_every = repeat_every
             self.total_iterations = total_iterations
             self.ui_type = Schedule.UI_TYPE_DAILY
             self.set_extra_scheduling_options(extra_options)
@@ -309,14 +324,14 @@ class TimedSchedule(Schedule):
 
     @classmethod
     def create_simple_weekly_schedule(cls, domain, model_event, content, days_of_week, start_day_of_week,
-            total_iterations=REPEAT_INDEFINITELY, extra_options=None):
+            total_iterations=REPEAT_INDEFINITELY, extra_options=None, repeat_every=1):
         schedule = cls(domain=domain)
         schedule.set_simple_weekly_schedule(model_event, content, days_of_week, start_day_of_week,
-            total_iterations=total_iterations, extra_options=extra_options)
+            total_iterations=total_iterations, extra_options=extra_options, repeat_every=repeat_every)
         return schedule
 
     def set_simple_weekly_schedule(self, model_event, content, days_of_week, start_day_of_week,
-            total_iterations=REPEAT_INDEFINITELY, extra_options=None):
+            total_iterations=REPEAT_INDEFINITELY, extra_options=None, repeat_every=1):
         """
         Sets this TimedSchedule to be a simple weekly schedule where you can choose
         the days of the week on which to send.
@@ -329,15 +344,17 @@ class TimedSchedule(Schedule):
         :start_day_of_week: The day of the week which will be considered the first day of the week for
             scheduling purposes
         :param total_iterations: The total number of weeks to send for
+        :param repeat_every: A value of 1 means repeat every week; 2 means repeat every other week, etc.
         """
         self.validate_day_of_week(start_day_of_week)
+        self.check_positive_repeat_every(repeat_every)
 
         with transaction.atomic():
             self.delete_related_events()
 
             self.event_type = self.get_event_type_from_model_event(model_event)
             self.start_day_of_week = start_day_of_week
-            self.repeat_every = 7
+            self.repeat_every = repeat_every * 7
             self.total_iterations = total_iterations
             self.ui_type = Schedule.UI_TYPE_WEEKLY
             self.start_offset = 0
@@ -369,19 +386,24 @@ class TimedSchedule(Schedule):
 
     @classmethod
     def create_simple_monthly_schedule(cls, domain, model_event, days, content,
-            total_iterations=REPEAT_INDEFINITELY, extra_options=None):
+            total_iterations=REPEAT_INDEFINITELY, extra_options=None, repeat_every=1):
         schedule = cls(domain=domain)
         schedule.set_simple_monthly_schedule(model_event, days, content, total_iterations=total_iterations,
-            extra_options=extra_options)
+            extra_options=extra_options, repeat_every=repeat_every)
         return schedule
 
     def set_simple_monthly_schedule(self, model_event, days, content, total_iterations=REPEAT_INDEFINITELY,
-            extra_options=None):
+            extra_options=None, repeat_every=1):
+        """
+        :param repeat_every: A value of 1 means repeat every month; 2 means repeat every other month, etc.
+        """
+        self.check_positive_repeat_every(repeat_every)
+
         with transaction.atomic():
             self.delete_related_events()
 
             self.event_type = self.get_event_type_from_model_event(model_event)
-            self.repeat_every = -1
+            self.repeat_every = -1 * repeat_every
             self.total_iterations = total_iterations
             self.ui_type = Schedule.UI_TYPE_MONTHLY
             self.start_offset = 0
