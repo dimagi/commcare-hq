@@ -10,39 +10,16 @@
     <link rel="stylesheet" href="{% static 'locations/css/manage.css' %}">
 {% endblock %}
 
-{% block js-inline %}{{ block.super }}
-<script>
-    var LOAD_LOCS_URL = '{{ api_root }}',
-        NEW_LOC_URL = '{% url "create_location" domain %}';
-
-    var locs = {{ locations|JSON }};
-    var can_edit_root = {{ can_edit_root|yesno:"true,false" }};
-    var hierarchy = {{ hierarchy|JSON }};
-    var show_inactive = {{ show_inactive|yesno:"true,false" }};
-
-    function loc_edit_url(loc_id) {
-        var template = '{% url "slab_edit_location" domain "-locid-" %}';
-        return template.replace('-locid-', loc_id);
-    }
-
-    function loc_descendant_url(loc_id) {
-        var template = '{% url "location_descendants_count" domain "-locid-" %}';
-        return template.replace('-locid-', loc_id);
-    }
-
-    remove_elements_after_action = function(button) {
-        $(button).closest('.loc_section').remove();
-    };
-
-    $(function() {
-        var model = new LocationTreeViewModel(hierarchy);
-        $('#location_tree').koApplyBindings(model);
-        model.load(locs);
-    });
-</script>
-{% endblock %}
-
 {% block page_content %}
+
+    {% registerurl 'slab_edit_location' domain '-locid-' %}
+    {% registerurl 'location_search' domain %}
+    {% registerurl 'create_location' domain %}
+    {% initial_page_data 'api_root' api_root %}
+    {% initial_page_data 'locations' locations|JSON %}
+    {% initial_page_data 'can_edit_root' can_edit_root|yesno:"true,false" %}
+    {% initial_page_data 'hierarchy' hierarchy %}
+    {% initial_page_data 'show_inactive' show_inactive|yesno:"true,false" %}
 
 {% if has_location_types %}
     <script type="text/html" id="location-template">
