@@ -13,6 +13,7 @@ Usage:
     ./manage.py test --log-file=test-failures.log
 """
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import datetime
 import os
 import sys
