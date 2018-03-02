@@ -63,8 +63,8 @@ class BaseDataDump(BaseCommand):
         self.email_result(download_id)
 
     def setup_result_file_name(self):
-        result_file_name = "data_dumps_{dump_title}_{timestamp}".format(
-            dump_title=(self.dump_title or self.case_type),
+        result_file_name = "{dump_title}_{timestamp}.csv".format(
+            dump_title=self.TASK_NAME,
             timestamp=datetime.now().strftime("%Y-%m-%d--%H-%M-%S"),
         )
         return result_file_name
