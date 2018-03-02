@@ -1,7 +1,10 @@
 from __future__ import absolute_import
 from __future__ import print_function
 
-from corehq.apps.es import case_search
+from corehq.apps.es import (
+    case_search,
+    queries,
+)
 from corehq.apps.es.case_search import CaseSearchES
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
@@ -47,14 +50,15 @@ class Command(BaseDataDump):
         self.test_type_value != 'microscopy-fluorescent' and
         self.test_type_value !=  'microscopy-zn'
         """
-        reject_test_types = ['clinical', 'dst', 'culture', 'sl_line_probe_assay', 'fl_line_probe_assay',
+        reject_test_types = ['dst', 'culture', 'sl_line_probe_assay', 'fl_line_probe_assay',
                              'cbnaat', 'microscopy-fluorescent', 'microscopy-zn']
         return (CaseSearchES()
                 .domain(DOMAIN)
                 .case_type(case_type)
+                .case_property_query("test_category", "clinical", clause=queries.MUST_NOT)
                 .NOT(case_search.case_property_filter(
-                    "test_type_value", reject_test_types)
-                ))
+                    "test_type_value", reject_test_types))
+                )
 
     def include_case_in_dump(self, test_case):
         person = self.get_person(test_case)
