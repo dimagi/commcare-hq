@@ -1,5 +1,5 @@
 /* globals django */
-hqImport('locations/js/location_tree', function() {
+hqDefine('locations/js/location_tree', function() {
     function api_get_children(loc_uuid, show_inactive, load_locs_url, callback) {
         var params = (loc_uuid ? {
             parent_id: loc_uuid,
@@ -61,6 +61,8 @@ hqImport('locations/js/location_tree', function() {
                 expanded: true,
                 reloadLocationSearchSelect: options.reloadLocationSearchSelect,
                 clearLocationSelection: options.clearLocationSelection,
+                new_loc_url: options.new_loc_url,
+                loc_edit_url: options.loc_edit_url,
             }, this));
         };
     }
@@ -73,6 +75,7 @@ hqImport('locations/js/location_tree', function() {
         var model = this;
         this.selected_location = ko.observable();
         this.l__selected_location_id = ko.observable();
+        this.clearLocationSelection = ko.observable(options.clearLocationSelection);
 
         this.selected_location_id = ko.computed(function() {
             if (!model.l__selected_location_id()) {
@@ -91,6 +94,8 @@ hqImport('locations/js/location_tree', function() {
                 is_archived: options.show_inactive,
                 reloadLocationSearchSelect: options.reloadLocationSearchSelect,
                 clearLocationSelection: options.clearLocationSelection,
+                new_loc_url: options.new_loc_url,
+                loc_edit_url: options.loc_edit_url,
             }, this);
         });
 
@@ -141,6 +146,8 @@ hqImport('locations/js/location_tree', function() {
                             expanded: 'semi',
                             reloadLocationSearchSelect: options.reloadLocationSearchSelect,
                             clearLocationSelection: options.clearLocationSelection,
+                            new_loc_url: options.new_loc_url,
+                            loc_edit_url: options.loc_edit_url,
                         }, model.selected_location_tree);
                         return level;
                     };
@@ -165,10 +172,11 @@ hqImport('locations/js/location_tree', function() {
         this.depth = depth || 0;
         this.children_status = ko.observable('not_loaded');
         this.expanded = ko.observable(false);
+        this.new_loc_url = ko.observable();
 
-        this.loc_edit_url = data.loc_edit_url;
+        this.edit_loc_url = ko.observable();
         this.reloadLocationSearchSelect = data.reloadLocationSearchSelect;
-        this.clearLocationSelection = data.clearLocationSelection;
+        this.clearLocationSelection = ko.observable();
 
         this.expanded.subscribe(function(val) {
             if (val === true && (this.children_status() === 'not_loaded' || this.children_status() === 'semi_loaded')) {
@@ -191,6 +199,10 @@ hqImport('locations/js/location_tree', function() {
             this.is_archived(data.is_archived);
             this.can_edit(data.can_edit);
             this.expanded(data.expanded);
+            this.new_loc_url(data.new_loc_url);
+            this.edit_loc_url(data.edit_loc_url);
+
+            this.clearLocationSelection(data.clearLocationSelection);
             if (data.children_status !== null && data.children_status !== undefined) {
                 this.children_status(data.children_status);
             }
@@ -272,7 +284,6 @@ hqImport('locations/js/location_tree', function() {
         }, this);
 
         this.no_children_caption = ko.computed(function() {
-            var child_type = this.allowed_child_type();
             var top_level = (this.name() == '_root');
 
             // TODO replace 'location' with proper type as applicable (what about pluralization?)
@@ -280,7 +291,7 @@ hqImport('locations/js/location_tree', function() {
         }, this);
 
         this.show_archive_action_button = ko.computed(function() {
-            return !show_inactive || this.is_archived();
+            return !data.show_inactive || this.is_archived();
         }, this);
 
         this.load(data);
@@ -347,7 +358,7 @@ hqImport('locations/js/location_tree', function() {
                             "name": name,
                         }), "success");
                         loc.remove_elements_after_action(button);
-                        reloadLocationSearchSelect();
+                        data.reloadLocationSearchSelect();
                     },
                 });
                 $(archive_location_modal).modal('hide');
@@ -373,7 +384,7 @@ hqImport('locations/js/location_tree', function() {
                 error: 'error',
                 success: function() {
                     loc.remove_elements_after_action(button);
-                    reloadLocationSearchSelect();
+                    data.reloadLocationSearchSelect();
                 },
             });
         };
@@ -400,7 +411,7 @@ hqImport('locations/js/location_tree', function() {
                                     "name": name,
                                 }), "success");
                                 loc.remove_elements_after_action(button);
-                                reloadLocationSearchSelect();
+                                data.reloadLocationSearchSelect();
                             } else {
                                 alert_user(response.message, "warning");
 
