@@ -4,6 +4,8 @@ from django.utils.deprecation import MiddlewareMixin
 from django.utils.translation import ugettext_lazy
 from corehq.apps.hqwebapp.views import no_permissions
 from corehq.toggles import PUBLISH_CUSTOM_REPORTS
+from corehq.util.soft_assert import soft_assert
+from no_exceptions.exceptions import Http401
 from .permissions import is_location_safe, location_restricted_response
 
 RESTRICTED_USER_UNASSIGNED_MSG = ugettext_lazy("""
@@ -31,6 +33,15 @@ class LocationAccessMiddleware(MiddlewareMixin):
     def process_view(self, request, view_fn, view_args, view_kwargs):
         user = getattr(request, 'couch_user', None)
         domain = getattr(request, 'domain', None)
+        if (
+            domain and not user
+            and not is_location_safe(view_fn, request, view_args, view_kwargs)
+        ):
+            # if domain and not user, then self.apply_location_access(request) is going to set
+            # request.can_access_all_locations = True, but that's not a good idea if the view is not location-safe.
+            # Better to throw a 401.
+            raise Http401('Please log in before requesting this URL')
+
         self.apply_location_access(request)
 
         if not request.can_access_all_locations:
