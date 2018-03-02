@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 
 from __future__ import division
+from __future__ import unicode_literals
 import datetime
 import math
 import operator
@@ -56,7 +57,7 @@ from corehq.util.timezones.conversions import ServerTime, PhoneTime
 from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.couch.safe_index import safe_index
 from dimagi.utils.dates import DateSpan, today_or_tomorrow
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.parsing import json_format_date, string_to_utc_datetime
 
 import six
@@ -1509,7 +1510,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
 
     @staticmethod
     def _html_anchor_tag(href, value):
-        return u'<a href="{}" target="_blank">{}</a>'.format(href, value)
+        return '<a href="{}" target="_blank">{}</a>'.format(href, value)
 
     @staticmethod
     def _make_url(base_url, params):

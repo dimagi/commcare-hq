@@ -5,7 +5,7 @@
         </div>
     </div>
     <div class="report-content">
-        <div class="alert alert-info" ng-show="$ctrl.now === $ctrl.selectedMonth">
+        <div class="alert alert-info" ng-show="$ctrl.showWarning()">
             <strong>Info!</strong> "You are downloading data for the current calendar month. Data for this report is calculated using calendar months (for example, January 1st-January 31st). Data for this month will not be complete until the end of the month."
         </div>
         <div class="alert alert-info col-md-12" ng-if="$ctrl.isChildBeneficiaryListSelected() && $ctrl.hasErrors()">
@@ -243,8 +243,8 @@
             </div>
             <div class="issnip-spinner-container" ng-if="($ctrl.showProgressBar() || $ctrl.readyToDownload() || $ctrl.queuedISSNIPTask) && !$ctrl.downloaded">
                 <i ng-if="$ctrl.showProgressBar() || $ctrl.queuedISSNIPTask" class="fa fa-circle-o-notch fa-spin"></i>
-                <span ng-if="$ctrl.showProgressBar() || $ctrl.queuedISSNIPTask">Preparing your ISSNIP report...</span>
-                <span ng-if="$ctrl.readyToDownload()">Your ISSNIP report is ready to be downloaded</span>
+                <span ng-if="$ctrl.showProgressBar() || $ctrl.queuedISSNIPTask">Preparing your ICDS-CAS monthly register report...</span>
+                <span ng-if="$ctrl.readyToDownload()">Your ICDS-CAS monthly register report is ready to be downloaded</span>
                 <a class="btn btn-primary" ng-click="$ctrl.goToLink()"
                    ng-disabled="!$ctrl.readyToDownload()"><span>Download</span></a>
             </div>

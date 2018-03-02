@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import division
+from __future__ import unicode_literals
 import datetime
 import io
 from dimagi.utils.csv import UnicodeWriter
@@ -23,7 +24,7 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import CommCareCaseSQL
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 from corehq.util.soft_assert import soft_assert
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from casexml.apps.case.const import ARCHIVED_CASE_OWNER_ID
 from corehq.apps.hqwebapp.tasks import send_html_email_async
@@ -756,9 +757,9 @@ class EpisodeVoucherUpdate(object):
             return {}
 
         return {
-            u'date_last_refill': date_last_refill.strftime("%Y-%m-%d"),
-            u'voucher_length': voucher_length,
-            u'refill_due_date': refill_due_date.strftime("%Y-%m-%d"),
+            'date_last_refill': date_last_refill.strftime("%Y-%m-%d"),
+            'voucher_length': voucher_length,
+            'refill_due_date': refill_due_date.strftime("%Y-%m-%d"),
         }
 
     def get_first_voucher_details(self):
@@ -781,9 +782,9 @@ class EpisodeVoucherUpdate(object):
             return {}
 
         return {
-            u'first_voucher_generation_date': first_voucher_generated.get_case_property('date_issued'),
-            u'first_voucher_drugs': first_prescription.get_case_property('drugs_ordered_readable'),
-            u'first_voucher_validation_date': (fulfilled_voucher_cases[0].get_case_property('date_fulfilled')
+            'first_voucher_generation_date': first_voucher_generated.get_case_property('date_issued'),
+            'first_voucher_drugs': first_prescription.get_case_property('drugs_ordered_readable'),
+            'first_voucher_validation_date': (fulfilled_voucher_cases[0].get_case_property('date_fulfilled')
                                               if fulfilled_voucher_cases else '')
         }
 
@@ -805,10 +806,10 @@ class EpisodeTestUpdate(object):
     def update_json(self):
         if self.diagnostic_tests:
             return {
-                u'diagnostic_tests': ", ".join([self._get_diagnostic_test_name(diagnostic_test)
+                'diagnostic_tests': ", ".join([self._get_diagnostic_test_name(diagnostic_test)
                                                 for diagnostic_test in self.diagnostic_tests
                                                 if self._get_diagnostic_test_name(diagnostic_test) is not None]),
-                u'diagnostic_test_results': ", ".join(
+                'diagnostic_test_results': ", ".join(
                     [diagnostic_test.get_case_property('result_grade')
                      for diagnostic_test in self.diagnostic_tests
                      if diagnostic_test.get_case_property('result_grade') is not None]
@@ -821,7 +822,7 @@ class EpisodeTestUpdate(object):
     def _get_diagnostic_test_name(self, diagnostic_test):
         site_specimen_name = diagnostic_test.get_case_property('site_specimen_name')
         if site_specimen_name:
-            return u"{}: {}".format(
+            return "{}: {}".format(
                 diagnostic_test.get_case_property('investigation_type_name'), site_specimen_name)
         else:
             return diagnostic_test.get_case_property('investigation_type_name')
@@ -883,7 +884,7 @@ def get_updated_fields(existing_properties, new_properties):
     updated_fields = {}
     for prop, value in new_properties.items():
         existing_value = six.text_type(existing_properties.get(prop, '--'))
-        new_value = six.text_type(value) if value is not None else u""
+        new_value = six.text_type(value) if value is not None else ""
         if existing_value != new_value:
             updated_fields[prop] = value
     return updated_fields
@@ -899,11 +900,10 @@ def run_model_reconciliation(command_name, email, person_case_ids=None, commit=F
 
 
 @task(queue='background_queue', ignore_result=True)
-def run_custom_export_tasks(command_name, email, case_type):
+def run_custom_export_tasks(command_name, email):
     if settings.SERVER_ENVIRONMENT == "enikshay":
         call_command(command_name,
-                     recipient=email,
-                     case_type=case_type)
+                     recipient=email)
 
 
 @task

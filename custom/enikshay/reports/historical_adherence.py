@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from collections import defaultdict, namedtuple
 import datetime
 
@@ -26,7 +27,7 @@ from django.utils.translation import ugettext_lazy
 
 from custom.enikshay.tasks import EpisodeAdherenceUpdate, calculate_dose_status_by_day
 from dimagi.utils.dates import DateSpan
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 import six
 from six.moves import range
 

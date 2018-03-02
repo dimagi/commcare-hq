@@ -8,7 +8,7 @@ from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
 
 from couchexport.models import Format
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 from corehq.const import SERVER_DATE_FORMAT
 from corehq.apps.reports.cache import request_cache

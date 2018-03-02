@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.utils.translation import ugettext_noop
 import dateutil
 from corehq.apps.app_manager.dbaccessors import get_latest_build_id

@@ -1,7 +1,8 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.db import models
 
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 REPORTING_MECHANISM_MISSED_CALL = 83
 REPORTING_MECHANISM_99_DOTS = 84

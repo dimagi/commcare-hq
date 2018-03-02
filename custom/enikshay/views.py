@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.http import HttpResponse
 from django.http.response import JsonResponse
 from django.shortcuts import redirect
@@ -110,28 +111,22 @@ class ReconciliationTaskView(TemplateView):
         return JsonResponse({'message': 'Task queued. You would get an email shortly.'})
 
 
+@method_decorator(require_superuser, name="dispatch")
 class DataDumpTaskView(TemplateView):
     template_name = "enikshay/data_dumps_task.html"
 
-    @method_decorator(require_superuser)
     def get(self, request, *args, **kwargs):
         return super(DataDumpTaskView, self).get(request, *args, **kwargs)
-
-    @staticmethod
-    def permitted_tasks():
-        return [choice[0] for choice in DataDumpTaskForm().fields['task'].choices]
 
     def get_context_data(self, **kwargs):
         kwargs['data_dump_task_form'] = DataDumpTaskForm()
         return super(DataDumpTaskView, self).get_context_data(**kwargs)
 
-    @method_decorator(require_superuser)
     def post(self, request, *args, **kwargs):
         def run_task(task_name):
-            run_custom_export_tasks(
+            run_custom_export_tasks.delay(
                 task_name,
-                request.POST.get('email'),
-                request.POST.get('case_type')
+                request.POST.get('email')
             )
         task_requested = request.POST.get('task')
         message = 'Invalid task. How did you manage that?'  # should never stay in this state

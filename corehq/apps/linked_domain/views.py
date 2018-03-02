@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+from __future__ import absolute_import, unicode_literals
 
 from datetime import datetime
 
@@ -25,7 +25,7 @@ from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.dispatcher import DomainReportDispatcher
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.util.timezones.utils import get_timezone_for_request
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 
 @login_or_api_key

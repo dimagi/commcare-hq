@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.conf import settings
 from corehq.fluff.calculators.case import CasePropertyFilter
 import fluff
@@ -56,7 +57,7 @@ class CouvertureFluff(fluff.IndicatorDocument):
     deleted_types = IH_DELETED_TYPES
 
     location_id = flat_field(get_location_id)
-    region_id = flat_field(lambda f: get_location_id_by_type(form=f, type=u'r\xe9gion'))
+    region_id = flat_field(lambda f: get_location_id_by_type(form=f, type='r\xe9gion'))
     district_id = flat_field(lambda f: get_location_id_by_type(form=f, type='district'))
     pps_name = flat_field(lambda f: get_pps_name(f))
     district_name = flat_field(lambda f: get_district_name(f))
@@ -79,7 +80,7 @@ class TauxDeSatisfactionFluff(fluff.IndicatorDocument):
     group_by = (fluff.AttributeGetter('product_name', lambda f: get_products(f, 'productName')),
                 fluff.AttributeGetter('product_id', lambda f: get_products_id(f, 'productName')))
 
-    region_id = flat_field(lambda f: get_location_id_by_type(form=f, type=u'r\xe9gion'))
+    region_id = flat_field(lambda f: get_location_id_by_type(form=f, type='r\xe9gion'))
     district_id = flat_field(lambda f: get_location_id_by_type(form=f, type='district'))
     commandes = report_calcs.TauxCalculator(property_name='amountOrdered')
     recus = report_calcs.TauxCalculator(property_name='amountReceived')
@@ -112,7 +113,7 @@ class IntraHealthFluff(fluff.IndicatorDocument):
     group_by = (fluff.AttributeGetter('product_name', lambda f: get_products(f, 'product_name')),
                 fluff.AttributeGetter('product_id', lambda f: get_products_id(f, 'product_name')))
 
-    region_id = flat_field(lambda f: get_location_id_by_type(form=f, type=u'r\xe9gion'))
+    region_id = flat_field(lambda f: get_location_id_by_type(form=f, type='r\xe9gion'))
     district_id = flat_field(lambda f: get_location_id_by_type(form=f, type='district'))
     PPS_name = flat_field(lambda f: get_pps_name(f))
     district_name = flat_field(lambda f: get_district_name(f))
@@ -145,7 +146,7 @@ class RecapPassageFluff(fluff.IndicatorDocument):
                 fluff.AttributeGetter('product_id', lambda f: get_products_id(f, 'product_name')))
 
     location_id = flat_field(get_location_id)
-    region_id = flat_field(lambda f: get_location_id_by_type(form=f, type=u'r\xe9gion'))
+    region_id = flat_field(lambda f: get_location_id_by_type(form=f, type='r\xe9gion'))
     district_id = flat_field(lambda f: get_location_id_by_type(form=f, type='district'))
     real_date_repeat = flat_field(get_real_date)
     PPS_name = flat_field(lambda f: f.form['PPS_name'])
@@ -164,7 +165,7 @@ class TauxDeRuptureFluff(fluff.IndicatorDocument):
     group_by = (fluff.AttributeGetter('product_name', lambda f: get_rupture_products(f)),
                 fluff.AttributeGetter('product_id', lambda f: get_rupture_products_ids(f)))
 
-    region_id = flat_field(lambda f: get_location_id_by_type(form=f, type=u'r\xe9gion'))
+    region_id = flat_field(lambda f: get_location_id_by_type(form=f, type='r\xe9gion'))
     district_id = flat_field(lambda f: get_location_id_by_type(form=f, type='district'))
     district_name = flat_field(lambda f: f.form['district'])
     PPS_name = flat_field(lambda f: CommCareCase.get(f.form['case']['@case_id']).name)
@@ -183,7 +184,7 @@ class LivraisonFluff(fluff.IndicatorDocument):
     month = flat_field(lambda f: get_month(f, 'mois_visite'))
     duree_moyenne_livraison = report_calcs.DureeMoyenneLivraison()
 
-    region_id = flat_field(lambda f: get_location_id_by_type(form=f, type=u'r\xe9gion'))
+    region_id = flat_field(lambda f: get_location_id_by_type(form=f, type='r\xe9gion'))
     district_id = flat_field(lambda f: CommCareCase.get(f.form['case']['@case_id']).location_id)
     district_name = flat_field(lambda f: CommCareCase.get(f.form['case']['@case_id']).name)
 

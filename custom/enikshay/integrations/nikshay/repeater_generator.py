@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import re
 import json
 import datetime
@@ -66,7 +67,7 @@ from dimagi.utils.post import parse_SOAP_response
 
 from custom.enikshay.integrations.nikshay.utils import get_location_user_for_notification
 from custom.enikshay.location_utils import get_health_establishment_hierarchy_codes
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 import six
 
 ENIKSHAY_ID = 8
@@ -189,7 +190,7 @@ class NikshayTreatmentOutcomePayload(BaseNikshayPayloadGenerator):
             "PatientID": episode_case_properties.get("nikshay_id"),
             "OutcomeDate": episode_case_properties.get(TREATMENT_OUTCOME_DATE),
             "Outcome": treatment_outcome.get(episode_case_properties.get(TREATMENT_OUTCOME)),
-            "MO": u"{} {}".format(
+            "MO": "{} {}".format(
                 episode_case_properties.get(TREATMENT_SUPPORTER_FIRST_NAME),
                 episode_case_properties.get(TREATMENT_SUPPORTER_LAST_NAME),
             ),
@@ -521,7 +522,7 @@ class NikshayHealthEstablishmentPayloadGenerator(SOAPPayloadGeneratorMixin, Loca
     @staticmethod
     def _get_address(location_user_data):
         if location_user_data.get('address_line_1') or location_user_data.get('address_line_2'):
-            return (u"%s %s" % (
+            return ("%s %s" % (
                 location_user_data.get('address_line_1'), location_user_data.get('address_line_2'))).strip()
         else:
             return NOT_AVAILABLE_VALUE

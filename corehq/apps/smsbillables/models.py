@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import division
+from __future__ import unicode_literals
 from collections import namedtuple
 from decimal import Decimal
 
@@ -41,6 +42,7 @@ class SmsGatewayFeeCriteria(models.Model):
     direction = models.CharField(max_length=10, db_index=True, choices=DIRECTION_CHOICES)
     country_code = models.IntegerField(null=True, blank=True, db_index=True)
     prefix = models.CharField(max_length=10, blank=True, default="", db_index=True)
+    is_active = models.BooleanField(default=True, db_index=True)
 
     class Meta(object):
         app_label = 'smsbillables'
@@ -55,7 +57,11 @@ class SmsGatewayFeeCriteria(models.Model):
         - backend_instance (optional)
         - country_code and prefix (optional)
         """
-        all_possible_criteria = cls.objects.filter(backend_api_id=backend_api_id, direction=direction)
+        all_possible_criteria = cls.objects.filter(
+            backend_api_id=backend_api_id,
+            direction=direction,
+            is_active=True,
+        )
 
         if all_possible_criteria.count() == 0:
             return None

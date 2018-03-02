@@ -3,7 +3,7 @@ import json
 from couchdbkit import ResourceNotFound
 from django.http import HttpResponse, HttpResponseRedirect, Http404
 from django.contrib import messages
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.web import json_response
 from django.views.decorators.http import require_POST
 from django.utils.translation import ugettext as _, ugettext_noop

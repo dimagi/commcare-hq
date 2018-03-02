@@ -26,7 +26,7 @@ from corehq.motech.openmrs.repeater_helpers import (
 )
 from corehq.motech.openmrs.repeaters import OpenmrsRepeater
 from corehq.motech.utils import b64_aes_encrypt
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.web import json_response
 from six.moves import map
 from six.moves import range

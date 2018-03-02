@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import datetime
 import calendar
 
@@ -131,7 +132,7 @@ class RepeaterFilter(BaseSingleOptionFilter):
     def options(self):
         repeaters = self._get_repeaters()
         return list(map(
-            lambda repeater: (repeater.get_id, u'{}: {}'.format(
+            lambda repeater: (repeater.get_id, '{}: {}'.format(
                 repeater.doc_type,
                 repeater.url,
             )),

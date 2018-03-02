@@ -14,7 +14,7 @@ from django import template
 from django.urls import reverse
 from django.utils.html import escape, format_html
 from django.utils.safestring import mark_safe
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from django_prbac.utils import has_privilege
 
 from dimagi.utils.make_uuid import random_hex

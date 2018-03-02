@@ -41,7 +41,7 @@ from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.exceptions import SuiteError
 from corehq.apps.app_manager.xpath import session_var, XPath
 from corehq import toggles
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 
 class DetailContributor(SectionContributor):

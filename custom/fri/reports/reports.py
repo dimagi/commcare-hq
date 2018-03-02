@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import cgi
 from datetime import datetime, time, timedelta
 from django.utils.translation import ugettext_noop

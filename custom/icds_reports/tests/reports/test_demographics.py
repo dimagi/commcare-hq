@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+from __future__ import unicode_literals
 from django.test import TestCase
 
 from custom.icds_reports.reports.demographics_data import get_demographics_data

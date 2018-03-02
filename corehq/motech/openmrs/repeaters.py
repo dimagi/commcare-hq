@@ -18,7 +18,7 @@ from corehq.motech.openmrs.repeater_helpers import (
     get_form_question_values,
     get_relevant_case_updates_from_form_json,
 )
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 
 # it actually triggers on forms,

@@ -1,5 +1,6 @@
 # coding=utf-8
 from __future__ import absolute_import, division
+from __future__ import unicode_literals
 from collections import namedtuple
 from datetime import date, datetime, timedelta
 
@@ -16,7 +17,7 @@ from couchexport.export import SCALAR_NEVER_WAS
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 from corehq.apps.es import filters
 from dimagi.utils.dates import safe_strftime
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.parsing import string_to_utc_datetime
 from phonelog.models import UserErrorEntry
 
@@ -325,9 +326,9 @@ def _fmt_date(date, include_sort_key=True):
         return _bootstrap_class(delta, timedelta(days=7), timedelta(days=3))
 
     if not date:
-        text = u'<span class="label label-default">{0}</span>'.format(_("Never"))
+        text = '<span class="label label-default">{0}</span>'.format(_("Never"))
     else:
-        text = u'<span class="{cls}">{text}</span>'.format(
+        text = '<span class="{cls}">{text}</span>'.format(
                 cls=_timedelta_class(datetime.utcnow() - date),
                 text=_(_naturaltime_with_hover(date)),
         )
@@ -338,7 +339,7 @@ def _fmt_date(date, include_sort_key=True):
 
 
 def _naturaltime_with_hover(date):
-    return u'<span title="{}">{}</span>'.format(date, naturaltime(date) or '---')
+    return '<span title="{}">{}</span>'.format(date, naturaltime(date) or '---')
 
 
 def _bootstrap_class(obj, severe, warn):
@@ -410,7 +411,7 @@ class ApplicationErrorReport(GenericTabularReport, ProjectReport):
     @memoized
     def _apps_by_id(self):
         def link(app):
-            return u'<a href="{}">{}</a>'.format(
+            return '<a href="{}">{}</a>'.format(
                 reverse('view_app', args=[self.domain, app.get_id]),
                 app.name,
             )

@@ -1,5 +1,6 @@
 # coding: utf-8
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from collections import namedtuple
 from datetime import datetime, timedelta
 from importlib import import_module
@@ -21,7 +22,7 @@ from corehq.apps.reports.const import USER_QUERY_LIMIT
 from couchexport.util import SerializableFunction
 from couchforms.analytics import get_first_form_submission_received
 from dimagi.utils.dates import DateSpan
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.web import json_request
 
 from corehq.apps.reports.exceptions import EditFormValidationError
@@ -192,7 +193,7 @@ def namedtupledict(name, fields):
 
 
 class SimplifiedUserInfo(
-        namedtupledict('SimplifiedUserInfo', (
+        namedtupledict(b'SimplifiedUserInfo' if six.PY2 else 'SimplifiedUserInfo', (
             'user_id',
             'username_in_report',
             'raw_username',
@@ -228,12 +229,12 @@ def _report_user_dict(user):
                         else username)
         first = user.get('first_name', '')
         last = user.get('last_name', '')
-        full_name = (u"%s %s" % (first, last)).strip()
+        full_name = ("%s %s" % (first, last)).strip()
 
         def parts():
-            yield u'%s' % html.escape(raw_username)
+            yield '%s' % html.escape(raw_username)
             if full_name:
-                yield u' "%s"' % html.escape(full_name)
+                yield ' "%s"' % html.escape(full_name)
         username_in_report = safestring.mark_safe(''.join(parts()))
         return SimplifiedUserInfo(
             user_id=user.get('_id', ''),
@@ -477,7 +478,7 @@ def get_INFilter_bindparams(base_name, values):
 def validate_xform_for_edit(xform):
     for node in xform.bind_nodes:
         if '@case_id' in node.attrib.get('nodeset') and node.attrib.get('calculate') == 'uuid()':
-            raise EditFormValidationError(_(u'Form cannot be edited because it will create a new case'))
+            raise EditFormValidationError(_('Form cannot be edited because it will create a new case'))
 
     return None
 

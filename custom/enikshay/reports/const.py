@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 TREATMENT_OUTCOMES = (
     'cured',
     'treatment_complete',

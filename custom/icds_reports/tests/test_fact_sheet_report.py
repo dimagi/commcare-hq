@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+from __future__ import unicode_literals
 from datetime import datetime
 from django.test.testcases import TestCase
 from custom.icds_reports.views import FactSheetsReport
@@ -298,7 +299,8 @@ class TestFactSheetReportMaternalAndChildNutrition(TestCase):
                 'data_source': 'AggChildHealthMonthlyDataSource',
                 'format': 'percent',
                 'header': 'Percent of children born in month with low birth weight',
-                'slug': 'low_birth_weight'
+                'slug': 'low_birth_weight',
+                'reverseColors': True,
             }
         )
 

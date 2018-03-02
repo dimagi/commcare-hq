@@ -19,7 +19,7 @@ from corehq.util.quickcache import quickcache
 from couchexport.models import Format
 from couchexport.writers import Excel2007ExportWriter
 from dimagi.utils.couch.loosechange import map_reduce
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from soil import DownloadBase
 from soil.util import expose_blob_download
 

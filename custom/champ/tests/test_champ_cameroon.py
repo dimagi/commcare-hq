@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from datetime import date
 
 from corehq.apps.userreports.specs import EvaluationContext
@@ -31,6 +32,9 @@ class TestEnhancedPeerMobilization(TestDataSourceExpressions):
                 'meta': {
                     'userID': 'user_id',
                     'timeEnd': '2017-01-31 20:00'
+                },
+                'seropostive_group': {
+                    'first_art_date': '2017-02-03',
                 },
                 'load': {
                     'uic': 'test uic',
@@ -156,7 +160,7 @@ class TestEnhancedPeerMobilization(TestDataSourceExpressions):
                     'userID': 'user_id',
                     'timeEnd': '2017-01-31 20:00'
                 },
-                'load': {
+                'seropostive_group': {
                     'first_art_date': '2017-02-03',
                 },
                 'viral_load_group': {
@@ -280,8 +284,10 @@ class TestEnhancedPeerMobilization(TestDataSourceExpressions):
                     'userID': 'user_id',
                     'timeEnd': '2017-01-31 20:00'
                 },
-                'load': {
+                'seropostive_group': {
                     'first_art_date': '2017-02-03',
+                },
+                'load': {
                     'client_type': 'test client',
                     'hiv_status': 'positive',
                 },

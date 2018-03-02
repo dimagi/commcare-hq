@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 COMPOSITE_INDICATORS = dict(
     # Child Health
     under5_fever_rdt_proportion=dict(

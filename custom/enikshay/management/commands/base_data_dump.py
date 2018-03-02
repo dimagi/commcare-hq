@@ -1,8 +1,12 @@
 # -*- coding: utf-8 -*-
-from __future__ import absolute_import
-import os
+from __future__ import (
+    absolute_import,
+    unicode_literals,
+)
 import csv
+import os
 import tempfile
+from zipfile import ZipFile
 from datetime import datetime
 
 from django.core.management.base import BaseCommand
@@ -15,6 +19,7 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.files import safe_filename_header
 
 from dimagi.utils.django.email import send_HTML_email
+from dimagi.utils.web import get_url_base
 
 from soil.util import expose_blob_download
 from casexml.apps.case.util import get_all_changes_to_case_property
@@ -45,16 +50,21 @@ class BaseDataDump(BaseCommand):
 
     def handle(self, recipient, *args, **options):
         self.recipient = recipient
+
+        if not self.recipient:
+            return
+
         self.full = options.get('full')
         self.setup()
         temp_file_path = self.generate_dump()
-        download_id = self.save_dump_to_blob(temp_file_path)
-        if self.recipient:
-            self.email_result(download_id)
+        temp_zip_path = self.zip_dump(temp_file_path)
+        download_id = self.save_dump_to_blob(temp_zip_path)
+        self.clean_temp_files(temp_file_path, temp_zip_path)
+        self.email_result(download_id)
 
     def setup_result_file_name(self):
-        result_file_name = "{dump_title}_{timestamp}.csv".format(
-            dump_title=self.TASK_NAME,
+        result_file_name = "data_dumps_{dump_title}_{timestamp}".format(
+            dump_title=(self.dump_title or self.case_type),
             timestamp=datetime.now().strftime("%Y-%m-%d--%H-%M-%S"),
         )
         return result_file_name
@@ -129,25 +139,43 @@ class BaseDataDump(BaseCommand):
 
         return temp_path
 
+    def zip_dump(self, temp_file_path):
+        _, zip_temp_path = tempfile.mkstemp(".zip")
+        with ZipFile(zip_temp_path, 'w') as zip_file_:
+            zip_file_.write(temp_file_path, self.result_file_name + '.csv')
+
+        return zip_temp_path
+
     def save_dump_to_blob(self, temp_path):
         with open(temp_path, 'rb') as file_:
             blob_db = get_blob_db()
-            blob_db.put(file_, self.result_file_name, timeout=60 * 48)  # 48 hours
-
-            file_format = Format.from_format(Format.CSV)
-            blob_dl_object = expose_blob_download(
+            blob_db.put(
+                file_,
                 self.result_file_name,
-                mimetype=file_format.mimetype,
-                content_disposition=safe_filename_header(self.result_file_name, file_format.extension),
-            )
+                timeout=60 * 48)  # 48 hours
+        file_format = Format.from_format(Format.CSV)
+        file_name_header = safe_filename_header(
+            self.result_file_name, file_format.extension)
+        blob_dl_object = expose_blob_download(
+            self.result_file_name,
+            mimetype=file_format.mimetype,
+            content_disposition=file_name_header
+        )
         return blob_dl_object.download_id
 
+    def clean_temp_files(self, *temp_file_paths):
+        for file_path in temp_file_paths:
+            os.remove(file_path)
+
     def email_result(self, download_id):
-        url = reverse('ajax_job_poll', kwargs={'download_id': download_id})
+        url = "%s%s?%s" % (get_url_base(),
+                           reverse('retrieve_download', kwargs={'download_id': download_id}),
+                           "get_file")  # downloads immediately, rather than rendering page
+
         send_HTML_email('%s Download for %s Finished' % (DOMAIN, self.case_type),
                         self.recipient,
                         'Simple email, just to let you know that there is a '
-                        'download waiting for you at %s' % url)
+                        'download waiting for you at %s. It will expire in 48 hours' % url)
 
     def get_cases(self, case_type):
         case_accessor = CaseAccessors(DOMAIN)

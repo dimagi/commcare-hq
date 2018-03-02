@@ -41,7 +41,7 @@ from couchexport.files import Temp
 from couchexport.models import Format
 from couchexport.shortcuts import export_response
 from dimagi.utils.couch.undo import get_deleted_doc_type, is_deleted, undo_delete, soft_delete
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_response
 

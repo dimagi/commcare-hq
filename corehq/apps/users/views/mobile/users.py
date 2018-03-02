@@ -24,7 +24,7 @@ from couchdbkit import ResourceNotFound
 from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
 import re
 
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.web import json_response
 from django_prbac.exceptions import PermissionDenied
 from django_prbac.utils import has_privilege
@@ -274,7 +274,7 @@ class EditCommCareUserView(BaseEditUserView):
             if re.match(r'\d+$', phone_number):
                 self.editable_user.add_phone_number(phone_number)
                 self.editable_user.save()
-                messages.success(request, _("Phone number added!"))
+                messages.success(request, _("Phone number added."))
             else:
                 messages.error(request, _("Please enter digits only."))
         return super(EditCommCareUserView, self).post(request, *args, **kwargs)

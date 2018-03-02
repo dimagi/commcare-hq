@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.urls import reverse, NoReverseMatch
 from django.views import View
 
@@ -12,7 +13,7 @@ from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.form_processor.reprocess import ReprocessingError
 from corehq.util.timezones.conversions import ServerTime
 
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.parsing import string_to_utc_datetime
 from corehq.apps.reports.display import xmlns_to_name
 from django.utils.translation import ugettext_noop, ugettext as _

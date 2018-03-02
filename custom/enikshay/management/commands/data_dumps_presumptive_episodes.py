@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import print_function
+from __future__ import unicode_literals
 import os
 from corehq.apps.es import case_search
 from corehq.apps.users.models import CommCareUser

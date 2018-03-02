@@ -1,11 +1,12 @@
 from __future__ import absolute_import
 from __future__ import division
+from __future__ import unicode_literals
 from collections import OrderedDict
 import re
 from sqlagg.base import AliasColumn
 from sqlagg.filters import EQ, OR, AND, BETWEEN, NOTEQ
 from corehq.apps.userreports.util import get_table_name
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from sqlagg.columns import *
 from django.utils.translation import ugettext as _, ugettext_noop
 from corehq.apps.fixtures.models import FixtureDataItem
@@ -18,7 +19,7 @@ from .definitions import *
 import six
 
 
-NO_VALUE = u'\u2014'
+NO_VALUE = '\u2014'
 
 
 def _int(str):

@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import copy
 from datetime import datetime, timedelta, date
 from functools import partial
@@ -95,7 +96,7 @@ from dimagi.utils.couch.bulk import wrapped_docs
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.couch.loosechange import parse_date
 from dimagi.utils.decorators.datespan import datespan_in_request
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.parsing import (json_format_datetime, string_to_boolean,
                                   string_to_datetime, json_format_date)
@@ -1127,9 +1128,9 @@ class ScheduledReportsView(BaseProjectReportSectionView):
             self.report_notification.save()
             ProjectReportsTab.clear_dropdown_cache(self.domain, self.request.couch_user.get_id)
             if self.is_new:
-                messages.success(request, "Scheduled report added!")
+                messages.success(request, _("Scheduled report added."))
             else:
-                messages.success(request, "Scheduled report updated!")
+                messages.success(request, _("Scheduled report updated."))
 
             touch_saved_reports_views(request.couch_user, self.domain)
             return HttpResponseRedirect(reverse('reports_home', args=(self.domain,)))
@@ -1626,9 +1627,9 @@ def edit_case_view(request, domain, case_id):
         submit_case_blocks([CaseBlock(case_id=case_id, **case_block_kwargs).as_string()],
             domain, username=user.username, user_id=user._id, device_id=__name__ + ".edit_case",
             xmlns=EDIT_FORM_XMLNS)
-        messages.success(request, _(u'Case properties saved for %s.' % case.name))
+        messages.success(request, _('Case properties saved for %s.' % case.name))
     else:
-        messages.success(request, _(u'No changes made to %s.' % case.name))
+        messages.success(request, _('No changes made to %s.' % case.name))
     return JsonResponse({'success': 1})
 
 
@@ -1638,7 +1639,7 @@ def edit_case_view(request, domain, case_id):
 def rebuild_case_view(request, domain, case_id):
     case = _get_case_or_404(domain, case_id)
     rebuild_case_from_forms(domain, case_id, UserRequestedRebuild(user_id=request.couch_user.user_id))
-    messages.success(request, _(u'Case %s was rebuilt from its forms.' % case.name))
+    messages.success(request, _('Case %s was rebuilt from its forms.' % case.name))
     return HttpResponseRedirect(reverse('case_details', args=[domain, case_id]))
 
 
@@ -1652,7 +1653,7 @@ def resave_case_view(request, domain, case_id):
     resave_case(domain, case)
     messages.success(
         request,
-        _(u'Case %s was successfully saved. Hopefully it will show up in all reports momentarily.' % case.name),
+        _('Case %s was successfully saved. Hopefully it will show up in all reports momentarily.' % case.name),
     )
     return HttpResponseRedirect(reverse('case_details', args=[domain, case_id]))
 
@@ -1663,11 +1664,11 @@ def resave_case_view(request, domain, case_id):
 def close_case_view(request, domain, case_id):
     case = _get_case_or_404(domain, case_id)
     if case.closed:
-        messages.info(request, u'Case {} is already closed.'.format(case.name))
+        messages.info(request, 'Case {} is already closed.'.format(case.name))
     else:
         device_id = __name__ + ".close_case_view"
         form_id = close_case(case_id, domain, request.couch_user, device_id)
-        msg = _(u'''Case {name} has been closed.
+        msg = _('''Case {name} has been closed.
             <a href="javascript:document.getElementById('{html_form_id}').submit();">Undo</a>.
             You can also reopen the case in the future by archiving the last form in the case history.
             <form id="{html_form_id}" action="{url}" method="POST">
@@ -1691,13 +1692,13 @@ def close_case_view(request, domain, case_id):
 def undo_close_case_view(request, domain, case_id):
     case = _get_case_or_404(domain, case_id)
     if not case.closed:
-        messages.info(request, u'Case {} is not closed.'.format(case.name))
+        messages.info(request, 'Case {} is not closed.'.format(case.name))
     else:
         closing_form_id = request.POST['closing_form']
         assert closing_form_id in case.xform_ids
         form = FormAccessors(domain).get_form(closing_form_id)
         form.archive(user_id=request.couch_user._id)
-        messages.success(request, u'Case {} has been reopened.'.format(case.name))
+        messages.success(request, 'Case {} has been reopened.'.format(case.name))
     return HttpResponseRedirect(reverse('case_details', args=[domain, case_id]))
 
 
@@ -2078,15 +2079,15 @@ class EditFormInstance(View):
                 case = CaseAccessors(domain).get_case(edit_session_data['case_id'])
                 if case.closed:
                     return _error(_(
-                        u'Case <a href="{case_url}">{case_name}</a> is closed. Please reopen the '
-                        u'case before editing the form'
+                        'Case <a href="{case_url}">{case_name}</a> is closed. Please reopen the '
+                        'case before editing the form'
                     ).format(
                         case_url=reverse('case_details', args=[domain, case.case_id]),
                         case_name=case.name,
                     ))
                 elif case.is_deleted:
                     return _error(
-                        _(u'Case <a href="{case_url}">{case_name}</a> is deleted. Cannot edit this form.').format(
+                        _('Case <a href="{case_url}">{case_name}</a> is deleted. Cannot edit this form.').format(
                             case_url=reverse('case_details', args=[domain, case.case_id]),
                             case_name=case.name,
                         )
@@ -2128,10 +2129,10 @@ def restore_edit(request, domain, instance_id):
     instance = _get_location_safe_form(domain, request.couch_user, instance_id)
     if instance.is_deprecated:
         submit_form_locally(instance.get_xml(), domain, app_id=instance.app_id, build_id=instance.build_id)
-        messages.success(request, _(u'Form was restored from a previous version.'))
+        messages.success(request, _('Form was restored from a previous version.'))
         return HttpResponseRedirect(reverse('render_form_data', args=[domain, instance.orig_id]))
     else:
-        messages.warning(request, _(u'Sorry, that form cannot be edited.'))
+        messages.warning(request, _('Sorry, that form cannot be edited.'))
         return HttpResponseRedirect(reverse('render_form_data', args=[domain, instance_id]))
 
 
@@ -2167,9 +2168,9 @@ def archive_form(request, domain, instance_id):
         "csrf_inline": csrf_inline(request)
     }
 
-    msg_template = u"""{notif} <a href="javascript:document.getElementById('{id}').submit();">{undo}</a>
+    msg_template = """{notif} <a href="javascript:document.getElementById('{id}').submit();">{undo}</a>
         <form id="{id}" action="{url}" method="POST">{csrf_inline}</form>""" \
-        if instance.is_archived else u'{notif}'
+        if instance.is_archived else '{notif}'
     msg = msg_template.format(**params)
     messages.add_message(request, notify_level, mark_safe(msg), extra_tags='html')
 
@@ -2179,9 +2180,9 @@ def archive_form(request, domain, instance_id):
 def _get_cases_with_forms_message(domain, cases_with_other_forms, case_id_from_request):
     def _get_case_link(case_id, name):
         if case_id == case_id_from_request:
-            return _(u"%(case_name)s (this case)") % {'case_name': name}
+            return _("%(case_name)s (this case)") % {'case_name': name}
         else:
-            return u'<a href="{}#!history">{}</a>'.format(reverse('case_details', args=[domain, case_id]), name)
+            return '<a href="{}#!history">{}</a>'.format(reverse('case_details', args=[domain, case_id]), name)
 
     case_links = ', '.join([
         _get_case_link(case_id, name)
@@ -2189,7 +2190,7 @@ def _get_cases_with_forms_message(domain, cases_with_other_forms, case_id_from_r
     ])
     msg = _("""Form cannot be archived as it creates cases that are updated by other forms.
         All other forms for these cases must be archived first:""")
-    notify_msg = u"""{} {}""".format(msg, case_links)
+    notify_msg = """{} {}""".format(msg, case_links)
     return notify_msg
 
 
