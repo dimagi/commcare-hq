@@ -1,39 +1,37 @@
 hqDefine('userreports/js/reportbuilder/configure_report', function() {
+    var initialPageData = hqImport('hqwebapp/js/initial_page_data');
 
     var ReportBuilder = {
       Constants: hqImport("userreports/js/constants"),
     };
 
-    $(document).ready(function() {
-        var reportConfig = new reportBuilder.ReportConfig({
-            "columnOptions": {{ column_options|JSON }},
-            "initialColumns": {{ initial_columns|JSON }},
-            "app": {{ application|JSON }},
-            "sourceId": {{ source_id|JSON }},
-            "sourceType": "{{ source_type }}",
-            "reportPreviewUrl": "{{ report_preview_url }}",
-            "previewDatasourceId": "{{ preview_datasource_id }}",
-            "existingReport": {% if existing_report %}{{ existing_report.get_id|JSON }}{% else %}null{% endif %},
-            "existingReportType": {{ existing_report_type|JSON }},
-            "reportTitle": "{{ report_title|escapejs }}",
-            "reportDescription": {% if report_description %}"{{ report_description|escapejs }}"{% else %}null{% endif %},
-            "dataSourceProperties": {{ data_source_properties|JSON }},
-            "initialDefaultFilters": {{ initial_default_filters|JSON }},
-            "initialUserFilters": {{ initial_user_filters|JSON }},
-            "initialLocation": {{ initial_location|JSON }},
-            "initialChartType": {{ initial_chart_type|JSON }},
-            "mapboxAccessToken": {{ MAPBOX_ACCESS_TOKEN|JSON }},
-            "dateRangeOptions": {{ date_range_options|JSON }},
-            // In previewMode, report can't be saved.
-            "previewMode":
-              {# equivalent to: not has_report_builder_access or (at_report_limit and not existing_report) #}
-              {% if not has_report_builder_access or at_report_limit and not existing_report %}
-                true
-              {% else %}
-                false
-              {% endif %}
-            ,
+    $(function() {
+        var existing_report = initialPageData.get('existing_report'),
+            report_description = initialPageData.get('report_description');
 
+        var reportConfig = new reportBuilder.ReportConfig({
+            "columnOptions": initialPageData.get('column_options'),
+            "initialColumns": initialPageData.get('initial_columns'),
+            "app": initialPageData.get('application'),
+            "sourceId": initialPageData.get('source_id'),
+            "sourceType": "initialPageData.get('source_type')",
+            "reportPreviewUrl": "initialPageData.get('report_preview_url')",
+            "previewDatasourceId": "initialPageData.get('preview_datasource_id')",
+            "existingReport": existing_report ? existing_report.get_id : null,
+            "existingReportType": initialPageData.get('existing_report_type'),
+            "reportTitle": initialPageData.get('report_title'),
+            "reportDescription": report_description ? report_description : null,
+            "dataSourceProperties": initialPageData.get('data_source_properties'),
+            "initialDefaultFilters": initialPageData.get('initial_default_filters'),
+            "initialUserFilters": initialPageData.get('initial_user_filters'),
+            "initialLocation": initialPageData.get('initial_location'),
+            "initialChartType": initialPageData.get('initial_chart_type'),
+            "mapboxAccessToken": initialPageData.get('MAPBOX_ACCESS_TOKEN'),
+            "dateRangeOptions": initialPageData.get('date_range_options'),
+            // In previewMode, report can't be saved.
+            "previewMode": (
+                !initialPageData.get('has_report_builder_access') ||
+                (!initialPageData.get('at_report_limit') && !initialPageData.get('existing_report'))),
         });
         $("#reportConfig").koApplyBindings(reportConfig);
         window._bindingsApplied = true;
