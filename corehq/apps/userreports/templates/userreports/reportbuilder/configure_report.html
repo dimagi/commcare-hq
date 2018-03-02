@@ -33,26 +33,26 @@
 {% endblock %}
 
 {% block additional_initial_page_data %}{{ block.super }}
-    {% initial_page_data 'column_options column_options|JSON %}
-    {% initial_page_data 'initial_columns initial_columns|JSON %}
-    {% initial_page_data 'application application|JSON %}
-    {% initial_page_data 'source_id source_id|JSON %}
+    {% initial_page_data 'column_options' column_options %}
+    {% initial_page_data 'initial_columns' initial_columns %}
+    {% initial_page_data 'application' application %}
+    {% initial_page_data 'source_id' source_id %}
     {% initial_page_data 'source_type' source_type %}
     {% initial_page_data 'report_preview_url' report_preview_url %}
     {% initial_page_data 'preview_datasource_id' preview_datasource_id %}
-    {% initial_page_data 'existing_report_type existing_report_type|JSON %}
+    {% initial_page_data 'existing_report_type' existing_report_type %}
     {% initial_page_data 'report_title' report_title|escapejs %}
     {% initial_page_data 'report_description' report_description|escapejs %}
-    {% initial_page_data 'data_source_properties data_source_properties|JSON %}
-    {% initial_page_data 'initial_default_filters initial_default_filters|JSON %}
-    {% initial_page_data 'initial_user_filters initial_user_filters|JSON %}
-    {% initial_page_data 'initial_location initial_location|JSON %}
-    {% initial_page_data 'initial_chart_type initial_chart_type|JSON %}
-    {% initial_page_data 'MAPBOX_ACCESS_TOKEN MAPBOX_ACCESS_TOKEN|JSON %}
-    {% initial_page_data 'date_range_options date_range_options|JSON %}
+    {% initial_page_data 'data_source_properties' data_source_properties %}
+    {% initial_page_data 'initial_default_filters' initial_default_filters %}
+    {% initial_page_data 'initial_user_filters' initial_user_filters %}
+    {% initial_page_data 'initial_location' initial_location %}
+    {% initial_page_data 'initial_chart_type' initial_chart_type %}
+    {% initial_page_data 'MAPBOX_ACCESS_TOKEN' MAPBOX_ACCESS_TOKEN %}
+    {% initial_page_data 'date_range_options' date_range_options %}
     {% initial_page_data 'has_report_builder_access' has_report_builder_access %}
     {% initial_page_data 'at_report_limit' at_report_limit %}
-    {% initial_page_data 'existing_report' existing_report|JSON %}
+    {% initial_page_data 'existing_report' existing_report %}
 {% endblock %}
 
 {% block page_content %}
