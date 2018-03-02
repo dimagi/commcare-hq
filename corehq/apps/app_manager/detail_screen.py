@@ -198,6 +198,8 @@ class FormattedDetailColumn(object):
 
     @property
     def xpath(self):
+        if self.column.useXpathExpression:
+            return self.column.field
         return get_column_xpath_generator(self.app, self.module, self.detail,
                                           self.column).xpath
 
