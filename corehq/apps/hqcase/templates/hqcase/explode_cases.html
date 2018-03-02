@@ -2,9 +2,12 @@
 {% load hq_shared_tags %}
 
 {% block js %}{{ block.super }}
-            <script src="{% static 'hqcase/js/explode_cases.js' %}"></script>
+    <script src="{% static 'hqcase/js/explode_cases.js' %}"></script>
 {% endblock %}
+
 {% block page_content %}
+    {% registerurl "users_select2_options" domain %}
+
     <div id="explode">
         <h1>Explode Cases 💣</h1>
         <h2><small>Use at your own risk 🙃</small></h2>

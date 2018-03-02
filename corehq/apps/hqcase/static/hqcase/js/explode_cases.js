@@ -1,4 +1,5 @@
 hqDefine('hqcase/js/explode_cases', function() {
+    var initialPageData = hqImport('hqwebapp/js/initial_page_data');
     $(function(){
         $('#explode').koApplyBindings({
             factor: ko.observable(''),
@@ -6,7 +7,7 @@ hqDefine('hqcase/js/explode_cases', function() {
         });
         $('#explode-user_id').select2({
             ajax: {
-                url: "{% url 'users_select2_options' domain %}",
+                url: initialPageData.reverse('users_select2_options'),
                 type: 'POST',
                 datatype: 'json',
                 quietMills: 250,
