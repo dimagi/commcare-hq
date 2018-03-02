@@ -3,6 +3,7 @@
 Usage: ./manage.py test --with-timing --timing-file=/path/to/timing.csv
 """
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import csv
 import sys
 import time
