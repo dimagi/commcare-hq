@@ -17,10 +17,10 @@ DOMAIN = "enikshay"
 
 class Command(BaseDataDump):
     """
-    1. Episode DRTB Specific cases
+    12. Episode DRTB Specific cases
     https://docs.google.com/spreadsheets/d/1OPp0oFlizDnIyrn7Eiv11vUp8IBmc73hES7qqT-mKKA/edit#gid=300586765
     """
-    TASK_NAME = "data_dumps_drtb_specific_episodes"
+    TASK_NAME = "12_drtb_specific_episodes"
     INPUT_FILE_NAME = "data_dumps_drtb_specific_episodes.csv"
 
     def __init__(self, *args, **kwargs):

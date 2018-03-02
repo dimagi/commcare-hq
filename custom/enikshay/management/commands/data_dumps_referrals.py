@@ -17,10 +17,10 @@ DOMAIN = "enikshay"
 
 class Command(BaseDataDump):
     """
-    1. Referral cases
+    13. Referral cases
     https://docs.google.com/spreadsheets/d/1OPp0oFlizDnIyrn7Eiv11vUp8IBmc73hES7qqT-mKKA/edit#gid=357905283
     """
-    TASK_NAME = "data_dumps_referrals"
+    TASK_NAME = "13_referrals"
     INPUT_FILE_NAME = "data_dumps_referrals.csv"
 
     def __init__(self, *args, **kwargs):

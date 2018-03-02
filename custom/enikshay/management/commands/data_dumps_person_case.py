@@ -28,7 +28,7 @@ class Command(BaseDataDump):
 
     https://docs.google.com/spreadsheets/d/1OPp0oFlizDnIyrn7Eiv11vUp8IBmc73hES7qqT-mKKA/edit#gid=1039030624
     """
-    TASK_NAME = "data_dumps_person_case"
+    TASK_NAME = "01_person_case"
     INPUT_FILE_NAME = "data_dumps_person_case.csv"
 
     def __init__(self, *args, **kwargs):

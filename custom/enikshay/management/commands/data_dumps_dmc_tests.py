@@ -18,10 +18,10 @@ DOMAIN = "enikshay"
 
 class Command(BaseDataDump):
     """
-    1. DMC Test
+    5. DMC Test
     https://docs.google.com/spreadsheets/d/1OPp0oFlizDnIyrn7Eiv11vUp8IBmc73hES7qqT-mKKA/edit#gid=1810278446
     """
-    TASK_NAME = "data_dumps_dmc_tests"
+    TASK_NAME = "05_dmc_tests"
     INPUT_FILE_NAME = "data_dumps_dmc_tests.csv"
 
     def __init__(self, *args, **kwargs):

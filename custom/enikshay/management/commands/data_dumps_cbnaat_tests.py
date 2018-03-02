@@ -19,10 +19,10 @@ DOMAIN = "enikshay"
 
 class Command(BaseDataDump):
     """
-    1. CBNAAT Test
+    6. CBNAAT Test
     https://docs.google.com/spreadsheets/d/1OPp0oFlizDnIyrn7Eiv11vUp8IBmc73hES7qqT-mKKA/edit#gid=777749756
     """
-    TASK_NAME = "data_dumps_cbnaat_tests"
+    TASK_NAME = "06_cbnaat_tests"
     INPUT_FILE_NAME = "data_dumps_cbnaat_tests.csv"
 
     def __init__(self, *args, **kwargs):

@@ -19,10 +19,10 @@ DOMAIN = "enikshay"
 
 class Command(BaseDataDump):
     """
-    1. FL LPA Test
+    7. FL LPA Test
     https://docs.google.com/spreadsheets/d/1OPp0oFlizDnIyrn7Eiv11vUp8IBmc73hES7qqT-mKKA/edit#gid=804408680
     """
-    TASK_NAME = "data_dumps_fllpa_tests"
+    TASK_NAME = "07_fllpa_tests"
     INPUT_FILE_NAME = "data_dumps_fllpa_tests.csv"
 
     def __init__(self, *args, **kwargs):

@@ -18,10 +18,10 @@ DOMAIN = "enikshay"
 
 class Command(BaseDataDump):
     """
-    1. Adherence Details
+    15. Adherence Details
     https://docs.google.com/spreadsheets/d/1OPp0oFlizDnIyrn7Eiv11vUp8IBmc73hES7qqT-mKKA/edit#gid=2059461644
     """
-    TASK_NAME = "data_dumps_adherence_details"
+    TASK_NAME = "15_adherence_details"
     INPUT_FILE_NAME = "data_dumps_adherence_details.csv"
 
     def __init__(self, *args, **kwargs):
