@@ -1,46 +1,41 @@
 MOTECH
 ======
 
-This document uses "MOTECH" and "MOTECH 2" interchangeably.
-
-MOTECH is how CommCare interfaces with other systems.
-
+MOTECH is a Data Integration Layer that is currently integrated with CommCare.  
 
 History
 -------
 
-What we now refer to as "MOTECH 1" is a product developed by the Grameen Foundation, and works with CommCare to interface with other systems.
+There was a previous version of MOTECH based on OSGI and the Spring Framework originally developed by the Grameen Foundation.  Information on MOTECH 1.0 can be found [HERE] <- (Insert links to MOTECH 1.0 documentation).  This platform was supporting both web-application use cases as well as data integration.  Due to the incompatability of OSGI and Spring in subsequent releases, MOTECH is now focused on data integration. 
 
-Dimagi chose to develop the functionality relevant to CommCare into the CommCare HQ platform for a range of reasons, including:
+Currently, MOTECH is fully integrated to leverage CommCare's frameworks, including:  
 
-* To take advantage of CommCare HQ's multi-tenant architecture (MOTECH 1 required installing a separate instance for each project)
-* To make it easier and faster for CommCare HQ developers to maintain and extend it
-* Tighter coupling with CommCare, for the opportunity to improve the CommCare-related functionality for integrations
-
-This functionality is what we now refer to as "MOTECH", or "MOTECH 2" to differentiate it from "MOTECH 1".
-
+* To take advantage of CommCare HQ's multi-tenant architecture
+* To make it easier and faster for CommCare HQ developers to maintain and extend it, considering CommCare integrations are the primary use case currently.  
 
 Current Integrations
 --------------------
 
-MOTECH 2 development has prioritized the integrations needed most by partners and projects. Chief among these are:
+MOTECH Development has prioritized the integrations most commonly requested by our community, chief among them are:
 
+* Custom trigger based on integrations
 * DHIS2
 * OpenMRS
 
-MOTECH-related settings are found under *Project Settings* in CommCare HQ. MOTECH code is located in the corehq/motech/ directory.
+Repeaters
+--------------------
 
-
-DHIS2 Integration
+DHIS2 Module
 -----------------
 
-DHIS2 is a Health Information System that offers organisations and governments a visual dashboard of health-related data, across geographical areas, time periods, and demographics.
+DHIS2 is a Health Information System that offers organisations and governments a visual dashboard of health-related data, across geographical areas, time periods, and demographics: [INSERT LINK]
 
 DHIS2 allows third-party systems like CommCare to send it two kinds of data:
 
-* Data that pertains to single events and individuals, for DHIS2 to aggregate
-* Data that has already been aggregated and categorized as DHIS2 would
+* Data that pertains to single events and individuals, for DHIS2 to aggregate within DHIS2.
+* Data that has already been aggregated
 
+The DHIS2 integration module in MOTECH enables aggregate data to be sent to DHIS2.  Individual data can be sent vi
 MOTECH 1 took the first approach.
 
 We found that often DHIS2 was not configured to accept this data, and would require the work of an administrator on behalf of the project organisation or government to set it up, which could be onerous. And so with MOTECH 2 we took the second approach.
@@ -52,7 +47,7 @@ CommCare aggregates and categorises data for DHIS2 using UCRs, and sends it at r
 Configuring a DHIS2 server is done under *Project Settings* > *DHIS2 Connection Settings*. Mapping UCR columns to DHIS2 data types is done under *Project Settings* > *DHIS2 DataSet Maps*
 
 
-OpenMRS & Bahmni Integration
+OpenMRS (& Bahmni) Module
 ----------------------------
 
 OpenMRS is used for storing and managing patient data. Bahmni is a hospital management system built on top of OpenMRS. Integration with Bahmni implies integration with OpenMRS.
