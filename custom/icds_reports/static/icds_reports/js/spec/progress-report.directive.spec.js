@@ -5,7 +5,7 @@ var pageData = hqImport('hqwebapp/js/initial_page_data');
 
 describe('Progress Report Directive', function () {
 
-    var $scope, $httpBackend, $location, controller, clock;
+    var $scope, $httpBackend, $location, controller;
 
     pageData.registerUrl('icds-ng-template', 'template');
     pageData.registerUrl('icds_locations', 'icds_locations');
