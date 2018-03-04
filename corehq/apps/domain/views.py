@@ -525,7 +525,7 @@ def generate_repeater_payloads(request, domain):
         data = csv.reader(request.FILES['payload_ids_file'])
         payload_ids = [row[0] for row in data]
     except Exception as e:
-        messages.error(request, _("Could not process the file. %s") % e.message)
+        messages.error(request, _("Could not process the file. %s") % str(e))
     else:
         send_repeater_payloads.delay(repeater_id, payload_ids, email_id)
         messages.success(request, _("Successfully queued request. You should receive an email shortly."))
