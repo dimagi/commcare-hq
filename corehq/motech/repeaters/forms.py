@@ -14,7 +14,7 @@ from corehq.apps.es.users import UserES
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.users.util import raw_username
 
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 from .models import BASIC_AUTH, DIGEST_AUTH
 

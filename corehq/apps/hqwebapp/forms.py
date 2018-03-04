@@ -18,7 +18,7 @@ from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import StrictButton
 from crispy_forms.helper import FormHelper
 
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from six.moves import map
 
 

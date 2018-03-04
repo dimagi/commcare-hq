@@ -8,7 +8,7 @@ from couchdbkit.exceptions import ResourceNotFound
 
 from corehq.form_processor.change_publishers import publish_ledger_v1_saved
 from dimagi.ext.couchdbkit import *
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 from casexml.apps.case.cleanup import close_case
 from casexml.apps.case.models import CommCareCase

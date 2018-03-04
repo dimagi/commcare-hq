@@ -5,7 +5,7 @@ from functools import partial
 
 from bulk_update.helper import bulk_update as bulk_update_helper
 
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from django.db import models, transaction
 import jsonfield
 from corehq.form_processor.interfaces.supply import SupplyInterface

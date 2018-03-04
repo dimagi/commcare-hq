@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import functools
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop, get_language
@@ -22,7 +23,7 @@ from corehq.apps.reports.standard.monitoring import MultiFormDrilldownMixin, Com
 from corehq.apps.reports.util import datespan_from_beginning
 from corehq.const import MISSING_APP_ID
 from corehq.toggles import SUPPORT
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 
 class ProjectInspectionReport(ProjectInspectionReportParamsMixin, GenericTabularReport, ProjectReport, ProjectReportParametersMixin):

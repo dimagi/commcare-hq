@@ -325,7 +325,7 @@ class VoucherPayload(BETSPayload):
         approver_usertype = USERTYPE_DISPLAYS.get(usertype, usertype)
         amount = voucher_case_properties.get(AMOUNT_APPROVED, "")
         if amount == "":
-            voucher_case_properties.get(AMOUNT_FULFILLED)
+            amount = voucher_case_properties.get(AMOUNT_FULFILLED)
 
         return cls(
             EventID=event_id,

@@ -120,7 +120,7 @@ from corehq.apps.domain.models import (
 from corehq.apps.domain.utils import normalize_domain_name, send_repeater_payloads
 from corehq.apps.hqwebapp.views import BaseSectionPageView, BasePageView, CRUDPaginatedViewMixin
 from corehq.apps.domain.forms import ProjectSettingsForm
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.web import get_ip, json_response, get_site_domain
 from corehq.motech.repeaters.forms import EmailBulkPayload
 from corehq.apps.users.decorators import require_can_edit_web_users, require_permission

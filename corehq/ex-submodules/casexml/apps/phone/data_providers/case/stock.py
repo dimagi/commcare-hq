@@ -5,7 +5,7 @@ from datetime import datetime
 from corehq import toggles
 from corehq.form_processor.exceptions import LedgerValueNotFound
 from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.parsing import json_format_datetime
 
 from casexml.apps.stock.consumption import compute_default_monthly_consumption, \

@@ -9,7 +9,7 @@ from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Fieldset, Div, HTML, Field
 from corehq.apps.hqwebapp.widgets import Select2MultipleChoiceWidget
 
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 from .models import (CustomDataFieldsDefinition, is_system_key,
                      CUSTOM_DATA_FIELD_PREFIX)

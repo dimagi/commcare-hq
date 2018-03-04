@@ -2,6 +2,7 @@
 API endpoints for filter options
 """
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import logging
 import json
 
@@ -15,7 +16,7 @@ from corehq.apps.reports.const import DEFAULT_PAGE_LIMIT
 from corehq.apps.reports.filters.case_list import CaseListFilterUtils
 from corehq.apps.users.analytics import get_search_users_in_domain_es_query
 from corehq.elastic import ESError
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.logging import notify_exception
 
 from corehq.apps.reports.filters.users import EmwfUtils, UsersUtils

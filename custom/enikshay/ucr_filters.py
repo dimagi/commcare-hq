@@ -4,7 +4,7 @@ from collections import namedtuple
 
 from sqlagg.filters import ORFilter, EQFilter
 
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 from corehq.apps.es import filters
 from corehq.apps.locations.models import SQLLocation

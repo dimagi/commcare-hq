@@ -23,7 +23,7 @@ from dimagi.ext.couchdbkit import *
 from casexml.apps.case.xml import V2, LEGAL_VERSIONS
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors
 from couchforms.const import DEVICE_LOG_XMLNS
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.parsing import json_format_datetime
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.post import simple_post, perform_SOAP_operation

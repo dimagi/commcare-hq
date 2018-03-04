@@ -8,7 +8,7 @@ from django.views.generic import View
 
 from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation, JSONResponseException
 
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 from corehq.apps.domain.decorators import login_required, require_superuser
 from corehq.apps.hqwebapp.views import BasePageView
