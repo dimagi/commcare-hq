@@ -2,6 +2,7 @@
 // for product and user per location selection
 hqDefine("locations/js/location", function() {
     var initialPageData = hqImport('hqwebapp/js/initial_page_data');
+    var LocationModels = hqImport('locations/js/location_drilldown');
     var insert_new_user = function(user) {
         var $select = $('#id_users-selected_ids');
         $select.multiSelect('addOption', { value: user.user_id, text: user.text });
@@ -65,7 +66,7 @@ hqDefine("locations/js/location", function() {
         var hierarchy = initialPageData.get('hierarchy');
         var loc_types_with_users = initialPageData.get('loc_types_with_users');
 
-        var model = new hqImport('location/js/location_drilldown').LocationSelectViewModel({
+        var model = new LocationModels.LocationSelectViewModel({
             "hierarchy": hierarchy,
             "default_caption": "\u2026",
             "auto_drill": false,
@@ -74,7 +75,6 @@ hqDefine("locations/js/location", function() {
             },
             "loc_url": location_url,
         });
-
         model.editing = ko.observable(false);
         model.allowed_child_types = ko.computed(function() {
             var active_loc = (this.selected_location() || this.root());
