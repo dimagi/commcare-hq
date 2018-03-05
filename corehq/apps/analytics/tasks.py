@@ -429,7 +429,7 @@ def track_periodic_data():
 
     # For each web user, iterate through their domains and select the max number of form submissions and
     # max number of mobile workers
-    for users in chunked(users_to_domains, 1000):
+    for users in chunked(users_to_domains, 500):
         submit = []
         for user in users:
             email = user.get('email')
