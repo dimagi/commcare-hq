@@ -425,7 +425,7 @@ hqDefine('app_manager/js/details/screen_config', function() {
                 }
 
                 if (this.useXpathExpression()) {
-                    var menuOptionsToRemove = ['picture', 'audio', 'conditional-enum'];
+                    var menuOptionsToRemove = ['picture', 'audio'];
                     for (var i = 0; i < menuOptionsToRemove.length; i++) {
                         for(var j = 0; j < menuOptions.length; j++) {
                             if (
