@@ -28,6 +28,7 @@ describe('Progress Report Directive', function () {
         $httpBackend.flush();
         $scope.$digest();
         controller = compiled.controller('progressReport');
+
         clock.restore();
     }));
 
