@@ -5,6 +5,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
     var vm = this;
 
     vm.months = [];
+    vm.monthsCopy = [];
     vm.years = [];
     vm.task_id = $location.search()['task_id'] || '';
     $rootScope.issnip_report_link = '';
@@ -42,12 +43,23 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
 
     vm.userLocationId = userLocationId;
 
+    vm.selectedMonth = new Date().getMonth() + 1;
+    vm.selectedYear = new Date().getFullYear();
+
     window.angular.forEach(moment.months(), function(key, value) {
-        vm.months.push({
+        vm.monthsCopy.push({
             name: key,
             id: value + 1,
         });
     });
+
+    if (vm.selectedYear === new Date().getFullYear()) {
+        vm.months = _.filter(vm.monthsCopy, function (month) {
+            return month.id <= new Date().getMonth() + 1;
+        });
+    } else {
+        vm.months = vm.monthsCopy;
+    }
 
     for (var year=2014; year <= new Date().getFullYear(); year++ ) {
         vm.years.push({
@@ -56,8 +68,6 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         });
     }
     vm.queuedISSNIPTask = false;
-    vm.selectedMonth = new Date().getMonth() + 1;
-    vm.selectedYear = new Date().getFullYear();
     vm.selectedIndicator = 1;
     vm.selectedFormat = 'xls';
     vm.selectedPDFFormat = 'many';
@@ -295,6 +305,17 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         }
     };
 
+    vm.onSelectYear = function (item) {
+        if (item.id === new Date().getFullYear()) {
+            vm.months = _.filter(vm.monthsCopy, function(month) {
+                return month.id <= new Date().getMonth() + 1;
+            });
+            vm.selectedMonth = vm.selectedMonth <= new Date().getMonth() + 1 ? vm.selectedMonth : new Date().getMonth() + 1;
+        } else {
+            vm.months = vm.monthsCopy;
+        }
+    };
+
     vm.getAwcs = function () {
         locationsService.getAncestors();
     };
@@ -308,7 +329,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
     };
 
     vm.onIndicatorSelect = function() {
-        if (vm.isChildBeneficiaryListSelected() && !vm.isDistrictOrBelowSelected()) {
+        if (vm.isChildBeneficiaryListSelected()) {
             init();
             vm.selectedFormat = vm.formats[0].id;
         } else {
