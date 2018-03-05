@@ -10,7 +10,7 @@ hqDefine('hqadmin/js/domain_faceted_report', function () {
         var result = {}, queryString = location.search.slice(1),
             re = /([^&=]+)=([^&]*)/g, m;
 
-        while (m = re.exec(queryString)) {
+        while (m = re.exec(queryString)) {      // eslint-disable-line no-cond-assign
             var param = decodeURIComponent(m[1]), val = decodeURIComponent(m[2]);
             if (result.hasOwnProperty(param)) {
                 result[param].push.apply(result[param], [val]);

@@ -18,7 +18,7 @@ hqDefine("domain/js/internal_settings", function() {
         $subarea.empty().append($("<option></option>").attr("value", '').text('---'));
         _.each(valid_sub_areas, function(val) {
             var $opt = $("<option></option>").attr("value", val).text(val);
-            if (val == chosen_sub_area) {
+            if (val === chosen_sub_area) {
                 $opt.prop("selected", true);
             }
             $subarea.append($opt);
@@ -65,8 +65,8 @@ hqDefine("domain/js/internal_settings", function() {
     var multiselect_utils = hqImport('hqwebapp/js/multiselect_utils');
     multiselect_utils.createFullMultiselectWidget(
         'id_countries',
-        django.gettext("Available Countries"),
-        django.gettext("Active Countries"),
-        django.gettext("Search Countries...")
+        gettext("Available Countries"),
+        gettext("Active Countries"),
+        gettext("Search Countries...")
     );
 });
