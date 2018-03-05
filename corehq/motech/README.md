@@ -11,7 +11,16 @@ There was a previous version of MOTECH based on OSGI and the Spring Framework or
 Currently, MOTECH is fully integrated to leverage CommCare's frameworks, including:  
 
 * To take advantage of CommCare HQ's multi-tenant architecture
-* To make it easier and faster for CommCare HQ developers to maintain and extend it, considering CommCare integrations are the primary use case currently.  
+* To make it easier and faster for CommCare HQ developers to maintain and extend it, considering CommCare integrations are the primary use case currently. 
+
+Framework
+--------------------
+
+MOTECH is designed to enable multiple types of integrations:  
+
+* Simple Transactional integration where a single action triggers one or more atomic integrations with 3rd party systems in either direction.  An exmaple is [INSERT HERE]
+* Complex Transactional integration where a single action requires multiple API calls to complete the integration and cannot recover gracefully if a failure between calls occurs.  An example is a single registration form in CommCare generating a patient and encounter in OpenMRS.    
+* Aggregate data integration where multiple actions in CommCare are aggregated an the result is pushed to a 3rd party system.  An example is CommCare tranactional data being aggregated into a Data Source (INSERT LINK) and being pushed to DHIS2 as aggregate data.  
 
 Current Integrations
 --------------------
@@ -23,7 +32,8 @@ MOTECH Development has prioritized the integrations most commonly requested by o
 * OpenMRS
 
 Repeaters
---------------------
+-----------------
+Repeaters is the way to.... [INSERT HERE]
 
 DHIS2 Module
 -----------------
