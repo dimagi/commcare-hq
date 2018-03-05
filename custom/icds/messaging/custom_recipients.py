@@ -1,8 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from corehq.apps.locations.models import SQLLocation
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.models import CommCareCaseIndexSQL
 from custom.icds.case_relationships import (
     mother_person_case_from_ccs_record_case,
     mother_person_case_from_child_health_case,
