@@ -83,14 +83,14 @@ def report_blobs_by_type(data, write):
 
 def report_blob_sizes(data, sizes, write):
     """report blob type, number of blobs, total size grouped by domain"""
-    def iter_headers(sizes):
-        for domain in sizes:
+    def iter_headers(by_domain):
+        for domain in by_domain:
             yield domain
             yield "MEAN"
             yield "COUNT"
 
     def iter_sizes(doc_type, domain_sizes):
-        for domain in sorted(by_domain):
+        for domain in by_domain:
             blob_sizes = domain_sizes[domain]
             numerics = [s.length for s in blob_sizes if s.length is not UNKNOWN]
             mean_size = int(mean(numerics)) if numerics else 0
