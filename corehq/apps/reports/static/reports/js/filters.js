@@ -201,9 +201,11 @@ hqDefine("reports/js/filters", [
             var model = new SMSPhoneNumberFilterViewModel(data.initialValue, data.groups);
             $el.koApplyBindings(model);
         });
-        $('[name=selected_group]').select2({
-            allowClear: true,
-            placeholder: gettext("Select a group"),
+        $('[name=selected_group]').each(function(i, el) {
+            $(el).select2({
+                allowClear: true,
+                placeholder: gettext("Select a group"),
+            });
         });
     };
 
