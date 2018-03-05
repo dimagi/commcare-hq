@@ -53,7 +53,6 @@ def process_device_log(domain, xform):
 def _process_user_subreport(xform):
     userlogs = _get_logs(xform.form_data, 'user_subreport', 'user')
     UserEntry.objects.filter(xform_id=xform.form_id).delete()
-    DeviceReportEntry.objects.filter(xform_id=xform.form_id).delete()
     to_save = []
     for i, log in enumerate(userlogs):
         to_save.append(UserEntry(
@@ -70,8 +69,7 @@ def _process_user_subreport(xform):
 def _process_log_subreport(domain, xform):
     form_data = xform.form_data
     logs = _get_logs(form_data, 'log_subreport', 'log')
-    logged_in_username = None
-    logged_in_user_id = None
+    DeviceReportEntry.objects.filter(xform_id=xform.form_id).delete()
     to_save = []
     for i, log in enumerate(logs):
         if not log:
