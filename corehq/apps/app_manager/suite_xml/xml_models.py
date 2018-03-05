@@ -48,6 +48,11 @@ class Xpath(XmlObject):
     variables = NodeListField('variable', XpathVariable)
 
 
+class XpathFunction(XmlObject):
+    ROOT_NAME = 'xpath_function'
+    function = XPathField('@function')
+
+
 class LocaleArgument(XmlObject):
     ROOT_NAME = 'argument'
     key = StringField('@key')
