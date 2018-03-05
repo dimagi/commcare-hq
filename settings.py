@@ -1672,6 +1672,9 @@ AVAILABLE_CUSTOM_SCHEDULING_RECIPIENTS = {
     'ICDS_SUPERVISOR_FROM_AWC_OWNER':
         ['custom.icds.messaging.custom_recipients.supervisor_from_awc_owner',
          "ICDS: Supervisor Location from AWC Owner"],
+    'ICDS_PARENT_OF_CCS_RECORD':
+        ['custom.icds.messaging.custom_recipients.parent_of_ccs_record',
+         "ICDS: Parent of CCS record"],
 }
 
 AVAILABLE_CUSTOM_RULE_CRITERIA = {

@@ -4,6 +4,7 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import CommCareCaseIndexSQL
 from custom.icds.case_relationships import (
+    mother_person_case_from_ccs_record_case,
     mother_person_case_from_child_health_case,
 )
 from custom.icds.const import SUPERVISOR_LOCATION_TYPE_CODE
@@ -32,3 +33,9 @@ def supervisor_from_awc_owner(case_schedule_instance):
         return None
 
     return awc.parent
+
+
+def parent_of_ccs_record(case_schedule_instance):
+    if not case_schedule_instance.case:
+        return None
+    return mother_person_case_from_ccs_record_case(case_schedule_instance.case)
