@@ -11,6 +11,13 @@ from custom.icds.const import SUPERVISOR_LOCATION_TYPE_CODE
 from custom.icds.exceptions import CaseRelationshipError
 
 
+def recipient_mother_person_case_from_ccs_record_case(case_schedule_instance):
+    try:
+        return mother_person_case_from_ccs_record_case(case_schedule_instance.case)
+    except CaseRelationshipError:
+        return None
+
+
 def recipient_mother_person_case_from_child_health_case(case_schedule_instance):
     try:
         return mother_person_case_from_child_health_case(case_schedule_instance.case)
@@ -33,9 +40,3 @@ def supervisor_from_awc_owner(case_schedule_instance):
         return None
 
     return awc.parent
-
-
-def parent_of_ccs_record(case_schedule_instance):
-    if not case_schedule_instance.case:
-        return None
-    return mother_person_case_from_ccs_record_case(case_schedule_instance.case)

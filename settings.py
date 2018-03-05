@@ -1666,15 +1666,15 @@ AVAILABLE_CUSTOM_REMINDER_RECIPIENTS = {
 
 # Used by the new reminders framework
 AVAILABLE_CUSTOM_SCHEDULING_RECIPIENTS = {
+    'ICDS_MOTHER_PERSON_CASE_FROM_CCS_RECORD_CASE':
+        ['custom.icds.messaging.custom_recipients.recipient_mother_person_case_from_ccs_record_case',
+         "ICDS: Mother person case from ccs_record case"],
     'ICDS_MOTHER_PERSON_CASE_FROM_CHILD_HEALTH_CASE':
         ['custom.icds.messaging.custom_recipients.recipient_mother_person_case_from_child_health_case',
          "ICDS: Mother person case from child_health case"],
     'ICDS_SUPERVISOR_FROM_AWC_OWNER':
         ['custom.icds.messaging.custom_recipients.supervisor_from_awc_owner',
          "ICDS: Supervisor Location from AWC Owner"],
-    'ICDS_PARENT_OF_CCS_RECORD':
-        ['custom.icds.messaging.custom_recipients.parent_of_ccs_record',
-         "ICDS: Parent of CCS record"],
 }
 
 AVAILABLE_CUSTOM_RULE_CRITERIA = {
