@@ -95,7 +95,7 @@
                            popover-placement="top-right"
                            popover-trigger="'mouseenter'"></i></label>
                     <div class="col-sm-6">
-                        <ui-select ng-model="$ctrl.selectedYear" theme="bootstrap">
+                        <ui-select ng-model="$ctrl.selectedYear" theme="bootstrap" on-select="$ctrl.onSelectYear($item)">
                             <ui-select-match placeholder="Year"><span ng-bind="$select.selected.name"></span></ui-select-match>
                             <ui-select-choices repeat="year.id as year in $ctrl.years| propsFilter: {name: $select.search}">
                                 <div ng-bind-html="year.name"></div>
@@ -192,7 +192,7 @@
                            popover-placement="top-right"
                            popover-trigger="'mouseenter'"></i></label>
                     <div class="col-sm-6">
-                        <ui-select ng-model="$ctrl.selectedYear" theme="bootstrap">
+                        <ui-select ng-model="$ctrl.selectedYear" theme="bootstrap" on-select="$ctrl.onSelectYear($item)">
                             <ui-select-match placeholder="Year"><span ng-bind="$select.selected.name"></span></ui-select-match>
                             <ui-select-choices repeat="year.id as year in $ctrl.years| propsFilter: {name: $select.search}">
                                 <div ng-bind-html="year.name"></div>

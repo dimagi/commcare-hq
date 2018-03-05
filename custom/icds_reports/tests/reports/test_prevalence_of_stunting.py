@@ -61,7 +61,7 @@ class TestPrevalenceOfStunting(TestCase):
                     "total_measured": 7,
                     "total": 449,
                     'original_name': ["st1"],
-                    "fillKey": "0%-25%"
+                    "fillKey": "38%-100%"
                 },
                 "st2": {
                     "severe": 9,
@@ -70,7 +70,7 @@ class TestPrevalenceOfStunting(TestCase):
                     "total_measured": 25,
                     "total": 490,
                     'original_name': ["st2"],
-                    "fillKey": "0%-25%"
+                    "fillKey": "38%-100%"
                 }
             }
         )
@@ -102,7 +102,7 @@ class TestPrevalenceOfStunting(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(data['rightLegend']['average'], "1.99")
+        self.assertEquals(data['rightLegend']['average'], "63.71")
 
     def test_map_data_right_legend_extended_info(self):
         data = get_prevalence_of_stunting_data_map(
@@ -188,7 +188,7 @@ class TestPrevalenceOfStunting(TestCase):
                     'original_name': ['b1', 'b2'],
                     'severe': 2,
                     'total': 449,
-                    'fillKey': '0%-25%'
+                    'fillKey': '38%-100%'
                 }
             }
         )
@@ -204,7 +204,7 @@ class TestPrevalenceOfStunting(TestCase):
             },
             loc_level='block',
         )
-        self.assertEquals(data['rightLegend']['average'], "1.11")
+        self.assertEquals(data['rightLegend']['average'], "75.00")
 
     def test_chart_data_keys_length(self):
         data = get_prevalence_of_stunting_data_chart(
