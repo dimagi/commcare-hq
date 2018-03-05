@@ -98,8 +98,8 @@ hqDefine('case_importer/js/excel_fields', function () {
         // space to underscore
         value = value.replace(/\s/g, "_");
         // remove other symbols
-        value = value.replace(/[^a-zA-Z0-9_\-]/g, "");
-        // remove xml from beginning of string. todo: why (36cafb01)?
+        value = value.replace(/[^a-zA-Z0-9_\-]/g, "");  // eslint-disable-line no-useless-escape
+        // remove xml from beginning of string, which would be an invalid xml identifier
         value = value.replace(/^xml/i, "");
         return value;
     };

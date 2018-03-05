@@ -1,8 +1,5 @@
+/* globals d3, nv */
 // Contains helper functions for rendering nvd3 multibar charts with data pulled from an elastic search histogram filter
-
-function isInt(n) {
-    return typeof n === 'number' && parseFloat(n) == parseInt(n, 10) && !isNaN(n);
-}
 
 function is_data_empty(histo_data) {
     for (var key in histo_data) {
@@ -40,7 +37,7 @@ function days_in_year(year) {
 }
 
 function is_leap_year(year) {
-    return new Date(year, 1, 29).getMonth() == 1;
+    return new Date(year, 1, 29).getMonth() === 1;
 }
 
 function days_in_month(month, year) {
@@ -87,7 +84,6 @@ function fill_in_spaces(vals, start, end, interval) {
     // this should not happen
     if (cur_index < _.filter(vals, function(n) {return n.y > 0;}).length) {
         ret.concat(vals.slice(cur_index));
-        console.log("There were extra values in a response");
     }
 
     return ret;
@@ -192,7 +188,7 @@ function findEnds(data, starting_time, ending_time) {
     };
 }
 
-function loadCharts(chart_name, xname, data, initial_values, starting_time, ending_time, interval) {
+function loadCharts(chart_name, xname, data, initial_values, starting_time, ending_time, interval) {    // eslint-disable-line no-unused-vars
     var ends = findEnds(data, starting_time, ending_time);
     starting_time = ends.start, ending_time = ends.end;
     var domain_data = format_data(data, starting_time, ending_time, interval);
@@ -213,7 +209,7 @@ function loadCharts(chart_name, xname, data, initial_values, starting_time, endi
 
     // move the yaxis label to the left a lil
     var yaxislabel = d3.selectAll('.nv-y.nv-axis .nv-axislabel');
-    yaxislabel.attr('transform', function(d,i,j) {
+    yaxislabel.attr('transform', function() {
         return 'translate (-11, 0), rotate(-90)';
     });
 
@@ -280,7 +276,7 @@ function formatChart(chart, selector, xname, data, margin_left) {
     return chart;
 }
 
-var insertLinebreaks = function (d) {
+var insertLinebreaks = function () {    // eslint-disable-line no-unused-vars
     var el = d3.select(this);
     var words = this.textContent.split(linebreak_txt);
     el.text('');
@@ -293,9 +289,10 @@ var insertLinebreaks = function (d) {
     }
 };
 
-function formatDataForLineGraph(data) {
-    var starting_time = 0, ending_time = Infinity;
-    ends = findEnds(data, starting_time, ending_time);
+function formatDataForLineGraph(data) { // eslint-disable-line no-unused-vars
+    var starting_time = 0,
+        ending_time = Infinity,
+        ends = findEnds(data, starting_time, ending_time);
     starting_time = ends.start, ending_time = ends.end;
     if (starting_time === Infinity) {
         starting_time = undefined, ending_time = undefined;
