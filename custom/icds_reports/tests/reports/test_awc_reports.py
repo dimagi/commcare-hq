@@ -2124,10 +2124,44 @@ class TestAWCReport(TestCase):
             ['kpi', 'chart']
         )
 
-    def test_awc_report_beneficiary_82f33fa1_2aec_45ba_8d6c_d3ca9f50ab73(self):
+    def test_awc_report_beneficiary_ca040875_2e42_4ce4_acf7_f96695b370f1(self):
         data = get_awc_report_beneficiary(
             0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1), 'icds-cas'
         )['data'][0]
+        self.assertJSONEqual(
+            json.dumps(data, cls=DjangoJSONEncoder),
+            json.dumps(
+                {
+                    "recorded_weight": "12.8000000000000000",
+                    "age_in_months": 59,
+                    "current_month_stunting": {
+                        "color": "black",
+                        "value": "Moderately stunted"
+                    },
+                    "pse_days_attended": 14,
+                    "dob": "2012-06-03",
+                    "age": "4 years 11 months ",
+                    "current_month_wasting": {
+                        "color": "black",
+                        "value": "Normal weight for height"
+                    },
+                    "current_month_nutrition_status": {
+                        "color": "black",
+                        "value": "Moderately underweight"
+                    },
+                    "case_id": "ca040875-2e42-4ce4-acf7-f96695b370f1",
+                    "recorded_height": "95.0000000000000000",
+                    "fully_immunized": "No",
+                    "person_name": "Name 4416"
+                },
+                cls=DjangoJSONEncoder
+            )
+        )
+
+    def test_awc_report_beneficiary_82f33fa1_2aec_45ba_8d6c_d3ca9f50ab73(self):
+        data = get_awc_report_beneficiary(
+            0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1), 'icds-cas'
+        )['data'][1]
         self.assertJSONEqual(
             json.dumps(data, cls=DjangoJSONEncoder),
             json.dumps(
@@ -2161,7 +2195,7 @@ class TestAWCReport(TestCase):
     def test_awc_report_beneficiary_b954eb28_75de_43c8_9ec0_d38b7d246ead(self):
         data = get_awc_report_beneficiary(
             0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1), 'icds-cas'
-        )['data'][1]
+        )['data'][2]
         self.assertJSONEqual(
             json.dumps(data, cls=DjangoJSONEncoder),
             json.dumps(
@@ -2195,7 +2229,7 @@ class TestAWCReport(TestCase):
     def test_awc_report_beneficiary_519720be_4343_41e7_a9f6_cdfad6ecf8d8(self):
         data = get_awc_report_beneficiary(
             0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1), 'icds-cas'
-        )['data'][2]
+        )['data'][3]
         self.assertJSONEqual(
             json.dumps(data, cls=DjangoJSONEncoder),
             json.dumps(
@@ -2229,7 +2263,7 @@ class TestAWCReport(TestCase):
     def test_awc_report_beneficiary_80099a73_b7ec_4de9_a402_459ed15f6641(self):
         data = get_awc_report_beneficiary(
             0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1), 'icds-cas'
-        )['data'][3]
+        )['data'][4]
         self.assertJSONEqual(
             json.dumps(data, cls=DjangoJSONEncoder),
             json.dumps(
@@ -2263,7 +2297,7 @@ class TestAWCReport(TestCase):
     def test_awc_report_beneficiary_532f3754_e231_40ec_a861_abbb2a06dff5(self):
         data = get_awc_report_beneficiary(
             0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1), 'icds-cas'
-        )['data'][4]
+        )['data'][5]
         self.assertJSONEqual(
             json.dumps(data, cls=DjangoJSONEncoder),
             json.dumps(
@@ -2297,7 +2331,7 @@ class TestAWCReport(TestCase):
     def test_awc_report_beneficiary_4cd07ebf_abce_4345_a930_f6db7ede8996(self):
         data = get_awc_report_beneficiary(
             0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1), 'icds-cas'
-        )['data'][5]
+        )['data'][6]
         self.assertJSONEqual(
             json.dumps(data, cls=DjangoJSONEncoder),
             json.dumps(
@@ -2331,7 +2365,7 @@ class TestAWCReport(TestCase):
     def test_awc_report_beneficiary_c9ee2435_d7fc_4307_9c18_9d5d83d2a691(self):
         data = get_awc_report_beneficiary(
             0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1), 'icds-cas'
-        )['data'][6]
+        )['data'][7]
         self.assertJSONEqual(
             json.dumps(data, cls=DjangoJSONEncoder),
             json.dumps(
@@ -2365,7 +2399,7 @@ class TestAWCReport(TestCase):
     def test_awc_report_beneficiary_d44f7902_83d4_4f1d_a913_4176cf41094e(self):
         data = get_awc_report_beneficiary(
             0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1), 'icds-cas'
-        )['data'][7]
+        )['data'][8]
         self.assertJSONEqual(
             json.dumps(data, cls=DjangoJSONEncoder),
             json.dumps(
@@ -2399,7 +2433,7 @@ class TestAWCReport(TestCase):
     def test_awc_report_beneficiary_71230690_c828_4863_b2c1_f61a75aed9d7(self):
         data = get_awc_report_beneficiary(
             0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1), 'icds-cas'
-        )['data'][8]
+        )['data'][9]
         self.assertJSONEqual(
             json.dumps(data, cls=DjangoJSONEncoder),
             json.dumps(
@@ -2425,40 +2459,6 @@ class TestAWCReport(TestCase):
                     "recorded_height": 0,
                     "fully_immunized": "No",
                     "person_name": "Name 4407",
-                },
-                cls=DjangoJSONEncoder
-            )
-        )
-
-    def test_awc_report_beneficiary_ca040875_2e42_4ce4_acf7_f96695b370f1(self):
-        data = get_awc_report_beneficiary(
-            0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1), 'icds-cas'
-        )['data'][9]
-        self.assertJSONEqual(
-            json.dumps(data, cls=DjangoJSONEncoder),
-            json.dumps(
-                {
-                    'recorded_weight': '14.0000000000000000',
-                    'age_in_months': 51,
-                    'current_month_stunting': {
-                        'color': 'black',
-                        'value': 'Data Not Entered'
-                    },
-                    'pse_days_attended': 15,
-                    'dob': '2013-02-13',
-                    'age': u'4 years 3 months ',
-                    'current_month_wasting': {
-                        'color': 'black',
-                        'value': 'Data Not Entered'
-                    },
-                    'current_month_nutrition_status': {
-                        'color': 'black',
-                        'value': 'Normal weight for age'
-                    },
-                    'case_id': u'339080d4-886a-498e-b359-5a7bcb47ee85',
-                    'recorded_height': 0,
-                    'fully_immunized': 'No',
-                    'person_name': 'Name 4418'
                 },
                 cls=DjangoJSONEncoder
             )

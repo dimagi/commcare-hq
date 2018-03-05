@@ -148,7 +148,7 @@ def get_beneficiary_list(domain, awc_id, month, start, length, sort):
     ).order_by(sort)
 
     total_count = count_query.execute().fetchone()
-    data = select_query.limit(length).offset((start / length) + 1).execute()
+    data = select_query.limit(length).offset(start).execute()
     return data, total_count[0]
 
 
