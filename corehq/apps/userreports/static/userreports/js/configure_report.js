@@ -1,6 +1,6 @@
-/* global reportBuilder */
 hqDefine('userreports/js/configure_report', function() {
-    var initialPageData = hqImport('hqwebapp/js/initial_page_data');
+    var initialPageData = hqImport('hqwebapp/js/initial_page_data'),
+        reportBuilder = hqImport('userreports/js/report_config').reportBuilder;
 
     $(function() {
         var existing_report = initialPageData.get('existing_report'),
