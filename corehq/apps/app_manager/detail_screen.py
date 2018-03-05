@@ -133,9 +133,11 @@ class FormattedDetailColumn(object):
             form=self.template_form,
             width=self.template_width,
         )
+        xpath_function = sx.XpathFunction(function=self.xpath)
+        template.text.xpath.variables.node.append(xpath_function.node)
         if self.variables:
             for key, value in sorted(self.variables.items()):
-                template.text.xpath.variables.node.append(
+                xpath_function.node.append(
                     sx.XpathVariable(name=key, locale_id=value).node
                 )
 
@@ -157,9 +159,10 @@ class FormattedDetailColumn(object):
                 sort_type = self.SORT_TYPE
 
             sort = sx.Sort(
-                text=sx.Text(xpath_function=self.sort_xpath_function),
+                text=sx.Text(xpath_function=u'$xpath_function'),
                 type=sort_type,
             )
+            sort.text.xpath.variables.node.append(sx.XpathFunction(function=self.sort_xpath_function).node)
 
         if self.sort_element:
             if not sort:
@@ -179,6 +182,8 @@ class FormattedDetailColumn(object):
                     text=sx.Text(xpath_function=sort_xpath),
                     type=sort_type,
                 )
+                if not sort_calculation:
+                    sort.text.xpath.variables.node.append(sx.XpathFunction(function=self.xpath).node)
 
             if self.sort_element.type == 'distance':
                 sort.text.xpath_function = self.evaluate_template(Distance.SORT_XPATH_FUNCTION)
@@ -203,12 +208,11 @@ class FormattedDetailColumn(object):
         return get_column_xpath_generator(self.app, self.module, self.detail,
                                           self.column).xpath
 
-    XPATH_FUNCTION = u"{xpath}"
+    XPATH_FUNCTION = u"$xpath_function"
 
     def evaluate_template(self, template):
         if template:
             return template.format(
-                xpath=self.xpath,
                 app=self.app,
                 module=self.module,
                 detail=self.detail,
@@ -301,21 +305,21 @@ class Plain(FormattedDetailColumn):
 @register_format_type('date')
 class Date(FormattedDetailColumn):
 
-    XPATH_FUNCTION = u"if({xpath} = '', '', format_date(date(if({xpath} = '', 0, {xpath})),'short'))"
+    XPATH_FUNCTION = u"if($xpath_function = '', '', format_date(date(if($xpath_function = '', 0, $xpath_function)),'short'))"
 
-    SORT_XPATH_FUNCTION = u"{xpath}"
+    SORT_XPATH_FUNCTION = u"$xpath_function"
 
 
 @register_format_type('time-ago')
 class TimeAgo(FormattedDetailColumn):
-    XPATH_FUNCTION = u"if({xpath} = '', '', string(int((today() - date({xpath})) div {column.time_ago_interval})))"
-    SORT_XPATH_FUNCTION = u"{xpath}"
+    XPATH_FUNCTION = u"if($xpath_function = '', '', string(int((today() - date($xpath_function)) div {column.time_ago_interval})))"
+    SORT_XPATH_FUNCTION = u"$xpath_function"
 
 
 @register_format_type('distance')
 class Distance(FormattedDetailColumn):
-    XPATH_FUNCTION = u"if(here() = '' or {xpath} = '', '', concat(round(distance({xpath}, here()) div 100) div 10, ' km'))"
-    SORT_XPATH_FUNCTION = u"if({xpath} = '', 2147483647, round(distance({xpath}, here())))"
+    XPATH_FUNCTION = u"if(here() = '' or $xpath_function = '', '', concat(round(distance($xpath_function, here()) div 100) div 10, ' km'))"
+    SORT_XPATH_FUNCTION = u"if($xpath_function = '', 2147483647, round(distance($xpath_function, here())))"
     SORT_TYPE = 'double'
 
 
@@ -333,9 +337,9 @@ class Enum(FormattedDetailColumn):
 
     def _make_xpath(self, type):
         if type == 'sort':
-            xpath_fragment_template = u"if({xpath} = '{key}', {i}, "
+            xpath_fragment_template = u"if($xpath_function = '{key}', {i}, "
         elif type == 'display':
-            xpath_fragment_template = u"if({xpath} = '{key}', ${key_as_var}, "
+            xpath_fragment_template = u"if($xpath_function = '{key}', ${key_as_var}, "
         else:
             raise ValueError('type must be in sort, display')
 
@@ -345,7 +349,6 @@ class Enum(FormattedDetailColumn):
                 xpath_fragment_template.format(
                     key=item.key,
                     key_as_var=item.key_as_variable,
-                    xpath=self.xpath,
                     i=i,
                 )
             )
@@ -448,7 +451,7 @@ class EnumImage(Enum):
 class LateFlag(HideShortHeaderColumn):
     template_width = "11%"
 
-    XPATH_FUNCTION = u"if({xpath} = '', '*', if(today() - date({xpath}) > {column.late_flag}, '*', ''))"
+    XPATH_FUNCTION = u"if($xpath_function = '', '*', if(today() - date($xpath_function) > {column.late_flag}, '*', ''))"
 
 
 @register_format_type('invisible')
