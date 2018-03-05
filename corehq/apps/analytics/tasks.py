@@ -409,7 +409,7 @@ def track_periodic_data():
     users_to_domains = (UserES().web_users()
                         .last_logged_in(gte=six_months_ago).source(['domains', 'email', 'date_joined'])
                         .analytics_enabled()
-                        .run().hits)
+                        .scroll())
     # users_to_domains is a list of dicts
     domains_to_forms = FormES().terms_aggregation('domain', 'domain').size(0).run()\
         .aggregations.domain.counts_by_bucket()
