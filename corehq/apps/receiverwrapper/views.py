@@ -223,6 +223,7 @@ def _noauth_post(request, domain, app_id=None):
 
 
 @login_or_digest_ex(allow_cc_users=True)
+@two_factor_exempt
 def _secure_post_digest(request, domain, app_id=None):
     """only ever called from secure post"""
     return _process_form(
@@ -236,6 +237,7 @@ def _secure_post_digest(request, domain, app_id=None):
 
 @handle_401_response
 @login_or_basic_ex(allow_cc_users=True)
+@two_factor_exempt
 def _secure_post_basic(request, domain, app_id=None):
     """only ever called from secure post"""
     return _process_form(
@@ -249,6 +251,7 @@ def _secure_post_basic(request, domain, app_id=None):
 
 @handle_401_response
 @login_or_token_ex(allow_cc_users=True)
+@two_factor_exempt
 def _secure_post_token(request, domain, app_id=None):
     """only ever called from secure post"""
     return _process_form(
@@ -262,7 +265,6 @@ def _secure_post_token(request, domain, app_id=None):
 
 @location_safe
 @csrf_exempt
-@two_factor_exempt
 @require_POST
 @check_domain_migration
 def secure_post(request, domain, app_id=None):
