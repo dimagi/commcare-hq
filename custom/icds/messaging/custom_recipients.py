@@ -7,12 +7,14 @@ from custom.icds.case_relationships import (
 )
 from custom.icds.const import SUPERVISOR_LOCATION_TYPE_CODE
 from custom.icds.exceptions import CaseRelationshipError
+from dimagi.utils.logging import notify_exception
 
 
 def recipient_mother_person_case_from_ccs_record_case(case_schedule_instance):
     try:
         return mother_person_case_from_ccs_record_case(case_schedule_instance.case)
     except CaseRelationshipError:
+        notify_exception(None, message="ICDS ccs_record relationship error")
         return None
 
 
