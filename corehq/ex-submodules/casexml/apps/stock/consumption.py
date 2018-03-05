@@ -8,7 +8,7 @@ from corehq.apps.consumption.const import DAYS_IN_MONTH
 from dimagi.utils import parsing as dateparse
 from datetime import datetime, timedelta
 from casexml.apps.stock import const
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 DEFAULT_CONSUMPTION_FUNCTION = lambda case_id, product_id: None
 

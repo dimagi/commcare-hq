@@ -12,7 +12,7 @@ from corehq.apps.reports.commtrack.maps import StockStatusMapReport
 from corehq.apps.reports.standard import CustomProjectReport
 from corehq.apps.hqwebapp.decorators import maps_prefer_canvas, use_maps
 from custom.ewsghana.utils import get_country_id, filter_slugs_by_role
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 import six
 
 

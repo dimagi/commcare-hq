@@ -7,7 +7,7 @@ from six.moves import filter
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext
 
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 from corehq.apps.es.aggregations import MinAggregation, SumAggregation, TermsAggregation
 from corehq.apps.es.es_query import HQESQuery

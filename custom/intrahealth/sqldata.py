@@ -17,7 +17,7 @@ from django.utils.translation import ugettext as _
 from sqlalchemy import select
 from corehq.apps.reports.util import get_INFilter_bindparams
 from custom.utils.utils import clean_IN_filter_value
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.parsing import json_format_date
 import six
 from functools import reduce

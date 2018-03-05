@@ -10,7 +10,7 @@ from dimagi.ext.couchdbkit import (
 )
 from corehq.apps.app_manager.models import Application
 from corehq.apps.groups.models import Group
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 
 class AppGroup(DocumentSchema):

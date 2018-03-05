@@ -68,7 +68,7 @@ from corehq.util.view_utils import reverse
 from couchexport.export import export_from_tables
 from couchexport.models import Format
 from dimagi.utils.couch.pagination import DatatablesParams
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 from dimagi.utils.web import json_request
 from no_exceptions.exceptions import Http403

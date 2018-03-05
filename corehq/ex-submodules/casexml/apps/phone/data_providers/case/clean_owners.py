@@ -14,7 +14,7 @@ from casexml.apps.phone.data_providers.case.utils import get_case_sync_updates, 
 from casexml.apps.phone.models import OwnershipCleanlinessFlag, IndexTree
 from casexml.apps.phone.tasks import ASYNC_RESTORE_SENT
 from corehq.apps.users.cases import get_owner_id
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 import six
 from six.moves import range
 

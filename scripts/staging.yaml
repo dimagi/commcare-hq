@@ -59,6 +59,8 @@ branches:
   - nh/omrs/repeater_format  # Norman 2/15
   - jr/ejs/sms-chat # Jordan 2/16
   - mk-mock-repeater-report # MK 28-Feb
+  - ce/auto-batches # Cal 3/5
+  - sr-meta-form # Cal 3/5
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty

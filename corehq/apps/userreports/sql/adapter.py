@@ -19,7 +19,7 @@ from corehq.apps.userreports.util import get_table_name
 from corehq.sql_db.connections import connection_manager
 from corehq.util.soft_assert import soft_assert
 from corehq.util.test_utils import unit_testing_only
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 
 metadata = sqlalchemy.MetaData()

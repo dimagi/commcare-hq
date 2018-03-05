@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
 from elasticsearch import TransportError
@@ -11,7 +12,7 @@ from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.standard.cases.filters import CaseSearchFilter
 from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.util.timezones.conversions import PhoneTime
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 from corehq.apps.es import filters, users as user_es, cases as case_es
 from corehq.apps.es.es_query import HQESQuery

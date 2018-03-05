@@ -224,6 +224,23 @@ class XFormInstance(DeferredBlobMixin, SafeSaveDocument, UnicodeMixIn,
 
         return None
 
+    @property
+    def time_start(self):
+        # Will be addressed in https://github.com/dimagi/commcare-hq/pull/19391/
+        return None
+
+    @property
+    def time_end(self):
+        return None
+
+    @property
+    def commcare_version(self):
+        return None
+
+    @property
+    def app_version(self):
+        return None
+
     def __unicode__(self):
         return "%s (%s)" % (self.type, self.xmlns)
 

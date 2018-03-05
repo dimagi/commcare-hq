@@ -33,7 +33,7 @@ from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.database import (
     iter_docs, get_safe_write_kwargs, apply_update, iter_bulk_delete
 )
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from django.utils.html import format_html
 from dimagi.utils.logging import log_signal_errors

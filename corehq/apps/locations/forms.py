@@ -15,7 +15,7 @@ from crispy_forms.bootstrap import StrictButton
 
 from corehq.apps.hqwebapp.widgets import Select2Ajax
 from dimagi.utils.couch.database import iter_docs
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 from corehq.apps.commtrack.util import generate_code
 from corehq.apps.custom_data_fields import CustomDataEditor

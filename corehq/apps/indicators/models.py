@@ -15,7 +15,7 @@ from corehq.apps.indicators.admin.crud import (IndicatorAdminCRUDManager,
         BaseDynamicIndicatorCRUDManager, CombinedCouchIndicatorCRUDManager)
 from couchforms.models import XFormInstance
 from dimagi.utils.dates import DateSpan, add_months, months_between
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.modules import to_function
 from dimagi.utils.couch.cache import cache_core
 import six

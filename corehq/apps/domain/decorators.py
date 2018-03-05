@@ -300,10 +300,13 @@ def two_factor_check(view_func, api_key):
             couch_user = _ensure_request_couch_user(request)
             if not api_key and dom and _two_factor_required(view_func, dom, couch_user):
                 token = request.META.get('HTTP_X_COMMCAREHQ_OTP')
-                if token and match_token(request.user, token):
-                    return fn(request, domain, *args, **kwargs)
-                else:
+                if not token:
                     return JsonResponse({"error": "must send X-CommcareHQ-OTP header"}, status=401)
+                elif not match_token(request.user, token):
+                    return JsonResponse({"error": "X-CommcareHQ-OTP token is incorrect"}, status=401)
+                else:
+                    return fn(request, domain, *args, **kwargs)
+
             return fn(request, domain, *args, **kwargs)
         return _inner
     return _outer

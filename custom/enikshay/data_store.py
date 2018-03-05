@@ -8,7 +8,7 @@ from corehq.apps.userreports.util import get_indicator_adapter
 
 from custom.enikshay.const import DOSE_KNOWN_INDICATORS
 from custom.enikshay.exceptions import EnikshayTaskException
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 
 class AdherenceDatastore(object):

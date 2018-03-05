@@ -58,8 +58,9 @@ class TestPrevalenceOfSevere(TestCase):
                     "severe": 0,
                     "moderate": 4,
                     "normal": 3,
+                    'total_height_eligible': 449,
                     "total_measured": 7,
-                    "total": 449,
+                    "total_weighed": 302,
                     'original_name': ["st1"],
                     "fillKey": "7%-100%"
                 },
@@ -67,8 +68,9 @@ class TestPrevalenceOfSevere(TestCase):
                     "severe": 0,
                     "moderate": 4,
                     "normal": 16,
+                    'total_height_eligible': 490,
                     "total_measured": 24,
-                    "total": 490,
+                    "total_weighed": 366,
                     'original_name': ["st2"],
                     "fillKey": "7%-100%"
                 }
@@ -105,7 +107,7 @@ class TestPrevalenceOfSevere(TestCase):
             },
             loc_level='state'
         )
-        self.assertEquals(data['rightLegend']['average'], "0.85")
+        self.assertEquals(data['rightLegend']['average'], "1.21")
 
     def test_map_data_right_legend_extended_info(self):
         data = get_prevalence_of_severe_data_map(
@@ -119,10 +121,10 @@ class TestPrevalenceOfSevere(TestCase):
         self.assertListEqual(
             data['rightLegend']['extended_info'],
             [
-                {'indicator': 'Total Children (6 - 60 months) weighed in given month:', 'value': '939'},
+                {'indicator': 'Total Children (6 - 60 months) weighed in given month:', 'value': '668'},
                 {'indicator': 'Total Children (6 - 60 months) with height measured in given month:',
                  'value': '31'},
-                {'indicator': 'Number of children (6 - 60 months) unmeasured:', 'value': '908'},
+                {'indicator': 'Number of children (6 - 60 months) unmeasured:', 'value': '271'},
                 {'indicator': '% Severely Acute Malnutrition (6 - 60 months):', 'value': '0.00%'},
                 {'indicator': '% Moderately Acute Malnutrition (6 - 60 months):', 'value': '25.81%'},
                 {'indicator': '% Normal (6 - 60 months):', 'value': '61.29%'}
@@ -190,7 +192,8 @@ class TestPrevalenceOfSevere(TestCase):
                     'normal': 3,
                     'original_name': ['b1', 'b2'],
                     'severe': 0,
-                    'total': 449,
+                    'total_height_eligible': 449,
+                    'total_weighed': 302,
                     'fillKey': '7%-100%'
                 }
             }
@@ -207,7 +210,7 @@ class TestPrevalenceOfSevere(TestCase):
             },
             loc_level='block',
         )
-        self.assertEquals(data['rightLegend']['average'], "0.90")
+        self.assertEquals(data['rightLegend']['average'], "1.33")
 
     def test_chart_data_keys_length(self):
         data = get_prevalence_of_severe_data_chart(
@@ -307,26 +310,30 @@ class TestPrevalenceOfSevere(TestCase):
                     {
                         "y": 0.0,
                         "x": 1485907200000,
-                        "all": 0,
-                        'measured': 0
+                        "total_weighed": 0,
+                        'total_measured': 0,
+                        'total_height_eligible': 0
                     },
                     {
                         "y": 0.0,
                         "x": 1488326400000,
-                        "all": 0,
-                        'measured': 0
+                        "total_weighed": 0,
+                        'total_measured': 0,
+                        'total_height_eligible': 0
                     },
                     {
                         "y": 0.5454545454545454,
                         "x": 1491004800000,
-                        "all": 964,
-                        'measured': 11
+                        "total_weighed": 659,
+                        'total_measured': 11,
+                        'total_height_eligible': 964,
                     },
                     {
                         "y": 0.6129032258064516,
                         "x": 1493596800000,
-                        "all": 939,
-                        'measured': 31
+                        "total_weighed": 668,
+                        'total_measured': 31,
+                        'total_height_eligible': 939,
                     }
                 ],
                 "key": "% normal"
@@ -352,26 +359,30 @@ class TestPrevalenceOfSevere(TestCase):
                     {
                         "y": 0.0,
                         "x": 1485907200000,
-                        "all": 0,
-                        'measured': 0
+                        "total_weighed": 0,
+                        'total_measured': 0,
+                        'total_height_eligible': 0,
                     },
                     {
                         "y": 0.0,
                         "x": 1488326400000,
-                        "all": 0,
-                        'measured': 0
+                        "total_weighed": 0,
+                        'total_measured': 0,
+                        'total_height_eligible': 0,
                     },
                     {
                         "y": 0.09090909090909091,
                         "x": 1491004800000,
-                        "all": 964,
-                        'measured': 11
+                        "total_weighed": 659,
+                        'total_measured': 11,
+                        'total_height_eligible': 964,
                     },
                     {
                         "y": 0.25806451612903225,
                         "x": 1493596800000,
-                        "all": 939,
-                        'measured': 31
+                        "total_weighed": 668,
+                        'total_measured': 31,
+                        'total_height_eligible': 939,
                     }
                 ],
                 "key": "% moderately wasted (moderate acute malnutrition)"
@@ -397,26 +408,30 @@ class TestPrevalenceOfSevere(TestCase):
                     {
                         "y": 0.0,
                         "x": 1485907200000,
-                        "all": 0,
-                        'measured': 0
+                        "total_weighed": 0,
+                        'total_measured': 0,
+                        'total_height_eligible': 0
                     },
                     {
                         "y": 0.0,
                         "x": 1488326400000,
-                        "all": 0,
-                        'measured': 0
+                        "total_weighed": 0,
+                        'total_measured': 0,
+                        'total_height_eligible': 0
                     },
                     {
                         "y": 0.09090909090909091,
                         "x": 1491004800000,
-                        "all": 964,
-                        'measured': 11
+                        "total_weighed": 659,
+                        'total_measured': 11,
+                        'total_height_eligible': 964,
                     },
                     {
                         "y": 0.0,
                         "x": 1493596800000,
-                        "all": 939,
-                        'measured': 31
+                        "total_weighed": 668,
+                        'total_measured': 31,
+                        'total_height_eligible': 939,
                     }
                 ],
                 "key": "% severely wasted (severe acute malnutrition)"
@@ -500,18 +515,20 @@ class TestPrevalenceOfSevere(TestCase):
             data['tooltips_data'],
             {
                 "s2": {
-                    "total": 150,
+                    "total_weighed": 84,
                     "severe": 0,
                     "moderate": 3,
                     "total_measured": 4,
-                    "normal": 1
+                    "normal": 1,
+                    "total_height_eligible": 150,
                 },
                 "s1": {
-                    "total": 70,
+                    "total_weighed": 65,
                     "severe": 0,
                     "moderate": 0,
                     "total_measured": 0,
-                    "normal": 0
+                    "normal": 0,
+                    "total_height_eligible": 70,
                 }
             }
         )
@@ -543,7 +560,7 @@ class TestPrevalenceOfSevere(TestCase):
                         ],
                         [
                             "s2",
-                            0.02
+                            0.03571428571428571
                         ]
                     ],
                     "key": ""

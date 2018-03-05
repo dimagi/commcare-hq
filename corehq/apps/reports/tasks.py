@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from datetime import datetime, timedelta
 from dateutil.parser import parse
 import hashlib
@@ -310,7 +311,7 @@ def build_form_multimedia_zip(
         _, fpath = tempfile.mkstemp()
 
     _write_attachments_to_file(fpath, use_transfer, num_forms, forms_info, case_id_to_name)
-    filename = u"{}.zip".format(zip_name)
+    filename = "{}.zip".format(zip_name)
     expose_download(use_transfer, fpath, filename, download_id, 'zip')
     DownloadBase.set_progress(build_form_multimedia_zip, num_forms, num_forms)
 
@@ -331,18 +332,18 @@ def _get_download_file_path(xmlns, startdate, enddate, export_id, app_id, num_fo
 
 
 def _format_filename(form_info, question_id, extension, case_id_to_name):
-    filename = u"{}-{}-form_{}{}".format(
+    filename = "{}-{}-form_{}{}".format(
         unidecode(question_id),
         form_info['username'] or form_info['form'].user_id or 'user_unknown',
         form_info['form'].form_id or 'unknown',
         extension
     )
     if form_info['case_ids']:
-        case_names = u'-'.join(map(
+        case_names = '-'.join(map(
             lambda case_id: case_id_to_name[case_id],
             form_info['case_ids'],
         ))
-        filename = u'{}-{}'.format(case_names, filename)
+        filename = '{}-{}'.format(case_names, filename)
     return filename
 
 
@@ -450,9 +451,9 @@ def _extract_form_attachment_info(form, properties):
             continue
         try:
             question_id = six.text_type(
-                u'-'.join(find_question_id(form.form_data, attachment_name)))
+                '-'.join(find_question_id(form.form_data, attachment_name)))
         except TypeError:
-            question_id = u'unknown' + six.text_type(unknown_number)
+            question_id = 'unknown' + six.text_type(unknown_number)
             unknown_number += 1
 
         if not properties or question_id in properties:

@@ -13,7 +13,7 @@ from corehq.apps.app_manager.suite_xml.contributors import PostProcessor
 from corehq.apps.app_manager.suite_xml.xml_models import StackDatum, Stack, CreateFrame
 from corehq.apps.app_manager.xpath import CaseIDXPath, session_var, \
     XPath
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from six.moves import filter
 
 

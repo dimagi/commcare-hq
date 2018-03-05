@@ -2,7 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from django.utils.dateparse import parse_datetime
 
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from collections import namedtuple
 from custom.enikshay.case_utils import get_person_case_from_episode
 from casexml.apps.case.xform import get_case_updates

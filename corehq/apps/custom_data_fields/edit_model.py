@@ -11,7 +11,7 @@ from django import forms
 from corehq.apps.hqwebapp.decorators import use_jquery_ui
 from corehq.toggles import MULTIPLE_CHOICE_CUSTOM_FIELD, REGEX_FIELD_VALIDATION
 
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 from .models import (CustomDataFieldsDefinition, CustomDataField,
                      validate_reserved_words)
