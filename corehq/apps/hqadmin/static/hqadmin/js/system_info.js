@@ -95,7 +95,7 @@ hqDefine('hqadmin/js/system_info', [
                     } catch (e) {
                         // this is fine
                     }
-                    /* eslint-ensable no-empty */
+                    /* eslint-enable no-empty */
                     self.error("Error: " + err);
                     self.autoRefresh(false);
                     self.timer = null;
