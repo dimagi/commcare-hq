@@ -51,8 +51,9 @@ def process_device_log(domain, xform):
 
 
 def _process_user_subreport(xform):
+    if UserEntry.objects.filter(xform_id=xform.form_id).exists():
+        return
     userlogs = _get_logs(xform.form_data, 'user_subreport', 'user')
-    UserEntry.objects.filter(xform_id=xform.form_id).delete()
     to_save = []
     for i, log in enumerate(userlogs):
         to_save.append(UserEntry(
@@ -67,9 +68,10 @@ def _process_user_subreport(xform):
 
 
 def _process_log_subreport(domain, xform):
+    if DeviceReportEntry.objects.filter(xform_id=xform.form_id).exists():
+        return
     form_data = xform.form_data
     logs = _get_logs(form_data, 'log_subreport', 'log')
-    DeviceReportEntry.objects.filter(xform_id=xform.form_id).delete()
     to_save = []
     for i, log in enumerate(logs):
         if not log:
@@ -110,8 +112,9 @@ def _get_user_info_from_log(domain, log):
 
 
 def _process_user_error_subreport(domain, xform):
+    if UserErrorEntry.objects.filter(xform_id=xform.form_id).exists():
+        return
     errors = _get_logs(xform.form_data, 'user_error_subreport', 'user_error')
-    UserErrorEntry.objects.filter(xform_id=xform.form_id).delete()
     to_save = []
     for i, error in enumerate(errors):
         # beta versions have 'version', but the name should now be 'app_build'.
@@ -137,8 +140,9 @@ def _process_user_error_subreport(domain, xform):
 
 
 def _process_force_close_subreport(domain, xform):
+    if ForceCloseEntry.objects.filter(xform_id=xform.form_id).exists():
+        return
     force_closures = _get_logs(xform.form_data, 'force_close_subreport', 'force_close')
-    ForceCloseEntry.objects.filter(xform_id=xform.form_id).delete()
     to_save = []
     for force_closure in force_closures:
         # There are some testing versions going around with an outdated schema
