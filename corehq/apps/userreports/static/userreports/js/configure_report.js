@@ -32,7 +32,7 @@ hqDefine('userreports/js/reportbuilder/configure_report', function() {
             // In previewMode, report can't be saved.
             "previewMode": (
                 !initialPageData.get('has_report_builder_access') ||
-                (!initialPageData.get('at_report_limit') && !initialPageData.get('existing_report'))),
+                (initialPageData.get('at_report_limit') && !existing_report)),
         });
         $("#reportConfig").koApplyBindings(reportConfig);
         window._bindingsApplied = true;
