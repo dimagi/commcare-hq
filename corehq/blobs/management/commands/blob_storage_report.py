@@ -274,7 +274,7 @@ def load_puts(fileobj, data):
 
 @contextmanager
 def make_row_writer(output_file, write_csv):
-    def make_row_widths_writer(rows):
+    def make_row_widths_writer(rows, output_file):
         widths = [len(text(item)) for item in rows[0]]
         for row in rows[1:]:
             for i, item in enumerate(row):
@@ -287,7 +287,7 @@ def make_row_writer(output_file, write_csv):
         )
 
         def write(row):
-            print(template.format(*row))
+            print(template.format(*row), file=output_file)
         return write
 
     if output_file != sys.stdout:
@@ -298,14 +298,18 @@ def make_row_writer(output_file, write_csv):
     else:
         def write(row):
             if row:
-                pending.append(row)
+                if len(row) == 1 and not pending:
+                    print(row[0], file=output_file)
+                else:
+                    pending.append(row)
             else:
                 if pending:
-                    write = make_row_widths_writer(pending)
+                    write = make_row_widths_writer(pending, output_file)
                     for row in pending:
                         write(row)
                     del pending[:]
-                print("")
+                print("", file=output_file)
+
     pending = []
     try:
         yield write
