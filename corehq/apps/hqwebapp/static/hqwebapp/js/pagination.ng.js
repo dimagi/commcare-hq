@@ -67,6 +67,7 @@
         self.updateList = function (data) {
             if (data.success) {
                 $scope.paginatedItems = data.response.itemList;
+                $scope.domainItems = data.response.domainRuleRunList;
                 $scope.total = data.response.total;
                 $scope.currentPage = data.response.page;
                 $scope.query = data.response.query;

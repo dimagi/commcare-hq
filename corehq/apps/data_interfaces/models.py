@@ -1339,6 +1339,12 @@ class DomainCaseRuleRun(models.Model):
             ('domain', 'started_on'),
         )
 
+    @classmethod
+    def by_domain(cls, domain):
+        return cls.objects.filter(
+            domain=domain
+        )
+
     def done(self, status, cases_checked, result):
         if not isinstance(result, CaseRuleActionResult):
             raise TypeError("Expected an instance of CaseRuleActionResult")
