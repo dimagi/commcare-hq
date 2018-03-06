@@ -67,6 +67,12 @@
                 <p>
                     {% blocktrans %}Welcome to CommCare!{% endblocktrans %}
                     {% blocktrans %}Please click the button below to activate your CommCare project <strong>{{ domain }}</strong>.{% endblocktrans %}
+                    {% if is_mobile_experience %}
+                        {% blocktrans %}
+                            CommCare HQ is a powerful tool, and is not optimized for a mobile device.
+                            For the best experience, please activate CommCare from a laptop or desktop browser.
+                        {% endblocktrans %}
+                    {% endif %}
                 </p>
                 <p style="text-align: center;">
                     <a class="btn"
