@@ -25,8 +25,6 @@ from corehq.util.log import with_progress_bar
 USAGE = "Usage: ./manage.py blob_storage_report [options] FILE [FILE ...]"
 text = six.text_type
 
-# TODO report total blob storage used by domain
-
 
 class Command(BaseCommand):
     """Report blob storage change over time using Riak CS access logs
@@ -339,3 +337,54 @@ def mean(data):
     if n < 1:
         raise ValueError('mean requires at least one data point')
     return sum(data) / float(n)
+
+#def _ss(data):
+#    """Return sum of square deviations of sequence data."""
+#    c = mean(data)
+#    ss = sum((x-c) ** 2 for x in data)
+#    return ss
+#
+#def stddev(data, ddof=0):
+#    """Calculates the population standard deviation
+#    by default; specify ddof=1 to compute the sample
+#    standard deviation.
+#    """
+#    n = len(data)
+#    if n < 2:
+#        raise ValueError('variance requires at least two data points')
+#    ss = _ss(data)
+#    pvar = ss / (n - ddof)
+#    return pvar ** 0.5
+#
+#
+#def get_sample_size(population_size, samples, z_score=1.96, error_margin=0.05):
+#    """Get sample size needed to calculate a meaningful mean
+#
+#    This function must be called multiple times to determine a suitable
+#    meaningful sample size. For example, the first time it is called it
+#    will return 100 or the population size, whichever is less. If the
+#    population size is very large this will probably have little value.
+#    Subsequent calls with the obtained samples should refine the result,
+#    assuming the samples have a reasonably random distribution.
+#
+#    Sources:
+#    https://www.surveymonkey.com/mp/sample-size-calculator/
+#    https://en.wikipedia.org/wiki/Sample_size_determination
+#    http://courses.wcupa.edu/rbove/Berenson/10th%20ed%20CD-ROM%20topics/section8_7.pdf
+#
+#    :param population_size: Total number of items being sampled.
+#    :param samples: List of samples already obtained (may be empty).
+#    :param z_score: Z-score for confidence level.
+#    :param error_margin: Acceptable margin of error percentage expressed
+#    as a decimal.
+#    :returns: The number of samples needed for a meaninful mean.
+#    """
+#    return 100
+#    # TODO implement this
+#    if len(samples) < 100:
+#        return min(100, population_size)
+#    p = .1 + sqrt((ps * (1 - ps)) / len(samples))  # UNFINISHED: this doesn't work
+#    z_num = z_score ** 2 * p * (1 - p)
+#    e_sqr = error_margin ** 2
+#    sample_size = (z_num / e_sqr) / (1 + (z_num / (e_sqr * population_size)))
+#    return int(sample_size + 1)
