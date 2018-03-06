@@ -18,21 +18,21 @@ from pillowtop.reindexer.reindexer import Reindexer, ReindexerFactory
 from casexml.apps.phone.models import SyncLog
 from casexml.apps.phone.dbaccessors.sync_logs_by_user import get_synclogs_for_user
 
+from corehq.apps.change_feed import topics
+from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
+
 
 def get_user_sync_history_pillow(pillow_id='UpdateUserSyncHistoryPillow', **kwargs):
     """
     This gets a pillow which iterates through all synclogs
     """
-    #Todo; convert to SQL?
-    couch_db = SyncLog.get_db()
-    change_feed = CouchChangeFeed(couch_db, include_docs=True)
+    change_feed = KafkaChangeFeed(topics=[topics.SMS], group_id=SMS_PILLOW_KAFKA_CONSUMER_GROUP_ID),
     checkpoint = PillowCheckpoint('synclog', change_feed.sequence_format)
-    form_processor = UserSyncHistoryProcessor()
     return ConstructedPillow(
         name=pillow_id,
         checkpoint=checkpoint,
         change_feed=change_feed,
-        processor=form_processor,
+        processor=UserSyncHistoryProcessor(),
         change_processed_event_handler=PillowCheckpointEventHandler(
             checkpoint=checkpoint, checkpoint_frequency=100
         ),
@@ -42,7 +42,6 @@ def get_user_sync_history_pillow(pillow_id='UpdateUserSyncHistoryPillow', **kwar
 class UserSyncHistoryProcessor(PillowProcessor):
 
     def process_change(self, pillow_instance, change):
-        #Todo; convert to SQL?
         synclog = change.get_document()
         if not synclog:
             return

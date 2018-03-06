@@ -45,6 +45,7 @@ class SyncLogPillowTest(TestCase):
 
         # make sure user has empty reporting-metadata before a sync
         self.assertEqual(self.ccuser.reporting_metadata.last_syncs, [])
+
         synclog = SyncLog(domain=self.domain.name, user_id=self.ccuser._id,
                           date=datetime.datetime(2015, 7, 1, 0, 0)),
         synclog.save()
@@ -52,3 +53,5 @@ class SyncLogPillowTest(TestCase):
         change_meta = change_meta_from_kafka_message(message.value)
         self.assertEqual(change_meta.document_id, synclog.synclog_id)
         self.assertEqual(change_meta.domain, self.domain.name, )
+
+        self.assertEqual(self.ccuser.reporting_metadata.last_syncs, [])

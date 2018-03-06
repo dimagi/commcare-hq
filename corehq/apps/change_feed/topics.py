@@ -22,6 +22,7 @@ COMMCARE_USER = 'commcare-user'
 GROUP = 'group'
 WEB_USER = 'web-user'
 LOCATION = 'location'
+SYNCLOG_SQL = 'synclog-sql'
 
 
 CASE_TOPICS = (CASE, CASE_SQL)
@@ -41,6 +42,7 @@ ALL = (
     WEB_USER,
     APP,
     LOCATION,
+    SYNCLOG_SQL,
 )
 
 

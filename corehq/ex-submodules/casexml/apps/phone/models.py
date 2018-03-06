@@ -22,6 +22,7 @@ from dimagi.utils.couch import LooselyEqualDocumentSchema
 from casexml.apps.case import const
 from casexml.apps.case.sharedmodels import CommCareCaseIndex, IndexHoldingMixIn
 from casexml.apps.phone.checksum import Checksum, CaseStateHash
+from casexml.apps.phone.change_publishers import publish_synclog_saved
 import logging
 import six
 
@@ -442,6 +443,17 @@ class SyncLogSQL(models.Model):
     had_state_error = models.BooleanField(default=False)
     error_date = models.DateTimeField(db_index=True, null=True, blank=True)
     error_hash = models.CharField(max_length=255, null=True, blank=True)
+
+    def save(self, *args, **kwargs):
+        super(SyncLogSQL, self).save(*args, **kwargs)
+        try:
+            publish_synclog_saved(self)
+        except:
+            notify_exception(
+                None,
+                message='Could not publish change for SyncLog',
+                details={'pk': self.pk}
+            )
 
 
 class SyncLog(AbstractSyncLog):
