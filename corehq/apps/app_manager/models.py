@@ -1441,12 +1441,20 @@ class NavMenuItemMediaMixin(DocumentSchema):
 
     @classmethod
     def wrap(cls, data):
-        # ToDo - Remove after migration
+        # Lazy migration from single-language media to localizable media
         for media_attr in ('media_image', 'media_audio'):
             old_media = data.get(media_attr, None)
-            if old_media and isinstance(old_media, six.string_types):
-                new_media = {'default': old_media}
-                data[media_attr] = new_media
+            if old_media:
+                # Single-language media was stored in a plain string.
+                # Convert this to a dict, using a dummy key because we
+                # don't know the app's supported or default lang yet.
+                if isinstance(old_media, six.string_types):
+                    new_media = {'default': old_media}
+                    data[media_attr] = new_media
+                elif isinstance(old_media, dict):
+                    # Once the media has localized data, discard the dummy key
+                    if 'default' in old_media and len(old_media.keys()) > 1:
+                        old_media.pop('default')
 
         return super(NavMenuItemMediaMixin, cls).wrap(data)
 
@@ -1477,13 +1485,13 @@ class NavMenuItemMediaMixin(DocumentSchema):
 
     @property
     def default_media_image(self):
-        # For older apps that were migrated
-        return self.icon_by_language('default')
+        # For older apps that were migrated: just return the first available item
+        return self.icon_by_language(strict=False)
 
     @property
     def default_media_audio(self):
-        # For older apps that were migrated
-        return self.audio_by_language('default')
+        # For older apps that were migrated: just return the first available item
+        return self.audio_by_language(strict=False)
 
     def icon_by_language(self, lang, strict=False):
         return self._get_media_by_language('media_image', lang, strict=strict)
