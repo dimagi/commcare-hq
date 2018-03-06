@@ -319,6 +319,8 @@ def make_row_writer(output_file, write_csv):
 
 def sizeof_fmt(num):
     # copied/slightly modified from corehq.couchapps.dbaccessors
+    if not num:
+        return ''
     for x in ['B', 'KB', 'MB', 'GB', 'TB']:
         if num < 1024.0:
             return "%3.1f %s" % (num, x)
