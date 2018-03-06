@@ -67,6 +67,11 @@ class FormFact(BaseFact, CustomSQLETLMixin):
     edited_on = models.DateTimeField(null=True)
     last_modified = models.DateTimeField(null=True)
 
+    time_end = models.DateTimeField(null=True, blank=True)
+    time_start = models.DateTimeField(null=True, blank=True)
+    commcare_version = models.CharField(max_length=8, blank=True, null=True)
+    app_version = models.PositiveIntegerField(null=True, blank=True)
+
     build_id = models.CharField(max_length=255, null=True)
     state = models.PositiveSmallIntegerField(
         choices=XFormInstanceSQL.STATES,

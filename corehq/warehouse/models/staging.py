@@ -288,6 +288,11 @@ class FormStagingTable(StagingTable, CouchToDjangoETLMixin):
     deleted_on = models.DateTimeField(null=True)
     edited_on = models.DateTimeField(null=True)
 
+    time_end = models.DateTimeField(null=True, blank=True)
+    time_start = models.DateTimeField(null=True, blank=True)
+    commcare_version = models.CharField(max_length=8, blank=True, null=True)
+    app_version = models.PositiveIntegerField(null=True, blank=True)
+
     build_id = models.CharField(max_length=255, null=True)
 
     state = models.PositiveSmallIntegerField(
@@ -312,6 +317,11 @@ class FormStagingTable(StagingTable, CouchToDjangoETLMixin):
             ('deleted_on', 'deleted_on'),
             ('edited_on', 'edited_on'),
             ('build_id', 'build_id'),
+
+            ('time_end', 'time_end'),
+            ('time_start', 'time_start'),
+            ('commcare_version', 'commcare_version'),
+            ('app_version', 'app_version'),
         ]
 
     @classmethod
