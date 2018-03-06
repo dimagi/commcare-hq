@@ -95,7 +95,7 @@ if [ "$EXISTENT_MODULE" == true ]; then
     sed -i "$ d" $NEW_MODULE_LOCATION
 else
     # create file
-    touch $NEW_MODULE_LOCATION
+    mkdir -p ./corehq/apps/$APP/static/$APP/js && touch $NEW_MODULE_LOCATION
 
     # add boilerplate
     echo "hqDefine('$NEW_MODULE_NAME', function() {" >> $NEW_MODULE_LOCATION

@@ -253,11 +253,12 @@ class SubmissionPost(object):
                     submission_type = 'device_log'
                     try:
                         process_device_log(self.domain, instance)
-                    except Exception:
+                    except Exception as e:
                         notify_exception(None, "Error processing device log", details={
                             'xml': self.instance,
                             'domain': self.domain
                         })
+                        e.sentry_capture = False
                         raise
 
                 elif instance.is_duplicate:

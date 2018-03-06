@@ -421,9 +421,11 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
     };
 
     vm.goToLink = function () {
-        window.open($rootScope.issnip_report_link);
-        vm.downloaded = true;
-        $rootScope.issnip_report_link = '';
+        if (vm.readyToDownload()) {
+            window.open($rootScope.issnip_report_link);
+            vm.downloaded = true;
+            $rootScope.issnip_report_link = '';
+        }
     };
 
 }
