@@ -72,11 +72,6 @@ def get_synclog_ids_by_date(start_datetime, end_datetime):
 
     synclogs = SyncLogSQL.objects.filter(date__gt=start_datetime, date__lt=end_datetime)
     for synclog in synclogs:
-        result_modified_datetime = synclog.date
-        # Skip the record if the datetime is equal to the start because this should return
-        # records with an exclusive start date.
-        if result_modified_datetime == start_datetime:
-            continue
         yield synclog.synclog_id.hex
 
 
