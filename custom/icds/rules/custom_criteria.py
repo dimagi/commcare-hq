@@ -1,67 +1,64 @@
 from __future__ import absolute_import
-from custom.icds.rules.immunization import (
-    get_immunization_products,
-    get_immunization_anchor_date,
-    get_map,
-    calculate_immunization_window,
-    get_tasks_case_immunization_ledger_values,
-    todays_date
-)
+from __future__ import unicode_literals
+from corehq.apps.app_manager.const import USERCASE_TYPE
+from custom.icds.const import AWC_LOCATION_TYPE_CODE, SUPERVISOR_LOCATION_TYPE_CODE
+from custom.icds.messaging.custom_content import get_user_from_usercase
+from custom.icds.rules.util import get_date, todays_date
+from dateutil.relativedelta import relativedelta
 
 
-def consider_case_for_dpt3_and_measles_reminder(case, now):
+def person_case_is_under_6_years_old(case, now):
     """
-    The purpose of this function is to determine if we should consider the
-    given case for the later check that happens when we check if DPT3 and
-    Measles vaccinations are due.
+    NOTE: Use this custom criteria with caution from SMS alerts, see below
+    for explanation.
 
-    The actual check for whether the immunizations are due happens at reminder
-    runtime. The purpose of this function which is referenced in the rule
-    is to just filter down that list of cases under consideration so that
-    we process as few as necessary.
+    This custom criteria is fine to use with auto case update rules because
+    those get run every day so the rule will be responsive to changes in today's date.
+    For an auto case update rule, you actually wouldn't even need this custom
+    criteria because you could just use one of the date criteria for the rule
+    out of the box.
+
+    But for rules that spawn conditional SMS alerts (i.e., those with
+    workflow=WORKFLOW_SCHEDULING), we need to be careful about using criteria
+    that reference today's date, because those don't run every day - they
+    only run when the case changes. So those rules can't be responsive to changes in
+    today's date, and that's why date criteria are not allowed in rules that
+    spawn SMS alerts.
+
+    For this criteria specifically, that means that you shouldn't use it to
+    spawn an alert that repeats for a long period of time because the person
+    might not be under 6 years of age for the entire duration of the schedule,
+    or the schedule would stop erratically at the first case update that happens
+    after the person's 6th birthday.
+
+    But if you're just using this specific criteria to spawn a one-time alert
+    that sends only when it first matches the case, it can be ok. And that only
+    works because we're checking that today's date is less than some fixed value.
+    If we were checking that today's date is greater than some fixed value, it
+    likely wouldn't produce the desired behavior.
     """
-    if case.type != 'tasks':
-        raise ValueError("This rule criteria should only be applied to cases with case type 'tasks'")
-
-    if case.get_case_property('tasks_type') != 'child':
+    if case.type != 'person':
         return False
 
-    products = get_immunization_products(case.domain, 'child')
-    product_code_to_product = get_map(products, 'code')
-    dpt3_product = product_code_to_product['3g_dpt_3']
-    measles_product = product_code_to_product['4g_measles']
-
-    ledger_values = get_tasks_case_immunization_ledger_values(case)
-    product_id_to_ledger_value = get_map(ledger_values, 'entry_id')
-
-    # If either of the vaccinations have happened, do not consider the case
-    if (
-        dpt3_product.product_id in product_id_to_ledger_value or
-        measles_product.product_id in product_id_to_ledger_value
-    ):
+    try:
+        dob = get_date(case.get_case_property('dob'))
+    except:
         return False
 
-    today = todays_date()
-    anchor_date = get_immunization_anchor_date(case)
+    return todays_date(now) < (dob + relativedelta(years=6))
 
-    _, dpt3_end_date = calculate_immunization_window(
-        case,
-        anchor_date,
-        dpt3_product,
-        products,
-        ledger_values
-    )
 
-    _, measles_end_date = calculate_immunization_window(
-        case,
-        anchor_date,
-        measles_product,
-        products,
-        ledger_values
-    )
+def check_user_location_type(usercase, location_type_code):
+    user = get_user_from_usercase(usercase)
+    if user and user.location:
+        return user.location.location_type.code == location_type_code
 
-    # If either of the vaccination windows have expired, do not consider the case
-    if today > dpt3_end_date or today > measles_end_date:
-        return False
+    return False
 
-    return True
+
+def is_usercase_of_aww(case, now):
+    return case.type == USERCASE_TYPE and check_user_location_type(case, AWC_LOCATION_TYPE_CODE)
+
+
+def is_usercase_of_ls(case, now):
+    return case.type == USERCASE_TYPE and check_user_location_type(case, SUPERVISOR_LOCATION_TYPE_CODE)

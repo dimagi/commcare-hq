@@ -739,6 +739,17 @@
                 "calculate_total": false,
                 "type": "field",
                 "display": "eNikshay External ID"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "doc_id",
+                "calculate_total": false,
+                "type": "field",
+                "display": "source_doc_id"
             }
         ]
     }

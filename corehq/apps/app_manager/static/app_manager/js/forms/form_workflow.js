@@ -95,7 +95,7 @@ hqDefine('app_manager/js/forms/form_workflow', function() {
 
     FormWorkflow.prototype.onAddFormLink = function(workflow, event) {
         // Default to linking to first form that can be auto linked
-        var default_choice = _.find(workflow.forms, function(form) { return form.autoLink }),
+        var default_choice = _.find(workflow.forms, function(form) { return form.autoLink; }),
             formId = default_choice ? default_choice.uniqueId : null;
         this.formLinks.push(new FormWorkflow.FormLink('', formId, workflow));
     };
@@ -174,7 +174,7 @@ hqDefine('app_manager/js/forms/form_workflow', function() {
             self.datums.removeAll();
         };
 
-       // initialize
+        // initialize
         self.autoLink(self.get_form_by_id(self.formId()).autoLink);
         self.datums(self.wrap_datums(datums));
         self.manualDatums(self.datums().length && self.autoLink());

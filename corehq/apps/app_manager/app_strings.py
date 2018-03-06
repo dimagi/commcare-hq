@@ -4,7 +4,7 @@ import functools
 from django.utils.translation import ugettext
 
 from corehq.apps.app_manager import id_strings
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from corehq.apps.app_manager.util import module_offers_search,\
     create_temp_sort_column, get_sort_and_sort_only_columns
 import langcodes
@@ -236,6 +236,11 @@ class AppStringsBase(object):
             messages['case_autoload.fixture.exactly_one_fixture'] = \
                 (u'The lookup table settings for your user are incorrect. '
                     u'This user must have access to exactly one lookup table row for the table: ${0}')
+
+        if 'case_autoload.usercase.case_missing' not in messages:
+            messages['usercase.missing_id'] = \
+                (u'This form affects the user case, but no user case id was found. '
+                    u'Please contact your supervisor.')
 
         from corehq.apps.app_manager.models import (
             AUTO_SELECT_CASE, AUTO_SELECT_FIXTURE, AUTO_SELECT_USER,

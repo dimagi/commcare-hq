@@ -1,4 +1,6 @@
 from __future__ import absolute_import
+from __future__ import division
+from __future__ import unicode_literals
 import datetime
 from collections import OrderedDict
 
@@ -15,8 +17,9 @@ from custom.world_vision.sqldata.child_sqldata import NutritionBirthWeightDetail
 from custom.world_vision.sqldata.main_sqldata import ImmunizationOverview
 from custom.world_vision.sqldata.mother_sqldata import PostnatalCareOverview, AnteNatalCareServiceOverviewExtended, \
     DeliveryPlaceDetailsExtended
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.parsing import json_format_date
+import six
 
 
 class TTCReport(ProjectReportParametersMixin, CustomProjectReport):
@@ -104,7 +107,7 @@ class TTCReport(ProjectReportParametersMixin, CustomProjectReport):
 
         config['last_month'] = json_format_date(today - datetime.timedelta(days=30))
 
-        for k, v in sorted(LOCATION_HIERARCHY.iteritems(), reverse=True):
+        for k, v in sorted(six.iteritems(LOCATION_HIERARCHY), reverse=True):
             req_prop = 'location_%s' % v['prop']
             if self.request.GET.getlist(req_prop, []):
                 location_list = self.request.GET.getlist(req_prop, [])

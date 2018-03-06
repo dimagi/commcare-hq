@@ -138,7 +138,7 @@ function bootstrap() {
                 ./manage.py sync_couch_views &&
                 ./manage.py migrate --noinput &&
                 ./manage.py compilejsi18n &&
-                ./manage.py bootstrap demo admin@example.com password"
+                ./manage.py make_superuser admin@example.com"
 }
 
 function runserver() {

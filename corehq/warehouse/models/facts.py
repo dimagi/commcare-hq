@@ -33,7 +33,7 @@ class BaseFact(models.Model, WarehouseTable):
             cls.load(batch)
         return True
 
-    class Meta:
+    class Meta(object):
         abstract = True
 
     @classmethod

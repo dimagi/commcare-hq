@@ -61,8 +61,8 @@ $(function () {
                 // Allow: home, end, left, right, down, up
                 (e.keyCode >= 35 && e.keyCode <= 40)
             ) {
-                   // let it happen, don't do anything
-                   return;
+                // let it happen, don't do anything
+                return;
             }
 
             // Ensure that it is a number and stop the keypress

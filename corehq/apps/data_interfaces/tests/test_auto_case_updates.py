@@ -21,6 +21,7 @@ from corehq.apps.data_interfaces.models import (
     CaseRuleUndoer,
 )
 from corehq.apps.data_interfaces.tasks import run_case_update_rules_for_domain
+from corehq.apps.domain.models import Domain
 from datetime import datetime, date
 
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
@@ -45,6 +46,8 @@ class AutomaticCaseUpdateTest(TestCase):
     def setUp(self):
         super(AutomaticCaseUpdateTest, self).setUp()
         self.domain = 'auto-update-test'
+        self.domain_object = Domain(name=self.domain)
+        self.domain_object.save()
         update_toggle_cache(AUTO_CASE_UPDATE_ENHANCEMENTS.slug, self.domain, True, NAMESPACE_DOMAIN)
         update_toggle_cache(RUN_AUTO_CASE_UPDATES_ON_SAVE.slug, self.domain, True, NAMESPACE_DOMAIN)
         self.case_db = CaseAccessors(self.domain)
@@ -167,6 +170,7 @@ class AutomaticCaseUpdateTest(TestCase):
         UpdateCaseDefinition.objects.all().delete()
         AutomaticUpdateRule.objects.all().delete()
         FormProcessorTestUtils.delete_all_cases(self.domain)
+        self.domain_object.delete()
         super(AutomaticCaseUpdateTest, self).tearDown()
 
     def _get_case(self):
@@ -1428,6 +1432,17 @@ class CaseRuleOnSaveTests(BaseCaseRuleTest):
 
 
 class CaseRuleEndToEndTests(BaseCaseRuleTest):
+
+    @classmethod
+    def setUpClass(cls):
+        super(CaseRuleEndToEndTests, cls).setUpClass()
+        cls.domain_object = Domain(name=cls.domain)
+        cls.domain_object.save()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.domain_object.delete()
+        super(CaseRuleEndToEndTests, cls).tearDownClass()
 
     def test_get_rules_from_domain(self):
         rule1 = _create_empty_rule(self.domain, case_type='person-1')

@@ -24,7 +24,7 @@ from couchdbkit import ResourceNotFound
 from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
 import re
 
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.web import json_response
 from django_prbac.exceptions import PermissionDenied
 from django_prbac.utils import has_privilege
@@ -68,7 +68,7 @@ from corehq.apps.users.bulkupload import (
     check_headers,
     UserUploadError,
 )
-from corehq.apps.users.dbaccessors.all_commcare_users import get_mobile_user_ids
+from corehq.apps.users.dbaccessors.all_commcare_users import get_mobile_user_ids, user_exists
 from corehq.apps.users.decorators import require_can_edit_commcare_users
 from corehq.apps.users.forms import (
     CommCareAccountForm, CommCareUserFormSet, CommtrackUserForm,
@@ -274,7 +274,7 @@ class EditCommCareUserView(BaseEditUserView):
             if re.match(r'\d+$', phone_number):
                 self.editable_user.add_phone_number(phone_number)
                 self.editable_user.save()
-                messages.success(request, _("Phone number added!"))
+                messages.success(request, _("Phone number added."))
             else:
                 messages.error(request, _("Please enter digits only."))
         return super(EditCommCareUserView, self).post(request, *args, **kwargs)
@@ -744,8 +744,13 @@ class MobileWorkerListView(HQJSONResponseMixin, BaseUserSettingsView):
                            'spaces.').format(username)
             }
         full_username = format_username(username, self.domain)
-        if CommCareUser.get_by_username(full_username, strict=True):
-            result = {'error': _(u'Username {} is already taken').format(username)}
+        exists = user_exists(full_username)
+        if exists.exists:
+            if exists.is_deleted:
+                result = {'warning': _(u'Username {} belonged to a user that was deleted.'
+                                       u' Reusing it may have unexpected consequences.').format(username)}
+            else:
+                result = {'error': _(u'Username {} is already taken').format(username)}
         else:
             result = {'success': _(u'Username {} is available').format(username)}
         return result

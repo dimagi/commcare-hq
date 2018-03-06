@@ -1,6 +1,6 @@
 hqDefine('case_importer/js/import_history', function () {
     var urllib = hqImport('hqwebapp/js/initial_page_data');
-    function RecentUploads() {
+    var RecentUploads = function () {
         var self = {};
         // this is used both for the state of the ajax request
         // and for the state of celery task
@@ -69,8 +69,11 @@ hqDefine('case_importer/js/import_history', function () {
             });
         };
         return self;
-    }
-    return {
-        RecentUploads: RecentUploads,
     };
+
+    $(function () {
+        var recentUploads = RecentUploads();
+        $('#recent-uploads').koApplyBindings(recentUploads);
+        _.delay(recentUploads.fetchCaseUploads);
+    });
 });

@@ -15,6 +15,6 @@ hqDefine('hqwebapp/js/toggles', function () {
         },
         previewEnabled: function (toggleName) {
             return genericToggleEnabled(hqImport('#toggles').previews, toggleName);
-        }
+        },
     };
 });

@@ -42,7 +42,7 @@ class FeaturePreview(StaticToggle):
 
 @quickcache([])
 def all_previews():
-    return all_toggles_by_name_in_scope(globals()).values()
+    return list(all_toggles_by_name_in_scope(globals()).values())
 
 
 def all_previews_by_name():

@@ -34,7 +34,7 @@ An overview of the design, API and data structures used here.
                 - [filter_items Expression](#filte_ritems-expression)
                 - [sort_items Expression](#sort_items-expression)
                 - [reduce_items Expression](#reduce_items-expression)
-                - [flatten_items expression](#flatten_items-expression)
+                - [flatten expression](#flatten-expression)
             - [Named Expressions](#named-expressions)
         - [Boolean Expression Filters](#boolean-expression-filters)
             - [Operators](#operators)
@@ -90,7 +90,8 @@ An overview of the design, API and data structures used here.
             - [Round to the nearest whole number](#round-to-the-nearest-whole-number)
             - [Always round to 3 decimal places](#always-round-to-3-decimal-places)
         - [Date formatting](#date-formatting)
-        - [Converting an ethiopian date string to a gregorian date](#ethiopian-transform)
+        - [Converting an ethiopian date string to a gregorian date](#converting-an-ethiopian-date-string-to-a-gregorian-date)
+        - [Converting a gregorian date string to an ethiopian date](#converting-a-gregorian-date-string-to-an-ethiopian-date)
     - [Charts](#charts)
         - [Pie charts](#pie-charts)
         - [Aggregate multibar charts](#aggregate-multibar-charts)
@@ -212,7 +213,7 @@ filter_items    | Filter a list of items to make a new list | `[1, 2, 3, -1, -2,
 map_items       | Map one list to another list | `[{'name': 'a', gender: 'f'}, {'name': 'b, gender: 'm'}]` -> `['a', 'b']`  (list of names from list of child data)
 sort_items      | Sort a list based on an expression | `[{'name': 'a', age: 5}, {'name': 'b, age: 3}]` -> `[{'name': 'b, age: 3}, {'name': 'a', age: 5}]`  (sort child data by age)
 reduce_items    | Aggregate a list of items into one value | sum on `[1, 2, 3]` -> `6`
-flatten_items   | Flatten multiple lists of items into one list | `[[1, 2], [4, 5]]` -> `[1, 2, 4, 5]`
+flatten   | Flatten multiple lists of items into one list | `[[1, 2], [4, 5]]` -> `[1, 2, 4, 5]`
 
 
 
@@ -735,14 +736,14 @@ Function Name  | Example
 ```
 This returns number of family members
 
-##### flatten_items expression
+##### flatten expression
 
-`flatten_items` takes list of list of objects specified by `items_expression` and returns one list of all objects.
+`flatten` takes list of list of objects specified by `items_expression` and returns one list of all objects.
 
 `items_expression` is any valid expression that returns a list of lists. It this doesn't evaluate to a list of lists an empty list is returned. It may be necessary to specify a `datatype` of `array` if the expression could return a single element.
 ```json
 {
-    "type": "flatten_items",
+    "type": "flatten",
     "items_expression": {},
 }
 ```
@@ -958,7 +959,7 @@ Similar to the boolean indicators - expression indicators leverage the expressio
 
 Property        | Description
 --------------- | -----------
-datatype        | The datatype of the indicator. Current valid choices are: "date", "datetime", "string", "decimal", and "integer".
+datatype        | The datatype of the indicator. Current valid choices are: "date", "datetime", "string", "decimal", "integer", and "small_integer".
 is_nullable     | Whether the database column should allow null values.
 is_primary_key  | Whether the database column should be (part of?) the primary key. (TODO: this needs to be confirmed)
 create_index    | Creates an index on this column. Only applicable if using the SQL backend
@@ -1747,13 +1748,25 @@ If there is an error formatting the date, the transform is not applied to that v
 
 ### Converting an ethiopian date string to a gregorian date
 Converts a string in the YYYY-MM-DD format to a gregorian date. For example,
-2009-09-11 is converted date(2017, 5, 19). If it is unable to convert the date,
+2009-09-11 is converted to date(2017, 5, 19). If it is unable to convert the date,
 it will return an empty string.
 
 ```json
 {
    "type": "custom",
    "custom_type": "ethiopian_date_to_gregorian_date"
+}
+```
+
+### Converting a gregorian date string to an ethiopian date
+Converts a string in the YYYY-MM-DD format to an ethiopian date. For example,
+2017-05-19 is converted to date(2009, 09, 11). If it is unable to convert the date,
+it will return an empty string.
+
+```json
+{
+   "type": "custom",
+   "custom_type": "gregorian_date_to_ethiopian_date"
 }
 ```
 
@@ -2024,6 +2037,7 @@ Following are some custom expressions that are currently available.
 - `location_parent_id`:  A shortcut to get a location's parent ID a location id.
 - `get_case_forms`: A way to get a list of forms submitted for a case.
 - `get_subcases`: A way to get a list of subcases (child cases) for a case.
+- `indexed_case`: A way to get an indexed case from another case.
 
 You can find examples of these in [practical examples](examples/examples.md).
 

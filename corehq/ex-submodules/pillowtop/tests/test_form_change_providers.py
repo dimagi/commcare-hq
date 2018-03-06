@@ -55,7 +55,7 @@ class TestCouchDomainFormChangeProvider(SimpleTestCase):
             doc_types=all_known_formlike_doc_types()
         )
         doc_ids = {change.id for change in provider.iter_all_changes()}
-        self.assertEqual(doc_ids, set(itertools.chain(*self.form_ids.values())))
+        self.assertEqual(doc_ids, set(itertools.chain(*list(self.form_ids.values()))))
 
     def test_change_provider_empty(self):
         provider = CouchDomainDocTypeChangeProvider(
@@ -91,7 +91,7 @@ class TestSqlDomainFormChangeProvider(TestCase):
     def test_change_provider(self):
         provider = SqlDomainXFormChangeProvider(self.domains, chunk_size=2)
         doc_ids = {change.id for change in provider.iter_all_changes()}
-        self.assertEqual(doc_ids, set(itertools.chain(*self.form_ids.values())))
+        self.assertEqual(doc_ids, set(itertools.chain(*list(self.form_ids.values()))))
 
     def test_change_provider_empty(self):
         provider = SqlDomainXFormChangeProvider([])

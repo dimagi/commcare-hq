@@ -8,7 +8,7 @@ from corehq.apps.data_dictionary.models import CaseType, CaseProperty
 from corehq.apps.data_dictionary.util import generate_data_dictionary
 
 
-@patch('corehq.apps.data_dictionary.util._get_all_case_properties')
+@patch('corehq.apps.data_dictionary.util.get_all_case_properties')
 class GenerateDictionaryTest(TestCase):
     domain = uuid.uuid4().hex
 

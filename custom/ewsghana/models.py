@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.dispatch import receiver
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.signals import commcare_domain_pre_delete
@@ -74,7 +75,7 @@ class EWSGhanaConfig(Document):
         if self.enabled:
             STOCK_AND_RECEIPT_SMS_HANDLER.set(self.domain, True, NAMESPACE_DOMAIN)
 
-    class Meta:
+    class Meta(object):
         app_label = 'ewsghana'
 
 
@@ -82,7 +83,7 @@ class FacilityInCharge(models.Model):
     user_id = models.CharField(max_length=128, db_index=True)
     location = models.ForeignKey(SQLLocation, on_delete=models.PROTECT)
 
-    class Meta:
+    class Meta(object):
         app_label = 'ewsghana'
 
 
@@ -110,7 +111,7 @@ class EWSExtension(models.Model):
     def domain_object(self):
         return Domain.get_by_name(self.domain)
 
-    class Meta:
+    class Meta(object):
         app_label = 'ewsghana'
 
 
@@ -121,7 +122,7 @@ class SQLNotification(models.Model):
     week = models.IntegerField()
     year = models.IntegerField()
 
-    class Meta:
+    class Meta(object):
         app_label = 'ewsghana'
 
 

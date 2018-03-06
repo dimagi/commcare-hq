@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import six.moves.urllib.request, six.moves.urllib.parse, six.moves.urllib.error
 from collections import namedtuple, OrderedDict
 import datetime
@@ -19,20 +20,20 @@ from django.utils.translation import ugettext as _, ugettext_lazy
 from django.views.decorators.http import require_POST
 from django.views.generic import View
 
+from couchdbkit.exceptions import ResourceNotFound
 from sqlalchemy import types, exc
 from sqlalchemy.exc import ProgrammingError
 
 from corehq.apps.accounting.models import Subscription
 from corehq.apps.analytics.tasks import update_hubspot_properties, send_hubspot_form, HUBSPOT_SAVED_UCR_FORM_ID
-from corehq.apps.app_manager.fields import ApplicationDataSource
 from corehq.apps.domain.models import Domain
-from corehq.apps.es import DomainES
 from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.reports.daterange import get_simple_dateranges
 from corehq.apps.userreports.specs import FactoryContext
 from corehq.apps.userreports.indicators.factory import IndicatorFactory
 from corehq.apps.userreports.filters.factory import FilterFactory
+from corehq.tabs.tabclasses import ProjectReportsTab
 from corehq.util import reverse
 from corehq.util.quickcache import quickcache
 from couchexport.export import export_from_tables
@@ -40,7 +41,7 @@ from couchexport.files import Temp
 from couchexport.models import Format
 from couchexport.shortcuts import export_response
 from dimagi.utils.couch.undo import get_deleted_doc_type, is_deleted, undo_delete, soft_delete
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_response
 
@@ -59,7 +60,7 @@ from corehq.apps.hqwebapp.decorators import (
     use_jquery_ui,
     use_nvd3,
 )
-from corehq.apps.userreports.app_manager import get_case_data_source, get_form_data_source, _clean_table_name
+from corehq.apps.userreports.app_manager import get_case_data_source, get_form_data_source
 from corehq.apps.userreports.const import (
     REPORT_BUILDER_EVENTS_KEY,
     DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE,
@@ -84,8 +85,6 @@ from corehq.apps.userreports.models import (
     get_report_config,
     report_config_id_is_static,
     id_is_static,
-    DataSourceMeta,
-    DataSourceBuildInformation,
 )
 from corehq.apps.userreports.rebuild import DataSourceResumeHelper
 from corehq.apps.userreports.reports.builder.forms import (
@@ -103,7 +102,6 @@ from corehq.apps.userreports.specs import EvaluationContext
 from corehq.apps.userreports.sql import IndicatorSqlAdapter
 from corehq.apps.userreports.tasks import (
     rebuild_indicators,
-    delete_data_source_task,
     resume_building_indicators,
     rebuild_indicators_in_place,
 )
@@ -242,7 +240,7 @@ class BaseEditConfigReportView(BaseUserConfigReportsView):
     def post(self, request, *args, **kwargs):
         if self.edit_form.is_valid():
             self.edit_form.save(commit=True)
-            messages.success(request, _(u'Report "{}" saved!').format(self.config.title))
+            messages.success(request, _('Report "{}" saved!').format(self.config.title))
             return HttpResponseRedirect(reverse(
                 'edit_configurable_report', args=[self.domain, self.config._id])
             )
@@ -282,6 +280,7 @@ class ReportBuilderView(BaseDomainView):
             'report_limit': allowed_num_reports,
             'paywall_url': paywall_home(self.domain),
             'pricing_page_url': reverse('public_pricing') if settings.ENABLE_PRELOGIN_SITE else "",
+            'support_email': settings.SUPPORT_EMAIL,
         })
         return main_context
 
@@ -465,9 +464,21 @@ class ConfigureReport(ReportBuilderView):
             self.source_type = self.request.GET['source_type']
             self.source_id = self.request.GET['source']
 
-        self.data_source_builder = DataSourceBuilder(self.domain, self.app, self.source_type, self.source_id)
+        try:
+            data_source_builder = DataSourceBuilder(self.domain, self.app, self.source_type, self.source_id)
+        except ResourceNotFound:
+            self.template_name = 'userreports/report_error.html'
+            if self.existing_report:
+                context = {'report_id': self.existing_report.get_id,
+                           'is_static': self.existing_report.is_static}
+            else:
+                context = {}
+            context['error_message'] = DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE
+            context.update(self.main_context)
+            return self.render_to_response(context)
+
         self._properties_by_column_id = {}
-        for p in self.data_source_builder.data_source_properties.values():
+        for p in data_source_builder.data_source_properties.values():
             column = p.to_report_column_option()
             for agg in column.aggregation_options:
                 indicators = column.get_indicators(agg)
@@ -573,33 +584,6 @@ class ConfigureReport(ReportBuilderView):
             'date_range_options': [r._asdict() for r in get_simple_dateranges()],
         }
 
-    def _handle_exception(self, response, exception):
-        if self.existing_report and self.existing_report.report_meta.edited_manually:
-            error_message_base = _(
-                'It looks like this report was edited by hand and is no longer editable in report builder.'
-            )
-            if toggle_enabled(self.request, toggles.USER_CONFIGURABLE_REPORTS):
-                error_message = '{} {}'.format(error_message_base, _(
-                    'You can edit the report manually using the <a href="{}">advanced UI</a>.'
-                ).format(reverse(EditConfigReportView.urlname, args=[self.domain, self.existing_report._id])))
-            else:
-                error_message = '{} {}'.format(
-                    error_message_base,
-                    _('You can delete and recreate this report using the button below, or '
-                      'report an issue if you believe you are seeing this page in error.')
-                )
-            response['error_message'] = error_message
-            return response
-        elif isinstance(exception, DataSourceConfigurationNotFoundError):
-            response['details'] = None
-            response['error_message'] = '{} {}'.format(
-                str(exception),
-                DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE
-            )
-            return response
-        else:
-            raise
-
     def _get_bound_form(self, report_data):
         form_class = _get_form_type(report_data['report_type'])
         return form_class(
@@ -643,6 +627,8 @@ class ConfigureReport(ReportBuilderView):
                         'default_filters': getattr(bound_form, 'default_filters', 'Not set'),
                     })
                     return self.get(request, domain, *args, **kwargs)
+                else:
+                    ProjectReportsTab.clear_dropdown_cache(domain, request.couch_user.get_id)
             self._delete_temp_data_source(report_data)
             send_hubspot_form(HUBSPOT_SAVED_UCR_FORM_ID, request)
             return json_response({
@@ -744,7 +730,7 @@ def delete_report(request, domain, report_id):
 
     messages.success(
         request,
-        _(u'Report "{name}" has been deleted. <a href="{url}" class="post-link">Undo</a>').format(
+        _('Report "{name}" has been deleted. <a href="{url}" class="post-link">Undo</a>').format(
             name=config.title,
             url=reverse('undo_delete_configurable_report', args=[domain, config._id]),
         ),
@@ -753,9 +739,10 @@ def delete_report(request, domain, report_id):
     if did_purge_something:
         messages.warning(
             request,
-            _(u"This report was used in one or more applications. "
+            _("This report was used in one or more applications. "
               "It has been removed from there too.")
         )
+    ProjectReportsTab.clear_dropdown_cache(domain, request.couch_user.get_id)
     redirect = request.GET.get("redirect", None)
     if not redirect:
         redirect = reverse('configurable_reports_home', args=[domain])
@@ -771,10 +758,10 @@ def undelete_report(request, domain, report_id):
         undo_delete(config)
         messages.success(
             request,
-            _(u'Successfully restored report "{name}"').format(name=config.title)
+            _('Successfully restored report "{name}"').format(name=config.title)
         )
     else:
-        messages.info(request, _(u'Report "{name}" not deleted.').format(name=config.title))
+        messages.info(request, _('Report "{name}" not deleted.').format(name=config.title))
     return HttpResponseRedirect(reverse(ConfigurableReport.slug, args=[request.domain, report_id]))
 
 
@@ -936,13 +923,13 @@ class CreateDataSourceFromAppView(BaseUserConfigReportsView):
             if app_source.source_type == 'case':
                 data_source = get_case_data_source(app, app_source.source)
                 data_source.save()
-                messages.success(request, _(u"Data source created for '{}'".format(app_source.source)))
+                messages.success(request, _("Data source created for '{}'".format(app_source.source)))
             else:
                 assert app_source.source_type == 'form'
                 xform = Form.get_form(app_source.source)
                 data_source = get_form_data_source(app, xform)
                 data_source.save()
-                messages.success(request, _(u"Data source created for '{}'".format(xform.default_name())))
+                messages.success(request, _("Data source created for '{}'".format(xform.default_name())))
 
             return HttpResponseRedirect(reverse(
                 EditDataSourceView.urlname, args=[self.domain, data_source._id]
@@ -1008,7 +995,7 @@ class BaseEditDataSourceView(BaseUserConfigReportsView):
     def post(self, request, *args, **kwargs):
         if self.edit_form.is_valid():
             config = self.edit_form.save(commit=True)
-            messages.success(request, _(u'Data source "{}" saved!').format(
+            messages.success(request, _('Data source "{}" saved!').format(
                 config.display_name
             ))
             if self.config_id is None:
@@ -1057,7 +1044,7 @@ class EditDataSourceView(BaseEditDataSourceView):
 
     @property
     def page_name(self):
-        return u"Edit {}".format(self.config.display_name)
+        return "Edit {}".format(self.config.display_name)
 
 
 @toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
@@ -1075,7 +1062,7 @@ def delete_data_source_shared(domain, config_id, request=None):
     if request:
         messages.success(
             request,
-            _(u'Data source "{name}" has been deleted. <a href="{url}" class="post-link">Undo</a>').format(
+            _('Data source "{name}" has been deleted. <a href="{url}" class="post-link">Undo</a>').format(
                 name=config.display_name,
                 url=reverse('undo_delete_data_source', args=[domain, config._id]),
             ),
@@ -1093,10 +1080,10 @@ def undelete_data_source(request, domain, config_id):
         undo_delete(config)
         messages.success(
             request,
-            _(u'Successfully restored data source "{name}"').format(name=config.display_name)
+            _('Successfully restored data source "{name}"').format(name=config.display_name)
         )
     else:
-        messages.info(request, _(u'Data source "{name}" not deleted.').format(name=config.display_name))
+        messages.info(request, _('Data source "{name}" not deleted.').format(name=config.display_name))
     return HttpResponseRedirect(reverse(
         EditDataSourceView.urlname, args=[domain, config._id]
     ))
@@ -1130,22 +1117,22 @@ def resume_building_data_source(request, domain, config_id):
     if not is_static and config.meta.build.finished:
         messages.warning(
             request,
-            _(u'Table "{}" has already finished building. Rebuild table to start over.').format(
+            _('Table "{}" has already finished building. Rebuild table to start over.').format(
                 config.display_name
             )
         )
     elif not DataSourceResumeHelper(config).has_resume_info():
         messages.warning(
             request,
-            _(u'Table "{}" did not finish building but resume information is not available. '
-              u'Unfortunately, this means you need to rebuild the table.').format(
+            _('Table "{}" did not finish building but resume information is not available. '
+              'Unfortunately, this means you need to rebuild the table.').format(
                 config.display_name
             )
         )
     else:
         messages.success(
             request,
-            _(u'Resuming rebuilding table "{}".').format(config.display_name)
+            _('Resuming rebuilding table "{}".').format(config.display_name)
         )
         resume_building_indicators.delay(config_id, request.user.username)
     return HttpResponseRedirect(reverse(
@@ -1350,7 +1337,7 @@ def _get_report_filter(domain, report_id, filter_id):
     report = get_report_config_or_404(report_id, domain)[0]
     report_filter = report.get_ui_filter(filter_id)
     if report_filter is None:
-        raise Http404(_(u'Filter {} not found!').format(filter_id))
+        raise Http404(_('Filter {} not found!').format(filter_id))
     return report_filter
 
 
@@ -1408,13 +1395,12 @@ class DataSourceSummaryView(BaseUserConfigReportsView):
 
     @property
     def page_name(self):
-        return u"Summary - {}".format(self.config.display_name)
+        return "Summary - {}".format(self.config.display_name)
 
     @property
     def page_context(self):
         return {
             'datasource_display_name': self.config.display_name,
-            'datasource_description': self.config.description,
             'filter_summary': self.configured_filter_summary(),
             'indicator_summary': self._add_links_to_output(self.indicator_summary()),
             'named_expression_summary': self._add_links_to_output(self.named_expression_summary()),

@@ -112,6 +112,16 @@ def get_domain_ids_by_names(names):
     )]
 
 
+def iter_domains():
+    for row in paginate_view(
+            Domain.get_db(),
+            'domain/domains',
+            100,
+            reduce=False,
+            include_docs=False):
+        yield row['key']
+
+
 def count_downloads_for_all_snapshots(domain_id):
     """
     domain_id should represent an actual (non-snapshot) domain for this to make sense

@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.test import SimpleTestCase
 from corehq.apps.userreports.models import ReportConfiguration
 from corehq.apps.userreports.exceptions import BadSpecError
@@ -155,10 +156,10 @@ class ChartJsonTest(SimpleTestCase):
         # when accessed via a report would crash.
         report = ReportConfiguration(configured_charts=[
             dict(
-                type=u'pie',
-                value_column=u'count',
-                aggregation_column=u'remote',
-                title=u'Remote status'
+                type='pie',
+                value_column='count',
+                aggregation_column='remote',
+                title='Remote status'
             )
         ])
         chart = report.charts[0]

@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.utils.translation import ugettext_lazy, ugettext as _
 
 from corehq.apps.locations.permissions import location_safe
@@ -9,7 +10,7 @@ from corehq.apps.userreports.reports.factory import ReportFactory
 from corehq.apps.userreports.reports.view import get_filter_values
 from custom.enikshay.reports.filters import PeriodFilter, EnikshayLocationFilter
 from custom.enikshay.reports.generic import EnikshayReport
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 
 @location_safe

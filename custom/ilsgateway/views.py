@@ -1,6 +1,7 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import base64
-import StringIO
+import io
 from datetime import datetime
 import json
 from django.urls import reverse, reverse_lazy
@@ -214,7 +215,7 @@ class SupervisionDocumentView(TemplateView):
             document = SupervisionDocument.objects.get(pk=document_id)
         except SupervisionDocument.DoesNotExist:
             raise Http404()
-        response = HttpResponse(StringIO.StringIO(base64.b64decode(document.document)))
+        response = HttpResponse(io.BytesIO(base64.b64decode(document.document)))
         response['Content-Type'] = document.data_type
         response['Content-Disposition'] = 'attachment; filename=%s' % document.name
         return response

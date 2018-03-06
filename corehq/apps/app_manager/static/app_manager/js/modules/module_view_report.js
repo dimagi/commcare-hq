@@ -9,11 +9,11 @@ hqDefine("app_manager/js/modules/module_view_report", function() {
         // so assume nav_menu_media_specifics has one element.
         var navMenuMediaItem = initial_page_data("nav_menu_media_specifics")[0];
         var navMenuMedia = initNavMenuMedia(
-                "",
-                navMenuMediaItem.menu_refs.image,
-                navMenuMediaItem.menu_refs.audio,
-                initial_page_data("multimedia_object_map"),
-                navMenuMediaItem.default_file_name
+            "",
+            navMenuMediaItem.menu_refs.image,
+            navMenuMediaItem.menu_refs.audio,
+            initial_page_data("multimedia_object_map"),
+            navMenuMediaItem.default_file_name
         );
         var saveURL = hqImport("hqwebapp/js/initial_page_data").reverse("edit_report_module");
         var staticData = new StaticFilterData(initial_page_data('static_data_options'));
@@ -30,7 +30,7 @@ hqDefine("app_manager/js/modules/module_view_report", function() {
             $('#module-name'),
             $('#module-filter'),
             $('#report-list'),
-            $('#add-report-btn')
+            $('#add-report-btn'),
         ]).each(function($element) {
             // never call applyBindings with null as the second arg!
             if ($element.get(0)) {
@@ -65,8 +65,8 @@ hqDefine("app_manager/js/modules/module_view_report", function() {
                     quietMillis: 250,
                     data: choiceListUtils.getApiQueryParams,
                     results: choiceListUtils.formatPageForSelect2,
-                    cache: true
-                }
+                    cache: true,
+                },
             });
             element.select2('data', _.map(initialValues, function(v){
                 return {id: v, text: v};

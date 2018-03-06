@@ -3,6 +3,7 @@
 
 
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from exceptions import NotImplementedError
 from corehq.apps.userreports.operators import OPERATOR_DISPLAY
 from corehq.apps.userreports.util import add_tabbed_text
@@ -94,7 +95,7 @@ class SinglePropertyValueFilter(Filter):
 
     def __str__(self):
         return "{} {} '{}'".format(str(self.expression),
-                                   OPERATOR_DISPLAY[self.operator.func_name],
+                                   OPERATOR_DISPLAY[self.operator.__name__],
                                    str(self.reference_expression))
 
 

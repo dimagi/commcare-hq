@@ -1,5 +1,6 @@
 
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from corehq.apps.products.models import SQLProduct
 from custom.ewsghana.alerts import COMPLETE_REPORT, \
     STOCKOUTS_MESSAGE, LOW_SUPPLY_MESSAGE, OVERSTOCKED_MESSAGE, RECEIPT_MESSAGE
@@ -40,7 +41,7 @@ class SOHAlerts(object):
 
         if stockouts or products_below:
             reorders = [
-                u'%s %s' % (code, amount)
+                '%s %s' % (code, amount)
                 for (code, amount) in report_helper.reorders()
                 if amount
             ]

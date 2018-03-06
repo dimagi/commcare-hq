@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from datetime import datetime
 
 from django.urls import reverse
@@ -14,7 +15,7 @@ from custom.enikshay.reports.utils import StubReport
 
 from django.utils.translation import ugettext_lazy as _
 
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 
 class EnikshayLocationFilter(BaseMultipleOptionFilter):

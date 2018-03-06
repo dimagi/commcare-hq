@@ -18,7 +18,7 @@ from corehq.form_processor.exceptions import XFormNotFound
 from corehq.apps.hqwebapp.decorators import use_jquery_ui
 from corehq.util.timezones.conversions import ServerTime
 
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 from corehq.apps.domain.decorators import (
     domain_admin_required,

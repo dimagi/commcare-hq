@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import division
 from collections import Counter
 
 from django.test import override_settings
@@ -73,7 +74,7 @@ class ConnectionManagerTests(SimpleTestCase):
             randomness_margin = total_requests * 0.1
             total_weighting = sum(db[1] for db in reporting_dbs['ucr']['READ'])
             expected = {
-                alias: weight * total_requests / total_weighting
+                alias: weight * total_requests // total_weighting
                 for alias, weight in reporting_dbs['ucr']['READ']
             }
             balanced = Counter(manager.get_load_balanced_read_engine_id('ucr') for i in range(total_requests))

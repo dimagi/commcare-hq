@@ -31,9 +31,11 @@
 <div class="row">
     <div class="col-sm-12">
         {% if read_only_mode %}
-        <p class="alert alert-block alert-warning">
-            {% trans "NOTE: A system administrator is required to edit this alert." %}
-        </p>
+            {% if criteria_form.requires_system_admin_to_edit or schedule_form.requires_system_admin_to_edit %}
+            <p class="alert alert-block alert-warning">
+                {% trans "NOTE: A system administrator is required to edit this alert." %}
+            </p>
+            {% endif %}
         {% endif %}
 
         <form id="conditional-alert-form" class="form form-horizontal main-form" method="POST" action="#">

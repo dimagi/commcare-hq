@@ -12,7 +12,7 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from django.views.decorators.http import require_http_methods
 
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.web import json_response
 from soil import DownloadBase
 from soil.exceptions import TaskFailedError
@@ -24,15 +24,15 @@ from corehq.apps.consumption.shortcuts import get_default_monthly_consumption
 from corehq.apps.custom_data_fields import CustomDataModelMixin
 from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.domain.views import BaseDomainView
-from corehq.apps.hqwebapp.decorators import use_select2
+from corehq.apps.hqwebapp.decorators import use_jquery_ui, use_multiselect, use_select2, use_select2_v4
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.hqwebapp.views import no_permissions
 from corehq.apps.products.models import Product, SQLProduct
-from corehq.apps.hqwebapp.decorators import use_jquery_ui, use_multiselect
 from corehq.apps.users.forms import MultipleSelectionForm
 from corehq.apps.locations.const import LOCK_LOCATIONS_TIMEOUT
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.locations.tasks import download_locations_async, import_locations_async
+from corehq.apps.reports.filters.api import EmwfOptionsView
 from corehq.util import reverse
 from corehq.util.files import file_extention_from_filename
 from custom.enikshay.user_setup import ENikshayLocationFormSet
@@ -59,6 +59,7 @@ from .tree_utils import assert_no_cycles
 from .util import load_locs_json, location_hierarchy_config, dump_locations
 import six
 from six.moves import map
+from six.moves import range
 
 
 logger = logging.getLogger(__name__)
@@ -183,6 +184,7 @@ class LocationsListView(BaseLocationView):
     template_name = 'locations/manage/locations.html'
 
     @use_jquery_ui
+    @use_select2_v4
     @method_decorator(check_pending_locations_import())
     def dispatch(self, request, *args, **kwargs):
         return super(LocationsListView, self).dispatch(request, *args, **kwargs)
@@ -230,6 +232,14 @@ class LocationsListView(BaseLocationView):
             return list(map(to_json, locs))
         else:
             return [to_json(user.get_sql_location(self.domain))]
+
+
+class LocationsSearchView(EmwfOptionsView):
+    @property
+    def data_sources(self):
+        return [
+            (self.get_locations_size, self.get_locations),
+        ]
 
 
 class LocationFieldsView(CustomDataModelMixin, BaseLocationView):
@@ -589,6 +599,17 @@ def delete_location(request, domain, loc_id):
             location_name=loc.name,
             action=_("deleted"),
         )
+    })
+
+
+@location_safe
+def location_lineage(request, domain, loc_id):
+    lineage = SQLLocation.objects.get_locations([loc_id])[0].lineage
+    for ancestor_idx in range(len(lineage)):
+        lineage[ancestor_idx] = SQLLocation.objects.get_locations([lineage[ancestor_idx]])[0].to_json()
+    lineage.insert(0, SQLLocation.objects.get_locations([loc_id])[0].to_json())
+    return json_response({
+        'lineage': lineage
     })
 
 

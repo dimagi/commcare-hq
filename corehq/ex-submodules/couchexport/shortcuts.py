@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+import io
 import logging
 from wsgiref.util import FileWrapper
 from zipfile import ZipFile
@@ -6,7 +7,6 @@ from zipfile import ZipFile
 from couchexport.files import TempBase
 from couchexport.models import DefaultExportSchema, SavedExportSchema
 from django.http import HttpResponse, HttpResponseNotFound, StreamingHttpResponse
-from StringIO import StringIO
 from unidecode import unidecode
 from couchexport.util import get_schema_index_view_keys
 from django.utils.translation import ugettext as _
@@ -44,7 +44,7 @@ def export_data_shared(export_tag, format=None, filename=None,
 def export_response(file, format, filename, checkpoint=None):
     """
     Get an http response for an export
-    file can be either a StringIO
+    file can be either a io.BytesIO or io.StringIO
     or an open file object (which this function is responsible for closing)
 
     """
@@ -56,7 +56,7 @@ def export_response(file, format, filename, checkpoint=None):
     if isinstance(file, TempBase):
         file = file.file
 
-    if isinstance(file, StringIO):
+    if isinstance(file, (io.BytesIO, io.StringIO)):
         response = HttpResponse(file.getvalue(), content_type=format.mimetype)
         # I don't know why we need to close the file. Keeping around.
         file.close()
@@ -80,7 +80,7 @@ def export_raw_data(export_tag, filename=None):
                                          include_docs=True,
                                          reduce=False,
                                          **get_schema_index_view_keys(export_tag))
-    f = StringIO()
+    f = io.BytesIO()
     zipfile = ZipFile(f, 'w')
     for xform_instance in xform_instances:
         form_xml = xform_instance.fetch_attachment('form.xml').encode('utf-8')

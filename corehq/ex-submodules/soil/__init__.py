@@ -199,7 +199,7 @@ class CachedDownload(DownloadBase):
 
     def get_content(self):
         return self.get_cache().get(self.cacheindex, None)
-    
+
     @classmethod
     def create(cls, payload, expiry, **kwargs):
         if isinstance(payload, FileWrapper):

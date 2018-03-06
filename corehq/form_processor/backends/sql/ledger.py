@@ -110,7 +110,7 @@ class LedgerProcessorSQL(LedgerProcessorInterface):
         LedgerProcessorSQL.hard_rebuild_ledgers(self.domain, case_id, section_id, entry_id)
 
     @staticmethod
-    def hard_rebuild_ledgers(domain, case_id, section_id=None, entry_id=None):
+    def hard_rebuild_ledgers(domain, case_id, section_id, entry_id):
         transactions = LedgerAccessorSQL.get_ledger_transactions_for_case(case_id, section_id, entry_id)
         if not transactions:
             LedgerAccessorSQL.delete_ledger_values(case_id, section_id, entry_id)

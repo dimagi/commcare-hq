@@ -1,6 +1,8 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import datetime
 import dateutil
+from couchdbkit import ResourceNotFound
 from django.core import cache
 from django.urls import NoReverseMatch
 from django.template.defaultfilters import yesno
@@ -13,7 +15,7 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CouchUser
 from corehq.util.dates import iso_string_to_datetime
 from corehq.util.view_utils import absolute_reverse
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 
 class CaseInfo(object):
@@ -143,7 +145,7 @@ class CaseInfo(object):
                 group_obj = Group.get(self.owner_id)
                 mc.set(cache_key, json.dumps(group_obj.to_json()))
                 return group_obj
-        except Exception:
+        except ResourceNotFound:
             return None
 
     def _get_username(self, user_id):

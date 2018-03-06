@@ -4,8 +4,7 @@
         "sheel-enikshay"
     ],
     "server_environment": [
-        "enikshay",
-        "softlayer"
+        "enikshay"
     ],
     "data_source_table": "test_qa",
     "report_id": "tb_lab_register_qa",

@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from lxml import etree
 
 from django.urls import reverse
@@ -62,7 +63,7 @@ def _ucla_form_modifier(form, question_ids):
 
     # Get the questions specified in question_ids
     question_dict = {q["value"].split("/")[-1]: FormQuestion.wrap(q) for q in form.get_questions(["en"])}
-    question_ids = {q for q in question_ids}.intersection(question_dict.keys())
+    question_ids = {q for q in question_ids}.intersection(list(question_dict.keys()))
     questions = [question_dict[k] for k in question_ids]
 
     # Get the existing subcases

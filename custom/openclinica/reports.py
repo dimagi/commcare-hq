@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from datetime import datetime
 from casexml.apps.case.models import CommCareCase
 from corehq import toggles
@@ -92,7 +93,7 @@ class OdmExportReport(ProjectReport, CaseListMixin, GenericReportView):
         return [
             [
                 'study',  # The first "sheet" is the study details. It has only one row.
-                [study_details.keys(), study_details.values()]
+                [list(study_details.keys()), list(study_details.values())]
             ],
             [
                 'subjects',

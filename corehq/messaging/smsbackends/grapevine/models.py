@@ -1,6 +1,4 @@
 from __future__ import absolute_import
-import six.moves.urllib.request, six.moves.urllib.error, six.moves.urllib.parse
-import urlparse
 from xml.etree import cElementTree as ElementTree
 from django.http import HttpResponse
 from tastypie.authentication import Authentication
@@ -35,7 +33,7 @@ TEMPLATE = """<?xml version="1.0" encoding="UTF-8"?>
 
 class SQLGrapevineBackend(SQLSMSBackend):
 
-    class Meta:
+    class Meta(object):
         app_label = 'sms'
         proxy = True
 
@@ -112,7 +110,7 @@ class UrlencodedDeserializer(Serializer):
     def from_urlencode(self, data, options=None):
         """ handles basic form encoded url posts """
         qs = dict((k, v if len(v) > 1 else v[0])
-            for k, v in six.iteritems(urlparse.parse_qs(data)))
+            for k, v in six.iteritems(six.moves.urllib.parse.parse_qs(data)))
 
         return qs
 
@@ -178,7 +176,7 @@ class GrapevineResource(Resource):
     smsLocation: The short code to which the SMS was sent.
     content: The message text of the SMS message.
     """
-    class Meta:
+    class Meta(object):
         resource_name = 'sms'
         object_class = SmsMessage
         authorization = Authorization()

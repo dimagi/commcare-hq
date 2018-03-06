@@ -2,6 +2,7 @@
 https://docs.google.com/document/d/1RPPc7t9NhRjOOiedlRmtCt3wQSjAnWaj69v2g7QRzS0/edit
 """
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import datetime
 import json
 

@@ -3,12 +3,12 @@ from abc import ABCMeta, abstractmethod
 from collections import namedtuple
 
 import six
-from StringIO import StringIO
+from io import BytesIO
 
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.util.quickcache import quickcache
 from dimagi.utils.chunked import chunked
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 from ..utils import should_use_sql_backend
 
@@ -239,7 +239,7 @@ class AbstractCaseAccessor(six.with_metaclass(ABCMeta)):
         raise NotImplementedError
 
     @abstractmethod
-    def get_reverse_indexed_cases(domain, case_ids):
+    def get_reverse_indexed_cases(domain, case_ids, case_types=None, is_closed=None):
         raise NotImplementedError
 
     @abstractmethod
@@ -382,8 +382,8 @@ class CaseAccessors(object):
     def get_all_reverse_indices_info(self, case_ids):
         return self.db_accessor.get_all_reverse_indices_info(self.domain, case_ids)
 
-    def get_reverse_indexed_cases(self, case_ids):
-        return self.db_accessor.get_reverse_indexed_cases(self.domain, case_ids)
+    def get_reverse_indexed_cases(self, case_ids, case_types=None, is_closed=None):
+        return self.db_accessor.get_reverse_indexed_cases(self.domain, case_ids, case_types, is_closed)
 
     def get_attachment_content(self, case_id, attachment_id):
         return self.db_accessor.get_attachment_content(case_id, attachment_id)
@@ -432,7 +432,7 @@ def get_cached_case_attachment(domain, case_id, attachment_id, is_image=False):
     cobject = CachedImage(attachment_cache_key) if is_image else CachedObject(attachment_cache_key)
     if not cobject.is_cached():
         content = CaseAccessors(domain).get_attachment_content(case_id, attachment_id)
-        stream = StringIO(content.content_body)
+        stream = BytesIO(content.content_body)
         metadata = {'content_type': content.content_type}
         cobject.cache_put(stream, metadata)
 

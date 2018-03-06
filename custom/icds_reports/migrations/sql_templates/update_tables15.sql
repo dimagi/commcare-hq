@@ -1,0 +1,2 @@
+ALTER TABLE agg_child_health ADD COLUMN weighed_and_height_measured_in_month integer;
+ALTER TABLE agg_child_health ADD COLUMN weighed_and_born_in_month integer;

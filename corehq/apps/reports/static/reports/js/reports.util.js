@@ -10,31 +10,31 @@ hqDefine('reports/js/reports.util', function () {
             return jQuery.param($(filters).map(function () {
                 return this.elements ? jQuery.makeArray(this.elements) : this;
             })
-            .filter(function (i, elem) {
-                return (
-                    this.name &&
+                .filter(function (i, elem) {
+                    return (
+                        this.name &&
                     !this.disabled &&
                     (this.checked || rselectTextarea.test(this.nodeName) || rinput.test(this.type)) &&
                     exclude.indexOf(elem.name) === -1
-                );
-            })
-            .map(function (i, elem) {
-                var val = jQuery(this).val();
-                if (val === null) {
-                    return null;
-                }
-                if (elem.getAttribute('data-ajax-select2')) {
-                    val = val.split(',');
-                }
-                return jQuery.isArray(val) ?
-                    jQuery.map(val, function (val) {
-                        return {
-                            name: elem.name,
-                            value: val.replace(rCRLF, "\r\n"),
-                        };
-                    }) :
-                {name: elem.name, value: val.replace(rCRLF, "\r\n")};
-            }).get(), true);
+                    );
+                })
+                .map(function (i, elem) {
+                    var val = jQuery(this).val();
+                    if (val === null) {
+                        return null;
+                    }
+                    if (elem.getAttribute('data-ajax-select2')) {
+                        val = val.split(',');
+                    }
+                    return jQuery.isArray(val) ?
+                        jQuery.map(val, function (val) {
+                            return {
+                                name: elem.name,
+                                value: val.replace(rCRLF, "\r\n"),
+                            };
+                        }) :
+                        {name: elem.name, value: val.replace(rCRLF, "\r\n")};
+                }).get(), true);
         },
     };
 });

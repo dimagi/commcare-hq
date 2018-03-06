@@ -1,10 +1,12 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from datetime import date
 from mock import patch, MagicMock
 from django.test import TestCase, override_settings
 from casexml.apps.case.mock import CaseStructure
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from ..tasks import EpisodeVoucherUpdate, EpisodeUpdater
+from ..const import ENROLLED_IN_PRIVATE
 from .utils import ENikshayCaseStructureMixin, get_voucher_case_structure
 import six
 
@@ -15,6 +17,7 @@ class TestVoucherCounts(ENikshayCaseStructureMixin, TestCase):
 
     def setUp(self):
         super(TestVoucherCounts, self).setUp()
+        self.episode.attrs['update'][ENROLLED_IN_PRIVATE] = 'true'
         self.cases = self.create_case_structure()
 
     def make_voucher(self, prescription, final_prescription_num_days=5,
@@ -219,9 +222,9 @@ class TestVoucherCounts(ENikshayCaseStructureMixin, TestCase):
 
         self.assertDictEqual(
             {
-                'first_voucher_generation_date': u'2012-01-01',
-                'first_voucher_drugs': u"Happy Pills, Sad Pills, Buggy Pillz",
-                'first_voucher_validation_date': u'2014-01-02',
+                'first_voucher_generation_date': '2012-01-01',
+                'first_voucher_drugs': "Happy Pills, Sad Pills, Buggy Pillz",
+                'first_voucher_validation_date': '2014-01-02',
             },
             EpisodeVoucherUpdate(self.domain, self.cases[self.episode_id]).get_first_voucher_details()
         )

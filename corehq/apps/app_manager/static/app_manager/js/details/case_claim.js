@@ -1,6 +1,6 @@
 hqDefine("app_manager/js/details/case_claim", function() {
     var searchViewModel = function (searchProperties, includeClosed, defaultProperties, lang,
-                                    searchButtonDisplayCondition, blacklistedOwnerIdsExpression, saveButton) {
+        searchButtonDisplayCondition, blacklistedOwnerIdsExpression, saveButton) {
         var self = this,
             DEFAULT_CLAIM_RELEVANT= "count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]) = 0";
 
@@ -146,10 +146,10 @@ hqDefine("app_manager/js/details/case_claim", function() {
     };
 
     var createSearchViewModel = function (searchProperties, includeClosed, defaultProperties, lang,
-                                          searchButtonDisplayCondition, blacklistedOwnerIdsExpression,
-                                          saveButton) {
+        searchButtonDisplayCondition, blacklistedOwnerIdsExpression,
+        saveButton) {
         return new searchViewModel(searchProperties, includeClosed, defaultProperties, lang,
-                                   searchButtonDisplayCondition, blacklistedOwnerIdsExpression, saveButton);
+            searchButtonDisplayCondition, blacklistedOwnerIdsExpression, saveButton);
     };
 
     return {

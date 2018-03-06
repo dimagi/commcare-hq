@@ -1,12 +1,17 @@
 from __future__ import absolute_import
+
 from collections import namedtuple
 from datetime import timedelta
+import re
+
 from requests import HTTPError
+from six.moves import zip
+
 from casexml.apps.case.xform import extract_case_blocks
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.motech.openmrs.logger import logger
 from corehq.motech.openmrs.openmrs_config import IdMatcher
-from six.moves import zip
+from corehq.motech.utils import pformat_json
 
 
 Should = namedtuple('Should', ['method', 'url', 'parser'])
@@ -48,6 +53,10 @@ ADDRESS_PROPERTIES = (
     'startDate',
     'endDate',
 )
+# To match cases against their OpenMRS Person UUID, set the IdMatcher's identifier_type_id to the value of
+# PERSON_UUID_IDENTIFIER_TYPE_ID. To match against any other OpenMRS identifier, set the IdMatcher's
+# identifier_type_id to the UUID of the OpenMRS Identifier Type.
+PERSON_UUID_IDENTIFIER_TYPE_ID = 'uuid'
 
 
 class Requests(object):
@@ -73,11 +82,27 @@ class Requests(object):
         response = self.post(uri, *args, **kwargs)
         try:
             response.raise_for_status()
-        except HTTPError:
-            logger.debug('Request: ', self.get_url(uri), kwargs)
-            logger.debug('Response: ', response.json())
+        except HTTPError as err:
+            err_request, err_response = parse_request_exception(err)
+            logger.error('Request: ', err_request)
+            logger.error('Response: ', err_response)
             raise
         return response
+
+
+def parse_request_exception(err):
+    """
+    Parses an instance of RequestException and returns a request
+    string and response string tuple
+    """
+    err_request = '{method} {url}\n\n{body}'.format(
+        method=err.request.method,
+        url=err.request.url,
+        body=err.request.body
+    ) if err.request.body else ' '.join((err.request.method, err.request.url))
+    err_content = pformat_json(err.response.content)  # pformat_json returns non-JSON values unchanged
+    err_response = '\n\n'.join((str(err), err_content))
+    return err_request, err_response
 
 
 def url(url_format_string, **kwargs):
@@ -85,7 +110,6 @@ def url(url_format_string, **kwargs):
 
 
 def create_person_attribute(requests, person_uuid, attribute_type_uuid, value):
-    # todo: not tested against real openmrs instance
     return requests.post('/ws/rest/v1/person/{person_uuid}/attribute'.format(
         person_uuid=person_uuid), json={
             'attributeType': attribute_type_uuid,
@@ -164,13 +188,50 @@ def create_visit(requests, person_uuid, provider_uuid, visit_datetime, values_fo
 
 
 def search_patients(requests, search_string):
-    return requests.get('/ws/rest/v1/patient', {'q': search_string, 'v': 'full'}).json()
+    try:
+        # Finding the patient is the first request sent to the server. If there is a mistake in the server details,
+        # or the server is offline, this is where we will discover it.
+        response = requests.get('/ws/rest/v1/patient', {'q': search_string, 'v': 'full'})
+        response.raise_for_status()
+    except HTTPError as err:
+        # raise_for_status() raised an HTTPError.
+        err_request, err_response = parse_request_exception(err)
+        logger.error('Error encountered searching patients')
+        logger.error('Request: ', err_request)
+        logger.error('Response: ', err_response)
+        http_error_msg = (
+            'An error was when encountered searching patients: {}. Check in Data Forwarding that the server URL '
+            'includes the path to the API, and that the password is correct'.format(err)
+        )  # This message will be shown in the Repeat Records report, and needs to be useful to an administrator
+        raise HTTPError(http_error_msg, response=err.response)
+    except Exception as err:
+        # get() failed -- probably a connection failure.
+        logger.error('Error encountered searching patients: ', str(err))
+        raise err.__class__(
+            'Unable to send request to OpenMRS server: {}. Please check the server address in Data Forwarding and '
+            'that the server is online.'.format(err)
+        )
+
+    return response.json()
+
+
+def get_patient_by_uuid(requests, uuid):
+    if not uuid:
+        return None
+    if not re.match(r'^[a-fA-F0-9\-]{36}$', uuid):
+        logger.debug('Person UUID "{}" failed validation'.format(uuid))
+        return None
+    return requests.get('/ws/rest/v1/patient/' + uuid, {'v': 'full'}).json()
 
 
 def get_patient_by_id(requests, patient_identifier_type, patient_identifier):
-    response_json = search_patients(requests, patient_identifier)
-    return PatientSearchParser(response_json).get_patient_matching_identifiers(
-        patient_identifier_type, patient_identifier)
+    if patient_identifier_type == PERSON_UUID_IDENTIFIER_TYPE_ID:
+        patient = get_patient_by_uuid(requests, patient_identifier)
+        return patient
+    else:
+        response_json = search_patients(requests, patient_identifier)
+        return PatientSearchParser(response_json).get_patient_matching_identifiers(
+            patient_identifier_type, patient_identifier)
 
 
 def update_person_name(requests, info, openmrs_config, person_uuid, name_uuid):
@@ -344,8 +405,8 @@ def get_relevant_case_updates_from_form_json(domain, form_json, case_types, extr
             result.append(CaseTriggerInfo(
                 case_id=case_block['@case_id'],
                 updates=dict(
-                    case_block.get('create', {}).items() +
-                    case_block.get('update', {}).items()
+                    list(case_block.get('create', {}).items()) +
+                    list(case_block.get('update', {}).items())
                 ),
                 created='create' in case_block,
                 closed='close' in case_block,

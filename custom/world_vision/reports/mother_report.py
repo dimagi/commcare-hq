@@ -1,11 +1,12 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from custom.world_vision.filters import LocationFilter, WVDatespanFilter
 from custom.world_vision.reports import AccordionTTCReport
 from custom.world_vision.sqldata.mother_sqldata import MotherRegistrationDetails, ClosedMotherCasesBreakdown, \
     PregnantMotherBreakdownByTrimester, AnteNatalCareServiceOverviewExtended, DeliveryLiveBirthDetails, \
     DeliveryStillBirthDetails, PostnatalCareOverview, CauseOfMaternalDeaths, FamilyPlanningMethods, \
     DeliveryPlaceMotherDetails, DeliveryPlaceDetailsExtended, NumberOfPNCVisits
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 
 class MotherTTCReport(AccordionTTCReport):

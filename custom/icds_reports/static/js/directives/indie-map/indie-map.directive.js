@@ -41,7 +41,6 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
         storageService.setKey('search', $location.search());
     }
 
-    var location_level = parseInt($location.search()['selectedLocationLevel']);
     var location_id = $location.search().location_id;
     vm.type = '';
     vm.mapHeight = 0;
@@ -66,6 +65,12 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
     };
 
     var mapConfiguration = function (location) {
+
+        var location_level = -1;
+        if (location.location_type === 'state') location_level = 0;
+        else if (location.location_type === 'district') location_level = 1;
+        else if (location.location_type === 'block') location_level = 2;
+        else location_level = -1;
 
         vm.initTopoJson(location_level, location);
 
@@ -190,44 +195,44 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
         vm.indicator = value;
     };
 
-    var capitalize = function (str) {
-        return str.replace(/(?:^|\s)\S/g, function (a) {
-            return a.toUpperCase();
-        });
-    };
-
     var getData = function (data) {
         var mapData = data && data !== void(0) ? data.data : null;
         if (!mapData) {
             return null;
         }
-
-        var formattedData = {};
-        Object.keys(mapData).forEach(function (key) {
-            formattedData[capitalize(key.toLowerCase())] = mapData[key];
-        });
-        return formattedData;
+        return mapData;
     };
 
-    vm.getContent = function (geography) {
+    vm.getHtmlContent = function (geography) {
         var html = "";
+        html += "<div class=\"modal-header\">";
+        html += '<button type="button" class="close" ng-click="$ctrl.closePopup()" ' +
+                'aria-label="Close"><span aria-hidden="true">&times;</span></button>';
+        html += "</div>";
+        html +="<div class=\"modal-body\">";
         window.angular.forEach(vm.data.data[geography.id].original_name, function (value) {
             html += '<button class="btn btn-xs btn-default" ng-click="$ctrl.updateMap(\'' + value + '\')">' + value + '</button>';
         });
+        html += "</div>";
         return html;
+    };
+
+    vm.closePopup = function () {
+        var popup = d3.select("#locPopup");
+        popup.classed("hidden", true);
     };
 
     vm.updateMap = function (geography) {
         if (geography.id !== void(0) && vm.data.data[geography.id] && vm.data.data[geography.id].original_name.length > 1) {
-            var html = "";
-            window.angular.forEach(vm.data.data[geography.id].original_name, function (value) {
-                html += '<button class="btn btn-xs btn-default" ng-click="$ctrl.updateMap(\'' + value + '\')">' + value + '</button>';
-            });
-            var css = 'display: block; left: ' + event.clientX + 'px; top: ' + event.clientY + 'px;';
-            var ele = d3.select('#locPopup')
-                .attr('style', css)
+            var html = vm.getHtmlContent(geography);
+            var css = 'display: block; left: ' + event.layerX + 'px; top: ' + event.layerY + 'px;';
+
+            var popup = d3.select('#locPopup');
+            popup.classed("hidden", false);
+            popup.attr('style', css)
                 .html(html);
-            $compile(ele[0])($scope);
+
+            $compile(popup[0])($scope);
         } else {
             var location = geography.id || geography;
             if (geography.id !== void(0) && vm.data.data[geography.id] && vm.data.data[geography.id].original_name.length === 1) {
@@ -243,6 +248,7 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
                 storageService.setKey('search', $location.search());
             });
         }
+
     };
 
 }

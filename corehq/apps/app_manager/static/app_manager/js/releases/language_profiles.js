@@ -53,7 +53,7 @@ hqDefine('app_manager/js/releases/language_profiles', function () {
         var select2config = {
             'allowClear': true,
             'width': '100%',
-            'placeholder': gettext(practice_users.length > 0 ? 'Select a user': 'No practice mode mobile workers available')
+            'placeholder': gettext(practice_users.length > 0 ? 'Select a user': 'No practice mode mobile workers available'),
         };
         this.addProfile = function(langs, name, id, practiceUser) {
             var profile = new Profile(langs, name, id, practiceUser);
@@ -90,6 +90,6 @@ hqDefine('app_manager/js/releases/language_profiles', function () {
     }
     return {
         ProfileManager: ProfileManager,
-        setProfileUrl: setProfileUrl
+        setProfileUrl: setProfileUrl,
     };
 });

@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from collections import defaultdict, namedtuple
 import datetime
 import logging
@@ -66,7 +67,7 @@ def fmt_product_rate_dict(product_name, product_rate=None):
     """
     This will be turned into a JSON representation of this SoftwareProductRate
     """
-    from corehq.apps.accounting.models import SoftwareProductRate, SoftwareProductType
+    from corehq.apps.accounting.models import SoftwareProductRate
 
     if product_rate is None:
         try:
@@ -78,7 +79,6 @@ def fmt_product_rate_dict(product_name, product_rate=None):
             product_rate = SoftwareProductRate.objects.create(name=product_name, is_active=True)
     return {
         'name': product_rate.name,
-        'product_type': SoftwareProductType.COMMCARE,
         'rate_id': product_rate.id,
         'monthly_fee': product_rate.monthly_fee.__str__(),
     }
@@ -356,7 +356,7 @@ def cancel_future_subscriptions(domain_name, from_date, web_user):
         SubscriptionAdjustment,
         SubscriptionAdjustmentReason,
     )
-    for later_subscription in Subscription.objects.filter(
+    for later_subscription in Subscription.visible_objects.filter(
         subscriber__domain=domain_name,
         date_start__gt=from_date,
     ).order_by('date_start').all():

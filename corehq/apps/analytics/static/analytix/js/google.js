@@ -18,11 +18,8 @@ hqDefine('analytix/js/google', [
 ) {
     'use strict';
     var _get = initialAnalytics.getFn('google'),
-        _global = initialAnalytics.getFn('global'),
-        _data = {},
-        module = {},
         _logger = logging.getLoggerForApi('Google Analytics'),
-        _ready;
+        _ready = $.Deferred();
 
     var _gtag = function () {
         // This should never run, because all calls to _gtag should be
@@ -35,7 +32,7 @@ hqDefine('analytix/js/google', [
             scriptUrl = '//www.googletagmanager.com/gtag/js?id=' + apiId;
 
         _logger = logging.getLoggerForApi('Google Analytics');
-        _ready = utils.initApi(apiId, scriptUrl, _logger, function() {
+        _ready = utils.initApi(_ready, apiId, scriptUrl, _logger, function() {
             window.dataLayer = window.dataLayer || [];
             _gtag = function () {
                 window.dataLayer.push(arguments);
@@ -82,6 +79,7 @@ hqDefine('analytix/js/google', [
      * @param {function} eventCallback - (optional) Event callback fn
      */
     var trackEvent = function (eventCategory, eventAction, eventLabel, eventValue, eventParameters, eventCallback) {
+        var originalArgs = arguments;
         _ready.done(function() {
             var params = {
                 event_category: eventCategory,
@@ -93,7 +91,7 @@ hqDefine('analytix/js/google', [
             if (_.isObject(eventParameters)) {
                 params = _.extend(params, eventParameters);
             }
-            _logger.debug.log(_logger.fmt.labelArgs(["Category", "Action", "Label", "Value", "Parameters", "Callback"], arguments), "Event Recorded");
+            _logger.debug.log(_logger.fmt.labelArgs(["Category", "Action", "Label", "Value", "Parameters", "Callback"], originalArgs), "Event Recorded");
             _gtag('event', eventAction, params);
         }).fail(function() {
             if (_.isFunction(eventCallback)) {
@@ -115,6 +113,7 @@ hqDefine('analytix/js/google', [
      * @param {object} eventParameters - (optional) Extra event parameters
      */
     var trackClick = function (element, eventCategory, eventAction, eventLabel, eventValue, eventParameters) {
+        var originalArgs = arguments;
         _ready.done(function() {
             utils.trackClickHelper(
                 element,
@@ -122,7 +121,7 @@ hqDefine('analytix/js/google', [
                     trackEvent(eventCategory, eventAction, eventLabel, eventValue, eventParameters, callbackFn);
                 }
             );
-            _logger.debug.log(_logger.fmt.labelArgs(["Element", "Category", "Action", "Label", "Value", "Parameters"], arguments), "Added Click Tracker");
+            _logger.debug.log(_logger.fmt.labelArgs(["Element", "Category", "Action", "Label", "Value", "Parameters"], originalArgs), "Added Click Tracker");
         });
     };
 

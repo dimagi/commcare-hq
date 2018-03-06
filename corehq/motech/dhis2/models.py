@@ -1,7 +1,6 @@
 from __future__ import absolute_import
-import json
+
 from itertools import chain
-from pprint import pformat
 
 import jsonfield
 from django.core.serializers.json import DjangoJSONEncoder
@@ -15,6 +14,7 @@ from corehq.motech.dhis2.utils import (
     get_previous_quarter,
 )
 from corehq.motech.dhis2.const import SEND_FREQUENCY_MONTHLY, SEND_FREQUENCY_QUARTERLY, SEND_FREQUENCIES
+from corehq.motech.utils import pformat_json
 from corehq.util.quickcache import quickcache
 from dimagi.ext.couchdbkit import (
     Document,
@@ -185,18 +185,29 @@ class JsonApiLog(models.Model):
         )
 
     @property
+    def pp_request_headers(self):
+        """
+        Pretty-print the request headers
+        """
+        return pformat_json(self.request_headers)
+
+    @property
+    def pp_request_params(self):
+        """
+        Pretty-print the request params
+        """
+        return pformat_json(self.request_params)
+
+    @property
     def pp_request_body(self):
         """
         Pretty-print the request body
         """
-        return pformat(self.request_body)
+        return pformat_json(self.request_body)
 
     @property
     def pp_response_body(self):
         """
         Pretty-print the response body
         """
-        try:
-            return pformat(json.loads(self.response_body))
-        except ValueError:
-            return self.response_body
+        return pformat_json(self.response_body)

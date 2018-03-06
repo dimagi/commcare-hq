@@ -281,7 +281,7 @@
     <field>
         <header>
             <text>
-                <locale id="m0.case_long.case_plain_10.header"/>
+                <locale id="m0.case_long.case_calculated_property_10.header"/>
             </text>
         </header>
         <template>
@@ -293,7 +293,7 @@
     <field>
         <header>
             <text>
-                <locale id="m0.case_long.case_plain_11.header"/>
+                <locale id="m0.case_long.case_calculated_property_11.header"/>
             </text>
         </header>
         <template>

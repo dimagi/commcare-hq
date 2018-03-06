@@ -1,7 +1,8 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.test.utils import override_settings
 
-from custom.icds_reports.const import ChartColors
+from custom.icds_reports.const import ChartColors, MapColors
 from custom.icds_reports.reports.enrolled_women import get_enrolled_women_data_map, \
     get_enrolled_women_data_chart, get_enrolled_women_sector_data
 from django.test import TestCase
@@ -22,12 +23,12 @@ class TestEnrolledWomen(TestCase):
             ),
             {
                 "rightLegend": {
-                    "info": "Total number of pregnant women who are enrolled for ICDS services.",
+                    "info": "Total number of pregnant women who are enrolled for Anganwadi Services.",
                     "average": 77.5,
                     "average_format": "number",
                     'extended_info': [
                         {
-                            'indicator': 'Number of pregnant women who are enrolled for ICDS services:',
+                            'indicator': 'Number of pregnant women who are enrolled for Anganwadi Services:',
                             'value': "155"
                         },
                         {
@@ -36,15 +37,15 @@ class TestEnrolledWomen(TestCase):
                         },
                         {
                             'indicator': (
-                                'Percentage of registered pregnant women who are enrolled for ICDS services:'
+                                'Percentage of registered pregnant women who are enrolled for Anganwadi Services:'
                             ),
                             'value': '100.00%'
                         }
                     ]
                 },
                 "fills": {
-                    "Women": "#006fdf",
-                    "defaultFill": "#9D9D9D"
+                    "Women": MapColors.BLUE,
+                    "defaultFill": MapColors.GREY
                 },
                 "data": {
                     "st1": {
@@ -79,12 +80,12 @@ class TestEnrolledWomen(TestCase):
             ),
             {
                 "rightLegend": {
-                    "info": "Total number of pregnant women who are enrolled for ICDS services.",
+                    "info": "Total number of pregnant women who are enrolled for Anganwadi Services.",
                     "average": 35.0,
                     "average_format": "number",
                     'extended_info': [
                         {
-                            'indicator': 'Number of pregnant women who are enrolled for ICDS services:',
+                            'indicator': 'Number of pregnant women who are enrolled for Anganwadi Services:',
                             'value': "70"
                         },
                         {
@@ -93,15 +94,15 @@ class TestEnrolledWomen(TestCase):
                         },
                         {
                             'indicator': (
-                                'Percentage of registered pregnant women who are enrolled for ICDS services:'
+                                'Percentage of registered pregnant women who are enrolled for Anganwadi Services:'
                             ),
                             'value': '100.00%'
                         }
                     ]
                 },
                 "fills": {
-                    "Women": "#006fdf",
-                    "defaultFill": "#9D9D9D"
+                    "Women": MapColors.BLUE,
+                    "defaultFill": MapColors.GREY
                 },
                 "data": {
                     'block_map': {
@@ -175,7 +176,7 @@ class TestEnrolledWomen(TestCase):
                                 "all": 155
                             }
                         ],
-                        "key": "Total number of pregnant women who are enrolled for ICDS services"
+                        "key": "Total number of pregnant women who are enrolled for Anganwadi Services"
                     }
                 ],
                 "all_locations": [
@@ -206,7 +207,7 @@ class TestEnrolledWomen(TestCase):
                 loc_level='supervisor'
             ),
             {
-                "info": "Total number of pregnant women who are enrolled for ICDS services.",
+                "info": "Total number of pregnant women who are enrolled for Anganwadi Services.",
                 "tooltips_data": {
                     "s2": {
                         "valid": 24,
@@ -219,7 +220,7 @@ class TestEnrolledWomen(TestCase):
                 },
                 "chart_data": [
                     {
-                        "color": "#006fdf",
+                        "color": MapColors.BLUE,
                         "classed": "dashed",
                         "strokeWidth": 2,
                         "values": [

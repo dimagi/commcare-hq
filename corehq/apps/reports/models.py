@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import calendar
 import hashlib
 import uuid
@@ -64,7 +65,7 @@ from couchforms.filters import instances
 from dimagi.ext.couchdbkit import *
 from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.couch.database import iter_docs
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.logging import notify_exception
 from django_prbac.exceptions import PermissionDenied
 import six
@@ -190,7 +191,7 @@ class TempCommCareUser(CommCareUser):
     def raw_username(self):
         return self.username
 
-    class Meta:
+    class Meta(object):
         app_label = 'reports'
 
 
@@ -482,7 +483,7 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
         except Exception:
             pass
 
-        if self.report.is_deprecated:
+        if getattr(self.report, 'is_deprecated', False):
             return ReportContent(
                 self.report.deprecation_email_message or
                 _("[DEPRECATED] %s report has been deprecated and will stop working soon. "
@@ -1024,12 +1025,7 @@ class CaseExportSchema(HQExportSchema):
 
     @property
     def has_case_history_table(self):
-        case_history_table = [table for table in self.tables if table.label == 'Case History']
-        return any(
-            column.selected
-            for table in case_history_table
-            for column in table.columns
-        )
+        return False  # This check is only for new exports
 
 
 class DefaultFormExportSchema(DefaultExportSchema):

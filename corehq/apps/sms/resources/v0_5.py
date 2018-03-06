@@ -225,7 +225,7 @@ class UserSelfRegistrationResource(BaseUserSelfRegistrationResource):
         super(UserSelfRegistrationResource, self).__init__(*args, **kwargs)
         self.registration_result = None
 
-    class Meta:
+    class Meta(object):
         authentication = RequirePermissionAuthentication(Permissions.edit_data)
         resource_name = 'sms_user_registration'
         allowed_methods = ['post']
@@ -292,7 +292,7 @@ class UserSelfRegistrationReinstallResource(BaseUserSelfRegistrationResource):
         super(UserSelfRegistrationReinstallResource, self).__init__(*args, **kwargs)
         self.reinstall_result = None
 
-    class Meta:
+    class Meta(object):
         authentication = RequirePermissionAuthentication(Permissions.edit_data)
         resource_name = 'sms_user_registration_reinstall'
         allowed_methods = ['post']

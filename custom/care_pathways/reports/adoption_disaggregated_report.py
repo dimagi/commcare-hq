@@ -1,4 +1,6 @@
 from __future__ import absolute_import
+from __future__ import division
+from __future__ import unicode_literals
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.graph_models import MultiBarChart, Axis
 from corehq.apps.reports.sqlreport import TableDataFormat
@@ -73,7 +75,7 @@ class AdoptionDisaggregatedReport(CareBaseReport):
 
     def _chart_data(self, chart, rows):
         def p2f(column):
-            return float(column['html'].strip('%')) / 100.0
+            return float(column['html'].strip('%')) / 100
 
         if rows:
             charts = [[], [], []]

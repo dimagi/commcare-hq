@@ -17,7 +17,7 @@ hqDefine("smsbillables/js/smsbillables.rate_calc", function() {
         });
     
         self.init = function () {
-            self.select2CountryCode.getExtraData = function (term) {
+            self.select2CountryCode.getExtraData = function () {
                 return {
                     'gateway': self.gateway(),
                     'direction': self.direction(),
@@ -64,7 +64,7 @@ hqDefine("smsbillables/js/smsbillables.rate_calc", function() {
         };
     };
     
-    var PublicSMSRateCalculator = function (form_data) {
+    var PublicSMSRateCalculator = function() {
         'use strict';
         var self = this;
     
@@ -105,7 +105,7 @@ hqDefine("smsbillables/js/smsbillables.rate_calc", function() {
                     self.calculatingRate(false);
                     self.hasError(true);
                     self.rateErrorText(gettext("There was an error fetching the SMS rate."));
-                }
+                },
             });
         };
         self.country_code.subscribe(updateRate);

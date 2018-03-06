@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import division
 import logging
 import calendar
 import copy
@@ -14,7 +15,7 @@ from corehq.apps.indicators.admin.crud import (IndicatorAdminCRUDManager,
         BaseDynamicIndicatorCRUDManager, CombinedCouchIndicatorCRUDManager)
 from couchforms.models import XFormInstance
 from dimagi.utils.dates import DateSpan, add_months, months_between
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.modules import to_function
 from dimagi.utils.couch.cache import cache_core
 import six
@@ -246,7 +247,7 @@ class IndicatorDefinition(Document, AdminCRUDDocumentMixin):
             else:
                 specific_doc = "couch"
             unique["%s.%s.%s" % (ind.slug, ind.namespace, specific_doc)] = ind
-        return unique.values()
+        return list(unique.values())
 
     @classmethod
     def get_nice_name(cls):
@@ -590,7 +591,7 @@ class MedianCouchIndicatorDef(NoGroupCouchIndicatorDefBase):
     def get_value(self, user_ids, datespan=None, is_debug=False):
         results = self.get_raw_results(user_ids, datespan)
         data = dict([(r['id'], r['value']) for r in results])
-        value = numpy.median(data.values()) if data.values() else None
+        value = numpy.median(list(data.values())) if list(data.values()) else None
         if is_debug:
             return value, data
         return value
@@ -652,7 +653,7 @@ class CombinedCouchViewIndicatorDefinition(DynamicIndicatorDefinition):
             debug_data["numerator"] = numerator[1]
             numerator = numerator[0]
 
-        ratio = float(numerator)/float(denominator) if denominator > 0 else None
+        ratio = float(numerator) / float(denominator) if denominator > 0 else None
         value = {
             'numerator': numerator,
             'denominator': denominator,
@@ -676,7 +677,7 @@ class CombinedCouchViewIndicatorDefinition(DynamicIndicatorDefinition):
             numerator = numerator_retro[i]
             n_val = numerator.get('value', 0)
             d_val = denominator.get('value', 0)
-            ratio = float(n_val)/float(d_val) if d_val else None
+            ratio = float(n_val) / float(d_val) if d_val else None
 
             monthly_combined = {
                 'date': denominator.get('date'),

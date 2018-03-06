@@ -259,7 +259,7 @@ class CaseMultimediaTest(BaseCaseMultimediaTest):
         self.assertEqual(len(restore_attachments), len(attaches))
 
         for attach in attaches:
-            url = attach.values()[1]
+            url = list(attach.values())[1]
             case_id = url.split('/')[-2]
             attach_key_from_url = url.split('/')[-1]
             tag = attach.tag

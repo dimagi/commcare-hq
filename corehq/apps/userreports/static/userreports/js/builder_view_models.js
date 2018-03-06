@@ -273,7 +273,7 @@ hqDefine('userreports/js/builder_view_models', function () {
     PropertyList.prototype.buttonHandler = function () {
         this.columns.push(this._createListItem());
         if (!_.isEmpty(this.analyticsAction) && !_.isEmpty(this.analyticsLabel)){
-            hqImport('userreports/js/report_analytics').track.event(this.analyticsAction, this.analyticsLabel);
+            hqImport('userreports/js/report_analytix').track.event(this.analyticsAction, this.analyticsLabel);
             hqImport('analytix/js/kissmetrix').track.event("Clicked " + this.analyticsAction + " in Report Builder");
         }
         if (_.isFunction(this.addItemCallback)) {
@@ -306,16 +306,16 @@ hqDefine('userreports/js/builder_view_models', function () {
     };
 
     var ConfigForm = function (
-            reportType,
-            sourceType,
-            columns,
-            userFilters,
-            defaultFilters,
-            dataSourceIndicators,
-            reportColumnOptions,
-            dateRangeOptions,
-            isGroupByRequired,
-            groupByInitialValue
+        reportType,
+        sourceType,
+        columns,
+        userFilters,
+        defaultFilters,
+        dataSourceIndicators,
+        reportColumnOptions,
+        dateRangeOptions,
+        isGroupByRequired,
+        groupByInitialValue
     ) {
         var self = this;
         var constants = hqImport('userreports/js/constants');
@@ -389,7 +389,7 @@ hqDefine('userreports/js/builder_view_models', function () {
             requireColumns: reportType !== "chart",
             requireColumnsText: "At least one column is required",
             noColumnsValidationCallback: function(){
-                hqImport('userreports/js/report_analytics').track.event(
+                hqImport('userreports/js/report_analytix').track.event(
                     'Click On Done (No Columns)',
                     reportType
                 );

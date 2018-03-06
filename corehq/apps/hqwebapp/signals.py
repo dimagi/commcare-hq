@@ -4,6 +4,7 @@ from datetime import date
 from django.contrib.auth.signals import user_logged_in, user_login_failed
 from django.dispatch import receiver
 
+from corehq import toggles
 from corehq.apps.users.models import CouchUser
 
 
@@ -23,10 +24,8 @@ def clear_failed_logins_and_unlock_account(sender, request, user, **kwargs):
 
 @receiver(user_login_failed)
 def add_failed_attempt(sender, credentials, **kwargs):
-    if credentials['username'].endswith('.commcarehq.org'):
-        return  # mobile user
     user = CouchUser.get_by_username(credentials['username'])
-    if user and user.is_web_user():
+    if user and (user.is_web_user() or toggles.MOBILE_LOGIN_LOCKOUT.enabled(user.domain)):
         if user.is_locked_out():
             return
         if user.attempt_date == date.today():

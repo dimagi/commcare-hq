@@ -1,7 +1,7 @@
-/* globals hqDefine */
+/* globals hqDefine, hqImport */
 hqDefine('commtrack/js/products_and_programs.async', function () {
     var CommtrackProductsProgramsViewModel = function (o) {
-        var view_model = BaseListViewModel(o);
+        var view_model = hqImport("hqwebapp/js/base_list_view_model").BaseListViewModel(o);
 
         view_model.currently_searching = ko.observable(false);
 
@@ -15,7 +15,7 @@ hqDefine('commtrack/js/products_and_programs.async', function () {
             });
         };
 
-        view_model.change_page = function (page, next_or_last) {
+        view_model.change_page = function (page) {
             page = ko.utils.unwrapObservable(page);
 
             if (page) {
@@ -25,19 +25,19 @@ hqDefine('commtrack/js/products_and_programs.async', function () {
                     dataType: 'json',
                     error: function () {
                         view_model.initial_load(true);
-                        $('.hide-until-load').fadeIn();
+                        $('.hide-until-load').removeClass("hide");
                         $('#user-list-notification').text(gettext('Sorry, there was an problem contacting the server ' +
                             'to fetch the data. Please, try again in a little bit.'));
                         view_model.currently_searching(false);
                     },
-                    success: reloadList
+                    success: reloadList,
                 });
             }
 
             return false;
         };
 
-        view_model.unsuccessful_archive_action = function (button, index) {
+        view_model.unsuccessful_archive_action = function (button) {
             return function (data) {
                 if (data.message && data.product_id) {
                     var alert_container = $('#alert_' + data.product_id);
@@ -53,7 +53,7 @@ hqDefine('commtrack/js/products_and_programs.async', function () {
             if (data.success) {
                 if (!view_model.initial_load()) {
                     view_model.initial_load(true);
-                    $('.hide-until-load').fadeIn();
+                    $('.hide-until-load').removeClass("hide");
                 }
                 view_model.current_page(data.current_page);
                 view_model.data_list(data.data_list);
@@ -80,7 +80,7 @@ hqDefine('commtrack/js/products_and_programs.async', function () {
             } else {
                 $(element).parent().removeClass('disabled');
             }
-        }
+        },
     };
 
     ko.bindingHandlers.isPaginationActive = {
@@ -92,7 +92,7 @@ hqDefine('commtrack/js/products_and_programs.async', function () {
             } else {
                 $(element).parent().removeClass('active');
             }
-        }
+        },
     };
 
     $(function(){

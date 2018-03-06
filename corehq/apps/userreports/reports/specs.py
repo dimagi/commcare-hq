@@ -1,4 +1,6 @@
 from __future__ import absolute_import
+from __future__ import division
+from __future__ import unicode_literals
 from collections import namedtuple
 import json
 
@@ -34,7 +36,7 @@ from corehq.apps.userreports.specs import TypeProperty
 from corehq.apps.userreports.transforms.factory import TransformFactory
 from corehq.apps.userreports.util import localize
 from corehq.apps.es import aggregations
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 import six
 
 
@@ -173,7 +175,7 @@ class FieldColumn(ReportColumn):
             total = sum(row[column_name] for row in data)
             for row in data:
                 row[column_name] = '{:.0%}'.format(
-                    float(row[column_name]) / total
+                    row[column_name] / total
                 )
 
     def get_column_config(self, data_source_config, lang):
@@ -252,7 +254,7 @@ class LocationColumn(ReportColumn):
                     g=GeoPointProperty().wrap(row[column_name])
                 )
             except BadValueError:
-                row[column_name] = u'{} ({})'.format(row[column_name], _('Invalid Location'))
+                row[column_name] = '{} ({})'.format(row[column_name], _('Invalid Location'))
 
     def get_column_config(self, data_source_config, lang):
         return ColumnConfig(columns=[
@@ -396,7 +398,7 @@ class PercentageColumn(ReportColumn):
         def _raw(data):
             if data['denom']:
                 try:
-                    return round(float(data['num']) / float(data['denom']), 3)
+                    return float(round(data['num'] / data['denom'], 3))
                 except (ValueError, TypeError):
                     raise BadData()
             else:

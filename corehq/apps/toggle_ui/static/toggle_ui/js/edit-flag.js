@@ -1,5 +1,17 @@
-/* globals hqDefine */
-hqDefine('toggle_ui/js/edit-flag', function () {
+hqDefine('toggle_ui/js/edit-flag', [
+    'jquery',
+    'knockout',
+    'underscore',
+    'hqwebapp/js/initial_page_data',
+    'hqwebapp/js/main',
+    'hqwebapp/js/knockout_bindings.ko',     // save button
+], function (
+    $,
+    ko,
+    _,
+    initialPageData,
+    hqMain
+) {
     var PAD_CHAR = '&nbsp;';
     function ToggleView() {
         var self = this;
@@ -8,7 +20,7 @@ hqDefine('toggle_ui/js/edit-flag', function () {
 
         self.init = function (config) {
             self.padded_ns = {};
-            var max_ns_len = Math.max.apply(Math, _.map(config.namespaces, function (ns) { return ns.length }));
+            var max_ns_len = Math.max.apply(Math, _.map(config.namespaces, function (ns) { return ns.length; }));
             _(config.namespaces).each(function (namespace) {
                 var diff = max_ns_len - namespace.length,
                     pad = new Array(diff + 1).join(PAD_CHAR);
@@ -30,7 +42,7 @@ hqDefine('toggle_ui/js/edit-flag', function () {
                 self.items.push({
                     namespace: ko.observable(self.padded_ns[namespace]),
                     value: ko.observable(value),
-                    last_used: ko.observable(last_used[value])
+                    last_used: ko.observable(last_used[value]),
                 });
             });
         };
@@ -39,7 +51,7 @@ hqDefine('toggle_ui/js/edit-flag', function () {
             self.items.push({
                 namespace: ko.observable(self.padded_ns[namespace]),
                 value: ko.observable(),
-                last_used: ko.observable()
+                last_used: ko.observable(),
             });
             self.change();
         };
@@ -53,7 +65,7 @@ hqDefine('toggle_ui/js/edit-flag', function () {
             self.saveButton.fire('change');
         };
 
-        self.saveButton = hqImport("hqwebapp/js/main").initSaveButton({
+        self.saveButton = hqMain.initSaveButton({
             unsavedMessage: "You have unsaved changes",
             save: function () {
                 var items = _.map(self.items(), function (item) {
@@ -64,7 +76,7 @@ hqDefine('toggle_ui/js/edit-flag', function () {
                 });
                 self.saveButton.ajax({
                     type: 'post',
-                    url: hqImport('hqwebapp/js/initial_page_data').reverse('edit_toggle') + location.search,
+                    url: initialPageData.reverse('edit_toggle') + location.search,
                     data: {
                         item_list: JSON.stringify(items),
                         randomness: self.randomness(),
@@ -72,12 +84,12 @@ hqDefine('toggle_ui/js/edit-flag', function () {
                     dataType: 'json',
                     success: function (data) {
                         self.init_items(data);
-                    }
+                    },
                 });
-            }
+            },
         });
 
-        var projectInfoUrl = '<a href="' + hqImport('hqwebapp/js/initial_page_data').reverse('domain_internal_settings') + '">domain</a>';
+        var projectInfoUrl = '<a href="' + initialPageData.reverse('domain_internal_settings') + '">domain</a>';
         self.getNamespaceHtml = function(namespace, value) {
             if (namespace === 'domain') {
                 return projectInfoUrl.replace('___', value);
@@ -90,14 +102,13 @@ hqDefine('toggle_ui/js/edit-flag', function () {
 
     $(function(){
         var $home = $('#toggle_editing_ko');
-        var initial_page_data = hqImport('hqwebapp/js/initial_page_data').get,
-            view = new ToggleView();
+        var view = new ToggleView();
         view.init({
-            items: initial_page_data('items'),
-            namespaces: initial_page_data('namespaces'),
-            last_used: initial_page_data('last_used'),
-            is_random_editable: initial_page_data('is_random_editable'),
-            randomness: initial_page_data('randomness'),
+            items: initialPageData.get('items'),
+            namespaces: initialPageData.get('namespaces'),
+            last_used: initialPageData.get('last_used'),
+            is_random_editable: initialPageData.get('is_random_editable'),
+            randomness: initialPageData.get('randomness'),
         });
         $home.koApplyBindings(view);
         $home.on('change', 'input', view.change);

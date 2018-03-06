@@ -3,8 +3,7 @@
         "enikshay"
     ],
     "server_environment": [
-        "enikshay",
-        "softlayer"
+        "enikshay"
     ],
     "data_source_table": "voucher_v3",
     "report_id": "payment_register",

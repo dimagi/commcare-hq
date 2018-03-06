@@ -10,6 +10,11 @@
     {% endif %}
     {% crispy form %}
 {% if data_source.get_id %}
+    {% if data_source.disable_destructive_rebuild %}
+    <div class="alert alert-info">
+       {% trans "Fully rebuilding has been disabled for this data source, please use the in place rebuild if necessary" %}</p>
+    </div>
+    {% endif %}
   <hr />
   {% if not read_only %}
   <form method='post' action="{% url 'delete_configurable_data_source' domain data_source.get_id %}" >
@@ -19,9 +24,11 @@
   {% endif %}
   <form method='post' action="{% url 'rebuild_configurable_data_source' domain data_source.get_id %}" >
     {% csrf_token %}
+    {% if not data_source.disable_destructive_rebuild %}
     <button type="submit" class="btn btn-default disable-on-submit pull-right">
       {% trans 'Rebuild Data Source'%}
     </button>
+    {% endif %}
     <a href="{% url 'preview_configurable_data_source' domain data_source.get_id %}" class="btn btn-default">{% trans 'Preview data' %}</a>
     <a href="{% url 'summary_configurable_data_source' domain data_source.get_id %}" class="btn btn-default">{% trans 'Data Source Summary' %}</a>
     <a href="{% url 'configurable_data_source_json' domain data_source.get_id %}" class="btn btn-default">{% trans 'Data Source Source (Advanced)' %}</a>

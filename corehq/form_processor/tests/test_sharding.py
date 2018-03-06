@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import division
 from collections import defaultdict
 from unittest import skipUnless, SkipTest
 from uuid import uuid4, UUID
@@ -161,7 +162,7 @@ class ShardAccessorTests(TestCase):
             doc_count_per_db[db_alias] += 1
 
         num_dbs = len(partition_config.get_form_processing_dbs())
-        even_split = int(N / num_dbs)
+        even_split = int(N // num_dbs)
         tolerance = N * 0.05  # 5% tollerance
         diffs = [abs(even_split - count) for count in doc_count_per_db.values()]
         outliers = [diff for diff in diffs if diff > tolerance]

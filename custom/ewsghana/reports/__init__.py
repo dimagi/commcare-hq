@@ -1,4 +1,6 @@
 from __future__ import absolute_import
+from __future__ import division
+from __future__ import unicode_literals
 from datetime import datetime
 from django.urls import reverse
 from django.db.models import Q
@@ -16,12 +18,13 @@ from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParam
 from custom.common import ALL_OPTION
 from custom.ewsghana.filters import ProductByProgramFilter, EWSDateFilter
 from custom.ewsghana.models import EWSExtension
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from corehq.apps.locations.models import SQLLocation, LocationType
 from custom.ewsghana.utils import get_descendants, filter_slugs_by_role, ews_date_format, get_products_for_locations, \
     get_products_for_locations_by_program, get_products_for_locations_by_products, calculate_last_period, \
     get_user_location_id
 from casexml.apps.stock.models import StockTransaction
+import six
 
 
 def get_url(view_name, text, domain):
@@ -471,7 +474,7 @@ class ProductSelectionPane(EWSData):
                     'all': product_dict['checked']
                 }
 
-        for _, product_dict in result.iteritems():
+        for _, product_dict in six.iteritems(result):
             product_dict['product_list'].sort(key=lambda prd: prd['name'])
         return render_to_string('ewsghana/partials/product_selection_pane.html', {
             'products_by_program': result,

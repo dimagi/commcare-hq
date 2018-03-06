@@ -20,7 +20,7 @@
     <field>
       <header>
         <text>
-          <locale id="m0.case_short.case_whatever_2.header"/>
+          <locale id="m0.case_short.case_calculated_property_2.header"/>
         </text>
       </header>
       <template>
@@ -64,7 +64,7 @@
     <field>
       <header>
         <text>
-          <locale id="m0.case_long.case_whatever_2.header"/>
+          <locale id="m0.case_long.case_calculated_property_2.header"/>
         </text>
       </header>
       <template>
@@ -95,7 +95,7 @@
     <field>
       <header>
         <text>
-          <locale id="m0.search_short.case_whatever_2.header"/>
+          <locale id="m0.search_short.case_calculated_property_2.header"/>
         </text>
       </header>
       <template>

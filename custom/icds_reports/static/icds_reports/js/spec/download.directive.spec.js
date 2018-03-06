@@ -52,6 +52,8 @@ describe('Download Directive', function () {
         });
 
         it('tests initialize months', function () {
+            controller.selectedYear = 2015;
+            controller.onSelectYear({id: 2015, value: 2015});
             var expected = [
                 {"name": "January", "id": 1},
                 {"name": "February", "id": 2},
@@ -65,6 +67,23 @@ describe('Download Directive', function () {
                 {"name": "October", "id": 10},
                 {"name": "November", "id": 11},
                 {"name": "December", "id": 12},
+            ];
+
+            assert.deepEqual(expected, controller.months);
+        });
+
+        it('tests initialize months when we have current year', function () {
+            var expected = [
+                {"name": "January", "id": 1},
+                {"name": "February", "id": 2},
+                {"name": "March", "id": 3},
+                {"name": "April", "id": 4},
+                {"name": "May", "id": 5},
+                {"name": "June", "id": 6},
+                {"name": "July", "id": 7},
+                {"name": "August", "id": 8},
+                {"name": "September", "id": 9},
+                {"name": "October", "id": 10},
             ];
 
             assert.deepEqual(expected, controller.months);
@@ -220,7 +239,7 @@ describe('Download Directive', function () {
             clock.restore();
         }));
 
-        it('tests not visible option to download issnip report', function () {
+        it('tests not visible option to download ICDS-CAS monthly register report', function () {
             var length = controller.indicators.length;
             assert.equal(7, length);
         });
@@ -268,7 +287,7 @@ describe('Download Directive', function () {
             clock.restore();
         }));
 
-        it('tests not visible option to download issnip report', function () {
+        it('tests not visible option to download ICDS-CAS monthly register report', function () {
             var length = controller.indicators.length;
             assert.equal(6, length);
         });

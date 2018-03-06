@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from corehq.apps.es import filters
 from corehq.apps.es.aggregations import (
     FilterAggregation, MissingAggregation
@@ -40,16 +41,16 @@ class UCRExpandEsDatabaseSubcolumn(UCRExpandDatabaseSubcolumn):
 def expand_column(report_column, distinct_values, lang):
     columns = []
     for index, val in enumerate(distinct_values):
-        ui_alias = u"{}-{}".format(report_column.column_id, index)
+        ui_alias = "{}-{}".format(report_column.column_id, index)
         es_alias = safe_es_column(ui_alias)
         columns.append(UCRExpandEsDatabaseSubcolumn(
-            u"{}-{}".format(report_column.get_header(lang), val),
+            "{}-{}".format(report_column.get_header(lang), val),
             ui_alias=ui_alias,
             es_alias=es_alias,
             expand_value=val,
             data_source_field=report_column.field,
             sortable=False,
-            data_slug=u"{}-{}".format(report_column.column_id, index),
+            data_slug="{}-{}".format(report_column.column_id, index),
             format_fn=report_column.get_format_fn(),
             help_text=report_column.description
         ))

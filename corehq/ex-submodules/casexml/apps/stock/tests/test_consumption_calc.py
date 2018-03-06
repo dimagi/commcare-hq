@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import division
 from functools import partial
 from django.test import SimpleTestCase
 from casexml.apps.stock.tests.mock_consumption import mock_consumption as consumption, mock_transaction as _tx, ago
@@ -77,7 +78,7 @@ class ConsumptionCalcTest(SimpleTestCase):
                 _tx('consumption', 10, 0),
                 _tx('receipts', 14, 0),
                 _tx('stockonhand', 10, 0),
-            ], 60), 44/15.)
+            ], 60), 44 / 15)
 
     def test_excluded_period(self):
         self.assertAlmostEqual(consumption([
@@ -132,9 +133,9 @@ class ConsumptionCalcTest(SimpleTestCase):
             _tx('stockonhand', 10, 0),
         ]
         self.assertEqual(consumption(tx, 60, {'min_periods': 4}), None)
-        self.assertAlmostEqual(consumption(tx, 60, {'min_periods': 3}), 44/15.)
+        self.assertAlmostEqual(consumption(tx, 60, {'min_periods': 3}), 44 / 15)
         self.assertEqual(consumption(tx, 60, {'min_window': 16}), None)
-        self.assertAlmostEqual(consumption(tx, 60, {'min_window': 15}), 44/15.)
+        self.assertAlmostEqual(consumption(tx, 60, {'min_window': 15}), 44 / 15)
 
 
 class ConsumptionCalcTestNew(SimpleTestCase):
@@ -210,7 +211,7 @@ class ConsumptionCalcTestNew(SimpleTestCase):
 
                 _tx_new(LedgerTransaction.TYPE_TRANSFER, -10, -4, 0),
                 _tx_new(LedgerTransaction.TYPE_BALANCE, 14, 10, 0),
-            ], 60), 44 / 15.)
+            ], 60), 44 / 15)
 
     def test_excluded_period(self):
         self.assertAlmostEqual(self.consumption([
@@ -256,9 +257,9 @@ class ConsumptionCalcTestNew(SimpleTestCase):
             _tx_new(LedgerTransaction.TYPE_BALANCE, 14, 10, 0),
         ]
         self.assertEqual(self.consumption(tx, 60, {'min_periods': 4}), None)
-        self.assertAlmostEqual(self.consumption(tx, 60, {'min_periods': 3}), 44 / 15.)
+        self.assertAlmostEqual(self.consumption(tx, 60, {'min_periods': 3}), 44 / 15)
         self.assertEqual(self.consumption(tx, 60, {'min_window': 16}), None)
-        self.assertAlmostEqual(self.consumption(tx, 60, {'min_window': 15}), 44 / 15.)
+        self.assertAlmostEqual(self.consumption(tx, 60, {'min_window': 15}), 44 / 15)
 
 
 def _tx_new(type_, delta, updated_balance, age):

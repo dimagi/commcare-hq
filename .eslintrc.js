@@ -15,6 +15,7 @@ module.exports = {
         "hqImport": false,
         "requirejs": false,
         "gettext": false,
+        "ngettext": false,
         "assert": false,
         "sinon": false,
         "$": false,

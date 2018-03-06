@@ -33,7 +33,7 @@ class Notification(models.Model):
         null=True
     )
 
-    class Meta:
+    class Meta(object):
         ordering = ["-activated"]
 
     @classmethod
@@ -102,7 +102,7 @@ class DismissedUINotify(models.Model):
     slug = models.CharField(max_length=140, db_index=True)
     date_dismissed = models.DateTimeField(auto_now_add=True)
 
-    class Meta:
+    class Meta(object):
         unique_together = ('user', 'slug',)
 
     @classmethod

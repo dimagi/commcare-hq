@@ -1,11 +1,12 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from custom.world_vision.reports import AccordionTTCReport
 from custom.world_vision.filters import LocationFilter, WVDatespanFilter
 from custom.world_vision.sqldata.child_sqldata import ImmunizationDetailsFirstYear, \
     ImmunizationDetailsSecondYear, ChildDeworming, ChildRegistrationDetails, ClosedChildCasesBreakdown, \
     ChildrenDeaths, ChildrenDeathDetails, NutritionMeanMedianBirthWeightDetails, NutritionBirthWeightDetails,\
     NutritionFeedingDetails, EBFStoppingDetails, ChildHealthIndicators, ChildrenDeathsByMonth
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 
 class ChildTTCReport(AccordionTTCReport):

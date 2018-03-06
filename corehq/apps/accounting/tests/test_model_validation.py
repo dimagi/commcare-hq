@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from datetime import date
 
 from django.core.exceptions import ValidationError
@@ -23,7 +24,7 @@ class TestCreditAdjustmentValidation(BaseAccountingTest):
             created_by='test@example.com',
             currency=generator.init_default_currency(),
         )
-        subscription = Subscription.objects.create(
+        subscription = Subscription.visible_objects.create(
             account=account,
             date_start=date.today(),
             plan_version=generator.subscribable_plan_version(),

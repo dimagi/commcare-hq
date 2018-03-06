@@ -1,4 +1,4 @@
-define([
+hqDefine("fixtures/js/view-table", [
     "jquery",
     "hqwebapp/js/django",
     "hqwebapp/js/initial_page_data",

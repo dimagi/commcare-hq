@@ -4,8 +4,7 @@
         "enikshay-reports-qa"
     ],
     "server_environment": [
-        "enikshay",
-        "softlayer"
+        "enikshay"
     ],
     "data_source_table": "episode",
     "report_id": "case_finding_mobile",

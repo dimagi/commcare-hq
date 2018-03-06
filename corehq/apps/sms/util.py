@@ -9,7 +9,7 @@ from django.conf import settings
 from corehq.apps.hqcase.utils import submit_case_block_from_template
 from corehq.util.quickcache import quickcache
 from django.core.exceptions import ValidationError
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.parsing import json_format_datetime
 from dimagi.utils.modules import to_function
 from django.utils.translation import ugettext as _
@@ -159,19 +159,6 @@ def _get_backend_classes(backend_list):
 @memoized
 def get_sms_backend_classes():
     return _get_backend_classes(settings.SMS_LOADED_SQL_BACKENDS)
-
-
-@memoized
-def get_ivr_backend_classes():
-    return _get_backend_classes(settings.IVR_LOADED_SQL_BACKENDS)
-
-
-@memoized
-def get_backend_classes():
-    return _get_backend_classes(
-        settings.SMS_LOADED_SQL_BACKENDS +
-        settings.IVR_LOADED_SQL_BACKENDS
-    )
 
 
 CLEAN_TEXT_REPLACEMENTS = (
