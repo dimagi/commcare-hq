@@ -4802,7 +4802,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         return self.build_spec.get_build()
 
     @property
-    def app_version(self):
+    def build_version(self):
         # `LooseVersion`s are smart!
         # LooseVersion('2.12.0') > '2.2'
         # (even though '2.12.0' < '2.2')
