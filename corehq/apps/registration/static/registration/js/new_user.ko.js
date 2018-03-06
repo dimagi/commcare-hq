@@ -90,7 +90,7 @@ hqDefine('registration/js/new_user.ko', function () {
 
     module.FormViewModel = function (defaults, containerSelector, steps) {
         var self = this;
-        
+
         module.onModuleLoad();
 
         // add a short delay to some of the validators so that
@@ -239,6 +239,7 @@ hqDefine('registration/js/new_user.ko', function () {
                 eula_confirmed: self.eulaConfirmed(),
                 phone_number: _private.getPhoneNumberFn() || self.phoneNumber(),
                 atypical_user: defaults.atypical_user,
+                is_mobile: window.innerWidth < 800 && window.innerHeight < 600,
             };
             if (self.hasPersonaFields) {
                 _.extend(data, {
