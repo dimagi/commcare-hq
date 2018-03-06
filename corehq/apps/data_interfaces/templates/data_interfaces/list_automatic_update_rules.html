@@ -120,6 +120,24 @@
                     <strong>There are currently no automatic update rules in this project.</strong>
                 {% endblocktrans %}
             </div>
+
+
+
+
+
+
+            <div ng-repeat="rule in paginatedItems">
+{#                ng-hide="rule.status==active">#}
+                {% angularjs %}
+                <strong>The last rule run for {{ rule.name }} project started on {{ rule.started_on }} and finished on {{ rule.finished_on }}. It updated {{ rule.num_updates }} cases and closed {{ rule.num_closes }} cases</strong>
+                {% endangularjs %}
+            </div>
+
+
+
+
+
+
             <div class="pull-right" style="clear: right;">
                 <pagination direction-links="true"
                             total-items="total"
