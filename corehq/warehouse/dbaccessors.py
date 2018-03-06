@@ -70,9 +70,12 @@ def get_synclog_ids_by_date(start_datetime, end_datetime):
     '''
     from casexml.apps.phone.models import SyncLogSQL
 
-    synclogs = SyncLogSQL.objects.filter(date__gt=start_datetime, date__lt=end_datetime)
-    for synclog in synclogs:
-        yield synclog.synclog_id.hex
+    return [
+        synclog_id.hex
+        for synclog_id in SyncLogSQL.objects.filter(
+            date__gt=start_datetime, date__lt=end_datetime
+        ).values_list('synclog_id')
+    ]
 
 
 def get_forms_by_last_modified(start_datetime, end_datetime):
