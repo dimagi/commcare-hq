@@ -5,5 +5,5 @@ from corehq.util.test_utils import unit_testing_only
 
 @unit_testing_only
 def get_all_sync_logs_docs():
-	for synclog in SyncLogSQL.objects.all():
-		yield synclog.doc
+    for synclog in SyncLogSQL.objects.all():
+        yield synclog.doc
