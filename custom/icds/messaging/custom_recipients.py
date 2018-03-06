@@ -4,6 +4,7 @@ from corehq.apps.locations.models import SQLLocation
 from custom.icds.case_relationships import (
     mother_person_case_from_ccs_record_case,
     mother_person_case_from_child_health_case,
+    mother_person_case_from_child_person_case,
 )
 from custom.icds.const import SUPERVISOR_LOCATION_TYPE_CODE
 from custom.icds.exceptions import CaseRelationshipError
@@ -22,6 +23,14 @@ def recipient_mother_person_case_from_child_health_case(case_schedule_instance):
     try:
         return mother_person_case_from_child_health_case(case_schedule_instance.case)
     except CaseRelationshipError:
+        return None
+
+
+def recipient_mother_person_case_from_child_person_case(case_schedule_instance):
+    try:
+        return mother_person_case_from_child_person_case(case_schedule_instance.case)
+    except CaseRelationshipError:
+        notify_exception(None, message="ICDS child person case relationship error")
         return None
 
 
