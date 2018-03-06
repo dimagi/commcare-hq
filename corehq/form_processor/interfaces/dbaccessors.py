@@ -8,7 +8,7 @@ from io import BytesIO
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.util.quickcache import quickcache
 from dimagi.utils.chunked import chunked
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 from ..utils import should_use_sql_backend
 

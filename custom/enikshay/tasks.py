@@ -24,7 +24,7 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import CommCareCaseSQL
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 from corehq.util.soft_assert import soft_assert
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from casexml.apps.case.const import ARCHIVED_CASE_OWNER_ID
 from corehq.apps.hqwebapp.tasks import send_html_email_async

@@ -22,7 +22,7 @@ from django.forms.fields import (
 from django.forms.forms import Form
 from django.forms.widgets import CheckboxSelectMultiple, HiddenInput
 from django.utils.functional import cached_property
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.django.fields import TrimmedCharField
 from django.utils.translation import ugettext as _, ugettext_lazy
 from corehq.apps.app_manager.dbaccessors import get_latest_released_app

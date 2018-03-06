@@ -22,7 +22,7 @@ from casexml.apps.case.exceptions import PhoneDateValueError, IllegalCaseId, Use
     CaseValueError
 from corehq.const import OPENROSA_VERSION_3
 from corehq.middleware import OPENROSA_VERSION_HEADER
-from corehq.toggles import ASYNC_RESTORE
+from corehq.toggles import ASYNC_RESTORE, SUMOLOGIC_LOGS, NAMESPACE_OTHER
 from corehq.apps.cloudcare.const import DEVICE_ID as FORMPLAYER_DEVICE_ID
 from corehq.apps.commtrack.exceptions import MissingProductId
 from corehq.apps.domain_migration_flags.api import any_migrations_in_progress
@@ -43,6 +43,7 @@ from couchforms.util import legacy_notification_assert
 from couchforms.openrosa_response import OpenRosaResponse, ResponseNature
 from dimagi.utils.logging import notify_exception, log_signal_errors
 from phonelog.utils import process_device_log
+from phonelog.tasks import send_device_logs_to_sumologic
 
 from celery.task.control import revoke as revoke_celery_task
 import six
@@ -208,7 +209,6 @@ class SubmissionPost(object):
 
         return "\n\n".join(messages)
 
-
     def run(self):
         failure_response = self._handle_basic_failure_modes()
         if failure_response:
@@ -242,17 +242,23 @@ class SubmissionPost(object):
 
             with case_db_cache as case_db:
                 instance = xforms[0]
+
+                if instance.xmlns == DEVICE_LOG_XMLNS:
+                    submission_type = 'device_log'
+                    self._conditionally_send_device_logs_to_sumologic(instance)
+
                 # ignore temporarily till we migrate DeviceReportEntry id to bigint
                 ignore_device_logs = settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS
                 if not ignore_device_logs and instance.xmlns == DEVICE_LOG_XMLNS:
                     submission_type = 'device_log'
                     try:
                         process_device_log(self.domain, instance)
-                    except Exception:
+                    except Exception as e:
                         notify_exception(None, "Error processing device log", details={
                             'xml': self.instance,
                             'domain': self.domain
                         })
+                        e.sentry_capture = False
                         raise
 
                 elif instance.is_duplicate:
@@ -310,6 +316,11 @@ class SubmissionPost(object):
 
             response = self._get_open_rosa_response(instance, **openrosa_kwargs)
             return FormProcessingResult(response, instance, cases, ledgers, submission_type)
+
+    def _conditionally_send_device_logs_to_sumologic(self, instance):
+        url = getattr(settings, 'SUMOLOGIC_URL', None)
+        if url and SUMOLOGIC_LOGS.enabled(instance.form_data.get('device_id'), NAMESPACE_OTHER):
+            send_device_logs_to_sumologic.delay(self.domain, instance, url)
 
     def _invalidate_caches(self, xform):
         for device_id in {None, xform.metadata.deviceID if xform.metadata else None}:

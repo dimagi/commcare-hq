@@ -2,7 +2,7 @@ from __future__ import absolute_import
 import collections
 import random
 
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 ABTestConfig = collections.namedtuple('ABTestConfig', ('name', 'slug', 'options'))
 

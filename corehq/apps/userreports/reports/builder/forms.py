@@ -68,7 +68,7 @@ from corehq.apps.userreports.reports.builder.const import (
 from corehq.apps.userreports.sql import get_column_name
 from corehq.apps.userreports.ui.fields import JsonField
 from corehq.apps.userreports.util import has_report_builder_access
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 import six
 
 # This dict maps filter types from the report builder frontend to UCR filter types
@@ -406,7 +406,7 @@ class DataSourceBuilder(object):
                 "map_expression": sub_doc(path)
             }
 
-    def indicators(self, columns, filters, is_multiselect_chart_report=False):
+    def indicators(self, columns, filters, is_multiselect_chart_report=False, as_dict=False):
         """
         Return a list of indicators to be used in a data source configuration that supports the given columns and
         indicators.
@@ -421,14 +421,26 @@ class DataSourceBuilder(object):
             if column['property']:
                 column_option = self.report_column_options[column['property']]
                 for indicator in column_option.get_indicators(column['calculation'], is_multiselect_chart_report):
-                    indicators.setdefault(str(indicator), indicator)
+                    # A column may have multiple indicators. e.g. "Group By" and "Count Per Choice" aggregations
+                    # will use one indicator for the field's string value, and "Sum" and "Average" aggregations
+                    # will use a second indicator for the field's numerical value. "column_id" includes the
+                    # indicator's data type, so it is unique per indicator ... except for choice list indicators,
+                    # because they get expanded to one column per choice. The column_id of choice columns will end
+                    # up unique because they will include a slug of the choice value. Here "column_id + type" is
+                    # unique.
+                    indicator_key = (indicator['column_id'], indicator['type'])
+                    indicators.setdefault(indicator_key, indicator)
 
         for filter_ in filters:
             # Property is only set if the filter exists in report_column_options
             if filter_['property']:
                 property_ = self.data_source_properties[filter_['property']]
                 indicator = property_.to_report_filter_indicator(filter_)
-                indicators.setdefault(str(indicator), indicator)
+                indicator_key = (indicator['column_id'], indicator['type'])
+                indicators.setdefault(indicator_key, indicator)
+
+        if as_dict:
+            return indicators
 
         return list(indicators.values())
 
@@ -437,14 +449,13 @@ class DataSourceBuilder(object):
         Will generate a set of possible indicators for the datasource making sure to include the
         provided columns and filters
         """
-        indicators = OrderedDict()
-        for i in self.indicators(required_columns, required_filters):
-            indicators.setdefault(str(i), i)
+        indicators = self.indicators(required_columns, required_filters, as_dict=True)
 
         for column_option in self.report_column_options.values():
             for agg in column_option.aggregation_options:
                 for indicator in column_option.get_indicators(agg):
-                    indicators.setdefault(str(indicator), indicator)
+                    indicator_key = (indicator['column_id'], indicator['type'])
+                    indicators.setdefault(indicator_key, indicator)
 
         return list(indicators.values())[:MAX_COLUMNS]
 
@@ -975,10 +986,11 @@ class ConfigureNewReportBase(forms.Form):
         data_source_config = DataSourceConfiguration.get(data_source_config_id)
 
         filters = self.cleaned_data['user_filters'] + self.cleaned_data['default_filters']
-        required_column_set = set([c["column_id"]
-                                   for c in self.ds_builder.indicators(self._configured_columns, filters)])
-        current_column_set = set([c["column_id"] for c in data_source_config.configured_indicators])
-        missing_columns = [c for c in required_column_set if c not in current_column_set]
+        # The data source needs indicators for all possible calculations, not just the ones currently in use
+        required_columns = {c["column_id"]
+                            for c in self.ds_builder.all_possible_indicators(self._configured_columns, filters)}
+        current_columns = {c["column_id"] for c in data_source_config.configured_indicators}
+        missing_columns = required_columns - current_columns
 
         # rebuild the table
         if missing_columns:

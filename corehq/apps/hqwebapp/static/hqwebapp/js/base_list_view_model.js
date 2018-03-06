@@ -60,7 +60,7 @@ hqDefine("hqwebapp/js/base_list_view_model", function() {
                 type: 'POST',
                 url: action_url,
                 dataType: 'json',
-                error: view_model.unsuccessful_archive_action(button, data_index),
+                error: view_model.unsuccessful_archive_action(button),
                 success: view_model.successful_archive_action(button, data_index),
             });
         };
@@ -80,7 +80,7 @@ hqDefine("hqwebapp/js/base_list_view_model", function() {
                         view_model.archive_action_items(actioned);
                     });
                 } else {
-                    view_model.unsuccessful_archive_action(button, index)(data);
+                    view_model.unsuccessful_archive_action(button)(data);
                 }
             };
         };

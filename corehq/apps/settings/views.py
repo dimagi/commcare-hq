@@ -30,7 +30,7 @@ from django.urls import reverse
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.hqwebapp.views import BaseSectionPageView
 from corehq.util.quickcache import quickcache
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.web import json_response
 from dimagi.utils.couch import CriticalSection
 from django.shortcuts import redirect

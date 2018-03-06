@@ -31,7 +31,7 @@ from corehq.apps.users.forms import SupplyPointSelectWidget
 from corehq import toggles
 from corehq.util.timezones.conversions import UserTime
 from dimagi.utils.couch.database import iter_docs
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from .models import (
     REPEAT_SCHEDULE_INDEFINITELY,
     CaseReminderEvent,

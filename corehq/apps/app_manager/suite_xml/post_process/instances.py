@@ -5,7 +5,7 @@ from corehq import toggles
 from corehq.apps.app_manager.exceptions import DuplicateInstanceIdError
 from corehq.apps.app_manager.suite_xml.contributors import PostProcessor
 from corehq.apps.app_manager.suite_xml.xml_models import Instance
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 import six
 
 

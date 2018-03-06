@@ -5,7 +5,7 @@
         </div>
     </div>
     <div class="report-content">
-        <div class="alert alert-info" ng-show="$ctrl.now === $ctrl.selectedMonth">
+        <div class="alert alert-info" ng-show="$ctrl.showWarning()">
             <strong>Info!</strong> "You are downloading data for the current calendar month. Data for this report is calculated using calendar months (for example, January 1st-January 31st). Data for this month will not be complete until the end of the month."
         </div>
         <div class="alert alert-info col-md-12" ng-if="$ctrl.isChildBeneficiaryListSelected() && $ctrl.hasErrors()">
@@ -95,7 +95,7 @@
                            popover-placement="top-right"
                            popover-trigger="'mouseenter'"></i></label>
                     <div class="col-sm-6">
-                        <ui-select ng-model="$ctrl.selectedYear" theme="bootstrap">
+                        <ui-select ng-model="$ctrl.selectedYear" theme="bootstrap" on-select="$ctrl.onSelectYear($item)">
                             <ui-select-match placeholder="Year"><span ng-bind="$select.selected.name"></span></ui-select-match>
                             <ui-select-choices repeat="year.id as year in $ctrl.years| propsFilter: {name: $select.search}">
                                 <div ng-bind-html="year.name"></div>
@@ -192,7 +192,7 @@
                            popover-placement="top-right"
                            popover-trigger="'mouseenter'"></i></label>
                     <div class="col-sm-6">
-                        <ui-select ng-model="$ctrl.selectedYear" theme="bootstrap">
+                        <ui-select ng-model="$ctrl.selectedYear" theme="bootstrap" on-select="$ctrl.onSelectYear($item)">
                             <ui-select-match placeholder="Year"><span ng-bind="$select.selected.name"></span></ui-select-match>
                             <ui-select-choices repeat="year.id as year in $ctrl.years| propsFilter: {name: $select.search}">
                                 <div ng-bind-html="year.name"></div>
@@ -243,8 +243,8 @@
             </div>
             <div class="issnip-spinner-container" ng-if="($ctrl.showProgressBar() || $ctrl.readyToDownload() || $ctrl.queuedISSNIPTask) && !$ctrl.downloaded">
                 <i ng-if="$ctrl.showProgressBar() || $ctrl.queuedISSNIPTask" class="fa fa-circle-o-notch fa-spin"></i>
-                <span ng-if="$ctrl.showProgressBar() || $ctrl.queuedISSNIPTask">Preparing your ISSNIP report...</span>
-                <span ng-if="$ctrl.readyToDownload()">Your ISSNIP report is ready to be downloaded</span>
+                <span ng-if="$ctrl.showProgressBar() || $ctrl.queuedISSNIPTask">Preparing your ICDS-CAS monthly register report...</span>
+                <span ng-if="$ctrl.readyToDownload()">Your ICDS-CAS monthly register report is ready to be downloaded</span>
                 <a class="btn btn-primary" ng-click="$ctrl.goToLink()"
                    ng-disabled="!$ctrl.readyToDownload()"><span>Download</span></a>
             </div>

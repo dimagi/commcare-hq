@@ -40,7 +40,7 @@ from crispy_forms import bootstrap as twbscrispy
 from corehq.apps.hqwebapp import crispy as hqcrispy
 
 from corehq.util.soft_assert import soft_assert
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 import re
 

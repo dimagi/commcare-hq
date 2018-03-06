@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from datetime import timedelta
 import datetime
 from django.utils.translation import ugettext_noop
@@ -15,7 +16,7 @@ from corehq.apps.reports.standard.cases.data_sources import CaseDisplay
 from corehq.pillows.base import restore_property_dict
 from corehq.util.timezones.conversions import PhoneTime
 from dimagi.utils.dates import force_to_datetime
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.parsing import json_format_date
 from six.moves import range
 

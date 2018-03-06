@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 class BadRequestError(Exception):
     """
     For catching client-side errors.

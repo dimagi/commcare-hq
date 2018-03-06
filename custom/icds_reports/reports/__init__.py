@@ -5,7 +5,7 @@ from dateutil.relativedelta import relativedelta
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin, \
     MonthYearMixin
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 from corehq.util.dates import get_first_last_days
 

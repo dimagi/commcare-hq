@@ -36,7 +36,7 @@ from corehq.apps.hqwebapp.decorators import use_jquery_ui, \
 from corehq.apps.users.models import WebUser, CouchUser
 from django.contrib.auth.models import User
 from dimagi.utils.couch.resource_conflict import retry_resource
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.web import get_ip
 from corehq.util.context_processors import get_per_domain_context
 

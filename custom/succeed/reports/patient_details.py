@@ -1,10 +1,11 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from couchdbkit.exceptions import ResourceNotFound
 from corehq.apps.reports.generic import ElasticProjectInspectionReport
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin
 from corehq.apps.cloudcare.api import get_cloudcare_app, get_cloudcare_form_url
 from django.utils import html
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from custom.succeed.utils import get_app_build, SUCCEED_CM_APPNAME, SUCCEED_PM_APPNAME, SUCCEED_CHW_APPNAME, \
     SUCCEED_DOMAIN
 from casexml.apps.case.models import CommCareCase

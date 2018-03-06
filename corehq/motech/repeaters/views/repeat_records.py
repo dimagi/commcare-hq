@@ -11,7 +11,7 @@ from django.views.decorators.http import require_POST
 from django.views.generic import View
 
 from couchdbkit import ResourceNotFound
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.web import json_response
 
 from corehq import toggles

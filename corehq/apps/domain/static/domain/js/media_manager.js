@@ -7,16 +7,15 @@ hqDefine('domain/js/media_manager', function () {
         self.m_id = data.m_id;
         self.tags = ko.observable(data.tags.join(' '));
         self.type = data.type;
-        self.image = ko.observable(self.type == 'CommCareImage');
-        self.audio = ko.observable(self.type == 'CommCareAudio');
-        self.other = ko.observable(self.type == 'CommCareMultimedia');
+        self.image = ko.observable(self.type === 'CommCareImage');
+        self.audio = ko.observable(self.type === 'CommCareAudio');
+        self.other = ko.observable(self.type === 'CommCareMultimedia');
     };
 
     var MediaManager = function(data, licenses) {
         var self = this;
         self.media = [];
         self.licenses = [];
-        var settingShared = false;
         var i;
         for (i = 0; i < licenses.length; i++) {
             self.licenses.push({name: licenses[i][1], code: licenses[i][0]});

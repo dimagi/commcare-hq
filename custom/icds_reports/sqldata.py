@@ -26,7 +26,7 @@ from couchexport.export import export_from_tables
 from couchexport.shortcuts import export_response
 
 from custom.utils.utils import clean_IN_filter_value
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 import six
 from six.moves import range
 
@@ -1681,8 +1681,10 @@ class DemographicsExport(ExportableMixin):
         return columns
 
     def get_data(self):
-        awc_monthly = DemographicsAWCMonthly(self.config, self.loc_level).get_data()
-        child_health = DemographicsChildHealth(self.config, self.loc_level).get_data()
+        awc_monthly = DemographicsAWCMonthly(
+            self.config, self.loc_level, show_test=self.show_test, beta=self.beta).get_data()
+        child_health = DemographicsChildHealth(
+            self.config, self.loc_level, show_test=self.show_test, beta=self.beta).get_data()
         connect_column = 'state_name'
         if self.loc_level == 2:
             connect_column = 'district_name'
@@ -2232,7 +2234,8 @@ class FactSheetsReport(object):
                                 'header': 'Percent of children born in month with low birth weight',
                                 'slug': 'low_birth_weight',
                                 'average': [],
-                                'format': 'percent'
+                                'format': 'percent',
+                                'reverseColors': True,
                             }
                         ]
                     }

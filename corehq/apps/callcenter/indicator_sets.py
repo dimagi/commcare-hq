@@ -15,7 +15,7 @@ from corehq.apps.callcenter.utils import get_call_center_cases
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain_es
 from dimagi.ext.jsonobject import JsonObject, DictProperty, StringProperty
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 import six
 
 logger = logging.getLogger('callcenter')

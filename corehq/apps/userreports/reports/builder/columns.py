@@ -18,7 +18,7 @@ from corehq.apps.userreports.reports.builder.const import (
     UI_AGGREGATIONS,
 )
 from corehq.apps.userreports.sql import get_column_name
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 import six
 
 

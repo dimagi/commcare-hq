@@ -10,7 +10,7 @@ from corehq.apps.userreports.reports.factory import ReportFactory
 from corehq.apps.userreports.reports.view import get_filter_values
 from custom.enikshay.reports.filters import PeriodFilter, EnikshayLocationFilter
 from custom.enikshay.reports.generic import EnikshayReport
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 
 @location_safe

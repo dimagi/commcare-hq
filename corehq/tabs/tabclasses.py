@@ -4,8 +4,8 @@ from six.moves.urllib.parse import urlencode
 from django.urls import reverse
 from django.conf import settings
 from django.http import Http404
-from django.utils.html import strip_tags
-from django.utils.safestring import mark_safe, mark_for_escaping
+from django.utils.html import escape, strip_tags
+from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_noop, ugettext as _, ugettext_lazy
 from corehq import privileges, toggles
 from corehq.apps.accounting.dispatcher import AccountingAdminInterfaceDispatcher
@@ -41,7 +41,7 @@ from corehq.tabs.uitab import UITab
 from corehq.tabs.utils import dropdown_dict, sidebar_to_dropdown, regroup_sidebar_items
 from corehq.toggles import PUBLISH_CUSTOM_REPORTS
 from custom.world_vision import WORLD_VISION_DOMAINS
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from django_prbac.utils import has_privilege
 from six.moves import map
 
@@ -810,8 +810,8 @@ class ApplicationsTab(UITab):
     @classmethod
     def make_app_title(cls, app_name, doc_type):
         return mark_safe("%s%s" % (
-            mark_for_escaping(strip_tags(app_name) or '(Untitled)'),
-            mark_for_escaping(' (Remote)' if doc_type == 'RemoteApp' else ''),
+            escape(strip_tags(app_name)) or '(Untitled)',
+            ' (Remote)' if doc_type == 'RemoteApp' else '',
         ))
 
     @property
@@ -1762,20 +1762,12 @@ class AdminTab(UITab):
             dropdown_dict(_("System Info"), url=reverse("system_info")),
             dropdown_dict(_("Submission Map"), url=reverse("dimagisphere")),
             dropdown_dict(_("Management"), is_header=True),
-            # dropdown_dict(mark_for_escaping("HQ Announcements"),
-            #                      url=reverse("default_announcement_admin")),
         ]
         try:
             if AccountingTab(self._request)._is_viewable:
                 submenu_context.append(
                     dropdown_dict(AccountingTab.title, url=reverse('accounting_default'))
                 )
-        except Exception:
-            pass
-        try:
-            submenu_context.append(dropdown_dict(
-                mark_for_escaping(_("Old SMS Billing")),
-                url=reverse("billing_default")))
         except Exception:
             pass
         submenu_context.extend([

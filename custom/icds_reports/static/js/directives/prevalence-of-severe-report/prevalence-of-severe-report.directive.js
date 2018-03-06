@@ -77,12 +77,12 @@ function PrevalenceOfSevereReportController($scope, $routeParams, $location, $fi
     };
 
     vm.templatePopup = function(loc, row) {
-        var total = row ? $filter('indiaNumbers')(row.total) : 'N/A';
+        var total = row ? $filter('indiaNumbers')(row.total_weighed) : 'N/A';
         var total_measured = row ? $filter('indiaNumbers')(row.total_measured) : 'N/A';
         var sever = row ? d3.format(".2%")(row.severe / (row.total_measured || 1)) : 'N/A';
         var moderate = row ? d3.format(".2%")(row.moderate / (row.total_measured || 1)) : 'N/A';
         var normal = row ? d3.format(".2%")(row.normal / (row.total_measured || 1)) : 'N/A';
-        var unmeasured = row ? $filter('indiaNumbers')(row.total - row.total_measured) : 'N/A';
+        var unmeasured = row ? $filter('indiaNumbers')(row.total_height_eligible - row.total_measured) : 'N/A';
         return '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
             '<p>' + loc.properties.name + '</p>' +
             '<div>Total Children ' + vm.chosenFilters() + ' weighed in given month: <strong>' + total + '</strong></div>' +
@@ -211,9 +211,10 @@ function PrevalenceOfSevereReportController($scope, $routeParams, $location, $fi
                     var normal = findValue(vm.chartData[0].values, d.value).y;
                     var moderate = findValue(vm.chartData[1].values, d.value).y;
                     var severe = findValue(vm.chartData[2].values, d.value).y;
-                    var measured = findValue(vm.chartData[0].values, d.value).measured;
-                    var all = findValue(vm.chartData[0].values, d.value).all;
-                    return vm.tooltipContent(d.value, normal, moderate, severe, all, measured);
+                    var total_measured = findValue(vm.chartData[0].values, d.value).total_measured;
+                    var total_weighed = findValue(vm.chartData[0].values, d.value).total_weighed;
+                    var height_eligible = findValue(vm.chartData[0].values, d.value).total_height_eligible;
+                    return vm.tooltipContent(d.value, normal, moderate, severe, total_weighed, total_measured, height_eligible);
                 });
                 return chart;
             },
@@ -232,12 +233,12 @@ function PrevalenceOfSevereReportController($scope, $routeParams, $location, $fi
         },
     };
 
-    vm.tooltipContent = function (monthName, normal, moderate, severe, all, measured) {
+    vm.tooltipContent = function (monthName, normal, moderate, severe, total_weighed, total_measured, height_eligible) {
 
         return "<p><strong>" + monthName + "</strong></p><br/>"
-            + '<div>Total Children ' + vm.chosenFilters() + ' weighed in given month: <strong>' + $filter('indiaNumbers')(all) + '</strong></div>'
-            + '<div>Total Children ' + vm.chosenFilters() + ' with height measured in given month: <strong>' + $filter('indiaNumbers')(measured) + '</strong></div>'
-            + '<div>Number of Children ' + vm.chosenFilters() + ' unmeasured: <strong>' + $filter('indiaNumbers')(all - measured) + '</strong></div>'
+            + '<div>Total Children ' + vm.chosenFilters() + ' weighed in given month: <strong>' + $filter('indiaNumbers')(total_weighed) + '</strong></div>'
+            + '<div>Total Children ' + vm.chosenFilters() + ' with height measured in given month: <strong>' + $filter('indiaNumbers')(total_measured) + '</strong></div>'
+            + '<div>Number of Children ' + vm.chosenFilters() + ' unmeasured: <strong>' + $filter('indiaNumbers')(height_eligible - total_measured) + '</strong></div>'
             + '<div>% children ' + vm.chosenFilters() + '  with Normal Acute Malnutrition: <strong>' + d3.format('.2%')(normal) + '</strong></div>'
             + '<div>% children ' + vm.chosenFilters() + '  with Moderate Acute Malnutrition (MAM): <strong>' + d3.format('.2%')(moderate) + '</strong></div>'
             + '<div>% children ' + vm.chosenFilters() + '  with Severe Acute Malnutrition (SAM): <strong>' + d3.format('.2%')(severe) + '</strong></div>';
