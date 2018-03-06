@@ -89,18 +89,30 @@ def report_blob_sizes(data, sizes, write):
             yield "MEAN"
             yield "COUNT"
 
-    def iter_sizes(doc_type, domain_sizes):
+    def iter_sizes(doc_type, domain_sizes, totals):
         for domain in by_domain:
             blob_sizes = domain_sizes[domain]
             numerics = [s.length for s in blob_sizes if s.length is not UNKNOWN]
             mean_size = int(mean(numerics)) if numerics else 0
-            yield sizeof_fmt(
+            est_size = (
                 mean_size *
                 len(data[blob_sizes[0].bucket]) *           # number blobs in bucket
                 (len(numerics) / float(samples[doc_type]))  # porportion of samples
             ) if blob_sizes else 0
+            found_of_total = "{}/{}".format(len(numerics), len(blob_sizes))
+            totals[domain]["size"] += est_size
+            totals[domain]["found"] += len(numerics)
+            totals[domain]["count"] += len(blob_sizes)
+            yield sizeof_fmt(est_size)
             yield sizeof_fmt(mean_size)
-            yield "{}/{}".format(len(numerics), len(blob_sizes))  # FOUND/TOTAL
+            yield found_of_total if blob_sizes else "-"  # FOUND/TOTAL
+
+    def iter_totals(totals):
+        yield sizeof_fmt(sum(t["size"] for t in totals.values()))
+        for domain in by_domain:
+            yield sizeof_fmt(totals[domain]["size"])
+            yield ""
+            yield "{found}/{count}".format(**totals[domain])
 
     def sumlens(item):
         return -sum(s.length for s in item[1] if s.length is not UNKNOWN)
@@ -125,10 +137,17 @@ def report_blob_sizes(data, sizes, write):
     def key(item):
         return sum(sumlens(["ignored", sizes]) for sizes in item[1].values())
 
+    totals = {domain: {
+        "size": 0,
+        "found": 0,
+        "count": 0,
+    } for domain in by_domain}
+    write(["Storage use based on sampled estimates (may be inaccurate)"])
     write(["DOC_TYPE"] + list(iter_headers(by_domain)))
     for doc_type, domain_sizes in sorted(by_type.items(), key=key):
-        write([doc_type] + list(iter_sizes(doc_type, domain_sizes)))
-    write([])
+        write([doc_type] + list(iter_sizes(doc_type, domain_sizes, totals)))
+    write(["---"] + ["---" for x in iter_headers(by_domain)])
+    write(list(iter_totals(totals)))
 
 
 def accumulate_put_requests(files):
