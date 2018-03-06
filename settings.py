@@ -296,6 +296,7 @@ HQ_APPS = (
     'corehq.messaging.smsbackends.unicel',
     'corehq.messaging.smsbackends.icds_nic',
     'corehq.messaging.smsbackends.vertex',
+    'corehq.messaging.smsbackends.whatsapp',
     'corehq.messaging.smsbackends.start_enterprise',
     'corehq.messaging.smsbackends.ivory_coast_mtn',
     'corehq.apps.reports.app_config.ReportsModule',
@@ -1572,6 +1573,7 @@ SMS_LOADED_SQL_BACKENDS = [
     'corehq.messaging.smsbackends.unicel.models.SQLUnicelBackend',
     'corehq.messaging.smsbackends.yo.models.SQLYoBackend',
     'corehq.messaging.smsbackends.vertex.models.VertexBackend',
+    'corehq.messaging.smsbackends.whatsapp.models.SQLWhatsAppBackend',
     'corehq.messaging.smsbackends.start_enterprise.models.StartEnterpriseBackend',
     'corehq.messaging.smsbackends.ivory_coast_mtn.models.IvoryCoastMTNBackend',
 ]
