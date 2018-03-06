@@ -74,7 +74,7 @@ def get_synclog_ids_by_date(start_datetime, end_datetime):
         synclog_id.hex
         for synclog_id in SyncLogSQL.objects.filter(
             date__gt=start_datetime, date__lt=end_datetime
-        ).values_list('synclog_id')
+        ).values_list('synclog_id', flat=True)
     ]
 
 
