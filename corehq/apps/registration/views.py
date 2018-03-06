@@ -34,6 +34,7 @@ from corehq.apps.registration.utils import activate_new_user, send_new_request_u
 from corehq.apps.hqwebapp.decorators import use_jquery_ui, \
     use_ko_validation
 from corehq.apps.users.models import WebUser, CouchUser
+from corehq import toggles
 from django.contrib.auth.models import User
 from dimagi.utils.couch.resource_conflict import retry_resource
 from memoized import memoized
@@ -117,7 +118,12 @@ class ProcessRegistrationView(JSONResponseMixin, NewUserNumberAbTestMixin, View)
             web_user = WebUser.get_by_username(new_user.username)
             web_user.phone_numbers.append(reg_form.cleaned_data['phone_number'])
             web_user.save()
-        track_workflow(new_user.email, "Requested new account")
+        track_workflow(new_user.email,
+                       "Requested new account",
+                       {'registered_mobile': reg_form.cleaned_data.get('is_mobile')})
+        if reg_form.cleaned_data.get('is_mobile'):
+            toggles.MOBILE_SIGNUP_REDIRECT_AB_TEST_CONTROLLER.set(
+                reg_form.cleaned_data['email'], True)
         login(self.request, new_user)
 
     @allow_remote_invocation
