@@ -14,19 +14,25 @@ def delete_expired_blobs():
     blob_expirations = BlobExpiration.objects.filter(expires_on__lt=_utcnow(), deleted=False)
 
     db = get_blob_db()
-    paths = []
-    bytes_deleted = 0
-    for blob_expiration in blob_expirations:
-        paths.append(db.get_path(blob_expiration.identifier, blob_expiration.bucket))
-        bytes_deleted += blob_expiration.length
+    total_bytes_deleted = 0
+    while blob_expirations.exists():
+        paths = []
+        deleted_ids = []
+        bytes_deleted = 0
+        for blob_expiration in blob_expirations[:1000]:
+            paths.append(db.get_path(blob_expiration.identifier, blob_expiration.bucket))
+            deleted_ids.append(blob_expiration.id)
+            bytes_deleted += blob_expiration.length
 
-    db.bulk_delete(paths)
-    blob_expirations.update(deleted=True)
-    datadog_counter(
-        'commcare.temp_blobs.bytes_deleted',
-        value=bytes_deleted,
-    )
-    return bytes_deleted
+        db.bulk_delete(paths)
+        BlobExpiration.objects.filter(id__in=deleted_ids).update(deleted=True)
+        datadog_counter(
+            'commcare.temp_blobs.bytes_deleted',
+            value=bytes_deleted,
+        )
+        total_bytes_deleted += bytes_deleted
+
+    return total_bytes_deleted
 
 
 def _utcnow():
