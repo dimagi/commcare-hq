@@ -701,6 +701,7 @@ class ShouldSyncLocationFixturesTest(TestCase):
         after_save = datetime.utcnow()
         self.assertEqual('winterfell', location.name)
         locations_queryset = SQLLocation.objects.filter(pk=location.pk)
+        # Should not resync if last sync was after location save
         self.assertFalse(
             should_sync_locations(SyncLog(date=after_save), locations_queryset, self.user.to_ota_restore_user())
         )
@@ -711,12 +712,41 @@ class ShouldSyncLocationFixturesTest(TestCase):
 
         location = SQLLocation.objects.last()
         locations_queryset = SQLLocation.objects.filter(pk=location.pk)
+        # Should resync if last sync was after location was saved but before location was archived
         self.assertTrue(
             should_sync_locations(SyncLog(date=after_save), locations_queryset, self.user.to_ota_restore_user())
         )
+        # Should not resync if last sync was after location was deleted
         self.assertFalse(
             should_sync_locations(SyncLog(date=after_archive), locations_queryset, self.user.to_ota_restore_user())
         )
+
+    def test_deleting_location_should_resync(self):
+        """
+        When locations are deleted, we should resync them
+        """
+        location = make_location(
+            domain=self.domain,
+            name="Riverrun",
+            location_type=self.location_type.name,
+        )
+        location.save()
+        after_save = datetime.utcnow()
+        self.assertEqual('Riverrun', location.name)
+        locations_queryset = SQLLocation.objects.filter(pk=location.pk)
+
+        # Should not resync if last sync was after location was saved
+        self.assertFalse(
+            should_sync_locations(SyncLog(date=after_save), locations_queryset, self.user.to_ota_restore_user())
+        )
+
+        # Delete the location
+        location.full_delete()
+        after_delete = datetime.utcnow()
+
+        # TODO: Should resync if last sync was after location was saved but before location was deleted
+
+        # TODO: Should not resync if last sync was after location was deleted
 
 
 @mock.patch('corehq.apps.domain.models.Domain.uses_locations', lambda: True)
