@@ -21,7 +21,7 @@ from corehq.apps.analytics.tasks import send_hubspot_form, \
     HUBSPOT_CREATED_EXPORT_FORM_ID, HUBSPOT_DOWNLOADED_EXPORT_FORM_ID
 from corehq.blobs.exceptions import NotFound
 from corehq.toggles import MESSAGE_LOG_METADATA, PAGINATED_EXPORTS
-from corehq.apps.export.export import get_export_download, get_export_size
+from corehq.apps.export.export import get_export_download, get_export_size, get_export_documents
 from corehq.apps.export.models.new import DatePeriod, DailySavedExportNotification, DataFile, \
     EmailExportWhenDoneRequest
 from corehq.apps.hqwebapp.views import HQJSONResponseMixin
@@ -765,6 +765,17 @@ class BaseDownloadExportView(ExportsPermissionsMixin, HQJSONResponseMixin, BaseP
             )
 
         return export_filter, export_specs
+
+    def get_export_documents_count(self, in_data):
+        export_filters, export_specs = self._process_filters_and_specs(in_data)
+        export_instances = [self._get_export(self.domain, spec['export_id']) for spec in export_specs]
+
+        count = 0
+        for instance in export_instances:
+            doc = get_export_documents(instance, export_filters)
+            count += doc.count
+
+        return count
 
     @allow_remote_invocation
     def prepare_custom_export(self, in_data):
@@ -2343,6 +2354,18 @@ class DownloadNewFormExportView(GenericDownloadNewExportMixin, DownloadFormExpor
         mobile_user_and_group_slugs = self._get_mobile_user_and_group_slugs(filter_slug)
         return filter_form.get_multimedia_task_kwargs(export_object, download_id, mobile_user_and_group_slugs)
 
+    @allow_remote_invocation
+    def prepare_custom_export(self, in_data):
+        prepare_custom_export = super(DownloadNewFormExportView, self).prepare_custom_export(in_data)
+
+        documents_count = super(DownloadNewFormExportView, self).get_export_documents_count(in_data)
+        if documents_count > 0:
+            track_workflow(self.request.couch_user.username, 'Downloaded Form Exports With Data')
+        else:
+            track_workflow(self.request.couch_user.username, 'Downloaded Form Exports With No Data')
+
+        return prepare_custom_export
+
 
 class BulkDownloadNewFormExportView(DownloadNewFormExportView):
     urlname = 'new_bulk_download_forms'
@@ -2377,6 +2400,18 @@ class DownloadNewCaseExportView(GenericDownloadNewExportMixin, DownloadCaseExpor
             mobile_user_and_group_slugs, self.request.can_access_all_locations, accessible_location_ids
         )
         return form_filters
+
+    @allow_remote_invocation
+    def prepare_custom_export(self, in_data):
+        prepare_custom_export = super(DownloadNewCaseExportView, self).prepare_custom_export(in_data)
+
+        documents_count = super(DownloadNewCaseExportView, self).get_export_documents_count(in_data)
+        if documents_count > 0:
+            track_workflow(self.request.couch_user.username, 'Downloaded Case Exports With Data')
+        else:
+            track_workflow(self.request.couch_user.username, 'Downloaded Case Exports With No Data')
+
+        return prepare_custom_export
 
 
 class DownloadNewSmsExportView(GenericDownloadNewExportMixin, BaseDownloadExportView):
