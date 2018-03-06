@@ -438,7 +438,7 @@ class SyncLogSQL(models.Model):
         ]
     )
     build_id = models.CharField(max_length=255, null=True, blank=True)
-    duration = models.PositiveSmallIntegerField(null=True, blank=True)
+    duration = models.PositiveIntegerField(null=True, blank=True)
     last_submitted = models.DateTimeField(db_index=True, null=True, blank=True)
     had_state_error = models.BooleanField(default=False)
     error_date = models.DateTimeField(db_index=True, null=True, blank=True)
