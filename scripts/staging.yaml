@@ -59,7 +59,6 @@ branches:
   - jr/ejs/sms-chat # Jordan 2/16
   - mk-mock-repeater-report # MK 28-Feb
   - ce/auto-batches # Cal 3/5
-  - jls/mm-deletion # Jenny March 6
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
