@@ -22,6 +22,7 @@ from corehq.form_processor.tests.utils import use_sql_backend
 from custom.icds.const import AWC_LOCATION_TYPE_CODE, SUPERVISOR_LOCATION_TYPE_CODE
 from custom.icds.rules.util import todays_date
 from datetime import datetime, date
+from dateutil.relativedelta import relativedelta
 
 
 @use_sql_backend
@@ -187,35 +188,46 @@ class CustomCriteriaTestCase(BaseCaseRuleTest):
         return CaseAccessors(self.domain).get_case(case.case_id)
 
     def test_person_case_is_under_6_years_old(self):
+        self.assert_person_case_is_under_N_years_old(
+            6, 'ICDS_PERSON_CASE_IS_UNDER_6_YEARS_OLD')
+
+    def test_person_case_is_under_19_years_old(self):
+        self.assert_person_case_is_under_N_years_old(
+            19, 'ICDS_PERSON_CASE_IS_UNDER_19_YEARS_OLD')
+
+    def assert_person_case_is_under_N_years_old(self, n_years, criteria_name):
         rule = _create_empty_rule(self.domain, case_type='person')
-        rule.add_criteria(CustomMatchDefinition, name='ICDS_PERSON_CASE_IS_UNDER_6_YEARS_OLD')
+        rule.add_criteria(CustomMatchDefinition, name=criteria_name)
 
         with _with_case(self.domain, 'person', datetime.utcnow()) as case:
+            dob = datetime(2018, 2, 22, 12, 0)
             # No value for dob yet
-            self.assertFalse(rule.criteria_match(case, datetime(2018, 2, 22, 12, 0)))
+            self.assertFalse(rule.criteria_match(case, dob))
 
             # Bad value for dob
             case = self._set_dob(case, 'x')
-            self.assertFalse(rule.criteria_match(case, datetime(2018, 2, 22, 12, 0)))
+            self.assertFalse(rule.criteria_match(case, dob))
 
             # Set dob
             case = self._set_dob(case, '2018-02-22')
 
-            # Test over 6 years old
-            self.assertFalse(rule.criteria_match(case, datetime(2024, 2, 22, 12, 0)))
-            self.assertFalse(rule.criteria_match(case, datetime(2024, 5, 22, 12, 0)))
-
-            # Test under 6 years old
-            self.assertTrue(rule.criteria_match(case, datetime(2024, 2, 21, 12, 0)))
-            self.assertTrue(rule.criteria_match(case, datetime(2018, 5, 22, 12, 0)))
+            for assert_, age in [
+                # Test over N years old
+                (self.assertFalse, relativedelta(years=n_years)),
+                (self.assertFalse, relativedelta(years=n_years, days=90)),
+                # Test under N years old
+                (self.assertTrue, relativedelta(years=n_years, days=-1)),
+                (self.assertTrue, relativedelta(days=90)),
+            ]:
+                assert_(rule.criteria_match(case, dob + age), age)
 
         # Test wrong case type
         rule = _create_empty_rule(self.domain, case_type='x')
-        rule.add_criteria(CustomMatchDefinition, name='ICDS_PERSON_CASE_IS_UNDER_6_YEARS_OLD')
+        rule.add_criteria(CustomMatchDefinition, name=criteria_name)
 
         with _with_case(self.domain, 'x', datetime.utcnow()) as case:
             case = self._set_dob(case, '2018-02-22')
-            self.assertFalse(rule.criteria_match(case, datetime(2018, 5, 22, 12, 0)))
+            self.assertFalse(rule.criteria_match(case, dob + relativedelta(days=90)))
 
     def test_is_usercase_of_aww(self):
         rule = _create_empty_rule(self.domain, case_type=USERCASE_TYPE)
