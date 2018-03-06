@@ -509,6 +509,10 @@ function DateTimeEntryBase(question, options) {
 
     self.afterRender = function() {
         self.$picker = $('#' + self.entryId);
+        // Disable typing in the date picker
+        self.$picker.keydown(function() {
+            return false;
+        });
         var datepickerOpts = {
             timepicker: self.timepicker,
             datepicker: self.datepicker,
