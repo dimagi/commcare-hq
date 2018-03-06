@@ -88,6 +88,28 @@ def download_bulk_app_translations(request, domain, app_id):
     return export_response(temp, Format.XLS_2007, "bulk_app_translations")
 
 
+@require_can_edit_apps
+def jls_download(request, domain, app_id):
+    app = get_app(domain, app_id)
+    headers = expected_bulk_app_sheet_headers(app)
+    rows = expected_bulk_app_sheet_rows(app)
+    temp = io.BytesIO()
+    data = [(k, v) for k, v in six.iteritems(rows)]
+    export_raw(headers, data, temp)
+    import tempfile
+    fd, path = tempfile.mkstemp()
+    with open(path,'wb') as out:
+        out.write(temp.getvalue())
+    return path
+
+
+def jls_upload(domain, app_id, filename):
+    app = get_app(domain, app_id)
+    with open(filename) as f:
+        msgs = process_bulk_app_translation_upload(app, f)
+    app.save()
+
+
 @no_conflict_require_POST
 @require_can_edit_apps
 @get_file("bulk_upload_file")

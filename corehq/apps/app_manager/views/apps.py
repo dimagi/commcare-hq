@@ -557,7 +557,7 @@ def edit_app_langs(request, domain, app_id):
         if old != new:
             app.rename_lang(old, new)
 
-    #remove deleted languages from build profiles
+    # remove deleted languages from build profiles
     new_langs = set(langs)
     deleted = [lang for lang in app.langs if lang not in new_langs]
     for id in app.build_profiles:
@@ -575,6 +575,15 @@ def edit_app_langs(request, domain, app_id):
     replace_all(app.langs, langs)
 
     app.save()
+
+    # Clear out old translations
+    if deleted:
+        from corehq.apps.app_manager.views.translations import jls_download, jls_upload
+        filename = jls_download(request, domain, app_id)
+        jls_upload(domain, app_id, filename)
+        # Get current translations, which won't include deleted languages
+        # Re-apply
+
     return json_response(langs)
 
 

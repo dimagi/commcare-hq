@@ -162,7 +162,7 @@ def process_bulk_app_translation_upload(app, f):
         # This could be added if we want though
         #      (it is not that bad if a user leaves out a row)
 
-        if sheet.worksheet.title == "Modules_and_forms":
+        if re.search(r'modules.and.forms', sheet.worksheet.title, re.I):
             # It's the first sheet
             ms = _process_modules_and_forms_sheet(rows, app)
             msgs.extend(ms)
