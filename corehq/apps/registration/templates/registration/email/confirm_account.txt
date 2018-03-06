@@ -6,13 +6,6 @@ As a first step, please confirm your email address and activate your new
 CommCare project titled: {{ domain }}. You will not be able to use your project
 until you have confirmed your email address.
 
-{% if is_mobile_experience %}
-    {% blocktrans %}
-        CommCare HQ is a powerful tool, and is not optimized for a mobile device.
-        For the best experience, please activate CommCare from a laptop or desktop browser.
-    {% endblocktrans %}
-{% endif %}
-
 {{ registration_link }}
 
 Once you have confirmed, our team will be in touch with some helpful tips for
