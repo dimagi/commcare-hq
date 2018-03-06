@@ -1,26 +1,26 @@
 MOTECH
 ======
 
-MOTECH is a Data Integration Layer that is currently integrated with CommCare.  
+MOTECH is a Data Integration Layer that is currently integrated with CommCare.
 
 History
 -------
 
-There was a previous version of MOTECH based on OSGI and the Spring Framework originally developed by the Grameen Foundation.  Information on MOTECH 1.0 can be found [HERE] <- (Insert links to MOTECH 1.0 documentation).  This platform was supporting both web-application use cases as well as data integration.  Due to the incompatability of OSGI and Spring in subsequent releases, MOTECH is now focused on data integration. 
+There was a previous version of MOTECH based on [OSGI](https://www.osgi.org/) and the [Spring Framework](https://projects.spring.io/spring-framework/) originally developed by the Grameen Foundation.  [Information on MOTECH 1.0 can be found here](http://docs.motechproject.org/en/latest/).  This platform was supporting both web-application use cases as well as data integration.  Due to the incompatability of OSGI and Spring in subsequent releases, MOTECH is now focused on data integration.
 
-Currently, MOTECH is fully integrated to leverage CommCare's frameworks, including:  
+Currently, MOTECH is fully integrated to leverage CommCare's frameworks, including:
 
 * To take advantage of CommCare HQ's multi-tenant architecture
-* To make it easier and faster for CommCare HQ developers to maintain and extend it, considering CommCare integrations are the primary use case currently. 
+* To make it easier and faster for CommCare HQ developers to maintain and extend it, considering CommCare integrations are the primary use case currently.
 
 Framework
---------------------
+---------
 
-MOTECH is designed to enable multiple types of integrations:  
+MOTECH is designed to enable multiple types of integrations:
 
-* Simple Transactional integration where a single action triggers one or more atomic integrations with 3rd party systems in either direction.  An exmaple is [INSERT HERE]
-* Complex Transactional integration where a single action requires multiple API calls to complete the integration and cannot recover gracefully if a failure between calls occurs.  An example is a single registration form in CommCare generating a patient and encounter in OpenMRS.    
-* Aggregate data integration where multiple actions in CommCare are aggregated an the result is pushed to a 3rd party system.  An example is CommCare tranactional data being aggregated into a Data Source (INSERT LINK) and being pushed to DHIS2 as aggregate data.  
+* Simple transactional integration where a single action triggers one or more atomic integrations with third-party systems in either direction.  An example is importing OpenMRS patients into CommCare.
+* Complex transactional integration where a single action requires multiple API calls to complete the integration.  An example is a single registration form in CommCare generating a patient and encounter in OpenMRS.
+* Aggregate data integration where multiple actions in CommCare are aggregated and the result is pushed to a third-party system.  An example is CommCare tranactional data being aggregated into a [Data Source](../apps/userreports/README.md) and being pushed to DHIS2 as aggregate data.
 
 Current Integrations
 --------------------
@@ -32,23 +32,23 @@ MOTECH Development has prioritized the integrations most commonly requested by o
 * OpenMRS
 
 Repeaters
------------------
-Repeaters is the way to.... [INSERT HERE]
+---------
+
+Repeaters allow integrators to send data from CommCare, formatted as JSON or XML, and send it as an authenticated user to a third-party system over HTTP(S).
 
 DHIS2 Module
------------------
+------------
 
-DHIS2 is a Health Information System that offers organisations and governments a visual dashboard of health-related data, across geographical areas, time periods, and demographics: [INSERT LINK]
+[DHIS2](https://www.dhis2.org/) is a Health Information System that offers organisations and governments a visual dashboard of health-related data, across geographical areas, time periods, and demographics.
 
 DHIS2 allows third-party systems like CommCare to send it two kinds of data:
 
 * Data that pertains to single events and individuals, for DHIS2 to aggregate within DHIS2.
 * Data that has already been aggregated
 
-The DHIS2 integration module in MOTECH enables aggregate data to be sent to DHIS2.  Individual data can be sent vi
-MOTECH 1 took the first approach.
+The DHIS2 integration module in MOTECH enables aggregate data to be sent to DHIS2.
 
-We found that often DHIS2 was not configured to accept this data, and would require the work of an administrator on behalf of the project organisation or government to set it up, which could be onerous. And so with MOTECH 2 we took the second approach.
+We found that often DHIS2 was not configured to accept individual data, and would require the work of an administrator on behalf of the project organisation or government to set it up, which could be onerous. And so with MOTECH 2 we took the second approach.
 
 Subsequently we have found a demand for both approaches, and so we may extend MOTECH to be able to to both.
 
@@ -58,9 +58,9 @@ Configuring a DHIS2 server is done under *Project Settings* > *DHIS2 Connection 
 
 
 OpenMRS (& Bahmni) Module
-----------------------------
+-------------------------
 
-OpenMRS is used for storing and managing patient data. Bahmni is a hospital management system built on top of OpenMRS. Integration with Bahmni implies integration with OpenMRS.
+[OpenMRS](https://openmrs.org/) is used for storing and managing patient data. [Bahmni](https://www.bahmni.org/) is an EMR and hospital system built on top of OpenMRS. Integration with Bahmni implies integration with OpenMRS.
 
 Because there is quite a lot of overlap between the kind of data that CommCare uses and the kind that OpenMRS uses, integration between these two systems has the potential to be richer than the integration between CommCare and DHIS2.
 
