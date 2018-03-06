@@ -7,10 +7,6 @@ from django.core.checks import Error, register
 class SQLDBAppConfig(AppConfig):
     name = 'corehq.sql_db'
 
-    def ready(self):
-        super(SQLDBAppConfig, self).ready()
-        register()(custom_db_checks)
-
 default_app_config = 'corehq.sql_db.SQLDBAppConfig'
 
 
