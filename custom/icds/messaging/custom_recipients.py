@@ -23,6 +23,7 @@ def recipient_mother_person_case_from_child_health_case(case_schedule_instance):
     try:
         return mother_person_case_from_child_health_case(case_schedule_instance.case)
     except CaseRelationshipError:
+        notify_exception(None, message="ICDS child health case relationship error")
         return None
 
 
