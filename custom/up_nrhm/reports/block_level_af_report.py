@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import division
+from __future__ import unicode_literals
 import re
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.generic import GenericTabularReport
@@ -19,7 +20,7 @@ class BlockLevelAFReport(GenericTabularReport, DatespanMixin, CustomProjectRepor
         afs = []
         for location in HierarchySqlData(config={'domain': self.domain}).get_data():
             if location['block'] == self.report_config['block']:
-                afs.append([(u"%s %s" % (location['first_name'] or '', location['last_name'] or '')).strip(),
+                afs.append([("%s %s" % (location['first_name'] or '', location['last_name'] or '')).strip(),
                             location['doc_id']])
         return afs
 

@@ -2,6 +2,7 @@
 A plugin to accept parameters used for various test runner operations.
 """
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from nose.plugins import Plugin
 
 REUSE_DB_HELP = """

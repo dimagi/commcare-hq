@@ -15,7 +15,7 @@ from custom.enikshay.reports.filters import EnikshayLocationFilter
 
 from django.utils.translation import ugettext as _, ugettext_lazy
 
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 
 @location_safe

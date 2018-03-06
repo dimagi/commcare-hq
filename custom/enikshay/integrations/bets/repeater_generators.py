@@ -20,6 +20,7 @@ from custom.enikshay.const import (
     FULFILLED_BY_ID,
     FULFILLED_BY_LOCATION_ID,
     AMOUNT_APPROVED,
+    AMOUNT_FULFILLED,
     TREATMENT_OUTCOME,
     TREATMENT_OUTCOME_DATE,
     PRESCRIPTION_TOTAL_DAYS_THRESHOLD,
@@ -322,6 +323,9 @@ class VoucherPayload(BETSPayload):
         approver_name = approver.name
         usertype = approver.user_data.get('usertype')
         approver_usertype = USERTYPE_DISPLAYS.get(usertype, usertype)
+        amount = voucher_case_properties.get(AMOUNT_APPROVED, "")
+        if amount == "":
+            amount = voucher_case_properties.get(AMOUNT_FULFILLED)
 
         return cls(
             EventID=event_id,
@@ -333,7 +337,7 @@ class VoucherPayload(BETSPayload):
             BeneficiaryType=LOCATION_TYPE_MAP[location.location_type.code],
             Location=fulfilled_by_location_id,
             # always round to nearest whole number, but send a string...
-            Amount=str(int(round(float(voucher_case_properties.get(AMOUNT_APPROVED))))),
+            Amount=str(int(round(float(amount)))),
             DTOLocation=_get_district_location_id(location),
             InvestigationType=voucher_case_properties.get(INVESTIGATION_TYPE),
             PersonId=person_case.get_case_property('person_id'),

@@ -16,7 +16,7 @@ from dimagi.ext.couchdbkit import *
 from django.db import models
 from django.contrib.postgres.fields import JSONField
 from django.core.exceptions import ValidationError
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.couch import LooselyEqualDocumentSchema
 from casexml.apps.case import const

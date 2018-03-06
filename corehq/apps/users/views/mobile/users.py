@@ -24,7 +24,7 @@ from couchdbkit import ResourceNotFound
 from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
 import re
 
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.web import json_response
 from django_prbac.exceptions import PermissionDenied
 from django_prbac.utils import has_privilege

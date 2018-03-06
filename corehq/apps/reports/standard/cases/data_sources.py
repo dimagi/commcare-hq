@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import datetime
 import dateutil
 from couchdbkit import ResourceNotFound
@@ -14,7 +15,7 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CouchUser
 from corehq.util.dates import iso_string_to_datetime
 from corehq.util.view_utils import absolute_reverse
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 
 class CaseInfo(object):

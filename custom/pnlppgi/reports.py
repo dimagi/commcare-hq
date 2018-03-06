@@ -1,6 +1,7 @@
 # coding=utf-8
 from __future__ import absolute_import
 from __future__ import division
+from __future__ import unicode_literals
 import datetime
 from operator import add
 
@@ -31,7 +32,7 @@ EMPTY_CELL = {'sort_key': 0, 'html': '---'}
 
 class SiteReportingRatesReport(SqlTabularReport, CustomProjectReport, ProjectReportParametersMixin):
     slug = 'site_reporting_rates_report'
-    name = u'Complétude et promptitude'
+    name = 'Complétude et promptitude'
     is_public = True
 
     report_template_path = 'pnlppgi/site_reporting.html'
@@ -179,7 +180,7 @@ class MalariaReport(SqlTabularReport, CustomProjectReport, ProjectReportParamete
 
 class WeeklyMalaria(MalariaReport):
     slug = 'weekly_malaria'
-    name = u'Données de la semaine'
+    name = 'Données de la semaine'
 
     report_template_path = 'pnlppgi/weekly_malaria.html'
 
@@ -269,28 +270,28 @@ class WeeklyMalaria(MalariaReport):
             DataTablesColumn('District', sortable=False),
             DataTablesColumn('Site', sortable=False),
             DataTablesColumnGroup(
-                u'Patients Agés de - 5 Ans',
+                'Patients Agés de - 5 Ans',
                 DataTablesColumn('Nombre Total de cas vus (toutes affections confondues)', sortable=False),
                 DataTablesColumn('Nombre de cas Suspects de paludisme', sortable=False),
                 DataTablesColumn('Nombre de Tests (TDR) réalisés', sortable=False),
                 DataTablesColumn('Nombre de cas de paludisme confirmés', sortable=False)
             ),
             DataTablesColumnGroup(
-                u'Patients Agés de 5 ans et +',
+                'Patients Agés de 5 ans et +',
                 DataTablesColumn('Nombre Total de cas vus (toutes affections confondues)', sortable=False),
                 DataTablesColumn('Nombre de cas Suspects de paludisme', sortable=False),
                 DataTablesColumn('Nombre de Tests (TDR) réalisés', sortable=False),
                 DataTablesColumn('Nombre de cas de paludisme confirmés', sortable=False)
             ),
             DataTablesColumnGroup(
-                u'Femmes Enceintes MALADES',
+                'Femmes Enceintes MALADES',
                 DataTablesColumn('Nombre Total de cas vus (toutes affections confondues)', sortable=False),
                 DataTablesColumn('Nombre de cas Suspects de paludisme', sortable=False),
                 DataTablesColumn('Nombre de Tests (TDR) réalisés', sortable=False),
                 DataTablesColumn('Nombre de cas de paludisme confirmés', sortable=False)
             ),
             DataTablesColumnGroup(
-                u'TOTAL',
+                'TOTAL',
                 DataTablesColumn('Nombre Total de cas vus (toutes affections confondues)', sortable=False),
                 DataTablesColumn('Nombre de cas Suspects. de paludisme (A)', sortable=False),
                 DataTablesColumn('Nombre de Tests (TDR) réalisés (B)', sortable=False),
@@ -353,7 +354,7 @@ class WeeklyMalaria(MalariaReport):
 
 class CumulativeMalaria(MalariaReport):
     slug = 'cumulative_malaria'
-    name = u'Données Cumulées de S01 à la Dernière Sem transmise'
+    name = 'Données Cumulées de S01 à la Dernière Sem transmise'
 
     report_template_path = 'pnlppgi/cumulative_malaria.html'
 
@@ -463,31 +464,31 @@ class CumulativeMalaria(MalariaReport):
             DataTablesColumn('District', sortable=False),
             DataTablesColumn('Site', sortable=False),
             DataTablesColumnGroup(
-                u'Patients Agés de - 5 Ans',
+                'Patients Agés de - 5 Ans',
                 DataTablesColumn('Nombre Total de cas vus (toutes affections confondues)', sortable=False),
                 DataTablesColumn('Nombre de cas Suspects de paludisme', sortable=False),
                 DataTablesColumn('Nombre de cas de paludisme confirmés', sortable=False)
             ),
             DataTablesColumnGroup(
-                u'Patients Agés de 5 - 10 ans',
+                'Patients Agés de 5 - 10 ans',
                 DataTablesColumn('Nombre Total de cas vus (toutes affections confondues)', sortable=False),
                 DataTablesColumn('Nombre de cas Suspects de paludisme', sortable=False),
                 DataTablesColumn('Nombre de cas de paludisme confirmés', sortable=False)
             ),
             DataTablesColumnGroup(
-                u'Patients Agés de 10 ans et +',
+                'Patients Agés de 10 ans et +',
                 DataTablesColumn('Nombre Total de cas vus (toutes affections confondues)', sortable=False),
                 DataTablesColumn('Nombre de cas Suspects de paludisme', sortable=False),
                 DataTablesColumn('Nombre de cas de paludisme confirmés', sortable=False)
             ),
             DataTablesColumnGroup(
-                u'Femmes Enceintes MALADES',
+                'Femmes Enceintes MALADES',
                 DataTablesColumn('Nombre Total de cas vus (toutes affections confondues)', sortable=False),
                 DataTablesColumn('Nombre de cas Suspects de paludisme', sortable=False),
                 DataTablesColumn('Nombre de cas de paludisme confirmés', sortable=False)
             ),
             DataTablesColumnGroup(
-                u'Rapport par Catégorie',
+                'Rapport par Catégorie',
                 DataTablesColumn('Total Cas', sortable=False),
                 DataTablesColumn('% des Moins de 5 ans', sortable=False),
                 DataTablesColumn('% des 5 - 10 ans', sortable=False),

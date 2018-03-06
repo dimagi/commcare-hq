@@ -8,7 +8,7 @@ from Crypto.Hash import SHA256
 from Crypto.Signature import PKCS1_PSS
 from django.templatetags.i18n import language_name
 
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.logging import notify_exception
 from corehq.apps.hqwebapp.forms import BulkUploadForm
 from corehq.apps.hqwebapp.tasks import send_html_email_async

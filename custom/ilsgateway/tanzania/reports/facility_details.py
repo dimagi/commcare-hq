@@ -12,7 +12,7 @@ from custom.ilsgateway.models import SupplyPointStatusTypes, ILSNotes
 from custom.ilsgateway.tanzania import ILSData, MultiReport
 from custom.ilsgateway.tanzania.reports.stock_on_hand import StockOnHandReport
 from custom.ilsgateway.tanzania.reports.utils import decimal_format, float_format, latest_status
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from django.utils.translation import ugettext as _
 
 

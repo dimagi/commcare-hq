@@ -9,7 +9,7 @@ from django.conf import settings
 from corehq.apps.hqcase.utils import submit_case_block_from_template
 from corehq.util.quickcache import quickcache
 from django.core.exceptions import ValidationError
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.parsing import json_format_datetime
 from dimagi.utils.modules import to_function
 from django.utils.translation import ugettext as _

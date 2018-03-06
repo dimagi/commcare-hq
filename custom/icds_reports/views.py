@@ -570,7 +570,7 @@ class AwcReportsView(BaseReportView):
                 order_dir = request.GET.get('order[0][dir]', 'asc')
                 if order_by_name_column == 'age':  # age and date of birth is stored in database as one value
                     order_by_name_column = 'dob'
-                order = "%s%s" % ('-' if order_dir == 'desc' else '', order_by_name_column)
+                order = "%s %s" % (order_by_name_column, order_dir)
 
                 data = get_awc_report_beneficiary(
                     start,
@@ -580,9 +580,11 @@ class AwcReportsView(BaseReportView):
                     config['awc_id'],
                     tuple(current_month.timetuple())[:3],
                     tuple(two_before.timetuple())[:3],
+                    domain
                 )
         elif step == 'beneficiary_details':
             data = get_beneficiary_details(
+                domain,
                 self.request.GET.get('case_id')
             )
         return JsonResponse(data=data)
@@ -1505,11 +1507,11 @@ class DownloadPDFReport(View):
         client = get_redis_client()
         if format == 'one':
             response = HttpResponse(client.get(uuid), content_type='application/pdf')
-            response['Content-Disposition'] = 'attachment; filename="ISSNIP_monthly_register_cumulative.pdf"'
+            response['Content-Disposition'] = 'attachment; filename="ICDS_CAS_monthly_register_cumulative.pdf"'
             return response
         else:
             response = HttpResponse(client.get(uuid), content_type='application/zip')
-            response['Content-Disposition'] = 'attachment; filename="ISSNIP_monthly_register.zip"'
+            response['Content-Disposition'] = 'attachment; filename="ICDS_CAS_monthly_register.zip"'
             return response
 
 

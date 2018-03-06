@@ -7,7 +7,7 @@ import six as six
 
 from casexml.apps.phone.exceptions import MissingSyncLog
 
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from couchforms import const
 
 

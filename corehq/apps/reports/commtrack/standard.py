@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import division
+from __future__ import unicode_literals
 from corehq.apps.domain.models import Domain
 from corehq.apps.reports.analytics.esaccessors import get_wrapped_ledger_values
 from corehq.apps.reports.commtrack.data_sources import (
@@ -16,7 +17,7 @@ from corehq.apps.reports.filters.commtrack import SelectReportingType
 from corehq.form_processor.utils.general import should_use_sql_backend
 from dimagi.utils.couch.loosechange import map_reduce
 from corehq.apps.locations.models import SQLLocation
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from django.utils.translation import ugettext as _, ugettext_noop
 from corehq.apps.reports.commtrack.util import get_relevant_supply_point_ids, get_product_id_name_mapping, \
     get_product_ids_for_program, get_consumption_helper_from_ledger_value
@@ -320,7 +321,7 @@ class InventoryReport(GenericTabularReport, CommtrackReportMixin):
 
     @property
     def rows(self):
-        def fmt(val, formatter=lambda k: k, default=u'\u2014'):
+        def fmt(val, formatter=lambda k: k, default='\u2014'):
             return formatter(val) if val is not None else default
 
         statuses = {

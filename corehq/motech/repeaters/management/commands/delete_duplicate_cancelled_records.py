@@ -5,7 +5,7 @@ import datetime
 from collections import defaultdict
 
 from django.core.management.base import BaseCommand
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 from corehq.util.couch import IterDB
 from corehq.motech.repeaters.const import RECORD_CANCELLED_STATE, RECORD_SUCCESS_STATE

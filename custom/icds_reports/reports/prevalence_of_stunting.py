@@ -65,7 +65,7 @@ def get_prevalence_of_stunting_data_map(domain, config, loc_level, show_test=Fal
         total_measured = row['total_measured'] or 0
 
         numerator = moderate + severe
-        values_to_calculate_average.append(numerator * 100 / (total or 1))
+        values_to_calculate_average.append(numerator * 100 / (total_measured or 1))
 
         severe_total += severe
         moderate_total += moderate
@@ -82,7 +82,7 @@ def get_prevalence_of_stunting_data_map(domain, config, loc_level, show_test=Fal
 
     for data_for_location in six.itervalues(data_for_map):
         numerator = data_for_location['moderate'] + data_for_location['severe']
-        value = numerator * 100 / (data_for_location['total'] or 1)
+        value = numerator * 100 / (data_for_location['total_measured'] or 1)
         if value < 25:
             data_for_location.update({'fillKey': '0%-25%'})
         elif 25 <= value < 38:

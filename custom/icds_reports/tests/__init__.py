@@ -57,6 +57,17 @@ def setUpModule():
         location_type=location_type
     )
 
+    state_location_type = LocationType.objects.create(
+        domain=domain.name,
+        name='state',
+    )
+    SQLLocation.objects.create(
+        domain=domain.name,
+        name='st1',
+        location_id='st1',
+        location_type=state_location_type
+    )
+
     awc_location_type = LocationType.objects.create(
         domain=domain.name,
         name='awc',

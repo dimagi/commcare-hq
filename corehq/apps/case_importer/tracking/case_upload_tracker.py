@@ -6,7 +6,7 @@ from corehq.apps.case_importer.tracking.filestorage import transient_file_store,
 from corehq.apps.case_importer.tracking.models import CaseUploadRecord, \
     CaseUploadFormRecord
 from corehq.apps.case_importer.util import open_spreadsheet_download_ref, get_spreadsheet
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 
 class CaseUpload(object):

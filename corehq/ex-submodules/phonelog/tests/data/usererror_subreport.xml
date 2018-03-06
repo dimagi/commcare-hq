@@ -1,0 +1,27 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<device_report xmlns="http://code.javarosa.org/devicereport">
+  <device_id>014915000230428</device_id>
+  <report_date>2018-02-13T18:26:27.550-05</report_date>
+  <app_version>CommCare Android, version "2.43"(1). App v260. CommCare Version 2.43. Build 1, built on: 2018-02-13</app_version>
+  <user_subreport>
+    <user>
+      <username>t1</username>
+      <user_id>37cc2dcdb1abf5c16bab0763f435e6b7</user_id>
+      <sync_token>aedc8e424183dcdf50530d89094ff7d7</sync_token>
+    </user>
+  </user_subreport>
+  <user_error_subreport version="1">
+    <user_error date="2018-02-22T17:21:21.201-05">
+      <type>error-config</type>
+      <msg>This is a test user error</msg>
+      <user_id>37cc2dcdb1abf5c16bab0763f435e6b7</user_id>
+      <session>session</session>
+      <app_build>260</app_build>
+      <app_id>73d5f08b9d55fe48602906a89672c214</app_id>
+      <expr>an expression</expr>
+    </user_error>
+  </user_error_subreport>
+  <meta>
+    <instanceID>c630b875-7933-44af-b46c-5054c2de0c0d</instanceID>
+  </meta>
+</device_report>

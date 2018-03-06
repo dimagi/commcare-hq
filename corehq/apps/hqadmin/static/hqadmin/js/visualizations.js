@@ -137,7 +137,7 @@ hqDefine("hqadmin/js/visualizations", function() {
                 data['get_request_params'] = self.get_request_params;
             }
 
-            if (self.is_cumulative != null) {
+            if (self.is_cumulative !== null) {
                 data['is_cumulative'] = self.is_cumulative;
             }
 

@@ -10,7 +10,7 @@ from corehq.apps.app_manager.dbaccessors import get_case_sharing_apps_in_domain
 from corehq.apps.app_manager.util import is_usercase_in_use, all_apps_by_domain
 from corehq.apps.data_dictionary.models import CaseProperty
 from corehq.util.quickcache import quickcache
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 import six
 
 

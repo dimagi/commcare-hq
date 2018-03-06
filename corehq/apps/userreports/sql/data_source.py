@@ -5,7 +5,7 @@ import numbers
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext
 
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 from sqlagg.columns import SimpleColumn
 from sqlagg.sorting import OrderBy

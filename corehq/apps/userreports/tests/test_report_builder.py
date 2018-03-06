@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 
 import os
 from django.test import TestCase
+from mock import patch
 
 from corehq.apps.app_manager.models import Application, Module
 from corehq.apps.app_manager.tests.app_factory import AppFactory
@@ -191,6 +192,50 @@ class ReportBuilderTest(ReportBuilderDBTest):
         report = builder_form.update_report()
 
         self.assertNotEqual(report.config_id, report_two.config_id)
+
+    def test_data_source_columns(self):
+        """
+        Report Builder should create a data source that includes columns for all possible aggregations, so that if
+        the user switches between a list report and a summary report the data source has all the required columns
+
+        (FB 268655)
+        """
+        builder_form = ConfigureListReportForm(
+            "My Report",
+            self.app._id,
+            "form",
+            self.form.unique_id,
+            data={
+                'user_filters': '[]',
+                'default_filters': '[]',
+                'columns': """[
+                    {"property": "/data/first_name", "display_text": "first name"},
+                    {"property": "/data/last_name", "display_text": "last name"},
+                    {"property": "/data/children", "display_text": "children"}
+                ]""",
+            }
+        )
+        self.assertTrue(builder_form.is_valid())
+        with patch('corehq.apps.userreports.tasks.delete_data_source_task'):
+            data_source_config_id = builder_form.create_temp_data_source('admin@example.com')
+        data_source = DataSourceConfiguration.get(data_source_config_id)
+        indicators = sorted([(ind['column_id'], ind['type']) for ind in data_source.configured_indicators])
+        expected_indicators = [
+            ('count', 'boolean'),
+            ('data_children_25bd0e0d', 'expression'),           # "children" should have 2 columns because it is
+            ('data_children_25bd0e0d_decimal', 'expression'),   # numeric
+            ('data_dob_b6293169', 'expression'),
+            ('data_first_name_ac8c51a7', 'expression'),
+            ('data_last_name_ce36e9e1', 'expression'),
+            ('data_state_6e36b993', 'choice_list'),
+            ('data_state_6e36b993', 'expression'),
+            ('deviceID_a7307e7d', 'expression'),
+            ('timeEnd_09f40526', 'expression'),
+            ('timeStart_c5a1ba73', 'expression'),
+            ('userID_41e1d44e', 'expression'),
+            ('username_ea02198f', 'expression'),
+        ]
+        self.assertEqual(indicators, expected_indicators)
 
 
 class MultiselectQuestionTest(ReportBuilderDBTest):

@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.urls import reverse
 from django.utils import html
 from django.utils.translation import ugettext as _, ugettext_noop
@@ -16,7 +17,7 @@ from custom.succeed.reports import EMPTY_FIELD, OUTPUT_DATE_FORMAT, \
     CM_APP_UPDATE_VIEW_TASK_MODULE, CM_UPDATE_TASK, TASK_RISK_FACTOR, TASK_ACTIVITY
 from custom.succeed.utils import SUCCEED_CM_APPNAME, get_app_build
 from custom.utils.utils import clean_IN_filter_value
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 
 class PatientTaskListReport(SqlTabularReport, CustomProjectReport, ProjectReportParametersMixin):
@@ -38,7 +39,7 @@ class PatientTaskListReport(SqlTabularReport, CustomProjectReport, ProjectReport
 
     def get_link(self, url, field, doc_id):
         if url:
-            return html.mark_safe(u"<a class='ajax_dialog' href='{0}' target='_blank'>{1}</a>".format(
+            return html.mark_safe("<a class='ajax_dialog' href='{0}' target='_blank'>{1}</a>".format(
                 url, html.escape(field)))
         else:
             return "%s (bad ID format)" % doc_id

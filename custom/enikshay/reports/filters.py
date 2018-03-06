@@ -15,7 +15,7 @@ from custom.enikshay.reports.utils import StubReport
 
 from django.utils.translation import ugettext_lazy as _
 
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 
 class EnikshayLocationFilter(BaseMultipleOptionFilter):

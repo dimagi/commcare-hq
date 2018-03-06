@@ -410,7 +410,7 @@ hqDefine('app_manager/js/details/screen_config', function() {
                 }, this);
 
                 // Add the graphing option if this is a graph so that we can set the value to graph
-                var menuOptions = DetailScreenConfig.MENU_OPTIONS;
+                var menuOptions = DetailScreenConfig.MENU_OPTIONS.slice();
                 if (this.original.format === "graph") {
                     menuOptions = menuOptions.concat([{
                         value: "graph",
@@ -422,6 +422,20 @@ hqDefine('app_manager/js/details/screen_config', function() {
                         value: "markdown",
                         label: gettext('Markdown'),
                     }]);
+                }
+
+                if (this.useXpathExpression()) {
+                    var menuOptionsToRemove = ['picture', 'audio'];
+                    for (var i = 0; i < menuOptionsToRemove.length; i++) {
+                        for(var j = 0; j < menuOptions.length; j++) {
+                            if (
+                                menuOptions[j].value !== this.original.format
+                                && menuOptions[j].value === menuOptionsToRemove[i]
+                            ) {
+                                menuOptions.splice(j, 1);
+                            }
+                        }
+                    }
                 }
 
                 this.format = uiElement.select(menuOptions).val(this.original.format || null);

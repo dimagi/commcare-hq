@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import division
+from __future__ import unicode_literals
 from sqlagg import CountUniqueColumn
 from sqlagg.filters import LTE, AND, EQ, OR, GTE
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn

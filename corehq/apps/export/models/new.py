@@ -32,7 +32,7 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.daterange import get_daterange_start_end_dates
 from corehq.util.soft_assert import soft_assert
 from corehq.util.timezones.utils import get_timezone_for_domain
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from couchdbkit import SchemaListProperty, SchemaProperty, BooleanProperty, DictProperty
 
 from corehq import feature_previews

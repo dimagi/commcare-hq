@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from datetime import datetime, timedelta
 from django.test import TestCase
 from mock import patch
@@ -66,11 +67,11 @@ class TestLSVHNDSurveyIndicator(TestCase):
             return date.strftime('%Y-%m-%d')
 
         return {
-            u'form': {
-                u'meta': {
-                    u'user_id': user_id
+            'form': {
+                'meta': {
+                    'user_id': user_id
                 },
-                u'vhsnd_date_past_month': es_formatted_date(date),
+                'vhsnd_date_past_month': es_formatted_date(date),
             }
         }
 

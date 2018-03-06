@@ -17,7 +17,7 @@ from corehq.apps.hqwebapp.decorators import (
 from custom.ilsgateway.models import SLABConfig
 from custom.ilsgateway.slab.forms import SLABEditLocationForm
 from dimagi.utils.couch import CriticalSection
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 
 class SLABConfigurationView(LocationsListView):

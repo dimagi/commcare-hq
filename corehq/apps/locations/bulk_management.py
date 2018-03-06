@@ -14,7 +14,7 @@ from django.db import transaction
 from django.utils.translation import string_concat, ugettext as _, ugettext_lazy
 
 from corehq.apps.locations.util import get_location_data_model
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.chunked import chunked
 
 from corehq.apps.domain.models import Domain

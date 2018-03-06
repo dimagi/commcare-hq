@@ -11,7 +11,7 @@ from corehq.apps.indicators.utils import get_indicator_domains
 from corehq.pillows.utils import get_deleted_doc_types
 from couchforms.models import XFormInstance
 from dimagi.utils.couch import LockManager
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from mvp_docs.models import IndicatorXForm, IndicatorCase
 from pillowtop.checkpoints.manager import PillowCheckpoint, \
     PillowCheckpointEventHandler
