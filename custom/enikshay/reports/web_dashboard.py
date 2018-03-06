@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.datatables import DataTablesHeader
 from corehq.apps.reports.filters.dates import DatespanFilter
@@ -12,7 +13,7 @@ from custom.enikshay.reports.generic import EnikshayReport
 from custom.enikshay.reports.sqldata.case_finding_sql_data import CaseFindingSqlData
 from custom.enikshay.reports.sqldata.charts_sql_data import ChartsSqlData
 from custom.enikshay.reports.sqldata.treatment_outcome_sql_data import TreatmentOutcomeSqlData
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 from django.utils.translation import ugettext_lazy, ugettext as _
 

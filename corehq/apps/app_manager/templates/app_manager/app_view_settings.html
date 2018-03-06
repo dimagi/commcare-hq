@@ -19,7 +19,7 @@
     <script src="{% static 'app_manager/js/settings/app_logos.js' %}"></script>
     <script src="{% static 'app_manager/js/settings/commcare_settings.js' %}"></script>
   {% endcompress %}
-    {% if linked_apps_enabled %}
+    {% if linked_domains_enabled %}
         {% compress js %}
         <script src="{% static 'app_manager/js/settings/linked_whitelist.js' %}"></script>
         {% endcompress %}

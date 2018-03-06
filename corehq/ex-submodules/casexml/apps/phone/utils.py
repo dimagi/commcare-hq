@@ -16,7 +16,7 @@ from casexml.apps.phone.restore_caching import RestorePayloadPathCache
 from casexml.apps.phone.xml import SYNC_XMLNS
 from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
 from casexml.apps.stock.mock import Balance
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from six.moves import range
 
 

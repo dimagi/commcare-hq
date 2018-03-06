@@ -46,6 +46,7 @@ describe('Lactating Enrolled Women Directive', function () {
 
     it('tests supervisor location', function () {
         controller.filtersData.location_id = 'test-id';
+        controller.userLocationId = 'test-id';
 
         $httpBackend.expectGET('icds_locations?location_id=test-id').respond(200, {location_type: 'supervisor'});
         $httpBackend.expectGET('lactating_enrolled_women?location_id=test-id').respond(200, {
@@ -60,6 +61,7 @@ describe('Lactating Enrolled Women Directive', function () {
 
     it('tests non supervisor location', function () {
         controller.filtersData.location_id = 'test-id';
+        controller.userLocationId = 'test-id';
 
         $httpBackend.expectGET('icds_locations?location_id=test-id').respond(200, {location_type: 'non supervisor'});
         $httpBackend.expectGET('lactating_enrolled_women?location_id=test-id').respond(200, {
@@ -74,11 +76,11 @@ describe('Lactating Enrolled Women Directive', function () {
 
     it('tests template popup', function () {
         var result = controller.templatePopup({properties: {name: 'test'}}, {valid: 5, all: 10});
-        var expected = '<div class="hoverinfo">' +
+        var expected = '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
             '<p>test</p>' +
-            '<div>Number of lactating women who are enrolled for ICDS services: <strong>5</strong>' +
+            '<div>Number of lactating women who are enrolled for Anganwadi Services: <strong>5</strong>' +
             '<div>Total number of lactating women who are registered: <strong>10</strong>' +
-            '<div>Percentage of registered lactating women who are enrolled for ICDS services: <strong>50.00%</strong>' +
+            '<div>Percentage of registered lactating women who are enrolled for Anganwadi Services: <strong>50.00%</strong>' +
             '</div>';
         assert.equal(result, expected);
     });
@@ -175,7 +177,7 @@ describe('Lactating Enrolled Women Directive', function () {
         });
         assert.equal(controller.chartOptions.caption.html,
             '<i class="fa fa-info-circle"></i> ' +
-            'Total number of lactating women who are enrolled for ICDS services'
+            'Total number of lactating women who are enrolled for Anganwadi Services'
         );
     });
 
@@ -184,9 +186,9 @@ describe('Lactating Enrolled Women Directive', function () {
         var month = {value: "Jul 2017", series: []};
 
         var expected = "<p><strong>Jul 2017</strong></p><br/>"
-            + "<p>Number of lactating women who are enrolled for ICDS services: <strong>42</strong></p>"
-            + "<p>Total number of lactating women who are registered: <strong>84</strong></p>"
-            + "<p>Percentage of registered lactating women who are enrolled for ICDS services: <strong>50.00%</strong></p>";
+            + "<div>Number of lactating women who are enrolled for Anganwadi Services: <strong>42</strong></div>"
+            + "<div>Total number of lactating women who are registered: <strong>84</strong></div>"
+            + "<div>Percentage of registered lactating women who are enrolled for Anganwadi Services: <strong>50.00%</strong></div>";
 
         var result = controller.tooltipContent(month.value, data);
         assert.equal(expected, result);

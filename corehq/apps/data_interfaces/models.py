@@ -42,7 +42,7 @@ from datetime import date, datetime, time, timedelta
 from dateutil.parser import parse
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch import CriticalSection
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.modules import to_function
 from django.conf import settings
@@ -97,7 +97,7 @@ class AutomaticUpdateRule(models.Model):
 
     locked_for_editing = models.BooleanField(default=False)
 
-    class Meta:
+    class Meta(object):
         app_label = "data_interfaces"
 
     class MigrationError(Exception):
@@ -469,7 +469,7 @@ class CaseRuleCriteria(models.Model):
 
 class CaseRuleCriteriaDefinition(models.Model):
 
-    class Meta:
+    class Meta(object):
         abstract = True
 
     def matches(self, case, now):
@@ -644,7 +644,7 @@ class AutomaticUpdateRuleCriteria(models.Model):
     property_value = models.CharField(max_length=126, null=True)
     match_type = models.CharField(max_length=15)
 
-    class Meta:
+    class Meta(object):
         app_label = "data_interfaces"
 
     def get_case_values(self, case):
@@ -800,7 +800,7 @@ class CaseRuleActionResult(object):
 
 class CaseRuleActionDefinition(models.Model):
 
-    class Meta:
+    class Meta(object):
         abstract = True
 
     def when_case_matches(self, case, rule):
@@ -1237,7 +1237,7 @@ class AutomaticUpdateAction(models.Model):
     property_value_type = models.CharField(max_length=15,
                                            default=EXACT)
 
-    class Meta:
+    class Meta(object):
         app_label = "data_interfaces"
 
 
@@ -1254,7 +1254,7 @@ class CaseRuleSubmission(models.Model):
     # A shortcut to keep track of which forms get archived
     archived = models.BooleanField(default=False)
 
-    class Meta:
+    class Meta(object):
         index_together = (
             ('domain', 'created_on'),
             ('domain', 'rule', 'created_on'),
@@ -1334,7 +1334,7 @@ class DomainCaseRuleRun(models.Model):
     num_related_closes = models.IntegerField(null=True)
     num_creates = models.IntegerField(null=True)
 
-    class Meta:
+    class Meta(object):
         index_together = (
             ('domain', 'started_on'),
         )

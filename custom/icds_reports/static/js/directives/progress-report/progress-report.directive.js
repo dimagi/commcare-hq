@@ -19,20 +19,23 @@ function ProgressReportController($scope, $location, progressReportService,
     vm.data = [];
     vm.dates = [];
     vm.now = new Date().getMonth() + 1;
-    vm.showWarning = storageService.getKey('search')['month'] === void(0) || vm.now === parseInt(storageService.getKey('search')['month']);
-    vm.report = $routeParams.report;
-
-    vm.prevDay = moment().subtract(1, 'days').format('Do MMMM, YYYY');
-    vm.lastDayOfPreviousMonth = moment().set('date', 1).subtract(1, 'days').format('Do MMMM, YYYY');
+    vm.previousMonth = moment().set('date', 1).subtract(1, 'days').format('MMMM YYYY');
     vm.currentMonth = moment().format("MMMM");
-    vm.showInfoMessage = function () {
-        var selected_month = parseInt($location.search()['month']) || new Date().getMonth() + 1;
-        var selected_year = parseInt($location.search()['year']) || new Date().getFullYear();
-        var current_month = new Date().getMonth() + 1;
-        var current_year = new Date().getFullYear();
-        return selected_month === current_month && selected_year === current_year &&
-            (new Date().getDate() === 1 || new Date().getDate() === 2);
-    };
+    vm.showPreviousMonthWarning = (
+        storageService.getKey('search')['month'] === void(0) ||
+        (
+            vm.now === parseInt(storageService.getKey('search')['month']) &&
+            new Date().getFullYear() === parseInt(storageService.getKey('search')['year'])
+        )
+    ) && (new Date().getDate() === 1 || new Date().getDate() === 2);
+    vm.showWarning = (
+        storageService.getKey('search')['month'] === void(0) ||
+        (
+            vm.now === parseInt(storageService.getKey('search')['month']) &&
+            new Date().getFullYear() === parseInt(storageService.getKey('search')['year'])
+        )
+    ) && !vm.showPreviousMonthWarning;
+    vm.report = $routeParams.report;
 
     vm.dtOptions = DTOptionsBuilder
         .newOptions()
@@ -54,7 +57,19 @@ function ProgressReportController($scope, $location, progressReportService,
     vm.showTable = true;
 
     $scope.$on('filtersChange', function() {
-        vm.showWarning = vm.now === storageService.getKey('search')['month'];
+        vm.showPreviousMonthWarning = (
+            (
+                vm.now === parseInt(storageService.getKey('search')['month']) &&
+                new Date().getFullYear() === parseInt(storageService.getKey('search')['year'])
+            ) &&
+            (
+                new Date().getDate() === 1 || new Date().getDate() === 2
+            )
+        );
+        vm.showWarning = (
+            vm.now === parseInt(storageService.getKey('search')['month']) &&
+            new Date().getFullYear() === parseInt(storageService.getKey('search')['year'])
+        ) && !vm.showPreviousMonthWarning;
         vm.loadData();
     });
 

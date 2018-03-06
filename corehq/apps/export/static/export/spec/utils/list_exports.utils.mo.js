@@ -8,17 +8,17 @@
                 index: [
                     'test-exports',
                     'http://openrosa.org/formdesigner/11FAC65A-F2CD-427F-A870-CF126336AAB5',
-                    'uuid-exportWithFileData'
+                    'uuid-exportWithFileData',
                 ],
                 fileData: {
                     downloadUrl: '/a/test-exports/reports/export/saved/download/uuid-file/?group_export_id=uuid-group-exportWithFileData',
                     size: '207 bytes',
                     showExpiredWarning: false,
                     lastUpdated: '3 weeks, 3 days ago',
-                    fileId: 'uuid-file'
+                    fileId: 'uuid-file',
                 },
                 groupId: 'uuid-group-exportWithFileData',
-                hasFile: true
+                hasFile: true,
             },
             name: "Test Export With File Data",
             addedToBulk: false,
@@ -52,7 +52,7 @@
             formname: 'Test Export Simple',
             exportType: 'form',
             isAutoRebuildEnabled: true,
-        }
+        },
     };
 
 })();

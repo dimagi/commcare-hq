@@ -32,7 +32,7 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.daterange import get_daterange_start_end_dates
 from corehq.util.soft_assert import soft_assert
 from corehq.util.timezones.utils import get_timezone_for_domain
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from couchdbkit import SchemaListProperty, SchemaProperty, BooleanProperty, DictProperty
 
 from corehq import feature_previews
@@ -654,7 +654,7 @@ class ExportInstance(BlobMixin, Document):
     last_updated = DateTimeProperty()
     last_accessed = DateTimeProperty()
 
-    class Meta:
+    class Meta(object):
         app_label = 'export'
 
     @property
@@ -1318,7 +1318,7 @@ class InferredSchema(Document):
     # that all schema duck types have this property.
     last_app_versions = DictProperty()
 
-    class Meta:
+    class Meta(object):
         app_label = 'export'
 
     def put_group_schema(self, path):
@@ -1377,7 +1377,7 @@ class ExportDataSchema(Document):
     # A map of app_id to app_version. Represents the last time it saw an app and at what version
     last_app_versions = DictProperty()
 
-    class Meta:
+    class Meta(object):
         app_label = 'export'
 
     def get_number_of_apps_to_process(self):
@@ -2592,7 +2592,7 @@ class ExportMigrationMeta(Document):
 
     migration_date = DateTimeProperty()
 
-    class Meta:
+    class Meta(object):
         app_label = 'export'
 
     @property

@@ -44,6 +44,7 @@
                     </fieldset>
                 </form>
             </div>
+            {% if allow_report_an_issue %}
             <form class="form form-horizontal" action="{% url "bug_report" %}" method="post">
                 {% csrf_token %}
                 <input type="hidden" id="bug-report-500-url" name="url" value="{{ request.build_absolute_uri }}"/>
@@ -86,6 +87,7 @@
                     </div>
                 </div>
             </form>
+            {% endif %}
             <br />
         </div>
     </div>

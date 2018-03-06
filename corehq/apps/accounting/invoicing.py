@@ -9,7 +9,7 @@ from django.db import transaction
 from django.db.models import F, Q, Min, Max, Sum
 from django.utils.translation import ugettext as _, ungettext
 
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 from corehq.apps.accounting.exceptions import (
     InvoiceAlreadyCreatedError,

@@ -25,7 +25,7 @@ from crispy_forms.helper import FormHelper
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from django_countries.data import COUNTRIES
 
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from django_prbac.models import Role, Grant, UserRole
 
 from corehq import privileges
@@ -165,7 +165,7 @@ class BillingAccountBasicForm(forms.Form):
                 additional_fields.append(crispy.Div(
                     crispy.Field(
                         'active_accounts',
-                        css_class="input-xxlarge ko-async-select2",
+                        css_class="input-xxlarge accounting-async-select2",
                         placeholder="Select Active Account",
                     ),
                     data_bind="visible: showActiveAccounts"
@@ -174,7 +174,7 @@ class BillingAccountBasicForm(forms.Form):
             crispy.Fieldset(
                 'Basic Information',
                 'name',
-                crispy.Field('email_list', css_class='input-xxlarge ko-email-select2'),
+                crispy.Field('email_list', css_class='input-xxlarge accounting-email-select2'),
                 crispy.Div(
                     crispy.Div(
                         css_class='col-sm-3 col-md-2'
@@ -309,7 +309,7 @@ class BillingAccountContactForm(forms.ModelForm):
 
     account_contact = forms.CharField(widget=forms.HiddenInput, required=False)
 
-    class Meta:
+    class Meta(object):
         model = BillingContactInfo
         fields = [
             'first_name',
@@ -348,7 +348,7 @@ class BillingAccountContactForm(forms.ModelForm):
                 'postal_code',
                 crispy.Field(
                     'country',
-                    css_class="input-xlarge ko-country-select2",
+                    css_class="input-xlarge accounting-country-select2",
                     data_countryname=COUNTRIES.get(
                         args[0].get('country') if len(args) > 0
                         else account.billingcontactinfo.country,
@@ -555,7 +555,7 @@ class SubscriptionForm(forms.Form):
             transfer_fields.extend([
                 crispy.Field(
                     'active_accounts',
-                    css_class='input-xxlarge ko-async-select2',
+                    css_class='input-xxlarge accounting-async-select2',
                     placeholder="Select Active Account",
                 ),
             ])
@@ -1517,7 +1517,7 @@ class FeatureRateForm(forms.ModelForm):
         widget=forms.HiddenInput,
     )
 
-    class Meta:
+    class Meta(object):
         model = FeatureRate
         fields = ['monthly_fee', 'monthly_limit', 'per_excess_fee']
 
@@ -1570,7 +1570,7 @@ class ProductRateForm(forms.ModelForm):
         widget=forms.HiddenInput,
     )
 
-    class Meta:
+    class Meta(object):
         model = SoftwareProductRate
         fields = ['monthly_fee', 'name']
 
@@ -1685,7 +1685,7 @@ class TriggerInvoiceForm(forms.Form):
                 'Trigger Invoice Details',
                 crispy.Field('month', css_class="input-large"),
                 crispy.Field('year', css_class="input-large"),
-                crispy.Field('domain', css_class="input-xxlarge ko-async-select2",
+                crispy.Field('domain', css_class="input-xxlarge accounting-async-select2",
                              placeholder="Search for Project")
             ),
             hqcrispy.FormActions(
@@ -1764,7 +1764,7 @@ class TriggerBookkeeperEmailForm(forms.Form):
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 'Trigger Bookkeeper Email Details',
-                crispy.Field('emails', css_class='input-xxlarge ko-email-select2'),
+                crispy.Field('emails', css_class='input-xxlarge accounting-email-select2'),
                 crispy.Field('month', css_class="input-large"),
                 crispy.Field('year', css_class="input-large"),
             ),

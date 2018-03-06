@@ -133,6 +133,10 @@ def _ensure_request_couch_user(request):
     couch_user = getattr(request, 'couch_user', None)
     if not couch_user and hasattr(request, 'user'):
         request.couch_user = couch_user = CouchUser.from_django_user(request.user)
+    elif couch_user and couch_user.is_anonymous and hasattr(request, 'user') and not request.user.is_anonymous:
+        # if ANONYMOUS_WEB_APPS_USAGE toggle is enabled then `request.couch_user` get's set to the anonymous
+        # mobile user in middleware which breaks this check if later authentication succeeds e.g. apikey
+        request.couch_user = couch_user = CouchUser.from_django_user(request.user)
     return couch_user
 
 
@@ -276,10 +280,14 @@ def two_factor_check(api_key):
             dom = Domain.get_by_name(domain)
             if not api_key and dom and dom.two_factor_auth:
                 token = request.META.get('HTTP_X_COMMCAREHQ_OTP')
-                if token and match_token(request.user, token):
-                    return fn(request, *args, **kwargs)
-                else:
+
+                if not token:
                     return JsonResponse({"error": "must send X-CommcareHQ-OTP header"}, status=401)
+                elif not match_token(request.user, token):
+                    return JsonResponse({"error": "X-CommcareHQ-OTP token is incorrect"}, status=401)
+                else:
+                    return fn(request, domain, *args, **kwargs)
+
             return fn(request, domain, *args, **kwargs)
         return _inner
     return _outer

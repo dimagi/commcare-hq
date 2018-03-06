@@ -4,7 +4,7 @@ from amqplib.client_0_8.method_framing import defaultdict
 from django.conf import settings
 from jsonobject.api import JsonObject
 from jsonobject.properties import StringProperty, IntegerProperty
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.logging import notify_exception
 
 SERVER_STATE_RUNNING = 1

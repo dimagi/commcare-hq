@@ -150,7 +150,8 @@ def _prepare_fixture(table_ids, domain, html_response=False, task=None):
         max_groups = 0
         max_locations = 0
         max_field_prop_combos = {field_name: 0 for field_name in data_type.fields_without_attributes}
-        fixture_data = FixtureDataItem.by_data_type(domain, data_type.get_id)
+        fixture_data = sorted(FixtureDataItem.by_data_type(domain, data_type.get_id),
+                              key=lambda x: x.sort_key)
         num_rows = len(fixture_data)
         for n, item_row in enumerate(fixture_data):
             _update_progress(event_count, n, num_rows)

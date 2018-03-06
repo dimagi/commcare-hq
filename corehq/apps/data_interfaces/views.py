@@ -52,7 +52,7 @@ from django.urls import reverse
 from django.http import HttpResponseRedirect, Http404, HttpResponseServerError, HttpResponseBadRequest
 from django.shortcuts import render
 from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from soil.exceptions import TaskFailedError
 from soil.util import expose_cached_download, get_download_context

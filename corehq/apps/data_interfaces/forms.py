@@ -18,7 +18,7 @@ from couchdbkit import ResourceNotFound
 
 from corehq.toggles import AUTO_CASE_UPDATE_ENHANCEMENTS
 from crispy_forms.bootstrap import StrictButton, InlineField, FormActions, FieldWithButtons
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from django.db import transaction
 from django import forms
 from crispy_forms.helper import FormHelper

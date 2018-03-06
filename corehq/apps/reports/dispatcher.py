@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.urls import reverse
 from django.http import Http404, HttpResponseRedirect, HttpResponseBadRequest
 from django.utils.decorators import method_decorator
@@ -97,7 +98,7 @@ class ReportDispatcher(View):
         if module_name is None:
             custom_reports = ()
         else:
-            module = __import__(module_name, fromlist=['reports'])
+            module = __import__(module_name, fromlist=[b'reports'])
             if hasattr(module, 'reports'):
                 reports = getattr(module, 'reports')
                 custom_reports = process(getattr(reports, attr_name, ()))

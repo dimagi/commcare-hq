@@ -55,7 +55,7 @@ from corehq.util.couch import get_document_or_not_found, DocumentNotFound
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.bulk import get_docs
 from dimagi.utils.couch.database import iter_docs
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.mixins import UnicodeMixIn
 
 from dimagi.utils.modules import to_function
@@ -68,6 +68,20 @@ class ElasticSearchIndexSettings(DocumentSchema):
 
 class SQLColumnIndexes(DocumentSchema):
     column_ids = StringListProperty()
+
+
+class SQLPartition(DocumentSchema):
+    """Uses architect library to partition
+
+    http://architect.readthedocs.io/features/partition/index.html
+    """
+    column = StringProperty()
+    subtype = StringProperty(choices=['date', 'string_firstchars'])
+    constraint = StringProperty()
+
+
+class SQLSettings(DocumentSchema):
+    partition_config = SchemaListProperty(SQLPartition)
 
 
 class DataSourceBuildInformation(DocumentSchema):
@@ -119,6 +133,7 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
     sql_column_indexes = SchemaListProperty(SQLColumnIndexes)
     icds_rebuild_related_docs = BooleanProperty(default=False)
     disable_destructive_rebuild = BooleanProperty(default=False)
+    sql_settings = SchemaProperty(SQLSettings)
 
     class Meta(object):
         # prevent JsonObject from auto-converting dates etc.
@@ -834,6 +849,25 @@ class AsyncIndicator(models.Model):
         self.indicator_config_ids = sorted(list(new_indicators))
         self.unsuccessful_attempts += 1
         self.date_queued = None
+
+    @classmethod
+    def bulk_creation(cls, doc_ids, doc_type, domain, config_ids):
+        """Ignores the locking in update_record
+
+        Should only be used if you know the table is not otherwise being used,
+        and the doc ids you're supplying are not currently being used in another
+        asynchronous table.
+
+        For example the first build of a table, or any complete rebuilds.
+
+        If after reading the above and you're still wondering whether it's safe
+        to use, don't.
+        """
+
+        AsyncIndicator.objects.bulk_create([
+            AsyncIndicator(doc_id=doc_id, doc_type=doc_type, domain=domain, indicator_config_ids=config_ids)
+            for doc_id in doc_ids
+        ])
 
 
 def get_datasource_config(config_id, domain):

@@ -6,7 +6,7 @@ from abc import ABCMeta, abstractmethod
 import six as six
 from couchdbkit import ResourceNotFound
 
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from couchforms import const
 
 

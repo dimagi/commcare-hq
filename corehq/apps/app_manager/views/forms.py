@@ -247,6 +247,11 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
     def should_edit(attribute):
         return attribute in request.POST
 
+    if 'sha1' in request.POST and (should_edit("xform") or "xform" in request.FILES):
+        conflict = _get_xform_conflict_response(form, request.POST['sha1'])
+        if conflict is not None:
+            return conflict
+
     if should_edit("name"):
         name = request.POST['name']
         form.name[lang] = name
@@ -427,10 +432,11 @@ def patch_xform(request, domain, app_id, form_unique_id):
     app = get_app(domain, app_id)
     form = app.get_form(form_unique_id)
 
-    current_xml = form.source
-    if hashlib.sha1(current_xml.encode('utf-8')).hexdigest() != sha1_checksum:
-        return json_response({'status': 'conflict', 'xform': current_xml})
+    conflict = _get_xform_conflict_response(form, sha1_checksum)
+    if conflict is not None:
+        return conflict
 
+    current_xml = form.source
     dmp = diff_match_patch()
     xml, _ = dmp.patch_apply(dmp.patch_fromText(patch), current_xml)
     xml = save_xform(app, form, xml)
@@ -444,6 +450,13 @@ def patch_xform(request, domain, app_id, form_unique_id):
     app.save(response_json)
     notify_form_changed(domain, request.couch_user, app_id, form_unique_id)
     return json_response(response_json)
+
+
+def _get_xform_conflict_response(form, sha1_checksum):
+    form_xml = form.source
+    if hashlib.sha1(form_xml.encode('utf-8')).hexdigest() != sha1_checksum:
+        return json_response({'status': 'conflict', 'xform': form_xml})
+    return None
 
 
 @require_GET

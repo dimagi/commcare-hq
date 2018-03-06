@@ -1,8 +1,9 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.utils.translation import ugettext_lazy
 from corehq.apps.reports.filters.select import MonthFilter
 from corehq.apps.userreports.util import get_table_name
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from sqlagg.columns import SimpleColumn
 from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter, BaseSingleOptionFilter
 from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn
@@ -95,7 +96,7 @@ class DrillDownOptionFilter(BaseDrilldownOptionFilter):
         for location in self.data_source(config={'domain': self.domain}).get_data():
             district = location['district']
             block = location['block']
-            user = (u"%s %s" % (location['first_name'] or '', location['last_name'] or '')).strip()
+            user = ("%s %s" % (location['first_name'] or '', location['last_name'] or '')).strip()
             user_id = location['doc_id']
             if not (district and block and user):
                 continue

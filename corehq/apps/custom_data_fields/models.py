@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+import re
 from dimagi.ext.couchdbkit import (Document, StringProperty,
     BooleanProperty, SchemaListProperty, StringListProperty)
 from dimagi.ext.jsonobject import JsonObject
@@ -42,6 +43,8 @@ class CustomDataField(JsonObject):
     is_required = BooleanProperty()
     label = StringProperty()
     choices = StringListProperty()
+    regex = StringProperty()
+    regex_msg = StringProperty()
     is_multiple_choice = BooleanProperty(default=False)
     # Currently only relevant for location fields
     index_in_fixture = BooleanProperty(default=False)
@@ -90,6 +93,11 @@ class CustomDataFieldsDefinition(Document):
                     options=', '.join(field.choices),
                 )
 
+        def validate_regex(field, value):
+            if field.regex and value and not re.search(field.regex, value):
+                return _("'{value}' is not a valid match for {slug}").format(
+                    value=value, slug=field.slug)
+
         def validate_required(field, value):
             if field.is_required and not value:
                 return _(
@@ -106,6 +114,7 @@ class CustomDataFieldsDefinition(Document):
                 value = custom_fields.get(field.slug, None)
                 errors.append(validate_required(field, value))
                 errors.append(validate_choices(field, value))
+                errors.append(validate_regex(field, value))
             return ' '.join(filter(None, errors))
 
         return validate_custom_fields

@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import division
+from __future__ import unicode_literals
 from django.db.models.aggregates import Avg, Max
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
@@ -9,7 +10,7 @@ from custom.ilsgateway.tanzania import ILSData, DetailsReport
 from custom.ilsgateway.tanzania.reports.utils import make_url, format_percent, link_format, latest_status_or_none
 from custom.ilsgateway.tanzania.reports.facility_details import FacilityDetailsReport, InventoryHistoryData, \
     RegistrationData, RandRHistory, Notes, RecentMessages
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from django.utils.translation import ugettext as _
 
 

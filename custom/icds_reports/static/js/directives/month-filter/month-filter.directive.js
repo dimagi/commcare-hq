@@ -50,7 +50,7 @@ function MonthModalController($location, $uibModalInstance) {
         } else {
             vm.months = vm.monthsCopy;
         }
-    }
+    };
 
     vm.close = function () {
         $uibModalInstance.dismiss('cancel');

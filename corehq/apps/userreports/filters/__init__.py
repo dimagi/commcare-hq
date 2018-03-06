@@ -95,7 +95,7 @@ class SinglePropertyValueFilter(Filter):
 
     def __str__(self):
         return "{} {} '{}'".format(str(self.expression),
-                                   OPERATOR_DISPLAY[self.operator.func_name],
+                                   OPERATOR_DISPLAY[self.operator.__name__],
                                    str(self.reference_expression))
 
 

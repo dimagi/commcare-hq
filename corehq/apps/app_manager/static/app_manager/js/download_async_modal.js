@@ -34,7 +34,7 @@ hqDefine('app_manager/js/download_async_modal', function () {
                     },
                     error: function (resp) {
                         self.downloadError(resp.responseText);
-                    }
+                    },
                 });
             }
         };
@@ -75,7 +75,7 @@ hqDefine('app_manager/js/download_async_modal', function () {
                     },
                     error: function () {
                         self.downloadError(self.ERROR_MESSAGE);
-                    }
+                    },
                 });
             }
         };

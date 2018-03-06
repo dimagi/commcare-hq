@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+from __future__ import unicode_literals
 import os
 
 import jsonobject
@@ -31,7 +32,7 @@ from custom.enikshay.integrations.ninetyninedots.const import (
 from custom.enikshay.integrations.ninetyninedots.exceptions import \
     NinetyNineDotsException
 from dimagi.ext.jsonobject import StrictJsonObject
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.modules import to_function
 
 DIRECTION_OUTBOUND = 1
@@ -389,10 +390,10 @@ def get_payload_properties(sector):
     return properties
 
 
-PublicPatientPayload = type('PublicPatientPayload', (BasePublicPatientPayload,),
+PublicPatientPayload = type(b'PublicPatientPayload', (BasePublicPatientPayload,),
                             get_payload_properties('public'))
 
-PrivatePatientPayload = type('PublicPatientPayload', (BasePrivatePatientPayload,),
+PrivatePatientPayload = type(b'PublicPatientPayload', (BasePrivatePatientPayload,),
                              get_payload_properties('private'))
 
 

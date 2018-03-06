@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import logging
 
 from django.conf.urls import include, url
@@ -33,6 +34,7 @@ from .views import (
     CaseAttachmentsView,
     MySavedReportsView,
     ScheduledReportsView,
+    ReportNotificationUnsubscribeView,
     default,
     old_saved_reports,
     case_forms,

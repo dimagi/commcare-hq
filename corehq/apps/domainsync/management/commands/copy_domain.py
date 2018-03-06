@@ -3,7 +3,7 @@ from __future__ import absolute_import
 from multiprocessing import Process, Queue
 import sys
 import os
-from urlparse import urlparse
+from six.moves.urllib.parse import urlparse
 from couchdbkit import ResourceNotFound, ResourceConflict
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError

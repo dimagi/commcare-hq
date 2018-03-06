@@ -1039,7 +1039,7 @@
 				}
 			  }, 
 			  "type": "boolean_expression", 
-			  "property_value": "yes"
+			  "property_value": "migrated"
 			},
 			"expression_if_true": {
 				"type": "constant",

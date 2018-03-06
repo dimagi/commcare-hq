@@ -28,7 +28,7 @@ from couchdbkit.exceptions import ResourceNotFound
 from corehq.apps.users.landing_pages import get_allowed_landing_pages
 from corehq.util.view_utils import json_error
 from dimagi.utils.couch import CriticalSection
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.web import json_response
 from django_digest.decorators import httpdigest
 from django_prbac.utils import has_privilege

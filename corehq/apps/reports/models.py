@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import calendar
 import hashlib
 import uuid
@@ -64,7 +65,7 @@ from couchforms.filters import instances
 from dimagi.ext.couchdbkit import *
 from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.couch.database import iter_docs
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.logging import notify_exception
 from django_prbac.exceptions import PermissionDenied
 import six
@@ -190,7 +191,7 @@ class TempCommCareUser(CommCareUser):
     def raw_username(self):
         return self.username
 
-    class Meta:
+    class Meta(object):
         app_label = 'reports'
 
 

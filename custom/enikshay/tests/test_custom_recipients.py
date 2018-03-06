@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from corehq.apps.data_interfaces.tests.util import create_case
 from corehq.apps.hqcase.utils import update_case
 from corehq.apps.reminders.models import CaseReminder

@@ -31,7 +31,7 @@ class Command(BaseCommand):
 
         print("Sending data to Hubspot")
         batch_track_on_hubspot(json_data)
-        print("Update success!")
+        print("Update success.")
 
     @classmethod
     def get_active_users(cls):

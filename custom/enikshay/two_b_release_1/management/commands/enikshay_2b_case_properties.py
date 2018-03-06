@@ -3,13 +3,14 @@ eNikshay 2B - Release 1 Migration
 https://docs.google.com/spreadsheets/d/1GFpMht-C-0cMCQu8rfqQG9lgW9omfYi3y2nUXHR8Pio/edit#gid=0
 """
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import datetime
 import logging
 import phonenumbers
 import sys
 import uuid
 from dimagi.utils.chunked import chunked
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from django.core.management import BaseCommand
 from casexml.apps.case.const import CASE_INDEX_EXTENSION, CASE_INDEX_CHILD
 from casexml.apps.case.mock import CaseStructure, CaseIndex, CaseFactory

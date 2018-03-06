@@ -173,7 +173,6 @@ def _handle_duplicate(new_doc):
         # Original form processing failed but left behind a form doc with no
         # attachments. It's safe to delete this now since we're going to re-process
         # the form anyway.
-        # https://sentry.io/dimagi/commcarehq/issues/261297321
         from couchforms.models import XFormInstance
         XFormInstance.get_db().delete_doc(conflict_id)
         return FormProcessingResult(new_doc)

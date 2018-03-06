@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import division
 import six.moves.html_parser
 import json
 import socket
@@ -86,7 +87,7 @@ from dimagi.utils.couch.database import get_db, is_bigcouch
 from dimagi.utils.csv import UnicodeWriter
 from dimagi.utils.dates import add_months
 from dimagi.utils.decorators.datespan import datespan_in_request
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.django.email import send_HTML_email
 from dimagi.utils.django.management import export_as_csv_action
 from dimagi.utils.parsing import json_format_date
@@ -293,7 +294,7 @@ def system_ajax(request):
                 meta['design_document'] = dd[len('_design/'):]
                 total_changes = sum(task['total_changes'] for task in meta['tasks'])
                 for task in meta['tasks']:
-                    task['progress_contribution'] = task['changes_done'] * 100 / total_changes
+                    task['progress_contribution'] = task['changes_done'] * 100 // total_changes
 
                 design_docs.append(meta)
             return json_response(design_docs)

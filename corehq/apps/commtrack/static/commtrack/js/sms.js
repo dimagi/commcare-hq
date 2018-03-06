@@ -133,7 +133,7 @@ hqDefine('commtrack/js/sms', function () {
                 keyword: this.keyword(),
                 caption: this.caption(),
                 type: this.type(),
-                name: this.name
+                name: this.name,
             };
         };
     }

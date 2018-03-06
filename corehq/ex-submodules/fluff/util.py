@@ -3,7 +3,14 @@ from __future__ import absolute_import
 import logging
 import datetime
 import sqlalchemy
-from .const import TYPE_DATE, TYPE_DATETIME, TYPE_INTEGER, TYPE_STRING, TYPE_DECIMAL
+from .const import (
+    TYPE_DATE,
+    TYPE_DATETIME,
+    TYPE_DECIMAL,
+    TYPE_INTEGER,
+    TYPE_SMALL_INTEGER,
+    TYPE_STRING,
+)
 
 logger = logging.getLogger('fluff')
 
@@ -64,6 +71,8 @@ def get_column_type(data_type):
         return sqlalchemy.DateTime
     if data_type == TYPE_INTEGER:
         return sqlalchemy.Integer
+    if data_type == TYPE_SMALL_INTEGER:
+        return sqlalchemy.SmallInteger
     if data_type == TYPE_DECIMAL:
         return sqlalchemy.Numeric(precision=64, scale=16)
     if data_type == TYPE_STRING:

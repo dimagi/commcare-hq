@@ -1,8 +1,9 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.conf.urls import url, include
 
 from corehq.apps.api.urls import CommCareHqApi
-from corehq.apps.domain.views import AddRepeaterView
+from corehq.motech.repeaters.views import AddRepeaterView
 from custom.enikshay.integrations.bets.views import (
     payment_confirmation,
     BETSDrugRefillRepeaterView,

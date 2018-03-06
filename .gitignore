@@ -39,6 +39,8 @@ dump.rdb
 python_env
 services
 KEEP_UNTIL__*
+formplayer.properties
+formplayer.jar
 
 submodules/formdesigner
 submodules/vellum/Vellum

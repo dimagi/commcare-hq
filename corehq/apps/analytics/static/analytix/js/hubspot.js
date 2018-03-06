@@ -45,8 +45,9 @@ hqDefine('analytix/js/hubspot', [
      * @param {integer|float} value - This is an optional argument that can be used to track the revenue of an event.
      */
     var trackEvent = function (eventId, value) {
+        var originalArgs = arguments;
         _ready.done(function() {
-            _logger.debug.log(_logger.fmt.labelArgs(["Event ID", "Value"], arguments), 'Track Event');
+            _logger.debug.log(_logger.fmt.labelArgs(["Event ID", "Value"], originalArgs), 'Track Event');
             _hsq.push(['trackEvent', {
                 id: eventId,
                 value: value,

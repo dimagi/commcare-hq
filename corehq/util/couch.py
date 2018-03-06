@@ -15,7 +15,7 @@ from jsonobject.exceptions import WrappingAttributeError
 
 from corehq.util.exceptions import DocumentClassNotFound
 from dimagi.utils.chunked import chunked
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.requestskit import get_auth
 
 

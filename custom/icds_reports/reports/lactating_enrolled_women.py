@@ -1,5 +1,6 @@
 from __future__ import absolute_import, division
 
+from __future__ import unicode_literals
 from collections import OrderedDict, defaultdict
 from datetime import datetime
 
@@ -68,11 +69,11 @@ def get_lactating_enrolled_women_data_map(domain, config, loc_level, show_test=F
             "average": sum(average) / float(len(average) or 1),
             "average_format": 'number',
             "info": _((
-                "Lactating Mothers enrolled for ICDS services."
+                "Lactating Mothers enrolled for Anganwadi Services."
             )),
             "extended_info": [
                 {
-                    'indicator': 'Number of pregnant women who are enrolled for ICDS services:',
+                    'indicator': 'Number of pregnant women who are enrolled for Anganwadi Services:',
                     'value': indian_formatted_number(total_valid)
                 },
                 {
@@ -83,7 +84,7 @@ def get_lactating_enrolled_women_data_map(domain, config, loc_level, show_test=F
                 },
                 {
                     'indicator': (
-                        'Percentage of registered pregnant women who are enrolled for ICDS services:'
+                        'Percentage of registered pregnant women who are enrolled for Anganwadi Services:'
                     ),
                     'value': '%.2f%%' % (total_valid * 100 / float(total or 1))
                 }
@@ -149,7 +150,7 @@ def get_lactating_enrolled_women_sector_data(domain, config, loc_level, location
         "tooltips_data": dict(tooltips_data),
         "format": "number",
         "info": _((
-            "Lactating Mothers enrolled for ICDS services."
+            "Lactating Mothers enrolled for Anganwadi Services."
         )),
         "chart_data": [
             {
@@ -227,7 +228,7 @@ def get_lactating_enrolled_data_chart(domain, config, loc_level, show_test=False
                         'all': value['all']
                     } for key, value in six.iteritems(data['blue'])
                 ],
-                "key": "Total number of lactating women who are enrolled for ICDS services",
+                "key": "Total number of lactating women who are enrolled for Anganwadi Services",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": ChartColors.BLUE

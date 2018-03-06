@@ -1,4 +1,5 @@
 from __future__ import absolute_import, print_function
+from __future__ import unicode_literals
 import datetime
 
 import pytz
@@ -22,6 +23,8 @@ from casexml.apps.case.const import ARCHIVED_CASE_OWNER_ID
 from custom.enikshay.management.commands.duplicate_occurrences_and_episodes_reconciliation import (
     get_case_recently_modified_on_phone,
 )
+from six.moves import map
+import six
 
 
 class Command(BaseModelReconciliationCommand):
@@ -41,7 +44,7 @@ class Command(BaseModelReconciliationCommand):
         self.commit = options.get('commit')
         self.log_progress = options.get('log_progress')
         self.recipient = (options.get('recipient') or 'mkangia@dimagi.com')
-        self.recipient = list(self.recipient) if not isinstance(self.recipient, basestring) else [self.recipient]
+        self.recipient = list(self.recipient) if not isinstance(self.recipient, six.string_types) else [self.recipient]
         self.result_file_name = self.setup_result_file()
         self.person_case_ids = options.get('person_case_ids')
         # iterate all occurrence cases

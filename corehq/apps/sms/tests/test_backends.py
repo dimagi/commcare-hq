@@ -1188,7 +1188,7 @@ class SQLMobileBackendTestCase(TestCase):
 
 class LoadBalanceBackend(SQLTestSMSBackend, PhoneLoadBalancingMixin):
 
-    class Meta:
+    class Meta(object):
         proxy = True
 
     @classmethod
@@ -1198,7 +1198,7 @@ class LoadBalanceBackend(SQLTestSMSBackend, PhoneLoadBalancingMixin):
 
 class RateLimitBackend(SQLTestSMSBackend):
 
-    class Meta:
+    class Meta(object):
         proxy = True
 
     def get_sms_rate_limit(self):
@@ -1211,7 +1211,7 @@ class RateLimitBackend(SQLTestSMSBackend):
 
 class LoadBalanceAndRateLimitBackend(SQLTestSMSBackend, PhoneLoadBalancingMixin):
 
-    class Meta:
+    class Meta(object):
         proxy = True
 
     def get_sms_rate_limit(self):

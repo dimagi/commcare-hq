@@ -1,4 +1,6 @@
 from __future__ import absolute_import
+from __future__ import division
+from __future__ import unicode_literals
 import functools
 from sqlagg.columns import *
 from sqlagg.base import AliasColumn
@@ -14,7 +16,7 @@ from corehq.apps.hqwebapp.decorators import use_maps, maps_prefer_canvas, use_nv
 from corehq.apps.userreports.util import get_table_name
 from corehq.const import USER_MONTH_FORMAT
 from corehq.util.dates import iso_string_to_date
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.parsing import json_format_date
 from .util import get_unique_combinations, capitalize_fn
 
@@ -216,7 +218,7 @@ class GSIDSQLPatientReport(GSIDSQLReport):
         return dict(sort_key=x or 0, html="%(x)s (%(p)s%%)" % \
             {
                 "x": x or 0,
-                "p": (100 * int(x or 0) / (t or 1))
+                "p": (100 * int(x or 0) // (t or 1))
             })
 
     @property
@@ -226,7 +228,7 @@ class GSIDSQLPatientReport(GSIDSQLReport):
         total_percent_agg_fn = lambda f_pos, m_pos, f_tot, m_tot: dict(sort_key=sum_fn(f_pos, m_pos), html="%(x)s (%(p)s%%)" % \
             {
                 "x": sum_fn(f_pos, m_pos),
-                "p": (100 * sum_fn(f_pos, m_pos) / (sum_fn(m_tot, f_tot) or 1))
+                "p": (100 * sum_fn(f_pos, m_pos) // (sum_fn(m_tot, f_tot) or 1))
             })
 
         patient_number_group = DataTablesColumnGroup("Tests")
@@ -587,7 +589,7 @@ class GSIDSQLByAgeReport(GSIDSQLReport):
     def percent_fn(self, x, y):
         return dict(
             sort_key=x or 0,
-            html="%(x)s (%(p)s%%)" % {"x": int(x or 0), "p": 100*(x or 0) / (y or 1)})
+            html="%(x)s (%(p)s%%)" % {"x": int(x or 0), "p": 100 * (x or 0) // (y or 1)})
 
     @property
     def columns(self):

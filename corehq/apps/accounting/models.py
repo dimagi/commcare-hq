@@ -22,7 +22,7 @@ import jsonfield
 import stripe
 
 from dimagi.ext.couchdbkit import DateTimeProperty, StringProperty, SafeSaveDocument, BooleanProperty
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.web import get_site_domain
 
 from corehq.apps.accounting.emails import send_subscription_change_alert
@@ -309,7 +309,7 @@ class Currency(models.Model):
     )
     date_updated = models.DateField(auto_now=True)
 
-    class Meta:
+    class Meta(object):
         app_label = 'accounting'
 
     @classmethod
@@ -364,7 +364,7 @@ class BillingAccount(ValidateModelMixin, models.Model):
         choices=PreOrPostPay.CHOICES,
     )
 
-    class Meta:
+    class Meta(object):
         app_label = 'accounting'
 
     @property
@@ -547,7 +547,7 @@ class BillingContactInfo(models.Model):
     )
     last_modified = models.DateTimeField(auto_now=True)
 
-    class Meta:
+    class Meta(object):
         app_label = 'accounting'
 
     def __init__(self, *args, **kwargs):
@@ -576,7 +576,7 @@ class SoftwareProductRate(models.Model):
     is_active = models.BooleanField(default=True)
     last_modified = models.DateTimeField(auto_now=True)
 
-    class Meta:
+    class Meta(object):
         app_label = 'accounting'
 
     def __str__(self):
@@ -607,7 +607,7 @@ class Feature(models.Model):
     feature_type = models.CharField(max_length=10, db_index=True, choices=FeatureType.CHOICES)
     last_modified = models.DateTimeField(auto_now=True)
 
-    class Meta:
+    class Meta(object):
         app_label = 'accounting'
 
     def __str__(self):
@@ -637,7 +637,7 @@ class FeatureRate(models.Model):
     is_active = models.BooleanField(default=True)
     last_modified = models.DateTimeField(auto_now=True)
 
-    class Meta:
+    class Meta(object):
         app_label = 'accounting'
 
     def __str__(self):
@@ -691,7 +691,7 @@ class SoftwarePlan(models.Model):
     )
     last_modified = models.DateTimeField(auto_now=True)
 
-    class Meta:
+    class Meta(object):
         app_label = 'accounting'
 
     @quickcache(vary_on=['self.pk'], timeout=10)
@@ -718,7 +718,7 @@ class DefaultProductPlan(models.Model):
     is_report_builder_enabled = models.BooleanField(default=False)
     last_modified = models.DateTimeField(auto_now=True)
 
-    class Meta:
+    class Meta(object):
         app_label = 'accounting'
         unique_together = ('edition', 'is_trial', 'is_report_builder_enabled')
 
@@ -762,7 +762,7 @@ class SoftwarePlanVersion(models.Model):
     role = models.ForeignKey(Role, on_delete=models.CASCADE)
     last_modified = models.DateTimeField(auto_now=True)
 
-    class Meta:
+    class Meta(object):
         app_label = 'accounting'
 
     def __str__(self):
@@ -865,7 +865,7 @@ class Subscriber(models.Model):
 
     objects = SubscriberManager()
 
-    class Meta:
+    class Meta(object):
         app_label = 'accounting'
 
     def __unicode__(self):
@@ -1024,7 +1024,7 @@ class Subscription(models.Model):
     visible_and_suppressed_objects = models.Manager()
     objects = DisabledManager()
 
-    class Meta:
+    class Meta(object):
         app_label = 'accounting'
 
     def __str__(self):
@@ -1686,7 +1686,7 @@ class InvoiceBase(models.Model):
     objects = InvoiceBaseManager()
     api_objects = Manager()
 
-    class Meta:
+    class Meta(object):
         abstract = True
 
     @property
@@ -1718,7 +1718,7 @@ class WireInvoice(InvoiceBase):
     # WireInvoice is tied to a domain, rather than a subscription
     domain = models.CharField(max_length=100)
 
-    class Meta:
+    class Meta(object):
         app_label = 'accounting'
 
     @property
@@ -1760,7 +1760,7 @@ class WireInvoice(InvoiceBase):
 
 class WirePrepaymentInvoice(WireInvoice):
 
-    class Meta:
+    class Meta(object):
         app_label = 'accounting'
         proxy = True
 
@@ -1779,7 +1779,7 @@ class Invoice(InvoiceBase):
     """
     subscription = models.ForeignKey(Subscription, on_delete=models.PROTECT)
 
-    class Meta:
+    class Meta(object):
         app_label = 'accounting'
 
     @property
@@ -1924,7 +1924,7 @@ class SubscriptionAdjustment(models.Model):
     new_salesforce_contract_id = models.CharField(blank=True, null=True, max_length=80)
     last_modified = models.DateTimeField(auto_now=True)
 
-    class Meta:
+    class Meta(object):
         app_label = 'accounting'
 
     @classmethod
@@ -1954,7 +1954,7 @@ class BillingRecordBase(models.Model):
     INVOICE_HTML_TEMPLATE = 'accounting/email/invoice.html'
     INVOICE_TEXT_TEMPLATE = 'accounting/email/invoice.txt'
 
-    class Meta:
+    class Meta(object):
         abstract = True
 
     _pdf = None
@@ -2090,7 +2090,7 @@ class WireBillingRecord(BillingRecordBase):
     INVOICE_HTML_TEMPLATE = 'accounting/email/wire_invoice.html'
     INVOICE_TEXT_TEMPLATE = 'accounting/email/wire_invoice.txt'
 
-    class Meta:
+    class Meta(object):
         app_label = 'accounting'
 
     @property
@@ -2116,7 +2116,7 @@ class WireBillingRecord(BillingRecordBase):
 
 class WirePrepaymentBillingRecord(WireBillingRecord):
 
-    class Meta:
+    class Meta(object):
         app_label = 'accounting'
         proxy = True
 
@@ -2127,12 +2127,12 @@ class WirePrepaymentBillingRecord(WireBillingRecord):
 class BillingRecord(BillingRecordBase):
     invoice = models.ForeignKey(Invoice, on_delete=models.PROTECT)
     INVOICE_CONTRACTED_HTML_TEMPLATE = 'accounting/email/invoice_contracted.html'
-    INVOICE_CONTRACTED_TEXT_TEMPLATE = 'accounting/email/invoice_contracted_plaintext.txt'
+    INVOICE_CONTRACTED_TEXT_TEMPLATE = 'accounting/email/invoice_contracted.txt'
 
     INVOICE_AUTOPAY_HTML_TEMPLATE = 'accounting/email/invoice_autopayment.html'
     INVOICE_AUTOPAY_TEXT_TEMPLATE = 'accounting/email/invoice_autopayment.txt'
 
-    class Meta:
+    class Meta(object):
         app_label = 'accounting'
 
     @property
@@ -2406,8 +2406,6 @@ class InvoicePdf(BlobMixin, SafeSaveDocument):
     date_created = DateTimeProperty()
     is_wire = BooleanProperty(default=False)
 
-    _migrating_blobs_from_couch = True
-
     def generate_pdf(self, invoice):
         self.save()
         pdf_data = NamedTemporaryFile()
@@ -2505,7 +2503,7 @@ class LineItem(models.Model):
 
     objects = LineItemManager()
 
-    class Meta:
+    class Meta(object):
         app_label = 'accounting'
 
     @property
@@ -2550,7 +2548,7 @@ class CreditLine(ValidateModelMixin, models.Model):
     is_active = models.BooleanField(default=True)
     last_modified = models.DateTimeField(auto_now=True)
 
-    class Meta:
+    class Meta(object):
         app_label = 'accounting'
 
     def __str__(self):
@@ -2776,13 +2774,13 @@ class PaymentMethod(models.Model):
     date_created = models.DateTimeField(auto_now_add=True)
     last_modified = models.DateTimeField(auto_now=True)
 
-    class Meta:
+    class Meta(object):
         app_label = 'accounting'
 
 
 class StripePaymentMethod(PaymentMethod):
     """ Do stuff with Stripe  """
-    class Meta:
+    class Meta(object):
         proxy = True
         app_label = 'accounting'
 
@@ -2950,7 +2948,7 @@ class PaymentRecord(models.Model):
                                  max_digits=10, decimal_places=4)
     last_modified = models.DateTimeField(auto_now=True)
 
-    class Meta:
+    class Meta(object):
         app_label = 'accounting'
 
     @property
@@ -2987,7 +2985,7 @@ class CreditAdjustment(ValidateModelMixin, models.Model):
     web_user = models.CharField(max_length=80, null=True, blank=True)
     last_modified = models.DateTimeField(auto_now=True)
 
-    class Meta:
+    class Meta(object):
         app_label = 'accounting'
 
     def clean(self):
