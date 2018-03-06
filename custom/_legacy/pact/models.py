@@ -1,11 +1,12 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.utils.translation import ugettext as _
 import uuid
 from dateutil.parser import parser
 import json
 from casexml.apps.case.models import CommCareCase
 from couchforms.models import XFormInstance
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.parsing import json_format_date
 from pact import enums
 
@@ -69,13 +70,13 @@ class DOTSubmission(XFormInstance):
             return "#"
         pass
 
-    class Meta:
+    class Meta(object):
         app_label = 'pact'
 
 
 class PactPatientCase(CommCareCase):
 
-    class Meta:
+    class Meta(object):
         app_label = 'pact'
 
     @property
@@ -411,7 +412,7 @@ class CDotWeeklySchedule(OldDocument):
         now = datetime.utcnow()
         return self.started <= now and (self.ended is None or self.ended > now)
 
-    class Meta:
+    class Meta(object):
         app_label = 'pact'
 
 
@@ -477,7 +478,7 @@ class CObservation(OldDocument):
         """helper function to concatenate adherence and method to check for conflicts"""
         return ((self.is_art, self.dose_number, self.total_doses), "%s" % (self.adherence))
 
-    class Meta:
+    class Meta(object):
         app_label = 'pact'
 
     def __unicode__(self):
@@ -498,7 +499,7 @@ class CObservationAddendum(OldDocument):
     created_date = OldDateTimeProperty()
     notes = StringProperty()  # placeholder if need be
 
-    class Meta:
+    class Meta(object):
         app_label = 'pact'
 
 

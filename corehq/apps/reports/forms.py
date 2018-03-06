@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.utils.translation import ugettext
 from corehq.apps.hqwebapp.crispy import FormActions, B3MultiField
 import langcodes
@@ -16,12 +17,6 @@ from .models import (
     ReportNotification,
 )
 from six.moves import range
-
-
-class LanguageSelect(forms.Select):
-
-    class Media:
-        js = ('reports/js/language_field.js',)
 
 
 class SavedReportConfigForm(forms.Form):
@@ -126,7 +121,7 @@ class ScheduledReportForm(forms.Form):
         choices=ReportNotification.hour_choices())
 
     send_to_owner = forms.BooleanField(
-        label='Send to me',
+        label='Send to owner',
         required=False)
 
     attach_excel = forms.BooleanField(
@@ -148,7 +143,7 @@ class ScheduledReportForm(forms.Form):
         label='Language',
         required=False,
         choices=[('', '')] + langcodes.get_all_langs_for_select(),
-        widget=LanguageSelect()
+        widget=forms.Select()
     )
 
     def __init__(self, *args, **kwargs):

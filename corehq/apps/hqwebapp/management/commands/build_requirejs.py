@@ -70,7 +70,21 @@ class Command(ResourceStaticCommand):
         # Overwrite each bundle in resource_versions with the sha from the optimized version in staticfiles
         for module in config['modules']:
             filename = os.path.join(self.root_dir, 'staticfiles', module['name'] + ".js")
-            resource_versions[module['name'] + ".js"] = self.get_hash(filename)
+
+            # TODO: it'd be a performance improvement to do this after the `open` below
+            # and pass in the file contents, since get_hash does another read.
+            file_hash = self.get_hash(filename)
+
+            # Overwrite source map reference. Source maps are accessed on the CDN,
+            # so they need to have the version hash appended.
+            with open(filename, 'r') as fin:
+                lines = fin.readlines()
+            with open(filename, 'w') as fout:
+                for line in lines:
+                    if re.search(r'sourceMappingURL=bundle.js.map', line):
+                        line = re.sub(r'bundle.js.map', 'bundle.js.map?version=' + file_hash, line)
+                    fout.write(line)
+            resource_versions[module['name'] + ".js"] = file_hash
 
         # Write out resource_versions.js for all js files in resource_versions
         # Exclude formdesigner directory, which contains a ton of files, none of which are required by HQ

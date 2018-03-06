@@ -42,11 +42,11 @@ hqDefine('app_manager/js/settings/commcare_settings', function () {
                     return {
                         visibleValue: function () {
                             return initialValues.$parent[attrib];
-                        }
-                    }
+                        },
+                    };
                 })(attr);
             }
-        };
+        }
 
         self.parseCondition = function (condition) {
             var parts = condition ? condition.split('||') : [],
@@ -99,12 +99,12 @@ hqDefine('app_manager/js/settings/commcare_settings', function () {
                             return false;
                         }
                     } else {
-                        return true
+                        return true;
                     }
 
                     return true;
                 },
-                settings: conditions.map(function (p) { return p.setting; })
+                settings: conditions.map(function (p) { return p.setting; }),
             };
 
         };
@@ -121,7 +121,7 @@ hqDefine('app_manager/js/settings/commcare_settings', function () {
             setting.requiredVersion = ko.computed(function () {
                 return {
                     option: setting.since[setting.value()] || setting.since[''] || '1.1',
-                    setting: setting.since[''] || '1.1'
+                    setting: setting.since[''] || '1.1',
                 };
             });
 
@@ -164,8 +164,8 @@ hqDefine('app_manager/js/settings/commcare_settings', function () {
                         });
                         uniqueNames = names.filter(function(elem, pos) {
                             return names.indexOf(elem) == pos;
-                        })
-                        return gettext('Auto-set by ') + uniqueNames.join(', ')
+                        });
+                        return gettext('Auto-set by ') + uniqueNames.join(', ');
                     }
                 } else {
                     return '';
@@ -200,7 +200,7 @@ hqDefine('app_manager/js/settings/commcare_settings', function () {
                 },
                 write: function (value) {
                     setting.value(value);
-                }
+                },
             });
             setting.visible = ko.computed(function () {
                 return !(
@@ -208,7 +208,7 @@ hqDefine('app_manager/js/settings/commcare_settings', function () {
                         (setting.hide_if_not_enabled && !setting.enabled()) ||
                         (setting.preview && !self.user.is_previewer) ||
                         (setting.permission && !self.permissions[setting.permission])
-                    );
+                );
             });
             setting.disabledButHasValue = ko.computed(function () {
                 return setting.disabled && setting.visibleValue() !== setting['default'];
@@ -229,7 +229,7 @@ hqDefine('app_manager/js/settings/commcare_settings', function () {
                     } else {
                         return null;
                     }
-                }
+                },
             });
             var wrap = CommcareSettings.widgets[setting.widget];
             if (wrap) {
@@ -300,7 +300,7 @@ hqDefine('app_manager/js/settings/commcare_settings', function () {
                 dataType: 'json',
                 success: function (data) {
                     app_manager.updateDOM(data.update);
-                }
+                },
             };
         });
 
@@ -309,7 +309,7 @@ hqDefine('app_manager/js/settings/commcare_settings', function () {
             unsavedMessage: gettext("You have unsaved settings."),
             save: function () {
                 self.saveButton.ajax(self.saveOptions());
-            }
+            },
         });
         self.saveButton.ui.appendTo($saveContainer);
         hqImport("app_manager/js/section_changer").attachToForm($saveContainer);
@@ -339,11 +339,11 @@ hqDefine('app_manager/js/settings/commcare_settings', function () {
                 options.push({
                     label: (self['default'] === values[i] ? '* ' : '') +
                         value_names[i],
-                    value: values[i]
+                    value: values[i],
                 });
             }
-            self.options(options)
-        }
+            self.options(options);
+        };
         self.options = ko.observable([]);
         self.updateOptions();
         self.selectOption = function (selectedOption) {
@@ -367,11 +367,11 @@ hqDefine('app_manager/js/settings/commcare_settings', function () {
                 }
                 return null;
             },
-            write: self.selectOption
+            write: self.selectOption,
         });
         self.writeSelectedOption = ko.computed({
             read: function () { return null; },
-            write: self.selectOption
+            write: self.selectOption,
         });
         self.valueIsLegal = function () {
             var value = self.value();
@@ -393,7 +393,7 @@ hqDefine('app_manager/js/settings/commcare_settings', function () {
                 self.visibleValue(
                     value ? self.values[0] : self.values[1]
                 );
-            }
+            },
         });
     };
 
@@ -480,7 +480,7 @@ hqDefine('app_manager/js/settings/commcare_settings', function () {
     CommcareSettings.widgets.text_input = CommcareSettings.widgets.select;
 
     return {
-        CommcareSettings: CommcareSettings
+        CommcareSettings: CommcareSettings,
     };
 });
 
@@ -491,5 +491,5 @@ ko.bindingHandlers.passwordSetter = {
         $(element).on('textchange change', function () {
             observableValue($(element).val());
         });
-    }
+    },
 };

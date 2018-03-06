@@ -14,20 +14,20 @@ SampleExportInstances = {
                     "path": ["data", "question1"],
                     "doc_type": "ScalarItem",
                     "last_occurrences": {
-                        "e44df667860aa2bd2f9a2782511384c3": 64
+                        "e44df667860aa2bd2f9a2782511384c3": 64,
                     },
                     "tag": null,
-                    "label": "question1"
+                    "label": "question1",
                 },
                 "selected": false,
                 "label": "question1",
-                "doc_type": "ExportColumn"
+                "doc_type": "ExportColumn",
             }, {
                 "show": true,
                 "item": {
                     "doc_type": "MultipleChoiceItem",
                     "last_occurrences": {
-                        "e44df667860aa2bd2f9a2782511384c3": 64
+                        "e44df667860aa2bd2f9a2782511384c3": 64,
                     },
                     "label": "question3",
                     "tag": null,
@@ -35,22 +35,22 @@ SampleExportInstances = {
                     "options": [{
                         "doc_type": "Option",
                         "last_occurrences": {
-                            "e44df667860aa2bd2f9a2782511384c3": 64
+                            "e44df667860aa2bd2f9a2782511384c3": 64,
                         },
-                        "value": "choice1"
+                        "value": "choice1",
                     }, {
                         "doc_type": "Option",
                         "last_occurrences": {
-                            "e44df667860aa2bd2f9a2782511384c3": 64
+                            "e44df667860aa2bd2f9a2782511384c3": 64,
                         },
-                        "value": "choice2"
-                    }]
+                        "value": "choice2",
+                    }],
                 },
                 "selected": false,
                 "label": "question3",
-                "doc_type": "ExportColumn"
+                "doc_type": "ExportColumn",
             }],
-            "doc_type": "TableConfiguration"
+            "doc_type": "TableConfiguration",
         }],
         "export_format": "csv",
         "doc_type": "ExportInstance",
@@ -70,20 +70,20 @@ SampleExportInstances = {
                     "path": ["data", "question1"],
                     "doc_type": "ScalarItem",
                     "last_occurrences": {
-                        "e44df667860aa2bd2f9a2782511384c3": 64
+                        "e44df667860aa2bd2f9a2782511384c3": 64,
                     },
                     "tag": null,
-                    "label": "question1"
+                    "label": "question1",
                 },
                 "selected": false,
                 "label": "question1",
-                "doc_type": "ExportColumn"
+                "doc_type": "ExportColumn",
             }, {
                 "show": true,
                 "item": {
                     "doc_type": "MultipleChoiceItem",
                     "last_occurrences": {
-                        "e44df667860aa2bd2f9a2782511384c3": 64
+                        "e44df667860aa2bd2f9a2782511384c3": 64,
                     },
                     "label": "question3",
                     "tag": null,
@@ -91,25 +91,25 @@ SampleExportInstances = {
                     "options": [{
                         "doc_type": "Option",
                         "last_occurrences": {
-                            "e44df667860aa2bd2f9a2782511384c3": 64
+                            "e44df667860aa2bd2f9a2782511384c3": 64,
                         },
-                        "value": "choice1"
+                        "value": "choice1",
                     }, {
                         "doc_type": "Option",
                         "last_occurrences": {
-                            "e44df667860aa2bd2f9a2782511384c3": 64
+                            "e44df667860aa2bd2f9a2782511384c3": 64,
                         },
-                        "value": "choice2"
-                    }]
+                        "value": "choice2",
+                    }],
                 },
                 "selected": false,
                 "label": "question3",
-                "doc_type": "ExportColumn"
+                "doc_type": "ExportColumn",
             }],
-            "doc_type": "TableConfiguration"
+            "doc_type": "TableConfiguration",
         }],
         "export_format": "csv",
         "doc_type": "ExportInstance",
         "is_deidentified": false,
-    }
+    },
 };

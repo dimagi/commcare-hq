@@ -5,6 +5,7 @@ from two_factor.forms import (
     PhoneNumberMethodForm, DeviceValidationForm, MethodForm,
     TOTPDeviceForm, PhoneNumberForm
 )
+from two_factor.validators import validate_international_phonenumber
 
 from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
@@ -14,7 +15,6 @@ from corehq.apps.users.models import CouchUser
 
 from django.utils.translation import ugettext as _
 from django.utils.safestring import mark_safe
-from django.core.exceptions import ValidationError
 
 from datetime import datetime
 
@@ -71,8 +71,14 @@ class HQPasswordChangeForm(EncodedPasswordChangeFormMixin, PasswordChangeForm):
 
 
 class HQPhoneNumberMethodForm(PhoneNumberMethodForm):
+    number = forms.CharField(label=_("Phone Number"),
+                             validators=[validate_international_phonenumber],
+                             widget=forms.TextInput(
+                                 attrs={'placeholder': _('Start with +, followed by Country Code.')}))
 
     def __init__(self, **kwargs):
+        validate_international_phonenumber.message = _("Make sure to enter a valid phone number "
+                                                       "starting with a +, followed by your country code.")
         super(HQPhoneNumberMethodForm, self).__init__(**kwargs)
         self.helper = FormHelper()
         self.helper.form_class = 'form form-horizontal'
@@ -102,6 +108,7 @@ class HQDeviceValidationForm(DeviceValidationForm):
         self.helper.form_class = 'form form-horizontal'
         self.helper.label_class = 'col-sm-3 col-md-4 col-lg-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        # Next button is defined first so the enter key triggers it
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 '',
@@ -109,16 +116,16 @@ class HQDeviceValidationForm(DeviceValidationForm):
             ),
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(
+                    _('Next'),
+                    css_class='btn-primary',
+                    type='submit',
+                ),
+                twbscrispy.StrictButton(
                     _("Back"),
                     css_class='btn-default',
                     type='submit',
                     value='method',
                     name="wizard_goto_step",
-                ),
-                twbscrispy.StrictButton(
-                    _('Next'),
-                    css_class='btn-primary',
-                    type='submit',
                 ),
             )
         )
@@ -132,6 +139,7 @@ class HQTwoFactorMethodForm(MethodForm):
         self.helper.form_class = 'form form-horizontal'
         self.helper.label_class = 'col-sm-3 col-md-4 col-lg-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        # Next button is defined first so the enter key triggers it
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 '',
@@ -139,17 +147,17 @@ class HQTwoFactorMethodForm(MethodForm):
             ),
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(
+                    _('Next'),
+                    css_class='btn-primary',
+                    type='submit',
+                ),
+                twbscrispy.StrictButton(
                     _("Back"),
                     css_class='btn-default',
                     type='submit',
                     value='welcome',
                     name="wizard_goto_step",
                 ),
-                twbscrispy.StrictButton(
-                    _('Next'),
-                    css_class='btn-primary',
-                    type='submit',
-                )
             )
         )
 
@@ -162,6 +170,7 @@ class HQTOTPDeviceForm(TOTPDeviceForm):
         self.helper.form_class = 'form form-horizontal'
         self.helper.label_class = 'col-sm-3 col-md-4 col-lg-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        # Next button is defined first so the enter key triggers it
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 '',
@@ -169,17 +178,17 @@ class HQTOTPDeviceForm(TOTPDeviceForm):
             ),
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(
+                    _('Next'),
+                    css_class='btn-primary',
+                    type='submit',
+                ),
+                twbscrispy.StrictButton(
                     _("Back"),
                     css_class='btn-default',
                     type='submit',
                     value='method',
                     name="wizard_goto_step",
                 ),
-                twbscrispy.StrictButton(
-                    _('Next'),
-                    css_class='btn-primary',
-                    type='submit',
-                )
             )
         )
 
@@ -199,6 +208,7 @@ class HQPhoneNumberForm(PhoneNumberForm):
         self.helper.form_class = 'form form-horizontal'
         self.helper.label_class = 'col-sm-3 col-md-4 col-lg-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        # Next button is defined first so the enter key triggers it
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 '',
@@ -206,17 +216,17 @@ class HQPhoneNumberForm(PhoneNumberForm):
             ),
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(
+                    _('Next'),
+                    css_class='btn-primary',
+                    type='submit',
+                ),
+                twbscrispy.StrictButton(
                     _("Back"),
                     css_class='btn-default',
                     type='submit',
                     value='method',
                     name="wizard_goto_step",
                 ),
-                twbscrispy.StrictButton(
-                    _('Next'),
-                    css_class='btn-primary',
-                    type='submit',
-                )
             )
         )
 

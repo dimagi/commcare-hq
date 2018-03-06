@@ -70,15 +70,6 @@
     border-radius: 4px;
 }
 
-.foo-table th, .foo-table td {
-/*    word-wrap: break-word;*/
- /*   word-break: break-all;*/
-}
-
-.foo-table td {
-    border-left: 0;
-}
-
 .foo-table th:nth-child(odd) {
     text-align: right;
     width: 80px;

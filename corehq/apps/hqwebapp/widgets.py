@@ -26,7 +26,9 @@ class BootstrapCheckboxInput(CheckboxInput):
         self.inline_label = inline_label
 
     def render(self, name, value, attrs=None):
-        final_attrs = self.build_attrs(attrs, extra_attrs={'type': 'checkbox', 'name': name})
+        extra_attrs = {'type': 'checkbox', 'name': name}
+        extra_attrs.update(self.attrs)
+        final_attrs = self.build_attrs(attrs, extra_attrs=extra_attrs)
         try:
             result = self.check_test(value)
         except: # Silently catch exceptions
@@ -125,7 +127,7 @@ $(function() {
 
 class _Select2Mixin(object):
 
-    class Media:
+    class Media(object):
         css = {
             'all': ('select2-3.4.5-legacy/select2.css',)
         }
@@ -159,7 +161,7 @@ class Select2Ajax(forms.TextInput):
     The url is not specified in the form class definition because in most cases the url will be dependent on the
     domain of the request.
     """
-    class Media:
+    class Media(object):
         css = {
             'all': ('select2-3.5.2-legacy/select2.css', 'select2-3.5.2-legacy/select2-bootstrap.css')
         }

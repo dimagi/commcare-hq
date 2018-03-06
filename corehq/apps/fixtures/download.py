@@ -1,5 +1,7 @@
 from __future__ import absolute_import
-from cStringIO import StringIO
+from __future__ import division
+import io
+
 from couchdbkit import ResourceNotFound
 from datetime import datetime, timedelta
 
@@ -28,7 +30,7 @@ def prepare_fixture_download(table_ids, domain, task, download_id):
         header_groups.append((data_type.tag, excel_sheets[data_type.tag]["headers"]))
         value_groups.append((data_type.tag, excel_sheets[data_type.tag]["rows"]))
 
-    file = StringIO()
+    file = io.BytesIO()
     format = Format.XLS_2007
     export_raw(tuple(header_groups), tuple(value_groups), file, format)
     return expose_cached_download(
@@ -75,7 +77,7 @@ def _prepare_fixture(table_ids, domain, html_response=False, task=None):
     def _update_progress(event_count, item_count, items_in_table):
         if task and now() - last_update[0] > upate_period:
             last_update[0] = now()
-            processed = event_count * 10 + (10. * item_count / items_in_table)
+            processed = event_count * 10 + (10 * item_count / items_in_table)
             processed = min(processed, total_events)  # limit at 100%
             DownloadBase.set_progress(task, processed, total_events)
 
@@ -148,7 +150,8 @@ def _prepare_fixture(table_ids, domain, html_response=False, task=None):
         max_groups = 0
         max_locations = 0
         max_field_prop_combos = {field_name: 0 for field_name in data_type.fields_without_attributes}
-        fixture_data = FixtureDataItem.by_data_type(domain, data_type.get_id)
+        fixture_data = sorted(FixtureDataItem.by_data_type(domain, data_type.get_id),
+                              key=lambda x: x.sort_key)
         num_rows = len(fixture_data)
         for n, item_row in enumerate(fixture_data):
             _update_progress(event_count, n, num_rows)

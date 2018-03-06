@@ -1,9 +1,11 @@
 from __future__ import absolute_import
 
+from __future__ import unicode_literals
 import requests
 
 from datetime import datetime, date
 
+from celery.result import AsyncResult
 from dateutil.relativedelta import relativedelta
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied
@@ -269,27 +271,35 @@ class IcdsDynamicTemplateView(TemplateView):
         return ['icds_reports/icds_app/%s.html' % self.kwargs['template']]
 
 
-@method_decorator([login_and_domain_required], name='dispatch')
-class ProgramSummaryView(View):
-
-    def get(self, request, *args, **kwargs):
+class BaseReportView(View):
+    def get_settings(self, request, *args, **kwargs):
         step = kwargs.get('step')
-
         now = datetime.utcnow()
-
         month = int(request.GET.get('month', now.month))
         year = int(request.GET.get('year', now.year))
 
-        if now.day == 1 and now.month == month and now.year == year:
+        if (now.day == 1 or now.day == 2) and now.month == month and now.year == year:
             month = (now - relativedelta(months=1)).month
             year = now.year
 
         include_test = request.GET.get('include_test', False)
-
         domain = self.kwargs['domain']
-
         current_month = datetime(year, month, 1)
         prev_month = current_month - relativedelta(months=1)
+        location = request.GET.get('location_id')
+        if location == 'null' or location == 'undefined':
+            location = None
+        selected_month = current_month
+
+        return step, now, month, year, include_test, domain, current_month, prev_month, location, selected_month
+
+
+@method_decorator([login_and_domain_required], name='dispatch')
+class ProgramSummaryView(BaseReportView):
+
+    def get(self, request, *args, **kwargs):
+        step, now, month, year, include_test, domain, current_month, prev_month, location, selected_month = \
+            self.get_settings(request, *args, **kwargs)
 
         config = {
             'month': tuple(current_month.timetuple())[:3],
@@ -297,7 +307,6 @@ class ProgramSummaryView(View):
             'aggregation_level': 1
         }
 
-        location = request.GET.get('location_id', '')
         config.update(get_location_filter(location, domain))
 
         data = {}
@@ -315,7 +324,8 @@ class ProgramSummaryView(View):
                 domain,
                 tuple(now.date().timetuple())[:3],
                 config,
-                include_test
+                include_test,
+                beta=icds_pre_release_features(request.couch_user)
             )
         elif step == 'awc_infrastructure':
             data = get_awc_infrastructure_data(domain, config, include_test)
@@ -323,24 +333,11 @@ class ProgramSummaryView(View):
 
 
 @method_decorator([login_and_domain_required], name='dispatch')
-class PrevalenceOfUndernutritionView(View):
+class PrevalenceOfUndernutritionView(BaseReportView):
 
     def get(self, request, *args, **kwargs):
-        step = kwargs.get('step')
-        now = datetime.utcnow()
-
-        month = int(request.GET.get('month', now.month))
-        year = int(request.GET.get('year', now.year))
-
-        if now.day == 1 and now.month == month and now.year == year:
-            month = (now - relativedelta(months=1)).month
-            year = now.year
-
-        selected_month = datetime(year, month, 1)
-
-        include_test = request.GET.get('include_test', False)
-
-        domain = self.kwargs['domain']
+        step, now, month, year, include_test, domain, current_month, prev_month, location, selected_month = \
+            self.get_settings(request, *args, **kwargs)
 
         config = {
             'month': tuple(selected_month.timetuple())[:3],
@@ -354,7 +351,6 @@ class PrevalenceOfUndernutritionView(View):
         if age:
             config.update(get_age_filter(age))
 
-        location = request.GET.get('location_id', '')
         config.update(get_location_filter(location, domain))
         loc_level = get_location_level(config.get('aggregation_level'))
 
@@ -364,10 +360,11 @@ class PrevalenceOfUndernutritionView(View):
                 data = get_prevalence_of_undernutrition_sector_data(domain, config, loc_level, location, include_test)
             else:
                 data = get_prevalence_of_undernutrition_data_map(domain, config.copy(), loc_level, include_test)
-                sector = get_prevalence_of_undernutrition_sector_data(
-                    domain, config.copy(), loc_level, location, include_test
-                )
-                data.update(sector)
+                if loc_level == LocationTypes.BLOCK:
+                    sector = get_prevalence_of_undernutrition_sector_data(
+                        domain, config, loc_level, location, include_test
+                    )
+                    data.update(sector)
         elif step == "chart":
             data = get_prevalence_of_undernutrition_data_chart(domain, config, loc_level, include_test)
 
@@ -381,8 +378,10 @@ class PrevalenceOfUndernutritionView(View):
 class LocationView(View):
 
     def get(self, request, *args, **kwargs):
-        if 'location_id' in request.GET and request.GET['location_id'] and request.GET['location_id'] != 'null':
-            location_id = request.GET['location_id']
+        location_id = request.GET.get('location_id')
+        if location_id == 'null' or location_id == 'undefined':
+            location_id = None
+        if location_id:
             if not user_can_access_location_id(self.kwargs['domain'], request.couch_user, location_id):
                 return JsonResponse({})
             location = get_object_or_404(
@@ -435,6 +434,8 @@ class LocationView(View):
 class LocationAncestorsView(View):
     def get(self, request, *args, **kwargs):
         location_id = request.GET.get('location_id')
+        if location_id == 'null' or location_id == 'undefined':
+            location_id = None
         show_test = request.GET.get('include_test', False)
         selected_location = get_object_or_404(SQLLocation, location_id=location_id, domain=self.kwargs['domain'])
         parents = list(SQLLocation.objects.get_queryset_ancestors(
@@ -471,6 +472,8 @@ class LocationAncestorsView(View):
 class AWCLocationView(View):
     def get(self, request, *args, **kwargs):
         location_id = request.GET.get('location_id')
+        if location_id == 'null' or location_id == 'undefined':
+            location_id = None
         selected_location = get_object_or_404(SQLLocation, location_id=location_id, domain=self.kwargs['domain'])
         awcs = selected_location.get_descendants().filter(
             location_type__code=AWC_LOCATION_TYPE_CODE
@@ -488,27 +491,16 @@ class AWCLocationView(View):
 
 @location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
-class AwcReportsView(View):
+class AwcReportsView(BaseReportView):
     def get(self, request, *args, **kwargs):
-        step = kwargs.get('step')
-        include_test = request.GET.get('include_test', False)
+        step, now, month, year, include_test, domain, current_month, prev_month, location, selected_month = \
+            self.get_settings(request, *args, **kwargs)
 
-        now = datetime.utcnow()
-
-        month_param = int(request.GET.get('month', now.month))
-        year_param = int(request.GET.get('year', now.year))
-
-        if now.day == 1 and now.month == month_param and now.year == year_param:
-            month_param = (now - relativedelta(months=1)).month
-            year_param = now.year
-
-        month = datetime(year_param, month_param, 1)
-        prev_month = month - relativedelta(months=1)
-        two_before = month - relativedelta(months=2)
-        location = request.GET.get('location_id', None)
+        two_before = current_month - relativedelta(months=2)
+        location = request.GET.get('location_id')
+        if location == 'null' or location == 'undefined':
+            location = None
         aggregation_level = 5
-
-        domain = self.kwargs['domain']
 
         config = {
             'aggregation_level': aggregation_level
@@ -530,7 +522,7 @@ class AwcReportsView(View):
             data = get_awc_reports_system_usage(
                 domain,
                 config,
-                tuple(month.timetuple())[:3],
+                tuple(current_month.timetuple())[:3],
                 tuple(prev_month.timetuple())[:3],
                 tuple(two_before.timetuple())[:3],
                 'aggregation_level',
@@ -539,7 +531,7 @@ class AwcReportsView(View):
         elif step == 'pse':
             data = get_awc_reports_pse(
                 config,
-                tuple(month.timetuple())[:3],
+                tuple(current_month.timetuple())[:3],
                 self.kwargs.get('domain'),
                 include_test
             )
@@ -547,7 +539,7 @@ class AwcReportsView(View):
             data = get_awc_reports_maternal_child(
                 domain,
                 config,
-                tuple(month.timetuple())[:3],
+                tuple(current_month.timetuple())[:3],
                 tuple(prev_month.timetuple())[:3],
                 include_test
             )
@@ -556,14 +548,15 @@ class AwcReportsView(View):
                 domain,
                 config,
                 tuple(now.date().timetuple())[:3],
-                tuple(month.timetuple())[:3],
-                include_test
+                tuple(current_month.timetuple())[:3],
+                include_test,
+                beta=icds_pre_release_features(request.couch_user)
             )
         elif step == 'awc_infrastructure':
             data = get_awc_report_infrastructure(
                 domain,
                 config,
-                tuple(month.timetuple())[:3],
+                tuple(current_month.timetuple())[:3],
                 include_test
             )
         elif step == 'beneficiary':
@@ -577,7 +570,7 @@ class AwcReportsView(View):
                 order_dir = request.GET.get('order[0][dir]', 'asc')
                 if order_by_name_column == 'age':  # age and date of birth is stored in database as one value
                     order_by_name_column = 'dob'
-                order = "%s%s" % ('-' if order_dir == 'desc' else '', order_by_name_column)
+                order = "%s %s" % (order_by_name_column, order_dir)
 
                 data = get_awc_report_beneficiary(
                     start,
@@ -585,11 +578,13 @@ class AwcReportsView(View):
                     draw,
                     order,
                     config['awc_id'],
-                    tuple(month.timetuple())[:3],
+                    tuple(current_month.timetuple())[:3],
                     tuple(two_before.timetuple())[:3],
+                    domain
                 )
         elif step == 'beneficiary_details':
             data = get_beneficiary_details(
+                domain,
                 self.request.GET.get('case_id')
             )
         return JsonResponse(data=data)
@@ -652,7 +647,8 @@ class ExportIndicatorView(View):
             return DemographicsExport(
                 config=config,
                 loc_level=aggregation_level,
-                show_test=include_test
+                show_test=include_test,
+                beta=icds_pre_release_features(request.user)
             ).to_export(export_format, location)
         elif indicator == SYSTEM_USAGE_EXPORT:
             return SystemUsageExport(
@@ -676,18 +672,15 @@ class ExportIndicatorView(View):
             ).to_export('csv', location)
         elif indicator == ISSNIP_MONTHLY_REGISTER_PDF:
             awcs = request.POST.get('selected_awcs').split(',')
-            if 'all' in awcs:
-                location = request.POST.get('location', '')
-                if location:
-                    awcs = [loc.location_id for loc in SQLLocation.objects.get(
-                        location_id=location).get_descendants().filter(
-                        location_type__code=AWC_LOCATION_TYPE_CODE)]
-                else:
-                    awcs = [loc.location_id for loc in SQLLocation.objects.filter(
-                        location_type__code=AWC_LOCATION_TYPE_CODE
-                    )]
+            location = request.POST.get('location', '')
+            if 'all' in awcs and location:
+                awcs = SQLLocation.objects.get(
+                    location_id=location
+                ).get_descendants().filter(
+                    location_type__code=AWC_LOCATION_TYPE_CODE
+                ).location_ids()
             pdf_format = request.POST.get('pdfformat')
-            prepare_issnip_monthly_register_reports.delay(
+            task = prepare_issnip_monthly_register_reports.delay(
                 self.kwargs['domain'],
                 self.request.couch_user,
                 awcs,
@@ -695,29 +688,20 @@ class ExportIndicatorView(View):
                 month,
                 year
             )
-            url = redirect('icds_dashboard', domain=self.kwargs['domain'])
-            return redirect(url.url + '#/download?show_pdf_message=true')
+            task_id = task.task_id
+            return JsonResponse(data={'task_id': task_id})
 
 
 @method_decorator([login_and_domain_required], name='dispatch')
-class FactSheetsView(View):
+class FactSheetsView(BaseReportView):
     def get(self, request, *args, **kwargs):
-        include_test = request.GET.get('include_test', False)
-        now = datetime.utcnow()
-        month = int(request.GET.get('month', now.month))
-        year = int(request.GET.get('year', now.year))
+        step, now, month, year, include_test, domain, current_month, prev_month, location, selected_month = \
+            self.get_settings(request, *args, **kwargs)
 
-        if now.day == 1 and now.month == month and now.year == year:
-            month = (now - relativedelta(months=1)).month
-            year = now.year
-
-        location = request.GET.get('location_id', None)
         aggregation_level = 1
 
         this_month = datetime(year, month, 1).date()
         two_before = this_month - relativedelta(months=2)
-
-        domain = self.kwargs['domain']
 
         config = {
             'aggregation_level': aggregation_level,
@@ -731,26 +715,19 @@ class FactSheetsView(View):
         config.update(get_location_filter(location, domain))
         loc_level = get_location_level(config.get('aggregation_level'))
 
-        data = FactSheetsReport(config=config, loc_level=loc_level, show_test=include_test).get_data()
+        beta = icds_pre_release_features(request.user)
+        data = FactSheetsReport(
+            config=config, loc_level=loc_level, show_test=include_test, beta=beta
+        ).get_data()
         return JsonResponse(data=data)
 
 
 @method_decorator([login_and_domain_required], name='dispatch')
-class PrevalenceOfSevereView(View):
+class PrevalenceOfSevereView(BaseReportView):
 
     def get(self, request, *args, **kwargs):
-        include_test = request.GET.get('include_test', False)
-        step = kwargs.get('step')
-        now = datetime.utcnow()
-        month = int(request.GET.get('month', now.month))
-        year = int(request.GET.get('year', now.year))
-
-        if now.day == 1 and now.month == month and now.year == year:
-            month = (now - relativedelta(months=1)).month
-            year = now.year
-        selected_month = datetime(year, month, 1)
-
-        domain = self.kwargs['domain']
+        step, now, month, year, include_test, domain, current_month, prev_month, location, selected_month = \
+            self.get_settings(request, *args, **kwargs)
 
         config = {
             'month': tuple(selected_month.timetuple())[:3],
@@ -763,8 +740,6 @@ class PrevalenceOfSevereView(View):
             config.update({'gender': gender})
         if age:
             config.update(get_age_filter(age))
-
-        location = request.GET.get('location_id', '')
 
         config.update(get_location_filter(location, self.kwargs['domain']))
         loc_level = get_location_level(config.get('aggregation_level'))
@@ -775,10 +750,11 @@ class PrevalenceOfSevereView(View):
                 data = get_prevalence_of_severe_sector_data(domain, config, loc_level, location, include_test)
             else:
                 data = get_prevalence_of_severe_data_map(domain, config.copy(), loc_level, include_test)
-                sector = get_prevalence_of_severe_sector_data(
-                    domain, config.copy(), loc_level, location, include_test
-                )
-                data.update(sector)
+                if loc_level == LocationTypes.BLOCK:
+                    sector = get_prevalence_of_severe_sector_data(
+                        domain, config, loc_level, location, include_test
+                    )
+                    data.update(sector)
         elif step == "chart":
             data = get_prevalence_of_severe_data_chart(domain, config, loc_level, include_test)
 
@@ -788,21 +764,11 @@ class PrevalenceOfSevereView(View):
 
 
 @method_decorator([login_and_domain_required], name='dispatch')
-class PrevalenceOfStuntingView(View):
+class PrevalenceOfStuntingView(BaseReportView):
 
     def get(self, request, *args, **kwargs):
-        include_test = request.GET.get('include_test', False)
-        step = kwargs.get('step')
-        now = datetime.utcnow()
-        month = int(request.GET.get('month', now.month))
-        year = int(request.GET.get('year', now.year))
-
-        if now.day == 1 and now.month == month and now.year == year:
-            month = (now - relativedelta(months=1)).month
-            year = now.year
-        selected_month = datetime(year, month, 1)
-
-        domain = self.kwargs['domain']
+        step, now, month, year, include_test, domain, current_month, prev_month, location, selected_month = \
+            self.get_settings(request, *args, **kwargs)
 
         config = {
             'month': tuple(selected_month.timetuple())[:3],
@@ -816,8 +782,6 @@ class PrevalenceOfStuntingView(View):
         if age:
             config.update(get_age_filter(age))
 
-        location = request.GET.get('location_id', '')
-
         config.update(get_location_filter(location, self.kwargs['domain']))
         loc_level = get_location_level(config.get('aggregation_level'))
 
@@ -827,10 +791,11 @@ class PrevalenceOfStuntingView(View):
                 data = get_prevalence_of_stunting_sector_data(domain, config, loc_level, location, include_test)
             else:
                 data = get_prevalence_of_stunting_data_map(domain, config.copy(), loc_level, include_test)
-                sector = get_prevalence_of_stunting_sector_data(
-                    domain, config.copy(), loc_level, location, include_test
-                )
-                data.update(sector)
+                if loc_level == LocationTypes.BLOCK:
+                    sector = get_prevalence_of_stunting_sector_data(
+                        domain, config, loc_level, location, include_test
+                    )
+                    data.update(sector)
         elif step == "chart":
             data = get_prevalence_of_stunting_data_chart(domain, config, loc_level, include_test)
 
@@ -840,21 +805,11 @@ class PrevalenceOfStuntingView(View):
 
 
 @method_decorator([login_and_domain_required], name='dispatch')
-class NewbornsWithLowBirthWeightView(View):
+class NewbornsWithLowBirthWeightView(BaseReportView):
 
     def get(self, request, *args, **kwargs):
-        include_test = request.GET.get('include_test', False)
-        step = kwargs.get('step')
-        now = datetime.utcnow()
-        month = int(request.GET.get('month', now.month))
-        year = int(request.GET.get('year', now.year))
-
-        if now.day == 1 and now.month == month and now.year == year:
-            month = (now - relativedelta(months=1)).month
-            year = now.year
-        selected_month = datetime(year, month, 1)
-
-        domain = self.kwargs['domain']
+        step, now, month, year, include_test, domain, current_month, prev_month, location, selected_month = \
+            self.get_settings(request, *args, **kwargs)
 
         config = {
             'month': tuple(selected_month.timetuple())[:3],
@@ -864,8 +819,6 @@ class NewbornsWithLowBirthWeightView(View):
         gender = self.request.GET.get('gender', None)
         if gender:
             config.update({'gender': gender})
-
-        location = request.GET.get('location_id', '')
 
         config.update(get_location_filter(location, self.kwargs['domain']))
         loc_level = get_location_level(config.get('aggregation_level'))
@@ -876,10 +829,11 @@ class NewbornsWithLowBirthWeightView(View):
                 data = get_newborn_with_low_birth_weight_data(domain, config, loc_level, location, include_test)
             else:
                 data = get_newborn_with_low_birth_weight_map(domain, config.copy(), loc_level, include_test)
-                sector = get_newborn_with_low_birth_weight_data(
-                    domain, config.copy(), loc_level, location, include_test
-                )
-                data.update(sector)
+                if loc_level == LocationTypes.BLOCK:
+                    sector = get_newborn_with_low_birth_weight_data(
+                        domain, config, loc_level, location, include_test
+                    )
+                    data.update(sector)
         elif step == "chart":
             data = get_newborn_with_low_birth_weight_chart(domain, config, loc_level, include_test)
 
@@ -889,21 +843,11 @@ class NewbornsWithLowBirthWeightView(View):
 
 
 @method_decorator([login_and_domain_required], name='dispatch')
-class EarlyInitiationBreastfeeding(View):
+class EarlyInitiationBreastfeeding(BaseReportView):
 
     def get(self, request, *args, **kwargs):
-        include_test = request.GET.get('include_test', False)
-        step = kwargs.get('step')
-        now = datetime.utcnow()
-        month = int(request.GET.get('month', now.month))
-        year = int(request.GET.get('year', now.year))
-
-        if now.day == 1 and now.month == month and now.year == year:
-            month = (now - relativedelta(months=1)).month
-            year = now.year
-        selected_month = datetime(year, month, 1)
-
-        domain = self.kwargs['domain']
+        step, now, month, year, include_test, domain, current_month, prev_month, location, selected_month = \
+            self.get_settings(request, *args, **kwargs)
 
         config = {
             'month': tuple(selected_month.timetuple())[:3],
@@ -914,7 +858,6 @@ class EarlyInitiationBreastfeeding(View):
         if gender:
             config.update({'gender': gender})
 
-        location = request.GET.get('location_id', '')
         config.update(get_location_filter(location, self.kwargs['domain']))
         loc_level = get_location_level(config.get('aggregation_level'))
 
@@ -924,10 +867,11 @@ class EarlyInitiationBreastfeeding(View):
                 data = get_early_initiation_breastfeeding_data(domain, config, loc_level, location, include_test)
             else:
                 data = get_early_initiation_breastfeeding_map(domain, config.copy(), loc_level, include_test)
-                sector = get_early_initiation_breastfeeding_data(
-                    domain, config.copy(), loc_level, location, include_test
-                )
-                data.update(sector)
+                if loc_level == LocationTypes.BLOCK:
+                    sector = get_early_initiation_breastfeeding_data(
+                        domain, config, loc_level, location, include_test
+                    )
+                    data.update(sector)
         elif step == "chart":
             data = get_early_initiation_breastfeeding_chart(domain, config, loc_level, include_test)
 
@@ -937,20 +881,10 @@ class EarlyInitiationBreastfeeding(View):
 
 
 @method_decorator([login_and_domain_required], name='dispatch')
-class ExclusiveBreastfeedingView(View):
+class ExclusiveBreastfeedingView(BaseReportView):
     def get(self, request, *args, **kwargs):
-        include_test = request.GET.get('include_test', False)
-        step = kwargs.get('step')
-        now = datetime.utcnow()
-        month = int(request.GET.get('month', now.month))
-        year = int(request.GET.get('year', now.year))
-
-        if now.day == 1 and now.month == month and now.year == year:
-            month = (now - relativedelta(months=1)).month
-            year = now.year
-        selected_month = datetime(year, month, 1)
-
-        domain = self.kwargs['domain']
+        step, now, month, year, include_test, domain, current_month, prev_month, location, selected_month = \
+            self.get_settings(request, *args, **kwargs)
 
         config = {
             'month': tuple(selected_month.timetuple())[:3],
@@ -961,7 +895,6 @@ class ExclusiveBreastfeedingView(View):
         if gender:
             config.update({'gender': gender})
 
-        location = request.GET.get('location_id', '')
         config.update(get_location_filter(location, self.kwargs['domain']))
         loc_level = get_location_level(config.get('aggregation_level'))
 
@@ -971,10 +904,11 @@ class ExclusiveBreastfeedingView(View):
                 data = get_exclusive_breastfeeding_sector_data(domain, config, loc_level, location, include_test)
             else:
                 data = get_exclusive_breastfeeding_data_map(domain, config.copy(), loc_level, include_test)
-                sector = get_exclusive_breastfeeding_sector_data(
-                    domain, config.copy(), loc_level, location, include_test
-                )
-                data.update(sector)
+                if loc_level == LocationTypes.BLOCK:
+                    sector = get_exclusive_breastfeeding_sector_data(
+                        domain, config, loc_level, location, include_test
+                    )
+                    data.update(sector)
         elif step == "chart":
             data = get_exclusive_breastfeeding_data_chart(domain, config, loc_level, include_test)
 
@@ -984,20 +918,10 @@ class ExclusiveBreastfeedingView(View):
 
 
 @method_decorator([login_and_domain_required], name='dispatch')
-class ChildrenInitiatedView(View):
+class ChildrenInitiatedView(BaseReportView):
     def get(self, request, *args, **kwargs):
-        include_test = request.GET.get('include_test', False)
-        step = kwargs.get('step')
-        now = datetime.utcnow()
-        month = int(request.GET.get('month', now.month))
-        year = int(request.GET.get('year', now.year))
-
-        if now.day == 1 and now.month == month and now.year == year:
-            month = (now - relativedelta(months=1)).month
-            year = now.year
-        selected_month = datetime(year, month, 1)
-
-        domain = self.kwargs['domain']
+        step, now, month, year, include_test, domain, current_month, prev_month, location, selected_month = \
+            self.get_settings(request, *args, **kwargs)
 
         config = {
             'month': tuple(selected_month.timetuple())[:3],
@@ -1008,7 +932,6 @@ class ChildrenInitiatedView(View):
         if gender:
             config.update({'gender': gender})
 
-        location = request.GET.get('location_id', '')
         config.update(get_location_filter(location, self.kwargs['domain']))
         loc_level = get_location_level(config.get('aggregation_level'))
 
@@ -1018,10 +941,11 @@ class ChildrenInitiatedView(View):
                 data = get_children_initiated_sector_data(domain, config, loc_level, location, include_test)
             else:
                 data = get_children_initiated_data_map(domain, config.copy(), loc_level, include_test)
-                sector = get_children_initiated_sector_data(
-                    domain, config.copy(), loc_level, location, include_test
-                )
-                data.update(sector)
+                if loc_level == LocationTypes.BLOCK:
+                    sector = get_children_initiated_sector_data(
+                        domain, config, loc_level, location, include_test
+                    )
+                    data.update(sector)
         elif step == "chart":
             data = get_children_initiated_data_chart(domain, config, loc_level, include_test)
 
@@ -1031,20 +955,10 @@ class ChildrenInitiatedView(View):
 
 
 @method_decorator([login_and_domain_required], name='dispatch')
-class InstitutionalDeliveriesView(View):
+class InstitutionalDeliveriesView(BaseReportView):
     def get(self, request, *args, **kwargs):
-        include_test = request.GET.get('include_test', False)
-        step = kwargs.get('step')
-        now = datetime.utcnow()
-        month = int(request.GET.get('month', now.month))
-        year = int(request.GET.get('year', now.year))
-
-        if now.day == 1 and now.month == month and now.year == year:
-            month = (now - relativedelta(months=1)).month
-            year = now.year
-        selected_month = datetime(year, month, 1)
-
-        domain = self.kwargs['domain']
+        step, now, month, year, include_test, domain, current_month, prev_month, location, selected_month = \
+            self.get_settings(request, *args, **kwargs)
 
         config = {
             'month': tuple(selected_month.timetuple())[:3],
@@ -1055,7 +969,6 @@ class InstitutionalDeliveriesView(View):
         if gender:
             config.update({'gender': gender})
 
-        location = request.GET.get('location_id', '')
         config.update(get_location_filter(location, self.kwargs['domain']))
         loc_level = get_location_level(config.get('aggregation_level'))
 
@@ -1065,10 +978,11 @@ class InstitutionalDeliveriesView(View):
                 data = get_institutional_deliveries_sector_data(domain, config, loc_level, location, include_test)
             else:
                 data = get_institutional_deliveries_data_map(domain, config.copy(), loc_level, include_test)
-                sector = get_institutional_deliveries_sector_data(
-                    domain, config.copy(), loc_level, location, include_test
-                )
-                data.update(sector)
+                if loc_level == LocationTypes.BLOCK:
+                    sector = get_institutional_deliveries_sector_data(
+                        domain, config, loc_level, location, include_test
+                    )
+                    data.update(sector)
         elif step == "chart":
             data = get_institutional_deliveries_data_chart(domain, config, loc_level, include_test)
 
@@ -1078,20 +992,10 @@ class InstitutionalDeliveriesView(View):
 
 
 @method_decorator([login_and_domain_required], name='dispatch')
-class ImmunizationCoverageView(View):
+class ImmunizationCoverageView(BaseReportView):
     def get(self, request, *args, **kwargs):
-        include_test = request.GET.get('include_test', False)
-        step = kwargs.get('step')
-        now = datetime.utcnow()
-        month = int(request.GET.get('month', now.month))
-        year = int(request.GET.get('year', now.year))
-
-        if now.day == 1 and now.month == month and now.year == year:
-            month = (now - relativedelta(months=1)).month
-            year = now.year
-        selected_month = datetime(year, month, 1)
-
-        domain = self.kwargs['domain']
+        step, now, month, year, include_test, domain, current_month, prev_month, location, selected_month = \
+            self.get_settings(request, *args, **kwargs)
 
         config = {
             'month': tuple(selected_month.timetuple())[:3],
@@ -1101,7 +1005,6 @@ class ImmunizationCoverageView(View):
         if gender:
             config.update({'gender': gender})
 
-        location = request.GET.get('location_id', '')
         config.update(get_location_filter(location, self.kwargs['domain']))
         loc_level = get_location_level(config.get('aggregation_level'))
 
@@ -1111,10 +1014,11 @@ class ImmunizationCoverageView(View):
                 data = get_immunization_coverage_sector_data(domain, config, loc_level, location, include_test)
             else:
                 data = get_immunization_coverage_data_map(domain, config.copy(), loc_level, include_test)
-                sector = get_immunization_coverage_sector_data(
-                    domain, config.copy(), loc_level, location, include_test
-                )
-                data.update(sector)
+                if loc_level == LocationTypes.BLOCK:
+                    sector = get_immunization_coverage_sector_data(
+                        domain, config, loc_level, location, include_test
+                    )
+                    data.update(sector)
         elif step == "chart":
             data = get_immunization_coverage_data_chart(domain, config, loc_level, include_test)
 
@@ -1137,6 +1041,8 @@ class AWCDailyStatusView(View):
             'aggregation_level': 1,
         }
         location = request.GET.get('location_id', '')
+        if location == 'null' or location == 'undefined':
+            location = None
         config.update(get_location_filter(location, self.kwargs['domain']))
         loc_level = get_location_level(config.get('aggregation_level'))
 
@@ -1146,10 +1052,11 @@ class AWCDailyStatusView(View):
                 data = get_awc_daily_status_sector_data(domain, config, loc_level, location, include_test)
             else:
                 data = get_awc_daily_status_data_map(domain, config.copy(), loc_level, include_test)
-                sector = get_awc_daily_status_sector_data(
-                    domain, config.copy(), loc_level, location, include_test
-                )
-                data.update(sector)
+                if loc_level == LocationTypes.BLOCK:
+                    sector = get_awc_daily_status_sector_data(
+                        domain, config, loc_level, location, include_test
+                    )
+                    data.update(sector)
         elif step == "chart":
             data = get_awc_daily_status_data_chart(domain, config, loc_level, include_test)
 
@@ -1159,26 +1066,15 @@ class AWCDailyStatusView(View):
 
 
 @method_decorator([login_and_domain_required], name='dispatch')
-class AWCsCoveredView(View):
+class AWCsCoveredView(BaseReportView):
     def get(self, request, *args, **kwargs):
-        include_test = request.GET.get('include_test', False)
-        step = kwargs.get('step')
-        now = datetime.utcnow()
-        month = int(request.GET.get('month', now.month))
-        year = int(request.GET.get('year', now.year))
-
-        if now.day == 1 and now.month == month and now.year == year:
-            month = (now - relativedelta(months=1)).month
-            year = now.year
-        selected_month = datetime(year, month, 1)
-
-        domain = self.kwargs['domain']
+        step, now, month, year, include_test, domain, current_month, prev_month, location, selected_month = \
+            self.get_settings(request, *args, **kwargs)
 
         config = {
             'month': tuple(selected_month.timetuple())[:3],
             'aggregation_level': 1,
         }
-        location = request.GET.get('location_id', '')
         config.update(get_location_filter(location, self.kwargs['domain']))
         loc_level = get_location_level(config.get('aggregation_level'))
 
@@ -1188,10 +1084,11 @@ class AWCsCoveredView(View):
                 data = get_awcs_covered_sector_data(domain, config, loc_level, location, include_test)
             else:
                 data = get_awcs_covered_data_map(domain, config.copy(), loc_level, include_test)
-                sector = get_awcs_covered_sector_data(
-                    domain, config.copy(), loc_level, location, include_test
-                )
-                data.update(sector)
+                if loc_level == LocationTypes.BLOCK:
+                    sector = get_awcs_covered_sector_data(
+                        domain, config, loc_level, location, include_test
+                    )
+                    data.update(sector)
         elif step == "chart":
             data = get_awcs_covered_data_chart(domain, config, loc_level, include_test)
 
@@ -1201,26 +1098,15 @@ class AWCsCoveredView(View):
 
 
 @method_decorator([login_and_domain_required], name='dispatch')
-class RegisteredHouseholdView(View):
+class RegisteredHouseholdView(BaseReportView):
     def get(self, request, *args, **kwargs):
-        include_test = request.GET.get('include_test', False)
-        step = kwargs.get('step')
-        now = datetime.utcnow()
-        month = int(request.GET.get('month', now.month))
-        year = int(request.GET.get('year', now.year))
-
-        if now.day == 1 and now.month == month and now.year == year:
-            month = (now - relativedelta(months=1)).month
-            year = now.year
-        selected_month = datetime(year, month, 1)
-
-        domain = self.kwargs['domain']
+        step, now, month, year, include_test, domain, current_month, prev_month, location, selected_month = \
+            self.get_settings(request, *args, **kwargs)
 
         config = {
             'month': tuple(selected_month.timetuple())[:3],
             'aggregation_level': 1,
         }
-        location = request.GET.get('location_id', '')
         config.update(get_location_filter(location, self.kwargs['domain']))
         loc_level = get_location_level(config.get('aggregation_level'))
 
@@ -1230,10 +1116,11 @@ class RegisteredHouseholdView(View):
                 data = get_registered_household_sector_data(domain, config, loc_level, location, include_test)
             else:
                 data = get_registered_household_data_map(domain, config.copy(), loc_level, include_test)
-                sector = get_registered_household_sector_data(
-                    domain, config.copy(), loc_level, location, include_test
-                )
-                data.update(sector)
+                if loc_level == LocationTypes.BLOCK:
+                    sector = get_registered_household_sector_data(
+                        domain, config, loc_level, location, include_test
+                    )
+                    data.update(sector)
         elif step == "chart":
             data = get_registered_household_data_chart(domain, config, loc_level, include_test)
 
@@ -1243,20 +1130,10 @@ class RegisteredHouseholdView(View):
 
 
 @method_decorator([login_and_domain_required], name='dispatch')
-class EnrolledChildrenView(View):
+class EnrolledChildrenView(BaseReportView):
     def get(self, request, *args, **kwargs):
-        include_test = request.GET.get('include_test', False)
-        step = kwargs.get('step')
-        now = datetime.utcnow()
-        month = int(request.GET.get('month', now.month))
-        year = int(request.GET.get('year', now.year))
-
-        if now.day == 1 and now.month == month and now.year == year:
-            month = (now - relativedelta(months=1)).month
-            year = now.year
-        selected_month = datetime(year, month, 1)
-
-        domain = self.kwargs['domain']
+        step, now, month, year, include_test, domain, current_month, prev_month, location, selected_month = \
+            self.get_settings(request, *args, **kwargs)
 
         config = {
             'month': tuple(selected_month.timetuple())[:3],
@@ -1270,7 +1147,6 @@ class EnrolledChildrenView(View):
         if age:
             config.update(get_age_filter(age))
 
-        location = request.GET.get('location_id', '')
         config.update(get_location_filter(location, self.kwargs['domain']))
         loc_level = get_location_level(config.get('aggregation_level'))
 
@@ -1280,10 +1156,11 @@ class EnrolledChildrenView(View):
                 data = get_enrolled_children_sector_data(domain, config, loc_level, location, include_test)
             else:
                 data = get_enrolled_children_data_map(domain, config.copy(), loc_level, include_test)
-                sector = get_enrolled_children_sector_data(
-                    domain, config.copy(), loc_level, location, include_test
-                )
-                data.update(sector)
+                if loc_level == LocationTypes.BLOCK:
+                    sector = get_enrolled_children_sector_data(
+                        domain, config, loc_level, location, include_test
+                    )
+                    data.update(sector)
         elif step == "chart":
             if 'age' in config:
                 del config['age']
@@ -1295,27 +1172,16 @@ class EnrolledChildrenView(View):
 
 
 @method_decorator([login_and_domain_required], name='dispatch')
-class EnrolledWomenView(View):
+class EnrolledWomenView(BaseReportView):
     def get(self, request, *args, **kwargs):
-        include_test = request.GET.get('include_test', False)
-        step = kwargs.get('step')
-        now = datetime.utcnow()
-        month = int(request.GET.get('month', now.month))
-        year = int(request.GET.get('year', now.year))
-
-        if now.day == 1 and now.month == month and now.year == year:
-            month = (now - relativedelta(months=1)).month
-            year = now.year
-        selected_month = datetime(year, month, 1)
-
-        domain = self.kwargs['domain']
+        step, now, month, year, include_test, domain, current_month, prev_month, location, selected_month = \
+            self.get_settings(request, *args, **kwargs)
 
         config = {
             'month': tuple(selected_month.timetuple())[:3],
             'aggregation_level': 1,
         }
 
-        location = request.GET.get('location_id', '')
         config.update(get_location_filter(location, self.kwargs['domain']))
         loc_level = get_location_level(config.get('aggregation_level'))
 
@@ -1325,10 +1191,11 @@ class EnrolledWomenView(View):
                 data = get_enrolled_women_sector_data(domain, config, loc_level, location, include_test)
             else:
                 data = get_enrolled_women_data_map(domain, config.copy(), loc_level, include_test)
-                sector = get_enrolled_women_sector_data(
-                    domain, config.copy(), loc_level, location, include_test
-                )
-                data.update(sector)
+                if loc_level == LocationTypes.BLOCK:
+                    sector = get_enrolled_women_sector_data(
+                        domain, config, loc_level, location, include_test
+                    )
+                    data.update(sector)
         elif step == "chart":
             data = get_enrolled_women_data_chart(domain, config, loc_level, include_test)
 
@@ -1338,26 +1205,15 @@ class EnrolledWomenView(View):
 
 
 @method_decorator([login_and_domain_required], name='dispatch')
-class LactatingEnrolledWomenView(View):
+class LactatingEnrolledWomenView(BaseReportView):
     def get(self, request, *args, **kwargs):
-        include_test = request.GET.get('include_test', False)
-        step = kwargs.get('step')
-        now = datetime.utcnow()
-        month = int(request.GET.get('month', now.month))
-        year = int(request.GET.get('year', now.year))
-
-        if now.day == 1 and now.month == month and now.year == year:
-            month = (now - relativedelta(months=1)).month
-            year = now.year
-        selected_month = datetime(year, month, 1)
-
-        domain = self.kwargs['domain']
+        step, now, month, year, include_test, domain, current_month, prev_month, location, selected_month = \
+            self.get_settings(request, *args, **kwargs)
 
         config = {
             'month': tuple(selected_month.timetuple())[:3],
             'aggregation_level': 1,
         }
-        location = request.GET.get('location_id', '')
         config.update(get_location_filter(location, self.kwargs['domain']))
         loc_level = get_location_level(config.get('aggregation_level'))
 
@@ -1367,10 +1223,11 @@ class LactatingEnrolledWomenView(View):
                 data = get_lactating_enrolled_women_sector_data(domain, config, loc_level, location, include_test)
             else:
                 data = get_lactating_enrolled_women_data_map(domain, config.copy(), loc_level, include_test)
-                sector = get_lactating_enrolled_women_sector_data(
-                    domain, config.copy(), loc_level, location, include_test
-                )
-                data.update(sector)
+                if loc_level == LocationTypes.BLOCK:
+                    sector = get_lactating_enrolled_women_sector_data(
+                        domain, config, loc_level, location, include_test
+                    )
+                    data.update(sector)
         elif step == "chart":
             data = get_lactating_enrolled_data_chart(domain, config, loc_level, include_test)
 
@@ -1380,26 +1237,15 @@ class LactatingEnrolledWomenView(View):
 
 
 @method_decorator([login_and_domain_required], name='dispatch')
-class AdolescentGirlsView(View):
+class AdolescentGirlsView(BaseReportView):
     def get(self, request, *args, **kwargs):
-        include_test = request.GET.get('include_test', False)
-        step = kwargs.get('step')
-        now = datetime.utcnow()
-        month = int(request.GET.get('month', now.month))
-        year = int(request.GET.get('year', now.year))
-
-        if now.day == 1 and now.month == month and now.year == year:
-            month = (now - relativedelta(months=1)).month
-            year = now.year
-        selected_month = datetime(year, month, 1)
-
-        domain = self.kwargs['domain']
+        step, now, month, year, include_test, domain, current_month, prev_month, location, selected_month = \
+            self.get_settings(request, *args, **kwargs)
 
         config = {
             'month': tuple(selected_month.timetuple())[:3],
             'aggregation_level': 1,
         }
-        location = request.GET.get('location_id', '')
         config.update(get_location_filter(location, self.kwargs['domain']))
         loc_level = get_location_level(config.get('aggregation_level'))
 
@@ -1409,10 +1255,11 @@ class AdolescentGirlsView(View):
                 data = get_adolescent_girls_sector_data(domain, config, loc_level, location, include_test)
             else:
                 data = get_adolescent_girls_data_map(domain, config.copy(), loc_level, include_test)
-                sector = get_adolescent_girls_sector_data(
-                    domain, config.copy(), loc_level, location, include_test
-                )
-                data.update(sector)
+                if loc_level == LocationTypes.BLOCK:
+                    sector = get_adolescent_girls_sector_data(
+                        domain, config, loc_level, location, include_test
+                    )
+                    data.update(sector)
         elif step == "chart":
             data = get_adolescent_girls_data_chart(domain, config, loc_level, include_test)
 
@@ -1422,41 +1269,30 @@ class AdolescentGirlsView(View):
 
 
 @method_decorator([login_and_domain_required], name='dispatch')
-class AdhaarBeneficiariesView(View):
+class AdhaarBeneficiariesView(BaseReportView):
     def get(self, request, *args, **kwargs):
-        include_test = request.GET.get('include_test', False)
-        step = kwargs.get('step')
-        now = datetime.utcnow()
-        month = int(request.GET.get('month', now.month))
-        year = int(request.GET.get('year', now.year))
-
-        if now.day == 1 and now.month == month and now.year == year:
-            month = (now - relativedelta(months=1)).month
-            year = now.year
-        selected_month = datetime(year, month, 1)
-
-        domain = self.kwargs['domain']
+        step, now, month, year, include_test, domain, current_month, prev_month, location, selected_month = \
+            self.get_settings(request, *args, **kwargs)
 
         config = {
             'month': tuple(selected_month.timetuple())[:3],
             'aggregation_level': 1,
         }
-        location = request.GET.get('location_id', '')
         config.update(get_location_filter(location, self.kwargs['domain']))
         loc_level = get_location_level(config.get('aggregation_level'))
 
         data = {}
+        beta = icds_pre_release_features(request.couch_user)
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
-                data = get_adhaar_sector_data(domain, config, loc_level, location, include_test)
+                data = get_adhaar_sector_data(domain, config, loc_level, location, include_test, beta=beta)
             else:
-                data = get_adhaar_data_map(domain, config.copy(), loc_level, include_test)
-                sector = get_adhaar_sector_data(
-                    domain, config.copy(), loc_level, location, include_test
-                )
-                data.update(sector)
+                data = get_adhaar_data_map(domain, config.copy(), loc_level, include_test, beta=beta)
+                if loc_level == LocationTypes.BLOCK:
+                    sector = get_adhaar_sector_data(domain, config, loc_level, location, include_test, beta=beta)
+                    data.update(sector)
         elif step == "chart":
-            data = get_adhaar_data_chart(domain, config, loc_level, include_test)
+            data = get_adhaar_data_chart(domain, config, loc_level, include_test, beta=beta)
 
         return JsonResponse(data={
             'report_data': data,
@@ -1464,25 +1300,15 @@ class AdhaarBeneficiariesView(View):
 
 
 @method_decorator([login_and_domain_required], name='dispatch')
-class CleanWaterView(View):
+class CleanWaterView(BaseReportView):
     def get(self, request, *args, **kwargs):
-        include_test = request.GET.get('include_test', False)
-        step = kwargs.get('step')
-        now = datetime.utcnow()
-        month = int(request.GET.get('month', now.month))
-        year = int(request.GET.get('year', now.year))
-
-        if now.day == 1 and now.month == month and now.year == year:
-            month = (now - relativedelta(months=1)).month
-            year = now.year
-        selected_month = datetime(year, month, 1)
-        domain = self.kwargs['domain']
+        step, now, month, year, include_test, domain, current_month, prev_month, location, selected_month = \
+            self.get_settings(request, *args, **kwargs)
 
         config = {
             'month': tuple(selected_month.timetuple())[:3],
             'aggregation_level': 1,
         }
-        location = request.GET.get('location_id', '')
         config.update(get_location_filter(location, self.kwargs['domain']))
         loc_level = get_location_level(config.get('aggregation_level'))
 
@@ -1492,10 +1318,11 @@ class CleanWaterView(View):
                 data = get_clean_water_sector_data(domain, config, loc_level, location, include_test)
             else:
                 data = get_clean_water_data_map(domain, config.copy(), loc_level, include_test)
-                sector = get_clean_water_sector_data(
-                    domain, config.copy(), loc_level, location, include_test
-                )
-                data.update(sector)
+                if loc_level == LocationTypes.BLOCK:
+                    sector = get_clean_water_sector_data(
+                        domain, config, loc_level, location, include_test
+                    )
+                    data.update(sector)
         elif step == "chart":
             data = get_clean_water_data_chart(domain, config, loc_level, include_test)
 
@@ -1505,26 +1332,15 @@ class CleanWaterView(View):
 
 
 @method_decorator([login_and_domain_required], name='dispatch')
-class FunctionalToiletView(View):
+class FunctionalToiletView(BaseReportView):
     def get(self, request, *args, **kwargs):
-        include_test = request.GET.get('include_test', False)
-        step = kwargs.get('step')
-        now = datetime.utcnow()
-        month = int(request.GET.get('month', now.month))
-        year = int(request.GET.get('year', now.year))
-
-        if now.day == 1 and now.month == month and now.year == year:
-            month = (now - relativedelta(months=1)).month
-            year = now.year
-        selected_month = datetime(year, month, 1)
-
-        domain = self.kwargs['domain']
+        step, now, month, year, include_test, domain, current_month, prev_month, location, selected_month = \
+            self.get_settings(request, *args, **kwargs)
 
         config = {
             'month': tuple(selected_month.timetuple())[:3],
             'aggregation_level': 1,
         }
-        location = request.GET.get('location_id', '')
         config.update(get_location_filter(location, self.kwargs['domain']))
         loc_level = get_location_level(config.get('aggregation_level'))
 
@@ -1534,10 +1350,11 @@ class FunctionalToiletView(View):
                 data = get_functional_toilet_sector_data(domain, config, loc_level, location, include_test)
             else:
                 data = get_functional_toilet_data_map(domain, config.copy(), loc_level, include_test)
-                sector = get_functional_toilet_sector_data(
-                    domain, config.copy(), loc_level, location, include_test
-                )
-                data.update(sector)
+                if loc_level == LocationTypes.BLOCK:
+                    sector = get_functional_toilet_sector_data(
+                        domain, config, loc_level, location, include_test
+                    )
+                    data.update(sector)
         elif step == "chart":
             data = get_functional_toilet_data_chart(domain, config, loc_level, include_test)
 
@@ -1547,26 +1364,15 @@ class FunctionalToiletView(View):
 
 
 @method_decorator([login_and_domain_required], name='dispatch')
-class MedicineKitView(View):
+class MedicineKitView(BaseReportView):
     def get(self, request, *args, **kwargs):
-        include_test = request.GET.get('include_test', False)
-        step = kwargs.get('step')
-        now = datetime.utcnow()
-        month = int(request.GET.get('month', now.month))
-        year = int(request.GET.get('year', now.year))
-
-        if now.day == 1 and now.month == month and now.year == year:
-            month = (now - relativedelta(months=1)).month
-            year = now.year
-        selected_month = datetime(year, month, 1)
-
-        domain = self.kwargs['domain']
+        step, now, month, year, include_test, domain, current_month, prev_month, location, selected_month = \
+            self.get_settings(request, *args, **kwargs)
 
         config = {
             'month': tuple(selected_month.timetuple())[:3],
             'aggregation_level': 1,
         }
-        location = request.GET.get('location_id', '')
         config.update(get_location_filter(location, self.kwargs['domain']))
         loc_level = get_location_level(config.get('aggregation_level'))
 
@@ -1576,10 +1382,11 @@ class MedicineKitView(View):
                 data = get_medicine_kit_sector_data(domain, config, loc_level, location, include_test)
             else:
                 data = get_medicine_kit_data_map(domain, config.copy(), loc_level, include_test)
-                sector = get_medicine_kit_sector_data(
-                    domain, config.copy(), loc_level, location, include_test
-                )
-                data.update(sector)
+                if loc_level == LocationTypes.BLOCK:
+                    sector = get_medicine_kit_sector_data(
+                        domain, config, loc_level, location, include_test
+                    )
+                    data.update(sector)
         elif step == "chart":
             data = get_medicine_kit_data_chart(domain, config, loc_level, include_test)
 
@@ -1589,26 +1396,15 @@ class MedicineKitView(View):
 
 
 @method_decorator([login_and_domain_required], name='dispatch')
-class InfantsWeightScaleView(View):
+class InfantsWeightScaleView(BaseReportView):
     def get(self, request, *args, **kwargs):
-        include_test = request.GET.get('include_test', False)
-        step = kwargs.get('step')
-        now = datetime.utcnow()
-        month = int(request.GET.get('month', now.month))
-        year = int(request.GET.get('year', now.year))
-
-        if now.day == 1 and now.month == month and now.year == year:
-            month = (now - relativedelta(months=1)).month
-            year = now.year
-        selected_month = datetime(year, month, 1)
-
-        domain = self.kwargs['domain']
+        step, now, month, year, include_test, domain, current_month, prev_month, location, selected_month = \
+            self.get_settings(request, *args, **kwargs)
 
         config = {
             'month': tuple(selected_month.timetuple())[:3],
             'aggregation_level': 1,
         }
-        location = request.GET.get('location_id', '')
         config.update(get_location_filter(location, self.kwargs['domain']))
         loc_level = get_location_level(config.get('aggregation_level'))
 
@@ -1618,10 +1414,11 @@ class InfantsWeightScaleView(View):
                 data = get_infants_weight_scale_sector_data(domain, config, loc_level, location, include_test)
             else:
                 data = get_infants_weight_scale_data_map(domain, config.copy(), loc_level, include_test)
-                sector = get_infants_weight_scale_sector_data(
-                    domain, config.copy(), loc_level, location, include_test
-                )
-                data.update(sector)
+                if loc_level == LocationTypes.BLOCK:
+                    sector = get_infants_weight_scale_sector_data(
+                        domain, config, loc_level, location, include_test
+                    )
+                    data.update(sector)
         elif step == "chart":
             data = get_infants_weight_scale_data_chart(domain, config, loc_level, include_test)
 
@@ -1631,26 +1428,15 @@ class InfantsWeightScaleView(View):
 
 
 @method_decorator([login_and_domain_required], name='dispatch')
-class AdultWeightScaleView(View):
+class AdultWeightScaleView(BaseReportView):
     def get(self, request, *args, **kwargs):
-        include_test = request.GET.get('include_test', False)
-        step = kwargs.get('step')
-        now = datetime.utcnow()
-        month = int(request.GET.get('month', now.month))
-        year = int(request.GET.get('year', now.year))
-
-        if now.day == 1 and now.month == month and now.year == year:
-            month = (now - relativedelta(months=1)).month
-            year = now.year
-        selected_month = datetime(year, month, 1)
-
-        domain = self.kwargs['domain']
+        step, now, month, year, include_test, domain, current_month, prev_month, location, selected_month = \
+            self.get_settings(request, *args, **kwargs)
 
         config = {
             'month': tuple(selected_month.timetuple())[:3],
             'aggregation_level': 1,
         }
-        location = request.GET.get('location_id', '')
         config.update(get_location_filter(location, self.kwargs['domain']))
         loc_level = get_location_level(config.get('aggregation_level'))
 
@@ -1660,10 +1446,11 @@ class AdultWeightScaleView(View):
                 data = get_adult_weight_scale_sector_data(domain, config, loc_level, location, include_test)
             else:
                 data = get_adult_weight_scale_data_map(domain, config.copy(), loc_level, include_test)
-                sector = get_adult_weight_scale_sector_data(
-                    domain, config.copy(), loc_level, location, include_test
-                )
-                data.update(sector)
+                if loc_level == LocationTypes.BLOCK:
+                    sector = get_adult_weight_scale_sector_data(
+                        domain, config, loc_level, location, include_test
+                    )
+                    data.update(sector)
         elif step == "chart":
             data = get_adult_weight_scale_data_chart(domain, config, loc_level, include_test)
 
@@ -1720,9 +1507,29 @@ class DownloadPDFReport(View):
         client = get_redis_client()
         if format == 'one':
             response = HttpResponse(client.get(uuid), content_type='application/pdf')
-            response['Content-Disposition'] = 'attachment; filename="ISSNIP_monthly_register_cumulative.pdf"'
+            response['Content-Disposition'] = 'attachment; filename="ICDS_CAS_monthly_register_cumulative.pdf"'
             return response
         else:
             response = HttpResponse(client.get(uuid), content_type='application/zip')
-            response['Content-Disposition'] = 'attachment; filename="ISSNIP_monthly_register.zip"'
+            response['Content-Disposition'] = 'attachment; filename="ICDS_CAS_monthly_register.zip"'
             return response
+
+
+@method_decorator([login_and_domain_required], name='dispatch')
+class CheckPDFReportStatus(View):
+    def get(self, request, *args, **kwargs):
+        task_id = self.request.GET.get('task_id', None)
+
+        res = AsyncResult(task_id)
+        status = res.ready()
+
+        if status:
+            task_result = prepare_issnip_monthly_register_reports.AsyncResult(task_id)
+            result = task_result.get()
+            return JsonResponse(
+                {
+                    'task_ready': status,
+                    'task_result': result
+                }
+            )
+        return JsonResponse({'task_ready': status})

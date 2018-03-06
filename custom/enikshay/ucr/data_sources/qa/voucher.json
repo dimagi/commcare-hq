@@ -3,8 +3,7 @@
         "enikshay-reports-qa"
     ],
     "server_environment": [
-        "enikshay",
-        "softlayer"
+        "enikshay"
     ],
     "config": {
         "referenced_doc_type": "CommCareCase",

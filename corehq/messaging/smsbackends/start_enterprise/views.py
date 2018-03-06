@@ -17,7 +17,7 @@ class StartEnterpriseDeliveryReceiptView(IncomingBackendView):
         return StartEnterpriseBackend
 
     def get(self, request, api_key, *args, **kwargs):
-        logging.info("Received Start Enterprise delivery receipt with items: %s" % request.GET.dict().keys())
+        logging.info("Received Start Enterprise delivery receipt with items: %s" % list(request.GET.dict().keys()))
 
         message_id = request.GET.get('msgid')
 

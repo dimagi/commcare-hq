@@ -7,7 +7,7 @@
         <form method="post"
               action="{% url "rearrange" domain app.id 'modules' %}">
               {% csrf_token %}
-              <input name="ajax" value="true" />
+              <input name="ajax" value="true" type="hidden" />
         </form>
     </li>
     {% with module as selected_module %}
@@ -25,7 +25,7 @@
                         <form method="post"
                               action="{% url "rearrange" domain app.id 'forms' %}">
                               {% csrf_token %}
-                              <input name="ajax" value="true" />
+                              <input name="ajax" value="true" type="hidden" />
                         </form>
                     </li>
                     {% with nav_form as selected_form %}

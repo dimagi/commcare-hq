@@ -8,7 +8,7 @@ from corehq.apps.app_manager.util import (is_usercase_in_use, xpath_references_c
     xpath_references_user_case)
 from corehq.apps.app_manager.xpath import (interpolate_xpath, CaseIDXPath, session_var,
     QualifiedScheduleFormXPath)
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 
 class MenuContributor(SuiteContributorByModule):

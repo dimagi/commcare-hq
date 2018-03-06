@@ -1,4 +1,4 @@
-/* global module, inject, chai */
+/* global module, inject, chai, sinon */
 "use strict";
 
 var pageData = hqImport('hqwebapp/js/initial_page_data');
@@ -18,6 +18,8 @@ describe('Progress Report Directive', function () {
         $scope = $rootScope.$new();
         $httpBackend = _$httpBackend_;
         $location = _$location_;
+        var fakeDate = new Date(2017, 9, 1);
+        var clock = sinon.useFakeTimers(fakeDate.getTime());
 
         $httpBackend.expectGET('template').respond(200, '<div></div>');
         var element = window.angular.element("<progress-report data='test'></progress-report>");
@@ -26,6 +28,8 @@ describe('Progress Report Directive', function () {
         $httpBackend.flush();
         $scope.$digest();
         controller = compiled.controller('progressReport');
+
+        clock.restore();
     }));
 
     it('tests instantiate the controller properly', function () {
@@ -33,30 +37,9 @@ describe('Progress Report Directive', function () {
     });
 
     it('tests initial state', function () {
-        assert.equal(controller.showWarning, true);
+        assert.equal(controller.showWarning, false);
+        assert.equal(controller.showPreviousMonthWarning, true);
         assert.deepEqual(controller.filtersData, {});
-    });
-
-    it('tests show info message', function () {
-        var fakeDate = new Date(2016, 1, 1);
-        var clock = sinon.useFakeTimers(fakeDate.getTime());
-
-        var expected = true;
-        var result = controller.showInfoMessage();
-
-        assert.equal(expected, result);
-        clock.restore();
-    });
-
-    it('tests not show info message', function () {
-        var fakeDate = new Date(2016, 1, 2);
-        var clock = sinon.useFakeTimers(fakeDate.getTime());
-
-        var expected = false;
-        var result = controller.showInfoMessage();
-
-        assert.equal(expected, result);
-        clock.restore();
     });
 
     it('tests location change', function () {
@@ -151,9 +134,20 @@ describe('Progress Report Directive', function () {
         assert.equal(expected, result);
     });
 
+    it('tests get color if current data equal previous month data when round up to 2 digits', function () {
+        var index = 2;
+        var data = [{'html': 'test'}, {'html': 1.11443907}, {'html': 1.1123987007}];
+
+        var expected = 'black';
+
+        var result = controller.getCSS(data, index, false);
+
+        assert.equal(expected, result);
+    });
+
     it('tests get color if previous month data are less than current data', function () {
         var index = 2;
-        var data = [{'html': 'test'}, {'html': 1}, {'html': 2}];
+        var data = [{'html': 'test'}, {'html': 1.11}, {'html': 1.12}];
 
         var expected = 'green fa fa-arrow-up';
 
@@ -164,7 +158,7 @@ describe('Progress Report Directive', function () {
 
     it('tests get color if previous month data are bigger than current data', function () {
         var index = 2;
-        var data = [{'html': 'test'}, {'html': 2}, {'html': 1}];
+        var data = [{'html': 'test'}, {'html': 1.12}, {'html': 1.11}];
 
         var expected = 'red fa fa-arrow-down';
 
@@ -175,9 +169,20 @@ describe('Progress Report Directive', function () {
 
     it('tests get color if previous month data are less than current data and reverse is true', function () {
         var index = 2;
-        var data = [{'html': 'test'}, {'html': 1}, {'html': 2}];
+        var data = [{'html': 'test'}, {'html': 1.11}, {'html': 1.12}];
 
         var expected = 'red fa fa-arrow-up';
+
+        var result = controller.getCSS(data, index, true);
+
+        assert.equal(expected, result);
+    });
+
+    it('tests get color if previous month data are bigger than current data and reverse is true', function () {
+        var index = 2;
+        var data = [{'html': 'test'}, {'html': 1.12}, {'html': 1.11}];
+
+        var expected = 'green fa fa-arrow-down';
 
         var result = controller.getCSS(data, index, true);
 

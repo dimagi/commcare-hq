@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from datetime import timedelta
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext as _

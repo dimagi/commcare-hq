@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.core.exceptions import ObjectDoesNotExist
 from casexml.apps.stock.consumption import ConsumptionHelper
 from corehq.apps.locations.models import SQLLocation

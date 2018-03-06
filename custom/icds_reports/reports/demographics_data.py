@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from datetime import datetime
 
 from dateutil.relativedelta import relativedelta
@@ -7,11 +8,14 @@ from django.utils.translation import ugettext as _
 
 from corehq.util.quickcache import quickcache
 from custom.icds_reports.models import AggAwcDailyView, AggAwcMonthly
-from custom.icds_reports.utils import percent_increase, percent_diff, get_value, apply_exclude
+from custom.icds_reports.utils import (
+    percent_increase, percent_diff, get_value, apply_exclude,
+    person_has_aadhaar_column, person_is_beneficiary_column
+)
 
 
-@quickcache(['domain', 'now_date', 'config', 'show_test'], timeout=30 * 60)
-def get_demographics_data(domain, now_date, config, show_test=False):
+@quickcache(['domain', 'now_date', 'config', 'show_test', 'beta'], timeout=30 * 60)
+def get_demographics_data(domain, now_date, config, show_test=False, beta=False):
     now_date = datetime(*now_date)
     yesterday_date = (now_date - relativedelta(days=1)).date()
     two_days_ago = (now_date - relativedelta(days=2)).date()
@@ -33,16 +37,10 @@ def get_demographics_data(domain, now_date, config, show_test=False):
             ccs_pregnant_all=Sum('cases_ccs_pregnant_all'),
             css_lactating=Sum('cases_ccs_lactating'),
             css_lactating_all=Sum('cases_ccs_lactating_all'),
-            person_adolescent=(
-                Sum('cases_person_adolescent_girls_11_14') +
-                Sum('cases_person_adolescent_girls_15_18')
-            ),
-            person_adolescent_all=(
-                Sum('cases_person_adolescent_girls_11_14_all') +
-                Sum('cases_person_adolescent_girls_15_18_all')
-            ),
-            person_aadhaar=Sum('cases_person_has_aadhaar'),
-            all_persons=Sum('cases_person_beneficiary')
+            person_adolescent=Sum('cases_person_adolescent_girls_11_14'),
+            person_adolescent_all=Sum('cases_person_adolescent_girls_11_14_all'),
+            person_aadhaar=Sum(person_has_aadhaar_column(beta)),
+            all_persons=Sum(person_is_beneficiary_column(beta))
         )
 
         if not show_test:
@@ -94,10 +92,11 @@ def get_demographics_data(domain, now_date, config, show_test=False):
                         prev_data,
                         'all_persons'
                     ),
-                    'color': 'green' if percent_increase(
+                    'color': 'green' if percent_diff(
                         'person_aadhaar',
                         data,
-                        prev_data) > 0 else 'red',
+                        prev_data,
+                        'all_persons') > 0 else 'red',
                     'value': get_value(data, 'person_aadhaar'),
                     'all': get_value(data, 'all_persons'),
                     'format': 'percent_and_div',
@@ -107,12 +106,12 @@ def get_demographics_data(domain, now_date, config, show_test=False):
             ],
             [
                 {
-                    'label': _('Percent children (0-6 years) enrolled for ICDS services'),
+                    'label': _('Percent children (0-6 years) enrolled for Anganwadi Services'),
                     'help_text': _('Percentage of children registered between '
-                                   '0-6 years old who are enrolled for ICDS services'),
+                                   '0-6 years old who are enrolled for Anganwadi Services'),
                     'percent': percent_diff('child_health', data, prev_data, 'child_health_all'),
                     'color': 'green' if percent_diff(
-                        'child_health_all',
+                        'child_health',
                         data,
                         prev_data, 'child_health_all') > 0 else 'red',
                     'value': get_value(data, 'child_health'),
@@ -122,8 +121,9 @@ def get_demographics_data(domain, now_date, config, show_test=False):
                     'redirect': 'enrolled_children'
                 },
                 {
-                    'label': _('Percent pregnant women enrolled for ICDS services'),
-                    'help_text': _('Percentage of pregnant women registered who are enrolled for ICDS services'),
+                    'label': _('Percent pregnant women enrolled for Anganwadi Services'),
+                    'help_text': _('Percentage of pregnant women registered who are enrolled for Anganwadi '
+                                   'Services'),
                     'percent': percent_diff('ccs_pregnant', data, prev_data, 'ccs_pregnant_all'),
                     'color': 'green' if percent_diff(
                         'ccs_pregnant',
@@ -141,8 +141,9 @@ def get_demographics_data(domain, now_date, config, show_test=False):
             [
 
                 {
-                    'label': _('Percent lactating women enrolled for ICDS services'),
-                    'help_text': _('Percentage of lactating women registered who are enrolled for ICDS services'),
+                    'label': _('Percent lactating women enrolled for Anganwadi Services'),
+                    'help_text': _('Percentage of lactating women registered who are enrolled for Anganwadi '
+                                   'Services'),
                     'percent': percent_diff('css_lactating', data, prev_data, 'css_lactating_all'),
                     'color': 'green' if percent_diff(
                         'css_lactating',
@@ -157,10 +158,10 @@ def get_demographics_data(domain, now_date, config, show_test=False):
                     'redirect': 'lactating_enrolled_women'
                 },
                 {
-                    'label': _('Percent adolescent girls (11-18 years) enrolled for ICDS services'),
+                    'label': _('Percent adolescent girls (11-14 years) enrolled for Anganwadi Services'),
                     'help_text': _((
-                        "Percentage of adolescent girls registered between 11-18 years"
-                        " old who are enrolled for ICDS services"
+                        "Percentage of adolescent girls registered between 11-14 years"
+                        " old who are enrolled for Anganwadi Services"
                     )),
                     'percent': percent_diff(
                         'person_adolescent',

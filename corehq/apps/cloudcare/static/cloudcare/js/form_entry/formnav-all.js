@@ -19,13 +19,13 @@ function init_preloaders(preloaders) {
                     url: PRELOADER_URL,
                     type: 'GET',
                     data: {
-                        "param": val
+                        "param": val,
                     },
-                    async: false
+                    async: false,
                 }).responseText;
                 preload_data[type][key] = valback;
             } else {
-                preload_data[type][key] = val
+                preload_data[type][key] = val;
             }
         }
     }

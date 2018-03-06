@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 SUPERVISOR_APP_ID = '48cc1709b7f62ffea24cc6634a00660c'
 VHND_SURVEY_XMLNS = "http://openrosa.org/formdesigner/A1C9EF1B-8B42-43AB-BA81-9484DB9D8293"
 

@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from casexml.apps.case.util import get_datetime_case_property_changed
 from custom.enikshay.const import ENROLLED_IN_PRIVATE
 

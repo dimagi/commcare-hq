@@ -1,9 +1,10 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from collections import namedtuple
 
 from sqlagg.filters import ORFilter, EQFilter
 
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 from corehq.apps.es import filters
 from corehq.apps.locations.models import SQLLocation

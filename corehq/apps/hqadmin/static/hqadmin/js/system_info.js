@@ -1,5 +1,16 @@
-/* globals hqDefine */
-hqDefine('hqadmin/js/system_info', function () {
+hqDefine('hqadmin/js/system_info', [
+    'jquery',
+    'knockout',
+    'underscore',
+    'hqwebapp/js/initial_page_data',
+    'hqwebapp/js/alert_user',
+], function (
+    $,
+    ko,
+    _,
+    initialPageData,
+    alertUser
+) {
     function format_date(datestring) {
         //parse and format the date timestamps - seconds since epoch into date object
         var date = new Date(datestring * 1000);
@@ -8,25 +19,26 @@ hqDefine('hqadmin/js/system_info', function () {
         // minutes part from the timestamp
         var minutes = date.getMinutes();
         // seconds part from the timestamp
-        var seconds = date.getSeconds();
+        var seconds = date.getSeconds(),
+            second_str;
         if (seconds < 10) {
-            var second_str = "0"+ seconds;
+            second_str = "0" + seconds;
         } else {
-            var second_str = seconds;
+            second_str = seconds;
         }
-    
+
         var year = date.getFullYear();
         var month = date.getMonth() + 1;
         var day = date.getDate();
-    
+
         return  year + '/' + month + '/' + day + ' ' + hours + ':' + minutes + ':' +  second_str;
-    
+
     }
-    
+
     function number_fix(num) {
         if (num !== null) {
             if (num.toFixed) {
-                return num.toFixed(2)
+                return num.toFixed(2);
             }
             if (num.toPrecision) {
                 return num.toPrecision(2);
@@ -34,7 +46,7 @@ hqDefine('hqadmin/js/system_info', function () {
             return num;
         }
     }
-    
+
     function RefreshableViewModel(url, model, interval, sort_by) {
         var self = this;
         self.error = ko.observable();
@@ -43,7 +55,7 @@ hqDefine('hqadmin/js/system_info', function () {
         self.loading = ko.observable(false);
         self.timer = null;
         self.interval = interval;
-    
+
         self.autoRefresh.subscribe(function (newVal) {
             if (newVal) {
                 self.refresh();
@@ -51,14 +63,14 @@ hqDefine('hqadmin/js/system_info', function () {
                 self.clearTimer();
             }
         });
-    
+
         self.clearTimer = function () {
             if (self.timer) {
                 clearTimeout(self.timer);
                 self.timer = null;
             }
         };
-    
+
         self.refresh = function () {
             self.clearTimer();
             self.loading(true);
@@ -68,30 +80,34 @@ hqDefine('hqadmin/js/system_info', function () {
                     return new model(item);
                 });
                 if (sort_by) {
-                    objects = _(objects).sortBy(function (x) { return x[sort_by]; })
+                    objects = _(objects).sortBy(function (x) { return x[sort_by]; });
                 }
                 self.models(objects);
                 if (self.autoRefresh()) {
                     self.timer = setTimeout(self.refresh, self.interval);
                 }
             })
-            .fail(function (jqxhr, textStatus, error) {
-                var err = 'Unknown server error';
-                try {
-                    err = JSON.parse(jqxhr.responseText).error;
-                } catch (e) {}
-                self.error("Error: " + err);
-                self.autoRefresh(false);
-                self.timer = null;
-            })
-            .always(function (){
-                self.loading(false);
-            });
+                .fail(function (jqxhr) {
+                    var err = 'Unknown server error';
+                    /* eslint-disable no-empty */
+                    try {
+                        err = JSON.parse(jqxhr.responseText).error;
+                    } catch (e) {
+                        // this is fine
+                    }
+                    /* eslint-enable no-empty */
+                    self.error("Error: " + err);
+                    self.autoRefresh(false);
+                    self.timer = null;
+                })
+                .always(function (){
+                    self.loading(false);
+                });
         };
     }
-    
+
     function ActiveTaskModel(data) {
-    
+
         this.pid = ko.observable(data.pid);
         this.type = ko.observable(data.type);
         this.database = ko.observable(data.database);
@@ -103,7 +119,7 @@ hqDefine('hqadmin/js/system_info', function () {
         this.changes_done = ko.observable(data.changes_done);
         this.progress_contribution = ko.observable(data.progress_contribution);
     }
-    
+
     function DesignDocModel(data) {
         var self = this;
         self.design_document = ko.observable(data.design_document);
@@ -112,12 +128,12 @@ hqDefine('hqadmin/js/system_info', function () {
             return new ActiveTaskModel(task);
         });
         self.tasks = ko.observableArray(tasks);
-    
+
         self.showDetails = function () {
             $('#' + self.details_id).toggle();
         };
     }
-    
+
     function CeleryTaskModel(data) {
         var self = this;
         this.name = ko.observable(data.name);
@@ -131,21 +147,21 @@ hqDefine('hqadmin/js/system_info', function () {
         this.args = ko.observable(data.args);
         this.kwargs = ko.observable(data.kwargs);
         this.runtime = ko.observable(number_fix(data.runtime));
-    
+
         this.toggleArgs = function () {
             $('#' + self.uuid()).toggle();
-        }
+        };
     }
-    
+
     function PillowOperationViewModel(pillow_model, operation) {
         var self = this;
         self.pillow_model = pillow_model;
         self.operation = operation;
         self.title = operation + ' for ' + pillow_model.name();
-    
+
         self.go = function () {
             self.pillow_model.perform_operation(operation);
-        }
+        };
     }
 
     function PillowProgress(name, db_offset, seq) {
@@ -161,7 +177,7 @@ hqDefine('hqadmin/js/system_info', function () {
         self.width = function() {
             return (self.seq * 100) / self.db_offset;
         };
-    
+
         self.status = function() {
             if (self.changes_behind() < 500) {
                 return 'progress-bar-success';
@@ -187,7 +203,7 @@ hqDefine('hqadmin/js/system_info', function () {
         self.supervisor_message = ko.observable();
         self.operation_in_progress = ko.observable(false);
         self.progress = ko.observableArray();
-    
+
         self.update = function (data) {
             self.name(data.name);
             self.seq_format(data.seq_format);
@@ -197,7 +213,7 @@ hqDefine('hqadmin/js/system_info', function () {
             self.show_supervisor_info(!!data.supervisor_state);
             self.supervisor_state(data.supervisor_state||'(unavailable)');
             self.supervisor_message(data.supervisor_message);
-    
+
             self.progress([]);
             if (self.seq_format() === 'json') {
                 _.each(self.offsets(), function(db_offset, key) {
@@ -208,27 +224,27 @@ hqDefine('hqadmin/js/system_info', function () {
                         value = self.seq()[key];
                     }
                     self.progress.push(new PillowProgress(key, db_offset, value));
-                })
+                });
             } else {
                 var key = _.keys(self.offsets())[0];
                 self.progress.push(new PillowProgress(key, self.offsets()[key], self.seq()));
             }
         };
-    
+
         self.update(pillow);
-    
+
         self.process_running = ko.computed(function () {
             return self.supervisor_state() === 'RUNNING';
         });
-    
+
         self.start_stop_text = ko.computed(function () {
             return self.process_running() ? gettext("Stop") : gettext("Start");
         });
-    
+
         self.disabled = ko.computed(function() {
             return self.operation_in_progress() || (self.supervisor_state() !== 'RUNNING' && self.supervisor_state() !== 'STOPPED');
         });
-    
+
         self.supervisor_state_css = ko.computed(function() {
             switch (self.supervisor_state()) {
                 case ('(unavailable)'):
@@ -241,7 +257,7 @@ hqDefine('hqadmin/js/system_info', function () {
                     return 'label-danger';
             }
         });
-    
+
         self.checkpoint_status_css = ko.computed(function() {
             var hours = pillow.hours_since_last;
             switch (true) {
@@ -255,7 +271,7 @@ hqDefine('hqadmin/js/system_info', function () {
                     return 'label-danger';
             }
         });
-    
+
         self.overall_status = ko.computed(function() {
             var status_combined = self.checkpoint_status_css() + self.supervisor_state_css();
             if (status_combined.indexOf('important') !== -1) {
@@ -268,7 +284,7 @@ hqDefine('hqadmin/js/system_info', function () {
                 return 'success';
             }
         });
-    
+
         self.show_pillow_dialog = function (operation) {
             var element = $('#pillow_operation_modal').get(0);
             ko.cleanNode(element);
@@ -276,83 +292,74 @@ hqDefine('hqadmin/js/system_info', function () {
             $('#pillow_operation_modal').modal({
                 backdrop: 'static',
                 keyboard: false,
-                show: true
+                show: true,
             });
         };
-    
+
         self.reset_checkpoint = function () {
             self.show_pillow_dialog('reset_checkpoint');
         };
-    
+
         self.start_stop = function () {
             self.show_pillow_dialog(self.process_running() ? 'stop' : 'start');
         };
-    
+
         self.refresh = function () {
             self.perform_operation('refresh');
         };
-    
+
         self.perform_operation = function(operation) {
             self.operation_in_progress(true);
-            $.post(hqImport("hqwebapp/js/initial_page_data").reverse("pillow_operation_api"), {
+            $.post(initialPageData.reverse("pillow_operation_api"), {
                 'pillow_name': self.name,
-                'operation': operation
+                'operation': operation,
             }, function( data ) {
                 self.operation_in_progress(false);
                 self.update(data);
-    
+
                 if (!data.success) {
-                    hqImport("hqwebapp/js/alert_user").alert_user("Operation failed: " + data.operation + " on "
+                    alertUser.alert_user("Operation failed: " + data.operation + " on "
                             + data.pillow_name + ', ' + data.message, 'danger');
                 }
             }, "json")
-            .fail(function (jqxhr, textStatus, error) {
-                var err = 'Unknown server error';
-                try {
-                    err = JSON.parse(jqxhr.responseText).error;
-                } catch (e) {}
-                self.operation_in_progress(false);
-                self.supervisor_state('(unavailable)');
-                self.supervisor_message(err);
-            }).always(function() {
-                $('#pillow_operation_modal').modal('hide');
-                $("#" + self.name() +" td").fadeTo( "fast" , 0.5).fadeTo( "fast" , 1);
-            });
-        }
+                .fail(function (jqxhr) {
+                    var err = 'Unknown server error';
+                    try {
+                        err = JSON.parse(jqxhr.responseText).error;
+                    } catch (e) {}
+                    self.operation_in_progress(false);
+                    self.supervisor_state('(unavailable)');
+                    self.supervisor_message(err);
+                }).always(function() {
+                    $('#pillow_operation_modal').modal('hide');
+                    $("#" + self.name() +" td").fadeTo( "fast" , 0.5).fadeTo( "fast" , 1);
+                });
+        };
     }
-    
-    function DbComparisons(data) {
-        var self = this;
-        self.description = data.description;
-        self.es_docs = data.es_docs;
-        self.couch_docs = data.couch_docs;
-        self.sql_rows = data.sql_rows;
-    }
-    
+
     $(function () {
-        var initial_page_data = hqImport("hqwebapp/js/initial_page_data").get,
-            celery_update = initial_page_data("celery_update"),
-            couch_update = initial_page_data("couch_update"),
-            system_ajax_url = hqImport("hqwebapp/js/initial_page_data").reverse("system_ajax");
+        var celery_update = initialPageData.get("celery_update"),
+            couch_update = initialPageData.get("couch_update"),
+            system_ajax_url = initialPageData.reverse("system_ajax");
         var celeryViewModel = new RefreshableViewModel(system_ajax_url + "?api=flower_poll", CeleryTaskModel, celery_update);
         var couchViewModel;
-        if (initial_page_data("is_bigcouch")) {
-            var couchViewModel = new RefreshableViewModel(system_ajax_url + "?api=_active_tasks", DesignDocModel, couch_update, 'design_document');
+        if (initialPageData.get("is_bigcouch")) {
+            couchViewModel = new RefreshableViewModel(system_ajax_url + "?api=_active_tasks", DesignDocModel, couch_update, 'design_document');
         } else {
-            var couchViewModel = new RefreshableViewModel(system_ajax_url + "?api=_active_tasks", ActiveTaskModel, couch_update);
+            couchViewModel = new RefreshableViewModel(system_ajax_url + "?api=_active_tasks", ActiveTaskModel, couch_update);
         }
         var pillowtopViewModel = new RefreshableViewModel(system_ajax_url + "?api=pillowtop", PillowModel, couch_update, 'name');
-    
+
         var AutoRefreshModel = function () {
             var self = this;
             self.refreshStatus = ko.observable(false);
             self.refreshStatusText = ko.observable('off');
             self.models = [];
-    
+
             self.addModel = function (model) {
                 self.models.push(model);
             };
-    
+
             self.toggleRefresh = function () {
                 self.refreshStatus(!self.refreshStatus());
                 self.refreshStatusText(self.refreshStatus() ? 'on' : 'off');
@@ -360,14 +367,14 @@ hqDefine('hqadmin/js/system_info', function () {
                     model.autoRefresh(self.refreshStatus());
                 });
             };
-    
+
             self.refreshAll = function () {
                 $.each(self.models, function (index, model) {
                     model.refresh();
                 });
             };
         };
-    
+
         var autoRefresh = new AutoRefreshModel();
         $("#celeryblock").koApplyBindings(celeryViewModel);
         $("#couchblock").koApplyBindings(couchViewModel);
@@ -375,7 +382,7 @@ hqDefine('hqadmin/js/system_info', function () {
         autoRefresh.addModel(celeryViewModel);
         autoRefresh.addModel(couchViewModel);
         autoRefresh.addModel(pillowtopViewModel);
-    
+
         autoRefresh.refreshAll();
         $('#autorefresh').koApplyBindings(autoRefresh);
     });

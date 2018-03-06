@@ -2,7 +2,7 @@ from __future__ import absolute_import
 import collections
 import random
 
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 ABTestConfig = collections.namedtuple('ABTestConfig', ('name', 'slug', 'options'))
 
@@ -53,22 +53,12 @@ NEW_USER_NUMBER = ABTestConfig(
 )
 
 
-APP_BUILDER_VIDEO_ON = 'on'
-APP_BUILDER_VIDEO_OFF = 'off'
+DATA_FEEDBACK_LOOP_OPTION_ON = 'data_feedback_loop_on'
+DATA_FEEDBACK_LOOP_OPTION_OFF = 'data_feedback_loop_off'
 
 
-APP_BUILDER_VIDEO = ABTestConfig(
-    'Onboarding Video Inside App Builder',
-    'app_builder_video_aug2017',
-    (APP_BUILDER_VIDEO_ON, APP_BUILDER_VIDEO_OFF)
-)
-
-NEW_USER_PERSONA_OPTION_SHOW = 'show_persona'
-NEW_USER_PERSONA_OPTION_HIDE = 'hide_persona'
-
-
-NEW_USER_PERSONA_FIELD = ABTestConfig(
-    'New User Persona Field',
-    'new_user_persona_field_nov2017',
-    (NEW_USER_PERSONA_OPTION_SHOW, NEW_USER_PERSONA_OPTION_HIDE)
+DATA_FEEDBACK_LOOP = ABTestConfig(
+    'Data Feedback Loop',
+    'data_feedback_loop_feb2018',
+    (DATA_FEEDBACK_LOOP_OPTION_ON, DATA_FEEDBACK_LOOP_OPTION_OFF)
 )

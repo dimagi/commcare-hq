@@ -1,4 +1,6 @@
 from __future__ import absolute_import
+from __future__ import division
+from __future__ import unicode_literals
 from collections import OrderedDict
 import re
 import os
@@ -91,7 +93,7 @@ class CareDataFormatter(DataFormatter):
                     missing_rows[key] = {'0', '1', '2'}.difference({row[-1]})
                 else:
                     missing_rows[key] = missing_rows[key].difference({row[-1]})
-            for k, v in missing_rows.iteritems():
+            for k, v in six.iteritems(missing_rows):
                 for missing_val in v:
                     dict_key = k + (missing_val,)
                     tmp_missing.update({dict_key: dict(all=0, some=0, none=0, gender=missing_val)})
@@ -104,12 +106,12 @@ class CareDataFormatter(DataFormatter):
             f = lambda x: (x[0][0], x[0][1], x[0][2], x[0][3])
         else:
             f = lambda x: x
-        chunks = _chunks(sorted(data.items(), key=f), chunk_size)
+        chunks = _chunks(sorted(list(data.items()), key=f), chunk_size)
         for chunk in chunks:
             group_row = dict(all=0, some=0, none=0)
             disp_name = None
             for val in chunk:
-                for k, v in val[1].iteritems():
+                for k, v in six.iteritems(val[1]):
                     if k in group_row:
                         group_row[k] += v
                 value_chains = get_domain_configuration(domain).by_type_hierarchy
@@ -182,7 +184,7 @@ class TableCardDataGroupsFormatter(DataFormatter):
 
         for group in range_groups:
             for idx, row in enumerate(group[1:], 1):
-                percent = 100 * float(group[idx]) / float(len(data))
+                percent = 100 * float(group[idx]) / len(data)
                 group[idx] = "%.2f%%" % percent
         return range_groups
 
@@ -240,7 +242,7 @@ class TableCardDataIndividualFormatter(DataFormatter):
         for group in groups:
             result[group] = self._init_row(practices)
 
-        for key, row in data.iteritems():
+        for key, row in six.iteritems(data):
             formatted_row = self._format.format_row(row)
             result[key[0]][row['practices']] = formatted_row[1]
 
@@ -267,17 +269,17 @@ class TableCardDataGroupsIndividualFormatter(TableCardDataIndividualFormatter):
         id_to_name = {}
         for row in sorted(data.keys()):
             groups.add(row[0])
-            id_to_name[row[0]] = u'{} ({})'.format(row[1].title(), row[2])
+            id_to_name[row[0]] = '{} ({})'.format(row[1].title(), row[2])
 
         groups = sorted(list(groups), key=lambda r: id_to_name[r])
         result = OrderedDict()
         for group in groups:
             result[group] = self._init_row(practices)
 
-        for key, row in data.iteritems():
+        for key, row in six.iteritems(data):
             formatted_row = self._format.format_row(row)
             result[key[0]][row['practices']] = formatted_row[1]
-            id_to_name[key[0]] = u'{} ({})'.format(key[1], key[2])
+            id_to_name[key[0]] = '{} ({})'.format(key[1], key[2])
 
         for key, row in result.items():
             formatted_row = []

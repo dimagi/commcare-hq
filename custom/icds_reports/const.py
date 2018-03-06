@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.conf import settings
 
 ISSUE_TRACKER_APP_ID = '48cc1709b7f62ffea24cc6634a005734'
@@ -25,6 +26,14 @@ class ChartColors(object):
     ORANGE = '#fa683c'
     RED = '#bf231d'
     BLUE = '#005ebd'
+
+
+class MapColors(object):
+    RED = '#de2d26'
+    ORANGE = '#fc9272'
+    BLUE = '#006fdf'
+    PINK = '#fee0d2'
+    GREY = '#9D9D9D'
 
 
 LOCATION_TYPES = [

@@ -88,9 +88,13 @@ hqDefine('app_manager/js/releases/app_diff', function () {
             ).done(function(appDataOneJson, appDataTwoJson) {
                 try {
                     self.$el.html(self.generateHtmlDiff(appDataOneJson, appDataTwoJson));
-                    self.$el.find('.diff-questions:not(:has(.diff-change))').html(
-                        '<i>' + gettext('No changes detected') + '</i>'
-                    );
+                    // Hide headings with no changes
+                    self.$el.find('.diff-module:not(:has(.diff-change))').hide();
+                    self.$el.find('.diff-form:not(:has(.diff-change))').hide();
+                    self.$el.find('.diff-question:not(:has(.diff-change))').hide();
+                    self.$el.find('.diff-case-type:not(:has(.diff-change))').hide();
+                    self.$el.find('.diff-case-property:not(:has(.diff-change))').hide();
+                    self.$el.find('.diff-case-action:not(:has(.diff-change))').hide();
                 } catch (e) {
                     self.showError();
                     throw e;
@@ -240,7 +244,7 @@ hqDefine('app_manager/js/releases/app_diff', function () {
             );
             var lines = [
                 HtmlUtils.makeLi(sanitize(formName), 'diff-form', 'file-o'),
-                HtmlUtils.makeLi(gettext('Save Questions'), 'diff-underline fa-ul', '', true),
+                HtmlUtils.makeLi(gettext('Save Questions'), 'diff-case-action diff-underline fa-ul', '', true),
                 HtmlUtils.makeUl('diff-questions diff-save-questions fa-ul'),
                 _.map(self.saveQuestions, function(q) { return q.toString(); }).join('\n'),
                 HtmlUtils.closeUl(),
@@ -283,10 +287,8 @@ hqDefine('app_manager/js/releases/app_diff', function () {
         this.toString = function() {
             var lines = [
                 // We want these to be considered one line
-                (
-                    HtmlUtils.makeLi(sanitize(self.name[self.options.lang]), 'diff-module', 'folder-open') +
-                    HtmlUtils.makeSpan(' ' + sanitize(self.shortComment), 'diff-comment', '', true)
-                ),
+                (HtmlUtils.makeLi(sanitize(self.name[self.options.lang]), 'diff-module', 'folder-open') +
+                    HtmlUtils.makeSpan(' ' + sanitize(self.shortComment), 'diff-comment', '', true)),
                 HtmlUtils.makeUl('diff-forms fa-ul'),
                 _.map(self.forms, function(f) { return f.toString(); }).join('\n'),
                 HtmlUtils.closeEl('ul'),
@@ -310,10 +312,8 @@ hqDefine('app_manager/js/releases/app_diff', function () {
         this.toString = function() {
             var lines = [
                 // We want these to be considered one line
-                (
-                    HtmlUtils.makeLi(sanitize(self.name[self.options.lang]), 'diff-form', 'file-o') +
-                    HtmlUtils.makeSpan(sanitize(' ' + self.shortComment), 'diff-comment', '', true)
-                ),
+                (HtmlUtils.makeLi(sanitize(self.name[self.options.lang]), 'diff-form', 'file-o') +
+                    HtmlUtils.makeSpan(sanitize(' ' + self.shortComment), 'diff-comment', '', true)),
                 HtmlUtils.makeUl('diff-questions fa-ul'),
                 _.map(self.questions, function(q) { return q.toString(); }).join('\n'),
                 HtmlUtils.closeEl('ul'),
@@ -346,13 +346,9 @@ hqDefine('app_manager/js/releases/app_diff', function () {
         this.toString = function() {
             var lines =[
                 // We want these to be considered one line
-                (
-                    HtmlUtils.makeLi(sanitize(self.label) || gettext('[unknown]'), 'diff-question') +
-                    HtmlUtils.makeSpan(sanitize(' ' + self.comment), 'diff-comment', '', true)
-                ),
-
+                (HtmlUtils.makeLi(sanitize(self.label) || gettext('[unknown]'), 'diff-question') +
+                    HtmlUtils.makeSpan(sanitize(' ' + self.comment), 'diff-comment', '', true)),
                 HtmlUtils.makeUl('diff-question-metadata fa-ul'),
-
                 HtmlUtils.makeLi(sanitize(self.hashtagValue), '', '', true),
                 (self.calculate ? HtmlUtils.makeLi(sanitize(self.calculate), '', 'calculator', true) : ''),
                 (self.relevant ? HtmlUtils.makeLi(sanitize(self.relevant), '', 'code-fork', true) : ''),

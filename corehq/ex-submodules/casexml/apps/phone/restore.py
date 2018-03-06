@@ -4,8 +4,7 @@ import logging
 import os
 import shutil
 import tempfile
-from io import FileIO
-from cStringIO import StringIO
+from io import BytesIO
 from uuid import uuid4
 from distutils.version import LooseVersion
 from datetime import datetime, timedelta
@@ -31,7 +30,7 @@ from corehq.toggles import EXTENSION_CASES_SYNC_ENABLED, LIVEQUERY_SYNC, ICDS_LI
 from corehq.util.datadog.utils import bucket_value
 from corehq.util.timer import TimingContext
 from corehq.util.datadog.gauges import datadog_counter
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.parsing import json_format_datetime
 from casexml.apps.phone.models import (
     get_properly_wrapped_sync_log,
@@ -212,7 +211,7 @@ class AsyncRestoreResponse(object):
     def get_http_response(self):
         headers = {"Retry-After": self.progress['retry_after']}
         response = stream_response(
-            StringIO(self.compile_response()),
+            BytesIO(self.compile_response()),
             status=202,
             headers=headers,
         )
@@ -740,7 +739,7 @@ RESTORE_SEGMENTS = {
 }
 
 
-class NoClose:
+class NoClose(object):
     """HACK file object with no-op `close()` to avoid close by S3Transfer
 
     https://github.com/boto/s3transfer/issues/80

@@ -8,7 +8,7 @@ from couchdbkit.exceptions import ResourceNotFound
 
 from corehq.form_processor.change_publishers import publish_ledger_v1_saved
 from dimagi.ext.couchdbkit import *
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 from casexml.apps.case.cleanup import close_case
 from casexml.apps.case.models import CommCareCase
@@ -237,7 +237,7 @@ class SupplyPointCase(CommCareCase):
     """
     location_id = StringProperty()
 
-    class Meta:
+    class Meta(object):
         # This is necessary otherwise couchdbkit will confuse this app with casexml
         app_label = "commtrack"
 
@@ -359,7 +359,7 @@ class StockState(models.Model):
         serializer = StockStateSerializer(self)
         return dict(serializer.data)
 
-    class Meta:
+    class Meta(object):
         app_label = 'commtrack'
         unique_together = ('section_id', 'case_id', 'product_id')
 

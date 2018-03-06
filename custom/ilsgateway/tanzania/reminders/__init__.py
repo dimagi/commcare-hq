@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from datetime import datetime
 from custom.ilsgateway.models import SupplyPointStatus
 from django.utils.translation import ugettext_lazy as _

@@ -1,6 +1,6 @@
 from __future__ import absolute_import
+import io
 from copy import copy
-from StringIO import StringIO
 from collections import namedtuple
 
 from django.urls import reverse
@@ -243,7 +243,7 @@ class DownloadAppSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
                     ])
                 ]
 
-        export_string = StringIO()
+        export_string = io.BytesIO()
         export_raw(tuple(headers), data, export_string, Format.XLS_2007),
         return export_response(
             export_string,
@@ -312,7 +312,7 @@ class DownloadFormSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
             (self._get_form_sheet_name(module, form, language), self._get_form_row(form, language))
             for module in modules for form in module.get_forms()
         )
-        export_string = StringIO()
+        export_string = io.BytesIO()
         export_raw(tuple(headers), data, export_string, Format.XLS_2007),
         return export_response(
             export_string,
@@ -408,7 +408,7 @@ class DownloadCaseSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
             self.get_case_questions_rows(case_type, language)
         ) for case_type in case_metadata.case_types)
 
-        export_string = StringIO()
+        export_string = io.BytesIO()
         export_raw(tuple(headers), data, export_string, Format.XLS_2007),
         return export_response(
             export_string,
@@ -431,7 +431,7 @@ class DownloadCaseSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
                 form_names[f.unique_id] = _get_translated_form_name(self.app, f.unique_id, language)
                 form_case_types[f.unique_id] = m.case_type
 
-        case_types = [case_type.name] + case_type.relationships.values()
+        case_types = [case_type.name] + list(case_type.relationships.values())
         opened_by = {}
         closed_by = {}
         for t in case_types:

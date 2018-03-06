@@ -29,6 +29,6 @@ hqDefine("domain/js/internal_calculations", function() {
             $('.calc-group').each(function(_, ele) {
                 load_calculation($(ele));
             });
-        })
+        });
     });
 });

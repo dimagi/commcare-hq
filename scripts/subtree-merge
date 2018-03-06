@@ -17,7 +17,7 @@ function subtree-merge() {
   git commit -m "subtree merge $module_name:$old_path into $new_path"
 }
 
-subtree-merge $MODULE_NAME $MODULE_URI $OLD_PATH $NEW_PATH
+subtree-merge "$MODULE_NAME" "$MODULE_URI" "$OLD_PATH" "$NEW_PATH"
 
 echo "Merge complete. If this was a submodule, remember to also"
 echo "- remove it, e.g.:"

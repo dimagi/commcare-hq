@@ -102,6 +102,14 @@ var reportBuilder = function () {  // eslint-disable-line
         self.dateRangeOptions = config['dateRangeOptions'];
 
         self.existingReportId = config['existingReport'];
+        self.reportTitle = ko.observable(config['reportTitle']);
+        self.reportTitle.subscribe(function () {
+            self.saveButton.fire('change');
+        });
+        self.reportDescription = ko.observable(config['reportDescription']);
+        self.reportDescription.subscribe(function () {
+            self.saveButton.fire('change');
+        });
 
         self.columnOptions = config["columnOptions"];  // Columns that could be added to the report
         self.reportPreviewUrl = config["reportPreviewUrl"];  // Fetch the preview data asynchronously.
@@ -138,7 +146,7 @@ var reportBuilder = function () {  // eslint-disable-line
                 self.previewChart(false);
             } else {
                 if (self.previewChart()) {
-                    hqImport('userreports/js/report_analytics').track.event('Change Chart Type', hqImport('hqwebapp/js/main').capitalize(newValue));
+                    hqImport('userreports/js/report_analytix').track.event('Change Chart Type', hqImport('hqwebapp/js/main').capitalize(newValue));
                 }
                 self.previewChart(true);
                 self.refreshPreview();
@@ -146,12 +154,12 @@ var reportBuilder = function () {  // eslint-disable-line
         });
         self.addChart = function () {
             self.selectedChart('bar');
-            hqImport('userreports/js/report_analytics').track.event('Add Chart');
+            hqImport('userreports/js/report_analytix').track.event('Add Chart');
             _kmq_track_click('Add Chart');
         };
         self.removeChart = function () {
             self.selectedChart('none');
-            hqImport('userreports/js/report_analytics').track.event('Remove Chart');
+            hqImport('userreports/js/report_analytix').track.event('Remove Chart');
         };
 
         self.previewChart = ko.observable(false);
@@ -200,7 +208,7 @@ var reportBuilder = function () {  // eslint-disable-line
 
         var _ga_track_config_change = function (analyticsAction, optReportType) {
             var analyticsLabel = hqImport('hqwebapp/js/main').capitalize(self._sourceType) + "-" + hqImport('hqwebapp/js/main').capitalize(optReportType || self.reportType());
-            hqImport('userreports/js/report_analytics').track.event(analyticsAction, analyticsLabel);
+            hqImport('userreports/js/report_analytix').track.event(analyticsAction, analyticsLabel);
         };
 
         /**
@@ -245,7 +253,7 @@ var reportBuilder = function () {  // eslint-disable-line
             },
             afterRenderCallback: function (elem, col) {
                 col.inputBoundCalculation.subscribe(function (val) {
-                    hqImport('userreports/js/report_analytics').track.event('Change Format', val);
+                    hqImport('userreports/js/report_analytix').track.event('Change Format', val);
                 });
             },
         });
@@ -445,8 +453,8 @@ var reportBuilder = function () {  // eslint-disable-line
             );
             return {
                 "existing_report": self.existingReportId,
-                "report_title": $('#report-title').val(), // From the inline-edit component
-                "report_description": $('#report-description').val(),  // From the inline-edit component
+                "report_title": self.reportTitle(),
+                "report_description": self.reportDescription(),
                 "report_type": self.reportType(),
                 "aggregate": self.isAggregationEnabled(),
                 "chart": self.selectedChart(),

@@ -12,7 +12,6 @@ from corehq.apps.accounting.models import SoftwarePlanEdition
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
 from corehq.apps.domain.models import Domain
-from corehq.apps.ivr.models import Call
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from corehq.messaging.smsbackends.test.models import SQLTestSMSBackend
 from corehq.apps.sms.models import (SMS, SQLMobileBackend, OUTGOING,
@@ -25,6 +24,7 @@ from corehq.util.test_utils import unit_testing_only
 from django.contrib.sites.models import Site
 from dateutil.parser import parse
 import uuid
+from corehq.apps.sms.api import process_username
 from casexml.apps.case.mock import CaseBlock
 
 
@@ -77,11 +77,13 @@ class TouchformsTestCase(LiveServerTestCase, DomainSubscriptionMixin):
             TOUCHFORMS_API_PASSWORD = "123"
         3. Start touchforms
     """
-
     users = None
     apps = None
     keywords = None
     groups = None
+
+    # Always start the test live server on port 8081
+    port = 8081
 
     def create_domain(self, domain):
         domain_obj = Domain(name=domain)
@@ -93,7 +95,8 @@ class TouchformsTestCase(LiveServerTestCase, DomainSubscriptionMixin):
         return domain_obj
 
     def create_mobile_worker(self, username, password, phone_number, save_vn=True):
-        user = CommCareUser.create(self.domain, username, password,
+        processed_username = process_username(username, self.domain)
+        user = CommCareUser.create(self.domain, processed_username, password,
             phone_number=phone_number)
         if save_vn:
             entry = user.get_or_create_phone_entry(phone_number)
@@ -247,13 +250,6 @@ class TouchformsTestCase(LiveServerTestCase, DomainSubscriptionMixin):
 
     def get_last_outbound_sms(self, contact):
         return SMS.get_last_log_for_recipient(
-            contact.doc_type,
-            contact.get_id,
-            direction=OUTGOING
-        )
-
-    def get_last_outbound_call(self, contact):
-        return Call.get_last_log_for_recipient(
             contact.doc_type,
             contact.get_id,
             direction=OUTGOING

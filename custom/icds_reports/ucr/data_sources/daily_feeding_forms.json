@@ -1105,6 +1105,7 @@
           "submitted_on"
         ]
       }
-    ]
+    ],
+    "disable_destructive_rebuild": true
   }
 }

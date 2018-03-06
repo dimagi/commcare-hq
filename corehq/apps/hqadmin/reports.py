@@ -15,7 +15,7 @@ from corehq.apps.hqwebapp.decorators import (
 )
 from corehq.apps.reports.standard import DatespanMixin
 from dimagi.utils.couch.database import iter_docs
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from corehq.apps.accounting.models import (
     SoftwarePlanEdition,
 )
@@ -1296,13 +1296,13 @@ class CommCareVersionReport(AdminFacetedReport):
             domain_name = domain['fields']['name']
             rows.update({domain_name: [domain_name] + [0] * len(versions)})
 
-        for data in get_data(rows.keys()):
+        for data in get_data(list(rows.keys())):
             row = rows.get(data.domain, None)
             if row and data.commcare_version in versions:
                 version_index = versions.index(data.commcare_version)
                 row[version_index + 1] = data.doc_count
 
-        return rows.values()
+        return list(rows.values())
 
 
 class AdminPhoneNumberReport(PhoneNumberReport):

@@ -1,25 +1,24 @@
 from __future__ import print_function
-
 from __future__ import absolute_import
+# http://www.gevent.org/gevent.monkey.html#module-gevent.monkey
 from gevent import monkey
-import six
-from six.moves import map
 monkey.patch_all()
 
-from corehq.apps.hqcase.management.commands.ptop_reindexer_v2 import FACTORIES_BY_SLUG
-
-from corehq.pillows.utils import get_all_expected_es_indices
-
-from corehq.elastic import get_es_new
-
-from cStringIO import StringIO
-import traceback
-from datetime import datetime
-from django.core.mail import mail_admins
-from corehq.pillows.user import add_demo_user_to_user_index
 import gevent
+import six
+
+from datetime import datetime
+from six.moves import map
+
+from django.core.mail import mail_admins
 from django.core.management.base import BaseCommand
 from django.conf import settings
+
+from corehq.apps.hqcase.management.commands.ptop_reindexer_v2 import FACTORIES_BY_SLUG
+from corehq.elastic import get_es_new
+from corehq.pillows.user import add_demo_user_to_user_index
+from corehq.pillows.utils import get_all_expected_es_indices
+from corehq.util.log import get_traceback_string
 
 
 def get_reindex_commands(alias_name):
@@ -121,9 +120,7 @@ class Command(BaseCommand):
                 for job in runs:
                     job.get()
             except Exception:
-                f = StringIO()
-                traceback.print_exc(file=f)
-                mail_admins("Pillow preindexing failed", f.getvalue())
+                mail_admins("Pillow preindexing failed", get_traceback_string())
                 raise
             else:
                 mail_admins(

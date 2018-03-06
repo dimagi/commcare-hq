@@ -1,4 +1,6 @@
 from __future__ import absolute_import
+from __future__ import division
+from __future__ import unicode_literals
 from decimal import Decimal
 import random
 import datetime
@@ -42,7 +44,10 @@ class BaseInvoiceTestCase(BaseAccountingTest):
     @classmethod
     def setUpClass(cls):
         super(BaseInvoiceTestCase, cls).setUpClass()
-        generator.bootstrap_test_plans()  # TODO - only call for subclasses that actually need the test plans
+
+        # TODO - only call for subclasses that actually need the test plans
+        generator.bootstrap_test_software_plan_versions()
+
         cls.billing_contact = generator.create_arbitrary_web_user_name()
         cls.dimagi_user = generator.create_arbitrary_web_user_name(is_dimagi=True)
         cls.currency = generator.init_default_currency()
@@ -440,7 +445,7 @@ class TestSmsLineItem(BaseInvoiceTestCase):
         - quantity is equal to 1
         - total and subtotals are 0.0
         """
-        num_sms = random.randint(0, self.sms_rate.monthly_limit/2)
+        num_sms = random.randint(0, self.sms_rate.monthly_limit // 2)
         arbitrary_sms_billables_for_domain(
             self.subscription.subscriber.domain, self.sms_date, num_sms, direction=INCOMING
         )

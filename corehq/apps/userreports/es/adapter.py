@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from copy import deepcopy
 import datetime
 from elasticsearch import NotFoundError, RequestError
@@ -8,7 +9,7 @@ from corehq.apps.es.es_query import HQESQuery
 from corehq.apps.es.aggregations import MissingAggregation
 from corehq.elastic import get_es_new, ESError
 from corehq.util.test_utils import unit_testing_only
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from pillowtop.es_utils import (
     set_index_reindex_settings,
     set_index_normal_settings,

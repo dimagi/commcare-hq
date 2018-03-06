@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from datetime import date, datetime, timedelta
 
 from dateutil.relativedelta import relativedelta
@@ -17,7 +18,7 @@ from custom.enikshay.private_sector_datamigration.models import (
 )
 from custom.enikshay.user_setup import compress_nikshay_id, join_chunked
 
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from six.moves import range
 
 PERSON_CASE_TYPE = 'person'

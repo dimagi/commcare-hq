@@ -24,7 +24,7 @@ class Command(BaseCommand):
                 os.remove(os.path.join(JS_CACHE_DIR, filename))
 
     def _in_manifest(self, content_hash, manifest):
-        paths = manifest.values()
+        paths = list(manifest.values())
         for path in paths:
             if content_hash in path:
                 return True

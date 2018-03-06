@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 APP_NAME = "mvp_maternal_health"
 
 MATERNAL_HEALTH_INDICATORS = dict(

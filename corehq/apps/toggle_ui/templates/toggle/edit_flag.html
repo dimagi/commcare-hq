@@ -4,13 +4,9 @@
 {% load timezone_tags %}
 {% load compress %}
 
-{% block title %}{% trans "Edit Feature Flag: " %}{{ toggle_meta.label }}{% endblock %}
+{% requirejs_main 'toggle_ui/js/edit-flag' %}
 
-{% block js %}{{ block.super }}
-    {% compress js %}
-        <script src="{% static 'toggle_ui/js/edit-flag.js' %}"></script>
-    {% endcompress %}
-{% endblock %}
+{% block title %}{% trans "Edit Feature Flag: " %}{{ toggle_meta.label }}{% endblock %}
 
 {% block stylesheets %}
     <style>

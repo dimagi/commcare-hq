@@ -441,7 +441,7 @@ hqDefine("reminders/js/reminders.manage", function() {
                 message: self.message_data(),
                 callback_timeout_intervals: self.callback_timeout_intervals(),
                 time_window_length: self.time_window_length(),
-            }
+            };
         });
     };
     

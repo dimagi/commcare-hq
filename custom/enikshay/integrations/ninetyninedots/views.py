@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import json
 import pytz
 from django.views.decorators.http import require_POST
@@ -45,6 +46,12 @@ class UpdateTreatmentOutcomeRepeaterView(AddCaseRepeaterView):
     page_name = "Update 99DOTS Treatment Outcome"
 
 
+class UnenrollPatientRepeaterView(AddCaseRepeaterView):
+    urlname = 'unenroll_99dots_patient'
+    page_title = "Unenroll 99DOTS Patients"
+    page_name = "Unenroll 99DOTS Patients"
+
+
 @toggles.NINETYNINE_DOTS.required_decorator()
 @api_auth
 @require_POST
@@ -74,7 +81,6 @@ def update_patient_adherence(request, domain):
             request,
             message=("An error occurred updating the episode case after receiving a 99DOTS"
                      "adherence case for beneficiary {}. {}").format(beneficiary_id, e))
-
     return json_response({"success": "Patient adherences updated."})
 
 

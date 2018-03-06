@@ -88,6 +88,9 @@ class FormAccessorCouch(AbstractFormAccessor):
                         content_type=meta.content_type,
                         content_length=meta.content_length,
                     )
+        else:
+            # xforms are expected to at least have the XML attachment
+            raise ResourceNotFound(msg="XForm attachment missing: {}".format(form_id))
         return doc
 
     @staticmethod
@@ -215,8 +218,10 @@ class CaseAccessorCouch(AbstractCaseAccessor):
         return get_indexed_case_ids(domain, case_ids)
 
     @staticmethod
-    def get_reverse_indexed_cases(domain, case_ids):
-        return get_reverse_indexed_cases(domain, case_ids)
+    def get_reverse_indexed_cases(domain, case_ids, case_types=None, is_closed=None):
+        return [case for case in get_reverse_indexed_cases(domain, case_ids)
+                if (not case_types or case.type in case_types)
+                and (is_closed is None or case.closed == is_closed)]
 
     @staticmethod
     def get_last_modified_dates(domain, case_ids):

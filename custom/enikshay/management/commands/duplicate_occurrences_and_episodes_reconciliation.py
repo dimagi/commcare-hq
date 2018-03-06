@@ -1,4 +1,5 @@
 from __future__ import absolute_import, print_function
+from __future__ import unicode_literals
 from django.core.management.base import CommandError
 from django.utils.dateparse import parse_date
 from corehq.apps.hqcase.utils import bulk_update_cases
@@ -12,6 +13,8 @@ from custom.enikshay.management.commands.base_model_reconciliation import (
     BaseModelReconciliationCommand,
     DOMAIN,
 )
+from six.moves import map
+import six
 
 
 class Command(BaseModelReconciliationCommand):
@@ -40,7 +43,7 @@ class Command(BaseModelReconciliationCommand):
         self.commit = options.get('commit')
         self.log_progress = options.get('log_progress')
         self.recipient = (options.get('recipient') or 'mkangia@dimagi.com')
-        self.recipient = list(self.recipient) if not isinstance(self.recipient, basestring) else [self.recipient]
+        self.recipient = list(self.recipient) if not isinstance(self.recipient, six.string_types) else [self.recipient]
         self.result_file_name = self.setup_result_file()
         self.case_accessor = CaseAccessors(DOMAIN)
         self.person_case_ids = options.get('person_case_ids')

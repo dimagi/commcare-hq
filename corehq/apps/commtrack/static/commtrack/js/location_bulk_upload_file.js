@@ -11,7 +11,7 @@ $(function () {
     function ConsumptionOptionsViewModel(base_url) {
         this.base_url = base_url;
         this.include_consumption = ko.observable(false);
-        self = this;
+        var self = this;
         this.url = ko.computed(function() {
             return (
                 self.base_url + "?"

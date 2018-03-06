@@ -1,4 +1,5 @@
 from __future__ import absolute_import, division
+from __future__ import unicode_literals
 from collections import OrderedDict, defaultdict
 from datetime import datetime
 
@@ -9,22 +10,15 @@ from django.db.models.aggregates import Sum
 from django.utils.translation import ugettext as _
 
 from corehq.util.quickcache import quickcache
-from custom.icds_reports.const import LocationTypes, ChartColors
+from custom.icds_reports.const import LocationTypes, ChartColors, MapColors
 from custom.icds_reports.models import AggAwcMonthly
 from custom.icds_reports.utils import apply_exclude, generate_data_for_map, indian_formatted_number, \
-    get_child_locations
+    get_child_locations, person_has_aadhaar_column, person_is_beneficiary_column
 import six
 
 
-RED = '#de2d26'
-ORANGE = '#fc9272'
-BLUE = '#006fdf'
-PINK = '#fee0d2'
-GREY = '#9D9D9D'
-
-
-@quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
-def get_adhaar_data_map(domain, config, loc_level, show_test=False):
+@quickcache(['domain', 'config', 'loc_level', 'show_test', 'beta'], timeout=30 * 60)
+def get_adhaar_data_map(domain, config, loc_level, show_test=False, beta=False):
 
     def get_data_for(filters):
         filters['month'] = datetime(*filters['month'])
@@ -33,14 +27,14 @@ def get_adhaar_data_map(domain, config, loc_level, show_test=False):
         ).values(
             '%s_name' % loc_level, '%s_map_location_name' % loc_level
         ).annotate(
-            in_month=Sum('cases_person_has_aadhaar'),
-            all=Sum('cases_person_beneficiary'),
+            in_month=Sum(person_has_aadhaar_column(beta)),
+            all=Sum(person_is_beneficiary_column(beta)),
         ).order_by('%s_name' % loc_level, '%s_map_location_name' % loc_level)
         if not show_test:
             queryset = apply_exclude(domain, queryset)
         return queryset
 
-    data_for_map, valid_total, in_month_total = generate_data_for_map(
+    data_for_map, valid_total, in_month_total, average, total = generate_data_for_map(
         get_data_for(config),
         loc_level,
         'in_month',
@@ -50,17 +44,17 @@ def get_adhaar_data_map(domain, config, loc_level, show_test=False):
     )
 
     fills = OrderedDict()
-    fills.update({'0%-25%': RED})
-    fills.update({'25%-50%': ORANGE})
-    fills.update({'50%-100%': PINK})
-    fills.update({'defaultFill': GREY})
+    fills.update({'0%-25%': MapColors.RED})
+    fills.update({'25%-50%': MapColors.ORANGE})
+    fills.update({'50%-100%': MapColors.PINK})
+    fills.update({'defaultFill': MapColors.GREY})
 
     return {
         "slug": "adhaar",
         "label": "Percent Aadhaar-seeded Beneficiaries",
         "fills": fills,
         "rightLegend": {
-            "average": (in_month_total * 100) / float(valid_total or 1),
+            "average": average,
             "info": _((
                 "Percentage of individuals registered using CAS whose Aadhaar identification has been captured"
             )),
@@ -83,8 +77,8 @@ def get_adhaar_data_map(domain, config, loc_level, show_test=False):
     }
 
 
-@quickcache(['domain', 'config', 'loc_level', 'location_id', 'show_test'], timeout=30 * 60)
-def get_adhaar_sector_data(domain, config, loc_level, location_id, show_test=False):
+@quickcache(['domain', 'config', 'loc_level', 'location_id', 'show_test', 'beta'], timeout=30 * 60)
+def get_adhaar_sector_data(domain, config, loc_level, location_id, show_test=False, beta=False):
     group_by = ['%s_name' % loc_level]
 
     config['month'] = datetime(*config['month'])
@@ -93,8 +87,8 @@ def get_adhaar_sector_data(domain, config, loc_level, location_id, show_test=Fal
     ).values(
         *group_by
     ).annotate(
-        in_month=Sum('cases_person_has_aadhaar'),
-        all=Sum('cases_person_beneficiary'),
+        in_month=Sum(person_has_aadhaar_column(beta)),
+        all=Sum(person_is_beneficiary_column(beta)),
     ).order_by('%s_name' % loc_level)
 
     if not show_test:
@@ -150,14 +144,14 @@ def get_adhaar_sector_data(domain, config, loc_level, location_id, show_test=Fal
                 "key": "",
                 "strokeWidth": 2,
                 "classed": "dashed",
-                "color": BLUE
+                "color": MapColors.BLUE
             },
         ]
     }
 
 
-@quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
-def get_adhaar_data_chart(domain, config, loc_level, show_test=False):
+@quickcache(['domain', 'config', 'loc_level', 'show_test', 'beta'], timeout=30 * 60)
+def get_adhaar_data_chart(domain, config, loc_level, show_test=False, beta=False):
     month = datetime(*config['month'])
     three_before = datetime(*config['month']) - relativedelta(months=3)
 
@@ -169,8 +163,8 @@ def get_adhaar_data_chart(domain, config, loc_level, show_test=False):
     ).values(
         'month', '%s_name' % loc_level
     ).annotate(
-        in_month=Sum('cases_person_has_aadhaar'),
-        all=Sum('cases_person_beneficiary'),
+        in_month=Sum(person_has_aadhaar_column(beta)),
+        all=Sum(person_is_beneficiary_column(beta)),
     ).order_by('month')
 
     if not show_test:

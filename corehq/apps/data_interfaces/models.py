@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import division
 import jsonfield
 import pytz
 import re
@@ -25,6 +26,8 @@ from corehq.messaging.scheduling.models import AlertSchedule, TimedSchedule
 from corehq.messaging.scheduling.tasks import (
     refresh_case_alert_schedule_instances,
     refresh_case_timed_schedule_instances,
+    delete_case_alert_schedule_instances,
+    delete_case_timed_schedule_instances,
 )
 from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import (
     get_case_alert_schedule_instances_for_schedule_id,
@@ -39,7 +42,7 @@ from datetime import date, datetime, time, timedelta
 from dateutil.parser import parse
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch import CriticalSection
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.modules import to_function
 from django.conf import settings
@@ -92,7 +95,9 @@ class AutomaticUpdateRule(models.Model):
     # that this rule belongs to.
     workflow = models.CharField(max_length=126)
 
-    class Meta:
+    locked_for_editing = models.BooleanField(default=False)
+
+    class Meta(object):
         app_label = "data_interfaces"
 
     class MigrationError(Exception):
@@ -254,8 +259,19 @@ class AutomaticUpdateRule(models.Model):
         self.save()
 
     def soft_delete(self):
-        self.deleted = True
-        self.save()
+        with transaction.atomic():
+            self.deleted = True
+            self.save()
+            if self.workflow == self.WORKFLOW_SCHEDULING:
+                schedule = self.get_messaging_rule_schedule()
+                schedule.deleted = True
+                schedule.save()
+                if isinstance(schedule, AlertSchedule):
+                    delete_case_alert_schedule_instances.delay(schedule.schedule_id)
+                elif isinstance(schedule, TimedSchedule):
+                    delete_case_timed_schedule_instances.delay(schedule.schedule_id)
+                else:
+                    raise TypeError("Unexpected schedule type")
 
     @unit_testing_only
     def hard_delete(self):
@@ -403,6 +419,20 @@ class AutomaticUpdateRule(models.Model):
                 active_only=active_only,
             )
 
+    def get_messaging_rule_schedule(self):
+        if self.workflow != self.WORKFLOW_SCHEDULING:
+            raise ValueError("Expected scheduling workflow")
+
+        if len(self.memoized_actions) != 1:
+            raise ValueError("Expected exactly 1 action")
+
+        action = self.memoized_actions[0]
+        action_definition = action.definition
+        if not isinstance(action_definition, CreateScheduleInstanceActionDefinition):
+            raise TypeError("Expected CreateScheduleInstanceActionDefinition")
+
+        return action_definition.schedule
+
 
 class CaseRuleCriteria(models.Model):
     rule = models.ForeignKey('AutomaticUpdateRule', on_delete=models.PROTECT)
@@ -439,7 +469,7 @@ class CaseRuleCriteria(models.Model):
 
 class CaseRuleCriteriaDefinition(models.Model):
 
-    class Meta:
+    class Meta(object):
         abstract = True
 
     def matches(self, case, now):
@@ -614,7 +644,7 @@ class AutomaticUpdateRuleCriteria(models.Model):
     property_value = models.CharField(max_length=126, null=True)
     match_type = models.CharField(max_length=15)
 
-    class Meta:
+    class Meta(object):
         app_label = "data_interfaces"
 
     def get_case_values(self, case):
@@ -770,7 +800,7 @@ class CaseRuleActionResult(object):
 
 class CaseRuleActionDefinition(models.Model):
 
-    class Meta:
+    class Meta(object):
         abstract = True
 
     def when_case_matches(self, case, rule):
@@ -1207,7 +1237,7 @@ class AutomaticUpdateAction(models.Model):
     property_value_type = models.CharField(max_length=15,
                                            default=EXACT)
 
-    class Meta:
+    class Meta(object):
         app_label = "data_interfaces"
 
 
@@ -1224,7 +1254,7 @@ class CaseRuleSubmission(models.Model):
     # A shortcut to keep track of which forms get archived
     archived = models.BooleanField(default=False)
 
-    class Meta:
+    class Meta(object):
         index_together = (
             ('domain', 'created_on'),
             ('domain', 'rule', 'created_on'),
@@ -1263,7 +1293,7 @@ class CaseRuleUndoer(object):
         form_ids = list(self.get_submission_queryset().values_list('form_id', flat=True))
         form_id_chunks = chunked(form_ids, chunk_size)
         if progress_bar:
-            length = len(form_ids) / chunk_size
+            length = len(form_ids) // chunk_size
             if len(form_ids) % chunk_size > 0:
                 length += 1
             form_id_chunks = with_progress_bar(form_id_chunks, length=length)
@@ -1304,7 +1334,7 @@ class DomainCaseRuleRun(models.Model):
     num_related_closes = models.IntegerField(null=True)
     num_creates = models.IntegerField(null=True)
 
-    class Meta:
+    class Meta(object):
         index_together = (
             ('domain', 'started_on'),
         )

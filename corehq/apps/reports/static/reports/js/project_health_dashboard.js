@@ -35,8 +35,8 @@ hqDefine("reports/js/project_health_dashboard", function() {
         }
         nv.addGraph(function() {
             var chart = nv.models.multiBarChart()
-              .showControls(false)
-              .stacked(true)
+                .showControls(false)
+                .stacked(true)
             ;
 
             chart.yAxis.tickFormat(d3.format(',.0f'));
@@ -70,18 +70,18 @@ hqDefine("reports/js/project_health_dashboard", function() {
         }];
         nv.addGraph(function() {
             var chart = nv.models.lineChart()
-                                 .margin({right: 50})
-                                 .showYAxis(true)
-                                 .showXAxis(true);
+                .margin({right: 50})
+                .showYAxis(true)
+                .showXAxis(true);
 
             chart.yAxis.tickFormat(d3.format(".0%"));
             chart.xScale(d3.time.scale());
             chart.xAxis.showMaxMin(false)
-                        .ticks(6)
-                        .tickFormat(function(d){
-                            return moment(d).format("MMM YYYY");
-                        });
-            chart.tooltipContent(function(key, x, y, e, graph){
+                .ticks(6)
+                .tickFormat(function(d){
+                    return moment(d).format("MMM YYYY");
+                });
+            chart.tooltipContent(function(key, x, y, e){
                 var d = e.series.values[e.pointIndex];
                 return '<h3>' + key + '</h3>' +
                        '<p>' +  y + ' in ' + x + '</p>' +

@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from decimal import Decimal
 from django.utils.translation import get_language
 from dimagi.ext.jsonobject import DictProperty, JsonObject, StringProperty
@@ -8,6 +9,7 @@ from corehq.apps.userreports.transforms.custom.date import (
     get_month_display,
     days_elapsed_from_date,
     get_ethiopian_to_gregorian,
+    get_gregorian_to_ethiopian,
 )
 from corehq.apps.userreports.transforms.custom.numeric import \
     get_short_decimal_display
@@ -35,6 +37,7 @@ _CUSTOM_TRANSFORM_MAP = {
     'user_without_domain_display': get_user_without_domain_display,
     'short_decimal_display': get_short_decimal_display,
     'ethiopian_date_to_gregorian_date': get_ethiopian_to_gregorian,
+    'gregorian_date_to_ethiopian_date': get_gregorian_to_ethiopian,
 }
 
 

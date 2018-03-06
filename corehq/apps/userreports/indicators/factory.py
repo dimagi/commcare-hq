@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.utils.translation import ugettext as _
 from jsonobject.exceptions import BadValueError
 from corehq.apps.userreports.exceptions import BadSpecError
@@ -11,6 +12,7 @@ from corehq.apps.userreports.indicators import (
     CompoundIndicator,
     LedgerBalancesIndicator,
     RawIndicator,
+    SmallBooleanIndicator,
 )
 from corehq.apps.userreports.indicators.specs import (
     BooleanIndicatorSpec,
@@ -19,6 +21,7 @@ from corehq.apps.userreports.indicators.specs import (
     IndicatorSpecBase,
     LedgerBalancesIndicatorSpec,
     RawIndicatorSpec,
+    SmallBooleanIndicatorSpec,
 )
 
 
@@ -66,6 +69,16 @@ def _build_expression_indicator(spec, context):
     )
 
 
+def _build_small_boolean_indicator(spec, context):
+    wrapped = SmallBooleanIndicatorSpec.wrap(spec)
+    return SmallBooleanIndicator(
+        wrapped.display_name,
+        wrapped.column_id,
+        FilterFactory.from_spec(wrapped.filter, context),
+        wrapped_spec=wrapped,
+    )
+
+
 def _build_boolean_indicator(spec, context):
     wrapped = BooleanIndicatorSpec.wrap(spec)
     return BooleanIndicator(
@@ -81,10 +94,10 @@ def _build_choice_list_indicator(spec, context):
     base_display_name = wrapped_spec.display_name
 
     def _construct_display(choice):
-        return u'{base} ({choice})'.format(base=base_display_name, choice=choice)
+        return '{base} ({choice})'.format(base=base_display_name, choice=choice)
 
     def _construct_column(choice):
-        return u'{col}_{choice}'.format(col=spec['column_id'], choice=choice)
+        return '{col}_{choice}'.format(col=spec['column_id'], choice=choice)
 
     choice_indicators = [
         BooleanIndicator(
@@ -136,6 +149,7 @@ def _build_inserted_at(spec, context):
 
 class IndicatorFactory(object):
     constructor_map = {
+        'small_boolean': _build_small_boolean_indicator,
         'boolean': _build_boolean_indicator,
         'choice_list': _build_choice_list_indicator,
         'count': _build_count_indicator,

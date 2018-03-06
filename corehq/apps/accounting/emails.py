@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.conf import settings
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from django.template.loader import render_to_string
@@ -40,6 +41,6 @@ def send_subscription_change_alert(domain, new_subscription, old_subscription, i
     send_html_email_async.delay(
         email_subject,
         sub_change_email_address,
-        render_to_string('accounting/subscription_change_email.html', email_context),
-        text_content=render_to_string('accounting/subscription_change_email.txt', email_context),
+        render_to_string('accounting/email/subscription_change.html', email_context),
+        text_content=render_to_string('accounting/email/subscription_change.txt', email_context),
     )

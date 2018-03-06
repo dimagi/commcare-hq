@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django import forms
 
 #from the models, we have this, (couchmodels.py)
@@ -83,13 +84,13 @@ class PactPatientForm(Form):
 
         # hack, if any of the names, change remake the name and initials
         name_changed = False
-        if 'first_name' in ret.keys():
+        if 'first_name' in list(ret.keys()):
             name_changed = True
             first_name = ret['first_name']
         else:
             first_name = self.casedoc.first_name
 
-        if 'last_name' in ret.keys():
+        if 'last_name' in list(ret.keys()):
             name_changed = True
             last_name = ret['last_name']
         else:

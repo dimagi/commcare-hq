@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+from __future__ import unicode_literals
 import os
 
 import jsonobject
@@ -31,7 +32,7 @@ from custom.enikshay.integrations.ninetyninedots.const import (
 from custom.enikshay.integrations.ninetyninedots.exceptions import \
     NinetyNineDotsException
 from dimagi.ext.jsonobject import StrictJsonObject
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.modules import to_function
 
 DIRECTION_OUTBOUND = 1
@@ -107,6 +108,12 @@ class DotsApiParam(StrictJsonObject):
     # whether we should send, receive, or both.
     direction = jsonobject.IntegerProperty(default=DIRECTION_BOTH,
                                            choices=[DIRECTION_INBOUND, DIRECTION_OUTBOUND, DIRECTION_BOTH])
+
+    # path to a function that takes a sector parameter and returns a validator function
+    # see checkbox_validator in this file for an example
+    validator = jsonobject.StringProperty()
+    # values passed into the validator function
+    validator_values = jsonobject.ObjectProperty(DotsApiParamChoices)
 
     def get_by_sector(self, prop, sector):
         prop = getattr(self, prop)
@@ -235,15 +242,17 @@ def unwrap_phone_number(param, val, sector):
 
 def _parse_number(number):
     if number:
-        return phonenumbers.parse(number, "IN")
+        phone_number = phonenumbers.parse(number, "IN")
+        phone_number.italian_leading_zero = False
+        return phone_number
 
 
 def _format_number(phonenumber):
     if phonenumber:
         return phonenumbers.format_number(
             phonenumber,
-            phonenumbers.PhoneNumberFormat.INTERNATIONAL
-        ).replace(" ", "")
+            phonenumbers.PhoneNumberFormat.E164
+        )
 
 
 def noop(*args, **kwargs):
@@ -258,6 +267,22 @@ def location_name_getter(case_properties, props_to_check):
         return location.name
     except SQLLocation.DoesNotExist:
         return None
+
+
+def checkbox_validator(sector, validator_values):
+    """Ensure that multiple answers to checkbox questions are all valid
+    """
+
+    def sector_validator(value):
+        valid_values = getattr(validator_values, sector) + validator_values.both
+        for individual_value in value.split(" "):
+            if individual_value not in valid_values:
+                raise ValueError('Error while parsing "{}". "{}" not in {}'.format(
+                    value, individual_value, ", ".join(valid_values))
+                )
+        return True
+
+    return sector_validator
 
 
 class MermParams(StrictJsonObject):
@@ -359,14 +384,16 @@ def get_payload_properties(sector):
                 choices=param.get_by_sector('choices', sector),
                 required=param.required_,
                 exclude_if_none=param.exclude_if_none,
+                validators=([to_function(param.validator)(sector, param.validator_values)]
+                            if param.validator else []),
             )
     return properties
 
 
-PublicPatientPayload = type('PublicPatientPayload', (BasePublicPatientPayload,),
+PublicPatientPayload = type(b'PublicPatientPayload', (BasePublicPatientPayload,),
                             get_payload_properties('public'))
 
-PrivatePatientPayload = type('PublicPatientPayload', (BasePrivatePatientPayload,),
+PrivatePatientPayload = type(b'PublicPatientPayload', (BasePrivatePatientPayload,),
                              get_payload_properties('private'))
 
 

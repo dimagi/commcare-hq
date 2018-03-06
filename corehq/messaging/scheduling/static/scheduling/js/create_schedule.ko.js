@@ -53,10 +53,11 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
     };
 
     var CreateScheduleViewModel = function (initial_values, select2_user_recipients,
-            select2_user_group_recipients, select2_user_organization_recipients,
-            select2_case_group_recipients) {
+        select2_user_group_recipients, select2_user_organization_recipients,
+        select2_case_group_recipients, current_visit_scheduler_form) {
         var self = this;
 
+        self.timestamp = new Date().getTime();
         self.send_frequency = ko.observable(initial_values.send_frequency);
         self.weekdays = ko.observableArray(initial_values.weekdays || []);
         self.days_of_month = ko.observableArray(initial_values.days_of_month || []);
@@ -81,13 +82,25 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
             initial_values.case_group_recipients, 'schedule-case_group_recipients');
         self.case_group_recipients.init();
         self.reset_case_property_enabled = ko.observable(initial_values.reset_case_property_enabled);
+        self.submit_partially_completed_forms = ko.observable(initial_values.submit_partially_completed_forms);
+        self.survey_reminder_intervals_enabled = ko.observable(initial_values.survey_reminder_intervals_enabled);
 
         self.is_trial_project = initial_values.is_trial_project;
         self.displayed_email_trial_message = false;
+        self.content = ko.observable(initial_values.content);
+        self.subject = new TranslationViewModel(
+            hqImport("hqwebapp/js/initial_page_data").get("language_list"),
+            initial_values.subject
+        );
         self.message = new TranslationViewModel(
             hqImport("hqwebapp/js/initial_page_data").get("language_list"),
             initial_values.message
         );
+        self.visit_scheduler_app_and_form_unique_id = new FormSelect2Handler(current_visit_scheduler_form,
+            'schedule-visit_scheduler_app_and_form_unique_id', self.timestamp);
+        self.visit_scheduler_app_and_form_unique_id.init();
+
+        self.capture_custom_metadata_item = ko.observable(initial_values.capture_custom_metadata_item);
 
         self.create_day_of_month_choice = function(value) {
             if(value === '-1') {
@@ -123,12 +136,16 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
 
         self.setOccurrencesOptionText = function(newValue) {
             var occurrences = $('option[value="after_occurrences"]');
+            var firstOccurrence = $('option[value="after_first_occurrence"]');
             if(newValue === 'daily') {
                 occurrences.text(gettext("After occurrences:"));
+                firstOccurrence.text(gettext("After first occurrence"));
             } else if(newValue === 'weekly') {
                 occurrences.text(gettext("After weeks:"));
+                firstOccurrence.text(gettext("After first week"));
             } else if(newValue === 'monthly') {
                 occurrences.text(gettext("After months:"));
+                firstOccurrence.text(gettext("After first month"));
             }
         };
 
@@ -157,7 +174,12 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
         self.computedEndDate = ko.computed(function() {
             if(self.stop_type() !== 'never') {
                 var start_date_milliseconds = Date.parse(self.start_date());
-                var occurrences = parseInt(self.occurrences());
+                var occurrences = null;
+                if(self.stop_type() === 'after_first_occurrence') {
+                    occurrences = 1;
+                } else {
+                    occurrences = parseInt(self.occurrences());
+                }
 
                 if(!isNaN(start_date_milliseconds) && !isNaN(occurrences)) {
                     var milliseconds_in_a_day = 24 * 60 * 60 * 1000;
@@ -252,7 +274,7 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
             var self = this;
         
             self.getHandlerSlug = function () {
-                return 'scheduling_recipients';
+                return 'scheduling_select2_helper';
             };
         
             self.getInitialData = function () {
@@ -265,13 +287,42 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
     RecipientsSelect2Handler.prototype = Object.create(RecipientsSelect2Handler.prototype);
     RecipientsSelect2Handler.prototype.constructor = RecipientsSelect2Handler;
 
+    var FormSelect2Handler = function (initial_object, field, timestamp) {
+        /*
+         * initial_object is an {id: ..., text: ...} object representing the initial value
+         */
+        BaseSelect2Handler.call(this, {
+            fieldName: field,
+            multiple: false,
+        });
+        var self = this;
+
+        self.getExtraData = function() {
+            return {'timestamp': timestamp};
+        };
+
+        self.getHandlerSlug = function () {
+            return 'scheduling_select2_helper';
+        };
+
+        self.getInitialData = function () {
+            return initial_object;
+        };
+
+        self.value(initial_object ? initial_object.id : '');
+    };
+
+    FormSelect2Handler.prototype = Object.create(FormSelect2Handler.prototype);
+    FormSelect2Handler.prototype.constructor = FormSelect2Handler;
+
     $(function () {
         var scheduleViewModel = new CreateScheduleViewModel(
             hqImport("hqwebapp/js/initial_page_data").get("current_values"),
             hqImport("hqwebapp/js/initial_page_data").get("current_select2_user_recipients"),
             hqImport("hqwebapp/js/initial_page_data").get("current_select2_user_group_recipients"),
             hqImport("hqwebapp/js/initial_page_data").get("current_select2_user_organization_recipients"),
-            hqImport("hqwebapp/js/initial_page_data").get("current_select2_case_group_recipients")
+            hqImport("hqwebapp/js/initial_page_data").get("current_select2_case_group_recipients"),
+            hqImport("hqwebapp/js/initial_page_data").get("current_visit_scheduler_form")
         );
         $('#create-schedule-form').koApplyBindings(scheduleViewModel);
         scheduleViewModel.init();

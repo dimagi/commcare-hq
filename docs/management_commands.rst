@@ -15,11 +15,6 @@ This is a list of useful management commands.  They can be run using
 For more information on a specific command, run
 ``$ ./manage.py <command> --help``
 
-**bootstrap**
-    Bootstrap a domain and user who owns it.
-    Usage::
-    $ ./manage.py bootstrap [options] <domain> <email> <password>
-
 **bootstrap_app**
     Bootstrap an app in an existing domain.
     Usage::
@@ -32,6 +27,11 @@ For more information on a specific command, run
     Copies the contents of a domain to another database.
     Usage:: 
     $ ./manage.py copy_domain [options] <sourcedb> <domain>
+
+**make_superuser**
+    Make a new superuser or make an existing user a superuser.
+    Usage::
+    $ ./manage.py make_superuser [options] <email>
 
 **ptop_reindexer_fluff**
     Fast reindex of fluff docs.

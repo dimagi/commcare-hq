@@ -648,6 +648,7 @@
           "last_date_gmp"
         ]
       }
-    ]
+    ],
+    "disable_destructive_rebuild": true
   }
 }

@@ -8,6 +8,6 @@ class SMSSerializer(serializers.ModelSerializer):
     messaging_subevent_id = serializers.IntegerField()
     custom_metadata = serializers.DictField()
 
-    class Meta:
+    class Meta(object):
         model = SMS
         exclude = ('couch_id', 'messaging_subevent')

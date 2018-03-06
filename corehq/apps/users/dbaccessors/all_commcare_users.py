@@ -1,10 +1,16 @@
 from __future__ import absolute_import
+
+from collections import namedtuple
+
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.es import UserES
 from corehq.util.quickcache import quickcache
 from corehq.util.test_utils import unit_testing_only
 from dimagi.utils.couch.database import iter_docs, iter_bulk_delete
 from six.moves import map
+
+
+UserExists = namedtuple('UserExists', 'exists is_deleted')
 
 
 def get_all_commcare_users_by_domain(domain):
@@ -180,6 +186,30 @@ def get_deleted_user_by_username(cls, username):
                                reduce=False
                                ).first()
     return cls.wrap_correctly(result['doc']) if result else None
+
+
+def user_exists(username):
+    """
+    :param username:
+    :return: namedtuple(exists:bool, is_deleted:bool)
+    """
+    result = CommCareUser.get_db().view(
+        'users/by_username',
+        key=username,
+        include_docs=False,
+        reduce=False,
+    )
+    if result:
+        return UserExists(True, False)
+
+    result = CommCareUser.get_db().view(
+        'deleted_users_by_username/view',
+        key=username,
+        include_docs=False,
+        reduce=False
+    ).count()
+    exists = bool(result)
+    return UserExists(exists, exists)
 
 
 @quickcache(['domain'])

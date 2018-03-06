@@ -1,4 +1,6 @@
 from __future__ import absolute_import
+from __future__ import division
+from __future__ import unicode_literals
 import logging
 from couchdbkit.exceptions import ResourceNotFound
 from corehq.apps.domain.models import Domain
@@ -6,7 +8,7 @@ from corehq.apps.reports.analytics.couchaccessors import get_ledger_values_for_c
 from corehq.apps.reports.analytics.esaccessors import get_wrapped_ledger_values, get_aggregated_ledger_values
 
 from dimagi.utils.couch.database import iter_docs
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.commtrack.models import SupplyPointCase
 from corehq.apps.products.models import Product
@@ -348,7 +350,7 @@ class StockStatusDataSource(ReportDataSource, CommtrackDataSourceMixin):
                         )
                     }
 
-            return product_aggregation.values()
+            return list(product_aggregation.values())
         else:
             # If we don't need advanced data, we can
             # just do some orm magic.
@@ -468,7 +470,7 @@ class ReportingStatusDataSource(ReportDataSource, CommtrackDataSourceMixin, Mult
                 doc['_id']: doc['location_id']
                 for doc in iter_docs(SupplyPointCase.get_db(), sp_ids)
             }
-            locations = _location_map(spoint_loc_map.values())
+            locations = _location_map(list(spoint_loc_map.values()))
 
             for spoint_id, loc_id in spoint_loc_map.items():
                 if loc_id not in locations:

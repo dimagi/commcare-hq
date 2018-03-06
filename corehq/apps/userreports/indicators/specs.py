@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from dimagi.ext.jsonobject import JsonObject, StringProperty, ListProperty, BooleanProperty, DictProperty
 from jsonobject import DefaultProperty
 from jsonobject.exceptions import BadValueError
@@ -10,7 +11,7 @@ from corehq.apps.userreports.transforms.factory import TransformFactory
 from corehq.apps.userreports.util import add_tabbed_text
 
 
-DATA_TYPE_CHOICES = ['date', 'datetime', 'string', 'integer', 'decimal', 'array']
+DATA_TYPE_CHOICES = ['date', 'datetime', 'string', 'integer', 'decimal', 'array', 'small_integer']
 
 
 def DataTypeProperty(**kwargs):
@@ -43,7 +44,7 @@ class IndicatorSpecBase(JsonObject):
         return wrapped
 
     def readable_output(self, context):
-        raise NotImplementedError
+        return self.type
 
 
 class PropertyReferenceIndicatorSpecBase(IndicatorSpecBase):
@@ -70,6 +71,10 @@ class BooleanIndicatorSpec(IndicatorSpecBase):
         from corehq.apps.userreports.filters.factory import FilterFactory
         filter_object = FilterFactory.from_spec(self.filter, context)
         return str(filter_object)
+
+
+class SmallBooleanIndicatorSpec(BooleanIndicatorSpec):
+    type = TypeProperty('small_boolean')
 
 
 class RawIndicatorSpec(PropertyReferenceIndicatorSpecBase):
@@ -121,7 +126,7 @@ class ChoiceListIndicatorSpec(PropertyReferenceIndicatorSpecBase):
         return in_multiselect if self.select_style == 'multiple' else equal
 
     def readable_output(self, context):
-        readable_output = super(ChoiceListIndicatorSpec).readable_output(context)
+        readable_output = super(ChoiceListIndicatorSpec, self).readable_output(context)
         return "{} for choices:\n{}".format(readable_output,
                                             add_tabbed_text(str(self.choices)))
 

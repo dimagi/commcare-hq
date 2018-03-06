@@ -1,4 +1,6 @@
 from __future__ import absolute_import
+from __future__ import division
+from __future__ import unicode_literals
 from collections import defaultdict
 from datetime import datetime, timedelta
 
@@ -9,7 +11,7 @@ from django.template.loader import render_to_string
 
 from casexml.apps.phone.models import OTARestoreCommCareUser
 from dimagi.utils.dates import DateSpan
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.parsing import string_to_datetime
 
 from corehq.apps.app_manager.dbaccessors import get_app
@@ -405,7 +407,7 @@ class LSAggregatePerformanceIndicator(LSIndicator):
         num_days_open = int(self.get_value_from_fixture(self.days_open_fixture, 'awc_opened_count'))
         num_awc_locations = len(self.awc_locations)
         if num_awc_locations:
-            avg_days_open = int(round(1.0 * num_days_open / num_awc_locations))
+            avg_days_open = int(round(num_days_open / num_awc_locations))
         else:
             # catch div by 0
             avg_days_open = 0

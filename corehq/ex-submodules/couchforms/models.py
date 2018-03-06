@@ -137,7 +137,7 @@ class XFormInstance(DeferredBlobMixin, SafeSaveDocument, UnicodeMixIn,
     build_id = StringProperty()
     export_tag = DefaultProperty(name='#export_tag')
 
-    class Meta:
+    class Meta(object):
         app_label = 'couchforms'
 
     @classmethod
@@ -222,6 +222,23 @@ class XFormInstance(DeferredBlobMixin, SafeSaveDocument, UnicodeMixIn,
         if const.TAG_META in self.form:
             return Metadata.wrap(clean_metadata(self.to_json()[const.TAG_FORM][const.TAG_META]))
 
+        return None
+
+    @property
+    def time_start(self):
+        # Will be addressed in https://github.com/dimagi/commcare-hq/pull/19391/
+        return None
+
+    @property
+    def time_end(self):
+        return None
+
+    @property
+    def commcare_version(self):
+        return None
+
+    @property
+    def app_version(self):
         return None
 
     def __unicode__(self):
@@ -489,5 +506,5 @@ class UnfinishedSubmissionStub(models.Model):
             "domain={s.domain})"
         ).format(s=self)
 
-    class Meta:
+    class Meta(object):
         app_label = 'couchforms'

@@ -28,5 +28,14 @@ hqDefine("reports/js/base", function() {
             html: true,
             title: gettext("You can email a saved version<br />of this report."),
         });
+
+        $(document).on('click', '.export-action-download', function() {
+            var $modalBody = $("#export-download-status .modal-body");
+            $modalBody.text("Fetching...");
+            $("#export-download-status .modal-header h3 span").text($(this).data("formname"));
+            $.getJSON($(this).data('dlocation'), function(d) {
+                $modalBody.empty().load(d.download_url);
+            });
+        });
     });
 });

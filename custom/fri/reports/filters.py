@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import pytz
 from django.utils.translation import ugettext as _
 from corehq.apps.reports.filters.base import BaseSingleOptionFilter

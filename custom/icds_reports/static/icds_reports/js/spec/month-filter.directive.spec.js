@@ -65,6 +65,9 @@ describe('Month Modal Controller', function () {
         inject(function ($rootScope, $controller) {
             scope = $rootScope.$new();
 
+            var fakeDate = new Date(2017, 9, 1);
+            var clock = sinon.useFakeTimers(fakeDate.getTime());
+
             modalInstance = {
                 close: sinon.spy(),
                 dismiss: sinon.spy(),
@@ -77,6 +80,8 @@ describe('Month Modal Controller', function () {
                 $scope: scope,
                 $uibModalInstance: modalInstance,
             });
+
+            clock.restore();
         });
     });
 
@@ -102,16 +107,27 @@ describe('Month Modal Controller', function () {
     });
 
     it('tests select current year', function () {
+        var fakeDate = new Date(2017, 9, 1);
+        var clock = sinon.useFakeTimers(fakeDate.getTime());
+
         var expected = new Date().getFullYear();
         assert.equal(controller.selectedYear, expected);
+
+        clock.restore();
     });
 
     it('tests select current month', function () {
+        var fakeDate = new Date(2016, 9, 1);
+        var clock = sinon.useFakeTimers(fakeDate.getTime());
+
         var expected = new Date().getMonth() + 1;
         assert.equal(controller.selectedMonth, expected);
+        clock.restore();
     });
 
     it('tests select month', function () {
+        var fakeDate = new Date(2016, 9, 1);
+        var clock = sinon.useFakeTimers(fakeDate.getTime());
         var expected = new Date().getMonth() - 3;
 
         var currentYear = new Date().getFullYear();
@@ -119,6 +135,7 @@ describe('Month Modal Controller', function () {
         controller.onSelectYear(currentYear);
 
         assert.equal(controller.selectedMonth, expected);
+        clock.restore();
     });
 
     function checkIfObjectExist(objectArray, name) {

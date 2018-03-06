@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.urls import reverse
 from django.http import Http404, HttpResponseRedirect, HttpResponseBadRequest
 from django.utils.decorators import method_decorator
@@ -78,7 +79,7 @@ class ReportDispatcher(View):
         """
         return True
 
-    def get_reports(self, domain=None):
+    def get_reports(self, domain):
         attr_name = self.map_name
         from corehq import reports
         if domain:
@@ -87,8 +88,8 @@ class ReportDispatcher(View):
             project = None
 
         def process(reports):
-            if project and callable(reports):
-                reports = reports(project)
+            if callable(reports):
+                reports = reports(project) if project else tuple()
             return tuple(reports)
 
         corehq_reports = process(getattr(reports, attr_name, ()))
@@ -97,7 +98,7 @@ class ReportDispatcher(View):
         if module_name is None:
             custom_reports = ()
         else:
-            module = __import__(module_name, fromlist=['reports'])
+            module = __import__(module_name, fromlist=[b'reports'])
             if hasattr(module, 'reports'):
                 reports = getattr(module, 'reports')
                 custom_reports = process(getattr(reports, attr_name, ()))
@@ -111,18 +112,15 @@ class ReportDispatcher(View):
 
         return corehq_reports + custom_reports
 
-    def get_reports_dict(self, domain=None):
-        return dict((report.slug, report)
-                    for name, group in self.get_reports(domain)
-                    for report in group)
-
     def get_report(self, domain, report_slug, *args):
         """
         Returns the report class for `report_slug`, or None if no report is
         found.
-
         """
-        return self.get_reports_dict(domain).get(report_slug, None)
+        for name, group in self.get_reports(domain):
+            for report in group:
+                if report.slug == report_slug:
+                    return report
 
     @quickcache(['domain', 'report_slug'], timeout=300)
     def get_report_class_name(self, domain, report_slug):

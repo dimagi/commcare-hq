@@ -449,7 +449,7 @@ def download_index_files(app, build_profile_id=None):
         files = [(path[len(prefix):], app.fetch_attachment(path))
                  for path in app.blobs if needed_for_CCZ(path)]
     else:
-        files = app.create_all_files().items()
+        files = list(app.create_all_files().items())
     return sorted(files)
 
 

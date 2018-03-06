@@ -1,10 +1,7 @@
 {% extends "hqwebapp/base_section.html" %}
 {% load i18n %}
 {% load hq_shared_tags %}
-
-{% block js %}{{ block.super }}
-<script src="{% static "groups/js/all_groups.js" %}"></script>
-{% endblock %}
+{% requirejs_main "groups/js/all_groups" %}
 
 {% block page_title %}
     {% trans "Groups" %}

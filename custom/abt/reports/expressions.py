@@ -1,11 +1,12 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import os
 from jsonobject import JsonObject
 import yaml
 from corehq.apps.userreports.specs import TypeProperty
 from corehq.apps.app_manager.models import Application
 from corehq.util.quickcache import quickcache
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 import six
 
 
@@ -109,7 +110,7 @@ class AbtSupervisorExpressionSpec(JsonObject):
         if item.get("domain", None) in ("airsmadagascar", "abtmali"):
             return "fra"
         country = cls._get_val(item, ["location_data", "country"])
-        if country in ["Senegal", u'S\xe9n\xe9gal', "Benin", "Mali", "Madagascar"]:
+        if country in ["Senegal", 'S\xe9n\xe9gal', "Benin", "Mali", "Madagascar"]:
             return "fra"
         elif country in ["mozambique", "Mozambique"]:
             return "por"
@@ -117,7 +118,7 @@ class AbtSupervisorExpressionSpec(JsonObject):
 
     @classmethod
     def _get_warning(cls, spec, item):
-        default = six.text_type(spec.get("warning", u""))
+        default = six.text_type(spec.get("warning", ""))
         language = cls._get_language(item)
         warning_key_map = {
             "fra": "warning_fr",
@@ -202,7 +203,7 @@ class AbtSupervisorExpressionSpec(JsonObject):
                         # Raise a flag because there are unchecked answers.
                         docs.append({
                             'flag': self._get_flag_name(item, spec),
-                            'warning': self._get_warning(spec, item).format(msg=u", ".join(unchecked)),
+                            'warning': self._get_warning(spec, item).format(msg=", ".join(unchecked)),
                             'comments': self._get_comments(partial, spec),
                             'names': names,
                         })

@@ -1,13 +1,15 @@
 from __future__ import absolute_import
-from collections import defaultdict, namedtuple
+
+from __future__ import division
+from __future__ import unicode_literals
 import datetime
-from six.moves.urllib.parse import urlencode
 import math
 import operator
+from collections import defaultdict, namedtuple
+
+from django.conf import settings
+from django.utils.translation import ugettext as _, ugettext_lazy, ugettext_noop
 from pygooglechart import ScatterChart
-from corehq.apps.locations.dbaccessors import user_ids_at_locations
-from corehq.apps.locations.models import SQLLocation
-from corehq.apps.locations.permissions import conditionally_location_safe
 import pytz
 
 from corehq import toggles
@@ -18,7 +20,7 @@ from corehq.apps.es.aggregations import (
     FilterAggregation,
     MissingAggregation,
 )
-from corehq.apps.locations.permissions import location_safe
+from corehq.apps.locations.permissions import conditionally_location_safe, location_safe
 from corehq.apps.reports import util
 from corehq.apps.reports.analytics.esaccessors import (
     get_last_submission_time_for_users,
@@ -53,17 +55,16 @@ from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.util import flatten_list
 from corehq.util.timezones.conversions import ServerTime, PhoneTime
 from corehq.util.view_utils import absolute_reverse
-from django.conf import settings
 from dimagi.utils.couch.safe_index import safe_index
 from dimagi.utils.dates import DateSpan, today_or_tomorrow
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.parsing import json_format_date, string_to_utc_datetime
-from django.utils.translation import ugettext as _, ugettext_lazy
-from django.utils.translation import ugettext_noop
+
 import six
 from functools import reduce
 from six.moves import range
 from six.moves import map
+from six.moves.urllib.parse import urlencode
 
 
 TOO_MUCH_DATA = ugettext_noop(
@@ -157,7 +158,6 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
     slug = 'case_activity'
     fields = ['corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
               'corehq.apps.reports.filters.select.CaseTypeFilter']
-    all_users = None
     display_data = ['percent']
     emailable = True
     description = ugettext_lazy("Followup rates on active cases.")
@@ -284,13 +284,13 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
 
     @property
     @memoized
-    def all_users(self):
+    def selected_users(self):
         return _get_selected_users(self.domain, self.request)
 
     @property
     @memoized
     def users_by_id(self):
-        return {user.user_id: user for user in self.all_users}
+        return {user.user_id: user for user in self.selected_users}
 
     @property
     @memoized
@@ -302,9 +302,9 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
     def paginated_users(self):
         if self.sort_column is None:
             return sorted(
-                self.all_users, key=lambda u: u.raw_username, reverse=self.pagination.desc
+                self.selected_users, key=lambda u: u.raw_username, reverse=self.pagination.desc
             )[self.pagination.start:self.pagination.start + self.pagination.count]
-        return self.all_users
+        return self.selected_users
 
     @property
     @memoized
@@ -357,7 +357,7 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
             closed = row.closed_count(landmark_key)
 
             try:
-                p_val = float(modified) * 100. / float(total_touched)
+                p_val = float(modified) * 100 / float(total_touched)
                 proportion = '%.f%%' % p_val
             except ZeroDivisionError:
                 p_val = None
@@ -824,11 +824,11 @@ class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissi
 
     @property
     def total_records(self):
-        return len(self.all_users)
+        return len(self.selected_users)
 
     @property
     @memoized
-    def all_users(self):
+    def selected_users(self):
         return _get_selected_users(self.domain, self.request)
 
     def paginate_list(self, data_list):
@@ -840,7 +840,7 @@ class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissi
             return data_list
 
     def users_by_username(self, order):
-        users = self.all_users
+        users = self.selected_users
         if order == "desc":
             users.reverse()
         return self.paginate_list(users)
@@ -851,19 +851,20 @@ class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissi
         else:
             get_counts_by_user = get_completed_counts_by_user
 
-        results = get_counts_by_user(
-            self.domain,
-            datespan,
-        )
+        if EMWF.show_all_mobile_workers(self.request.GET.getlist(EMWF.slug)):
+            user_ids = None  # Don't restrict query by user ID
+        else:
+            user_ids = [u.user_id for u in self.selected_users]
 
+        results = get_counts_by_user(self.domain, datespan, user_ids)
         return self.users_sorted_by_count(results, order)
 
     def users_sorted_by_count(self, count_dict, order):
-        # Split all_users into those in count_dict and those not.
+        # Split selected_users into those in count_dict and those not.
         # Sort the former by count and return
         users_with_forms = []
         users_without_forms = []
-        for user in self.all_users:
+        for user in self.selected_users:
             u_id = user['user_id']
             if u_id in count_dict:
                 users_with_forms.append((count_dict[u_id], user))
@@ -908,7 +909,7 @@ class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissi
 
     @property
     def get_all_rows(self):
-        rows = [self.get_row(user) for user in self.all_users]
+        rows = [self.get_row(user) for user in self.selected_users]
         self.total_row = self.get_row()
         return rows
 
@@ -920,7 +921,7 @@ class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissi
         if user:
             user_ids = [user.user_id]
         else:
-            user_ids = [u.user_id for u in self.all_users]
+            user_ids = [u.user_id for u in self.selected_users]
 
         if self.is_submission_time:
             get_counts_by_date = get_submission_counts_by_date
@@ -972,7 +973,7 @@ class FormCompletionTimeReport(WorkerMonitoringFormReportTableBase, DatespanMixi
     @property
     @memoized
     def selected_form_data(self):
-        forms = FormsByApplicationFilter.get_value(self.request, self.domain).values()
+        forms = list(FormsByApplicationFilter.get_value(self.request, self.domain).values())
         if len(forms) == 1 and forms[0]['xmlns']:
             return forms[0]
         non_fuzzy_forms = [form for form in forms if not form['is_fuzzy']]
@@ -1154,7 +1155,7 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringFormReportTableBase
         else:
             rows.append(['No Submissions Available for this Date Range'] + ['--']*5)
 
-        self.total_row = [_("Average"), "-", "-", "-", "-", self._format_td_status(int(total_seconds/total), False) if total > 0 else "--"]
+        self.total_row = [_("Average"), "-", "-", "-", "-", self._format_td_status(int(total_seconds // total), False) if total > 0 else "--"]
         return rows
 
     def get_user_link(self, username, user):
@@ -1464,10 +1465,10 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
             ret = [util._report_user_dict(u) for u in list(CommCareUser.by_domain(self.domain))]
             return ret
         else:
-            all_users = flatten_list(self.users_by_group.values())
+            all_users = flatten_list(list(self.users_by_group.values()))
             all_users.extend([user for user in self.get_users_by_mobile_workers().values()])
             all_users.extend([user for user in self.get_admins_and_demo_users()])
-            return dict([(user['user_id'], user) for user in all_users]).values()
+            return list(dict([(user['user_id'], user) for user in all_users]).values())
 
     @property
     def user_ids(self):
@@ -1509,7 +1510,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
 
     @staticmethod
     def _html_anchor_tag(href, value):
-        return u'<a href="{}" target="_blank">{}</a>'.format(href, value)
+        return '<a href="{}" target="_blank">{}</a>'.format(href, value)
 
     @staticmethod
     def _make_url(base_url, params):
@@ -1630,7 +1631,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
                     sum(
                         [int(report_data.avg_submissions_by_user.get(user["user_id"], 0))
                         for user in users]
-                    ) / self.num_avg_intervals
+                    ) // self.num_avg_intervals
                 ),
                 # Active users
                 util.numcell("%s / %s" % (active_users, total_users),
@@ -1693,7 +1694,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
                 ),
                 # Average Forms submitted
                 util.numcell(
-                    int(report_data.avg_submissions_by_user.get(user["user_id"], 0)) / self.num_avg_intervals
+                    int(report_data.avg_submissions_by_user.get(user["user_id"], 0)) // self.num_avg_intervals
                 ),
                 # Last Form submission
                 last_form_by_user.get(user["user_id"]) or _(self.NO_FORMS_TEXT),

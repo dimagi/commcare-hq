@@ -22,7 +22,7 @@ from corehq.apps.reports.datatables import (
     DTSortDirection,
 )
 from corehq.util.timezones.conversions import ServerTime
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy
 from .models import DeviceReportEntry
@@ -186,7 +186,7 @@ class BaseDeviceLogReport(GetParamsMixin, DatespanMixin, PaginatedReportMixin):
 
     @property
     def ordering(self):
-        by, direction = self.get_sorting_block()[0].items()[0]
+        by, direction = list(self.get_sorting_block()[0].items())[0]
         return '-' + by if direction == 'desc' else by
 
     @property

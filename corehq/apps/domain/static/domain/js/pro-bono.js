@@ -1,8 +1,12 @@
-/* globals hqDefine */
-hqDefine('domain/js/pro-bono', function () {
+hqDefine('domain/js/pro-bono', [
+    'jquery',
+    'select2-3.5.2-legacy/select2',
+], function(
+    $
+) {
     var _validateEmail = function (email) {
         // from http://stackoverflow.com/questions/46155/validate-email-address-in-javascript
-        var re = /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+        var re = /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/; // eslint-disable-line no-useless-escape
         return re.test(email);
     };
 
@@ -12,9 +16,9 @@ hqDefine('domain/js/pro-bono', function () {
                 var matchedData = $(data).filter(function() {
                     return this.text.localeCompare(term) === 0;
                 });
-    
+
                 var isEmailValid = _validateEmail(term);
-    
+
                 if (matchedData.length === 0 && isEmailValid) {
                     return { id: term, text: term };
                 }

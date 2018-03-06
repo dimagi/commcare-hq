@@ -5,7 +5,6 @@ from corehq.apps.accounting.models import (
     FeatureType,
     SoftwarePlanEdition,
     SoftwarePlanVisibility,
-    SoftwareProductType,
 )
 from corehq.apps.accounting.utils import log_accounting_error, log_accounting_info
 import six
@@ -127,9 +126,7 @@ def _ensure_product_rate(monthly_fee, edition, verbose, apps):
     try:
         # TODO - remove after squashing migrations
         SoftwareProduct = apps.get_model('accounting', 'SoftwareProduct')
-        product = SoftwareProduct(name=product_name, product_type=SoftwareProductType.COMMCARE)
-        if hasattr(product, 'product_type'):
-            product.product_type = SoftwareProductType.COMMCARE
+        product = SoftwareProduct(name=product_name, product_type='CommCare')
         try:
             product = SoftwareProduct.objects.get(name=product.name)
             if verbose:

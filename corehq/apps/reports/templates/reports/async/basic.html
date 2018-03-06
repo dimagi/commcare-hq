@@ -5,7 +5,3 @@
 {% block reportcontent %}
     {% if report_partial %}{% include report_partial %}{% endif %}
 {% endblock %}
-
-{% block js %}{{ block.super }}
-    <script src="{% static "reports/js/export_action_download.js" %}"></script>
-{% endblock %}

@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import division
 import requests
 from corehq.apps.sms.models import SMS, SQLSMSBackend
 from corehq.messaging.smsbackends.smsgh.forms import SMSGHBackendForm
@@ -14,7 +15,7 @@ class SMSGHException(Exception):
 
 class SQLSMSGHBackend(SQLSMSBackend):
 
-    class Meta:
+    class Meta(object):
         app_label = 'sms'
         proxy = True
 
@@ -43,7 +44,7 @@ class SQLSMSGHBackend(SQLSMSBackend):
         return SMSGHBackendForm
 
     def response_is_error(self, response):
-        return (int(response.status_code) / 100) in (4, 5)
+        return (int(response.status_code) // 100) in (4, 5)
 
     def get_additional_data(self, response):
         try:
