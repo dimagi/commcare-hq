@@ -418,7 +418,7 @@ def synclog_to_sql_object(synclog_json_object):
     return synclog
 
 
-@architect.install('partition', type='range', subtype='date', constraint='day', column='date')
+@architect.install('partition', type='range', subtype='date', constraint='week', column='date')
 class SyncLogSQL(models.Model):
 
     synclog_id = models.UUIDField(unique=True, primary_key=True, default=uuid.uuid1().hex)
