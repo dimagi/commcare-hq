@@ -1,5 +1,4 @@
 from __future__ import absolute_import
-import io
 
 from django.contrib import messages
 
@@ -14,11 +13,10 @@ from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
     require_can_edit_apps
 from corehq.apps.app_manager.app_translations import \
     expected_bulk_app_sheet_headers, expected_bulk_app_sheet_rows, \
-    process_bulk_app_translation_upload
+    process_bulk_app_translation_upload, raw_bulk_app_sheet
 from corehq.apps.app_manager.ui_translations import process_ui_translation_upload, \
     build_ui_translation_download_file
 from corehq.util.workbook_json.excel import InvalidExcelFileException
-from couchexport.export import export_raw
 from couchexport.models import Format
 from couchexport.shortcuts import export_response
 from dimagi.utils.decorators.view import get_file
@@ -80,34 +78,8 @@ def download_bulk_ui_translations(request, domain, app_id):
 @require_can_edit_apps
 def download_bulk_app_translations(request, domain, app_id):
     app = get_app(domain, app_id)
-    headers = expected_bulk_app_sheet_headers(app)
-    rows = expected_bulk_app_sheet_rows(app)
-    temp = io.BytesIO()
-    data = [(k, v) for k, v in six.iteritems(rows)]
-    export_raw(headers, data, temp)
+    temp = raw_bulk_app_sheet(app)
     return export_response(temp, Format.XLS_2007, "bulk_app_translations")
-
-
-@require_can_edit_apps
-def jls_download(request, domain, app_id):
-    app = get_app(domain, app_id)
-    headers = expected_bulk_app_sheet_headers(app)
-    rows = expected_bulk_app_sheet_rows(app)
-    temp = io.BytesIO()
-    data = [(k, v) for k, v in six.iteritems(rows)]
-    export_raw(headers, data, temp)
-    import tempfile
-    fd, path = tempfile.mkstemp()
-    with open(path,'wb') as out:
-        out.write(temp.getvalue())
-    return path
-
-
-def jls_upload(domain, app_id, filename):
-    app = get_app(domain, app_id)
-    with open(filename) as f:
-        msgs = process_bulk_app_translation_upload(app, f)
-    app.save()
 
 
 @no_conflict_require_POST
