@@ -1674,7 +1674,7 @@ AVAILABLE_CUSTOM_SCHEDULING_RECIPIENTS = {
          "ICDS: Mother person case from child_health case"],
     'ICDS_MOTHER_PERSON_CASE_FROM_CHILD_PERSON_CASE':
         ['custom.icds.messaging.custom_recipients.recipient_mother_person_case_from_child_person_case',
-         "ICDS: Mother person case from child case"],
+         "ICDS: Mother person case from child person case"],
     'ICDS_SUPERVISOR_FROM_AWC_OWNER':
         ['custom.icds.messaging.custom_recipients.supervisor_from_awc_owner',
          "ICDS: Supervisor Location from AWC Owner"],
