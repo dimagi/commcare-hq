@@ -10,6 +10,8 @@ from corehq.blobs.interface import AbstractBlobDB, SAFENAME
 from corehq.blobs.util import ClosingContextProxy, set_blob_expire_object
 from corehq.util.datadog.gauges import datadog_counter
 
+from dimagi.utils.chunked import chunked
+
 import boto3
 from botocore.client import Config
 from botocore.handlers import calculate_md5
@@ -105,17 +107,19 @@ class S3BlobDB(AbstractBlobDB):
         return False
 
     def bulk_delete(self, paths):
-        objects = [{"Key": path} for path in paths]
-        s3_bucket = self._s3_bucket()
-        deleted_bytes = 0
-        for path in paths:
-            with maybe_not_found():
-                deleted_bytes += s3_bucket.Object(path).content_length
-        resp = s3_bucket.delete_objects(Delete={"Objects": objects})
-        deleted = set(d["Key"] for d in resp.get("Deleted", []))
-        success = all(o["Key"] in deleted for o in objects)
-        datadog_counter('commcare.blobs.deleted.count', value=len(deleted))
-        datadog_counter('commcare.blobs.deleted.bytes', value=deleted_bytes)
+        success = True
+        for chunk in chunked(paths, 1000):
+            objects = [{"Key": path} for path in chunk]
+            s3_bucket = self._s3_bucket()
+            deleted_bytes = 0
+            for path in chunk:
+                with maybe_not_found():
+                    deleted_bytes += s3_bucket.Object(path).content_length
+            resp = s3_bucket.delete_objects(Delete={"Objects": objects})
+            deleted = set(d["Key"] for d in resp.get("Deleted", []))
+            success = success and all(o["Key"] in deleted for o in objects)
+            datadog_counter('commcare.blobs.deleted.count', value=len(deleted))
+            datadog_counter('commcare.blobs.deleted.bytes', value=deleted_bytes)
         return success
 
     def copy_blob(self, content, info, bucket):
