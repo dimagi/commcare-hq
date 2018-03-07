@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+from __future__ import unicode_literals
 import inspect
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
@@ -1012,7 +1013,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         # redact hashed password
         properties = sorted(predefined_properties - {'password'}) + sorted(dynamic_properties - {'password'})
 
-        return u'{name}({keyword_args})'.format(
+        return '{name}({keyword_args})'.format(
             name=name,
             keyword_args=', '.join('{key}={value!r}'.format(
                 key=key,
@@ -1088,7 +1089,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
 
     @property
     def full_name(self):
-        return (u"%s %s" % (self.first_name or u'', self.last_name or u'')).strip()
+        return ("%s %s" % (self.first_name or '', self.last_name or '')).strip()
 
     @property
     def human_friendly_name(self):

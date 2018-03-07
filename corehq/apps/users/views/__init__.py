@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from datetime import datetime
 import json
 
@@ -366,7 +367,7 @@ def get_domain_languages(domain):
     domain_languages = []
     for lang_code in set(app_languages + sms_languages):
         name = langcodes.get_name(lang_code)
-        label = u"{} ({})".format(lang_code, name) if name else lang_code
+        label = "{} ({})".format(lang_code, name) if name else lang_code
         domain_languages.append((lang_code, label))
 
     return sorted(domain_languages) or langcodes.get_all_langs_for_select()
@@ -460,7 +461,7 @@ class ListWebUsersView(HQJSONResponseMixin, BaseUserSettingsView):
         user_roles = [AdminUserRole(domain=self.domain)]
         user_roles.extend(sorted(
             UserRole.by_domain(self.domain),
-            key=lambda role: role.name if role.name else u'\uFFFF'
+            key=lambda role: role.name if role.name else '\uFFFF'
         ))
 
         show_es_issue = False

@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from couchdbkit import ResourceNotFound
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import SQLLocation
