@@ -39,6 +39,8 @@ MOTECH ships with a suite of **standard repeaters** which can be enabled through
 
 All repeaters are hooked into the **MOTECH management dashboard**. This allows project managers to create and delete specific repeater instances, and contains tools to audit and debug sent, queued and cancelled messages. 
 
+You can find more details in [the Repeaters README](./repeaters/README.md).
+
 DHIS2 Module
 ------------
 
@@ -55,6 +57,8 @@ CommCare aggregates and categorises data for DHIS2 using UCRs, and sends it at r
 
 Configuring a DHIS2 server is done under *Project Settings* > *DHIS2 Connection Settings*. Mapping UCR columns to DHIS2 data types is done under *Project Settings* > *DHIS2 DataSet Maps*
 
+You can find more details in [the DHIS2 module README](./dhis2/README.md).
+
 
 OpenMRS (& Bahmni) Module
 -------------------------
@@ -70,6 +74,8 @@ CommCare sends data to OpenMRS using its Web Services API.
 All data sent to OpenMRS relates to what OpenMRS refers to as "patients", "visits", "encounters" and "events". In CommCare these correspond to properties of one or a handful of case types, and values of some form questions. 
 
 CommCare uses Repeaters to build and send a workflow of requests to OpenMRS, populated using both cases and forms.
+
+You can find more details in [the OpenMRS module README](./openmrs/README.md).
 
 History
 -------
