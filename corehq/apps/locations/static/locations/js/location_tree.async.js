@@ -183,7 +183,8 @@ hqDefine('locations/js/location_tree', function() {
         this.expanded = ko.observable(false);
 
         this.loc_edit_url = data.loc_edit_url;
-        this.new_loc_url = function() { return data.new_loc_url; };
+
+        this.new_loc_url = data.new_loc_url;
         this.reloadLocationSearchSelect = data.reloadLocationSearchSelect;
         this.clearLocationSelection = data.clearLocationSelection;
 
@@ -236,7 +237,8 @@ hqDefine('locations/js/location_tree', function() {
                 var model_children = $.map(sortedChildren, function(e) {
                     return new LocationModel(_.extend(e, {
                         loc_edit_url: data.loc_edit_url,
-                        load_locs_url: data.load_locs_url }), root, loc.depth + 1);
+                        load_locs_url: data.load_locs_url,
+                        new_loc_url: data.new_loc_url }), root, loc.depth + 1);
                 });
                 model_children.unshift(loc.children()[0]);
                 this.children(model_children);
@@ -244,7 +246,8 @@ hqDefine('locations/js/location_tree', function() {
                 this.children($.map(sortedChildren, function (e) {
                     return new LocationModel(_.extend(e, {
                         loc_edit_url: data.loc_edit_url,
-                        load_locs_url: data.load_locs_url }), root, loc.depth + 1);
+                        load_locs_url: data.load_locs_url,
+                        new_loc_url: data.new_loc_url }), root, loc.depth + 1);
                 }));
             }
 
@@ -260,7 +263,8 @@ hqDefine('locations/js/location_tree', function() {
             api_get_children(this.uuid(), data.show_inactive, data.load_locs_url, function(resp) {
                 loc.set_children(resp, {
                     loc_edit_url: data.loc_edit_url,
-                    load_locs_url: data.load_locs_url
+                    load_locs_url: data.load_locs_url,
+                    new_loc_url: data.new_loc_url,
                 });
                 if (callback) {
                     callback(loc);
