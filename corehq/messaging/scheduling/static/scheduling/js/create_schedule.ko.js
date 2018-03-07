@@ -66,6 +66,8 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
         self.start_date = ko.observable(initial_values.start_date);
         self.start_date_type = ko.observable(initial_values.start_date_type);
         self.start_offset_type = ko.observable(initial_values.start_offset_type);
+        self.repeat = ko.observable(initial_values.repeat);
+        self.repeat_every = ko.observable(initial_values.repeat_every);
         self.stop_type = ko.observable(initial_values.stop_type);
         self.occurrences = ko.observable(initial_values.occurrences);
         self.recipient_types = ko.observableArray(initial_values.recipient_types || []);
@@ -134,22 +136,18 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
             }
         };
 
-        self.setOccurrencesOptionText = function(newValue) {
-            var occurrences = $('option[value="after_occurrences"]');
-            var firstOccurrence = $('option[value="after_first_occurrence"]');
+        self.setRepeatOptionText = function(newValue) {
+            var option = $('option[value="repeat_every_1"]');
             if(newValue === 'daily') {
-                occurrences.text(gettext("After occurrences:"));
-                firstOccurrence.text(gettext("After first occurrence"));
+                option.text(gettext("every day"));
             } else if(newValue === 'weekly') {
-                occurrences.text(gettext("After weeks:"));
-                firstOccurrence.text(gettext("After first week"));
+                option.text(gettext("every week"));
             } else if(newValue === 'monthly') {
-                occurrences.text(gettext("After months:"));
-                firstOccurrence.text(gettext("After first month"));
+                option.text(gettext("every month"));
             }
         };
 
-        self.send_frequency.subscribe(self.setOccurrencesOptionText);
+        self.send_frequency.subscribe(self.setRepeatOptionText);
 
         self.showTimeInput = ko.computed(function() {
             return self.send_frequency() !== 'immediately';
@@ -168,6 +166,10 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
         });
 
         self.showStopInput = ko.computed(function() {
+            return self.send_frequency() !== 'immediately';
+        });
+
+        self.showRepeatInput = ko.computed(function() {
             return self.send_frequency() !== 'immediately';
         });
 
@@ -255,7 +257,7 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
         self.init = function () {
             self.initDatePicker($("#id_schedule-start_date"));
             self.initTimePicker($("#id_schedule-send_time"));
-            self.setOccurrencesOptionText(self.send_frequency());
+            self.setRepeatOptionText(self.send_frequency());
         };
     };
 
