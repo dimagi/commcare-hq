@@ -18,9 +18,6 @@ class Command(BaseCommand):
         assert bad_billables.count() == correct_billables.count()
         assert correct_billables.count() == correct_billables.filter(gateway_fee__criteria__is_active=True).count()
 
-        bad_billable_total_gateway_cost = bad_billables.aggregate(Sum('gateway_fee__amount'))
-        correct_billable_total_gateway_cost = correct_billables.aggregate(Sum('gateway_fee__amount'))
-
         start_date = correct_billables.earliest('date_sent').date_sent
         end_date = correct_billables.latest('date_sent').date_sent
 
@@ -31,12 +28,24 @@ class Command(BaseCommand):
 
         for (year, month) in with_progress_bar(list(get_months_in_range(end_date, start_date))):
             for domain in domain_and_month_to_data:
+                billables_this_month = correct_billables.filter(
+                    domain=domain,
+                    date_sent__year=year,
+                    date_sent__month=month,
+                )
+                bad_billables_this_month = bad_billables.filter(
+                    domain=domain,
+                    date_sent__year=year,
+                    date_sent__month=month,
+                )
+                correct_total_gateway_cost = billables_this_month.aggregate(Sum('gateway_fee__amount')),
+                bad_total_gateway_cost = bad_billables_this_month.aggregate(Sum('gateway_fee__amount')),
+                print correct_total_gateway_cost
                 domain_and_month_to_data[domain][(year, month)] = {
-                    'number_of_smsbillables': correct_billables.filter(
-                        domain=domain,
-                        date_sent__year=year,
-                        date_sent__month=month,
-                    ).count()
+                    'number_of_smsbillables': billables_this_month.count(),
+                    'correct_total_gateway_cost': correct_total_gateway_cost,
+                    'bad_total_gateway_cost': bad_total_gateway_cost,
+                    'under_billing': correct_total_gateway_cost - bad_total_gateway_cost,
                 }
         print domain_and_month_to_data
 
