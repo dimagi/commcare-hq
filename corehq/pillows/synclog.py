@@ -30,7 +30,7 @@ def get_user_sync_history_pillow(
     change_feed = KafkaChangeFeed(
         topics=[topics.SYNCLOG_SQL], group_id=SYNCLOG_SQL_USER_SYNC_GROUP_ID,
         num_processes=num_processes, process_num=process_num)
-    checkpoint = KafkaPillowCheckpoint('synclog', [topics.SYNCLOG_SQL])
+    checkpoint = KafkaPillowCheckpoint('synclog-user-sync', [topics.SYNCLOG_SQL])
     return ConstructedPillow(
         name=pillow_id,
         checkpoint=checkpoint,
