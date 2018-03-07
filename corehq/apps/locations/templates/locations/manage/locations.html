@@ -23,10 +23,10 @@
     {% registerurl 'location_search' domain %}
     {% registerurl 'create_location' domain %}
     {% initial_page_data 'api_root' api_root %}
-    {% initial_page_data 'locations' locations|JSON %}
-    {% initial_page_data 'can_edit_root' can_edit_root|yesno:"true,false" %}
+    {% initial_page_data 'locations' locations %}
+    {% initial_page_data 'can_edit_root' can_edit_root %}
     {% initial_page_data 'hierarchy' hierarchy %}
-    {% initial_page_data 'show_inactive' show_inactive|yesno:"true,false" %}
+    {% initial_page_data 'show_inactive' show_inactive %}
 
 <header>
     <div class="row">
