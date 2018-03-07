@@ -128,7 +128,7 @@
 
         <div class="loc_section">
             <!-- header bar -->
-            <div class="loc_header" style="clear: both;" data-bind="if: name() != '_root'">
+            <div class="loc_header clearfix" data-bind="if: name() != '_root'">
                 <div style="float:right;" data-bind="if: can_edit()" id="button-template">
                     {% if not show_inactive %}
                         <a class="btn btn-primary"
@@ -202,20 +202,21 @@
 
     </script>
 {% else %}
-  <div class="loc_child no_children alert alert-info">
-    {% url "location_types" domain as location_types_url %}
-    {% blocktrans %}
-    Please define the organization levels
-    <a href="{{ location_types_url }}">here</a>
-    for your project before creating any locations.
-    {% endblocktrans %}
-  </div>
+    <div class="loc_child no_children alert alert-info">
+        {% url "location_types" domain as location_types_url %}
+        {% blocktrans %}
+        Please define the organization levels
+        <a href="{{ location_types_url }}">here</a>
+        for your project before creating any locations.
+        {% endblocktrans %}
+    </div>
 {% endif %}
-
-<div class="col-lg-12" style="clear: both">
-<div id="location_tree">
-  <div data-bind="template: { name: 'location-template', if: root, data: root }"></div>
-</div>
+<div class="row">
+    <div class="col-lg-12" style="clear: both">
+        <div id="location_tree">
+        <div data-bind="template: { name: 'location-template', if: root, data: root }"></div>
+        </div>
+    </div>
 </div>
 {% endblock %}
 
