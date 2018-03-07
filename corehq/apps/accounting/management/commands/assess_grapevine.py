@@ -4,6 +4,7 @@ from django.core.management import BaseCommand
 from django.db.models import Sum
 
 from corehq.apps.smsbillables.models import SmsBillable, SmsGatewayFeeCriteria
+from corehq.util.log import with_progress_bar
 
 
 class Command(BaseCommand):
@@ -26,7 +27,7 @@ class Command(BaseCommand):
         print start_date
         print end_date
 
-        for (year, month) in get_months_in_range(end_date, start_date):
+        for (year, month) in with_progress_bar(list(get_months_in_range(end_date, start_date))):
             domains_in_month = correct_billables.values('domain').distinct()
             print domains_in_month
             for domain in (domains_in_month):
