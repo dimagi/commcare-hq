@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from couchdbkit import ResourceConflict
 from dimagi.ext.couchdbkit import DocumentSchema, DictProperty, DateTimeProperty, BooleanProperty
 import datetime
