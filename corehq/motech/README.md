@@ -49,11 +49,7 @@ DHIS2 allows third-party systems like CommCare to send it two kinds of data:
 * Data that pertains to single events and individuals, for DHIS2 to aggregate within DHIS2.
 * Data that has already been aggregated
 
-The DHIS2 integration module in MOTECH enables aggregate data to be sent to DHIS2.
-
-We found that often DHIS2 was not configured to accept individual data, and would require the work of an administrator on behalf of the project organisation or government to set it up, which could be onerous. And so with MOTECH 2 we took the second approach.
-
-Subsequently we have found a demand for both approaches, and so we may extend MOTECH to be able to to both.
+The DHIS2 integration module in MOTECH enables aggregate data to be sent to DHIS2. Currently, the DHIS2 module does not send individual data. 
 
 CommCare aggregates and categorises data for DHIS2 using UCRs, and sends it at regular intervals.
 
@@ -65,16 +61,15 @@ OpenMRS (& Bahmni) Module
 
 [OpenMRS](https://openmrs.org/) is used for storing and managing patient data. [Bahmni](https://www.bahmni.org/) is an EMR and hospital system built on top of OpenMRS. Integration with Bahmni implies integration with OpenMRS.
 
-Because there is quite a lot of overlap between the kind of data that CommCare uses and the kind that OpenMRS uses, integration between these two systems has the potential to be richer than the integration between CommCare and DHIS2.
-
-OpenMRS integration is under development, and this information may date quickly.
-
+### Importing data from OpenMRS to CommCare
 CommCare can import data from OpenMRS using OpenMRS's Reporting API.
 
-CommCare sends data to OpenMRS using its Web Services API. All data sent to OpenMRS relates to what OpenMRS refers to as "patients", "visits", "encounters" and "events". In CommCare these correspond to properties of one or a handful of case types, and values of some form questions. CommCare uses Repeaters to build and send a workflow of requests to OpenMRS, populated using both cases and forms.
+### Sending data from CommCare to OpenMRS
+CommCare sends data to OpenMRS using its Web Services API. 
 
-Currently under development is the ability to import "live" (or very recent) changes from OpenMRS using its Atom Feed API. This will update CommCare cases, and will appear similar to the system form submissions of a case import.
+All data sent to OpenMRS relates to what OpenMRS refers to as "patients", "visits", "encounters" and "events". In CommCare these correspond to properties of one or a handful of case types, and values of some form questions. 
 
+CommCare uses Repeaters to build and send a workflow of requests to OpenMRS, populated using both cases and forms.
 
 History
 -------
