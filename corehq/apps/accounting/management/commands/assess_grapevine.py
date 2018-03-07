@@ -13,8 +13,9 @@ class Command(BaseCommand):
         assert inactive_criteria.count() == 2
         bad_billables = SmsBillable.objects.filter(gateway_fee__criteria__is_active=False)
         log_ids = bad_billables.values('log_id')
-        correct_billables = SmsBillable.objects.filter(is_active=True, log_id__in=log_ids)
+        correct_billables = SmsBillable.objects.filter(is_valid=True, log_id__in=log_ids)
         assert bad_billables.count() == correct_billables.count()
+        assert correct_billables.count() == correct_billables.filter(gateway_fee__criteria__is_active=True).count()
 
         bad_billable_total_gateway_cost = bad_billables.aggregate(Sum('gateway_fee__amount'))
         correct_billable_total_gateway_cost = correct_billables.aggregate(Sum('gateway_fee__amount'))
