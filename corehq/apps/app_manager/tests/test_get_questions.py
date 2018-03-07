@@ -30,6 +30,7 @@ QUESTIONS = [
                      "]/parent_property_1"),
         'constraint': "1 + instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]/child_property_1",
         'comment': None,
+        'setvalue': None,
     },
     {
         'tag': 'input',
@@ -44,6 +45,7 @@ QUESTIONS = [
         'relevant': None,
         'constraint': None,
         'comment': "This is a comment",
+        'setvalue': None,
     },
     {
         'tag': 'input',
@@ -58,6 +60,7 @@ QUESTIONS = [
         'relevant': None,
         'constraint': None,
         'comment': None,
+        'setvalue': None,
     },
     {
         'tag': 'trigger',
@@ -72,6 +75,7 @@ QUESTIONS = [
         'relevant': None,
         'constraint': None,
         'comment': None,
+        'setvalue': None,
     },
     {
         'tag': 'input',
@@ -86,6 +90,7 @@ QUESTIONS = [
         'relevant': None,
         'constraint': '1',
         'comment': None,
+        'setvalue': None,
     },
     {
         'tag': 'select1',
@@ -107,6 +112,7 @@ QUESTIONS = [
         'relevant': None,
         'constraint': None,
         'comment': None,
+        'setvalue': None,
     },
     {
         'tag': 'input',
@@ -121,6 +127,7 @@ QUESTIONS = [
         'relevant': None,
         'constraint': None,
         'comment': None,
+        'setvalue': None,
     },
     {
         'tag': 'input',
@@ -135,6 +142,7 @@ QUESTIONS = [
         'relevant': None,
         'constraint': None,
         'comment': None,
+        'setvalue': None,
     },
     {
         'tag': 'hidden',
