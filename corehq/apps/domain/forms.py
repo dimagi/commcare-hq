@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import datetime
 import io
 import logging
@@ -92,7 +93,7 @@ from corehq.util.timezones.forms import TimeZoneChoiceField
 from memoized import memoized
 import six
 from six.moves import range
-from six import unichr
+from six import chr
 
 # used to resize uploaded custom logos, aspect ratio is preserved
 LOGO_SIZE = (211, 32)
@@ -402,8 +403,8 @@ class SnapshotSettingsForm(forms.Form):
 
 
 class TransferDomainFormErrors(object):
-    USER_DNE = ugettext_lazy(u'The user being transferred to does not exist')
-    DOMAIN_MISMATCH = ugettext_lazy(u'Mismatch in domains when confirming')
+    USER_DNE = ugettext_lazy('The user being transferred to does not exist')
+    DOMAIN_MISMATCH = ugettext_lazy('Mismatch in domains when confirming')
 
 
 class TransferDomainForm(forms.ModelForm):
@@ -417,8 +418,8 @@ class TransferDomainForm(forms.ModelForm):
         self.current_domain = domain
         self.from_username = from_username
 
-        self.fields['domain'].label = _(u'Type the name of the project to confirm')
-        self.fields['to_username'].label = _(u'New owner\'s CommCare username')
+        self.fields['domain'].label = _('Type the name of the project to confirm')
+        self.fields['to_username'].label = _('New owner\'s CommCare username')
 
         self.helper = FormHelper()
         self.helper.layout = crispy.Layout(
@@ -1268,17 +1269,17 @@ def legacy_get_password_strength(value):
 def _get_uppercase_unicode_regexp():
     # rather than add another dependency (regex library)
     # http://stackoverflow.com/a/17065040/10840
-    uppers = [u'[']
+    uppers = ['[']
     for i in range(sys.maxunicode):
-        c = unichr(i)
+        c = chr(i)
         if c.isupper():
             uppers.append(c)
-    uppers.append(u']')
-    upper_group = u"".join(uppers)
+    uppers.append(']')
+    upper_group = "".join(uppers)
     return re.compile(upper_group, re.UNICODE)
 
-SPECIAL = re.compile(ur"\W", re.UNICODE)
-NUMBER = re.compile(ur"\d", re.UNICODE)  # are there other unicode numerals?
+SPECIAL = re.compile(r"\W", re.UNICODE)
+NUMBER = re.compile(r"\d", re.UNICODE)  # are there other unicode numerals?
 UPPERCASE = _get_uppercase_unicode_regexp()
 
 

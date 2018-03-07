@@ -1,5 +1,6 @@
 # Standard Library imports
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from functools import wraps
 import logging
 from base64 import b64decode
@@ -115,7 +116,7 @@ def login_and_domain_required(view_func):
                 else:
                     raise Http404
             elif (
-                req.path.startswith(u'/a/{}/reports/custom'.format(domain_name)) and
+                req.path.startswith('/a/{}/reports/custom'.format(domain_name)) and
                 PUBLISH_CUSTOM_REPORTS.enabled(domain_name)
             ):
                 return view_func(req, domain_name, *args, **kwargs)

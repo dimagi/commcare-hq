@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import requests
 from django.test import SimpleTestCase, RequestFactory
 from ..auth import (
@@ -165,7 +166,7 @@ class TestDetermineAuthTypeFromRequest(SimpleTestCase):
     def get_django_request(self, auth=None, headers=None):
         def to_django_header(header_key):
             # python simple_server.WSGIRequestHandler does basically this:
-            return u'HTTP_' + header_key.upper().replace('-', '_')
+            return 'HTTP_' + header_key.upper().replace('-', '_')
 
         req = (requests.Request(
             'GET',

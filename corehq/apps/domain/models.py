@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from datetime import datetime
 import time
 import uuid
@@ -50,7 +51,7 @@ from corehq.apps.app_manager.const import AMPLIFIES_NO, AMPLIFIES_NOT_SET, AMPLI
 
 from .project_access.models import SuperuserProjectEntryRecord  # noqa
 from functools import reduce
-from six import unichr
+from six import chr
 
 lang_lookup = defaultdict(str)
 
@@ -482,7 +483,7 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
         res = cls.view("domain/fields_by_prefix",
                        group=True,
                        startkey=[field, True, prefix],
-                       endkey=[field, True, "%s%c" % (prefix, unichr(0xfff8)), {}])
+                       endkey=[field, True, "%s%c" % (prefix, chr(0xfff8)), {}])
         vals = [(d['value'], d['key'][2]) for d in res]
         vals.sort(reverse=True)
         return [(v[1], v[0]) for v in vals]
@@ -659,7 +660,7 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
         return [d['key'] for d in Domain.view(
             "domain/domains",
             startkey=prefix,
-            endkey=prefix + u"zzz",
+            endkey=prefix + "zzz",
             reduce=False,
             include_docs=False
         ).all()]
@@ -941,7 +942,7 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
         for result in results:
             response = result[1]
             if isinstance(response, Exception):
-                message = u"Error occurred during domain pre_delete {}".format(self.name)
+                message = "Error occurred during domain pre_delete {}".format(self.name)
                 raise DomainDeleteException(message, response)
             elif response:
                 assert isinstance(response, list)
@@ -1167,13 +1168,13 @@ class TransferDomainRequest(models.Model):
         self.email_from_request()
 
     def activate_url(self):
-        return u"{url_base}/domain/transfer/{guid}/activate".format(
+        return "{url_base}/domain/transfer/{guid}/activate".format(
             url_base=get_url_base(),
             guid=self.transfer_guid
         )
 
     def deactivate_url(self):
-        return u"{url_base}/domain/transfer/{guid}/deactivate".format(
+        return "{url_base}/domain/transfer/{guid}/deactivate".format(
             url_base=get_url_base(),
             guid=self.transfer_guid
         )
@@ -1185,14 +1186,14 @@ class TransferDomainRequest(models.Model):
         text_content = render_to_string("{template}.txt".format(template=self.TRANSFER_TO_EMAIL), context)
 
         send_html_email_async.delay(
-            _(u'Transfer of ownership for CommCare project space.'),
+            _('Transfer of ownership for CommCare project space.'),
             self.to_user.email,
             html_content,
             text_content=text_content)
 
     def email_from_request(self):
         context = self.as_dict()
-        context['settings_url'] = u"{url_base}{path}".format(
+        context['settings_url'] = "{url_base}{path}".format(
             url_base=get_url_base(),
             path=reverse('transfer_domain_view', args=[self.domain]))
 
@@ -1200,7 +1201,7 @@ class TransferDomainRequest(models.Model):
         text_content = render_to_string("{template}.txt".format(template=self.TRANSFER_FROM_EMAIL), context)
 
         send_html_email_async.delay(
-            _(u'Transfer of ownership for CommCare project space.'),
+            _('Transfer of ownership for CommCare project space.'),
             self.from_user.email,
             html_content,
             text_content=text_content)
@@ -1226,7 +1227,7 @@ class TransferDomainRequest(models.Model):
             self.as_dict())
 
         send_html_email_async.delay(
-            _(u'There has been a transfer of ownership of {domain}').format(
+            _('There has been a transfer of ownership of {domain}').format(
                 domain=self.domain), self.DIMAGI_CONFIRM_ADDRESS,
             html_content, text_content=text_content
         )
