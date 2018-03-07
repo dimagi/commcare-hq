@@ -93,7 +93,7 @@ from corehq.util.timezones.forms import TimeZoneChoiceField
 from memoized import memoized
 import six
 from six.moves import range
-from six import chr
+from six import unichr
 
 # used to resize uploaded custom logos, aspect ratio is preserved
 LOGO_SIZE = (211, 32)
@@ -1271,7 +1271,7 @@ def _get_uppercase_unicode_regexp():
     # http://stackoverflow.com/a/17065040/10840
     uppers = ['[']
     for i in range(sys.maxunicode):
-        c = chr(i)
+        c = unichr(i)
         if c.isupper():
             uppers.append(c)
     uppers.append(']')

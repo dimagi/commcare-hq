@@ -51,7 +51,7 @@ from corehq.apps.app_manager.const import AMPLIFIES_NO, AMPLIFIES_NOT_SET, AMPLI
 
 from .project_access.models import SuperuserProjectEntryRecord  # noqa
 from functools import reduce
-from six import chr
+from six import unichr
 
 lang_lookup = defaultdict(str)
 
@@ -483,7 +483,7 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
         res = cls.view("domain/fields_by_prefix",
                        group=True,
                        startkey=[field, True, prefix],
-                       endkey=[field, True, "%s%c" % (prefix, chr(0xfff8)), {}])
+                       endkey=[field, True, "%s%c" % (prefix, unichr(0xfff8)), {}])
         vals = [(d['value'], d['key'][2]) for d in res]
         vals.sort(reverse=True)
         return [(v[1], v[0]) for v in vals]
