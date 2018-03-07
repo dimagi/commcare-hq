@@ -150,7 +150,7 @@ class ProcessRegistrationView(JSONResponseMixin, NewUserNumberAbTestMixin, View)
                 persona_fields['buyer_persona'] = reg_form.cleaned_data['persona']
                 if reg_form.cleaned_data['persona_other']:
                     persona_fields['buyer_persona_other'] = reg_form.cleaned_data['persona_other']
-                update_hubspot_properties.delay(new_user, {'report_builder_subscription_request': 'yes'})
+                update_hubspot_properties.delay(new_user, persona_fields)
 
             return {
                 'success': True,
