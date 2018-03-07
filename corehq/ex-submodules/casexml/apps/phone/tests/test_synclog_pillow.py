@@ -41,7 +41,11 @@ class SyncLogPillowTest(TestCase):
         return properly_wrap_sync_log(SyncLogSQL.objects.order_by('date').last().doc)
 
     def test_pillow(self):
+        from corehq.apps.change_feed.topics import get_topic_offset
+        from corehq.pillows.synclog import get_user_sync_history_pillow
         consumer = get_test_kafka_consumer(topics.SYNCLOG_SQL)
+        # get the seq id before the change is published
+        kafka_seq = get_topic_offset(topics.SYNCLOG_SQL)
 
         # make sure user has empty reporting-metadata before a sync
         self.assertEqual(self.ccuser.reporting_metadata.last_syncs, [])
@@ -52,10 +56,13 @@ class SyncLogPillowTest(TestCase):
         synclog.save()
 
         # make sure kafka change updates the user with latest sync info
-        message = consumer.next()
+        message = next(consumer)
         change_meta = change_meta_from_kafka_message(message.value)
         synclog = self._get_latest_synclog()
         self.assertEqual(change_meta.document_id, synclog._id)
         self.assertEqual(change_meta.domain, self.domain.name)
+
+        pillow = get_user_sync_history_pillow()
+        pillow.process_changes(since=kafka_seq, forever=False)
 
         self.assertEqual(self.ccuser.reporting_metadata.last_syncs, [])
