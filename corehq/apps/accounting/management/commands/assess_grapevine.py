@@ -27,13 +27,10 @@ class Command(BaseCommand):
         print start_date
         print end_date
 
-        domain_and_month_to_data = {}
+        domain_and_month_to_data = {_['domain']: {} for _ in correct_billables.values('domain').distinct()}
 
         for (year, month) in with_progress_bar(list(get_months_in_range(end_date, start_date))):
-            domains_in_month = correct_billables.values('domain').distinct()
-            for domain in domains_in_month:
-                domain = domain['domain']
-                domain_and_month_to_data.setdefault(domain, {})
+            for domain in domain_and_month_to_data:
                 domain_and_month_to_data[domain][(year, month)] = {
                     'number_of_smsbillables': correct_billables.filter(
                         domain=domain,
