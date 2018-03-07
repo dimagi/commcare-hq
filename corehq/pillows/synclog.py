@@ -15,7 +15,7 @@ from dimagi.utils.parsing import string_to_utc_datetime
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors.interface import PillowProcessor
 from pillowtop.feed.interface import Change
-from pillowtop.checkpoints.manager import PillowCheckpoint, PillowCheckpointEventHandler
+from pillowtop.checkpoints.manager import KafkaPillowCheckpoint, KafkaCheckpointEventHandler
 from pillowtop.reindexer.reindexer import Reindexer, ReindexerFactory
 
 
@@ -27,14 +27,14 @@ def get_user_sync_history_pillow(pillow_id='UpdateUserSyncHistoryPillow', **kwar
     This gets a pillow which iterates through all synclogs
     """
     change_feed = KafkaChangeFeed(topics=[topics.SYNCLOG_SQL], group_id=SYNCLOG_SQL_USER_SYNC_GROUP_ID),
-    checkpoint = PillowCheckpoint('synclog', change_feed.sequence_format)
+    checkpoint = KafkaPillowCheckpoint('synclog-user-sync', topics.SYNCLOG_SQL)
     return ConstructedPillow(
         name=pillow_id,
         checkpoint=checkpoint,
         change_feed=change_feed,
         processor=UserSyncHistoryProcessor(),
-        change_processed_event_handler=PillowCheckpointEventHandler(
-            checkpoint=checkpoint, checkpoint_frequency=100
+        change_processed_event_handler=KafkaCheckpointEventHandler(
+            checkpoint=checkpoint, checkpoint_frequency=100, change_feed=change_feed
         ),
     )
 
