@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import csv
 import io
 import json
@@ -729,30 +730,30 @@ class MobileWorkerListView(HQJSONResponseMixin, BaseUserSettingsView):
         except KeyError:
             return HttpResponseBadRequest('You must specify a username')
         if username == 'admin' or username == 'demo_user' or username == ANONYMOUS_USERNAME:
-            return {'error': _(u'Username {} is reserved.').format(username)}
+            return {'error': _('Username {} is reserved.').format(username)}
         if '@' in username:
             return {
-                'error': _(u'Username {} cannot contain "@".').format(username)
+                'error': _('Username {} cannot contain "@".').format(username)
             }
         if '&' in username:
             return {
-                'error': _(u'Username {} cannot contain "&".').format(username)
+                'error': _('Username {} cannot contain "&".').format(username)
             }
         if ' ' in username:
             return {
-                'error': _(u'Username {} cannot contain '
+                'error': _('Username {} cannot contain '
                            'spaces.').format(username)
             }
         full_username = format_username(username, self.domain)
         exists = user_exists(full_username)
         if exists.exists:
             if exists.is_deleted:
-                result = {'warning': _(u'Username {} belonged to a user that was deleted.'
-                                       u' Reusing it may have unexpected consequences.').format(username)}
+                result = {'warning': _('Username {} belonged to a user that was deleted.'
+                                       ' Reusing it may have unexpected consequences.').format(username)}
             else:
-                result = {'error': _(u'Username {} is already taken').format(username)}
+                result = {'error': _('Username {} is already taken').format(username)}
         else:
-            result = {'success': _(u'Username {} is available').format(username)}
+            result = {'success': _('Username {} is available').format(username)}
         return result
 
     @allow_remote_invocation
@@ -847,7 +848,7 @@ class MobileWorkerListView(HQJSONResponseMixin, BaseUserSettingsView):
             user_data = in_data['mobileWorker']
             form_data = {}
             for k, v in user_data.get('customFields', {}).items():
-                form_data[u"{}-{}".format(CUSTOM_DATA_FIELD_PREFIX, k)] = v
+                form_data["{}-{}".format(CUSTOM_DATA_FIELD_PREFIX, k)] = v
             for f in fields:
                 form_data[f] = user_data.get(f)
             form_data['domain'] = self.domain
@@ -1121,7 +1122,7 @@ def user_upload_job_poll(request, domain, download_id, template="users/mobile/pa
                 if row['flag'] == 'missing-data':
                     errors.append(_('A row with no username was skipped'))
                 else:
-                    errors.append(u'{username}: {flag}'.format(**row))
+                    errors.append('{username}: {flag}'.format(**row))
             errors.extend(self.response_errors)
             return errors
 
