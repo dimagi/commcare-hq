@@ -151,14 +151,14 @@ TODO:
         <td>
             <!--ko if: !$parent.hasFilterValueCol -->
             <select class="form-control input-sm" data-bind="
-                options: ReportBuilder.Constants.FORMAT_OPTIONS,
+                options: hqImport('userreports/js/constants').FORMAT_OPTIONS,
                 value: format,
                 attr: {disabled: !existsInCurrentVersion()}
             "></select>
             <!--/ko-->
             <!--ko if: $parent.hasFilterValueCol -->
             <select class="form-control input-sm" data-bind="
-                options: ReportBuilder.Constants.DEFAULT_FILTER_FORMAT_OPTIONS,
+                options: hqImport('userreports/js/constants').DEFAULT_FILTER_FORMAT_OPTIONS,
                 value: format,
                 attr: {disabled: !existsInCurrentVersion()}
             "></select>
@@ -229,4 +229,3 @@ TODO:
     <label class="help-block" data-bind="text: requireColumnsText">
     </label>
 </div>
-
