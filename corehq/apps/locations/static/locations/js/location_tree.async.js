@@ -177,9 +177,10 @@ hqDefine('locations/js/location_tree', function() {
         this.expanded = ko.observable(false);
         this.new_loc_url = ko.observable();
 
-        this.edit_loc_url = ko.observable();
+        this.edit_loc_url = data.edit_loc_url;
+        this.new_loc_url = data.new_loc_url;
         this.reloadLocationSearchSelect = data.reloadLocationSearchSelect;
-        this.clearLocationSelection = ko.observable();
+        this.clearLocationSelection = data.clearLocationSelection;
 
         this.expanded.subscribe(function(val) {
             if (val === true && (this.children_status() === 'not_loaded' || this.children_status() === 'semi_loaded')) {
@@ -202,10 +203,7 @@ hqDefine('locations/js/location_tree', function() {
             this.is_archived(data.is_archived);
             this.can_edit(data.can_edit);
             this.expanded(data.expanded);
-            this.new_loc_url(data.new_loc_url);
-            this.edit_loc_url(data.edit_loc_url);
 
-            this.clearLocationSelection(data.clearLocationSelection);
             if (data.children_status !== null && data.children_status !== undefined) {
                 this.children_status(data.children_status);
             }
