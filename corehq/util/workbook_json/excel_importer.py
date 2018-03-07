@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from corehq.util.workbook_json.excel import WorkbookJSONReader
 from soil import DownloadBase
 

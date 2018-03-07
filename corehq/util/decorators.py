@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from celery.task import task
 from functools import wraps
 import logging

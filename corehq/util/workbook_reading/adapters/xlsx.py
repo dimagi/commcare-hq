@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from contextlib import contextmanager
 from zipfile import BadZipfile
 from datetime import datetime, time
@@ -32,7 +33,7 @@ def open_xlsx_workbook(filename):
         except BadZipfile as e:
             f.seek(0)
             if f.read(8) == XLSX_ENCRYPTED_MARKER:
-                raise SpreadsheetFileEncrypted(u'Workbook is encrypted')
+                raise SpreadsheetFileEncrypted('Workbook is encrypted')
             else:
                 raise SpreadsheetFileInvalidError(e.message)
         yield _XLSXWorkbookAdaptor(openpyxl_workbook).to_workbook()
