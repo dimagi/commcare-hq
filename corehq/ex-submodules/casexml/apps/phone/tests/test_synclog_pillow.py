@@ -6,7 +6,7 @@ from django.test import TestCase
 from casexml.apps.case.tests.util import delete_all_sync_logs
 from casexml.apps.phone.models import SyncLog, SyncLogSQL, properly_wrap_sync_log
 from corehq.apps.domain.models import Domain
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.models import CommCareUser, LastSync
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import change_meta_from_kafka_message
 from corehq.apps.change_feed.tests.utils import get_test_kafka_consumer
@@ -62,7 +62,10 @@ class SyncLogPillowTest(TestCase):
         self.assertEqual(change_meta.document_id, synclog._id)
         self.assertEqual(change_meta.domain, self.domain.name)
 
+        # make sure processor updates the user correctly
         pillow = get_user_sync_history_pillow()
         pillow.process_changes(since=kafka_seq, forever=False)
-
-        self.assertEqual(self.ccuser.reporting_metadata.last_syncs, [])
+        ccuser = CommCareUser.get(self.ccuser._id)
+        self.assertEqual(len(ccuser.reporting_metadata.last_syncs), 0)
+        self.assertEqual(ccuser.reporting_metadata.last_syncs[0].sync_date, synclog.date)
+        self.assertEqual(ccuser.reporting_metadata.last_sync_for_user.sync_date, synclog.date)
