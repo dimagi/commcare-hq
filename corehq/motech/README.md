@@ -1,12 +1,9 @@
 MOTECH
 ======
 
-MOTECH is a Data Integration Layer that is currently integrated with CommCare.
+MOTECH is CommCare's Data Integration Layer.
 
-History
--------
-
-There was a previous version of MOTECH based on [OSGI](https://www.osgi.org/) and the [Spring Framework](https://projects.spring.io/spring-framework/) originally developed by the Grameen Foundation.  [Information on MOTECH 1.0 can be found here](http://docs.motechproject.org/en/latest/).  This platform was supporting both web-application use cases as well as data integration.  Due to the incompatability of OSGI and Spring in subsequent releases, MOTECH is now focused on data integration.
+It allows sending simple and aggregate data payloads to third-party systems when certain triggers are met. Triggers and Payloads are easily defined through custom methods in the MOTECH codebase, and a full suite of management tools is available to audit and debug sent, queued and cancelled messages. 
 
 Currently, MOTECH is fully integrated to leverage CommCare's frameworks, including:
 
@@ -16,25 +13,31 @@ Currently, MOTECH is fully integrated to leverage CommCare's frameworks, includi
 Framework
 ---------
 
-MOTECH is designed to enable multiple types of integrations:
+MOTECH is designed to enable multiple types of integration:
 
-* Simple transactional integration where a single action triggers one or more atomic integrations with third-party systems in either direction.  An example is importing OpenMRS patients into CommCare.
+* Simple transactional integration where a single action triggers one or more atomic messages with third-party systems in either direction.  An example is importing OpenMRS patients into CommCare.
 * Complex transactional integration where a single action requires multiple API calls to complete the integration.  An example is a single registration form in CommCare generating a patient and encounter in OpenMRS.
 * Aggregate data integration where multiple actions in CommCare are aggregated and the result is pushed to a third-party system.  An example is CommCare tranactional data being aggregated into a [Data Source](../apps/userreports/README.md) and being pushed to DHIS2 as aggregate data.
 
 Current Integrations
 --------------------
+MOTECH currently allows for the following integrations:
 
-MOTECH Development has prioritized the integrations most commonly requested by our community, chief among them are:
-
-* Custom trigger based on integrations
+* Standard trigger-based integration which forwards all CommCare Case, Form or Application data to any third-party endpoint. This requires no code, and is easily configured through a UI.
+* Custom trigger-based integrations sending custom payloads to any third-party endpoint. Triggers and Payloads are defined in code.
 * DHIS2
 * OpenMRS
 
 Repeaters
 ---------
 
-Repeaters allow integrators to send data from CommCare, formatted as JSON or XML, and send it as an authenticated user to a third-party system over HTTP(S).
+Repeaters allow integrators to send data from CommCare and send it as an authenticated user to third-party systems over HTTP or HTTPS.
+
+MOTECH ships with a suite of **standard repeaters** which can be enabled through the MOTECH management dashboard. These send all case, form, or application data to any third-party endpoint. The payload for these is sent whenever a change is detected. The schema is [predefined](https://confluence.dimagi.com/pages/viewpage.action?pageId=12224128) and can be sent as either `XML` or `JSON`. 
+
+**Custom repeaters** are defined in code, and subclass any of the `BaseRepeater` classes. They allow the developer to create custom payloads that can compile data from multiple sources and be sent in any format, including `JSON`, `XML` and `SOAP`. Custom triggers for when to send this data are also defined in code. These trigger methods are run whenever the model in question (`case`, `form`, or `application`) is changed.
+
+All repeaters are hooked into the **MOTECH management dashboard**. This allows project managers to create and delete specific repeater instances, and contains tools to audit and debug sent, queued and cancelled messages. 
 
 DHIS2 Module
 ------------
@@ -71,3 +74,9 @@ CommCare can import data from OpenMRS using OpenMRS's Reporting API.
 CommCare sends data to OpenMRS using its Web Services API. All data sent to OpenMRS relates to what OpenMRS refers to as "patients", "visits", "encounters" and "events". In CommCare these correspond to properties of one or a handful of case types, and values of some form questions. CommCare uses Repeaters to build and send a workflow of requests to OpenMRS, populated using both cases and forms.
 
 Currently under development is the ability to import "live" (or very recent) changes from OpenMRS using its Atom Feed API. This will update CommCare cases, and will appear similar to the system form submissions of a case import.
+
+
+History
+-------
+
+There was a previous version of MOTECH based on [OSGI](https://www.osgi.org/) and the [Spring Framework](https://projects.spring.io/spring-framework/) originally developed by the Grameen Foundation.  Information on MOTECH 1.0 can be found [here](http://docs.motechproject.org/en/latest/).  This platform supported both web-application use cases as well as data integration.  Due to the incompatability of OSGI and Spring in subsequent releases, MOTECH is now focused on data integration.
