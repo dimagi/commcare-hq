@@ -30,6 +30,7 @@ class Command(BaseCommand):
             domains_in_month = correct_billables.values('domain').distinct()
             print domains_in_month
             for domain in (domains_in_month):
+                domain = domain['domain']
                 print "%s %d-%d" % (domain, year, month)
 
 
