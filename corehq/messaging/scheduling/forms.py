@@ -358,7 +358,7 @@ class ScheduleForm(Form):
             if initial['send_frequency'] == self.SEND_DAILY:
                 repeat_every = self.initial_schedule.repeat_every
             elif initial['send_frequency'] == self.SEND_WEEKLY:
-                repeat_every = self.initial_schedule.repeat_every / 7
+                repeat_every = self.initial_schedule.repeat_every // 7
             elif initial['send_frequency'] == self.SEND_MONTHLY:
                 repeat_every = self.initial_schedule.repeat_every * -1
             else:

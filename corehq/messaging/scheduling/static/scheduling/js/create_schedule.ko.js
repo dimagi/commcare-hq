@@ -204,7 +204,7 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
 
         self.calculateMonthlyEndDate = function(start_date_milliseconds, repeat_every, occurrences) {
             var last_day = null;
-            self.days_of_month().forEach(function(value, index) {
+            self.days_of_month().forEach(function(value) {
                 value = parseInt(value);
                 if(last_day === null) {
                     last_day = value;
