@@ -20,8 +20,8 @@ class Command(BaseCommand):
         bad_billable_total_gateway_cost = bad_billables.aggregate(Sum('gateway_fee__amount'))
         correct_billable_total_gateway_cost = correct_billables.aggregate(Sum('gateway_fee__amount'))
 
-        start_date = correct_billables.earliest('date_sent')
-        end_date = correct_billables.latest('date_sent')
+        start_date = correct_billables.earliest('date_sent').date_sent
+        end_date = correct_billables.latest('date_sent').date_sent
 
         for (year, month) in get_months_in_range(start_date, end_date):
             domains_in_month = correct_billables.values('domain').distinct()
