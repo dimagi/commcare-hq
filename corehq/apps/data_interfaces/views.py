@@ -33,7 +33,8 @@ from corehq.apps.data_interfaces.forms import (
     CaseRuleActionsForm)
 from corehq.apps.data_interfaces.models import (AutomaticUpdateRule,
                                                 AutomaticUpdateRuleCriteria,
-                                                AutomaticUpdateAction)
+                                                AutomaticUpdateAction,
+                                                DomainCaseRuleRun)
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.hqcase.utils import get_case_by_identifier
@@ -627,11 +628,16 @@ class AutomaticUpdateRuleListView(JSONResponseMixin, DataInterfaceSection):
 
     @property
     def page_context(self):
+
+        domain_rule_run_info = DomainCaseRuleRun.return_class_variables(self.domain)
+        domain_rule_run_values = list(map(self._format_domain_rule_run, domain_rule_run_info))[0]
+
         return {
             'pagination_limit_cookie_name': ('hq.pagination.limit'
                                              '.automatic_update_rule_list.%s'
                                              % self.domain),
             'help_site_url': 'https://confluence.dimagi.com/display/commcarepublic/Automatically+Close+Cases',
+            'domain_rule_run_values': domain_rule_run_values,
         }
 
     def _format_rule(self, rule):
@@ -645,6 +651,20 @@ class AutomaticUpdateRuleListView(JSONResponseMixin, DataInterfaceSection):
                          .done()
                          .strftime(SERVER_DATETIME_FORMAT)) if rule.last_run else '-',
             'edit_url': reverse(EditCaseRuleView.urlname, args=[self.domain, rule.pk]),
+        }
+
+    def _format_domain_rule_run(self, domain_rule_run):
+        return {
+            'status': domain_rule_run.status,
+            'cases_checked': domain_rule_run.cases_checked,
+            'num_updates': domain_rule_run.num_updates,
+            'num_closes': domain_rule_run.num_closes,
+            'num_related_updates': domain_rule_run.num_related_updates,
+            'num_related_closes': domain_rule_run.num_related_closes,
+            'num_creates': domain_rule_run.num_creates,
+            'finished_on': domain_rule_run.finished_on,
+            'domain': domain_rule_run.domain,
+            'started_on': domain_rule_run.started_on
         }
 
     @allow_remote_invocation
