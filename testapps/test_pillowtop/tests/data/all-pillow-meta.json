@@ -219,7 +219,7 @@
     "UpdateUserSyncHistoryPillow": {
         "advertised_name": "UpdateUserSyncHistoryPillow",
         "change_feed_type": "KafkaChangeFeed",
-        "checkpoint_id": "update-user-sync-history",
+        "checkpoint_id": "UpdateUserSyncHistoryPillow",
         "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
         "name": "UpdateUserSyncHistoryPillow"
     }
