@@ -62,6 +62,7 @@ hqDefine('locations/js/location_tree', function() {
                 clearLocationSelection: options.clearLocationSelection,
                 new_loc_url: options.new_loc_url,
                 loc_edit_url: options.loc_edit_url,
+                load_locs_url: options.load_locs_url,
             }, this));
         };
     }
@@ -99,6 +100,7 @@ hqDefine('locations/js/location_tree', function() {
                 clearLocationSelection: options.clearLocationSelection,
                 new_loc_url: options.new_loc_url,
                 loc_edit_url: options.loc_edit_url,
+                load_locs_url: options.load_locs_url,
             }, this);
         });
 
@@ -132,6 +134,7 @@ hqDefine('locations/js/location_tree', function() {
                                 clearLocationSelection: options.clearLocationSelection,
                                 new_loc_url: options.new_loc_url,
                                 loc_edit_url: options.loc_edit_url,
+                                load_locs_url: options.load_locs_url,
                             };
                             var level = new LocationModel(data, tree_model, response.lineage.length - lineage_idx - 1);
                             child = Array.of(Object.assign({}, data));
@@ -153,6 +156,7 @@ hqDefine('locations/js/location_tree', function() {
                             clearLocationSelection: options.clearLocationSelection,
                             new_loc_url: options.new_loc_url,
                             loc_edit_url: options.loc_edit_url,
+                            load_locs_url: options.load_locs_url,
                         }, tree_model);
                         return level;
                     };
@@ -230,13 +234,17 @@ hqDefine('locations/js/location_tree', function() {
                 }
 
                 var model_children = $.map(sortedChildren, function(e) {
-                    return new LocationModel(_.extend(e, { loc_edit_url: data.loc_edit_url }), root, loc.depth + 1);
+                    return new LocationModel(_.extend(e, {
+                        loc_edit_url: data.loc_edit_url,
+                        load_locs_url: data.load_locs_url }), root, loc.depth + 1);
                 });
                 model_children.unshift(loc.children()[0]);
                 this.children(model_children);
             } else {
                 this.children($.map(sortedChildren, function (e) {
-                    return new LocationModel(_.extend(e, { loc_edit_url: data.loc_edit_url }), root, loc.depth + 1);
+                    return new LocationModel(_.extend(e, {
+                        loc_edit_url: data.loc_edit_url,
+                        load_locs_url: data.load_locs_url }), root, loc.depth + 1);
                 }));
             }
 
@@ -250,7 +258,10 @@ hqDefine('locations/js/location_tree', function() {
         this.load_children_async = function(callback) {
             this.children_status('loading');
             api_get_children(this.uuid(), data.show_inactive, data.load_locs_url, function(resp) {
-                loc.set_children(resp);
+                loc.set_children(resp, {
+                    loc_edit_url: data.loc_edit_url,
+                    load_locs_url: data.load_locs_url
+                });
                 if (callback) {
                     callback(loc);
                 }
