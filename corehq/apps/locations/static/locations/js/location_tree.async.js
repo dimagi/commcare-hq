@@ -4,7 +4,6 @@ hqDefine('locations/js/location_tree', function() {
         var params = (loc_uuid ? {
             parent_id: loc_uuid,
         } : {});
-        // show_inactive comes from global state
         params.include_inactive = show_inactive;
         $.getJSON(load_locs_url, params, function(allData) {
             callback(allData.objects);
@@ -132,15 +131,15 @@ hqDefine('locations/js/location_tree', function() {
                                 reloadLocationSearchSelect: options.reloadLocationSearchSelect,
                                 clearLocationSelection: options.clearLocationSelection,
                             };
-                            var level = new LocationModel(data, model.selected_location_tree, response.lineage.length - lineage_idx - 1);
+                            var level = new LocationModel(data, tree_model, response.lineage.length - lineage_idx - 1);
                             child = Array.of(Object.assign({}, data));
                         }
                         var root_children = [];
-                        for (var child_idx = 0; child_idx < this.selected_location_tree.locs.length; child_idx++) {
-                            if (this.selected_location_tree.locs[child_idx].name === child[0].name) {
+                        for (var child_idx = 0; child_idx < tree_model.locs.length; child_idx++) {
+                            if (tree_model.locs[child_idx].name === child[0].name) {
                                 root_children.push(child[0]);
                             } else {
-                                root_children.push(this.selected_location_tree.locs[child_idx]);
+                                root_children.push(tree_model.locs[child_idx]);
                             }
                         }
                         level = new LocationModel({
@@ -152,11 +151,11 @@ hqDefine('locations/js/location_tree', function() {
                             clearLocationSelection: options.clearLocationSelection,
                             new_loc_url: options.new_loc_url,
                             loc_edit_url: options.loc_edit_url,
-                        }, model.selected_location_tree);
+                        }, tree_model);
                         return level;
                     };
 
-                    model.selected_location_tree.root(expand_tree());
+                    tree_model.root(expand_tree());
 
                 },
             });
