@@ -57,11 +57,15 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         vm.months = _.filter(vm.monthsCopy, function (month) {
             return month.id <= new Date().getMonth() + 1;
         });
+    } else if (vm.selectedYear === 2017) {
+        vm.months = _.filter(vm.monthsCopy, function (month) {
+            return month.id >= 3;
+        });
     } else {
         vm.months = vm.monthsCopy;
     }
 
-    for (var year=2014; year <= new Date().getFullYear(); year++ ) {
+    for (var year=2017; year <= new Date().getFullYear(); year++ ) {
         vm.years.push({
             name: year,
             id: year,
@@ -311,6 +315,11 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
                 return month.id <= new Date().getMonth() + 1;
             });
             vm.selectedMonth = vm.selectedMonth <= new Date().getMonth() + 1 ? vm.selectedMonth : new Date().getMonth() + 1;
+        } else if (item.id === 2017) {
+            vm.months = _.filter(vm.monthsCopy, function (month) {
+                return month.id >= 3;
+            });
+            vm.selectedMonth = vm.selectedMonth >= 3 ? vm.selectedMonth : 3;
         } else {
             vm.months = vm.monthsCopy;
         }

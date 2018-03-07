@@ -97,7 +97,7 @@ describe('Download Directive', function () {
 
         it('tests initialize years', function () {
             var result = controller.years;
-            var expected = [{"name": 2014, "id": 2014}, {"name": 2015, "id": 2015}, {"name": 2016, "id": 2016}];
+            var expected = [];
             assert.deepEqual(expected, result);
         });
 
