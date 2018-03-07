@@ -13,7 +13,7 @@
 
 {% block page_content %}
 
-    {% registerurl 'slab_edit_location' domain '-locid-' %}
+    {% registerurl 'slab_edit_location' domain '---' %}
     {% registerurl 'location_search' domain %}
     {% registerurl 'create_location' domain %}
     {% initial_page_data 'api_root' api_root %}
@@ -29,7 +29,7 @@
             <!-- header bar -->
             <div class="loc_header" data-bind="if: name() != '_root'">
                 <div style="float:right;" data-bind="if: can_edit() && type() === 'FACILITY'">
-                    <a class="btn btn-primary" data-bind="attr: { href: loc_edit_url(uuid()) }">
+                    <a class="btn btn-primary" data-bind="attr: { href: loc_edit_url(uuid(), 'slab_edit_location') }">
                         {% trans "Edit" %}
                     </a>
                 </div>

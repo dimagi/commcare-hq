@@ -3,18 +3,13 @@ hqDefine('locations/js/locations', function() {
     var LocationModels = hqImport('locations/js/location_tree');
 
     $(function() {
-        var load_locs_url = initialPageData.get('api_root'),
-            new_loc_url = initialPageData.reverse("create_location");
+        var load_locs_url = initialPageData.get('api_root');
 
         var locs = initialPageData.get('locations'),
             can_edit_root = initialPageData.get('can_edit_root'),
             hierarchy = initialPageData.get('hierarchy'),
             show_inactive = initialPageData.get('show_inactive'),
             location_search_url = initialPageData.reverse('location_search');
-
-        var loc_edit_url = function(loc_id) {
-            return initialPageData.reverse('edit_location', loc_id);
-        };
 
         var enableLocationSearchSelect = function () {
             $('#location_search_select').select2({
@@ -51,10 +46,8 @@ hqDefine('locations/js/locations', function() {
             show_inactive: show_inactive,
             can_edit_root: can_edit_root,
             load_locs_url: load_locs_url,
-            new_loc_url: new_loc_url,
             reloadLocationSearchSelect: reloadLocationSearchSelect,
             clearLocationSelection: clearLocationSelection,
-            loc_edit_url: loc_edit_url,
         };
 
         var tree_model = new LocationModels.LocationTreeViewModel(hierarchy, options);

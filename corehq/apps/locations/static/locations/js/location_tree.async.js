@@ -1,5 +1,7 @@
 /* globals django */
 hqDefine('locations/js/location_tree', function() {
+    var initialPageData = hqImport('hqwebapp/js/initial_page_data');
+
     function api_get_children(loc_uuid, show_inactive, load_locs_url, callback) {
         var params = (loc_uuid ? {
             parent_id: loc_uuid,
@@ -14,8 +16,6 @@ hqDefine('locations/js/location_tree', function() {
         // options should have properties:
         //      "can_edit_root"
         //      "load_locs_url"
-        //      "new_loc_url"
-        //      "loc_edit_url"
         //      "reloadLocationSearchSelect"
         //      "clearLocationSelection"
 
@@ -60,8 +60,6 @@ hqDefine('locations/js/location_tree', function() {
                 expanded: true,
                 reloadLocationSearchSelect: options.reloadLocationSearchSelect,
                 clearLocationSelection: options.clearLocationSelection,
-                new_loc_url: options.new_loc_url,
-                loc_edit_url: options.loc_edit_url,
                 load_locs_url: options.load_locs_url,
             }, this));
         };
@@ -71,8 +69,6 @@ hqDefine('locations/js/location_tree', function() {
         // options should have properties:
         //      "can_edit_root"
         //      "load_locs_url"
-        //      "new_loc_url"
-        //      "loc_edit_url"
         //      "reloadLocationSearchSelect"
         //      "clearLocationSelection"
 
@@ -98,8 +94,6 @@ hqDefine('locations/js/location_tree', function() {
                 is_archived: options.show_inactive,
                 reloadLocationSearchSelect: options.reloadLocationSearchSelect,
                 clearLocationSelection: options.clearLocationSelection,
-                new_loc_url: options.new_loc_url,
-                loc_edit_url: options.loc_edit_url,
                 load_locs_url: options.load_locs_url,
             }, this);
         });
@@ -182,9 +176,6 @@ hqDefine('locations/js/location_tree', function() {
         this.children_status = ko.observable('not_loaded');
         this.expanded = ko.observable(false);
 
-        this.loc_edit_url = data.loc_edit_url;
-
-        this.new_loc_url = data.new_loc_url;
         this.reloadLocationSearchSelect = data.reloadLocationSearchSelect;
         this.clearLocationSelection = data.clearLocationSelection;
 
@@ -235,19 +226,13 @@ hqDefine('locations/js/location_tree', function() {
                 }
 
                 var model_children = $.map(sortedChildren, function(e) {
-                    return new LocationModel(_.extend(e, {
-                        loc_edit_url: data.loc_edit_url,
-                        load_locs_url: data.load_locs_url,
-                        new_loc_url: data.new_loc_url }), root, loc.depth + 1);
+                    return new LocationModel(_.extend(e, {load_locs_url: data.load_locs_url}), root, loc.depth + 1);
                 });
                 model_children.unshift(loc.children()[0]);
                 this.children(model_children);
             } else {
                 this.children($.map(sortedChildren, function (e) {
-                    return new LocationModel(_.extend(e, {
-                        loc_edit_url: data.loc_edit_url,
-                        load_locs_url: data.load_locs_url,
-                        new_loc_url: data.new_loc_url }), root, loc.depth + 1);
+                    return new LocationModel(_.extend(e, {load_locs_url: data.load_locs_url}), root, loc.depth + 1);
                 }));
             }
 
@@ -262,9 +247,7 @@ hqDefine('locations/js/location_tree', function() {
             this.children_status('loading');
             api_get_children(this.uuid(), data.show_inactive, data.load_locs_url, function(resp) {
                 loc.set_children(resp, {
-                    loc_edit_url: data.loc_edit_url,
                     load_locs_url: data.load_locs_url,
-                    new_loc_url: data.new_loc_url,
                 });
                 if (callback) {
                     callback(loc);
@@ -331,28 +314,32 @@ hqDefine('locations/js/location_tree', function() {
         this.delete_error_message = _.template(django.gettext("An error occurred while deleting your location. If the problem persists, please report an issue"));
 
         this.loc_archive_url = function(loc_id) {
-            var initial_page_data = hqImport('hqwebapp/js/initial_page_data');
-            return initial_page_data.reverse('archive_location', loc_id);
+            return initialPageData.reverse('archive_location', loc_id);
         };
 
         this.loc_unarchive_url = function(loc_id) {
-            var initial_page_data = hqImport('hqwebapp/js/initial_page_data');
-            return initial_page_data.reverse('unarchive_location', loc_id);
+            return initialPageData.reverse('unarchive_location', loc_id);
         };
 
         this.loc_delete_url = function(loc_id) {
-            var initial_page_data = hqImport('hqwebapp/js/initial_page_data');
-            return initial_page_data.reverse('delete_location', loc_id, loc_id);
+            return initialPageData.reverse('delete_location', loc_id, loc_id);
         };
 
         this.loc_lineage_url = function(loc_id) {
-            var initial_page_data = hqImport('hqwebapp/js/initial_page_data');
-            return initial_page_data.reverse('location_lineage', loc_id);
+            return initialPageData.reverse('location_lineage', loc_id);
         };
 
         this.loc_descendant_url = function(loc_id) {
-            var initial_page_data = hqImport('hqwebapp/js/initial_page_data');
-            return initial_page_data.reverse('location_descendants_count', loc_id);
+            return initialPageData.reverse('location_descendants_count', loc_id);
+        };
+
+        this.loc_edit_url = function (loc_id, urlName) {
+            urlName = urlName || 'edit_location';
+            return initialPageData.reverse(urlName, loc_id);
+        };
+
+        this.new_loc_url = function() {
+            return initialPageData.reverse('create_location');
         };
 
         this.archive_loc = function(button, name, loc_id) {
