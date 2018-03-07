@@ -23,6 +23,16 @@
         djangoRMIProvider.configure({% djng_current_rmi %});
     }]);
     autoUpdateRuleApp.constant('paginationLimitCookieName', '{{ pagination_limit_cookie_name }}');
+
+    autoUpdateRuleApp.constant('domain_rule_run_values', {{ domain_rule_run_values|JSON}})
+
+
+
+
+    autoUpdateRuleApp.constant('domain_rule_run_values', '{{ domain_rule_run_values }}');
+
+
+
     autoUpdateRuleApp.constant('paginationCustomData', {
         activateRule: function (rule, djangoRMI) {
             djangoRMI.update_rule({
@@ -120,6 +130,26 @@
                     <strong>There are currently no automatic update rules in this project.</strong>
                 {% endblocktrans %}
             </div>
+
+
+
+
+        {% angularjs %}
+        <div class="alert alert-info" ng-show="domain_rule_run_values.status == 'F'">
+            <strong> {{ domain_rule_run_values.status }}. </strong>
+        </div>
+        <div class="alert alert-info" ng-show="domain_rule_run_values.status == 'R'">
+                <strong> {{ domain_rule_run_values.status }}. </strong>
+        </div>
+        {% endangularjs %}
+
+
+
+
+
+
+
+
             <div class="pull-right" style="clear: right;">
                 <pagination direction-links="true"
                             total-items="total"
