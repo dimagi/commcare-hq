@@ -4,7 +4,7 @@ import datetime
 from django.test import TestCase
 
 from casexml.apps.case.tests.util import delete_all_sync_logs
-from casexml.apps.phone.models import SyncLog
+from casexml.apps.phone.models import SyncLog, SyncLogSQL, properly_wrap_sync_log
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.change_feed import topics
@@ -37,6 +37,9 @@ class SyncLogPillowTest(TestCase):
         cls.domain.delete()
         super(SyncLogPillowTest, cls).tearDownClass()
 
+    def _get_latest_synclog(self):
+        return properly_wrap_sync_log(SyncLogSQL.objects.order_by('date').last().doc)
+
     def test_pillow(self):
         consumer = get_test_kafka_consumer(topics.SYNCLOG_SQL)
 
@@ -51,7 +54,8 @@ class SyncLogPillowTest(TestCase):
         # make sure kafka change updates the user with latest sync info
         message = consumer.next()
         change_meta = change_meta_from_kafka_message(message.value)
-        self.assertEqual(change_meta.document_id, synclog.synclog_id)
+        synclog = self._get_latest_synclog()
+        self.assertEqual(change_meta.document_id, synclog._id)
         self.assertEqual(change_meta.domain, self.domain.name)
 
         self.assertEqual(self.ccuser.reporting_metadata.last_syncs, [])
