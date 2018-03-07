@@ -63,5 +63,7 @@ hqDefine('locations/js/locations', function() {
         tree_model.load(locs);
         var model = new LocationModels.LocationSearchViewModel(tree_model, options);
         $('#location_search').koApplyBindings(model);
+
+        enableLocationSearchSelect();
     });
 });
