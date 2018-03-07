@@ -1672,6 +1672,9 @@ AVAILABLE_CUSTOM_SCHEDULING_RECIPIENTS = {
     'ICDS_MOTHER_PERSON_CASE_FROM_CHILD_HEALTH_CASE':
         ['custom.icds.messaging.custom_recipients.recipient_mother_person_case_from_child_health_case',
          "ICDS: Mother person case from child_health case"],
+    'ICDS_MOTHER_PERSON_CASE_FROM_CHILD_PERSON_CASE':
+        ['custom.icds.messaging.custom_recipients.recipient_mother_person_case_from_child_person_case',
+         "ICDS: Mother person case from child person case"],
     'ICDS_SUPERVISOR_FROM_AWC_OWNER':
         ['custom.icds.messaging.custom_recipients.supervisor_from_awc_owner',
          "ICDS: Supervisor Location from AWC Owner"],
@@ -1680,6 +1683,8 @@ AVAILABLE_CUSTOM_SCHEDULING_RECIPIENTS = {
 AVAILABLE_CUSTOM_RULE_CRITERIA = {
     'ICDS_PERSON_CASE_IS_UNDER_6_YEARS_OLD':
         'custom.icds.rules.custom_criteria.person_case_is_under_6_years_old',
+    'ICDS_PERSON_CASE_IS_UNDER_19_YEARS_OLD':
+        'custom.icds.rules.custom_criteria.person_case_is_under_19_years_old',
     'ICDS_IS_USERCASE_OF_AWW':
         'custom.icds.rules.custom_criteria.is_usercase_of_aww',
     'ICDS_IS_USERCASE_OF_LS':
