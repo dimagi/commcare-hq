@@ -52,7 +52,7 @@ hqDefine('locations/js/location_tree', function() {
         };
 
         // load location hierarchy
-        this.load = function(locs) {
+        this.load = function (locs) {
             this.root(new LocationModel({
                 name: '_root',
                 children: locs,
@@ -130,6 +130,8 @@ hqDefine('locations/js/location_tree', function() {
                                 children_status: 'semi_loaded',
                                 reloadLocationSearchSelect: options.reloadLocationSearchSelect,
                                 clearLocationSelection: options.clearLocationSelection,
+                                new_loc_url: options.new_loc_url,
+                                loc_edit_url: options.loc_edit_url,
                             };
                             var level = new LocationModel(data, tree_model, response.lineage.length - lineage_idx - 1);
                             child = Array.of(Object.assign({}, data));
@@ -175,10 +177,9 @@ hqDefine('locations/js/location_tree', function() {
         this.depth = depth || 0;
         this.children_status = ko.observable('not_loaded');
         this.expanded = ko.observable(false);
-        this.new_loc_url = ko.observable();
 
-        this.edit_loc_url = data.edit_loc_url;
-        this.new_loc_url = data.new_loc_url;
+        this.loc_edit_url = data.loc_edit_url;
+        this.new_loc_url = function() { return data.new_loc_url; };
         this.reloadLocationSearchSelect = data.reloadLocationSearchSelect;
         this.clearLocationSelection = data.clearLocationSelection;
 
@@ -208,34 +209,34 @@ hqDefine('locations/js/location_tree', function() {
                 this.children_status(data.children_status);
             }
             if (data.children !== null) {
-                this.set_children(data.children);
+                this.set_children(data.children, data);
             }
         };
 
-        this.set_children = function(data) {
-            var children = [];
-            if (data) {
-                children = _.sortBy(data, function(e) {
+        this.set_children = function(children, data) {
+            var sortedChildren = [];
+            if (children) {
+                sortedChildren = _.sortBy(children, function(e) {
                     return e.name;
                 });
             }
 
             if (loc.children().length > 0 && loc.name() !== "_root") {
-                for (var child_idx = 0; child_idx < children.length; child_idx++) {
-                    if (children[child_idx].name === loc.children()[0].name()) {
-                        children.splice(child_idx, 1);
+                for (var child_idx = 0; child_idx < sortedChildren.length; child_idx++) {
+                    if (sortedChildren[child_idx].name === loc.children()[0].name()) {
+                        sortedChildren.splice(child_idx, 1);
                         break;
                     }
                 }
 
-                var model_children = $.map(children, function(e) {
-                    return new LocationModel(e, root, loc.depth + 1);
+                var model_children = $.map(sortedChildren, function(e) {
+                    return new LocationModel(_.extend(e, { loc_edit_url: data.loc_edit_url }), root, loc.depth + 1);
                 });
                 model_children.unshift(loc.children()[0]);
                 this.children(model_children);
             } else {
-                this.children($.map(children, function(e) {
-                    return new LocationModel(e, root, loc.depth + 1);
+                this.children($.map(sortedChildren, function (e) {
+                    return new LocationModel(_.extend(e, { loc_edit_url: data.loc_edit_url }), root, loc.depth + 1);
                 }));
             }
 

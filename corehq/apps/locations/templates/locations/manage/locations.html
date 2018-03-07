@@ -132,7 +132,7 @@
                 <div style="float:right;" data-bind="if: can_edit()" id="button-template">
                     {% if not show_inactive %}
                         <a class="btn btn-primary"
-                           data-bind="attr: { href: edit_loc_url(uuid()) }">
+                           data-bind="attr: { href: loc_edit_url(uuid()) }">
                             {% trans "Edit" %}
                         </a>
                     {% endif %}
