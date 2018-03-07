@@ -26,7 +26,7 @@ class Command(BaseCommand):
         print start_date
         print end_date
 
-        for (year, month) in get_months_in_range(start_date, end_date):
+        for (year, month) in get_months_in_range(end_date, start_date):
             domains_in_month = correct_billables.values('domain').distinct()
             print domains_in_month
             for domain in (domains_in_month):
