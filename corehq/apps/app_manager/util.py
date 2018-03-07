@@ -33,7 +33,7 @@ from corehq.apps.app_manager.xform import XForm, XFormException, parse_xml
 from corehq.apps.users.models import CommCareUser
 from corehq.util.quickcache import quickcache
 from dimagi.utils.couch import CriticalSection
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.make_uuid import random_hex
 import six
 

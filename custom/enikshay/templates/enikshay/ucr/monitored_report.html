@@ -1,0 +1,16 @@
+{% extends "userreports/configurable_report.html" %}
+{% load i18n %}
+{% block reporttable %}
+    {% if hours_behind %}
+        <div class="row">
+            <div class="col-sm-12">
+                <div class="well well-sm">
+                    {% blocktrans %}
+                        This report may not reflect forms submitted in the last <strong>{{ hours_behind }}</strong> hours.
+                    {% endblocktrans %}
+                </div>
+            </div>
+        </div>
+    {% endif %}
+    {{ block.super }}
+{% endblock reporttable%}

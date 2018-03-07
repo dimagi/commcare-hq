@@ -1,10 +1,11 @@
 # coding=utf-8
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from collections import OrderedDict
 
 from django.template.defaultfilters import slugify
 
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 import sqlagg
 from sqlagg.columns import SimpleColumn
 from sqlagg.filters import RawFilter, SqlFilter
@@ -261,7 +262,7 @@ class SqlData(ReportDataSource):
         formatted_data = formatter.format(data, keys=self.keys, group_by=self.group_by)
 
         if self.group_by:
-            return formatted_data.values()
+            return list(formatted_data.values())
         else:
             return [formatted_data]
 

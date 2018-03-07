@@ -15,22 +15,24 @@ class OldExportsEnabledException(Exception):
 def generate_data_dictionary(domain):
     if toggles.OLD_EXPORTS.enabled(domain):
         raise OldExportsEnabledException()
-    properties = _get_all_case_properties(domain)
+    properties = get_all_case_properties(domain)
     _create_properties_for_case_types(domain, properties)
     CaseType.objects.filter(domain=domain, name__in=list(properties)).update(fully_generated=True)
     return True
 
 
-def _get_all_case_properties(domain):
+def get_all_case_properties(domain, case_types=None):
     # moved here to avoid circular import
     from corehq.apps.export.models.new import CaseExportDataSchema
 
     case_type_to_properties = {}
     case_properties_from_apps = all_case_properties_by_domain(
-        domain, include_parent_properties=False
+        domain, case_types=case_types, include_parent_properties=False
     )
 
-    for case_type in get_case_types_from_apps(domain):
+    if case_types is None:
+        case_types = get_case_types_from_apps(domain)
+    for case_type in case_types:
         properties = set()
         schema = CaseExportDataSchema.generate_schema_from_builds(domain, None, case_type)
         for group_schema in schema.group_schemas:

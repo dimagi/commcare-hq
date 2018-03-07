@@ -1,5 +1,6 @@
 from __future__ import print_function
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from datetime import date
 from django.core.management import BaseCommand
 
@@ -53,7 +54,7 @@ class Command(BaseCommand):
 
         for credit_adj in credit_adjs:
             related_subscription = _get_subscription_from_credit_adj(credit_adj)
-            print(u','.join(map(
+            print(','.join(map(
                 _make_value_safe_for_csv,
                 [
                     credit_adj.note,

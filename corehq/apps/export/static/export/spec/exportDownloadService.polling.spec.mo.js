@@ -9,7 +9,7 @@ describe('DownloadExportFormController -> exportDownloadService - Polling', func
             .when('POST', DnldExpData.mockBackendUrls.PREPARE_CUSTOM_EXPORT)
             .respond({
                 success: true,
-                download_id: downloadId
+                download_id: downloadId,
             });
         DnldExpData.$httpBackend.expectPOST(DnldExpData.mockBackendUrls.PREPARE_CUSTOM_EXPORT);
     });
@@ -19,7 +19,7 @@ describe('DownloadExportFormController -> exportDownloadService - Polling', func
 
         beforeEach(function () {
             DnldExpData.createController([
-                DnldExpData.simpleFormExport
+                DnldExpData.simpleFormExport,
             ], true);
             DnldExpData.currentScope.prepareExport();
             DnldExpData.$httpBackend.flush();
@@ -49,7 +49,7 @@ describe('DownloadExportFormController -> exportDownloadService - Polling', func
 
         beforeEach(function () {
             DnldExpData.createController([
-                DnldExpData.simpleFormExport
+                DnldExpData.simpleFormExport,
             ], true);
             DnldExpData.currentScope.prepareExport();
             DnldExpData.$httpBackend.flush();
@@ -90,7 +90,7 @@ describe('DownloadExportFormController -> exportDownloadService - Polling', func
 
         beforeEach(function () {
             DnldExpData.createController([
-                DnldExpData.simpleFormExport
+                DnldExpData.simpleFormExport,
             ], true);
             DnldExpData.currentScope.prepareExport();
             DnldExpData.$httpBackend.flush();
@@ -130,7 +130,7 @@ describe('DownloadExportFormController -> exportDownloadService - Polling', func
     describe('HTTP Error', function () {
         beforeEach(function () {
             DnldExpData.createController([
-                DnldExpData.simpleFormExport
+                DnldExpData.simpleFormExport,
             ], true);
             DnldExpData.currentScope.prepareExport();
             DnldExpData.$httpBackend.flush();

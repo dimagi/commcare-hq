@@ -172,7 +172,7 @@ class IntegrityConfig(JsonObject):
     couches = ListProperty(CouchConfig)
 
 
-class Colors:
+class Colors(object):
     # http://stackoverflow.com/a/287944/835696
     OKBLUE = '\033[94m'
     OKGREEN = '\033[92m'

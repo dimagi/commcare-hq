@@ -407,6 +407,8 @@ def calced_props(dom, id, all_stats):
         "cp_n_lookup_tables": num_lookup_tables(dom),
         "cp_has_project_icon": has_domain_icon(dom),
         "cp_n_apps_with_icon": num_apps_with_icon(dom),
+        "cp_n_apps": len(_get_domain_apps(dom)),
+        "cp_n_apps_with_multi_lang": num_apps_with_multi_languages(dom),
     }
 
 
@@ -493,3 +495,8 @@ def num_apps_with_icon(domain):
 def num_apps_with_profile(domain):
     apps = _get_domain_apps(domain)
     return len([a for a in apps if a.build_profiles])
+
+
+def num_apps_with_multi_languages(domain):
+    apps = _get_domain_apps(domain)
+    return len([a for a in apps if len(a.langs) > 1])

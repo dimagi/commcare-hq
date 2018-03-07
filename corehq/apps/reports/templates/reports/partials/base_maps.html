@@ -1,11 +1,9 @@
 {% load hq_shared_tags %}
 
-{% block js %}
-    <script src="{% static "reports/js/base_maps.js" %}"></script>
-{% endblock js %}
-
-{% initial_page_data 'context' context %}
-{% initial_page_data 'icon_path' 'leaflet/dist/images'|static %}
+<!-- Data container, similar to initial page data -->
+<div class="base-maps-data"
+     data-icon_path="{{ 'leaflet/dist/images'|static }}"
+     data-context="{% html_attr context %}"></div>
 
 <div class="panel panel-default">
     <div class="panel-heading">

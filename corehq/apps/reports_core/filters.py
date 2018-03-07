@@ -8,7 +8,7 @@ from corehq.apps.userreports.util import localize
 from corehq.util.dates import iso_string_to_date, get_quarter_date_range
 
 from dimagi.utils.dates import DateSpan
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from django.utils.translation import ugettext, ugettext_lazy as _
 from django.conf import settings
 from django.urls import reverse

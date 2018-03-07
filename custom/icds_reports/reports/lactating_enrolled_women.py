@@ -1,5 +1,6 @@
 from __future__ import absolute_import, division
 
+from __future__ import unicode_literals
 from collections import OrderedDict, defaultdict
 from datetime import datetime
 
@@ -10,15 +11,9 @@ from django.db.models.aggregates import Sum
 from django.utils.translation import ugettext as _
 
 from corehq.util.quickcache import quickcache
-from custom.icds_reports.const import LocationTypes, ChartColors
+from custom.icds_reports.const import LocationTypes, ChartColors, MapColors
 from custom.icds_reports.models import AggCcsRecordMonthly
 from custom.icds_reports.utils import apply_exclude, indian_formatted_number, get_child_locations
-
-RED = '#de2d26'
-ORANGE = '#fc9272'
-BLUE = '#006fdf'
-PINK = '#fee0d2'
-GREY = '#9D9D9D'
 
 
 @quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
@@ -63,8 +58,8 @@ def get_lactating_enrolled_women_data_map(domain, config, loc_level, show_test=F
         data_for_map[on_map_name]['original_name'].append(name)
 
     fills = OrderedDict()
-    fills.update({'Women': BLUE})
-    fills.update({'defaultFill': GREY})
+    fills.update({'Women': MapColors.BLUE})
+    fills.update({'defaultFill': MapColors.GREY})
 
     return {
         "slug": "lactating_enrolled_women",
@@ -74,11 +69,11 @@ def get_lactating_enrolled_women_data_map(domain, config, loc_level, show_test=F
             "average": sum(average) / float(len(average) or 1),
             "average_format": 'number',
             "info": _((
-                "Lactating Mothers enrolled for ICDS services."
+                "Lactating Mothers enrolled for Anganwadi Services."
             )),
             "extended_info": [
                 {
-                    'indicator': 'Number of pregnant women who are enrolled for ICDS services:',
+                    'indicator': 'Number of pregnant women who are enrolled for Anganwadi Services:',
                     'value': indian_formatted_number(total_valid)
                 },
                 {
@@ -89,7 +84,7 @@ def get_lactating_enrolled_women_data_map(domain, config, loc_level, show_test=F
                 },
                 {
                     'indicator': (
-                        'Percentage of registered pregnant women who are enrolled for ICDS services:'
+                        'Percentage of registered pregnant women who are enrolled for Anganwadi Services:'
                     ),
                     'value': '%.2f%%' % (total_valid * 100 / float(total or 1))
                 }
@@ -155,7 +150,7 @@ def get_lactating_enrolled_women_sector_data(domain, config, loc_level, location
         "tooltips_data": dict(tooltips_data),
         "format": "number",
         "info": _((
-            "Lactating Mothers enrolled for ICDS services."
+            "Lactating Mothers enrolled for Anganwadi Services."
         )),
         "chart_data": [
             {
@@ -163,7 +158,7 @@ def get_lactating_enrolled_women_sector_data(domain, config, loc_level, location
                 "key": "",
                 "strokeWidth": 2,
                 "classed": "dashed",
-                "color": BLUE
+                "color": MapColors.BLUE
             }
         ]
     }
@@ -233,7 +228,7 @@ def get_lactating_enrolled_data_chart(domain, config, loc_level, show_test=False
                         'all': value['all']
                     } for key, value in six.iteritems(data['blue'])
                 ],
-                "key": "Total number of lactating women who are enrolled for ICDS services",
+                "key": "Total number of lactating women who are enrolled for Anganwadi Services",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": ChartColors.BLUE

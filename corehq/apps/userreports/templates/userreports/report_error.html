@@ -18,7 +18,7 @@
         <div id="error-message"></div>
     </div>
     {% endblock report_alerts %}
-    {% if not is_static %}
+    {% if report_id and not is_static %}
         <form method='post' action="{% url 'delete_configurable_report' domain report_id %}?redirect={% url 'reports_home' domain %}" >
             {% csrf_token %}
             <input type="submit" value="{% trans 'Delete Report'%}" class="btn btn-danger disable-on-submit pull-right">

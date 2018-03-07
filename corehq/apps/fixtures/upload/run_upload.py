@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import division
 from couchdbkit import ResourceNotFound
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext as _
@@ -43,7 +44,7 @@ def _run_fixture_upload(domain, workbook, replace=False, task=None):
 
         def _update_progress(table_count, item_count, items_in_table):
             if task:
-                processed = table_count * 10 + (10. * item_count / items_in_table)
+                processed = table_count * 10 + (10 * item_count / items_in_table)
                 DownloadBase.set_progress(task, processed, 10 * total_tables)
 
         for table_number, table_def in enumerate(type_sheets):

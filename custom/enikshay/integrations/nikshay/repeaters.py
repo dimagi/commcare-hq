@@ -1,6 +1,8 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import re
 
+from django.conf import settings
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.utils.translation import ugettext_lazy as _
@@ -278,6 +280,10 @@ class NikshayHealthEstablishmentRepeater(SOAPRepeaterMixin, LocationRepeater):
     include_app_id_param = False
     friendly_name = _("Forward Nikshay Health Establishments")
 
+    @property
+    def verify(self):
+        return False
+
     @classmethod
     def available_for_domain(cls, domain):
         return NIKSHAY_INTEGRATION.enabled(domain)
@@ -303,8 +309,6 @@ class NikshayHealthEstablishmentRepeater(SOAPRepeaterMixin, LocationRepeater):
             return False
         return True
 
-
-
     def handle_response(self, result, repeat_record):
         if isinstance(result, Exception):
             attempt = repeat_record.handle_exception(result)
@@ -323,9 +327,11 @@ class NikshayHealthEstablishmentRepeater(SOAPRepeaterMixin, LocationRepeater):
         # message does not give the final node message here so need to find the real message
         # look at SUCCESSFUL_HEALTH_ESTABLISHMENT_RESPONSE for example
         message_node = message.find("NewDataSet/HE_DETAILS/Message")
-        if message_node:
-            message_text = message_node.text
-        if message_node and re.search(HEALTH_ESTABLISHMENT_SUCCESS_RESPONSE_REGEX, message_text):
+        already_registered_id_node = message.find("NewDataSet/Table1/HE_ID")
+        if already_registered_id_node is not None:
+            attempt = repeat_record.handle_success(result)
+            self.generator.handle_success(result, self.payload_doc(repeat_record), repeat_record)
+        elif message_node is not None and re.search(HEALTH_ESTABLISHMENT_SUCCESS_RESPONSE_REGEX, message_node.text):
             attempt = repeat_record.handle_success(result)
             self.generator.handle_success(result, self.payload_doc(repeat_record), repeat_record)
         else:
@@ -383,16 +389,19 @@ def related_dates_changed(case):
 
 @receiver(post_save, sender=SQLLocation, dispatch_uid="create_nikshay_he_repeat_records")
 def create_location_repeat_records(sender, raw=False, **kwargs):
-    if raw:
+    if raw or settings.SERVER_ENVIRONMENT != "enikshay":
         return
     create_repeat_records(NikshayHealthEstablishmentRepeater, kwargs['instance'])
 
 
 def create_nikshay_case_repeat_records(sender, case, **kwargs):
+    if settings.SERVER_ENVIRONMENT != "enikshay":
+        return
     create_repeat_records(NikshayRegisterPatientRepeater, case)
     create_repeat_records(NikshayTreatmentOutcomeRepeater, case)
     create_repeat_records(NikshayFollowupRepeater, case)
     create_repeat_records(NikshayRegisterPrivatePatientRepeater, case)
     create_repeat_records(NikshayHIVTestRepeater, case)
+
 
 case_post_save.connect(create_nikshay_case_repeat_records, CommCareCaseSQL)

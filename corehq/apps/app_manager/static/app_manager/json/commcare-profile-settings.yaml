@@ -76,7 +76,7 @@
   id: "password_format"
   values: ["a", "n"]
   value_names: ["Alphanumeric", "Numeric"]
-  default: "n"
+  default: "a"
   force: true
 
 - name: "CommCare Home Screen Logo"

@@ -3,6 +3,7 @@ import uuid
 
 from couchdbkit import ResourceConflict
 from couchdbkit.exceptions import ResourceNotFound
+from decimal import Decimal
 from django.test import TestCase, SimpleTestCase, override_settings
 
 from corehq.toggles import (
@@ -269,21 +270,34 @@ class DyanmicPredictablyRandomToggleTests(TestCase):
             self.addCleanup(db_toggle.delete)
             self.assertEqual(randomness, toggle.randomness)
 
-    def test_override_default_randomness(self):
-        randomness = 0
-        overridden_randomness = .5
+    def test_override_default_randomness_decimal(self):
+        self._run_toggle_overrride_test(Decimal('.5'), .5, 'decimal')
+
+    def test_override_default_randomness_float(self):
+        self._run_toggle_overrride_test(.5, .5, 'float')
+
+    def test_override_default_randomness_string(self):
+        self._run_toggle_overrride_test('.5', .5, 'string')
+
+    def test_override_default_randomness_invalid(self):
+        default_randomness = .1
+        self._run_toggle_overrride_test('not-a-number', default_randomness, 'invalid',
+                                        default_randomness=default_randomness)
+
+    def _run_toggle_overrride_test(self, input_override, expected_override, test_id, default_randomness=0):
         toggle = DynamicallyPredictablyRandomToggle(
-            'override_dynamic_toggle{}'.format(randomness),
+            'override_dynamic_toggle_{}'.format(test_id),
             'A toggle for testing',
             TAG_CUSTOM,
             [NAMESPACE_USER],
-            default_randomness=randomness,
+            default_randomness=default_randomness,
         )
         db_toggle = Toggle(slug=toggle.slug)
-        setattr(db_toggle, DynamicallyPredictablyRandomToggle.RANDOMNESS_KEY, overridden_randomness)
+        setattr(db_toggle, DynamicallyPredictablyRandomToggle.RANDOMNESS_KEY, input_override)
         db_toggle.save()
+        db_toggle = Toggle.get(toggle.slug)
         self.addCleanup(db_toggle.delete)
-        self.assertEqual(overridden_randomness, toggle.randomness)
+        self.assertEqual(expected_override, toggle.randomness)
 
 
 class ShortcutTests(TestCase):

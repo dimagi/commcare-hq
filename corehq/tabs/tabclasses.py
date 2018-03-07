@@ -4,8 +4,8 @@ from six.moves.urllib.parse import urlencode
 from django.urls import reverse
 from django.conf import settings
 from django.http import Http404
-from django.utils.html import strip_tags
-from django.utils.safestring import mark_safe, mark_for_escaping
+from django.utils.html import escape, strip_tags
+from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_noop, ugettext as _, ugettext_lazy
 from corehq import privileges, toggles
 from corehq.apps.accounting.dispatcher import AccountingAdminInterfaceDispatcher
@@ -41,7 +41,7 @@ from corehq.tabs.uitab import UITab
 from corehq.tabs.utils import dropdown_dict, sidebar_to_dropdown, regroup_sidebar_items
 from corehq.toggles import PUBLISH_CUSTOM_REPORTS
 from custom.world_vision import WORLD_VISION_DOMAINS
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from django_prbac.utils import has_privilege
 from six.moves import map
 
@@ -810,8 +810,8 @@ class ApplicationsTab(UITab):
     @classmethod
     def make_app_title(cls, app_name, doc_type):
         return mark_safe("%s%s" % (
-            mark_for_escaping(strip_tags(app_name) or '(Untitled)'),
-            mark_for_escaping(' (Remote)' if doc_type == 'RemoteApp' else ''),
+            escape(strip_tags(app_name)) or '(Untitled)',
+            ' (Remote)' if doc_type == 'RemoteApp' else '',
         ))
 
     @property
@@ -912,7 +912,7 @@ class MessagingTab(UITab):
     def reminders_urls(self):
         reminders_urls = []
 
-        if self.can_access_reminders and not self.project.uses_new_reminders:
+        if self.can_access_reminders and self.show_old_reminders_pages:
             from corehq.apps.reminders.views import (
                 EditScheduledReminderView,
                 CreateScheduledReminderView,
@@ -979,10 +979,26 @@ class MessagingTab(UITab):
 
     @property
     @memoized
+    def show_new_reminders_pages(self):
+        return (
+            self.project.uses_new_reminders or
+            toggles.NEW_REMINDERS_MIGRATOR.enabled(self.couch_user.username)
+        )
+
+    @property
+    @memoized
+    def show_old_reminders_pages(self):
+        return (
+            not self.project.uses_new_reminders or
+            toggles.NEW_REMINDERS_MIGRATOR.enabled(self.couch_user.username)
+        )
+
+    @property
+    @memoized
     def messages_urls(self):
         messages_urls = []
 
-        if self.can_use_outbound_sms and not self.project.uses_new_reminders:
+        if self.can_use_outbound_sms and self.show_old_reminders_pages:
             messages_urls.extend([
                 {
                     'title': _('Compose SMS Message'),
@@ -991,7 +1007,7 @@ class MessagingTab(UITab):
             ])
 
         if self.can_access_reminders:
-            if self.project.uses_new_reminders:
+            if self.show_new_reminders_pages:
                 from corehq.messaging.scheduling.views import (
                     BroadcastListView as NewBroadcastListView,
                     CreateScheduleView,
@@ -1032,7 +1048,7 @@ class MessagingTab(UITab):
                         'show_in_dropdown': True,
                     },
                 ])
-            else:
+            if self.show_old_reminders_pages:
                 from corehq.apps.reminders.views import (
                     BroadcastListView as OldBroadcastListView,
                     CreateBroadcastView,
@@ -1062,20 +1078,6 @@ class MessagingTab(UITab):
                 ])
 
         return messages_urls
-
-    @property
-    @memoized
-    def performance_urls(self):
-        performance_urls = []
-        if self.can_access_reminders and toggles.SMS_PERFORMANCE_FEEDBACK.enabled(self.domain):
-            performance_urls.append(
-                {
-                    'title': _('Configure Performance Messages'),
-                    'url': reverse('performance_sms.list_performance_configs', args=[self.domain]),
-                    'show_in_dropdown': True,
-                }
-            )
-        return performance_urls
 
     @property
     @memoized
@@ -1166,7 +1168,6 @@ class MessagingTab(UITab):
         for title, urls in (
             (_("Messages"), self.messages_urls),
             (_("Data Collection and Reminders"), self.reminders_urls),
-            (_("Performance Messaging"), self.performance_urls),
             (_("CommCare Supply"), self.supply_urls),
             (_("Contacts"), self.contacts_urls),
             (_("Settings"), self.settings_urls)
@@ -1597,6 +1598,16 @@ def _get_feature_flag_items(domain):
             'title': _('Location Fixture'),
             'url': reverse(LocationFixtureConfigView.urlname, args=[domain])
         })
+
+    if toggles.LINKED_DOMAINS.enabled(domain):
+        feature_flag_items.append({
+            'title': _('Linked Projects'),
+            'url': reverse('domain_links', args=[domain])
+        })
+        feature_flag_items.append({
+            'title': _('Linked Project History'),
+            'url': reverse('domain_report_dispatcher', args=[domain, 'project_link_report'])
+        })
     return feature_flag_items
 
 
@@ -1751,20 +1762,12 @@ class AdminTab(UITab):
             dropdown_dict(_("System Info"), url=reverse("system_info")),
             dropdown_dict(_("Submission Map"), url=reverse("dimagisphere")),
             dropdown_dict(_("Management"), is_header=True),
-            # dropdown_dict(mark_for_escaping("HQ Announcements"),
-            #                      url=reverse("default_announcement_admin")),
         ]
         try:
             if AccountingTab(self._request)._is_viewable:
                 submenu_context.append(
                     dropdown_dict(AccountingTab.title, url=reverse('accounting_default'))
                 )
-        except Exception:
-            pass
-        try:
-            submenu_context.append(dropdown_dict(
-                mark_for_escaping(_("Old SMS Billing")),
-                url=reverse("billing_default")))
         except Exception:
             pass
         submenu_context.extend([

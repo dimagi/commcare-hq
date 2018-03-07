@@ -30,7 +30,7 @@ hqDefine('app_manager/js/settings/linked_whitelist', function () {
         if ($whitelistTab.length) {
             var domains = hqImport("hqwebapp/js/initial_page_data").get("linked_whitelist");
             var save = hqImport("hqwebapp/js/initial_page_data").reverse("update_linked_whitelist");
-            linkedWhitelist = new LinkedWhitelist(domains, save);
+            var linkedWhitelist = new LinkedWhitelist(domains, save);
             $whitelistTab.koApplyBindings(linkedWhitelist);
         }
     });

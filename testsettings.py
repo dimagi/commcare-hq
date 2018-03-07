@@ -103,4 +103,9 @@ LOGGING = {
     'loggers': {},
 }
 
-ICDS_UCR_DATABASE_ALIAS = 'default'
+REPORTING_DATABASES = {
+    'default': 'default',
+    'ucr': 'default',
+    'icds-ucr': 'default',
+    'icds-test-ucr': 'default',
+}

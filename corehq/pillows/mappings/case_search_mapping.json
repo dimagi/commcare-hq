@@ -4,9 +4,13 @@
     "dynamic": false,
     "_meta": {
         "comment": "",
-        "created": "2013-09-19 @dmyung"
+        "created": "2016-03-29 @frener"
     },
     "properties": {
+        "_indexed_on": {
+            "format": "__DATE_FORMATS_STRING__",
+            "type": "date"
+        },
         "case_properties": {
             "type": "nested",
             "dynamic": false,

@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from corehq.apps.hqwebapp.decorators import use_daterangepicker, use_datatables, use_select2, use_jquery_ui, \
     use_nvd3
 from custom.ilsgateway.filters import (
@@ -14,7 +15,7 @@ from custom.ilsgateway.tanzania.reports.mixins import RandRSubmissionData, Distr
     SohSubmissionData, DeliverySubmissionData, ProductAvailabilitySummary
 from custom.ilsgateway.tanzania.reports.stock_on_hand import StockOnHandReport
 from custom.ilsgateway.tanzania.reports.utils import make_url
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from django.utils.translation import ugettext as _
 
 

@@ -1,4 +1,6 @@
 from __future__ import absolute_import
+from __future__ import division
+from __future__ import unicode_literals
 import collections
 from collections import OrderedDict
 from datetime import timedelta
@@ -22,11 +24,12 @@ from custom.ewsghana.models import FacilityInCharge, EWSExtension
 from custom.ewsghana.reports import EWSData, MultiReport, EWSLineChart, ProductSelectionPane
 from custom.ewsghana.utils import has_input_stock_permissions, ews_date_format
 from dimagi.utils.couch.database import iter_docs
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from django.utils.translation import ugettext as _
 from corehq.apps.locations.dbaccessors import get_users_by_location_id
 from corehq.apps.locations.models import get_location, SQLLocation
 from six.moves import range
+import six
 
 
 class StockLevelsLegend(EWSData):
@@ -191,7 +194,7 @@ class InventoryManagementData(EWSData):
             if not daily_consumption:
                 return 0
             consumption = round(float(daily_consumption) * 30.0)
-            quantity = float(state.stock_on_hand) - int((date - state.report.date).days / 7.0) * consumption
+            quantity = float(state.stock_on_hand) - ((date - state.report.date).days // 7) * consumption
             if consumption and consumption > 0 and quantity > 0:
                 return quantity / consumption
             return 0
@@ -216,7 +219,7 @@ class InventoryManagementData(EWSData):
         ).select_related('report', 'sql_product').order_by('report__date')
 
         rows = OrderedDict()
-        weeks = ceil((enddate - startdate).days / 7.0)
+        weeks = ceil((enddate - startdate).days / 7)
 
         for state in st:
             product_name = '{0} ({1})'.format(state.sql_product.name, state.sql_product.code)
@@ -228,8 +231,8 @@ class InventoryManagementData(EWSData):
                     rows[product_name][i] = calculate_weeks_remaining(
                         state, consumptions.get(state.product_id, None), date)
 
-        for k, v in rows.iteritems():
-            rows[k] = [{'x': key, 'y': value} for key, value in v.iteritems()]
+        for k, v in six.iteritems(rows):
+            rows[k] = [{'x': key, 'y': value} for key, value in six.iteritems(v)]
 
         rows['Understock'] = []
         rows['Overstock'] = []
@@ -247,7 +250,7 @@ class InventoryManagementData(EWSData):
                                  y_axis=Axis(self.chart_y_label, '.1f'))
             chart.height = 600
             values = []
-            for product, value in self.chart_data.iteritems():
+            for product, value in six.iteritems(self.chart_data):
                 values.extend([a['y'] for a in value])
                 chart.add_dataset(product, value,
                                   color='black' if product in ['Understock', 'Overstock'] else None)
@@ -269,12 +272,12 @@ class InputStock(EWSData):
         if has_input_stock_permissions(self.config['user'],
                                        SQLLocation.objects.get(location_id=self.config['location_id']),
                                        self.domain):
-            rows.append([u"<a href='{}'>INPUT STOCK for {}</a>".format(link, self.location.name)])
+            rows.append(["<a href='{}'>INPUT STOCK for {}</a>".format(link, self.location.name)])
 
         try:
             rows.append(
                 [
-                    u'The last report received was at <b>{}.</b>'.format(
+                    'The last report received was at <b>{}.</b>'.format(
                         StockState.objects.filter(case_id=self.location.supply_point_id)
                         .values('last_modified_date')
                         .latest('last_modified_date')['last_modified_date']

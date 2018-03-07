@@ -1,4 +1,6 @@
 from __future__ import absolute_import
+from __future__ import division
+from __future__ import unicode_literals
 from datetime import timedelta
 import logging
 from custom.bihar import getters
@@ -97,7 +99,7 @@ class DueNextMonth(TotalCalculator):
 
     @fluff.date_emitter
     def total(self, case):
-        yield get_edd(case) - self.window / 2
+        yield get_edd(case) - self.window // 2
 
 
 class RecentDeliveryList(TotalCalculator):

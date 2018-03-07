@@ -1,6 +1,8 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import base64
 import json
+import six
 import uuid
 from collections import OrderedDict
 from copy import deepcopy
@@ -988,7 +990,7 @@ class TestReportPillow(TestCase):
         for fn in transform_functions:
             cleaned = fn(bad_appVersion)
             self.assertFalse(isinstance(cleaned['form']['meta']['appVersion'], dict))
-            self.assertTrue(isinstance(cleaned['form']['meta']['appVersion'], str))
+            self.assertTrue(isinstance(cleaned['form']['meta']['appVersion'], six.text_type))
             self.assertTrue(cleaned['form']['meta']['appVersion'], "CCODK:\"2.5.1\"(11126). v236 CC2.5b[11126] on April-15-2013")
 
 
@@ -1075,14 +1077,14 @@ class ToManySourceResource(Resource):
             'pk': get_obj(bundle_or_obj).other_model_ids
         }
 
-    class Meta:
+    class Meta(object):
         model_class = ToManySourceModel
 
 
 class ToManyDestResource(Resource):
     id = fields.CharField(attribute='id')
 
-    class Meta:
+    class Meta(object):
         model_class = ToManyDestModel
 
     def detail_uri_kwargs(self, bundle_or_obj):
@@ -1155,7 +1157,7 @@ class ToManyDictSourceResource(Resource):
             'pk': get_obj(bundle_or_obj).other_model_ids
         }
 
-    class Meta:
+    class Meta(object):
         model_class = ToManyDictSourceModel
 
 
@@ -1167,7 +1169,7 @@ class ToManyDictDestResource(Resource):
             'pk': get_obj(bundle_or_obj).id
         }
 
-    class Meta:
+    class Meta(object):
         model_class = ToManyDictDestModel
 
 
@@ -1237,7 +1239,7 @@ class ToOneSourceResource(Resource):
             'pk': get_obj(bundle_or_obj).other_model_id
         }
 
-    class Meta:
+    class Meta(object):
         model_class = ToOneSourceModel
 
 
@@ -1249,7 +1251,7 @@ class ToOneDestResource(Resource):
             'pk': get_obj(bundle_or_obj).id
         }
 
-    class Meta:
+    class Meta(object):
         model_class = ToOneDestModel
 
 
@@ -1304,7 +1306,7 @@ class UseIfRequestedTestResource(Resource):
             'pk': get_obj(bundle_or_obj).id
         }
 
-    class Meta:
+    class Meta(object):
         model_class = UseIfRequestedModel
 
 

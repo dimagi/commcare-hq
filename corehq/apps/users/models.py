@@ -38,13 +38,14 @@ from dimagi.ext.couchdbkit import (
     DateProperty
 )
 from couchdbkit.resource import ResourceNotFound
+from corehq.util.dates import get_timestamp
 from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.database import get_safe_write_kwargs, iter_docs
 from dimagi.utils.logging import notify_exception, log_signal_errors
 
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.make_uuid import random_hex
 from dimagi.utils.modules import to_function
 from corehq.util.quickcache import quickcache
@@ -478,7 +479,7 @@ class DomainMembership(Membership):
     def viewable_reports(self):
         return self.permissions.view_report_list
 
-    class Meta:
+    class Meta(object):
         app_label = 'users'
 
 
@@ -967,6 +968,8 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
     analytics_enabled = BooleanProperty(default=True)
 
     two_factor_auth_disabled_until = DateTimeProperty()
+    login_attempts = IntegerProperty(default=0)
+    attempt_date = DateProperty()
 
     reporting_metadata = SchemaProperty(ReportingMetadata)
 
@@ -1027,6 +1030,9 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
     @property
     def is_dimagi(self):
         return self.username.endswith('@dimagi.com')
+
+    def is_locked_out(self):
+        return self.login_attempts >= MAX_LOGIN_ATTEMPTS
 
     @property
     def raw_username(self):
@@ -1097,6 +1103,10 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
     def days_since_created(self):
         # Note this does not round, but returns the floor of days since creation
         return (datetime.utcnow() - self.created_on).days
+
+    @property
+    def timestamp_created(self):
+        return get_timestamp(self.created_on)
 
     formatted_name = full_name
     name = full_name
@@ -2250,8 +2260,6 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
     program_id = StringProperty()
     last_password_set = DateTimeProperty(default=datetime(year=1900, month=1, day=1))
 
-    login_attempts = IntegerProperty(default=0)
-    attempt_date = DateProperty()
     fcm_device_token = StringProperty()
     # this property is used to mark users who signed up from internal invitations
     # such as those going through the recruiting pipeline
@@ -2347,6 +2355,7 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
             if location.location_id in membership.assigned_location_ids:
                 return
             membership.assigned_location_ids.append(location.location_id)
+            self.get_sql_locations.reset_cache(self)
             self.save()
         else:
             self.set_location(domain, location)
@@ -2365,6 +2374,7 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
         membership.location_id = location_id
         if self.location_id not in membership.assigned_location_ids:
             membership.assigned_location_ids.append(location_id)
+            self.get_sql_locations.reset_cache(self)
         self.get_sql_location.reset_cache(self)
         self.save()
 
@@ -2377,6 +2387,7 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
         old_location_id = membership.location_id
         if old_location_id:
             membership.assigned_location_ids.remove(old_location_id)
+            self.get_sql_locations.reset_cache(self)
         if membership.assigned_location_ids and fall_back_to_next:
             membership.location_id = membership.assigned_location_ids[0]
         else:
@@ -2395,6 +2406,7 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
             self.unset_location(domain, fall_back_to_next)
         else:
             membership.assigned_location_ids.remove(location_id)
+            self.get_sql_locations.reset_cache(self)
             self.save()
 
     def reset_locations(self, domain, location_ids):
@@ -2406,6 +2418,7 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
         membership.assigned_location_ids = location_ids
         if not membership.location_id and location_ids:
             membership.location_id = location_ids[0]
+        self.get_sql_locations.reset_cache(self)
         self.save()
 
     @memoized
@@ -2429,9 +2442,6 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
 
     def get_location(self, domain):
         return self.get_sql_location(domain)
-
-    def is_locked_out(self):
-        return self.login_attempts >= MAX_LOGIN_ATTEMPTS
 
 
 class FakeUser(WebUser):
@@ -2468,7 +2478,7 @@ class DomainRequest(models.Model):
     is_approved = models.BooleanField(default=False)
     domain = models.CharField(max_length=255, db_index=True)
 
-    class Meta:
+    class Meta(object):
         app_label = "users"
 
     @classmethod

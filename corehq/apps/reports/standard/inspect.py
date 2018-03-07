@@ -1,10 +1,11 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import functools
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop, get_language
 
 from corehq.apps.es import forms as form_es, filters as es_filters
-from corehq.apps.hqcase.utils import SYSTEM_FORM_XMLNS
+from corehq.apps.hqcase.utils import SYSTEM_FORM_XMLNS_MAP
 from corehq.apps.locations.dbaccessors import user_ids_at_accessible_locations
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports import util
@@ -22,7 +23,7 @@ from corehq.apps.reports.standard.monitoring import MultiFormDrilldownMixin, Com
 from corehq.apps.reports.util import datespan_from_beginning
 from corehq.const import MISSING_APP_ID
 from corehq.toggles import SUPPORT
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 
 class ProjectInspectionReport(ProjectInspectionReportParamsMixin, GenericTabularReport, ProjectReport, ProjectReportParametersMixin):
@@ -92,13 +93,14 @@ class SubmitHistoryMixin(ElasticProjectInspectionReport,
 
         # filter results by app and xmlns if applicable
         if FormsByApplicationFilter.has_selections(self.request):
-            form_values = self.all_relevant_forms.values()
+            form_values = list(self.all_relevant_forms.values())
             if form_values:
                 query = query.OR(*[self._form_filter(f) for f in form_values])
 
         # Exclude system forms unless they selected "Unknown User"
         if HQUserType.UNKNOWN not in EMWF.selected_user_types(mobile_user_and_group_slugs):
-            query = query.NOT(form_es.xmlns(SYSTEM_FORM_XMLNS))
+            for xmlns in SYSTEM_FORM_XMLNS_MAP.keys():
+                query = query.NOT(form_es.xmlns(xmlns))
 
         return query
 

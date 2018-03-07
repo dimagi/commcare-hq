@@ -1,5 +1,6 @@
 from __future__ import absolute_import
-from dimagi.utils.decorators.memoized import memoized
+from __future__ import unicode_literals
+from memoized import memoized
 from dimagi.utils.logging import notify_exception
 from corehq.util.test_utils import unit_testing_only
 
@@ -61,7 +62,7 @@ class IndicatorAdapter(object):
         if not is_rate_limited(key):
             notify_exception(
                 None,
-                u'unexpected error saving UCR doc: {}'.format(exception),
+                'unexpected error saving UCR doc: {}'.format(exception),
                 details={
                     'domain': self.config.domain,
                     'doc_id': doc.get('_id', '<unknown>'),

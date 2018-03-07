@@ -1,18 +1,19 @@
 from __future__ import absolute_import
 
-import json
-
-import mock
+from __future__ import unicode_literals
 from datetime import date
+import json
 
 from django.core.serializers.json import DjangoJSONEncoder
 from django.test.testcases import TestCase
+import mock
 
 from custom.icds_reports.sqldata import ChildrenExport, PregnantWomenExport, ExportableMixin, DemographicsExport, \
     SystemUsageExport, AWCInfrastructureExport, BeneficiaryExport
 
 
 class TestExportData(TestCase):
+    maxDiff = None
 
     @classmethod
     def setUpClass(cls):
@@ -30,285 +31,416 @@ class TestExportData(TestCase):
         super(TestExportData, cls).tearDownClass()
 
     def test_children_export(self):
+        data = ChildrenExport(
+            config={
+                'domain': 'icds-cas'
+            },
+        ).get_excel_data('b1')[0][0]
+        self.assertEqual(data, "Children")
+
+    def test_children_export_info(self):
+        data = ChildrenExport(
+            config={
+                'domain': 'icds-cas'
+            },
+        ).get_excel_data('b1')[1]
         self.assertListEqual(
-            ChildrenExport(
-                config={
-                    'domain': 'icds-cas'
-                },
-            ).get_excel_data('b1'),
+            data,
             [
+                "Export Info",
                 [
-                    "Children",
                     [
-                        [
-                            "State",
-                            "Weighing efficiency (in month)",
-                            "Height measurement efficiency (in month)",
-                            "Total number of unweighed children (0-5 Years)",
-                            "Percentage of severely underweight children",
-                            "Percentage of moderately underweight children",
-                            "Percentage of normal weight-for-age children",
-                            "Percentage of children with severe wasting",
-                            "Percentage of children with moderate wasting",
-                            "Percentage of children with normal weight-for-height",
-                            "Percentage of children with severe stunting",
-                            "Percentage of children with moderate stunting",
-                            "Percentage of children with normal height-for-age",
-                            "Percentage of children with completed 1 year immunizations",
-                            "Percentage of children breastfed at birth",
-                            "Percentage of children exclusively breastfeeding",
-                            "Percentage of children initiated complementary feeding (in the past 30 days)",
-                            "Percentage of children initiated appropriate complementary feeding",
-                            "Percentage of children receiving complementary feeding with adequate diet diversity",
-                            "Percentage of children receiving complementary feeding with adequate diet quanity",
-                            "Percentage of children receiving complementary feeding with appropriate "
-                            "handwashing before feeding"
-                        ],
-                        [
-                            "st1",
-                            "67.39 %",
-                            "1.42 %",
-                            317,
-                            "1.75 %",
-                            "19.96 %",
-                            "71.81 %",
-                            "0.00 %",
-                            "0.55 %",
-                            "0.00 %",
-                            "0.66 %",
-                            "0.87 %",
-                            "0.22 %",
-                            "14.77%",
-                            "37.50 %",
-                            "50.00 %",
-                            "65.62 %",
-                            "53.52 %",
-                            "34.51 %",
-                            "39.44 %",
-                            "47.89 %"
-                        ],
-                        [
-                            "st1",
-                            "67.39 %",
-                            "1.42 %",
-                            317,
-                            "1.75 %",
-                            "19.96 %",
-                            "71.81 %",
-                            "0.00 %",
-                            "0.55 %",
-                            "0.00 %",
-                            "0.66 %",
-                            "0.87 %",
-                            "0.22 %",
-                            "14.77%",
-                            "37.50 %",
-                            "50.00 %",
-                            "65.62 %",
-                            "53.52 %",
-                            "34.51 %",
-                            "39.44 %",
-                            "47.89 %"
-                        ],
-                        [
-                            "st1",
-                            "67.39 %",
-                            "1.42 %",
-                            317,
-                            "1.75 %",
-                            "19.96 %",
-                            "71.81 %",
-                            "0.00 %",
-                            "0.55 %",
-                            "0.00 %",
-                            "0.66 %",
-                            "0.87 %",
-                            "0.22 %",
-                            "14.77%",
-                            "37.50 %",
-                            "50.00 %",
-                            "65.62 %",
-                            "53.52 %",
-                            "34.51 %",
-                            "39.44 %",
-                            "47.89 %"
-                        ],
-                        [
-                            "st1",
-                            "67.39 %",
-                            "1.42 %",
-                            317,
-                            "1.75 %",
-                            "19.96 %",
-                            "71.81 %",
-                            "0.00 %",
-                            "0.55 %",
-                            "0.00 %",
-                            "0.66 %",
-                            "0.87 %",
-                            "0.22 %",
-                            "14.77%",
-                            "37.50 %",
-                            "50.00 %",
-                            "65.62 %",
-                            "53.52 %",
-                            "34.51 %",
-                            "39.44 %",
-                            "47.89 %"
-                        ],
-                        [
-                            "st1",
-                            "67.39 %",
-                            "1.42 %",
-                            317,
-                            "1.75 %",
-                            "19.96 %",
-                            "71.81 %",
-                            "0.00 %",
-                            "0.55 %",
-                            "0.00 %",
-                            "0.66 %",
-                            "0.87 %",
-                            "0.22 %",
-                            "14.77%",
-                            "37.50 %",
-                            "50.00 %",
-                            "65.62 %",
-                            "53.52 %",
-                            "34.51 %",
-                            "39.44 %",
-                            "47.89 %"
-                        ],
-                        [
-                            "st2",
-                            "70.45 %",
-                            "3.04 %",
-                            307,
-                            "1.92 %",
-                            "15.50 %",
-                            "66.31 %",
-                            "0.41 %",
-                            "0.41 %",
-                            "0.00 %",
-                            "1.82 %",
-                            "0.61 %",
-                            "1.62 %",
-                            "7.19%",
-                            "42.86 %",
-                            "25.00 %",
-                            "60.00 %",
-                            "50.81 %",
-                            "47.03 %",
-                            "33.51 %",
-                            "47.57 %"
-                        ],
-                        [
-                            "st2",
-                            "70.45 %",
-                            "3.04 %",
-                            307,
-                            "1.92 %",
-                            "15.50 %",
-                            "66.31 %",
-                            "0.41 %",
-                            "0.41 %",
-                            "0.00 %",
-                            "1.82 %",
-                            "0.61 %",
-                            "1.62 %",
-                            "7.19%",
-                            "42.86 %",
-                            "25.00 %",
-                            "60.00 %",
-                            "50.81 %",
-                            "47.03 %",
-                            "33.51 %",
-                            "47.57 %"
-                        ],
-                        [
-                            "st2",
-                            "70.45 %",
-                            "3.04 %",
-                            307,
-                            "1.92 %",
-                            "15.50 %",
-                            "66.31 %",
-                            "0.41 %",
-                            "0.41 %",
-                            "0.00 %",
-                            "1.82 %",
-                            "0.61 %",
-                            "1.62 %",
-                            "7.19%",
-                            "42.86 %",
-                            "25.00 %",
-                            "60.00 %",
-                            "50.81 %",
-                            "47.03 %",
-                            "33.51 %",
-                            "47.57 %"
-                        ],
-                        [
-                            "st2",
-                            "70.45 %",
-                            "3.04 %",
-                            307,
-                            "1.92 %",
-                            "15.50 %",
-                            "66.31 %",
-                            "0.41 %",
-                            "0.41 %",
-                            "0.00 %",
-                            "1.82 %",
-                            "0.61 %",
-                            "1.62 %",
-                            "7.19%",
-                            "42.86 %",
-                            "25.00 %",
-                            "60.00 %",
-                            "50.81 %",
-                            "47.03 %",
-                            "33.51 %",
-                            "47.57 %"
-                        ],
-                        [
-                            "st2",
-                            "70.45 %",
-                            "3.04 %",
-                            307,
-                            "1.92 %",
-                            "15.50 %",
-                            "66.31 %",
-                            "0.41 %",
-                            "0.41 %",
-                            "0.00 %",
-                            "1.82 %",
-                            "0.61 %",
-                            "1.62 %",
-                            "7.19%",
-                            "42.86 %",
-                            "25.00 %",
-                            "60.00 %",
-                            "50.81 %",
-                            "47.03 %",
-                            "33.51 %",
-                            "47.57 %"
-                        ]
-                    ]
-                ],
-                [
-                    "Export Info",
+                        "Generated at",
+                        "16:21:11 15 November 2017"
+                    ],
                     [
-                        [
-                            "Generated at",
-                            "16:21:11 15 November 2017"
-                        ],
-                        [
-                            "Block",
-                            "b1"
-                        ]
+                        "Block",
+                        "b1"
                     ]
                 ]
+            ]
+        )
+
+    def test_children_export_data_length(self):
+        data = ChildrenExport(
+            config={
+                'domain': 'icds-cas'
+            },
+        ).get_excel_data('b1')[0][1]
+        self.assertEqual(len(data), 11)
+
+    def test_children_export_headers(self):
+        data = ChildrenExport(
+            config={
+                'domain': 'icds-cas'
+            },
+        ).get_excel_data('b1')[0][1][0]
+        self.assertListEqual(
+            data,
+            [
+                "State",
+                "Weighing efficiency (in month)",
+                "Height measurement efficiency (in month)",
+                "Total number of unweighed children (0-5 Years)",
+                "Percentage of severely underweight children",
+                "Percentage of moderately underweight children",
+                "Percentage of normal weight-for-age children",
+                "Percentage of children with severe wasting",
+                "Percentage of children with moderate wasting",
+                "Percentage of children with normal weight-for-height",
+                "Percentage of children with severe stunting",
+                "Percentage of children with moderate stunting",
+                "Percentage of children with normal height-for-age",
+                'Percent of newborns with low birth weight',
+                "Percentage of children with completed 1 year immunizations",
+                "Percentage of children breastfed at birth",
+                "Percentage of children exclusively breastfeeding",
+                "Percentage of children initiated complementary feeding (in the past 30 days)",
+                "Percentage of children initiated appropriate complementary feeding",
+                "Percentage of children receiving complementary feeding with adequate diet diversity",
+                "Percentage of children receiving complementary feeding with adequate diet quanity",
+                "Percentage of children receiving complementary feeding with appropriate "
+                "handwashing before feeding"
+            ]
+        )
+
+    def test_children_export_child_one(self):
+        data = ChildrenExport(
+            config={
+                'domain': 'icds-cas'
+            },
+        ).get_excel_data('b1')[0][1][1]
+        self.assertListEqual(
+            data,
+            [
+                "st1",
+                "67.39 %",
+                "1.42 %",
+                317,
+                "2.60 %",
+                "23.21 %",
+                "74.20 %",
+                "0.00 %",
+                "38.46 %",
+                '53.85 %',
+                "38.46 %",
+                "46.15 %",
+                "15.38 %",
+                "66.67 %",
+                "14.77%",
+                "37.50 %",
+                "50.00 %",
+                "65.62 %",
+                "53.52 %",
+                "34.51 %",
+                "39.44 %",
+                "47.89 %"
+            ]
+        )
+
+    def test_children_export_child_two(self):
+        data = ChildrenExport(
+            config={
+                'domain': 'icds-cas'
+            },
+        ).get_excel_data('b1')[0][1][2]
+        self.assertListEqual(
+            data,
+            [
+                'st1',
+                '67.39 %',
+                '1.42 %',
+                317,
+                '2.60 %',
+                '23.21 %',
+                '74.20 %',
+                '0.00 %',
+                '38.46 %',
+                '53.85 %',
+                '38.46 %',
+                '46.15 %',
+                '15.38 %',
+                "66.67 %",
+                '14.77%',
+                '37.50 %',
+                '50.00 %',
+                '65.62 %',
+                '53.52 %',
+                '34.51 %',
+                '39.44 %',
+                '47.89 %'
+            ]
+        )
+
+    def test_children_export_child_three(self):
+        data = ChildrenExport(
+            config={
+                'domain': 'icds-cas'
+            },
+        ).get_excel_data('b1')[0][1][3]
+        self.assertListEqual(
+            data,
+            [
+                "st1",
+                "67.39 %",
+                "1.42 %",
+                317,
+                "2.60 %",
+                "23.21 %",
+                "74.20 %",
+                "0.00 %",
+                "38.46 %",
+                '53.85 %',
+                "38.46 %",
+                "46.15 %",
+                "15.38 %",
+                "66.67 %",
+                "14.77%",
+                "37.50 %",
+                "50.00 %",
+                "65.62 %",
+                "53.52 %",
+                "34.51 %",
+                "39.44 %",
+                "47.89 %"
+            ]
+        )
+
+    def test_children_export_child_four(self):
+        data = ChildrenExport(
+            config={
+                'domain': 'icds-cas'
+            },
+        ).get_excel_data('b1')[0][1][4]
+        self.assertListEqual(
+            data,
+            [
+                "st1",
+                "67.39 %",
+                "1.42 %",
+                317,
+                "2.60 %",
+                "23.21 %",
+                "74.20 %",
+                "0.00 %",
+                "38.46 %",
+                '53.85 %',
+                "38.46 %",
+                "46.15 %",
+                "15.38 %",
+                "66.67 %",
+                "14.77%",
+                "37.50 %",
+                "50.00 %",
+                "65.62 %",
+                "53.52 %",
+                "34.51 %",
+                "39.44 %",
+                "47.89 %"
+            ]
+        )
+
+    def test_children_export_child_five(self):
+        data = ChildrenExport(
+            config={
+                'domain': 'icds-cas'
+            },
+        ).get_excel_data('b1')[0][1][5]
+        self.assertListEqual(
+            data,
+            [
+                "st1",
+                "67.39 %",
+                "1.42 %",
+                317,
+                "2.60 %",
+                "23.21 %",
+                "74.20 %",
+                "0.00 %",
+                "38.46 %",
+                '53.85 %',
+                "38.46 %",
+                "46.15 %",
+                "15.38 %",
+                "66.67 %",
+                "14.77%",
+                "37.50 %",
+                "50.00 %",
+                "65.62 %",
+                "53.52 %",
+                "34.51 %",
+                "39.44 %",
+                "47.89 %"
+            ]
+        )
+
+    def test_children_export_child_six(self):
+        data = ChildrenExport(
+            config={
+                'domain': 'icds-cas'
+            },
+        ).get_excel_data('b1')[0][1][6]
+        self.assertListEqual(
+            data,
+            [
+                "st2",
+                "70.45 %",
+                "3.04 %",
+                307,
+                "2.46 %",
+                "18.85 %",
+                "78.69 %",
+                "3.45 %",
+                "13.79 %",
+                '62.07 %',
+                "36.67 %",
+                "20.00 %",
+                "43.33 %",
+                "0.00 %",
+                "7.19%",
+                "42.86 %",
+                "25.00 %",
+                "60.00 %",
+                "50.81 %",
+                "47.03 %",
+                "33.51 %",
+                "47.57 %"
+            ]
+        )
+
+    def test_children_export_child_seven(self):
+        data = ChildrenExport(
+            config={
+                'domain': 'icds-cas'
+            },
+        ).get_excel_data('b1')[0][1][7]
+        self.assertListEqual(
+            data,
+            [
+                "st2",
+                "70.45 %",
+                "3.04 %",
+                307,
+                "2.46 %",
+                "18.85 %",
+                "78.69 %",
+                "3.45 %",
+                "13.79 %",
+                '62.07 %',
+                "36.67 %",
+                "20.00 %",
+                "43.33 %",
+                "0.00 %",
+                "7.19%",
+                "42.86 %",
+                "25.00 %",
+                "60.00 %",
+                "50.81 %",
+                "47.03 %",
+                "33.51 %",
+                "47.57 %"
+            ]
+        )
+
+    def test_children_export_child_eight(self):
+        data = ChildrenExport(
+            config={
+                'domain': 'icds-cas'
+            },
+        ).get_excel_data('b1')[0][1][8]
+        self.assertListEqual(
+            data,
+            [
+                "st2",
+                "70.45 %",
+                "3.04 %",
+                307,
+                "2.46 %",
+                "18.85 %",
+                "78.69 %",
+                "3.45 %",
+                "13.79 %",
+                '62.07 %',
+                "36.67 %",
+                "20.00 %",
+                "43.33 %",
+                "0.00 %",
+                "7.19%",
+                "42.86 %",
+                "25.00 %",
+                "60.00 %",
+                "50.81 %",
+                "47.03 %",
+                "33.51 %",
+                "47.57 %"
+            ]
+        )
+
+    def test_children_export_child_nine(self):
+        data = ChildrenExport(
+            config={
+                'domain': 'icds-cas'
+            },
+        ).get_excel_data('b1')[0][1][9]
+        self.assertListEqual(
+            data,
+            [
+                "st2",
+                "70.45 %",
+                "3.04 %",
+                307,
+                "2.46 %",
+                "18.85 %",
+                "78.69 %",
+                "3.45 %",
+                "13.79 %",
+                '62.07 %',
+                "36.67 %",
+                "20.00 %",
+                "43.33 %",
+                "0.00 %",
+                "7.19%",
+                "42.86 %",
+                "25.00 %",
+                "60.00 %",
+                "50.81 %",
+                "47.03 %",
+                "33.51 %",
+                "47.57 %"
+            ]
+        )
+
+    def test_children_export_child_ten(self):
+        data = ChildrenExport(
+            config={
+                'domain': 'icds-cas'
+            },
+        ).get_excel_data('b1')[0][1][10]
+        self.assertListEqual(
+            data,
+            [
+                "st2",
+                "70.45 %",
+                "3.04 %",
+                307,
+                "2.46 %",
+                "18.85 %",
+                "78.69 %",
+                "3.45 %",
+                "13.79 %",
+                '62.07 %',
+                "36.67 %",
+                "20.00 %",
+                "43.33 %",
+                "0.00 %",
+                "7.19%",
+                "42.86 %",
+                "25.00 %",
+                "60.00 %",
+                "50.81 %",
+                "47.03 %",
+                "33.51 %",
+                "47.57 %"
             ]
         )
 
@@ -757,6 +889,255 @@ class TestExportData(TestCase):
             ]
         )
 
+    def test_demographics_export_flags_being_passed(self):
+        self.assertListEqual(
+            DemographicsExport(
+                config={
+                    'domain': 'icds-cas'
+                },
+                beta=True
+            ).get_excel_data('st1'),
+            [
+                [
+                    'Demographics',
+                    [
+                        [
+                            'State', 'Number of households',
+                            'Total number of beneficiaries (under 6 years old and women between 11 and 49 years '
+                            'old, alive and seeking services) who have an aadhaar ID',
+                            'Total number of beneficiaries (under 6 years old and women between 11 and 49 years '
+                            'old, alive and seeking services)',
+                            'Percent Aadhaar-seeded beneficaries', 'Number of pregnant women',
+                            'Number of pregnant women enrolled for services', 'Number of lactating women',
+                            'Number of lactating women enrolled for services',
+                            'Number of children 0-6 years old',
+                            'Number of children 0-6 years old enrolled for services',
+                            'Number of children 0-6 months old enrolled for services',
+                            'Number of children 6 months to 3 years old enrolled for services',
+                            'Number of children 3 to 6 years old enrolled for services',
+                            'Number of adolescent girls 11 to 14 years old',
+                            'Number of adolescent girls 15 to 18 years old',
+                            'Number of adolescent girls 11 to 14 years old that are enrolled for services',
+                            'Number of adolescent girls 15 to 18 years old that are enrolled for services'
+                        ],
+                        [
+                            u'st1',
+                            7266,
+                            365,
+                            1493,
+                            '24.45 %',
+                            120,
+                            120,
+                            171,
+                            171,
+                            1227,
+                            1227,
+                            56,
+                            244,
+                            927,
+                            36,
+                            12,
+                            36,
+                            12
+                        ],
+                        [
+                            u'st1',
+                            7266,
+                            365,
+                            1493,
+                            '24.45 %',
+                            120,
+                            120,
+                            171,
+                            171,
+                            1227,
+                            1227,
+                            56,
+                            244,
+                            927,
+                            36,
+                            12,
+                            36,
+                            12
+                        ],
+                        [
+                            u'st1',
+                            7266,
+                            365,
+                            1493,
+                            '24.45 %',
+                            120,
+                            120,
+                            171,
+                            171,
+                            1227,
+                            1227,
+                            56,
+                            244,
+                            927,
+                            36,
+                            12,
+                            36,
+                            12
+                        ],
+                        [
+                            u'st1',
+                            7266,
+                            365,
+                            1493,
+                            '24.45 %',
+                            120,
+                            120,
+                            171,
+                            171,
+                            1227,
+                            1227,
+                            56,
+                            244,
+                            927,
+                            36,
+                            12,
+                            36,
+                            12
+                        ],
+                        [
+                            u'st1',
+                            7266,
+                            365,
+                            1493,
+                            '24.45 %',
+                            120,
+                            120,
+                            171,
+                            171,
+                            1227,
+                            1227,
+                            56,
+                            244,
+                            927,
+                            36,
+                            12,
+                            36,
+                            12
+                        ],
+                        [
+                            u'st2',
+                            6662,
+                            269,
+                            1590,
+                            '16.92 %',
+                            139,
+                            139,
+                            154,
+                            154,
+                            1322,
+                            1322,
+                            52,
+                            301,
+                            969,
+                            36,
+                            20,
+                            36,
+                            20
+                        ],
+                        [
+                            u'st2',
+                            6662,
+                            269,
+                            1590,
+                            '16.92 %',
+                            139,
+                            139,
+                            154,
+                            154,
+                            1322,
+                            1322,
+                            52,
+                            301,
+                            969,
+                            36,
+                            20,
+                            36,
+                            20
+                        ],
+                        [
+                            u'st2',
+                            6662,
+                            269,
+                            1590,
+                            '16.92 %',
+                            139,
+                            139,
+                            154,
+                            154,
+                            1322,
+                            1322,
+                            52,
+                            301,
+                            969,
+                            36,
+                            20,
+                            36,
+                            20
+                        ],
+                        [
+                            u'st2',
+                            6662,
+                            269,
+                            1590,
+                            '16.92 %',
+                            139,
+                            139,
+                            154,
+                            154,
+                            1322,
+                            1322,
+                            52,
+                            301,
+                            969,
+                            36,
+                            20,
+                            36,
+                            20
+                        ],
+                        [
+                            u'st2',
+                            6662,
+                            269,
+                            1590,
+                            '16.92 %',
+                            139,
+                            139,
+                            154,
+                            154,
+                            1322,
+                            1322,
+                            52,
+                            301,
+                            969,
+                            36,
+                            20,
+                            36,
+                            20
+                        ]
+                    ]
+                ],
+                [
+                    'Export Info',
+                    [
+                        [
+                            'Generated at',
+                            '16:21:11 15 November 2017'
+                        ],
+                        [
+                            u'State',
+                            u'st1'
+                        ]
+                    ]
+                ]
+            ]
+        )
+
     def test_system_usage_export(self):
         self.assertListEqual(
             SystemUsageExport(
@@ -964,91 +1345,91 @@ class TestExportData(TestCase):
                     [
                         [
                             "State",
-                            "Percentage AWCs with drinking water",
-                            "Percentage AWCs with functional toilet",
-                            "Percentage AWCs with medicine kit",
-                            "Percentage AWCs with weighing scale: infants",
-                            "Percentage AWCs with weighing scale: mother and child"
+                            "Percentage AWCs reported clean drinking water",
+                            "Percentage AWCs reported functional toilet",
+                            "Percentage AWCs reported medicine kit",
+                            "Percentage AWCs reported weighing scale: infants",
+                            "Percentage AWCs reported weighing scale: mother and child"
                         ],
                         [
                             "st1",
+                            "100.00 %",
                             "50.00 %",
-                            "25.00 %",
-                            "30.77 %",
-                            "38.46 %",
-                            "13.46 %"
+                            "61.54 %",
+                            "76.92 %",
+                            "26.92 %"
                         ],
                         [
                             "st1",
+                            "100.00 %",
                             "50.00 %",
-                            "25.00 %",
-                            "30.77 %",
-                            "38.46 %",
-                            "13.46 %"
+                            "61.54 %",
+                            "76.92 %",
+                            "26.92 %"
                         ],
                         [
                             "st1",
+                            "100.00 %",
                             "50.00 %",
-                            "25.00 %",
-                            "30.77 %",
-                            "38.46 %",
-                            "13.46 %"
+                            "61.54 %",
+                            "76.92 %",
+                            "26.92 %"
                         ],
                         [
                             "st1",
+                            "100.00 %",
                             "50.00 %",
-                            "25.00 %",
-                            "30.77 %",
-                            "38.46 %",
-                            "13.46 %"
+                            "61.54 %",
+                            "76.92 %",
+                            "26.92 %"
                         ],
                         [
                             "st1",
+                            "100.00 %",
                             "50.00 %",
-                            "25.00 %",
-                            "30.77 %",
-                            "38.46 %",
-                            "13.46 %"
+                            "61.54 %",
+                            "76.92 %",
+                            "26.92 %"
                         ],
                         [
                             "st2",
-                            "35.42 %",
-                            "20.83 %",
-                            "31.25 %",
-                            "29.17 %",
-                            "10.42 %"
+                            "94.44 %",
+                            "55.56 %",
+                            "83.33 %",
+                            "77.78 %",
+                            "27.78 %"
                         ],
                         [
                             "st2",
-                            "35.42 %",
-                            "20.83 %",
-                            "31.25 %",
-                            "29.17 %",
-                            "10.42 %"
+                            "94.44 %",
+                            "55.56 %",
+                            "83.33 %",
+                            "77.78 %",
+                            "27.78 %"
                         ],
                         [
                             "st2",
-                            "35.42 %",
-                            "20.83 %",
-                            "31.25 %",
-                            "29.17 %",
-                            "10.42 %"
+                            "94.44 %",
+                            "55.56 %",
+                            "83.33 %",
+                            "77.78 %",
+                            "27.78 %"
                         ],
                         [
                             "st2",
-                            "35.42 %",
-                            "20.83 %",
-                            "31.25 %",
-                            "29.17 %",
-                            "10.42 %"
+                            "94.44 %",
+                            "55.56 %",
+                            "83.33 %",
+                            "77.78 %",
+                            "27.78 %"
                         ],
                         [
                             "st2",
-                            "35.42 %",
-                            "20.83 %",
-                            "31.25 %",
-                            "29.17 %",
-                            "10.42 %"
+                            "94.44 %",
+                            "55.56 %",
+                            "83.33 %",
+                            "77.78 %",
+                            "27.78 %"
                         ]
                     ]
                 ],
@@ -1142,20 +1523,6 @@ class TestExportData(TestCase):
                             20
                         ],
                         [
-                            "Name 1794",
-                            "2012-04-03",
-                            "5 years 1 month ",
-                            "F",
-                            "No",
-                            "2017-05-01",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            25
-                        ],
-                        [
                             "Name 1795",
                             "2014-01-20",
                             "3 years 4 months ",
@@ -1182,62 +1549,6 @@ class TestExportData(TestCase):
                             "Data Not Entered",
                             "Data Not Entered",
                             23
-                        ],
-                        [
-                            "Name 1801",
-                            "2011-12-27",
-                            "5 years 5 months ",
-                            "M",
-                            "No",
-                            "2017-05-01",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            19
-                        ],
-                        [
-                            "Name 1807",
-                            "2011-10-16",
-                            "5 years 7 months ",
-                            "M",
-                            "No",
-                            "2017-05-01",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            23
-                        ],
-                        [
-                            "Name 1811",
-                            "2011-11-29",
-                            "5 years 6 months ",
-                            "F",
-                            "No",
-                            "2017-05-01",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            21
-                        ],
-                        [
-                            "Name 1812",
-                            "2012-02-06",
-                            "5 years 3 months ",
-                            "M",
-                            "No",
-                            "2017-05-01",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            17
                         ],
                         [
                             "Name 1814",
@@ -1618,20 +1929,6 @@ class TestExportData(TestCase):
                             24
                         ],
                         [
-                            "Name 2275",
-                            "2011-09-27",
-                            "5 years 8 months ",
-                            "F",
-                            "No",
-                            "2017-05-01",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            22
-                        ],
-                        [
                             "Name 2276",
                             "2012-07-22",
                             "4 years 10 months ",
@@ -1672,20 +1969,6 @@ class TestExportData(TestCase):
                             "Data Not Entered",
                             "Data Not Entered",
                             19
-                        ],
-                        [
-                            "Name 2332",
-                            "2012-02-20",
-                            "5 years 3 months ",
-                            "F",
-                            "No",
-                            "2017-05-01",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            25
                         ],
                         [
                             "Name 2333",
@@ -1800,20 +2083,6 @@ class TestExportData(TestCase):
                             24
                         ],
                         [
-                            "Name 2343",
-                            "2011-07-30",
-                            "5 years 10 months ",
-                            "M",
-                            "No",
-                            "2017-05-01",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            23
-                        ],
-                        [
                             "Name 2344",
                             "2013-03-09",
                             "4 years 2 months ",
@@ -1828,20 +2097,6 @@ class TestExportData(TestCase):
                             22
                         ],
                         [
-                            "Name 2345",
-                            "2011-08-20",
-                            "5 years 9 months ",
-                            "M",
-                            "No",
-                            "2017-05-01",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            17
-                        ],
-                        [
                             "Name 2346",
                             "2014-01-20",
                             "3 years 4 months ",
@@ -1854,62 +2109,6 @@ class TestExportData(TestCase):
                             "Data Not Entered",
                             "Data Not Entered",
                             16
-                        ],
-                        [
-                            "Name 2347",
-                            "2011-11-21",
-                            "5 years 6 months ",
-                            "F",
-                            "No",
-                            "2017-05-01",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            25
-                        ],
-                        [
-                            "Name 2531",
-                            "2011-10-16",
-                            "5 years 7 months ",
-                            "M",
-                            "No",
-                            "2017-05-01",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            19
-                        ],
-                        [
-                            "Name 2534",
-                            "2011-10-20",
-                            "5 years 7 months ",
-                            "M",
-                            "No",
-                            "2017-05-01",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            22
-                        ],
-                        [
-                            "Name 4377",
-                            "2011-06-22",
-                            "5 years 11 months ",
-                            "M",
-                            "No",
-                            "2017-05-01",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            "Data Not Entered",
-                            18
                         ]
                     ]
                 ],

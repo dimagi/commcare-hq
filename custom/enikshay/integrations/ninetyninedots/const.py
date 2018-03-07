@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+from __future__ import unicode_literals
 MERM_ID = 'merm_id'
 MERM_DAILY_REMINDER_STATUS = 'merm_alarm_enabled'
 MERM_DAILY_REMINDER_TIME = "merm_daily_reminder_time"

@@ -3,8 +3,7 @@
         "enikshay"
     ],
     "server_environment": [
-        "enikshay",
-        "softlayer"
+        "enikshay"
     ],
     "data_source_table": "episode_v4",
     "report_id": "beneficiary_register",
@@ -736,6 +735,17 @@
                 "calculate_total": false,
                 "type": "field",
                 "display": "Treatment Outcome"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "doc_id",
+                "calculate_total": false,
+                "type": "field",
+                "display": "source_doc_id"
             }
         ]
     }

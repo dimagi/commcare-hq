@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from collections import defaultdict
 
 from django.conf import settings
@@ -45,7 +46,7 @@ class SOHHandler(KeywordHandler):
     def get_valid_reports(self, data):
         filtered_transactions = []
         excluded_products = []
-        for product_id, transactions in get_transactions_by_product(data['transactions']).iteritems():
+        for product_id, transactions in six.iteritems(get_transactions_by_product(data['transactions'])):
             begin_soh = None
             end_soh = None
             receipt = 0

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import json
 import os
 
@@ -93,15 +94,18 @@ FAILURE_RESPONSE = (
     'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">'
     '<soap:Body><InsertHFIDPatient_UATBCResponse xmlns="http://tempuri.org/"><InsertHFIDPatient_UATBCResult>'
     'Invalid data format</InsertHFIDPatient_UATBCResult></InsertHFIDPatient_UATBCResponse></soap:Body>'
-    '</soap:Envelope>')
+    '</soap:Envelope>'
+).encode('utf-8')
 
 SUCCESSFUL_SOAP_RESPONSE = (
     '<?xml version="1.0" encoding="utf-8"?><soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" '
     'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">'
     '<soap:Body><InsertHFIDPatient_UATBCResponse xmlns="http://tempuri.org/"><InsertHFIDPatient_UATBCResult>'
-    '000001</InsertHFIDPatient_UATBCResult></InsertHFIDPatient_UATBCResponse></soap:Body></soap:Envelope>')
+    '000001</InsertHFIDPatient_UATBCResult></InsertHFIDPatient_UATBCResponse></soap:Body></soap:Envelope>'
+).encode('utf-8')
 
 DUMMY_HEALTH_ESTABLISHMENT_ID = '125344'
+DUMMY_REGISTERED_HEALTH_ESTABLISHMENT_ID = '987654'
 
 SUCCESSFUL_HEALTH_ESTABLISHMENT_RESPONSE = (
     '<?xml version="1.0" encoding="utf-8"?>'
@@ -122,7 +126,42 @@ SUCCESSFUL_HEALTH_ESTABLISHMENT_RESPONSE = (
             '</HE_RegistrationResponse>'
         '</soap:Body>'
     '</soap:Envelope>'
-).format(dummy_id=DUMMY_HEALTH_ESTABLISHMENT_ID)
+).format(dummy_id=DUMMY_HEALTH_ESTABLISHMENT_ID).encode('utf-8')
+
+ALREADY_REGISTERED_ESTABLISHMENT_RESPONSE = (
+    '<?xml version="1.0" encoding="utf-8"?>'
+    '<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" '
+    'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">'
+        '<soap:Body>'
+            '<HE_RegistrationResponse xmlns="http://tempuri.org/">'
+                '<HE_RegistrationResult>'
+                    '<diffgr:diffgram xmlns:msdata="urn:schemas-microsoft-com:xml-msdata" '
+                        'xmlns:diffgr="urn:schemas-microsoft-com:xml-diffgram-v1">'
+                    '<NewDataSet xmlns="">'
+                        '<Table1 diffgr:id="Table11" msdata:rowOrder="0" diffgr:hasChanges="inserted">'
+                            '<HE_ID>{dummy_id}</HE_ID>'
+                            '<ESTABLISHMENT_TYPE>Laboratory</ESTABLISHMENT_TYPE>'
+                            '<SECTOR>Private (including NGOs)</SECTOR>'
+                            '<ESTABLISHMENT_NAME>Health Care Diagnostic Centre 700800</ESTABLISHMENT_NAME>'
+                            '<MCI_HR_NO>12345</MCI_HR_NO>'
+                            '<CONTACT_PNAME>Health Care Diagnostic Centre</CONTACT_PNAME>'
+                            '<CONTACT_PESIGNATION>NA</CONTACT_PESIGNATION>'
+                            '<TELEPHONE_NO>9999999999</TELEPHONE_NO>'
+                            '<MOBILE_NO>9999999999</MOBILE_NO>'
+                            '<COMPLETE_ADDRESS>V N Desai Hospital 179 B Jama Masjid Lane </COMPLETE_ADDRESS>'
+                            '<PINCODE>400098</PINCODE>'
+                            '<EMAILID>abc@xyz.com</EMAILID>'
+                            '<STATE>Maharashtra</STATE>'
+                            '<DISTRICT>Bandra East</DISTRICT>'
+                            '<Status>Already Exists</Status>'
+                        '</Table1>'
+                    '</NewDataSet>'
+                    '</diffgr:diffgram>'
+                '</HE_RegistrationResult>'
+            '</HE_RegistrationResponse>'
+        '</soap:Body>'
+    '</soap:Envelope>'
+).format(dummy_id=DUMMY_REGISTERED_HEALTH_ESTABLISHMENT_ID).encode('utf-8')
 
 
 class NikshayRepeaterTestBase(ENikshayCaseStructureMixin, TestCase):
@@ -203,7 +242,7 @@ class NikshayRepeaterTestBase(ENikshayCaseStructureMixin, TestCase):
         })
 
 
-@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True, SERVER_ENVIRONMENT='enikshay')
 class TestNikshayRegisterPatientRepeater(ENikshayLocationStructureMixin, NikshayRepeaterTestBase):
 
     def setUp(self):
@@ -290,7 +329,7 @@ class TestNikshayRegisterPatientRepeater(ENikshayLocationStructureMixin, Nikshay
         self.assertEqual(2, len(self.repeat_records().all()))
 
 
-@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True, SERVER_ENVIRONMENT='enikshay')
 class TestNikshayRegisterPatientPayloadGenerator(ENikshayLocationStructureMixin, NikshayRepeaterTestBase):
     def setUp(self):
         super(TestNikshayRegisterPatientPayloadGenerator, self).setUp()
@@ -307,7 +346,7 @@ class TestNikshayRegisterPatientPayloadGenerator(ENikshayLocationStructureMixin,
         self.assertEqual(payload['regBy'], "tbu-dmdmo01")
 
         # From Person
-        self.assertEqual(payload['pname'], u"Peregrine เՇร ค Շгคק")
+        self.assertEqual(payload['pname'], "Peregrine เՇร ค Շгคק")
         self.assertEqual(payload['page'], '20')
         self.assertEqual(payload['pgender'], 'M')
         self.assertEqual(payload['paddress'], 'Mt. Everest')
@@ -321,7 +360,7 @@ class TestNikshayRegisterPatientPayloadGenerator(ENikshayLocationStructureMixin,
         self.assertEqual(payload['sitedetail'], 2)
         self.assertEqual(payload['Ptype'], '4')
         self.assertEqual(payload['poccupation'], 4)
-        self.assertEqual(payload['dotname'], u'𝔊𝔞𝔫𝔡𝔞𝔩𝔣 𝔗𝔥𝔢 𝔊𝔯𝔢𝔶')
+        self.assertEqual(payload['dotname'], '𝔊𝔞𝔫𝔡𝔞𝔩𝔣 𝔗𝔥𝔢 𝔊𝔯𝔢𝔶')
         self.assertEqual(payload['dotmob'], '066000666')
         self.assertEqual(payload['disease_classification'], 'EP')
         self.assertEqual(payload['pregdate'], '2014-09-09')
@@ -451,7 +490,7 @@ class TestNikshayRegisterPatientPayloadGenerator(ENikshayLocationStructureMixin,
             "Results": [
                 {
                     "FieldName": "NikshayId",
-                    "Fieldvalue": "The INSERT statement conflicted with the FOREIGN KEY constraint \"FK_PatientsDetails_TBUnits\". The conflict occurred in database \"nikshay\", table \"dbo.TBUnits\".\u000d\u000a \u000d\u000aDM-ABC-01-16-0001\u000d\u000aThe statement has been terminated."  # noqa. yes, this is a real response.
+                    "Fieldvalue": "The INSERT statement conflicted with the FOREIGN KEY constraint \"FK_PatientsDetails_TBUnits\". The conflict occurred in database \"nikshay\", table \"dbo.TBUnits\".\\u000d\\u000a \\u000d\\u000aDM-ABC-01-16-0001\\u000d\\u000aThe statement has been terminated."  # noqa. yes, this is a real response.
                 }
             ]
         }
@@ -469,7 +508,7 @@ class TestNikshayRegisterPatientPayloadGenerator(ENikshayLocationStructureMixin,
         self._assert_case_property_equal(updated_episode_case, 'nikshay_error', six.text_type(message))
 
 
-@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True, SERVER_ENVIRONMENT='enikshay')
 class TestNikshayHIVTestRepeater(ENikshayLocationStructureMixin, NikshayRepeaterTestBase):
 
     def setUp(self):
@@ -569,7 +608,7 @@ class TestNikshayHIVTestRepeater(ENikshayLocationStructureMixin, NikshayRepeater
         self.assertEqual(2, len(self.repeat_records().all()))
 
 
-@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True, SERVER_ENVIRONMENT='enikshay')
 class TestNikshayHIVTestPayloadGenerator(ENikshayLocationStructureMixin, NikshayRepeaterTestBase):
     def setUp(self):
         super(TestNikshayHIVTestPayloadGenerator, self).setUp()
@@ -655,7 +694,7 @@ class TestNikshayHIVTestPayloadGenerator(ENikshayLocationStructureMixin, Nikshay
         self.assertEqual(payload["ARTCentreDate"], "01/01/1900")
 
 
-@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True, SERVER_ENVIRONMENT='enikshay')
 class TestNikshayTreatmentOutcomeRepeater(ENikshayLocationStructureMixin, NikshayRepeaterTestBase):
 
     def setUp(self):
@@ -751,7 +790,7 @@ class TestNikshayTreatmentOutcomeRepeater(ENikshayLocationStructureMixin, Niksha
         self.assertEqual(2, len(self.repeat_records().all()))
 
 
-@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True, SERVER_ENVIRONMENT='enikshay')
 class TestNikshayTreatmentOutcomePayload(ENikshayLocationStructureMixin, NikshayRepeaterTestBase):
     def setUp(self):
         super(TestNikshayTreatmentOutcomePayload, self).setUp()
@@ -775,7 +814,7 @@ class TestNikshayTreatmentOutcomePayload(ENikshayLocationStructureMixin, Nikshay
         self.assertEqual(payload['PatientID'], self.person_id)
         self.assertEqual(payload['regBy'], "tbu-dmdmo01")
         self.assertEqual(payload['OutcomeDate'], "1990-01-01")
-        self.assertEqual(payload['MO'], u"𝔊𝔞𝔫𝔡𝔞𝔩𝔣 𝔗𝔥𝔢 𝔊𝔯𝔢𝔶")
+        self.assertEqual(payload['MO'], "𝔊𝔞𝔫𝔡𝔞𝔩𝔣 𝔗𝔥𝔢 𝔊𝔯𝔢𝔶")
         self.assertEqual(payload['MORemark'], 'None Collected in eNikshay')
         self.assertEqual(payload['Outcome'], '2')
 
@@ -789,7 +828,7 @@ class TestNikshayTreatmentOutcomePayload(ENikshayLocationStructureMixin, Nikshay
         self.assertEqual(payload['Outcome'], '7')
 
 
-@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True, SERVER_ENVIRONMENT='enikshay')
 class TestNikshayFollowupRepeater(ENikshayLocationStructureMixin, NikshayRepeaterTestBase):
 
     def setUp(self):
@@ -919,7 +958,7 @@ class TestNikshayFollowupRepeater(ENikshayLocationStructureMixin, NikshayRepeate
         self.assertEqual(1, len(self.repeat_records().all()))
 
 
-@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True, SERVER_ENVIRONMENT='enikshay')
 class TestNikshayFollowupPayloadGenerator(ENikshayLocationStructureMixin, NikshayRepeaterTestBase):
     def setUp(self):
         super(TestNikshayFollowupPayloadGenerator, self).setUp()
@@ -1186,7 +1225,7 @@ class TestNikshayFollowupPayloadGenerator(ENikshayLocationStructureMixin, Niksha
             NikshayFollowupPayloadGenerator(None).get_payload(self.repeat_record, test_case)
 
 
-@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True, SERVER_ENVIRONMENT='enikshay')
 class TestNikshayRegisterPrivatePatientRepeater(ENikshayLocationStructureMixin, NikshayRepeaterTestBase):
 
     def setUp(self):
@@ -1361,7 +1400,7 @@ class TestNikshayRegisterPrivatePatientPayloadGenerator(ENikshayLocationStructur
         self.assertEqual(updated_episode_case.external_id, None)
 
 
-@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True, SERVER_ENVIRONMENT='enikshay')
 class TestNikshayHealthEstablishmentRepeater(NikshayRepeaterTestBase):
 
     def setUp(self):
@@ -1429,7 +1468,7 @@ class TestNikshayHealthEstablishmentRepeater(NikshayRepeaterTestBase):
 
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True, ENIKSHAY_PRIVATE_API_PASSWORD="123",
-                   ENIKSHAY_PRIVATE_API_USERS={'nikshay_code': 'test-mh14'})
+                   ENIKSHAY_PRIVATE_API_USERS={'nikshay_code': 'test-mh14'}, SERVER_ENVIRONMENT='enikshay')
 class TestNikshayHealthEstablishmentPayloadGenerator(NikshayRepeaterTestBase):
     def setUp(self):
         super(TestNikshayHealthEstablishmentPayloadGenerator, self).setUp()
@@ -1560,7 +1599,7 @@ class TestNikshayHealthEstablishmentPayloadGenerator(NikshayRepeaterTestBase):
         })
         self.pcp.save()
         payload = NikshayHealthEstablishmentPayloadGenerator(None).get_payload(None, self.pcp)
-        self.assertEqual(payload['ESTABLISHMENT_TYPE'], health_establishment_type.get('lab'))
+        self.assertEqual(payload['ESTABLISHMENT_TYPE'], health_establishment_type.get('Lab'))
         self.assertEqual(payload['SECTOR'], health_establishment_sector.get(self.pcp.metadata['sector'], ''))
         self.assertEqual(payload['ESTABLISHMENT_NAME'], self.pcp.name)
         self.assertEqual(payload['MCI_HR_NO'], "14321")
@@ -1610,3 +1649,12 @@ class TestNikshayHealthEstablishmentPayloadGenerator(NikshayRepeaterTestBase):
         updated_location = SQLLocation.objects.get(location_id=self.pcp.location_id)
         self.assertEqual(updated_location.metadata['nikshay_code'], DUMMY_HEALTH_ESTABLISHMENT_ID)
         self.assertEqual(updated_location.metadata['old_nikshay_code'], 'old_id_value')
+
+        payload_generator.handle_success(
+            MockSoapResponse(200, ALREADY_REGISTERED_ESTABLISHMENT_RESPONSE),
+            self.pcp,
+            repeat_record
+        )
+        updated_location = SQLLocation.objects.get(location_id=self.pcp.location_id)
+        self.assertEqual(updated_location.metadata['nikshay_code'], DUMMY_REGISTERED_HEALTH_ESTABLISHMENT_ID)
+        self.assertEqual(updated_location.metadata['old_nikshay_code'], DUMMY_HEALTH_ESTABLISHMENT_ID)

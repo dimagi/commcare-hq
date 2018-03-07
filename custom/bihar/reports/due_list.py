@@ -1,9 +1,10 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from copy import copy
 import logging
 from corehq.util.dates import iso_string_to_date
 from dimagi.utils.couch.database import iter_docs
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from django.utils.html import format_html
 from django.utils.translation import ugettext_noop, ugettext as _
 from custom.bihar.reports.indicators.reports import ClientListBase
@@ -134,7 +135,7 @@ class VaccinationSummary(GroupReferenceMixIn, BiharSummaryReport):
             params = copy(self.request_params)
             params['category'] = item_config['slug']
             params['date'] = json_format_date(self.get_date())
-            return format_html(u'<a href="{next}">{val}</a>',
+            return format_html('<a href="{next}">{val}</a>',
                 val=value,
                 next=url_and_params(
                     VaccinationClientList.get_url(self.domain,
@@ -177,7 +178,7 @@ class VaccinationClientList(ClientListBase):
 
     @property
     def rendered_report_title(self):
-        return u'{title} ({count})'.format(title=_(self.config_item['title']), count=len(self.rows)) \
+        return '{title} ({count})'.format(title=_(self.config_item['title']), count=len(self.rows)) \
             if self.config_item else super(VaccinationClientList, self).rendered_report_title
 
     @property

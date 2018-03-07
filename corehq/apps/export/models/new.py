@@ -32,7 +32,7 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.daterange import get_daterange_start_end_dates
 from corehq.util.soft_assert import soft_assert
 from corehq.util.timezones.utils import get_timezone_for_domain
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from couchdbkit import SchemaListProperty, SchemaProperty, BooleanProperty, DictProperty
 
 from corehq import feature_previews
@@ -309,6 +309,7 @@ class ExportColumn(DocumentSchema):
         :returns: An ExportColumn instance
         """
         is_case_update = item.tag == PROPERTY_TAG_CASE and not isinstance(item, CaseIndexItem)
+        is_case_id = is_case_update and item.path[-1].name == '@case_id'
         is_case_history_update = item.tag == PROPERTY_TAG_UPDATE
         is_label_question = isinstance(item, LabelItem)
 
@@ -316,7 +317,7 @@ class ExportColumn(DocumentSchema):
         constructor_args = {
             "item": item,
             "label": item.readable_path if not is_case_history_update else item.label,
-            "is_advanced": is_case_update or is_label_question,
+            "is_advanced": not is_case_id and (is_case_update or is_label_question),
         }
 
         if isinstance(item, GeopointItem):
@@ -653,7 +654,7 @@ class ExportInstance(BlobMixin, Document):
     last_updated = DateTimeProperty()
     last_accessed = DateTimeProperty()
 
-    class Meta:
+    class Meta(object):
         app_label = 'export'
 
     @property
@@ -1317,7 +1318,7 @@ class InferredSchema(Document):
     # that all schema duck types have this property.
     last_app_versions = DictProperty()
 
-    class Meta:
+    class Meta(object):
         app_label = 'export'
 
     def put_group_schema(self, path):
@@ -1376,7 +1377,7 @@ class ExportDataSchema(Document):
     # A map of app_id to app_version. Represents the last time it saw an app and at what version
     last_app_versions = DictProperty()
 
-    class Meta:
+    class Meta(object):
         app_label = 'export'
 
     def get_number_of_apps_to_process(self):
@@ -2173,7 +2174,7 @@ def _merge_lists(one, two, keyfn, resolvefn):
         merged.append(new_obj)
 
     # Get the rest of the objects in the second list
-    merged.extend(two_keys.values())
+    merged.extend(list(two_keys.values()))
     return merged
 
 
@@ -2190,13 +2191,13 @@ def _merge_dicts(one, two, resolvefn):
     # keys either in one or two, but not both
     merged = {
         key: one.get(key, two.get(key))
-        for key in one.viewkeys() ^ two.viewkeys()
+        for key in six.viewkeys(one) ^ six.viewkeys(two)
     }
 
     # merge keys that exist in both
     merged.update({
         key: resolvefn(one[key], two[key])
-        for key in one.viewkeys() & two.viewkeys()
+        for key in six.viewkeys(one) & six.viewkeys(two)
     })
     return merged
 
@@ -2591,7 +2592,7 @@ class ExportMigrationMeta(Document):
 
     migration_date = DateTimeProperty()
 
-    class Meta:
+    class Meta(object):
         app_label = 'export'
 
     @property
@@ -2673,6 +2674,12 @@ class DataFile(models.Model):
     def delete(self, using=None, keep_parents=False):
         self._delete_blob()
         return super(DataFile, self).delete(using, keep_parents)
+
+
+class EmailExportWhenDoneRequest(models.Model):
+    domain = models.CharField(max_length=255)
+    download_id = models.CharField(max_length=255)
+    user_id = models.CharField(max_length=255)
 
 
 # These must match the constants in corehq/apps/export/static/export/js/const.js

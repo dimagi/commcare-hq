@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from custom.world_vision.filters import LocationFilter, WVDatespanFilter
 from custom.world_vision.reports import TTCReport
 from custom.world_vision.sqldata.child_sqldata import ChildRegistrationDetails, ClosedChildCasesBreakdown, \
@@ -9,7 +10,7 @@ from custom.world_vision.sqldata.main_sqldata import DeliveryPlaceDetails, \
 from custom.world_vision.sqldata.mother_sqldata import MotherRegistrationDetails, ClosedMotherCasesBreakdown, \
     PregnantMotherBreakdownByTrimester, DeliveryLiveBirthDetails, PostnatalCareOverview, \
     CauseOfMaternalDeaths, AnteNatalCareServiceOverviewExtended
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 
 class MixedTTCReport(TTCReport):

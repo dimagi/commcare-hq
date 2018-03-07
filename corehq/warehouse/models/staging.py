@@ -43,7 +43,7 @@ class StagingTable(models.Model, WarehouseTable):
         on_delete=models.PROTECT,
     )
 
-    class Meta:
+    class Meta(object):
         abstract = True
 
     @classmethod

@@ -46,7 +46,7 @@ def flatten(d, parent_key='', delimiter='/'):
             continue
         new_key = parent_key + delimiter + k if parent_key else k
         if isinstance(v, collections.MutableMapping):
-            items.extend(flatten(v, new_key, delimiter).items())
+            items.extend(list(flatten(v, new_key, delimiter).items()))
         elif not isinstance(v, list):
             items.append((new_key, v))
     return dict(items)

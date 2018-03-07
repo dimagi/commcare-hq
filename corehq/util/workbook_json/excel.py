@@ -95,7 +95,7 @@ class IteratorJSONReader(object):
         else:
             dud = {}
             cls.set_field_value(dud, field, value)
-            (field, value), = dud.items()
+            (field, value), = list(dud.items())
 
             if field not in obj:
                 obj[field] = []

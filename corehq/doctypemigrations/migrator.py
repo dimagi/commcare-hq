@@ -6,7 +6,7 @@ from corehq.dbaccessors.couchapps.all_docs import delete_all_docs_by_doc_type
 from corehq.doctypemigrations.changes import stream_changes_forever
 from corehq.doctypemigrations.continuous_migrate import ContinuousReplicator
 from corehq.doctypemigrations.stats import get_doc_counts_per_doc_type
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from corehq.doctypemigrations.bulk_migrate import bulk_migrate
 from corehq.doctypemigrations.models import DocTypeMigration, DocTypeMigrationCheckpoint
 from dimagi.utils.couch.database import get_db

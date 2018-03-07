@@ -13,6 +13,7 @@ function SystemUsageController($scope, $http, $log, $routeParams, $location, sto
 
     vm.prevDay = moment().subtract(1, 'days').format('Do MMMM, YYYY');
     vm.currentMonth = moment().format("MMMM");
+    vm.lastDayOfPreviousMonth = moment().set('date', 1).subtract(1, 'days').format('Do MMMM, YYYY');
 
     if (Object.keys($location.search()).length === 0) {
         $location.search(storageService.getKey('search'));

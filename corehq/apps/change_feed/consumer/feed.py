@@ -9,7 +9,7 @@ from kafka.common import ConsumerTimeout
 from corehq.apps.change_feed.data_sources import get_document_store
 from corehq.apps.change_feed.exceptions import UnknownDocumentStore
 from corehq.apps.change_feed.topics import get_multi_topic_offset, validate_offsets
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.logging import notify_error
 from pillowtop.checkpoints.manager import PillowCheckpointEventHandler
 from pillowtop.models import kafka_seq_to_str

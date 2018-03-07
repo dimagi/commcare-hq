@@ -122,10 +122,10 @@ FormplayerFrontend.module("Users.Views", function(Views, FormplayerFrontend, Bac
                     page: this.model.get('page'),
                 },
             })
-            .done(this.render.bind(this))
-            .fail(function(xhr){
-                FormplayerFrontend.trigger('showError', xhr.responseText);
-            });
+                .done(this.render.bind(this))
+                .fail(function(xhr){
+                    FormplayerFrontend.trigger('showError', xhr.responseText);
+                });
         },
         onClickNext: function(e) {
             e.preventDefault();

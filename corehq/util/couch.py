@@ -15,7 +15,7 @@ from jsonobject.exceptions import WrappingAttributeError
 
 from corehq.util.exceptions import DocumentClassNotFound
 from dimagi.utils.chunked import chunked
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.requestskit import get_auth
 
 
@@ -204,7 +204,7 @@ class IterDB(object):
                 success_ids = {d['_id'] for d in docs}
 
         if self.callback:
-            self.callback.post_commit(op_slug, docs, success_ids, categorized_errors.values())
+            self.callback.post_commit(op_slug, docs, success_ids, list(categorized_errors.values()))
 
         if self.throttle_secs:
             sleep(self.throttle_secs)

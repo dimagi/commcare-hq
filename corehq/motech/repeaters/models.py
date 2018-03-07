@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from datetime import datetime, timedelta
 import six.moves.urllib.request, six.moves.urllib.parse, six.moves.urllib.error
-import urlparse
+import six.moves.urllib.parse
 import warnings
 
 from django.utils.translation import ugettext_lazy as _
@@ -23,7 +23,7 @@ from dimagi.ext.couchdbkit import *
 from casexml.apps.case.xml import V2, LEGAL_VERSIONS
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors
 from couchforms.const import DEVICE_LOG_XMLNS
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.parsing import json_format_datetime
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.post import simple_post, perform_SOAP_operation
@@ -71,6 +71,7 @@ def log_repeater_success_in_datadog(domain, status_code, repeater_type):
 DELETED = "-Deleted"
 BASIC_AUTH = "basic"
 DIGEST_AUTH = "digest"
+OAUTH1 = "oauth1"
 
 
 class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
@@ -84,10 +85,11 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
     url = StringProperty()
     format = StringProperty()
 
-    auth_type = StringProperty(choices=(BASIC_AUTH, DIGEST_AUTH), required=False)
+    auth_type = StringProperty(choices=(BASIC_AUTH, DIGEST_AUTH, OAUTH1), required=False)
     username = StringProperty()
     password = StringProperty()
     friendly_name = _("Data")
+    paused = BooleanProperty(default=False)
 
     payload_generator_classes = ()
 
@@ -161,6 +163,11 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
 
     def clear_caches(self):
         super(Repeater, self).clear_caches()
+        # Also expire for cases repeater is fetched using Repeater class.
+        # The quick cache called in clear_cache also check on relies of doc class
+        # so in case the class is set as Repeater it is not expired like in edit forms.
+        # So expire it explicitly here with Repeater class as well.
+        Repeater.get.clear(Repeater, self._id)
         if self.__class__ == Repeater:
             cls = self.get_class_from_doc_type(self.doc_type)
         else:
@@ -224,6 +231,14 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
             self['base_doc'] += DELETED
         self.save()
 
+    def pause(self):
+        self.paused = True
+        self.save()
+
+    def resume(self):
+        self.paused = False
+        self.save()
+
     def get_url(self, repeat_record):
         # to be overridden
         return self.url
@@ -285,6 +300,16 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
             self.generator.handle_failure(result, self.payload_doc(repeat_record), repeat_record)
         return attempt
 
+    @property
+    def form_class_name(self):
+        """
+        Return the name of the class whose edit form this class uses.
+
+        (Most classes that extend CaseRepeater, and all classes that
+        extend FormRepeater, use the same form.)
+        """
+        return self.__class__.__name__
+
 
 class FormRepeater(Repeater):
     """
@@ -302,6 +327,13 @@ class FormRepeater(Repeater):
     def payload_doc(self, repeat_record):
         return FormAccessors(repeat_record.domain).get_form(repeat_record.payload_id)
 
+    @property
+    def form_class_name(self):
+        """
+        FormRepeater and its subclasses use the same form for editing
+        """
+        return 'FormRepeater'
+
     def allowed_to_forward(self, payload):
         return (
             payload.xmlns != DEVICE_LOG_XMLNS and
@@ -314,14 +346,14 @@ class FormRepeater(Repeater):
             return url
         else:
             # adapted from http://stackoverflow.com/a/2506477/10840
-            url_parts = list(urlparse.urlparse(url))
-            query = urlparse.parse_qsl(url_parts[4])
+            url_parts = list(six.moves.urllib.parse.urlparse(url))
+            query = six.moves.urllib.parse.parse_qsl(url_parts[4])
             try:
                 query.append(("app_id", self.payload_doc(repeat_record).app_id))
             except (XFormNotFound, ResourceNotFound):
                 return None
             url_parts[4] = six.moves.urllib.parse.urlencode(query)
-            return urlparse.urlunparse(url_parts)
+            return six.moves.urllib.parse.urlunparse(url_parts)
 
     def get_headers(self, repeat_record):
         headers = super(FormRepeater, self).get_headers(repeat_record)
@@ -363,6 +395,13 @@ class CaseRepeater(Repeater):
     @memoized
     def payload_doc(self, repeat_record):
         return CaseAccessors(repeat_record.domain).get_case(repeat_record.payload_id)
+
+    @property
+    def form_class_name(self):
+        """
+        CaseRepeater and most of its subclasses use the same form for editing
+        """
+        return 'CaseRepeater'
 
     def get_headers(self, repeat_record):
         headers = super(CaseRepeater, self).get_headers(repeat_record)
@@ -506,6 +545,10 @@ class RepeatRecord(Document):
     next_check = DateTimeProperty()
     succeeded = BooleanProperty(default=False)
 
+    @property
+    def record_id(self):
+        return self._id
+
     @classmethod
     def wrap(cls, data):
         should_bootstrap_attempts = ('attempts' not in data)
@@ -581,6 +624,11 @@ class RepeatRecord(Document):
     def get_numbered_attempts(self):
         for i, attempt in enumerate(self.attempts):
             yield i + 1, attempt
+
+    def postpone_by(self, duration):
+        self.last_checked = datetime.utcnow()
+        self.next_check = self.last_checked + duration
+        self.save()
 
     def make_set_next_try_attempt(self, failure_reason):
         # we use an exponential back-off to avoid submitting to bad urls

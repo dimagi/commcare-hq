@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import re
 from corehq.apps.sms.api import send_sms_to_verified_number
 from corehq.apps.sms.models import MessagingEvent
@@ -72,7 +73,7 @@ def handle(verified_contact, text, msg):
     }
 
     def choose_handler(keyword):
-        for k, v in handlers.iteritems():
+        for k, v in six.iteritems(handlers):
             if keyword.lower() in k:
                 return v
         return None

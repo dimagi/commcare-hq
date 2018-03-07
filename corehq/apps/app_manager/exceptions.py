@@ -160,17 +160,5 @@ class PracticeUserException(AppManagerException):
         super(PracticeUserException, self).__init__(*args, **kwargs)
 
 
-class ActionNotPermitted(AppManagerException):
-    pass
-
-
-class RemoteRequestError(AppManagerException):
-    pass
-
-
-class RemoteAuthError(RemoteRequestError):
-    pass
-
-
 class AppLinkError(AppManagerException):
     pass

@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from functools import partial
 from dateutil import rrule
 from corehq.apps.locations.dbaccessors import get_one_user_at_location
@@ -10,7 +11,7 @@ from custom.ilsgateway.tanzania import ILSData, DetailsReport
 from custom.ilsgateway.tanzania.reports.mixins import RandRSubmissionData
 from custom.ilsgateway.tanzania.reports.utils import randr_value, get_span, \
     rr_format_percent, link_format, make_url
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from custom.ilsgateway.tanzania.reports.facility_details import FacilityDetailsReport, InventoryHistoryData, \
     RegistrationData, RandRHistory, Notes, RecentMessages
 from django.utils.translation import ugettext as _

@@ -46,7 +46,7 @@ class Command(BaseCommand):
                 received_on=form.received_on,
                 app_id=form.app_id,
                 build_id=form.build_id,
-                attachments=form.attachments.keys(),
+                attachments=list(form.attachments.keys()),
                 auth_context=form.auth_context,
             )
 

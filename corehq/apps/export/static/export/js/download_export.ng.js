@@ -8,7 +8,7 @@
         'ngResource',
         'ngRoute',
         'ng.django.rmi',
-        'ngMessages'
+        'ngMessages',
     ]);
 
     download_export.config(['$httpProvider', function($httpProvider) {
@@ -20,7 +20,7 @@
     download_export.constant('formElement', {
         progress: function () { return null; },
         group: function () { return null; },
-        user_type: function () { return null; }
+        user_type: function () { return null; },
     });
 
     download_export.constant('exportList', []);
@@ -90,7 +90,7 @@
                 $scope.groupsLoading = false;
                 $scope.hasGroups = data.groups.length > 0;
                 if (formElement.group()) formElement.group().select2({
-                    data: data.groups
+                    data: data.groups,
                 });
             } else {
                 self._handleGroupRetry();
@@ -144,7 +144,7 @@
             djangoRMI.prepare_custom_export({
                 exports: $scope.exportList,
                 max_column_size: self._maxColumnSize,
-                form_data: $scope.formData
+                form_data: $scope.formData,
             })
                 .success(function (data) {
                     if (data.success) {
@@ -176,7 +176,7 @@
             $scope.preparingMultimediaExport = true;
             djangoRMI.prepare_form_multimedia({
                 exports: $scope.exportList,
-                form_data: $scope.formData
+                form_data: $scope.formData,
             })
                 .success(function (data) {
                     if (data.success) {
@@ -230,6 +230,7 @@
             if (!_.isEmpty(data)) {
                 $scope.progress = data.progress;
                 self._updateProgressBar(data);
+                $scope.download_id = data.download_id;
                 $scope.showProgress = true;
             }
         });
@@ -283,8 +284,24 @@
         $scope.sendAnalytics = function () {
             hqImport('analytix/js/google').track.event(
                 "Download Export",
-                            hqImport('export/js/utils').capitalize(exportDownloadService.exportType), "Saved");
+                hqImport('export/js/utils').capitalize(exportDownloadService.exportType), "Saved");
             hqImport('analytix/js/kissmetrix').track.event("Clicked Download button");
+        };
+
+        $scope.sendEmailUponCompletion = function () {
+            setTimeout(function () {  // function must wait until download_id is available in the scope
+                if ($scope.download_id !== undefined) {
+                    var initial_page_data = hqImport('hqwebapp/js/initial_page_data');
+                    $.ajax({
+                        method: 'POST',
+                        dataType: 'json',
+                        url: initial_page_data.reverse('add_export_email_request'),
+                        data: { download_id: $scope.download_id },
+                    });
+                } else {
+                    $scope.sendEmailUponCompletion();
+                }
+            });
         };
     };
     download_export.controller(exportsControllers);
@@ -311,7 +328,7 @@
 
         self._checkDownloadProgress = function () {
             djangoRMI.poll_custom_export_download({
-                download_id: self.downloadId
+                download_id: self.downloadId,
             })
                 .success(function (data) {
                     if (data.is_poll_successful) {

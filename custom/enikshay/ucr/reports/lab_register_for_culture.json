@@ -5,8 +5,7 @@
         "enikshay-reports-qa"
     ],
     "server_environment": [
-        "enikshay",
-        "softlayer"
+        "enikshay"
     ],
     "data_source_table": "test_drtb_v3",
     "report_id": "lab_register_for_culture",

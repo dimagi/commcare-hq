@@ -55,6 +55,7 @@ FormplayerFrontend.module("Sessions", function (Sessions, FormplayerFrontend, Ba
                     "username": user.username,
                     "domain": user.domain,
                     "restoreAs": user.restoreAs,
+                    "tz_offset_millis": (new Date()).getTimezoneOffset() * 60 * 1000 * -1,
                 }),
                 url: formplayerUrl + '/incomplete-form',
                 success: function (request) {

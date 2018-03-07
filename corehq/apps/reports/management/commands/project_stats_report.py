@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+from __future__ import unicode_literals
 import re
 from collections import defaultdict
 from datetime import datetime, date
@@ -140,7 +141,7 @@ class Command(BaseCommand):
                 stats[key].append(count)
 
         final_stats = []
-        for month, case_count_list in sorted(stats.items(), key=lambda r: r[0]):
+        for month, case_count_list in sorted(list(stats.items()), key=lambda r: r[0]):
             final_stats.append((month, sum(case_count_list) // len(case_count_list)))
 
         suffix = ''
@@ -185,7 +186,7 @@ class Command(BaseCommand):
                 stats[key].append(count)
 
         final_stats = []
-        for month, case_count_list in sorted(stats.items(), key=lambda r: r[0]):
+        for month, case_count_list in sorted(list(stats.items()), key=lambda r: r[0]):
             final_stats.append((month, sum(case_count_list) // len(case_count_list)))
 
         self._print_table(['Month', 'Cases updated per user'], final_stats)
@@ -258,7 +259,7 @@ class Command(BaseCommand):
                 stats[month].append(row['count'])
 
         final_stats = []
-        for month, transaction_count_list in sorted(stats.items(), key=lambda r: r[0]):
+        for month, transaction_count_list in sorted(list(stats.items()), key=lambda r: r[0]):
             final_stats.append((month.isoformat(), sum(transaction_count_list) // len(transaction_count_list)))
 
         self._print_table(['Month', 'Ledgers updated per case'], final_stats)

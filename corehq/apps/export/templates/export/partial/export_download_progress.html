@@ -2,6 +2,7 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 {% load djangular_tags %}
+{% registerurl 'add_export_email_request' domain %}
 
 <div ng-controller="DownloadProgressController"
      ng-cloak>
@@ -45,15 +46,27 @@
                                 <span ng-show="isMultimediaDownload">{% trans "Download Multimedia" %}</span>
                         </a>
                         <button type="button"
-                                class="btn btn-primary btn-disabled btn-full-width"
+                                class="btn btn-default btn-disabled btn-full-width"
                                 ng-show="!isDownloadReady"
                                 disabled="disabled">
                                 <i class="fa-spin fa fa-spinner"></i>
                                 <span ng-show="!isMultimediaDownload">{% trans "Collecting Data" %}</span>
                                 <span ng-show="isMultimediaDownload">{% trans "Collecting Multimedia" %}</span>
                         </button>
+                        <button type="button"
+                                title="{% trans 'For exports that may take a while to prepare, email a link when download is ready' %}"
+                                style="margin-top: 5px;"
+                                ng-show="!isDownloadReady"
+                                ng-init="sendEmailFlag = false;"
+                                ng-class="'btn btn-' + (sendEmailFlag ? 'default' : 'primary') + ' btn-full-width'"
+                                ng-disabled="sendEmailFlag"
+                                ng-click="sendEmailUponCompletion(); sendEmailFlag = true;">
+                                <i class="fa fa-envelope"></i>
+                                {% trans "Email me when ready" %}
+                                <i class="fa fa-check" ng-show="sendEmailFlag"></i>
+                        </button>
                         {% if show_sync_to_dropbox %}
-                        <button button="submit"
+                        <button type="submit"
                                 class="btn btn-default btn-full-width"
                                 style="margin-top: 5px;"
                                 ng-disabled="!isDownloadReady && !isMultimediaDownload"

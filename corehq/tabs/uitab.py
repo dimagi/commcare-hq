@@ -7,7 +7,7 @@ from django.utils.translation import get_language
 from corehq.apps.domain.models import Domain
 from corehq.tabs.exceptions import UrlPrefixFormatError, UrlPrefixFormatsSuggestion
 from corehq.tabs.utils import sidebar_to_dropdown
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.django.cache import make_template_fragment_key
 from dimagi.utils.web import get_url_base
 
@@ -174,11 +174,11 @@ class UITab(object):
                 for url_prefix_format in self.url_prefix_formats]
 
     def get_url_prefix_formats_suggestion(self):
-        import urlparse
+        import six.moves.urllib.parse
         accepted_urls = []
         # sorted shortest first
         all_urls = sorted(
-            urlparse.urlparse(url).path
+            six.moves.urllib.parse.urlparse(url).path
             # replace the actual domain with {domain}
             .replace('/a/{}'.format(self.domain), '/a/{domain}')
             for url in self._get_inferred_urls

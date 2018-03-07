@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.utils.decorators import method_decorator
 from corehq import privileges
 from corehq.apps.reports.dispatcher import ReportDispatcher

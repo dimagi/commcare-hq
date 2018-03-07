@@ -1,5 +1,7 @@
 from __future__ import absolute_import
-from StringIO import StringIO
+
+from __future__ import unicode_literals
+import io
 import datetime
 import re
 import pytz
@@ -31,7 +33,7 @@ from corehq.util.view_utils import absolute_reverse
 from couchexport.export import export_from_tables
 from couchexport.shortcuts import export_response
 from dimagi.utils.couch.pagination import DatatablesParams
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.modules import to_function
 from dimagi.utils.web import json_request, json_response
 from dimagi.utils.parsing import string_to_boolean
@@ -651,7 +653,7 @@ class GenericReportView(object):
 
     @property
     def excel_response(self):
-        file = StringIO()
+        file = io.BytesIO()
         export_from_tables(self.export_table, file, self.export_format)
         return file
 
@@ -692,7 +694,7 @@ class GenericReportView(object):
             export_all_rows_task.delay(self.__class__, self.__getstate__())
             return HttpResponse()
         else:
-            temp = StringIO()
+            temp = io.BytesIO()
             export_from_tables(self.export_table, temp, self.export_format)
             return export_response(temp, self.export_format, self.export_name)
 

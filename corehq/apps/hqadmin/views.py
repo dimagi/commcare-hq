@@ -1,9 +1,10 @@
 from __future__ import absolute_import
+from __future__ import division
 import six.moves.html_parser
 import json
 import socket
 import uuid
-from StringIO import StringIO
+from io import StringIO
 from collections import defaultdict, namedtuple, OrderedDict, Counter
 from datetime import timedelta, date, datetime
 
@@ -86,7 +87,7 @@ from dimagi.utils.couch.database import get_db, is_bigcouch
 from dimagi.utils.csv import UnicodeWriter
 from dimagi.utils.dates import add_months
 from dimagi.utils.decorators.datespan import datespan_in_request
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.django.email import send_HTML_email
 from dimagi.utils.django.management import export_as_csv_action
 from dimagi.utils.parsing import json_format_date
@@ -242,7 +243,7 @@ class RecentCouchChangesView(BaseAdminSectionView):
 
         def _to_chart_data(data_dict):
             return [
-                {'label': l, 'value': v} for l, v in sorted(data_dict.items(), key=lambda tup: tup[1], reverse=True)
+                {'label': l, 'value': v} for l, v in sorted(list(data_dict.items()), key=lambda tup: tup[1], reverse=True)
             ][:20]
 
         return {
@@ -293,7 +294,7 @@ def system_ajax(request):
                 meta['design_document'] = dd[len('_design/'):]
                 total_changes = sum(task['total_changes'] for task in meta['tasks'])
                 for task in meta['tasks']:
-                    task['progress_contribution'] = task['changes_done'] * 100 / total_changes
+                    task['progress_contribution'] = task['changes_done'] * 100 // total_changes
 
                 design_docs.append(meta)
             return json_response(design_docs)
@@ -734,8 +735,8 @@ def _lookup_id_in_database(doc_id, db_name=None):
         dbs = [_get_db_from_db_name(db_name)]
         response['selected_db'] = db_name
     else:
-        couch_dbs = couch_config.all_dbs_by_slug.values()
-        sql_dbs = _SQL_DBS.values()
+        couch_dbs = list(couch_config.all_dbs_by_slug.values())
+        sql_dbs = list(_SQL_DBS.values())
         dbs = couch_dbs + sql_dbs
 
     db_results = []
@@ -1245,7 +1246,7 @@ class CallcenterUCRCheck(BaseAdminSectionView):
         domain_stats = get_call_center_data_source_stats(domains)
 
         context = {
-            'data': sorted(domain_stats.values(), key=lambda s: s.name),
+            'data': sorted(list(domain_stats.values()), key=lambda s: s.name),
             'domain': domain
         }
 

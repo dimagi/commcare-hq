@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import datetime
 from couchdbkit import ResourceNotFound
 import dateutil
@@ -8,7 +9,7 @@ import numpy
 import pytz
 from corehq.apps.indicators.models import DynamicIndicatorDefinition, CombinedCouchViewIndicatorDefinition
 from corehq.const import USER_MONTH_FORMAT
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from mvp.models import MVP
 from mvp.reports import MVPIndicatorReport
 from six.moves import range

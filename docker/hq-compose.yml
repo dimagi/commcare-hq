@@ -45,6 +45,12 @@ postgres:
 couch:
   image: klaemo/couchdb:2.0-dev
   command: ["--with-haproxy", "--with-admin-party-please", "-n", "1"]
+  ulimits:
+    # fix high CPU usage (1048576 is the default, tried 65536, 1024 fixed it)
+    # https://groups.google.com/forum/#!topic/rabbitmq-users/hO06SB-QBqc
+    nofile:
+      soft: 1024
+      hard: 1048576
   expose:
     - "5984"
   volumes:

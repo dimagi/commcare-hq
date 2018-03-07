@@ -1,8 +1,5 @@
+/* globals d3, nv */
 // Contains helper functions for rendering nvd3 multibar charts with data pulled from an elastic search histogram filter
-
-function isInt(n) {
-    return typeof n === 'number' && parseFloat(n) == parseInt(n, 10) && !isNaN(n);
-}
 
 function is_data_empty(histo_data) {
     for (var key in histo_data) {
@@ -28,7 +25,7 @@ function are_init_values_zero(values) {
 
 function swap_prop_names(obj, from_to_map) {
     var ret_obj = {};
-    _.each(from_to_map, function (v, k) { ret_obj[v] = obj[k] });
+    _.each(from_to_map, function (v, k) { ret_obj[v] = obj[k]; });
     return ret_obj;
 }
 
@@ -40,7 +37,7 @@ function days_in_year(year) {
 }
 
 function is_leap_year(year) {
-    return new Date(year, 1, 29).getMonth() == 1;
+    return new Date(year, 1, 29).getMonth() === 1;
 }
 
 function days_in_month(month, year) {
@@ -87,7 +84,6 @@ function fill_in_spaces(vals, start, end, interval) {
     // this should not happen
     if (cur_index < _.filter(vals, function(n) {return n.y > 0;}).length) {
         ret.concat(vals.slice(cur_index));
-        console.log("There were extra values in a response");
     }
 
     return ret;
@@ -107,7 +103,7 @@ function trim_data(data) {
      * Removes the empty entries from the ends of the data
      */
     function get_first(arr) {
-        return find(arr, function (o) { return o.y > 0 });
+        return find(arr, function (o) { return o.y > 0; });
     }
     function get_last(arr) {
         var anarr = arr.slice(0);
@@ -115,7 +111,7 @@ function trim_data(data) {
         var reverse_index = get_first(anarr);
         return reverse_index > -1 ? arr.length - reverse_index : -1;
     }
-    var gte_zero = function (n) {return n >= 0};
+    var gte_zero = function (n) {return n >= 0;};
 
     var firsts = _.filter(_.map(data, function(d) { return get_first(d.values); }), gte_zero);
     var lasts = _.filter(_.map(data, function(d) { return get_last(d.values); }), gte_zero);
@@ -125,7 +121,7 @@ function trim_data(data) {
     return _.map(data, function(d){
         d.values = d.values.splice(first, last);
         return d;
-    })
+    });
 }
 
 function format_data(data, start, end, interval, no_trim) {
@@ -188,11 +184,11 @@ function findEnds(data, starting_time, ending_time) {
 
     return {
         start: start,
-        end: end
+        end: end,
     };
 }
 
-function loadCharts(chart_name, xname, data, initial_values, starting_time, ending_time, interval) {
+function loadCharts(chart_name, xname, data, initial_values, starting_time, ending_time, interval) {    // eslint-disable-line no-unused-vars
     var ends = findEnds(data, starting_time, ending_time);
     starting_time = ends.start, ending_time = ends.end;
     var domain_data = format_data(data, starting_time, ending_time, interval);
@@ -213,41 +209,41 @@ function loadCharts(chart_name, xname, data, initial_values, starting_time, endi
 
     // move the yaxis label to the left a lil
     var yaxislabel = d3.selectAll('.nv-y.nv-axis .nv-axislabel');
-    yaxislabel.attr('transform', function(d,i,j) {
-        return 'translate (-11, 0), rotate(-90)'
+    yaxislabel.attr('transform', function() {
+        return 'translate (-11, 0), rotate(-90)';
     });
 
     return {
         "bar-chart": bar_chart,
         "cumulative-chart": cum_chart,
-        "stacked-cumulative-chart": stacked_cum_chart
-    }
+        "stacked-cumulative-chart": stacked_cum_chart,
+    };
 }
 
 function addHistogram(selector, xname, data) {
     var chart = nv.models.multiBarChart().color(d3.scale.category10().range());
     chart = formatChart(chart, selector, xname, data);
-    nv.addGraph(function() { return chart });
+    nv.addGraph(function() { return chart; });
     return chart;
 }
 
 function addLineGraph(selector, xname, data) {
     var chart = nv.models.lineChart()
-                  .x(function(d) { return d[0] })
-                  .y(function(d) { return d[1] })
-                  .color(d3.scale.category10().range());
+        .x(function(d) { return d[0]; })
+        .y(function(d) { return d[1]; })
+        .color(d3.scale.category10().range());
     chart = formatChart(chart, selector, xname, data);
-    nv.addGraph(function() { return chart });
+    nv.addGraph(function() { return chart; });
     return chart;
 }
 
 function addStackedAreaGraph(selector, xname, data) {
     var chart = nv.models.stackedAreaChart()
-                  .x(function(d) { return d[0] })
-                  .y(function(d) { return d[1] })
-                  .color(d3.scale.category10().range());
+        .x(function(d) { return d[0]; })
+        .y(function(d) { return d[1]; })
+        .color(d3.scale.category10().range());
     chart = formatChart(chart, selector, xname, data);
-    nv.addGraph(function() { return chart });
+    nv.addGraph(function() { return chart; });
     return chart;
 }
 
@@ -280,7 +276,7 @@ function formatChart(chart, selector, xname, data, margin_left) {
     return chart;
 }
 
-var insertLinebreaks = function (d) {
+var insertLinebreaks = function () {    // eslint-disable-line no-unused-vars
     var el = d3.select(this);
     var words = this.textContent.split(linebreak_txt);
     el.text('');
@@ -293,9 +289,10 @@ var insertLinebreaks = function (d) {
     }
 };
 
-function formatDataForLineGraph(data) {
-    var starting_time = 0, ending_time = Infinity;
-    ends = findEnds(data, starting_time, ending_time);
+function formatDataForLineGraph(data) { // eslint-disable-line no-unused-vars
+    var starting_time = 0,
+        ending_time = Infinity,
+        ends = findEnds(data, starting_time, ending_time);
     starting_time = ends.start, ending_time = ends.end;
     if (starting_time === Infinity) {
         starting_time = undefined, ending_time = undefined;

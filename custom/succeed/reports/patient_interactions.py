@@ -1,12 +1,14 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from collections import OrderedDict
 from django.utils import html
 from corehq.apps.users.models import CouchUser
 from custom.succeed.reports.patient_task_list import PatientTaskListReport
 from custom.succeed.reports import *
 from custom.succeed.reports.patient_details import PatientDetailsReport
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from custom.succeed.utils import is_cm, is_chw
+import six
 
 RISK_FACTOR_CONFIG = OrderedDict()
 RISK_FACTOR_CONFIG['Status:'] = ['risk-factor_at_status', 'risk-factor_bp_status',
@@ -125,7 +127,7 @@ class PatientInteractionsReport(PatientDetailsReport):
 
         # Risk Factor Table
         rows = []
-        for key, val in RISK_FACTOR_CONFIG.iteritems():
+        for key, val in six.iteritems(RISK_FACTOR_CONFIG):
             data = [key]
             for v in val:
                 case_data = ret['patient'][v] if v in ret['patient'] else ''

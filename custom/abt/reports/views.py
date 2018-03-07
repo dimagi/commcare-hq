@@ -1,6 +1,7 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
+import io
 import json
-from StringIO import StringIO
 
 from django.http import HttpResponse
 
@@ -107,7 +108,7 @@ class FormattedSupervisoryReport(CustomConfigurableReport):
         # body
         percentile_fill('C', 2, max_column, max_row - 1, 0.90, red)
 
-        f = StringIO()
+        f = io.BytesIO()
         workbook.save(f)
         return f
 

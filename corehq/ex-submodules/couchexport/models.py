@@ -17,7 +17,7 @@ from couchexport.files import ExportFiles
 from couchexport.transforms import identity
 from couchexport.util import SerializableFunctionProperty,\
     get_schema_index_view_keys, force_tag_to_list
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.couch.database import get_db, iter_docs
 from soil import DownloadBase

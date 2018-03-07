@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from corehq.apps.data_interfaces.tests.util import create_case
 from corehq.apps.locations.tests.util import make_loc, setup_location_types
 from corehq.messaging.scheduling.scheduling_partitioned.models import (
@@ -23,6 +24,27 @@ class CustomRecipientTest(BaseICDSTest):
         cls.ls1 = make_loc('ls1', domain=cls.domain, type=SUPERVISOR_LOCATION_TYPE_CODE)
         cls.awc1 = make_loc('awc1', domain=cls.domain, type=AWC_LOCATION_TYPE_CODE, parent=cls.ls1)
         cls.awc2 = make_loc('awc2', domain=cls.domain, type=AWC_LOCATION_TYPE_CODE, parent=None)
+
+    def test_mother_person_case_from_ccs_record_case(self):
+        for cls in (CaseAlertScheduleInstance, CaseTimedScheduleInstance):
+            self.assertEqual(
+                cls(
+                    domain=self.domain,
+                    case_id=self.ccs_record_case.case_id,
+                    recipient_type='CustomRecipient',
+                    recipient_id='ICDS_MOTHER_PERSON_CASE_FROM_CCS_RECORD_CASE'
+                ).recipient.case_id,
+                self.mother_person_case.case_id
+            )
+
+            self.assertIsNone(
+                cls(
+                    domain=self.domain,
+                    case_id=self.lone_ccs_record_case.case_id,
+                    recipient_type='CustomRecipient',
+                    recipient_id='ICDS_MOTHER_PERSON_CASE_FROM_CCS_RECORD_CASE'
+                ).recipient
+            )
 
     def test_mother_person_case_from_child_health_case(self):
         for cls in (CaseAlertScheduleInstance, CaseTimedScheduleInstance):

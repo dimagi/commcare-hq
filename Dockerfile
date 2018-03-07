@@ -1,3 +1,4 @@
+# When changing this file, also update Dockerfile-py3
 FROM python:2.7
 MAINTAINER Dimagi <devops@dimagi.com>
 

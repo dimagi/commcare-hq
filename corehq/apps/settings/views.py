@@ -30,15 +30,16 @@ from django.urls import reverse
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.hqwebapp.views import BaseSectionPageView
 from corehq.util.quickcache import quickcache
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.web import json_response
 from dimagi.utils.couch import CriticalSection
+from django.shortcuts import redirect
 
 from tastypie.models import ApiKey
 from two_factor.utils import default_device
 from two_factor.views import (
     ProfileView, SetupView, SetupCompleteView,
-    BackupTokensView, DisableView, PhoneSetupView
+    BackupTokensView, DisableView, PhoneSetupView, PhoneDeleteView
 )
 import six
 
@@ -384,9 +385,29 @@ class TwoFactorPhoneSetupView(BaseMyAccountView, PhoneSetupView):
         # this is only here to add the login_required decorator
         return super(TwoFactorPhoneSetupView, self).dispatch(request, *args, **kwargs)
 
+    def done(self, form_list, **kwargs):
+        """
+        Store the device and reload the page.
+        """
+        self.get_device(user=self.request.user, name='backup').save()
+        messages.add_message(self.request, messages.SUCCESS, _("Phone number added."))
+        return redirect(reverse(TwoFactorProfileView.urlname))
 
-class NewPhoneView(TwoFactorSetupView):
-    urlname = 'new_phone'
+
+class TwoFactorPhoneDeleteView(BaseMyAccountView, PhoneDeleteView):
+
+    def get_success_url(self):
+        messages.add_message(self.request, messages.SUCCESS, ugettext_lazy("Phone number removed."))
+        return reverse(TwoFactorProfileView.urlname)
+
+    @method_decorator(login_required)
+    def dispatch(self, request, *args, **kwargs):
+        # this is only here to add the login_required decorator
+        return super(PhoneDeleteView, self).dispatch(request, *args, **kwargs)
+
+
+class TwoFactorResetView(TwoFactorSetupView):
+    urlname = 'reset'
 
     form_list = (
         ('method', HQTwoFactorMethodForm),
@@ -398,7 +419,7 @@ class NewPhoneView(TwoFactorSetupView):
 
     def get(self, request, *args, **kwargs):
         default_device(request.user).delete()
-        return super(NewPhoneView, self).get(request, *args, **kwargs)
+        return super(TwoFactorResetView, self).get(request, *args, **kwargs)
 
 
 class BaseProjectDataView(BaseDomainView):

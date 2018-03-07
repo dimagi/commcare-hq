@@ -3,10 +3,9 @@
         "enikshay"
     ],
     "server_environment": [
-        "enikshay",
-        "softlayer"
+        "enikshay"
     ],
-    "data_source_table": "voucher_v2",
+    "data_source_table": "voucher_v5",
     "report_id": "drug_voucher",
     "config": {
         "description": "",
@@ -132,6 +131,17 @@
                 "calculate_total": false,
                 "type": "field",
                 "display": "Beneficiary Mobile Number"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "treating_provider_name",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Treating Provider Name - ID"
             },
             {
                 "sortable": false,

@@ -27,6 +27,7 @@ from xml2json.lib import xml2json
 
 from corehq import toggles, privileges
 from corehq.apps.accounting.decorators import requires_privilege_for_commcare_user, requires_privilege_with_fallback
+from corehq.apps.analytics import ab_tests
 from corehq.apps.app_manager.dbaccessors import (
     get_latest_build_doc,
     get_latest_released_app_doc,
@@ -251,12 +252,16 @@ class PreviewAppView(TemplateView):
     @use_legacy_jquery
     def get(self, request, *args, **kwargs):
         app = get_app(request.domain, kwargs.pop('app_id'))
-        return self.render_to_response({
+        ab_test = ab_tests.ABTest(ab_tests.DATA_FEEDBACK_LOOP, self.request)
+        response = self.render_to_response({
             'app': app,
             'formplayer_url': settings.FORMPLAYER_URL,
             "maps_api_key": settings.GMAPS_API_KEY,
             "environment": PREVIEW_APP_ENVIRONMENT,
+            'ab_test': ab_test.context,     # sets ab test version if needed
         })
+        ab_test.update_response(response)
+        return response
 
 
 class SingleAppLandingPageView(TemplateView):
@@ -385,7 +390,7 @@ def form_context(request, domain, app_id, module_id, form_id):
     except (FormNotFoundException, ModuleNotFoundException):
         raise Http404()
 
-    form_name = form.name.values()[0]
+    form_name = list(form.name.values())[0]
 
     # make the name for the session we will use with the case and form
     session_name = u'{app} > {form}'.format(
@@ -465,10 +470,10 @@ def get_fixtures(request, domain, user_id, fixture_id):
     try:
         user = CommCareUser.get_by_user_id(user_id)
     except CouchUser.AccountTypeError:
-        err = ("You can't use case sharing or fixtures as a %s. " 
+        err = ("You can't use case sharing or fixtures as a %s. "
                "Login as a mobile worker and try again.") % settings.WEB_USER_TERM,
         return HttpResponse(err, status=412, content_type="text/plain")
-    
+
     if not user:
         raise Http404
 

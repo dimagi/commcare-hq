@@ -46,6 +46,7 @@ describe('AWCs Covered Directive', function () {
 
     it('tests supervisor location', function () {
         controller.filtersData.location_id = 'test-id';
+        controller.userLocationId = 'test-id';
 
         $httpBackend.expectGET('icds_locations?location_id=test-id').respond(200, {location_type: 'supervisor'});
         $httpBackend.expectGET('awcs_covered?location_id=test-id').respond(200, {
@@ -60,6 +61,7 @@ describe('AWCs Covered Directive', function () {
 
     it('tests non supervisor location', function () {
         controller.filtersData.location_id = 'test-id';
+        controller.userLocationId = 'test-id';
 
         $httpBackend.expectGET('icds_locations?location_id=test-id').respond(200, {location_type: 'non supervisor'});
         $httpBackend.expectGET('awcs_covered?location_id=test-id').respond(200, {
@@ -74,9 +76,10 @@ describe('AWCs Covered Directive', function () {
 
     it('tests template popup', function () {
         var result = controller.templatePopup({properties: {name: 'test'}}, {awcs: 15});
-        var expected = '<div class="hoverinfo" style="max-width: 200px !important;">'
+        var expected = '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">'
             + '<p>test</p>'
-            + '<p>Total AWCs that have launched ICDS CAS</p>'
+            + '<p>Total AWCs that have launched ICDS-CAS. '
+            + 'AWCs are considered launched after submitting at least one Household Registration form.</p>'
             + '<div>Number of AWCs Launched: <strong>15</strong></div>';
 
         assert.equal(result, expected);
@@ -174,7 +177,9 @@ describe('AWCs Covered Directive', function () {
         });
         assert.equal(controller.chartOptions.caption.html,
             '<i class="fa fa-info-circle"></i> ' +
-            'Number of AWCs Launched'
+            'Total AWCs that have launched ICDS-CAS. ' +
+            'AWCs are considered launched after submitting at least' +
+            ' one Household Registration form.'
         );
     });
 
@@ -183,7 +188,10 @@ describe('AWCs Covered Directive', function () {
         var month = {value: "Jul 2017", series: []};
 
         var expected = '<p><strong>Jul 2017</strong></p><br/>'
-            + '<p>Number of AWCs Launched: <strong>72</strong></p>';
+            + 'Total AWCs that have launched ICDS-CAS. '
+            + 'AWCs are considered launched after submitting at least'
+            + ' one Household Registration form.'
+            + '<div>Number of AWCs Launched: <strong>72</strong></div>';
 
         var result = controller.tooltipContent(month.value, data.y);
         assert.equal(expected, result);

@@ -1,4 +1,6 @@
 from __future__ import absolute_import
+from __future__ import division
+from __future__ import unicode_literals
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_noop
 from corehq.apps.commtrack.models import StockState, CommtrackConfig
@@ -10,7 +12,7 @@ from corehq.apps.reports.commtrack.maps import StockStatusMapReport
 from corehq.apps.reports.standard import CustomProjectReport
 from corehq.apps.hqwebapp.decorators import maps_prefer_canvas, use_maps
 from custom.ewsghana.utils import get_country_id, filter_slugs_by_role
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 import six
 
 
@@ -148,7 +150,7 @@ class EWSMapReport(CustomProjectReport, StockStatusMapReport):
         except AttributeError:
             raise RuntimeError('unknown adapter [%s]' % adapter)
         config = dict(self.request.GET.iterlists())
-        for k, v in config.iteritems():
+        for k, v in six.iteritems(config):
             if len(v) == 1:
                 config[k] = v[0]
         data = loader(self.data_source, config)

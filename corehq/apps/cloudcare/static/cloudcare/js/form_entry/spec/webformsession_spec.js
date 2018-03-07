@@ -11,23 +11,23 @@ describe('WebForm', function() {
             tq = new TaskQueue();
             taskOne = sinon.spy();
             taskTwo = sinon.spy();
-            tq.addTask('one', taskOne, [1,2,3])
-            tq.addTask('two', taskTwo, [5,6,7])
+            tq.addTask('one', taskOne, [1,2,3]);
+            tq.addTask('two', taskTwo, [5,6,7]);
         });
 
         it('Executes tasks in order', function() {
-            tq.execute()
+            tq.execute();
             assert.isTrue(taskOne.calledOnce);
             assert.isTrue(taskOne.calledWith(1, 2, 3));
             assert.isFalse(taskTwo.calledOnce);
 
-            tq.execute()
+            tq.execute();
             assert.isTrue(taskTwo.calledOnce);
             assert.isTrue(taskTwo.calledWith(5, 6, 7));
             assert.equal(tq.queue.length, 0);
 
-            tq.execute() // ensure no hard failure when no tasks in queue
-        })
+            tq.execute(); // ensure no hard failure when no tasks in queue
+        });
 
         it('Executes tasks by name', function() {
             tq.execute('two');
@@ -38,8 +38,8 @@ describe('WebForm', function() {
             tq.execute('cannot find me');
             assert.equal(tq.queue.length, 1);
 
-            tq.execute()
-            tq.execute()
+            tq.execute();
+            tq.execute();
         });
 
         it('Clears tasks by name', function() {
@@ -201,7 +201,7 @@ describe('WebForm', function() {
 
             assert.isTrue(sess.onerror.calledOnce);
             assert.isTrue(sess.onerror.calledWith({
-                human_readable_message: Formplayer.Errors.TIMEOUT_ERROR
+                human_readable_message: Formplayer.Errors.TIMEOUT_ERROR,
             }));
         });
 

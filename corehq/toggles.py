@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import division
 from collections import namedtuple
 from functools import wraps
 import hashlib
@@ -298,7 +299,12 @@ class DynamicallyPredictablyRandomToggle(PredictablyRandomToggle):
             toggle = Toggle.get(self.slug)
         except ResourceNotFound:
             return self.default_randomness
-        return getattr(toggle, self.RANDOMNESS_KEY, self.default_randomness)
+        dynamic_randomness = getattr(toggle, self.RANDOMNESS_KEY, self.default_randomness)
+        try:
+            dynamic_randomness = float(dynamic_randomness)
+            return dynamic_randomness
+        except ValueError:
+            return self.default_randomness
 
 
 # if no namespaces are specified the user namespace is assumed
@@ -334,7 +340,7 @@ def all_toggles():
     """
     Loads all toggles
     """
-    return all_toggles_by_name_in_scope(globals()).values()
+    return list(all_toggles_by_name_in_scope(globals()).values())
 
 
 def all_toggles_by_name():
@@ -750,6 +756,13 @@ CUSTOM_PROPERTIES = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN]
 )
 
+WEBAPPS_CASE_MIGRATION = StaticToggle(
+    'webapps_case_migration',
+    "Work-in-progress to support user-written migrations",
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_USER]
+)
+
 ENABLE_LOADTEST_USERS = StaticToggle(
     'enable_loadtest_users',
     'Enable creating loadtest users on HQ',
@@ -854,13 +867,6 @@ APPLICATION_ERROR_REPORT = StaticToggle(
     TAG_SOLUTIONS,
     help_link='https://confluence.dimagi.com/display/ccinternal/Show+Application+Error+Report+Feature+Flag',
     namespaces=[NAMESPACE_USER],
-)
-
-AGGREGATE_USER_STATUS_REPORT = StaticToggle(
-    'aggregate_user_status_report',
-    'Show Aggregate User Status',
-    TAG_PRODUCT,
-    namespaces=[NAMESPACE_DOMAIN],
 )
 
 OPENCLINICA = StaticToggle(
@@ -1071,14 +1077,6 @@ EWS_BROADCAST_BY_ROLE = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
-SMS_PERFORMANCE_FEEDBACK = StaticToggle(
-    'sms_performance_feedback',
-    'Enable SMS-based performance feedback',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN],
-    help_link='https://docs.google.com/document/d/1YvbYLV4auuf8gVdYZ6jFZTsOLfJdxm49XhvWkska4GE/edit#',
-)
-
 LEGACY_SYNC_SUPPORT = StaticToggle(
     'legacy_sync_support',
     "Support mobile sync bugs in older projects (2.9 and below).",
@@ -1119,6 +1117,22 @@ CUSTOM_APP_BASE_URL = StaticToggle(
     'ICDS/eNikshay: Allow specifying a custom base URL for an application. Main use case is '
     'to allow migrating ICDS to a new cluster.',
     TAG_CUSTOM,
+    [NAMESPACE_DOMAIN]
+)
+
+
+NEW_REMINDERS_MIGRATOR = StaticToggle(
+    'new_reminders_migrator',
+    "Enables features to handle migrating domains to the new reminders framework",
+    TAG_INTERNAL,
+    [NAMESPACE_USER]
+)
+
+
+REMINDERS_MIGRATION_IN_PROGRESS = StaticToggle(
+    'reminders_migration_in_progress',
+    "Disables editing of reminders so that the migration to the new framework can happen.",
+    TAG_INTERNAL,
     [NAMESPACE_DOMAIN]
 )
 
@@ -1266,14 +1280,6 @@ DATA_DICTIONARY = StaticToggle(
     description='Available in the Data section, shows the names of all properties of each case type.',
 )
 
-LINKED_APPS = StaticToggle(
-    'linked_apps',
-    'Allows master and linked apps',
-    TAG_SOLUTIONS,
-    [NAMESPACE_DOMAIN],
-    help_link='https://confluence.dimagi.com/display/ccinternal/Linked+Applications',
-)
-
 LOCATION_USERS = StaticToggle(
     'location_users',
     'Enikshay: Autogenerate users for each location',
@@ -1324,8 +1330,8 @@ VIEW_APP_CHANGES = StaticToggle(
 
 COUCH_SQL_MIGRATION_BLACKLIST = StaticToggle(
     'couch_sql_migration_blacklist',
-    "Domains to exclude from migrating to SQL backend. Includes the following "
-    "by default: 'ews-ghana', 'ils-gateway', 'ils-gateway-train'",
+    "Domains to exclude from migrating to SQL backend because the reference legacy models in custom code. "
+    "Includes the following by default: 'ews-ghana', 'ils-gateway', 'ils-gateway-train'",
     TAG_INTERNAL,
     [NAMESPACE_DOMAIN],
     always_enabled={
@@ -1413,6 +1419,13 @@ BULK_UPLOAD_DATE_OPENED = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
+REGEX_FIELD_VALIDATION = StaticToggle(
+    'regex_field_validation',
+    'Enable regex validation for custom data fields',
+    TAG_SOLUTIONS,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
 ICDS_LIVEQUERY = PredictablyRandomToggle(
     'icds_livequery',
     'ICDS: Enable livequery case sync for a random subset of ICDS users',
@@ -1442,10 +1455,42 @@ CUSTOM_ICON_BADGES = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
-
 ICDS_UCR_ELASTICSEARCH_DOC_LOADING = DynamicallyPredictablyRandomToggle(
     'icds_ucr_elasticsearch_doc_loading',
     'ICDS: Load related form docs from ElasticSearch instead of Riak',
     TAG_CUSTOM,
+    namespaces=[NAMESPACE_OTHER],
+)
+
+MOBILE_LOGIN_LOCKOUT = StaticToggle(
+    'mobile_user_login_lockout',
+    "On too many wrong password attempts, lock out mobile users",
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN]
+)
+
+SHOW_ALL_SCHEDULED_REPORT_EMAILS = StaticToggle(
+    'show_all_scheduled_report_emails',
+    "In the 'My Scheduled Reports' tab, show all reports the user is part of (if the user is an "
+    "admin, show all in the current project)",
+    TAG_PRODUCT,
+    [NAMESPACE_DOMAIN],
+)
+
+LINKED_DOMAINS = StaticToggle(
+    'linked_domains',
+    'Allow linking domains (successor to linked apps)',
+    TAG_INTERNAL,
+    [NAMESPACE_DOMAIN],
+    description=(
+        "Link project spaces to allow syncing apps, lookup tables, organizations etc."
+    ),
+    help_link='https://confluence.dimagi.com/display/ccinternal/Linked+Applications'
+)
+
+SUMOLOGIC_LOGS = DynamicallyPredictablyRandomToggle(
+    'sumologic_logs',
+    'Send logs to sumologic',
+    TAG_INTERNAL,
     namespaces=[NAMESPACE_OTHER],
 )

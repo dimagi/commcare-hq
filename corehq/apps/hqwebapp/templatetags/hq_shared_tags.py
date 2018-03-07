@@ -6,7 +6,7 @@ import json
 
 from django.conf import settings
 from django.template import loader_tags, NodeList, TemplateSyntaxError
-from django.template.base import Variable, VariableDoesNotExist
+from django.template.base import Variable, VariableDoesNotExist, Token, TOKEN_TEXT
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
 from django.http import QueryDict
@@ -14,7 +14,7 @@ from django import template
 from django.urls import reverse
 from django.utils.html import escape, format_html
 from django.utils.safestring import mark_safe
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from django_prbac.utils import has_privilege
 
 from dimagi.utils.make_uuid import random_hex
@@ -147,7 +147,7 @@ def domains_for_user(context, request, selected_domain=None):
              request.couch_user.is_superuser)
         ),
     }
-    return mark_safe(render_to_string('hqwebapp/includes/domain_list_dropdown.html', ctxt))
+    return mark_safe(render_to_string('hqwebapp/includes/domain_list_dropdown.html', ctxt, request))
 
 
 @register.simple_tag
@@ -637,6 +637,8 @@ def registerurl(parser, token):
     expressions = [parser.compile_filter(arg) for arg in split_contents[2:]]
 
     class FakeNode(template.Node):
+        # must mock token or error handling code will fail and not reveal real error
+        token = Token(TOKEN_TEXT, '', (0, 0), 0)
 
         def render(self, context):
             args = [expression.resolve(context) for expression in expressions]

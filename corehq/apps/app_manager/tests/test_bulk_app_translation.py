@@ -4,7 +4,7 @@ import codecs
 import tempfile
 
 from django.test import SimpleTestCase
-from StringIO import StringIO
+from io import BytesIO
 
 from mock import patch
 
@@ -52,7 +52,7 @@ class BulkAppTranslationTestBase(SimpleTestCase, TestXmlMixin):
         if not expected_messages:
             expected_messages = ["App Translations Updated!"]
 
-        file = StringIO()
+        file = BytesIO()
         export_raw(excel_headers, excel_data, file, format=Format.XLS_2007)
 
         with tempfile.TemporaryFile(suffix='.xlsx') as f:
@@ -343,7 +343,7 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
         super(BulkAppTranslationDownloadTest, cls).setUpClass()
         cls.app = Application.wrap(cls.get_json("app"))
         # Todo, refactor this into BulkAppTranslationTestBase.upload_raw_excel_translations
-        file = StringIO()
+        file = BytesIO()
         export_raw(cls.excel_headers, cls.excel_data, file, format=Format.XLS_2007)
 
         with tempfile.TemporaryFile(suffix='.xlsx') as f:
@@ -440,7 +440,7 @@ class AggregateMarkdownNodeTests(SimpleTestCase, TestXmlMixin):
            '', '', '', '', '', '', '', '', ''))))
 
     def get_worksheet(self, title):
-        string_io = StringIO()
+        string_io = BytesIO()
         export_raw(self.headers, self.data, string_io, format=Format.XLS_2007)
         string_io.seek(0)
         workbook = WorkbookJSONReader(string_io)  # __init__ will read string_io

@@ -4,5 +4,5 @@
 "<a href="{% url "form_source" domain app.id error.form.unique_id %}">{{ error.form.name|trans:langs }}</a>"
   Form
 in the "{{ error.module.name|trans:langs }}" Menu.<br />
-  <a class="btn btn-primary btn-xs" href="{% url "form_source" domain app.id error.form.unique_id %}">{% trans 'Fix' %} {{ error.form.name|trans:langs }} {% trans 'Form' %}</a>
+  <a class="btn btn-primary btn-xs" href="{% url "form_source" domain app.id error.form.unique_id %}">{% trans 'Go to' %} {{ error.form.name|trans:langs }} {% trans 'Form' %}</a>
 {% endif %}

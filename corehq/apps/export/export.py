@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import division
 import contextlib
 import os
 import tempfile
@@ -336,7 +337,8 @@ def get_export_documents(export_instance, filters):
     # We believe we can occasionally hit the 5m limit to process a single scroll window
     # with a window size of 1000 (https://manage.dimagi.com/default.asp?248384).
     # Thus, smaller window size is intentional
-    return query.size(500).scroll()
+    # Another option we have is to bump the "scroll" parameter up from "5m"
+    return query.size(200).scroll()
 
 
 def _get_export_query(export_instance, filters):
@@ -432,13 +434,13 @@ def __record_datadog_export(duration, doc_bytes, n_rows, metric, tags):
     if doc_bytes:
         datadog_histogram(
             '{}_normalized_by_size'.format(metric),
-            duration / doc_bytes,
+            duration // doc_bytes,
             tags=tags,
         )
     if n_rows:
         datadog_histogram(
             '{}_normalized_by_rows'.format(metric),
-            duration / n_rows,
+            duration // n_rows,
             tags=tags,
         )
 
@@ -502,9 +504,8 @@ def save_export_payload(export, payload):
     export.last_updated = datetime.datetime.utcnow()
 
     try:
-        export.save()
+        with export.atomic_blobs():
+            export.set_payload(payload)
     except ResourceConflict:
         # task was executed concurrently, so let first to finish win and abort the rest
         pass
-    else:
-        export.set_payload(payload)

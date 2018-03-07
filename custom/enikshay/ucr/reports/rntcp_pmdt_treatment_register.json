@@ -6,8 +6,7 @@
         "enikshay-performance-test"
     ],
     "server_environment": [
-        "enikshay",
-        "softlayer"
+        "enikshay"
     ],
     "data_source_table": "episode_drtb_v2",
     "report_id": "rntcp_pmdt_treatment_register",

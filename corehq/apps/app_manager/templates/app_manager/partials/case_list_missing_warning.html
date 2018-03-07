@@ -4,15 +4,15 @@
 <div class="alert alert-warning" data-bind="visible: !contextVariables.requires_case_details()">
     {% if module.module_type == 'shadow' %}
         {% blocktrans %}
-        This menu either doesn't have a source menu or has a source menu that doesn't use cases.
+        This menu either doesn't have a source menu or has a source menu that doesn't require a case list.
         Changes made here will have no effect.
         {% endblocktrans %}
     {% else %}
         {% blocktrans %}
-        This menu doesn't currently use cases.
-        Changes made here will have no effect until you use:
+        None of the forms in this menu require a case list.
+        Changes made here will have no effect until you either:
         <ol>
-            <li>forms that require a case or</li>
+            <li>use forms that require a case list, such as forms that update or close a case, or</li>
             <li>select the <strong>Case List Menu Item</strong> setting.</li>
         </ol>
         {% endblocktrans %}

@@ -12,7 +12,7 @@ from corehq.toggles import ENABLE_LOADTEST_USERS
 from corehq.apps.domain.models import Domain
 from dimagi.ext.couchdbkit import *
 from django.db import models
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.couch import LooselyEqualDocumentSchema
 from casexml.apps.case import const
@@ -1232,6 +1232,6 @@ class OwnershipCleanlinessFlag(models.Model):
     def get_for_owner(cls, domain, owner_id):
         return cls.objects.get_or_create(domain=domain, owner_id=owner_id)[0]
 
-    class Meta:
+    class Meta(object):
         app_label = 'phone'
         unique_together = [('domain', 'owner_id')]

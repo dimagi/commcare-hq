@@ -7,8 +7,11 @@ from casexml.apps.case.models import CommCareCase
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.test_utils import TestFileMixin
 import corehq.motech.openmrs.repeater_helpers
-from corehq.motech.openmrs.repeater_helpers import \
-    get_relevant_case_updates_from_form_json, CaseTriggerInfo
+from corehq.motech.openmrs.repeater_helpers import (
+    get_patient_by_uuid,
+    get_relevant_case_updates_from_form_json,
+    CaseTriggerInfo
+)
 
 
 @mock.patch.object(CaseAccessors, 'get_cases', lambda self, case_ids, ordered=False: [{
@@ -59,6 +62,41 @@ class OpenmrsRepeaterTest(SimpleTestCase, TestFileMixin):
                 )
             ]
         )
+
+
+class GetPatientByUuidTests(SimpleTestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        cls.patient = {
+            'uuid': 'c83d9989-585f-4db3-bf55-ca1d0ee7c0af',
+            'display': 'Luis Safiana Bassilo'
+        }
+        response = mock.Mock()
+        response.json.return_value = cls.patient
+        cls.requests = mock.Mock()
+        cls.requests.get.return_value = response
+
+    @classmethod
+    def tearDownClass(cls):
+        pass
+
+    def test_none(self):
+        patient = get_patient_by_uuid(self.requests, uuid=None)
+        self.assertIsNone(patient)
+
+    def test_empty(self):
+        patient = get_patient_by_uuid(self.requests, uuid='')
+        self.assertIsNone(patient)
+
+    def test_invalid_uuid(self):
+        patient = get_patient_by_uuid(self.requests, uuid='c83d9989585f4db3bf55ca1d0ee7c0af')
+        # OpenMRS UUIDs have "-" separators
+        self.assertIsNone(patient)
+
+    def test_valid_uuid(self):
+        patient = get_patient_by_uuid(self.requests, uuid='c83d9989-585f-4db3-bf55-ca1d0ee7c0af')
+        self.assertEqual(patient, self.patient)
 
 
 class DocTests(SimpleTestCase):

@@ -42,7 +42,7 @@ from functools import wraps
 from copy import deepcopy
 from mimetypes import guess_type
 from six.moves.urllib.request import urlopen
-from urlparse import urljoin
+from six.moves.urllib.parse import urljoin
 
 from couchdbkit import MultipleResultsFound
 import itertools
@@ -53,11 +53,13 @@ from django.utils.translation import ugettext_lazy
 from couchdbkit.exceptions import BadValueError
 
 from corehq.apps.app_manager.app_schemas.case_properties import ParentCasePropertyBuilder
-from corehq.apps.app_manager.remote_link_accessors import get_remote_version, get_remote_master_release
+from corehq.apps.app_manager.detail_screen import PropertyXpathGenerator
+from corehq.apps.linked_domain.applications import get_master_app_version, get_latest_master_app_release
 from corehq.apps.app_manager.suite_xml.utils import get_select_chain
 from corehq.apps.app_manager.suite_xml.generator import SuiteGenerator, MediaSuiteGenerator
 from corehq.apps.app_manager.xpath_validator import validate_xpath
 from corehq.apps.data_dictionary.util import get_case_property_description_dict
+from corehq.apps.linked_domain.exceptions import ActionNotPermitted
 from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
 from corehq.apps.users.dbaccessors.couch_users import get_display_name_for_user_id
 from corehq.util.timezones.utils import get_timezone_for_domain
@@ -89,7 +91,7 @@ from corehq.apps.app_manager.xpath import (
 from corehq.apps.builds import get_default_build_spec
 from dimagi.utils.couch.undo import DeleteRecord, DELETED_SUFFIX
 from dimagi.utils.dates import DateSpan
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.make_uuid import random_hex
 from dimagi.utils.web import get_url_base, parse_int
 from corehq.util import bitly
@@ -110,7 +112,7 @@ from corehq.apps.app_manager.dbaccessors import (
     get_latest_build_doc,
     get_latest_released_app_doc,
     domain_has_apps,
-    get_latest_released_app, get_latest_released_app_version)
+)
 from corehq.apps.app_manager.util import (
     split_path,
     save_xform,
@@ -147,8 +149,7 @@ from corehq.apps.app_manager.exceptions import (
     CaseXPathValidationError,
     UserCaseXPathValidationError,
     XFormValidationFailed,
-    PracticeUserException,
-    ActionNotPermitted)
+    PracticeUserException)
 from corehq.apps.reports.daterange import get_daterange_start_end_dates, get_simple_dateranges
 from jsonpath_rw import jsonpath, parse
 import six
@@ -415,10 +416,10 @@ class FormActions(DocumentSchema):
 
     def all_property_names(self):
         names = set()
-        names.update(self.update_case.update.keys())
-        names.update(self.case_preload.preload.values())
+        names.update(list(self.update_case.update.keys()))
+        names.update(list(self.case_preload.preload.values()))
         for subcase in self.subcases:
-            names.update(subcase.case_properties.keys())
+            names.update(list(subcase.case_properties.keys()))
         return names
 
     def count_subcases_per_repeat_context(self):
@@ -547,7 +548,7 @@ class LoadUpdateAction(AdvancedAction):
 
     def get_property_names(self):
         names = super(LoadUpdateAction, self).get_property_names()
-        names.update(self.preload.values())
+        names.update(list(self.preload.values()))
         return names
 
     @property
@@ -1816,7 +1817,7 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
         for subcase in self.actions.subcases:
             if subcase.case_type == case_type:
                 case_properties.update(
-                    subcase.case_properties.keys()
+                    list(subcase.case_properties.keys())
                 )
                 if case_type != module_case_type and (
                         self.actions.open_case.is_active() or
@@ -2023,6 +2024,7 @@ class DetailColumn(IndexedSchema):
     header = DictProperty()
     model = StringProperty()
     field = StringProperty()
+    useXpathExpression = BooleanProperty(default=False)
     format = StringProperty()
 
     enum = SchemaListProperty(MappingItem)
@@ -2031,7 +2033,6 @@ class DetailColumn(IndexedSchema):
 
     late_flag = IntegerProperty(default=30)
     advanced = StringProperty(default="")
-    calc_xpath = StringProperty(default=".")
     filter_xpath = StringProperty(default="")
     time_ago_interval = FloatProperty(default=365.25)
 
@@ -2086,6 +2087,14 @@ class DetailColumn(IndexedSchema):
         if isinstance(data.get('enum'), dict):
             data['enum'] = sorted({'key': key, 'value': value}
                                   for key, value in data['enum'].items())
+
+        # Lazy migration: xpath expressions from format to first-class property
+        if data.get('format') == 'calculate':
+            property_xpath = PropertyXpathGenerator(None, None, None, super(DetailColumn, cls).wrap(data)).xpath
+            data['field'] = dot_interpolate(data.get('calc_xpath', '.'), property_xpath)
+            data['useXpathExpression'] = True
+            data['hasAutocomplete'] = False
+            data['format'] = 'plain'
 
         return super(DetailColumn, cls).wrap(data)
 
@@ -2509,7 +2518,7 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
         raise IncompatibleFormTypeException()
 
 
-class ModuleDetailsMixin():
+class ModuleDetailsMixin(object):
 
     @classmethod
     def wrap_details(cls, data):
@@ -2788,7 +2797,7 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
         load_actions = data.get('actions', {}).get('load_update_cases', [])
         for action in load_actions:
             preload = action['preload']
-            if preload and preload.values()[0].startswith('/'):
+            if preload and list(preload.values())[0].startswith('/'):
                 action['preload'] = {v: k for k, v in preload.items()}
 
         return super(AdvancedForm, cls).wrap(data)
@@ -3049,7 +3058,7 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
         for subcase in self.actions.get_subcase_actions():
             if subcase.case_type == case_type:
                 case_properties.update(
-                    subcase.case_properties.keys()
+                    list(subcase.case_properties.keys())
                 )
                 for case_index in subcase.case_indices:
                     parent = self.actions.get_action_from_tag(case_index.tag)
@@ -4654,7 +4663,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
     # always false for RemoteApp
     case_sharing = BooleanProperty(default=False)
-    vellum_case_management = BooleanProperty(default=False)
+    vellum_case_management = BooleanProperty(default=True)
 
     # legacy property; kept around to be able to identify (deprecated) v1 apps
     application_version = StringProperty(default=APP_V2, choices=[APP_V1, APP_V2], required=False)
@@ -5293,7 +5302,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     anonymous_cloudcare_hash = StringProperty(default=random_string)
 
     translation_strategy = StringProperty(default='select-known',
-                                          choices=app_strings.CHOICES.keys())
+                                          choices=list(app_strings.CHOICES.keys()))
     auto_gps_capture = BooleanProperty(default=False)
     date_created = DateTimeProperty()
     created_from_template = StringProperty()
@@ -5534,10 +5543,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         if toggles.CUSTOM_PROPERTIES.enabled(self.domain) and "custom_properties" in self__profile:
             app_profile['custom_properties'].update(self__profile['custom_properties'])
 
-        if toggles.PHONE_HEARTBEAT.enabled(self.domain):
-            apk_heartbeat_url = self.heartbeat_url
-        else:
-            apk_heartbeat_url = None
+        apk_heartbeat_url = self.heartbeat_url
         locale = self.get_build_langs(build_profile_id)[0]
         return render_to_string(template, {
             'is_odk': is_odk,
@@ -5735,8 +5741,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
     @classmethod
     def new_app(cls, domain, name, lang="en"):
-        app = cls(domain=domain, modules=[], name=name, langs=[lang],
-                  date_created=datetime.datetime.utcnow(), vellum_case_management=True)
+        app = cls(domain=domain, modules=[], name=name, langs=[lang], date_created=datetime.datetime.utcnow())
         return app
 
     def add_module(self, module):
@@ -6130,7 +6135,7 @@ class RemoteApp(ApplicationBase):
     manage_urls = BooleanProperty(default=False)
 
     questions_map = DictProperty(required=False)
-    
+
     def is_remote_app(self):
         return True
 
@@ -6159,11 +6164,11 @@ class RemoteApp(ApplicationBase):
 
     def get_build_langs(self):
         if self.build_profiles:
-            if len(self.build_profiles.keys()) > 1:
+            if len(list(self.build_profiles.keys())) > 1:
                 raise AppEditingError('More than one app profile for a remote app')
             else:
                 # return first profile, generated as part of lazy migration
-                return self.build_profiles[self.build_profiles.keys()[0]].langs
+                return self.build_profiles[list(self.build_profiles.keys())[0]].langs
         else:
             return self.langs
 
@@ -6264,54 +6269,33 @@ class RemoteApp(ApplicationBase):
         return questions
 
 
-RemoteAppDetails = namedtuple('RemoteAppDetails', 'url_base domain username api_key app_id')
-
-
-class RemoteLinkedAppAuth(DocumentSchema):
-    username = StringProperty()
-    api_key = StringProperty()
-
-
 class LinkedApplication(Application):
     """
     An app that can pull changes from an app in a different domain.
     """
     # This is the id of the master application
     master = StringProperty()
-    master_domain = StringProperty()
-    remote_url_base = StringProperty()
-    remote_auth = SchemaProperty(RemoteLinkedAppAuth)
-
-    _meta_fields = Application._meta_fields + ['remote_auth']
 
     @property
-    def remote_app_details(self):
-        return RemoteAppDetails(
-            self.remote_url_base,
-            self.master_domain,
-            self.remote_auth.username,
-            self.remote_auth.api_key,
-            self.master
-        )
+    @memoized
+    def domain_link(self):
+        from corehq.apps.linked_domain.dbaccessors import get_domain_master_link
+        return get_domain_master_link(self.domain)
 
     def get_master_version(self):
-        if self.master_is_remote:
-            return get_remote_version(self.remote_app_details)
-        else:
-            return get_latest_released_app_version(self.master_domain, self.master)
+        if self.domain_link:
+            return get_master_app_version(self.domain_link, self.master)
 
     @property
     def master_is_remote(self):
-        return bool(self.remote_url_base)
+        if self.domain_link:
+            return self.domain_link.is_remote
 
     def get_latest_master_release(self):
-        if self.master_is_remote:
-            return get_remote_master_release(self.remote_app_details, self.domain)
+        if self.domain_link:
+            return get_latest_master_app_release(self.domain_link, self.master)
         else:
-            master_app = get_app(None, self.master)
-            if self.domain not in master_app.linked_whitelist:
-                raise ActionNotPermitted
-            return get_latest_released_app(master_app.domain, self.master)
+            raise ActionNotPermitted
 
 
 def import_app(app_id_or_source, domain, source_properties=None, validate_source_domain=None):

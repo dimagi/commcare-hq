@@ -10,7 +10,7 @@ from collections import (
 )
 from datetime import datetime
 
-from StringIO import StringIO
+from io import BytesIO, StringIO
 from django.db import models
 from jsonfield.fields import JSONField
 from jsonobject import JsonObject
@@ -34,7 +34,7 @@ from dimagi.ext import jsonobject
 from dimagi.utils.couch import RedisLockableMixIn
 from dimagi.utils.couch.safe_index import safe_index
 from dimagi.utils.couch.undo import DELETED_SUFFIX
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from .abstract_models import AbstractXFormInstance, AbstractCommCareCase, CaseAttachmentMixin, IsImageMixin
 from .exceptions import AttachmentNotFound
 import six
@@ -83,7 +83,7 @@ class Attachment(namedtuple('Attachment', 'name raw_content content_type')):
         return data
 
     def content_as_file(self):
-        return StringIO(self.content)
+        return BytesIO(self.content)
 
 
 class SaveStateMixin(object):
@@ -208,6 +208,12 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
     # for compatability with corehq.blobs.mixin.DeferredBlobMixin interface
     persistent_blobs = None
 
+    # form meta properties
+    time_end = models.DateTimeField(null=True, blank=True)
+    time_start = models.DateTimeField(null=True, blank=True)
+    commcare_version = models.CharField(max_length=8, blank=True, null=True)
+    app_version = models.PositiveIntegerField(null=True, blank=True)
+
     def __init__(self, *args, **kwargs):
         super(XFormInstanceSQL, self).__init__(*args, **kwargs)
         # keep track to avoid refetching to check whether value is updated
@@ -215,6 +221,11 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
 
     def form_id_updated(self):
         return self.__original_form_id != self.form_id
+
+    @property
+    def original_form_id(self):
+        """Form ID before it was updated"""
+        return self.__original_form_id
 
     @property
     @memoized
@@ -327,6 +338,7 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
         return form_json
 
     @property
+    @memoized
     def history(self):
         """:returns: List of XFormOperationSQL objects"""
         from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
@@ -408,7 +420,7 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
             "domain='{f.domain}')"
         ).format(f=self)
 
-    class Meta:
+    class Meta(object):
         db_table = XFormInstanceSQL_DB_TABLE
         app_label = "form_processor"
         index_together = [
@@ -439,8 +451,10 @@ class AbstractAttachment(PartitionedModel, models.Model, SaveStateMixin):
             raise InvalidAttachment("cannot save attachment without name")
 
         content_readable = content
-        if isinstance(content, six.string_types):
+        if isinstance(content, six.text_type):
             content_readable = StringIO(content)
+        elif isinstance(content, six.binary_type):
+            content_readable = BytesIO(content)
 
         db = get_blob_db()
         bucket = self.blobdb_bucket()
@@ -491,7 +505,7 @@ class AbstractAttachment(PartitionedModel, models.Model, SaveStateMixin):
             raise AttachmentNotFound("cannot manipulate attachment on unidentified document")
         return os.path.join(self._attachment_prefix, self.attachment_id.hex)
 
-    class Meta:
+    class Meta(object):
         abstract = True
         app_label = "form_processor"
 
@@ -521,7 +535,7 @@ class XFormAttachmentSQL(AbstractAttachment, IsImageMixin):
             "properties='{a.properties}', "
         ).format(a=self)
 
-    class Meta:
+    class Meta(object):
         db_table = XFormAttachmentSQL_DB_TABLE
         app_label = "form_processor"
         index_together = [
@@ -536,6 +550,7 @@ class XFormOperationSQL(PartitionedModel, SaveStateMixin, models.Model):
     ARCHIVE = 'archive'
     UNARCHIVE = 'unarchive'
     EDIT = 'edit'
+    UUID_DATA_FIX = 'uuid_data_fix'
 
     form = models.ForeignKey(XFormInstanceSQL, to_field='form_id', on_delete=models.CASCADE)
     user_id = models.CharField(max_length=255, null=True)
@@ -551,7 +566,7 @@ class XFormOperationSQL(PartitionedModel, SaveStateMixin, models.Model):
     def user(self):
         return self.user_id
 
-    class Meta:
+    class Meta(object):
         app_label = "form_processor"
         db_table = XFormOperationSQL_DB_TABLE
 
@@ -926,7 +941,7 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
             "server_modified_on='{c.server_modified_on}')"
         ).format(c=self)
 
-    class Meta:
+    class Meta(object):
         index_together = [
             ["owner_id", "server_modified_on"],
             ["domain", "owner_id", "closed"],
@@ -1004,7 +1019,7 @@ class CaseAttachmentSQL(AbstractAttachment, CaseAttachmentMixin):
             "attachment_from='{a.attachment_from}')"
         ).format(a=self)
 
-    class Meta:
+    class Meta(object):
         app_label = "form_processor"
         db_table = CaseAttachmentSQL_DB_TABLE
         index_together = [
@@ -1086,7 +1101,7 @@ class CommCareCaseIndexSQL(PartitionedModel, models.Model, SaveStateMixin):
             "relationship='{i.relationship})"
         ).format(i=self)
 
-    class Meta:
+    class Meta(object):
         index_together = [
             ["domain", "case"],
             ["domain", "referenced_id"],
@@ -1311,7 +1326,7 @@ class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
             "revoked='{self.revoked}')"
         ).format(self=self)
 
-    class Meta:
+    class Meta(object):
         unique_together = ("case", "form_id", "type")
         ordering = ['server_date']
         db_table = CaseTransaction_DB_TABLE
@@ -1439,7 +1454,7 @@ class LedgerValue(PartitionedModel, SaveStateMixin, models.Model, TrackRelatedCh
                "entry_id={s.entry_id}, " \
                "balance={s.balance}".format(s=self)
 
-    class Meta:
+    class Meta(object):
         app_label = "form_processor"
         db_table = LedgerValue_DB_TABLE
         unique_together = ("case", "section_id", "entry_id")
@@ -1541,7 +1556,7 @@ class LedgerTransaction(PartitionedModel, SaveStateMixin, models.Model):
             "updated_balance='{self.updated_balance}')"
         ).format(self=self)
 
-    class Meta:
+    class Meta(object):
         db_table = LedgerTransaction_DB_TABLE
         app_label = "form_processor"
         # note: can't put a unique constraint here (case_id, form_id, section_id, entry_id)

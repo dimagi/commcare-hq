@@ -32,6 +32,7 @@
                                     click: get_short_odk_url,
                                     attr: {'data-parent': '#deploy-accordion_' + id()}
                                 ">
+                                <i class="fcc fcc-applications"></i>
                                 {% trans "Download to Android" %}
                             </a>
                         </h4>
@@ -173,6 +174,23 @@
                         </div>
                     </div>
                 </div>
+                {% if can_view_cloudcare %}
+                    <div class="panel panel-appmanager">
+                        <div class="panel-heading">
+                            <h4 class="panel-title">
+                                <a class="track-usage-link"
+                                   target="_blank"
+                                   data-category="App Manager"
+                                   data-action="Deploy Type"
+                                   data-label="Open in Web Apps"
+                                   data-bind="attr: {href: $root.webAppsUrl(id)}">
+                                    <i class="fa fa-desktop"></i>
+                                    {% trans 'Open in Web Apps' %}
+                                </a>
+                            </h4>
+                        </div>
+                    </div>
+                {% endif %}
                 <div class="panel panel-appmanager">
                     <div class="panel-heading">
                         <h4 class="panel-title">
@@ -186,6 +204,7 @@
                                 }
                                "
                                aria-expanded="true" aria-controls="panel-java">
+                                <i class="fcc fcc-applications"></i>
                                 {% trans "Download to Java Phone" %}
                             </a>
                         </h4>
@@ -231,6 +250,7 @@
                                    }
                                 "
                                aria-expanded="true" aria-controls="panel-sms">
+                                <i class="fcc fcc-messaging"></i>
                                 {% trans "Send to phone via SMS" %}
                             </a>
                         </h4>
@@ -303,6 +323,7 @@
                                       }
                                    "
                                    aria-expanded="true" aria-controls="panel-multimedia">
+                                    <i class="fa fa-camera"></i>
                                     {% trans 'Download Multimedia' %}
                                 </a>
                             </h4>
@@ -319,10 +340,12 @@
                         <div class="panel-heading">
                             <h4 class="panel-title">
                                 <a class="track-usage-link"
+                                   target="_blank"
                                    data-category="App Manager"
                                    data-action="Deploy Type"
                                    data-label="View Source Files"
                                    data-bind="attr: {href: $root.reverse('download_index', id)}">
+                                    <i class="fa fa-file-text-o"></i>
                                     {% trans 'View Source Files' %}
                                 </a>
                             </h4>

@@ -14,7 +14,7 @@ from casexml.apps.phone.data_providers.case.utils import get_case_sync_updates, 
 from casexml.apps.phone.models import OwnershipCleanlinessFlag, IndexTree
 from casexml.apps.phone.tasks import ASYNC_RESTORE_SENT
 from corehq.apps.users.cases import get_owner_id
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 import six
 from six.moves import range
 
@@ -320,7 +320,7 @@ class CleanOwnerCaseSyncOperation(object):
                     owner_id, self.restore_state.last_sync_log.date
                 ))
                 # we also need to fetch unowned extension cases that have been modified
-                extension_case_ids = self.restore_state.last_sync_log.extension_index_tree.indices.keys()
+                extension_case_ids = list(self.restore_state.last_sync_log.extension_index_tree.indices.keys())
                 modified_extension_cases = set(filter_cases_modified_since(
                     self.case_accessor, extension_case_ids, self.restore_state.last_sync_log.date
                 ))

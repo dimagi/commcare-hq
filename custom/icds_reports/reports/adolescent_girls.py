@@ -1,4 +1,5 @@
 from __future__ import absolute_import, division
+from __future__ import unicode_literals
 from datetime import datetime
 
 from collections import defaultdict, OrderedDict
@@ -9,17 +10,10 @@ from django.db.models.aggregates import Sum
 from django.utils.translation import ugettext as _
 
 from corehq.util.quickcache import quickcache
-from custom.icds_reports.const import LocationTypes, ChartColors
+from custom.icds_reports.const import LocationTypes, ChartColors, MapColors
 from custom.icds_reports.models import AggAwcMonthly
 from custom.icds_reports.utils import apply_exclude, indian_formatted_number, get_child_locations
 import six
-
-
-RED = '#de2d26'
-ORANGE = '#fc9272'
-BLUE = '#006fdf'
-PINK = '#fee0d2'
-GREY = '#9D9D9D'
 
 
 @quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
@@ -32,8 +26,8 @@ def get_adolescent_girls_data_map(domain, config, loc_level, show_test=False):
         ).values(
             '%s_name' % loc_level, '%s_map_location_name' % loc_level
         ).annotate(
-            valid=Sum('cases_person_adolescent_girls_11_14') + Sum('cases_person_adolescent_girls_15_18'),
-            all=Sum('cases_person_adolescent_girls_11_14_all') + Sum('cases_person_adolescent_girls_15_18_all'),
+            valid=Sum('cases_person_adolescent_girls_11_14'),
+            all=Sum('cases_person_adolescent_girls_11_14_all'),
         ).order_by('%s_name' % loc_level, '%s_map_location_name' % loc_level)
         if not show_test:
             queryset = apply_exclude(domain, queryset)
@@ -64,8 +58,8 @@ def get_adolescent_girls_data_map(domain, config, loc_level, show_test=False):
         data_for_map[on_map_name]['original_name'].append(name)
 
     fills = OrderedDict()
-    fills.update({'Adolescent Girls': BLUE})
-    fills.update({'defaultFill': GREY})
+    fills.update({'Adolescent Girls': MapColors.BLUE})
+    fills.update({'defaultFill': MapColors.GREY})
 
     return {
         "slug": "adolescent_girls",
@@ -75,25 +69,25 @@ def get_adolescent_girls_data_map(domain, config, loc_level, show_test=False):
             "average": sum(average) / float(len(average) or 1),
             "average_format": 'number',
             "info": _((
-                "Total number of adolescent girls who are enrolled for ICDS services"
+                "Total number of adolescent girls who are enrolled for Anganwadi Services"
             )),
             "extended_info": [
                 {
                     'indicator': (
-                        'Number of adolescent girls (11 - 18 years) who are enrolled for ICDS services:'
+                        'Number of adolescent girls (11 - 14 years) who are enrolled for Anganwadi Services:'
                     ),
                     'value': indian_formatted_number(total_valid)
                 },
                 {
                     'indicator': (
-                        'Total number of adolescent girls (11 - 18 years) who are registered:'
+                        'Total number of adolescent girls (11 - 14 years) who are registered:'
                     ),
                     'value': indian_formatted_number(total)
                 },
                 {
                     'indicator': (
-                        'Percentage of registered adolescent girls (11 - 18 years) '
-                        'who are enrolled for ICDS services:'
+                        'Percentage of registered adolescent girls (11 - 14 years) '
+                        'who are enrolled for Anganwadi Services:'
                     ),
                     'value': '%.2f%%' % (total_valid * 100 / float(total or 1))
                 }
@@ -113,8 +107,8 @@ def get_adolescent_girls_sector_data(domain, config, loc_level, location_id, sho
     ).values(
         *group_by
     ).annotate(
-        valid=Sum('cases_person_adolescent_girls_11_14') + Sum('cases_person_adolescent_girls_15_18'),
-        all=Sum('cases_person_adolescent_girls_11_14_all') + Sum('cases_person_adolescent_girls_15_18_all'),
+        valid=Sum('cases_person_adolescent_girls_11_14'),
+        all=Sum('cases_person_adolescent_girls_11_14_all'),
     ).order_by('%s_name' % loc_level)
 
     if not show_test:
@@ -160,7 +154,7 @@ def get_adolescent_girls_sector_data(domain, config, loc_level, location_id, sho
         "tooltips_data": dict(tooltips_data),
         "format": "number",
         "info": _((
-            "Total number of adolescent girls who are enrolled for ICDS services"
+            "Total number of adolescent girls who are enrolled for Anganwadi Services"
         )),
         "chart_data": [
             {
@@ -168,7 +162,7 @@ def get_adolescent_girls_sector_data(domain, config, loc_level, location_id, sho
                 "key": "Number Of Girls",
                 "strokeWidth": 2,
                 "classed": "dashed",
-                "color": BLUE
+                "color": MapColors.BLUE
             }
         ]
     }
@@ -187,8 +181,8 @@ def get_adolescent_girls_data_chart(domain, config, loc_level, show_test=False):
     ).values(
         'month', '%s_name' % loc_level
     ).annotate(
-        valid=Sum('cases_person_adolescent_girls_11_14') + Sum('cases_person_adolescent_girls_15_18'),
-        all=Sum('cases_person_adolescent_girls_11_14_all') + Sum('cases_person_adolescent_girls_15_18_all'),
+        valid=Sum('cases_person_adolescent_girls_11_14'),
+        all=Sum('cases_person_adolescent_girls_11_14_all'),
     ).order_by('month')
 
     if not show_test:
@@ -238,7 +232,7 @@ def get_adolescent_girls_data_chart(domain, config, loc_level, show_test=False):
                         'all': value['all']
                     } for key, value in six.iteritems(data['blue'])
                 ],
-                "key": "Total number of adolescent girls who are enrolled for ICDS services",
+                "key": "Total number of adolescent girls who are enrolled for Anganwadi Services",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": ChartColors.BLUE

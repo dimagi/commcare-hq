@@ -16,7 +16,7 @@ hqDefine('analytix/js/hubspot', [
     'use strict';
     var _get = initialAnalytics.getFn('hubspot'),
         _logger = logging.getLoggerForApi('Hubspot'),
-        _ready;
+        _ready = $.Deferred();
 
     var _hsq = window._hsq = window._hsq || [];
 
@@ -25,7 +25,7 @@ hqDefine('analytix/js/hubspot', [
             scriptUrl = '//js.hs-analytics.net/analytics/' + utils.getDateHash() + '/' + apiId + '.js';
 
         _logger = logging.getLoggerForApi('Hubspot');
-        _ready = utils.initApi(apiId, scriptUrl, _logger);
+        _ready = utils.initApi(_ready, apiId, scriptUrl, _logger);
     });
 
     /**
@@ -45,8 +45,9 @@ hqDefine('analytix/js/hubspot', [
      * @param {integer|float} value - This is an optional argument that can be used to track the revenue of an event.
      */
     var trackEvent = function (eventId, value) {
+        var originalArgs = arguments;
         _ready.done(function() {
-            _logger.debug.log(_logger.fmt.labelArgs(["Event ID", "Value"], arguments), 'Track Event');
+            _logger.debug.log(_logger.fmt.labelArgs(["Event ID", "Value"], originalArgs), 'Track Event');
             _hsq.push(['trackEvent', {
                 id: eventId,
                 value: value,

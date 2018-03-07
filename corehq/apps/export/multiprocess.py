@@ -19,6 +19,7 @@ The export works as follows:
   * Add raw data dumps for unsuccessful pages to final ZIP archive
 """
 from __future__ import absolute_import
+from __future__ import division
 import gzip
 import json
 import logging
@@ -151,7 +152,7 @@ def run_export_with_logging(export_instance, page_number, dump_path, doc_count, 
     """
     logger.info('    Processing page {} started (attempt {})'.format(page_number, attempts))
     progress_queue = getattr(run_export_with_logging, 'queue', None)
-    update_frequency = min(1000, int(doc_count / 10) or 1)
+    update_frequency = min(1000, int(doc_count // 10) or 1)
     progress_tracker = LoggingProgressTracker(page_number, progress_queue, update_frequency)
     try:
         result = run_export(export_instance, page_number, dump_path, doc_count, progress_tracker)
@@ -405,7 +406,7 @@ def _output_progress(queue, total_docs):
                 '(Avg processing rate: {rate} docs per sec)'.format(
                     progress=progress,
                     total=total_docs,
-                    percent=int(progress * 100 / total_docs),
+                    percent=int(progress * 100 // total_docs),
                     dumped=total_dumped,
                     elapsed=elapsed,
                     remaining=time_remaining,

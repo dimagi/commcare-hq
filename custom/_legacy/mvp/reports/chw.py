@@ -1,4 +1,6 @@
 from __future__ import absolute_import
+from __future__ import division
+from __future__ import unicode_literals
 from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
 import logging
@@ -8,7 +10,7 @@ from corehq.apps.indicators.models import DynamicIndicatorDefinition, CombinedCo
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DataTablesColumnGroup
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import DatespanMixin
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from django.utils.html import format_html
 from mvp.models import MVP
 from mvp.reports import MVPIndicatorReport
@@ -149,7 +151,7 @@ class CHWManagerReport(GenericTabularReport, MVPIndicatorReport, DatespanMixin):
                 self.statistics_rows[2].append(indicator_stats['std'])
                 self.statistics_rows[3].append(indicator_stats['total'])
 
-        return user_data.values()
+        return list(user_data.values())
 
     @property
     def indicator_slugs(self):
@@ -263,7 +265,7 @@ class CHWManagerReport(GenericTabularReport, MVPIndicatorReport, DatespanMixin):
                 value = value[0]
             raw_values[user.user_id] = value
             user_indices[user.user_id] = u
-        all_values = raw_values.values()
+        all_values = list(raw_values.values())
         debug_all = []
         for data in debug_data.values():
             debug_all.extend(data)

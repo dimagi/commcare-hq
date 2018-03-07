@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.utils.translation import ugettext_noop as _
 
 from corehq.apps.reports.generic import GenericTabularReport, GetParamsMixin
@@ -8,6 +9,7 @@ from corehq.apps.hqwebapp.decorators import use_nvd3_v3
 from custom.care_pathways.filters import GeographyFilter, MalawiPPTYearFilter, PPTYearFilter, GenderFilter, \
     GroupLeadershipFilter, CBTNameFilter, RealOrTestFilter, ScheduleFilter
 from custom.care_pathways.utils import get_domain_configuration
+import six
 
 
 class CareReportMixin(object):
@@ -32,7 +34,7 @@ class CareReportMixin(object):
             real_or_test=self.request.GET.get('real_or_test', '')
         )
         hierarchy_config = get_domain_configuration(self.domain).geography_hierarchy
-        for k, v in sorted(hierarchy_config.iteritems(), reverse=True):
+        for k, v in sorted(six.iteritems(hierarchy_config), reverse=True):
             req_prop = 'geography_%s' % v['prop']
             if self.request.GET.getlist(req_prop, []) not in [[], ['0']]:
                 config.update({k: tuple(self.request.GET.getlist(req_prop, []))})

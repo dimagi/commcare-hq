@@ -418,6 +418,7 @@
                     'hqwebapp/js/layout',
                     'hqwebapp/js/hq-bug-report',
                     'notifications/js/notifications_service',
+                    'analytix/js/appcues',
                     'analytix/js/drift',
                     'analytix/js/google',
                     'analytix/js/hubspot',
@@ -437,17 +438,12 @@
                 <script src="{% static 'hqwebapp/js/hq-bug-report.js' %}"></script>
                 <script src="{% static 'hqwebapp/js/layout.js' %}"></script>
                 <script src="{% static 'hqwebapp/js/toggles.js' %}"></script>
+                <script src="{% static 'hqwebapp/js/alert_user.js' %}"></script>
                 <script src="{% static 'hqwebapp/js/main.js' %}"></script>
             {% endcompress %}
         {% endif %}
 
         {# JavaScript Display Logic Libaries #}
-
-        {% if not requirejs_main %}
-        {% compress js %}
-        <script src="{% static 'hqwebapp/js/alert_user.js' %}"></script>
-        {% endcompress %}
-        {% endif %}
 
         {% if request.couch_user and not requirejs_main %}
         <script src="{% static 'notifications/js/notifications_service.js' %}"></script>
