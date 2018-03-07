@@ -1,4 +1,3 @@
-/* globals django */
 // for product and user per location selection
 hqDefine("locations/js/location", function() {
     var initialPageData = hqImport('hqwebapp/js/initial_page_data');
@@ -54,9 +53,9 @@ hqDefine("locations/js/location", function() {
 
         multiselect_utils.createFullMultiselectWidget(
             'id_products-selected_ids',
-            django.gettext("Available Products"),
-            django.gettext("Products at Location"),
-            django.gettext("Search Products...")
+            gettext("Available Products"),
+            gettext("Products at Location"),
+            gettext("Search Products...")
         );
     });
     $(function() {
