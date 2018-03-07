@@ -23,6 +23,9 @@ class Command(BaseCommand):
         start_date = correct_billables.earliest('date_sent').date_sent
         end_date = correct_billables.latest('date_sent').date_sent
 
+        print start_date
+        print end_date
+
         for (year, month) in get_months_in_range(start_date, end_date):
             domains_in_month = correct_billables.values('domain').distinct()
             print domains_in_month
