@@ -25,8 +25,6 @@ class SyncLogPillowTest(TestCase):
         cls.ccuser = CommCareUser(
             domain=DOMAIN,
             username='ccuser',
-            location_id=cls.somerville.location_id,
-            assigned_location_ids=[cls.somerville.location_id],
             last_login=datetime.datetime.now(),
             date_joined=datetime.datetime.now(),
         )
@@ -40,17 +38,20 @@ class SyncLogPillowTest(TestCase):
         super(SyncLogPillowTest, cls).tearDownClass()
 
     def test_pillow(self):
-        consumer = get_test_kafka_consumer(topics.SYNCLOG)
+        consumer = get_test_kafka_consumer(topics.SYNCLOG_SQL)
 
         # make sure user has empty reporting-metadata before a sync
         self.assertEqual(self.ccuser.reporting_metadata.last_syncs, [])
 
+        # do a sync
         synclog = SyncLog(domain=self.domain.name, user_id=self.ccuser._id,
-                          date=datetime.datetime(2015, 7, 1, 0, 0)),
+                          date=datetime.datetime(2015, 7, 1, 0, 0))
         synclog.save()
+
+        # make sure kafka change updates the user with latest sync info
         message = consumer.next()
         change_meta = change_meta_from_kafka_message(message.value)
         self.assertEqual(change_meta.document_id, synclog.synclog_id)
-        self.assertEqual(change_meta.domain, self.domain.name, )
+        self.assertEqual(change_meta.domain, self.domain.name)
 
         self.assertEqual(self.ccuser.reporting_metadata.last_syncs, [])
