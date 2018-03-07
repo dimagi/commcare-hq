@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import re
 from corehq.apps.hqwebapp.crispy import FormActions, FieldWithHelpBubble
 from crispy_forms.helper import FormHelper
@@ -24,7 +25,7 @@ class BrokenBuildsForm(forms.Form):
 
 class AuthenticateAsForm(forms.Form):
     username = forms.CharField(max_length=255)
-    domain = forms.CharField(label=u"Domain (used for mobile workers)", max_length=255, required=False)
+    domain = forms.CharField(label="Domain (used for mobile workers)", max_length=255, required=False)
 
     def clean(self):
         username = self.cleaned_data['username']
@@ -32,20 +33,20 @@ class AuthenticateAsForm(forms.Form):
 
         # Ensure that the username exists either as the raw input or with fully qualified name
         if domain:
-            extended_username = u"{}@{}.commcarehq.org".format(username, domain)
+            extended_username = "{}@{}.commcarehq.org".format(username, domain)
             user = CommCareUser.get_by_username(username=extended_username)
             self.cleaned_data['username'] = extended_username
             if user is None:
                 raise forms.ValidationError(
-                    u"Cannot find user '{}' for domain '{}'".format(username, domain)
+                    "Cannot find user '{}' for domain '{}'".format(username, domain)
                 )
         else:
             user = CommCareUser.get_by_username(username=username)
             if user is None:
-                raise forms.ValidationError(u"Cannot find user '{}'".format(username))
+                raise forms.ValidationError("Cannot find user '{}'".format(username))
 
         if not user.is_commcare_user():
-            raise forms.ValidationError(u"User '{}' is not a CommCareUser".format(username))
+            raise forms.ValidationError("User '{}' is not a CommCareUser".format(username))
 
         return self.cleaned_data
 
@@ -131,12 +132,12 @@ class SuperuserManagementForm(forms.Form):
         users = []
         for username in csv_email_list:
             if "@dimagi.com" not in username:
-                raise forms.ValidationError(u"Email address '{}' is not a dimagi email address".format(username))
+                raise forms.ValidationError("Email address '{}' is not a dimagi email address".format(username))
             try:
                 users.append(User.objects.get(username=username))
             except User.DoesNotExist:
                 raise forms.ValidationError(
-                    u"User with email address '{}' does not exist on "
+                    "User with email address '{}' does not exist on "
                     "this site, please have the user registered first".format(username))
 
         self.cleaned_data['users'] = users
