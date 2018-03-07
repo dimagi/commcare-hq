@@ -332,32 +332,27 @@ hqDefine('locations/js/location_tree', function() {
 
         this.loc_archive_url = function(loc_id) {
             var initial_page_data = hqImport('hqwebapp/js/initial_page_data');
-            var template = initial_page_data.reverse('archive_location');
-            return template.replace('-locid-', loc_id);
+            return initial_page_data.reverse('archive_location', loc_id);
         };
 
         this.loc_unarchive_url = function(loc_id) {
             var initial_page_data = hqImport('hqwebapp/js/initial_page_data');
-            var template = initial_page_data.reverse('unarchive_location');
-            return template.replace('-locid-', loc_id);
+            return initial_page_data.reverse('unarchive_location', loc_id);
         };
 
         this.loc_delete_url = function(loc_id) {
             var initial_page_data = hqImport('hqwebapp/js/initial_page_data');
-            var template = initial_page_data.reverse('delete_location');
-            return template.replace('-locid-', loc_id);
+            return initial_page_data.reverse('delete_location', loc_id, loc_id);
         };
 
         this.loc_lineage_url = function(loc_id) {
             var initial_page_data = hqImport('hqwebapp/js/initial_page_data');
-            var template = initial_page_data.reverse('location_lineage');
-            return template.replace('-locid-', loc_id);
+            return initial_page_data.reverse('location_lineage', loc_id);
         };
 
         this.loc_descendant_url = function(loc_id) {
             var initial_page_data = hqImport('hqwebapp/js/initial_page_data');
-            var template = initial_page_data.reverse('location_descendants_count');
-            return template.replace('-locid-', loc_id);
+            return initial_page_data.reverse('location_descendants_count', loc_id);
         };
 
         this.archive_loc = function(button, name, loc_id) {

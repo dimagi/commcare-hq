@@ -10,13 +10,11 @@ hqDefine('locations/js/locations', function() {
             can_edit_root = initialPageData.get('can_edit_root'),
             hierarchy = initialPageData.get('hierarchy'),
             show_inactive = initialPageData.get('show_inactive'),
-            location_search_url = initialPageData.reverse('location_search'),
-            edit_location_url = initialPageData.reverse('edit_location');
+            location_search_url = initialPageData.reverse('location_search');
 
-        function loc_edit_url(loc_id) {
-            var template = edit_location_url;
-            return template.replace('-locid-', loc_id);
-        }
+        var loc_edit_url = function(loc_id) {
+            return initialPageData.reverse('edit_location', loc_id);
+        };
 
         var enableLocationSearchSelect = function () {
             $('#location_search_select').select2({

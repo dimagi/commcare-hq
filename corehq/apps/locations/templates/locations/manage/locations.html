@@ -13,13 +13,13 @@
 
 
 {% block page_content %}
-    {% registerurl 'archive_location' domain '-locid-' %}
-    {% registerurl 'unarchive_location' domain '-locid-' %}
-    {% registerurl 'delete_location' domain '-locid-' %}
-    {% registerurl 'location_lineage' domain '-locid-' %}
-    {% registerurl 'location_descendants_count' domain '-locid-'%}
+    {% registerurl 'archive_location' domain '---' %}
+    {% registerurl 'unarchive_location' domain '---' %}
+    {% registerurl 'delete_location' domain '---' %}
+    {% registerurl 'location_lineage' domain '---' %}
+    {% registerurl 'location_descendants_count' domain '---'%}
 
-    {% registerurl 'edit_location' domain '-locid-' %}
+    {% registerurl 'edit_location' domain '---' %}
     {% registerurl 'location_search' domain %}
     {% registerurl 'create_location' domain %}
     {% initial_page_data 'api_root' api_root %}
