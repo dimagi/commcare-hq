@@ -8,8 +8,8 @@ hqDefine("locations/js/location", function() {
         $select.multiSelect('select', user.user_id);
     };
     var TEMPLATE_STRINGS = {
-        new_user_success: _.template(gettext("User " + initialPageData.get('user_name') +
-                                             " added successfully.  A validation message has been sent to the phone number provided.")),
+        new_user_success: _.template(gettext("User <%= name =%> added successfully. " +
+                                             "A validation message has been sent to the phone number provided.")),
     };
 
     $(function() {
