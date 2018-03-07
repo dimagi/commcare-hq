@@ -750,6 +750,10 @@ LOCAL_MIDDLEWARE = ()
 LOCAL_PILLOWTOPS = {}
 LOCAL_REPEATERS = ()
 
+# tuple of fully qualified repeater class names that are enabled.
+# Set to None to enable all or empty tuple to disable all.
+REPEATERS_WHITELIST = None
+
 # Prelogin site
 ENABLE_PRELOGIN_SITE = False
 PRELOGIN_APPS = (
