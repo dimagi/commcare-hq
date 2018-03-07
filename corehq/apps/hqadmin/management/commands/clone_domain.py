@@ -166,7 +166,7 @@ class Command(BaseCommand):
 
         self._copy_custom_data(LocationFieldsView.field_type)
 
-        location_types = LocationType.objects.return_class_variables(self.existing_domain)
+        location_types = LocationType.objects.by_domain(self.existing_domain)
         location_types_map = {}
         for location_type in location_types:
             if location_type.parent_type_id:

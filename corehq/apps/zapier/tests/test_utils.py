@@ -30,7 +30,7 @@ def cleanup_repeaters_for_domain(domain):
     for repeater in FormRepeater.by_domain(domain):
             repeater.delete()
     for case_repeater_class in CASE_TYPE_REPEATER_CLASS_MAP.values():
-        for repeater in case_repeater_class.return_class_variables(domain):
+        for repeater in case_repeater_class.by_domain(domain):
             repeater.delete()
 
 

@@ -46,7 +46,7 @@ class DomainForwardingOptionsView(BaseAdminProjectSettingsView):
         return [
             (
                 r.__name__,
-                r.return_class_variables(self.domain),
+                r.by_domain(self.domain),
                 r.friendly_name,
                 r.get_custom_url(self.domain)
             )

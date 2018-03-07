@@ -39,7 +39,7 @@ def create_repeat_records(repeater_cls, payload):
         return
     domain = payload.domain
     if domain:
-        repeaters = repeater_cls.return_class_variables(domain)
+        repeaters = repeater_cls.by_domain(domain)
         for repeater in repeaters:
             repeater.register(payload)
 
