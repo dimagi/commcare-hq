@@ -27,13 +27,21 @@ class Command(BaseCommand):
         print start_date
         print end_date
 
+        domain_and_month_to_data = {}
+
         for (year, month) in with_progress_bar(list(get_months_in_range(end_date, start_date))):
             domains_in_month = correct_billables.values('domain').distinct()
-            print domains_in_month
-            for domain in (domains_in_month):
+            for domain in domains_in_month:
                 domain = domain['domain']
-                print "%s %d-%d" % (domain, year, month)
-
+                domain_and_month_to_data.setdefault(domain, {})
+                domain_and_month_to_data[domain][(year, month)] = {
+                    'number_of_smsbillables': correct_billables.filter(
+                        domain=domain,
+                        date_sent__year=year,
+                        date_sent__month=month,
+                    ).count()
+                }
+        print domain_and_month_to_data
 
 
 # https://stackoverflow.com/questions/4039879/best-way-to-find-the-months-between-two-dates
