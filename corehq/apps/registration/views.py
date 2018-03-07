@@ -146,8 +146,18 @@ class ProcessRegistrationView(JSONResponseMixin, NewUserNumberAbTestMixin, View)
                 }
 
             persona_fields = {}
-            if reg_form.cleaned_data['persona']:
-                persona_fields['buyer_persona'] = reg_form.cleaned_data['persona']
+            persona = reg_form.cleaned_data['persona']
+            if persona:
+                # This text is slightly different than the form's choices text
+                # because it goes directly into email
+                hubspot_text = {
+                    "M&E": "Monitoring and evaluating a program",
+                    "Improve Delivery": "Improving delivery of services",
+                    "Research": "Collecting data for a research project",
+                    "IT": "Building a technology solution for your stakeholders",
+                    "Other": "Other",
+                }
+                persona_fields['buyer_persona'] = hubspot_text.get(persona, persona)
                 if reg_form.cleaned_data['persona_other']:
                     persona_fields['buyer_persona_other'] = reg_form.cleaned_data['persona_other']
                 update_hubspot_properties.delay(new_user, persona_fields)
