@@ -766,16 +766,16 @@ class BaseDownloadExportView(ExportsPermissionsMixin, HQJSONResponseMixin, BaseP
 
         return export_filter, export_specs
 
-    def get_export_documents_count(self, in_data):
+    def has_export_documents(self, in_data):
         export_filters, export_specs = self._process_filters_and_specs(in_data)
         export_instances = [self._get_export(self.domain, spec['export_id']) for spec in export_specs]
 
-        count = 0
         for instance in export_instances:
             doc = get_export_documents(instance, export_filters)
-            count += doc.count
+            if (doc.count > 0):
+                return True
 
-        return count
+        return False
 
     @allow_remote_invocation
     def prepare_custom_export(self, in_data):
@@ -2358,8 +2358,7 @@ class DownloadNewFormExportView(GenericDownloadNewExportMixin, DownloadFormExpor
     def prepare_custom_export(self, in_data):
         prepare_custom_export = super(DownloadNewFormExportView, self).prepare_custom_export(in_data)
 
-        documents_count = super(DownloadNewFormExportView, self).get_export_documents_count(in_data)
-        if documents_count > 0:
+        if super(DownloadNewFormExportView, self).has_export_documents(in_data):
             track_workflow(self.request.couch_user.username, 'Downloaded Form Exports With Data')
         else:
             track_workflow(self.request.couch_user.username, 'Downloaded Form Exports With No Data')
@@ -2405,8 +2404,7 @@ class DownloadNewCaseExportView(GenericDownloadNewExportMixin, DownloadCaseExpor
     def prepare_custom_export(self, in_data):
         prepare_custom_export = super(DownloadNewCaseExportView, self).prepare_custom_export(in_data)
 
-        documents_count = super(DownloadNewCaseExportView, self).get_export_documents_count(in_data)
-        if documents_count > 0:
+        if super(DownloadNewCaseExportView, self).has_export_documents(in_data):
             track_workflow(self.request.couch_user.username, 'Downloaded Case Exports With Data')
         else:
             track_workflow(self.request.couch_user.username, 'Downloaded Case Exports With No Data')
