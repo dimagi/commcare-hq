@@ -197,11 +197,11 @@ function AWCSCoveredController($scope, $routeParams, $location, $filter, icdsCas
                 tooltip.contentGenerator(function (d) {
 
                     var findValue = function (values, date) {
-                        var day = _.find(values, function(num) { return d3.time.format('%b %Y')(new Date(num['x'])) === date;});
+                        var day = _.find(values, function(num) { return num['x'] === date; });
                         return d3.format(",")(day['y']);
                     };
 
-                    var tooltipContent = vm.tooltipContent(d.value, findValue(vm.chartData[0].values, d.value));
+                    var tooltipContent = vm.tooltipContent(d3.time.format('%b %Y')(new Date(d.value)), findValue(vm.chartData[0].values, d.value));
                     return tooltipContent;
                 });
                 return chart;

@@ -206,7 +206,7 @@ function PrevalenceOfStuntingReportController($scope, $routeParams, $location, $
                 tooltip.contentGenerator(function (d) {
 
                     var findValue = function (values, date) {
-                        return _.find(values, function(num) { return d3.time.format('%b %Y')(new Date(num['x'])) === date;});
+                        return _.find(values, function(num) { return num['x'] === date; });
                     };
 
                     var normal = findValue(vm.chartData[0].values, d.value).y;
@@ -214,7 +214,7 @@ function PrevalenceOfStuntingReportController($scope, $routeParams, $location, $
                     var severe = findValue(vm.chartData[2].values, d.value).y;
                     var measured = findValue(vm.chartData[0].values, d.value).measured;
                     var all = findValue(vm.chartData[0].values, d.value).all;
-                    return vm.tooltipContent(d.value, normal, moderate, severe, measured, all);
+                    return vm.tooltipContent(d3.time.format('%b %Y')(new Date(d.value)), normal, moderate, severe, measured, all);
                 });
                 return chart;
             },
