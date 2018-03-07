@@ -21,8 +21,6 @@ from corehq.apps.users.models import CommCareUser
 from corehq.apps.app_manager.tests.util import TestXmlMixin, extract_xml_partial
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 
-from corehq.elastic import refresh_elasticsearch_index
-
 from .util import (
     setup_location_types_with_structure,
     setup_locations_with_structure,
@@ -721,52 +719,6 @@ class ShouldSyncLocationFixturesTest(TestCase):
         # Should not resync if last sync was after location was deleted
         self.assertFalse(
             should_sync_locations(SyncLog(date=after_archive), locations_queryset, self.user.to_ota_restore_user())
-        )
-
-    def test_deleting_location_should_resync(self):
-        """
-        When locations are deleted, we should resync them
-        """
-        location = make_location(
-            domain=self.domain,
-            name="Riverrun",
-            location_type=self.location_type.name,
-        )
-        location.save()
-        after_save = datetime.utcnow()
-        self.assertEqual('Riverrun', location.name)
-        locations_queryset = SQLLocation.objects.filter(pk=location.pk)
-
-        # Should not resync if last sync was after location was saved
-        self.assertFalse(
-            should_sync_locations(SyncLog(date=after_save), locations_queryset, self.user.to_ota_restore_user())
-        )
-
-        # Set the user's location
-        self.user.set_location(location)
-        after_assign = datetime.utcnow()
-
-        # Should resync if last sync was before location was assigned
-        self.assertTrue(
-            should_sync_locations(SyncLog(date=after_save), locations_queryset, self.user.to_ota_restore_user())
-        )
-        # Should not resync if last sync was after location was assigned
-        self.assertFalse(
-            should_sync_locations(SyncLog(date=after_assign), locations_queryset, self.user.to_ota_restore_user())
-        )
-
-        # Delete the location
-        refresh_elasticsearch_index('users')
-        location.full_delete()
-        after_delete = datetime.utcnow()
-
-        # Should resync if last sync was before location was deleted
-        self.assertTrue(
-            should_sync_locations(SyncLog(date=after_assign), locations_queryset, self.user.to_ota_restore_user())
-        )
-        # Should not resync if last sync was after location was deleted
-        self.assertFalse(
-            should_sync_locations(SyncLog(date=after_delete), locations_queryset, self.user.to_ota_restore_user())
         )
 
 
