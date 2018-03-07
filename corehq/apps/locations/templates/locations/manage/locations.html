@@ -128,7 +128,7 @@
 
         <div class="loc_section">
             <!-- header bar -->
-            <div class="loc_header" data-bind="if: name() != '_root'">
+            <div class="loc_header" style="clear: both;" data-bind="if: name() != '_root'">
                 <div style="float:right;" data-bind="if: can_edit()" id="button-template">
                     {% if not show_inactive %}
                         <a class="btn btn-primary"
@@ -155,13 +155,13 @@
                 </div>
 
                 <!-- want to make entire row clickable, but overrides click on 'edit' button -->
-                <span data-bind="click: toggle, style: { cursor: (can_have_children() ? 'pointer' : 'default') }">
+                <div data-bind="click: toggle, style: { cursor: (can_have_children() ? 'pointer' : 'default') }">
                     <span data-bind="if: can_have_children">
                         <i class="fa" data-bind="css: { 'fa-plus-square': !expanded(), 'fa-minus-square': expanded()==true, 'fa-plus-square-o': expanded()=='semi' }"></i>
                     </span>
                     <span class="loc_name" data-bind="text: name"></span>
                     <span class="loc_type">(<span data-bind="text: type"></span>)</span>
-                </span>
+                </div>
                 <div style="clear: both;"></div>
                 <hr style="margin: 0px;"/>
             </div>
