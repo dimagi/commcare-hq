@@ -25,6 +25,7 @@ from dimagi.utils.couch.database import get_safe_write_kwargs
 from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.analytics.tasks import send_hubspot_form, HUBSPOT_CREATED_NEW_PROJECT_SPACE_FORM_ID
 from corehq import toggles
+from corehq.util.view_utils import absolute_reverse
 
 
 def activate_new_user(form, is_domain_admin=True, domain=None, ip=None):
@@ -202,6 +203,31 @@ You can view the %s here: %s""" % (
         )
     except Exception:
         logging.warning("Can't send email, but the message was:\n%s" % message)
+
+
+def send_mobile_experience_reminder(recipient, full_name):
+    url = absolute_reverse("login")
+
+    params = {
+        "full_name": full_name,
+        "url": url,
+        'url_prefix': '' if settings.STATIC_CDN else 'http://' + get_site_domain(),
+    }
+    message_plaintext = render_to_string(
+        'registration/email/mobile_signup_reminder.txt', params)
+    message_html = render_to_string(
+        'registration/email/mobile_signup_reminder.html', params)
+
+    subject = ugettext('Visit CommCareHQ on your computer!')
+
+    try:
+        send_html_email_async.delay(subject, recipient, message_html,
+                                    text_content=message_plaintext,
+                                    email_from=settings.DEFAULT_FROM_EMAIL,
+                                    ga_track=True)
+    except Exception:
+        logging.warning(
+            "Can't send email, but the message was:\n%s" % message_plaintext)
 
 
 # Only new-users are eligible for advanced trial

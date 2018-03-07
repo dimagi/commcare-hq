@@ -29,8 +29,12 @@ from corehq.apps.domain.exceptions import NameUnavailableException
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.registration.models import RegistrationRequest
 from corehq.apps.registration.forms import DomainRegistrationForm, RegisterWebUserForm
-from corehq.apps.registration.utils import activate_new_user, send_new_request_update_email, request_new_domain, \
-    send_domain_registration_email
+from corehq.apps.registration.utils import (
+    activate_new_user,
+    send_new_request_update_email,
+    request_new_domain,
+    send_domain_registration_email,
+    send_mobile_experience_reminder)
 from corehq.apps.hqwebapp.decorators import use_jquery_ui, \
     use_ko_validation
 from corehq.apps.users.models import WebUser, CouchUser
@@ -430,3 +434,13 @@ def eula_agreement(request):
         current_user.save()
 
     return HttpResponseRedirect(request.POST.get('next', '/'))
+
+
+@transaction.atomic
+@login_required
+def send_desktop_reminder(request):
+    if request.method == 'POST':
+        send_mobile_experience_reminder(request.user.username,
+                                        request.user.get_full_name())
+
+    return {"success": True}
