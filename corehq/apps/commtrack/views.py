@@ -248,7 +248,7 @@ class StockLevelsView(BaseCommTrackManageView):
         return super(StockLevelsView, self).dispatch(*args, **kwargs)
 
     def get_existing_stock_levels(self):
-        loc_types = LocationType.objects.return_class_variables(self.domain)
+        loc_types = LocationType.objects.by_domain(self.domain)
         return [{
             'loc_type': loc_type.name,
             'emergency_level': loc_type.emergency_level,
