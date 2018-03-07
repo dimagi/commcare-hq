@@ -8,9 +8,8 @@ from io import BytesIO
 
 import mock
 import os
-import sys
 from unittest import TestCase, SkipTest
-from collections import namedtuple
+from collections import defaultdict, namedtuple
 from contextlib import contextmanager
 
 from functools import wraps
@@ -532,3 +531,24 @@ def make_make_path(current_directory):
         return os.path.join(os.path.dirname(current_directory), *args)
 
     return _make_path
+
+
+@contextmanager
+def patch_datadog():
+    from corehq.util.datadog.gauges import _enforce_prefix
+
+    def record(fn, name, value, enforce_prefix='commcare', tags=None):
+        _enforce_prefix(name, enforce_prefix)
+        if tags:
+            for tag in (tags or []):
+                stats[name + "." + tag].append(value)
+        else:
+            stats[name].append(value)
+
+    stats = defaultdict(list)
+    patch = mock.patch("corehq.util.datadog.gauges._datadog_record", new=record)
+    patch.start()
+    try:
+        yield stats
+    finally:
+        patch.stop()

@@ -52,6 +52,8 @@ class S3BlobDB(AbstractBlobDB):
         s3_bucket.upload_fileobj(content, path)
         if timeout is not None:
             set_blob_expire_object(bucket, identifier, content_length, timeout)
+        datadog_counter('commcare.blobs.added.count')
+        datadog_counter('commcare.blobs.added.bytes', value=content_length)
         return BlobInfo(identifier, content_length, "md5-" + content_md5)
 
     def get(self, identifier, bucket=DEFAULT_BUCKET):
@@ -83,23 +85,37 @@ class S3BlobDB(AbstractBlobDB):
                 summaries = s3_bucket.objects.filter(Prefix=path + "/")
                 pages = ([{"Key": o.key} for o in page]
                          for page in summaries.pages())
+                deleted_bytes = sum(o.size for page in summaries.pages()
+                                    for o in page)
             else:
                 pages = [[{"Key": path}]]
+                # may raise a not found error -> return False
+                deleted_bytes = s3_bucket.Object(path).content_length
             success = True
+            deleted_count = 0
             for objects in pages:
                 resp = s3_bucket.delete_objects(Delete={"Objects": objects})
                 if success:
                     deleted = set(d["Key"] for d in resp.get("Deleted", []))
                     success = all(o["Key"] in deleted for o in objects)
+                    deleted_count += len(deleted)
+            datadog_counter('commcare.blobs.deleted.count', value=deleted_count)
+            datadog_counter('commcare.blobs.deleted.bytes', value=deleted_bytes)
             return success
         return False
 
     def bulk_delete(self, paths):
         objects = [{"Key": path} for path in paths]
         s3_bucket = self._s3_bucket()
+        deleted_bytes = 0
+        for path in paths:
+            with maybe_not_found():
+                deleted_bytes += s3_bucket.Object(path).content_length
         resp = s3_bucket.delete_objects(Delete={"Objects": objects})
         deleted = set(d["Key"] for d in resp.get("Deleted", []))
         success = all(o["Key"] in deleted for o in objects)
+        datadog_counter('commcare.blobs.deleted.count', value=len(deleted))
+        datadog_counter('commcare.blobs.deleted.bytes', value=deleted_bytes)
         return success
 
     def copy_blob(self, content, info, bucket):
