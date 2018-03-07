@@ -73,7 +73,7 @@ class Command(BaseCommand):
                 )
             else:
                 reset_export = True  # always reset if the file doesn't already exist
-            exporter.by_domain(domain)
+            exporter.return_class_variables(domain)
             total, skips = exporter.migrate(reset=reset_export, chunk_size=chunk_size, **migrator_options)
             if skips:
                 sys.exit(skips)

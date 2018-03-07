@@ -229,7 +229,7 @@ class ConfigurableDataSourceEditForm(DocumentFormBase):
             raise ValidationError(
                 _('Table id is too long. Your table id and domain name must add up to fewer than 40 characters')
             )
-        for src in self.instance.by_domain(self.domain):
+        for src in self.instance.return_class_variables(self.domain):
             if src.table_id == table_id and src.get_id != self.instance.get_id:
                 raise ValidationError(
                     _('A data source with this table id already exists. Table'

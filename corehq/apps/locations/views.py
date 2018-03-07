@@ -299,7 +299,7 @@ class LocationTypesView(BaseDomainView):
             'include_without_expanding': (loc_type.include_without_expanding_id
                                           if loc_type.include_without_expanding_id else None),
             'include_only': list(loc_type.include_only.values_list('pk', flat=True)),
-        } for loc_type in LocationType.objects.by_domain(self.domain)]
+        } for loc_type in LocationType.objects.return_class_variables(self.domain)]
 
     @method_decorator(lock_locations)
     def post(self, request, *args, **kwargs):

@@ -628,11 +628,17 @@ class AutomaticUpdateRuleListView(JSONResponseMixin, DataInterfaceSection):
 
     @property
     def page_context(self):
+        domain_rule_run_info = DomainCaseRuleRun.return_class_variables(
+            self.domain
+        )
+        domain_rule_run_values = list(map(self._format_domain_rule_run, domain_rule_run_info))[0]
         return {
             'pagination_limit_cookie_name': ('hq.pagination.limit'
                                              '.automatic_update_rule_list.%s'
                                              % self.domain),
             'help_site_url': 'https://confluence.dimagi.com/display/commcarepublic/Automatically+Close+Cases',
+            'domain_rule_run_values': domain_rule_run_values,
+            'preethi_fake_val': 'preethi_fake_output_string'
         }
 
     def _format_rule(self, rule):
@@ -658,6 +664,8 @@ class AutomaticUpdateRuleListView(JSONResponseMixin, DataInterfaceSection):
             'num_related_closes': domain_rule_run.num_related_closes,
             'num_creates': domain_rule_run.num_creates,
             'finished_on': domain_rule_run.finished_on,
+            'domain': domain_rule_run.domain,
+            'started_on': domain_rule_run.started_on
         }
 
     @allow_remote_invocation
@@ -680,20 +688,13 @@ class AutomaticUpdateRuleListView(JSONResponseMixin, DataInterfaceSection):
             active_only=False,
         )
 
-        domain_rule_run_info = DomainCaseRuleRun.by_domain(
-            self.domain
-        )
-
         rule_page = rules.order_by('name')[start:stop]
 
         total = rules.count()
 
-        domain_rule_run_values = list(map(self._format_domain_rule_run, domain_rule_run_info))
-
         return {
             'response': {
                 'itemList': list(map(self._format_rule, rule_page)),
-                'domainRuleRunList': domain_rule_run_values,
                 'total': total,
                 'page': page,
             },

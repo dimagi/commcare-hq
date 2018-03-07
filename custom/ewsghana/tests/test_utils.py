@@ -140,7 +140,7 @@ def prepare_commtrack_config(domain):
             parent_type=parent_type,
         )[0]
 
-    for location_type in LocationType.objects.by_domain(domain):
+    for location_type in LocationType.objects.return_class_variables(domain):
         location_type.delete()
 
     country = _make_loc_type(name="country", administrative=True)

@@ -123,11 +123,13 @@ def run_case_update_rules_for_domain(domain, now=None):
     now = now or datetime.utcnow()
     start_run = datetime.utcnow()
     last_migration_check_time = None
-    run_record = DomainCaseRuleRun.objects.create(
+    print("!!#$@$ Running case update. *&^@*&#^$ (ln 126)")
+    run_record = DomainCaseRuleRun.create_domain_case_rule_run_object(
         domain=domain,
-        started_on=start_run,
+        start_run=start_run,
         status=DomainCaseRuleRun.STATUS_RUNNING,
     )
+    print("!!#$@$ Running case update. *&^@*&#^$ (ln 132)")
     cases_checked = 0
     case_update_result = CaseRuleActionResult()
 

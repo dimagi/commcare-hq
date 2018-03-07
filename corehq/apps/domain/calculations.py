@@ -448,7 +448,7 @@ def num_location_restricted_roles(domain):
 
 
 def num_case_sharing_loc_types(domain):
-    loc_types = [l for l in LocationType.objects.by_domain(domain) if l.shares_cases]
+    loc_types = [l for l in LocationType.objects.return_class_variables(domain) if l.shares_cases]
     return len(loc_types)
 
 

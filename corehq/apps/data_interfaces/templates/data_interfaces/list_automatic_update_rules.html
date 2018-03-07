@@ -126,24 +126,9 @@
 
 
 
-            <div ng-repeat="rule in paginatedItems">
-                {% angularjs %}
-                <strong>Name: {{ rule.name }}, Case type: {{ rule.case_type }}, Status: {{ rule.active }}, Last Run: {{ rule.last_run }}</strong>
-                {% endangularjs %}
-            </div>
-
-            <div>
-                {% angularjs %}
-                <strong>===============================================</strong>
-                {% endangularjs %}
-            </div>
-
-
-            <div ng-repeat="domainRule in domainItems">
-                {% angularjs %}
-                    <strong>PP{{ domainItems }}PP {{ domainRule.status }}</strong>
-{#                <strong>The last rule run for {{ domainRule.status }} project started on {{ domainRule.started_on }} and finished on {{ domainRule.finished_on }}. It updated {{ domainRule.num_updates }} cases and closed {{ domainRule.num_closes }} cases</strong>#}
-                {% endangularjs %}
+            <div class="alert alert-info" ng-hide="domain_rule_run_values.finished_on != null || paginatedItems.length == 0 || notLoaded || hasError">
+{#              <strong>{{ domain_rule_run_values }}</strong>#}
+                <strong> The last case close rule run for this project started on {{ domain_rule_run_values.started_on }} and finished on {{ domain_rule_run_values.finished_on }}. It updated {{ domain_rule_run_values.num_updates }} cases and closed {{ domain_rule_run_values.num_closes }} cases. </strong>
             </div>
 
 

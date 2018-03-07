@@ -34,7 +34,7 @@ def create_short_form_repeat_records(sender, xform, **kwargs):
 def create_repeat_records(repeater_cls, payload):
     domain = payload.domain
     if domain:
-        repeaters = repeater_cls.by_domain(domain)
+        repeaters = repeater_cls.return_class_variables(domain)
         for repeater in repeaters:
             repeater.register(payload)
 

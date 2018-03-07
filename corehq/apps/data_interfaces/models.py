@@ -1340,10 +1340,24 @@ class DomainCaseRuleRun(models.Model):
         )
 
     @classmethod
-    def by_domain(cls, domain):
-        return cls.objects.filter(
-            domain=domain
+    def return_class_variables(cls, domain):
+        # return cls.objects.filter(
+        #     domain=domain
+        # )
+        # ret_val = cls.objects.all()
+        ret_val = cls.objects.filter(domain=domain).order_by('-started_on')
+        return ret_val
+        # return {k: v for k, v in cls.__dict__.items()}
+
+    def create_domain_case_rule_run_object(self, domain, start_run, status):
+        self.objects.create(
+            domain=domain,
+            started_on=start_run,
+            status=DomainCaseRuleRun.STATUS_RUNNING,
         )
+        self.domain = domain
+        self.status = status
+        self.started_on = start_run
 
     def done(self, status, cases_checked, result):
         if not isinstance(result, CaseRuleActionResult):
@@ -1357,4 +1371,5 @@ class DomainCaseRuleRun(models.Model):
         self.num_related_closes = result.num_related_closes
         self.num_creates = result.num_creates
         self.finished_on = datetime.utcnow()
+        self.started_on = datetime.utcnow()
         self.save()
