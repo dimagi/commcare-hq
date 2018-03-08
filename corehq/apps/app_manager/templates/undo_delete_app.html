@@ -1,0 +1,7 @@
+{% load i18n %}
+
+<form action="{% url 'undo_delete_app' domain record_id %}" method="post">
+    {% csrf_token %}
+    {% trans "You have deleted an application." %}
+    <input type="submit" class="btn btn-default" value="Undo" />
+</form>
