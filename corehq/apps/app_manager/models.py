@@ -1486,12 +1486,12 @@ class NavMenuItemMediaMixin(DocumentSchema):
     @property
     def default_media_image(self):
         # For older apps that were migrated: just return the first available item
-        return self.icon_by_language(strict=False)
+        return self.icon_by_language('')
 
     @property
     def default_media_audio(self):
         # For older apps that were migrated: just return the first available item
-        return self.audio_by_language(strict=False)
+        return self.audio_by_language('')
 
     def icon_by_language(self, lang, strict=False):
         return self._get_media_by_language('media_image', lang, strict=strict)
