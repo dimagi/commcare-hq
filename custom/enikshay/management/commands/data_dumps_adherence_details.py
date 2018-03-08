@@ -59,7 +59,7 @@ class Command(BaseDataDump):
     def get_custom_value(self, column_name, adherence):
         assert adherence.type == CASE_TYPE_ADHERENCE, \
             "Unexpected Case type instead of %s" % CASE_TYPE_ADHERENCE
-        if column_name == "Date of Creation of Presumptive TB Episode":
+        if column_name == "Date of Creation of Adherence Case":
             return adherence.opened_on
         elif column_name == "Created by Username":
             user_id = None
