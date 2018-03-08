@@ -2020,8 +2020,10 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             self.save()
 
     def _remove_location_from_user(self, location_id):
+        from corehq.apps.fixtures.models import UserFixtureType
         try:
             self.assigned_location_ids.remove(location_id)
+            self.update_fixture_status(UserFixtureType.LOCATION)
         except ValueError:
             notify_exception(None, "Location missing from user", {
                 'user_id': self._id,
