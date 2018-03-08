@@ -1486,12 +1486,21 @@ class NavMenuItemMediaMixin(DocumentSchema):
     @property
     def default_media_image(self):
         # For older apps that were migrated: just return the first available item
+        self._assert_unexpected_default_media_call('media_image')
         return self.icon_by_language('')
 
     @property
     def default_media_audio(self):
         # For older apps that were migrated: just return the first available item
+        self._assert_unexpected_default_media_call('media_audio')
         return self.audio_by_language('')
+
+    def _assert_unexpected_default_media_call(self, media_attr):
+        assert media_attr in ('media_image', 'media_audio')
+        media = getattr(self, media_attr)
+        if isinstance(media, dict) and media.keys() == ['default']:
+            _assert = soft_assert(['jschweers' + '@' + 'dimagi.com'])
+            _assert(False, 'Called default_media_image on app with localized media')
 
     def icon_by_language(self, lang, strict=False):
         return self._get_media_by_language('media_image', lang, strict=strict)
