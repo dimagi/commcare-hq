@@ -29,6 +29,7 @@ class Command(BaseCommand):
         print end_date
 
         domain_and_month_to_data = {_['domain']: {} for _ in correct_billables.values('domain').distinct()}
+        print list(get_months_in_range(end_date, start_date))
 
         for (year, month) in with_progress_bar(list(get_months_in_range(end_date, start_date))):
             for domain in domain_and_month_to_data:
