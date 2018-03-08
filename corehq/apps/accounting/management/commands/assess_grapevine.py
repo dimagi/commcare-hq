@@ -39,8 +39,9 @@ class Command(BaseCommand):
                     date_sent__month=month,
                 )
                 billable_count = billables_this_month.count()
-                correct_total_gateway_cost = billables_this_month.aggregate(Sum('gateway_fee__amount'))['gateway_fee__amount__sum'] or 0,
-                bad_total_gateway_cost = bad_billables_this_month.aggregate(Sum('gateway_fee__amount'))['gateway_fee__amount__sum'] or 0,
+                print billables_this_month.aggregate(Sum('gateway_fee__amount'))['gateway_fee__amount__sum']
+                correct_total_gateway_cost = billables_this_month.aggregate(Sum('gateway_fee__amount'))['gateway_fee__amount__sum'][0] or 0,
+                bad_total_gateway_cost = bad_billables_this_month.aggregate(Sum('gateway_fee__amount'))['gateway_fee__amount__sum'][0] or 0,
                 print correct_total_gateway_cost
                 print bad_total_gateway_cost
                 domain_and_month_to_data[domain][(year, month)] = {
