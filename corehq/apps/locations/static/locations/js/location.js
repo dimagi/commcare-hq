@@ -8,7 +8,7 @@ hqDefine("locations/js/location", function() {
         $select.multiSelect('select', user.user_id);
     };
     var TEMPLATE_STRINGS = {
-        new_user_success: _.template(gettext("User <%= name =%> added successfully. " +
+        new_user_success: _.template(gettext("User <%= name %> added successfully. " +
                                              "A validation message has been sent to the phone number provided.")),
     };
 
