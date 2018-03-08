@@ -29,20 +29,20 @@ class TestFormatFilename(SimpleTestCase):
 @generate_cases([
 
     ('spam*?: 𐍃𐍀𐌰𐌼-&.txt'.encode('utf-8'),
-     'spam 𐍃𐍀𐌰𐌼-&.txt'.encode('utf-8')),
+     'spam 𐍃𐍀𐌰𐌼-&.txt'),
 
-    ('spam*?: 𐍃𐍀𐌰𐌼-&.txt'.encode('utf-8'),
-     'spam 𐍃𐍀𐌰𐌼-&.txt'.encode('utf-8')),
+    ('spam*?: 𐍃𐍀𐌰𐌼-&.txt',
+     'spam 𐍃𐍀𐌰𐌼-&.txt'),
 
     ('line 1\nline 2',
      'line 1line 2'),
 
     # colons are not allowed in filenames on Mac, > and < are not allowed on Windows
-    ("Surveys > Survey Category 1 (Ex. Household) > Survey 1: 2016-12-23 2016-12-23.zip",
+    (b"Surveys > Survey Category 1 (Ex. Household) > Survey 1: 2016-12-23 2016-12-23.zip",
      "Surveys  Survey Category 1 (Ex. Household)  Survey 1 2016-12-23 2016-12-23.zip"),
 
-    ("ICDS CAS - AWW > ड्य\n ूलिस्ट > टीकों का रà\n ��कार्ड: 2016-05-31 2016-05-31.zip".encode('utf-8'),
-     "ICDS CAS - AWW  ड्य ूलिस्ट  टीकों का रà ��कार्ड 2016-05-31 2016-05-31.zip".encode('utf-8')),
+    ("ICDS CAS - AWW > ड्य\n ूलिस्ट > टीकों का रà\n ��कार्ड: 2016-05-31 2016-05-31.zip",
+     "ICDS CAS - AWW  ड्य ूलिस्ट  टीकों का रà ��कार्ड 2016-05-31 2016-05-31.zip"),
 
 ], TestFormatFilename)
 def test_format_and_set_as_header(self, filename, expected_filename):
