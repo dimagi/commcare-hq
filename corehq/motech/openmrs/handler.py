@@ -20,14 +20,11 @@ def send_openmrs_data(requests, form_json, openmrs_config, case_trigger_infos, f
 
     :return: A response-like object that can be used by Repeater.handle_response
     """
-    problem_log = []
     response = None
-
     logger.debug('Fetching OpenMRS patient UUIDs with ', case_trigger_infos)
     for info in case_trigger_infos:
         assert isinstance(info, CaseTriggerInfo)
-        response = sync_openmrs_patient(requests, info, form_json, form_question_values, openmrs_config, problem_log)
-
+        response = sync_openmrs_patient(requests, info, form_json, form_question_values, openmrs_config)
     return response or OpenmrsResponse(404, 'Not Found')
 
 
@@ -53,8 +50,8 @@ def create_visits(requests, info, form_json, form_question_values, openmrs_confi
             )
 
 
-def sync_openmrs_patient(requests, info, form_json, form_question_values, openmrs_config, problem_log):
-    patient = get_patient(requests, info, openmrs_config, problem_log)
+def sync_openmrs_patient(requests, info, form_json, form_question_values, openmrs_config):
+    patient = get_patient(requests, info, openmrs_config)
     if patient is None:
         raise ValueError('CommCare patient was not found in OpenMRS')
     person_uuid = patient['person']['uuid']

@@ -291,7 +291,7 @@ def get_subresource_instances(requests, person_uuid, subresource):
     )).json()['results']
 
 
-def get_patient(requests, info, openmrs_config, problem_log):
+def get_patient(requests, info, openmrs_config):
     patient = None
     for id_matcher in openmrs_config.case_config.id_matchers:
         assert isinstance(id_matcher, IdMatcher)
@@ -301,11 +301,6 @@ def get_patient(requests, info, openmrs_config, problem_log):
                 info.extra_fields[id_matcher.case_property])
             if patient:
                 break
-
-    if not patient:
-        problem_log.append("Could not find patient matching case")
-        return
-
     return patient
 
 
