@@ -144,6 +144,8 @@ hqDefine('locations/js/location_tree', function() {
                         location_type: location.type(),
                         name: location.name(),
                         uuid: location.uuid(),
+                        reloadLocationSearchSelect: options.reloadLocationSearchSelect,
+                        clearLocationSelection: options.clearLocationSelection,
                     };
                     root_children.push(data);
                 }
@@ -153,6 +155,8 @@ hqDefine('locations/js/location_tree', function() {
                 name: '_root',
                 children: root_children,
                 can_edit: options.can_edit_root,
+                reloadLocationSearchSelect: options.reloadLocationSearchSelect,
+                clearLocationSelection: options.clearLocationSelection,
                 expanded: 'semi',
             }, tree_model);
             return level;
@@ -223,13 +227,21 @@ hqDefine('locations/js/location_tree', function() {
                 }
 
                 var model_children = $.map(sortedChildren, function(e) {
-                    return new LocationModel(_.extend(e, {load_locs_url: data.load_locs_url}), root, loc.depth + 1);
+                    return new LocationModel(_.extend(e, {
+                        load_locs_url: data.load_locs_url,
+                        reloadLocationSearchSelect: data.reloadLocationSearchSelect,
+                        clearLocationSelection: data.clearLocationSelection,
+                    }), root, loc.depth + 1);
                 });
                 model_children.unshift(loc.children()[0]);
                 this.children(model_children);
             } else {
                 this.children($.map(sortedChildren, function (e) {
-                    return new LocationModel(_.extend(e, {load_locs_url: data.load_locs_url}), root, loc.depth + 1);
+                    return new LocationModel(_.extend(e, {
+                        load_locs_url: data.load_locs_url,
+                        reloadLocationSearchSelect: data.reloadLocationSearchSelect,
+                        clearLocationSelection: data.clearLocationSelection,
+                    }), root, loc.depth + 1);
                 }));
             }
 
@@ -245,6 +257,8 @@ hqDefine('locations/js/location_tree', function() {
             api_get_children(this.uuid(), data.show_inactive, data.load_locs_url, function(resp) {
                 loc.set_children(resp, {
                     load_locs_url: data.load_locs_url,
+                    reloadLocationSearchSelect: data.reloadLocationSearchSelect,
+                    clearLocationSelection: data.clearLocationSelection,
                 });
                 if (callback) {
                     callback(loc);
