@@ -122,12 +122,19 @@ class ProcessRegistrationView(JSONResponseMixin, NewUserNumberAbTestMixin, View)
             web_user = WebUser.get_by_username(new_user.username)
             web_user.phone_numbers.append(reg_form.cleaned_data['phone_number'])
             web_user.save()
+
+        is_mobile = reg_form.cleaned_data.get('is_mobile')
+        email = reg_form.cleaned_data['email']
+        if is_mobile:
+            toggles.MOBILE_SIGNUP_REDIRECT_AB_TEST_CONTROLLER.set(email, True)
         track_workflow(new_user.email,
                        "Requested new account",
-                       {'registered_mobile': reg_form.cleaned_data.get('is_mobile')})
-        if reg_form.cleaned_data.get('is_mobile'):
-            toggles.MOBILE_SIGNUP_REDIRECT_AB_TEST_CONTROLLER.set(
-                reg_form.cleaned_data['email'], True)
+                       {
+                           'registered_mobile': reg_form.cleaned_data.get('is_mobile'),
+                           'in_mobile_experiment': (
+                               is_mobile and
+                               toggles.MOBILE_SIGNUP_REDIRECT_AB_TEST.enabled(email))
+                       })
         login(self.request, new_user)
 
     @allow_remote_invocation
