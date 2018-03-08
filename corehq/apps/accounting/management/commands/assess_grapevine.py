@@ -81,5 +81,5 @@ def get_months_in_range(d1, d2):
     for i in range(months_diff + 1):
         next_date = d2 + relativedelta(months=i)
         yield (next_date.year, next_date.month)
-        return
+        # return
 
