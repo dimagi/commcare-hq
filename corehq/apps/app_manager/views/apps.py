@@ -18,6 +18,7 @@ from django.utils.text import slugify
 from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_GET
 from django_prbac.utils import has_privilege
+from django.template.loader import render_to_string
 
 from corehq import toggles, privileges
 from corehq.apps.analytics.tasks import HUBSPOT_APP_TEMPLATE_FORM_ID, send_hubspot_form
@@ -79,14 +80,18 @@ import six
 @no_conflict_require_POST
 @require_can_edit_apps
 def delete_app(request, domain, app_id):
-    "Deletes an app from the database"
+    """
+    Deletes an app from the database
+    """
     app = get_app(domain, app_id)
     record = app.delete_app()
+    undo_delete_template = "undo_delete_app.html"
+    undo_delete_string = render_to_string(undo_delete_template,
+                                          context={'domain': domain, 'record_id': record.get_id},
+                                          request=request)
     messages.success(
         request,
-        _('You have deleted an application. <a href="%s" class="post-link">Undo</a>')
-        % reverse('undo_delete_app', args=[domain, record.get_id]),
-        extra_tags='html'
+        undo_delete_string,
     )
     app.save()
     clear_app_cache(request, domain)
