@@ -12,7 +12,7 @@ class JsonErrorTests(SimpleTestCase):
 
 @generate_cases([
     ('ascii string',),
-    ('utf8 string \xef\xbd\xa1', 'utf8 string \uff61'),
+    (b'utf8 string \xef\xbd\xa1', 'utf8 string \uff61'),
     ('unicode string \uff61',),
 ], JsonErrorTests)
 def test_json_exception_response_data(self, message, expected=None):
