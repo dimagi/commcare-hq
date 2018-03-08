@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from tempfile import NamedTemporaryFile
 from zipfile import BadZipfile
 import openpyxl
@@ -65,7 +66,7 @@ class IteratorJSONReader(object):
         obj = {}
         for field, value in zip(self.headers, [''] * len(self.headers)):
             if not isinstance(field, six.string_types):
-                raise HeaderValueError(u'Field %s is not a string.' % field)
+                raise HeaderValueError('Field %s is not a string.' % field)
             self.set_field_value(obj, field, value)
         return list(obj)
 

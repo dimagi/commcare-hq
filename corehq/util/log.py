@@ -1,6 +1,7 @@
 from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import division
+from __future__ import unicode_literals
 import six
 import sys
 from collections import defaultdict
@@ -169,7 +170,7 @@ class HqAdminEmailHandler(AdminEmailHandler):
                 )
             )
         except Exception as e:
-            return u"Unable to extract code. {}".format(e)
+            return "Unable to extract code. {}".format(e)
 
     @classmethod
     def _clean_subject(cls, subject):
