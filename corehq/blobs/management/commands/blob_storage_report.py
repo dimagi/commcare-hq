@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 import csv
@@ -94,8 +95,8 @@ def report_blob_sizes(data, sizes, write):
             mean_size = int(mean(numerics)) if numerics else 0
             est_size = (
                 mean_size *
-                len(data[blob_sizes[0].bucket]) *           # number blobs in bucket
-                (len(numerics) / float(samples[doc_type]))  # porportion of samples
+                len(data[blob_sizes[0].bucket]) *       # number blobs in bucket
+                (len(numerics) / samples[doc_type])     # porportion of samples
             ) if blob_sizes else 0
             found_of_total = "{}/{}".format(len(numerics), len(blob_sizes))
             totals[domain]["size"] += est_size
@@ -336,7 +337,7 @@ def mean(data):
     n = len(data)
     if n < 1:
         raise ValueError('mean requires at least one data point')
-    return sum(data) / float(n)
+    return sum(data) / n
 
 #def _ss(data):
 #    """Return sum of square deviations of sequence data."""
