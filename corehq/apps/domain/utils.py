@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from collections import Counter
 import os
 import re
@@ -94,7 +95,7 @@ def get_domain_url_slug(hr_name, max_length=25, separator='-'):
     try:
         text = next(words)
     except StopIteration:
-        return u''
+        return ''
 
     for word in words:
         if len(text + separator + word) <= max_length:
