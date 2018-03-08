@@ -73,7 +73,7 @@ class DomainLinkView(BaseAdminProjectSettingsView):
         def _link_context(link, timezone=timezone):
             return {
                 'linked_domain': link.linked_domain,
-                'master_domain': link.master_domain,
+                'master_domain': link.qualified_master,
                 'remote_base_url': link.remote_base_url,
                 'is_remote': link.is_remote,
                 'last_update': server_to_user_time(link.last_pull, timezone) if link.last_pull else 'Never',
