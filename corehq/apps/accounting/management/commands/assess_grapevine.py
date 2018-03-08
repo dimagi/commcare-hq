@@ -1,9 +1,13 @@
+import csv
+from datetime import datetime
+
 from dateutil.relativedelta import relativedelta
 
 from django.core.management import BaseCommand
 from django.db.models import Sum
 
 from corehq.apps.smsbillables.models import SmsBillable, SmsGatewayFeeCriteria
+from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.util.log import with_progress_bar
 
 
@@ -48,6 +52,22 @@ class Command(BaseCommand):
                     'under_billing': correct_total_gateway_cost - bad_total_gateway_cost,
                 }
         print domain_and_month_to_data
+
+        filename = 'assess_grapevine-%.csv' % datetime.utcnow().strftime(SERVER_DATETIME_FORMAT)
+        with open(filename, 'w') as f:
+            writer = csv.writer(f)
+            writer.writerow([
+                'Project', 'Year', 'Month',
+                'Number of SMS Billables', 'Total correct gateway cost', 'Total incorrect gateway cost',
+                'Amount underbilled'
+            ])
+            for domain in sorted(domain_and_month_to_data):
+                for (year, month) in sorted(domain_and_month_to_data[domain]):
+                    data = domain_and_month_to_data[domain][(year, month)]
+                    writer.writerow([
+                        domain.encode('utf-8'), year, month, data['number_of_smsbillables'],
+                        data['correct_total_gateway_cost'], data['bad_total_gateway_cost'], data['under_billing']
+                    ])
 
 
 # https://stackoverflow.com/questions/4039879/best-way-to-find-the-months-between-two-dates
