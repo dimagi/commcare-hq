@@ -104,40 +104,41 @@ class BaseDataDump(BaseCommand):
                 case_row = {}
                 if not self.include_case_in_dump(case):
                     continue
-                # iterate columns to be generated
-                # details is a dict with key in [
-                # "N/A" -> not to be populated so ignore it
-                # self -> value would be a case property or some meta on the case itself
-                # custom -> value would be some custom logic to be manually coded
-                # specific case reference/association -> value would be case property on this associated case]
-                for column_name, details in self.report.items():
-                    for case_reference, calculation in details.items():
-                        if case_reference == "N/A":
-                            case_row[column_name] = ""
-                        elif case_reference == 'self':
-                            if calculation == 'caseid':
-                                case_row[column_name] = case.case_id
+                for case_to_dump in self.cases_to_dump(case):
+                    # iterate columns to be generated
+                    # details is a dict with key in [
+                    # "N/A" -> not to be populated so ignore it
+                    # self -> value would be a case property or some meta on the case itself
+                    # custom -> value would be some custom logic to be manually coded
+                    # specific case reference/association -> value would be case property on this associated case]
+                    for column_name, details in self.report.items():
+                        for case_reference, calculation in details.items():
+                            if case_reference == "N/A":
+                                case_row[column_name] = ""
+                            elif case_reference == 'self':
+                                if calculation == 'caseid':
+                                    case_row[column_name] = case_to_dump.case_id
+                                else:
+                                    column_value = case_to_dump.get_case_property(calculation)
+                                    if column_value and not isinstance(column_value, bool):
+                                        column_value = column_value.encode("utf-8")
+                                    case_row[column_name] = column_value
+                            elif case_reference == 'custom':
+                                try:
+                                    case_row[column_name] = self.get_custom_value(column_name, case_to_dump)
+                                except Exception as e:
+                                    case_row[column_name] = str(e)
                             else:
-                                column_value = case.get_case_property(calculation)
-                                if column_value and not isinstance(column_value, bool):
-                                    column_value = column_value.encode("utf-8")
-                                case_row[column_name] = column_value
-                        elif case_reference == 'custom':
-                            try:
-                                case_row[column_name] = self.get_custom_value(column_name, case)
-                            except Exception as e:
-                                case_row[column_name] = str(e)
-                        else:
-                            try:
-                                column_value = self.get_case_reference_value(
-                                    case_reference, case, calculation)
-                                if column_value and not isinstance(column_value, bool):
-                                    column_value = column_value.encode("utf-8")
-                                case_row[column_name] = column_value
-                            except Exception as e:
-                                case_row[column_name] = str(e)
+                                try:
+                                    column_value = self.get_case_reference_value(
+                                        case_reference, case_to_dump, calculation)
+                                    if column_value and not isinstance(column_value, bool):
+                                        column_value = column_value.encode("utf-8")
+                                    case_row[column_name] = column_value
+                                except Exception as e:
+                                    case_row[column_name] = str(e)
 
-                writer.writerow(case_row)
+                    writer.writerow(case_row)
 
         return temp_path
 
@@ -185,6 +186,9 @@ class BaseDataDump(BaseCommand):
             case_ids_query = case_ids_query.size(LIMITED_TEST_DUMP_SIZE)
         case_ids = case_ids_query.get_ids()
         return case_accessor.iter_cases(case_ids)
+
+    def cases_to_dump(self, case):
+        return [case]
 
     def get_case_ids_query(self, case_type):
         raise NotImplementedError
