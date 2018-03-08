@@ -389,10 +389,21 @@ def update_person_properties(requests, info, openmrs_config, person_uuid):
         if property_ in PERSON_PROPERTIES and value_source.get_value(info)
     }
     if properties:
-        for p in properties:
-            assert p in PERSON_PROPERTIES
         requests.post_with_raise(
             '/ws/rest/v1/person/{person_uuid}'.format(person_uuid=person_uuid),
+            json=properties
+        )
+
+
+def rollback_person_properties(requests, person, openmrs_config):
+    properties = {
+        property_: person[property_]
+        for property_ in openmrs_config.case_config.person_properties.keys()
+        if property_ in PERSON_PROPERTIES
+    }
+    if properties:
+        requests.post_with_raise(
+            '/ws/rest/v1/person/{person_uuid}'.format(person_uuid=person['uuid']),
             json=properties
         )
 
