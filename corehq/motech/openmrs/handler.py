@@ -26,7 +26,7 @@ def send_openmrs_data(requests, form_json, openmrs_config, case_trigger_infos, f
 
     logger.debug('OpenMRS patient(s) found: ', person_uuids)
     # todo: find a better way to correlate to the correct or "main" patient
-    if len(person_uuids) == 1 and all(person_uuid for person_uuid in person_uuids):
+    if len(person_uuids) == 1 and person_uuids[0]:
         person_uuid, = person_uuids
         info, = case_trigger_infos
         info.form_question_values.update(form_question_values)
