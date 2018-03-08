@@ -53,7 +53,7 @@ class Command(BaseCommand):
                 }
         print domain_and_month_to_data
 
-        filename = 'assess_grapevine-%.csv' % datetime.utcnow().strftime(SERVER_DATETIME_FORMAT)
+        filename = 'assess_grapevine-%s.csv' % datetime.utcnow().strftime(SERVER_DATETIME_FORMAT)
         with open(filename, 'w') as f:
             writer = csv.writer(f)
             writer.writerow([
