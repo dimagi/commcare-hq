@@ -26,6 +26,7 @@ When not specified, a submodule's trunk and name inherit from the parent
 from __future__ import print_function
 from __future__ import absolute_import
 
+from __future__ import unicode_literals
 from gevent import monkey
 import six
 monkey.patch_all(time=False, select=False)
