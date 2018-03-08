@@ -21,6 +21,7 @@ RATE_LIMITED_EXCEPTIONS = {
     'dimagi.utils.couch.bulk.BulkFetchException': 'couchdb',
     'socketpool.pool.MaxTriesError': 'couchdb',
     'corehq.elastic.ESError': 'elastic',
+    'http_parser.http.NoMoreData': 'couchdb',
 }
 
 
