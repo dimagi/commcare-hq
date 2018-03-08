@@ -15,7 +15,7 @@ from corehq.util.workbook_reading import Worksheet, Cell, Workbook, \
 #     a container format used for document by older versions of Microsoft Office.
 #     It is however an open format used by other programs as well.
 # Also checked that it's not used non-encrypted xlsx files, which are just .zip files
-XLSX_ENCRYPTED_MARKER = '\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1'
+XLSX_ENCRYPTED_MARKER = b'\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1'
 
 
 @contextmanager
