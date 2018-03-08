@@ -81,6 +81,8 @@ function PrecisionVsAchievementsTableModel() {
         });
     };
 
+    self.getData();
+
     self.onSelectOption = function(event, property) {
         if (event.added !== void(0)) {
             var $item = event.added;
