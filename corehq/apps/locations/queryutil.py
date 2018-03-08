@@ -23,6 +23,7 @@ class ComparedQuerySet(object):
     def __init__(self, mptt_set, cte_set, timing_context):
         self._mptt_set = mptt_set
         self._cte_set = cte_set
+        self._enable_cte = settings.IS_LOCATION_CTE_ENABLED
         if isinstance(timing_context, ComparedQuerySet):
             timing_context = timing_context._timing.clone()
         self._timing = timing_context
@@ -45,6 +46,8 @@ class ComparedQuerySet(object):
                             yield item
                 finished = True
             finally:
+                if not self._enable_cte:
+                    return
                 with self._timing("cte"):
                     items2 = list(self._cte_set)
                 ids1 = {_identify(it) for it in items1}
@@ -58,9 +61,10 @@ class ComparedQuerySet(object):
         with _commit_timing(self):
             with self._timing("mptt"):
                 len1 = len(self._mptt_set)
-            with self._timing("cte"):
-                len2 = len(self._cte_set)
-        if len1 != len2:
+            if self._enable_cte:
+                with self._timing("cte"):
+                    len2 = len(self._cte_set)
+        if self._enable_cte and len1 != len2:
             ids1 = {_identify(it) for it in self._mptt_set}
             ids2 = {_identify(it) for it in self._cte_set}
             _report_diff(self, ids1, ids2, "%s != %s" % (len1, len2))
@@ -70,29 +74,32 @@ class ComparedQuerySet(object):
         with _commit_timing(self):
             with self._timing("mptt"):
                 mptt_result = self._mptt_set.__getitem__(key)
-            with self._timing("cte"):
-                cte_result = self._cte_set.__getitem__(key)
+            if self._enable_cte or isinstance(mptt_result, QuerySet):
+                with self._timing("cte"):
+                    cte_result = self._cte_set.__getitem__(key)
         if isinstance(mptt_result, QuerySet):
             if not isinstance(cte_result, QuerySet):
                 _report_diff(self, mptt_result, cte_result)
             return ComparedQuerySet(mptt_result, cte_result, self)
-        if isinstance(mptt_result, list) and isinstance(cte_result, list):
-            ids1 = [_identify(it) for it in mptt_result]
-            ids2 = [_identify(it) for it in cte_result]
-        else:
-            ids1 = _identify(mptt_result)
-            ids2 = _identify(cte_result)
-        if ids1 != ids2:
-            _report_diff(self, ids1, ids2)
+        if self._enable_cte:
+            if isinstance(mptt_result, list) and isinstance(cte_result, list):
+                ids1 = [_identify(it) for it in mptt_result]
+                ids2 = [_identify(it) for it in cte_result]
+            else:
+                ids1 = _identify(mptt_result)
+                ids2 = _identify(cte_result)
+            if ids1 != ids2:
+                _report_diff(self, ids1, ids2)
         return mptt_result
 
     def exists(self, *args, **kw):
         with _commit_timing(self):
             with self._timing("mptt"):
                 ex1 = self._mptt_set.exists(*args, **kw)
-            with self._timing("cte"):
-                ex2 = self._cte_set.exists(*args, **kw)
-        if ex1 != ex2:
+            if self._enable_cte:
+                with self._timing("cte"):
+                    ex2 = self._cte_set.exists(*args, **kw)
+        if self._enable_cte and ex1 != ex2:
             _report_diff(self, ex1, ex2)
         return ex1
 
@@ -138,9 +145,10 @@ def _make_get_method(name):
         with _commit_timing(self):
             with self._timing("mptt"):
                 obj1 = getattr(self._mptt_set, name)(*args, **kw)
-            with self._timing("cte"):
-                obj2 = getattr(self._cte_set, name)(*args, **kw)
-        if _identify(obj1) != _identify(obj2):
+            if self._enable_cte:
+                with self._timing("cte"):
+                    obj2 = getattr(self._cte_set, name)(*args, **kw)
+        if self._enable_cte and _identify(obj1) != _identify(obj2):
             _report_diff(self, obj1, obj2)
         return obj1
     method.__name__ = str(name)  # unicode_literals: must be bytes on PY2
