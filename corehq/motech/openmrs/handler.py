@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from corehq.motech.openmrs.logger import logger
 from corehq.motech.openmrs.repeater_helpers import (
     CaseTriggerInfo,
+    OpenmrsResponse,
     create_visit,
     get_patient,
     update_person_properties,
@@ -14,14 +15,21 @@ from dimagi.utils.parsing import string_to_utc_datetime
 
 
 def send_openmrs_data(requests, form_json, openmrs_config, case_trigger_infos, form_question_values):
+    """
+    Updates an OpenMRS patient and creates visits
+
+    :return: A response-like object that can be used by Repeater.handle_response
+    """
     provider_uuid = getattr(openmrs_config, 'openmrs_provider', None)
     problem_log = []
     person_uuids = []
+    response = None
+
     logger.debug('Fetching OpenMRS patient UUIDs with ', case_trigger_infos)
     for info in case_trigger_infos:
         assert isinstance(info, CaseTriggerInfo)
         # todo: create patient if it doesn't exist?
-        person_uuid = sync_openmrs_patient(requests, info, openmrs_config, problem_log)
+        response, person_uuid = sync_openmrs_patient(requests, info, openmrs_config, problem_log)
         person_uuids.append(person_uuid)
 
     logger.debug('OpenMRS patient(s) found: ', person_uuids)
@@ -34,12 +42,21 @@ def send_openmrs_data(requests, form_json, openmrs_config, case_trigger_infos, f
             logger.debug('Send visit for form?', form_config, form_json)
             if form_config.xmlns == form_json['form']['@xmlns']:
                 logger.debug('Yes')
-                send_openmrs_visit(requests, info, form_config, person_uuid, provider_uuid,
-                                   visit_datetime=string_to_utc_datetime(form_json['form']['meta']['timeEnd']))
+                response = send_openmrs_visit(
+                    requests,
+                    info,
+                    form_config,
+                    person_uuid,
+                    provider_uuid,
+                    visit_datetime=string_to_utc_datetime(form_json['form']['meta']['timeEnd'])
+                )
+    else:
+        response = OpenmrsResponse(404, 'Not Found')
+    return response
 
 
 def send_openmrs_visit(requests, info, form_config, person_uuid, provider_uuid, visit_datetime):
-    create_visit(
+    return create_visit(
         requests,
         person_uuid=person_uuid,
         provider_uuid=provider_uuid,
@@ -72,4 +89,4 @@ def sync_openmrs_patient(requests, info, openmrs_config, problem_log):
 
     sync_person_attributes(requests, info, openmrs_config, person_uuid, patient['person']['attributes'])
 
-    return person_uuid
+    return OpenmrsResponse(200, 'OK'), person_uuid

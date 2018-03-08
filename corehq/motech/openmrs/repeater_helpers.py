@@ -59,6 +59,9 @@ ADDRESS_PROPERTIES = (
 PERSON_UUID_IDENTIFIER_TYPE_ID = 'uuid'
 
 
+OpenmrsResponse = namedtuple('OpenmrsResponse', 'status_code reason')
+
+
 class Requests(object):
     def __init__(self, base_url, username, password):
         import requests
@@ -185,6 +188,7 @@ def create_visit(requests, person_uuid, provider_uuid, visit_datetime, values_fo
             observation_uuids.append(response.json()['uuid'])
 
     logger.debug('Observations created: ', observation_uuids)
+    return OpenmrsResponse(status_code=response.status_code, reason=response.reason)
 
 
 def search_patients(requests, search_string):
