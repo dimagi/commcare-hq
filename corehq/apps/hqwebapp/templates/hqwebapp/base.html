@@ -570,7 +570,7 @@
 
         {# EULA #}
         {% if request.couch_user and not request.couch_user.is_eula_signed and not request.couch_user.is_anonymous %}
-            {% include 'hqwebapp/includes/modal_eula.html' with needs_agreement=True %}
+            {% include 'hqwebapp/includes/modal_terms.html' with needs_agreement=True %}
         {% endif %}
 
         {# 30 Day Trial #}
