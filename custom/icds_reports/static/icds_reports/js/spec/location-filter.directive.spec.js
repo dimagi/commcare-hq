@@ -17,6 +17,8 @@ describe('Location Filter Controller', function () {
             parent_id: null,
             location_id: "9951736acfe54c68948225cc05fbbd63",
             name: "Chhattisgarh",
+            user_have_access: 1,
+            user_have_access_to_parent: 0,
         }],
     };
 
@@ -28,6 +30,8 @@ describe('Location Filter Controller', function () {
         parent_id: null,
         location_id: "9951736acfe54c68948225cc05fbbd63",
         name: "Chhattisgarh",
+        user_have_access: 1,
+        user_have_access_to_parent: 0,
     }, [], [], [],
     ];
 
@@ -106,6 +110,8 @@ describe('Location Filter Controller', function () {
             parent_id: null,
             location_id: "9951736acfe54c68948225cc05fbbd63",
             name: "Chhattisgarh",
+            user_have_access: 1,
+            user_have_access_to_parent: 0,
         }];
 
         var result = controller.getLocationsForLevel(level);
@@ -129,6 +135,8 @@ describe('Location Filter Controller', function () {
                 "parent_id": null,
                 "location_id": "9951736acfe54c68948225cc05fbbd63",
                 "name": "Chhattisgarh",
+                "user_have_access": 1,
+                "user_have_access_to_parent": 0,
             },
             {"name": "All", "location_id": "all"},
             null,
@@ -164,17 +172,23 @@ describe('Location Modal Controller', function () {
             parent_id: null,
             location_id: "9951736acfe54c68948225cc05fbbd63",
             name: "Chhattisgarh",
+            user_have_access: 1,
+            user_have_access_to_parent: 0,
         }],
     };
 
     var mockSelectedLocations = [{
         name: "All",
         location_id: "all",
+        user_have_access: 1,
+        user_have_access_to_parent: 0,
     }, {
         location_type_name: "state",
         parent_id: null,
         location_id: "9951736acfe54c68948225cc05fbbd63",
         name: "Chhattisgarh",
+        user_have_access: 1,
+        user_have_access_to_parent: 0,
     }, [], [], [],
     ];
 
@@ -251,6 +265,8 @@ describe('Location Modal Controller', function () {
             parent_id: null,
             location_id: "9951736acfe54c68948225cc05fbbd63",
             name: "Chhattisgarh",
+            user_have_access: 1,
+            user_have_access_to_parent: 0,
         }];
 
         var result = controller.getLocationsForLevel(level);
@@ -277,17 +293,26 @@ describe('Location Modal Controller', function () {
             parent_id: null,
             location_id: "9951736acfe54c68948225cc05fbbd63",
             name: "Chhattisgarh",
+            user_have_access: 1,
+            user_have_access_to_parent: 0,
         };
 
         var expected = [
-            {"name": "All", "location_id": "all"},
+            {
+                "name": "All",
+                "location_id": "all",
+                "user_have_access": 1,
+                "user_have_access_to_parent": 0,
+            },
             {
                 "location_type_name": "state",
                 "parent_id": null,
                 "location_id": "9951736acfe54c68948225cc05fbbd63",
                 "name": "Chhattisgarh",
+                "user_have_access": 1,
+                "user_have_access_to_parent": 0,
             },
-            {"name": "All", "location_id": "all"},
+            null,
             null,
             null,
             null,
@@ -306,7 +331,14 @@ describe('Location Modal Controller', function () {
         assert.equal(expected, result);
 
         controller.apply();
-        expected = {"name": "All", "location_id": "all"};
+        expected = {
+            "location_id": "9951736acfe54c68948225cc05fbbd63",
+            "location_type_name": "state",
+            "name": "Chhattisgarh",
+            "parent_id": null,
+            "user_have_access": 1,
+            "user_have_access_to_parent": 0,
+        };
         result = controller.selectedLocationId;
 
         assert.deepEqual(expected, result);
@@ -327,12 +359,19 @@ describe('Location Modal Controller', function () {
     it('tests reset when user id exist', function () {
         controller.userLocationId = '9951736acfe54c68948225cc05fbbd63';
         var expected = [
-            {"name": "All", "location_id": "all"},
+            {
+                "name": "All",
+                "location_id": "all",
+                "user_have_access": 1,
+                "user_have_access_to_parent": 0,
+            },
             {
                 "location_type_name": "state",
                 "parent_id": null,
                 "location_id": "9951736acfe54c68948225cc05fbbd63",
                 "name": "Chhattisgarh",
+                "user_have_access": 1,
+                "user_have_access_to_parent": 0,
             },
             {"name": "All", "location_id": "all"},
         ];
