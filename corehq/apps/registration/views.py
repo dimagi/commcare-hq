@@ -154,6 +154,9 @@ class ProcessRegistrationView(JSONResponseMixin, NewUserNumberAbTestMixin, View)
                 }
             return {
                 'success': True,
+                'is_mobile_experience': (
+                    reg_form.cleaned_data.get('is_mobile') and
+                    toggles.MOBILE_SIGNUP_REDIRECT_AB_TEST.enabled(reg_form.cleaned_data['email']))
             }
         logging.error(
             "There was an error processing a new user registration form."

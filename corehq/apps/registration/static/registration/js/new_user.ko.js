@@ -325,6 +325,8 @@ hqDefine('registration/js/new_user.ko', function () {
         self.showThirdTimeout = ko.observable(false);
         self.showFourthTimeout = ko.observable(false);
 
+        self.isMobileExperience = ko.observable(false);
+
         self.submitForm = function () {
             self.showFirstTimeout(false);
             self.showSecondTimeout(false);
@@ -369,6 +371,7 @@ hqDefine('registration/js/new_user.ko', function () {
                         } else if (response.success) {
                             self.isSubmitting(false);
                             self.isSubmitSuccess(true);
+                            self.isMobileExperience(response.is_mobile_experience);
                             _private.submitSuccessAnalytics(submitData);
                         }
                     },
