@@ -2680,6 +2680,7 @@ class Module(ModuleBase, ModuleDetailsMixin):
                 header={(lang or 'en'): ugettext("Name")},
                 field='name',
                 model='case',
+                hasAutocomplete=True,
             )]
         )
         module = Module(
