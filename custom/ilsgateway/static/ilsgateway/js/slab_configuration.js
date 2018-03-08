@@ -3,8 +3,6 @@ hqDefine('ilsgateway/js/locations', function () {
     var LocationModels = hqImport('locations/js/location_tree');
 
     $(function () {
-        var load_locs_url = initialPageData.get('api_root');
-
         var locs = initialPageData.get('locations'),
             can_edit_root = initialPageData.get('can_edit_root'),
             hierarchy = initialPageData.get('hierarchy'),
@@ -13,7 +11,6 @@ hqDefine('ilsgateway/js/locations', function () {
         var options = {
             show_inactive: show_inactive,
             can_edit_root: can_edit_root,
-            load_locs_url: load_locs_url,
         };
 
         var tree_model = new LocationModels.LocationTreeViewModel(hierarchy, options);

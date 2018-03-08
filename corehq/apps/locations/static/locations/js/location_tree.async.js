@@ -1,23 +1,21 @@
 /* globals django */
 hqDefine('locations/js/location_tree', function() {
     var initialPageData = hqImport('hqwebapp/js/initial_page_data');
+    var locationUtils = hqImport('locations/js/utils');
 
-    function api_get_children(loc_uuid, show_inactive, load_locs_url, callback) {
+    function api_get_children(loc_uuid, show_inactive, callback) {
         var params = (loc_uuid ? {
             parent_id: loc_uuid,
         } : {});
         params.include_inactive = show_inactive;
-        $.getJSON(load_locs_url, params, function(allData) {
+        $.getJSON(initialPageData.get('api_root'), params, function(allData) {
             callback(allData.objects);
         });
     }
 
     function LocationTreeViewModel(hierarchy, options) {
-        // options should have properties:
+        // options should have property:
         //      "can_edit_root"
-        //      "load_locs_url"
-        //      "reloadLocationSearchSelect"
-        //      "clearLocationSelection"
 
         var model = this;
 
@@ -58,24 +56,18 @@ hqDefine('locations/js/location_tree', function() {
                 children: locs,
                 can_edit: options.can_edit_root,
                 expanded: true,
-                reloadLocationSearchSelect: options.reloadLocationSearchSelect,
-                clearLocationSelection: options.clearLocationSelection,
-                load_locs_url: options.load_locs_url,
             }, this));
         };
     }
 
     function LocationSearchViewModel(tree_model, options) {
-        // options should have properties:
+        // options should have property:
         //      "can_edit_root"
-        //      "load_locs_url"
-        //      "reloadLocationSearchSelect"
-        //      "clearLocationSelection"
 
         var model = this;
         this.selected_location = ko.observable();
         this.l__selected_location_id = ko.observable();
-        this.clearLocationSelection = ko.observable(options.clearLocationSelection);
+        this.clearLocationSelection = locationUtils.clearLocationSelection.bind(this, tree_model);
 
         this.selected_location_id = ko.computed(function() {
             if (!model.l__selected_location_id()) {
@@ -92,9 +84,6 @@ hqDefine('locations/js/location_tree', function() {
                 uuid: model.selected_location_id(),
                 can_edit: options.can_edit_root,
                 is_archived: options.show_inactive,
-                reloadLocationSearchSelect: options.reloadLocationSearchSelect,
-                clearLocationSelection: options.clearLocationSelection,
-                load_locs_url: options.load_locs_url,
             }, this);
         });
 
@@ -125,9 +114,6 @@ hqDefine('locations/js/location_tree', function() {
                     children: child,
                     expanded: child ? 'semi' : false,
                     children_status: 'semi_loaded',
-                    reloadLocationSearchSelect: options.reloadLocationSearchSelect,
-                    clearLocationSelection: options.clearLocationSelection,
-                    load_locs_url: options.load_locs_url,
                 };
                 level = new LocationModel(data, tree_model, lineage.length - idx - 1);
                 child = Array.of(Object.assign({}, data));
@@ -140,12 +126,9 @@ hqDefine('locations/js/location_tree', function() {
                     var data = {
                         can_edit: options.can_edit_root,
                         is_archived: location.is_archived(),
-                        load_locs_url: options.load_locs_url,
                         location_type: location.type(),
                         name: location.name(),
                         uuid: location.uuid(),
-                        reloadLocationSearchSelect: options.reloadLocationSearchSelect,
-                        clearLocationSelection: options.clearLocationSelection,
                     };
                     root_children.push(data);
                 }
@@ -155,8 +138,6 @@ hqDefine('locations/js/location_tree', function() {
                 name: '_root',
                 children: root_children,
                 can_edit: options.can_edit_root,
-                reloadLocationSearchSelect: options.reloadLocationSearchSelect,
-                clearLocationSelection: options.clearLocationSelection,
                 expanded: 'semi',
             }, tree_model);
             return level;
@@ -177,8 +158,8 @@ hqDefine('locations/js/location_tree', function() {
         this.children_status = ko.observable('not_loaded');
         this.expanded = ko.observable(false);
 
-        this.reloadLocationSearchSelect = data.reloadLocationSearchSelect;
-        this.clearLocationSelection = data.clearLocationSelection;
+        this.reloadLocationSearchSelect = locationUtils.reloadLocationSearchSelect;
+        this.clearLocationSelection = locationUtils.clearLocationSelection.bind(this, root);
 
         this.expanded.subscribe(function(val) {
             if (val === true && (this.children_status() === 'not_loaded' || this.children_status() === 'semi_loaded')) {
@@ -206,11 +187,11 @@ hqDefine('locations/js/location_tree', function() {
                 this.children_status(data.children_status);
             }
             if (data.children !== null) {
-                this.set_children(data.children, data);
+                this.set_children(data.children);
             }
         };
 
-        this.set_children = function(children, data) {
+        this.set_children = function(children) {
             var sortedChildren = [];
             if (children) {
                 sortedChildren = _.sortBy(children, function(e) {
@@ -227,21 +208,13 @@ hqDefine('locations/js/location_tree', function() {
                 }
 
                 var model_children = $.map(sortedChildren, function(e) {
-                    return new LocationModel(_.extend(e, {
-                        load_locs_url: data.load_locs_url,
-                        reloadLocationSearchSelect: data.reloadLocationSearchSelect,
-                        clearLocationSelection: data.clearLocationSelection,
-                    }), root, loc.depth + 1);
+                    return new LocationModel(e, root, loc.depth + 1);
                 });
                 model_children.unshift(loc.children()[0]);
                 this.children(model_children);
             } else {
                 this.children($.map(sortedChildren, function (e) {
-                    return new LocationModel(_.extend(e, {
-                        load_locs_url: data.load_locs_url,
-                        reloadLocationSearchSelect: data.reloadLocationSearchSelect,
-                        clearLocationSelection: data.clearLocationSelection,
-                    }), root, loc.depth + 1);
+                    return new LocationModel(e, root, loc.depth + 1);
                 }));
             }
 
@@ -254,12 +227,8 @@ hqDefine('locations/js/location_tree', function() {
 
         this.load_children_async = function(callback) {
             this.children_status('loading');
-            api_get_children(this.uuid(), data.show_inactive, data.load_locs_url, function(resp) {
-                loc.set_children(resp, {
-                    load_locs_url: data.load_locs_url,
-                    reloadLocationSearchSelect: data.reloadLocationSearchSelect,
-                    clearLocationSelection: data.clearLocationSelection,
-                });
+            api_get_children(this.uuid(), data.show_inactive, function(resp) {
+                loc.set_children(resp);
                 if (callback) {
                     callback(loc);
                 }
@@ -353,6 +322,10 @@ hqDefine('locations/js/location_tree', function() {
             return initialPageData.reverse('create_location');
         };
 
+        this.location_search_url = function() {
+            return initialPageData.reverse('location_search_url');
+        };
+
         this.archive_loc = function(button, name, loc_id) {
             var archive_location_modal = $('#archive-location-modal')[0];
 
@@ -368,7 +341,7 @@ hqDefine('locations/js/location_tree', function() {
                             "name": name,
                         }), "success");
                         loc.remove_elements_after_action(button);
-                        data.reloadLocationSearchSelect();
+                        locationUtils.reloadLocationSearchSelect();
                     },
                 });
                 $(archive_location_modal).modal('hide');
@@ -394,7 +367,7 @@ hqDefine('locations/js/location_tree', function() {
                 error: 'error',
                 success: function() {
                     loc.remove_elements_after_action(button);
-                    data.reloadLocationSearchSelect();
+                    locationUtils.reloadLocationSearchSelect();
                 },
             });
         };
@@ -421,7 +394,7 @@ hqDefine('locations/js/location_tree', function() {
                                     "name": name,
                                 }), "success");
                                 loc.remove_elements_after_action(button);
-                                data.reloadLocationSearchSelect();
+                                locationUtils.reloadLocationSearchSelect();
                             } else {
                                 alert_user(response.message, "warning");
 
