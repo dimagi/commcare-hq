@@ -17,6 +17,7 @@ from corehq.apps.locations.tests.util import (
     setup_locations_with_structure,
 )
 from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.tests.util import create_user_case
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.tests.utils import use_sql_backend
 from custom.icds.const import AWC_LOCATION_TYPE_CODE, SUPERVISOR_LOCATION_TYPE_CODE
@@ -233,9 +234,7 @@ class CustomCriteriaTestCase(BaseCaseRuleTest):
         rule = _create_empty_rule(self.domain, case_type=USERCASE_TYPE)
         rule.add_criteria(CustomMatchDefinition, name='ICDS_IS_USERCASE_OF_AWW')
 
-        with _with_case(self.domain, USERCASE_TYPE, datetime.utcnow(), owner_id=self.aww.get_id) as aww_uc,\
-                _with_case(self.domain, USERCASE_TYPE, datetime.utcnow(), owner_id=self.ls.get_id) as ls_uc:
-
+        with create_user_case(self.aww) as aww_uc, create_user_case(self.ls) as ls_uc:
             self.assertTrue(rule.criteria_match(aww_uc, datetime.utcnow()))
             self.assertFalse(rule.criteria_match(ls_uc, datetime.utcnow()))
 
@@ -243,8 +242,6 @@ class CustomCriteriaTestCase(BaseCaseRuleTest):
         rule = _create_empty_rule(self.domain, case_type=USERCASE_TYPE)
         rule.add_criteria(CustomMatchDefinition, name='ICDS_IS_USERCASE_OF_LS')
 
-        with _with_case(self.domain, USERCASE_TYPE, datetime.utcnow(), owner_id=self.aww.get_id) as aww_uc,\
-                _with_case(self.domain, USERCASE_TYPE, datetime.utcnow(), owner_id=self.ls.get_id) as ls_uc:
-
+        with create_user_case(self.aww) as aww_uc, create_user_case(self.ls) as ls_uc:
             self.assertFalse(rule.criteria_match(aww_uc, datetime.utcnow()))
             self.assertTrue(rule.criteria_match(ls_uc, datetime.utcnow()))

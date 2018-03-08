@@ -91,6 +91,20 @@ def validate_date(value):
     return value.date()
 
 
+def validate_int(value, min_value):
+    error = ValidationError(_("Please enter a whole number greater than or equal to {}").format(min_value))
+
+    try:
+        value = int(value)
+    except (TypeError, ValueError):
+        raise error
+
+    if value < min_value:
+        raise error
+
+    return value
+
+
 class RecipientField(CharField):
     def to_python(self, value):
         if not value:
@@ -108,7 +122,6 @@ class ScheduleForm(Form):
     SEND_MONTHLY = 'monthly'
     SEND_IMMEDIATELY = 'immediately'
 
-    STOP_AFTER_FIRST_OCCURRENCE = 'after_first_occurrence'
     STOP_AFTER_OCCURRENCES = 'after_occurrences'
     STOP_NEVER = 'never'
 
@@ -117,6 +130,10 @@ class ScheduleForm(Form):
     CONTENT_SMS_SURVEY = 'sms_survey'
     CONTENT_IVR_SURVEY = 'ivr_survey'
     CONTENT_CUSTOM_SMS = 'custom_sms'
+
+    REPEAT_NO = 'no'
+    REPEAT_EVERY_1 = 'repeat_every_1'
+    REPEAT_EVERY_N = 'repeat_every_n'
 
     LANGUAGE_PROJECT_DEFAULT = 'PROJECT_DEFAULT'
 
@@ -175,18 +192,30 @@ class ScheduleForm(Form):
         max_value=1439,
         label='',
     )
+    repeat = ChoiceField(
+        required=False,
+        # The text for REPEAT_EVERY_1 gets set dynamically
+        choices=(
+            (REPEAT_NO, ugettext_lazy('no')),
+            (REPEAT_EVERY_1, ''),
+            (REPEAT_EVERY_N, ugettext_lazy('every')),
+        ),
+    )
+    repeat_every = IntegerField(
+        required=False,
+        min_value=2,
+        label='',
+    )
     stop_type = ChoiceField(
         required=False,
         choices=(
-            # The text for STOP_AFTER_FIRST_OCCURRENCE and STOP_AFTER_OCCURRENCES gets set dynamically
-            (STOP_AFTER_FIRST_OCCURRENCE, ''),
-            (STOP_AFTER_OCCURRENCES, ''),
-            (STOP_NEVER, ugettext_lazy('Never')),
+            (STOP_AFTER_OCCURRENCES, ugettext_lazy('after')),
+            (STOP_NEVER, ugettext_lazy('never')),
         )
     )
     occurrences = IntegerField(
         required=False,
-        min_value=1,
+        min_value=2,
         label='',
     )
     recipient_types = MultipleChoiceField(
@@ -323,13 +352,29 @@ class ScheduleForm(Form):
 
         self.add_initial_for_send_time(initial)
 
-        if self.initial_schedule.total_iterations == TimedSchedule.REPEAT_INDEFINITELY:
-            initial['stop_type'] = self.STOP_NEVER
-        elif self.initial_schedule.total_iterations == 1:
-            initial['stop_type'] = self.STOP_AFTER_FIRST_OCCURRENCE
+        if self.initial_schedule.total_iterations == 1:
+            initial['repeat'] = self.REPEAT_NO
         else:
-            initial['stop_type'] = self.STOP_AFTER_OCCURRENCES
-            initial['occurrences'] = self.initial_schedule.total_iterations
+            if initial['send_frequency'] == self.SEND_DAILY:
+                repeat_every = self.initial_schedule.repeat_every
+            elif initial['send_frequency'] == self.SEND_WEEKLY:
+                repeat_every = self.initial_schedule.repeat_every // 7
+            elif initial['send_frequency'] == self.SEND_MONTHLY:
+                repeat_every = self.initial_schedule.repeat_every * -1
+            else:
+                raise ValueError("Unexpected value for send_frequency: %s" % initial['send_frequency'])
+
+            if repeat_every == 1:
+                initial['repeat'] = self.REPEAT_EVERY_1
+            else:
+                initial['repeat'] = self.REPEAT_EVERY_N
+                initial['repeat_every'] = repeat_every
+
+            if self.initial_schedule.total_iterations == TimedSchedule.REPEAT_INDEFINITELY:
+                initial['stop_type'] = self.STOP_NEVER
+            elif self.initial_schedule.total_iterations > 1:
+                initial['stop_type'] = self.STOP_AFTER_OCCURRENCES
+                initial['occurrences'] = self.initial_schedule.total_iterations
 
     def add_initial_recipients(self, recipients, initial):
         recipient_types = set()
@@ -599,23 +644,78 @@ class ScheduleForm(Form):
 
         result.extend([
             hqcrispy.B3MultiField(
+                _("Repeat"),
+                crispy.Div(
+                    twbscrispy.InlineField(
+                        'repeat',
+                        data_bind='value: repeat',
+                    ),
+                    css_class='col-sm-4',
+                ),
+                crispy.Div(
+                    twbscrispy.InlineField(
+                        'repeat_every',
+                        data_bind='value: repeat_every',
+                    ),
+                    css_class='col-sm-2',
+                    data_bind="visible: repeat() === '%s'" % self.REPEAT_EVERY_N,
+                ),
+                crispy.Div(
+                    crispy.Div(
+                        crispy.HTML('<label class="control-label">%s</label>' % _("days")),
+                        css_class='col-sm-4',
+                        data_bind="visible: send_frequency() === '%s'" % self.SEND_DAILY,
+                    ),
+                    crispy.Div(
+                        crispy.HTML('<label class="control-label">%s</label>' % _("weeks")),
+                        css_class='col-sm-4',
+                        data_bind="visible: send_frequency() === '%s'" % self.SEND_WEEKLY,
+                    ),
+                    crispy.Div(
+                        crispy.HTML('<label class="control-label">%s</label>' % _("months")),
+                        css_class='col-sm-4',
+                        data_bind="visible: send_frequency() === '%s'" % self.SEND_MONTHLY,
+                    ),
+                    data_bind="visible: repeat() === '%s'" % self.REPEAT_EVERY_N,
+                ),
+                data_bind='visible: showRepeatInput',
+            ),
+            hqcrispy.B3MultiField(
                 _("Stop"),
                 crispy.Div(
                     twbscrispy.InlineField(
                         'stop_type',
                         data_bind='value: stop_type',
                     ),
-                    css_class='col-sm-6',
+                    css_class='col-sm-4',
                 ),
                 crispy.Div(
                     twbscrispy.InlineField(
                         'occurrences',
                         data_bind='value: occurrences',
                     ),
-                    css_class='col-sm-6',
+                    css_class='col-sm-2',
                     data_bind="visible: stop_type() === '%s'" % self.STOP_AFTER_OCCURRENCES,
                 ),
-                data_bind='visible: showStopInput',
+                crispy.Div(
+                    crispy.Div(
+                        crispy.HTML('<label class="control-label">%s</label>' % _("occurrences")),
+                        css_class='col-sm-4',
+                        data_bind="visible: send_frequency() === '%s'" % self.SEND_DAILY,
+                    ),
+                    crispy.Div(
+                        crispy.HTML('<label class="control-label">%s</label>' % _("weekly occurrences")),
+                        css_class='col-sm-4',
+                        data_bind="visible: send_frequency() === '%s'" % self.SEND_WEEKLY,
+                    ),
+                    crispy.Div(
+                        crispy.HTML('<label class="control-label">%s</label>' % _("monthly occurrences")),
+                        css_class='col-sm-4',
+                        data_bind="visible: send_frequency() === '%s'" % self.SEND_MONTHLY,
+                    ),
+                    data_bind="visible: stop_type() === '%s'" % self.STOP_AFTER_OCCURRENCES,
+                ),
+                data_bind="visible: showStopInput() && repeat() !== '%s'" % self.REPEAT_NO,
             ),
             hqcrispy.B3MultiField(
                 "",
@@ -1001,8 +1101,30 @@ class ScheduleForm(Form):
 
         return value
 
-    def clean_stop_type(self):
+    def clean_repeat(self):
         if self.cleaned_data.get('send_frequency') == self.SEND_IMMEDIATELY:
+            return None
+
+        repeat = self.cleaned_data.get('repeat')
+        if not repeat:
+            raise ValidationError(_("This field is required"))
+
+        return repeat
+
+    def clean_repeat_every(self):
+        if (
+            self.cleaned_data.get('send_frequency') == self.SEND_IMMEDIATELY or
+            self.cleaned_data.get('repeat') != self.REPEAT_EVERY_N
+        ):
+            return None
+
+        return validate_int(self.cleaned_data.get('repeat_every'), 2)
+
+    def clean_stop_type(self):
+        if (
+            self.cleaned_data.get('send_frequency') == self.SEND_IMMEDIATELY or
+            self.cleaned_data.get('repeat') == self.REPEAT_NO
+        ):
             return None
 
         stop_type = self.cleaned_data.get('stop_type')
@@ -1014,22 +1136,12 @@ class ScheduleForm(Form):
     def clean_occurrences(self):
         if (
             self.cleaned_data.get('send_frequency') == self.SEND_IMMEDIATELY or
+            self.cleaned_data.get('repeat') == self.REPEAT_NO or
             self.cleaned_data.get('stop_type') != self.STOP_AFTER_OCCURRENCES
         ):
             return None
 
-        error = ValidationError(_("Please enter a whole number greater than 0"))
-
-        occurrences = self.cleaned_data.get('occurrences')
-        try:
-            occurrences = int(occurrences)
-        except (TypeError, ValueError):
-            raise error
-
-        if occurrences <= 0:
-            raise error
-
-        return occurrences
+        return validate_int(self.cleaned_data.get('occurrences'), 2)
 
     def clean_subject(self):
         if self.cleaned_data.get('content') != self.CONTENT_EMAIL:
@@ -1150,12 +1262,18 @@ class ScheduleForm(Form):
 
     def distill_total_iterations(self):
         form_data = self.cleaned_data
-        if form_data['stop_type'] == self.STOP_NEVER:
-            return TimedSchedule.REPEAT_INDEFINITELY
-        elif form_data['stop_type'] == self.STOP_AFTER_FIRST_OCCURRENCE:
+        if form_data['repeat'] == self.REPEAT_NO:
             return 1
+        elif form_data['stop_type'] == self.STOP_NEVER:
+            return TimedSchedule.REPEAT_INDEFINITELY
 
         return form_data['occurrences']
+
+    def distill_repeat_every(self):
+        if self.cleaned_data['repeat'] == self.REPEAT_EVERY_N:
+            return self.cleaned_data['repeat_every']
+
+        return 1
 
     def distill_default_language_code(self):
         value = self.cleaned_data['default_language_code']
@@ -1219,6 +1337,7 @@ class ScheduleForm(Form):
 
     def save_daily_schedule(self):
         form_data = self.cleaned_data
+        repeat_every = self.distill_repeat_every()
         total_iterations = self.distill_total_iterations()
         content = self.distill_content()
         extra_scheduling_options = self.distill_extra_scheduling_options()
@@ -1232,6 +1351,7 @@ class ScheduleForm(Form):
                 total_iterations=total_iterations,
                 start_offset=self.distill_start_offset(),
                 extra_options=extra_scheduling_options,
+                repeat_every=repeat_every,
             )
         else:
             schedule = TimedSchedule.create_simple_daily_schedule(
@@ -1241,12 +1361,14 @@ class ScheduleForm(Form):
                 total_iterations=total_iterations,
                 start_offset=self.distill_start_offset(),
                 extra_options=extra_scheduling_options,
+                repeat_every=repeat_every,
             )
 
         return schedule
 
     def save_weekly_schedule(self):
         form_data = self.cleaned_data
+        repeat_every = self.distill_repeat_every()
         total_iterations = self.distill_total_iterations()
         content = self.distill_content()
         extra_scheduling_options = self.distill_extra_scheduling_options()
@@ -1261,6 +1383,7 @@ class ScheduleForm(Form):
                 self.distill_start_day_of_week(),
                 total_iterations=total_iterations,
                 extra_options=extra_scheduling_options,
+                repeat_every=repeat_every,
             )
         else:
             schedule = TimedSchedule.create_simple_weekly_schedule(
@@ -1271,12 +1394,14 @@ class ScheduleForm(Form):
                 self.distill_start_day_of_week(),
                 total_iterations=total_iterations,
                 extra_options=extra_scheduling_options,
+                repeat_every=repeat_every,
             )
 
         return schedule
 
     def save_monthly_schedule(self):
         form_data = self.cleaned_data
+        repeat_every = self.distill_repeat_every()
         total_iterations = self.distill_total_iterations()
         content = self.distill_content()
         extra_scheduling_options = self.distill_extra_scheduling_options()
@@ -1294,6 +1419,7 @@ class ScheduleForm(Form):
                 content,
                 total_iterations=total_iterations,
                 extra_options=extra_scheduling_options,
+                repeat_every=repeat_every,
             )
         else:
             schedule = TimedSchedule.create_simple_monthly_schedule(
@@ -1303,6 +1429,7 @@ class ScheduleForm(Form):
                 content,
                 total_iterations=total_iterations,
                 extra_options=extra_scheduling_options,
+                repeat_every=repeat_every,
             )
 
         return schedule
