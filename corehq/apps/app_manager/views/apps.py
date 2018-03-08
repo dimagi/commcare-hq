@@ -8,18 +8,14 @@ import zipfile
 from collections import defaultdict
 from wsgiref.util import FileWrapper
 
-from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
+from couchdbkit.exceptions import ResourceConflict
 from django.contrib import messages
 from django.http import HttpResponse, Http404, HttpResponseBadRequest, HttpResponseRedirect
-from django.http.request import QueryDict
 from django.shortcuts import render
 from django.urls import reverse
-from django.utils.decorators import method_decorator
 from django.utils.http import urlencode as django_urlencode
 from django.utils.text import slugify
 from django.utils.translation import ugettext as _
-from django.views import View
-from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET
 from django_prbac.utils import has_privilege
 
@@ -34,7 +30,7 @@ from corehq.apps.app_manager.const import (
 )
 from corehq.apps.app_manager.dbaccessors import get_app, get_current_app, get_latest_released_app_version
 from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
-    require_can_edit_apps, require_deploy_apps, no_conflict
+    require_can_edit_apps, require_deploy_apps
 from corehq.apps.app_manager.exceptions import IncompatibleFormTypeException, RearrangeError, AppLinkError
 from corehq.apps.app_manager.forms import CopyApplicationForm
 from corehq.apps.app_manager.models import (
@@ -42,10 +38,9 @@ from corehq.apps.app_manager.models import (
     ApplicationBase,
     DeleteApplicationRecord,
     Form,
-    FormNotFoundException,
     Module,
     ModuleNotFoundException,
-    ReportModule, LinkedApplication)
+    ReportModule)
 from corehq.apps.app_manager.models import import_app as import_app_util
 from corehq.apps.app_manager.util import (
     get_settings_values,
