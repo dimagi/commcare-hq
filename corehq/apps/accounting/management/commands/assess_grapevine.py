@@ -40,6 +40,7 @@ class Command(BaseCommand):
                 )
                 billable_count = billables_this_month.count()
                 if billable_count:
+                    print billables_this_month.aggregate(Sum('gateway_fee__amount'))
                     correct_total_gateway_cost = billables_this_month.aggregate(Sum('gateway_fee__amount'))[0]['gateway_fee__amount__sum'],
                     bad_total_gateway_cost = bad_billables_this_month.aggregate(Sum('gateway_fee__amount'))[0]['gateway_fee__amount__sum'],
                 else:
