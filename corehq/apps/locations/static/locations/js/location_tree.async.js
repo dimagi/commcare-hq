@@ -98,8 +98,6 @@ hqDefine('locations/js/location_tree', function() {
             }, this);
         });
 
-        this.selected_location_tree = tree_model;
-
         this.lineage = ko.computed(function() {
             if (!model.selected_location()) {
                 return;
@@ -110,56 +108,55 @@ hqDefine('locations/js/location_tree', function() {
                 dataType: 'json',
                 error: 'error',
                 success: function(response) {
-
-                    var expand_tree = function() {
-                        var child = null;
-                        for (var lineage_idx = 0; lineage_idx < response.lineage.length; lineage_idx++) {
-                            var location = response.lineage[lineage_idx];
-                            var data = {
-                                name: location.name,
-                                location_type: location.location_type,
-                                uuid: location.location_id,
-                                is_archived: location.is_archived,
-                                can_edit: options.can_edit_root,
-                                children: child,
-                                expanded: child ? 'semi' : false,
-                                children_status: 'semi_loaded',
-                                reloadLocationSearchSelect: options.reloadLocationSearchSelect,
-                                clearLocationSelection: options.clearLocationSelection,
-                                new_loc_url: options.new_loc_url,
-                                loc_edit_url: options.loc_edit_url,
-                                load_locs_url: options.load_locs_url,
-                            };
-                            var level = new LocationModel(data, tree_model, response.lineage.length - lineage_idx - 1);
-                            child = Array.of(Object.assign({}, data));
-                        }
-                        var root_children = [];
-                        for (var child_idx = 0; child_idx < tree_model.locs.length; child_idx++) {
-                            if (tree_model.locs[child_idx].name === child[0].name) {
-                                root_children.push(child[0]);
-                            } else {
-                                root_children.push(tree_model.locs[child_idx]);
-                            }
-                        }
-                        level = new LocationModel({
-                            name: '_root',
-                            children: root_children,
-                            can_edit: options.can_edit_root,
-                            expanded: 'semi',
-                            reloadLocationSearchSelect: options.reloadLocationSearchSelect,
-                            clearLocationSelection: options.clearLocationSelection,
-                            new_loc_url: options.new_loc_url,
-                            loc_edit_url: options.loc_edit_url,
-                            load_locs_url: options.load_locs_url,
-                        }, tree_model);
-                        return level;
-                    };
-
-                    tree_model.root(expand_tree());
-
-                },
+                    tree_model.root(model.expand_tree(response.lineage));
+                }.bind(model),
             });
         });
+
+        this.expand_tree = function (lineage) {
+            var child, level;
+            lineage.forEach(function(location, idx) {
+                var data = {
+                    name: location.name,
+                    location_type: location.location_type,
+                    uuid: location.location_id,
+                    is_archived: location.is_archived,
+                    can_edit: options.can_edit_root,
+                    children: child,
+                    expanded: child ? 'semi' : false,
+                    children_status: 'semi_loaded',
+                    reloadLocationSearchSelect: options.reloadLocationSearchSelect,
+                    clearLocationSelection: options.clearLocationSelection,
+                    load_locs_url: options.load_locs_url,
+                };
+                level = new LocationModel(data, tree_model, lineage.length - idx - 1);
+                child = Array.of(Object.assign({}, data));
+            });
+            var root_children = [];
+            tree_model.root().children().forEach(function(location) {
+                if (location.name() === child[0].name) {
+                    root_children.push(child[0]);
+                } else {
+                    var data = {
+                        can_edit: options.can_edit_root,
+                        is_archived: location.is_archived(),
+                        load_locs_url: options.load_locs_url,
+                        location_type: location.type(),
+                        name: location.name(),
+                        uuid: location.uuid(),
+                    };
+                    root_children.push(data);
+                }
+            });
+
+            level = new LocationModel({
+                name: '_root',
+                children: root_children,
+                can_edit: options.can_edit_root,
+                expanded: 'semi',
+            }, tree_model);
+            return level;
+        };
     }
 
     function LocationModel(data, root, depth) {
