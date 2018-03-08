@@ -120,7 +120,6 @@ class ProcessRegistrationView(JSONResponseMixin, NewUserNumberAbTestMixin, View)
             web_user.save()
         track_workflow(new_user.email, "Requested new account")
         login(self.request, new_user)
-        return new_user
 
     @allow_remote_invocation
     def register_new_user(self, data):
@@ -129,7 +128,7 @@ class ProcessRegistrationView(JSONResponseMixin, NewUserNumberAbTestMixin, View)
             show_number=self.ab_show_number,
         )
         if reg_form.is_valid():
-            new_user = self._create_new_account(reg_form)
+            self._create_new_account(reg_form)
             try:
                 request_new_domain(
                     self.request, reg_form, is_new_user=True
@@ -150,7 +149,9 @@ class ProcessRegistrationView(JSONResponseMixin, NewUserNumberAbTestMixin, View)
                 persona_fields['buyer_persona'] = reg_form.cleaned_data['persona']
                 if reg_form.cleaned_data['persona_other']:
                     persona_fields['buyer_persona_other'] = reg_form.cleaned_data['persona_other']
-                update_hubspot_properties.delay(new_user, persona_fields)
+                couch_user = CouchUser.get_by_username(reg_form.cleaned_data['email'])
+                if couch_user:
+                    update_hubspot_properties.delay(couch_user, persona_fields)
 
             return {
                 'success': True,
