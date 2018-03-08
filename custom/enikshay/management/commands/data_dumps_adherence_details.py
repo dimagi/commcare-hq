@@ -57,7 +57,8 @@ class Command(BaseDataDump):
         return get_adherence_cases_from_episode(DOMAIN, episode_case.case_id)
 
     def get_custom_value(self, column_name, adherence):
-        assert adherence.type == CASE_TYPE_ADHERENCE, "Unexpected Case type instead of %s" % CASE_TYPE_ADHERENCE
+        assert adherence.type == CASE_TYPE_ADHERENCE, \
+            "Unexpected Case type instead of %s" % CASE_TYPE_ADHERENCE
         if column_name == "Date of Creation of Presumptive TB Episode":
             return adherence.opened_on
         elif column_name == "Created by Username":
@@ -72,9 +73,9 @@ class Command(BaseDataDump):
         return Exception("unknown custom column %s" % column_name)
 
     def get_person(self, adherence):
-        assert(adherence.type in [CASE_TYPE_ADHERENCE, CASE_TYPE_EPISODE],
-               "Unexpected Case type instead of %s and %s" % (CASE_TYPE_ADHERENCE, CASE_TYPE_EPISODE)
-               )
+        assert adherence.type in [CASE_TYPE_ADHERENCE, CASE_TYPE_EPISODE], \
+            "Unexpected Case type instead of %s and %s" % (CASE_TYPE_ADHERENCE, CASE_TYPE_EPISODE)
+
         if 'person' not in self.context:
             if adherence.type == CASE_TYPE_EPISODE:
                 episode = adherence
