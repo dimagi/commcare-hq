@@ -38,14 +38,17 @@ class Command(BaseCommand):
                     date_sent__year=year,
                     date_sent__month=month,
                 )
-                correct_total_gateway_cost = billables_this_month.aggregate(Sum('gateway_fee__amount'))[0]['gateway_fee__amount__sum'],
-                bad_total_gateway_cost = bad_billables_this_month.aggregate(Sum('gateway_fee__amount'))[0]['gateway_fee__amount__sum'],
-                print correct_total_gateway_cost
+                billable_count = billables_this_month.count()
+                if billable_count:
+                    correct_total_gateway_cost = billables_this_month.aggregate(Sum('gateway_fee__amount'))[0]['gateway_fee__amount__sum'],
+                    bad_total_gateway_cost = bad_billables_this_month.aggregate(Sum('gateway_fee__amount'))[0]['gateway_fee__amount__sum'],
+                else:
+                    correct_total_gateway_cost = bad_total_gateway_cost = 0
                 domain_and_month_to_data[domain][(year, month)] = {
-                    'number_of_smsbillables': billables_this_month.count(),
+                    'number_of_smsbillables': billable_count,
                     'correct_total_gateway_cost': correct_total_gateway_cost,
                     'bad_total_gateway_cost': bad_total_gateway_cost,
-                    'under_billing': (correct_total_gateway_cost - bad_total_gateway_cost) if correct_total_gateway_cost is not None else 0,
+                    'under_billing': correct_total_gateway_cost - bad_total_gateway_cost,
                 }
         print domain_and_month_to_data
 
