@@ -232,7 +232,7 @@ def _find_stagnant_cases(adapter):
 india_timezone = pytz.timezone('Asia/Kolkata')
 
 
-@task(queue='icds_dashboard_reports')
+@task(queue='icds_dashboard_reports_queue')
 def prepare_issnip_monthly_register_reports(domain, user, awcs, pdf_format, month, year):
 
     utc_now = datetime.now(pytz.utc)
