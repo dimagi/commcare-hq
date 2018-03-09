@@ -10,7 +10,11 @@ hqDefine('hqwebapp/js/main', [
     alertUser,
     googleAnalytics
 ) {
+    console.log("PRINTED1!");
+    console.log("====");
     var eventize = function (that) {
+        console.log("PRINTED1!");
+    console.log("====");
         'use strict';
         var events = {};
         that.on = function (tag, callback) {
@@ -31,8 +35,11 @@ hqDefine('hqwebapp/js/main', [
         };
         return that;
     };
-
+console.log("PRINTED1!");
+    console.log("====");
     var makeHqHelp = function (opts, wrap) {
+        console.log("PRINTED1!");
+    console.log("====");
         'use strict';
         wrap = wrap === undefined ? true : wrap;
         var el = $(
@@ -48,8 +55,11 @@ hqDefine('hqwebapp/js/main', [
         }
         return el;
     };
-
+console.log("PRINTED1!");
+    console.log("====");
     var transformHelpTemplate = function ($template, wrap) {
+        console.log("PRINTED1!");
+    console.log("====");
         'use strict';
         if ($template.data()) {
             var $help = makeHqHelp($template.data(), wrap);
@@ -60,8 +70,14 @@ hqDefine('hqwebapp/js/main', [
 
     var initBlock = function ($elem) {
         'use strict';
+        console.log("IN INIT BLOCK!")
+        console.log(window.USE_REQUIREJS)
+        console.log("====")
 
         $('.submit').click(function (e) {
+            console.log("IN INIT BLOCK*@!#&*(!&#(&!#")
+            console.log(window.USE_REQUIREJS)
+            console.log("====")
             var $form = $(this).closest('.form, form'),
                 data = $form.find('[name]').serialize(),
                 action = $form.attr('action') || $form.data('action');
@@ -73,6 +89,10 @@ hqDefine('hqwebapp/js/main', [
             e.preventDefault();
             $.postGo($(this).attr('href'), {});
         });
+
+        console.log("IN INIT BLOCK*@!#&*(!&#(&!#")
+        console.log(window.USE_REQUIREJS)
+        console.log("====")
 
         $(".button", $elem).button().wrap('<span />');
         $("input[type='submit']", $elem).button();
