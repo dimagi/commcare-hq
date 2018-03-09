@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import os
 from manage import _set_source_root_parent, _set_source_root
 
