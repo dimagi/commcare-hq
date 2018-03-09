@@ -10,12 +10,13 @@ from dateutil.relativedelta import relativedelta
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied
 from django.db.models.query_utils import Q
-from django.http.response import JsonResponse, HttpResponseBadRequest, HttpResponse, Http404
+from django.http.response import JsonResponse, HttpResponseBadRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect
+from django.urls import reverse
 from django.utils.decorators import method_decorator
-from django.views.generic.base import View, TemplateView
+from django.views.generic.base import View, TemplateView, RedirectView
 
-import settings
+
 from corehq import toggles
 from corehq.apps.cloudcare.utils import webapps_url
 from corehq.apps.domain.decorators import login_and_domain_required
@@ -30,9 +31,6 @@ from custom.icds.const import AWC_LOCATION_TYPE_CODE
 from custom.icds_reports.const import LocationTypes, BHD_ROLE, ICDS_SUPPORT_EMAIL, CHILDREN_EXPORT, \
     PREGNANT_WOMEN_EXPORT, DEMOGRAPHICS_EXPORT, SYSTEM_USAGE_EXPORT, AWC_INFRASTRUCTURE_EXPORT,\
     BENEFICIARY_LIST_EXPORT, ISSNIP_MONTHLY_REGISTER_PDF
-from custom.icds_reports.filters import CasteFilter, MinorityFilter, DisabledFilter, \
-    ResidentFilter, MaternalStatusFilter, ChildAgeFilter, THRBeneficiaryType, ICDSMonthFilter, \
-    TableauLocationFilter, ICDSYearFilter
 
 from custom.icds_reports.reports.adhaar import get_adhaar_data_chart, get_adhaar_data_map, get_adhaar_sector_data
 from custom.icds_reports.reports.adolescent_girls import get_adolescent_girls_data_map, \
@@ -99,57 +97,13 @@ from .exceptions import TableauTokenException
 
 @location_safe
 @method_decorator([toggles.ICDS_REPORTS.required_decorator(), login_and_domain_required], name='dispatch')
-class TableauView(TemplateView):
+class TableauView(RedirectView):
 
-    template_name = 'icds_reports/tableau.html'
+    permanent = True
+    pattern_name = 'icds_dashboard'
 
-    filters = [
-        ICDSMonthFilter,
-        ICDSYearFilter,
-        TableauLocationFilter,
-        CasteFilter,
-        MinorityFilter,
-        DisabledFilter,
-        ResidentFilter,
-        MaternalStatusFilter,
-        ChildAgeFilter,
-        THRBeneficiaryType
-    ]
-
-    @property
-    def domain(self):
-        return self.kwargs['domain']
-
-    @property
-    def couch_user(self):
-        return self.request.couch_user
-
-    def get_context_data(self, **kwargs):
-        location_type_code, user_location_id, state_id, district_id, block_id = _get_user_location(
-            self.couch_user, self.domain
-        )
-        client_ip = self.request.META.get('X-Forwarded-For', '')
-        tableau_access_url = get_tableau_trusted_url(client_ip)
-
-        kwargs.update({
-            'report_workbook': self.kwargs.get('workbook'),
-            'report_worksheet': self.kwargs.get('worksheet'),
-            'debug': self.request.GET.get('debug', False),
-            'view_by': location_type_code,
-            'view_by_value': user_location_id,
-            'state_id': state_id,
-            'district_id': district_id,
-            'block_id': block_id,
-            'tableau_access_url': tableau_access_url,
-            'filters': [
-                {
-                    'html': view_filter(request=self.request, domain=self.domain).render(),
-                    'slug': view_filter(request=self.request, domain=self.domain).slug
-                }
-                for view_filter in self.filters
-            ]
-        })
-        return super(TableauView, self).get_context_data(**kwargs)
+    def get_redirect_url(self, domain=None, **kwargs):
+        return reverse('icds_dashboard', args=[domain])
 
 
 def _get_user_location(user, domain):
