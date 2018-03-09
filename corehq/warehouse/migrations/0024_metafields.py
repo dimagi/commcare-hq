@@ -9,7 +9,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('warehouse', '0022_userstagingtable_assigned_location_ids'),
+        ('warehouse', '0023_add_build_info'),
     ]
 
     operations = [
