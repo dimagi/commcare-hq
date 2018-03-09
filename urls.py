@@ -138,7 +138,7 @@ urlpatterns = [
     url(r'^404/$', TemplateView.as_view(template_name='404.html')),
     url(r'^403/$', TemplateView.as_view(template_name='403.html')),
     url(r'^captcha/', include('captcha.urls')),
-    url(r'^eula_basic/$', TemplateView.as_view(template_name='terms.html'), name='eula_basic'),
+    url(r'^eula_basic/$', TemplateView.as_view(template_name='eula.html'), name='eula_basic'),
     url(r'^eula/$', eula, name='eula'),
     url(r'^apache_license_basic/$', TemplateView.as_view(template_name='apache_license.html'), name='apache_license_basic'),
     url(r'^apache_license/$', apache_license, name='apache_license'),

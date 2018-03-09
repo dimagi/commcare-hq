@@ -706,7 +706,7 @@ def render_static(request, template, page_name):
 
 
 def eula(request):
-    return render_static(request, "terms.html", "Terms of Service, Privacy Policy, and Business Agreement")
+    return render_static(request, "eula.html", _("End User License Agreement"))
 
 
 def cda(request):
