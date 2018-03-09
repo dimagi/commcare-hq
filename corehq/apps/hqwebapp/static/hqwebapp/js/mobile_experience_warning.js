@@ -17,23 +17,23 @@ hqDefine('hqwebapp/js/mobile_experience_warning', function() {
         $.cookie(cookieName, true);
 
         var initialPageData = hqImport('hqwebapp/js/initial_page_data'),
-            alertUser = hqImport('hqwebapp/js/alert_user'),
-            url = initialPageData.reverse('send_desktop_reminder');
+            url = initialPageData.reverse('send_desktop_reminder'),
+            $modal = $("#mobile-experience-modal"),
+            $videoModal = $("#mobile-experience-video-modal");
 
         var sendReminder = function() {
             $.ajax({
                 dataType: 'json',
                 url: url,
                 type: 'post',
-                success: alertUser.alert_user.bind(this, "The reminder has been sent", "success")
             });
-            closeModal();
-            showVideo();
+            $modal.modal('toggle');
+            $videoModal.modal();
         };
         var closeModal = function() {};
         var showVideo = function() {};
 
         $("#send-mobile-reminder-button").click(sendReminder);
-        $("#mobile-experience-modal").modal();
+        $modal.modal();
     });
 });
