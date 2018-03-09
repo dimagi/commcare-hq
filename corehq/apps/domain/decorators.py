@@ -110,7 +110,7 @@ def login_and_domain_required(view_func):
                 elif domain.is_snapshot:
                     # snapshots are publicly viewable
                     return require_previewer(view_func)(req, domain_name, *args, **kwargs)
-                elif domain.allow_domain_requests:
+                elif couch_user.is_web_user() and domain.allow_domain_requests:
                     from corehq.apps.users.views import DomainRequestView
                     return DomainRequestView.as_view()(req, *args, **kwargs)
                 else:
