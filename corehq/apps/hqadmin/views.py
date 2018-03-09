@@ -512,7 +512,7 @@ class AdminRestoreView(TemplateView):
         response, timing_context = self._get_restore_response()
         timing_context = timing_context or TimingContext(self.user.username)
         if isinstance(response, StreamingHttpResponse):
-            string_payload = ''.join(response.streaming_content)
+            string_payload = b''.join(response.streaming_content)
             xml_payload = etree.fromstring(string_payload)
             restore_id_element = xml_payload.find('{{{0}}}Sync/{{{0}}}restore_id'.format(SYNC_XMLNS))
             cases = xml_payload.findall('{http://commcarehq.org/case/transaction/v2}case')
