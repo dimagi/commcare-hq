@@ -2,7 +2,6 @@ from __future__ import absolute_import
 
 from django.db import models, transaction
 
-from .dimensions import DomainDim, UserDim
 from corehq.form_processor.models import XFormInstanceSQL
 from corehq.sql_db.routers import db_for_read_write
 from corehq.util.test_utils import unit_testing_only
@@ -10,6 +9,7 @@ from corehq.warehouse.const import (APPLICATION_DIM_SLUG, APP_STATUS_FACT_SLUG,
     DOMAIN_DIM_SLUG, FORM_FACT_SLUG, FORM_STAGING_SLUG, SYNCLOG_FACT_SLUG,
     SYNCLOG_STAGING_SLUG, USER_DIM_SLUG)
 from corehq.warehouse.etl import CustomSQLETLMixin
+from corehq.warehouse.models.dimensions import DomainDim, UserDim, ApplicationDim
 from corehq.warehouse.models.shared import WarehouseTable
 from corehq.warehouse.utils import truncate_records_for_cls
 
@@ -116,27 +116,28 @@ class ApplicationStatusFact(BaseFact, CustomSQLETLMixin):
 
     Grain: app_id, user_id
     '''
-    # TODO: Write Update SQL Query (currently there exists a placeholder)
     slug = APP_STATUS_FACT_SLUG
 
-    # TODO: Add app dimension
-    # app_dim = models.CharField(max_length=255)
+    app_dim = models.ForeignKey(ApplicationDim, on_delete=models.PROTECT)
+    app_id = models.CharField(max_length=255)
 
-    # TODO: Add domain dimension
-    # domain_dim = models.CharField(max_length=255)
+    domain_dim = models.ForeignKey(DomainDim, on_delete=models.PROTECT)
 
     user_dim = models.ForeignKey(UserDim, on_delete=models.PROTECT)
+    user_id = models.CharField(max_length=255)
 
     last_form_submission_date = models.DateTimeField(null=True)
     last_sync_log_date = models.DateTimeField(null=True)
 
-    last_form_app_build_version = models.CharField(max_length=255)
-    last_form_app_commcare_version = models.CharField(max_length=255)
-    last_form_app_source = models.CharField(max_length=255)
+    last_form_app_build_version = models.CharField(max_length=255, null=True)
+    last_form_app_commcare_version = models.CharField(max_length=255, null=True)
+    # last_form_app_source = models.CharField(max_length=255)
 
     last_sync_log_app_build_version = models.CharField(max_length=255)
-    last_sync_log_app_commcare_version = models.CharField(max_length=255)
-    last_sync_log_app_source = models.CharField(max_length=255)
+    # last_sync_log_app_source = models.CharField(max_length=255)
+
+    class Meta:
+        unique_together = ('app_id', 'user_id')
 
     @classmethod
     def dependencies(cls):
