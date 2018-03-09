@@ -115,9 +115,11 @@ CELERY_SEND_TASK_ERROR_EMAILS = True
 CELERY_PERIODIC_QUEUE = 'celery' # change this to something else if you want a different queue for periodic tasks
 CELERY_FLOWER_URL = 'http://127.0.0.1:5555'
 
-####### Django Compressor ########
+####### Less/Django Compressor ########
 
-COMPRESS_ENABLED = False  # this will allow less.js to compile less files on the client side
+LESS_DEBUG = True
+COMPRESS_ENABLED = False
+COMPRESS_OFFLINE = False
 
 ####### Bitly ########
 
