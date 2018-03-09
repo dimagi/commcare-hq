@@ -130,10 +130,11 @@ class ProcessRegistrationView(JSONResponseMixin, NewUserNumberAbTestMixin, View)
         track_workflow(new_user.email,
                        "Requested new account",
                        {
-                           'registered_mobile': reg_form.cleaned_data.get('is_mobile'),
-                           'in_mobile_experiment': (
-                               is_mobile and
-                               toggles.MOBILE_SIGNUP_REDIRECT_AB_TEST.enabled(email))
+                           'mobile_visitor': reg_form.cleaned_data.get('is_mobile'),
+                           'mobile_visitor_cohort': (
+                               "control" if is_mobile and
+                               toggles.MOBILE_SIGNUP_REDIRECT_AB_TEST.enabled(email)
+                               else "variation")
                        })
         login(self.request, new_user)
 
