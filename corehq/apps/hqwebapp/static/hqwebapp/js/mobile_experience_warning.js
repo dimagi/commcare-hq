@@ -1,9 +1,24 @@
 hqDefine('hqwebapp/js/mobile_experience_warning', function() {
-    var initialPageData = hqImport('hqwebapp/js/initial_page_data'),
-        alertUser = hqImport('hqwebapp/js/alert_user');
+    if (window.innerWidth > 800 && window.innerHeight > 600) {
+        return;
+    }
+
+    var cookieName = "has-seen-mobile-experience-warning";
+    if ($.cookie(cookieName)) {
+        return;
+    }
 
     $(function() {
-        var url = initialPageData.reverse('send_desktop_reminder');
+        var toggles = hqImport('hqwebapp/js/toggles');
+        if (!toggles.toggleEnabled('MOBILE_SIGNUP_REDIRECT_AB_TEST_CONTROLLER') ||
+                !toggles.toggleEnabled('MOBILE_SIGNUP_REDIRECT_AB_TEST')) {
+            return;
+        }
+        $.cookie(cookieName, true);
+
+        var initialPageData = hqImport('hqwebapp/js/initial_page_data'),
+            alertUser = hqImport('hqwebapp/js/alert_user'),
+            url = initialPageData.reverse('send_desktop_reminder');
 
         var sendReminder = function() {
             $.ajax({
