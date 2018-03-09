@@ -12,6 +12,7 @@ from casexml.apps.case.xform import extract_case_blocks
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.motech.openmrs.logger import logger
 from corehq.motech.openmrs.openmrs_config import IdMatcher
+from corehq.motech.openmrs.workflow import WorkflowTask, Task
 from corehq.motech.utils import pformat_json
 
 
@@ -138,58 +139,105 @@ def server_datetime_to_openmrs_timestamp(dt):
     return openmrs_timestamp
 
 
-def create_visit(requests, person_uuid, provider_uuid, visit_datetime, values_for_concept, encounter_type,
-                 openmrs_form, visit_type, location_uuid=None, patient_uuid=None):
-    patient_uuid = patient_uuid or person_uuid
-    start_datetime = server_datetime_to_openmrs_timestamp(visit_datetime)
-    stop_datetime = server_datetime_to_openmrs_timestamp(
-        visit_datetime + timedelta(days=1) - timedelta(seconds=1)
-    )
+class CreateVisitTask(WorkflowTask):
 
-    visit = {
-        'patient': patient_uuid,
-        'visitType': visit_type,
-        'startDatetime': start_datetime,
-        'stopDatetime': stop_datetime,
+    def run(self, requests, person_uuid, provider_uuid, visit_datetime, values_for_concept, encounter_type,
+            openmrs_form, visit_type, location_uuid=None):
+
+        start_datetime = server_datetime_to_openmrs_timestamp(visit_datetime)
+        stop_datetime = server_datetime_to_openmrs_timestamp(
+            visit_datetime + timedelta(days=1) - timedelta(seconds=1)
+        )
+
+        visit = {
+            'patient': person_uuid,
+            'visitType': visit_type,
+            'startDatetime': start_datetime,
+            'stopDatetime': stop_datetime,
+        }
+        if location_uuid:
+            visit['location'] = location_uuid
+        response = requests.post_with_raise('/ws/rest/v1/visit', json=visit)
+        visit_uuid = response.json()['uuid']
+
+        self._subtasks.append(
+            CreateEncounterTask(
+                None,
+                requests, person_uuid, provider_uuid, start_datetime, values_for_concept, encounter_type,
+                openmrs_form, visit_uuid, location_uuid,
+                rollback_task=Task(delete_encounter, requests),
+                pass_result_as='encounter_uuid',
+            )
+        )
+
+        return visit_uuid
+
+
+def delete_visit(requests, visit_uuid):
+    return requests.delete('/ws/rest/v1/visit/{uuid}'.format(uuid=visit_uuid)).json()
+
+
+class CreateEncounterTask(WorkflowTask):
+
+    def run(self, requests, person_uuid, provider_uuid, start_datetime, values_for_concept, encounter_type,
+            openmrs_form, visit_uuid, location_uuid=None):
+
+        encounter = {
+            'encounterDatetime': start_datetime,
+            'patient': person_uuid,
+            'form': openmrs_form,
+            'encounterType': encounter_type,
+            'visit': visit_uuid,
+        }
+        if location_uuid:
+            encounter['location'] = location_uuid
+        if provider_uuid:
+            # TODO: Verify. See commented-out section below
+            encounter['provider'] = provider_uuid
+        response = requests.post_with_raise('/ws/rest/v1/encounter', json=encounter)
+        encounter_uuid = response.json()['uuid']
+
+        # TODO: This is suspicious. Doesn't match docs. If it's true, add it as a subtask
+        # if provider_uuid:
+        #     encounter_provider = {'provider': provider_uuid}
+        #     uri = '/ws/rest/v1/encounter/{uuid}/encounterprovider'.format(uuid=encounter_uuid)
+        #     requests.post_with_raise(uri, json=encounter_provider)
+
+        for concept_uuid, values in values_for_concept.items():
+            for value in values:
+
+                self._subtasks.append(
+                    WorkflowTask(
+                        create_obs,
+                        requests, encounter_uuid, concept_uuid, person_uuid, start_datetime, value, location_uuid,
+                        rollback_task=Task(delete_obs, requests),
+                        pass_result_as='obs_uuid'
+                    )
+                )
+
+        return encounter_uuid
+
+
+def delete_encounter(requests, encounter_uuid):
+    return requests.delete('/ws/rest/v1/encounter/{uuid}'.format(uuid=encounter_uuid)).json()
+
+
+def create_obs(requests, encounter_uuid, concept_uuid, person_uuid, start_datetime, value, location_uuid=None):
+    observation = {
+        'concept': concept_uuid,
+        'person': person_uuid,
+        'obsDatetime': start_datetime,
+        'encounter': encounter_uuid,
+        'value': value,
     }
     if location_uuid:
-        visit['location'] = location_uuid
-    response = requests.post_with_raise('/ws/rest/v1/visit', json=visit)
-    visit_uuid = response.json()['uuid']
+        observation['location'] = location_uuid
+    response = requests.post_with_raise('/ws/rest/v1/obs', json=observation)
+    return response.json()['uuid']
 
-    encounter = {
-        'encounterDatetime': start_datetime,
-        'patient': patient_uuid,
-        'form': openmrs_form,
-        'encounterType': encounter_type,
-        'visit': visit_uuid,
-    }
-    if location_uuid:
-        encounter['location'] = location_uuid
-    response = requests.post_with_raise('/ws/rest/v1/encounter', json=encounter)
-    encounter_uuid = response.json()['uuid']
-    if provider_uuid:
-        encounter_provider = {'provider': provider_uuid}
-        uri = '/ws/rest/v1/encounter/{uuid}/encounterprovider'.format(uuid=encounter_uuid)
-        requests.post_with_raise(uri, json=encounter_provider)
 
-    observation_uuids = []
-    for concept_uuid, values in values_for_concept.items():
-        for value in values:
-            observation = {
-                'concept': concept_uuid,
-                'person': person_uuid,
-                'obsDatetime': start_datetime,
-                'encounter': encounter_uuid,
-                'value': value,
-            }
-            if location_uuid:
-                observation['location'] = location_uuid
-            response = requests.post_with_raise('/ws/rest/v1/obs', json=observation)
-            observation_uuids.append(response.json()['uuid'])
-
-    logger.debug('Observations created: ', observation_uuids)
-    return OpenmrsResponse(status_code=response.status_code, reason=response.reason)
+def delete_obs(requests, obs_uuid):
+    return requests.delete('/ws/rest/v1/obs/{uuid}'.format(uuid=obs_uuid)).json()
 
 
 def search_patients(requests, search_string):
