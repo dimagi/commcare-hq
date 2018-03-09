@@ -1,7 +1,7 @@
 MOTECH
 ======
 
-MOTECH is CommCare's Data Integration Layer.
+MOTECH is a Data Integration Layer
 
 It allows sending simple and aggregate data payloads to third-party systems when certain triggers are met. Triggers and Payloads are easily defined through custom methods in the MOTECH codebase, and a full suite of management tools is available to audit and debug sent, queued and cancelled messages. 
 
@@ -9,6 +9,7 @@ Currently, MOTECH is fully integrated to leverage CommCare's frameworks, includi
 
 * To take advantage of CommCare HQ's multi-tenant architecture
 * To make it easier and faster for CommCare HQ developers to maintain and extend it, considering CommCare integrations are the primary use case currently.
+* If you are interesting in using this without the full CommCare scaffolding, please reach out to the mailing list to discuss.  
 
 Framework
 ---------
