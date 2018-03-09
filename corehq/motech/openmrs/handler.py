@@ -7,27 +7,48 @@ from corehq.motech.openmrs.repeater_helpers import (
     create_visit,
     get_patient,
     update_person_properties,
+    rollback_person_properties,
     update_person_name,
     update_person_address,
     create_person_address,
     update_person_attribute,
     create_person_attribute,
 )
+from corehq.motech.openmrs.workflow import Task, WorkflowTask, execute_workflow
 from dimagi.utils.parsing import string_to_utc_datetime
 
 
 def send_openmrs_data(requests, domain, form_json, openmrs_config, case_trigger_infos, form_question_values):
     """
-    Updates an OpenMRS patient and creates visits
+    Updates an OpenMRS patient and (optionally) creates visits.
+
+    This involves several requests to the `OpenMRS REST Web Services`_. If any of those requests fail, we want to
+    roll back previous changes to avoid inconsistencies in OpenMRS. To do this we define a workflow of tasks we
+    want to do. Each workflow task has a reverse rollback task. If a task fails, all previous tasks are rolled
+    back in reverse order
+
 
     :return: A response-like object that can be used by Repeater.handle_response
+
+
+    .. _OpenMRS REST Web Services: https://wiki.openmrs.org/display/docs/REST+Web+Services+API+For+Clients
     """
-    response = None
-    logger.debug('Fetching OpenMRS patient UUIDs with ', case_trigger_infos)
+    workflow_queue = []
     for info in case_trigger_infos:
-        assert isinstance(info, CaseTriggerInfo)
-        response = sync_openmrs_patient(requests, domain, info, form_json, form_question_values, openmrs_config)
-    return response or OpenmrsResponse(404, 'Not Found')
+        workflow_queue.append(
+            SyncOpenmrsPatientTask(
+                requests, domain, info, form_json, form_question_values, openmrs_config,
+                func=None,
+                rollback_task=None,
+            )
+        )
+    success, errors = execute_workflow(workflow_queue)
+    if success:
+        return OpenmrsResponse(200, 'OK')
+    else:
+        logger.error('Errors encountered sending OpenMRS data: %s', errors)
+        # TODO: Do something more useful with errors, like OpenmrsResponse.content or something
+        return OpenmrsResponse(400, 'Bad Request')
 
 
 def sync_person_attributes(requests, info, openmrs_config, person_uuid, attributes):
@@ -67,25 +88,38 @@ def create_visits(requests, info, form_json, form_question_values, openmrs_confi
             )
 
 
-def sync_openmrs_patient(requests, domain, info, form_json, form_question_values, openmrs_config):
-    patient = get_patient(requests, domain, info, openmrs_config)
-    if patient is None:
-        raise ValueError('CommCare patient was not found in OpenMRS')
-    person_uuid = patient['person']['uuid']
-    logger.debug('OpenMRS patient found: ', person_uuid)
-    update_person_properties(requests, info, openmrs_config, person_uuid)
+class SyncOpenmrsPatientTask(WorkflowTask):
 
-    name_uuid = patient['person']['preferredName']['uuid']
-    update_person_name(requests, info, openmrs_config, person_uuid, name_uuid)
+    def run(self, requests, domain, info, form_json, form_question_values, openmrs_config):
+        assert isinstance(info, CaseTriggerInfo)
 
-    address_uuid = patient['person']['preferredAddress']['uuid'] if patient['person']['preferredAddress'] else None
-    if address_uuid:
-        update_person_address(requests, info, openmrs_config, person_uuid, address_uuid)
-    else:
-        create_person_address(requests, info, openmrs_config, person_uuid)
+        logger.debug('Fetching OpenMRS patient UUID with ', info)
+        patient = get_patient(requests, domain, info, openmrs_config)
+        if patient is None:
+            raise ValueError('CommCare patient was not found in OpenMRS')
+        person_uuid = patient['person']['uuid']
+        logger.debug('OpenMRS patient found: ', person_uuid)
 
-    sync_person_attributes(requests, info, openmrs_config, person_uuid, patient['person']['attributes'])
+        self._subtasks.append(
+            WorkflowTask(
+                requests, info, openmrs_config, person_uuid,
+                func=update_person_properties,
+                rollback_task=Task(rollback_person_properties, requests, patient['person'], openmrs_config),
+            )
+        )
 
-    create_visits(requests, info, form_json, form_question_values, openmrs_config, person_uuid)
-
-    return OpenmrsResponse(200, 'OK')
+        # TODO: Make WorkflowTasks for the following:
+        #
+        # name_uuid = patient['person']['preferredName']['uuid']
+        # update_person_name(requests, info, openmrs_config, person_uuid, name_uuid)
+        #
+        # address_uuid = patient['person']['preferredAddress']['uuid'] if patient['person']['preferredAddress'] else None
+        # if address_uuid:
+        #     update_person_address(requests, info, openmrs_config, person_uuid, address_uuid)
+        # else:
+        #     create_person_address(requests, info, openmrs_config, person_uuid)
+        #
+        # sync_person_attributes(requests, info, openmrs_config, person_uuid, patient['person']['attributes'])
+        #
+        # create_visits(requests, info, form_json, form_question_values, openmrs_config, person_uuid)
+        #
