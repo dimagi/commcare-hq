@@ -6,6 +6,7 @@ These can be run locally when connected to the VPN
 """
 from __future__ import print_function
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from argparse import ArgumentParser, RawDescriptionHelpFormatter
 from collections import namedtuple
 import json

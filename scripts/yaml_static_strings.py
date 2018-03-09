@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import print_function
+from __future__ import unicode_literals
 import argparse
 import yaml
 import six
@@ -36,7 +37,7 @@ parser.add_argument(
 
 
 def format_string(value, prefix):
-    return u"{}('{}'),".format(prefix, value.replace("'", "\\'"))
+    return "{}('{}'),".format(prefix, value.replace("'", "\\'"))
 
 
 if __name__ == "__main__":

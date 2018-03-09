@@ -1,5 +1,6 @@
 from __future__ import print_function
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import os
 import sh
 import sys
@@ -13,7 +14,7 @@ _original_init = sh.RunningCommand.__init__
 
 
 def _verbose_init(self, cmd, call_args, stdin, stdout, stderr):
-    print(u"[{cwd}]$ {command}".format(
+    print("[{cwd}]$ {command}".format(
         cwd=format_cwd(call_args['cwd']),
         command=' '.join(cmd[0].rsplit('/', 1)[1:] + cmd[1:]),
     ))
