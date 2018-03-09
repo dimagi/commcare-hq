@@ -16,6 +16,7 @@ from custom.enikshay.case_utils import (
 from custom.enikshay.const import (
     ENROLLED_IN_PRIVATE,
 )
+from custom.enikshay.exceptions import ENikshayCaseNotFound
 from custom.enikshay.management.commands.base_data_dump import BaseDataDump
 
 DOMAIN = "enikshay"
@@ -118,7 +119,10 @@ class Command(BaseDataDump):
 
     def get_occurrence(self, test_case):
         if 'occurrence' not in self.context:
-            self.context['occurrence'] = get_occurrence_case_from_test(DOMAIN, test_case.case_id)
+            try:
+                self.context['occurrence'] = get_occurrence_case_from_test(DOMAIN, test_case.case_id)
+            except ENikshayCaseNotFound as e:
+                self.context['occurrence'] = None
         if not self.context['occurrence']:
             raise Exception("could not find occurrrence for test %s" % test_case.case_id)
         return self.context['occurrence']
