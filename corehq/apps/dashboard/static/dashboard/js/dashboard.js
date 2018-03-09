@@ -4,7 +4,7 @@ hqDefine("dashboard/js/dashboard", [
     'underscore',
     'hqwebapp/js/initial_page_data',
     // Just importing main.py so the post-link function is accessible, function parameter not needed
-    'hqwebapp/js/main'
+    'hqwebapp/js/main',
 ], function(
     $,
     ko,
