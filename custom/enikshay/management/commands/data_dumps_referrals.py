@@ -55,7 +55,7 @@ class Command(BaseDataDump):
         return Exception("unknown case reference %s" % case_reference)
 
     def get_custom_value(self, column_name, referral):
-        if column_name == "Date of Creation of Presumptive TB Episode":
+        if column_name == "Date of Creation of Referral Case":
             return referral.opened_on
         elif column_name == "Created by Username":
             user_id = None
