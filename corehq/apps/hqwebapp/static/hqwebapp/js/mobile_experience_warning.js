@@ -19,7 +19,8 @@ hqDefine('hqwebapp/js/mobile_experience_warning', function() {
         var initialPageData = hqImport('hqwebapp/js/initial_page_data'),
             url = initialPageData.reverse('send_desktop_reminder'),
             $modal = $("#mobile-experience-modal"),
-            $videoModal = $("#mobile-experience-video-modal");
+            $videoModal = $("#mobile-experience-video-modal"),
+            kissmetrix = hqImport('analytix/js/kissmetrix');
 
         var sendReminder = function() {
             $.ajax({
@@ -29,9 +30,11 @@ hqDefine('hqwebapp/js/mobile_experience_warning', function() {
             });
             $modal.modal('toggle');
             $videoModal.modal();
+            kissmetrix.track.event('Clicked mobile experience reminder');
         };
 
         $("#send-mobile-reminder-button").click(sendReminder);
         $modal.modal();
+        kissmetrix.track.event('Saw mobile experience warning');
     });
 });
