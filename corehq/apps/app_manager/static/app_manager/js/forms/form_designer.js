@@ -16,6 +16,8 @@ hqDefine("app_manager/js/forms/form_designer", function() {
             return FORM_TYPES.FOLLOWUP;
         };
 
+    var appcues = hqImport('analytix/js/appcues');
+
     $(function() {
         var VELLUM_OPTIONS = _.extend({}, initial_page_data("vellum_options"), {
             itemset: {
@@ -64,7 +66,6 @@ hqDefine("app_manager/js/forms/form_designer", function() {
                 if (initial_page_data("days_since_created") === 0) {
                     hqImport('analytix/js/kissmetrix').track.event('Saved the Form Builder within first 24 hours');
                 }
-                var appcues = hqImport('analytix/js/appcues');
                 appcues.trackEvent(
                     appcues.EVENT_TYPES.FORM_SAVE, {
                         formType: formType(),
@@ -98,6 +99,12 @@ hqDefine("app_manager/js/forms/form_designer", function() {
                         appcues.EVENT_TYPES.QUESTION_CREATE, { formType: formType() }
                     );
                 });
+
+                appcues.trackEvent(
+                    appcues.EVENT_TYPES.FORM_LOADED, {
+                        formType: formType(),
+                    }
+                );
             },
         });
 

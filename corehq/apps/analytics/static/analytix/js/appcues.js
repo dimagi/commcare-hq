@@ -18,6 +18,7 @@ hqDefine('analytix/js/appcues', [
     var _get = initialAnalytics.getFn('appcues'),
         _ready = $.Deferred(),
         EVENT_TYPES = {
+            FORM_LOADED: "Form is loaded",
             FORM_SAVE: "Saved a form",
             FORM_SUBMIT: "Submitted a form",
             POPPED_OUT_PREVIEW: "Popped out preview",
