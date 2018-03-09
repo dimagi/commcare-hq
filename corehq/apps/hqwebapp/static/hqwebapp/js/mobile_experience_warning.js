@@ -30,8 +30,6 @@ hqDefine('hqwebapp/js/mobile_experience_warning', function() {
             $modal.modal('toggle');
             $videoModal.modal();
         };
-        var closeModal = function() {};
-        var showVideo = function() {};
 
         $("#send-mobile-reminder-button").click(sendReminder);
         $modal.modal();
