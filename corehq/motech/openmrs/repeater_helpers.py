@@ -319,21 +319,6 @@ def update_person_properties(requests, info, openmrs_config, person_uuid):
         )
 
 
-def sync_person_attributes(requests, info, openmrs_config, person_uuid, attributes):
-    existing_person_attributes = {
-        attribute['attributeType']['uuid']: (attribute['uuid'], attribute['value'])
-        for attribute in attributes
-    }
-    for person_attribute_type, value_source in openmrs_config.case_config.person_attributes.items():
-        value = value_source.get_value(info)
-        if person_attribute_type in existing_person_attributes:
-            attribute_uuid, existing_value = existing_person_attributes[person_attribute_type]
-            if value != existing_value:
-                update_person_attribute(requests, person_uuid, attribute_uuid, person_attribute_type, value)
-        else:
-            create_person_attribute(requests, person_uuid, person_attribute_type, value)
-
-
 class PatientSearchParser(object):
     def __init__(self, response_json):
         self.response_json = response_json

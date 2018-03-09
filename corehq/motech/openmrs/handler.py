@@ -9,7 +9,8 @@ from corehq.motech.openmrs.repeater_helpers import (
     update_person_name,
     update_person_address,
     create_person_address,
-    sync_person_attributes,
+    update_person_attribute,
+    create_person_attribute,
 )
 from dimagi.utils.parsing import string_to_utc_datetime
 
@@ -26,6 +27,21 @@ def send_openmrs_data(requests, form_json, openmrs_config, case_trigger_infos, f
         assert isinstance(info, CaseTriggerInfo)
         response = sync_openmrs_patient(requests, info, form_json, form_question_values, openmrs_config)
     return response or OpenmrsResponse(404, 'Not Found')
+
+
+def sync_person_attributes(requests, info, openmrs_config, person_uuid, attributes):
+    existing_person_attributes = {
+        attribute['attributeType']['uuid']: (attribute['uuid'], attribute['value'])
+        for attribute in attributes
+    }
+    for person_attribute_type, value_source in openmrs_config.case_config.person_attributes.items():
+        value = value_source.get_value(info)
+        if person_attribute_type in existing_person_attributes:
+            attribute_uuid, existing_value = existing_person_attributes[person_attribute_type]
+            if value != existing_value:
+                update_person_attribute(requests, person_uuid, attribute_uuid, person_attribute_type, value)
+        else:
+            create_person_attribute(requests, person_uuid, person_attribute_type, value)
 
 
 def create_visits(requests, info, form_json, form_question_values, openmrs_config, person_uuid):
