@@ -61,6 +61,16 @@ class HQSanitzeSystemPasswordsProcessor(SanitizePasswordsProcessor):
 
 class HQSentryClient(DjangoClient):
 
+    def __init__(self, *args, **kwargs):
+        super(HQSentryClient, self).__init__(*args, **kwargs)
+        self.install_celery_hook()
+
+    def install_celery_hook(self):
+        # https://docs.sentry.io/clients/python/integrations/celery/
+        from raven.contrib.celery import register_signal, register_logger_signal
+        register_logger_signal(self)
+        register_signal(self)
+
     def should_capture(self, exc_info):
         ex_value = exc_info[1]
         capture = getattr(ex_value, 'sentry_capture', True)
