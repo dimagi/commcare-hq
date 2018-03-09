@@ -34,5 +34,6 @@ hqDefine('hqwebapp/js/mobile_experience_warning', function() {
         var showVideo = function() {};
 
         $("#send-mobile-reminder-button").click(sendReminder);
+        $("#mobile-experience-modal").modal();
     });
 });

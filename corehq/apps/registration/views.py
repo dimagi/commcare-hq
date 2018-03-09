@@ -6,7 +6,7 @@ from django.contrib import messages
 from django.contrib.auth import authenticate, login
 from django.urls import reverse
 from django.db import transaction
-from django.http import HttpResponseRedirect, Http404
+from django.http import HttpResponseRedirect, Http404, HttpResponse
 from django.shortcuts import redirect, render
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _
@@ -453,4 +453,4 @@ def send_desktop_reminder(request):
         send_mobile_experience_reminder(request.user.username,
                                         request.user.get_full_name())
 
-    return {"success": True}
+    return HttpResponse()
