@@ -125,6 +125,7 @@ class ProcessRegistrationView(JSONResponseMixin, NewUserNumberAbTestMixin, View)
 
         is_mobile = reg_form.cleaned_data.get('is_mobile')
         email = reg_form.cleaned_data['email']
+
         if is_mobile:
             toggles.MOBILE_SIGNUP_REDIRECT_AB_TEST_CONTROLLER.set(email, True)
         track_workflow(new_user.email,
@@ -133,7 +134,8 @@ class ProcessRegistrationView(JSONResponseMixin, NewUserNumberAbTestMixin, View)
                            'mobile_visitor': reg_form.cleaned_data.get('is_mobile'),
                            'mobile_visitor_cohort': (
                                "control" if is_mobile and
-                               toggles.MOBILE_SIGNUP_REDIRECT_AB_TEST.enabled(email)
+                               toggles.MOBILE_SIGNUP_REDIRECT_AB_TEST.enabled(
+                                   email, toggles.NAMESPACE_USER)
                                else "variation")
                        })
         login(self.request, new_user)
@@ -164,7 +166,8 @@ class ProcessRegistrationView(JSONResponseMixin, NewUserNumberAbTestMixin, View)
                 'success': True,
                 'is_mobile_experience': (
                     reg_form.cleaned_data.get('is_mobile') and
-                    toggles.MOBILE_SIGNUP_REDIRECT_AB_TEST.enabled(reg_form.cleaned_data['email']))
+                    toggles.MOBILE_SIGNUP_REDIRECT_AB_TEST.enabled(
+                        reg_form.cleaned_data['email'], toggles.NAMESPACE_USER))
             }
         logging.error(
             "There was an error processing a new user registration form."
