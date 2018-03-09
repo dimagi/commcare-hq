@@ -17,6 +17,7 @@ hqDefine('locations/js/locations', function() {
 
         $('#location_tree').koApplyBindings(tree_model);
         tree_model.load(locs);
+
         var model = new LocationModels.LocationSearchViewModel(tree_model, options);
         $('#location_search').koApplyBindings(model);
 
