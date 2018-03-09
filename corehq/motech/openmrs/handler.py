@@ -4,7 +4,8 @@ from corehq.motech.openmrs.logger import logger
 from corehq.motech.openmrs.repeater_helpers import (
     CaseTriggerInfo,
     OpenmrsResponse,
-    create_visit,
+    CreateVisitTask,
+    delete_visit,
     get_patient,
     update_person_properties,
     rollback_person_properties,
@@ -66,26 +67,40 @@ def sync_person_attributes(requests, info, openmrs_config, person_uuid, attribut
             create_person_attribute(requests, person_uuid, person_attribute_type, value)
 
 
-def create_visits(requests, info, form_json, form_question_values, openmrs_config, person_uuid):
-    provider_uuid = getattr(openmrs_config, 'openmrs_provider', None)
-    info.form_question_values.update(form_question_values)
-    for form_config in openmrs_config.form_configs:
-        logger.debug('Send visit for form?', form_config, form_json)
-        if form_config.xmlns == form_json['form']['@xmlns']:
-            logger.debug('Yes')
-            create_visit(
-                requests,
-                person_uuid=person_uuid,
-                provider_uuid=provider_uuid,
-                visit_datetime=string_to_utc_datetime(form_json['form']['meta']['timeEnd']),
-                values_for_concept={obs.concept: [obs.value.get_value(info)]
-                                    for obs in form_config.openmrs_observations
-                                    if obs.value.get_value(info)},
-                encounter_type=form_config.openmrs_encounter_type,
-                openmrs_form=form_config.openmrs_form,
-                visit_type=form_config.openmrs_visit_type,
-                # location_uuid=,  # location of case owner (CHW) > location[meta][openmrs_uuid]
-            )
+class CreateVisitsTask(WorkflowTask):
+
+    def __init__(self, *args, **kwargs):
+        super(CreateVisitsTask, self).__init__(None, None, None, *args, **kwargs)
+
+    def run(self, requests, info, form_json, form_question_values, openmrs_config, person_uuid):
+        provider_uuid = getattr(openmrs_config, 'openmrs_provider', None)
+        info.form_question_values.update(form_question_values)
+        for form_config in openmrs_config.form_configs:
+            logger.debug('Send visit for form?', form_config, form_json)
+            if form_config.xmlns == form_json['form']['@xmlns']:
+                logger.debug('Yes')
+
+                self._subtasks.append(
+                    CreateVisitTask(
+                        None,
+
+                        requests,
+                        person_uuid=person_uuid,
+                        provider_uuid=provider_uuid,
+                        visit_datetime=string_to_utc_datetime(form_json['form']['meta']['timeEnd']),
+                        values_for_concept={obs.concept: [obs.value.get_value(info)]
+                                            for obs in form_config.openmrs_observations
+                                            if obs.value.get_value(info)},
+                        encounter_type=form_config.openmrs_encounter_type,
+                        openmrs_form=form_config.openmrs_form,
+                        visit_type=form_config.openmrs_visit_type,
+                        # TODO: Set location = location of case owner (CHW)
+                        # location_uuid=location[meta][openmrs_uuid]
+
+                        rollback_task=delete_visit,
+                        pass_result_as='visit_uuid'
+                    )
+                )
 
 
 class SyncOpenmrsPatientTask(WorkflowTask):
@@ -117,9 +132,16 @@ class SyncOpenmrsPatientTask(WorkflowTask):
         # if address_uuid:
         #     update_person_address(requests, info, openmrs_config, person_uuid, address_uuid)
         # else:
-        #     create_person_address(requests, info, openmrs_config, person_uuid)
+        #     self._subtasks.append(
+        #         WorkflowTask(
+        #             Task(delete_person_address, requests, patient['person'], openmrs_config),
+        #             'address_uuid',
+        #             create_person_address,
+        #             requests, info, openmrs_config, person_uuid,
+        #         )
+        #     )
         #
-        # sync_person_attributes(requests, info, openmrs_config, person_uuid, patient['person']['attributes'])
-        #
-        # create_visits(requests, info, form_json, form_question_values, openmrs_config, person_uuid)
-        #
+        # self._subtasks.extend([
+        #     SyncPersonAttributesTask(requests, info, openmrs_config, person_uuid, patient['person']['attributes']),
+        #     CreateVisitsTask(requests, info, form_json, form_question_values, openmrs_config, person_uuid)
+        # ])
