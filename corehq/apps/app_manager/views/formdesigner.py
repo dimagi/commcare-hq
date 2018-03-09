@@ -132,6 +132,7 @@ def _get_form_designer_view(request, domain, app, module, form):
             app,
             request.couch_user.username,
         ),
+        'full_name': request.couch_user.full_name,
     })
     context.update(_get_requirejs_context())
     context['current_app_version_url'] = reverse(

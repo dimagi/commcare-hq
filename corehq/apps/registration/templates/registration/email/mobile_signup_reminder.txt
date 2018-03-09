@@ -1,4 +1,4 @@
-Dear {{ name }},
+Dear {{ full_name }},
 
 This email has been sent as a reminder for you to visit your CommCare HQ project space on a laptop or desktop computer.
 

@@ -48,7 +48,7 @@
         <div id="preview_text"
              style="display:none!important">
             {% blocktrans %}
-                Dear {{ name }}, please visit your CommCare HQ Account!
+                Dear {{ full_name }}, please visit your CommCare HQ Account!
             {% endblocktrans %}
         </div>
         <!-- extra space for preview -->
@@ -61,7 +61,7 @@
             </div>
             {% block content %}
                 <p>
-                    {% blocktrans %}Dear {{ name }},{% endblocktrans %}
+                    {% blocktrans %}Dear {{ full_name }},{% endblocktrans %}
                 </p>
 
                 <p>

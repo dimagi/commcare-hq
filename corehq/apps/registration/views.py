@@ -451,6 +451,6 @@ def eula_agreement(request):
 def send_desktop_reminder(request):
     if request.method == 'POST':
         send_mobile_experience_reminder(request.user.username,
-                                        request.user.get_full_name())
+                                        request.couch_user.full_name)
 
     return HttpResponse()

@@ -162,17 +162,18 @@
         <div class="full-screen-modal modal fade" id="mobile-experience-modal">
             <div class="modal-dialog">
                 <div class="modal-content">
-                    {% blocktrans %}
                     <div class="modal-header">
-                        <h4 class="modal-title">CommCareHQ looks better on the desktop!</h4>
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                        <h4 class="modal-title">{% trans "CommCareHQ looks better on desktop!" %}</h4>
                     </div>
                     <div class="modal-body">
                         <p>
-                            Hi {{ name }}, it looks like you’re on a mobile device. CommCareHQ is optimized for desktop or laptop browsers.
-                            <a style="cursor: pointer" id="send-mobile-reminder-button">Click here</a> to send yourself an email with a login link to use when you’re back on a full-size browser.
+                            {% blocktrans %}
+                                Hi {{ full_name }}, it looks like you’re on a mobile device. CommCareHQ is optimized for desktop or laptop browsers.
+                                <a style="cursor: pointer" id="send-mobile-reminder-button">Click here</a> to send yourself an email with a login link to use when you’re back on a full-size browser.
+                            {% endblocktrans %}
                         </p>
                     </div>
-                    {% endblocktrans %}
                 </div>
             </div>
         </div>
