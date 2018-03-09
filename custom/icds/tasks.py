@@ -20,6 +20,7 @@ from corehq.apps.users.models import CommCareUser
 from corehq.blobs import get_blob_db
 from corehq.form_processor.models import XFormAttachmentSQL
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
+from corehq.util.datadog.gauges import datadog_counter
 from corehq.util.timezones.conversions import ServerTime
 from custom.icds.const import (
     AWC_LOCATION_TYPE_CODE,
@@ -167,14 +168,18 @@ if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:
         for db_name in get_db_aliases_for_partitioned_query():
             paths = []
             deleted_attachments = []
+            bytes_deleted = 0
             attachments = _get_query(db_name)
             for attachment in attachments[:1000]:
                 paths.append(db.get_path(attachment.blob_id, attachment.blobdb_bucket()))
                 deleted_attachments.append(attachment.pk)
+                bytes_deleted += attachment.content_length if attachment.content_length else 0
 
             if paths:
                 db.bulk_delete(paths)
                 XFormAttachmentSQL.objects.using(db_name).filter(pk__in=deleted_attachments).delete()
+                datadog_counter('commcare.icds_images.bytes_deleted', value=bytes_deleted)
+                datadog_counter('commcare.icds_images.count_deleted', value=len(paths))
                 run_again = True
 
         if run_again:
