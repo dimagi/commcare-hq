@@ -1,8 +1,9 @@
 from __future__ import absolute_import
 import os
-####### Database config. This assumes Postgres ####### 
 
 INTERNAL_IPS = ['127.0.0.1']
+
+####### Database config. This assumes Postgres #######
 
 DATABASES = {
     'default': {
