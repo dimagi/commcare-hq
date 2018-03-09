@@ -85,7 +85,7 @@
 {% include 'app_manager/partials/download_async_modal.html' with element_id='download-zip-modal' %}
 
 
- {% if request|toggle_enabled:"MOBILE_SIGNUP_REDIRECT_AB_TEST_CONTROLLER" and request|toggle_enabled:"MOBILE_SIGNUP_REDIRECT_AB_TEST" and request|ui_notify_enabled:"MOBILE_EXPERIENCE_WARNING" %}
+ {% if request|toggle_enabled:"MOBILE_SIGNUP_REDIRECT_AB_TEST_CONTROLLER" and request|toggle_enabled:"MOBILE_SIGNUP_REDIRECT_AB_TEST" %}
     <div class="full-screen-modal modal fade" id="mobile-experience-modal">
         <div class="modal-dialog">
             <div class="modal-content">
