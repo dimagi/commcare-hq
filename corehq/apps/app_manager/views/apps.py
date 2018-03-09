@@ -26,6 +26,7 @@ from django_prbac.utils import has_privilege
 from corehq import toggles, privileges
 from corehq.apps.analytics.tasks import HUBSPOT_APP_TEMPLATE_FORM_ID, send_hubspot_form
 from corehq.apps.app_manager import id_strings, add_ons
+from corehq.apps.app_manager.app_translations import process_bulk_app_translation_upload, raw_bulk_app_sheet
 from corehq.apps.app_manager.commcare_settings import get_commcare_settings_layout
 from corehq.apps.app_manager.const import (
     MAJOR_RELEASE_TO_VERSION,
@@ -557,7 +558,7 @@ def edit_app_langs(request, domain, app_id):
         if old != new:
             app.rename_lang(old, new)
 
-    #remove deleted languages from build profiles
+    # remove deleted languages from build profiles
     new_langs = set(langs)
     deleted = [lang for lang in app.langs if lang not in new_langs]
     for id in app.build_profiles:
@@ -574,7 +575,20 @@ def edit_app_langs(request, domain, app_id):
             list1.extend(list2)
     replace_all(app.langs, langs)
 
+    # Clear out old translations
+    if deleted:
+        # Get current translations, which won't include deleted languages
+        temp = raw_bulk_app_sheet(app)
+        fd, filename = tempfile.mkstemp()
+        with open(filename,'wb') as out:
+            out.write(temp.getvalue())
+
+        # Re-apply
+        with open(filename) as f:
+            msgs = process_bulk_app_translation_upload(app, f)
+
     app.save()
+
     return json_response(langs)
 
 

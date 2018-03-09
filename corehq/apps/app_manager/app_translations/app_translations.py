@@ -1,6 +1,7 @@
 # coding=utf-8
 from __future__ import absolute_import
 from collections import defaultdict, OrderedDict
+import io
 
 import itertools
 from django.utils.encoding import force_text
@@ -20,6 +21,8 @@ from corehq.apps.app_manager.util import save_xform
 from corehq.apps.app_manager.xform import namespaces, WrappedNode, ItextValue, ItextOutput
 from corehq.util.workbook_json.excel import HeaderValueError, WorkbookJSONReader, JSONReaderError, \
     InvalidExcelFileException
+
+from couchexport.export import export_raw
 
 from django.contrib import messages
 from django.utils.translation import ugettext as _
@@ -64,6 +67,11 @@ def process_bulk_app_translation_upload(app, f):
     expected_sheets = {h[0]: h[1] for h in headers}
     processed_sheets = set()
 
+    # The first sheet might be marked with "Modules_and_forms" or
+    # "Modules and Forms" depending on where it comes from
+    def _is_first_sheet(sheet_title):
+        return re.search(r'modules.and.forms', sheet_title, re.I)
+
     try:
         workbook = WorkbookJSONReader(f)
     # todo: HeaderValueError does not belong here
@@ -105,7 +113,7 @@ def process_bulk_app_translation_upload(app, f):
             continue
 
         # CHECK FOR MISSING KEY COLUMN
-        if sheet.worksheet.title == "Modules and Forms":
+        if _is_first_sheet(sheet.worksheet.title):
             # Several columns on this sheet could be used to uniquely identify
             # rows. Using sheet_name for now, but unique_id could also be used.
             if expected_columns[1] not in sheet.headers:
@@ -162,7 +170,7 @@ def process_bulk_app_translation_upload(app, f):
         # This could be added if we want though
         #      (it is not that bad if a user leaves out a row)
 
-        if sheet.worksheet.title == "Modules_and_forms":
+        if _is_first_sheet(sheet.worksheet.title):
             # It's the first sheet
             ms = _process_modules_and_forms_sheet(rows, app)
             msgs.extend(ms)
@@ -201,6 +209,15 @@ def _make_modules_and_forms_row(row_type, sheet_name, languages,
     return [item if item is not None else ""
             for item in ([row_type, sheet_name] + languages
                          + media_image + media_audio + [unique_id])]
+
+
+def raw_bulk_app_sheet(app):
+    headers = expected_bulk_app_sheet_headers(app)
+    rows = expected_bulk_app_sheet_rows(app)
+    temp = io.BytesIO()
+    data = [(k, v) for k, v in six.iteritems(rows)]
+    export_raw(headers, data, temp)
+    return temp
 
 
 def expected_bulk_app_sheet_headers(app):
