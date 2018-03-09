@@ -10,17 +10,22 @@ from corehq.util.cache_utils import is_rate_limited
 from corehq.util.datadog.gauges import datadog_counter
 
 RATE_LIMITED_EXCEPTIONS = {
-    'botocore.vendored.requests.packages.urllib3.exceptions.ProtocolError': 'riak',
-    'botocore.vendored.requests.exceptions.ReadTimeout': 'riak',
-    'botocore.exceptions.ClientError': 'riak',
-    'OperationalError': 'postgres',  # could be psycopg2._psycopg or django.db.utils
-    'socket.error': 'rabbitmq',
-    'redis.exceptions.ConnectionError': 'redis',
     'restkit.errors.RequestError': 'couchdb',
     'restkit.errors.RequestFailed': 'couchdb',
     'dimagi.utils.couch.bulk.BulkFetchException': 'couchdb',
     'socketpool.pool.MaxTriesError': 'couchdb',
+    'http_parser.http.NoMoreData': 'couchdb',
+
     'corehq.elastic.ESError': 'elastic',
+
+    'OperationalError': 'postgres',  # could be psycopg2._psycopg or django.db.utils
+
+    'socket.error': 'rabbitmq',
+
+    'redis.exceptions.ConnectionError': 'redis',
+    'botocore.exceptions.ClientError': 'riak',
+    'botocore.vendored.requests.packages.urllib3.exceptions.ProtocolError': 'riak',
+    'botocore.vendored.requests.exceptions.ReadTimeout': 'riak',
 }
 
 
