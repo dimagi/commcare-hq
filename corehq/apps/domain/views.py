@@ -6,6 +6,7 @@ from decimal import Decimal
 import logging
 import json
 import io
+import csv
 
 from couchdbkit import ResourceNotFound
 import dateutil
@@ -117,12 +118,13 @@ from corehq.apps.domain.models import (
     LICENSES,
     TransferDomainRequest,
 )
-from corehq.apps.domain.utils import normalize_domain_name
+from corehq.apps.domain.utils import normalize_domain_name, send_repeater_payloads
 from corehq.apps.hqwebapp.views import BaseSectionPageView, BasePageView, CRUDPaginatedViewMixin
 from corehq.apps.domain.forms import ProjectSettingsForm
 from memoized import memoized
 from dimagi.utils.web import get_ip, json_response, get_site_domain
-from corehq.apps.users.decorators import require_permission
+from corehq.motech.repeaters.forms import EmailBulkPayload
+from corehq.apps.users.decorators import require_can_edit_web_users, require_permission
 from toggle.models import Toggle
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.hqwebapp.signals import clear_login_attempts
@@ -513,6 +515,22 @@ class EditOpenClinicaSettingsView(BaseProjectSettingsView):
             else:
                 messages.error(request, _('An error occurred. Please try again.'))
         return self.get(request, *args, **kwargs)
+
+
+@require_POST
+@require_can_edit_web_users
+def generate_repeater_payloads(request, domain):
+    try:
+        email_id = request.POST.get('email_id')
+        repeater_id = request.POST.get('repeater_id')
+        data = csv.reader(request.FILES['payload_ids_file'])
+        payload_ids = [row[0] for row in data]
+    except Exception as e:
+        messages.error(request, _("Could not process the file. %s") % str(e))
+    else:
+        send_repeater_payloads.delay(repeater_id, payload_ids, email_id)
+        messages.success(request, _("Successfully queued request. You should receive an email shortly."))
+    return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
 
 
 def autocomplete_fields(request, field):

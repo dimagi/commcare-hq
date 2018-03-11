@@ -3,15 +3,26 @@ from __future__ import unicode_literals
 from collections import Counter
 import os
 import re
+import datetime
+import json
+import csv
+import tempfile
 
 from couchdbkit import ResourceNotFound
 from django.conf import settings
 
+from celery.task import task
+
 from corehq import toggles
 from corehq.apps.domain.models import Domain
 from corehq.util.quickcache import quickcache
-from dimagi.utils.couch.database import get_db
 from corehq.apps.es import DomainES
+
+from dimagi.utils.couch.database import get_db
+from dimagi.utils.django.email import send_HTML_email
+
+from soil.util import ExposeBlobDownload
+from couchexport.models import Format
 
 
 DOMAIN_MODULE_KEY = 'DOMAIN_MODULE_CONFIG'
@@ -112,3 +123,63 @@ def guess_domain_language(domain_name):
     domain = Domain.get_by_name(domain_name)
     counter = Counter([app.default_language for app in domain.applications() if not app.is_remote_app()])
     return counter.most_common(1)[0][0] if counter else 'en'
+
+
+@task(queue='background_queue')
+def send_repeater_payloads(repeater_id, payload_ids, email_id):
+    from corehq.motech.repeaters.models import Repeater, RepeatRecord
+    repeater = Repeater.get(repeater_id)
+    repeater_type = repeater.doc_type
+    payloads = dict()
+    headers = ['note']
+    result_file_name = "bulk-payloads-%s-%s-%s.csv" % (
+        repeater.doc_type, repeater.get_id,
+        datetime.datetime.utcnow().strftime("%Y-%m-%d--%H-%M-%S")
+    )
+
+    def get_payload(payload_id):
+        dummy_repeat_record = RepeatRecord(
+            domain=repeater.domain,
+            next_check=datetime.datetime.utcnow(),
+            repeater_id=repeater.get_id,
+            repeater_type=repeater_type,
+            payload_id=payload_id,
+        )
+        payload_doc = repeater.payload_doc(dummy_repeat_record)
+        payload = repeater.get_payload(dummy_repeat_record, payload_doc)
+        if isinstance(payload, dict):
+            return payload
+        else:
+            return json.loads(payload)
+
+    def populate_payloads():
+        for payload_id in payload_ids:
+            try:
+                payload = get_payload(payload_id)
+                payloads[payload_id] = payload
+                headers = list(set(headers + payload.keys()))
+            except Exception as e:
+                payloads[payload_id] = {'note': 'Could not generate payload, %s' % str(e)}
+
+    def create_result_file():
+        _, temp_file_path = tempfile.mkstemp()
+        with open(temp_file_path, 'w') as csvfile:
+            headers.append('payload_id')
+            writer = csv.DictWriter(csvfile, fieldnames=headers)
+            writer.writeheader()
+            for payload_id, payload in payloads.items():
+                row = payload
+                row['payload_id'] = payload_id
+                writer.writerow(row)
+        return temp_file_path
+
+    def email_result(download_url):
+        send_HTML_email('Bulk Payload generated for %s' % repeater_type,
+                        email_id,
+                        'This email is to just let you know that there is a '
+                        'download waiting for you at %s. It will expire in 24 hours' % download_url)
+
+    populate_payloads()
+    temp_file_path = create_result_file()
+    download_url = ExposeBlobDownload().get_link(temp_file_path, result_file_name, Format.CSV)
+    email_result(download_url)
