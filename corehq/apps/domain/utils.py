@@ -144,8 +144,7 @@ def send_repeater_payloads(repeater_id, payload_ids, email_id):
             repeater_type=repeater_type,
             payload_id=payload_id,
         )
-        payload_doc = repeater.payload_doc(dummy_repeat_record)
-        payload = repeater.get_payload(dummy_repeat_record, payload_doc)
+        payload = repeater.get_payload(dummy_repeat_record)
         if isinstance(payload, dict):
             return payload
         else:
