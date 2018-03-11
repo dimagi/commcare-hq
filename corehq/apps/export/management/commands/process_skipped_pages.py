@@ -1,6 +1,7 @@
 from __future__ import print_function
 
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import multiprocessing
 import os
 import re
@@ -55,7 +56,7 @@ class Command(BaseCommand):
 
         if not export_archive_path or not os.path.exists(export_archive_path):
             confirm = input(
-                u"""
+                """
                 No export archive provided. Do you want to download the latest one? [y/N]
                 """
             )

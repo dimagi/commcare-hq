@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import json
 
 import re
@@ -124,9 +125,9 @@ class WriterTest(SimpleTestCase):
             self.assertEqual(
                 json.loads(export.read()),
                 {
-                    u'My table': {
-                        u'headers': [u'Q3', u'Q1'],
-                        u'rows': [[u'baz', u'foo'], [u'bop', u'bip']],
+                    'My table': {
+                        'headers': ['Q3', 'Q1'],
+                        'rows': [['baz', 'foo'], ['bop', 'bip']],
 
                     }
                 }
@@ -168,13 +169,13 @@ class WriterTest(SimpleTestCase):
             self.assertEqual(
                 json.loads(export.read()),
                 {
-                    u'My table_000': {
-                        u'headers': [u'Q3', u'Q1'],
-                        u'rows': [[u'baz', u'foo'], [u'bop', u'bip']],
+                    'My table_000': {
+                        'headers': ['Q3', 'Q1'],
+                        'rows': [['baz', 'foo'], ['bop', 'bip']],
                     },
-                    u'My table_001': {
-                        u'headers': [u'Q3', u'Q1'],
-                        u'rows': [[u'baz', u'foo'], [u'bop', u'bip']],
+                    'My table_001': {
+                        'headers': ['Q3', 'Q1'],
+                        'rows': [['baz', 'foo'], ['bop', 'bip']],
                     }
                 }
             )
@@ -213,9 +214,9 @@ class WriterTest(SimpleTestCase):
             self.assertEqual(
                 json.loads(export.read()),
                 {
-                    u'My table': {
-                        u'headers': [u'MC | one', u'MC | two', 'MC | extra'],
-                        u'rows': [[EMPTY_VALUE, 1, 'extra'], [1, 1, '']],
+                    'My table': {
+                        'headers': ['MC | one', 'MC | two', 'MC | extra'],
+                        'rows': [[EMPTY_VALUE, 1, 'extra'], [1, 1, '']],
 
                     }
                 }
@@ -260,9 +261,9 @@ class WriterTest(SimpleTestCase):
             self.assertEqual(
                 json.loads(export.read()),
                 {
-                    u'My table': {
-                        u'headers': [u'Scalar Array'],
-                        u'rows': [['one two']],
+                    'My table': {
+                        'headers': ['Scalar Array'],
+                        'rows': [['one two']],
 
                     }
                 }
@@ -357,9 +358,9 @@ class WriterTest(SimpleTestCase):
             self.assertEqual(
                 json.loads(export.read()),
                 {
-                    u'My table': {
-                        u'headers': [u'StockItem @type', u'StockItem @quantity'],
-                        u'rows': [
+                    'My table': {
+                        'headers': ['StockItem @type', 'StockItem @quantity'],
+                        'rows': [
                             ['question-id', '2'],
                             ['question-id', '2'],
                             [MISSING_VALUE, MISSING_VALUE],
@@ -399,9 +400,9 @@ class WriterTest(SimpleTestCase):
             self.assertEqual(
                 json.loads(export.read()),
                 {
-                    u'My table': {
-                        u'headers': [u'Date'],
-                        u'rows': [[MISSING_VALUE], [couch_to_excel_datetime('2015-07-22T14:16:49.584880Z', None)]],
+                    'My table': {
+                        'headers': ['Date'],
+                        'rows': [[MISSING_VALUE], [couch_to_excel_datetime('2015-07-22T14:16:49.584880Z', None)]],
 
                     }
                 }
@@ -441,9 +442,9 @@ class WriterTest(SimpleTestCase):
             self.assertEqual(
                 json.loads(export.read()),
                 {
-                    u'My table': {
-                        u'headers': [u'MC'],
-                        u'rows': [['two extra'], ['one two']],
+                    'My table': {
+                        'headers': ['MC'],
+                        'rows': [['two extra'], ['one two']],
 
                     }
                 }
@@ -490,14 +491,14 @@ class WriterTest(SimpleTestCase):
             self.assertEqual(
                 json.loads(export.read()),
                 {
-                    u'My table': {
-                        u'headers': [u'Q3'],
-                        u'rows': [[u'baz'], [u'bop']],
+                    'My table': {
+                        'headers': ['Q3'],
+                        'rows': [['baz'], ['bop']],
 
                     },
-                    u'My other table': {
-                        u'headers': [u'Q4'],
-                        u'rows': [[u'bar'], [u'boop']],
+                    'My other table': {
+                        'headers': ['Q4'],
+                        'rows': [['bar'], ['boop']],
                     }
                 }
             )
@@ -613,18 +614,18 @@ class WriterTest(SimpleTestCase):
             self.assertEqual(
                 json.loads(export.read()),
                 {
-                    u'My table': {
-                        u'headers': [u'Q3'],
-                        u'rows': [[u'baz'], [u'bop']],
+                    'My table': {
+                        'headers': ['Q3'],
+                        'rows': [['baz'], ['bop']],
 
                     },
-                    u'Export2-My other table': {
-                        u'headers': [u'Q4'],
-                        u'rows': [[u'bar'], [u'boop']],
+                    'Export2-My other table': {
+                        'headers': ['Q4'],
+                        'rows': [['bar'], ['boop']],
                     },
-                    u'Export3-My other table': {
-                        u'headers': [u'Q4'],
-                        u'rows': [[u'bar'], [u'boop']],
+                    'Export3-My other table': {
+                        'headers': ['Q4'],
+                        'rows': [['bar'], ['boop']],
                     },
                 }
             )
@@ -669,9 +670,9 @@ class WriterTest(SimpleTestCase):
             self.assertEqual(
                 json.loads(export.read()),
                 {
-                    u'My table': {
-                        u'headers': [u'location'],
-                        u'rows': [[EMPTY_VALUE]],
+                    'My table': {
+                        'headers': ['location'],
+                        'rows': [[EMPTY_VALUE]],
 
                     }
                 }
@@ -706,9 +707,9 @@ class WriterTest(SimpleTestCase):
             self.assertEqual(
                 json.loads(export.read()),
                 {
-                    u'Sheet1': {
-                        u'headers': [u'Q1'],
-                        u'rows': [[u'foo'], [u'bip']],
+                    'Sheet1': {
+                        'headers': ['Q1'],
+                        'rows': [['foo'], ['bip']],
 
                     }
                 }
@@ -781,14 +782,14 @@ class ExportTest(SimpleTestCase):
             self.assertEqual(
                 json.loads(export.read()),
                 {
-                    u'My table': {
-                        u'headers': [
-                            u'Foo column',
-                            u'Bar column'],
-                        u'rows': [
-                            [u'apple', u'banana'],
-                            [u'apple', u'banana'],
-                            [u'apple', u'banana'],
+                    'My table': {
+                        'headers': [
+                            'Foo column',
+                            'Bar column'],
+                        'rows': [
+                            ['apple', 'banana'],
+                            ['apple', 'banana'],
+                            ['apple', 'banana'],
                         ],
                     }
                 }
@@ -838,9 +839,9 @@ class ExportTest(SimpleTestCase):
             self.assertEqual(
                 json.loads(export.read()),
                 {
-                    u'My table': {
-                        u'headers': [u'case_name'],
-                        u'rows': [[u'batman'], [MISSING_VALUE]],
+                    'My table': {
+                        'headers': ['case_name'],
+                        'rows': [['batman'], [MISSING_VALUE]],
 
                     }
                 }
@@ -879,14 +880,14 @@ class ExportTest(SimpleTestCase):
             self.assertEqual(
                 export_dict,
                 {
-                    u'My table': {
-                        u'headers': [
-                            u'DEID Date Transform column [sensitive]',
+                    'My table': {
+                        'headers': [
+                            'DEID Date Transform column [sensitive]',
                         ],
-                        u'rows': [
+                        'rows': [
                             [MISSING_VALUE],
-                            [u'2016-04-07'],
-                            [u'2016-04-27'],  # offset by 3 since that's the mocked random offset
+                            ['2016-04-07'],
+                            ['2016-04-27'],  # offset by 3 since that's the mocked random offset
                         ],
                     }
                 }
