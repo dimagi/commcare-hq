@@ -1187,6 +1187,7 @@ class CreateScheduleInstanceActionDefinition(CaseRuleActionDefinition):
                     case_phase_matches, schedule_instance_start_date = VisitSchedulerIntegrationHelper(case,
                         scheduler_module_info).get_result()
                 except VisitSchedulerIntegrationHelper.VisitSchedulerIntegrationException:
+                    self.delete_schedule_instances(case)
                     self.notify_scheduler_integration_exception(case, scheduler_module_info)
                     return CaseRuleActionResult()
 
