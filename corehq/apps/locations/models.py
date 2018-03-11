@@ -109,7 +109,7 @@ class LocationType(models.Model):
     # If specified, include only the linked types
     include_only = models.ManyToManyField('self', symmetrical=False, related_name='included_in')
 
-    last_modified = models.DateTimeField(auto_now=True)
+    last_modified = models.DateTimeField(auto_now=True, db_index=True)
     has_user = models.BooleanField(default=False)
 
     emergency_level = StockLevelField(default=0.5)
@@ -392,12 +392,12 @@ class SQLLocation(MPTTModel):
     domain = models.CharField(max_length=255, db_index=True)
     name = models.CharField(max_length=255, null=True)
     location_id = models.CharField(max_length=100, db_index=True, unique=True)
-    location_type = models.ForeignKey(LocationType, on_delete=models.CASCADE)
+    location_type = models.ForeignKey(LocationType, on_delete=models.CASCADE, db_index=True)
     site_code = models.CharField(max_length=255)
     external_id = models.CharField(max_length=255, null=True, blank=True)
     metadata = jsonfield.JSONField(default=dict, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    last_modified = models.DateTimeField(auto_now=True)
+    last_modified = models.DateTimeField(auto_now=True, db_index=True)
     is_archived = models.BooleanField(default=False)
     latitude = models.DecimalField(max_digits=20, decimal_places=10, null=True, blank=True)
     longitude = models.DecimalField(max_digits=20, decimal_places=10, null=True, blank=True)

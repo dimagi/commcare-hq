@@ -8,6 +8,7 @@ from corehq.warehouse.const import (
     DOMAIN_DIM_SLUG,
     FORM_STAGING_SLUG,
     SYNCLOG_STAGING_SLUG,
+    SYNCLOG_FACT_SLUG,
 )
 
 from .dimensions import UserDim, DomainDim
@@ -66,6 +67,11 @@ class FormFact(BaseFact, CustomSQLETLMixin):
     edited_on = models.DateTimeField(null=True)
     last_modified = models.DateTimeField(null=True)
 
+    time_end = models.DateTimeField(null=True, blank=True)
+    time_start = models.DateTimeField(null=True, blank=True)
+    commcare_version = models.CharField(max_length=8, blank=True, null=True)
+    app_version = models.PositiveIntegerField(null=True, blank=True)
+
     build_id = models.CharField(max_length=255, null=True)
     state = models.PositiveSmallIntegerField(
         choices=XFormInstanceSQL.STATES,
@@ -79,7 +85,36 @@ class FormFact(BaseFact, CustomSQLETLMixin):
             FORM_STAGING_SLUG,
         ]
 
-# TODO: Write SyncLogFact
+
+class SyncLogFact(BaseFact, CustomSQLETLMixin):
+    '''
+    SyncLog Fact Table
+    Grain: sync_log_id
+    '''
+    slug = SYNCLOG_FACT_SLUG
+
+    sync_log_id = models.CharField(max_length=255)
+    sync_date = models.DateTimeField(null=True)
+
+    # these can be null per SyncLogStagingTable
+    domain = models.CharField(max_length=255, null=True)
+
+    user_dim = models.ForeignKey(UserDim, on_delete=models.PROTECT)
+    domain_dim = models.ForeignKey(DomainDim, on_delete=models.PROTECT)
+
+    # these can be null per SyncLogStagingTable
+    build_id = models.CharField(max_length=255, null=True)
+
+    duration = models.IntegerField(null=True)  # in seconds
+
+    @classmethod
+    def dependencies(cls):
+        return [
+            USER_DIM_SLUG,
+            DOMAIN_DIM_SLUG,
+            SYNCLOG_STAGING_SLUG,
+        ]
+
 
 class ApplicationStatusFact(BaseFact, CustomSQLETLMixin):
     '''
@@ -116,4 +151,5 @@ class ApplicationStatusFact(BaseFact, CustomSQLETLMixin):
             FORM_STAGING_SLUG,
             FORM_FACT_SLUG,
             SYNCLOG_STAGING_SLUG,
+            SYNCLOG_FACT_SLUG,
         ]
