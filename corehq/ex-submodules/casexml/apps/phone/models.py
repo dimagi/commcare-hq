@@ -2,9 +2,11 @@ from __future__ import absolute_import
 from collections import defaultdict, namedtuple
 from copy import copy
 from datetime import datetime
+import architect
+import uuid
 import json
 from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
-from casexml.apps.phone.exceptions import IncompatibleSyncLogType
+from casexml.apps.phone.exceptions import IncompatibleSyncLogType, MissingSyncLog
 from corehq.toggles import LEGACY_SYNC_SUPPORT
 from corehq.util.global_request import get_request_domain
 from corehq.util.soft_assert import soft_assert
@@ -12,12 +14,16 @@ from corehq.toggles import ENABLE_LOADTEST_USERS
 from corehq.apps.domain.models import Domain
 from dimagi.ext.couchdbkit import *
 from django.db import models
+from django.contrib.postgres.fields import JSONField
+from django.core.exceptions import ValidationError
 from memoized import memoized
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.couch import LooselyEqualDocumentSchema
+from dimagi.utils.logging import notify_exception
 from casexml.apps.case import const
 from casexml.apps.case.sharedmodels import CommCareCaseIndex, IndexHoldingMixIn
 from casexml.apps.phone.checksum import Checksum, CaseStateHash
+from casexml.apps.phone.change_publishers import publish_synclog_saved
 import logging
 import six
 
@@ -326,12 +332,10 @@ class AbstractSyncLog(SafeSaveDocument, UnicodeMixIn):
         if self.previous_log_removed or not self.previous_log_id:
             return
 
-        if not hasattr(self, "_previous_log_ref"):
-            try:
-                self._previous_log_ref = SyncLog.get(self.previous_log_id)
-            except ResourceNotFound:
-                self._previous_log_ref = None
-        return self._previous_log_ref
+        try:
+            return get_properly_wrapped_sync_log(self.previous_log_id)
+        except MissingSyncLog:
+            return None
 
     @classmethod
     def from_other_format(cls, other_sync_log):
@@ -352,6 +356,105 @@ class AbstractSyncLog(SafeSaveDocument, UnicodeMixIn):
 
     def test_only_get_dependent_cases_on_phone(self):
         raise NotImplementedError()
+
+
+def save_synclog_to_sql(synclog_json_object):
+    synclog = synclog_to_sql_object(synclog_json_object)
+    synclog.save()
+
+
+def delete_synclog(synclog_id):
+    """
+    Deletes synclog object both from Couch and SQL, if the doc
+        isn't found in either couch or SQL an exception is raised
+    """
+    deleted = False
+    try:
+        synclog = SyncLogSQL.objects.filter(synclog_id=synclog_id).first()
+        if synclog:
+            synclog.delete()
+            deleted = True
+    except ValidationError:
+        pass
+
+    try:
+        synclog = properly_wrap_sync_log(SyncLog.get_db().get(synclog_id))
+        SyncLog.get_db().delete_doc(synclog)
+        deleted = True
+    except ResourceNotFound:
+        pass
+
+    if not deleted:
+        raise MissingSyncLog("A SyncLogSQL object with this synclog_id ({})is not found".format(synclog_id))
+
+
+def synclog_to_sql_object(synclog_json_object):
+    # Returns a SyncLogSQL object, a saved instance from DB or
+    #   instantiated SQL object to be saved
+    # synclog_json_object should be a SyncLog instance
+    # if synclog_json_object._id
+    synclog = None
+    if synclog_json_object._id:
+        synclog = SyncLogSQL.objects.filter(synclog_id=synclog_json_object._id).first()
+
+    is_new_synclog_sql = not synclog_json_object._id or not synclog
+
+    if is_new_synclog_sql:
+        synclog_id = synclog_json_object._id or uuid.uuid1().hex.lower()
+        synclog_json_object._id = synclog_id
+        synclog = SyncLogSQL(
+            domain=synclog_json_object.domain,
+            user_id=synclog_json_object.user_id,
+            synclog_id=synclog_id,
+            date=synclog_json_object.date,
+            previous_synclog_id=getattr(synclog_json_object, 'previous_log_id', None),
+            log_format=synclog_json_object.log_format,
+            build_id=synclog_json_object.build_id,
+            duration=synclog_json_object.duration,
+            last_submitted=synclog_json_object.last_submitted,
+            had_state_error=synclog_json_object.had_state_error,
+            error_date=synclog_json_object.error_date,
+            error_hash=synclog_json_object.error_hash,
+        )
+    synclog.doc = synclog_json_object.to_json()
+    return synclog
+
+
+@architect.install('partition', type='range', subtype='date', constraint='week', column='date')
+class SyncLogSQL(models.Model):
+
+    synclog_id = models.UUIDField(unique=True, primary_key=True, default=uuid.uuid1().hex)
+    domain = models.CharField(max_length=255, null=True, blank=True, default=None, db_index=True)
+    user_id = models.CharField(max_length=255, default=None, db_index=True)
+    date = models.DateTimeField(db_index=True, null=True, blank=True)
+    # needs to be a foreign key?
+    previous_synclog_id = models.UUIDField(max_length=255, default=None, null=True, blank=True)
+    doc = JSONField()
+    log_format = models.CharField(
+        max_length=10,
+        default=LOG_FORMAT_LEGACY,
+        choices=[
+            (format, format)
+            for format in [LOG_FORMAT_LEGACY, LOG_FORMAT_SIMPLIFIED, LOG_FORMAT_LIVEQUERY]
+        ]
+    )
+    build_id = models.CharField(max_length=255, null=True, blank=True)
+    duration = models.PositiveIntegerField(null=True, blank=True)
+    last_submitted = models.DateTimeField(db_index=True, null=True, blank=True)
+    had_state_error = models.BooleanField(default=False)
+    error_date = models.DateTimeField(db_index=True, null=True, blank=True)
+    error_hash = models.CharField(max_length=255, null=True, blank=True)
+
+    def save(self, *args, **kwargs):
+        super(SyncLogSQL, self).save(*args, **kwargs)
+        try:
+            publish_synclog_saved(self)
+        except:
+            notify_exception(
+                None,
+                message='Could not publish change for SyncLog',
+                details={'pk': self.pk}
+            )
 
 
 class SyncLog(AbstractSyncLog):
@@ -385,6 +488,12 @@ class SyncLog(AbstractSyncLog):
         from casexml.apps.phone.dbaccessors.sync_logs_by_user import get_last_synclog_for_user
 
         return get_last_synclog_for_user(user_id)
+
+    def save(self):
+        save_synclog_to_sql(self)
+
+    def delete(self):
+        delete_synclog(self._id)
 
     def _assert(self, conditional, msg="", case_id=None):
         if not conditional:
@@ -733,7 +842,10 @@ class SimplifiedSyncLog(AbstractSyncLog):
     def save(self, *args, **kwargs):
         # force doc type to SyncLog to avoid changing the couch view.
         self.doc_type = "SyncLog"
-        super(SimplifiedSyncLog, self).save(*args, **kwargs)
+        save_synclog_to_sql(self)
+
+    def delete(self):
+        delete_synclog(self._id)
 
     def case_count(self):
         return len(self.case_ids_on_phone)
@@ -1194,8 +1306,24 @@ def get_properly_wrapped_sync_log(doc_id):
     """
     Looks up and wraps a sync log, using the class based on the 'log_format' attribute.
     Defaults to the existing legacy SyncLog class.
+
+    Raises MissingSyncLog if doc_id is not found
     """
-    return properly_wrap_sync_log(SyncLog.get_db().get(doc_id))
+    try:
+        synclog = SyncLogSQL.objects.filter(synclog_id=doc_id).first()
+        if synclog:
+            return properly_wrap_sync_log(synclog.doc)
+    except ValidationError:
+        # this occurs if doc_id is not a valid UUID
+        synclog = None
+    if not synclog:
+        try:
+            # try to lookup in couch
+            return properly_wrap_sync_log(SyncLog.get_db().get(doc_id))
+        except ResourceNotFound:
+            pass
+        raise MissingSyncLog("A SyncLogSQL object with this synclog_id ({})is not found".format(
+            doc_id))
 
 
 def properly_wrap_sync_log(doc):

@@ -14,6 +14,7 @@ from corehq.apps.dump_reload.sql import SqlDataDumper
 
 
 class Command(BaseCommand):
+    # This doesn't include SyncLog data
     help = "Dump a domain's data to disk."
 
     def add_arguments(self, parser):

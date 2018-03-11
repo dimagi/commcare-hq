@@ -1,5 +1,9 @@
 from __future__ import absolute_import
 from __future__ import print_function
+
+from casexml.apps.phone.dbaccessors.sync_logs_by_user import get_synclogs_for_user
+from corehq.apps.change_feed import topics
+from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
 from corehq.apps.receiverwrapper.util import get_version_and_app_from_build_id
 from corehq.apps.users.models import CouchUser, CommCareUser, WebUser
 from corehq.apps.users.util import update_latest_builds, update_last_sync
@@ -10,30 +14,30 @@ from dimagi.utils.parsing import string_to_utc_datetime
 
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors.interface import PillowProcessor
-from pillowtop.feed.couch import CouchChangeFeed
 from pillowtop.feed.interface import Change
-from pillowtop.checkpoints.manager import PillowCheckpoint, PillowCheckpointEventHandler
+from pillowtop.checkpoints.manager import KafkaPillowCheckpoint
 from pillowtop.reindexer.reindexer import Reindexer, ReindexerFactory
 
-from casexml.apps.phone.models import SyncLog
-from casexml.apps.phone.dbaccessors.sync_logs_by_user import get_synclogs_for_user
+
+SYNCLOG_SQL_USER_SYNC_GROUP_ID = "synclog_sql_user_sync"
 
 
-def get_user_sync_history_pillow(pillow_id='UpdateUserSyncHistoryPillow', **kwargs):
+def get_user_sync_history_pillow(
+        pillow_id='UpdateUserSyncHistoryPillow', num_processes=1, process_num=0, **kwargs):
     """
     This gets a pillow which iterates through all synclogs
     """
-    couch_db = SyncLog.get_db()
-    change_feed = CouchChangeFeed(couch_db, include_docs=True)
-    checkpoint = PillowCheckpoint('synclog', change_feed.sequence_format)
-    form_processor = UserSyncHistoryProcessor()
+    change_feed = KafkaChangeFeed(
+        topics=[topics.SYNCLOG_SQL], group_id=SYNCLOG_SQL_USER_SYNC_GROUP_ID,
+        num_processes=num_processes, process_num=process_num)
+    checkpoint = KafkaPillowCheckpoint(pillow_id, [topics.SYNCLOG_SQL])
     return ConstructedPillow(
         name=pillow_id,
         checkpoint=checkpoint,
         change_feed=change_feed,
-        processor=form_processor,
-        change_processed_event_handler=PillowCheckpointEventHandler(
-            checkpoint=checkpoint, checkpoint_frequency=100
+        processor=UserSyncHistoryProcessor(),
+        change_processed_event_handler=KafkaCheckpointEventHandler(
+            checkpoint=checkpoint, checkpoint_frequency=100, change_feed=change_feed
         ),
     )
 
@@ -41,7 +45,6 @@ def get_user_sync_history_pillow(pillow_id='UpdateUserSyncHistoryPillow', **kwar
 class UserSyncHistoryProcessor(PillowProcessor):
 
     def process_change(self, pillow_instance, change):
-
         synclog = change.get_document()
         if not synclog:
             return
