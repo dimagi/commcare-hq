@@ -218,8 +218,8 @@
     },
     "UpdateUserSyncHistoryPillow": {
         "advertised_name": "UpdateUserSyncHistoryPillow",
-        "change_feed_type": "CouchChangeFeed",
-        "checkpoint_id": "synclog",
+        "change_feed_type": "KafkaChangeFeed",
+        "checkpoint_id": "UpdateUserSyncHistoryPillow",
         "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
         "name": "UpdateUserSyncHistoryPillow"
     }

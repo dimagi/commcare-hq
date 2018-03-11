@@ -68,23 +68,14 @@ def get_synclog_ids_by_date(start_datetime, end_datetime):
     Returns all synclog ids that have been modified within a time range. The start date is
     exclusive while the end date is inclusive (start_datetime, end_datetime].
     '''
-    from casexml.apps.phone.models import SyncLog
-    json_start_datetime = json_format_datetime(start_datetime)
+    from casexml.apps.phone.models import SyncLogSQL
 
-    results = SyncLog.view(
-        "sync_logs_by_date/view",
-        startkey=[json_start_datetime],
-        endkey=[json_format_datetime(end_datetime)],
-        reduce=False,
-        include_docs=False
-    )
-    for result in results:
-        result_modified_datetime = result['key'][0]
-        # Skip the record if the datetime is equal to the start because this should return
-        # records with an exclusive start date.
-        if result_modified_datetime == json_start_datetime:
-            continue
-        yield result['id']
+    return [
+        synclog_id.hex
+        for synclog_id in SyncLogSQL.objects.filter(
+            date__gt=start_datetime, date__lt=end_datetime
+        ).values_list('synclog_id', flat=True)
+    ]
 
 
 def get_forms_by_last_modified(start_datetime, end_datetime):

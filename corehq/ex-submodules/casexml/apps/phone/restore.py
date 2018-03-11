@@ -14,13 +14,12 @@ from xml.etree import cElementTree as ElementTree
 import six
 from celery.exceptions import TimeoutError
 from celery.result import AsyncResult
-from couchdbkit import ResourceNotFound
 from django.http import HttpResponse, StreamingHttpResponse
 from django.conf import settings
 
 from casexml.apps.phone.data_providers import get_element_providers, get_async_providers
 from casexml.apps.phone.exceptions import (
-    MissingSyncLog, InvalidSyncLogException, SyncLogUserMismatch,
+    InvalidSyncLogException, SyncLogUserMismatch,
     BadStateException, RestoreException
 )
 from casexml.apps.phone.restore_caching import AsyncRestoreTaskIdCache, RestorePayloadPathCache
@@ -31,7 +30,6 @@ from corehq.util.datadog.utils import bucket_value
 from corehq.util.timer import TimingContext
 from corehq.util.datadog.gauges import datadog_counter
 from memoized import memoized
-from dimagi.utils.parsing import json_format_datetime
 from casexml.apps.phone.models import (
     get_properly_wrapped_sync_log,
     LOG_FORMAT_LIVEQUERY,
@@ -377,12 +375,10 @@ class RestoreState(object):
     def last_sync_log(self):
         if self._last_sync_log is Ellipsis:
             if self.params.sync_log_id:
-                try:
-                    sync_log = get_properly_wrapped_sync_log(self.params.sync_log_id)
-                except ResourceNotFound:
-                    # if we are in loose mode, return an HTTP 412 so that the phone will
-                    # just force a fresh sync
-                    raise MissingSyncLog('No sync log with ID {} found'.format(self.params.sync_log_id))
+                # if we are in loose mode, return an HTTP 412 so that the phone will
+                # just force a fresh sync
+                # This raises MissingSyncLog exception if synclog not found
+                sync_log = get_properly_wrapped_sync_log(self.params.sync_log_id)
                 if sync_log.doc_type != 'SyncLog':
                     raise InvalidSyncLogException('Bad sync log doc type for {}'.format(self.params.sync_log_id))
                 elif sync_log.user_id != self.restore_user.user_id:
