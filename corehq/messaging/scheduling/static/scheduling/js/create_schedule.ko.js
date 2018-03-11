@@ -173,7 +173,6 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
             return self.send_frequency() !== 'immediately';
         });
 
-
         self.calculateDailyEndDate = function(start_date_milliseconds, repeat_every, occurrences) {
             var milliseconds_in_a_day = 24 * 60 * 60 * 1000;
             var days_until_end_date = (occurrences - 1) * repeat_every;
@@ -242,13 +241,21 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
             } else if(self.stop_type() === 'never') {
                 return NaN;
             } else {
-                return parseInt(self.occurrences());
+                var value = parseInt(self.occurrences());
+                if(value <= 0) {
+                    return NaN;
+                }
+                return value;
             }
         };
 
         self.calculateRepeatEvery = function() {
             if(self.repeat() === 'repeat_every_n') {
-                return parseInt(self.repeat_every());
+                var value = parseInt(self.repeat_every());
+                if(value <= 0) {
+                    return NaN;
+                }
+                return value;
             } else {
                 return 1;
             }
@@ -258,6 +265,10 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
             var start_date_milliseconds = Date.parse(self.start_date());
             var repeat_every = self.calculateRepeatEvery();
             var occurrences = self.calculateOccurrences();
+
+            if(self.start_date_type() && self.start_date_type() !== 'SPECIFIC_DATE') {
+                return '';
+            }
 
             if(isNaN(start_date_milliseconds) || isNaN(occurrences) || isNaN(repeat_every)) {
                 return '';

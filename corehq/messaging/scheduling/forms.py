@@ -192,6 +192,10 @@ class ScheduleForm(Form):
         max_value=1439,
         label='',
     )
+    start_date = CharField(
+        label='',
+        required=False
+    )
     repeat = ChoiceField(
         required=False,
         # The text for REPEAT_EVERY_1 gets set dynamically
@@ -1101,6 +1105,12 @@ class ScheduleForm(Form):
 
         return value
 
+    def clean_start_date(self):
+        if self.cleaned_data.get('send_frequency') == self.SEND_IMMEDIATELY:
+            return None
+
+        return validate_date(self.cleaned_data.get('start_date'))
+
     def clean_repeat(self):
         if self.cleaned_data.get('send_frequency') == self.SEND_IMMEDIATELY:
             return None
@@ -1452,11 +1462,6 @@ class BroadcastForm(ScheduleForm):
         max_length=1000,
     )
 
-    start_date = CharField(
-        label='',
-        required=False
-    )
-
     def __init__(self, domain, schedule, can_use_sms_surveys, broadcast, *args, **kwargs):
         self.initial_broadcast = broadcast
         super(BroadcastForm, self).__init__(domain, schedule, can_use_sms_surveys, *args, **kwargs)
@@ -1483,7 +1488,7 @@ class BroadcastForm(ScheduleForm):
                         'start_date',
                         data_bind='value: start_date',
                     ),
-                    css_class='col-sm-6',
+                    css_class='col-sm-4',
                 ),
                 data_bind='visible: showStartDateInput',
             ),
@@ -1505,12 +1510,6 @@ class BroadcastForm(ScheduleForm):
                 result['start_date'] = self.initial_broadcast.start_date.strftime('%Y-%m-%d')
 
         return result
-
-    def clean_start_date(self):
-        if self.cleaned_data.get('send_frequency') == self.SEND_IMMEDIATELY:
-            return None
-
-        return validate_date(self.cleaned_data.get('start_date'))
 
     def distill_start_offset(self):
         return 0
@@ -1573,6 +1572,7 @@ class BroadcastForm(ScheduleForm):
 class ConditionalAlertScheduleForm(ScheduleForm):
     START_DATE_RULE_TRIGGER = 'RULE_TRIGGER'
     START_DATE_CASE_PROPERTY = 'CASE_PROPERTY'
+    START_DATE_SPECIFIC_DATE = 'SPECIFIC_DATE'
     START_DATE_FROM_VISIT_SCHEDULER = 'VISIT_SCHEDULER'
 
     START_OFFSET_ZERO = 'ZERO'
@@ -1582,11 +1582,20 @@ class ConditionalAlertScheduleForm(ScheduleForm):
     YES = 'Y'
     NO = 'N'
 
+    # start_date is defined on the superclass but cleaning it in this subclass
+    # depends on start_date_type, which depends on send_frequency
+    field_order = [
+        'send_frequency',
+        'start_date_type',
+        'start_date',
+    ]
+
     start_date_type = ChoiceField(
-        required=True,
+        required=False,
         choices=(
             (START_DATE_RULE_TRIGGER, ugettext_lazy("The first available time after the rule is satisfied")),
-            (START_DATE_CASE_PROPERTY, ugettext_lazy("The date from case property: ")),
+            (START_DATE_CASE_PROPERTY, ugettext_lazy("The date from case property:")),
+            (START_DATE_SPECIFIC_DATE, ugettext_lazy("A specific date:")),
         )
     )
 
@@ -1843,22 +1852,6 @@ class ConditionalAlertScheduleForm(ScheduleForm):
 
     def compute_initial(self):
         result = super(ConditionalAlertScheduleForm, self).compute_initial()
-        if self.initial_schedule:
-            schedule = self.initial_schedule
-            if isinstance(schedule, TimedSchedule):
-                if schedule.start_offset == 0:
-                    result['start_offset_type'] = self.START_OFFSET_ZERO
-                elif schedule.start_offset > 0:
-                    result['start_offset_type'] = self.START_OFFSET_POSITIVE
-                    result['start_offset'] = schedule.start_offset
-                else:
-                    result['start_offset_type'] = self.START_OFFSET_NEGATIVE
-                    result['start_offset'] = abs(schedule.start_offset)
-
-                if schedule.start_day_of_week >= 0:
-                    result['start_day_of_week'] = str(schedule.start_day_of_week)
-
-            self.add_initial_for_custom_metadata(result)
 
         if self.initial_rule:
             action_definition = self.initial_rule.memoized_actions[0].definition
@@ -1873,6 +1866,9 @@ class ConditionalAlertScheduleForm(ScheduleForm):
             if action_definition.start_date_case_property:
                 result['start_date_type'] = self.START_DATE_CASE_PROPERTY
                 result['start_date_case_property'] = action_definition.start_date_case_property
+            elif action_definition.specific_start_date:
+                result['start_date_type'] = self.START_DATE_SPECIFIC_DATE
+                result['start_date'] = action_definition.specific_start_date
             elif scheduler_module_info.enabled:
                 result['visit_scheduler_app_and_form_unique_id'] = get_combined_id(
                     scheduler_module_info.app_id,
@@ -1885,6 +1881,26 @@ class ConditionalAlertScheduleForm(ScheduleForm):
                 result['visit_window_position'] = scheduler_module_info.window_position
             else:
                 result['start_date_type'] = self.START_DATE_RULE_TRIGGER
+
+        if self.initial_schedule:
+            schedule = self.initial_schedule
+            if (
+                isinstance(schedule, TimedSchedule) and
+                result.get('start_date_type') != self.START_DATE_SPECIFIC_DATE
+            ):
+                if schedule.start_offset == 0:
+                    result['start_offset_type'] = self.START_OFFSET_ZERO
+                elif schedule.start_offset > 0:
+                    result['start_offset_type'] = self.START_OFFSET_POSITIVE
+                    result['start_offset'] = schedule.start_offset
+                else:
+                    result['start_offset_type'] = self.START_OFFSET_NEGATIVE
+                    result['start_offset'] = abs(schedule.start_offset)
+
+                if schedule.start_day_of_week >= 0:
+                    result['start_day_of_week'] = str(schedule.start_day_of_week)
+
+            self.add_initial_for_custom_metadata(result)
 
         return result
 
@@ -1904,6 +1920,14 @@ class ConditionalAlertScheduleForm(ScheduleForm):
                         'start_date_case_property',
                     ),
                     data_bind="visible: start_date_type() === '%s'" % self.START_DATE_CASE_PROPERTY,
+                    css_class='col-sm-4',
+                ),
+                crispy.Div(
+                    twbscrispy.InlineField(
+                        'start_date',
+                        data_bind='value: start_date',
+                    ),
+                    data_bind="visible: start_date_type() === '%s'" % self.START_DATE_SPECIFIC_DATE,
                     css_class='col-sm-4',
                 ),
                 crispy.Div(
@@ -1942,12 +1966,14 @@ class ConditionalAlertScheduleForm(ScheduleForm):
                     crispy.HTML("<span>%s</span>" % _("day(s)")),
                     data_bind="visible: start_offset_type() !== '%s'" % self.START_OFFSET_ZERO,
                 ),
-                data_bind="visible: send_frequency() === '%s'" % self.SEND_DAILY,
+                data_bind=("visible: send_frequency() === '%s' && start_date_type() !== '%s'" %
+                           (self.SEND_DAILY, self.START_DATE_SPECIFIC_DATE)),
             ),
             hqcrispy.B3MultiField(
                 _("Begin"),
                 twbscrispy.InlineField('start_day_of_week'),
-                data_bind="visible: send_frequency() === '%s'" % self.SEND_WEEKLY,
+                data_bind=("visible: send_frequency() === '%s' && start_date_type() !== '%s'" %
+                           (self.SEND_WEEKLY, self.START_DATE_SPECIFIC_DATE)),
             ),
         ]
 
@@ -2034,7 +2060,10 @@ class ConditionalAlertScheduleForm(ScheduleForm):
         """ % _("Requires System Admin"))
 
     def clean_start_offset_type(self):
-        if self.cleaned_data.get('send_frequency') != self.SEND_DAILY:
+        if (
+            self.cleaned_data.get('send_frequency') != self.SEND_DAILY or
+            self.cleaned_data.get('start_date_type') == self.START_DATE_SPECIFIC_DATE
+        ):
             return None
 
         value = self.cleaned_data.get('start_offset_type')
@@ -2050,9 +2079,38 @@ class ConditionalAlertScheduleForm(ScheduleForm):
 
         return value
 
+    def clean_start_offset(self):
+        if (
+            self.cleaned_data.get('send_frequency') != self.SEND_DAILY or
+            self.cleaned_data.get('start_date_type') == self.START_DATE_SPECIFIC_DATE or
+            self.cleaned_data.get('start_offset_type') == self.START_OFFSET_ZERO
+        ):
+            return None
+
+        return validate_int(self.cleaned_data.get('start_offset'), 1)
+
+    def clean_start_date_type(self):
+        if self.cleaned_data.get('send_frequency') == self.SEND_IMMEDIATELY:
+            return None
+
+        value = self.cleaned_data.get('start_date_type')
+        if not value:
+            raise ValidationError(_("This field is required"))
+
+        return value
+
+    def clean_start_date(self):
+        if self.cleaned_data.get('start_date_type') != self.START_DATE_SPECIFIC_DATE:
+            return None
+
+        return super(ConditionalAlertScheduleForm, self).clean_start_date()
+
     def clean_start_day_of_week(self):
-        if self.cleaned_data.get('send_frequency') != self.SEND_WEEKLY:
-            return TimedSchedule.ANY_DAY
+        if (
+            self.cleaned_data.get('send_frequency') != self.SEND_WEEKLY or
+            self.cleaned_data.get('start_date_type') == self.START_DATE_SPECIFIC_DATE
+        ):
+            return None
 
         value = self.cleaned_data.get('start_day_of_week')
         error = ValidationError(_("Invalid choice selected"))
@@ -2223,12 +2281,13 @@ class ConditionalAlertScheduleForm(ScheduleForm):
     def distill_start_offset(self):
         send_frequency = self.cleaned_data.get('send_frequency')
         start_offset_type = self.cleaned_data.get('start_offset_type')
+        start_date_type = self.cleaned_data.get('start_date_type')
 
         if (
             send_frequency == self.SEND_DAILY and
+            start_date_type != self.START_DATE_SPECIFIC_DATE and
             start_offset_type in (self.START_OFFSET_NEGATIVE, self.START_OFFSET_POSITIVE)
         ):
-
             start_offset = self.cleaned_data.get('start_offset')
 
             if start_offset is None:
@@ -2242,6 +2301,12 @@ class ConditionalAlertScheduleForm(ScheduleForm):
         return 0
 
     def distill_start_day_of_week(self):
+        if self.cleaned_data['send_frequency'] != self.SEND_WEEKLY:
+            return TimedSchedule.ANY_DAY
+
+        if self.cleaned_data['start_date_type'] == self.START_DATE_SPECIFIC_DATE:
+            return self.cleaned_data['start_date'].weekday()
+
         return self.cleaned_data['start_day_of_week']
 
     def distill_scheduler_module_info(self):
@@ -2313,6 +2378,7 @@ class ConditionalAlertScheduleForm(ScheduleForm):
             'reset_case_property_name': self.cleaned_data['reset_case_property_name'],
             'scheduler_module_info': self.distill_scheduler_module_info().to_json(),
             'start_date_case_property': self.cleaned_data['start_date_case_property'],
+            'specific_start_date': self.cleaned_data['start_date'],
         }
 
         if isinstance(schedule, AlertSchedule):
@@ -2333,6 +2399,7 @@ class ConditionalAlertScheduleForm(ScheduleForm):
         action_definition.reset_case_property_name = self.cleaned_data['reset_case_property_name']
         action_definition.set_scheduler_module_info(self.distill_scheduler_module_info())
         action_definition.start_date_case_property = self.cleaned_data['start_date_case_property']
+        action_definition.specific_start_date = self.cleaned_data['start_date']
         action_definition.save()
 
     def validate_existing_action_definition(self, action_definition, schedule):

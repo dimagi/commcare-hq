@@ -1080,6 +1080,8 @@ class CreateScheduleInstanceActionDefinition(CaseRuleActionDefinition):
     # Only applicable when the schedule is a TimedSchedule
     start_date_case_property = models.CharField(max_length=126, null=True)
 
+    specific_start_date = models.DateField(null=True)
+
     # A dict with the structure represented by SchedulerModuleInfo;
     # when enabled=True in this dict, the framework uses info related to the
     # specified visit number to set the start date for any schedule instances
