@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import print_function
+from __future__ import unicode_literals
 from corehq.apps.receiverwrapper.util import get_version_and_app_from_build_id
 from corehq.apps.users.models import CouchUser, CommCareUser, WebUser
 from corehq.apps.users.util import update_latest_builds, update_last_sync
