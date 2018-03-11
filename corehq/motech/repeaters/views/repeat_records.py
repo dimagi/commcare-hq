@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import json
 import pytz
 
@@ -186,7 +187,7 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
     def _make_row(self, record):
         row = [
             self._make_state_label(record),
-            record.repeater.get_url(record) if record.repeater else _(u'Unable to generate url for record'),
+            record.repeater.get_url(record) if record.repeater else _('Unable to generate url for record'),
             self._format_date(record.last_checked) if record.last_checked else '---',
             self._format_date(record.next_check) if record.next_check else '---',
             render_to_string('repeaters/partials/attempt_history.html', {'record': record}),
@@ -246,7 +247,7 @@ class RepeatRecordView(View):
             payload = record.get_payload()
         except XFormNotFound:
             return json_response({
-                'error': u'Odd, could not find payload for: {}'.format(record.payload_id)
+                'error': 'Odd, could not find payload for: {}'.format(record.payload_id)
             }, status_code=404)
 
         if content_type == 'text/xml':

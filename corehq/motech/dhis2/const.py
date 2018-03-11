@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 SEND_FREQUENCY_MONTHLY = 'monthly'
 SEND_FREQUENCY_QUARTERLY = 'quarterly'
 

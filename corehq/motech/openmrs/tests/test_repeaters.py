@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import doctest
 import os
 from django.test import SimpleTestCase
@@ -30,11 +31,11 @@ class OpenmrsRepeaterTest(SimpleTestCase, TestFileMixin):
                 CaseTriggerInfo(
                     case_id='65e55473-e83b-4d78-9dde-eaf949758997',
                     updates={
-                        u'case_name': u'Elsa',
-                        u'case_type': u'paciente',
-                        u'estado_tarv': u'1',
-                        u'owner_id': u'9393007a6921eecd4a9f20eefb5c7a8e',
-                        u'tb': u'0',
+                        'case_name': 'Elsa',
+                        'case_type': 'paciente',
+                        'estado_tarv': '1',
+                        'owner_id': '9393007a6921eecd4a9f20eefb5c7a8e',
+                        'tb': '0',
                     },
                     created=True,
                     closed=False,
@@ -52,8 +53,8 @@ class OpenmrsRepeaterTest(SimpleTestCase, TestFileMixin):
                 CaseTriggerInfo(
                     case_id='65e55473-e83b-4d78-9dde-eaf949758997',
                     updates={
-                        u'estado_tarv': u'1',
-                        u'tb': u'1',
+                        'estado_tarv': '1',
+                        'tb': '1',
                     },
                     created=False,
                     closed=False,
