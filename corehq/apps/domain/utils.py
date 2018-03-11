@@ -150,7 +150,7 @@ def send_repeater_payloads(repeater_id, payload_ids, email_id):
         else:
             return json.loads(payload)
 
-    def populate_payloads():
+    def populate_payloads(headers):
         for payload_id in payload_ids:
             try:
                 payload = get_payload(payload_id)
@@ -158,6 +158,7 @@ def send_repeater_payloads(repeater_id, payload_ids, email_id):
                 headers = list(set(headers + payload.keys()))
             except Exception as e:
                 payloads[payload_id] = {'note': 'Could not generate payload, %s' % str(e)}
+        return headers
 
     def create_result_file():
         _, temp_file_path = tempfile.mkstemp()
@@ -177,7 +178,7 @@ def send_repeater_payloads(repeater_id, payload_ids, email_id):
                         'This email is to just let you know that there is a '
                         'download waiting for you at %s. It will expire in 24 hours' % download_url)
 
-    populate_payloads()
+    headers = populate_payloads(headers)
     temp_file_path = create_result_file()
     download_url = ExposeBlobDownload().get_link(temp_file_path, result_file_name, Format.CSV)
     email_result(download_url)
