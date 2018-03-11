@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from corehq.apps.sms.forms import BackendForm
 from corehq.apps.sms.mixin import apply_leniency
 from corehq.apps.sms.util import validate_phone_number

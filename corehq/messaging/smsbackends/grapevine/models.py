@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from xml.etree import cElementTree as ElementTree
 from django.http import HttpResponse
 from tastypie.authentication import Authentication

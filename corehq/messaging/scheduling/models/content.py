@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import print_function
+from __future__ import unicode_literals
 import jsonfield as old_jsonfield
 from corehq.apps.accounting.utils import domain_is_on_trial
 from corehq.apps.app_manager.exceptions import XFormIdNotUnique
