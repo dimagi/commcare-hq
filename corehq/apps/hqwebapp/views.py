@@ -721,10 +721,6 @@ def bsd_license(request):
     return render_static(request, "bsd_license.html", _("BSD License"))
 
 
-def product_agreement(request):
-    return render_static(request, "product_agreement.html", _("Product Subscription Agreement"))
-
-
 def unsubscribe(request, user_id):
     # todo in the future we should not require a user to be logged in to unsubscribe.
     from django.contrib import messages

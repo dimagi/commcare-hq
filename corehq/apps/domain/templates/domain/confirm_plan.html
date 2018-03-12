@@ -82,11 +82,13 @@
         </p>
         <div class="checkbox">
             <label  style="font-weight: bold;">
-                <input type="checkbox" id="confirm-product-agreement" name="confirm_legal" />
-                {% url "product_agreement" as pa_url %}
+                <input type="checkbox" id="confirm-eula" name="confirm_eula" />
+                {% url "eula" as eula_url %}
                 {% blocktrans %}
-                    I have read and agree to the <a href="{{ pa_url }}" target="_blank">
-                    Software Product Subscription Agreement</a>.
+                    I have read and agree to the
+                    <a href="{{ eula_url }}" target="_blank">
+                        Dimagi Terms of Service and Business Agreement
+                    </a>.
                 {% endblocktrans %}
             </label>
         </div>

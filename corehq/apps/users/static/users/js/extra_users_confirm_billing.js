@@ -1,7 +1,7 @@
 hqDefine("users/js/extra_users_confirm_billing", function() {
     $(function () {
         // Only allow saving once agreement is confirmed
-        $('#id_confirm_product_agreement').click(function () {
+        $('#id_confirm_eula').click(function () {
             var $submit = $('#submit-button-pa'),
                 $helpText = $('#submit-button-help-qa');
             if ($(this).prop('checked')) {

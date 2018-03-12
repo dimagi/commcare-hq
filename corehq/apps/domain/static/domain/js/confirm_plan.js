@@ -4,7 +4,7 @@ hqDefine("domain/js/confirm_plan", function () {
         hide = "hide";
 
     $(function () {
-        $('#confirm-product-agreement').click(function () {
+        $('#confirm-eula').click(function () {
             var $submit = $('#submit-button-pa'),
                 $helpText = $('#submit-button-help-qa');
             if ($(this).prop(checked)) {

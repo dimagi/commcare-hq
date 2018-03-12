@@ -1054,16 +1054,16 @@ class DomainRequestForm(forms.Form):
 
 
 class ConfirmExtraUserChargesForm(EditBillingAccountInfoForm):
-    confirm_product_agreement = forms.BooleanField(
+    confirm_eula = forms.BooleanField(
         required=True,
     )
 
     def __init__(self, account, domain, creating_user, data=None, *args, **kwargs):
         super(ConfirmExtraUserChargesForm, self).__init__(account, domain, creating_user, data=data, *args, **kwargs)
-        self.fields['confirm_product_agreement'].label = _(
-            'I have read and agree to the <a href="%(pa_url)s" target="_blank">'
+        self.fields['confirm_eula'].label = _(
+            'I have read and agree to the <a href="%(eula_url)s" target="_blank">'
             'Software Product Subscription Agreement</a>.'
-        ) % {'pa_url': reverse('product_agreement')}
+        ) % {'eula_url': reverse('eula')}
 
         from corehq.apps.users.views.mobile import MobileWorkerListView
         self.helper.label_class = 'col-sm-3 col-md-2'
@@ -1089,7 +1089,7 @@ class ConfirmExtraUserChargesForm(EditBillingAccountInfoForm):
             ),
             hqcrispy.B3MultiField(
                 '',
-                crispy.Field('confirm_product_agreement'),
+                crispy.Field('confirm_eula'),
             ),
             hqcrispy.FormActions(
                 crispy.HTML(
