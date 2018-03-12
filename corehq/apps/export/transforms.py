@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.core.cache import cache
 
 from corehq.apps.export.esaccessors import get_case_name

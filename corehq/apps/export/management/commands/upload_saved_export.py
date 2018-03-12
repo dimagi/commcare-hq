@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import os
 
 from django.core.management.base import BaseCommand, CommandError

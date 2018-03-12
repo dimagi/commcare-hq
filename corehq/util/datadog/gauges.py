@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from functools import wraps
 from celery.task import periodic_task
 from corehq.util.datadog import statsd, datadog_logger

@@ -1,6 +1,7 @@
 from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import division
+from __future__ import unicode_literals
 import six
 import sys
 from collections import defaultdict
@@ -169,7 +170,7 @@ class HqAdminEmailHandler(AdminEmailHandler):
                 )
             )
         except Exception as e:
-            return u"Unable to extract code. {}".format(e)
+            return "Unable to extract code. {}".format(e)
 
     @classmethod
     def _clean_subject(cls, subject):
@@ -260,19 +261,22 @@ def display_seconds(seconds):
     return str(timedelta(seconds=int(round(seconds))))
 
 
-def with_progress_bar(iterable, length=None, prefix='Processing', oneline=True):
-    """
-    Turns 'iterable' into a generator which prints a progress bar.
+def with_progress_bar(iterable, length=None, prefix='Processing', oneline=True,
+                      stream=sys.stdout):
+    """Turns 'iterable' into a generator which prints a progress bar.
+
     :param oneline: Set to False to print each update on a new line.
         Useful if there will be other things printing to the terminal.
+        Set to "concise" to use exactly one line for all output.
     """
-    if hasattr(iterable, "__len__"):
-        length = len(iterable)
-    elif length is None:
-        raise AttributeError(
-            "'{}' object has no len(), you must pass in the 'length' parameter"
-            .format(type(iterable))
-        )
+    if length is None:
+        if hasattr(iterable, "__len__"):
+            length = len(iterable)
+        else:
+            raise AttributeError(
+                "'{}' object has no len(), you must pass in the 'length' parameter"
+                .format(type(iterable))
+            )
 
     granularity = min(50, length)
     start = datetime.now()
@@ -285,25 +289,30 @@ def with_progress_bar(iterable, length=None, prefix='Processing', oneline=True):
         remaining = (display_seconds((elapsed / percent) * (1 - percent))
                      if position > 0 else "-:--:--")
 
-        print(prefix, end=' ')
-        print("[{}{}]".format("." * dots, " " * spaces), end=' ')
-        print("{}/{}".format(position, length), end=' ')
-        print("{:.0%}".format(percent), end=' ')
-        print("{} remaining".format(remaining), end=' ')
-        print(("\r" if oneline else "\n"), end=' ')
-        sys.stdout.flush()
+        print(prefix, end=' ', file=stream)
+        print("[{}{}]".format("." * dots, " " * spaces), end=' ', file=stream)
+        print("{}/{}".format(position, length), end=' ', file=stream)
+        print("{:.0%}".format(percent), end=' ', file=stream)
+        if position == length:
+            print("{} elapsed".format(datetime.now() - start), file=stream)
+        else:
+            print("{} remaining".format(remaining), end=' ', file=stream)
+        print(("\r" if oneline else "\n"), end='', file=stream)
+        stream.flush()
 
-    print("Started at {:%Y-%m-%d %H:%M:%S}".format(start))
+    if oneline != "concise":
+        print("Started at {:%Y-%m-%d %H:%M:%S}".format(start), file=stream)
     checkpoints = {length * i // granularity for i in range(length)}
     for i, x in enumerate(iterable):
         yield x
         if i in checkpoints:
             draw(i)
     draw(length)
-    print("")
-    end = datetime.now()
-    print("Finished at {:%Y-%m-%d %H:%M:%S}".format(end))
-    print("Elapsed time: {}".format(display_seconds((end - start).total_seconds())))
+    if oneline != "concise":
+        print("", file=stream)
+        end = datetime.now()
+        print("Finished at {:%Y-%m-%d %H:%M:%S}".format(end), file=stream)
+        print("Elapsed time: {}".format(display_seconds((end - start).total_seconds())), file=stream)
 
 
 def get_traceback_string():

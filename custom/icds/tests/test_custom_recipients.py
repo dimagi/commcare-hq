@@ -67,6 +67,27 @@ class CustomRecipientTest(BaseICDSTest):
                 ).recipient
             )
 
+    def test_mother_person_case_from_child_person_case(self):
+        for cls in (CaseAlertScheduleInstance, CaseTimedScheduleInstance):
+            self.assertEqual(
+                cls(
+                    domain=self.domain,
+                    case_id=self.child_person_case.case_id,
+                    recipient_type='CustomRecipient',
+                    recipient_id='ICDS_MOTHER_PERSON_CASE_FROM_CHILD_PERSON_CASE'
+                ).recipient.case_id,
+                self.mother_person_case.case_id
+            )
+
+            self.assertIsNone(
+                cls(
+                    domain=self.domain,
+                    case_id=self.lone_child_person_case.case_id,
+                    recipient_type='CustomRecipient',
+                    recipient_id='ICDS_MOTHER_PERSON_CASE_FROM_CHILD_PERSON_CASE'
+                ).recipient
+            )
+
     def test_supervisor_from_awc_owner(self):
         for cls in (CaseAlertScheduleInstance, CaseTimedScheduleInstance):
             with create_case(self.domain, 'person', owner_id=self.awc1.location_id) as case:

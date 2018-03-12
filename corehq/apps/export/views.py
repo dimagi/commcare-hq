@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 
 from __future__ import division
+from __future__ import unicode_literals
 from datetime import datetime, date, timedelta
 from wsgiref.util import FileWrapper
 
@@ -589,7 +590,7 @@ class BaseDownloadExportView(ExportsPermissionsMixin, HQJSONResponseMixin, BaseP
         doc = get_document_or_404_lite(SavedExportSchema, export_id)
         if doc.index[0] == domain:
             return doc
-        raise Http404(_(u"Export not found"))
+        raise Http404(_("Export not found"))
 
     @property
     def export_id(self):
@@ -731,7 +732,7 @@ class BaseDownloadExportView(ExportsPermissionsMixin, HQJSONResponseMixin, BaseP
 
         return export_object.get_download_task(
             filter=export_filter,
-            filename=u"{}{}".format(export_object.name,
+            filename="{}{}".format(export_object.name,
                                    date.today().isoformat()),
             previous_export_id=None,
             max_column_size=max_column_size,
@@ -803,7 +804,7 @@ class DownloadFormExportView(BaseDownloadExportView):
         doc = get_document_or_404_lite(FormExportSchema, export_id)
         if doc.index[0] == domain:
             return doc
-        raise Http404(_(u"Export not found"))
+        raise Http404(_("Export not found"))
 
     @property
     def export_list_url(self):
@@ -1570,7 +1571,7 @@ class DataFileDownloadList(BaseProjectDataView):
         data_file.content_type = request.FILES['file'].content_type
         data_file.content_length = request.FILES['file'].size
         data_file.save_blob(request.FILES['file'])
-        messages.success(request, _(u'Data file "{}" uploaded'.format(data_file.description)))
+        messages.success(request, _('Data file "{}" uploaded'.format(data_file.description)))
         return HttpResponseRedirect(reverse(self.urlname, kwargs={'domain': self.domain}))
 
 
@@ -1921,7 +1922,7 @@ class BaseNewExportView(BaseExportView):
         messages.success(
             request,
             mark_safe(
-                _(u"Export <strong>{}</strong> saved.").format(
+                _("Export <strong>{}</strong> saved.").format(
                     export.name
                 )
             )
@@ -2200,7 +2201,7 @@ class DeleteNewCustomExportView(BaseModifyNewCustomView):
         messages.success(
             request,
             mark_safe(
-                _(u"Export <strong>{}</strong> was deleted.").format(
+                _("Export <strong>{}</strong> was deleted.").format(
                     export.name
                 )
             )
@@ -2249,12 +2250,12 @@ class GenericDownloadNewExportMixin(object):
 
     def _get_filename(self, export_instances):
         if len(export_instances) > 1:
-            return u"{}_custom_bulk_export_{}".format(
+            return "{}_custom_bulk_export_{}".format(
                 self.domain,
                 date.today().isoformat()
             )
         else:
-            return u"{} {}".format(
+            return "{} {}".format(
                 export_instances[0].name,
                 date.today().isoformat()
             )
@@ -2516,7 +2517,7 @@ def download_daily_saved_export(req, domain, export_instance_id):
         try:
             export_instance = get_properly_wrapped_export_instance(export_instance_id)
         except ResourceNotFound:
-            raise Http404(_(u"Export not found"))
+            raise Http404(_("Export not found"))
 
         assert domain == export_instance.domain
 

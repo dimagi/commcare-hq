@@ -988,6 +988,7 @@ class XForm(WrappedNode):
                 "constraint": cnode.constraint,
                 "comment": self._get_comment(leaf_data_nodes, path),
                 "hashtagValue": self.hashtag_path(path),
+                "setvalue": self.get_setvalue(path),
             }
             if include_translations:
                 question["translations"] = self.get_label_translations(node, langs)
@@ -1189,6 +1190,12 @@ class XForm(WrappedNode):
         try:
             return leaf_data_nodes[path].attrib.get('{v}comment')
         except KeyError:
+            return None
+
+    def get_setvalue(self, path):
+        try:
+            return self.model_node.find('{f}setvalue[@ref="%s"]' % path).attrib['value']
+        except (KeyError, AttributeError):
             return None
 
     def get_path(self, node):

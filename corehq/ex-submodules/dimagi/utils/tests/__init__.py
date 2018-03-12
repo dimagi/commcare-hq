@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import datetime
 from memoized import Memoized
 from dimagi.utils.chunked import chunked

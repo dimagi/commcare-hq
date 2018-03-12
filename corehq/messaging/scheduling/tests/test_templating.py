@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import SQLLocation, LocationType
@@ -70,7 +71,7 @@ class TemplatingTestCase(TestCase):
         owner = owner or self.mobile_user
         modified_by = modified_by or self.mobile_user
         return create_test_case(self.domain, 'child', 'P002',
-            case_properties={'child_prop1': 'def', 'unicode_property': u'\u0928\u092e\u0938\u094d\u0924\u0947'},
+            case_properties={'child_prop1': 'def', 'unicode_property': '\u0928\u092e\u0938\u094d\u0924\u0947'},
             owner_id=owner.get_id, user_id=modified_by.get_id)
 
     def create_parent_case(self, owner=None, modified_by=None):
@@ -86,36 +87,36 @@ class TemplatingTestCase(TestCase):
             r.set_context_param('case', CaseMessagingTemplateParam(case))
 
             self.assertEqual(
-                r.render(u"No template variables"),
-                u"No template variables"
+                r.render("No template variables"),
+                "No template variables"
             )
             self.assertEqual(
-                r.render(u"Case's name is {case.name}"),
-                u"Case's name is P002"
+                r.render("Case's name is {case.name}"),
+                "Case's name is P002"
             )
             self.assertEqual(
-                r.render(u"Multiple properties: {case.name}, {case.child_prop1}"),
-                u"Multiple properties: P002, def"
+                r.render("Multiple properties: {case.name}, {case.child_prop1}"),
+                "Multiple properties: P002, def"
             )
             self.assertEqual(
-                r.render(u"Unicode property: {case.unicode_property}"),
-                u"Unicode property: \u0928\u092e\u0938\u094d\u0924\u0947"
+                r.render("Unicode property: {case.unicode_property}"),
+                "Unicode property: \u0928\u092e\u0938\u094d\u0924\u0947"
             )
             self.assertEqual(
-                r.render(u"Don't render case: {case}"),
-                u"Don't render case: (?)"
+                r.render("Don't render case: {case}"),
+                "Don't render case: (?)"
             )
             self.assertEqual(
-                r.render(u"Unknown property: {case.unknown}"),
-                u"Unknown property: (?)"
+                r.render("Unknown property: {case.unknown}"),
+                "Unknown property: (?)"
             )
             self.assertEqual(
-                r.render(u"Unknown property: {case.unknown.unknown}"),
-                u"Unknown property: (?)"
+                r.render("Unknown property: {case.unknown.unknown}"),
+                "Unknown property: (?)"
             )
             self.assertEqual(
-                r.render(u"Unknown param: {x}"),
-                u"Unknown param: (?)"
+                r.render("Unknown param: {x}"),
+                "Unknown param: (?)"
             )
 
     @run_with_all_backends
@@ -128,24 +129,24 @@ class TemplatingTestCase(TestCase):
             r.set_context_param('case', CaseMessagingTemplateParam(child_case))
 
             self.assertEqual(
-                r.render(u"Child case prop: {case.child_prop1}"),
-                u"Child case prop: def"
+                r.render("Child case prop: {case.child_prop1}"),
+                "Child case prop: def"
             )
             self.assertEqual(
-                r.render(u"Parent case prop: {case.parent.parent_prop1}"),
-                u"Parent case prop: abc"
+                r.render("Parent case prop: {case.parent.parent_prop1}"),
+                "Parent case prop: abc"
             )
             self.assertEqual(
-                r.render(u"Don't render case: {case.parent}"),
-                u"Don't render case: (?)"
+                r.render("Don't render case: {case.parent}"),
+                "Don't render case: (?)"
             )
             self.assertEqual(
-                r.render(u"No grandparent case: {case.parent.parent.name}"),
-                u"No grandparent case: (?)"
+                r.render("No grandparent case: {case.parent.parent.name}"),
+                "No grandparent case: (?)"
             )
             self.assertEqual(
-                r.render(u"No host case: {case.host.name}"),
-                u"No host case: (?)"
+                r.render("No host case: {case.host.name}"),
+                "No host case: (?)"
             )
 
     @run_with_all_backends
@@ -158,24 +159,24 @@ class TemplatingTestCase(TestCase):
             r.set_context_param('case', CaseMessagingTemplateParam(extension_case))
 
             self.assertEqual(
-                r.render(u"Extension case prop: {case.child_prop1}"),
-                u"Extension case prop: def"
+                r.render("Extension case prop: {case.child_prop1}"),
+                "Extension case prop: def"
             )
             self.assertEqual(
-                r.render(u"Host case prop: {case.host.parent_prop1}"),
-                u"Host case prop: abc"
+                r.render("Host case prop: {case.host.parent_prop1}"),
+                "Host case prop: abc"
             )
             self.assertEqual(
-                r.render(u"Don't render case: {case.host}"),
-                u"Don't render case: (?)"
+                r.render("Don't render case: {case.host}"),
+                "Don't render case: (?)"
             )
             self.assertEqual(
-                r.render(u"No host host case: {case.host.host.name}"),
-                u"No host host case: (?)"
+                r.render("No host host case: {case.host.host.name}"),
+                "No host host case: (?)"
             )
             self.assertEqual(
-                r.render(u"No parent case: {case.parent.name}"),
-                u"No parent case: (?)"
+                r.render("No parent case: {case.parent.name}"),
+                "No parent case: (?)"
             )
 
     @run_with_all_backends
@@ -184,34 +185,34 @@ class TemplatingTestCase(TestCase):
 
         with self.create_parent_case(owner=self.mobile_user) as case:
             r.set_context_param('case', CaseMessagingTemplateParam(case))
-            self.assertEqual(r.render(u"Name: {case.owner.name}"), u"Name: mobile1")
-            self.assertEqual(r.render(u"First Name: {case.owner.first_name}"), u"First Name: Mobile")
-            self.assertEqual(r.render(u"Last Name: {case.owner.last_name}"), u"Last Name: User")
-            self.assertEqual(r.render(u"Phone: {case.owner.phone_number}"), u"Phone: 999123")
-            self.assertEqual(r.render(u"Unknown: {case.owner.unknown}"), u"Unknown: (?)")
-            self.assertEqual(r.render(u"Unknown: {case.owner.unknown.unknown}"), u"Unknown: (?)")
+            self.assertEqual(r.render("Name: {case.owner.name}"), "Name: mobile1")
+            self.assertEqual(r.render("First Name: {case.owner.first_name}"), "First Name: Mobile")
+            self.assertEqual(r.render("Last Name: {case.owner.last_name}"), "Last Name: User")
+            self.assertEqual(r.render("Phone: {case.owner.phone_number}"), "Phone: 999123")
+            self.assertEqual(r.render("Unknown: {case.owner.unknown}"), "Unknown: (?)")
+            self.assertEqual(r.render("Unknown: {case.owner.unknown.unknown}"), "Unknown: (?)")
 
         with self.create_parent_case(owner=self.web_user) as case:
             r.set_context_param('case', CaseMessagingTemplateParam(case))
-            self.assertEqual(r.render(u"Name: {case.owner.name}"), u"Name: web1@templating-test")
-            self.assertEqual(r.render(u"First Name: {case.owner.first_name}"), u"First Name: Web")
-            self.assertEqual(r.render(u"Last Name: {case.owner.last_name}"), u"Last Name: User")
-            self.assertEqual(r.render(u"Phone: {case.owner.phone_number}"), u"Phone: 999456")
-            self.assertEqual(r.render(u"Unknown: {case.owner.unknown}"), u"Unknown: (?)")
-            self.assertEqual(r.render(u"Unknown: {case.owner.unknown.unknown}"), u"Unknown: (?)")
+            self.assertEqual(r.render("Name: {case.owner.name}"), "Name: web1@templating-test")
+            self.assertEqual(r.render("First Name: {case.owner.first_name}"), "First Name: Web")
+            self.assertEqual(r.render("Last Name: {case.owner.last_name}"), "Last Name: User")
+            self.assertEqual(r.render("Phone: {case.owner.phone_number}"), "Phone: 999456")
+            self.assertEqual(r.render("Unknown: {case.owner.unknown}"), "Unknown: (?)")
+            self.assertEqual(r.render("Unknown: {case.owner.unknown.unknown}"), "Unknown: (?)")
 
         with self.create_parent_case(owner=self.group) as case:
             r.set_context_param('case', CaseMessagingTemplateParam(case))
-            self.assertEqual(r.render(u"Name: {case.owner.name}"), u"Name: Test Group")
-            self.assertEqual(r.render(u"Unknown: {case.owner.unknown}"), u"Unknown: (?)")
-            self.assertEqual(r.render(u"Unknown: {case.owner.unknown.unknown}"), u"Unknown: (?)")
+            self.assertEqual(r.render("Name: {case.owner.name}"), "Name: Test Group")
+            self.assertEqual(r.render("Unknown: {case.owner.unknown}"), "Unknown: (?)")
+            self.assertEqual(r.render("Unknown: {case.owner.unknown.unknown}"), "Unknown: (?)")
 
         with self.create_parent_case(owner=self.location) as case:
             r.set_context_param('case', CaseMessagingTemplateParam(case))
-            self.assertEqual(r.render(u"Name: {case.owner.name}"), u"Name: Test Location")
-            self.assertEqual(r.render(u"Site Code: {case.owner.site_code}"), u"Site Code: loc1234")
-            self.assertEqual(r.render(u"Unknown: {case.owner.unknown}"), u"Unknown: (?)")
-            self.assertEqual(r.render(u"Unknown: {case.owner.unknown.unknown}"), u"Unknown: (?)")
+            self.assertEqual(r.render("Name: {case.owner.name}"), "Name: Test Location")
+            self.assertEqual(r.render("Site Code: {case.owner.site_code}"), "Site Code: loc1234")
+            self.assertEqual(r.render("Unknown: {case.owner.unknown}"), "Unknown: (?)")
+            self.assertEqual(r.render("Unknown: {case.owner.unknown.unknown}"), "Unknown: (?)")
 
     @run_with_all_backends
     def test_modified_by_template_params(self):
@@ -219,18 +220,18 @@ class TemplatingTestCase(TestCase):
 
         with self.create_parent_case(modified_by=self.mobile_user) as case:
             r.set_context_param('case', CaseMessagingTemplateParam(case))
-            self.assertEqual(r.render(u"Name: {case.last_modified_by.name}"), u"Name: mobile1")
-            self.assertEqual(r.render(u"First Name: {case.last_modified_by.first_name}"), u"First Name: Mobile")
-            self.assertEqual(r.render(u"Last Name: {case.last_modified_by.last_name}"), u"Last Name: User")
-            self.assertEqual(r.render(u"Phone: {case.last_modified_by.phone_number}"), u"Phone: 999123")
-            self.assertEqual(r.render(u"Unknown: {case.last_modified_by.unknown}"), u"Unknown: (?)")
-            self.assertEqual(r.render(u"Unknown: {case.last_modified_by.unknown.unknown}"), u"Unknown: (?)")
+            self.assertEqual(r.render("Name: {case.last_modified_by.name}"), "Name: mobile1")
+            self.assertEqual(r.render("First Name: {case.last_modified_by.first_name}"), "First Name: Mobile")
+            self.assertEqual(r.render("Last Name: {case.last_modified_by.last_name}"), "Last Name: User")
+            self.assertEqual(r.render("Phone: {case.last_modified_by.phone_number}"), "Phone: 999123")
+            self.assertEqual(r.render("Unknown: {case.last_modified_by.unknown}"), "Unknown: (?)")
+            self.assertEqual(r.render("Unknown: {case.last_modified_by.unknown.unknown}"), "Unknown: (?)")
 
         with self.create_parent_case(modified_by=self.web_user) as case:
             r.set_context_param('case', CaseMessagingTemplateParam(case))
-            self.assertEqual(r.render(u"Name: {case.last_modified_by.name}"), u"Name: web1@templating-test")
-            self.assertEqual(r.render(u"First Name: {case.last_modified_by.first_name}"), u"First Name: Web")
-            self.assertEqual(r.render(u"Last Name: {case.last_modified_by.last_name}"), u"Last Name: User")
-            self.assertEqual(r.render(u"Phone: {case.last_modified_by.phone_number}"), u"Phone: 999456")
-            self.assertEqual(r.render(u"Unknown: {case.last_modified_by.unknown}"), u"Unknown: (?)")
-            self.assertEqual(r.render(u"Unknown: {case.last_modified_by.unknown.unknown}"), u"Unknown: (?)")
+            self.assertEqual(r.render("Name: {case.last_modified_by.name}"), "Name: web1@templating-test")
+            self.assertEqual(r.render("First Name: {case.last_modified_by.first_name}"), "First Name: Web")
+            self.assertEqual(r.render("Last Name: {case.last_modified_by.last_name}"), "Last Name: User")
+            self.assertEqual(r.render("Phone: {case.last_modified_by.phone_number}"), "Phone: 999456")
+            self.assertEqual(r.render("Unknown: {case.last_modified_by.unknown}"), "Unknown: (?)")
+            self.assertEqual(r.render("Unknown: {case.last_modified_by.unknown.unknown}"), "Unknown: (?)")

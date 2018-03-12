@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import copy
 from datetime import datetime, timedelta
 import json
@@ -807,7 +808,7 @@ class AdminDomainStatsReport(AdminFacetedReport, DomainStatsReport):
 
         def format_bool(val):
             if isinstance(val, bool):
-                return u"{}".format(val)
+                return "{}".format(val)
             return _('No info')
 
         for dom in domains:
@@ -1215,12 +1216,12 @@ class DeviceLogSoftAssertReport(BaseDeviceLogReport, AdminReport):
     @property
     def selected_domain(self):
         selected_domain = self.request.GET.get('domain', None)
-        return selected_domain if selected_domain != u'' else None
+        return selected_domain if selected_domain != '' else None
 
     @property
     def selected_commcare_version(self):
         commcare_version = self.request.GET.get('commcare_version', None)
-        return commcare_version if commcare_version != u'' else None
+        return commcare_version if commcare_version != '' else None
 
     @property
     def headers(self):
@@ -1373,7 +1374,7 @@ class UserAuditReport(AdminReport, DatespanMixin):
     @property
     def selected_domain(self):
         selected_domain = self.request.GET.get('domain_name', None)
-        return selected_domain if selected_domain != u'' else None
+        return selected_domain if selected_domain != '' else None
 
     @property
     def selected_user(self):

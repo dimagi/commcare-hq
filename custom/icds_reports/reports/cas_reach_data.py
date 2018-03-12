@@ -15,7 +15,6 @@ from custom.icds_reports.utils import get_value, percent_increase, apply_exclude
 def get_cas_reach_data(domain, now_date, config, show_test=False):
     now_date = datetime(*now_date)
     yesterday_date = (now_date - relativedelta(days=1)).date()
-    current_month_selected = True
 
     def get_data_for_awc_monthly(month, filters):
         level = filters['aggregation_level']
@@ -56,9 +55,9 @@ def get_cas_reach_data(domain, now_date, config, show_test=False):
     awc_this_month_data = get_data_for_awc_monthly(current_month, config)
     awc_prev_month_data = get_data_for_awc_monthly(previous_month, config)
 
-    if current_month.year != now_date.year or current_month.month != now_date.month:
+    current_month_selected = (current_month.year == now_date.year and current_month.month == now_date.month)
+    if not current_month_selected:
         yesterday_date = current_month + relativedelta(months=1) - relativedelta(days=1)
-        current_month_selected = False
 
     two_days_ago = yesterday_date - relativedelta(days=1)
     daily_yesterday = get_data_for_daily_usage(yesterday_date, config)

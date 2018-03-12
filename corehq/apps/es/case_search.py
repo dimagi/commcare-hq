@@ -11,6 +11,7 @@ from corehq.apps.es import case_search as case_search_es
 """
 from __future__ import absolute_import
 
+from __future__ import unicode_literals
 from corehq.apps.es.aggregations import TermsAggregation, BucketResult
 from corehq.apps.es.cases import CaseES, owner
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_ALIAS

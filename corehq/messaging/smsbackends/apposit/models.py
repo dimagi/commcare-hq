@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import json
 import requests
 from corehq.apps.sms.models import SMS, SQLSMSBackend
