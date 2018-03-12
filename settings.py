@@ -2170,8 +2170,6 @@ CUSTOM_DASHBOARD_PAGE_URL_NAMES = {
 
 REMOTE_APP_NAMESPACE = "%(domain)s.commcarehq.org"
 
-# a DOMAIN_MODULE_CONFIG doc present in your couchdb can override individual
-# items.
 DOMAIN_MODULE_MAP = {
     'a5288-test': 'a5288',
     'a5288-study': 'a5288',
