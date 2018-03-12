@@ -405,8 +405,8 @@ def synclog_to_sql_object(synclog_json_object):
     is_new_synclog_sql = not synclog_json_object._id or not synclog
 
     if is_new_synclog_sql:
-        synclog_id = synclog_json_object._id or uuid.uuid1().hex.lower()
-        synclog_json_object._id = synclog_id
+        synclog_id = uuid.UUID(synclog_json_object._id) if synclog_json_object._id else uuid.uuid1()
+        synclog_json_object._id = synclog_id.hex.lower()
         synclog = SyncLogSQL(
             domain=synclog_json_object.domain,
             user_id=synclog_json_object.user_id,
