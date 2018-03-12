@@ -34,7 +34,7 @@ class FakeDB(object):
 
     @staticmethod
     def get(blob_id):
-        content = 'foo\n'
+        content = b'foo\n'
         return StreamingBody(BytesIO(content), len(content))
 
     @staticmethod
