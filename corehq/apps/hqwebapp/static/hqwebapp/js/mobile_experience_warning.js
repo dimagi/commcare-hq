@@ -17,7 +17,7 @@ hqDefine('hqwebapp/js/mobile_experience_warning', function() {
         $.cookie(cookieName, true);
 
         var initialPageData = hqImport('hqwebapp/js/initial_page_data'),
-            url = initialPageData.reverse('send_desktop_reminder'),
+            url = initialPageData.reverse('send_mobile_reminder'),
             $modal = $("#mobile-experience-modal"),
             $videoModal = $("#mobile-experience-video-modal"),
             kissmetrix = hqImport('analytix/js/kissmetrix');

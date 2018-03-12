@@ -452,7 +452,7 @@ def eula_agreement(request):
 
 @transaction.atomic
 @login_required
-def send_desktop_reminder(request):
+def send_mobile_reminder(request):
     if request.method == 'POST':
         send_mobile_experience_reminder(request.user.username,
                                         request.couch_user.full_name)
