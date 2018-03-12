@@ -38,10 +38,6 @@ def get_domain_from_url(path):
     return domain
 
 
-def get_domain_module_map():
-    return getattr(settings, 'DOMAIN_MODULE_MAP', {})
-
-
 @quickcache(['domain'])
 def domain_restricts_superusers(domain):
     domain = Domain.get_by_name(domain)

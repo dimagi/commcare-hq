@@ -10,7 +10,6 @@ from dimagi.utils.couch import CriticalSection
 
 from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
 from corehq.apps.data_dictionary.util import get_all_case_properties
-from corehq.apps.domain.utils import get_domain_module_map
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
 from corehq.apps.locations.permissions import conditionally_location_safe, \
@@ -228,7 +227,7 @@ def can_view_attachments(request):
 @login_and_domain_required
 @location_safe
 def default(request, domain):
-    if domain in WORLD_VISION_DOMAINS and get_domain_module_map().get(domain):
+    if domain in WORLD_VISION_DOMAINS and settings.DOMAIN_MODULE_MAP.get(domain):
         from custom.world_vision.reports.mixed_report import MixedTTCReport
         return HttpResponseRedirect(MixedTTCReport.get_url(domain))
     return HttpResponseRedirect(reverse(MySavedReportsView.urlname, args=[domain]))
