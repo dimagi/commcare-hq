@@ -86,7 +86,7 @@
 
 
  {% if request|toggle_enabled:"MOBILE_SIGNUP_REDIRECT_AB_TEST_CONTROLLER" and request|toggle_enabled:"MOBILE_SIGNUP_REDIRECT_AB_TEST" %}
-    <div class="full-screen-modal modal fade" id="mobile-experience-modal">
+    <div class="full-screen-no-background-modal modal fade" id="mobile-experience-modal">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
@@ -100,12 +100,14 @@
                         <a style="cursor: pointer" id="send-mobile-reminder-button">Click here</a> to send yourself an email with a login link to use when you’re back on a full-size browser.
                         {% endblocktrans %}
                     </p>
+                    <img src="{% static 'hqwebapp/images/yikes_face.png' %}"
+                            style="position:relative;height:100px;left:50%;transform:translateX(-50%);margin-top:40px;" />
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="full-screen-modal modal fade" id="mobile-experience-video-modal">
+    <div class="full-screen-no-background-modal modal fade" id="mobile-experience-video-modal">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
