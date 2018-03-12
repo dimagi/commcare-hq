@@ -21,7 +21,7 @@ from custom.enikshay.case_utils import (
     CASE_TYPE_OCCURRENCE,
     CASE_TYPE_PERSON,
     get_sector,
-    get_all_episode_cases_from_person,
+    get_all_episode_confirmed_tb_cases_from_person,
     get_occurrence_case_from_episode,
     get_adherence_cases_between_dates,
 )
@@ -66,7 +66,7 @@ class BaseNinetyNineDotsUpdater(object):
     @memoized
     def _episode_case(self):
         try:
-            episode_cases = get_all_episode_cases_from_person(self.domain, self._person_case.case_id)
+            episode_cases = get_all_episode_confirmed_tb_cases_from_person(self.domain, self._person_case.case_id)
         except ENikshayCaseNotFound as e:
             raise NinetyNineDotsException(e)
 

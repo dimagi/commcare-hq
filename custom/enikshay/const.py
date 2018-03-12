@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 # Case property names used in integrations
 from __future__ import unicode_literals
 PRIMARY_PHONE_NUMBER = 'phone_number'
@@ -182,7 +183,8 @@ DUMMY_VALUES = {
     'registration_number': '12345',
     'phone_number': '9999999999',
     'pincode': '888888',
-    'email': 'abc@xyz.com'
+    'email': 'abc@xyz.com',
+    'null': 'NULL',
 }
 
 LOCATION_SITE_CODE_MEHSANA = 'dto_gu_msn'

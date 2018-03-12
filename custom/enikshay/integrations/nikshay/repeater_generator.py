@@ -61,6 +61,9 @@ from custom.enikshay.integrations.nikshay.field_mappings import (
     basis_of_diagnosis,
     health_establishment_type,
     health_establishment_sector,
+    marital_status,
+    key_population,
+    area,
 )
 from custom.enikshay.case_utils import update_case
 from dimagi.utils.post import parse_SOAP_response
@@ -101,10 +104,12 @@ class BaseNikshayPayloadGenerator(BasePayloadGenerator):
             "regBy": username,
             "regby": username,
             "RegBy": username,
+            "reg_by": username,
             "password": password,
             "Source": ENIKSHAY_ID,
             "IP_From": server_ip,
             "IP_FROM": server_ip,
+            "ip_address": server_ip,
         }
 
     @staticmethod
@@ -175,6 +180,63 @@ class NikshayRegisterPatientPayloadGenerator(BaseNikshayPayloadGenerator):
     def handle_exception(self, exception, repeat_record):
         if isinstance(exception, RequestConnectionError):
             update_case(repeat_record.domain, repeat_record.payload_id, {"nikshay_error": six.text_type(exception)})
+
+
+class NikshayRegisterPatientPayloadGeneratorV2(BaseNikshayPayloadGenerator):
+    deprecated_format_names = ('case_json',)
+
+    def get_payload(self, repeat_record, episode_case):
+        """
+        https://docs.google.com/spreadsheets/d/1fh-RSW20mO79By-h78gCN-cbiNyhI1Xa87f2AFTrigs/edit
+        """
+        person_case = get_person_case_from_episode(episode_case.domain, episode_case.get_id)
+        episode_case_properties = episode_case.dynamic_case_properties()
+        person_case_properties = person_case.dynamic_case_properties()
+        occurence_case = None
+        use_2b_app_structure = self.use_2b_app_structure(person_case)
+        if use_2b_app_structure:
+            occurence_case = get_occurrence_case_from_episode(episode_case.domain, episode_case.get_id)
+        properties_dict = self._base_properties(repeat_record)
+        properties_dict.update({
+            "Local_ID": person_case.get_id,
+        })
+
+        try:
+            properties_dict.update(_get_person_case_properties_v2(
+                episode_case, person_case, person_case_properties))
+        except NikshayLocationNotFound as e:
+            # _save_error_message(person_case.domain, person_case.case_id, e)
+            # let it pass and fail with missing fields instead.
+            pass
+        properties_dict.update(_get_episode_case_properties_v2(
+            episode_case_properties, occurence_case, person_case, use_2b_app_structure))
+        return json.dumps(properties_dict)
+
+    def handle_success(self, response, payload_doc, repeat_record):
+        # A success would be getting a nikshay_id for the patient
+        # without it this would actually be a failure
+        try:
+            nikshay_id = _get_nikshay_id_from_response_v2(response)
+            update_case(
+                payload_doc.domain,
+                payload_doc.case_id,
+                {
+                    "nikshay_registered": "true",
+                    "v2_notified": "true",
+                    "nikshay_id": nikshay_id,
+                    "nikshay_error": "",
+                },
+                external_id=nikshay_id,
+            )
+        except NikshayResponseException as e:
+            _save_error_message(payload_doc.domain, payload_doc.case_id, e.message)
+
+    def handle_failure(self, response, payload_doc, repeat_record):
+        _save_error_message(payload_doc.domain, payload_doc.case_id, response.json())
+
+    def handle_exception(self, exception, repeat_record):
+        if isinstance(exception, RequestConnectionError):
+            update_case(repeat_record.domain, repeat_record.payload_id, {"nikshay_error": exception})
 
 
 class NikshayTreatmentOutcomePayload(BaseNikshayPayloadGenerator):
@@ -616,6 +678,26 @@ def _get_nikshay_id_from_response(response):
         raise NikshayResponseException("No Nikshay ID received: {}".format(response_json))
 
 
+def _get_nikshay_id_from_response_v2(response):
+    """
+    Sample response body
+        {
+         u'nikshay_id': u'MH-BAN-01-01-17-0003    ',
+         u'message': "duplicate"
+        }
+    """
+    try:
+        response_json = response.json()
+    except ValueError:
+        raise NikshayResponseException("Invalid JSON received")
+    nikshay_id = response_json.get('nikshay_id', '').strip()
+
+    if nikshay_id:
+        return nikshay_id
+    else:
+        raise NikshayResponseException("No Nikshay ID received: {}".format(response_json))
+
+
 def _get_person_age(person_case_properties):
     # Nikshay excepts only integer value so pick floor value or 1 in case age less than 1
     # 2.3 => 2, 0.5 => 1
@@ -624,6 +706,13 @@ def _get_person_age(person_case_properties):
     if person_age == '0':
         person_age = '1'
     return person_age
+
+
+def _get_location_nikshay_code(location_id):
+    if location_id:
+        location = SQLLocation.active_objects.get_or_None(location_id=location_id)
+        if location:
+            return location.metadata.get('nikshay_code')
 
 
 def _get_person_case_properties(episode_case, person_case, person_case_properties):
@@ -659,6 +748,89 @@ def _get_person_case_properties(episode_case, person_case, person_case_propertie
     return person_properties
 
 
+def property_value_or_backup(property_value, backup_value):
+    return property_value if property_value else backup_value
+
+
+def phone_number_or_backup(phone_number):
+    if not phone_number or len(phone_number) != 10:
+        return DUMMY_VALUES['phone_number']
+    return phone_number
+
+
+def _get_person_case_properties_v2(episode_case, person_case, person_case_properties):
+    state_nikshay_code = _get_location_nikshay_code(person_case_properties.get('current_address_state_choice'))
+    district_nikshay_code = _get_location_nikshay_code(person_case_properties.get('current_address_district_choice'))
+    house, street, ward = "", "", ""
+    current_address = person_case_properties.get('current_address', '')
+    if current_address:
+        house = current_address[0:50]
+        street = current_address[50:100]
+        ward = current_address[100:150]
+    person_hiv_status = person_case_properties.get('hiv_status')
+
+    person_socio_economic_status = person_case_properties.get('socioeconomic_status')
+    if person_socio_economic_status == 'unknown':
+        person_socio_economic_status = NOT_AVAILABLE_VALUE
+    person_properties = {
+        "patient_name": person_case.name,
+        "gender": gender_mapping.get(person_case_properties.get('sex', ''), ''),
+        # 2B is currently setting age_entered but we are in the short term moving it to use age instead
+        "age": _get_person_age(person_case_properties),
+        "p_house_no": house,
+        # send 0 since that is accepted by Nikshay for this mandatory field
+        "contact_no": phone_number_or_backup(person_case_properties.get(PRIMARY_PHONE_NUMBER)),
+        "contact_person_name": property_value_or_backup(
+            person_case_properties.get('secondary_contact_name_address', '')[0:50],
+            DUMMY_VALUES['null']),
+        "contact_person_address": property_value_or_backup(person_case_properties.get('secondary_contact_name_address'),
+                                                           DUMMY_VALUES['null']),
+        "contact_person_mobile_no": phone_number_or_backup(person_case_properties.get(BACKUP_PHONE_NUMBER)),
+        "area": area.get(
+            person_case_properties.get('area'),
+            area.get('not_known')),
+        "p_town": property_value_or_backup(
+            person_case_properties.get('current_address_village_town_city', '')[0:50],
+            DUMMY_VALUES['null']),
+        "p_taluka": property_value_or_backup(
+            person_case_properties.get('current_address_block_taluka_mandal', '')[0:50],
+            DUMMY_VALUES['null']),
+        "p_landmark": person_case_properties.get('current_address_landmark', '')[0:50],
+        "p_pincode": property_value_or_backup(person_case_properties.get('current_address_postal_code'),
+                                              DUMMY_VALUES['pincode']),
+        "p_state": state_nikshay_code,
+        "p_district": district_nikshay_code,
+        "socio_economic_status": property_value_or_backup(person_socio_economic_status,
+                                                          NOT_AVAILABLE_VALUE).upper(),
+        "hiv_status": hiv_status.get(person_hiv_status, hiv_status.get('unknown')),
+        "maritial_status": marital_status.get(
+            person_case_properties.get('marital_status'),
+            marital_status.get('unmarried')),
+        "id_dates": str(datetime.date.today()),
+        "p_street": street,
+        "p_ward": ward,
+        "ifsc_code": "",
+        "account_no": "",
+        "bank_name": DUMMY_VALUES['null']
+    }
+    person_locations = get_person_locations(person_case, episode_case, v2=True)
+    person_properties.update(
+        {
+            'reg_sto_code': person_locations.sto,
+            'reg_dto_code': person_locations.dto,
+            'reg_tbu_code': person_locations.tu,
+            'reg_phi_code': person_locations.phi,
+        }
+    )
+
+    if not person_properties['p_state']:
+        person_properties['p_state'] = person_properties['reg_sto_code']
+    if not person_properties['p_district']:
+        person_properties['p_district'] = person_properties['reg_dto_code']
+
+    return person_properties
+
+
 def _get_episode_case_properties(episode_case_properties, occurence_case, person_case, use_new_2b_structure):
     """
     :return: Example : {'dateofInitiation': '2016-12-01', 'pregdate': '2016-12-01', 'dotdesignation': u'tbhv_to',
@@ -670,11 +842,11 @@ def _get_episode_case_properties(episode_case_properties, occurence_case, person
     if use_new_2b_structure:
         occurence_case_properties = occurence_case.dynamic_case_properties()
         episode_site_choice = occurence_case_properties.get('site_choice')
-        patient_occupation = person_case.dynamic_case_properties().get('occupation', 'other')
+        patient_occupation = person_case.dynamic_case_properties().get('occupation')
         episode_disease_classification = occurence_case_properties.get('disease_classification', '')
     else:
         episode_site_choice = episode_case_properties.get('site_choice')
-        patient_occupation = episode_case_properties.get('occupation', 'other')
+        patient_occupation = episode_case_properties.get('occupation')
         episode_disease_classification = episode_case_properties.get('disease_classification', '')
 
     if episode_site_choice:
@@ -689,11 +861,9 @@ def _get_episode_case_properties(episode_case_properties, occurence_case, person
 
     episode_year = episode_date.year
 
+    _patient_occupation = occupation.get(patient_occupation, occupation['other'])
+    episode_properties.update({"poccupation": _patient_occupation})
     episode_properties.update({
-        "poccupation": occupation.get(
-            patient_occupation,
-            occupation['other']
-        ),
         "pregdate": str(episode_date),
         "ptbyr": str(episode_year),
         "disease_classification": disease_classification.get(
@@ -716,6 +886,38 @@ def _get_episode_case_properties(episode_case_properties, occurence_case, person
         "dateofInitiation": episode_case_properties.get(TREATMENT_START_DATE, str(datetime.date.today())),
         "Ptype": patient_type_choice.get(episode_case_properties.get('patient_type_choice', ''), ''),
     })
+
+    return episode_properties
+
+
+def _get_episode_case_properties_v2(episode_case_properties, occurence_case, person_case, use_new_2b_structure):
+    episode_properties = {}
+
+    if use_new_2b_structure:
+        patient_occupation = person_case.get_case_property('occupation')
+    else:
+        patient_occupation = episode_case_properties.get('occupation')
+
+    episode_properties.update({
+        "occupation": occupation.get(
+            patient_occupation,
+            occupation['other']
+        ),
+    })
+
+    occurrence_key_population = occurence_case.get_case_property('key_populations')
+    if occurrence_key_population:
+        # key populations is multiple choice and hence can have two options like "diabetes tobacco"
+        # so share mapping for each
+        key_populations = set()
+        _occurrence_key_populations = occurrence_key_population.split(' ')
+        for _occurrence_key_population in _occurrence_key_populations:
+            key_populations.add(str(
+                key_population.get(_occurrence_key_population, key_population.get('other')
+            )))
+        episode_properties['key_population'] = ','.join(key_populations)
+    else:
+        episode_properties['key_population'] = '11'  # Not Applicable
 
     return episode_properties
 

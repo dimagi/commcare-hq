@@ -6,6 +6,7 @@ import warnings
 
 from django.utils.translation import ugettext_lazy as _
 from requests.auth import HTTPBasicAuth, HTTPDigestAuth
+from requests_oauthlib import OAuth1
 from requests.exceptions import Timeout, ConnectionError
 from couchdbkit.exceptions import ResourceNotFound
 
@@ -257,6 +258,8 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
             return HTTPBasicAuth(self.username, self.password)
         elif self.auth_type == DIGEST_AUTH:
             return HTTPDigestAuth(self.username, self.password)
+        elif self.auth_type == OAUTH1:
+            return OAuth1(self.username, self.password)
         return None
 
     @property

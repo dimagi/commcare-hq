@@ -22,7 +22,7 @@ from custom.enikshay.case_utils import (
     get_open_episode_case_from_person,
     get_occurrence_case_from_test,
     get_open_episode_case_from_occurrence,
-    person_has_any_nikshay_notifiable_episode,
+    person_has_any_legacy_nikshay_notifiable_episode,
     get_person_case_from_occurrence)
 from custom.enikshay.exceptions import ENikshayCaseNotFound
 from custom.enikshay.const import (
@@ -44,6 +44,7 @@ from custom.enikshay.integrations.nikshay.repeater_generator import (
     NikshayFollowupPayloadGenerator,
     NikshayRegisterPrivatePatientPayloadGenerator,
     NikshayHealthEstablishmentPayloadGenerator,
+    NikshayRegisterPatientPayloadGeneratorV2,
 )
 from custom.enikshay.integrations.nikshay.utils import get_location_user_for_notification
 from custom.enikshay.integrations.utils import (
@@ -51,7 +52,6 @@ from custom.enikshay.integrations.utils import (
     is_valid_test_submission,
     is_valid_archived_submission,
 )
-
 
 from custom.enikshay.integrations.utils import case_properties_changed
 from custom.enikshay.integrations.nikshay.field_mappings import treatment_outcome
@@ -103,6 +103,24 @@ class NikshayRegisterPatientRepeater(BaseNikshayRepeater):
             return False
 
 
+class NikshayRegisterPatientRepeaterV2(BaseNikshayRepeater):
+    class Meta(object):
+        app_label = 'repeaters'
+
+    include_app_id_param = False
+    friendly_name = _("Forward eNikshay Patients to Nikshay (episode case type) V2")
+
+    payload_generator_classes = (NikshayRegisterPatientPayloadGeneratorV2,)
+
+    @classmethod
+    def get_custom_url(cls, domain):
+        from custom.enikshay.integrations.nikshay.views import RegisterNikshayPatientRepeaterViewV2
+        return reverse(RegisterNikshayPatientRepeaterViewV2.urlname, args=[domain])
+
+    def allowed_to_forward(self, episode_case):
+        return False
+
+
 class NikshayHIVTestRepeater(BaseNikshayRepeater):
     class Meta(object):
         app_label = 'repeaters'
@@ -133,7 +151,7 @@ class NikshayHIVTestRepeater(BaseNikshayRepeater):
                     person_hiv_status_changed(person_case)
                 ) and
                 is_valid_person_submission(person_case) and
-                person_has_any_nikshay_notifiable_episode(person_case)
+                person_has_any_legacy_nikshay_notifiable_episode(person_case)
             )
         else:
             return False
@@ -207,7 +225,7 @@ class NikshayFollowupRepeater(BaseNikshayRepeater):
                 ) and
                 case_properties_changed(test_case, 'date_reported') and
                 not is_valid_test_submission(test_case) and
-                person_has_any_nikshay_notifiable_episode(person_case)
+                person_has_any_legacy_nikshay_notifiable_episode(person_case)
             )
         else:
             return False

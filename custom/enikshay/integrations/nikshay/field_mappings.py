@@ -39,6 +39,8 @@ treatment_support_designation = {
     'other_community_volunteer': '7',
 }
 
+# needs to be cross checked if enikshay included more values
+# and once for sanity with Nikshay values
 occupation = {
     'air_force': 7,
     'business_person': 7,
@@ -70,6 +72,9 @@ occupation = {
     'unemployed': 28,
     'worker': 29,
     'writer': 7,
+    'not_known': 31,
+    'housewife': 32,
+    'workers_not_reporting_any_occupation': 30,
 }
 
 episode_site = {
@@ -102,7 +107,7 @@ treatment_outcome = {
 hiv_status = {
     'reactive': 'Pos',
     'non_reactive': 'Neg',
-    'unknown': 'Unknown',
+    'unknown': 'Unknown'
 }
 
 art_initiated = {
@@ -164,4 +169,34 @@ health_establishment_type = {
 
 health_establishment_sector = {
     PRIVATE_HEALTH_ESTABLISHMENT_SECTOR: 'V',
+}
+
+marital_status = {
+    'unmarried': 'Single',  # Single
+    'married': 'Married',  # Married
+    'widowed': 'Other',  # Other
+    'separated': 'Other'  # Other
+}
+
+key_population = {
+    'known_patient_contact': 1,  # Contact of Known TB Patients
+    # 'no mapping': 2,  # Diabetes
+    # 'no mapping': 3,  # Tobacco
+    'prison_inmate': 4,  # Prison
+    'miner': 5,  # Miner
+    'migrant': 6,  # Migrant
+    'refugee': 7,  # Refugee
+    'slum_dweller': 8,  # Urban Slum
+    'health_care_worker': 9,  # Health Care Worker
+    'tribal_population': 10,  # Other
+    'other': 10,  # Other
+    # 'no mapping': 11,  # Not Applicable
+}
+
+area = {
+    'tribal': 'T',
+    'rural': 'R',
+    'urban': 'U',
+    'urban_slum': 'S',
+    'not_known': 'N',
 }
