@@ -1620,12 +1620,6 @@ AVAILABLE_CUSTOM_SCHEDULING_CONTENT = {
     "ICDS_CF_VISITS_COMPLETE":
         ["custom.icds.messaging.custom_content.cf_visits_complete",
          "ICDS: CF Visits Complete"],
-    "ICDS_DPT3_AND_MEASLES_ARE_DUE":
-        ["custom.icds.messaging.custom_content.dpt3_and_measles_are_due",
-         "ICDS: DPT3 and Measles Due"],
-    "ICDS_CHILD_VACCINATIONS_COMPLETE":
-        ["custom.icds.messaging.custom_content.child_vaccinations_complete",
-         "ICDS: Child vaccinations complete"],
     "ICDS_AWW_1":
         ["custom.icds.messaging.custom_content.aww_1",
          "ICDS: Weekly AWC Submission Performance to AWW"],

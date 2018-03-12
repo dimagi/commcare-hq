@@ -241,58 +241,6 @@ def cf_visits_complete(recipient, case_schedule_instance):
     return [render_content_for_user(recipient, 'cf_visits_complete.txt', context)]
 
 
-def dpt3_and_measles_are_due(recipient, case_schedule_instance):
-    """
-    Check if the DPT3 and Measles vaccinations are both due, and if so return the
-    reminder message.
-    """
-    case = case_schedule_instance.case
-    if case.type != 'tasks':
-        raise ValueError("Expected 'tasks' case")
-
-    if case.get_case_property('tasks_type') != 'child':
-        raise ValueError("Expected 'tasks_type' of 'child'")
-
-    products = get_immunization_products(case_schedule_instance.domain, 'child')
-    product_code_to_product = get_map(products, 'code')
-    dpt3_product = product_code_to_product['3g_dpt_3']
-    measles_product = product_code_to_product['4g_measles']
-
-    ledger_values = get_tasks_case_immunization_ledger_values(case)
-    anchor_date = get_immunization_anchor_date(case)
-    if (
-        immunization_is_due(case, anchor_date, dpt3_product, products, ledger_values) and
-        immunization_is_due(case, anchor_date, measles_product, products, ledger_values)
-    ):
-        child_person_case = child_person_case_from_tasks_case(case)
-
-        if person_case_is_migrated_or_opted_out(child_person_case):
-            return []
-
-        context = {
-            'child_name': child_person_case.name,
-        }
-        return [render_content_for_user(recipient, 'dpt3_and_measles_due.txt', context)]
-
-    return []
-
-
-def child_vaccinations_complete(recipient, case_schedule_instance):
-    case = case_schedule_instance.case
-    if case.type != 'tasks':
-        raise ValueError("Expected 'tasks' case")
-
-    try:
-        child_person_case = child_person_case_from_tasks_case(case)
-    except CaseRelationshipError:
-        return notify_exception_and_return_empty_list()
-
-    context = {
-        'child_name': child_person_case.name,
-    }
-    return [render_content_for_user(recipient, 'child_vaccinations_complete.txt', context)]
-
-
 def validate_user_location_and_indicator(user, indicator_class):
     if issubclass(indicator_class, AWWIndicator):
         if user.location.location_type.code != AWC_LOCATION_TYPE_CODE:
