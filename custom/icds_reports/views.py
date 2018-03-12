@@ -1,6 +1,9 @@
 from __future__ import absolute_import
 
 from __future__ import unicode_literals
+
+from collections import OrderedDict
+
 import requests
 
 from datetime import datetime, date
@@ -468,6 +471,7 @@ class LocationAncestorsView(View):
         ).filter(
             ~Q(pk__in=parent_ids) & (Q(parent_id__in=parent_ids) | Q(parent_id__isnull=True))
         ).select_related('parent').distinct().order_by('name')
+
         return JsonResponse(data={
             'locations': [
                 {
@@ -481,7 +485,7 @@ class LocationAncestorsView(View):
                     ),
                     'user_have_access_to_parent': location.location_id in parent_locations_ids
                 }
-                for location in set(list(locations) + list(parents))
+                for location in list(OrderedDict.fromkeys(list(locations) + list(parents)))
                 if show_test or location.metadata.get('is_test_location', 'real') != 'test'
             ],
             'selected_location': {
