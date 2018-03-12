@@ -280,6 +280,31 @@ class WrapSQL(RawSQL):
         return [self]
 
 
+def raw_cte_sql(sql, params, refs):
+    """Make queryset-like-thing for CTE with raw SQL"""
+
+    class ref(object):
+        def __init__(self, output_field):
+            self.output_field = output_field
+
+    class compiler(object):
+        @staticmethod
+        def as_sql():
+            return sql, params
+
+    class raw_queryset(object):
+        class query(object):
+            @staticmethod
+            def get_compiler(connection):
+                return compiler
+
+            @staticmethod
+            def resolve_ref(name):
+                return ref(refs[name])
+
+    return raw_queryset
+
+
 def get_location_fixture_queryset(user):
     if toggles.SYNC_ALL_LOCATIONS.enabled(user.domain):
         return SQLLocation.active_objects.filter(domain=user.domain).prefetch_related('location_type')
@@ -320,14 +345,17 @@ def cte_get_location_fixture_queryset(user):
         # https://code.djangoproject.com/ticket/26061
         return user_locations
 
-    expand_to = _get_expand_to_depths_cte(user_locations)
-    expand_from = _get_expansion_details_cte(user.domain, user_locations, expand_to)
-    fixture_ids = _get_fixture_ids_cte(user.domain, user_locations, expand_from)
+    fixture_ids = With(raw_cte_sql(
+        """
+        SELECT "id", "path", "depth"
+        FROM get_location_fixture_ids(%s::TEXT, %s)
+        """,
+        [user.domain, [loc.id for loc in user_locations]],
+        {"id": int_field, "path": int_array, "depth": int_field},
+    ))
 
     result = fixture_ids.join(
         SQLLocation.objects.all()
-        .with_cte(expand_to)
-        .with_cte(expand_from)
         .with_cte(fixture_ids),
         id=fixture_ids.col.id
     ).annotate(
