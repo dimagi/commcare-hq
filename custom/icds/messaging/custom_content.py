@@ -24,13 +24,6 @@ from custom.icds.messaging.indicators import (
     LSVHNDSurveyIndicator,
     LSSubmissionPerformanceIndicator,
 )
-from custom.icds.rules.immunization import (
-    get_immunization_products,
-    get_immunization_anchor_date,
-    get_tasks_case_immunization_ledger_values,
-    get_map,
-    immunization_is_due,
-)
 from decimal import Decimal, InvalidOperation
 from dimagi.utils.logging import notify_exception
 from django.template import TemplateDoesNotExist
