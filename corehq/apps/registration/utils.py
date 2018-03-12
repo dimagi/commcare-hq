@@ -228,6 +228,7 @@ def send_mobile_experience_reminder(recipient, full_name):
     except Exception:
         logging.warning(
             "Can't send email, but the message was:\n%s" % message_plaintext)
+        raise
 
 
 # Only new-users are eligible for advanced trial
