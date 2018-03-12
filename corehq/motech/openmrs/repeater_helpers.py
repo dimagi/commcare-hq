@@ -364,8 +364,9 @@ def get_form_question_values(form_json):
     """
     Returns question-value pairs to result where questions are given as "/data/foo/bar"
 
-    >>> get_form_question_values({'form': {b'foo': {b'bar': b'baz'}}})
-    {'/data/foo/bar': 'baz'}
+    >>> values = get_form_question_values({'form': {'foo': {'bar': 'baz'}}})
+    >>> values == {'/data/foo/bar': 'baz'}
+    True
 
     """
     _reserved_keys = ('@uiVersion', '@xmlns', '@name', '#type', 'case', 'meta', '@version')
