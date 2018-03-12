@@ -110,7 +110,7 @@
           "type": "root_doc",
           "expression": {
             "type": "property_path",
-            "property_path": ["form", "case_load_ccs_record0","case", "@case_id"]
+            "property_path": ["form", "case_load_ccs_record0", "case", "@case_id"]
 
           }
         }
