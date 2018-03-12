@@ -1651,11 +1651,9 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.fields['plan_edition'].initial = renewed_version.plan.edition
         self.fields['confirm_eula'].label = mark_safe(ugettext_noop(
-            'I have read and agree to the <a href="%(eula_url)s" '
+            'I have read and agree to the <a href="http://www.dimagi.com/terms/" target="_blank" '
             'target="_blank">Terms of Service and Business Agreement</a>.'
-        ) % {
-            'eula_url': reverse("eula"),
-        })
+        ))
 
         from corehq.apps.domain.views import DomainSubscriptionView
         self.helper.layout = crispy.Layout(

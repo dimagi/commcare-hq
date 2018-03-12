@@ -13,7 +13,7 @@ from corehq.apps.domain.utils import legacy_domain_re
 from django.contrib import admin
 from corehq.apps.app_manager.views.phone import list_apps
 from corehq.apps.domain.views import ProBonoStaticView, logo
-from corehq.apps.hqwebapp.views import eula, apache_license, bsd_license, cda, unsubscribe
+from corehq.apps.hqwebapp.views import apache_license, bsd_license, cda, unsubscribe
 from corehq.apps.reports.views import ReportNotificationUnsubscribeView
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import static
 from corehq.apps.reports.urls import report_urls
@@ -138,8 +138,6 @@ urlpatterns = [
     url(r'^404/$', TemplateView.as_view(template_name='404.html')),
     url(r'^403/$', TemplateView.as_view(template_name='403.html')),
     url(r'^captcha/', include('captcha.urls')),
-    url(r'^eula_basic/$', TemplateView.as_view(template_name='eula.html'), name='eula_basic'),
-    url(r'^terms/$', eula, name='eula'),
     url(r'^apache_license_basic/$', TemplateView.as_view(template_name='apache_license.html'), name='apache_license_basic'),
     url(r'^apache_license/$', apache_license, name='apache_license'),
     url(r'^bsd_license_basic/$', TemplateView.as_view(template_name='bsd_license.html'), name='bsd_license_basic'),

@@ -1061,9 +1061,9 @@ class ConfirmExtraUserChargesForm(EditBillingAccountInfoForm):
     def __init__(self, account, domain, creating_user, data=None, *args, **kwargs):
         super(ConfirmExtraUserChargesForm, self).__init__(account, domain, creating_user, data=data, *args, **kwargs)
         self.fields['confirm_eula'].label = _(
-            'I have read and agree to the <a href="%(eula_url)s" target="_blank">'
-            'Software Product Subscription Agreement</a>.'
-        ) % {'eula_url': reverse('eula')}
+            'I have read and agree to the <a href="http://www.dimagi.com/terms/" target="_blank">'
+            'Terms of Service and Business Agreement</a>.'
+        )
 
         from corehq.apps.users.views.mobile import MobileWorkerListView
         self.helper.label_class = 'col-sm-3 col-md-2'

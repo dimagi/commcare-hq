@@ -287,7 +287,13 @@ hqDefine('hqwebapp/js/main', [
             }
         });
 
-        // EULA and CDA modals
+        // EULA modal (only rendered on page if user hasn't agreed to terms)
+        $("#eulaModal").modal({
+            keyboard: false,
+            backdrop: 'static',
+        });
+
+        // CDA modal
         _.each($(".remote-modal"), function(modal) {
             var $modal = $(modal);
             $modal.on("show show.bs.modal", function() {

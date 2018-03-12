@@ -83,10 +83,9 @@
         <div class="checkbox">
             <label  style="font-weight: bold;">
                 <input type="checkbox" id="confirm-eula" name="confirm_eula" />
-                {% url "eula" as eula_url %}
                 {% blocktrans %}
                     I have read and agree to the
-                    <a href="{{ eula_url }}" target="_blank">
+                    <a href="http://www.dimagi.com/terms/" target="_blank">
                         Dimagi Terms of Service and Business Agreement
                     </a>.
                 {% endblocktrans %}

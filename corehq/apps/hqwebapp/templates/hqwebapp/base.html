@@ -352,7 +352,9 @@
                                 <a href="{% trans 'http://www.commcarehq.org/home' %}">{% trans 'Learn more about CommCare HQ' %}</a>
                             {% endif %}
                             &nbsp;|&nbsp;
-                            <a href="{% url "eula" %}">{% trans "Read CommCare HQ's End User License Agreement" %}</a>
+                            <a href="http://www.dimagi.com/terms/" target="_blank">
+                                {% trans "Read CommCare HQ's Terms of Service and Business Agreement" %}
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -413,6 +415,7 @@
                     'jquery.cookie/jquery.cookie',
                     'hqwebapp/js/layout',
                     'hqwebapp/js/hq-bug-report',
+                    'hqwebapp/js/main',
                     'notifications/js/notifications_service',
                     'analytix/js/appcues',
                     'analytix/js/drift',
@@ -565,8 +568,8 @@
         {% include 'hqwebapp/includes/modal_report_issue.html' %}
 
         {# EULA #}
-        {% if request.couch_user and not request.couch_user.is_eula_signed and not request.couch_user.is_anonymous %}
-            {% include 'hqwebapp/includes/modal_eula.html' with needs_agreement=True %}
+        {% if True or request.couch_user and not request.couch_user.is_eula_signed and not request.couch_user.is_anonymous %}
+            {% include 'hqwebapp/includes/modal_eula.html' %}
         {% endif %}
 
         {# 30 Day Trial #}

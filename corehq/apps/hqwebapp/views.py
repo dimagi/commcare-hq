@@ -705,10 +705,6 @@ def render_static(request, template, page_name):
                   {'tmpl': template, 'page_name': page_name})
 
 
-def eula(request):
-    return render_static(request, "eula.html", _("End User License Agreement"))
-
-
 def cda(request):
     return render_static(request, "cda.html", _("Content Distribution Agreement"))
 
