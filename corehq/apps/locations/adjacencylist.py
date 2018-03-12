@@ -1,6 +1,8 @@
 from __future__ import absolute_import
-from django.db.models import IntegerField
-from django.db.models.expressions import Value
+from django.contrib.postgres.fields.array import ArrayField
+from django.db.models import CharField, IntegerField
+from django.db.models.aggregates import Max
+from django.db.models.expressions import F, Func, Value
 from django.db.models.query import Q, QuerySet
 from django_cte import With
 from mptt.models import MPTTModel, TreeManager
@@ -8,6 +10,26 @@ from mptt.models import MPTTModel, TreeManager
 from .queryutil import ComparedQuerySet, TimingContext
 
 int_field = IntegerField()
+str_array = ArrayField(CharField())
+
+
+class StrArray(Func):
+    function = "Array"
+    # HACK fool postgres with concat
+    # https://stackoverflow.com/a/12488455/10840 (see comment by KajMagnus)
+    template = "%(function)s[%(expressions)s || '']::varchar[]"
+    output_field = str_array
+
+
+class array_append(Func):
+    function = "array_append"
+    output_field = str_array
+
+
+class array_length(Func):
+    function = "array_length"
+    template = "%(function)s(%(expressions)s, 1)"
+    output_field = int_field
 
 
 class AdjListManager(TreeManager):
@@ -17,7 +39,7 @@ class AdjListManager(TreeManager):
 
         :param node: A model instance or a QuerySet or Q object querying
         the adjacency list model. If a QuerySet, it should query a
-        single value with something like `.values('pk')`. If Q the
+        single value with something like `.values('id')`. If Q the
         `include_self` argument will be ignored.
         :param ascending: Order of results. The default (`False`) gets
         results in descending order (root ancestor first, immediate
@@ -31,22 +53,22 @@ class AdjListManager(TreeManager):
             where = node
         elif include_self:
             if isinstance(node, QuerySet):
-                where = Q(pk__in=node)
+                where = Q(id__in=node)
             else:
-                where = Q(pk=node.id)
+                where = Q(id=node.id)
         elif isinstance(node, QuerySet):
-            where = Q(pk__in=node.values(parent_col))
+            where = Q(id__in=node.values(parent_col))
         else:
-            where = Q(pk=getattr(node, parent_col))
+            where = Q(id=getattr(node, parent_col))
 
         def make_cte_query(cte):
             return self.filter(where).values(
-                "pk",
+                "id",
                 parent_col,
                 _depth=Value(0, output_field=int_field),
             ).union(
-                cte.join(self.model, pk=getattr(cte.col, parent_col)).values(
-                    "pk",
+                cte.join(self.model, id=getattr(cte.col, parent_col)).values(
+                    "id",
                     parent_col,
                     _depth=cte.col._depth + Value(1, output_field=int_field),
                 ),
@@ -55,7 +77,7 @@ class AdjListManager(TreeManager):
         cte = With.recursive(make_cte_query)
         return (
             cte
-            .join(self.all(), pk=cte.col.pk)
+            .join(self.all(), id=cte.col.id)
             .with_cte(cte)
             .order_by(("" if ascending else "-") + "{}._depth".format(cte.name))
         )
@@ -65,37 +87,91 @@ class AdjListManager(TreeManager):
 
         :param node: A model instance or a QuerySet or Q object querying
         the adjacency list model. If a QuerySet, it should query a
-        single value with something like `.values('pk')`. If Q the
+        single value with something like `.values('id')`. If Q the
         `include_self` argument will be ignored.
         :returns: A `QuerySet` instance.
         """
         parent_col = self.model.parent_id_attr
+        ordering_col = self.model.ordering_col_attr
 
+        discard_dups = False
         if isinstance(node, Q):
             where = node
+            discard_dups = True
         elif include_self:
             if isinstance(node, QuerySet):
-                where = Q(pk__in=node)
+                where = Q(id__in=node)
+                discard_dups = True
             else:
-                where = Q(pk=node.id)
+                where = Q(id=node.id)
         elif isinstance(node, QuerySet):
             where = Q(**{parent_col + "__in": node})
+            discard_dups = True
         else:
             where = Q(**{parent_col: node.id})
 
         def make_cte_query(cte):
             return self.filter(where).values(
-                "pk",
+                "id",
                 parent_col,
+                _cte_ordering=StrArray(ordering_col),
             ).union(
-                cte.join(self.model, **{parent_col: cte.col.pk}).values(
-                    "pk",
+                cte.join(self.model, **{parent_col: cte.col.id}).annotate(
+                    _cte_ordering=array_append(
+                        cte.col._cte_ordering,
+                        F(ordering_col),
+                    )
+                ).values(
+                    "id",
                     parent_col,
+                    "_cte_ordering",
                 ),
+                all=True,
             )
-
         cte = With.recursive(make_cte_query)
-        return cte.join(self.all(), pk=cte.col.pk).with_cte(cte)
+        ctes = [cte]
+
+        if discard_dups:
+            # Remove duplicates when the supplied Queryset or Q object
+            # may contain/match both parents and children. For a given
+            # id, retain the row with the longest path. TODO remove this
+            # and ensure duplicates do not matter or the criteria never
+            # matches both parents and children in all calling code.
+            max_lens = With(
+                cte.queryset().values(
+                    max_id=cte.col.id,
+                ).annotate(
+                    max_len=Max(
+                        array_length(F("_cte_ordering")),
+                        output_field=int_field
+                    )
+                ),
+                name="max_lens"
+            )
+            xdups = With(
+                cte.join(
+                    max_lens.queryset(),
+                    max_id=cte.col.id,
+                    max_len=array_length(cte.col._cte_ordering),
+                ).values(
+                    id=cte.col.id,
+                    _cte_ordering=cte.col._cte_ordering,
+                    **{parent_col: getattr(cte.col, parent_col)}
+                ),
+                name="xdups",
+            )
+            ctes.append(max_lens)
+            ctes.append(xdups)
+            cte = xdups
+
+        query = (
+            cte
+            .join(self.all(), id=cte.col.id)
+            .order_by(cte.col._cte_ordering)
+        )
+        for item in ctes:
+            query = query.with_cte(item)
+        return query
 
     cte_get_queryset_ancestors = cte_get_ancestors
     cte_get_queryset_descendants = cte_get_descendants
@@ -143,6 +219,7 @@ class AdjListModel(MPTTModel):
     """
 
     parent_id_attr = 'parent_id'
+    ordering_col_attr = 'name'
 
     objects = AdjListManager()
 

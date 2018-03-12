@@ -197,8 +197,8 @@ def _report_diff(cqs, obj1, obj2, context=""):
 
     CTE query: {cqs._cte_set.query}
 
-    result1: {obj1!r}
-    result2: {obj2!r}
+    MPTT result: {obj1!r}
+    CTE result:  {obj2!r}
     {context}""".format(**locals())
 
     soft_assert(to='{}@{}'.format('dmiller', 'dimagi.com'))(False, message)
