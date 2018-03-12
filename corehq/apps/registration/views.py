@@ -128,7 +128,8 @@ class ProcessRegistrationView(JSONResponseMixin, NewUserNumberAbTestMixin, View)
         email = new_user.email
 
         if is_mobile:
-            toggles.MOBILE_SIGNUP_REDIRECT_AB_TEST_CONTROLLER.set(email, True)
+            toggles.MOBILE_SIGNUP_REDIRECT_AB_TEST_CONTROLLER.set(
+                email, True, namespace=toggles.NAMESPACE_USER)
         track_workflow(email,
                        "Requested new account",
                        {

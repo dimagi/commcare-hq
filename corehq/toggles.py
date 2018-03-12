@@ -1499,7 +1499,8 @@ SUMOLOGIC_LOGS = DynamicallyPredictablyRandomToggle(
 MOBILE_SIGNUP_REDIRECT_AB_TEST_CONTROLLER = StaticToggle(
     'mobile_signup_redirect_ab_test_controller',
     'Enable the ab test for telling mobile signups to use desktops. Set on the fly on registration if mobile',
-    TAG_PRODUCT
+    TAG_PRODUCT,
+    namespaces=[NAMESPACE_USER]
 )
 
 
