@@ -2246,7 +2246,25 @@ DOMAIN_MODULE_MAP = {
     'care-macf-bangladesh': 'custom.care_pathways',
     'care-macf-ghana': 'custom.care_pathways',
     'pnlppgi': 'custom.pnlppgi',
-    'champ-cameroon': 'custom.champ'
+    'champ-cameroon': 'custom.champ',
+
+    # From DOMAIN_MODULE_CONFIG on production
+    'dca-malawi': 'dca',
+    'eagles-fahu': 'dca',
+    'ews-ghana': 'custom.ewsghana',
+    'ews-ghana-1': 'custom.ewsghana',
+    'ewsghana-6': 'custom.ewsghana',
+    'ewsghana-september': 'custom.ewsghana',
+    'ewsghana-test-4': 'custom.ewsghana',
+    'ewsghana-test-5': 'custom.ewsghana',
+    'ewsghana-test3': 'custom.ewsghana',
+    'ils-gateway': 'custom.ilsgateway',
+    'ils-gateway-training': 'custom.ilsgateway',
+    'ilsgateway-full-test': 'custom.ilsgateway',
+    'ilsgateway-test-2': 'custom.ilsgateway',
+    'ilsgateway-test3': 'custom.ilsgateway',
+    'mvp-mayange': 'mvp',
+    'psi-unicef': 'psi',
 }
 
 CASEXML_FORCE_DOMAIN_CHECK = True
