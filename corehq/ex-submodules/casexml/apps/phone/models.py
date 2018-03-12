@@ -392,7 +392,6 @@ def synclog_to_sql_object(synclog_json_object):
     # Returns a SyncLogSQL object, a saved instance from DB or
     #   instantiated SQL object to be saved
     # synclog_json_object should be a SyncLog instance
-    # if synclog_json_object._id
     synclog = None
     if synclog_json_object._id:
         synclog = SyncLogSQL.objects.filter(synclog_id=synclog_json_object._id).first()
@@ -427,7 +426,6 @@ class SyncLogSQL(models.Model):
     domain = models.CharField(max_length=255, null=True, blank=True, default=None, db_index=True)
     user_id = models.CharField(max_length=255, default=None, db_index=True)
     date = models.DateTimeField(db_index=True, null=True, blank=True)
-    # needs to be a foreign key?
     previous_synclog_id = models.UUIDField(max_length=255, default=None, null=True, blank=True)
     doc = JSONField()
     log_format = models.CharField(

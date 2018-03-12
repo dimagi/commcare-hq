@@ -6,7 +6,7 @@ from django.test import TestCase
 from casexml.apps.case.tests.util import delete_all_sync_logs
 from casexml.apps.phone.models import SyncLog, SyncLogSQL, properly_wrap_sync_log
 from corehq.apps.domain.models import Domain
-from corehq.apps.users.models import CommCareUser, LastSync
+from corehq.apps.users.models import CommCareUser
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import change_meta_from_kafka_message
 from corehq.apps.change_feed.tests.utils import get_test_kafka_consumer

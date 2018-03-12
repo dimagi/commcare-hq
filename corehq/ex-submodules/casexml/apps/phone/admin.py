@@ -30,5 +30,6 @@ class SyncLogSQLAdmin(admin.ModelAdmin):
     list_filter = ['domain', 'user_id', 'date']
     search_fields = ['domain', 'user_id']
 
+
 admin.site.register(SyncLogSQL, SyncLogSQLAdmin)
 admin.site.register(OwnershipCleanlinessFlag, OwnershipCleanlinessFlagAdmin)
