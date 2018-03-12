@@ -2265,6 +2265,9 @@ DOMAIN_MODULE_MAP = {
     'ilsgateway-test3': 'custom.ilsgateway',
     'mvp-mayange': 'mvp',
     'psi-unicef': 'psi',
+
+    # Used in tests.  TODO - use override_settings instead
+    'ewsghana-test-input-stock': 'custom.ewsghana',
 }
 
 CASEXML_FORCE_DOMAIN_CHECK = True
