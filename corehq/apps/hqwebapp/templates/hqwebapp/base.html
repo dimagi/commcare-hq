@@ -568,7 +568,7 @@
         {% include 'hqwebapp/includes/modal_report_issue.html' %}
 
         {# EULA #}
-        {% if True or request.couch_user and not request.couch_user.is_eula_signed and not request.couch_user.is_anonymous %}
+        {% if request.couch_user and not request.couch_user.is_eula_signed and not request.couch_user.is_anonymous %}
             {% include 'hqwebapp/includes/modal_eula.html' %}
         {% endif %}
 
