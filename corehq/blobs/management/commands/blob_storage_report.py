@@ -75,7 +75,7 @@ def report_blobs_by_type(data, write):
     """report on number of new blobs by blob bucket"""
     assert len(data) < 100, len(data)
     write(["BUCKET", "BLOB COUNT"])
-    for key, value in sorted(data.items()):
+    for key, value in sorted(six.iteritems(data)):
         write([key, len(value)])
     write([])
 
