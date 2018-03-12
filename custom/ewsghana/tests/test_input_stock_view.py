@@ -2,7 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from decimal import Decimal
 from django.urls import reverse
-from django.test import override_settings, TestCase
+from django.test import TestCase
 from casexml.apps.stock.models import StockTransaction, StockReport
 from corehq.apps.accounting.models import SoftwarePlanEdition
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
@@ -25,7 +25,6 @@ TEST_DOMAIN = 'ewsghana-test-input-stock'
 class TestInputStockView(TestCase, DomainSubscriptionMixin):
 
     @classmethod
-    @override_settings(DOMAIN_MODULE_MAP={TEST_DOMAIN: 'custom.ewsghana'})
     def setUpClass(cls):
         super(TestInputStockView, cls).setUpClass()
         cls.domain = initial_bootstrap(TEST_DOMAIN)
