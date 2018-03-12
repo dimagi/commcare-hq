@@ -121,7 +121,7 @@ class Command(BaseDataDump):
         if 'occurrence' not in self.context:
             try:
                 self.context['occurrence'] = get_occurrence_case_from_test(DOMAIN, test_case.case_id)
-            except ENikshayCaseNotFound as e:
+            except ENikshayCaseNotFound:
                 self.context['occurrence'] = None
         if not self.context['occurrence']:
             raise Exception("could not find occurrrence for test %s" % test_case.case_id)
