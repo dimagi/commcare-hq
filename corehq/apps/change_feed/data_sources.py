@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from django.conf import settings
+from casexml.apps.phone.document_store import ReadonlySyncLogDocumentStore
 from corehq.apps.change_feed.exceptions import UnknownDocumentStore
 from corehq.apps.locations.document_store import ReadonlyLocationDocumentStore
 from corehq.apps.sms.document_stores import ReadonlySMSDocumentStore
@@ -18,6 +19,7 @@ SMS = 'sms'
 LEDGER_V2 = 'ledger-v2'
 LEDGER_V1 = 'ledger-v1'
 LOCATION = 'location'
+SYNCLOG_SQL = 'synclog-sql'
 
 
 def get_document_store(data_source_type, data_source_name, domain):
@@ -41,6 +43,8 @@ def get_document_store(data_source_type, data_source_name, domain):
         return LedgerV1DocumentStore(domain)
     elif data_source_type == LOCATION:
         return ReadonlyLocationDocumentStore(domain)
+    elif data_source_type == SYNCLOG_SQL:
+        return ReadonlySyncLogDocumentStore()
     else:
         raise UnknownDocumentStore(
             'getting document stores for backend {} is not supported!'.format(data_source_type)
