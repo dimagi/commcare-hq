@@ -249,8 +249,10 @@ class DashboardView(TemplateView):
         kwargs.update(self.kwargs)
         kwargs['location_hierarchy'] = location_hierarchy_config(self.domain)
         kwargs['user_location_id'] = self.couch_user.get_location_id(self.domain)
-        kwargs['have_access'] = icds_pre_release_features(self.couch_user)
-
+        kwargs['have_access_to_features'] = icds_pre_release_features(self.couch_user)
+        kwargs['have_access_to_all_locations'] = self.couch_user.has_permission(
+            self.domain, 'access_all_locations'
+        )
         is_commcare_user = self.couch_user.is_commcare_user()
 
         if self.couch_user.is_web_user():

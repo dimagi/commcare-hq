@@ -37,6 +37,7 @@ describe('Location Filter Controller', function () {
 
     beforeEach(module('icdsApp', function ($provide) {
         $provide.constant("userLocationId", null);
+        $provide.constant("haveAccessToAllLocations", true);
         $provide.constant("locationHierarchy", [['awc', ['supervisor']], ['block', ['district']],
             ['district', ['state']], ['state', [null]], ['supervisor', ['block']]]);
     }));

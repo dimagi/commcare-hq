@@ -117,7 +117,7 @@ function LocationModalController($uibModalInstance, $location, locationsService,
 }
 
 
-function LocationFilterController($scope, $location, $uibModal, locationHierarchy, locationsService, storageService, userLocationId) {
+function LocationFilterController($scope, $location, $uibModal, locationHierarchy, locationsService, storageService, userLocationId, haveAccessToAllLocations) {
     var vm = this;
     if (Object.keys($location.search()).length === 0) {
         $location.search(storageService.getKey('search'));
@@ -244,7 +244,9 @@ function LocationFilterController($scope, $location, $uibModal, locationHierarch
                         var sorted_locations = _.sortBy(locationsGrouppedByParent[parentId], function(o) {
                             return o.name;
                         });
-                        if (selectedLocation.user_have_access) {
+                        if (["null", "undefined"].indexOf(userLocationId) === -1 && parentId === 'root' && !haveAccessToAllLocations) {
+                            vm.locationsCache[parentId] = sorted_locations;
+                        } else if (selectedLocation.user_have_access) {
                             vm.locationsCache[parentId] = [ALL_OPTION].concat(sorted_locations);
                         } else {
                             vm.locationsCache[parentId] = sorted_locations;
@@ -366,7 +368,7 @@ function LocationFilterController($scope, $location, $uibModal, locationHierarch
     init();
 }
 
-LocationFilterController.$inject = ['$scope', '$location', '$uibModal', 'locationHierarchy', 'locationsService', 'storageService', 'userLocationId'];
+LocationFilterController.$inject = ['$scope', '$location', '$uibModal', 'locationHierarchy', 'locationsService', 'storageService', 'userLocationId', 'haveAccessToAllLocations'];
 LocationModalController.$inject = ['$uibModalInstance', '$location', 'locationsService', 'selectedLocationId', 'hierarchy', 'selectedLocations', 'locationsCache', 'maxLevel', 'userLocationId', 'showMessage'];
 
 window.angular.module('icdsApp').directive("locationFilter", function() {
