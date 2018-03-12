@@ -21,30 +21,30 @@ class TestLocationView(TestCase):
         super(TestLocationView, cls).setUpClass()
         cls.domain = create_domain('icds-test')
         state = LocationType.objects.create(
-                domain=cls.domain.name,
-                name='state',
-                parent_type=None
-            )
+            domain=cls.domain.name,
+            name='state',
+            parent_type=None
+        )
         district = LocationType.objects.create(
-                domain=cls.domain.name,
-                name='district',
-                parent_type=state
-            )
+            domain=cls.domain.name,
+            name='district',
+            parent_type=state
+        )
         block = LocationType.objects.create(
-                domain=cls.domain.name,
-                name='block',
-                parent_type=district
-            )
+            domain=cls.domain.name,
+            name='block',
+            parent_type=district
+        )
         supervisor = LocationType.objects.create(
-                domain=cls.domain.name,
-                name='supervisor',
-                parent_type=block
-            )
+            domain=cls.domain.name,
+            name='supervisor',
+            parent_type=block
+        )
         awc = LocationType.objects.create(
-                domain=cls.domain.name,
-                name='awc',
-                parent_type=supervisor
-            )
+            domain=cls.domain.name,
+            name='awc',
+            parent_type=supervisor
+        )
 
         cls.state = SQLLocation.objects.create(
             name='Test State',
@@ -347,30 +347,30 @@ class TestLocationAncestorsView(TestCase):
         super(TestLocationAncestorsView, cls).setUpClass()
         cls.domain = create_domain('icds-test')
         state = LocationType.objects.create(
-                domain=cls.domain.name,
-                name='state',
-                parent_type=None
-            )
+            domain=cls.domain.name,
+            name='state',
+            parent_type=None
+        )
         district = LocationType.objects.create(
-                domain=cls.domain.name,
-                name='district',
-                parent_type=state
-            )
+            domain=cls.domain.name,
+            name='district',
+            parent_type=state
+        )
         block = LocationType.objects.create(
-                domain=cls.domain.name,
-                name='block',
-                parent_type=district
-            )
+            domain=cls.domain.name,
+            name='block',
+            parent_type=district
+        )
         supervisor = LocationType.objects.create(
-                domain=cls.domain.name,
-                name='supervisor',
-                parent_type=block
-            )
+            domain=cls.domain.name,
+            name='supervisor',
+            parent_type=block
+        )
         awc = LocationType.objects.create(
-                domain=cls.domain.name,
-                name='awc',
-                parent_type=supervisor
-            )
+            domain=cls.domain.name,
+            name='awc',
+            parent_type=supervisor
+        )
 
         cls.state = SQLLocation.objects.create(
             name='Test State',
@@ -814,7 +814,6 @@ class TestLocationAncestorsView(TestCase):
                 }
             ]
         }
-        print json.loads(response.content)
         self.assertDictEqual(expected, json.loads(response.content))
 
     def test_with_location_restriction_state(self):
@@ -1155,5 +1154,4 @@ class TestLocationAncestorsView(TestCase):
         with mock.patch('corehq.apps.users.models.WebUser.has_permission', return_value=False):
             response = view(request, domain='icds-test')
         self.user.unset_location_by_id(self.domain.name, self.awc.location_id)
-        print json.loads(response.content)
         self.assertDictEqual(expected, json.loads(response.content))
