@@ -53,6 +53,7 @@ class BaseDataDump(BaseCommand):
 
     def handle(self, recipient, *args, **options):
         self.recipient = recipient
+        self.full = options.get('full')
         if not self.recipient:
             return
 
@@ -65,9 +66,10 @@ class BaseDataDump(BaseCommand):
         self.email_result(download_id)
 
     def setup_result_file_name(self):
-        result_file_name = "enikshay_data_public_{dump_title}_{timestamp}.csv".format(
+        result_file_name = "enikshay_data_public_{dump_title}_{timestamp}_{full}.csv".format(
             dump_title=self.TASK_NAME,
             timestamp=datetime.now().strftime("%Y-%m-%d--%H-%M-%S"),
+            full=('full' if self.full else 'mock')
         )
         return result_file_name
 
@@ -174,10 +176,14 @@ class BaseDataDump(BaseCommand):
         url = "%s%s?%s" % (get_url_base(),
                            reverse('retrieve_download', kwargs={'download_id': download_id}),
                            "get_file")  # downloads immediately, rather than rendering page
-        send_HTML_email('[%s] Export ready for %s.' % (DOMAIN, self.TASK_NAME),
-                        self.recipient,
-                        'Simple email, just to let you know that there is a '
-                        'download waiting for you at %s. It will expire in 48 hours' % url)
+        send_HTML_email(
+            '[%s] [%s] Export ready for %s.' % (
+                DOMAIN,
+                'Full' if self.full else 'Mock',
+                self.TASK_NAME),
+            self.recipient,
+            'Simple email, just to let you know that there is a '
+            'download waiting for you at %s. It will expire in 48 hours' % url)
 
     def get_cases(self, case_type):
         case_accessor = CaseAccessors(DOMAIN)
