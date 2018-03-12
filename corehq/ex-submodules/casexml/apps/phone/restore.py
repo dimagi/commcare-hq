@@ -379,7 +379,7 @@ class RestoreState(object):
                 # just force a fresh sync
                 # This raises MissingSyncLog exception if synclog not found
                 sync_log = get_properly_wrapped_sync_log(self.params.sync_log_id)
-                if sync_log.doc_type != 'SyncLog':
+                if sync_log.doc_type not in ('SyncLog', 'SimplifiedSyncLog'):
                     raise InvalidSyncLogException('Bad sync log doc type for {}'.format(self.params.sync_log_id))
                 elif sync_log.user_id != self.restore_user.user_id:
                     raise SyncLogUserMismatch('Sync log {} does not match user id {} (was {})'.format(
