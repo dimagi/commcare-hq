@@ -659,10 +659,10 @@ class TestLocationAncestorsView(TestCase):
         response = view(request, domain='icds-test')
         expected = {
             'selected_location': {
-                'name': 'Test Supervisor', 
-                'user_have_access_to_parent': False, 
-                'location_type_name': 'supervisor', 
-                'user_have_access': True, 
+                'name': 'Test Supervisor',
+                'user_have_access_to_parent': False,
+                'location_type_name': 'supervisor',
+                'user_have_access': True,
                 'parent_id': self.block.location_id,
                 'location_id': self.supervisor.location_id
             },
