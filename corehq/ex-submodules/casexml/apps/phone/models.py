@@ -299,6 +299,9 @@ class AbstractSyncLog(SafeSaveDocument, UnicodeMixIn):
             ret.strict = False
         return ret
 
+    def delete(self):
+        delete_synclog(self._id)
+
     def case_count(self):
         """
         How many cases are associated with this. Used in reports.
@@ -489,9 +492,6 @@ class SyncLog(AbstractSyncLog):
 
     def save(self):
         save_synclog_to_sql(self)
-
-    def delete(self):
-        delete_synclog(self._id)
 
     def _assert(self, conditional, msg="", case_id=None):
         if not conditional:
@@ -841,9 +841,6 @@ class SimplifiedSyncLog(AbstractSyncLog):
         # force doc type to SyncLog to avoid changing the couch view.
         self.doc_type = "SyncLog"
         save_synclog_to_sql(self)
-
-    def delete(self):
-        delete_synclog(self._id)
 
     def case_count(self):
         return len(self.case_ids_on_phone)
