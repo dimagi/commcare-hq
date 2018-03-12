@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import json
 from corehq.apps.app_manager.dbaccessors import get_app_ids_in_domain, get_latest_released_app
 from corehq.apps.app_manager.models import AdvancedForm

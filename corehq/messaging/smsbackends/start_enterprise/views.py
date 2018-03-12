@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import logging
 from corehq.apps.sms.views import IncomingBackendView
 from corehq.messaging.smsbackends.start_enterprise.models import (

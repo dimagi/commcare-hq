@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import json
 import re
 from corehq.apps.data_interfaces.forms import CaseRuleCriteriaForm, validate_case_property_name
