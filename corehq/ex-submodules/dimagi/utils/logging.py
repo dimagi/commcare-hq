@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import sys
 import logging
 
@@ -19,8 +20,8 @@ def notify_exception(request, message=None, details=None, exec_info=None):
     if request is not None:
         message = message or request.path
     notify_logger.error(
-        'Notify Exception: %s' % (message
-                                  or "No message provided, fix error handler"),
+        b'Notify Exception: %s' % (message
+                                  or b"No message provided, fix error handler"),
         exc_info=exec_info or sys.exc_info(),
         extra={
             'status_code': 500,

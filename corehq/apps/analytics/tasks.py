@@ -398,7 +398,7 @@ def _get_report_count(domain):
     return get_report_builder_count(domain)
 
 
-@periodic_task(run_every=crontab(minute="0", hour="0"), queue='background_queue')
+@periodic_task(run_every=crontab(minute="0", hour="4"), queue='background_queue')
 def track_periodic_data():
     """
     Sync data that is neither event or page based with hubspot/Kissmetrics
@@ -429,7 +429,7 @@ def track_periodic_data():
 
     # For each web user, iterate through their domains and select the max number of form submissions and
     # max number of mobile workers
-    for users in chunked(users_to_domains, 1000):
+    for users in chunked(users_to_domains, 500):
         submit = []
         for user in users:
             email = user.get('email')

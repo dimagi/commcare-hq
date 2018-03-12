@@ -1407,7 +1407,7 @@ class TestAWCReport(TestCase):
                 (2017, 5, 1),
             )['kpi'][0][1],
             {
-                "all": 1,
+                "all": 0,
                 'color': 'green',
                 "format": "percent_and_div",
                 "percent": "Data in the previous reporting period was 0",
@@ -1665,7 +1665,7 @@ class TestAWCReport(TestCase):
                 (2017, 5, 1),
             )['kpi'][0][1],
             {
-                "all": 1,
+                "all": 0,
                 'color': 'green',
                 "format": "percent_and_div",
                 "percent": "Data in the previous reporting period was 0",
@@ -1915,7 +1915,7 @@ class TestAWCReport(TestCase):
                 (2017, 5, 1),
             )['kpi'][0][1],
             {
-                "all": 1,
+                "all": 0,
                 'color': 'green',
                 "format": "percent_and_div",
                 "percent": "Data in the previous reporting period was 0",

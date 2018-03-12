@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import division
+from __future__ import unicode_literals
 import six.moves.html_parser
 import json
 import socket
@@ -511,7 +512,7 @@ class AdminRestoreView(TemplateView):
         response, timing_context = self._get_restore_response()
         timing_context = timing_context or TimingContext(self.user.username)
         if isinstance(response, StreamingHttpResponse):
-            string_payload = ''.join(response.streaming_content)
+            string_payload = b''.join(response.streaming_content)
             xml_payload = etree.fromstring(string_payload)
             restore_id_element = xml_payload.find('{{{0}}}Sync/{{{0}}}restore_id'.format(SYNC_XMLNS))
             cases = xml_payload.findall('{http://commcarehq.org/case/transaction/v2}case')
@@ -770,7 +771,7 @@ def web_user_lookup(request):
     }
     if web_user is None:
         messages.error(
-            request, u"Sorry, no user found with email {}. Did you enter it correctly?".format(web_user_email)
+            request, "Sorry, no user found with email {}. Did you enter it correctly?".format(web_user_email)
         )
     else:
         from django_otp import user_has_device
@@ -1158,7 +1159,7 @@ def _gir_csv_response(month, year):
         domain_months[item.domain_name].append(item)
     field_names = GIR_FIELDS
     response = HttpResponse(content_type='text/csv')
-    response['Content-Disposition'] = u'attachment; filename=gir.csv'
+    response['Content-Disposition'] = 'attachment; filename=gir.csv'
     writer = UnicodeWriter(response)
     writer.writerow(list(field_names))
     for months in domain_months.values():

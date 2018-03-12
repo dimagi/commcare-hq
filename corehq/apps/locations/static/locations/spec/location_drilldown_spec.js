@@ -1,12 +1,9 @@
 /*eslint-env mocha */
-/*global _ LocationSelectViewModel */
 
-
-/*eslint no-unused-vars:0*/
-var LOAD_LOCS_URL = '/locations/api/';
 
 describe('Location Drilldown', function() {
     var hierarchy = [["state", [null]], ["district", ["state"]], ["block", ["district"]]];
+    var LocationSelectViewModel = hqImport('locations/js/location_drilldown').LocationSelectViewModel;
 
     it('should contain root object', function() {
         var viewModel = new LocationSelectViewModel({hierarchy: hierarchy});

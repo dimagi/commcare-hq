@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import division
+from __future__ import unicode_literals
 import contextlib
 import os
 import tempfile
@@ -92,12 +93,12 @@ class _ExportWriter(object):
                     for t in instance.selected_tables
                 ]
                 for table_index, table in enumerate(instance.selected_tables):
-                    sheet_name = table.label or u"Sheet{}".format(table_index + 1)
+                    sheet_name = table.label or "Sheet{}".format(table_index + 1)
                     # If it's a bulk export and the sheet has the same name as another sheet,
                     # Prefix the sheet name with the export name
                     if len(export_instances) > 1 and all_sheet_names[sheet_name] > 1:
-                        sheet_name = u"{}-{}".format(
-                            instance.name or u"Export{}".format(instance_index + 1),
+                        sheet_name = "{}-{}".format(
+                            instance.name or "Export{}".format(instance_index + 1),
                             sheet_name
                         )
                     table_titles[table] = sheet_name
@@ -208,7 +209,7 @@ class _PaginatedExportWriter(object):
             for table_index, table in enumerate(instance.selected_tables):
                 table_name = table.label or "Sheet{}".format(table_index + 1)
                 if len(export_instances) > 1:
-                    table_name = u"{}-{}".format(
+                    table_name = "{}-{}".format(
                         instance.name or "Export{}".format(instance_index + 1),
                         table_name
                     )

@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import logging
 import re
 import requests
@@ -104,4 +105,4 @@ def send_HTML_email(subject, recipient, html_content, text_content=None,
                 requests.get(url + "&ea=send", verify=False)
         except Exception as e:
             # never fail hard on analytics
-            logging.exception(u'Unable to send google analytics request for tracked email: {}'.format(e))
+            logging.exception('Unable to send google analytics request for tracked email: {}'.format(e))

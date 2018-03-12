@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 # threadlocals middleware for global usage
+from __future__ import unicode_literals
 try:
     from threading import local
 except ImportError:

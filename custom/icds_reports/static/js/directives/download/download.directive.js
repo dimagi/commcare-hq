@@ -57,11 +57,15 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         vm.months = _.filter(vm.monthsCopy, function (month) {
             return month.id <= new Date().getMonth() + 1;
         });
+    } else if (vm.selectedYear === 2017) {
+        vm.months = _.filter(vm.monthsCopy, function (month) {
+            return month.id >= 3;
+        });
     } else {
         vm.months = vm.monthsCopy;
     }
 
-    for (var year=2014; year <= new Date().getFullYear(); year++ ) {
+    for (var year=2017; year <= new Date().getFullYear(); year++ ) {
         vm.years.push({
             name: year,
             id: year,
@@ -111,12 +115,8 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         {id: 4, name: 'System Usage'},
         {id: 5, name: 'AWC Infrastructure'},
         {id: 6, name: 'Child Beneficiary List'},
-
+        {id: 7, name: 'ICDS-CAS Monthly Register'},
     ];
-
-    if (haveAccessToFeatures) {
-        vm.indicators.push({id: 7, name: 'ICDS-CAS Monthly Register'});
-    }
 
     var ALL_OPTION = {name: 'All', location_id: 'all'};
     var NATIONAL_OPTION = {name: 'National', location_id: 'all'};
@@ -311,6 +311,11 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
                 return month.id <= new Date().getMonth() + 1;
             });
             vm.selectedMonth = vm.selectedMonth <= new Date().getMonth() + 1 ? vm.selectedMonth : new Date().getMonth() + 1;
+        } else if (item.id === 2017) {
+            vm.months = _.filter(vm.monthsCopy, function (month) {
+                return month.id >= 3;
+            });
+            vm.selectedMonth = vm.selectedMonth >= 3 ? vm.selectedMonth : 3;
         } else {
             vm.months = vm.monthsCopy;
         }
@@ -421,9 +426,11 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
     };
 
     vm.goToLink = function () {
-        window.open($rootScope.issnip_report_link);
-        vm.downloaded = true;
-        $rootScope.issnip_report_link = '';
+        if (vm.readyToDownload()) {
+            window.open($rootScope.issnip_report_link);
+            vm.downloaded = true;
+            $rootScope.issnip_report_link = '';
+        }
     };
 
 }

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.test import TestCase
 
 from corehq.apps.sms.models import QueuedSMS
@@ -15,7 +16,7 @@ TEST_PASSWORD = "test-password"
 TEST_SENDER_ID = "test-sender-id"
 TEST_PHONE_NUMBER = "+919999999999"
 TEST_TEXT_MESSAGE = "THIS IS A TEXT MESSAGE."
-TEST_UNICODE_MESSAGE = u"शब्दों का डर is a message with symbols ##,,++&&"
+TEST_UNICODE_MESSAGE = "शब्दों का डर is a message with symbols ##,,++&&"
 
 
 class TestVertexBackendRequestContent(TestCase):

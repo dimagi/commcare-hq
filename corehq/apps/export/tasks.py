@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import logging
 from celery.task import task
 
@@ -63,7 +64,7 @@ def populate_export_download_task(export_instances, filters, download_id, filena
 
 @task(queue='background_queue', ignore_result=True)
 def rebuild_export_task(export_instance_id, last_access_cutoff=None, filter=None):
-    keys = [u'rebuild_export_task_%s' % export_instance_id]
+    keys = ['rebuild_export_task_%s' % export_instance_id]
     timeout = 48 * 3600  # long enough to make sure this doesn't get called while another one is running
     with CriticalSection(keys, timeout=timeout, block=False) as locked_section:
         if locked_section.success():

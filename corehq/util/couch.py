@@ -1,5 +1,6 @@
 from __future__ import print_function
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import json
 import traceback
 from collections import defaultdict, namedtuple
@@ -73,7 +74,7 @@ def get_document_or_404(cls, domain, doc_id, additional_doc_types=None):
         return get_document_or_not_found(
             cls, domain, doc_id, additional_doc_types=additional_doc_types)
     except DocumentNotFound as e:
-        raise Http404(u"{}\n\n{}".format(e, traceback.format_exc()))
+        raise Http404("{}\n\n{}".format(e, traceback.format_exc()))
 
 
 def get_document_or_404_lite(cls, doc_id):
@@ -83,7 +84,7 @@ def get_document_or_404_lite(cls, doc_id):
     try:
         return get_document_or_not_found_lite(cls, doc_id)
     except DocumentNotFound as e:
-        raise Http404(u"{}\n\n{}".format(e, traceback.format_exc()))
+        raise Http404("{}\n\n{}".format(e, traceback.format_exc()))
 
 
 @memoized
@@ -116,7 +117,7 @@ def get_document_class_by_doc_type(doc_type):
         return get_classes_by_doc_type()[doc_type]
     except KeyError:
         raise DocumentClassNotFound(
-            u'No Document class with name "{}" could be found.'.format(doc_type))
+            'No Document class with name "{}" could be found.'.format(doc_type))
 
 
 def get_db_by_doc_type(doc_type):

@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import json
 import logging
 import traceback
@@ -72,7 +73,7 @@ def json_error(f):
         except BadRequest as e:
             return _get_json_exception_response(400, request, e)
         except Exception as e:
-            notify_exception(request, 'JSON exception response: {}'.format(smart_bytes(e)))
+            notify_exception(request, b'JSON exception response: {}'.format(smart_bytes(e)))
             return _get_json_exception_response(500, request, e)
     return inner
 

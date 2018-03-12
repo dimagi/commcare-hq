@@ -1,5 +1,6 @@
 # Standard Library imports
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from functools import wraps
 import logging
 from base64 import b64decode
@@ -109,13 +110,13 @@ def login_and_domain_required(view_func):
                 elif domain.is_snapshot:
                     # snapshots are publicly viewable
                     return require_previewer(view_func)(req, domain_name, *args, **kwargs)
-                elif domain.allow_domain_requests:
+                elif couch_user.is_web_user() and domain.allow_domain_requests:
                     from corehq.apps.users.views import DomainRequestView
                     return DomainRequestView.as_view()(req, *args, **kwargs)
                 else:
                     raise Http404
             elif (
-                req.path.startswith(u'/a/{}/reports/custom'.format(domain_name)) and
+                req.path.startswith('/a/{}/reports/custom'.format(domain_name)) and
                 PUBLISH_CUSTOM_REPORTS.enabled(domain_name)
             ):
                 return view_func(req, domain_name, *args, **kwargs)

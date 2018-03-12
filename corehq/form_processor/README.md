@@ -67,9 +67,40 @@ If the function signature is changing:
 
 6. Repeat steps 1-4 above for the pl_proxy function (file in `corehq/sql_proxy_accessors`)
 
-Make a separate PR to drop the old function (to be merged later):
+Make a separate PR to drop the old function (to be merged later) following [this
+example](https://github.com/dimagi/commcare-hq/pull/19195):
 
-1. Delete the `.sql` files containing the old function definition.
-2. Replace all references to the old file in existing migrations with `noop_migration`
+1. Create a new migration to drop the old function:
+    ```
+    $ ./manage.py makemigrations sql_accessors --name drop_OLD_FUNCTION_NAME_fn --empty
+    ```
+    Edit this file to run the `DROP FUNCTION...` line of the old `.sql` file:
+    ```
+    from __future__ import absolute_import
+    from __future__ import unicode_literals
+
+    from django.db import migrations
+
+    from corehq.sql_db.operations import HqRunSQL
+
+
+    class Migration(migrations.Migration):
+
+        dependencies = [
+            ('sql_accessors', '0057_filter_get_reverse_indexed_cases'),
+        ]
+
+        operations = [
+            HqRunSQL("DROP FUNCTION IF EXISTS get_reverse_indexed_cases(TEXT, TEXT[]);"),
+        ]
+    ```
+2. Delete the `.sql` files containing the old function definition.
+3. Replace all references to the old file in existing migrations with `noop_migration`
     1. Or you can just remove it completely if there are other migration operations
     happening in the migration.
+4. Repeat the above for the pl_proxy function defined in `sql_proxy_accessors`
+   if applicable.
+
+These `HqRunSQL` operations can later be replaced with `noop_migration`s, but
+there's no urgency in that, so we can wait until someone goes through and
+squashes all these migrations.

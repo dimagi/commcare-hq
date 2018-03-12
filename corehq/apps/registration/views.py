@@ -20,6 +20,7 @@ from corehq.apps.analytics.tasks import (
     track_workflow,
     track_confirmed_account_on_hubspot,
     track_clicked_signup_on_hubspot,
+    update_hubspot_properties,
 )
 from corehq.apps.analytics.utils import get_meta
 from corehq.apps.app_manager.dbaccessors import domain_has_apps
@@ -142,6 +143,16 @@ class ProcessRegistrationView(JSONResponseMixin, NewUserNumberAbTestMixin, View)
                         'project name unavailable': [],
                     }
                 }
+
+            persona_fields = {}
+            if reg_form.cleaned_data['persona']:
+                persona_fields['buyer_persona'] = reg_form.cleaned_data['persona']
+                if reg_form.cleaned_data['persona_other']:
+                    persona_fields['buyer_persona_other'] = reg_form.cleaned_data['persona_other']
+                couch_user = CouchUser.get_by_username(reg_form.cleaned_data['email'])
+                if couch_user:
+                    update_hubspot_properties.delay(couch_user, persona_fields)
+
             return {
                 'success': True,
             }

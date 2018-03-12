@@ -1,5 +1,6 @@
 # coding=utf-8
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import uuid
 from django.test import SimpleTestCase, override_settings
 from corehq.util.sentry import HQSanitzeSystemPasswordsProcessor
@@ -35,7 +36,7 @@ class HQSentryTest(SimpleTestCase):
                 'http://username:{pw}@example.com',
                 'p1: {pw}, p2: {pw2}',
                 'no secrets here',
-                u'in दिल्ली  we say {pw}'
+                'in दिल्ली  we say {pw}'
             ]:
                 formatted_test = test.format(**subs)
                 expected_result = test.format(**masks)

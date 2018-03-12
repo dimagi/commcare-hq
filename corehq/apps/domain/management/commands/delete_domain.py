@@ -1,6 +1,7 @@
 from __future__ import print_function
 
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.core.management.base import BaseCommand
 
 from corehq.apps.domain.models import Domain
@@ -25,11 +26,11 @@ class Command(BaseCommand):
     def handle(self, domain_name, **options):
         domain = Domain.get_by_name(domain_name)
         if not domain:
-            print(u'domain with name "{}" not found'.format(domain_name))
+            print('domain with name "{}" not found'.format(domain_name))
             return
         if not options['noinput']:
             confirm = input(
-                u"""
+                """
                 Are you sure you want to delete the domain "{}" and all of it's data?
                 This operation is not reversible and all forms and cases will be PERMANENTLY deleted.
 
@@ -39,6 +40,6 @@ class Command(BaseCommand):
             if confirm != domain_name:
                 print("\n\t\tDomain deletion cancelled.")
                 return
-        print(u"Deleting domain {}".format(domain_name))
+        print("Deleting domain {}".format(domain_name))
         domain.delete()
         print("Operation completed")

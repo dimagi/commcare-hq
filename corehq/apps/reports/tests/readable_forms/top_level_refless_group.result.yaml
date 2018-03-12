@@ -1,11 +1,12 @@
 - calculate: null
   children:
   - {calculate: null, comment: null, constraint: null, group: '', hashtagValue: '',
-    label: '', relevant: null, repeat: null, required: false, response: null, tag: group,
-    type: FieldList, value: ''}
+    label: '', relevant: null, repeat: null, required: false, response: null, setvalue: null,
+    tag: group, type: FieldList, value: ''}
   - {calculate: null, comment: null, constraint: int(.) <= (int(today())+1), group: '',
     hashtagValue: /progress_note/note/encounter_date, label: Date of Encounter, relevant: null,
-    repeat: null, required: true, response: null, tag: input, type: Date, value: /progress_note/note/encounter_date}
+    repeat: null, required: true, response: null, setvalue: null, tag: input, type: Date,
+    value: /progress_note/note/encounter_date}
   - calculate: null
     comment: null
     constraint: null
@@ -19,45 +20,47 @@
     repeat: null
     required: false
     response: null
+    setvalue: null
     tag: select1
     type: Select
     value: /progress_note/note/times/missed_visit
   - {calculate: null, comment: null, constraint: null, group: '', hashtagValue: '',
     label: Activity Time, relevant: null, repeat: null, required: false, response: null,
-    tag: group, type: FieldList, value: ''}
+    setvalue: null, tag: group, type: FieldList, value: ''}
   - {calculate: null, comment: null, constraint: null, group: '', hashtagValue: /progress_note/note/times/office,
     label: PACT Office Visit, relevant: null, repeat: null, required: false, response: null,
-    tag: input, type: Int, value: /progress_note/note/times/office}
+    setvalue: null, tag: input, type: Int, value: /progress_note/note/times/office}
   - {calculate: null, comment: null, constraint: null, group: '', hashtagValue: /progress_note/note/times/home,
     label: Home Visit, relevant: null, repeat: null, required: false, response: null,
-    tag: input, type: Int, value: /progress_note/note/times/home}
+    setvalue: null, tag: input, type: Int, value: /progress_note/note/times/home}
   - {calculate: null, comment: null, constraint: null, group: '', hashtagValue: /progress_note/note/times/other,
     label: Other Visit, relevant: null, repeat: null, required: false, response: null,
-    tag: input, type: Int, value: /progress_note/note/times/other}
+    setvalue: null, tag: input, type: Int, value: /progress_note/note/times/other}
   - {calculate: null, comment: null, constraint: null, group: '', hashtagValue: /progress_note/note/times/wait,
     label: Time Waiting for Client, relevant: null, repeat: null, required: false,
-    response: null, tag: input, type: Int, value: /progress_note/note/times/wait}
+    response: null, setvalue: null, tag: input, type: Int, value: /progress_note/note/times/wait}
   - {calculate: null, comment: null, constraint: null, group: '', hashtagValue: /progress_note/note/times/accompaniment,
     label: Accompaniment Time, relevant: null, repeat: null, required: false, response: null,
-    tag: input, type: Int, value: /progress_note/note/times/accompaniment}
+    setvalue: null, tag: input, type: Int, value: /progress_note/note/times/accompaniment}
   - {calculate: null, comment: null, constraint: null, group: '', hashtagValue: /progress_note/note/times/phone,
     label: Phone Call/Leave Message, relevant: null, repeat: null, required: false,
-    response: null, tag: input, type: Int, value: /progress_note/note/times/phone}
+    response: null, setvalue: null, tag: input, type: Int, value: /progress_note/note/times/phone}
   - {calculate: null, comment: null, constraint: null, group: '', hashtagValue: /progress_note/note/times/discussion,
     label: Provider/Discussion Message, relevant: null, repeat: null, required: false,
-    response: null, tag: input, type: Int, value: /progress_note/note/times/discussion}
+    response: null, setvalue: null, tag: input, type: Int, value: /progress_note/note/times/discussion}
   - {calculate: null, comment: null, constraint: null, group: '', hashtagValue: /progress_note/note/times/administrative,
     label: Administrative, relevant: null, repeat: null, required: false, response: null,
-    tag: input, type: Int, value: /progress_note/note/times/administrative}
+    setvalue: null, tag: input, type: Int, value: /progress_note/note/times/administrative}
   - {calculate: null, comment: null, constraint: null, group: '', hashtagValue: /progress_note/note/times/travel,
     label: Travel, relevant: null, repeat: null, required: false, response: null,
-    tag: input, type: Int, value: /progress_note/note/times/travel}
+    setvalue: null, tag: input, type: Int, value: /progress_note/note/times/travel}
   - {calculate: null, comment: null, constraint: null, group: '', hashtagValue: '',
-    label: '', relevant: null, repeat: null, required: false, response: null, tag: group,
-    type: FieldList, value: ''}
+    label: '', relevant: null, repeat: null, required: false, response: null, setvalue: null,
+    tag: group, type: FieldList, value: ''}
   - {calculate: null, comment: null, constraint: null, group: '', hashtagValue: /progress_note/note/times/other_location,
     label: Location of Other Visit, relevant: /progress_note/note/times/other > 0,
-    repeat: null, required: false, response: null, tag: input, type: Text, value: /progress_note/note/times/other_location}
+    repeat: null, required: false, response: null, setvalue: null, tag: input, type: Text,
+    value: /progress_note/note/times/other_location}
   - calculate: null
     comment: null
     constraint: null
@@ -76,16 +79,17 @@
     repeat: null
     required: false
     response: null
+    setvalue: null
     tag: select1
     type: Select
     value: /progress_note/note/times/accompaniment_type
   - {calculate: null, comment: null, constraint: null, group: '', hashtagValue: /progress_note/note/times/accompaniment_other,
     label: Specify Accompaniment Type, relevant: /progress_note/note/times/accompaniment_type
-      = 'other', repeat: null, required: false, response: null, tag: input, type: Text,
-    value: /progress_note/note/times/accompaniment_other}
+      = 'other', repeat: null, required: false, response: null, setvalue: null, tag: input,
+    type: Text, value: /progress_note/note/times/accompaniment_other}
   - {calculate: null, comment: null, constraint: null, group: '', hashtagValue: '',
-    label: '', relevant: null, repeat: null, required: false, response: null, tag: group,
-    type: FieldList, value: ''}
+    label: '', relevant: null, repeat: null, required: false, response: null, setvalue: null,
+    tag: group, type: FieldList, value: ''}
   - calculate: null
     comment: null
     constraint: null
@@ -99,6 +103,7 @@
     repeat: null
     required: false
     response: null
+    setvalue: null
     tag: select1
     type: Select
     value: /progress_note/note/discussed_appointments
@@ -115,6 +120,7 @@
     repeat: null
     required: false
     response: null
+    setvalue: null
     tag: select1
     type: Select
     value: /progress_note/note/discussed_goals
@@ -131,12 +137,13 @@
     repeat: null
     required: false
     response: null
+    setvalue: null
     tag: select1
     type: Select
     value: /progress_note/note/discussed_followup
   - {calculate: null, comment: null, constraint: null, group: '', hashtagValue: '',
-    label: '', relevant: null, repeat: null, required: false, response: null, tag: group,
-    type: FieldList, value: ''}
+    label: '', relevant: null, repeat: null, required: false, response: null, setvalue: null,
+    tag: group, type: FieldList, value: ''}
   - calculate: null
     comment: null
     constraint: null
@@ -150,6 +157,7 @@
     repeat: null
     required: false
     response: null
+    setvalue: null
     tag: select1
     type: Select
     value: /progress_note/note/reviewed_cd
@@ -166,21 +174,23 @@
     repeat: null
     required: false
     response: null
+    setvalue: null
     tag: select1
     type: Select
     value: /progress_note/note/discussed_qsp
   - {calculate: null, comment: null, constraint: null, group: '', hashtagValue: '',
     label: Adherence, relevant: null, repeat: null, required: false, response: null,
-    tag: group, type: FieldList, value: ''}
+    setvalue: null, tag: group, type: FieldList, value: ''}
   - {calculate: null, comment: null, constraint: null, group: '', hashtagValue: /progress_note/note/adherence/missed,
     label: Doses Missed in the Last 7 Days, relevant: null, repeat: null, required: false,
-    response: null, tag: input, type: Int, value: /progress_note/note/adherence/missed}
+    response: null, setvalue: null, tag: input, type: Int, value: /progress_note/note/adherence/missed}
   - {calculate: null, comment: null, constraint: null, group: '', hashtagValue: /progress_note/note/adherence/possible,
     label: Doses Possible in the Last 7 Days, relevant: null, repeat: null, required: false,
-    response: null, tag: input, type: Int, value: /progress_note/note/adherence/possible}
+    response: null, setvalue: null, tag: input, type: Int, value: /progress_note/note/adherence/possible}
   - {calculate: null, comment: null, constraint: null, group: '', hashtagValue: /progress_note/note/adherence/freetext,
     label: 'Patient''s response to "How was it taking your meds today?"', relevant: null,
-    repeat: null, required: false, response: null, tag: input, type: Text, value: /progress_note/note/adherence/freetext}
+    repeat: null, required: false, response: null, setvalue: null, tag: input, type: Text,
+    value: /progress_note/note/adherence/freetext}
   - calculate: null
     comment: null
     constraint: null
@@ -198,12 +208,13 @@
     repeat: null
     required: false
     response: null
+    setvalue: null
     tag: select1
     type: Select
     value: /progress_note/note/adherence/self_report
   - {calculate: null, comment: null, constraint: null, group: '', hashtagValue: '',
-    label: '', relevant: null, repeat: null, required: false, response: null, tag: group,
-    type: FieldList, value: ''}
+    label: '', relevant: null, repeat: null, required: false, response: null, setvalue: null,
+    tag: group, type: FieldList, value: ''}
   - calculate: null
     comment: null
     constraint: null
@@ -217,6 +228,7 @@
     repeat: null
     required: false
     response: null
+    setvalue: null
     tag: select1
     type: Select
     value: /progress_note/note/newreferral
@@ -233,6 +245,7 @@
     repeat: null
     required: false
     response: null
+    setvalue: null
     tag: select1
     type: Select
     value: /progress_note/note/newbw
@@ -243,11 +256,11 @@
       - {calculate: null, comment: null, constraint: null, group: /progress_note/note/referrals/referral,
         hashtagValue: /progress_note/note/referrals/referral, label: '', relevant: null,
         repeat: /progress_note/note/referrals/referral, required: false, response: null,
-        tag: group, type: FieldList, value: /progress_note/note/referrals/referral}
+        setvalue: null, tag: group, type: FieldList, value: /progress_note/note/referrals/referral}
       - {calculate: null, comment: null, constraint: null, group: /progress_note/note/referrals/referral,
         hashtagValue: /progress_note/note/referrals/referral/ref_date, label: Referral
           Date, relevant: null, repeat: /progress_note/note/referrals/referral, required: false,
-        response: null, tag: input, type: Date, value: /progress_note/note/referrals/referral/ref_date}
+        response: null, setvalue: null, tag: input, type: Date, value: /progress_note/note/referrals/referral/ref_date}
       - calculate: null
         comment: null
         constraint: null
@@ -262,6 +275,7 @@
         repeat: /progress_note/note/referrals/referral
         required: false
         response: null
+        setvalue: null
         tag: select1
         type: Select
         value: /progress_note/note/referrals/referral/ref_type
@@ -272,6 +286,7 @@
       repeat: null
       required: null
       response: null
+      setvalue: null
       tag: null
       type: null
       value: null
@@ -284,6 +299,7 @@
     repeat: null
     required: false
     response: null
+    setvalue: null
     tag: repeat
     type: Repeat
     value: /progress_note/note/referrals/referral
@@ -294,11 +310,11 @@
       - {calculate: null, comment: null, constraint: null, group: /progress_note/note/bwresults/bw,
         hashtagValue: /progress_note/note/bwresults/bw, label: '', relevant: null,
         repeat: /progress_note/note/bwresults/bw, required: false, response: null,
-        tag: group, type: FieldList, value: /progress_note/note/bwresults/bw}
+        setvalue: null, tag: group, type: FieldList, value: /progress_note/note/bwresults/bw}
       - {calculate: null, comment: null, constraint: null, group: /progress_note/note/bwresults/bw,
         hashtagValue: /progress_note/note/bwresults/bw/test_date, label: Date of Tests,
         relevant: null, repeat: /progress_note/note/bwresults/bw, required: true,
-        response: null, tag: input, type: Date, value: /progress_note/note/bwresults/bw/test_date}
+        response: null, setvalue: null, tag: input, type: Date, value: /progress_note/note/bwresults/bw/test_date}
       - calculate: null
         comment: null
         constraint: null
@@ -312,23 +328,25 @@
         repeat: /progress_note/note/bwresults/bw
         required: false
         response: null
+        setvalue: null
         tag: select
         type: MSelect
         value: /progress_note/note/bwresults/bw/tests
       - {calculate: null, comment: null, constraint: null, group: /progress_note/note/bwresults/bw,
         hashtagValue: /progress_note/note/bwresults/bw/vl, label: Viral Load Result,
         relevant: 'selected(../tests,''vl'')', repeat: /progress_note/note/bwresults/bw,
-        required: true, response: null, tag: input, type: Int, value: /progress_note/note/bwresults/bw/vl}
+        required: true, response: null, setvalue: null, tag: input, type: Int, value: /progress_note/note/bwresults/bw/vl}
       - calculate: null
         children:
         - {calculate: null, comment: null, constraint: null, group: /progress_note/note/bwresults/bw/cd,
           hashtagValue: /progress_note/note/bwresults/bw/cd/cdcnt, label: CD4 Count
             Result, relevant: null, repeat: /progress_note/note/bwresults/bw, required: true,
-          response: null, tag: input, type: Int, value: /progress_note/note/bwresults/bw/cd/cdcnt}
+          response: null, setvalue: null, tag: input, type: Int, value: /progress_note/note/bwresults/bw/cd/cdcnt}
         - {calculate: null, comment: null, constraint: null, group: /progress_note/note/bwresults/bw/cd,
           hashtagValue: /progress_note/note/bwresults/bw/cd/cdper, label: CD4 Percent
             Result (Optional), relevant: null, repeat: /progress_note/note/bwresults/bw,
-          required: false, response: null, tag: input, type: Int, value: /progress_note/note/bwresults/bw/cd/cdper}
+          required: false, response: null, setvalue: null, tag: input, type: Int,
+          value: /progress_note/note/bwresults/bw/cd/cdper}
         comment: null
         constraint: null
         group: /progress_note/note/bwresults/bw
@@ -338,6 +356,7 @@
         repeat: /progress_note/note/bwresults/bw
         required: false
         response: null
+        setvalue: null
         tag: group
         type: FieldList
         value: /progress_note/note/bwresults/bw/cd
@@ -348,6 +367,7 @@
       repeat: null
       required: null
       response: null
+      setvalue: null
       tag: null
       type: null
       value: null
@@ -360,12 +380,13 @@
     repeat: null
     required: false
     response: null
+    setvalue: null
     tag: repeat
     type: Repeat
     value: /progress_note/note/bwresults/bw
   - {calculate: null, comment: null, constraint: null, group: '', hashtagValue: '',
     label: Conversations, relevant: null, repeat: null, required: false, response: null,
-    tag: group, type: Group, value: ''}
+    setvalue: null, tag: group, type: Group, value: ''}
   - calculate: null
     comment: null
     constraint: null
@@ -393,6 +414,7 @@
     repeat: null
     required: false
     response: null
+    setvalue: null
     tag: select
     type: MSelect
     value: /progress_note/note/conversations/which
@@ -413,6 +435,7 @@
     repeat: null
     required: false
     response: null
+    setvalue: null
     tag: select
     type: MSelect
     value: /progress_note/note/conversations/conversations_1
@@ -430,6 +453,7 @@
     repeat: null
     required: false
     response: null
+    setvalue: null
     tag: select
     type: MSelect
     value: /progress_note/note/conversations/conversations_2
@@ -450,6 +474,7 @@
     repeat: null
     required: false
     response: null
+    setvalue: null
     tag: select
     type: MSelect
     value: /progress_note/note/conversations/conversations_3
@@ -470,6 +495,7 @@
     repeat: null
     required: false
     response: null
+    setvalue: null
     tag: select
     type: MSelect
     value: /progress_note/note/conversations/conversations_4
@@ -490,6 +516,7 @@
     repeat: null
     required: false
     response: null
+    setvalue: null
     tag: select
     type: MSelect
     value: /progress_note/note/conversations/conversations_5
@@ -508,6 +535,7 @@
     repeat: null
     required: false
     response: null
+    setvalue: null
     tag: select
     type: MSelect
     value: /progress_note/note/conversations/conversations_6
@@ -529,6 +557,7 @@
     repeat: null
     required: false
     response: null
+    setvalue: null
     tag: select
     type: MSelect
     value: /progress_note/note/conversations/conversations_7
@@ -547,6 +576,7 @@
     repeat: null
     required: false
     response: null
+    setvalue: null
     tag: select
     type: MSelect
     value: /progress_note/note/conversations/conversations_8
@@ -564,6 +594,7 @@
     repeat: null
     required: false
     response: null
+    setvalue: null
     tag: select
     type: MSelect
     value: /progress_note/note/conversations/conversations_9
@@ -581,6 +612,7 @@
     repeat: null
     required: false
     response: null
+    setvalue: null
     tag: select
     type: MSelect
     value: /progress_note/note/conversations/conversations_10
@@ -600,6 +632,7 @@
     repeat: null
     required: false
     response: null
+    setvalue: null
     tag: select
     type: MSelect
     value: /progress_note/note/conversations/conversations_11
@@ -620,6 +653,7 @@
     repeat: null
     required: false
     response: null
+    setvalue: null
     tag: select
     type: MSelect
     value: /progress_note/note/conversations/conversations_12
@@ -641,6 +675,7 @@
     repeat: null
     required: false
     response: null
+    setvalue: null
     tag: select
     type: MSelect
     value: /progress_note/note/conversations/conversations_13
@@ -661,6 +696,7 @@
     repeat: null
     required: false
     response: null
+    setvalue: null
     tag: select
     type: MSelect
     value: /progress_note/note/conversations/conversations_14
@@ -681,6 +717,7 @@
     repeat: null
     required: false
     response: null
+    setvalue: null
     tag: select
     type: MSelect
     value: /progress_note/note/conversations/conversations_15
@@ -697,6 +734,7 @@
     repeat: null
     required: false
     response: null
+    setvalue: null
     tag: select
     type: MSelect
     value: /progress_note/note/conversations/conversations_16
@@ -704,7 +742,7 @@
     label: "\nAny other notes from the meeting?\n\n     Please Include:\n     1) Environment/context\n\
       \     2) Themes/activities\n     3) Take-home message\n                    \
       \                    ", relevant: null, repeat: null, required: false, response: null,
-    tag: input, type: Text, value: /progress_note/note/memo}
+    setvalue: null, tag: input, type: Text, value: /progress_note/note/memo}
   comment: null
   constraint: null
   group: null
@@ -714,96 +752,119 @@
   repeat: null
   required: false
   response: null
+  setvalue: null
   tag: group
   type: Group
   value: ''
 - {calculate: null, comment: null, constraint: null, group: null, hashtagValue: /progress_note/meta/userID,
   label: meta/userID, relevant: null, repeat: null, required: null, response: null,
-  tag: hidden, type: DataBindOnly, value: /progress_note/meta/userID}
+  setvalue: null, tag: hidden, type: DataBindOnly, value: /progress_note/meta/userID}
 - {calculate: null, comment: null, constraint: null, group: null, hashtagValue: /progress_note/meta/timeStart,
   label: meta/timeStart, relevant: null, repeat: null, required: null, response: null,
-  tag: hidden, type: DataBindOnly, value: /progress_note/meta/timeStart}
+  setvalue: null, tag: hidden, type: DataBindOnly, value: /progress_note/meta/timeStart}
 - {calculate: null, comment: null, constraint: null, group: null, hashtagValue: /progress_note/meta/timeEnd,
   label: meta/timeEnd, relevant: null, repeat: null, required: null, response: null,
-  tag: hidden, type: DataBindOnly, value: /progress_note/meta/timeEnd}
+  setvalue: null, tag: hidden, type: DataBindOnly, value: /progress_note/meta/timeEnd}
 - {calculate: 'instance(''casedb'')/casedb/case[@case_id= /progress_note/case/@case_id]/pactid',
   comment: null, constraint: null, group: null, hashtagValue: /progress_note/note/pact_id,
   label: note/pact_id, relevant: null, repeat: null, required: null, response: '111',
-  tag: hidden, type: DataBindOnly, value: /progress_note/note/pact_id}
+  setvalue: null, tag: hidden, type: DataBindOnly, value: /progress_note/note/pact_id}
 - {calculate: null, comment: null, constraint: null, group: null, hashtagValue: /progress_note/meta/username,
   label: meta/username, relevant: null, repeat: null, required: null, response: null,
-  tag: hidden, type: DataBindOnly, value: /progress_note/meta/username}
+  setvalue: null, tag: hidden, type: DataBindOnly, value: /progress_note/meta/username}
 - {calculate: null, comment: null, constraint: null, group: null, hashtagValue: /progress_note/meta/deviceID,
   label: meta/deviceID, relevant: null, repeat: null, required: null, response: null,
-  tag: hidden, type: DataBindOnly, value: /progress_note/meta/deviceID}
+  setvalue: null, tag: hidden, type: DataBindOnly, value: /progress_note/meta/deviceID}
 - {calculate: /progress_note/note/encounter_date, comment: null, constraint: null,
   group: null, hashtagValue: /progress_note/case/update/last_note, label: case/update/last_note,
-  relevant: null, repeat: null, required: null, response: null, tag: hidden, type: DataBindOnly,
-  value: /progress_note/case/update/last_note}
+  relevant: null, repeat: null, required: null, response: null, setvalue: null, tag: hidden,
+  type: DataBindOnly, value: /progress_note/case/update/last_note}
 - {calculate: null, comment: null, constraint: null, group: null, hashtagValue: /progress_note/meta/instanceID,
   label: meta/instanceID, relevant: null, repeat: null, required: null, response: null,
-  tag: hidden, type: DataBindOnly, value: /progress_note/meta/instanceID}
+  setvalue: null, tag: hidden, type: DataBindOnly, value: /progress_note/meta/instanceID}
 - {calculate: null, comment: null, constraint: null, group: null, hashtagValue: /progress_note/meta/appVersion,
   label: meta/appVersion, relevant: null, repeat: null, required: null, response: null,
-  tag: hidden, type: DataBindOnly, value: /progress_note/meta/appVersion}
+  setvalue: null, tag: hidden, type: DataBindOnly, value: /progress_note/meta/appVersion}
 - {calculate: null, comment: null, constraint: null, group: null, hashtagValue: /progress_note/case/@case_id,
   label: case/@case_id, relevant: null, repeat: null, required: null, response: null,
-  tag: hidden, type: DataBindOnly, value: /progress_note/case/@case_id}
+  setvalue: null, tag: hidden, type: DataBindOnly, value: /progress_note/case/@case_id}
 - {calculate: /progress_note/meta/userID, comment: null, constraint: null, group: null,
   hashtagValue: /progress_note/case/@user_id, label: case/@user_id, relevant: null,
-  repeat: null, required: null, response: null, tag: hidden, type: DataBindOnly, value: /progress_note/case/@user_id}
+  repeat: null, required: null, response: null, setvalue: null, tag: hidden, type: DataBindOnly,
+  value: /progress_note/case/@user_id}
 - {calculate: /progress_note/meta/timeEnd, comment: null, constraint: null, group: null,
   hashtagValue: /progress_note/case/@date_modified, label: case/@date_modified, relevant: null,
-  repeat: null, required: null, response: null, tag: hidden, type: DataBindOnly, value: /progress_note/case/@date_modified}
+  repeat: null, required: null, response: null, setvalue: null, tag: hidden, type: DataBindOnly,
+  value: /progress_note/case/@date_modified}
 - {calculate: null, comment: null, group: null, label: note/adherence/freetext, relevant: null,
-  repeat: null, required: null, response: '67', tag: null, type: null, value: /progress_note/note/adherence/freetext}
+  repeat: null, required: null, response: '67', setvalue: null, tag: null, type: null,
+  value: /progress_note/note/adherence/freetext}
 - {calculate: null, comment: null, group: null, label: note/adherence/missed, relevant: null,
-  repeat: null, required: null, response: '', tag: null, type: null, value: /progress_note/note/adherence/missed}
+  repeat: null, required: null, response: '', setvalue: null, tag: null, type: null,
+  value: /progress_note/note/adherence/missed}
 - {calculate: null, comment: null, group: null, label: note/adherence/possible, relevant: null,
-  repeat: null, required: null, response: '', tag: null, type: null, value: /progress_note/note/adherence/possible}
+  repeat: null, required: null, response: '', setvalue: null, tag: null, type: null,
+  value: /progress_note/note/adherence/possible}
 - {calculate: null, comment: null, group: null, label: note/adherence/self_report,
-  relevant: null, repeat: null, required: null, response: all, tag: null, type: null,
-  value: /progress_note/note/adherence/self_report}
+  relevant: null, repeat: null, required: null, response: all, setvalue: null, tag: null,
+  type: null, value: /progress_note/note/adherence/self_report}
 - {calculate: null, comment: null, group: null, label: note/conversations/which, relevant: null,
-  repeat: null, required: null, response: '', tag: null, type: null, value: /progress_note/note/conversations/which}
+  repeat: null, required: null, response: '', setvalue: null, tag: null, type: null,
+  value: /progress_note/note/conversations/which}
 - {calculate: null, comment: null, group: null, label: note/discussed_appointments,
-  relevant: null, repeat: null, required: null, response: 'no', tag: null, type: null,
-  value: /progress_note/note/discussed_appointments}
+  relevant: null, repeat: null, required: null, response: 'no', setvalue: null, tag: null,
+  type: null, value: /progress_note/note/discussed_appointments}
 - {calculate: null, comment: null, group: null, label: note/discussed_followup, relevant: null,
-  repeat: null, required: null, response: 'no', tag: null, type: null, value: /progress_note/note/discussed_followup}
+  repeat: null, required: null, response: 'no', setvalue: null, tag: null, type: null,
+  value: /progress_note/note/discussed_followup}
 - {calculate: null, comment: null, group: null, label: note/discussed_goals, relevant: null,
-  repeat: null, required: null, response: 'no', tag: null, type: null, value: /progress_note/note/discussed_goals}
+  repeat: null, required: null, response: 'no', setvalue: null, tag: null, type: null,
+  value: /progress_note/note/discussed_goals}
 - {calculate: null, comment: null, group: null, label: note/discussed_qsp, relevant: null,
-  repeat: null, required: null, response: 'no', tag: null, type: null, value: /progress_note/note/discussed_qsp}
+  repeat: null, required: null, response: 'no', setvalue: null, tag: null, type: null,
+  value: /progress_note/note/discussed_qsp}
 - {calculate: null, comment: null, group: null, label: note/encounter_date, relevant: null,
-  repeat: null, required: null, response: '2010-09-06', tag: null, type: null, value: /progress_note/note/encounter_date}
+  repeat: null, required: null, response: '2010-09-06', setvalue: null, tag: null,
+  type: null, value: /progress_note/note/encounter_date}
 - {calculate: null, comment: null, group: null, label: note/memo, relevant: null,
-  repeat: null, required: null, response: We talked and it was good., tag: null, type: null,
-  value: /progress_note/note/memo}
+  repeat: null, required: null, response: We talked and it was good., setvalue: null,
+  tag: null, type: null, value: /progress_note/note/memo}
 - {calculate: null, comment: null, group: null, label: note/newbw, relevant: null,
-  repeat: null, required: null, response: 'no', tag: null, type: null, value: /progress_note/note/newbw}
+  repeat: null, required: null, response: 'no', setvalue: null, tag: null, type: null,
+  value: /progress_note/note/newbw}
 - {calculate: null, comment: null, group: null, label: note/newreferral, relevant: null,
-  repeat: null, required: null, response: 'no', tag: null, type: null, value: /progress_note/note/newreferral}
+  repeat: null, required: null, response: 'no', setvalue: null, tag: null, type: null,
+  value: /progress_note/note/newreferral}
 - {calculate: null, comment: null, group: null, label: note/reviewed_cd, relevant: null,
-  repeat: null, required: null, response: 'no', tag: null, type: null, value: /progress_note/note/reviewed_cd}
+  repeat: null, required: null, response: 'no', setvalue: null, tag: null, type: null,
+  value: /progress_note/note/reviewed_cd}
 - {calculate: null, comment: null, group: null, label: note/times/accompaniment, relevant: null,
-  repeat: null, required: null, response: '', tag: null, type: null, value: /progress_note/note/times/accompaniment}
+  repeat: null, required: null, response: '', setvalue: null, tag: null, type: null,
+  value: /progress_note/note/times/accompaniment}
 - {calculate: null, comment: null, group: null, label: note/times/administrative,
-  relevant: null, repeat: null, required: null, response: '', tag: null, type: null,
-  value: /progress_note/note/times/administrative}
+  relevant: null, repeat: null, required: null, response: '', setvalue: null, tag: null,
+  type: null, value: /progress_note/note/times/administrative}
 - {calculate: null, comment: null, group: null, label: note/times/discussion, relevant: null,
-  repeat: null, required: null, response: '', tag: null, type: null, value: /progress_note/note/times/discussion}
+  repeat: null, required: null, response: '', setvalue: null, tag: null, type: null,
+  value: /progress_note/note/times/discussion}
 - {calculate: null, comment: null, group: null, label: note/times/home, relevant: null,
-  repeat: null, required: null, response: '12', tag: null, type: null, value: /progress_note/note/times/home}
+  repeat: null, required: null, response: '12', setvalue: null, tag: null, type: null,
+  value: /progress_note/note/times/home}
 - {calculate: null, comment: null, group: null, label: note/times/missed_visit, relevant: null,
-  repeat: null, required: null, response: 'no', tag: null, type: null, value: /progress_note/note/times/missed_visit}
+  repeat: null, required: null, response: 'no', setvalue: null, tag: null, type: null,
+  value: /progress_note/note/times/missed_visit}
 - {calculate: null, comment: null, group: null, label: note/times/office, relevant: null,
-  repeat: null, required: null, response: '', tag: null, type: null, value: /progress_note/note/times/office}
+  repeat: null, required: null, response: '', setvalue: null, tag: null, type: null,
+  value: /progress_note/note/times/office}
 - {calculate: null, comment: null, group: null, label: note/times/other, relevant: null,
-  repeat: null, required: null, response: '', tag: null, type: null, value: /progress_note/note/times/other}
+  repeat: null, required: null, response: '', setvalue: null, tag: null, type: null,
+  value: /progress_note/note/times/other}
 - {calculate: null, comment: null, group: null, label: note/times/phone, relevant: null,
-  repeat: null, required: null, response: '', tag: null, type: null, value: /progress_note/note/times/phone}
+  repeat: null, required: null, response: '', setvalue: null, tag: null, type: null,
+  value: /progress_note/note/times/phone}
 - {calculate: null, comment: null, group: null, label: note/times/travel, relevant: null,
-  repeat: null, required: null, response: '', tag: null, type: null, value: /progress_note/note/times/travel}
+  repeat: null, required: null, response: '', setvalue: null, tag: null, type: null,
+  value: /progress_note/note/times/travel}
 - {calculate: null, comment: null, group: null, label: note/times/wait, relevant: null,
-  repeat: null, required: null, response: '', tag: null, type: null, value: /progress_note/note/times/wait}
+  repeat: null, required: null, response: '', setvalue: null, tag: null, type: null,
+  value: /progress_note/note/times/wait}

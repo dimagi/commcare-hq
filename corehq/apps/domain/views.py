@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import copy
 import datetime
 from decimal import Decimal
@@ -919,8 +920,8 @@ class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMix
                 }
             except BillingRecord.DoesNotExist:
                 log_accounting_error(
-                    u"An invoice was generated for %(invoice_id)d "
-                    u"(domain: %(domain)s), but no billing record!" % {
+                    "An invoice was generated for %(invoice_id)d "
+                    "(domain: %(domain)s), but no billing record!" % {
                         'invoice_id': invoice.id,
                         'domain': self.domain,
                     }
@@ -1278,10 +1279,10 @@ class SelectPlanView(DomainAccountingSettings):
 
     @property
     def steps(self):
-        edition_name = u" (%s)" % self.edition_name if self.edition_name else ""
+        edition_name = " (%s)" % self.edition_name if self.edition_name else ""
         return [
             {
-                'title': _(u"1. Select a Plan%(edition_name)s") % {
+                'title': _("1. Select a Plan%(edition_name)s") % {
                     "edition_name": edition_name
                 },
                 'url': reverse(SelectPlanView.urlname, args=[self.domain]),
@@ -1544,7 +1545,7 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
             if not is_saved:
                 messages.error(
                     request, _(
-                        u"It appears there was an issue subscribing your project to the %s Software Plan. You "
+                        "It appears there was an issue subscribing your project to the %s Software Plan. You "
                         "may try resubmitting, but if that doesn't work, rest assured someone will be "
                         "contacting you shortly."
                     ) % software_plan_name
@@ -1552,7 +1553,7 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
             else:
                 messages.success(
                     request, _(
-                        u"Your project has been successfully subscribed to the %s Software Plan."
+                        "Your project has been successfully subscribed to the %s Software Plan."
                     ) % software_plan_name
                 )
                 return HttpResponseRedirect(reverse(DomainSubscriptionView.urlname, args=[self.domain]))
@@ -2645,7 +2646,7 @@ class TransferDomainView(BaseAdminProjectSettingsView):
             if request.GET.get('resend', None):
                 self.active_transfer.send_transfer_request()
                 messages.info(request,
-                              _(u"Resent transfer request for project '{domain}'").format(domain=self.domain))
+                              _("Resent transfer request for project '{domain}'").format(domain=self.domain))
 
         return super(TransferDomainView, self).get(request, *args, **kwargs)
 
@@ -2715,7 +2716,7 @@ class ActivateTransferDomainView(BasePageView):
             return HttpResponseRedirect(reverse("no_permissions"))
 
         self.active_transfer.transfer_domain(ip=get_ip(request))
-        messages.success(request, _(u"Successfully transferred ownership of project '{domain}'")
+        messages.success(request, _("Successfully transferred ownership of project '{domain}'")
                          .format(domain=self.active_transfer.domain))
 
         return HttpResponseRedirect(reverse('dashboard_default', args=[self.active_transfer.domain]))
@@ -2747,7 +2748,7 @@ class DeactivateTransferDomainView(View):
         # Do not want to send them back to the activate page
         if referer.endswith(reverse('activate_transfer_domain', args=[guid])):
             messages.info(request,
-                          _(u"Declined ownership of project '{domain}'").format(domain=transfer.domain))
+                          _("Declined ownership of project '{domain}'").format(domain=transfer.domain))
             return HttpResponseRedirect('/')
         else:
             return HttpResponseRedirect(referer)
