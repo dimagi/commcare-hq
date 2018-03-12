@@ -38,7 +38,6 @@ def get_domain_from_url(path):
     return domain
 
 
-@quickcache([], timeout=60)
 def get_domain_module_map():
     return getattr(settings, 'DOMAIN_MODULE_MAP', {})
 
