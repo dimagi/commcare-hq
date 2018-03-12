@@ -75,7 +75,7 @@ def report_blobs_by_type(data, write):
     """report on number of new blobs by blob bucket"""
     assert len(data) < 100, len(data)
     write(["BUCKET", "BLOB COUNT"])
-    for key, value in sorted(data.items()):
+    for key, value in sorted(six.iteritems(data)):
         write([key, len(value)])
     write([])
 
@@ -121,7 +121,7 @@ def report_blob_sizes(data, sizes, write):
     by_domain = OrderedDict()
     by_type = defaultdict(lambda: defaultdict(list))
     samples = defaultdict(lambda: 0)
-    for i, (domain, domain_sizes) in enumerate(sorted(sizes.items(), key=sumlens)):
+    for i, (domain, domain_sizes) in enumerate(sorted(six.iteritems(sizes), key=sumlens)):
         if i < 5:
             by_domain[domain] = domain_sizes
         else:
@@ -143,7 +143,7 @@ def report_blob_sizes(data, sizes, write):
     } for domain in by_domain}
     write(["Storage use based on sampled estimates (may be inaccurate)"])
     write(["DOC_TYPE"] + list(iter_headers(by_domain)))
-    for doc_type, domain_sizes in sorted(by_type.items(), key=key):
+    for doc_type, domain_sizes in sorted(six.iteritems(by_type), key=key):
         write([doc_type] + list(iter_sizes(doc_type, domain_sizes, totals)))
     write(["---"] + ["---" for x in iter_headers(by_domain)])
     write(list(iter_totals(totals)))

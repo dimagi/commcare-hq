@@ -1454,7 +1454,7 @@ class NavMenuItemMediaMixin(DocumentSchema):
                     data[media_attr] = new_media
                 elif isinstance(old_media, dict):
                     # Once the media has localized data, discard the dummy key
-                    if 'default' in old_media and len(old_media.keys()) > 1:
+                    if 'default' in old_media and len(old_media) > 1:
                         old_media.pop('default')
 
         return super(NavMenuItemMediaMixin, cls).wrap(data)
@@ -1499,7 +1499,7 @@ class NavMenuItemMediaMixin(DocumentSchema):
     def _assert_unexpected_default_media_call(self, media_attr):
         assert media_attr in ('media_image', 'media_audio')
         media = getattr(self, media_attr)
-        if isinstance(media, dict) and media.keys() == ['default']:
+        if isinstance(media, dict) and list(media) == ['default']:
             _assert = soft_assert(['jschweers' + '@' + 'dimagi.com'])
             _assert(False, 'Called default_media_image on app with localized media')
 
