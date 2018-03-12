@@ -14,7 +14,7 @@ from restkit.session import set_session
 from gevent.monkey import patch_all
 from psycogreen.gevent import patch_psycopg
 
-set_session("gevent")
+set_session(b"gevent")
 patch_all(subprocess=True)
 patch_psycopg()
 
