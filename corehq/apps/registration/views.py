@@ -124,11 +124,11 @@ class ProcessRegistrationView(JSONResponseMixin, NewUserNumberAbTestMixin, View)
             web_user.save()
 
         is_mobile = reg_form.cleaned_data.get('is_mobile')
-        email = reg_form.cleaned_data['email']
+        email = new_user.email
 
         if is_mobile:
             toggles.MOBILE_SIGNUP_REDIRECT_AB_TEST_CONTROLLER.set(email, True)
-        track_workflow(new_user.email,
+        track_workflow(email,
                        "Requested new account",
                        {
                            'mobile_visitor': reg_form.cleaned_data.get('is_mobile'),
