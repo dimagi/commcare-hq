@@ -7,7 +7,6 @@ from corehq.apps.locations.models import SQLLocation, get_location
 from corehq.apps.sms.models import PhoneNumber
 from corehq.apps.users.models import WebUser
 from dimagi.ext.couchdbkit import Document, BooleanProperty, StringProperty
-from custom.utils.utils import add_to_module_map
 from casexml.apps.stock.models import DocDomainMapping
 from corehq.toggles import STOCK_AND_RECEIPT_SMS_HANDLER, NAMESPACE_DOMAIN
 from django.db import models
@@ -65,7 +64,6 @@ class EWSGhanaConfig(Document):
             DocDomainMapping.objects.create(doc_id=self._id,
                                             domain_name=self.domain,
                                             doc_type='EWSGhanaConfig')
-            add_to_module_map(self.domain, 'custom.ewsghana')
 
     def update_toggle(self):
         """
