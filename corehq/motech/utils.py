@@ -11,7 +11,7 @@ from django.conf import settings
 
 AES_BLOCK_SIZE = 16
 AES_KEY_MAX_LEN = 32  # AES key must be either 16, 24, or 32 bytes long
-PAD_CHAR = ' '
+PAD_CHAR = b' '
 
 
 def pad(string, block_size, char=PAD_CHAR):
@@ -19,7 +19,7 @@ def pad(string, block_size, char=PAD_CHAR):
     Pad `string` to a multiple of `block_size` in length by appending
     `char`. `char` defaults to space.
 
-    >>> pad('xyzzy', 8)
+    >>> pad(b'xyzzy', 8)
     'xyzzy   '
 
     """
