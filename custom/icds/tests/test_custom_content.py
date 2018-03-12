@@ -259,23 +259,6 @@ class CustomContentTest(BaseICDSTest):
             ["Congratulations! You've done all the Complementary Feeding  Visits for Sam"],
         )
 
-    @patch('custom.icds.messaging.custom_content.get_language_code_for_state')
-    def test_child_vaccinations_complete(self, language_code_patch):
-        c = CustomContent(custom_content_id='ICDS_CHILD_VACCINATIONS_COMPLETE')
-
-        schedule_instance = CaseTimedScheduleInstance(
-            domain=self.domain,
-            case_id=self.child_tasks_case.case_id,
-        )
-
-        c.set_context(schedule_instance=schedule_instance)
-
-        language_code_patch.return_value = ENGLISH
-        self.assertEqual(
-            c.get_list_of_messages(self.user1),
-            ["Congratulations! You've given all the vaccines to Joe"],
-        )
-
     def test_get_state_code(self):
         self.assertEqual(get_state_code(self.user1.location), 'state1')
         self.assertIsNone(get_state_code(self.user2.location))
