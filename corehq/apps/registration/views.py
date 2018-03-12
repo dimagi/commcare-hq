@@ -10,6 +10,7 @@ from django.http import HttpResponseRedirect, Http404, HttpResponse
 from django.shortcuts import redirect, render
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _
+from django.views.decorators.http import require_POST
 import sys
 
 from django.views.generic.base import TemplateView, View
@@ -450,11 +451,10 @@ def eula_agreement(request):
     return HttpResponseRedirect(request.POST.get('next', '/'))
 
 
-@transaction.atomic
 @login_required
+@require_POST
 def send_mobile_reminder(request):
-    if request.method == 'POST':
-        send_mobile_experience_reminder(request.user.username,
-                                        request.couch_user.full_name)
+    send_mobile_experience_reminder(request.user.username,
+                                    request.couch_user.full_name)
 
     return HttpResponse()
