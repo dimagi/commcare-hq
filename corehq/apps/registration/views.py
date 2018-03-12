@@ -131,8 +131,8 @@ class ProcessRegistrationView(JSONResponseMixin, NewUserNumberAbTestMixin, View)
         track_workflow(email,
                        "Requested new account",
                        {
-                           'mobile_visitor': reg_form.cleaned_data.get('is_mobile'),
-                           'mobile_visitor_cohort': (
+                           'mobile_visitor_march2018test': reg_form.cleaned_data.get('is_mobile'),
+                           'mobile_visitor_cohort_march2018test': (
                                "control" if is_mobile and
                                toggles.MOBILE_SIGNUP_REDIRECT_AB_TEST.enabled(
                                    email, toggles.NAMESPACE_USER)
