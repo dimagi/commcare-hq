@@ -11,8 +11,7 @@ hqDefine("app_manager/js/forms/form_designer", function() {
             var formType = FORM_TYPES.FOLLOWUP;
             if (initial_page_data("is_registration_form")) {
                 formType = FORM_TYPES.REGISTRATION;
-            }
-            if (initial_page_data("is_survey")) {
+            } else if (initial_page_data("is_survey")) {
                 formType = FORM_TYPES.SURVEY;
             }
             appcues.trackEvent(eventType + " (" + formType + ")");
