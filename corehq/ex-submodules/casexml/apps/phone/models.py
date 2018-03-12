@@ -299,6 +299,9 @@ class AbstractSyncLog(SafeSaveDocument, UnicodeMixIn):
             ret.strict = False
         return ret
 
+    def save(self):
+        save_synclog_to_sql(self)
+
     def delete(self):
         delete_synclog(self._id)
 
@@ -489,9 +492,6 @@ class SyncLog(AbstractSyncLog):
         from casexml.apps.phone.dbaccessors.sync_logs_by_user import get_last_synclog_for_user
 
         return get_last_synclog_for_user(user_id)
-
-    def save(self):
-        save_synclog_to_sql(self)
 
     def _assert(self, conditional, msg="", case_id=None):
         if not conditional:
@@ -836,11 +836,6 @@ class SimplifiedSyncLog(AbstractSyncLog):
         if self._purged_cases is None:
             self._purged_cases = set()
         return self._purged_cases
-
-    def save(self, *args, **kwargs):
-        # force doc type to SyncLog to avoid changing the couch view.
-        self.doc_type = "SyncLog"
-        save_synclog_to_sql(self)
 
     def case_count(self):
         return len(self.case_ids_on_phone)
