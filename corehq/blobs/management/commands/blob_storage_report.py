@@ -121,7 +121,7 @@ def report_blob_sizes(data, sizes, write):
     by_domain = OrderedDict()
     by_type = defaultdict(lambda: defaultdict(list))
     samples = defaultdict(lambda: 0)
-    for i, (domain, domain_sizes) in enumerate(sorted(list(sizes.items()), key=sumlens)):
+    for i, (domain, domain_sizes) in enumerate(sorted(six.iteritems(sizes), key=sumlens)):
         if i < 5:
             by_domain[domain] = domain_sizes
         else:
