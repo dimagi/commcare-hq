@@ -29,7 +29,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from gevent import monkey
 import six
-monkey.patch_all(time=False, select=False)
+monkey.patch_all()
 
 import os
 import jsonobject
