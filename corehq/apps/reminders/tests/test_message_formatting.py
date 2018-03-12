@@ -211,7 +211,8 @@ class MessageTestCase(TestCase):
             expected_result['case']['last_modified_by'] = self.get_expected_template_params_for_web()
             self.assertEqual(get_message_template_params(case), expected_result)
 
-        with create_test_case(self.domain, 'person', 'Joe', owner_id=self.location.location_id, user_id='system') as case:
+        with create_test_case(self.domain, 'person', 'Joe', owner_id=self.location.location_id,
+                user_id='system') as case:
             expected_result = {'case': case.to_json()}
             expected_result['case']['owner'] = self.get_expected_template_params_for_location()
             expected_result['case']['last_modified_by'] = _get_system_user_template_info()
