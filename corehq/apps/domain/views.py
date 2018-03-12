@@ -122,7 +122,7 @@ from corehq.apps.hqwebapp.views import BaseSectionPageView, BasePageView, CRUDPa
 from corehq.apps.domain.forms import ProjectSettingsForm
 from memoized import memoized
 from dimagi.utils.web import get_ip, json_response, get_site_domain
-from corehq.motech.repeaters.forms import EmailBulkPayload
+
 from corehq.apps.users.decorators import require_can_edit_web_users, require_permission
 from toggle.models import Toggle
 from corehq.apps.hqwebapp.tasks import send_html_email_async
