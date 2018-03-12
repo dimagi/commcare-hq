@@ -143,7 +143,7 @@ def report_blob_sizes(data, sizes, write):
     } for domain in by_domain}
     write(["Storage use based on sampled estimates (may be inaccurate)"])
     write(["DOC_TYPE"] + list(iter_headers(by_domain)))
-    for doc_type, domain_sizes in sorted(list(by_type.items()), key=key):
+    for doc_type, domain_sizes in sorted(six.iteritems(by_type), key=key):
         write([doc_type] + list(iter_sizes(doc_type, domain_sizes, totals)))
     write(["---"] + ["---" for x in iter_headers(by_domain)])
     write(list(iter_totals(totals)))
