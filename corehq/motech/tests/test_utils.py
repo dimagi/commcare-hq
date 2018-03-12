@@ -1,4 +1,3 @@
-# coding=utf-8
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import doctest
@@ -21,8 +20,8 @@ class PadTests(SimpleTestCase):
         """
         pad should pad a string according to its size in bytes, not its length in letters.
         """
-        padded = pad(b'xyźźy', 8, b'*')
-        self.assertEqual(padded, b'xyźźy*')
+        padded = pad(b'xy\xc5\xba\xc5\xbay', 8, b'*')
+        self.assertEqual(padded, b'xy\xc5\xba\xc5\xbay*')
 
 
 class DocTests(SimpleTestCase):
