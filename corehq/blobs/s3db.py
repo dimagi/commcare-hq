@@ -93,10 +93,9 @@ class S3BlobDB(AbstractBlobDB):
                 deleted_count = 0
                 for objects in pages:
                     resp = s3_bucket.delete_objects(Delete={"Objects": objects})
-                    if success:
-                        deleted = set(d["Key"] for d in resp.get("Deleted", []))
-                        success = all(o["Key"] in deleted for o in objects)
-                        deleted_count += len(deleted)
+                    deleted = set(d["Key"] for d in resp.get("Deleted", []))
+                    success = success and all(o["Key"] in deleted for o in objects)
+                    deleted_count += len(deleted)
             else:
                 obj = s3_bucket.Object(path)
                 deleted_count = 1
