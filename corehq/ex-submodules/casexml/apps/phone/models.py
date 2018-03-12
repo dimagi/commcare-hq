@@ -388,7 +388,7 @@ def delete_synclog(synclog_id):
         pass
 
     if not deleted:
-        raise MissingSyncLog("A SyncLogSQL object with this synclog_id ({})is not found".format(synclog_id))
+        raise MissingSyncLog("No synclog object with this synclog_id ({}) is  found".format(synclog_id))
 
 
 def synclog_to_sql_object(synclog_json_object):
