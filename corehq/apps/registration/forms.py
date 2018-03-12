@@ -308,11 +308,7 @@ class WebUserInvitationForm(NoAutocompleteMixin, DomainRegistrationForm):
                                help_text=mark_safe("""
                                <span data-bind="text: passwordHelp, css: color">
                                """))
-    is_mobile = forms.BooleanField(widget=forms.HiddenInput(
-        attrs={
-            'data-bind': 'value: (window.innerWidth < 800 && window.innerHeight < 600)'
-        }
-    ))
+    is_mobile = forms.BooleanField(widget=forms.HiddenInput())
     if settings.ENABLE_DRACONIAN_SECURITY_FEATURES:
         captcha = CaptchaField(_("Type the letters in the box"))
     create_domain = forms.BooleanField(widget=forms.HiddenInput(), required=False, initial=False)
