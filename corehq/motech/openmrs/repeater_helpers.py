@@ -385,7 +385,7 @@ def get_form_question_values(form_json):
                 _recurse_form_questions(value, new_path, result_)
             else:
                 # key is a question and value is its answer
-                question = b'/'.join(new_path)
+                question = '/'.join((p.decode('utf8') if isinstance(p, bytes) else p for p in new_path))
                 result_[question] = value
 
     result = {}

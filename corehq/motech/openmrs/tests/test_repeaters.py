@@ -11,7 +11,8 @@ import corehq.motech.openmrs.repeater_helpers
 from corehq.motech.openmrs.repeater_helpers import (
     get_patient_by_uuid,
     get_relevant_case_updates_from_form_json,
-    CaseTriggerInfo
+    CaseTriggerInfo,
+    get_form_question_values,
 )
 
 
@@ -98,6 +99,27 @@ class GetPatientByUuidTests(SimpleTestCase):
     def test_valid_uuid(self):
         patient = get_patient_by_uuid(self.requests, uuid='c83d9989-585f-4db3-bf55-ca1d0ee7c0af')
         self.assertEqual(patient, self.patient)
+
+
+class GetFormQuestionValuesTests(SimpleTestCase):
+
+    def test_unicode_answer(self):
+        value = get_form_question_values({'form': {'foo': {'bar': u'b\u0105z'}}})
+        self.assertEqual(value, {'/data/foo/bar': u'b\u0105z'})
+
+    def test_utf8_answer(self):
+        value = get_form_question_values({'form': {'foo': {'bar': b'b\xc4\x85z'}}})
+        self.assertEqual(value, {'/data/foo/bar': b'b\xc4\x85z'})
+
+    def test_unicode_question(self):
+        # Form Builder questions are expected to be ASCII
+        value = get_form_question_values({'form': {'foo': {u'b\u0105r': 'baz'}}})
+        self.assertEqual(value, {u'/data/foo/b\u0105r': 'baz'})
+
+    def test_utf8_question(self):
+        # Form Builder questions are expected to be ASCII
+        value = get_form_question_values({'form': {'foo': {b'b\xc4\x85r': 'baz'}}})
+        self.assertEqual(value, {u'/data/foo/b\u0105r': 'baz'})
 
 
 class DocTests(SimpleTestCase):
