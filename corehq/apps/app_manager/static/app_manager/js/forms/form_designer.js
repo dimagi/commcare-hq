@@ -1,22 +1,21 @@
 /* globals hqDefine, hqImport, define, require, form_tour_start, WS4Redis, django */
 hqDefine("app_manager/js/forms/form_designer", function() {
     var initial_page_data = hqImport("hqwebapp/js/initial_page_data").get,
+        appcues = hqImport('analytix/js/appcues'),
         FORM_TYPES = {
             REGISTRATION: "registration",
             SURVEY: "survey",
             FOLLOWUP: "followup",
         },
-        formType = function () {
+        trackFormEvent = function (eventType) {
+            var formType = FORM_TYPES.FOLLOWUP;
             if (initial_page_data("is_registration_form")) {
-                return FORM_TYPES.REGISTRATION;
+                formType = FORM_TYPES.REGISTRATION;
+            } else if (initial_page_data("is_survey")) {
+                formType = FORM_TYPES.SURVEY;
             }
-            if (initial_page_data("is_survey")) {
-                return FORM_TYPES.SURVEY;
-            }
-            return FORM_TYPES.FOLLOWUP;
+            appcues.trackEvent(eventType + " (" + formType + ")");
         };
-
-    var appcues = hqImport('analytix/js/appcues');
 
     $(function() {
         var VELLUM_OPTIONS = _.extend({}, initial_page_data("vellum_options"), {
@@ -66,12 +65,7 @@ hqDefine("app_manager/js/forms/form_designer", function() {
                 if (initial_page_data("days_since_created") === 0) {
                     hqImport('analytix/js/kissmetrix').track.event('Saved the Form Builder within first 24 hours');
                 }
-                appcues.trackEvent(
-                    appcues.EVENT_TYPES.FORM_SAVE, {
-                        formType: formType(),
-                        previewOpen: hqImport("app_manager/js/preview_app").isOpen(),
-                    }
-                );
+                trackFormEvent(appcues.EVENT_TYPES.FORM_SAVE);
             },
             onReady: function() {
                 if (initial_page_data('vellum_debug') === 'dev') {
@@ -94,17 +88,10 @@ hqDefine("app_manager/js/forms/form_designer", function() {
                 }
                 $("#formdesigner").vellum("get").data.core.form.on("question-create", function() {
                     kissmetrixTrack();
-                    var appcues = hqImport('analytix/js/appcues');
-                    appcues.trackEvent(
-                        appcues.EVENT_TYPES.QUESTION_CREATE, { formType: formType() }
-                    );
+                    trackFormEvent(appcues.EVENT_TYPES.QUESTION_CREATE);
                 });
 
-                appcues.trackEvent(
-                    appcues.EVENT_TYPES.FORM_LOADED, {
-                        formType: formType(),
-                    }
-                );
+                trackFormEvent(appcues.EVENT_TYPES.FORM_LOADED);
             },
         });
 
