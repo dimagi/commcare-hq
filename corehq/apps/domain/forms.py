@@ -1636,9 +1636,6 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
     plan_edition = forms.CharField(
         widget=forms.HiddenInput,
     )
-    confirm_eula = forms.BooleanField(
-        required=True,
-    )
 
     def __init__(self, account, domain, creating_user, current_subscription,
                  renewed_version, data=None, *args, **kwargs):
@@ -1650,10 +1647,6 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.fields['plan_edition'].initial = renewed_version.plan.edition
-        self.fields['confirm_eula'].label = mark_safe(ugettext_noop(
-            'I have read and agree to the <a href="http://www.dimagi.com/terms/" target="_blank" '
-            'target="_blank">Terms of Service and Business Agreement</a>.'
-        ))
 
         from corehq.apps.domain.views import DomainSubscriptionView
         self.helper.layout = crispy.Layout(
@@ -1675,10 +1668,6 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
                 'postal_code',
                 crispy.Field('country', css_class="input-large accounting-country-select2",
                              data_countryname=COUNTRIES.get(self.current_country, ''))
-            ),
-            crispy.Fieldset(
-                _("Re-Confirm Terms of Servie and Business Agreement"),
-                'confirm_eula',
             ),
             hqcrispy.FormActions(
                 hqcrispy.LinkButton(
