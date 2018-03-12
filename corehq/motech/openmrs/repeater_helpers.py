@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+from __future__ import unicode_literals
 from collections import namedtuple
 from datetime import timedelta
 import re
@@ -363,8 +364,9 @@ def get_form_question_values(form_json):
     """
     Returns question-value pairs to result where questions are given as "/data/foo/bar"
 
-    >>> get_form_question_values({'form': {'foo': {'bar': 'baz'}}})
-    {'/data/foo/bar': 'baz'}
+    >>> values = get_form_question_values({'form': {'foo': {'bar': 'baz'}}})
+    >>> values == {'/data/foo/bar': 'baz'}
+    True
 
     """
     _reserved_keys = ('@uiVersion', '@xmlns', '@name', '#type', 'case', 'meta', '@version')
@@ -384,13 +386,13 @@ def get_form_question_values(form_json):
                 _recurse_form_questions(value, new_path, result_)
             else:
                 # key is a question and value is its answer
-                question = '/'.join(new_path)
+                question = '/'.join((p.decode('utf8') if isinstance(p, bytes) else p for p in new_path))
                 result_[question] = value
 
     result = {}
-    _recurse_form_questions(form_json['form'], ['/data'], result)  # "/data" is just convention, hopefully familiar
-    # from form builder. The form's data will usually be immediately under "form_json['form']" but not necessarily.
-    # If this causes problems we may need a more reliable way to get to it.
+    _recurse_form_questions(form_json['form'], [b'/data'], result)  # "/data" is just convention, hopefully
+    # familiar from form builder. The form's data will usually be immediately under "form_json['form']" but not
+    # necessarily. If this causes problems we may need a more reliable way to get to it.
     return result
 
 

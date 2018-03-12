@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from corehq.motech.openmrs.logger import logger
 from corehq.motech.openmrs.repeater_helpers import (
     CaseTriggerInfo,
