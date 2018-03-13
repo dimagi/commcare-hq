@@ -160,9 +160,8 @@ function CustomDataFieldsModel () {
         customDataFieldsForm.submit();
     };
 
-    <script>
         var customDataFieldsModel = new CustomDataFieldsModel();
-        customDataFieldsModel.init({{ custom_fields|JSON }});
+        customDataFieldsModel.init(initialPageData.get('custom_fields'));
         customDataFieldsModel.data_fields.subscribe(function() {
             $("#save-custom-fields").prop("disabled", false);
         });

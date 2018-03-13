@@ -22,6 +22,7 @@
 {% endblock %}
 
 {% block page_content %}
+    {% initial_page_data 'custom_fields' custom_fields %}
     <form id="custom-fields-form"
           action="."
           method="POST"
