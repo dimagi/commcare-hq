@@ -203,14 +203,14 @@ class Command(BaseCommand):
                     for chunk in chunked(form_ids_to_check, 500):
                         check_and_process_forms(chunk, self)
 
-        def __enter__(self):
-            self._log_file = open(self.log_filename, 'w')
+    def __enter__(self):
+        self._log_file = open(self.log_filename, 'w')
 
-        def __exit__(self, exc_type, exc_val, exc_tb):
-            self._log_file.close()
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self._log_file.close()
 
-        def log(message):
-            self._log_file.write(message)
+    def log(self, message):
+        self._log_file.write(message)
 
 
 def check_and_process_forms(form_ids, logger):
