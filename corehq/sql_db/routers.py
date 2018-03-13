@@ -43,9 +43,12 @@ class MonolithRouter(object):
 
 
 def allow_migrate(db, app_label):
+    """
+    :return: Must return a boolean value, not None.
+    """
     if app_label == ICDS_REPORTS_APP:
         db_alias = get_icds_ucr_db_alias()
-        return db_alias and db_alias == db
+        return bool(db_alias and db_alias == db)
     elif app_label == SYNCLOGS_APP:
         return db == settings.SYNCLOGS_SQL_DB_ALIAS
 
