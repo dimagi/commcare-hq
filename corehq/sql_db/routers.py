@@ -32,6 +32,10 @@ class PartitionRouter(object):
         if obj1_partitioned and obj2_partitioned:
             return obj1.db == obj2.db
         elif not obj1_partitioned and not obj2_partitioned:
+            app1, app2 = obj1._meta.app_label, obj2._meta.app_label
+            if app1 in (SYNCLOGS_APP, WAREHOUSE_APP):
+                # these apps live in their own databases
+                return app1 == app2
             return True
         return False
 
