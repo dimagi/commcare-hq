@@ -191,12 +191,12 @@ function AWCDailyStatusController($scope, $routeParams, $location, $filter, icds
                 tooltip.contentGenerator(function (d) {
 
                     var findValue = function (values, date) {
-                        var day = _.find(values, function(num) { return d3.time.format('%m/%d/%y')(new Date(num.x)) === date;});
+                        var day = _.find(values, function(num) { return num.x === date; });
                         return day.y;
                     };
                     var total = findValue(vm.chartData[0].values, d.value);
                     var value = findValue(vm.chartData[1].values, d.value);
-                    return vm.tooltipContent(d.value, value, total);
+                    return vm.tooltipContent(d3.time.format('%b %Y')(new Date(d.value)), value, total);
                 });
                 return chart;
             },
