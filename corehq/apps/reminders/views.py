@@ -50,6 +50,7 @@ from corehq.apps.reminders.util import (
     get_recipient_name,
     requires_old_reminder_framework,
 )
+from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain_es
 from corehq.apps.sms.models import Keyword, KeywordAction
 from corehq.apps.sms.views import BaseMessagingSectionView
 from corehq.apps.translations.models import StandaloneTranslationDoc
@@ -241,10 +242,9 @@ class CreateScheduledReminderView(BaseMessagingSectionView):
 
     @property
     def available_case_types(self):
-        case_types = []
-        for app in self.apps:
-            case_types.extend([m.case_type for m in app.modules])
-        return set(case_types)
+        result = list(get_case_types_for_domain_es(self.domain))
+        result.sort()
+        return result
 
     @property
     def action(self):
@@ -265,7 +265,7 @@ class CreateScheduledReminderView(BaseMessagingSectionView):
 
     @property
     def search_case_type_response(self):
-        return list(self.available_case_types)
+        return self.available_case_types
 
     def clean_dict_list(self, dict_list):
         """
