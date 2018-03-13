@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.test import SimpleTestCase
 from mock import Mock
 
@@ -7,6 +8,9 @@ from corehq.motech.openmrs.workflow import Task, WorkflowTask, execute_workflow,
 class TaskTests(SimpleTestCase):
 
     def test_task_run_func_args_kwargs(self):
+        """
+        Task.run_func should call func with the args and kwargs that the task was instantiated with.
+        """
         sing = Mock()
         func_task = Task(sing, 'Brave Sir Robin', what='ran', where='away')
 
@@ -18,8 +22,10 @@ class TaskTests(SimpleTestCase):
         func_task.run_func()
         sing.assert_called_with('Brave Sir Robin', what='ran', where='away')
 
-
     def test_task_run(self):
+        """
+        Task.run should be called if the task was not instantiated with func
+        """
         class SirRobin(Task):
             def run(self):
                 pass
@@ -34,6 +40,9 @@ class TaskTests(SimpleTestCase):
 class WorkflowTests(SimpleTestCase):
 
     def test_workflow_runs(self):
+        """
+        If no errors occur, a workflow should be executed to completion
+        """
         func1 = Mock()
         func2 = Mock()
         workflow_queue = [
@@ -49,6 +58,9 @@ class WorkflowTests(SimpleTestCase):
         self.assertEqual(workflow_queue, [])
 
     def test_rollback_runs(self):
+        """
+        If an error is encountered, the workflow should stop, and the rollback should run to completion
+        """
         func1 = Mock()
         black_knight = Mock(side_effect=ValueError("'Tis but a flesh wound"))
         func3 = Mock()
@@ -84,6 +96,10 @@ class WorkflowTests(SimpleTestCase):
         self.assertEqual(workflow_queue[0].func, func3)
 
     def test_pass_result_as(self):
+        """
+        WorkflowTask.pass_result_as should pass the result of run_func to its rollback task using the given
+        parameter name.
+        """
         create_foo = Mock(return_value=5)
         delete_foo = Mock()
         fail = Mock(side_effect=Exception('Fail'))
@@ -102,6 +118,9 @@ class WorkflowTests(SimpleTestCase):
 class DecoratorTests(SimpleTestCase):
 
     def test_task_decorator(self):
+        """
+        The `@task` decorator should return a function that creates a Task instance when it is executed
+        """
         do_something = Mock()
 
         @task
@@ -119,6 +138,9 @@ class DecoratorTests(SimpleTestCase):
         do_something.assert_called_with('ran', where='away')
 
     def test_workflow_task_decorator(self):
+        """
+        The `@workflow_task` decorator should return a function that creates a WorkflowTask instance
+        """
         do_something = Mock()
 
         @workflow_task()
@@ -138,6 +160,9 @@ class DecoratorTests(SimpleTestCase):
         do_something.assert_called_with('ran', where='away')
 
     def test_workflow_task_decorator_with_rollback(self):
+        """
+        The @workflow_task decorator should be able to set `rollback_task` and `pass_result_as`
+        """
         create_foo = Mock(return_value=5)
         delete_foo = Mock()
         fail = Mock(side_effect=Exception('Fail'))
