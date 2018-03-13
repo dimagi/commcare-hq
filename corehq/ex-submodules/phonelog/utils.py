@@ -181,9 +181,9 @@ class SumoLogicLog(object):
         self.xform = xform
 
     def send_data(self, url):
-        requests.post(url, data=self.log_subreport(), headers=self._get_header('log'))
-        requests.post(url, data=self.user_error_subreport(), headers=self._get_header('user_error'))
-        requests.post(url, data=self.force_close_subreport(), headers=self._get_header('force_close'))
+        requests.post(url, data=self.log_subreport(), headers=self._get_header('log'), timeout=5)
+        requests.post(url, data=self.user_error_subreport(), headers=self._get_header('user_error'), timeout=5)
+        requests.post(url, data=self.force_close_subreport(), headers=self._get_header('force_close'), timeout=5)
 
     def _get_header(self, fmt):
         """
