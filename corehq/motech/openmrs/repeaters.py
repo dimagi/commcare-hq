@@ -57,19 +57,24 @@ class OpenmrsRepeater(CaseRepeater):
     def allowed_to_forward(self, case):
         return True
 
-    def fire_for_record(self, repeat_record):
-        form_json = json.loads(self.get_payload(repeat_record))
+    def get_payload(self, repeat_record):
+        payload = super(OpenmrsRepeater, self).get_payload(repeat_record)
+        return json.loads(payload)
 
+    def send_request(self, repeat_record, payload, verify=None):
         case_trigger_infos = get_relevant_case_updates_from_form_json(
-            self.domain, form_json, case_types=self.white_listed_case_types,
+            self.domain, payload, case_types=self.white_listed_case_types,
             extra_fields=[id_matcher.case_property
                           for id_matcher in self.openmrs_config.case_config.id_matchers])
-        form_question_values = get_form_question_values(form_json)
+        form_question_values = get_form_question_values(payload)
 
-        send_openmrs_data(Requests(self.url, self.username, self.password), form_json, self.openmrs_config,
-                          case_trigger_infos, form_question_values)
-
-        return repeat_record.handle_success(None)
+        return send_openmrs_data(
+            Requests(self.url, self.username, self.password),
+            payload,
+            self.openmrs_config,
+            case_trigger_infos,
+            form_question_values
+        )
 
 
 def create_openmrs_repeat_records(sender, xform, **kwargs):
