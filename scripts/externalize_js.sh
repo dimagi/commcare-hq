@@ -101,17 +101,6 @@ else
     echo "hqDefine('$NEW_MODULE_NAME', function() {" >> $NEW_MODULE_LOCATION
 fi
 
-# pull inline js from file, removes the script tags, and places it into the new file
-sed -n "/{% block js-inline %}/, /{% endblock\( js-inline\)\? %}/ p" $HTML_FILE_LOCATION | \
-    python -c "import sys; sys.stdout.writelines(sys.stdin.readlines()[2:-2])" >> $NEW_MODULE_LOCATION
-
-# remove from old file
-sed -i "/{% block js-inline %}/, /{% endblock\( js-inline\)\? %}/ d" $HTML_FILE_LOCATION
-
-# close off boilerplate
-echo "});" >> $NEW_MODULE_LOCATION
-
-
 if [ "$EXISTENT_MODULE" == false ]; then
     # add import to the html
     SCRIPT_IMPORT="<script src=\"{% static '$NEW_MODULE_NAME.js' %}\"></script>"
@@ -124,12 +113,20 @@ if [ "$EXISTENT_MODULE" == false ]; then
         }" $HTML_FILE_LOCATION
     # otherwise, just tell them to add one somewhere on the page
     else
-        echo "----------------------------"
-        echo "Please add this static import somewhere in the html file"
-        echo "{% block js %}{{ block.super }}\n\t$SCRIPT_IMPORT\n{% endblock %}"
-        echo "----------------------------"
+        sed -i "/{% block js-inline %}/i \
+        {% block js %}{{ block.super }}\n\t$SCRIPT_IMPORT\n{% endblock %}" $HTML_FILE_LOCATION
     fi
 fi
+
+# pull inline js from file, removes the script tags, and places it into the new file
+sed -n "/{% block js-inline %}/, /{% endblock\( js-inline\)\? %}/ p" $HTML_FILE_LOCATION | \
+    python -c "import sys; sys.stdout.writelines(sys.stdin.readlines()[2:-2])" >> $NEW_MODULE_LOCATION
+
+# remove from old file
+sed -i "/{% block js-inline %}/, /{% endblock\( js-inline\)\? %}/ d" $HTML_FILE_LOCATION
+
+# close off boilerplate
+echo "});" >> $NEW_MODULE_LOCATION
 
 
 # fix eslint issues
