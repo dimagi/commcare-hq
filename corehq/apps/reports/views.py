@@ -32,7 +32,6 @@ from six.moves.urllib.error import URLError
 
 from django.conf import settings
 from django.contrib import messages
-from django.contrib.auth.decorators import permission_required
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.files.base import ContentFile
 from django.http import (
@@ -1225,9 +1224,9 @@ def send_test_scheduled_report(request, domain, scheduled_report_id):
     except Exception as e:
         import logging
         logging.exception(e)
-        messages.error(request, "An error occured, message unable to send")
+        messages.error(request, _("An error occurred, message unable to send"))
     else:
-        messages.success(request, "Test message sent to %s" % user.get_email())
+        messages.success(request, _("Test message sent to the report's recipients."))
 
     return HttpResponseRedirect(reverse("reports_home", args=(domain,)))
 
