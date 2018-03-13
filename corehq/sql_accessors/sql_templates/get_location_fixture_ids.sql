@@ -28,7 +28,6 @@ BEGIN
                             U0."id" = ANY(user_location_ids_array)
                             AND U1."expand_to_id" IS NOT NULL
                         )
-                        ORDER BY U0."tree_id" ASC, U0."lft" ASC
                     )
                 )
 
@@ -47,7 +46,6 @@ BEGIN
                             U0."id" = ANY(user_location_ids_array)
                             AND U1."include_without_expanding_id" IS NOT NULL
                         )
-                        ORDER BY U0."tree_id" ASC, U0."lft" ASC
                     )
                 )
             )
@@ -134,10 +132,8 @@ BEGIN
                             SELECT U0."id"
                             FROM "locations_sqllocation" U0
                             WHERE U0."id" = ANY(user_location_ids_array)
-                            ORDER BY U0."tree_id" ASC, U0."lft" ASC
                         )
                     )
-                    ORDER BY "locations_sqllocation"."tree_id" ASC, "locations_sqllocation"."lft" ASC
                 )
             )
 
@@ -170,7 +166,6 @@ BEGIN
                     "locations_sqllocation"."is_archived" = False
                     AND "locations_sqllocation"."id" = ("cte"."parent_id")
                 )
-                ORDER BY "locations_sqllocation"."tree_id" ASC, "locations_sqllocation"."lft" ASC
             )
         )
 
@@ -217,7 +212,6 @@ BEGIN
                                         SELECT "locations_sqllocation"."location_type_id"
                                         FROM "locations_sqllocation"
                                         WHERE "locations_sqllocation"."id" = ANY(user_location_ids_array)
-                                        ORDER BY "locations_sqllocation"."tree_id" ASC, "locations_sqllocation"."lft" ASC
                                     )
                                 )
                             )
@@ -228,7 +222,6 @@ BEGIN
                 AND "locations_sqllocation"."domain" = domain_name
                 AND "locations_sqllocation"."parent_id" IS NULL
             )
-            ORDER BY "locations_sqllocation"."tree_id" ASC, "locations_sqllocation"."lft" ASC
         )
 
         UNION ALL
@@ -275,7 +268,6 @@ BEGIN
                                         SELECT "locations_sqllocation"."location_type_id"
                                         FROM "locations_sqllocation"
                                         WHERE "locations_sqllocation"."id" = ANY(user_location_ids_array)
-                                        ORDER BY "locations_sqllocation"."tree_id" ASC, "locations_sqllocation"."lft" ASC
                                     )
                                 )
                             )
@@ -285,8 +277,6 @@ BEGIN
                 ) = True
                 AND "locations_sqllocation"."domain" = domain_name
             )
-            ORDER BY "locations_sqllocation"."tree_id" ASC,
-              "locations_sqllocation"."lft" ASC
         )
     )
 
