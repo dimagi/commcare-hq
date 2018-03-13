@@ -12,14 +12,9 @@
     <script src="{% static 'reports/js/reports.async.js' %}"></script>
     <script src="{% static 'appstore/js/facet_sidebar.js' %}"></script>
     <script src="{% static 'reports/js/standard_hq_report.js' %}"></script>
+            <script src="{% static 'hqadmin/js/faceted_report.js' %}"></script>
 {% endblock %}
 
-{% block js-inline %}{{ block.super }}
-    <script>
-        var standardHQReport = hqImport("reports/js/standard_hq_report").getStandardHQReport(),
-            asyncHQReport = hqImport("reports/js/standard_hq_report").getAsyncHQReport();
-    </script>
-{% endblock %}
 
 {% block page_navigation %}
     {{ block.super }}
