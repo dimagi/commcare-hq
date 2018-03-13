@@ -242,9 +242,7 @@ class CreateScheduledReminderView(BaseMessagingSectionView):
 
     @property
     def available_case_types(self):
-        result = list(get_case_types_for_domain_es(self.domain))
-        result.sort()
-        return result
+        return sorted(get_case_types_for_domain_es(self.domain))
 
     @property
     def action(self):
