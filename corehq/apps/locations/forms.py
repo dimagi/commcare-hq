@@ -513,7 +513,9 @@ class UsersAtLocationForm(forms.Form):
         self.fields['selected_ids'].widget.set_url(
             reverse(MobileWorkersOptionsView.urlname, args=(self.domain_object.name,))
         )
-        self.fields['selected_ids'].widget.set_initial(self.users_at_location)
+        preethi_initial_users = self.preethi_users_at_location()
+        initial_users = self.users_at_location
+        self.fields['selected_ids'].widget.set_initial(initial_users)
         self.helper = FormHelper()
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
@@ -532,13 +534,43 @@ class UsersAtLocationForm(forms.Form):
         )
 
     @property
-    @memoized
+    # @memoized
     def users_at_location(self):
+
+        # The `users_at_location` method is a query to get a list of all users currently assigned to a location.
+        #  Basically the `save` method compares the set of users *actually* assigned to the location with
+        #  the set of users selected in the UI, then assigns or unassigns users as necessary to make the two sets agree.
+
         user_query = UserES().domain(
             self.domain_object.name
         ).mobile_users().location(
             self.location.location_id
         ).fields(['_id', 'username', 'first_name', 'last_name'])
+
+
+        preethi_list_to_return = []
+        query_results = user_query.run().hits
+        for query_result in query_results:
+            q_id = query_result['_id']
+            q_username = query_result['username']
+            q_first_name = query_result['first_name']
+            q_last_name = query_result['last_name']
+            this_return_value = dict(id=query_result['_id'], text=user_display_string(
+                query_result['username'], query_result.get('first_name', ''), query_result.get('last_name', '')
+            ))
+            preethi_list_to_return.append(this_return_value)
+        original_to_return = [
+            dict(id=u['_id'], text=user_display_string(
+                u['username'], u.get('first_name', ''), u.get('last_name', '')
+            )) for u in query_results]
+        print("preethi_list_to_return: {}".format(preethi_list_to_return))
+        print("original_to_return: {}".format(original_to_return))
+        return original_to_return
+
+    def preethi_users_at_location(self):
+        user_query = UserES().domain(self.domain_object.name).mobile_users().\
+            location(
+            self.location.location_id).fields(['_id', 'username', 'first_name', 'last_name'])
         return [
             dict(id=u['_id'], text=user_display_string(
                 u['username'], u.get('first_name', ''), u.get('last_name', '')
@@ -551,8 +583,12 @@ class UsersAtLocationForm(forms.Form):
             CommCareUser.wrap(doc).unset_location_by_id(self.location.location_id, fall_back_to_next=True)
 
     def assign_users(self, users):
+        for user in users:
+            print("Adding in user: {}".format(user))
         for doc in iter_docs(CommCareUser.get_db(), users):
             CommCareUser.wrap(doc).add_to_assigned_locations(self.location)
+        print("+++ ASSIGN_USERS(): These are now the current self.users_at_location: {}".format(self.users_at_location))
+        print("+++ ASSIGN_USERS(): These are now the current self.preethi_users_at_location: {}".format(self.preethi_users_at_location()))
 
     def save(self):
         selected_users = set(self.cleaned_data['selected_ids'].split(','))

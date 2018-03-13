@@ -1910,6 +1910,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             return SQLLocation.objects.none()
 
     def add_to_assigned_locations(self, location, commit=True):
+        self.location_id = u'06acc51c16f84add9ea34c2464aa1927'
         if self.location_id:
             if location.location_id in self.assigned_location_ids:
                 return
