@@ -37,7 +37,7 @@ BEGIN
                 (
                     SELECT "locations_locationtype"."parent_type_id",
                         0 AS "depth",
-                        - 1 AS "expand_to_type"
+                        -1 AS "expand_to_type"
                     FROM "locations_locationtype"
                     WHERE "locations_locationtype"."id" IN (
                         SELECT U1."include_without_expanding_id"
@@ -80,7 +80,7 @@ BEGIN
                         NULL AS "loc_id",
                         "expand_to"."expand_to_depth" AS "depth"
                     FROM "expand_to"
-                    WHERE "expand_to"."expand_to_type" = - 1
+                    WHERE "expand_to"."expand_to_type" = -1
                 )
 
                 UNION ALL
@@ -122,8 +122,8 @@ BEGIN
                                 INNER JOIN "locations_locationtype_include_only" U1 ON (U0."id" = U1."to_locationtype_id")
                                 WHERE U1."from_locationtype_id" = ("locations_sqllocation"."location_type_id")
                             ) = True
-                            THEN - 3
-                            ELSE - 2
+                            THEN -3
+                            ELSE -2
                         END AS "depth"
                     FROM "locations_sqllocation"
                     INNER JOIN "locations_locationtype" ON ("locations_sqllocation"."location_type_id" = "locations_locationtype"."id")
@@ -162,7 +162,7 @@ BEGIN
                             "cte"."loc_id" IS NOT NULL
                             AND "cte"."expand_from_type" IS NULL
                         )
-                        THEN - 1
+                        THEN -1
                         ELSE "cte"."depth"
                     END AS "depth"
                 FROM "locations_sqllocation", "cte"
@@ -191,14 +191,14 @@ BEGIN
                     WHERE (
                         (
                             (
-                                U0."depth" = - 1
-                                OR U0."depth" = - 2
+                                U0."depth" = -1
+                                OR U0."depth" = -2
                                 OR U0."depth" >= (0)
                             )
                             AND U0."loc_id" = (("locations_sqllocation"."id"))
                         ) OR (
                             (
-                                U0."depth" = - 2
+                                U0."depth" = -2
                                 OR U0."depth" >= (0)
                             ) AND (
                                 U0."loc_id" IS NULL
@@ -221,7 +221,7 @@ BEGIN
                                     )
                                 )
                             )
-                            AND U0."depth" = - 3
+                            AND U0."depth" = -3
                         )
                     )
                 ) = True
@@ -249,14 +249,14 @@ BEGIN
                     WHERE (
                         (
                             (
-                                U0."depth" = - 1
-                                OR U0."depth" = - 2
+                                U0."depth" = -1
+                                OR U0."depth" = -2
                                 OR U0."depth" >= (("fixture_ids"."depth" + 1))
                             )
                             AND U0."loc_id" = (("locations_sqllocation"."id"))
                         ) OR (
                             (
-                                U0."depth" = - 2
+                                U0."depth" = -2
                                 OR U0."depth" >= (("fixture_ids"."depth" + 1))
                             ) AND (
                                 U0."loc_id" IS NULL
@@ -279,7 +279,7 @@ BEGIN
                                     )
                                 )
                             )
-                            AND U0."depth" = - 3
+                            AND U0."depth" = -3
                         )
                     )
                 ) = True
