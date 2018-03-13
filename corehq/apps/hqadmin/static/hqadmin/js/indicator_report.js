@@ -28,27 +28,23 @@ hqDefine('hqadmin/js/indicator_report', function() {
             visualizations = {};
 
         _.each(indicatorData, function(indicator, data) {
-            if (indicators.indexOf(indicator) !== -1) {
-                visualizations[indicator] = _.extend({}, data, {viz: null});
-            }
+            if (indicators.indexOf(indicator) === -1) { return; }
+
+            visualizations[indicator] = _.extend(
+                {}, data, {
+                    viz: new HQVisualizations({
+                        chart_name: data.chart_name,
+                        histogram_type: data.histogram_type,
+                        xaxis_label: data.xaxis_label,
+                        ajax_url: data.ajax_url,
+                        data: url_params,
+                        interval: data.interval,
+                        is_cumulative: data.is_cumulative,
+                        get_request_params: data.get_request_params,
+                    }).init(),
+                }
+            );
         });
-
-
-        for (var key in visualizations) {
-            if (visualizations.hasOwnProperty(key)) {
-                visualizations[key].viz = new HQVisualizations({
-                    chart_name: visualizations[key].chart_name,
-                    histogram_type: visualizations[key].histogram_type,
-                    xaxis_label: visualizations[key].xaxis_label,
-                    ajax_url: visualizations[key].ajax_url,
-                    data: url_params,
-                    interval: visualizations[key].interval,
-                    is_cumulative: visualizations[key].is_cumulative,
-                    get_request_params: visualizations[key].get_request_params
-                });
-                visualizations[key].viz.init();
-            }
-        }
 
         $("#all-charts-filter").on("submit", function() {
             var $this = $(this);
