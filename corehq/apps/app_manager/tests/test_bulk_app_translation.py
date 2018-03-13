@@ -148,6 +148,8 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBase):
         ("module1", (
           ("case_list_form_label", "list", "Register Mother", "Inscrivez-Mère"),
           ("name", "list", "Name", "Nom"),
+          ("Tab 0", "detail", "Name", "Nom"),
+          ("Tab 1", "detail", "Other", "Autre"),
           ("name", "detail", "", "Nom"),
           ("other-prop (ID Mapping Text)", "detail", "Other Prop", ""),
           ("foo (ID Mapping Value)", "detail", "bar", "french bar"),
@@ -223,6 +225,14 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBase):
         self.assert_case_property_label(None, "name", 0, "long", "en")
 
         module = self.app.get_module(0)
+        self.assertEqual(
+            module.case_details.long.tabs[0].header['en'],
+            'Name'
+        )
+        self.assertEqual(
+            module.case_details.long.tabs[1].header['fra'],
+            'Autre'
+        )
         self.assertEqual(
             module.case_details.long.columns[1].enum[0].value['fra'],
             'french bar'

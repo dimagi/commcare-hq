@@ -803,7 +803,7 @@ def _update_case_list_translations(sheet, rows, app):
             else:
                 msgs.append((
                     messages.error,
-                    "Expected {0} case detail tabs in sheet {1}, found {2}. "
+                    "Expected {0} case detail tabs in sheet {1} but found row for Tab {2}. "
                     "No changes were made for sheet {1}.".format(
                         len(detail_tab_headers),
                         sheet.worksheet.title,
