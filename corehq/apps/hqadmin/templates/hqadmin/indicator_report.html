@@ -9,12 +9,15 @@
         <script src="{% static 'hqwebapp/js/hash-tab.js' %}" type='text/javascript'></script>
         <script src='{% static 'hqadmin/js/nvd3_charts_helper.js' %}' type='text/javascript'></script>
         <script src='{% static 'hqadmin/js/visualizations.js' %}' type='text/javascript'></script>
-        <script src="{% static 'hqadmin/js/indicator_report.js' %}"></script>
     {% endcompress %}
+    <script src="{% static 'hqadmin/js/indicator_report.js' %}"></script>
 {% endblock %}
 
 
 {% block page_content %}{{ block.super }}
+    {% initial_page_data "indicator_data" indicator_data %}
+    {% initial_page_data "indicators" indicators %}
+
     <div class="well">
         <form id="all-charts-filter" style="margin: 0;" class="form-inline">
             <span>

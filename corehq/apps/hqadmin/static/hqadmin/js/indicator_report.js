@@ -1,16 +1,6 @@
 hqDefine('hqadmin/js/indicator_report', function() {
-    var visualizations = {
-        {% for indicator, data in indicator_data.items %}
-            {% if indicator in indicators %}
-                {{ indicator }}: {
-                    {% for data_key, data_value in data.items %}
-                        {{ data_key }}: "{{ data_value }}",
-                    {% endfor %}
-                    viz: null
-                },
-            {% endif %}
-        {% endfor %}
-    };
+    var initialPageData = hqImport('hqwebapp/js/initial_page_data'),
+        HQVisualizations = hqImport("hqadmin/js/visualizations").HQVisualizations;
 
     function parse_url_params() {
         var result = {}, queryString = location.search.slice(1),
@@ -29,24 +19,34 @@ hqDefine('hqadmin/js/indicator_report', function() {
     }
     var url_params = parse_url_params();
 
+    $(function () {
+        var indicatorData = initialPageData.get('indicator_data'),
+            indicators = initialPageData.get('indicators'),
+            visualizations = {};
 
-    for (var key in visualizations) {
-        if (visualizations.hasOwnProperty(key)) {
-            visualizations[key].viz = new hqImport("hqadmin/js/visualizations").HQVisualizations({
-                chart_name: visualizations[key].chart_name,
-                histogram_type: visualizations[key].histogram_type,
-                xaxis_label: visualizations[key].xaxis_label,
-                ajax_url: visualizations[key].ajax_url,
-                data: url_params,
-                interval: visualizations[key].interval,
-                is_cumulative: visualizations[key].is_cumulative,
-                get_request_params: visualizations[key].get_request_params
-            });
-            visualizations[key].viz.init();
+        _.each(indicatorData, function(indicator, data) {
+            if (indicators.indexOf(indicator) !== -1) {
+                visualizations[indicator] = _.extend({}, data, {viz: null});
+            }
+        });
+
+
+        for (var key in visualizations) {
+            if (visualizations.hasOwnProperty(key)) {
+                visualizations[key].viz = new HQVisualizations({
+                    chart_name: visualizations[key].chart_name,
+                    histogram_type: visualizations[key].histogram_type,
+                    xaxis_label: visualizations[key].xaxis_label,
+                    ajax_url: visualizations[key].ajax_url,
+                    data: url_params,
+                    interval: visualizations[key].interval,
+                    is_cumulative: visualizations[key].is_cumulative,
+                    get_request_params: visualizations[key].get_request_params
+                });
+                visualizations[key].viz.init();
+            }
         }
-    }
 
-    $(function() {
         $("#all-charts-filter").on("submit", function() {
             var $this = $(this);
             var startdate = $this.find('[name="startdate"]').val();
