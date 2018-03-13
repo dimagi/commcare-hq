@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 import os
 
 from django.test import SimpleTestCase
+from mock import patch
 
 from corehq.apps.userreports.models import get_datasource_config
 from corehq.form_processor.utils import convert_xform_to_json
@@ -12,6 +13,7 @@ from corehq.util.test_utils import TestFileMixin
 BLACKLISTED_COLUMNS = ['received_on', 'inserted_at']
 
 
+@patch('corehq.apps.callcenter.data_source.get_call_center_domains', lambda: [])
 class TestPNCForms(SimpleTestCase, TestFileMixin):
     ucr_name = "static-icds-cas-static-postnatal_care_forms"
     domain = 'icds-cas'
