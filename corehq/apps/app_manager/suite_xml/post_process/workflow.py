@@ -48,7 +48,7 @@ class WorkflowHelper(PostProcessor):
 
                 self.create_workflow_stack(form_command, stack_frames)
 
-    def get_frame_children(self, target_form, module_only=False, include_target_root=False):
+    def get_frame_children(self, target_form, module_only=False, include_target_root=False, target_module=None):
         """
         For a form return the list of stack frame children that are required
         to navigate to that form.
@@ -74,9 +74,15 @@ class WorkflowHelper(PostProcessor):
         :returns:   list of strings and DatumMeta objects. String represent stack commands
                     and DatumMeta's represent stack datums.
         """
-        target_form_command = id_strings.form_command(target_form)
-        target_module_id, target_form_id = target_form_command.split('-')
-        module_command = id_strings.menu_id(target_form.get_module())
+        target_module = target_module or target_form.get_module()
+        target_form_command = ""
+        if target_form:
+            target_form_command = id_strings.form_command(target_form)
+            target_module_id, target_form_id = target_form_command.split('-')
+        else:
+            target_form_command = id_strings.case_list_command(target_module)
+            target_module_id, target_form_id, dummy = target_form_command.split('-')
+        module_command = id_strings.menu_id(target_module)
         module_datums = self.get_module_datums(target_module_id)
         form_datums = module_datums[target_form_id]
 
@@ -84,7 +90,7 @@ class WorkflowHelper(PostProcessor):
             datums_list = self.root_module_datums
         else:
             datums_list = list(module_datums.values())  # [ [datums for f0], [datums for f1], ...]
-            root_module = target_form.get_module().root_module
+            root_module = target_module.root_module
             if root_module and include_target_root:
                 datums_list = datums_list + list(self.get_module_datums(id_strings.menu_id(root_module)).values())
 
@@ -421,8 +427,9 @@ class CaseListFormWorkflow(object):
         """
         ids_on_stack = stack_frames.ids_on_stack
         if not len(target_module.forms):
-            return
-        target_frame_children = self.helper.get_frame_children(target_module.get_form(0), module_only=True)
+            target_frame_children = self.helper.get_frame_children(None, module_only=True, target_module=target_module)
+        else:
+            target_frame_children = self.helper.get_frame_children(target_module.get_form(0), module_only=True)
         remaining_target_frame_children = [fc for fc in target_frame_children if fc.id not in ids_on_stack]
         frame_children = WorkflowHelper.get_datums_matched_to_source(
             remaining_target_frame_children, source_form_datums
