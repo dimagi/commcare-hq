@@ -11,6 +11,7 @@
                 <div class="row bubble" style="width: 80%">
                     <h4 style="text-align: center">Filters</h4>
                     <div class="row">
+                        <div class="col-md-2"></div>
                         <div class="col-md-2">
                             <label>District:</label>
                             <select class="form-control"
@@ -19,8 +20,19 @@
                                                optionsText: 'text',
                                                optionsValue: 'id',
                                                selectedOptions: filters.district,
-                                               event: { change: function(data, e) { onSelectOption(e, 'district') }},
+                                               event: { change: function(data, e) { districtOnSelect(e) }},
                                                select2: { placeholder: 'District' }"></select>
+                        </div>
+                        <div class="col-md-2">
+                            <label>CBO:</label>
+                            <select class="form-control"
+                                    multiple="multiple"
+                                    data-bind="options: availableCbos,
+                                               optionsText: 'text',
+                                               optionsValue: 'id',
+                                               selectedOptions: filters.cbo,
+                                               event: { change: function(data, e) { onSelectOption(e, 'cbo') }},
+                                               select2: { placeholder: 'Cbo' }"></select>
                         </div>
                         <div class="col-md-2">
                             <label>Visit Type:</label>
@@ -40,6 +52,10 @@
                                                value: filters.activity_type,
                                                select2: {}"></select>
                         </div>
+                    </div>
+                    <hr>
+                    <div style="margin-bottom: 15px;" class="row">
+                        <div class="col-md-3"></div>
                         <div class="col-md-2">
                             <label>Client Type:</label>
                             <select class="form-control"
