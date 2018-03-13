@@ -32,6 +32,10 @@ class PartitionRouter(object):
         if obj1_partitioned and obj2_partitioned:
             return obj1.db == obj2.db
         elif not obj1_partitioned and not obj2_partitioned:
+            app1, app2 = obj1._meta.app_label, obj2._meta.app_label
+            if app1 in (SYNCLOGS_APP, WAREHOUSE_APP):
+                # these apps live in their own databases
+                return app1 == app2
             return True
         return False
 
@@ -43,9 +47,12 @@ class MonolithRouter(object):
 
 
 def allow_migrate(db, app_label):
+    """
+    :return: Must return a boolean value, not None.
+    """
     if app_label == ICDS_REPORTS_APP:
         db_alias = get_icds_ucr_db_alias()
-        return db_alias and db_alias == db
+        return bool(db_alias and db_alias == db)
     elif app_label == SYNCLOGS_APP:
         return db == settings.SYNCLOGS_SQL_DB_ALIAS
 
