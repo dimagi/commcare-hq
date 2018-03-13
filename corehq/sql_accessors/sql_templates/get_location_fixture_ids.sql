@@ -16,7 +16,8 @@ BEGIN
         WITH RECURSIVE cte AS (
             (
                 (
-                    SELECT "locations_locationtype"."parent_type_id",
+                    SELECT
+                        "locations_locationtype"."parent_type_id",
                         0 AS "depth",
                         "locations_locationtype"."id" AS "expand_to_type"
                     FROM "locations_locationtype"
@@ -34,7 +35,8 @@ BEGIN
                 UNION ALL
 
                 (
-                    SELECT "locations_locationtype"."parent_type_id",
+                    SELECT
+                        "locations_locationtype"."parent_type_id",
                         0 AS "depth",
                         -1 AS "expand_to_type"
                     FROM "locations_locationtype"
@@ -95,7 +97,7 @@ BEGIN
                                     AND "locations_locationtype"."expand_from" IS NOT NULL
                                 )
                                 AND EXISTS (
-                                    SELECT 1 AS "value"
+                                    SELECT 1
                                     FROM "locations_locationtype" U0
                                     INNER JOIN "locations_locationtype_include_only" U1 ON (U0."id" = U1."to_locationtype_id")
                                     WHERE U1."from_locationtype_id" = ("locations_sqllocation"."location_type_id")
@@ -115,7 +117,7 @@ BEGIN
                                 WHERE U0."expand_to_type" = ("locations_locationtype"."expand_to_id")
                             )
                             WHEN EXISTS (
-                                SELECT 1 AS "value"
+                                SELECT 1
                                 FROM "locations_locationtype" U0
                                 INNER JOIN "locations_locationtype_include_only" U1 ON (U0."id" = U1."to_locationtype_id")
                                 WHERE U1."from_locationtype_id" = ("locations_sqllocation"."location_type_id")
@@ -140,7 +142,8 @@ BEGIN
             UNION ALL
 
             (
-                SELECT "locations_sqllocation"."parent_id",
+                SELECT
+                    "locations_sqllocation"."parent_id",
                     CASE 
                         WHEN (
                             "cte"."expand_from_type" IS NOT NULL
@@ -181,7 +184,7 @@ BEGIN
             WHERE (
                 "locations_sqllocation"."is_archived" = False
                 AND EXISTS (
-                    SELECT 1 AS "value"
+                    SELECT 1
                     FROM "expand_from" U0
                     WHERE (
                         (
@@ -237,7 +240,7 @@ BEGIN
                 "locations_sqllocation"."is_archived" = False
                 AND "locations_sqllocation"."parent_id" = ("fixture_ids"."id")
                 AND EXISTS (
-                    SELECT 1 AS "value"
+                    SELECT 1
                     FROM "expand_from" U0
                     WHERE (
                         (
