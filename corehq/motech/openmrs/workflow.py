@@ -59,6 +59,7 @@ class WorkflowTask(Task):
 
 
 def task(func):
+    # Doesn't use `@wraps` because `call()` doesn't execute func; it returns a Task instantiated with func
     def call(*args, **kwargs):
         instance = Task(func, *args, **kwargs)
         return instance
