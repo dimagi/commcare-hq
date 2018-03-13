@@ -169,11 +169,24 @@ if [ "$TEMPLATE_TAG_COUNT" -gt 0 ]; then
                 $INITIALPAGEDATA_IMPORT" $NEW_MODULE_LOCATION
         echo "and in particular these lines"
         echo $INITIAL_PAGE_DATA_TAG_LINES
-        echo "and add these data imports as well"
-        for ipd in $INITIAL_PAGE_DATA_TAGS; do
-            echo "{% initial_page_data '$ipd' $ipd %}"
-        done
+        PAGE_CONTENT=`sed -n "/block page_content/=" $HTML_FILE_LOCATION`
+        PAGE_CONTENT_WORDS=`echo $INITIAL_PAGE_DATA_TAGS | wc -w`
+        if [ "$PAGE_CONTENT_WORDS" -gt 0 ]; then
+            for ipd in $INITIAL_PAGE_DATA_TAGS; do
+                sed -i "/block page_content/a\
+                {% initial_page_data '$ipd' $ipd %}" $HTML_FILE_LOCATION
+            done
+        else
+            echo "and add these data imports as well"
+            for ipd in $INITIAL_PAGE_DATA_TAGS; do
+                echo "{% initial_page_data '$ipd' $ipd %}"
+            done
+        fi
     fi
+
+    git add $NEW_MODULE_LOCATION $HTML_FILE_LOCATION
+    git commit -m "initial page data"
+
     echo "----------------------------"
 fi
 
