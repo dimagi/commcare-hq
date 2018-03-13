@@ -160,4 +160,22 @@ function CustomDataFieldsModel () {
         customDataFieldsForm.submit();
     };
 
-}
+    <script>
+        var customDataFieldsModel = new CustomDataFieldsModel();
+        customDataFieldsModel.init({{ custom_fields|JSON }});
+        customDataFieldsModel.data_fields.subscribe(function() {
+            $("#save-custom-fields").prop("disabled", false);
+        });
+
+        ko.applyBindings(customDataFieldsModel, $('#custom-fields-form').get(0));
+
+        $('form[id="custom-fields-form"]').on("change", null, null, function() {
+            $("#save-custom-fields").prop("disabled", false);
+        }).on("input", null, null, function() {
+            $("#save-custom-fields").prop("disabled", false);
+        });
+
+        $('.modal-footer button').on("click", function() {
+            $(":submit").prop("disabled", false);
+        })
+});
