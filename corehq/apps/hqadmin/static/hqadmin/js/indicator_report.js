@@ -27,7 +27,7 @@ hqDefine('hqadmin/js/indicator_report', function() {
             indicators = initialPageData.get('indicators'),
             visualizations = {};
 
-        _.each(indicatorData, function(indicator, data) {
+        _.each(indicatorData, function(data, indicator) {
             if (indicators.indexOf(indicator) === -1) { return; }
 
             visualizations[indicator] = _.extend(
