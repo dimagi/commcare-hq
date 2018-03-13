@@ -3,8 +3,7 @@ from mock import patch, MagicMock
 from django.test import SimpleTestCase
 from django.test.utils import override_settings
 
-from corehq.sql_db.routers import allow_migrate, SYNCLOGS_APP
-
+from corehq.sql_db.routers import allow_migrate, SYNCLOGS_APP, ICDS_REPORTS_APP
 
 WAREHOUSE_DB = 'warehouse'
 db_dict = {'NAME': 'commcarehq_warehouse', 'USER': 'commcarehq', 'HOST': 'hqdb0', 'PORT': 5432}
@@ -58,3 +57,11 @@ class AllowMigrateTest(SimpleTestCase):
     def test_synclogs_db(self):
         self.assertFalse(allow_migrate('default', SYNCLOGS_APP))
         self.assertTrue(allow_migrate('synclogs', SYNCLOGS_APP))
+
+    @patch('corehq.sql_db.routers.get_icds_ucr_db_alias')
+    def test_icds_db(self, mock):
+        mock.return_value = None
+        self.assertIs(False, allow_migrate('default', ICDS_REPORTS_APP))
+        mock.return_value = 'icds'
+        self.assertIs(False, allow_migrate('default', ICDS_REPORTS_APP))
+        self.assertIs(True, allow_migrate('icds', ICDS_REPORTS_APP))
