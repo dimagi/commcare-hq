@@ -23,6 +23,6 @@ def purge_old_device_report_entries():
     UserEntry.objects.filter(server_date__lt=max_age).delete()
 
 
-@task
+@task(queue='sumologic_logs_queue')
 def send_device_logs_to_sumologic(domain, xform, url):
     SumoLogicLog(domain, xform).send_data(url)
