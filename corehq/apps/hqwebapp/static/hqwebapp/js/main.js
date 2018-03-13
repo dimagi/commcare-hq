@@ -36,7 +36,7 @@ hqDefine('hqwebapp/js/main', [
         'use strict';
         wrap = wrap === undefined ? true : wrap;
         var el = $(
-            '<div class="hq-help">' + 
+            '<div class="hq-help">' +
                 '<a href="#" tabindex="-1">' +
                     '<i class="fa fa-question-circle icon-question-sign"></i></a></div>'
         );
