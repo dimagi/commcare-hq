@@ -4,15 +4,18 @@ hqDefine('hqadmin/js/indicator_report', function() {
 
     function parse_url_params() {
         var result = {}, queryString = location.search.slice(1),
-            re = /([^&=]+)=([^&]*)/g, m;
+            re = /([^&=]+)=([^&]*)/g,
+            m = re.exec(queryString);
 
-        while (m = re.exec(queryString)) {
+
+        while (m) {
             var param = decodeURIComponent(m[1]), val = decodeURIComponent(m[2]);
             if (result.hasOwnProperty(param)) {
                 result[param].push.apply(result[param], [val]);
             } else {
                 result[param] = [val];
             }
+            m = re.exec(queryString);
         }
 
         return result;
