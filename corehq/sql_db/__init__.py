@@ -1,5 +1,5 @@
 from __future__ import absolute_import
-from django.apps import AppConfig
+from django.apps import AppConfig, apps
 from django.conf import settings
 from django.core.checks import Error, register, Tags
 
@@ -37,10 +37,22 @@ def custom_db_checks(app_configs, **kwargs):
 
 @register(Tags.database, deploy=True)
 def check_db_tables(app_configs, **kwargs):
-    errors = []
-    from django.apps import apps
+    from corehq.sql_db.routers import ICDS_REPORTS_APP, ICDS_MODEL
     from corehq.sql_db.models import PartitionedModel
     from corehq.sql_db.util import get_db_aliases_for_partitioned_query
+
+    errors = []
+
+    # some apps only apply to specific envs
+    env_specific_apps = {
+        ICDS_MODEL: settings.ICDS_ENVS,
+        ICDS_REPORTS_APP: settings.ICDS_ENVS
+    }
+
+    skip = (
+        'warehouse',  # remove this once the warehouse tables are created
+        'auditcare'  # tables don't exist everywhere (can look into removing them from code)
+    )
 
     def _check_model(model_class, using=None):
         try:
@@ -54,6 +66,14 @@ def check_db_tables(app_configs, **kwargs):
             ))
 
     for model in apps.get_models():
+        app_label = model._meta.app_label
+        if app_label in skip:
+            continue
+
+        enabled_envs = env_specific_apps.get(app_label)
+        if enabled_envs and settings.SERVER_ENVIRONMENT not in enabled_envs:
+            continue
+
         if issubclass(model, PartitionedModel):
             for db in get_db_aliases_for_partitioned_query():
                 error = _check_model(model, using=db)
