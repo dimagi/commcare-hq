@@ -21,7 +21,7 @@ from corehq.apps.analytics.tasks import send_hubspot_form, \
     HUBSPOT_CREATED_EXPORT_FORM_ID, HUBSPOT_DOWNLOADED_EXPORT_FORM_ID
 from corehq.blobs.exceptions import NotFound
 from corehq.toggles import MESSAGE_LOG_METADATA, PAGINATED_EXPORTS
-from corehq.apps.export.export import get_export_download, get_export_size, get_export_documents
+from corehq.apps.export.export import get_export_download, get_export_size
 from corehq.apps.export.models.new import DatePeriod, DailySavedExportNotification, DataFile, \
     EmailExportWhenDoneRequest
 from corehq.apps.hqwebapp.views import HQJSONResponseMixin
@@ -766,13 +766,12 @@ class BaseDownloadExportView(ExportsPermissionsMixin, HQJSONResponseMixin, BaseP
 
         return export_filter, export_specs
 
-    def has_export_documents(self, in_data):
+    def check_if_export_has_data(self, in_data):
         export_filters, export_specs = self._process_filters_and_specs(in_data)
         export_instances = [self._get_export(self.domain, spec['export_id']) for spec in export_specs]
 
         for instance in export_instances:
-            doc = get_export_documents(instance, export_filters)
-            if (doc.count > 0):
+            if (get_export_size(instance, export_filters) > 0):
                 return True
 
         return False
@@ -2358,7 +2357,7 @@ class DownloadNewFormExportView(GenericDownloadNewExportMixin, DownloadFormExpor
     def prepare_custom_export(self, in_data):
         prepare_custom_export = super(DownloadNewFormExportView, self).prepare_custom_export(in_data)
 
-        if super(DownloadNewFormExportView, self).has_export_documents(in_data):
+        if super(DownloadNewFormExportView, self).check_if_export_has_data(in_data):
             track_workflow(self.request.couch_user.username, 'Downloaded Form Exports With Data')
         else:
             track_workflow(self.request.couch_user.username, 'Downloaded Form Exports With No Data')
@@ -2404,7 +2403,7 @@ class DownloadNewCaseExportView(GenericDownloadNewExportMixin, DownloadCaseExpor
     def prepare_custom_export(self, in_data):
         prepare_custom_export = super(DownloadNewCaseExportView, self).prepare_custom_export(in_data)
 
-        if super(DownloadNewCaseExportView, self).has_export_documents(in_data):
+        if super(DownloadNewCaseExportView, self).check_if_export_has_data(in_data):
             track_workflow(self.request.couch_user.username, 'Downloaded Case Exports With Data')
         else:
             track_workflow(self.request.couch_user.username, 'Downloaded Case Exports With No Data')
