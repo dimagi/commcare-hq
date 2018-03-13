@@ -4,7 +4,6 @@ hqDefine('custom_data_fields/js/custom_data_fields', function() {
         self.value = ko.observable(choice);
     }
 
-
     function CustomDataField () {
         var self = this;
         self.slug = ko.observable();
@@ -110,7 +109,7 @@ hqDefine('custom_data_fields/js/custom_data_fields', function() {
 
         self.init = function (initialFields) {
             _.each(initialFields, function (field) {
-                custom_field = new CustomDataField();
+                var custom_field = new CustomDataField();
                 custom_field.init(field);
                 self.data_fields.push(custom_field);
                 custom_field.choices.subscribe(function() {
@@ -161,8 +160,9 @@ hqDefine('custom_data_fields/js/custom_data_fields', function() {
         };
     }
 
+    $(function () {
         var customDataFieldsModel = new CustomDataFieldsModel();
-        customDataFieldsModel.init(initialPageData.get('custom_fields'));
+        customDataFieldsModel.init(hqImport('hqwebapp/js/initial_page_data').get('custom_fields'));
         customDataFieldsModel.data_fields.subscribe(function() {
             $("#save-custom-fields").prop("disabled", false);
         });
@@ -177,5 +177,6 @@ hqDefine('custom_data_fields/js/custom_data_fields', function() {
 
         $('.modal-footer button').on("click", function() {
             $(":submit").prop("disabled", false);
-        })
+        });
+    });
 });
