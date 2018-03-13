@@ -2167,8 +2167,6 @@ CUSTOM_DASHBOARD_PAGE_URL_NAMES = {
 
 REMOTE_APP_NAMESPACE = "%(domain)s.commcarehq.org"
 
-# a DOMAIN_MODULE_CONFIG doc present in your couchdb can override individual
-# items.
 DOMAIN_MODULE_MAP = {
     'a5288-test': 'a5288',
     'a5288-study': 'a5288',
@@ -2262,6 +2260,9 @@ DOMAIN_MODULE_MAP = {
     'ilsgateway-test3': 'custom.ilsgateway',
     'mvp-mayange': 'mvp',
     'psi-unicef': 'psi',
+
+    # Used in tests.  TODO - use override_settings instead
+    'ewsghana-test-input-stock': 'custom.ewsghana',
 }
 
 CASEXML_FORCE_DOMAIN_CHECK = True

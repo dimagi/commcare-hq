@@ -4,17 +4,14 @@ from collections import Counter
 import os
 import re
 
-from couchdbkit import ResourceNotFound
 from django.conf import settings
 
 from corehq import toggles
 from corehq.apps.domain.models import Domain
 from corehq.util.quickcache import quickcache
-from dimagi.utils.couch.database import get_db
 from corehq.apps.es import DomainES
 
 
-DOMAIN_MODULE_KEY = 'DOMAIN_MODULE_CONFIG'
 ADM_DOMAIN_KEY = 'ADM_ENABLED_DOMAINS'
 
 new_domain_re = r"(?:[a-z0-9]+\-)*[a-z0-9]+" # lowercase letters, numbers, and '-' (at most one between "words")
@@ -39,18 +36,6 @@ def get_domain_from_url(path):
     except Exception:
         domain = None
     return domain
-
-
-@quickcache([], timeout=60)
-def get_domain_module_map():
-    hardcoded = getattr(settings, 'DOMAIN_MODULE_MAP', {})
-    try:
-        dynamic = get_db().open_doc('DOMAIN_MODULE_CONFIG').get('module_map', {})
-    except ResourceNotFound:
-        dynamic = {}
-
-    hardcoded.update(dynamic)
-    return hardcoded
 
 
 @quickcache(['domain'])
