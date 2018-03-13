@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from collections import OrderedDict
 from datetime import datetime, timedelta
 import hashlib
@@ -282,8 +283,8 @@ def can_use_restore_as(request):
 @register.simple_tag
 def toggle_js_url(domain, username):
     return (
-        u'{url}?username={username}'
-        u'&cachebuster={toggles_cb}-{previews_cb}-{domain_cb}-{user_cb}'
+        '{url}?username={username}'
+        '&cachebuster={toggles_cb}-{previews_cb}-{domain_cb}-{user_cb}'
     ).format(
         url=reverse('toggles_js', args=[domain]),
         username=username,
@@ -643,7 +644,7 @@ def registerurl(parser, token):
         def render(self, context):
             args = [expression.resolve(context) for expression in expressions]
             url = reverse(url_name, args=args)
-            return (u"<div data-name=\"{}\" data-value={}></div>"
+            return ("<div data-name=\"{}\" data-value={}></div>"
                     .format(url_name, json.dumps(url)))
 
     nodelist = NodeList([FakeNode()])
@@ -667,7 +668,7 @@ def _create_page_data(parser, token, node_slug):
     class FakeNode(template.Node):
         def render(self, context):
             resolved = value.resolve(context)
-            return (u"<div data-name=\"{}\" data-value=\"{}\"></div>"
+            return ("<div data-name=\"{}\" data-value=\"{}\"></div>"
                     .format(name, html_attr(resolved)))
 
     nodelist = NodeList([FakeNode()])

@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import re
 from contextlib import contextmanager
 
@@ -23,7 +24,7 @@ class BootstrapMultiField(MultiField):
 
     def render(self, form, form_style, context, template_pack=None):
         template_pack = template_pack or get_template_pack()
-        fields_output = u''
+        fields_output = ''
         for field in self.fields:
             fields_output += render_field(
                 field, form, form_style, context,
@@ -113,7 +114,7 @@ class FormActions(OriginalFormActions):
 
     def render(self, form, form_style, context, template_pack=None):
         template_pack = template_pack or get_template_pack()
-        html = u''
+        html = ''
         for field in self.fields:
             html += render_field(
                 field, form, form_style, context,
@@ -224,7 +225,7 @@ class B3MultiField(LayoutObject):
 
     def render(self, form, form_style, context, template_pack=None):
         template_pack = template_pack or get_template_pack()
-        html = u''
+        html = ''
 
         errors = self._get_errors(form, self.fields)
         if len(errors) > 0:
