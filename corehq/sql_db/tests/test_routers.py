@@ -21,10 +21,10 @@ class AllowMigrateTest(SimpleTestCase):
         USE_PARTITIONED_DATABASE=True,
     )
     def test_warehouse_migrate(self):
-        self.assertTrue(allow_migrate(WAREHOUSE_DB, 'warehouse'))
+        self.assertIs(True, allow_migrate(WAREHOUSE_DB, 'warehouse'))
         with patch('corehq.sql_db.routers.partition_config', MagicMock()):
-            self.assertFalse(allow_migrate(WAREHOUSE_DB, 'couchforms'))
-        self.assertFalse(allow_migrate('default', 'warehouse'))
+            self.assertIs(False, allow_migrate(WAREHOUSE_DB, 'couchforms'))
+        self.assertIs(False, allow_migrate('default', 'warehouse'))
 
     @override_settings(
         SYNCLOGS_SQL_DB_ALIAS='default',
@@ -39,8 +39,8 @@ class AllowMigrateTest(SimpleTestCase):
         }
     )
     def test_synclogs_default(self):
-        self.assertTrue(allow_migrate('default', SYNCLOGS_APP))
-        self.assertFalse(allow_migrate('synclogs', SYNCLOGS_APP))
+        self.assertIs(True, allow_migrate('default', SYNCLOGS_APP))
+        self.assertIs(False, allow_migrate('synclogs', SYNCLOGS_APP))
 
     @override_settings(
         SYNCLOGS_SQL_DB_ALIAS='synclogs',
@@ -55,8 +55,8 @@ class AllowMigrateTest(SimpleTestCase):
         }
     )
     def test_synclogs_db(self):
-        self.assertFalse(allow_migrate('default', SYNCLOGS_APP))
-        self.assertTrue(allow_migrate('synclogs', SYNCLOGS_APP))
+        self.assertIs(False, allow_migrate('default', SYNCLOGS_APP))
+        self.assertIs(True, allow_migrate('synclogs', SYNCLOGS_APP))
 
     @patch('corehq.sql_db.routers.get_icds_ucr_db_alias')
     def test_icds_db(self, mock):
