@@ -55,9 +55,11 @@ def allow_migrate(db, app_label):
         return bool(db_alias and db_alias == db)
     elif app_label == SYNCLOGS_APP:
         return db == settings.SYNCLOGS_SQL_DB_ALIAS
+    elif app_label == WAREHOUSE_APP:
+        return db == settings.WAREHOUSE_DATABASE_ALIAS
 
     if not settings.USE_PARTITIONED_DATABASE:
-        return app_label != PROXY_APP
+        return app_label != PROXY_APP and db in ('default', None)
 
     if app_label == PROXY_APP:
         return db == partition_config.get_proxy_db()
@@ -68,8 +70,6 @@ def allow_migrate(db, app_label):
         )
     elif app_label == SQL_ACCESSORS_APP:
         return db in partition_config.get_form_processing_dbs()
-    elif app_label == WAREHOUSE_APP:
-        return db == settings.WAREHOUSE_DATABASE_ALIAS
     else:
         return db == partition_config.get_main_db()
 
