@@ -1216,8 +1216,7 @@ class Subscription(models.Model):
                     note=None, web_user=None, adjustment_method=None,
                     service_type=None, pro_bono_status=None, funding_source=None,
                     transfer_credits=True, internal_change=False, account=None,
-                    do_not_invoice=None, no_invoice_reason=None,
-                    skip_auto_downgrade=None, **kwargs):
+                    do_not_invoice=None, no_invoice_reason=None, **kwargs):
         """
         Changing a plan TERMINATES the current subscription and
         creates a NEW SUBSCRIPTION where the old plan left off.
@@ -1254,7 +1253,7 @@ class Subscription(models.Model):
             service_type=(service_type or SubscriptionType.NOT_SET),
             pro_bono_status=(pro_bono_status or ProBonoStatus.NO),
             funding_source=(funding_source or FundingSource.CLIENT),
-            skip_auto_downgrade=skip_auto_downgrade if skip_auto_downgrade is not None else self.skip_auto_downgrade,
+            skip_auto_downgrade=False,
             **kwargs
         )
 
