@@ -87,6 +87,11 @@ def db_for_read_write(model, write=True):
     """
     app_label = model._meta.app_label
 
+    if app_label == WAREHOUSE_APP:
+        return settings.WAREHOUSE_DATABASE_ALIAS
+    elif app_label == SYNCLOGS_APP:
+        return settings.SYNCLOGS_SQL_DB_ALIAS
+
     if not settings.USE_PARTITIONED_DATABASE:
         return 'default'
 
@@ -97,9 +102,5 @@ def db_for_read_write(model, write=True):
         if not write:
             engine_id = connection_manager.get_load_balanced_read_engine_id(ICDS_UCR_ENGINE_ID)
         return connection_manager.get_django_db_alias(engine_id)
-    elif app_label == WAREHOUSE_APP:
-        return settings.WAREHOUSE_DATABASE_ALIAS
-    elif app_label == SYNCLOGS_APP:
-        return settings.SYNCLOGS_SQL_DB_ALIAS
     else:
         return partition_config.get_main_db()
