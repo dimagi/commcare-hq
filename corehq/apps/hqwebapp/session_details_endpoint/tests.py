@@ -49,11 +49,11 @@ class SessionDetailsViewTest(TestCase):
         self.assertEqual(200, response.status_code)
         self.assertJSONEqual(response.content, self.expected_response)
 
-    @override_settings(FORMPLAYER_INTERNAL_AUTH_KEY='123abc', DEBUG=False)
+    @override_settings(FORMPLAYER_INTERNAL_AUTH_KEY=b'123abc', DEBUG=False)
     def test_with_hmac_signing(self):
         assert not settings.DEBUG
         data = json.dumps({'sessionId': self.session_key, 'domain': 'domain'})
-        header_value = base64.b64encode(hmac.new('123abc', data, hashlib.sha256).digest())
+        header_value = base64.b64encode(hmac.new(b'123abc', data, hashlib.sha256).digest())
         response = Client().post(
             self.url,
             data,
