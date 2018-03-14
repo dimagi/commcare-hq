@@ -192,6 +192,11 @@ if [ "$TEMPLATE_TAG_COUNT" -gt 0 ]; then
 fi
 
 
+# fix eslint issues
+echo "Maybe fixing more lint issues"
+eslint --fix $NEW_MODULE_LOCATION || true
+
+
 # a bit more yelling at the user
 # (maybe should just open these in an available browser? todo)
 ./manage.py show_urls | grep $MODULE
