@@ -5,6 +5,18 @@ from __future__ import unicode_literals
 
 from django.db import migrations, models
 
+from corehq.sql_db.operations import HqRunPython
+
+
+def _assign_default_values(apps, schema_editor):
+    Subscription = apps.get_model('accounting', 'Subscription')
+    Subscription.objects.filter(
+        no_invoice_reason__isnull=True
+    ).update(no_invoice_reason='')
+    Subscription.objects.filter(
+        salesforce_contract_id__isnull=True
+    ).update(salesforce_contract_id='')
+
 
 class Migration(migrations.Migration):
 
@@ -13,6 +25,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        HqRunPython(_assign_default_values),
         migrations.AlterField(
             model_name='subscription',
             name='no_invoice_reason',
