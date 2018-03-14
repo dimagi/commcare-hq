@@ -40,12 +40,6 @@ class PartitionRouter(object):
         return False
 
 
-class MonolithRouter(object):
-
-    def allow_migrate(self, db, app_label, model=None, **hints):
-        return app_label != PROXY_APP
-
-
 def allow_migrate(db, app_label):
     """
     Return ``True`` if a app's migrations should be applied to the specified database otherwise

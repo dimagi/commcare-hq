@@ -1354,10 +1354,7 @@ else:
 if helper.is_testing():
     helper.assign_test_db_names(DATABASES)
 
-if USE_PARTITIONED_DATABASE:
-    DATABASE_ROUTERS = ['corehq.sql_db.routers.PartitionRouter']
-else:
-    DATABASE_ROUTERS = ['corehq.sql_db.routers.MonolithRouter']
+DATABASE_ROUTERS = ['corehq.sql_db.routers.PartitionRouter']
 
 MVP_INDICATOR_DB = 'mvp-indicators'
 
