@@ -5,13 +5,7 @@ from collections import defaultdict
 from xml.etree.cElementTree import Element
 
 import six
-from django.db.models import Field, IntegerField, Lookup
-from django.db.models.expressions import (
-    Case, Exists, ExpressionWrapper, F, Func, OuterRef, RawSQL, Subquery,
-    Value, When,
-)
-from django.db.models.query import Q
-from django.db.models.aggregates import Max
+from django.db.models import IntegerField
 from django.contrib.postgres.fields.array import ArrayField
 from django_cte import With
 
@@ -220,66 +214,6 @@ int_field = IntegerField()
 int_array = ArrayField(int_field)
 
 
-class Array(Func):
-    function = "Array"
-    template = '%(function)s[%(expressions)s]'
-    output_field = int_array
-
-
-class array_append(Func):
-    function = "array_append"
-    output_field = int_array
-
-
-@Field.register_lookup
-class EqualsAny(Lookup):
-    # Can't use Func for ANY(...) because functions are wrapped in parens
-    # resulting in SQL like `... = (ANY(...))` which is not valid.
-    lookup_name = "eq_any"
-
-    def as_postgresql(self, compiler, connection):
-        lhs, lhs_params = self.process_lhs(compiler, connection)
-        rhs, rhs_params = self.process_rhs(compiler, connection)
-        params = lhs_params + rhs_params
-        return '%s = ANY(%s)' % (lhs, rhs), params
-
-
-class WrapSQL(RawSQL):
-    """Wrap ORM-generated SQL expression(s) with raw SQL
-
-    Desparate measures for desparate times. Any `{named_sub_expression}`
-    slugs in the "wrapper" SQL string will be filled with the
-    corresponding ORM SQL expression passed as a keyword argument.
-    """
-
-    def __init__(self, _sql, **expressions):
-        self.sql = _sql
-        output_field = expressions.pop("output_field", Field())
-        self.expressions = expressions
-        # purposely skip RawSQL.__init__ by calling its super
-        super(RawSQL, self).__init__(output_field=output_field)
-
-    def __repr__(self):
-        return "{}({}, {})".format(
-            self.__class__.__name__, self.sql, self.expressions)
-
-    def as_sql(self, compiler, connection):
-        expressions = {}
-        params = []
-        for key, expr in self.expressions.items():
-            if hasattr(expr, "get_compiler"):
-                comp = expr.get_compiler(connection=connection)
-                expr_sql, expr_params = comp.as_sql()
-            else:
-                expr_sql, expr_params = expr.as_sql(compiler, connection)
-            expressions[key] = expr_sql
-            params.extend(expr_params)
-        return self.sql.format(**expressions), params
-
-    def get_group_by_cols(self):
-        return [self]
-
-
 def raw_cte_sql(sql, params, refs):
     """Make queryset-like-thing for CTE with raw SQL"""
 
@@ -322,10 +256,6 @@ def cte_get_location_fixture_queryset(user):
     user_locations = user.get_sql_locations(user.domain)
 
     if user_locations.query.is_empty():
-        # HACK special case because empty queryset causes non-recursive part of
-        # recursive CTE unions to be omitted -> invalid SQL -> Postgres error:
-        # recursive query "cte" does not have the form non-recursive-term UNION [ALL] recursive-term
-        # https://code.djangoproject.com/ticket/26061
         return user_locations
 
     fixture_ids = With(raw_cte_sql(
@@ -333,322 +263,20 @@ def cte_get_location_fixture_queryset(user):
         SELECT "id", "path", "depth"
         FROM get_location_fixture_ids(%s::TEXT, %s)
         """,
-        [user.domain, [loc.id for loc in user_locations]],
+        [user.domain, list(user_locations.order_by().values_list("id", flat=True))],
         {"id": int_field, "path": int_array, "depth": int_field},
     ))
 
     result = fixture_ids.join(
-        SQLLocation.objects.all()
-        .with_cte(fixture_ids),
-        id=fixture_ids.col.id
+        SQLLocation.objects.all(),
+        id=fixture_ids.col.id,
     ).annotate(
         path=fixture_ids.col.path,
         depth=fixture_ids.col.depth,
-    ).order_by("path").prefetch_related('location_type')
+    ).with_cte(fixture_ids).prefetch_related('location_type')
 
     #print(result.query)
     return result
-
-
-def _get_expand_to_depths_cte(user_locations):
-    """Get a CTE with location type ids and corresponding expand to depths
-
-    This traverses the location type hierarchy, which is assumed to
-    mirror the location hierarchy but contain many less records. The
-    traversal is over user locations' types and their ancestors, so
-    should be reasonably fast.
-
-    CTE columns:
-    - expand_to_type: location type id, -1 if include_without_expanding
-    - expand_to_depth: expansion depth
-    """
-    def expand_to_cte(cte):
-        return LocationType.objects.filter(
-            # get expand_to location types
-            id__in=Subquery(
-                user_locations.filter(
-                    location_type__expand_to__isnull=False,
-                ).values("location_type__expand_to"),
-            ),
-        ).values(
-            "parent_type_id",
-            expand_to_type=F("id"),
-            depth=Value(0, output_field=int_field),
-        ).union(
-            # get include_without_expanding location types
-            LocationType.objects.filter(
-                id__in=Subquery(
-                    user_locations.filter(
-                        location_type__include_without_expanding__isnull=False,
-                    ).values("location_type__include_without_expanding"),
-                ),
-            ).values(
-                "parent_type_id",
-                expand_to_type=Value(-1, output_field=int_field),
-                depth=Value(0, output_field=int_field),
-            ),
-            all=True,
-        ).union(
-            # recursive CTE to calculate depths
-            cte.join(
-                LocationType.objects.all(),
-                id=cte.col.parent_type_id,
-            ).values(
-                "parent_type_id",
-                expand_to_type=cte.col.expand_to_type,
-                depth=cte.col.depth + Value(1, output_field=int_field),
-            ),
-            all=True,
-        )
-    cte = With.recursive(expand_to_cte)
-    return With(
-        cte.queryset().with_cte(cte).filter(
-            # exclude all but the root items
-            parent_type_id__isnull=True,
-        ).order_by().values(
-            "expand_to_type",
-            expand_to_depth=Max(cte.col.depth, output_field=int_field),
-        ),
-        "expand_to",
-    )
-
-
-def _get_expansion_details_cte(domain, user_locations, expand_to):
-    """Get a CTE with expand from location ids and expansion depths
-
-    The traversal is over user locations and their ancestors, so should
-    be reasonably fast.
-
-    CTE columns:
-    - loc_id: location id, null for include_without_expanding or
-      expand_from_root.
-    - depth: expand to depth. Negative values in this column have
-      special meanings. See output examples below.
-
-     loc_id | depth
-    --------|-------
-     NULL   |  3     -- include all locations with depth <= 3
-     1      | -1     -- include location 1 (but do not expand)
-     10     |  4     -- include all descendents of location 10 to depth 4
-     100    | -2     -- include all descendents of location 100, unlimited depth
-     11     | -3     -- location 11 and its descendants are included based on
-                        include_only types
-    """
-    def expand_from_cte(cte):
-        return expand_to.queryset().filter(expand_to_type=-1).values(
-            # get include_without_expanding depth
-            parent_id=Value(None, output_field=int_field),
-            expand_from_type=Value(None, output_field=int_field),
-            loc_id=Value(None, output_field=int_field),
-            depth=expand_to.col.expand_to_depth,
-        ).union(
-            SQLLocation.active_objects.filter(
-                domain__exact=domain,
-                id__in=Subquery(user_locations.values("id")),
-            ).annotate(
-                is_include_only_type=Exists(
-                    LocationType.objects
-                    .filter(included_in=OuterRef("location_type"))
-                    .values(value=Value(1, output_field=int_field)),
-                ),
-            ).values(
-                "parent_id",
-                expand_from_type=Case(
-                    When(
-                        # if expand_from is set and not the current location type
-                        # it will be one of this location's ancestors
-                        Q(
-                            location_type___expand_from__isnull=False,
-                            location_type___expand_from_root=Value(False),
-                        ) & ~Q(
-                            location_type___expand_from=F("location_type")
-                        ) & Q(
-                            # note: might be wrong to ignore
-                            # location_type___expand_from when
-                            # include_only types exist
-                            is_include_only_type=False,
-                        ),
-                        then=F("location_type___expand_from"),
-                    ),
-                    # otherwise it will be null for this and all ancestors
-                    default=Value(None),
-                    output_field=int_field,
-                ),
-                loc_id=Case(
-                    When(
-                        # expand_from_root -> no path
-                        location_type___expand_from_root=Value(True),
-                        then=Value(None),
-                    ),
-                    # first path element
-                    default=F("id"),
-                    output_field=int_field,
-                ),
-                depth=Case(
-                    When(
-                        # get expand_to depth
-                        location_type__expand_to__isnull=False,
-                        then=Subquery(
-                            expand_to.queryset()
-                            .filter(expand_to_type=OuterRef("location_type__expand_to"))
-                            .values("expand_to_depth")
-                        ),
-                    ),
-                    When(
-                        # use include_only types
-                        is_include_only_type=True,
-                        then=Value(-3),
-                    ),
-                    # unlimited expansion depth
-                    default=Value(-2),
-                    output_field=int_field,
-                ),
-            ),
-            all=True,
-        ).union(
-            cte.join(
-                SQLLocation.active_objects.all(),
-                id=cte.col.parent_id,
-            ).annotate(
-                cte_loc_id=ExpressionWrapper(
-                    cte.col.loc_id,
-                    output_field=int_field,
-                ),
-                cte_expand_from_type=ExpressionWrapper(
-                    cte.col.expand_from_type,
-                    output_field=int_field,
-                ),
-            ).values(
-                "parent_id",
-                expand_from_type=Case(
-                    When(
-                        # set expand_from_type if it will apply to an ancestor
-                        Q(
-                            Q(cte_expand_from_type__isnull=False),
-                            ~Q(cte_expand_from_type=F("location_type")),
-                        ),
-                        then=cte.col.expand_from_type,
-                    ),
-                    # otherwise it will be null for this and all ancestors
-                    default=Value(None),
-                    output_field=int_field,
-                ),
-                loc_id=Case(
-                    # expand_from_root -> no path
-                    When(cte_loc_id__isnull=True, then=Value(None)),
-                    # next element of path
-                    default=F("id"),
-                    output_field=int_field,
-                ),
-                depth=Case(
-                    When(
-                        # ancestor of expand_from -> include but do not expand
-                        cte_loc_id__isnull=False,
-                        cte_expand_from_type__isnull=True,
-                        then=Value(-1),
-                    ),
-                    # no path yet or starting path -> use previous depth
-                    default=cte.col.depth,
-                    output_field=int_field,
-                ),
-            ),
-            all=True,
-        )
-    cte = With.recursive(expand_from_cte)
-    return With(
-        cte.queryset().with_cte(cte).order_by().values(
-            "loc_id",
-            "depth",
-        ).distinct(),
-        "expand_from",
-    )
-
-
-def _get_fixture_ids_cte(domain, user_locations, expand_from):
-    """Get fixture locations using expand_from criteria
-
-    CTE columns:
-    - id: location id
-    - parent_id: location parent id
-    - depth: depth in locations tree (0 is root node)
-    - path: location tree path from root (array of location ids)
-    """
-    def is_included(depth_expr, path_expr):
-        return Exists(
-            expand_from.queryset().annotate(
-                # HACK use RawSQL because OuterRef is broken
-                # https://code.djangoproject.com/ticket/28621
-                outer_id=RawSQL(
-                    '"locations_sqllocation"."id"', [],
-                    output_field=int_field,
-                ),
-                location_type=RawSQL(
-                    '"locations_sqllocation"."location_type_id"', [],
-                    output_field=int_field,
-                ),
-            ).filter(Q(
-                # ancestor of expand_from
-                # or expansion depth is unlimited
-                # or descendant of expand_from within expand_to depth
-                Q(depth=-1) | Q(depth=-2) | Q(depth__gte=depth_expr),
-                loc_id=F("outer_id"),
-            ) | Q(
-                # unlimited depth or max depth >= current depth
-                Q(depth=-2) | Q(depth__gte=depth_expr),
-                # AND
-                # include_without_expanding/expand_from_root
-                # or descendant of expand_from within expand_to depth
-                Q(loc_id__isnull=True) | Q(loc_id__eq_any=path_expr),
-            ) | Q(
-                # location type is in include_only types
-                Q(loc_id=F("outer_id")) | Q(loc_id__eq_any=path_expr),
-                depth=-3,
-                location_type__in=WrapSQL(
-                    """(
-                    SELECT to_locationtype_id
-                    FROM locations_locationtype_include_only
-                    WHERE from_locationtype_id IN ({user_types})
-                    )""",
-                    user_types=user_locations.values("location_type").query,
-                ),
-            )).values(value=Value(1, output_field=int_field)),
-        )
-
-    def fixture_ids_cte(cte):
-        return SQLLocation.active_objects.annotate(
-            is_included=is_included(Value(0), Array("outer_id")),
-        ).values(
-            "id",
-            "parent_id",
-            depth=Value(0, output_field=int_field),
-            path=Array("id"),
-        ).filter(
-            domain__exact=domain,
-            parent__isnull=True,  # start at the root
-            is_included=True,
-        ).union(
-            cte.join(
-                SQLLocation.active_objects.all(),
-                parent_id=cte.col.id,
-            ).annotate(
-                depth=cte.col.depth + Value(1, output_field=int_field),
-                path=array_append(cte.col.path, "id"),
-                is_included=is_included(
-                    cte.col.depth + Value(1, output_field=int_field),
-                    array_append(cte.col.path, "outer_id"),
-                ),
-            ).filter(
-                domain__exact=domain,
-                is_included=True,
-            ).values(
-                "id",
-                "parent_id",
-                "depth",
-                "path",
-            ),
-            all=True,
-        )
-    return With.recursive(fixture_ids_cte, "fixture_ids")
 
 
 def mptt_get_location_fixture_queryset(user):
