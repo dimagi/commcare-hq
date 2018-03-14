@@ -13,7 +13,7 @@ from dateutil.relativedelta import relativedelta
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied
 from django.db.models.query_utils import Q
-from django.http.response import JsonResponse, HttpResponseBadRequest, HttpResponse, StreamingHttpResponse
+from django.http.response import JsonResponse, HttpResponseBadRequest, HttpResponse, StreamingHttpResponse, Http404
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -1499,13 +1499,13 @@ class ICDSImagesAccessorAPI(View):
     @method_decorator(api_auth)
     def get(self, request, domain, form_id=None, attachment_id=None):
         if not form_id or not attachment_id:
-            return None
+            raise Http404
         try:
             content = FormAccessors(domain).get_attachment_content(form_id, attachment_id)
         except AttachmentNotFound:
-            return None
+            raise Http404
         if 'image' not in content.content_type:
-            return None
+            raise Http404
         return StreamingHttpResponse(
             streaming_content=FileWrapper(content.content_stream),
             content_type=content.content_type
