@@ -20,6 +20,7 @@ from corehq.motech.openmrs.repeater_helpers import (
     delete_person_attribute_task,
 )
 from corehq.motech.openmrs.workflow import Task, WorkflowTask, execute_workflow, workflow_task
+from corehq.motech.utils import pformat_json
 from dimagi.utils.parsing import string_to_utc_datetime
 
 
@@ -46,11 +47,10 @@ def send_openmrs_data(requests, domain, form_json, openmrs_config, case_trigger_
 
     success, errors = execute_workflow(workflow_queue)
     if success:
-        return OpenmrsResponse(200, 'OK')
+        return OpenmrsResponse(200, 'OK', '')
     else:
         logger.error('Errors encountered sending OpenMRS data: %s', errors)
-        # TODO: Do something more useful with errors, like OpenmrsResponse.content or something
-        return OpenmrsResponse(400, 'Bad Request')
+        return OpenmrsResponse(400, 'Bad Request', pformat_json(errors))
 
 
 class SyncPersonAttrsTask(WorkflowTask):
