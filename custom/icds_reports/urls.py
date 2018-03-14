@@ -10,7 +10,7 @@ from custom.icds_reports.views import TableauView, DashboardView, IcdsDynamicTem
     AWCsCoveredView, RegisteredHouseholdView, EnrolledChildrenView, EnrolledWomenView, \
     LactatingEnrolledWomenView, AdolescentGirlsView, AdhaarBeneficiariesView, CleanWaterView, \
     FunctionalToiletView, MedicineKitView, InfantsWeightScaleView, AdultWeightScaleView, AggregationScriptPage, \
-    ICDSBugReportView, AWCLocationView, DownloadPDFReport, CheckPDFReportStatus
+    ICDSBugReportView, AWCLocationView, DownloadPDFReport, CheckPDFReportStatus, ICDSImagesAccessorAPI
 
 urlpatterns = [
     url(r'^tableau/(?P<workbook>\w+)/(?P<worksheet>\w+)$', TableauView.as_view(), name='icds_tableau'),
@@ -114,5 +114,7 @@ urlpatterns = [
     url(r'^bug_report/', ICDSBugReportView.as_view(), name='icds_bug_report'),
     url(r'^awc_locations/', AWCLocationView.as_view(), name='awc_locations'),
     url(r'^download_pdf/', DownloadPDFReport.as_view(), name='icds_download_pdf'),
-    url(r'^issnip_pdf_status/', CheckPDFReportStatus.as_view(), name='issnip_pdf_status')
+    url(r'^issnip_pdf_status/', CheckPDFReportStatus.as_view(), name='issnip_pdf_status'),
+    url(r'^icds_image_accessor/(?P<form_id>[\w\-:]+)/(?P<attachment_id>.*)$',
+        ICDSImagesAccessorAPI.as_view(), name='icds_image_accessor'),
 ]
