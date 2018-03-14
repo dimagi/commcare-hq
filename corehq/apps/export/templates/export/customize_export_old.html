@@ -11,6 +11,18 @@
 
 
 {% block page_content %}
+{% initial_page_data 'has_excel_dashboard_access|JSON' has_excel_dashboard_access|JSON %}
+{% initial_page_data 'minimal|JSON' minimal|JSON %}
+{% initial_page_data 'default_order|JSON' default_order|JSON %}
+{% initial_page_data 'helper.allow_repeats|JSON' helper.allow_repeats|JSON %}
+{% initial_page_data 'request.get_full_path|safe|JSON' request.get_full_path|safe|JSON %}
+{% initial_page_data 'column_type_options|JSON' column_type_options|JSON %}
+{% initial_page_data 'deid_options|JSON' deid_options|JSON %}
+{% initial_page_data 'export_stock|JSON' export_stock|JSON %}
+{% initial_page_data 'presave|JSON' presave|JSON %}
+{% initial_page_data 'table_configuration|JSON' table_configuration|JSON %}
+{% initial_page_data 'custom_export|JSON' custom_export|JSON %}
+{% initial_page_data 'custom_export.type|JSON' custom_export.type|JSON %}
 <div id="customize-export" style="display: none;" data-bind="visible: true">
     {# content for multi-select help popover #}
     {% if custom_export.type == 'case' %}
