@@ -45,7 +45,6 @@ def check_db_tables(app_configs, **kwargs):
 
     skip = (
         'warehouse',  # remove this once the warehouse tables are created
-        'auditcare'  # tables don't exist everywhere (can look into removing them from code)
     )
 
     def _check_model(model_class, using=None):
