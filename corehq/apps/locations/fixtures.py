@@ -319,23 +319,6 @@ def get_location_fixture_queryset(user):
 
 def cte_get_location_fixture_queryset(user):
 
-    # There may be ambiguities in location type configurations that could
-    # cause undefined outcomes:
-    # - expand_from_root = TRUE seems to do the same thing as
-    #   include_without_expanding IS NOT NULL (redundant config?).
-    # - expand_from_root = TRUE with expand_from IS NOT NULL seems logically
-    #   inconsistent. Suggest adding check constraint to prevent this state.
-    # - include_without_expanding IS NOT NULL with expand_from IS NOT NULL
-    #   seems logically inconsistent. Suggest adding check constraint.
-    # - expand_from could point to a location that is not an ancester
-    # - expand_to could point to a location that is not a descendant (maybe
-    #   doesn't matter since it's only used to calculate a depth).
-    # - two location types along the same path could both have expand_to set
-    #   to different levels, making the expansion depth ambiguous if a user
-    #   had both of those locations.
-    # - ancestors could be excluded with improper include_only config.
-    #   seems like we could achieve the same thing with expand_from/expand_to
-
     user_locations = user.get_sql_locations(user.domain)
 
     if user_locations.query.is_empty():
