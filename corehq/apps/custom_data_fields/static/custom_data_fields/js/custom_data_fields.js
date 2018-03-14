@@ -167,7 +167,7 @@ hqDefine('custom_data_fields/js/custom_data_fields', function() {
             $("#save-custom-fields").prop("disabled", false);
         });
 
-        ko.applyBindings(customDataFieldsModel, $('#custom-fields-form').get(0));
+        $('#custom-fields-form').koApplyBindings(customDataFieldsModel);
 
         $('form[id="custom-fields-form"]').on("change", null, null, function() {
             $("#save-custom-fields").prop("disabled", false);
