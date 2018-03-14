@@ -339,7 +339,10 @@ def track_clicked_signup_on_hubspot(email, hubspot_cookie, meta):
     else:
         data['a_b_test_variable_newsletter'] = 'C'
     if email:
-        _send_form_to_hubspot(HUBSPOT_CLICKED_SIGNUP_FORM, None, hubspot_cookie, meta, extra_fields=data, email=email)
+        _send_form_to_hubspot(
+            HUBSPOT_CLICKED_SIGNUP_FORM, None, hubspot_cookie,
+            meta, extra_fields=data, email=email
+        )
 
 
 def track_workflow(email, event, properties=None):
