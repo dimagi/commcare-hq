@@ -10,6 +10,8 @@
 
 
 {% block page_content %}
+{% initial_page_data ' case_types|JSON'  case_types|JSON %}
+{% initial_page_data ' values|JSON'  values|JSON %}
     {% registerurl 'case_search_config' request.domain %}
     <h1>{% trans "Enable Case Search" %}</h1>
 
