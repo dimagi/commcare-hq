@@ -263,8 +263,8 @@ hqDefine("export/js/custom_export_view", function() {
                     });
                     column.showOptions = ko.observable(false);
                     column.newOption = ko.observable("");
-                    column.addOption = function(e) {
-                        if (this.newOption() != "") {
+                    column.addOption = function() {
+                        if (this.newOption() !== "") {
                             if (this.options.indexOf(this.newOption()) === -1) {
                                 this.options.push(this.newOption());
                                 this.allOptions.push(this.newOption());
@@ -392,9 +392,9 @@ hqDefine("export/js/custom_export_view", function() {
                     // If the button had said "Create"
                     if (!self.custom_export._id || !self.custom_export._id()) {
                         var event_category = null;
-                        if (self.custom_export.type() == "form") {
+                        if (self.custom_export.type() === "form") {
                             event_category = 'Form Exports';
-                        } else if (self.custom_export.type() == "case") {
+                        } else if (self.custom_export.type() === "case") {
                             event_category = 'Case Exports';
                         }
 
