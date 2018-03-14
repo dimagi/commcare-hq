@@ -189,7 +189,7 @@ from corehq.apps.hqwebapp.decorators import (
 )
 import six
 from six.moves import range
-from no_exceptions.exceptions import Http400
+from no_exceptions.exceptions import Http403
 
 
 # Number of columns in case property history popup
@@ -995,7 +995,7 @@ class ScheduledReportsView(BaseProjectReportSectionView):
                 instance.day = calculate_day(instance.interval, instance.day, day_change)
 
             if not self.can_edit_report(instance):
-                raise Http400()
+                raise Http403()
         else:
             instance = ReportNotification(
                 owner_id=self.request.couch_user._id,
