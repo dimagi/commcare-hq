@@ -9,16 +9,16 @@ from dateutil.relativedelta import relativedelta
 
 def person_case_is_under_6_years_old(case, now):
     """
-    NOTE: Use this custom criteria with caution from SMS alerts, see
-    `person_case_is_under_n_years_old` for explanation.
+    NOTE: Use this custom criteria with caution for SMS alerts.
+    See `person_case_is_under_n_years_old` for explanation.
     """
     return person_case_is_under_n_years_old(case, now, 6)
 
 
 def person_case_is_under_19_years_old(case, now):
     """
-    NOTE: Use this custom criteria with caution from SMS alerts, see
-    `person_case_is_under_n_years_old` for explanation.
+    NOTE: Use this custom criteria with caution for SMS alerts.
+    See `person_case_is_under_n_years_old` for explanation.
     """
     return person_case_is_under_n_years_old(case, now, 19)
 
@@ -55,7 +55,7 @@ def person_case_is_under_n_years_old(case, now, n_years):
 
     try:
         dob = get_date(case.get_case_property('dob'))
-    except:
+    except Exception:
         return False
 
     return todays_date(now) < (dob + relativedelta(years=n_years))
