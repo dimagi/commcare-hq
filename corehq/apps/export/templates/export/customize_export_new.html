@@ -12,6 +12,12 @@
 
 
 {% block page_content %}
+{% initial_page_data 'number_of_apps_to_process' number_of_apps_to_process %}
+{% initial_page_data 'format_options|JSON' format_options|JSON %}
+{% initial_page_data 'has_daily_saved_export_access|JSON' has_daily_saved_export_access|JSON %}
+{% initial_page_data 'has_excel_dashboard_access|JSON' has_excel_dashboard_access|JSON %}
+{% initial_page_data 'request.get_full_path|safe|JSON' request.get_full_path|safe|JSON %}
+{% initial_page_data 'export_instance|JSON' export_instance|JSON %}
 <div id="customize-export" style="display: none;" data-bind="visible: true">
     {# content for multi-select help popover #}
     {% if export_instance.type == 'case' %}
