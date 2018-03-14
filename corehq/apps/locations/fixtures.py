@@ -8,6 +8,7 @@ import six
 from django.db.models import IntegerField
 from django.contrib.postgres.fields.array import ArrayField
 from django_cte import With
+from django_cte.raw import raw_cte_sql
 
 from casexml.apps.phone.fixtures import FixtureProvider
 from corehq.apps.custom_data_fields.dbaccessors import get_by_domain_and_type
@@ -214,31 +215,6 @@ int_field = IntegerField()
 int_array = ArrayField(int_field)
 
 
-def raw_cte_sql(sql, params, refs):
-    """Make queryset-like-thing for CTE with raw SQL"""
-
-    class ref(object):
-        def __init__(self, output_field):
-            self.output_field = output_field
-
-    class compiler(object):
-        @staticmethod
-        def as_sql():
-            return sql, params
-
-    class raw_queryset(object):
-        class query(object):
-            @staticmethod
-            def get_compiler(connection):
-                return compiler
-
-            @staticmethod
-            def resolve_ref(name):
-                return ref(refs[name])
-
-    return raw_queryset
-
-
 def get_location_fixture_queryset(user):
     if toggles.SYNC_ALL_LOCATIONS.enabled(user.domain):
         return SQLLocation.active_objects.filter(domain=user.domain).prefetch_related('location_type')
@@ -275,7 +251,6 @@ def cte_get_location_fixture_queryset(user):
         depth=fixture_ids.col.depth,
     ).with_cte(fixture_ids).prefetch_related('location_type')
 
-    #print(result.query)
     return result
 
 
