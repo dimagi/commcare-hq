@@ -9,7 +9,7 @@ hqDefine('export/js/customize_export_old', function() {
             history_to_parents: gettext('Case History > Parent Cases'),
             parent_cases: gettext('Parent Cases'),
         };
-        var customExportView = CustomExportView.wrap({
+        var customExportView = hqImport("export/js/custom_export_view").CustomExportView.wrap({
             export_type: initialPageData.get('custom_export_type'),
             custom_export: initialPageData.get('custom_export'),
             table_configuration: initialPageData.get('table_configuration'),
@@ -20,7 +20,7 @@ hqDefine('export/js/customize_export_old', function() {
             urls: {
                 save: initialPageData.get('request_get_full_path'),
             },
-            allow_repeats: initialPageData.get('helper.allow_repeats'),
+            allow_repeats: initialPageData.get('helper_allow_repeats'),
             default_order: initialPageData.get('default_order'),
             minimal: initialPageData.get('minimal'),
         }, translations, initialPageData.get('has_excel_dashboard_access'));
