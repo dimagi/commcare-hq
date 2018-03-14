@@ -61,7 +61,7 @@ ADDRESS_PROPERTIES = (
 PERSON_UUID_IDENTIFIER_TYPE_ID = 'uuid'
 
 
-OpenmrsResponse = namedtuple('OpenmrsResponse', 'status_code reason')
+OpenmrsResponse = namedtuple('OpenmrsResponse', 'status_code reason content')
 
 
 class Requests(object):
