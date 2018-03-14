@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.db import models
 from jsonfield import JSONField
 from corehq.apps.case_importer.tracking.task_status import TaskStatus, \
