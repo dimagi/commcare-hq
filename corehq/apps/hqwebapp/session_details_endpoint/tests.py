@@ -63,7 +63,7 @@ class SessionDetailsViewTest(TestCase):
         self.assertEqual(200, response.status_code)
         self.assertJSONEqual(response.content, self.expected_response)
 
-    @override_settings(FORMPLAYER_INTERNAL_AUTH_KEY='123abc', DEBUG=False)
+    @override_settings(FORMPLAYER_INTERNAL_AUTH_KEY=b'123abc', DEBUG=False)
     def test_with_hmac_signing_fail(self):
         assert not settings.DEBUG
         data = json.dumps({'sessionId': self.session_key, 'domain': 'domain'})
