@@ -9,7 +9,6 @@ Supports psuedo-tables using dls and real tables.
 """
 
 from __future__ import absolute_import
-from __future__ import unicode_literals
 import collections
 import datetime
 

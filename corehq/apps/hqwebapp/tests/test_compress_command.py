@@ -1,5 +1,4 @@
 from __future__ import absolute_import
-from __future__ import unicode_literals
 import os
 from nose.plugins.attrib import attr
 
@@ -10,9 +9,9 @@ from django.template.loaders.app_directories import get_app_template_dirs
 
 B3_BASE = 'hqwebapp/base.html'
 
-COMPRESS_JS = b' compress js '
-COMPRESS_CSS = b' compress css '
-ENDCOMPRESS = b' endcompress '
+COMPRESS_JS = ' compress js '
+COMPRESS_CSS = ' compress css '
+ENDCOMPRESS = ' endcompress '
 
 DISALLOWED_TAGS = [
     ('{% if', 'You cannot use "if" tags in a compress block'),
