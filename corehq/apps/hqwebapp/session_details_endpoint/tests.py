@@ -1,5 +1,4 @@
 from __future__ import absolute_import
-from __future__ import unicode_literals
 import base64
 import hashlib
 import hmac
@@ -28,12 +27,12 @@ class SessionDetailsViewTest(TestCase):
         cls.url = reverse('session_details')
 
         cls.expected_response = {
-            'username': cls.sql_user.username,
-            'djangoUserId': cls.sql_user.pk,
-            'superUser': cls.sql_user.is_superuser,
-            'authToken': None,
-            'domains': ['toyland'],
-            'anonymous': False
+            u'username': cls.sql_user.username,
+            u'djangoUserId': cls.sql_user.pk,
+            u'superUser': cls.sql_user.is_superuser,
+            u'authToken': None,
+            u'domains': [u'toyland'],
+            u'anonymous': False
         }
 
     @classmethod
@@ -53,7 +52,7 @@ class SessionDetailsViewTest(TestCase):
     def test_with_hmac_signing(self):
         assert not settings.DEBUG
         data = json.dumps({'sessionId': self.session_key, 'domain': 'domain'})
-        header_value = base64.b64encode(hmac.new(b'123abc', data, hashlib.sha256).digest())
+        header_value = base64.b64encode(hmac.new('123abc', data, hashlib.sha256).digest())
         response = Client().post(
             self.url,
             data,
