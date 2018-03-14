@@ -61,6 +61,28 @@ def person_case_is_under_N_years_old(case, now, n_years):
     return todays_date(now) < (dob + relativedelta(years=n_years))
 
 
+def icds_ccs_record_case_has_future_edd_and_null_add(case, now):
+    """
+    NOTE: This criteria references today's date.
+    Use this custom criteria with caution for SMS alerts.
+    See `person_case_is_under_n_years_old` for explanation.
+    """
+    if case.type != 'ccs_record':
+        return False
+
+    try:
+        edd = get_date(case.get_case_property('edd'))
+    except Exception:
+        return False
+
+    try:
+        add = case.get_case_property('add')
+    except Exception:
+        add = None
+
+    return todays_date(now) < edd and not add
+
+
 def check_user_location_type(usercase, location_type_code):
     user = get_user_from_usercase(usercase)
     if user and user.location:
