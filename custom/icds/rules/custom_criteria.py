@@ -10,20 +10,20 @@ from dateutil.relativedelta import relativedelta
 def person_case_is_under_6_years_old(case, now):
     """
     NOTE: Use this custom criteria with caution from SMS alerts, see
-    `person_case_is_under_N_years_old` for explanation.
+    `person_case_is_under_n_years_old` for explanation.
     """
-    return person_case_is_under_N_years_old(case, now, 6)
+    return person_case_is_under_n_years_old(case, now, 6)
 
 
 def person_case_is_under_19_years_old(case, now):
     """
     NOTE: Use this custom criteria with caution from SMS alerts, see
-    `person_case_is_under_N_years_old` for explanation.
+    `person_case_is_under_n_years_old` for explanation.
     """
-    return person_case_is_under_N_years_old(case, now, 19)
+    return person_case_is_under_n_years_old(case, now, 19)
 
 
-def person_case_is_under_N_years_old(case, now, n_years):
+def person_case_is_under_n_years_old(case, now, n_years):
     """
     This custom criteria is fine to use with auto case update rules because
     those get run every day so the rule will be responsive to changes in today's date.

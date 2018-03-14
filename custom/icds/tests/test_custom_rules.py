@@ -192,14 +192,14 @@ class CustomCriteriaTestCase(BaseCaseRuleTest):
         return CaseAccessors(self.domain).get_case(case.case_id)
 
     def test_person_case_is_under_6_years_old(self):
-        self.assert_person_case_is_under_N_years_old(
+        self.assert_person_case_is_under_n_years_old(
             6, 'ICDS_PERSON_CASE_IS_UNDER_6_YEARS_OLD')
 
     def test_person_case_is_under_19_years_old(self):
-        self.assert_person_case_is_under_N_years_old(
+        self.assert_person_case_is_under_n_years_old(
             19, 'ICDS_PERSON_CASE_IS_UNDER_19_YEARS_OLD')
 
-    def assert_person_case_is_under_N_years_old(self, n_years, criteria_name):
+    def assert_person_case_is_under_n_years_old(self, n_years, criteria_name):
         rule = _create_empty_rule(self.domain, case_type='person')
         rule.add_criteria(CustomMatchDefinition, name=criteria_name)
 
