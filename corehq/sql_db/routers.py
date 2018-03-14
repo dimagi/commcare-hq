@@ -48,6 +48,11 @@ class MonolithRouter(object):
 
 def allow_migrate(db, app_label):
     """
+    Return ``True`` if a app's migrations should be applied to the specified database otherwise
+    return ``False``.
+
+    Note: returning ``None`` is tantamount to returning ``True``
+
     :return: Must return a boolean value, not None.
     """
     if app_label == ICDS_REPORTS_APP:
