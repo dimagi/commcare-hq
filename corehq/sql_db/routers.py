@@ -14,7 +14,7 @@ WAREHOUSE_APP = 'warehouse'
 SYNCLOGS_APP = 'phone'
 
 
-class PartitionRouter(object):
+class MultiDBRouter(object):
 
     def db_for_read(self, model, **hints):
         return db_for_read_write(model, write=False)

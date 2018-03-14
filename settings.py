@@ -1354,7 +1354,7 @@ else:
 if helper.is_testing():
     helper.assign_test_db_names(DATABASES)
 
-DATABASE_ROUTERS = ['corehq.sql_db.routers.PartitionRouter']
+DATABASE_ROUTERS = ['corehq.sql_db.routers.MultiDBRouter']
 
 MVP_INDICATOR_DB = 'mvp-indicators'
 
