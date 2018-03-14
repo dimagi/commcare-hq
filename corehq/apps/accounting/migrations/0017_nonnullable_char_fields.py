@@ -3,7 +3,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
-from django.db import migrations, models
+from django.db import migrations
 
 from corehq.sql_db.operations import HqRunPython
 
@@ -26,16 +26,4 @@ class Migration(migrations.Migration):
 
     operations = [
         HqRunPython(_assign_default_values),
-        migrations.AlterField(
-            model_name='subscription',
-            name='no_invoice_reason',
-            field=models.CharField(blank=True, default='', max_length=256),
-            preserve_default=False,
-        ),
-        migrations.AlterField(
-            model_name='subscription',
-            name='salesforce_contract_id',
-            field=models.CharField(blank=True, default='', max_length=80),
-            preserve_default=False,
-        ),
     ]
