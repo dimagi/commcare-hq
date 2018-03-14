@@ -121,6 +121,8 @@ def render_form(form, domain, options):
                 'user_info': get_doc_info_by_id(domain, operation.user),
             })
     context['instance_history'] = instance_history
+    # # TRYING THIS NEXT LINE:
+    # context['form_data'] = [context['form_data'][1], context['form_data'][1], context['form_data'][1]]
     return render_to_string("reports/form/partials/single_form.html", context, request=request)
 
 

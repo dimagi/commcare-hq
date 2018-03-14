@@ -269,7 +269,12 @@ def get_questions(domain, app_id, xmlns):
 def get_questions_from_xform_node(xform, langs):
     questions = xform.get_questions(
         langs, include_triggers=True, include_groups=True)
-    return [FormQuestionResponse(q) for q in questions]
+    return_list = []
+    for q in questions:
+        val_to_add = FormQuestionResponse(q)
+        return_list.append(val_to_add)
+    # return_list = [FormQuestionResponse(q) for q in questions]
+    return return_list
 
 
 def get_questions_for_submission(xform):
@@ -288,20 +293,22 @@ def get_questions_for_submission(xform):
 
 def get_readable_data_for_submission(xform):
     questions, questions_error = get_questions_for_submission(xform)
-    return get_readable_form_data(
+    readable_form_data = get_readable_form_data(
         deepcopy(xform.form_data),
         questions,
         process_label=_html_interpolate_output_refs
-    ), questions_error
+    )
+    return readable_form_data, questions_error
 
 
 def get_readable_form_data(xform_data, questions, process_label=None):
-    return zip_form_data_and_questions(
-        strip_form_data(xform_data),
-        questions_in_hierarchy(questions),
+    zipped_data = zip_form_data_and_questions(
+        relative_data=strip_form_data(xform_data),
+        questions=questions_in_hierarchy(questions),
         path_context='/%s/' % xform_data.get('#type', 'data'),
         process_label=process_label,
     )
+    return zipped_data
 
 
 def strip_form_data(data):
@@ -405,6 +412,10 @@ def zip_form_data_and_questions(relative_data, questions, path_context='',
         }
 
     result = []
+    print("=========")
+    for question in questions:
+        print("QUestion!")
+    print("=========")
     for question in questions:
         path = path_relative_to_context(question.value, path_context)
         absolute_path = absolute_path_from_context(question.value, path_context)
@@ -415,6 +426,18 @@ def zip_form_data_and_questions(relative_data, questions, path_context='',
         question_data.pop('response')
         if question.type in ('Group', 'FieldList'):
             children = question_data.pop('children')
+
+
+            zipped_children = zip_form_data_and_questions(
+                relative_data=node,
+                questions=children,
+                path_context=absolute_path,
+                output_context=output_context,
+                process_label=process_label,
+                absolute_data=absolute_data,
+            )
+
+
             form_question = FormQuestionResponse(
                 children=zip_form_data_and_questions(
                     node,
@@ -505,9 +528,12 @@ def questions_in_hierarchy(questions):
     # get_questions preserve hierarchy to begin with
     result = []
     question_lists_by_group = {None: result}
+    #### THIS IS MY ATTEMPTED FIX: the group was none before, so it wasn't properly getting defined as a child. This didn't seem to work.
+    questions[3].group=u'/data/a_group'
     for question in questions:
+        question_value = question.value
         question_lists_by_group[question.group].append(question)
-        if question.type in ('Group', 'Repeat', 'FieldList') \
-                and question.value not in question_lists_by_group:
-            question_lists_by_group[question.value] = question.children
+        if question.type in ('Group', 'Repeat', 'FieldList'):
+                if question_value not in question_lists_by_group:
+                    question_lists_by_group[question_value] = question.children
     return question_lists_by_group[None]
