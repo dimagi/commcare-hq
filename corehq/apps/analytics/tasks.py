@@ -323,12 +323,6 @@ def track_job_candidate_on_hubspot(user_email):
 
 
 @analytics_task()
-def track_saved_app_on_hubspot(couchuser, hubspot_cookie, meta):
-    if couchuser.is_web_user():
-        _send_form_to_hubspot(HUBSPOT_SAVED_APP_FORM_ID, couchuser, hubspot_cookie, meta)
-
-
-@analytics_task()
 def track_clicked_signup_on_hubspot(email, hubspot_cookie, meta):
     data = {'lifecyclestage': 'subscriber'}
     number = deterministic_random(email + 'a_b_test_variable_newsletter')
