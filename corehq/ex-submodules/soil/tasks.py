@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from celery.task import task, periodic_task
 import time
 from django.core.cache import cache
