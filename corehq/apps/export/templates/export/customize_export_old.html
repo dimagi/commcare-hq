@@ -6,23 +6,23 @@
     {{ block.super }}
     <script src="{% static 'export/js/utils.js' %}"></script>
     <script src="{% static 'export/js/customize_export.js' %}"></script>
-            <script src="{% static 'export/js/customize_export_old.js' %}"></script>
+    <script src="{% static 'export/js/customize_export_old.js' %}"></script>
 {% endblock %}
 
 
 {% block page_content %}
-{% initial_page_data 'has_excel_dashboard_access|JSON' has_excel_dashboard_access|JSON %}
-{% initial_page_data 'minimal|JSON' minimal|JSON %}
-{% initial_page_data 'default_order|JSON' default_order|JSON %}
-{% initial_page_data 'helper.allow_repeats|JSON' helper.allow_repeats|JSON %}
-{% initial_page_data 'request.get_full_path|safe|JSON' request.get_full_path|safe|JSON %}
-{% initial_page_data 'column_type_options|JSON' column_type_options|JSON %}
-{% initial_page_data 'deid_options|JSON' deid_options|JSON %}
-{% initial_page_data 'export_stock|JSON' export_stock|JSON %}
-{% initial_page_data 'presave|JSON' presave|JSON %}
-{% initial_page_data 'table_configuration|JSON' table_configuration|JSON %}
-{% initial_page_data 'custom_export|JSON' custom_export|JSON %}
-{% initial_page_data 'custom_export.type|JSON' custom_export.type|JSON %}
+{% initial_page_data 'has_excel_dashboard_access' has_excel_dashboard_access %}
+{% initial_page_data 'minimal' minimal %}
+{% initial_page_data 'default_order' default_order %}
+{% initial_page_data 'helper_allow_repeats' helper.allow_repeats %}
+{% initial_page_data 'request_get_full_path' request.get_full_path %}
+{% initial_page_data 'column_type_options' column_type_options %}
+{% initial_page_data 'deid_options' deid_options %}
+{% initial_page_data 'export_stock' export_stock %}
+{% initial_page_data 'presave' presave %}
+{% initial_page_data 'table_configuration' table_configuration %}
+{% initial_page_data 'custom_export' custom_export %}
+{% initial_page_data 'custom_export_type' custom_export.type %}
 <div id="customize-export" style="display: none;" data-bind="visible: true">
     {# content for multi-select help popover #}
     {% if custom_export.type == 'case' %}
