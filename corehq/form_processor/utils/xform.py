@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from datetime import datetime
 
 import iso8601
@@ -117,7 +118,7 @@ def convert_xform_to_json(xml_string):
         name, json_form = xml2json.xml2json(xml_string)
     except xml2json.XMLSyntaxError as e:
         from couchforms import XMLSyntaxError
-        raise XMLSyntaxError(u'Invalid XML: %s' % e)
+        raise XMLSyntaxError('Invalid XML: %s' % e)
     json_form['#type'] = name
     return json_form
 
