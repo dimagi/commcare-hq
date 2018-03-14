@@ -45,6 +45,8 @@ hqDefine('accounting/js/base_subscriptions_main', [
         var self = {};
         var invoice = $('#id_do_not_invoice').prop("checked");
         self.noInvoice = ko.observable(invoice);
+        var skipAutoDowngrade = $('#id_skip_auto_downgrade').prop("checked");
+        self.skipAutoDowngrade = ko.observable(skipAutoDowngrade);
         return self;
     };
 

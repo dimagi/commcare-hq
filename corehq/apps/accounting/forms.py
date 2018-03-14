@@ -426,6 +426,11 @@ class SubscriptionForm(forms.Form):
         label=ugettext_lazy("Exclude from automated downgrade process"),
         required=False
     )
+    skip_auto_downgrade_reason = forms.CharField(
+        label=ugettext_lazy("Justify why \"Skip Auto Downgrade\""),
+        max_length=256,
+        required=False,
+    )
     set_subscription = forms.CharField(widget=forms.HiddenInput, required=False)
 
     def __init__(self, subscription, account_id, web_user, *args, **kwargs):
@@ -506,6 +511,7 @@ class SubscriptionForm(forms.Form):
             self.fields['pro_bono_status'].initial = subscription.pro_bono_status
             self.fields['funding_source'].initial = subscription.funding_source
             self.fields['skip_auto_downgrade'].initial = subscription.skip_auto_downgrade
+            self.fields['skip_auto_downgrade_reason'].initial = subscription.skip_auto_downgrade_reason
 
             if (
                 subscription.date_start is not None
@@ -585,7 +591,16 @@ class SubscriptionForm(forms.Form):
                 'service_type',
                 'pro_bono_status',
                 'funding_source',
-                hqcrispy.B3MultiField("Skip Auto Downgrade", 'skip_auto_downgrade'),
+                hqcrispy.B3MultiField(
+                    "Skip Auto Downgrade",
+                    crispy.Field('skip_auto_downgrade', data_bind="checked: skipAutoDowngrade")
+                ),
+                crispy.Div(
+                    crispy.Field(
+                        'skip_auto_downgrade_reason', data_bind="attr: {required: skipAutoDowngrade}"
+                    ),
+                    data_bind="visible: skipAutoDowngrade",
+                ),
                 'set_subscription'
             ),
             hqcrispy.FormActions(
@@ -645,6 +660,7 @@ class SubscriptionForm(forms.Form):
             pro_bono_status=self.cleaned_data['pro_bono_status'],
             funding_source=self.cleaned_data['funding_source'],
             skip_auto_downgrade=self.cleaned_data['skip_auto_downgrade'],
+            skip_auto_downgrade_reason=self.cleaned_data['skip_auto_downgrade_reason'],
         )
 
     def clean_active_accounts(self):
