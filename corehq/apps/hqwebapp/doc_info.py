@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from couchdbkit import ResourceNotFound
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.couch.undo import DELETED_SUFFIX
@@ -75,7 +76,7 @@ def get_doc_info(doc, domain_hint=None, cache=None):
     if has_doc_type(doc_type, 'Application') or has_doc_type(doc_type, 'RemoteApp'):
         if doc.get('copy_of'):
             doc_info = DocInfo(
-                display=u'%s (#%s)' % (doc['name'], doc['version']),
+                display='%s (#%s)' % (doc['name'], doc['version']),
                 type_display=_('Application Build'),
                 link=reverse(
                     'download_index',
