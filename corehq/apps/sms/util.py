@@ -172,12 +172,12 @@ CLEAN_TEXT_REPLACEMENTS = (
     (":p", ": p"),
     (":P", ": P"),
     # Special punctuation ascii conversion
-    ("\u2013", "-"), # Dash
-    ("\u201c", '"'), # Open double quote
-    ("\u201d", '"'), # Close double quote
-    ("\u2018", "'"), # Open single quote
-    ("\u2019", "'"), # Close single quote
-    ("\u2026", "..."), # Ellipsis
+    ("\u2013", "-"),  # Dash
+    ("\u201c", '"'),  # Open double quote
+    ("\u201d", '"'),  # Close double quote
+    ("\u2018", "'"),  # Open single quote
+    ("\u2019", "'"),  # Close single quote
+    ("\u2026", "..."),  # Ellipsis
 )
 
 
