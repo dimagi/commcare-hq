@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import base64
 import io
 from datetime import datetime, timedelta, time

@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import re
 import uuid
 import datetime
@@ -171,12 +172,12 @@ CLEAN_TEXT_REPLACEMENTS = (
     (":p", ": p"),
     (":P", ": P"),
     # Special punctuation ascii conversion
-    (u"\u2013", "-"), # Dash
-    (u"\u201c", '"'), # Open double quote
-    (u"\u201d", '"'), # Close double quote
-    (u"\u2018", "'"), # Open single quote
-    (u"\u2019", "'"), # Close single quote
-    (u"\u2026", "..."), # Ellipsis
+    ("\u2013", "-"), # Dash
+    ("\u201c", '"'), # Open double quote
+    ("\u201d", '"'), # Close double quote
+    ("\u2018", "'"), # Open single quote
+    ("\u2019", "'"), # Close single quote
+    ("\u2026", "..."), # Ellipsis
 )
 
 
