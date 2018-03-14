@@ -1,5 +1,6 @@
 from __future__ import division
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from collections import namedtuple
 from copy import deepcopy
 from datetime import datetime
@@ -119,7 +120,7 @@ def get_pillow_config_by_name(pillow_name):
     for config in all_configs:
         if config.name == pillow_name:
             return config
-    raise PillowNotFoundError(u'No pillow found with name {}'.format(pillow_name))
+    raise PillowNotFoundError('No pillow found with name {}'.format(pillow_name))
 
 
 def force_seq_int(seq):
@@ -269,7 +270,7 @@ def ensure_matched_revisions(change):
             fetched_rev = _convert_rev_to_int(doc_rev)
             stored_rev = _convert_rev_to_int(change_rev)
             if fetched_rev < stored_rev or stored_rev == -1:
-                message = u"Mismatched revs for {}: Cloudant rev {} vs. Changes feed rev {}".format(
+                message = "Mismatched revs for {}: Cloudant rev {} vs. Changes feed rev {}".format(
                     change.id,
                     doc_rev,
                     change_rev

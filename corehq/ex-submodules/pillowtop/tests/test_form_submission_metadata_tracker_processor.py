@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.test import TestCase
 from dimagi.utils.parsing import string_to_utc_datetime
 
