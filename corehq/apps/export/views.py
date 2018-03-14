@@ -2357,7 +2357,7 @@ class DownloadNewFormExportView(GenericDownloadNewExportMixin, DownloadFormExpor
     def prepare_custom_export(self, in_data):
         prepare_custom_export = super(DownloadNewFormExportView, self).prepare_custom_export(in_data)
 
-        if super(DownloadNewFormExportView, self).check_if_export_has_data(in_data):
+        if self.check_if_export_has_data(in_data):
             track_workflow(self.request.couch_user.username, 'Downloaded Form Exports With Data')
         else:
             track_workflow(self.request.couch_user.username, 'Downloaded Form Exports With No Data')
@@ -2403,7 +2403,7 @@ class DownloadNewCaseExportView(GenericDownloadNewExportMixin, DownloadCaseExpor
     def prepare_custom_export(self, in_data):
         prepare_custom_export = super(DownloadNewCaseExportView, self).prepare_custom_export(in_data)
 
-        if super(DownloadNewCaseExportView, self).check_if_export_has_data(in_data):
+        if self.check_if_export_has_data(in_data):
             track_workflow(self.request.couch_user.username, 'Downloaded Case Exports With Data')
         else:
             track_workflow(self.request.couch_user.username, 'Downloaded Case Exports With No Data')
