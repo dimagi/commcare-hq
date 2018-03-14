@@ -4,20 +4,13 @@
         {% if question.type == 'DataBindOnly' %}
             <tr class="info form-data-hidden-values">
                 <td colspan="2">
-{#                    <p>WORKING Q:</p>#}
-{#                    <p>Question: {{ question }}</p>#}
-{#                    <p>question.type: {{ question.type }}</p>#}
-{#                    <p>question.children: {{ question.children }}</p>#}
                     <strong>{% trans "Hidden Values (Form Calculations)" %}</strong>
                 </td>
             </tr>
         {% elif not question.type and not question.children %}
             <tr class="info">
                 <td colspan="2">
-{#                    <p>BROKEN Q:</p>#}
-{#                    <p>question.type: {{ question.type }}</p>#}
-{#                    <p>question.children: {{ question.children }}</p>#}
-                    <strong>{% trans "Unrecognized Data (PREETHI)" %}</strong>
+                    <strong>{% trans "Unrecognized Data" %}</strong>
                 </td>
             </tr>
         {% endif %}
@@ -32,9 +25,6 @@
 <tr class="form-data-question {% if question.response == None %}muted form-data-skipped{% endif %}">
     {% if question.children %}
         {% if question.type %}
-{#            <p>This is where the table is actually def'd</p>#}
-{#            <p>children: {{ question.children }}</p>#}
-{#            <p>type: {{ question.type }}</p>#}
             <td colspan="2">
             <table class="table table-bordered form-data-group-table">
                 <tr class="form-data-group-spacer">
@@ -51,7 +41,7 @@
             </table>
             </td>
         {% else %}
-             This is for separators between repeat chunks
+            {# This is for separators between repeat chunks #}
             {% if not forloop.last %}
                 <tr class="form-data-group-spacer"><th colspan="2"></th></tr>
             {% endif %}

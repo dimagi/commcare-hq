@@ -530,6 +530,7 @@ def questions_in_hierarchy(questions):
     question_lists_by_group = {None: result}
     #### THIS IS MY ATTEMPTED FIX: the group was none before, so it wasn't properly getting defined as a child. This didn't seem to work.
     questions[3].group=u'/data/a_group'
+
     for question in questions:
         question_value = question.value
         question_lists_by_group[question.group].append(question)

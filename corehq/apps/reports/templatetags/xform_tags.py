@@ -121,8 +121,10 @@ def render_form(form, domain, options):
                 'user_info': get_doc_info_by_id(domain, operation.user),
             })
     context['instance_history'] = instance_history
-    # # TRYING THIS NEXT LINE:
-    # context['form_data'] = [context['form_data'][1], context['form_data'][1], context['form_data'][1]]
+    #### THIS IS MY ATTEMPTED FIX
+    context['form_data'][0].response = u"fake_field_list_response_0"
+    context['form_data'][0]['children'][0].response = u"fake_response_1"
+    context['form_data'][0]['children'][1].response = u"fake_response_2"
     return render_to_string("reports/form/partials/single_form.html", context, request=request)
 
 
