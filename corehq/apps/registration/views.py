@@ -22,7 +22,7 @@ from corehq.apps.analytics.tasks import (
     track_confirmed_account_on_hubspot,
     track_clicked_signup_on_hubspot,
     update_hubspot_properties,
-)
+    HUBSPOT_COOKIE)
 from corehq.apps.analytics.utils import get_meta
 from corehq.apps.app_manager.dbaccessors import domain_has_apps
 from corehq.apps.domain.decorators import login_required
@@ -222,7 +222,7 @@ class UserRegistrationView(NewUserNumberAbTestMixin, BasePageView):
     def post(self, request, *args, **kwargs):
         if self.prefilled_email:
             meta = get_meta(request)
-            track_clicked_signup_on_hubspot.delay(self.prefilled_email, request.COOKIES, meta)
+            track_clicked_signup_on_hubspot.delay(self.prefilled_email, request.COOKIES.get(HUBSPOT_COOKIE), meta)
         return super(UserRegistrationView, self).get(request, *args, **kwargs)
 
     @property
