@@ -947,6 +947,7 @@ class CreateCommCareUserModal(JsonRequestResponseMixin, DomainViewMixin, View):
                 initiate_sms_verification_workflow(user, phone_number)
 
             user_json = {'user_id': user._id, 'text': user.username_in_report}
+            # This is where to possibly refresh
             return self.render_json_response({"status": "success",
                                               "user": user_json})
         return self.render_form("failure")
