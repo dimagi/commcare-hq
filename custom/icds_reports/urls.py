@@ -13,6 +13,14 @@ from custom.icds_reports.views import TableauView, DashboardView, IcdsDynamicTem
     ICDSBugReportView, AWCLocationView, DownloadPDFReport, CheckPDFReportStatus, ICDSImagesAccessorAPI
 
 dashboardurls = [
+    url(r'^icds_image_accessor/(?P<form_id>[\w\-:]+)/(?P<attachment_id>.*)$',
+        ICDSImagesAccessorAPI.as_view(), name='icds_image_accessor'),
+    url('^', DashboardView.as_view(), name='icds_dashboard')
+]
+
+urlpatterns = [
+    url(r'^tableau/(?P<workbook>\w+)/(?P<worksheet>\w+)$', TableauView.as_view(), name='icds_tableau'),
+    url(r'^icds_dashboard/', include(dashboardurls)),
     url(r'^icds-ng-template/(?P<template>[\w-].+)', IcdsDynamicTemplateView.as_view(), name='icds-ng-template'),
     url(r'^program_summary/(?P<step>[\w-]+)/', ProgramSummaryView.as_view(), name='program_summary'),
     url(r'^awc_reports/(?P<step>[\w-]+)/', AwcReportsView.as_view(), name='awc_reports'),
@@ -113,12 +121,4 @@ dashboardurls = [
     url(r'^awc_locations/', AWCLocationView.as_view(), name='awc_locations'),
     url(r'^download_pdf/', DownloadPDFReport.as_view(), name='icds_download_pdf'),
     url(r'^issnip_pdf_status/', CheckPDFReportStatus.as_view(), name='issnip_pdf_status'),
-    url(r'^icds_image_accessor/(?P<form_id>[\w\-:]+)/(?P<attachment_id>.*)$',
-        ICDSImagesAccessorAPI.as_view(), name='icds_image_accessor'),
-    url('^', DashboardView.as_view(), name='icds_dashboard')
-]
-
-urlpatterns = [
-    url(r'^tableau/(?P<workbook>\w+)/(?P<worksheet>\w+)$', TableauView.as_view(), name='icds_tableau'),
-    url(r'^icds_dashboard/', include(dashboardurls)),
 ]
