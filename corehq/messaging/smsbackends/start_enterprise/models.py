@@ -18,6 +18,7 @@ from corehq.messaging.smsbackends.start_enterprise.exceptions import StartEnterp
 from corehq.messaging.smsbackends.start_enterprise.forms import StartEnterpriseBackendForm
 from corehq.apps.sms.models import SMS
 from corehq.apps.sms.util import strip_plus
+from corehq.util.string_utils import confirm_ascii, to_utf_16_be
 
 
 class StartEnterpriseDeliveryReceipt(models.Model):
@@ -67,10 +68,10 @@ class StartEnterpriseBackend(SQLSMSBackend):
     def get_params(self, msg_obj):
         config = self.config
         try:
-            message = str(msg_obj.text)
+            message = confirm_ascii(msg_obj.text)
             message_type = LONG_TEXT_MSG_TYPE
         except UnicodeEncodeError:
-            message = msg_obj.text.encode('utf_16_be').encode('hex').upper()
+            message = to_utf_16_be(msg_obj.text)
             message_type = LONG_UNICODE_MSG_TYPE
 
         return {
