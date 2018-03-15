@@ -67,3 +67,7 @@ SYSTEM_USAGE_EXPORT = 4
 AWC_INFRASTRUCTURE_EXPORT = 5
 BENEFICIARY_LIST_EXPORT = 6
 ISSNIP_MONTHLY_REGISTER_PDF = 7
+
+AGG_COMP_FEEDING_TABLE = 'icds_dashboard_comp_feed_form'
+AGG_CCS_RECORD_PNC_TABLE = 'icds_dashboard_ccs_record_postnatal_forms'
+AGG_CHILD_HEALTH_PNC_TABLE = 'icds_dashboard_child_health_postnatal_forms'
