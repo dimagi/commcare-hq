@@ -31,7 +31,8 @@ FILE_NAME_TO_TABLE_MAPPING = {
     'person_cases': 'config_report_icds-cas_static-person_cases_v2_b4b5d57a',
     'ucr_table_name_mapping': 'ucr_table_name_mapping',
     'usage': 'config_report_icds-cas_static-usage_forms_92fbe2aa',
-    'vhnd': 'config_report_icds-cas_static-vhnd_form_28e7fd58'
+    'vhnd': 'config_report_icds-cas_static-vhnd_form_28e7fd58',
+    'complementary_feeding': 'config_report_icds-cas_static-complementary_feeding_fo_4676987e',
 }
 
 
@@ -97,7 +98,8 @@ def setUpModule():
             with open(os.path.join(path, file_name)) as f:
                 table_name = FILE_NAME_TO_TABLE_MAPPING[file_name[:-4]]
                 table = metadata.tables[table_name]
-                postgres_copy.copy_from(f, table, engine, format=b'csv', null=b'', header=True)
+                if not table_name.startswith('icds_dashboard_'):
+                    postgres_copy.copy_from(f, table, engine, format=b'csv', null=b'', header=True)
 
         try:
             move_ucr_data_into_aggregation_tables(datetime(2017, 5, 28), intervals=2)
