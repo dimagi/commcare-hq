@@ -1,39 +1,37 @@
 from __future__ import absolute_import
-import uuid
-import random
-from datetime import datetime
 
-from django.conf import settings
-from django.core.management import call_command
+import random
+import uuid
+from datetime import datetime, timedelta
 from django.test import TestCase
 
-from corehq.form_processor.tests.utils import partitioned
-from corehq.warehouse.models import ApplicationStagingTable
-from corehq.warehouse.models import (
-    UserStagingTable,
-    GroupStagingTable,
-    LocationStagingTable,
-    LocationTypeStagingTable,
-    Batch,
-)
 import six
+from django.conf import settings
+from django.core.management import call_command
 
-DEFAULT_BATCH_ID = '222617b9-8cf0-40a2-8462-7f872e1f1344'
+from corehq.form_processor.tests.utils import partitioned
+from corehq.warehouse.models import (ApplicationStagingTable, Batch,
+    GroupStagingTable, LocationStagingTable, UserStagingTable)
 
 
-def get_default_batch():
-    return Batch.objects.get(batch_id=DEFAULT_BATCH_ID)
-
-
-def create_batch(start, end, batch_id=None):
-    batch_id = batch_id or str(uuid.uuid4())
+def create_batch(slug):
+    # adding one second because last modified times have milliseconds while the command
+    # does not. this allows us to include all records modified at the same second
+    # which the records in the test are.
+    now = (datetime.utcnow() + timedelta(seconds=1)).strftime('%Y-%m-%d %H:%M:%S')
     call_command(
         'create_batch',
-        batch_id,
-        '-s={}'.format(start.isoformat()),
-        '-e={}'.format(end.isoformat()),
+        slug,
+        now
     )
-    return Batch.objects.get(batch_id=batch_id)
+    return Batch.objects.filter(dag_slug=slug).order_by('-created_on').first()
+
+
+def complete_batch(id):
+    call_command(
+        'mark_batch_complete',
+        id
+    )
 
 
 def create_user_staging_record(
@@ -42,7 +40,8 @@ def create_user_staging_record(
         username=None,
         doc_type=None,
         base_doc=None,
-        batch_id=None):
+        batch_id=None,
+        domain_memberships=None):
     record = UserStagingTable(
         user_id=user_id or uuid.uuid4().hex,
         username=username or 'user-staging',
@@ -53,7 +52,8 @@ def create_user_staging_record(
         is_staff=False,
         is_superuser=False,
         date_joined=datetime.utcnow(),
-        batch_id=batch_id or DEFAULT_BATCH_ID
+        batch_id=batch_id,
+        domain_memberships=domain_memberships,
     )
     record.save()
     return record
@@ -75,7 +75,7 @@ def create_group_staging_record(
         user_ids=user_ids or [],
         removed_user_ids=removed_user_ids or [],
         group_last_modified=datetime.utcnow(),
-        batch_id=batch_id or DEFAULT_BATCH_ID
+        batch_id=batch_id
     )
     record.save()
     return record
@@ -88,7 +88,9 @@ def create_location_staging_record(
         location_id=None,
         location_type_id=None,
         sql_location_id=None,
-        sql_parent_location_id=None):
+        sql_parent_location_id=None,
+        location_type_name=None,
+        location_type_code=None):
     record = LocationStagingTable(
         domain=domain,
         name=name,
@@ -97,21 +99,10 @@ def create_location_staging_record(
         user_id=uuid.uuid4().hex,
         sql_location_id=sql_location_id if sql_location_id is not None else random.randint(0, 100),
         sql_parent_location_id=sql_parent_location_id,
+        location_type_name=location_type_name if location_type_name is not None else '',
+        location_type_code=location_type_code if location_type_code is not None else '',
         location_last_modified=datetime.utcnow(),
-        batch_id=batch_id or DEFAULT_BATCH_ID
-    )
-    record.save()
-    return record
-
-
-def create_location_type_staging_record(domain, name, location_type_id, code=None, batch_id=None):
-    record = LocationTypeStagingTable(
-        domain=domain,
-        name=name,
-        location_type_id=location_type_id,
-        code=code,
-        location_type_last_modified=datetime.utcnow(),
-        batch_id=batch_id or DEFAULT_BATCH_ID
+        batch_id=batch_id
     )
     record.save()
     return record
@@ -129,7 +120,7 @@ def create_application_staging_record(domain, name, app_id=None, doc_type=None, 
     return record
 
 
-def create_location_records_from_tree(domain, tree):
+def create_location_records_from_tree(domain, tree, batch_id):
     '''
     Expects a dictionary object that specifies a location hierarchy. Example:
 
@@ -149,30 +140,10 @@ def create_location_records_from_tree(domain, tree):
     }
     '''
 
-    location_types = {}
-    _create_location_types_from_tree(domain, tree, location_types)
-    _create_locations_from_tree(domain, tree, None, location_types, {})
+    _create_locations_from_tree(domain, tree, None, {}, batch_id)
 
 
-def _create_location_types_from_tree(domain, tree, location_types):
-    if not tree:
-        return
-
-    for location_tuple, next_tree in six.iteritems(tree):
-        location_name, location_type = location_tuple
-
-        if location_type not in location_types:
-            location_types[location_type] = create_location_type_staging_record(
-                domain=domain,
-                name=location_type,
-                code=location_type,
-                location_type_id=len(location_types),
-            )
-
-        _create_location_types_from_tree(domain, next_tree, location_types)
-
-
-def _create_locations_from_tree(domain, tree, parent_id, location_types, next_id):
+def _create_locations_from_tree(domain, tree, parent_id, next_id, batch_id):
     if not tree:
         return
 
@@ -183,16 +154,18 @@ def _create_locations_from_tree(domain, tree, parent_id, location_types, next_id
         location_name, location_type = item[0]
         next_tree = item[1]
 
-        location_type_record = location_types[location_type]
         create_location_staging_record(
             domain,
             location_name,
-            location_type_id=location_type_record.location_type_id,
+            location_type_id=index,
             sql_location_id=next_id['id'],
             sql_parent_location_id=parent_id,
+            batch_id=batch_id,
+            location_type_name=location_type,
+            location_type_code=location_type
         )
         next_id['id'] += 1
-        _create_locations_from_tree(domain, next_tree, next_id['id'] - 1, location_types, next_id)
+        _create_locations_from_tree(domain, next_tree, next_id['id'] - 1, next_id, batch_id)
 
 
 @partitioned
