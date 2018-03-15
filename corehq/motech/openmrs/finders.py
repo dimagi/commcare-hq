@@ -1,22 +1,34 @@
-from __future__ import absolute_import, division
+from __future__ import absolute_import
+from __future__ import division
+
 from collections import namedtuple
 from pprint import pformat
 
 from jsonpath_rw import parse
 
+from dimagi.ext.couchdbkit import (
+    DecimalProperty,
+    DocumentSchema,
+    ListProperty,
+    StringProperty,
+)
 
-PATIENT_FINDERS = []
 
-
-def register_patient_finder(class_):
-    PATIENT_FINDERS.append(class_)
-    return class_
-
-
-class PatientFinderBase(object):
+class PatientFinder(DocumentSchema):
     """
-    PatientFinderBase is used to find a patient if ID matchers fail.
+    PatientFinder is used to find a patient if ID matchers fail.
     """
+
+    @classmethod
+    def wrap(cls, data):
+        from corehq.motech.openmrs.openmrs_config import recurse_subclasses
+
+        if cls is PatientFinder:
+            return {
+                sub._doc_type: sub for sub in recurse_subclasses(cls)
+            }[data['doc_type']].wrap(data)
+        else:
+            return super(PatientFinder, cls).wrap(data)
 
     def find_patients(self, requests, case, case_config):
         """
@@ -66,27 +78,45 @@ def get_caseproperty_jsonpathvaluemap(jsonpath, value_source):
 PatientScore = namedtuple('PatientScore', ['patient', 'score'])
 
 
-class WeightedPropertyPatientFinder(PatientFinderBase):
+class PropertyWeight(DocumentSchema):
+    case_property = StringProperty()
+    weight = DecimalProperty()
+
+
+class WeightedPropertyPatientFinder(PatientFinder):
     """
     Finds patients that match cases by assigning weights to matching
     property values, and adding those weights to calculate a confidence
     score.
     """
-    def __init__(self, searchable_properties, property_weights, threshold=1, confidence_margin=0.1):
-        """
-        Initialise the instance
 
-        :param searchable_properties: Properties that can be used to
-               search for patients in OpenMRS
-        :param property_weights: A dictionary of case property names
-               and their weights
-        :param threshold: The sum of weights that must be met in order
-               for a patient to be considered a match
-        """
-        self.searchable_properties = searchable_properties
-        self.property_weights = property_weights
-        self.threshold = threshold
-        self.confidence_margin = confidence_margin
+    # Identifiers that are searchable in OpenMRS. e.g.
+    #     [ 'bahmni_id', 'household_id', 'last_name']
+    searchable_properties = ListProperty()
+
+    # The weight assigned to a matching property.
+    # [
+    #     {"case_property": "bahmni_id", "weight": 0.9},
+    #     {"case_property": "household_id", "weight": 0.9},
+    #     {"case_property": "dob", "weight": 0.75},
+    #     {"case_property": "first_name", "weight": 0.025},
+    #     {"case_property": "last_name", "weight": 0.025},
+    #     {"case_property": "municipality", "weight": 0.2},
+    # ]
+    property_weights = ListProperty(PropertyWeight)
+
+    # The threshold that the sum of weights must pass for a CommCare case to
+    # be considered a match to an OpenMRS patient
+    threshold = DecimalProperty(default=1.0)
+
+    # If more than one patient passes `threshold`, the margin by which the
+    # weight of the best match must exceed the weight of the second-best match
+    # to be considered correct.
+    confidence_margin = DecimalProperty(default=0.667)  # Default: Matches two thirds better than second-best
+
+
+    def __init__(self):
+        super(WeightedPropertyPatientFinder, self).__init__()
         self.property_map = {}
 
     def set_property_map(self, case_config):

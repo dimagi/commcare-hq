@@ -1,5 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
+from corehq.motech.openmrs.finders import PatientFinder
 from dimagi.ext.couchdbkit import (
     DictProperty,
     DocumentSchema,
@@ -121,6 +123,7 @@ class FormQuestionConcept(FormQuestion):
 
 class OpenmrsCaseConfig(DocumentSchema):
     id_matchers = SchemaListProperty(IdMatcher)
+    patient_finder = PatientFinder(required=False)
     person_properties = SchemaDictProperty(ValueSource)
     person_preferred_name = SchemaDictProperty(ValueSource)
     person_preferred_address = SchemaDictProperty(ValueSource)
@@ -144,4 +147,3 @@ class OpenmrsConfig(DocumentSchema):
     openmrs_provider = StringProperty(required=False)
     case_config = SchemaProperty(OpenmrsCaseConfig)
     form_configs = ListProperty(OpenmrsFormConfig)
-    patient_finder = StringProperty(required=False)

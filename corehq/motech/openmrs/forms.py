@@ -4,33 +4,21 @@ import logging
 from django import forms
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext as _
-from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.userreports.ui.fields import JsonField
 from corehq.motech.openmrs.const import LOG_LEVEL_CHOICES, IMPORT_FREQUENCY_CHOICES
 from corehq.motech.openmrs.dbaccessors import get_openmrs_importers_by_domain
-from corehq.motech.openmrs.finders import PATIENT_FINDERS
 from corehq.motech.openmrs.models import OpenmrsImporter, ColumnMapping
 from corehq.motech.openmrs.repeater_helpers import PERSON_PROPERTIES, NAME_PROPERTIES, ADDRESS_PROPERTIES
 from corehq.motech.utils import b64_aes_encrypt
-from crispy_forms import layout as crispy
-from crispy_forms.bootstrap import StrictButton
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
 from six.moves import map
-
-
-def patient_finder_choices():
-    def fullname(class__):
-        return '.'.join((class__.__module__, class__.__name__))
-
-    return [('', 'Match on IDs only')] + [(fullname(class_), class_.__name__) for class_ in PATIENT_FINDERS]
 
 
 class OpenmrsConfigForm(forms.Form):
     openmrs_provider = forms.CharField(label=_('Provider UUID'), required=False)
     case_config = JsonField(expected_type=dict)
     form_configs = JsonField(expected_type=list)
-    patient_finder = forms.ChoiceField(choices=patient_finder_choices, required=False)
 
     def __init__(self, *args, **kwargs):
         super(OpenmrsConfigForm, self).__init__(*args, **kwargs)
