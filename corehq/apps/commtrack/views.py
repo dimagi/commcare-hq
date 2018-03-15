@@ -316,6 +316,17 @@ class RebuildStockStateView(BaseCommTrackManageView):
         else:
             return ServerTime(server_date).ui_string()
 
+    @memoized
+    def selected_case_id(self):
+        location_id = self.request.GET.get('location_id')
+        if location_id:
+            try:
+                return (SQLLocation.objects
+                        .get(domain=self.domain, location_id=location_id)
+                        .supply_point_id)
+            except SQLLocation.DoesNotExist:
+                messages.error(self.request, 'Your location id did not match a location')
+
     @property
     def page_context(self, **kwargs):
         stock_state_limit = self.request.GET.get('stock_state_limit', 100)
@@ -324,15 +335,8 @@ class RebuildStockStateView(BaseCommTrackManageView):
         stock_transaction_limit_exceeded = False
 
         query = StockTransaction.objects.filter(report__domain=self.domain)
-        if self.location_id:
-            try:
-                case_id = (SQLLocation.objects
-                           .get(domain=self.domain, location_id=self.location_id)
-                           .supply_point_id)
-            except SQLLocation.DoesNotExist:
-                messages.error(self.request, 'Your location id did not match a location')
-            else:
-                query = query.filter(case_id=case_id)
+        if self.selected_case_id:
+            query = query.filter(case_id=self.selected_case_id)
 
         stock_state_keys = [
             (txn.case_id, txn.section_id, txn.product_id)
@@ -376,10 +380,6 @@ class RebuildStockStateView(BaseCommTrackManageView):
             'stock_transaction_limit_exceeded': stock_transaction_limit_exceeded,
             'stock_transaction_limit': stock_transaction_limit,
         }
-
-    def get(self, *args, **kwargs):
-        self.location_id = self.request.GET.get('location_id')
-        return super(RebuildStockStateView, self).get(*args, **kwargs)
 
     def post(self, request, *args, **kwargs):
         case_id = request.POST.get('case_id')
