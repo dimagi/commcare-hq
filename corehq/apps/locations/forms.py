@@ -28,6 +28,7 @@ from corehq.apps.users.forms import NewMobileWorkerForm, generate_strong_passwor
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import user_display_string
 from corehq.apps.hqwebapp import crispy as hqcrispy
+from corehq.elastic import refresh_elasticsearch_index
 
 from .models import SQLLocation, LocationType, LocationFixtureConfiguration
 from .permissions import user_can_access_location_id
@@ -534,6 +535,8 @@ class UsersAtLocationForm(forms.Form):
     @property
     @memoized
     def users_at_location(self):
+        refresh_elasticsearch_index('users')
+
         user_query = UserES().domain(
             self.domain_object.name
         ).mobile_users().location(
