@@ -1389,6 +1389,7 @@ class MessageConfigurationTypeFilter(BaseSingleOptionFilter):
     TYPE_CONDITIONAL_ALERT = 'conditional_alert'
 
     options = [
+        (TYPE_BROADCAST, ugettext_lazy("Broadcasts")),
         (TYPE_CONDITIONAL_ALERT, ugettext_lazy("Conditional Alerts")),
     ]
 
@@ -1458,6 +1459,31 @@ class ScheduleInstanceReport(ProjectReport, ProjectReportParametersMixin, Generi
                 rule.name,
             )
 
+    def get_broadcast_display(self, schedule_instance):
+        if isinstance(schedule_instance, AlertScheduleInstance):
+            cls = ImmediateBroadcast
+            schedule_id = schedule_instance.alert_schedule_id
+            broadcast_type = EditScheduleView.IMMEDIATE_BROADCAST
+        elif isinstance(schedule_instance, TimedScheduleInstance):
+            cls = ScheduledBroadcast
+            schedule_id = schedule_instance.timed_schedule_id
+            broadcast_type = EditScheduleView.SCHEDULED_BROADCAST
+        else:
+            raise TypeError("Expected AlertScheduleInstance or TimedScheduleInstance")
+
+        try:
+            broadcast = cls.objects.get(domain=self.domain, schedule_id=schedule_id)
+        except cls.DoesNotExist:
+            return '-'
+
+        if broadcast.deleted:
+            return _("(Deleted Broadcast)")
+        else:
+            return self.get_link_display(
+                reverse(EditScheduleView.urlname, args=[self.domain, broadcast_type, broadcast.pk]),
+                broadcast.name,
+            )
+
     def get_recipient_display(self, recipient):
         if recipient is None:
             return _("(no recipient)")
@@ -1496,8 +1522,13 @@ class ScheduleInstanceReport(ProjectReport, ProjectReportParametersMixin, Generi
             return _("(unknown)")
 
     def get_querysets(self):
+        if self.configuration_type == MessageConfigurationTypeFilter.TYPE_CONDITIONAL_ALERT:
+            classes = (CaseAlertScheduleInstance, CaseTimedScheduleInstance)
+        else:
+            classes = (AlertScheduleInstance, TimedScheduleInstance)
+
         for db_alias in get_db_aliases_for_partitioned_query():
-            for cls in (CaseAlertScheduleInstance, CaseTimedScheduleInstance):
+            for cls in classes:
                 yield cls.objects.using(db_alias).filter(
                     domain=self.domain,
                     active=True,
@@ -1515,6 +1546,24 @@ class ScheduleInstanceReport(ProjectReport, ProjectReportParametersMixin, Generi
 
         return result[self.pagination.start:self.pagination.start + self.pagination.count]
 
+    def get_schedule_instance_display(self, schedule_instance):
+        if isinstance(schedule_instance, (AlertScheduleInstance, TimedScheduleInstance)):
+            return [
+                self.get_utc_timestamp_display(schedule_instance.next_event_due),
+                self.get_broadcast_display(schedule_instance),
+                self.get_recipient_display(schedule_instance.recipient),
+                '-',
+            ]
+        elif isinstance(schedule_instance, (CaseAlertScheduleInstance, CaseTimedScheduleInstance)):
+            return [
+                self.get_utc_timestamp_display(schedule_instance.next_event_due),
+                self.get_rule_display(schedule_instance.rule_id),
+                self.get_recipient_display(schedule_instance.recipient),
+                self.get_case_display(schedule_instance.case) if schedule_instance.case else '-',
+            ]
+        else:
+            raise TypeError("Unexpected type: %s" % type(schedule_instance))
+
     @property
     def rows(self):
         if self.max_pages_reached:
@@ -1526,12 +1575,8 @@ class ScheduleInstanceReport(ProjectReport, ProjectReportParametersMixin, Generi
             ]]
 
         return [
-            [
-                self.get_utc_timestamp_display(schedule_instance.next_event_due),
-                self.get_rule_display(schedule_instance.rule_id),
-                self.get_recipient_display(schedule_instance.recipient),
-                self.get_case_display(schedule_instance.case) if schedule_instance.case else '-',
-            ] for schedule_instance in self.get_current_page_records()
+             self.get_schedule_instance_display(schedule_instance)
+             for schedule_instance in self.get_current_page_records()
         ]
 
     @classmethod
