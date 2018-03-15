@@ -423,7 +423,7 @@ class LocationView(View):
 
         locations = SQLLocation.objects.accessible_to_user(self.kwargs['domain'], self.request.couch_user)
         if not parent_id:
-            locations = locations.filter(domain=self.kwargs['domain'], parent_id__isnull=True)
+            locations = locations.filter(parent_id__isnull=True)
         else:
             locations = locations.filter(parent__location_id=parent_id)
 
