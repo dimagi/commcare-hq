@@ -337,6 +337,9 @@ class RebuildStockStateView(BaseCommTrackManageView):
         query = StockTransaction.objects.filter(report__domain=self.domain)
         if self.selected_case_id:
             query = query.filter(case_id=self.selected_case_id)
+        selected_product_id = self.request.GET.get('product_id')
+        if selected_product_id:
+            query = query.filter(product_id=selected_product_id)
 
         stock_state_keys = [
             (txn.case_id, txn.section_id, txn.product_id)
