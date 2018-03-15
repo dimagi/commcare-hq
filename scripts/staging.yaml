@@ -51,12 +51,12 @@ branches:
   - vellum-staging # J$ 11/13
   # - je/cythonized-jsonobject # j$ 1/8
   # - fr/two-factor-mobile-users  # FR 2/7
-  - nh/omrs/repeater_format  # Norman 2/15
   - jr/ejs/sms-chat # Jordan 2/16
   - mk-mock-repeater-report # MK 28-Feb
   - ce/auto-batches # Cal 3/5
   - sr-pg-synclogs # Sravan 8-March
   - sr-form-meta # Sravan 11-March
+  - nh/omrs/finders+rollback  # Norman 2018-03-15 (loving the date format diversity happening here)
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
