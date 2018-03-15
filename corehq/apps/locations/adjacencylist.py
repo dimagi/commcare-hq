@@ -53,21 +53,24 @@ class AdjListManager(TreeManager):
             where = node
         elif include_self:
             if isinstance(node, QuerySet):
-                where = Q(id__in=node)
+                where = Q(id__in=node.order_by())
             else:
                 where = Q(id=node.id)
         elif isinstance(node, QuerySet):
-            where = Q(id__in=node.values(parent_col))
+            where = Q(id__in=node.order_by().values(parent_col))
         else:
             where = Q(id=getattr(node, parent_col))
 
         def make_cte_query(cte):
-            return self.filter(where).values(
+            return self.filter(where).order_by().values(
                 "id",
                 parent_col,
                 _depth=Value(0, output_field=int_field),
             ).union(
-                cte.join(self.model, id=getattr(cte.col, parent_col)).values(
+                cte.join(
+                    self.all().order_by(),
+                    id=getattr(cte.col, parent_col)
+                ).values(
                     "id",
                     parent_col,
                     _depth=cte.col._depth + Value(1, output_field=int_field),
@@ -100,23 +103,26 @@ class AdjListManager(TreeManager):
             discard_dups = True
         elif include_self:
             if isinstance(node, QuerySet):
-                where = Q(id__in=node)
+                where = Q(id__in=node.order_by())
                 discard_dups = True
             else:
                 where = Q(id=node.id)
         elif isinstance(node, QuerySet):
-            where = Q(**{parent_col + "__in": node})
+            where = Q(**{parent_col + "__in": node.order_by()})
             discard_dups = True
         else:
             where = Q(**{parent_col: node.id})
 
         def make_cte_query(cte):
-            return self.filter(where).values(
+            return self.filter(where).order_by().values(
                 "id",
                 parent_col,
                 _cte_ordering=StrArray(ordering_col),
             ).union(
-                cte.join(self.model, **{parent_col: cte.col.id}).annotate(
+                cte.join(
+                    self.all().order_by(),
+                    **{parent_col: cte.col.id}
+                ).annotate(
                     _cte_ordering=array_append(
                         cte.col._cte_ordering,
                         F(ordering_col),
