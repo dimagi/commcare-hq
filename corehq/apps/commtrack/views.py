@@ -354,26 +354,12 @@ class RebuildStockStateView(BaseCommTrackManageView):
         actions_by_stock_state_key = []
         stock_transaction_count = 0
         for stock_state_key in stock_state_keys:
-            case_id, section_id, product_id = stock_state_key
-            actions = [
-                (
-                    action.__class__.__name__,
-                    action,
-                    self.get_server_date_by_form_id(
-                        action.stock_transaction.report.form_id),
-                ) for action in
-                plan_rebuild_stock_state(case_id, section_id, product_id)
-            ]
-            stock_transaction_count += len(actions)
+            actions = self.get_actions_by_stock_state_key(*stock_state_key)
+            stock_transaction_count += len(actions[1])
             if stock_transaction_count > stock_transaction_limit:
                 stock_transaction_limit_exceeded = True
                 break
-            actions_by_stock_state_key.append(
-                ({'case_id': case_id, 'section_id': section_id,
-                  'product_id': product_id},
-                 actions,
-                 get_doc_info_by_id(self.domain, case_id))
-            )
+            actions_by_stock_state_key.append(actions)
 
         assert len(set(stock_state_keys)) == len(stock_state_keys)
         return {
@@ -383,6 +369,24 @@ class RebuildStockStateView(BaseCommTrackManageView):
             'stock_transaction_limit_exceeded': stock_transaction_limit_exceeded,
             'stock_transaction_limit': stock_transaction_limit,
         }
+
+    def get_actions_by_stock_state_key(self, case_id, section_id, product_id):
+        actions = [
+            (
+                action.__class__.__name__,
+                action,
+                self.get_server_date_by_form_id(
+                    action.stock_transaction.report.form_id),
+            ) for action in
+            plan_rebuild_stock_state(case_id, section_id, product_id)
+        ]
+        return (
+            {'case_id': case_id,
+             'section_id': section_id,
+             'product_id': product_id},
+            actions,
+            get_doc_info_by_id(self.domain, case_id)
+        )
 
     def post(self, request, *args, **kwargs):
         case_id = request.POST.get('case_id')
