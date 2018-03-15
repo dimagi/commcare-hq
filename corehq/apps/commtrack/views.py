@@ -316,8 +316,7 @@ class RebuildStockStateView(BaseCommTrackManageView):
         else:
             return ServerTime(server_date).ui_string()
 
-    @memoized
-    def selected_case_id(self):
+    def _get_selected_case_id(self):
         location_id = self.request.GET.get('location_id')
         if location_id:
             try:
@@ -335,8 +334,9 @@ class RebuildStockStateView(BaseCommTrackManageView):
         stock_transaction_limit_exceeded = False
 
         query = StockTransaction.objects.filter(report__domain=self.domain)
-        if self.selected_case_id:
-            query = query.filter(case_id=self.selected_case_id)
+        selected_case_id = self._get_selected_case_id()
+        if selected_case_id:
+            query = query.filter(case_id=selected_case_id)
         selected_product_id = self.request.GET.get('product_id')
         if selected_product_id:
             query = query.filter(product_id=selected_product_id)
