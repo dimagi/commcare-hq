@@ -95,22 +95,11 @@ if [ "$EXISTENT_MODULE" == true ]; then
     sed -i "$ d" $NEW_MODULE_LOCATION
 else
     # create file
-    touch $NEW_MODULE_LOCATION
+    mkdir -p ./corehq/apps/$APP/static/$APP/js && touch $NEW_MODULE_LOCATION
 
     # add boilerplate
     echo "hqDefine('$NEW_MODULE_NAME', function() {" >> $NEW_MODULE_LOCATION
 fi
-
-# pull inline js from file, removes the script tags, and places it into the new file
-sed -n "/{% block js-inline %}/, /{% endblock\( js-inline\)\? %}/ p" $HTML_FILE_LOCATION | \
-    python -c "import sys; sys.stdout.writelines(sys.stdin.readlines()[2:-2])" >> $NEW_MODULE_LOCATION
-
-# remove from old file
-sed -i "/{% block js-inline %}/, /{% endblock\( js-inline\)\? %}/ d" $HTML_FILE_LOCATION
-
-# close off boilerplate
-echo "});" >> $NEW_MODULE_LOCATION
-
 
 if [ "$EXISTENT_MODULE" == false ]; then
     # add import to the html
@@ -124,12 +113,20 @@ if [ "$EXISTENT_MODULE" == false ]; then
         }" $HTML_FILE_LOCATION
     # otherwise, just tell them to add one somewhere on the page
     else
-        echo "----------------------------"
-        echo "Please add this static import somewhere in the html file"
-        echo "{% block js %}{{ block.super }}\n\t$SCRIPT_IMPORT\n{% endblock %}"
-        echo "----------------------------"
+        sed -i "/{% block js-inline %}/i \
+        {% block js %}{{ block.super }}\n\t$SCRIPT_IMPORT\n{% endblock %}" $HTML_FILE_LOCATION
     fi
 fi
+
+# pull inline js from file, removes the script tags, and places it into the new file
+sed -n "/{% block js-inline %}/, /{% endblock\( js-inline\)\? %}/ p" $HTML_FILE_LOCATION | \
+    python -c "import sys; sys.stdout.writelines(sys.stdin.readlines()[2:-2])" >> $NEW_MODULE_LOCATION
+
+# remove from old file
+sed -i "/{% block js-inline %}/, /{% endblock\( js-inline\)\? %}/ d" $HTML_FILE_LOCATION
+
+# close off boilerplate
+echo "});" >> $NEW_MODULE_LOCATION
 
 
 # fix eslint issues
@@ -172,13 +169,32 @@ if [ "$TEMPLATE_TAG_COUNT" -gt 0 ]; then
                 $INITIALPAGEDATA_IMPORT" $NEW_MODULE_LOCATION
         echo "and in particular these lines"
         echo $INITIAL_PAGE_DATA_TAG_LINES
-        echo "and add these data imports as well"
-        for ipd in $INITIAL_PAGE_DATA_TAGS; do
-            echo "{% initial_page_data '$ipd' $ipd %}"
-        done
+        PAGE_CONTENT=`sed -n "/block page_content/=" $HTML_FILE_LOCATION`
+        PAGE_CONTENT_WORDS=`echo $INITIAL_PAGE_DATA_TAGS | wc -w`
+        if [ "$PAGE_CONTENT_WORDS" -gt 0 ]; then
+            IFS=$'\n'
+            for ipd in $INITIAL_PAGE_DATA_TAGS; do
+                sed -i "/block page_content/a\
+                {% initial_page_data '$ipd' $ipd %}" $HTML_FILE_LOCATION
+            done
+        else
+            echo "and add these data imports as well"
+            for ipd in $INITIAL_PAGE_DATA_TAGS; do
+                echo "{% initial_page_data '$ipd' $ipd %}"
+            done
+        fi
     fi
+
+    git add $NEW_MODULE_LOCATION $HTML_FILE_LOCATION
+    git commit -m "initial page data"
+
     echo "----------------------------"
 fi
+
+
+# fix eslint issues
+echo "Maybe fixing more lint issues"
+eslint --fix $NEW_MODULE_LOCATION || true
 
 
 # a bit more yelling at the user

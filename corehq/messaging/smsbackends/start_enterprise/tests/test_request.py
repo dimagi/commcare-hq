@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from corehq.apps.sms.models import QueuedSMS
 from corehq.messaging.smsbackends.start_enterprise.models import StartEnterpriseBackend
 from corehq.apps.sms.util import strip_plus
@@ -13,7 +14,7 @@ TEST_PASSWORD = 'def'
 TEST_SENDER_ID = 'ghi'
 TEST_PHONE_NUMBER = '+919999999999'
 TEST_TEXT_MESSAGE = 'ASCII Message'
-TEST_UNICODE_MESSAGE = u"\u0928\u092e\u0938\u094d\u0924\u0947"
+TEST_UNICODE_MESSAGE = "\u0928\u092e\u0938\u094d\u0924\u0947"
 
 
 class TestStartEnterpriseBackendRequest(TestCase):

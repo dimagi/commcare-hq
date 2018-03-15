@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from datetime import datetime
 import time
 import uuid
@@ -659,7 +660,7 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
         return [d['key'] for d in Domain.view(
             "domain/domains",
             startkey=prefix,
-            endkey=prefix + u"zzz",
+            endkey=prefix + "zzz",
             reduce=False,
             include_docs=False
         ).all()]
@@ -941,7 +942,7 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
         for result in results:
             response = result[1]
             if isinstance(response, Exception):
-                message = u"Error occurred during domain pre_delete {}".format(self.name)
+                message = "Error occurred during domain pre_delete {}".format(self.name)
                 raise DomainDeleteException(message, response)
             elif response:
                 assert isinstance(response, list)
@@ -990,8 +991,7 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
         import and return the python module corresponding to domain_name, or
         None if it doesn't exist.
         """
-        from corehq.apps.domain.utils import get_domain_module_map
-        module_name = get_domain_module_map().get(domain_name, domain_name)
+        module_name = settings.DOMAIN_MODULE_MAP.get(domain_name, domain_name)
 
         try:
             return import_module(module_name) if module_name else None
@@ -1167,13 +1167,13 @@ class TransferDomainRequest(models.Model):
         self.email_from_request()
 
     def activate_url(self):
-        return u"{url_base}/domain/transfer/{guid}/activate".format(
+        return "{url_base}/domain/transfer/{guid}/activate".format(
             url_base=get_url_base(),
             guid=self.transfer_guid
         )
 
     def deactivate_url(self):
-        return u"{url_base}/domain/transfer/{guid}/deactivate".format(
+        return "{url_base}/domain/transfer/{guid}/deactivate".format(
             url_base=get_url_base(),
             guid=self.transfer_guid
         )
@@ -1185,14 +1185,14 @@ class TransferDomainRequest(models.Model):
         text_content = render_to_string("{template}.txt".format(template=self.TRANSFER_TO_EMAIL), context)
 
         send_html_email_async.delay(
-            _(u'Transfer of ownership for CommCare project space.'),
+            _('Transfer of ownership for CommCare project space.'),
             self.to_user.email,
             html_content,
             text_content=text_content)
 
     def email_from_request(self):
         context = self.as_dict()
-        context['settings_url'] = u"{url_base}{path}".format(
+        context['settings_url'] = "{url_base}{path}".format(
             url_base=get_url_base(),
             path=reverse('transfer_domain_view', args=[self.domain]))
 
@@ -1200,7 +1200,7 @@ class TransferDomainRequest(models.Model):
         text_content = render_to_string("{template}.txt".format(template=self.TRANSFER_FROM_EMAIL), context)
 
         send_html_email_async.delay(
-            _(u'Transfer of ownership for CommCare project space.'),
+            _('Transfer of ownership for CommCare project space.'),
             self.from_user.email,
             html_content,
             text_content=text_content)
@@ -1226,7 +1226,7 @@ class TransferDomainRequest(models.Model):
             self.as_dict())
 
         send_html_email_async.delay(
-            _(u'There has been a transfer of ownership of {domain}').format(
+            _('There has been a transfer of ownership of {domain}').format(
                 domain=self.domain), self.DIMAGI_CONFIRM_ADDRESS,
             html_content, text_content=text_content
         )

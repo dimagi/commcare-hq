@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import hashlib
 from django.core.cache import cache
 
@@ -14,7 +15,7 @@ class ExponentialBackoff(object):
     @classmethod
     def _get_cache_key(cls, key):
         key_hash = hashlib.md5(key).hexdigest() if key else ''
-        return u'django-exp-backoff.{}'.format(key_hash)
+        return 'django-exp-backoff.{}'.format(key_hash)
 
     @classmethod
     def _number_is_power_of_two(cls, x):

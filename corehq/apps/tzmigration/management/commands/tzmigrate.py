@@ -1,6 +1,7 @@
 from __future__ import print_function
 
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.core.management.base import BaseCommand, CommandError
 
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
@@ -115,7 +116,7 @@ class Command(BaseCommand):
                 if is_datetime_string(json_diff.old_value) and is_datetime_string(json_diff.new_value):
                     continue
             if json_diff in (
-                    FormJsonDiff(diff_type=u'type', path=[u'external_id'], old_value=u'', new_value=None),
-                    FormJsonDiff(diff_type=u'type', path=[u'closed_by'], old_value=u'', new_value=None)):
+                    FormJsonDiff(diff_type='type', path=['external_id'], old_value='', new_value=None),
+                    FormJsonDiff(diff_type='type', path=['closed_by'], old_value='', new_value=None)):
                 continue
             print('[{}] {}'.format(diff.doc_id, json_diff))

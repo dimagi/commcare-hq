@@ -6,6 +6,7 @@ import errno
 import os
 import shutil
 import sys
+from collections import namedtuple
 from hashlib import md5
 from os.path import commonprefix, exists, isabs, isdir, dirname, join, realpath, sep
 
@@ -44,6 +45,8 @@ class FilesystemBlobDB(AbstractBlobDB):
         b64digest = base64.b64encode(digest.digest())
         if timeout is not None:
             set_blob_expire_object(bucket, identifier, length, timeout)
+        datadog_counter('commcare.blobs.added.count')
+        datadog_counter('commcare.blobs.added.bytes', value=length)
         return BlobInfo(identifier, length, "md5-" + b64digest)
 
     def get(self, identifier, bucket=DEFAULT_BUCKET):
@@ -58,7 +61,7 @@ class FilesystemBlobDB(AbstractBlobDB):
         if not exists(path):
             datadog_counter('commcare.blobdb.notfound')
             raise NotFound(identifier, bucket)
-        return os.path.getsize(path)
+        return _count_size(path).size
 
     def exists(self, identifier, bucket=DEFAULT_BUCKET):
         path = self.get_path(identifier, bucket)
@@ -74,16 +77,26 @@ class FilesystemBlobDB(AbstractBlobDB):
             remove = os.remove
         if not exists(path):
             return False
+        cs = _count_size(path)
+        datadog_counter('commcare.blobs.deleted.count', value=cs.count)
+        datadog_counter('commcare.blobs.deleted.bytes', value=cs.size)
         remove(path)
         return True
 
     def bulk_delete(self, paths):
         success = True
+        deleted_count = 0
+        deleted_bytes = 0
         for path in paths:
             if not exists(path):
                 success = False
             else:
+                cs = _count_size(path)
+                deleted_count += cs.count
+                deleted_bytes += cs.size
                 os.remove(path)
+        datadog_counter('commcare.blobs.deleted.count', value=deleted_count)
+        datadog_counter('commcare.blobs.deleted.bytes', value=deleted_bytes)
         return success
 
     def copy_blob(self, content, info, bucket):
@@ -115,6 +128,22 @@ def safejoin(root, subpath):
     if commonprefix([root + sep, path]) != root + sep:
         raise BadName(u"invalid relative path: %r" % subpath)
     return path
+
+
+def _count_size(path):
+    if isdir(path):
+        count = 0
+        size = 0
+        for root, dirs, files in os.walk(path):
+            count += len(files)
+            size += sum(os.path.getsize(join(root, name)) for name in files)
+    else:
+        count = 1
+        size = os.path.getsize(path)
+    return _CountSize(count, size)
+
+
+_CountSize = namedtuple("_CountSize", "count size")
 
 
 def openfile(path, mode="r", *args, **kw):

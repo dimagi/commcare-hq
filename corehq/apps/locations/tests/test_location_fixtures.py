@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import uuid
 import mock
 import os
@@ -701,6 +702,7 @@ class ShouldSyncLocationFixturesTest(TestCase):
         after_save = datetime.utcnow()
         self.assertEqual('winterfell', location.name)
         locations_queryset = SQLLocation.objects.filter(pk=location.pk)
+        # Should not resync if last sync was after location save
         self.assertFalse(
             should_sync_locations(SyncLog(date=after_save), locations_queryset, self.user.to_ota_restore_user())
         )
@@ -711,9 +713,11 @@ class ShouldSyncLocationFixturesTest(TestCase):
 
         location = SQLLocation.objects.last()
         locations_queryset = SQLLocation.objects.filter(pk=location.pk)
+        # Should resync if last sync was after location was saved but before location was archived
         self.assertTrue(
             should_sync_locations(SyncLog(date=after_save), locations_queryset, self.user.to_ota_restore_user())
         )
+        # Should not resync if last sync was after location was deleted
         self.assertFalse(
             should_sync_locations(SyncLog(date=after_archive), locations_queryset, self.user.to_ota_restore_user())
         )

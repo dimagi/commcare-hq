@@ -2,6 +2,7 @@
 A collection of functions which test the most basic operations of various services.
 """
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from collections import namedtuple
 from io import BytesIO
 import datetime

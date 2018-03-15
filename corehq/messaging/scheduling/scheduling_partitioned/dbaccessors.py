@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from corehq.sql_db.util import (
     run_query_across_partitioned_databases,
     get_db_aliases_for_partitioned_query,

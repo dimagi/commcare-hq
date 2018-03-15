@@ -1,5 +1,6 @@
 # encoding: utf-8
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from unidecode import unidecode
 from six.moves.urllib.parse import quote
 import six
@@ -23,10 +24,10 @@ def safe_filename(filename, extension=None):
     """
     filename = filename if isinstance(filename, six.text_type) else filename.decode('utf8')
     if extension is not None:
-        filename = u"{}.{}".format(filename, extension)
-    unsafe_chars = u':*?"<>|/\\\r\n'
+        filename = "{}.{}".format(filename, extension)
+    unsafe_chars = ':*?"<>|/\\\r\n'
     for c in unsafe_chars:
-        filename = filename.replace(c, u'')
+        filename = filename.replace(c, '')
     return filename
 
 

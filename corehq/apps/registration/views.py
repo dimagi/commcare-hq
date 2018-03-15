@@ -6,10 +6,11 @@ from django.contrib import messages
 from django.contrib.auth import authenticate, login
 from django.urls import reverse
 from django.db import transaction
-from django.http import HttpResponseRedirect, Http404
+from django.http import HttpResponseRedirect, Http404, HttpResponse
 from django.shortcuts import redirect, render
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _
+from django.views.decorators.http import require_POST
 import sys
 
 from django.views.generic.base import TemplateView, View
@@ -20,7 +21,8 @@ from corehq.apps.analytics.tasks import (
     track_workflow,
     track_confirmed_account_on_hubspot,
     track_clicked_signup_on_hubspot,
-)
+    update_hubspot_properties,
+    HUBSPOT_COOKIE)
 from corehq.apps.analytics.utils import get_meta
 from corehq.apps.app_manager.dbaccessors import domain_has_apps
 from corehq.apps.domain.decorators import login_required
@@ -29,11 +31,16 @@ from corehq.apps.domain.exceptions import NameUnavailableException
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.registration.models import RegistrationRequest
 from corehq.apps.registration.forms import DomainRegistrationForm, RegisterWebUserForm
-from corehq.apps.registration.utils import activate_new_user, send_new_request_update_email, request_new_domain, \
-    send_domain_registration_email
+from corehq.apps.registration.utils import (
+    activate_new_user,
+    send_new_request_update_email,
+    request_new_domain,
+    send_domain_registration_email,
+    send_mobile_experience_reminder)
 from corehq.apps.hqwebapp.decorators import use_jquery_ui, \
     use_ko_validation
 from corehq.apps.users.models import WebUser, CouchUser
+from corehq import toggles
 from django.contrib.auth.models import User
 from dimagi.utils.couch.resource_conflict import retry_resource
 from memoized import memoized
@@ -117,7 +124,23 @@ class ProcessRegistrationView(JSONResponseMixin, NewUserNumberAbTestMixin, View)
             web_user = WebUser.get_by_username(new_user.username)
             web_user.phone_numbers.append(reg_form.cleaned_data['phone_number'])
             web_user.save()
-        track_workflow(new_user.email, "Requested new account")
+
+        is_mobile = reg_form.cleaned_data.get('is_mobile')
+        email = new_user.email
+
+        if is_mobile:
+            toggles.MOBILE_SIGNUP_REDIRECT_AB_TEST_CONTROLLER.set(
+                email, True)
+        track_workflow(email,
+                       "Requested new account",
+                       {
+                           'mobile_visitor_march2018test': reg_form.cleaned_data.get('is_mobile'),
+                           'mobile_visitor_cohort_march2018test': (
+                               "control" if is_mobile and
+                               toggles.MOBILE_SIGNUP_REDIRECT_AB_TEST.enabled(
+                                   email, toggles.NAMESPACE_USER)
+                               else "variation")
+                       })
         login(self.request, new_user)
 
     @allow_remote_invocation
@@ -142,8 +165,22 @@ class ProcessRegistrationView(JSONResponseMixin, NewUserNumberAbTestMixin, View)
                         'project name unavailable': [],
                     }
                 }
+
+            persona_fields = {}
+            if reg_form.cleaned_data['persona']:
+                persona_fields['buyer_persona'] = reg_form.cleaned_data['persona']
+                if reg_form.cleaned_data['persona_other']:
+                    persona_fields['buyer_persona_other'] = reg_form.cleaned_data['persona_other']
+                couch_user = CouchUser.get_by_username(reg_form.cleaned_data['email'])
+                if couch_user:
+                    update_hubspot_properties.delay(couch_user, persona_fields)
+
             return {
                 'success': True,
+                'is_mobile_experience': (
+                    reg_form.cleaned_data.get('is_mobile') and
+                    toggles.MOBILE_SIGNUP_REDIRECT_AB_TEST.enabled(
+                        reg_form.cleaned_data['email'], toggles.NAMESPACE_USER))
             }
         logging.error(
             "There was an error processing a new user registration form."
@@ -185,7 +222,7 @@ class UserRegistrationView(NewUserNumberAbTestMixin, BasePageView):
     def post(self, request, *args, **kwargs):
         if self.prefilled_email:
             meta = get_meta(request)
-            track_clicked_signup_on_hubspot.delay(self.prefilled_email, request.COOKIES, meta)
+            track_clicked_signup_on_hubspot.delay(self.prefilled_email, request.COOKIES.get(HUBSPOT_COOKIE), meta)
         return super(UserRegistrationView, self).get(request, *args, **kwargs)
 
     @property
@@ -424,3 +461,12 @@ def eula_agreement(request):
         current_user.save()
 
     return HttpResponseRedirect(request.POST.get('next', '/'))
+
+
+@login_required
+@require_POST
+def send_mobile_reminder(request):
+    send_mobile_experience_reminder(request.user.username,
+                                    request.couch_user.full_name)
+
+    return HttpResponse()

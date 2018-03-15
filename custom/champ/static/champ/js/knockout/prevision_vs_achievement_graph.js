@@ -286,10 +286,12 @@ function PrecisionVsAchievementsGraphModel() {
         $.post(get_url, ko.toJSON(self.filters), function(data) {
             d3.select('#chart').datum(data.chart).call(chart);
             nv.utils.windowResize(chart.update);
+            $('#report-loading-container').hide();
         });
     };
 
     self.submit = function () {
+        $('#report-loading-container').show();
         self.getChartData(self.chart);
     };
 

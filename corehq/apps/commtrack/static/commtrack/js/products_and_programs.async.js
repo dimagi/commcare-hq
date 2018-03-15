@@ -15,7 +15,7 @@ hqDefine('commtrack/js/products_and_programs.async', function () {
             });
         };
 
-        view_model.change_page = function (page, next_or_last) {
+        view_model.change_page = function (page) {
             page = ko.utils.unwrapObservable(page);
 
             if (page) {
@@ -37,7 +37,7 @@ hqDefine('commtrack/js/products_and_programs.async', function () {
             return false;
         };
 
-        view_model.unsuccessful_archive_action = function (button, index) {
+        view_model.unsuccessful_archive_action = function (button) {
             return function (data) {
                 if (data.message && data.product_id) {
                     var alert_container = $('#alert_' + data.product_id);

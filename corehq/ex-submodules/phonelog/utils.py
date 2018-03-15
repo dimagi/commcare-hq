@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import requests
 from django.conf import settings
 from django.db import transaction
@@ -51,9 +52,9 @@ def process_device_log(domain, xform):
 
 
 def _process_user_subreport(xform):
+    if UserEntry.objects.filter(xform_id=xform.form_id).exists():
+        return
     userlogs = _get_logs(xform.form_data, 'user_subreport', 'user')
-    UserEntry.objects.filter(xform_id=xform.form_id).delete()
-    DeviceReportEntry.objects.filter(xform_id=xform.form_id).delete()
     to_save = []
     for i, log in enumerate(userlogs):
         to_save.append(UserEntry(
@@ -68,10 +69,10 @@ def _process_user_subreport(xform):
 
 
 def _process_log_subreport(domain, xform):
+    if DeviceReportEntry.objects.filter(xform_id=xform.form_id).exists():
+        return
     form_data = xform.form_data
     logs = _get_logs(form_data, 'log_subreport', 'log')
-    logged_in_username = None
-    logged_in_user_id = None
     to_save = []
     for i, log in enumerate(logs):
         if not log:
@@ -112,6 +113,8 @@ def _get_user_info_from_log(domain, log):
 
 
 def _process_user_error_subreport(domain, xform):
+    if UserErrorEntry.objects.filter(xform_id=xform.form_id).exists():
+        return
     errors = _get_logs(xform.form_data, 'user_error_subreport', 'user_error')
     to_save = []
     for i, error in enumerate(errors):
@@ -138,6 +141,8 @@ def _process_user_error_subreport(domain, xform):
 
 
 def _process_force_close_subreport(domain, xform):
+    if ForceCloseEntry.objects.filter(xform_id=xform.form_id).exists():
+        return
     force_closures = _get_logs(xform.form_data, 'force_close_subreport', 'force_close')
     to_save = []
     for force_closure in force_closures:
@@ -177,9 +182,9 @@ class SumoLogicLog(object):
         self.xform = xform
 
     def send_data(self, url):
-        requests.post(url, data=self.log_subreport(), headers=self._get_header('log'))
-        requests.post(url, data=self.user_error_subreport(), headers=self._get_header('user_error'))
-        requests.post(url, data=self.force_close_subreport(), headers=self._get_header('force_close'))
+        requests.post(url, data=self.log_subreport(), headers=self._get_header('log'), timeout=5)
+        requests.post(url, data=self.user_error_subreport(), headers=self._get_header('user_error'), timeout=5)
+        requests.post(url, data=self.force_close_subreport(), headers=self._get_header('force_close'), timeout=5)
 
     def _get_header(self, fmt):
         """
@@ -205,15 +210,15 @@ class SumoLogicLog(object):
             get_commcare_version_from_appversion_text,
         )
         template = (
-            u"[log_date={log_date}] "
-            u"[log_submission_date={log_submission_date}] "
-            u"[log_type={log_type}] "
-            u"[domain={domain}] "
-            u"[username={username}] "
-            u"[device_id={device_id}] "
-            u"[app_version={app_version}] "
-            u"[cc_version={cc_version}] "
-            u"[msg={msg}]"
+            "[log_date={log_date}] "
+            "[log_submission_date={log_submission_date}] "
+            "[log_type={log_type}] "
+            "[domain={domain}] "
+            "[username={username}] "
+            "[device_id={device_id}] "
+            "[app_version={app_version}] "
+            "[cc_version={cc_version}] "
+            "[msg={msg}]"
         )
         appversion_text = self.xform.form_data.get('app_version')
         return template.format(
@@ -243,13 +248,13 @@ class SumoLogicLog(object):
 
     def log_subreport(self):
         logs = _get_logs(self.xform.form_data, 'log_subreport', 'log')
-        return u"\n".join([self._fill_base_template(log) for log in logs if log.get('type') != 'forceclose'])
+        return "\n".join([self._fill_base_template(log) for log in logs if log.get('type') != 'forceclose'])
 
     def user_error_subreport(self):
         logs = _get_logs(self.xform.form_data, 'user_error_subreport', 'user_error')
-        log_additions_template = u" [app_id={app_id}] [user_id={user_id}] [session={session}] [expr={expr}]"
+        log_additions_template = " [app_id={app_id}] [user_id={user_id}] [session={session}] [expr={expr}]"
 
-        return u"\n".join(
+        return "\n".join(
             self._fill_base_template(log) + log_additions_template.format(
                 app_id=log.get('app_id'),
                 user_id=log.get('user_id'),
@@ -261,10 +266,10 @@ class SumoLogicLog(object):
     def force_close_subreport(self):
         logs = _get_logs(self.xform.form_data, 'force_close_subreport', 'force_close')
         log_additions_template = (
-            u" [app_id={app_id}] [user_id={user_id}] [session={session}] "
-            u"[device_model={device_model}]"
+            " [app_id={app_id}] [user_id={user_id}] [session={session}] "
+            "[device_model={device_model}]"
         )
-        return u"\n".join(
+        return "\n".join(
             self._fill_base_template(log) + log_additions_template.format(
                 app_id=log.get('app_id'),
                 user_id=log.get('user_id'),

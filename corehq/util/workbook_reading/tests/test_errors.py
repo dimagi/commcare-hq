@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.test import SimpleTestCase
 
 from corehq.util.workbook_reading import SpreadsheetFileNotFound, SpreadsheetFileInvalidError, \
@@ -34,4 +35,4 @@ def test_file_encrypted(self, open_workbook, ext):
     with self.assertRaises(SpreadsheetFileEncrypted) as cxt:
         with open_workbook(get_file('encrypted', ext)):
             pass
-    self.assertEqual(cxt.exception.message, u'Workbook is encrypted')
+    self.assertEqual(cxt.exception.message, 'Workbook is encrypted')

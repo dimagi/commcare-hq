@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import uuid
 from datetime import datetime
 from functools import partial
@@ -193,7 +194,7 @@ class LocationType(models.Model):
         return self.name
 
     def __repr__(self):
-        return u"LocationType(domain='{}', name='{}', administrative={})".format(
+        return "LocationType(domain='{}', name='{}', administrative={})".format(
             self.domain,
             self.name,
             self.administrative,
@@ -571,10 +572,10 @@ class SQLLocation(MPTTModel):
         ]
 
     def __unicode__(self):
-        return u"{} ({})".format(self.name, self.domain)
+        return "{} ({})".format(self.name, self.domain)
 
     def __repr__(self):
-        return u"SQLLocation(domain='{}', name='{}', location_type='{}')".format(
+        return "SQLLocation(domain='{}', name='{}', location_type='{}')".format(
             self.domain,
             self.name,
             self.location_type.name if hasattr(self, 'location_type') else None,
@@ -582,7 +583,7 @@ class SQLLocation(MPTTModel):
 
     @property
     def display_name(self):
-        return u"{} [{}]".format(self.name, self.location_type.name)
+        return "{} [{}]".format(self.name, self.location_type.name)
 
     def archived_descendants(self):
         """
@@ -751,7 +752,7 @@ class LocationFixtureConfiguration(models.Model):
     sync_hierarchical_fixture = models.BooleanField(default=True)
 
     def __repr__(self):
-        return u'{}: flat: {}, hierarchical: {}'.format(
+        return '{}: flat: {}, hierarchical: {}'.format(
             self.domain, self.sync_flat_fixture, self.sync_hierarchical_fixture
         )
 
@@ -767,8 +768,13 @@ def _unassign_users_from_location(domain, location_id):
     """
     Unset location for all users assigned to that location.
     """
-    from corehq.apps.locations.dbaccessors import get_all_users_by_location
-    for user in get_all_users_by_location(domain, location_id):
+    from corehq.apps.locations.dbaccessors import user_ids_at_locations
+    from corehq.apps.users.models import CommCareUser
+    from dimagi.utils.couch.database import iter_docs
+
+    user_ids = user_ids_at_locations([location_id])
+    for doc in iter_docs(CommCareUser.get_db(), user_ids):
+        user = CommCareUser.wrap(doc)
         if user.is_web_user():
             user.unset_location_by_id(domain, location_id, fall_back_to_next=True)
         elif user.is_commcare_user():

@@ -21,6 +21,40 @@
     right: 20px;
     margin: 0;
     width: auto;
+
+    .modal-content {
+        position: absolute;
+        top: 20px;
+        bottom: 20px;
+        left: 20px;
+        right: 20px;
+    }
+}
+
+
+.full-screen-no-background-modal .modal-dialog {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    margin: 0;
+    width: auto;
+
+    .modal-content {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        border-radius: 0;
+        border: 0;
+
+        .modal-body .video-container {
+            margin: 15px auto;
+            float: none;
+        }
+    }
 }
 
 // Modal that has some kind of control (pagination, search box, etc.) in header or footer

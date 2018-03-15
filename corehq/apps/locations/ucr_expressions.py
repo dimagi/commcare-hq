@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from jsonobject import DefaultProperty
 
 from corehq.apps.locations.models import SQLLocation

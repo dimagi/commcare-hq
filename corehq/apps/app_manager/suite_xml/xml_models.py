@@ -35,11 +35,24 @@ class IdNode(XmlObject):
     id = StringField('@id')
 
 
+class CalculatedPropertyXpathVariable(XmlObject):
+    ROOT_NAME = 'variable'
+    name = StringField('@name')
+    locale_id = StringField('locale/@id')
+
+
+class CalculatedPropertyXpath(XmlObject):
+    ROOT_NAME = 'xpath'
+    function = XPathField('@function')
+    variables = NodeListField('variable', CalculatedPropertyXpathVariable)
+
+
 class XpathVariable(XmlObject):
     ROOT_NAME = 'variable'
     name = StringField('@name')
 
     locale_id = StringField('locale/@id')
+    xpath = NodeField('xpath', CalculatedPropertyXpath)
 
 
 class Xpath(XmlObject):
@@ -783,6 +796,10 @@ class Detail(OrderedXmlObject, IdNode):
             else:
                 result.add(field.header.text.xpath_function)
                 result.add(field.template.text.xpath_function)
+                if field.template.text.xpath:
+                    for variable in field.template.text.xpath.variables:
+                        if variable.xpath:
+                            result.add(six.text_type(variable.xpath.function))
 
         for detail in self.details:
             result.update(detail.get_all_xpaths())
