@@ -250,6 +250,7 @@ class CustomCriteriaTestCase(BaseCaseRuleTest):
         now = datetime(2018, 2, 22, 12, 0)
         with _with_case(self.domain, 'ccs_record', datetime.utcnow()) as case:
             for match, edd in [
+                (False, None),          # edd not set
                 (False, '2018-01-22'),  # past
                 (False, '2018-02-22'),  # past
                 (True, '2018-02-23'),   # future
