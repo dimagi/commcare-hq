@@ -70,6 +70,7 @@ class OpenmrsRepeater(CaseRepeater):
 
         return send_openmrs_data(
             Requests(self.url, self.username, self.password),
+            self.domain,
             payload,
             self.openmrs_config,
             case_trigger_infos,
