@@ -27,16 +27,13 @@ from __future__ import print_function
 from __future__ import absolute_import
 
 from __future__ import unicode_literals
-from gevent import monkey
 import six
-monkey.patch_all()
 
 import os
 import jsonobject
 import sh
 import sys
 import contextlib
-import gevent
 
 from fabric.colors import red
 from sh_verbose import ShVerbose
@@ -77,7 +74,7 @@ def fetch_remote(base_config, name="origin"):
         seen.add(path)
         git = get_git(path)
         print("  [{cwd}] fetching {name}".format(cwd=path, name=name))
-        jobs.append(gevent.spawn(git.fetch, name))
+        git.fetch(name)
         for branch in (b for b in config.branches if ":" in b):
             remote, branch = branch.split(":", 1)
             if remote not in git.remote().split():
@@ -86,9 +83,8 @@ def fetch_remote(base_config, name="origin"):
                       .format(**locals()))
                 git.remote("add", remote, url)
             print("  [{path}] fetching {remote} {branch}".format(**locals()))
-            jobs.append(gevent.spawn(git.fetch, remote, branch))
+            git.fetch(remote, branch)
             fetched.add(remote)
-    gevent.joinall(jobs)
     print("fetched {}".format(", ".join(['origin'] + sorted(fetched))))
 
 
