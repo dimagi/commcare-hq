@@ -9,6 +9,7 @@ from casexml.apps.case.xform import get_case_updates, is_device_report
 from corehq.apps.domain.auth import determine_authtype_from_request, BASIC
 from corehq.apps.domain.decorators import (
     check_domain_migration, login_or_digest_ex, login_or_basic_ex, login_or_token_ex,
+    two_factor_exempt,
 )
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.receiverwrapper.auth import (
@@ -222,6 +223,7 @@ def _noauth_post(request, domain, app_id=None):
 
 
 @login_or_digest_ex(allow_cc_users=True)
+@two_factor_exempt
 def _secure_post_digest(request, domain, app_id=None):
     """only ever called from secure post"""
     return _process_form(
@@ -235,6 +237,7 @@ def _secure_post_digest(request, domain, app_id=None):
 
 @handle_401_response
 @login_or_basic_ex(allow_cc_users=True)
+@two_factor_exempt
 def _secure_post_basic(request, domain, app_id=None):
     """only ever called from secure post"""
     return _process_form(
@@ -248,6 +251,7 @@ def _secure_post_basic(request, domain, app_id=None):
 
 @handle_401_response
 @login_or_token_ex(allow_cc_users=True)
+@two_factor_exempt
 def _secure_post_token(request, domain, app_id=None):
     """only ever called from secure post"""
     return _process_form(
