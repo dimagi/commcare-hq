@@ -39,9 +39,11 @@ def reprocess_unfinished_stub(stub, save=True):
     try:
         form = FormAccessors(stub.domain).get_form(form_id)
     except XFormNotFound:
-        # form doesn't exist which means the failure probably happend during saving so
-        # let mobile handle re-submitting it
-        logger.error('Form not found: %s', form_id)
+        if stub.saved:
+            logger.error("Form not found for reprocessing", extra={
+                'form_id': form_id,
+                'domain': stub.domain
+            })
         save and stub.delete()
         return
 
