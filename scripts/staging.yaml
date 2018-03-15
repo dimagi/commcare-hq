@@ -51,7 +51,7 @@ name: autostaging
 branches:
   - vellum-staging # J$ 11/13
   # - je/cythonized-jsonobject # j$ 1/8
-  # - fr/two-factor-mobile-users  # FR 2/7
+  - fr/two-factor-mobile-users  # FR 2/7
   - jr/ejs/sms-chat # Jordan 2/16
   - mk-mock-repeater-report # MK 28-Feb
   - ce/auto-batches # Cal 3/5
