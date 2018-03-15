@@ -328,8 +328,8 @@ class RebuildStockStateView(BaseCommTrackManageView):
 
     @property
     def page_context(self, **kwargs):
-        stock_state_limit = self.request.GET.get('stock_state_limit', 100)
-        stock_transaction_limit = self.request.GET.get('stock_transaction_limit', 1000)
+        stock_state_limit = int(self.request.GET.get('stock_state_limit', 100))
+        stock_transaction_limit = int(self.request.GET.get('stock_transaction_limit', 1000))
         stock_state_limit_exceeded = False
         stock_transaction_limit_exceeded = False
 
