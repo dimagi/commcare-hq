@@ -384,9 +384,17 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         return vm.isChildBeneficiaryListSelected() && (vm.selectedFilterOptions().length === 0 || !vm.isDistrictOrBelowSelected());
     };
 
+    vm.isCombinedPDFSelected = function() {
+        return vm.isISSNIPMonthlyRegisterSelected() && vm.selectedPDFFormat === 'one';
+    };
+
+    vm.isBlockOrBelowSelected = function () {
+        return vm.selectedLocations[2] && vm.selectedLocations[2] !== ALL_OPTION.location_id;
+    };
+
     vm.hasErrorsISSNIPExport = function() {
         if (vm.selectedPDFFormat === 'one') {
-            return vm.isISSNIPMonthlyRegisterSelected() && !vm.isDistrictOrBelowSelected();
+            return vm.isISSNIPMonthlyRegisterSelected() && !vm.isBlockOrBelowSelected();
         }
         return vm.isISSNIPMonthlyRegisterSelected() && (!vm.isDistrictOrBelowSelected() || !vm.isAWCsSelected());
     };
