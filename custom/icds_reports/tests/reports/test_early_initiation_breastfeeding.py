@@ -8,7 +8,7 @@ from custom.icds_reports.reports.early_initiation_breastfeeding import get_early
 from django.test import TestCase
 
 
-@override_settings(SERVER_ENVIRONMENT='icds')
+@override_settings(SERVER_ENVIRONMENT='icds-new')
 class TestEarlyInitiationBreastFeeding(TestCase):
     maxDiff = None
 

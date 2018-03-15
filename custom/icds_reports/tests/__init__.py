@@ -79,7 +79,7 @@ def setUpModule():
         location_type=awc_location_type
     )
 
-    with override_settings(SERVER_ENVIRONMENT='icds'):
+    with override_settings(SERVER_ENVIRONMENT='icds-new'):
         configs = StaticDataSourceConfiguration.by_domain('icds-cas')
         adapters = [get_indicator_adapter(config) for config in configs]
 
@@ -114,7 +114,7 @@ def tearDownModule():
         'corehq.apps.callcenter.data_source.call_center_data_source_configuration_provider'
     )
     _call_center_domain_mock.start()
-    with override_settings(SERVER_ENVIRONMENT='icds'):
+    with override_settings(SERVER_ENVIRONMENT='icds-new'):
         configs = StaticDataSourceConfiguration.by_domain('icds-cas')
         adapters = [get_indicator_adapter(config) for config in configs]
         for adapter in adapters:

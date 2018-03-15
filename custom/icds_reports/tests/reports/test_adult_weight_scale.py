@@ -9,7 +9,7 @@ from django.test import TestCase
 from custom.icds_reports.const import ChartColors, MapColors
 
 
-@override_settings(SERVER_ENVIRONMENT='icds')
+@override_settings(SERVER_ENVIRONMENT='icds-new')
 class TestAdultWeightScale(TestCase):
     maxDiff = None
 
