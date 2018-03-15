@@ -198,7 +198,7 @@ class SumoLogicLog(object):
         if settings.SERVER_ENVIRONMENT == 'production':
             environment = 'prod'
 
-        return {str("X-Sumo-Category"): "{env}/{domain}/{fmt}".format(
+        return {b"X-Sumo-Category": "{env}/{domain}/{fmt}".format(
             env=environment,
             domain=self.domain,
             fmt=fmt,
