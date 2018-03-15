@@ -28,6 +28,7 @@ from corehq.apps.users.forms import NewMobileWorkerForm, generate_strong_passwor
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import user_display_string
 from corehq.apps.hqwebapp import crispy as hqcrispy
+from corehq.util.quickcache import quickcache
 
 from .models import SQLLocation, LocationType, LocationFixtureConfiguration
 from .permissions import user_can_access_location_id
@@ -531,8 +532,8 @@ class UsersAtLocationForm(forms.Form):
             )
         )
 
-    @property
     @memoized
+    @quickcache(['self.domain_object.name', 'self.location.location_id'], memoize_timeout=0, timeout=5)
     def users_at_location(self):
         user_query = UserES().domain(
             self.domain_object.name
@@ -561,6 +562,7 @@ class UsersAtLocationForm(forms.Form):
         to_add = selected_users - previous_users
         self.unassign_users(to_remove)
         self.assign_users(to_add)
+        self.quickcache.set_cached_value(selected_users)
 
 
 class LocationFixtureForm(forms.ModelForm):
