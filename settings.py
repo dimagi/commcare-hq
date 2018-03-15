@@ -1683,8 +1683,8 @@ AVAILABLE_CUSTOM_RULE_CRITERIA = {
         'custom.icds.rules.custom_criteria.person_case_is_under_6_years_old',
     'ICDS_PERSON_CASE_IS_UNDER_19_YEARS_OLD':
         'custom.icds.rules.custom_criteria.person_case_is_under_19_years_old',
-    'ICDS_CCS_RECORD_CASE_HAS_FUTURE_EDD_AND_NULL_ADD':
-        'custom.icds.rules.custom_criteria.icds_ccs_record_case_has_future_edd_and_null_add',
+    'ICDS_CCS_RECORD_CASE_HAS_FUTURE_EDD':
+        'custom.icds.rules.custom_criteria.ccs_record_case_has_future_edd',
     'ICDS_IS_USERCASE_OF_AWW':
         'custom.icds.rules.custom_criteria.is_usercase_of_aww',
     'ICDS_IS_USERCASE_OF_LS':

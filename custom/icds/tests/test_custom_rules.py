@@ -233,35 +233,33 @@ class CustomCriteriaTestCase(BaseCaseRuleTest):
             case = self._set_dob(case, '2018-02-22')
             self.assertFalse(rule.criteria_match(case, dob + relativedelta(days=90)))
 
-    def test_icds_ccs_record_case_has_future_edd_and_null_add(self):
+    def test_ccs_record_case_has_future_edd(self):
         rule = _create_empty_rule(self.domain, case_type='ccs_record')
         rule.add_criteria(CustomMatchDefinition,
-            name='ICDS_CCS_RECORD_CASE_HAS_FUTURE_EDD_AND_NULL_ADD')
+            name='ICDS_CCS_RECORD_CASE_HAS_FUTURE_EDD')
 
-        def check(case, edd, add, match):
-            case = self._set_case_props(case, {"edd": edd, "add": add})
+        def check(case, edd, match):
+            case = self._set_case_props(case, {"edd": edd})
             (self.assertTrue if match else self.assertFalse)(
                 rule.criteria_match(case, now),
-                "%s case with edd=%s and add=%s should%s match" % (
-                    case.type, edd, add, "" if match else " not",
+                "%s case with edd=%s should%s match" % (
+                    case.type, edd, "" if match else " not",
                 )
             )
 
         now = datetime(2018, 2, 22, 12, 0)
         with _with_case(self.domain, 'ccs_record', datetime.utcnow()) as case:
-            for match, edd, add in [
-                (False, '2018-01-22', None),          # past edd, null add
-                (False, '2018-02-22', None),          # past edd, null add
-                (False, '2018-01-22', '2018-02-22'),  # past edd, non-null add
-                (False, '2018-03-22', '2018-02-21'),  # future edd, non-null add
-                (True, '2018-02-23', None),           # future edd, null add
-                (True, '2018-03-22', None),           # future edd, null add
+            for match, edd in [
+                (False, '2018-01-22'),  # past
+                (False, '2018-02-22'),  # past
+                (True, '2018-02-23'),   # future
+                (True, '2018-03-22'),   # future
             ]:
-                check(case, edd, add, match)
+                check(case, edd, match)
 
         # rule should not match person case
         with _with_case(self.domain, 'person', datetime.utcnow()) as person:
-            check(person, '2018-03-22', None, False)
+            check(person, '2018-03-22', False)
 
     def test_is_usercase_of_aww(self):
         rule = _create_empty_rule(self.domain, case_type=USERCASE_TYPE)
