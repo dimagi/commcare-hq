@@ -534,7 +534,7 @@ class UsersAtLocationForm(forms.Form):
 
     @memoized
     @quickcache(['self.domain_object.name', 'self.location.location_id'], memoize_timeout=0, timeout=5)
-    def users_at_location(self):
+    def get_users_at_location(self):
         user_query = UserES().domain(
             self.domain_object.name
         ).mobile_users().location(
