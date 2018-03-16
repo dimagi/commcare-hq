@@ -207,7 +207,7 @@ class CachedDownload(DownloadBase):
             # I don't know what to do other than create a memory bottleneck here
             # can revisit when loading a whole file into memory becomes a
             # serious concern
-            payload = ''.join(payload)
+            payload = b''.join(payload)
         download_id = str(uuid.uuid4())
         ret = cls(download_id, **kwargs)
         cache.caches[ret.cache_backend].set(download_id, payload, expiry)
