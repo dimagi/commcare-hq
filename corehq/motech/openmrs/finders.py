@@ -165,6 +165,20 @@ class WeightedPropertyPatientFinder(PatientFinder):
             jsonpath = parse('person.preferredAddress.' + addr_prop)
             self._property_map.update(get_caseproperty_jsonpathvaluemap(jsonpath, value_source))
 
+        for id_type_uuid, value_source in case_config['patient_identifiers'].items():
+            if id_type_uuid == 'uuid':
+                jsonpath = parse('uuid')
+            else:
+                # "(identifiers[*] where identifierType.uuid=id_type_uuid).identifier"
+                jsonpath = Child(
+                    WhereCmp(
+                        Child(Fields('identifiers'), Slice()),
+                        Child(Fields('identifierType'), Fields('uuid')), eq, id_type_uuid
+                    ),
+                    Fields('identifier')
+                )
+            self._property_map.update(get_caseproperty_jsonpathvaluemap(jsonpath, value_source))
+
     def get_score(self, patient, case):
         """
         Return the sum of weighted properties to give an OpenMRS
@@ -198,11 +212,16 @@ class WeightedPropertyPatientFinder(PatientFinder):
         from casexml.apps.case.mock import CaseBlock
         from corehq.apps.hqcase.utils import submit_case_blocks
 
-        id_map = {m['identifier_type_id']: m['case_property'] for m in case_config['id_matchers']}
+        case_config_ids = case_config['patient_identifiers']
         case_update = {}
+        if 'uuid' in case_config_ids:
+            case_property = case_config_ids['uuid']['case_property']
+            value = patient['uuid']
+            case_update[case_property] = value
         for identifier in patient['identifiers']:
-            if identifier['identifierType']['uuid'] in id_map:
-                case_property = id_map[identifier['identifierType']['uuid']]
+            id_type_uuid = identifier['identifierType']['uuid']
+            if id_type_uuid in case_config_ids:
+                case_property = case_config_ids[id_type_uuid]['case_property']
                 value = identifier['identifier']
                 case_update[case_property] = value
         case_block = CaseBlock(

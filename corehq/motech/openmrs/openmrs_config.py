@@ -123,19 +123,21 @@ class FormQuestionConcept(FormQuestion):
 
 class OpenmrsCaseConfig(DocumentSchema):
 
-    # "id_matchers": [
-    #     {
-    #         "case_property": "nid",
-    #         "identifier_type_id": "e2b966d0-1d5f-11e0-b929-000c29ad1d07",
-    #         "doc_type": "IdMatcher"
+    # "patient_identifiers": {
+    #     "e2b966d0-1d5f-11e0-b929-000c29ad1d07": {
+    #         "doc_type": "CaseProperty",
+    #         "case_property": "nid"
     #     },
-    #     {
+    #     "uuid": {
+    #         "doc_type": "CaseProperty",
     #         "case_property": "openmrs_uuid",
-    #         "identifier_type_id": "uuid",
-    #         "doc_type": "IdMatcher"
     #     }
-    # ]
-    id_matchers = SchemaListProperty(IdMatcher)
+    # }
+    patient_identifiers = SchemaDictProperty(ValueSource)
+
+    # The patient_identifiers that are considered reliable
+    # "match_on_ids": ["uuid", "e2b966d0-1d5f-11e0-b929-000c29ad1d07",
+    match_on_ids = ListProperty()
 
     # "person_properties": {
     #     "gender": {
@@ -212,6 +214,26 @@ class OpenmrsCaseConfig(DocumentSchema):
     #     }
     # }
     person_attributes = SchemaDictProperty(ValueSource)
+
+    @classmethod
+    def wrap(cls, data):
+        if 'id_matchers' in data:
+            # Convert id_matchers to patient_identifiers. e.g.
+            #     [{'doc_type': 'IdMatcher'
+            #       'identifier_type_id': 'e2b966d0-1d5f-11e0-b929-000c29ad1d07',
+            #       'case_property': 'nid'}]
+            # to
+            #     {'e2b966d0-1d5f-11e0-b929-000c29ad1d07': {'doc_type': 'CaseProperty', 'case_property': 'nid'}},
+            patient_identifiers = {
+                m['identifier_type_id']: {
+                    'doc_type': 'CaseProperty',
+                    'case_property': m['case_property']
+                } for m in data['id_matchers']
+            }
+            data['patient_identifiers'] = patient_identifiers
+            data['match_on_ids'] = list(patient_identifiers)
+            data.pop('id_matchers')
+        return super(OpenmrsCaseConfig, cls).wrap(data)
 
 
 class ObservationMapping(DocumentSchema):

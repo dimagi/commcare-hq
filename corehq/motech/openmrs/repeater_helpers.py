@@ -304,20 +304,20 @@ def find_patient(requests, domain, case_id, openmrs_config):
 
 def get_patient(requests, domain, info, openmrs_config):
     patient = None
-    for id_matcher in openmrs_config.case_config.id_matchers:
-        assert isinstance(id_matcher, IdMatcher)
-        if id_matcher.case_property in info.extra_fields:
+    for id_ in openmrs_config.case_config.match_on_ids:
+        identifier = openmrs_config.case_config.patient_identifiers[id_]
+        if identifier.case_property in info.extra_fields:
             patient = get_patient_by_id(
-                requests, id_matcher.identifier_type_id,
-                info.extra_fields[id_matcher.case_property])
+                requests, id_,
+                info.extra_fields[identifier.case_property])
             if patient:
                 break
     else:
-        # ID matchers did not match a patient in OpenMRS.
+        # Definitive IDs did not match a patient in OpenMRS.
         if openmrs_config.case_config.patient_finder:
             # Search for patients based on other case properties
             logger.debug(
-                'Case %s did not match patient with OpenmrsCaseConfig.id_matchers. Search using '
+                'Case %s did not match patient with OpenmrsCaseConfig.match_on_ids. Search using '
                 'PatientFinder "%s"', info.case_id, openmrs_config.case_config.patient_finder['doc_type'],
             )
             patient = find_patient(requests, domain, info.case_id, openmrs_config)
