@@ -195,9 +195,20 @@ class OpenmrsCaseConfig(DocumentSchema):
     person_preferred_address = SchemaDictProperty(ValueSource)
 
     # "person_attributes": {
-    #     "e2b966d0-1d5f-11e0-b929-000c29ad1d07": {
+    #     "c1f4239f-3f10-11e4-adec-0800271c1b75": {
     #         "doc_type": "CaseProperty",
-    #         "case_property": "hiv_status"
+    #         "case_property": "caste"
+    #     },
+    #     "c1f455e7-3f10-11e4-adec-0800271c1b75": {
+    #         "doc_type": "CasePropertyConcept",
+    #         "case_property": "class",
+    #         "value_concepts": {
+    #             "sc": "c1fcd1c6-3f10-11e4-adec-0800271c1b75",
+    #             "general": "c1fc20ab-3f10-11e4-adec-0800271c1b75",
+    #             "obc": "c1fb51cc-3f10-11e4-adec-0800271c1b75",
+    #             "other_caste": "c207073d-3f10-11e4-adec-0800271c1b75",
+    #             "st": "c20478b6-3f10-11e4-adec-0800271c1b75"
+    #         }
     #     }
     # }
     person_attributes = SchemaDictProperty(ValueSource)
