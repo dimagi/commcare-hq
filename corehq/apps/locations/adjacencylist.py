@@ -179,7 +179,9 @@ class AdjListManager(TreeManager):
             query = query.with_cte(item)
         return query
 
-    cte_get_queryset_ancestors = cte_get_ancestors
+    def cte_get_queryset_ancestors(self, node, include_self=False):
+        return self.cte_get_ancestors(node, include_self=include_self)
+
     cte_get_queryset_descendants = cte_get_descendants
 
     def mptt_get_queryset_ancestors(self, node, *args, **kw):
