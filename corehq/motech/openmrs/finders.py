@@ -2,10 +2,12 @@ from __future__ import absolute_import
 from __future__ import division
 
 from collections import namedtuple
+from operator import eq
 from pprint import pformat
 
-from jsonpath_rw import parse
+from jsonpath_rw import Child, parse, Fields, Slice
 
+from corehq.motech.openmrs.jsonpath import WhereCmp
 from dimagi.ext.couchdbkit import (
     DecimalProperty,
     DocumentSchema,
@@ -140,19 +142,27 @@ class WeightedPropertyPatientFinder(PatientFinder):
         #
 
         for person_prop, value_source in case_config['person_properties'].items():
-            jsonpath = 'person.' + person_prop
+            jsonpath = parse('person.' + person_prop)
             self._property_map.update(get_caseproperty_jsonpathvaluemap(jsonpath, value_source))
 
         for attr_uuid, value_source in case_config['person_attributes'].items():
-            jsonpath = 'person.attributes.value where `parent`.attributeType.uuid = "{}"'.format(attr_uuid)
+            # jsonpath_rw offers programmatic JSONPath expressions. This is the equivalent of
+            # "(person.attributes[*] where attributeType.uuid=attr_uuid).value"
+            jsonpath = Child(
+                WhereCmp(
+                    Child(Child(Fields('person'), Fields('attributes')), Slice()),
+                    Child(Fields('attributeType'), Fields('uuid')), eq, attr_uuid
+                ),
+                Fields('value')
+            )
             self._property_map.update(get_caseproperty_jsonpathvaluemap(jsonpath, value_source))
 
         for name_prop, value_source in case_config['person_preferred_name'].items():
-            jsonpath = 'person.preferredName.' + name_prop
+            jsonpath = parse('person.preferredName.' + name_prop)
             self._property_map.update(get_caseproperty_jsonpathvaluemap(jsonpath, value_source))
 
         for addr_prop, value_source in case_config['person_preferred_address'].items():
-            jsonpath = 'person.preferredAddress.' + addr_prop
+            jsonpath = parse('person.preferredAddress.' + addr_prop)
             self._property_map.update(get_caseproperty_jsonpathvaluemap(jsonpath, value_source))
 
     def get_score(self, patient, case):
@@ -165,15 +175,14 @@ class WeightedPropertyPatientFinder(PatientFinder):
                 prop = property_weight['case_property']
                 weight = property_weight['weight']
 
-                case_value = case.get_case_property(prop)
-                jsonpath_expr = parse(self._property_map[prop].jsonpath)
-                matches = jsonpath_expr.find(patient)
+                matches = self._property_map[prop].jsonpath.find(patient)
                 if matches:
                     assert len(matches) == 1, 'jsonpath "{}" did not uniquely match a patient value'.format(
                         self._property_map[prop].jsonpath
                     )
                     patient_value = matches[0].value
                     value_map = self._property_map[prop].value_map
+                    case_value = case.get_case_property(prop)
                     is_equal = value_map.get(patient_value, patient_value) == case_value
                     yield weight if is_equal else 0
                 else:
