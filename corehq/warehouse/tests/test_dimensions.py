@@ -17,8 +17,6 @@ from corehq.warehouse.tests.utils import (
     create_location_records_from_tree,
     create_location_staging_record,
     create_group_staging_record,
-    DEFAULT_BATCH_ID,
-    get_default_batch,
     create_batch,
     BaseWarehouseTestCase, create_application_staging_record)
 from corehq.warehouse.models import (
@@ -30,14 +28,8 @@ from corehq.warehouse.models import (
     UserGroupDim,
     LocationDim,
     LocationStagingTable,
-    LocationTypeStagingTable,
+    DomainMembershipDim
 )
-
-
-def setup_module():
-    start = datetime.utcnow() - timedelta(days=3)
-    end = datetime.utcnow() + timedelta(days=3)
-    create_batch(start, end, DEFAULT_BATCH_ID)
 
 
 def teardown_module():
@@ -47,39 +39,45 @@ def teardown_module():
 class TestUserDim(BaseWarehouseTestCase):
 
     domain = 'user-dim-test'
+    slug = 'user_dim'
 
     @classmethod
     def setUpClass(cls):
         super(TestUserDim, cls).setUpClass()
+        cls.batch = create_batch(cls.slug)
         cls.records = [
             create_user_staging_record(
                 cls.domain,
                 user_id=SYSTEM_USER_ID,
                 username='system_bob',
+                batch_id=cls.batch.id
             ),
             create_user_staging_record(
                 cls.domain,
                 user_id=DEMO_USER_ID,
                 username='demo_sally',
+                batch_id=cls.batch.id
             ),
             create_user_staging_record(
                 cls.domain,
                 user_id=COMMTRACK_USERNAME,
                 username='commtrack_billy',
+                batch_id=cls.batch.id
             ),
             create_user_staging_record(
-                cls.domain,
+                None,
                 user_id='beeboobop',
                 username='web',
-                doc_type='WebUser'
+                doc_type='WebUser',
+                batch_id=cls.batch.id
             ),
             create_user_staging_record(
                 cls.domain,
                 user_id='greengoblin',
                 username='mobile',
+                batch_id=cls.batch.id
             ),
         ]
-        cls.batch = get_default_batch()
 
     @classmethod
     def tearDownClass(cls):
@@ -115,18 +113,108 @@ class TestUserDim(BaseWarehouseTestCase):
         )
 
 
+class TestDomainMembershipDim(BaseWarehouseTestCase):
+    slug = DomainMembershipDim.slug
+
+    @classmethod
+    def setUpClass(cls):
+        super(TestDomainMembershipDim, cls).setUpClass()
+        cls.batch = create_batch(cls.slug)
+        cls.bootstrap_user_staging()
+
+    @classmethod
+    def bootstrap_user_staging(cls):
+        create_user_staging_record(
+            domain='test1',
+            user_id='u1',
+            username='mobile1',
+            doc_type='CommCareUser',
+            batch_id=cls.batch.id,
+        )
+        create_user_staging_record(
+            domain='test1',
+            user_id='u2',
+            username='mobile2',
+            doc_type='CommCareUser',
+            batch_id=cls.batch.id,
+        )
+        create_user_staging_record(
+            domain=None,
+            username='mobile1',
+            user_id='u3',
+            doc_type='WebUser',
+            batch_id=cls.batch.id,
+            domain_memberships=[
+                {'domain': 'test1', 'is_admin': True},
+                {'domain': 'test2', 'is_admin': False},
+            ]
+        )
+        UserDim.commit(cls.batch)
+
+    @classmethod
+    def tearDownClass(cls):
+        DomainMembershipDim.clear_records()
+        UserDim.clear_records()
+        UserStagingTable.clear_records()
+        super(TestDomainMembershipDim, cls).tearDownClass()
+
+    def test_insert_and_update(self):
+        DomainMembershipDim.commit(self.batch)
+        # should create 4 domain membership columns
+        self.assertEqual(
+            DomainMembershipDim.objects.count(), 4
+        )
+        # 'u3' user should have 2 membership columns for each of the domain
+        dim_id_of_user3 = UserDim.objects.filter(user_id='u3')[0].id
+        self.assertEqual(
+            DomainMembershipDim.objects.filter(user_dim_id=dim_id_of_user3).count(),
+            2
+        )
+
+        ## test removing a domain membership
+        # clear and add new staging record to remove a membership of 2
+        UserStagingTable.clear_records()
+        create_user_staging_record(
+            domain=None,
+            username='mobile1',
+            user_id='u3',
+            doc_type='WebUser',
+            batch_id=self.batch.id,
+            domain_memberships=[
+                {'domain': 'test1', 'is_admin': True},
+            ]
+        )
+        DomainMembershipDim.commit(self.batch)
+        # should create 3 domain membership columns instead of 4
+        self.assertEqual(
+            DomainMembershipDim.objects.count(), 3
+        )
+        # u3 user should have only 1 domain-membership
+        dim_id_of_user3 = UserDim.objects.filter(user_id='u3')[0].id
+        self.assertEqual(
+            DomainMembershipDim.objects.filter(user_dim_id=dim_id_of_user3).count(),
+            1
+        )
+
+
 class TestUserGroupDim(BaseWarehouseTestCase):
 
     domain = 'user-group-dim-test'
+    slug = 'user_group_dim'
 
     @classmethod
     def setUpClass(cls):
         super(TestUserGroupDim, cls).setUpClass()
-        cls.blue_dog = create_user_staging_record(cls.domain, username='blue-dog')
-        cls.black_dog = create_user_staging_record(cls.domain, username='black-dog')
-        cls.yellow_cat = create_user_staging_record(cls.domain, username='yellow-cat')
-
-        cls.batch = get_default_batch()
+        cls.batch = create_batch(cls.slug)
+        cls.blue_dog = create_user_staging_record(cls.domain,
+                                                  username='blue-dog',
+                                                  batch_id=cls.batch.id)
+        cls.black_dog = create_user_staging_record(cls.domain,
+                                                   username='black-dog',
+                                                   batch_id=cls.batch.id)
+        cls.yellow_cat = create_user_staging_record(cls.domain,
+                                                    username='yellow-cat',
+                                                    batch_id=cls.batch.id)
 
     @classmethod
     def tearDownClass(cls):
@@ -146,11 +234,13 @@ class TestUserGroupDim(BaseWarehouseTestCase):
             self.domain,
             'dogs',
             user_ids=[self.blue_dog.user_id, self.black_dog.user_id],
+            batch_id=self.batch.id
         )
         create_group_staging_record(
             self.domain,
             'cats',
             user_ids=[self.yellow_cat.user_id],
+            batch_id=self.batch.id
         )
         GroupDim.commit(self.batch)
         self.assertEqual(GroupDim.objects.count(), 2)
@@ -173,15 +263,15 @@ class TestUserGroupDim(BaseWarehouseTestCase):
 class TestLocationDim(BaseWarehouseTestCase):
 
     domain = 'location-dim-test'
+    slug = 'location_dim'
 
     @classmethod
     def setUpClass(cls):
         super(TestLocationDim, cls).setUpClass()
-        cls.batch = get_default_batch()
+        cls.batch = create_batch(cls.slug)
 
     def tearDown(self):
         LocationStagingTable.clear_records()
-        LocationTypeStagingTable.clear_records()
         LocationDim.clear_records()
         super(TestLocationDim, self).tearDown()
 
@@ -194,10 +284,9 @@ class TestLocationDim(BaseWarehouseTestCase):
                 ('Chicago', 'city'): {},
             }
         }
-        create_location_records_from_tree(self.domain, tree)
+        create_location_records_from_tree(self.domain, tree, self.batch.id)
 
         self.assertEqual(LocationStagingTable.objects.count(), 4)
-        self.assertEqual(LocationTypeStagingTable.objects.count(), 3)
 
         LocationDim.commit(self.batch)
         self.assertEqual(LocationDim.objects.count(), 4)
@@ -235,7 +324,7 @@ class TestLocationDim(BaseWarehouseTestCase):
                 ('Chicago', 'city'): {},
             }
         }
-        create_location_records_from_tree(self.domain, tree)
+        create_location_records_from_tree(self.domain, tree, self.batch.id)
         LocationDim.commit(self.batch)
         self.assertEqual(LocationDim.objects.count(), 4)
 
@@ -251,6 +340,7 @@ class TestLocationDim(BaseWarehouseTestCase):
             # Give it the same parent as the Home location
             sql_parent_location_id=city_location.sql_location_id,
             location_type_id=home_location.location_type_id,
+            batch_id=self.batch.id
         )
 
         LocationDim.commit(self.batch)
@@ -260,11 +350,12 @@ class TestLocationDim(BaseWarehouseTestCase):
 class TestAppDim(BaseWarehouseTestCase):
 
     domain = 'app-dim-test'
+    slug = 'app_dim'
 
     @classmethod
     def setUpClass(cls):
         super(TestAppDim, cls).setUpClass()
-        cls.batch = get_default_batch()
+        cls.batch = create_batch(cls.slug)
 
     @classmethod
     def tearDownClass(cls):
@@ -273,8 +364,8 @@ class TestAppDim(BaseWarehouseTestCase):
         super(TestAppDim, cls).tearDownClass()
 
     def test_app_dim(self):
-        create_application_staging_record(self.domain, 'test-app')
-        create_application_staging_record(self.domain, 'test-deleted', doc_type='Application-Deleted')
+        create_application_staging_record(self.domain, 'test-app', batch_id=self.batch.id)
+        create_application_staging_record(self.domain, 'test-deleted', doc_type='Application-Deleted', batch_id=self.batch.id)
         ApplicationDim.commit(self.batch)
         self.assertEqual(ApplicationDim.objects.count(), 2)
         test_app = ApplicationDim.objects.get(name='test-app')

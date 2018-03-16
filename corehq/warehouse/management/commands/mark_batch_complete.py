@@ -18,7 +18,7 @@ class Command(BaseCommand):
 
     def handle(self, batch_id, **options):
         try:
-            batch = Batch.objects.get(batch_id=batch_id)
+            batch = Batch.objects.get(pk=batch_id)
         except Batch.DoesNotExist:
             raise CommandError('Invalid batch ID: {}'.format(batch_id))
 
