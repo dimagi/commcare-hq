@@ -92,7 +92,7 @@ class AncestorLocationExpression(JsonObject):
         try:
             location = _get_location(location_id, context)
             ancestor = location.get_ancestors(include_self=False).get(location_type__name=location_type)
-            return ancestor.to_json()
+            return ancestor.to_json(include_lineage=False)
         except (AttributeError, SQLLocation.DoesNotExist):
             # location is None, or location does not have an ancestor of that type
             return None
