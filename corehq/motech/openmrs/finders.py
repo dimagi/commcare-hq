@@ -56,7 +56,7 @@ JsonpathValuemap = namedtuple('JsonpathValuemap', ['jsonpath', 'value_map'])
 
 def get_caseproperty_jsonpathvaluemap(jsonpath, value_source):
     """
-    Used for updating property_map to map case properties to OpenMRS
+    Used for updating _property_map to map case properties to OpenMRS
     patient property-, attribute- and concept values.
 
     i.e. Allows us to answer the question, "If we know the case property how
@@ -120,11 +120,11 @@ class WeightedPropertyPatientFinder(PatientFinder):
 
     def __init__(self, *args, **kwargs):
         super(WeightedPropertyPatientFinder, self).__init__(*args, **kwargs)
-        self.property_map = {}
+        self._property_map = {}
 
     def set_property_map(self, case_config):
         """
-        Set self.property_map to map OpenMRS properties and attributes
+        Set self._property_map to map OpenMRS properties and attributes
         to case properties.
         """
         # Example value of case_config::
@@ -142,19 +142,19 @@ class WeightedPropertyPatientFinder(PatientFinder):
 
         for person_prop, value_source in case_config['person_properties'].items():
             jsonpath = 'person.' + person_prop
-            self.property_map.update(get_caseproperty_jsonpathvaluemap(jsonpath, value_source))
+            self._property_map.update(get_caseproperty_jsonpathvaluemap(jsonpath, value_source))
 
         for attr_uuid, value_source in case_config['person_attributes'].items():
-            jsonpath = 'person.attributes.value where `parent`.attributeType.uuid = "' + attr_uuid + '"'
-            self.property_map.update(get_caseproperty_jsonpathvaluemap(jsonpath, value_source))
+            jsonpath = 'person.attributes.value where `parent`.attributeType.uuid = "{}"'.format(attr_uuid)
+            self._property_map.update(get_caseproperty_jsonpathvaluemap(jsonpath, value_source))
 
         for name_prop, value_source in case_config['person_preferred_name'].items():
             jsonpath = 'person.preferredName.' + name_prop
-            self.property_map.update(get_caseproperty_jsonpathvaluemap(jsonpath, value_source))
+            self._property_map.update(get_caseproperty_jsonpathvaluemap(jsonpath, value_source))
 
         for addr_prop, value_source in case_config['person_preferred_address'].items():
             jsonpath = 'person.preferredAddress.' + addr_prop
-            self.property_map.update(get_caseproperty_jsonpathvaluemap(jsonpath, value_source))
+            self._property_map.update(get_caseproperty_jsonpathvaluemap(jsonpath, value_source))
 
     def get_score(self, patient, case):
         """
@@ -162,11 +162,14 @@ class WeightedPropertyPatientFinder(PatientFinder):
         patient a score of how well they match a CommCare case.
         """
         def weights():
-            for prop, weight in self.property_weights.items():
+            for property_weight in self.property_weights:
+                prop = property_weight['case_property']
+                weight = property_weight['weight']
+
                 case_value = case.get_case_property(prop)
-                jsonpath_expr = parse(self.property_map[prop].jsonpath)
+                jsonpath_expr = parse(self._property_map[prop].jsonpath)
                 patient_value = jsonpath_expr.find(patient)
-                value_map = self.property_map[prop].value_map
+                value_map = self._property_map[prop].value_map
                 is_equal = value_map.get(patient_value, patient_value) == case_value
                 yield weight if is_equal else 0
 
