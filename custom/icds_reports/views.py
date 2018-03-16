@@ -3,6 +3,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 from collections import OrderedDict
+from wsgiref.util import FileWrapper
 
 import requests
 
@@ -13,7 +14,7 @@ from dateutil.relativedelta import relativedelta
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied
 from django.db.models.query_utils import Q
-from django.http.response import JsonResponse, HttpResponseBadRequest, HttpResponse
+from django.http.response import JsonResponse, HttpResponseBadRequest, HttpResponse, StreamingHttpResponse, Http404
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -22,7 +23,7 @@ from django.views.generic.base import View, TemplateView, RedirectView
 
 from corehq import toggles
 from corehq.apps.cloudcare.utils import webapps_url
-from corehq.apps.domain.decorators import login_and_domain_required
+from corehq.apps.domain.decorators import login_and_domain_required, api_auth
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.hqwebapp.views import BugReportView
 from corehq.apps.locations.models import SQLLocation
@@ -30,6 +31,8 @@ from corehq.apps.locations.permissions import location_safe, user_can_access_loc
 from corehq.apps.locations.util import location_hierarchy_config
 from corehq.apps.hqwebapp.decorators import use_daterangepicker
 from corehq.apps.users.models import UserRole
+from corehq.form_processor.exceptions import AttachmentNotFound
+from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from custom.icds.const import AWC_LOCATION_TYPE_CODE
 from custom.icds_reports.const import LocationTypes, BHD_ROLE, ICDS_SUPPORT_EMAIL, CHILDREN_EXPORT, \
     PREGNANT_WOMEN_EXPORT, DEMOGRAPHICS_EXPORT, SYSTEM_USAGE_EXPORT, AWC_INFRASTRUCTURE_EXPORT,\
@@ -1522,3 +1525,21 @@ class CheckPDFReportStatus(View):
                 }
             )
         return JsonResponse({'task_ready': status})
+
+
+@location_safe
+class ICDSImagesAccessorAPI(View):
+    @method_decorator(api_auth)
+    def get(self, request, domain, form_id=None, attachment_id=None):
+        if not form_id or not attachment_id:
+            raise Http404
+        try:
+            content = FormAccessors(domain).get_attachment_content(form_id, attachment_id)
+        except AttachmentNotFound:
+            raise Http404
+        if 'image' not in content.content_type:
+            raise Http404
+        return StreamingHttpResponse(
+            streaming_content=FileWrapper(content.content_stream),
+            content_type=content.content_type
+        )
