@@ -117,7 +117,6 @@ class WeightedPropertyPatientFinder(PatientFinder):
     # to be considered correct.
     confidence_margin = DecimalProperty(default=0.667)  # Default: Matches two thirds better than second-best
 
-
     def __init__(self, *args, **kwargs):
         super(WeightedPropertyPatientFinder, self).__init__(*args, **kwargs)
         self._property_map = {}

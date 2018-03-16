@@ -66,6 +66,7 @@ def create_visits(requests, info, form_json, form_question_values, openmrs_confi
                 # location_uuid=,  # location of case owner (CHW) > location[meta][openmrs_uuid]
             )
 
+
 def sync_openmrs_patient(requests, domain, info, form_json, form_question_values, openmrs_config):
     patient = get_patient(requests, domain, info, openmrs_config)
     if patient is None:
