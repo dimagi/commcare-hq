@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from corehq.apps.domain_migration_flags.api import any_migrations_in_progress
 from corehq.apps.sms.models import QueuedSMS
 from corehq.apps.sms.tasks import send_to_sms_queue

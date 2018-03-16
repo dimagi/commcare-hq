@@ -1,6 +1,7 @@
 # coding=utf-8
 from __future__ import absolute_import
 
+from __future__ import unicode_literals
 import contextlib
 import datetime
 import logging
@@ -150,7 +151,7 @@ class SubmissionPost(object):
         '''
 
         if not instance.metadata or instance.metadata.deviceID != FORMPLAYER_DEVICE_ID:
-            return u'   √   '
+            return '   √   '
 
         messages = []
         user = CouchUser.get_by_user_id(instance.user_id)
@@ -470,7 +471,7 @@ class SubmissionPost(object):
     @staticmethod
     def get_exception_response_and_log(error_instance, path):
         logging.exception(
-            u"Problem receiving submission to %s. Doc id: %s, Error %s" % (
+            "Problem receiving submission to %s. Doc id: %s, Error %s" % (
                 path,
                 error_instance.form_id,
                 error_instance.problem
@@ -484,7 +485,7 @@ class SubmissionPost(object):
 
 
 def _transform_instance_to_error(interface, exception, instance):
-    error_message = u'{}: {}'.format(type(exception).__name__, six.text_type(exception))
+    error_message = '{}: {}'.format(type(exception).__name__, six.text_type(exception))
     return interface.xformerror_from_xform_instance(instance, error_message)
 
 

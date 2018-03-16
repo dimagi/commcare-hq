@@ -5,7 +5,7 @@ import uuid
 import functools
 import json
 import logging
-from io import BytesIO
+from io import StringIO
 
 import mock
 import os
@@ -283,7 +283,7 @@ class capture_log_output(ContextDecorator):
         self.original_handlers = self.logger.handlers
         for handler in self.original_handlers:
             self.logger.removeHandler(handler)
-        self.output = BytesIO()
+        self.output = StringIO()
         self.logger.addHandler(logging.StreamHandler(self.output))
 
     def __enter__(self):

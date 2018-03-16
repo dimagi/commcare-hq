@@ -37,6 +37,7 @@ from corehq.motech.repeaters.dbaccessors import (
     get_repeat_records_by_payload_id,
 )
 from corehq.motech.repeaters.models import RepeatRecord
+from corehq.motech.utils import pformat_json
 
 
 class DomainForwardingRepeatRecords(GenericTabularReport):
@@ -253,7 +254,7 @@ class RepeatRecordView(View):
         if content_type == 'text/xml':
             payload = indent_xml(payload)
         elif content_type == 'application/json':
-            payload = json.dumps(json.loads(payload), indent=4)
+            payload = pformat_json(payload)
         elif content_type == 'application/soap+xml':
             # we return a payload that is a dict, which is then converted to
             # XML by the zeep library before being sent along as a SOAP request.

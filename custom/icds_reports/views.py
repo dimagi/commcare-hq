@@ -2,6 +2,7 @@ from __future__ import absolute_import
 
 from __future__ import unicode_literals
 
+from collections import OrderedDict
 from wsgiref.util import FileWrapper
 
 import requests
@@ -208,8 +209,10 @@ class DashboardView(TemplateView):
         kwargs.update(self.kwargs)
         kwargs['location_hierarchy'] = location_hierarchy_config(self.domain)
         kwargs['user_location_id'] = self.couch_user.get_location_id(self.domain)
-        kwargs['have_access'] = icds_pre_release_features(self.couch_user)
-
+        kwargs['have_access_to_features'] = icds_pre_release_features(self.couch_user)
+        kwargs['have_access_to_all_locations'] = self.couch_user.has_permission(
+            self.domain, 'access_all_locations'
+        )
         is_commcare_user = self.couch_user.is_commcare_user()
 
         if self.couch_user.is_web_user():
@@ -338,10 +341,16 @@ class LocationView(View):
 
     def get(self, request, *args, **kwargs):
         location_id = request.GET.get('location_id')
+        user_locations_with_parents = SQLLocation.objects.get_queryset_ancestors(
+            self.request.couch_user.get_sql_locations(self.kwargs['domain']), include_self=True
+        ).distinct()
+        parent_ids = [loc.location_id for loc in user_locations_with_parents]
         if location_id == 'null' or location_id == 'undefined':
             location_id = None
         if location_id:
-            if not user_can_access_location_id(self.kwargs['domain'], request.couch_user, location_id):
+            if not user_can_access_location_id(
+                self.kwargs['domain'], request.couch_user, location_id
+            ) and location_id not in parent_ids:
                 return JsonResponse({})
             location = get_object_or_404(
                 SQLLocation,
@@ -352,12 +361,16 @@ class LocationView(View):
             map_location_name = location.name
             if 'map_location_name' in location.metadata and location.metadata['map_location_name']:
                 map_location_name = location.metadata['map_location_name']
-
             return JsonResponse({
                 'name': location.name,
                 'map_location_name': map_location_name,
                 'location_type': location.location_type.code,
-                'location_type_name': location.location_type_name
+                'location_type_name': location.location_type_name,
+                'user_have_access': user_can_access_location_id(
+                    self.kwargs['domain'],
+                    request.couch_user, location.location_id
+                ),
+                'user_have_access_to_parent': location.location_id in parent_ids
             })
 
         parent_id = request.GET.get('parent_id')
@@ -367,9 +380,12 @@ class LocationView(View):
 
         locations = SQLLocation.objects.accessible_to_user(self.kwargs['domain'], self.request.couch_user)
         if not parent_id:
-            locations = SQLLocation.objects.filter(domain=self.kwargs['domain'], parent_id__isnull=True)
+            locations = locations.filter(parent_id__isnull=True)
         else:
             locations = locations.filter(parent__location_id=parent_id)
+
+        if locations.count() == 0:
+            locations = user_locations_with_parents.filter(parent__location_id=parent_id)
 
         if name:
             locations = locations.filter(name__iexact=name)
@@ -382,6 +398,11 @@ class LocationView(View):
                     'name': loc.name,
                     'parent_id': parent_id,
                     'location_type_name': loc.location_type_name,
+                    'user_have_access': user_can_access_location_id(
+                        self.kwargs['domain'],
+                        request.couch_user, loc.location_id
+                    ),
+                    'user_have_access_to_parent': loc.location_id in parent_ids
                 }
                 for loc in locations if show_test or loc.metadata.get('is_test_location', 'real') != 'test'
             ]
@@ -401,11 +422,13 @@ class LocationAncestorsView(View):
             self.request.couch_user.get_sql_locations(self.kwargs['domain']), include_self=True
         ).distinct()) + list(selected_location.get_ancestors())
         parent_ids = [x.pk for x in parents]
+        parent_locations_ids = [loc.location_id for loc in parents]
         locations = SQLLocation.objects.accessible_to_user(
             domain=self.kwargs['domain'], user=self.request.couch_user
         ).filter(
             ~Q(pk__in=parent_ids) & (Q(parent_id__in=parent_ids) | Q(parent_id__isnull=True))
         ).select_related('parent').distinct().order_by('name')
+
         return JsonResponse(data={
             'locations': [
                 {
@@ -413,15 +436,25 @@ class LocationAncestorsView(View):
                     'name': location.name,
                     'parent_id': location.parent.location_id if location.parent else None,
                     'location_type_name': location.location_type_name,
+                    'user_have_access': user_can_access_location_id(
+                        self.kwargs['domain'],
+                        request.couch_user, location.location_id
+                    ),
+                    'user_have_access_to_parent': location.location_id in parent_locations_ids
                 }
-                for location in set(list(locations) + list(parents))
+                for location in list(OrderedDict.fromkeys(list(locations) + list(parents)))
                 if show_test or location.metadata.get('is_test_location', 'real') != 'test'
             ],
             'selected_location': {
                 'location_type_name': selected_location.location_type_name,
                 'location_id': selected_location.location_id,
                 'name': selected_location.name,
-                'parent_id': selected_location.parent.location_id if selected_location.parent else None
+                'parent_id': selected_location.parent.location_id if selected_location.parent else None,
+                'user_have_access': user_can_access_location_id(
+                    self.kwargs['domain'],
+                    request.couch_user, selected_location.location_id
+                ),
+                'user_have_access_to_parent': selected_location.location_id in parent_locations_ids
             }
         })
 
@@ -434,9 +467,9 @@ class AWCLocationView(View):
         if location_id == 'null' or location_id == 'undefined':
             location_id = None
         selected_location = get_object_or_404(SQLLocation, location_id=location_id, domain=self.kwargs['domain'])
-        awcs = selected_location.get_descendants().filter(
-            location_type__code=AWC_LOCATION_TYPE_CODE
-        ).order_by('name')
+        awcs = SQLLocation.objects.accessible_to_user(
+            domain=self.kwargs['domain'], user=self.request.couch_user
+        ).filter(parent_id=selected_location.pk).order_by('name')
         return JsonResponse(data={
             'locations': [
                 {

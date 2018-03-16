@@ -1683,6 +1683,8 @@ AVAILABLE_CUSTOM_RULE_CRITERIA = {
         'custom.icds.rules.custom_criteria.person_case_is_under_6_years_old',
     'ICDS_PERSON_CASE_IS_UNDER_19_YEARS_OLD':
         'custom.icds.rules.custom_criteria.person_case_is_under_19_years_old',
+    'ICDS_CCS_RECORD_CASE_HAS_FUTURE_EDD':
+        'custom.icds.rules.custom_criteria.ccs_record_case_has_future_edd',
     'ICDS_IS_USERCASE_OF_AWW':
         'custom.icds.rules.custom_criteria.is_usercase_of_aww',
     'ICDS_IS_USERCASE_OF_LS':
@@ -2027,6 +2029,7 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'vhnd_form.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'visitorbook_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'complementary_feeding_forms.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'postnatal_care_forms.json'),
 
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'adherence.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_for_cc_outbound.json'),

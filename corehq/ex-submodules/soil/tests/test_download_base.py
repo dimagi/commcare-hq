@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from io import StringIO
 from django.test import SimpleTestCase
 
@@ -25,7 +26,7 @@ class TestBlobDownload(SimpleTestCase):
         content_disposition = 'text/xml'
         download_id = 'abc123'
 
-        self.db.put(StringIO(u'content'), self.identifier)
+        self.db.put(StringIO('content'), self.identifier)
 
         expose_blob_download(
             self.identifier,
@@ -38,4 +39,4 @@ class TestBlobDownload(SimpleTestCase):
         self.assertIsNotNone(download)
 
         response = download.toHttpResponse()
-        self.assertEqual(next(response.streaming_content), u'content')
+        self.assertEqual(next(response.streaming_content), 'content')

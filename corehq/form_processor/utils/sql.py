@@ -3,6 +3,7 @@ Note that the adapters must return the fields in the same order as they appear
 in the table DSL
 """
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import json
 from collections import namedtuple
 
