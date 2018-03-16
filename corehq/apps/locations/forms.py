@@ -566,7 +566,9 @@ class UsersAtLocationForm(forms.Form):
 
         user_cache_list = []
         for doc in iter_docs(CommCareUser.get_db(), selected_users):
-            user_cache_list.append({'text': doc['username'], 'id': doc['_id']})
+            display_username = user_display_string(
+                doc['username'], doc.get('first_name', ''), doc.get('last_name', ''))
+            user_cache_list.append({'text': display_username, 'id': doc['_id']})
         self.get_users_at_location.set_cached_value(self).to(user_cache_list)
 
 class LocationFixtureForm(forms.ModelForm):
