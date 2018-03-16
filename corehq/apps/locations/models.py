@@ -477,8 +477,8 @@ class SQLLocation(MPTTModel):
 
     full_delete = delete
 
-    def to_json(self):
-        return {
+    def to_json(self, include_lineage=True):
+        json_dict = {
             'name': self.name,
             'site_code': self.site_code,
             '_id': self.location_id,
@@ -493,9 +493,12 @@ class SQLLocation(MPTTModel):
             'metadata': self.metadata,
             'location_type': self.location_type.name,
             'location_type_code': self.location_type.code,
-            'lineage': self.lineage,
             'parent_location_id': self.parent_location_id,
         }
+        if include_lineage:
+            # lineage requires a non-trivial db hit
+            json_dict['lineage'] = self.lineage
+        return json_dict
 
     @property
     def lineage(self):
