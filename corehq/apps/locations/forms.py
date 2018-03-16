@@ -507,7 +507,7 @@ class UsersAtLocationForm(forms.Form):
                                   ugettext_lazy("Update Membership"))
 
         super(UsersAtLocationForm, self).__init__(
-            initial={'selected_ids': self.users_at_location},
+            initial={'selected_ids': self.get_users_at_location()},
             *args, **kwargs
         )
 
@@ -515,7 +515,7 @@ class UsersAtLocationForm(forms.Form):
         self.fields['selected_ids'].widget.set_url(
             reverse(MobileWorkersOptionsView.urlname, args=(self.domain_object.name,))
         )
-        self.fields['selected_ids'].widget.set_initial(self.users_at_location)
+        self.fields['selected_ids'].widget.set_initial(self.get_users_at_location())
         self.helper = FormHelper()
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
@@ -558,13 +558,16 @@ class UsersAtLocationForm(forms.Form):
 
     def save(self):
         selected_users = set(self.cleaned_data['selected_ids'].split(','))
-        previous_users = set([u['id'] for u in self.users_at_location])
+        previous_users = set([u['id'] for u in self.get_users_at_location()])
         to_remove = previous_users - selected_users
         to_add = selected_users - previous_users
         self.unassign_users(to_remove)
         self.assign_users(to_add)
-        self.quickcache.set_cached_value(selected_users)
 
+        user_cache_list = []
+        for doc in iter_docs(CommCareUser.get_db(), selected_users):
+            user_cache_list.append({'text': doc['username'], 'id': doc['_id']})
+        self.get_users_at_location.set_cached_value(self).to(user_cache_list)
 
 class LocationFixtureForm(forms.ModelForm):
     class Meta(object):
