@@ -4,9 +4,9 @@ from django.test import SimpleTestCase
 
 from django.conf import settings
 
-from corehq.apps.nimbus_api import const
-from corehq.apps.nimbus_api.exceptions import NimbusRequestException
-from corehq.apps.nimbus_api.form_validation import validate_form
+from corehq.apps.formplayer_api import const
+from corehq.apps.formplayer_api.exceptions import NimbusRequestException
+from corehq.apps.formplayer_api.form_validation import validate_form
 
 
 @requests_mock.Mocker()

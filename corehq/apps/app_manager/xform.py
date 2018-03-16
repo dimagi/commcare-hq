@@ -8,14 +8,14 @@ from django.utils.translation import ugettext_lazy as _
 
 from casexml.apps.case.xml import V2_NAMESPACE
 from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
-from corehq.apps import nimbus_api
+from corehq.apps import formplayer_api
 from corehq.apps.app_manager.const import (
     SCHEDULE_PHASE, SCHEDULE_LAST_VISIT, SCHEDULE_LAST_VISIT_DATE,
     CASE_ID, USERCASE_ID, SCHEDULE_UNSCHEDULED_VISIT, SCHEDULE_CURRENT_VISIT_NUMBER,
     SCHEDULE_GLOBAL_NEXT_VISIT_DATE, SCHEDULE_NEXT_DUE)
 from lxml import etree as ET
 
-from corehq.apps.nimbus_api.exceptions import NimbusAPIException
+from corehq.apps.formplayer_api.exceptions import NimbusAPIException
 from corehq.util.view_utils import get_request
 from memoized import memoized
 from .xpath import CaseIDXPath, session_var, QualifiedScheduleFormXPath
@@ -573,7 +573,7 @@ def validate_xform(domain, source):
     # normalize and strip comments
     source = ET.tostring(parse_xml(source))
     try:
-        validation_results = nimbus_api.validate_form(source)
+        validation_results = formplayer_api.validate_form(source)
     except NimbusAPIException:
         raise XFormValidationFailed("Unable to validate form")
 

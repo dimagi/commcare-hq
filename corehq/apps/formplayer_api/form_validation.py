@@ -4,9 +4,9 @@ import requests
 from requests import HTTPError
 from requests import RequestException
 
-from corehq.apps.nimbus_api import const
-from corehq.apps.nimbus_api.exceptions import NimbusRequestException, NimbusAPIException
-from corehq.apps.nimbus_api.utils import get_nimbus_url
+from corehq.apps.formplayer_api import const
+from corehq.apps.formplayer_api.exceptions import NimbusRequestException, NimbusAPIException
+from corehq.apps.formplayer_api.utils import get_nimbus_url
 from dimagi.utils.logging import notify_exception
 
 
@@ -46,13 +46,13 @@ def validate_form(form_xml):
             headers={'Content-Type': 'application/xml'}
         )
     except RequestException as e:
-        notify_exception(None, "Error calling Nimbus form validation endpoint")
+        notify_exception(None, "Error calling Formplayer form validation endpoint")
         raise NimbusAPIException(e)
 
     try:
         response.raise_for_status()
     except HTTPError:
-        notify_exception(None, "Error calling Nimbus form validation endpoint", details={
+        notify_exception(None, "Error calling Formplayer form validation endpoint", details={
             'status_code': response.status_code
         })
         raise NimbusRequestException(response.status_code)

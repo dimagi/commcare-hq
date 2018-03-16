@@ -21,7 +21,7 @@ import requests
 from soil import heartbeat
 
 from corehq.apps.hqadmin.escheck import check_es_cluster_health
-from corehq.apps.nimbus_api.utils import get_nimbus_url
+from corehq.apps.formplayer_api.utils import get_nimbus_url
 from corehq.apps.app_manager.models import Application
 from corehq.apps.change_feed.connection import get_kafka_client_or_none
 from corehq.apps.es import GroupES
