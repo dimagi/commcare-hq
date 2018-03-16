@@ -108,6 +108,7 @@ def rebuild_indicators_in_place(indicator_config_id, initiated_by=None):
         if not id_is_static(indicator_config_id):
             config.meta.build.initiated_in_place = datetime.utcnow()
             config.meta.build.finished_in_place = False
+            config.meta.build.rebuilt_asynchronously = False
             config.save()
 
         adapter.build_table()

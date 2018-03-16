@@ -18,7 +18,8 @@
         <div class="alert alert-info col-md-12" ng-if="$ctrl.isISSNIPMonthlyRegisterSelected() && $ctrl.hasErrorsISSNIPExport()">
             <strong>Please make the following selections before you can export:</strong>
             <ul>
-                <li ng-if="!$ctrl.isDistrictOrBelowSelected()" style="padding: 5px;">Select at least a district-level location</li>
+                <li ng-if="$ctrl.isCombinedPDFSelected() && !$ctrl.isBlockOrBelowSelected()" style="padding: 5px;">Select at least a block-level location</li>
+                <li ng-if="!$ctrl.isCombinedPDFSelected() && !$ctrl.isDistrictOrBelowSelected()" style="padding: 5px;">Select at least a district-level location</li>
             </ul>
         </div>
         <div class="form-horizontal black">

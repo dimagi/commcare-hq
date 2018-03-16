@@ -65,3 +65,8 @@ class AllowMigrateTest(SimpleTestCase):
         mock.return_value = 'icds'
         self.assertIs(False, allow_migrate('default', ICDS_REPORTS_APP))
         self.assertIs(True, allow_migrate('icds', ICDS_REPORTS_APP))
+
+    def test_synclogs_non_partitioned(self):
+        self.assertIs(False, allow_migrate('synclogs', 'accounting'))
+        self.assertIs(True, allow_migrate(None, 'accounting'))
+        self.assertIs(True, allow_migrate('default', 'accounting'))

@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import uuid
 from collections import namedtuple
 from datetime import datetime
@@ -555,16 +556,16 @@ class CaseAccessorTestsSQL(TestCase):
             {
                 CaseIndexInfo(
                     case_id=case.case_id,
-                    identifier=u'task',
+                    identifier='task',
                     referenced_id=referenced_id1,
-                    referenced_type=u'task',
+                    referenced_type='task',
                     relationship=CommCareCaseIndexSQL.EXTENSION,
                 ),
                 CaseIndexInfo(
                     case_id=case.case_id,
-                    identifier=u'parent',
+                    identifier='parent',
                     referenced_id=referenced_id2,
-                    referenced_type=u'mother',
+                    referenced_type='mother',
                     relationship=CommCareCaseIndexSQL.CHILD
                 ),
             }

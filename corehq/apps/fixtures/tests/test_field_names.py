@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from xml.etree import cElementTree as ElementTree
 
 from django.test import TestCase, SimpleTestCase
@@ -154,7 +155,7 @@ class FieldNameValidationTest(SimpleTestCase):
         self.assertTrue(is_identifier_invalid(bad_name))
 
     def test_unicode(self):
-        bad_name = u"ﾉｲ丂 ﾑ ｲ尺ﾑｱ! \_(ツ)_/¯"
+        bad_name = "ﾉｲ丂 ﾑ ｲ尺ﾑｱ! \_(ツ)_/¯"
         self.assertTrue(is_identifier_invalid(bad_name))
 
     def test_good(self):

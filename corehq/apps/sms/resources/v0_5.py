@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import json
 from collections import namedtuple
 from corehq.apps.accounting.utils import domain_has_privilege

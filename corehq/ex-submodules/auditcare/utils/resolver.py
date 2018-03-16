@@ -1,5 +1,6 @@
 #Source: http://djangosnippets.org/snippets/1378/ which yielded: http://pastebin.com/raw.php?i=7KfALc0j
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.urls import RegexURLPattern, Resolver404, get_resolver
 
 __all__ = ('resolve_to_name',)
