@@ -1,7 +1,7 @@
-class NimbusAPIException(Exception):
+class FormplayerAPIException(Exception):
     pass
 
 
-class NimbusRequestException(NimbusAPIException):
+class FormplayerRequestException(FormplayerAPIException):
     def __init__(self, status_code):
         self.status_code = status_code

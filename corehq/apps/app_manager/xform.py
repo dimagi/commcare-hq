@@ -15,7 +15,7 @@ from corehq.apps.app_manager.const import (
     SCHEDULE_GLOBAL_NEXT_VISIT_DATE, SCHEDULE_NEXT_DUE)
 from lxml import etree as ET
 
-from corehq.apps.formplayer_api.exceptions import NimbusAPIException
+from corehq.apps.formplayer_api.exceptions import FormplayerAPIException
 from corehq.util.view_utils import get_request
 from memoized import memoized
 from .xpath import CaseIDXPath, session_var, QualifiedScheduleFormXPath
@@ -574,7 +574,7 @@ def validate_xform(domain, source):
     source = ET.tostring(parse_xml(source))
     try:
         validation_results = formplayer_api.validate_form(source)
-    except NimbusAPIException:
+    except FormplayerAPIException:
         raise XFormValidationFailed("Unable to validate form")
 
     if not validation_results.success:
