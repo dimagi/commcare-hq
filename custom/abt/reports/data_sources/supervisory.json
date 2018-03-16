@@ -12,7 +12,8 @@
         "airsbenin",
         "airsmozambique",
         "airskenya",
-        "airs-testing"
+        "airs-testing",
+        "vectorlink-uganda"
     ],
     "config": {
         "engine_id": "default",
