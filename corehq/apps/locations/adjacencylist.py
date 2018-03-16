@@ -53,10 +53,14 @@ class AdjListManager(TreeManager):
             where = node
         elif include_self:
             if isinstance(node, QuerySet):
+                if node.query.is_empty():
+                    return self.none()
                 where = Q(id__in=node.order_by())
             else:
                 where = Q(id=node.id)
         elif isinstance(node, QuerySet):
+            if node.query.is_empty():
+                return self.none()
             where = Q(id__in=node.order_by().values(parent_col))
         else:
             where = Q(id=getattr(node, parent_col))
@@ -103,11 +107,15 @@ class AdjListManager(TreeManager):
             discard_dups = True
         elif include_self:
             if isinstance(node, QuerySet):
+                if node.query.is_empty():
+                    return self.none()
                 where = Q(id__in=node.order_by())
                 discard_dups = True
             else:
                 where = Q(id=node.id)
         elif isinstance(node, QuerySet):
+            if node.query.is_empty():
+                return self.none()
             where = Q(**{parent_col + "__in": node.order_by()})
             discard_dups = True
         else:
