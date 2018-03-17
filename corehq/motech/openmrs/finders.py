@@ -211,11 +211,13 @@ class WeightedPropertyPatientFinder(PatientFinder):
         """
         from casexml.apps.case.mock import CaseBlock
         from corehq.apps.hqcase.utils import submit_case_blocks
+        from corehq.motech.openmrs.repeater_helpers import PERSON_UUID_IDENTIFIER_TYPE_ID
 
         case_config_ids = case_config['patient_identifiers']
         case_update = {}
-        if 'uuid' in case_config_ids:
-            case_property = case_config_ids['uuid']['case_property']
+        id_type_uuid = PERSON_UUID_IDENTIFIER_TYPE_ID
+        if id_type_uuid in case_config_ids:
+            case_property = case_config_ids[id_type_uuid]['case_property']
             value = patient['uuid']
             case_update[case_property] = value
         for identifier in patient['identifiers']:

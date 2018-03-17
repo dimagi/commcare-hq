@@ -12,7 +12,6 @@ from casexml.apps.case.xform import extract_case_blocks
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.motech.openmrs.finders import PatientFinder
 from corehq.motech.openmrs.logger import logger
-from corehq.motech.openmrs.openmrs_config import IdMatcher
 from corehq.motech.utils import pformat_json
 
 
@@ -349,17 +348,20 @@ class PatientSearchParser(object):
         Return the patient that matches the given identifier. If the
         number of matches is zero or more than one, return None.
 
-        :param patient_identifier_type: 'uuid' to match the patient's
-            OpenMRS Person UUID, otherwise the UUID of the OpenMRS
-            identifier type
+        :param patient_identifier_type: PERSON_UUID_IDENTIFIER_TYPE_ID
+            to match the patient's OpenMRS Person UUID, otherwise the
+            UUID of the OpenMRS identifier type
         :param patient_identifier: The value that uniquely identifies
             the patient we want.
 
         """
         patients = []
         for patient in self.response_json['results']:
-            if patient_identifier_type == 'uuid' and patient['uuid'] == patient_identifier:
-                    patients.append(patient)
+            if (
+                patient_identifier_type == PERSON_UUID_IDENTIFIER_TYPE_ID and
+                patient['uuid'] == patient_identifier
+            ):
+                patients.append(patient)
             else:
                 for identifier in patient['identifiers']:
                     if (
