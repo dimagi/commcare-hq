@@ -344,9 +344,9 @@ BEGIN
 		'sex, ' ||
 		'age_tranche, ' ||
 		'caste, ' ||
-		'COALESCE(disabled, ' || quote_nullable(_no_text) || '), ' ||
-		'COALESCE(minority, ' || quote_nullable(_no_text) || '), ' ||
-		'COALESCE(resident, ' || quote_nullable(_no_text) || '), ' ||
+		'COALESCE(disabled, ' || quote_nullable(_no_text) || ') as coalesce_disabled, ' ||
+		'COALESCE(minority, ' || quote_nullable(_no_text) || ') as coalesce_minority, ' ||
+		'COALESCE(resident, ' || quote_nullable(_no_text) || ') as coalesce_resident, ' ||
 		'sum(valid_in_month), ' ||
 		'sum(nutrition_status_weighed), ' ||
 		'sum(nutrition_status_unweighed), ' ||
@@ -397,7 +397,7 @@ BEGIN
 		'sum(CASE WHEN (born_in_month = 1 AND (nutrition_status_weighed = 1 OR low_birth_weight_born_in_month = 1)) THEN 1 ELSE 0 END) ' ||
 		'FROM ' || quote_ident(_ucr_child_monthly_table) || ' ' ||
     'WHERE state_id != ' || quote_literal(_blank_value) ||  ' AND month = ' || quote_literal(_start_date) || ' ' ||
-		'GROUP BY state_id, district_id, block_id, supervisor_id, awc_id, month, sex, age_tranche, caste, disabled, minority, resident)';
+		'GROUP BY state_id, district_id, block_id, supervisor_id, awc_id, month, sex, age_tranche, caste, coalesce_disabled, coalesce_minority, coalesce_resident)';
 
 	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename5 || '_indx1') || ' ON ' || quote_ident(_tablename5) || '(state_id, district_id, block_id, supervisor_id, awc_id)';
 	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename5 || '_indx2') || ' ON ' || quote_ident(_tablename5) || '(district_id)';
