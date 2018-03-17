@@ -181,7 +181,13 @@ BEGIN
 		'valid_in_month, ' ||
 		'valid_all_registered_in_month, ' ||
 		'ebf_no_info_recorded, ' ||
-		'dob ' ||
+		'dob, ' ||
+		'sex, ' ||
+		'age_tranche, ' ||
+		'caste, ' ||
+		'disabled, ' ||
+		'minority, ' ||
+		'resident ' ||
   ') (SELECT ' ||
 		'awc_id, ' ||
 		'case_id, ' ||
@@ -232,7 +238,13 @@ BEGIN
 		'valid_in_month, ' ||
 		'valid_all_registered_in_month, ' ||
 		'ebf_no_info_recorded, ' ||
-		'dob ' ||
+		'dob, ' ||
+		'sex, ' ||
+		'age_tranche, ' ||
+		'caste, ' ||
+		'disabled, ' ||
+		'minority, ' ||
+		'resident ' ||
 		'FROM ' || quote_ident(_ucr_child_monthly_table) || ' WHERE month = ' || quote_literal(_start_date) || ')';
 
     EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx2') || ' ON ' || quote_ident(_tablename) || '(case_id)';
