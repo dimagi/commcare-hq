@@ -1,7 +1,6 @@
 from __future__ import absolute_import
 
 from django.test import SimpleTestCase
-from jsonpath_rw import parse
 
 from corehq.motech.openmrs.finders import PatientFinder, WeightedPropertyPatientFinder
 

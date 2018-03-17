@@ -27,9 +27,9 @@ class WhereCmp(JSONPath):
 
     def __eq__(self, other):
         return (
-                isinstance(other, WhereCmp) and
-                other.left == self.left and
-                other.right == self.right and
-                other.op == self.op and
-                other.operand == self.operand
+            isinstance(other, WhereCmp) and
+            other.left == self.left and
+            other.right == self.right and
+            other.op == self.op and
+            other.operand == self.operand
         )
