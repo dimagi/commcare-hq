@@ -6,6 +6,12 @@ from corehq.motech.openmrs.finders import PatientFinder, WeightedPropertyPatient
 
 
 PATIENT = {
+    'uuid': '94c0e9c0-1bea-4467-b3c3-823e36c5adf5',
+    'display': '04141401/16/0297 - Mahapajapati Gotami',
+    'identifiers': [{
+        'identifier': '04141401/16/0297',
+        'identifierType': {'uuid': 'e2b97b70-1d5f-11e0-b929-000c29ad1d07', 'display': 'NID'}
+    }],
     'person': {
         'gender': 'F',
         'birthdate': '1984-01-01T00:00:00.000+0200',
@@ -62,6 +68,11 @@ class WeightedPropertyPatientFinderTests(SimpleTestCase):
 
     def setUp(self):
         self.case_config = {
+            'patient_identifiers': {
+                'uuid': {'doc_type': 'CaseProperty', 'case_property': 'openmrs_uuid'},
+                'e2b97b70-1d5f-11e0-b929-000c29ad1d07': {'doc_type': 'CaseProperty', 'case_property': 'nid'}
+            },
+            'match_on_ids': ['uuid'],
             'person_properties': {
                 'gender': {'doc_type': 'CaseProperty', 'case_property': 'sex'},
                 'birthdate': {'doc_type': 'CaseProperty', 'case_property': 'dob'},
@@ -147,6 +158,18 @@ class WeightedPropertyPatientFinderTests(SimpleTestCase):
             self.assertEqual(patient_value, {
                 'caste': 'Buddhist',
                 'class': 'c1fcd1c6-3f10-11e4-adec-0800271c1b75',
+            }[prop])
+
+    def test_patient_identifiers_jsonpath(self):
+        for prop in ('openmrs_uuid', 'nid'):
+            matches = self.finder._property_map[prop].jsonpath.find(PATIENT)
+            self.assertEqual(len(matches), 1, 'jsonpath "{}" did not uniquely match a patient value'.format(
+                self.finder._property_map[prop].jsonpath
+            ))
+            patient_value = matches[0].value
+            self.assertEqual(patient_value, {
+                'openmrs_uuid': '94c0e9c0-1bea-4467-b3c3-823e36c5adf5',
+                'nid': '04141401/16/0297',
             }[prop])
 
     def test_get_score_ge_1(self):
