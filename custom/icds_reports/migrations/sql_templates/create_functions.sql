@@ -403,6 +403,7 @@ DECLARE
 	_tablename4 text;
 	_tablename5 text;
 	_ucr_child_monthly_table text;
+	_child_health_monthly_table text;
 	_start_date date;
 	_end_date date;
 	_all_text text;
@@ -418,6 +419,7 @@ BEGIN
 	_tablename3 := 'agg_child_health' || '_' || _start_date || '_3';
 	_tablename4 := 'agg_child_health' || '_' || _start_date || '_4';
 	_tablename5 := 'agg_child_health' || '_' || _start_date || '_5';
+	_child_health_monthly_table := 'child_health_monthly' || '_' || _start_date;
 	EXECUTE 'SELECT table_name FROM ucr_table_name_mapping WHERE table_type = ' || quote_literal('child_health_monthly') INTO _ucr_child_monthly_table;
 	_all_text = 'All';
 	_null_value = NULL;
@@ -516,18 +518,18 @@ BEGIN
 		'sum(bf_at_birth_born_in_month), ' ||
 		'sum(ebf_eligible), ' ||
 		'sum(ebf_in_month), ' ||
-		'sum(cf_eligible), ' ||
-		'sum(cf_in_month), ' ||
-		'sum(cf_diet_diversity), ' ||
-		'sum(cf_diet_quantity), ' ||
-		'sum(cf_demo), ' ||
-		'sum(cf_handwashing), ' ||
+		'0, ' ||
+		'0, ' ||
+		'0, ' ||
+		'0, ' ||
+		'0, ' ||
+		'0, ' ||
 		'sum(counsel_increase_food_bf), ' ||
 		'sum(counsel_manage_breast_problems), ' ||
 		'sum(counsel_ebf), ' ||
 		'sum(counsel_adequate_bf), ' ||
-		'sum(counsel_pediatric_ifa), ' ||
-		'sum(counsel_comp_feeding_vid), ' ||
+		'0, ' ||
+		'0, ' ||
 		'sum(fully_immunized_eligible), ' ||
 		'sum(fully_immunized_on_time), ' ||
 		'sum(fully_immunized_late), ' ||
@@ -539,8 +541,8 @@ BEGIN
 		'sum(CASE WHEN wasting_severe = 1 AND nutrition_status_weighed = 1 AND height_measured_in_month = 1 THEN 1 ELSE 0 END), ' ||
 		'sum(CASE WHEN stunting_moderate = 1 AND height_measured_in_month = 1 THEN 1 ELSE 0 END), ' ||
 		'sum(CASE WHEN stunting_severe = 1 AND height_measured_in_month = 1 THEN 1 ELSE 0 END), ' ||
-		'sum(cf_initiated), ' ||
-		'sum(cf_initiation_eligible), ' ||
+		'0, ' ||
+		'0, ' ||
 		'sum(height_measured_in_month), ' ||
 		'sum(CASE WHEN wasting_normal = 1 AND nutrition_status_weighed = 1 AND height_measured_in_month = 1 THEN 1 ELSE 0 END), ' ||
 		'sum(CASE WHEN stunting_normal = 1 AND height_measured_in_month = 1 THEN 1 ELSE 0 END), ' ||
@@ -560,6 +562,35 @@ BEGIN
 	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename5 || '_indx6') || ' ON ' || quote_ident(_tablename5) || '(gender)';
 	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename5 || '_indx7') || ' ON ' || quote_ident(_tablename5) || '(age_tranche)';
 
+  EXECUTE 'UPDATE ' || quote_ident(_tablename5) || ' agg_child_health SET ' ||
+    'cf_eligible = temp.cf_eligible, ' ||
+    'cf_in_month = temp.cf_in_month, ' ||
+    'cf_diet_diversity = temp.cf_diet_diversity, ' ||
+    'cf_diet_quantity = temp.cf_diet_quantity, ' ||
+    'cf_demo = temp.cf_demo, ' ||
+    'cf_handwashing = temp.cf_handwashing, ' ||
+    'counsel_pediatric_ifa = temp.counsel_pediatric_ifa, ' ||
+    'counsel_play_cf_video = temp.counsel_comp_feeding_vid, ' ||
+    'cf_initiation_in_month = temp.cf_initiation_in_month, ' ||
+    'cf_initiation_eligible = temp.cf_initiation_eligible ' ||
+    'FROM (SELECT ' ||
+      'awc_id, month, sex, age_tranche, caste, disabled, minority, resident, ' ||
+      'sum(cf_eligible) as cf_eligible, ' ||
+      'sum(cf_in_month) as cf_in_month, ' ||
+      'sum(cf_diet_diversity) as cf_diet_diversity, ' ||
+      'sum(cf_diet_quantity) as cf_diet_quantity, ' ||
+      'sum(cf_demo) as cf_demo, ' ||
+      'sum(cf_handwashing) as cf_handwashing, ' ||
+      'sum(counsel_pediatric_ifa) as counsel_pediatric_ifa, ' ||
+      'sum(counsel_comp_feeding_vid) as counsel_comp_feeding_vid, ' ||
+      'sum(cf_initiation_in_month) as cf_initiation_in_month, ' ||
+      'sum(cf_initiation_eligible) as cf_initiation_eligible ' ||
+      'FROM ' || quote_ident(_child_health_monthly_table) || ' ' ||
+      'GROUP BY awc_id, month, sex, age_tranche, caste, disabled, minority, resident) temp ' ||
+    'WHERE temp.awc_id = agg_child_health.awc_id AND temp.month = agg_child_health.month AND temp.sex = agg_child_health.gender ' ||
+      'AND temp.age_tranche = agg_child_health.age_tranche AND temp.caste = agg_child_health.caste ' ||
+      'AND temp.disabled = agg_child_health.disabled AND temp.minority = agg_child_health.minority ' ||
+      'AND temp.resident = agg_child_health.resident';
 
 	--Roll up by location
 	_rollup_text = 'sum(valid_in_month), ' ||
