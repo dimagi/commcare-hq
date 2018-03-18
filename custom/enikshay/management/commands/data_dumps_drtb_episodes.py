@@ -1,6 +1,5 @@
 from __future__ import absolute_import
 from __future__ import print_function
-from __future__ import unicode_literals
 
 from corehq.apps.es import queries
 
@@ -11,7 +10,6 @@ from custom.enikshay.case_utils import (
 )
 from custom.enikshay.const import (
     ENROLLED_IN_PRIVATE,
-    DSTB_EPISODE_TYPE,
 )
 from custom.enikshay.management.commands.base_data_dump import BaseDataDump
 
@@ -20,11 +18,11 @@ DOMAIN = "enikshay"
 
 class Command(BaseDataDump):
     """
-    3. Episode DSTB cases
-    https://docs.google.com/spreadsheets/d/1OPp0oFlizDnIyrn7Eiv11vUp8IBmc73hES7qqT-mKKA/edit#gid=1106002519
+    4. Episode DRTB cases
+    https://docs.google.com/spreadsheets/d/1OPp0oFlizDnIyrn7Eiv11vUp8IBmc73hES7qqT-mKKA/edit#gid=1091819174
     """
-    TASK_NAME = "03_dstb_episodes"
-    INPUT_FILE_NAME = "data_dumps_dstb_episodes.csv"
+    TASK_NAME = "04_drtb_episodes"
+    INPUT_FILE_NAME = "data_dumps_drtb_episodes.csv"
 
     def __init__(self, *args, **kwargs):
         super(Command, self).__init__(*args, **kwargs)
@@ -39,7 +37,7 @@ class Command(BaseDataDump):
         return (self.case_search_instance
                 .case_type(case_type)
                 .case_property_query(ENROLLED_IN_PRIVATE, 'true', clause=queries.MUST_NOT)
-                .case_property_query("episode_type", DSTB_EPISODE_TYPE, clause=queries.MUST)
+                .case_property_query("episode_type", "confirmed_drtb", clause=queries.MUST)
                 )
 
     def include_case_in_dump(self, episode):
@@ -68,7 +66,7 @@ class Command(BaseDataDump):
                 return self.get_person(episode).get_case_property('tu_id')
             else:
                 return ''
-        elif column_name == "Current Treating Facility- TU Name":
+        elif column_name == "Current Treating Facility - TU Name":
             if not episode.closed and episode.get_case_property('is_active') == 'yes':
                 return self.get_person(episode).get_case_property('tu_name')
             else:
@@ -78,8 +76,8 @@ class Command(BaseDataDump):
                 return self.get_person(episode).owner_id
             else:
                 return ''
-        elif column_name == "Current Treating Facility - PHI Name":
-            if not episode.closed and episode.get_case_property('is_active') == 'yes':
+        elif column_name == "Current Owner - PHI Name":
+            if episode.closed and episode.get_case_property('is_active') == 'yes':
                 return self.get_person(episode).get_case_property('phi_name')
             else:
                 return ''
