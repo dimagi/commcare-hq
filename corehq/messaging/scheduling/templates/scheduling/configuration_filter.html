@@ -1,0 +1,26 @@
+{% load hq_shared_tags %}
+{% load i18n %}
+
+<div class="report-filter-message-type-configuration" data-initial-value='{{ initial_value|JSON }}' data-conditional-alert-choices='{{ conditional_alert_choices|JSON }}'>
+    <div class="form-group">
+        <label class="control-label {{ css_label_class }}">{% trans "Show" %}</label>
+        <div class="col-xs-4">
+            <select name="configuration_type" class="form-control" data-bind="value: configuration_type">
+                <option value="broadcast">{% trans "Broadcasts" %}</option>
+                <option value="conditional_alert">{% trans "Conditional Alerts" %}</option>
+            </select>
+        </div>
+    </div>
+    <div class="form-group" data-bind="visible: configuration_type() === 'conditional_alert'">
+        <label class="control-label {{ css_label_class }}">{% trans "Conditional Alert" %}</label>
+        <div class="col-xs-4">
+            <select name="rule_id"
+                    class="form-control"
+                    data-bind="options: conditional_alert_choices,
+                               optionsValue: 'id',
+                               optionsText: 'name',
+                               value: rule_id">
+            </select>
+        </div>
+    </div>
+</div>

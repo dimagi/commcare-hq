@@ -39,6 +39,13 @@ hqDefine("reports/js/filters", [
             }
         });
     };
+    var MessageConfigurationTypeFilterViewModel = function(initial, conditionalAlertChoices) {
+        var self = this;
+        var all = [{'id': '', 'name': gettext('All')}];
+        self.configuration_type = ko.observable(initial.configuration_type);
+        self.rule_id = ko.observable(initial.rule_id);
+        self.conditional_alert_choices = ko.observableArray(all.concat(conditionalAlertChoices));
+    };
     var SMSPhoneNumberFilterViewModel = function (initial_value, groups) {
         var PHONE_NUMBER_SELECT_OPTIONS =
             [
@@ -195,6 +202,19 @@ hqDefine("reports/js/filters", [
             hqMain.transformHelpTemplate($(this), true);
         });
 
+        $(".report-filter-message-type-configuration").each(function (i, el) {
+            var $el = $(el),
+                data = $el.data();
+            var model = new MessageConfigurationTypeFilterViewModel(data.initialValue, data.conditionalAlertChoices);
+            $el.koApplyBindings(model);
+
+            $('[name=rule_id]').each(function(i, el) {
+                $(el).select2({
+                    allowClear: true,
+                    placeholder: gettext("All"),
+                });
+            });
+        });
         $(".report-filter-phone-number").each(function (i, el) {
             var $el = $(el),
                 data = $el.data();

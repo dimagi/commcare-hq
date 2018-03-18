@@ -13,7 +13,6 @@ from corehq.apps.data_interfaces.views import CaseGroupCaseManagementView
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.views import EditLocationView
-from corehq.apps.reports.filters.base import BaseSingleOptionFilter
 from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.apps.reports.filters.fixtures import OptionalAsyncLocationFilter
 from corehq.apps.reports.standard import DatespanMixin, ProjectReport, ProjectReportParametersMixin
@@ -60,6 +59,7 @@ from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import CommCareCaseSQL
 from corehq.form_processor.utils import is_commcarecase
+from corehq.messaging.scheduling.filters import MessageConfigurationFilter
 from corehq.messaging.scheduling.models import ScheduledBroadcast, ImmediateBroadcast
 from corehq.messaging.scheduling.views import EditScheduleView, EditConditionalAlertView
 from corehq.messaging.scheduling.scheduling_partitioned.models import (
@@ -1380,26 +1380,12 @@ class PhoneNumberReport(BaseCommConnectLogReport):
         return self._get_rows(paginate=False, link_user=False)
 
 
-class MessageConfigurationTypeFilter(BaseSingleOptionFilter):
-    label = ugettext_lazy("Show for")
-    default_text = ''
-    slug = 'configuration_type'
-
-    TYPE_BROADCAST = 'broadcast'
-    TYPE_CONDITIONAL_ALERT = 'conditional_alert'
-
-    options = [
-        (TYPE_BROADCAST, ugettext_lazy("Broadcasts")),
-        (TYPE_CONDITIONAL_ALERT, ugettext_lazy("Conditional Alerts")),
-    ]
-
-
 class ScheduleInstanceReport(ProjectReport, ProjectReportParametersMixin, GenericTabularReport, DatespanMixin):
     name = ugettext_lazy('Scheduled Messaging Events')
     slug = 'scheduled_messaging_events'
     fields = [
         DatespanFilter,
-        MessageConfigurationTypeFilter,
+        MessageConfigurationFilter,
     ]
     default_datespan_end_date_to_today = True
     ajax_pagination = True
@@ -1426,8 +1412,16 @@ class ScheduleInstanceReport(ProjectReport, ProjectReportParametersMixin, Generi
         return sum(qs.count() for qs in self.get_querysets())
 
     @cached_property
+    def configuration_filter_value(self):
+        return MessageConfigurationFilter.get_value(self.request, self.domain)
+
+    @cached_property
     def configuration_type(self):
-        return MessageConfigurationTypeFilter.get_value(self.request, self.domain)
+        return self.configuration_filter_value['configuration_type']
+
+    @cached_property
+    def rule_id(self):
+        return self.configuration_filter_value['rule_id']
 
     def get_utc_timestamp_display(self, timestamp):
         return ServerTime(timestamp).user_time(self.timezone).done().strftime('%Y-%m-%d %H:%M:%S')
@@ -1522,19 +1516,27 @@ class ScheduleInstanceReport(ProjectReport, ProjectReportParametersMixin, Generi
             return _("(unknown)")
 
     def get_querysets(self):
-        if self.configuration_type == MessageConfigurationTypeFilter.TYPE_CONDITIONAL_ALERT:
+        if self.configuration_type == MessageConfigurationFilter.TYPE_CONDITIONAL_ALERT:
             classes = (CaseAlertScheduleInstance, CaseTimedScheduleInstance)
         else:
             classes = (AlertScheduleInstance, TimedScheduleInstance)
 
         for db_alias in get_db_aliases_for_partitioned_query():
             for cls in classes:
-                yield cls.objects.using(db_alias).filter(
+                qs = cls.objects.using(db_alias).filter(
                     domain=self.domain,
                     active=True,
                     next_event_due__gte=self.datespan.startdate_utc,
                     next_event_due__lt=self.datespan.enddate_utc,
                 ).order_by('next_event_due', 'schedule_instance_id')
+
+                if (
+                    self.configuration_type == MessageConfigurationFilter.TYPE_CONDITIONAL_ALERT and
+                    self.rule_id
+                ):
+                    qs = qs.filter(rule_id=self.rule_id)
+
+                yield qs
 
     def get_current_page_records(self):
         result = []
@@ -1591,5 +1593,6 @@ class ScheduleInstanceReport(ProjectReport, ProjectReportParametersMixin, Generi
         return [
             {'name': 'startdate', 'value': self.datespan.startdate.strftime('%Y-%m-%d')},
             {'name': 'enddate', 'value': self.datespan.enddate.strftime('%Y-%m-%d')},
-            {'name': MessageConfigurationTypeFilter.slug, 'value': self.configuration_type},
+            {'name': 'configuration_type', 'value': self.configuration_type},
+            {'name': 'rule_id', 'value': self.rule_id},
         ]
