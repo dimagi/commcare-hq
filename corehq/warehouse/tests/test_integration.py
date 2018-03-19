@@ -6,7 +6,7 @@ from corehq.apps.domain.models import Domain
 from corehq.dbaccessors.couchapps.all_docs import delete_all_docs_by_doc_type
 from corehq.form_processor.tests.utils import create_form_for_test, FormProcessorTestUtils
 
-from corehq.warehouse.tests.utils import DEFAULT_BATCH_ID, create_batch, get_default_batch, BaseWarehouseTestCase
+from corehq.warehouse.tests.utils import create_batch, BaseWarehouseTestCase
 from corehq.warehouse.models import (
     UserStagingTable,
     DomainStagingTable,
@@ -16,12 +16,6 @@ from corehq.warehouse.models import (
     FormFact,
     Batch,
 )
-
-
-def setup_module():
-    start = datetime.utcnow() - timedelta(days=3)
-    end = datetime.utcnow() + timedelta(days=3)
-    create_batch(start, end, DEFAULT_BATCH_ID)
 
 
 def teardown_module():
@@ -34,6 +28,7 @@ class FormFactIntegrationTest(BaseWarehouseTestCase):
     staging and dimension tables.
     '''
     domain = 'form-fact-integration-test'
+    slug = 'form_fact'
 
     @classmethod
     def setUpClass(cls):
@@ -78,6 +73,7 @@ class FormFactIntegrationTest(BaseWarehouseTestCase):
             create_form_for_test(cls.domain, user_id=cls.user_records[0]._id),
             create_form_for_test(cls.domain, user_id=cls.user_records[0]._id),
         ]
+        cls.batch = create_batch(cls.slug)
 
     @classmethod
     def tearDownClass(cls):
@@ -98,7 +94,7 @@ class FormFactIntegrationTest(BaseWarehouseTestCase):
         super(FormFactIntegrationTest, cls).tearDownClass()
 
     def test_loading_form_fact(self):
-        batch = get_default_batch()
+        batch = self.batch
 
         DomainStagingTable.commit(batch)
         self.assertEqual(DomainStagingTable.objects.count(), len(self.domain_records))
