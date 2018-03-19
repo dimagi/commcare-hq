@@ -387,14 +387,32 @@ class LocationDrilldownFilterValue(FilterValue):
     def show_none(self):
         return self.value == self.SHOW_NONE
 
+    def _should_prefix_ancestor(self):
+        return not (self.show_all and self.show_none) and getattr(self.filter, 'ancestor_expression')
+
+    def _ancestor_sql_filter(self):
+        assert self._should_prefix_ancestor()
+        # all locations in self.value will have same ancestor, so just pick first one to query
+        return ancestor_sql_filter(self.filter.ancestor_expression, self.value[0])
+
     def to_sql_filter(self):
         if self.show_all:
             return None
 
-        return INFilter(
-            self.filter.field,
-            get_INFilter_bindparams(self.filter.slug, [None] if self.show_none else self.value)
-        )
+        if self._should_prefix_ancestor():
+            return ANDFilter(
+                self._ancestor_sql_filter(),
+                INFilter(
+                    self.filter.field,
+                    get_INFilter_bindparams(self.filter.slug, self.value)
+                )
+            )
+
+        if self.show_none:
+            return INFilter(
+                self.filter.field,
+                get_INFilter_bindparams(self.filter.slug, [None])
+            )
 
     def to_sql_values(self):
         if self.show_all:
@@ -408,6 +426,16 @@ class LocationDrilldownFilterValue(FilterValue):
         if self.show_all:
             return None
         return filters.term(self.filter.field, self.value)
+
+
+def ancestor_sql_filter(ancestor_expression, location_id):
+    # all locations in self.value will have same ancestor, so just pick first one to query
+    from corehq.apps.locations.models import SQLLocation
+    return EQFilter(
+        ancestor_expression['field'],
+        SQLLocation.by_location_id(location_id).get_ancestor_of_type(
+            ancestor_expression['location_type']).location_id
+    )
 
 
 def dynamic_choice_list_url(domain, report, filter):

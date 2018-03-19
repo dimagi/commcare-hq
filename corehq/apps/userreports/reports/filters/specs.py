@@ -120,6 +120,7 @@ class LocationDrilldownFilterSpec(FilterSpec):
     include_descendants = BooleanProperty(default=False)
     # default to some random high number '99'
     max_drilldown_levels = IntegerProperty(default=99)
+    ancestor_expression = DictProperty(default={}, required=False)
 
 
 class PreFilterSpec(FilterSpec):

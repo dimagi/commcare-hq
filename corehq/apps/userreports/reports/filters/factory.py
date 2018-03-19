@@ -106,6 +106,15 @@ def _build_multi_field_dynamic_choice_list_filter(spec, report):
 
 def _build_location_drilldown_filter(spec, report):
     wrapped = LocationDrilldownFilterSpec.wrap(spec)
+
+    valid_spec = (
+        not wrapped.ancestor_expression or
+        set(wrapped.ancestor_expression.keys()) == set(['field', 'location_type'])
+    )
+    if not valid_spec:
+        raise BadSpecError(_(
+            "'ancestor_expression' must be empty dictionary or have 'field', 'location_type' keys"))
+
     return LocationDrilldownFilter(
         name=wrapped.slug,
         datatype=wrapped.datatype,
@@ -114,6 +123,7 @@ def _build_location_drilldown_filter(spec, report):
         domain=report.domain,
         include_descendants=wrapped.include_descendants,
         max_drilldown_levels=wrapped.max_drilldown_levels,
+        ancestor_expression=wrapped.ancestor_expression,
     )
 
 

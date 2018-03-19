@@ -778,6 +778,10 @@ class LocationDrilldownFilterTest(LocationHierarchyTestCase):
         )
 
     def test_filter_value(self):
+        from sqlalchemy import Column, String
+        mock_table = Mock()
+        mock_table.c = [Column(f, type_=String) for f in ['block_id', 'state_id']]
+
         filter = ReportFilter.wrap({
             "type": "location_drilldown",
             "field": "block_id",
@@ -786,6 +790,29 @@ class LocationDrilldownFilterTest(LocationHierarchyTestCase):
         })
         filter_value = LocationDrilldownFilterValue(filter, ['Middlesex'])
         self.assertDictEqual(filter_value.to_sql_values(), {'block_id_drill_0': 'Middlesex'})
+        self.assertEqual(filter_value.to_sql_filter().build_expression(mock_table), 'block_id IN (:Middlesex,)')
+
+    def test_prefix_ancestor_location(self):
+        from sqlalchemy import Column, String
+        mock_table = Mock()
+        mock_table.c = [Column(f, type_=String) for f in ['block_id', 'state_id']]
+
+        filter = ReportFilter.wrap({
+            "type": "location_drilldown",
+            "field": "block_id",
+            "slug": "block_id_drill",
+            "display": "Drilldown by Location",
+            "ancestor_expression": {
+                'field': 'state_id',
+                'location_type': 'state',
+            }
+        })
+        filter_value = LocationDrilldownFilterValue(filter, ['Middlesex'])
+        self.assertDictEqual(filter_value.to_sql_values(), {'block_id_drill_0': 'Middlesex'})
+        self.assertEqual(
+            filter_value.to_sql_filter().build_expression(mock_table),
+            'state_id = :Massachusetts AND block_id IN (:Middlesex,)'
+        )
 
 
 class QueryDictUtilTest(SimpleTestCase):

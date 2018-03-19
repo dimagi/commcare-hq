@@ -419,7 +419,7 @@ class LocationDrilldownFilter(BaseFilter):
     location_filter = True
 
     def __init__(self, name, field, datatype, label, domain, include_descendants,
-                 max_drilldown_levels, css_id=None):
+                 max_drilldown_levels, ancestor_expression, css_id=None):
         params = [
             FilterParam(name, True),
         ]
@@ -431,6 +431,7 @@ class LocationDrilldownFilter(BaseFilter):
         self.domain = domain
         self.include_descendants = include_descendants
         self.max_drilldown_levels = max_drilldown_levels
+        self.ancestor_expression = ancestor_expression
 
     @property
     def api_root(self):
