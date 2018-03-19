@@ -307,15 +307,7 @@ class MySavedReportsView(BaseProjectReportSectionView):
         scheduled_reports = sorted(scheduled_reports,
                                    key=lambda s: s.configs[0].name)
         for report in scheduled_reports:
-            time_difference = get_timezone_difference(self.domain)
-            (report.hour, day_change) = recalculate_hour(
-                report.hour,
-                int(time_difference[:3]),
-                int(time_difference[3:])
-            )
-            report.minute = 0
-            if day_change:
-                report.day = calculate_day(report.interval, report.day, day_change)
+            self._adjust_report_day_and_time(report)
         return scheduled_reports
 
     @property
@@ -347,14 +339,28 @@ class MySavedReportsView(BaseProjectReportSectionView):
         user = self.request.couch_user
         user_email = user.get_email()
         is_admin = user.is_domain_admin(self.domain)
+
         for scheduled_report in all_scheduled_reports:
             if not _is_valid(scheduled_report) or user_email == scheduled_report.owner_email:
                 continue
+            self._adjust_report_day_and_time(scheduled_report)
             if is_admin:
                 ret.append(scheduled_report)
             elif user_email in scheduled_report.all_recipient_emails:
                 ret.append(scheduled_report)
         return ret
+
+    def _adjust_report_day_and_time(self, report):
+        time_difference = get_timezone_difference(self.domain)
+        (report.hour, day_change) = recalculate_hour(
+            report.hour,
+            int(time_difference[:3]),
+            int(time_difference[3:])
+        )
+        report.minute = 0
+        if day_change:
+            report.day = calculate_day(report.interval, report.day, day_change)
+        return report
 
     @property
     def page_context(self):
