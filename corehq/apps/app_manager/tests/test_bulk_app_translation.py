@@ -259,18 +259,6 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBase):
             module.case_details.long.columns[3].enum[0].value['en'],
             'jr://file/commcare/image/module1_list_icon_energy_high_english.jpg'
         )
-        '''
-          ("mood (ID Mapping Text)", "detail", "Other Prop", ""),
-          (". < 3 (ID Mapping Value)", "detail", ":(", ":--("),
-          (". >= 3 (ID Mapping Value)", "detail", ":)", ":--)"),
-          ("energy (ID Mapping Text)", "detail", "Other Prop", ""),
-          (". < 3 (ID Mapping Value)", "detail",
-            "jr://file/commcare/image/module1_list_icon_energy_high_english.jpg",
-            "jr://file/commcare/image/module1_list_icon_energy_high_french.jpg"),
-          (". >= 3 (ID Mapping Value)", "detail",
-            "jr://file/commcare/image/module1_list_icon_energy_low_english.jpg",
-            "jr://file/commcare/image/module1_list_icon_energy_low_french.jpg"),
-        '''
 
         # Test special characters and output refs
         self.assert_question_label("one < two", 0, 0, "en", "/data/question2")
