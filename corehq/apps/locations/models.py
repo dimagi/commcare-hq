@@ -430,10 +430,23 @@ class SQLLocation(MPTTModel):
         return super(SQLLocation, self).get_descendants(**kw)
 
     def get_ancestors(self, **kw):
+        """
+        Returns list of all ancestor locations of this location
+        """
         timing = TimingContext("get_ancestors")
         with timing("mptt"):
             mptt_set = self.mptt_get_ancestors(**kw)
         return ComparedQuerySet(mptt_set, timing)
+
+    def get_ancestor_of_type(self, type_code):
+        """
+        Returns the ancestor of given location_type_code of the location
+        """
+        for loc in self.get_ancestors():
+            if loc.location_type.code == type_code:
+                return loc
+        raise SQLLocation.DoesNotExist(
+            'No ancestor of type {} could be found for this location'.format(type_code))
 
     def get_descendants(self, **kw):
         timing = TimingContext("get_descendants")
