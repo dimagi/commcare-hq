@@ -211,7 +211,7 @@ hqDefine('app_manager/js/releases/releases', function () {
         self.savedApps = ko.observableArray();
         self.doneFetching = ko.observable(false);
         self.buildState = ko.observable('');
-        self.buildStatusCode = ko.observable();
+        self.buildErrorCode = ko.observable('');
         self.onlyShowReleased = ko.observable(false);
         self.fetchState = ko.observable('');
         self.nextVersionToFetch = null;
@@ -449,11 +449,11 @@ hqDefine('app_manager/js/releases/releases', function () {
                         self.addSavedApp(app, true);
                     }
                     self.buildState('');
-                    self.buildStatusCode(200);
+                    self.buildErrorCode('');
                     hqImport('app_manager/js/app_manager').setPublishStatus(false);
                 },
                 error: function(xhr) {
-                    self.buildStatusCode(xhr.status);
+                    self.buildErrorCode(xhr.status);
                     self.buildState('error');
                 },
             });

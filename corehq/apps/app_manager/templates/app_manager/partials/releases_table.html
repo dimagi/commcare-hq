@@ -63,10 +63,10 @@
 
     <div class="alert alert-danger hide"
          data-bind="visible: buildState() == 'error', css: {hide: false}">
-        <span data-bind="visible: buildStatusCode() === 403">
+        <span data-bind="visible: buildErrorCode() === 403">
             {% trans "Sorry, you don't have permission to do this action!" %}
         </span>
-        <span data-bind="visible: buildStatusCode() !== 403">
+        <span data-bind="visible: buildErrorCode() !== 403">
             {% trans "Whoops, that didn't go through. Reload the page and click Make New Version to try again." %}
         </span>
     </div>
