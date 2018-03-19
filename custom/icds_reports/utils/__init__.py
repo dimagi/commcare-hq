@@ -9,6 +9,8 @@ from datetime import datetime, timedelta
 
 import operator
 
+import qrcode
+from base64 import b64encode
 from six.moves import cStringIO
 from dateutil.relativedelta import relativedelta
 from django.template.loader import render_to_string, get_template
@@ -489,6 +491,22 @@ def create_pdf_file(pdf_hash, pdf_context):
     client.expire(pdf_hash, 24 * 60 * 60)
     resultFile.close()
     return pdf_hash
+
+
+def generate_qrcode(data):
+    qr = qrcode.QRCode(
+        version=1,
+        error_correction=qrcode.constants.ERROR_CORRECT_L,
+        box_size=10,
+        border=4
+    )
+    qr.add_data(data)
+    qr.make(fit=True)
+    image = qr.make_image()
+    output = cStringIO()
+    image.save(output, "PNG")
+    qr_content = b64encode(output.getvalue())
+    return qr_content
 
 
 def icds_pre_release_features(user):

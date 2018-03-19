@@ -251,6 +251,9 @@ class AdjListModel(MPTTModel):
         return super(AdjListModel, self).get_descendants(**kw)
 
     def get_ancestors(self, **kw):
+        """
+        Returns a Queryset of all ancestor locations of this location
+        """
         timing = TimingContext("get_ancestors")
         with timing("mptt"):
             mptt_set = self.mptt_get_ancestors(**kw)
@@ -259,6 +262,9 @@ class AdjListModel(MPTTModel):
         return ComparedQuerySet(mptt_set, cte_set, timing)
 
     def get_descendants(self, **kw):
+        """
+        Returns a Queryset of all descendant locations of this location
+        """
         timing = TimingContext("get_descendants")
         with timing("mptt"):
             mptt_set = self.mptt_get_descendants(**kw)

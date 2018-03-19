@@ -181,6 +181,7 @@ for _make_method, name in [
     (_make_qs_method, "none"),
     (_make_qs_method, "only"),
     (_make_qs_method, "order_by"),
+    (_make_qs_method, "prefetch_related"),
     (_make_qs_method, "select_related"),
     (_make_qs_method, "values"),
     (_make_qs_method, "values_list"),

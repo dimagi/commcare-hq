@@ -408,6 +408,12 @@ class SQLLocation(AdjListModel):
     active_objects = OnlyUnarchivedLocationManager()
     inactive_objects = OnlyArchivedLocationManager()
 
+    def get_ancestor_of_type(self, type_code):
+        """
+        Returns the ancestor of given location_type_code of the location
+        """
+        return self.get_ancestors().get(location_type__code=type_code)
+
     @classmethod
     def get_sync_fields(cls):
         return ["domain", "name", "site_code", "external_id",
@@ -444,8 +450,8 @@ class SQLLocation(AdjListModel):
 
     full_delete = delete
 
-    def to_json(self):
-        return {
+    def to_json(self, include_lineage=True):
+        json_dict = {
             'name': self.name,
             'site_code': self.site_code,
             '_id': self.location_id,
@@ -460,9 +466,12 @@ class SQLLocation(AdjListModel):
             'metadata': self.metadata,
             'location_type': self.location_type.name,
             'location_type_code': self.location_type.code,
-            'lineage': self.lineage,
             'parent_location_id': self.parent_location_id,
         }
+        if include_lineage:
+            # lineage requires a non-trivial db hit
+            json_dict['lineage'] = self.lineage
+        return json_dict
 
     @property
     def lineage(self):

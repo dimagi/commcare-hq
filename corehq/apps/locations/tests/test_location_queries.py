@@ -50,6 +50,27 @@ class TestLocationQuerysetMethods(BaseTestLocationQuerysetMethods):
             [loc.name for loc in middlesex_locs]
         )
 
+    def test_ancestors(self):
+        boston_matches = (SQLLocation.objects
+                          .filter_by_user_input(self.domain, "Boston"))
+
+        self.assertItemsEqual(
+            [loc.name for loc in boston_matches[0].mptt_get_ancestors()],
+            ['Suffolk', 'Massachusetts']
+        )
+
+    def test_ancestor_of_type(self):
+        boston = (SQLLocation.objects
+                  .filter_by_user_input(self.domain, "Boston"))[0]
+        self.assertEqual(
+            boston.get_ancestor_of_type('county').name,
+            'Suffolk'
+        )
+        self.assertEqual(
+            boston.get_ancestor_of_type('state').name,
+            'Massachusetts'
+        )
+
     def test_get_ancestors_with_empty_queryset(self):
         empty = SQLLocation.objects.none()
         locs = SQLLocation.objects.get_queryset_ancestors(empty)

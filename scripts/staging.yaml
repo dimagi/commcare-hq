@@ -58,6 +58,7 @@ branches:
   - sr-form-meta # Sravan 11-March
   - nh/omrs/finders+rollback  # Norman 2018-03-15 (loving the date format diversity happening here)
   - es/rebuild_stock_state  # Ethan III/XV
+  - np/PyGithub==1.37  # NP 3/15
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
