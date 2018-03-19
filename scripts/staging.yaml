@@ -57,7 +57,6 @@ branches:
   - ce/auto-batches # Cal 3/5
   - sr-form-meta # Sravan 11-March
   - nh/omrs/finders+rollback  # Norman 2018-03-15 (loving the date format diversity happening here)
-  - es/rebuild_stock_state  # Ethan III/XV
   - np/PyGithub==1.37  # NP 3/15
   - jls/privacy-policy  # Jenny 3/19
 submodules:
