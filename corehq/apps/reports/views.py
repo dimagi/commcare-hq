@@ -339,7 +339,6 @@ class MySavedReportsView(BaseProjectReportSectionView):
         user = self.request.couch_user
         user_email = user.get_email()
         is_admin = user.is_domain_admin(self.domain)
-
         for scheduled_report in all_scheduled_reports:
             if not _is_valid(scheduled_report) or user_email == scheduled_report.owner_email:
                 continue
