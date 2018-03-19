@@ -1887,7 +1887,8 @@ class CreateNewExchangeSnapshotView(BaseAdminProjectSettingsView):
     def has_signed_eula(self):
         eula_signed = self.request.couch_user.is_eula_signed()
         if not eula_signed:
-            messages.error(self.request, _("You must agree to our terms of service to publish a project to Exchange"))
+            messages.error(self.request, _("You must agree to our terms of service "
+                                           "to publish a project to Exchange"))
         return eula_signed
 
     @property
