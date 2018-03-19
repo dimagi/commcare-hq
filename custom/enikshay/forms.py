@@ -4,7 +4,24 @@ from django import forms
 from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
 from crispy_forms.layout import Layout, ButtonHolder, Fieldset, Submit
-from custom.enikshay.management.commands.data_dumps_person_case import Command as data_dumps_person_case
+from custom.enikshay.management.commands import (
+    data_dumps_person_case,
+    data_dumps_adherence_details,
+    data_dumps_adherence_summary,
+    data_dumps_cbnaat_tests,
+    data_dumps_clinical_tests,
+    data_dumps_culture_tests,
+    data_dumps_dmc_tests,
+    data_dumps_drtb_episodes,
+    data_dumps_drtb_specific_episodes,
+    data_dumps_dst_tests,
+    data_dumps_dstb_episodes,
+    data_dumps_fllpa_tests,
+    data_dumps_other_tests,
+    data_dumps_presumptive_episodes,
+    data_dumps_referrals,
+    data_dumps_sllpa_tests,
+)
 
 
 class ReconciliationTaskForm(forms.Form):
@@ -46,12 +63,33 @@ class ReconciliationTaskForm(forms.Form):
 
 
 class DataDumpTaskForm(forms.Form):
-    permitted_tasks = [data_dumps_person_case.TASK_NAME]
+    # all commands to be supported. Just add the command here to add new ones.
+    _permitted_tasks = [
+        data_dumps_person_case,
+        data_dumps_presumptive_episodes,
+        data_dumps_dstb_episodes,
+        data_dumps_drtb_episodes,
+        data_dumps_dmc_tests,
+        data_dumps_cbnaat_tests,
+        data_dumps_fllpa_tests,
+        data_dumps_sllpa_tests,
+        data_dumps_culture_tests,
+        data_dumps_dst_tests,
+        data_dumps_clinical_tests,
+        data_dumps_drtb_specific_episodes,
+        data_dumps_referrals,
+        data_dumps_adherence_summary,
+        data_dumps_adherence_details,
+        data_dumps_other_tests,
+    ]
+    permitted_tasks = [choice.__name__.split('.')[-1] for choice in _permitted_tasks]
 
     email = forms.EmailField(label='Your email or email to send confirmation to')
+    full = forms.BooleanField(label='Full Run', required=False)
     task = forms.ChoiceField(label='Task', choices=(
-        [('all', 'All')] + [(choice, choice.capitalize().replace('_', ' '))
-                            for choice in permitted_tasks]
+        [('all', 'All')] + [(choice.__name__.split('.')[-1],
+                             choice.Command.TASK_NAME.capitalize().replace('_', ' '))
+                            for choice in _permitted_tasks]
     ))
 
     def __init__(self, *args, **kwargs):
@@ -64,6 +102,7 @@ class DataDumpTaskForm(forms.Form):
             Fieldset(
                 "Details",
                 crispy.Field('email'),
+                crispy.Field('full'),
                 crispy.Field('task')
             ),
             ButtonHolder(

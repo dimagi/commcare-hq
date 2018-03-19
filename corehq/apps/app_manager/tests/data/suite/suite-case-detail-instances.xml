@@ -67,7 +67,11 @@
       </header>
       <template>
         <text>
-          <xpath function="count(instance('item-list:short')/short_list/short)"/>
+          <xpath function="$calculated_property">
+            <variable name="calculated_property">
+              <xpath function="count(instance('item-list:short')/short_list/short)"/>
+            </variable>
+          </xpath>
         </text>
       </template>
     </field>
@@ -98,7 +102,11 @@
       </header>
       <template>
         <text>
-          <xpath function="count(instance('item-list:long')/long_list/long)"/>
+          <xpath function="$calculated_property">
+            <variable name="calculated_property">
+              <xpath function="count(instance('item-list:long')/long_list/long)"/>
+            </variable>
+          </xpath>
         </text>
       </template>
     </field>
@@ -271,7 +279,11 @@
       </header>
       <template>
         <text>
-          <xpath function="count(instance('item-list:inline')/inline_list/inline)"/>
+          <xpath function="$calculated_property">
+            <variable name="calculated_property">
+              <xpath function="count(instance('item-list:inline')/inline_list/inline)"/>
+            </variable>
+          </xpath>
         </text>
       </template>
     </field>

@@ -209,6 +209,7 @@ class PrevisionVsAchievementsTableView(ChampView):
         config = {
             'domain': domain,
             'district': self.get_list_property('district'),
+            'cbo': self.get_list_property('cbo'),
             'type_visit': self.post_data.get('visit_type', None),
             'activity_type': self.post_data.get('activity_type', None),
             'client_type': self.get_list_property('client_type'),

@@ -60,6 +60,9 @@ ADDRESS_PROPERTIES = (
 PERSON_UUID_IDENTIFIER_TYPE_ID = 'uuid'
 
 
+OpenmrsResponse = namedtuple('OpenmrsResponse', 'status_code reason')
+
+
 class Requests(object):
     def __init__(self, base_url, username, password):
         import requests
@@ -186,6 +189,7 @@ def create_visit(requests, person_uuid, provider_uuid, visit_datetime, values_fo
             observation_uuids.append(response.json()['uuid'])
 
     logger.debug('Observations created: ', observation_uuids)
+    return OpenmrsResponse(status_code=response.status_code, reason=response.reason)
 
 
 def search_patients(requests, search_string):
@@ -288,7 +292,7 @@ def get_subresource_instances(requests, person_uuid, subresource):
     )).json()['results']
 
 
-def get_patient(requests, info, openmrs_config, problem_log):
+def get_patient(requests, info, openmrs_config):
     patient = None
     for id_matcher in openmrs_config.case_config.id_matchers:
         assert isinstance(id_matcher, IdMatcher)
@@ -298,11 +302,6 @@ def get_patient(requests, info, openmrs_config, problem_log):
                 info.extra_fields[id_matcher.case_property])
             if patient:
                 break
-
-    if not patient:
-        problem_log.append("Could not find patient matching case")
-        return
-
     return patient
 
 
@@ -319,21 +318,6 @@ def update_person_properties(requests, info, openmrs_config, person_uuid):
             '/ws/rest/v1/person/{person_uuid}'.format(person_uuid=person_uuid),
             json=properties
         )
-
-
-def sync_person_attributes(requests, info, openmrs_config, person_uuid, attributes):
-    existing_person_attributes = {
-        attribute['attributeType']['uuid']: (attribute['uuid'], attribute['value'])
-        for attribute in attributes
-    }
-    for person_attribute_type, value_source in openmrs_config.case_config.person_attributes.items():
-        value = value_source.get_value(info)
-        if person_attribute_type in existing_person_attributes:
-            attribute_uuid, existing_value = existing_person_attributes[person_attribute_type]
-            if value != existing_value:
-                update_person_attribute(requests, person_uuid, attribute_uuid, person_attribute_type, value)
-        else:
-            create_person_attribute(requests, person_uuid, person_attribute_type, value)
 
 
 class PatientSearchParser(object):

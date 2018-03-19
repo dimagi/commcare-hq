@@ -25,7 +25,11 @@
       </header>
       <template>
         <text>
-          <xpath function="instance('reports')/report[1]/name"/>
+          <xpath function="$calculated_property">
+            <variable name="calculated_property">
+              <xpath function="instance('reports')/report[1]/name"/>
+            </variable>
+          </xpath>
         </text>
       </template>
     </field>
@@ -69,7 +73,11 @@
       </header>
       <template>
         <text>
-          <xpath function="instance('ledgerdb')/ledgers/name/name"/>
+          <xpath function="$calculated_property">
+            <variable name="calculated_property">
+              <xpath function="instance('ledgerdb')/ledgers/name/name"/>
+            </variable>
+          </xpath>
         </text>
       </template>
     </field>
@@ -100,7 +108,11 @@
       </header>
       <template>
         <text>
-          <xpath function="instance('reports')/report[1]/name"/>
+          <xpath function="$calculated_property">
+            <variable name="calculated_property">
+              <xpath function="instance('reports')/report[1]/name"/>
+            </variable>
+          </xpath>
         </text>
       </template>
     </field>

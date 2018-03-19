@@ -24,6 +24,8 @@ from corehq.apps.hqwebapp.tasks import send_html_email_async
 from dimagi.utils.couch.database import get_safe_write_kwargs
 from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.analytics.tasks import send_hubspot_form, HUBSPOT_CREATED_NEW_PROJECT_SPACE_FORM_ID
+from corehq import toggles
+from corehq.util.view_utils import absolute_reverse
 
 
 def activate_new_user(form, is_domain_admin=True, domain=None, ip=None):
@@ -136,47 +138,6 @@ def request_new_domain(request, form, is_new_user=True):
     return new_domain.name
 
 
-REGISTRATION_EMAIL_BODY_HTML = u"""
-<p><h2>30 Day Free Trial</h2></p>
-<p>Welcome to your 30 day free trial! Evaluate all of our features for the next 30 days to decide which plan is right for you. Unless you subscribe to a paid plan, at the end of the 30 day trial you will be subscribed to the free Community plan. Read more about our pricing plans <a href="{pricing_link}">here</a>.</p>
-<p><h2>Want to learn more?</h2></p>
-<p>Check out our tutorials and other documentation on the <a href="{wiki_link}">CommCare Help Site</a>, the home of all CommCare documentation.</p>
-<p><h2>Need Support?</h2></p>
-<p>We encourage you to join the CommCare Forum, where CommCare users from all over the world ask each other questions and share information. Join <a href="{forum_link}">here</a></p>
-<p>If you encounter any technical problems while using CommCareHQ, look for a "Report an Issue" link at the bottom of every page. Our developers will look into the problem as soon as possible.</p>
-<p>We hope you enjoy your experience with CommCareHQ!</p>
-<p>The CommCareHQ Team</p>
-
-<p>If your email viewer won't permit you to click on the link above, cut and paste the following link into your web browser:
-{registration_link}
-</p>
-"""
-
-REGISTRATION_EMAIL_BODY_PLAINTEXT = u"""
-30 Day Free Trial
-
-Welcome to your 30 day free trial! Evaluate all of our features for the next 30 days to decide which plan is right for you. Unless you subscribe to a paid plan, at the end of the 30 day trial you will be subscribed to the free Community plan. Read more about our pricing plans:
-{pricing_link}
-
-Want to learn more?
-
-Check out our tutorials and other documentation on the CommCare Help Site, the home of all CommCare documentation:
-{wiki_link}
-
-Need Support?
-
-We encourage you to join the CommCare Forum, where CommCare users from all over the world ask each other questions and share information. Join here:
-{forum_link}
-
-If you encounter any technical problems while using CommCareHQ, look for a "Report an Issue" link at the bottom of every page. Our developers will look into the problem as soon as possible.
-
-We hope you enjoy your experience with CommCareHQ!
-
-The CommCareHQ Team
-
-"""
-
-
 WIKI_LINK = 'http://help.commcarehq.org'
 FORUM_LINK = 'https://forum.dimagi.com/'
 PRICING_LINK = 'https://www.commcarehq.org/pricing'
@@ -194,6 +155,9 @@ def send_domain_registration_email(recipient, domain_name, guid, full_name):
         "forum_link": FORUM_LINK,
         "wiki_link": WIKI_LINK,
         'url_prefix': '' if settings.STATIC_CDN else 'http://' + DNS_name,
+        "is_mobile_experience": (
+            toggles.MOBILE_SIGNUP_REDIRECT_AB_TEST_CONTROLLER.enabled(recipient, toggles.NAMESPACE_USER) and
+            toggles.MOBILE_SIGNUP_REDIRECT_AB_TEST.enabled(recipient, toggles.NAMESPACE_USER))
     }
     message_plaintext = render_to_string('registration/email/confirm_account.txt', params)
     message_html = render_to_string('registration/email/confirm_account.html', params)
@@ -239,6 +203,32 @@ You can view the %s here: %s""" % (
         )
     except Exception:
         logging.warning("Can't send email, but the message was:\n%s" % message)
+
+
+def send_mobile_experience_reminder(recipient, full_name):
+    url = absolute_reverse("login")
+
+    params = {
+        "full_name": full_name,
+        "url": url,
+        'url_prefix': '' if settings.STATIC_CDN else 'http://' + get_site_domain(),
+    }
+    message_plaintext = render_to_string(
+        'registration/email/mobile_signup_reminder.txt', params)
+    message_html = render_to_string(
+        'registration/email/mobile_signup_reminder.html', params)
+
+    subject = ugettext('Visit CommCareHQ on your computer!')
+
+    try:
+        send_html_email_async.delay(subject, recipient, message_html,
+                                    text_content=message_plaintext,
+                                    email_from=settings.DEFAULT_FROM_EMAIL,
+                                    ga_track=True)
+    except Exception:
+        logging.warning(
+            "Can't send email, but the message was:\n%s" % message_plaintext)
+        raise
 
 
 # Only new-users are eligible for advanced trial
