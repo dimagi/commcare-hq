@@ -135,9 +135,8 @@ class CaseListFormSuiteTests(SimpleTestCase, TestXmlMixin):
         clmi_module.case_list.show = True
 
         #self.assertXmlEqual(self.get_xml('case_list_form_end_of_form_case_list_clmi_only'), app.create_suite())
-        self.assertXmlPartialEqual(
-            self.get_xml('case_list_form_end_of_form_case_list_clmi_only'), factory.app.create_suite(), './entry[2]'
-        )
+        self.assertXmlPartialEqual(self.get_xml('case_list_form_end_of_form_case_list_clmi_only'),
+                                   factory.app.create_suite(), './entry[2]')
 
     def test_case_list_form_parent_child_advanced(self):
         # * Register house (case type = house, basic)
