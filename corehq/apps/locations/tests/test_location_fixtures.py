@@ -628,6 +628,25 @@ class ForkedHierarchyLocationFixturesTest(TestCase, FixtureHasLocationsMixin):
             ['Massachusetts', 'Suffolk', 'Middlesex', 'Berkshires', 'Pioneer Valley']
         )
 
+    def test_include_only_location_types(self):
+        self.user._couch_user.set_location(self.locations['Massachusetts'])
+        location_type = self.locations['Massachusetts'].location_type
+        location_type.include_only = [
+            self.location_types['state'],
+            self.location_types['county'],
+            self.location_types['city'],
+        ]
+        location_type.save()
+        # include county and state
+        self.assert_fixture_queryset_equals_locations([
+            'Massachusetts',
+            'Middlesex',
+            'Cambridge',
+            'Somerville',
+            'Suffolk',
+            'Boston',
+        ])
+
 
 class ShouldSyncLocationFixturesTest(TestCase):
 
