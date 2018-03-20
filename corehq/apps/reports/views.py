@@ -1905,7 +1905,7 @@ def _get_form_render_context(request, domain, instance, case_id=None):
 
     instance_history = []
     if instance.history:
-        form_opertaions = {
+        form_operations = {
             'archive': ugettext_lazy('Archive'),
             'unarchive': ugettext_lazy('Un-Archive'),
             'edit': ugettext_lazy('Edit'),
