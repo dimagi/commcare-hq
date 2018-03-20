@@ -19,6 +19,7 @@ from corehq.apps.hqwebapp.templatetags.hq_shared_tags import static
 from corehq.apps.reports.urls import report_urls
 from corehq.apps.registration.utils import PRICING_LINK
 from corehq.apps.sms.views import sms_in
+from corehq.apps.hqwebapp.urls import legacy_prelogin
 
 try:
     from localsettings import LOCAL_APP_URLS
@@ -32,7 +33,6 @@ handler404 = 'corehq.apps.hqwebapp.views.not_found'
 handler403 = 'corehq.apps.hqwebapp.views.no_permissions'
 
 from corehq.apps.hqwebapp.urls import domain_specific as hqwebapp_domain_specific
-from corehq.apps.hqwebapp.urls import legacy_prelogin
 from corehq.apps.settings.urls import domain_specific as settings_domain_specific
 from corehq.apps.settings.urls import users_redirect, domain_redirect
 from corehq.apps.sms.urls import sms_admin_interface_urls
