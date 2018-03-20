@@ -235,3 +235,12 @@ class TemplatingTestCase(TestCase):
             self.assertEqual(r.render("Phone: {case.last_modified_by.phone_number}"), "Phone: 999456")
             self.assertEqual(r.render("Unknown: {case.last_modified_by.unknown}"), "Unknown: (?)")
             self.assertEqual(r.render("Unknown: {case.last_modified_by.unknown.unknown}"), "Unknown: (?)")
+
+        with create_test_case(self.domain, 'person', 'Joe', user_id='system') as case:
+            r.set_context_param('case', CaseMessagingTemplateParam(case))
+            self.assertEqual(r.render("Name: {case.last_modified_by.name}"), "Name: System")
+            self.assertEqual(r.render("First Name: {case.last_modified_by.first_name}"), "First Name: System")
+            self.assertEqual(r.render("Last Name: {case.last_modified_by.last_name}"), "Last Name: ")
+            self.assertEqual(r.render("Phone: {case.last_modified_by.phone_number}"), "Phone: ")
+            self.assertEqual(r.render("Unknown: {case.last_modified_by.unknown}"), "Unknown: (?)")
+            self.assertEqual(r.render("Unknown: {case.last_modified_by.unknown.unknown}"), "Unknown: (?)")
