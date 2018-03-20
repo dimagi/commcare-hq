@@ -1,6 +1,9 @@
 from __future__ import absolute_import
 
 from __future__ import unicode_literals
+
+from memoized import memoized
+
 from custom.icds_reports.models import AggAwcMonthly, ChildHealthMonthlyView, CcsRecordMonthly, \
     AggChildHealthMonthly
 from django.db.models.aggregates import Sum, Count
@@ -25,6 +28,7 @@ class ISSNIPMonthlyReport(object):
         )
 
     @property
+    @memoized
     def agg_awc_monthly_data(self):
         data = AggAwcMonthly.objects.filter(
             awc_id=self.config['awc_id'],
@@ -38,6 +42,7 @@ class ISSNIPMonthlyReport(object):
         return data[0] if data else None
 
     @property
+    @memoized
     def child_health_monthly_data(self):
         data = ChildHealthMonthlyView.objects.filter(
             awc_id=self.config['awc_id'],
@@ -72,6 +77,7 @@ class ISSNIPMonthlyReport(object):
         return data[0] if data else None
 
     @property
+    @memoized
     def css_record_monthly(self):
         data = CcsRecordMonthly.objects.filter(
             awc_id=self.config['awc_id'],
@@ -95,26 +101,31 @@ class ISSNIPMonthlyReport(object):
         return data[0] if data else None
 
     @property
+    @memoized
     def infrastructure_data(self):
         data = AWCInfrastructureUCR(self.config).data
         return list(data.values())[-1] if data else None
 
     @property
+    @memoized
     def vhnd_data(self):
         data = VHNDFormUCR(self.config).data
         return list(data.values())[-1] if data else None
 
     @property
+    @memoized
     def ccs_record_monthly_ucr(self):
         data = CcsRecordMonthlyURC(self.config).data
         return data[self.config['awc_id']] if data else None
 
     @property
+    @memoized
     def child_health_monthly_ucr(self):
         data = ChildHealthMonthlyURC(self.config).data
         return data[self.config['awc_id']] if data else None
 
     @property
+    @memoized
     def agg_child_health_monthly(self):
         data = AggChildHealthMonthly.objects.filter(
             awc_id=self.config['awc_id'],
