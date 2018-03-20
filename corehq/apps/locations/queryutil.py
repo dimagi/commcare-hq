@@ -73,7 +73,7 @@ class ComparedQuerySet(object):
         with _commit_timing(self):
             with self._timing("mptt"):
                 mptt_result = self._mptt_set.__getitem__(key)
-            if self._cte_set is not None or isinstance(mptt_result, QuerySet):
+            if self._cte_set is not None:
                 with self._timing("cte"):
                     cte_result = self._cte_set.__getitem__(key)
         if isinstance(mptt_result, QuerySet):
