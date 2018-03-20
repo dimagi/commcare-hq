@@ -279,7 +279,7 @@ class ReportBuilderView(BaseDomainView):
             ),
             'report_limit': allowed_num_reports,
             'paywall_url': paywall_home(self.domain),
-            'pricing_page_url': reverse('public_pricing') if settings.ENABLE_PRELOGIN_SITE else "",
+            'pricing_page_url': settings.PRICING_PAGE_URL,
             'support_email': settings.SUPPORT_EMAIL,
         })
         return main_context
@@ -346,7 +346,7 @@ class ReportBuilderPaywallPricing(ReportBuilderPaywallBase):
             'at_report_limit': num_builder_reports >= max_allowed_reports and max_allowed_reports is not None,
             'max_allowed_reports': max_allowed_reports if max_allowed_reports is not None else 0,
             'support_email': settings.SUPPORT_EMAIL,
-            'pricing_page_url': reverse('public_pricing') if settings.ENABLE_PRELOGIN_SITE else "",
+            'pricing_page_url': settings.PRICING_PAGE_URL,
         })
         return context
 

@@ -25,12 +25,6 @@ try:
 except ImportError:
     LOCAL_APP_URLS = []
 
-try:
-    from localsettings import PRELOGIN_APP_URLS
-except ImportError:
-    PRELOGIN_APP_URLS = [
-        url(r'', include('corehq.apps.prelogin.urls')),
-    ]
 admin.autodiscover()
 
 handler500 = 'corehq.apps.hqwebapp.views.server_error'
@@ -38,6 +32,7 @@ handler404 = 'corehq.apps.hqwebapp.views.not_found'
 handler403 = 'corehq.apps.hqwebapp.views.no_permissions'
 
 from corehq.apps.hqwebapp.urls import domain_specific as hqwebapp_domain_specific
+from corehq.apps.hqwebapp.urls import legacy_prelogin
 from corehq.apps.settings.urls import domain_specific as settings_domain_specific
 from corehq.apps.settings.urls import users_redirect, domain_redirect
 from corehq.apps.sms.urls import sms_admin_interface_urls
@@ -162,7 +157,10 @@ urlpatterns = [
 ] + LOCAL_APP_URLS
 
 if settings.ENABLE_PRELOGIN_SITE:
-    urlpatterns += PRELOGIN_APP_URLS
+    # handle redirects from old prelogin
+    urlpatterns += [
+        url(r'', include(legacy_prelogin)),
+    ]
 
 if settings.DEBUG:
     try:
