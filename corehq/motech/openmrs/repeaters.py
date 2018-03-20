@@ -64,12 +64,13 @@ class OpenmrsRepeater(CaseRepeater):
     def send_request(self, repeat_record, payload, verify=None):
         case_trigger_infos = get_relevant_case_updates_from_form_json(
             self.domain, payload, case_types=self.white_listed_case_types,
-            extra_fields=[id_matcher.case_property
-                          for id_matcher in self.openmrs_config.case_config.id_matchers])
+            extra_fields=[identifier.case_property
+                          for identifier in self.openmrs_config.case_config.patient_identifiers.values()])
         form_question_values = get_form_question_values(payload)
 
         return send_openmrs_data(
             Requests(self.url, self.username, self.password),
+            self.domain,
             payload,
             self.openmrs_config,
             case_trigger_infos,
