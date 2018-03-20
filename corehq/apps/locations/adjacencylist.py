@@ -3,7 +3,7 @@ from django.contrib.postgres.fields.array import ArrayField
 from django.db.models import CharField, IntegerField
 from django.db.models.aggregates import Max
 from django.db.models.expressions import F, Func, Value
-from django.db.models.query import Q, QuerySet
+from django.db.models.query import Q, QuerySet, EmptyResultSet
 from django_cte import With
 from mptt.models import MPTTModel, TreeManager
 
@@ -53,13 +53,13 @@ class AdjListManager(TreeManager):
             where = node
         elif include_self:
             if isinstance(node, QuerySet):
-                if node.query.is_empty():
+                if _is_empty(node):
                     return self.none()
                 where = Q(id__in=node.order_by())
             else:
                 where = Q(id=node.id)
         elif isinstance(node, QuerySet):
-            if node.query.is_empty():
+            if _is_empty(node):
                 return self.none()
             where = Q(id__in=node.order_by().values(parent_col))
         else:
@@ -107,14 +107,14 @@ class AdjListManager(TreeManager):
             discard_dups = True
         elif include_self:
             if isinstance(node, QuerySet):
-                if node.query.is_empty():
+                if _is_empty(node):
                     return self.none()
                 where = Q(id__in=node.order_by())
                 discard_dups = True
             else:
                 where = Q(id=node.id)
         elif isinstance(node, QuerySet):
-            if node.query.is_empty():
+            if _is_empty(node):
                 return self.none()
             where = Q(**{parent_col + "__in": node.order_by()})
             discard_dups = True
@@ -271,3 +271,14 @@ class AdjListModel(MPTTModel):
         with timing("cte"):
             cte_set = type(self).objects.cte_get_descendants(self, **kw)
         return ComparedQuerySet(mptt_set, cte_set, timing)
+
+
+def _is_empty(queryset):
+    query = queryset.query
+    if query.is_empty():
+        return True
+    try:
+        query.sql_with_params()
+    except EmptyResultSet:
+        return True
+    return False
