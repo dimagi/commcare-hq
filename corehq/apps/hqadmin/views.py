@@ -1,6 +1,8 @@
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
+
+import itertools
 import six.moves.html_parser
 import json
 import socket
@@ -105,6 +107,7 @@ from .models import HqDeploy
 from .reporting.reports import get_project_spaces, get_stats_data, HISTO_TYPE_TO_FUNC
 from .utils import get_celery_stats
 import six
+from six.moves import filter
 
 
 @require_superuser
@@ -517,12 +520,19 @@ class AdminRestoreView(TemplateView):
             restore_id_element = xml_payload.find('{{{0}}}Sync/{{{0}}}restore_id'.format(SYNC_XMLNS))
             cases = xml_payload.findall('{http://commcarehq.org/case/transaction/v2}case')
             num_cases = len(cases)
-            case_type_counts = dict(Counter(
-                case.find(
-                    '{http://commcarehq.org/case/transaction/v2}create/'
-                    '{http://commcarehq.org/case/transaction/v2}case_type'
-                ).text for case in cases
-            ))
+            
+            create_case_type = filter(None, [case.find(
+                '{http://commcarehq.org/case/transaction/v2}create/'
+                '{http://commcarehq.org/case/transaction/v2}case_type'
+            ) for case in cases])
+            update_case_type = filter(None, [case.find(
+                '{http://commcarehq.org/case/transaction/v2}update/'
+                '{http://commcarehq.org/case/transaction/v2}case_type'
+            ) for case in cases])
+            case_type_counts = dict(Counter([
+                case.type for case in itertools.chain(create_case_type, update_case_type)
+            ]))
+
             locations = xml_payload.findall(
                 "{{{0}}}fixture[@id='locations']/{{{0}}}locations/{{{0}}}location".format(RESPONSE_XMLNS)
             )
