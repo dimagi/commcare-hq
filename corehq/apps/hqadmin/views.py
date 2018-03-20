@@ -520,7 +520,7 @@ class AdminRestoreView(TemplateView):
             restore_id_element = xml_payload.find('{{{0}}}Sync/{{{0}}}restore_id'.format(SYNC_XMLNS))
             cases = xml_payload.findall('{http://commcarehq.org/case/transaction/v2}case')
             num_cases = len(cases)
-            
+
             create_case_type = filter(None, [case.find(
                 '{http://commcarehq.org/case/transaction/v2}create/'
                 '{http://commcarehq.org/case/transaction/v2}case_type'
@@ -538,6 +538,7 @@ class AdminRestoreView(TemplateView):
             )
             num_locations = len(locations)
             location_type_counts = dict(Counter(location.attrib['type'] for location in locations))
+
             reports = xml_payload.findall(
                 "{{{0}}}fixture[@id='commcare:reports']/{{{0}}}reports/".format(RESPONSE_XMLNS)
             )
@@ -547,6 +548,7 @@ class AdminRestoreView(TemplateView):
                 for report in reports
                 if 'report_id' in report.attrib
             }
+
             num_ledger_entries = len(xml_payload.findall(
                 "{{{0}}}balance/{{{0}}}entry".format(COMMTRACK_REPORT_XMLNS)
             ))
