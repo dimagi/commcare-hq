@@ -17,6 +17,7 @@ from corehq.apps.hqwebapp.views import (
     assert_initial_page_data, retrieve_download, toggles_js, couch_doc_counts,
     server_up, BugReportView,
     redirect_to_dimagi,
+    temporary_google_verify,
 )
 from corehq.apps.hqwebapp.session_details_endpoint.views import SessionDetailsView
 
@@ -87,4 +88,5 @@ legacy_prelogin = [
     url(r'^askdemo/$', redirect_to_dimagi('commcare/'),
         name='public_demo_cta'),
     url(r'^supply/$', redirect_to_dimagi('commcare/')),
+    url(r'^google9633af922b8b0064.html$', temporary_google_verify),
 ]

@@ -1284,3 +1284,9 @@ def redirect_to_dimagi(endpoint):
             )
         return redirect_to_default(request)
     return _redirect
+
+
+def temporary_google_verify(request):
+    # will remove once google search console verify process completes
+    # BMB 4/20/18
+    return render(request, "google9633af922b8b0064.html")
