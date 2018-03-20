@@ -250,13 +250,13 @@ BEGIN
     EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx2') || ' ON ' || quote_ident(_tablename) || '(case_id)';
 
     EXECUTE 'UPDATE ' || quote_ident(_tablename) || ' chm_monthly SET ' ||
-    '  cf_in_month = COALESCE(agg.comp_feeding_latest, 0), ' ||
-    '  cf_diet_diversity = COALESCE(agg.diet_diversity, 0), ' ||
-    '  cf_diet_quantity = COALESCE(agg.diet_quantity, 0), ' ||
-    '  cf_handwashing = COALESCE(agg.hand_wash, 0), ' ||
-    '  cf_demo = COALESCE(agg.demo_comp_feeding, 0), ' ||
-    '  counsel_pediatric_ifa = COALESCE(agg.counselled_pediatric_ifa, 0) , ' ||
-    '  counsel_comp_feeding_vid = COALESCE(agg.play_comp_feeding_vid, 0)  ' ||
+      'cf_in_month = COALESCE(agg.comp_feeding_latest, 0), ' ||
+      'cf_diet_diversity = COALESCE(agg.diet_diversity, 0), ' ||
+      'cf_diet_quantity = COALESCE(agg.diet_quantity, 0), ' ||
+      'cf_handwashing = COALESCE(agg.hand_wash, 0), ' ||
+      'cf_demo = COALESCE(agg.demo_comp_feeding, 0), ' ||
+      'counsel_pediatric_ifa = COALESCE(agg.counselled_pediatric_ifa, 0) , ' ||
+      'counsel_comp_feeding_vid = COALESCE(agg.play_comp_feeding_vid, 0)  ' ||
     'FROM ' || quote_ident(_agg_complementary_feeding_table) || ' agg ' ||
     'WHERE chm_monthly.case_id = agg.case_id AND chm_monthly.cf_eligible = 1 AND agg.month = ' || quote_literal(_start_date);
 
@@ -267,20 +267,17 @@ BEGIN
 
     -- Likely not needed, but these have been coerced to 0 historically
     EXECUTE 'UPDATE ' || quote_ident(_tablename) || ' chm_monthly SET ' ||
-    '  cf_in_month = 0, ' ||
-    '  cf_diet_diversity = 0, ' ||
-    '  cf_diet_quantity = 0, ' ||
-    '  cf_handwashing = 0, ' ||
-    '  cf_demo = 0, ' ||
-    '  counsel_pediatric_ifa = 0, ' ||
-    '  counsel_comp_feeding_vid = 0  ' ||
-    'FROM ' || quote_ident(_agg_complementary_feeding_table) || ' agg ' ||
-    'WHERE chm_monthly.case_id = agg.case_id AND chm_monthly.cf_eligible = 0 AND agg.month = ' || quote_literal(_start_date);
-
-    EXECUTE 'UPDATE ' || quote_ident(_tablename) || ' chm_monthly SET ' ||
-    '  cf_initiation_in_month = 0 ' ||
-    'FROM ' || quote_ident(_agg_complementary_feeding_table) || ' agg ' ||
-    'WHERE chm_monthly.case_id = agg.case_id AND chm_monthly.cf_initiation_eligible = 0 AND agg.month = ' || quote_literal(_start_date);
+      'cf_in_month = COALESCE(cf_in_month, 0), ' ||
+      'cf_diet_diversity = COALESCE(cf_diet_diversity, 0), ' ||
+      'cf_diet_quantity = COALESCE(cf_diet_quantity, 0), ' ||
+      'cf_handwashing = COALESCE(cf_handwashing, 0), ' ||
+      'cf_demo = COALESCE(cf_demo, 0), ' ||
+      'counsel_pediatric_ifa = COALESCE(counsel_pediatric_ifa, 0), ' ||
+      'counsel_comp_feeding_vid = COALESCE(counsel_comp_feeding_vid, 0), ' ||
+      'cf_initiation_in_month = COALESCE(cf_initiation_in_month, 0) ' ||
+    'WHERE cf_in_month IS NULL OR cf_diet_diversity IS NULL OR cf_diet_quantity IS NULL ' ||
+      'OR cf_handwashing IS NULL OR cf_demo IS NULL OR counsel_pediatric_ifa IS NULL ' ||
+      'OR counsel_comp_feeding_vid IS NULL OR cf_initiation_in_month IS NULL';
 
     EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx1') || ' ON ' || quote_ident(_tablename) || '(awc_id, case_id)';
 END;
