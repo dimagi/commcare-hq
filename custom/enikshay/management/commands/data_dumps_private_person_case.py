@@ -28,7 +28,17 @@ class Command(BaseDataDump):
         self.case_type = CASE_TYPE_PERSON
 
     def get_custom_value(self, column_name, case):
-        if column_name == "Facility/Provider assigned to type":
+        if column_name == "Organisation":
+            private_sector_organization_id = case.get_case_property('private_sector_organization_id')
+            if private_sector_organization_id:
+                location = SQLLocation.active_objects.get_or_None(location_id=private_sector_organization_id)
+                if location:
+                    return location.name
+                else:
+                    return "Location not found with id: %s" % private_sector_organization_id
+            else:
+                return "Organization Location not found on case"
+        elif column_name == "Facility/Provider assigned to type":
             owner_id = case.owner_id
             location = SQLLocation.active_objects.get_or_None(location_id=owner_id)
             if location:
@@ -45,6 +55,16 @@ class Command(BaseDataDump):
                     return "Treating hospital Location not found with id: %s" % treating_hospital_id
             else:
                 return "Treating hospital id not found on case"
+        elif column_name == "Associated FO Name":
+            fo_id = case.get_case_property('fo')
+            if fo_id:
+                location = SQLLocation.active_objects.get_or_None(location_id=fo_id)
+                if location:
+                    return location.name
+                else:
+                    return "FO Location not found with id: %s" % fo_id
+            else:
+                return "FO id not found on case"
 
         raise Exception("unknown custom column %s" % column_name)
 
