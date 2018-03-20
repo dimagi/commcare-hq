@@ -38,7 +38,6 @@ def _namedtuple_from_cursor(cursor):
 
 
 def form_adapter(form):
-    # Note: below field order should match SQL definition \d form_processor_xforminstancesql
     fields = [
         form.id,
         form.form_id,
@@ -63,10 +62,6 @@ def form_adapter(form):
         form.deleted_on,
         form.deletion_id,
         form.server_modified_on,
-        form.app_version,
-        form.commcare_version,
-        form.time_end,
-        form.time_start
     ]
     return ObjectAdapter(fields, XFormInstanceSQL_DB_TABLE)
 
