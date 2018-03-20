@@ -124,9 +124,10 @@ def run_case_update_rules_for_domain(domain, now=None):
 
     if should_use_sql_backend(domain):
         for db in get_db_aliases_for_partitioned_query():
-            run_case_update_rules_for_domain_and_db(domain, now, run_record.pk, db=db).delay()
+            run_case_update_rules_for_domain_and_db.delay(domain, now, run_record.pk, db=db)
     else:
-        run_case_update_rules_for_domain_and_db(domain, now, run_record.pk).delay()
+        # explicitly pass db=None so that the serial task decorator has access to db in the key generation
+        run_case_update_rules_for_domain_and_db.delay(domain, now, run_record.pk, db=None)
 
 
 @serial_task(
@@ -169,7 +170,8 @@ def run_case_update_rules_for_domain_and_db(domain, now, run_id, db=None):
             case_update_result.add_result(run_rules_for_case(case, rules, now))
             cases_checked += 1
 
-    run = DomainCaseRuleRun.done(DomainCaseRuleRun.STATUS_FINISHED, cases_checked, case_update_result, db=db)
+    run = DomainCaseRuleRun.done(run_id, DomainCaseRuleRun.STATUS_FINISHED, cases_checked, case_update_result,
+        db=db)
 
     if run.status == DomainCaseRuleRun.STATUS_FINISHED:
         for rule in all_rules:
