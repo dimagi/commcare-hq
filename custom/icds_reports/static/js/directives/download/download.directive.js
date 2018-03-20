@@ -421,7 +421,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         if (vm.selectedPDFFormat === 'one') {
             return vm.isISSNIPMonthlyRegisterSelected() && !vm.isBlockOrBelowSelected();
         }
-        return vm.isISSNIPMonthlyRegisterSelected() && (!vm.isDistrictOrBelowSelected() || !vm.isAWCsSelected());
+        return vm.isISSNIPMonthlyRegisterSelected() && (!vm.isBlockOrBelowSelected() || !vm.isAWCsSelected());
     };
 
     vm.isVisible = function(level) {
