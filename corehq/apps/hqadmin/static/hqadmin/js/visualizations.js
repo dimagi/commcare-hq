@@ -99,6 +99,7 @@ hqDefine("hqadmin/js/visualizations", function() {
                     _update_chart_if_exists(chart); // for some reason nvd3 doesn't fully animate the charts, force this update
                 });
             });
+            return this;
         };
 
         self.loadChartData = function(callback_fn, startdate, enddate) {

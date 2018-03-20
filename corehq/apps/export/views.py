@@ -767,6 +767,16 @@ class BaseDownloadExportView(ExportsPermissionsMixin, HQJSONResponseMixin, BaseP
 
         return export_filter, export_specs
 
+    def check_if_export_has_data(self, in_data):
+        export_filters, export_specs = self._process_filters_and_specs(in_data)
+        export_instances = [self._get_export(self.domain, spec['export_id']) for spec in export_specs]
+
+        for instance in export_instances:
+            if (get_export_size(instance, export_filters) > 0):
+                return True
+
+        return False
+
     @allow_remote_invocation
     def prepare_custom_export(self, in_data):
         """Uses the current exports download framework (with some nasty filters)
@@ -2344,6 +2354,17 @@ class DownloadNewFormExportView(GenericDownloadNewExportMixin, DownloadFormExpor
         mobile_user_and_group_slugs = self._get_mobile_user_and_group_slugs(filter_slug)
         return filter_form.get_multimedia_task_kwargs(export_object, download_id, mobile_user_and_group_slugs)
 
+    @allow_remote_invocation
+    def prepare_custom_export(self, in_data):
+        prepare_custom_export = super(DownloadNewFormExportView, self).prepare_custom_export(in_data)
+
+        if self.check_if_export_has_data(in_data):
+            track_workflow(self.request.couch_user.username, 'Downloaded Form Exports With Data')
+        else:
+            track_workflow(self.request.couch_user.username, 'Downloaded Form Exports With No Data')
+
+        return prepare_custom_export
+
 
 class BulkDownloadNewFormExportView(DownloadNewFormExportView):
     urlname = 'new_bulk_download_forms'
@@ -2378,6 +2399,17 @@ class DownloadNewCaseExportView(GenericDownloadNewExportMixin, DownloadCaseExpor
             mobile_user_and_group_slugs, self.request.can_access_all_locations, accessible_location_ids
         )
         return form_filters
+
+    @allow_remote_invocation
+    def prepare_custom_export(self, in_data):
+        prepare_custom_export = super(DownloadNewCaseExportView, self).prepare_custom_export(in_data)
+
+        if self.check_if_export_has_data(in_data):
+            track_workflow(self.request.couch_user.username, 'Downloaded Case Exports With Data')
+        else:
+            track_workflow(self.request.couch_user.username, 'Downloaded Case Exports With No Data')
+
+        return prepare_custom_export
 
 
 class DownloadNewSmsExportView(GenericDownloadNewExportMixin, BaseDownloadExportView):

@@ -71,6 +71,16 @@ class TestLocationQuerysetMethods(BaseTestLocationQuerysetMethods):
             'Massachusetts'
         )
 
+    def test_get_ancestors_with_empty_queryset(self):
+        empty = SQLLocation.objects.none()
+        locs = SQLLocation.objects.get_queryset_ancestors(empty)
+        self.assertEqual(locs.count(), 0)
+
+    def test_get_descendants_with_empty_queryset(self):
+        empty = SQLLocation.objects.none()
+        locs = SQLLocation.objects.get_queryset_descendants(empty)
+        self.assertEqual(locs.count(), 0)
+
 
 class TestLocationScopedQueryset(BaseTestLocationQuerysetMethods):
 

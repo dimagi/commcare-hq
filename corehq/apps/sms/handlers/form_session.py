@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from corehq.apps.domain.models import Domain
 from corehq.apps.sms.api import (
     MessageMetadata,
@@ -78,7 +79,7 @@ def get_single_open_session_or_close_multiple(domain, contact_id):
 
 
 def answer_next_question(v, text, msg, session):
-    resp = current_question(session.session_id)
+    resp = current_question(session.session_id, domain=v.domain)
     event = resp.event
     valid, text, error_msg = validate_answer(event, text, v)
 
