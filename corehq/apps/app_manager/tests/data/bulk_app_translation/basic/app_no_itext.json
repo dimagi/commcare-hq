@@ -275,7 +275,87 @@
                         "calc_xpath": ".",
                         "model": "case",
                         "advanced": ""
-                    }
+                    },
+            {
+              "advanced": "",
+              "calc_xpath": ".",
+              "case_tile_field": "",
+              "doc_type": "DetailColumn",
+              "enum": [
+                {
+                  "doc_type": "MappingItem",
+                  "key": ". < 3",
+                  "value": {
+                    "en": ":(",
+                    "fra": ":-("
+                  }
+                },
+                {
+                  "doc_type": "MappingItem",
+                  "key": ". >= 3",
+                  "value": {
+                          "en": ":)",
+                          "fra": ":-)"
+                        }
+                      }
+                    ],
+                    "field": "mood",
+                    "filter_xpath": "",
+                    "format": "conditional-enum",
+                    "graph_configuration": null,
+                    "hasAutocomplete": true,
+                    "hasNodeset": false,
+                    "header": {
+                      "en": "Mood"
+                    },
+                    "isTab": false,
+                    "late_flag": 30,
+                    "model": "case",
+                    "nodeset": "",
+                    "relevant": "",
+                    "time_ago_interval": 365.25,
+                    "useXpathExpression": false
+                  },
+                  {
+                    "advanced": "",
+                    "calc_xpath": ".",
+                    "case_tile_field": "",
+                    "doc_type": "DetailColumn",
+                    "enum": [
+                      {
+                        "doc_type": "MappingItem",
+                        "key": ". < 3",
+                        "value": {
+                          "en": "jr://file/commcare/image/module1_list_icon_energy_high.jpg",
+                          "fra": "jr://file/commcare/image/module1_list_icon_energy_high_french.jpg"
+                        }
+                      },
+                      {
+                        "doc_type": "MappingItem",
+                        "key": ". >= 3",
+                        "value": {
+                          "en": "jr://file/commcare/image/module1_list_icon_energy_low.jpg",
+                          "fra": "jr://file/commcare/image/module1_list_icon_energy_low_french.jpg"
+                        }
+                      }
+                    ],
+                    "field": "energy",
+                    "filter_xpath": "",
+                    "format": "enum-image",
+                    "graph_configuration": null,
+                    "hasAutocomplete": true,
+                    "hasNodeset": false,
+                    "header": {
+                      "en": "Energy"
+                    },
+                    "isTab": false,
+                    "late_flag": 30,
+                    "model": "case",
+                    "nodeset": "",
+                    "relevant": "",
+                    "time_ago_interval": 365.25,
+                    "useXpathExpression": false
+                  }
                 ],
                 "display": "long"
             }

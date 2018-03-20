@@ -295,7 +295,7 @@ def expected_bulk_app_sheet_rows(app):
                 for detail in case_properties:
 
                     field_name = detail.field
-                    if detail.format == "enum":
+                    if re.search(r'\benum\b', detail.format):   # enum, conditional-enum, enum-image
                         field_name += " (ID Mapping Text)"
                     elif detail.format == "graph":
                         field_name += " (graph)"
@@ -307,7 +307,7 @@ def expected_bulk_app_sheet_rows(app):
                     )
 
                     # Add a row for any mapping pairs
-                    if detail.format == "enum":
+                    if re.search(r'\benum\b', detail.format):
                         for mapping in detail.enum:
                             rows[module_string].append(
                                 (
