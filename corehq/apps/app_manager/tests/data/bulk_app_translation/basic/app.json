@@ -217,7 +217,30 @@
 
           ],
           "tabs": [
-
+            {
+                "doc_type": "DetailTab",
+                "has_nodeset": false,
+                "header": {
+                    "en": "Name in English",
+                    "fra": "Name in French"
+                },
+                "isTab": true,
+                "nodeset": "",
+                "relevant": "",
+                "starting_index": 0
+            },
+            {
+                "doc_type": "DetailTab",
+                "has_nodeset": false,
+                "header": {
+                    "en": "Other in English",
+                    "fra": "Other in French"
+                },
+                "isTab": true,
+                "nodeset": "",
+                "relevant": "",
+                "starting_index": 1
+            }
           ],
           "lookup_responses": [
 
