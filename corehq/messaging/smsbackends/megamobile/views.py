@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from corehq.apps.sms.api import incoming as incoming_sms
 from corehq.messaging.smsbackends.megamobile.models import SQLMegamobileBackend
 from django.http import HttpResponse

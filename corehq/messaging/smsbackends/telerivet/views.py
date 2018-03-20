@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import uuid
 from corehq.apps.sms.models import SMS, SQLMobileBackend, SQLMobileBackendMapping
 from corehq.apps.sms.util import clean_phone_number

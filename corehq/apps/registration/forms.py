@@ -68,11 +68,11 @@ class RegisterWebUserForm(forms.Form):
                href='#eulaModal'>
                CommCare HQ End User License Agreement</a>.""")))
     atypical_user = forms.BooleanField(required=False, widget=forms.HiddenInput())
+    is_mobile = forms.BooleanField(required=False, widget=forms.HiddenInput())
 
     def __init__(self, *args, **kwargs):
         self.show_phone_number = kwargs.pop('show_number', False)
         super(RegisterWebUserForm, self).__init__(*args, **kwargs)
-
         if not self.show_phone_number:
             del self.fields['phone_number']
             phone_number_fields = []
@@ -164,6 +164,7 @@ class RegisterWebUserForm(forms.Form):
                         css_class="btn btn-success btn-lg",
                         data_bind="click: nextStep, disable: disableNextStepOne"
                     ),
+                    hqcrispy.InlineField('is_mobile'),
                     css_class="check-password",
                 ),
                 css_class="form-step step-1",
@@ -365,7 +366,7 @@ class WebUserInvitationForm(NoAutocompleteMixin, DomainRegistrationForm):
 
 # From http://www.peterbe.com/plog/automatically-strip-whitespace-in-django-app_manager
 #
-# I'll put this in each app, so they can be standalone, but it should really go in some centralized 
+# I'll put this in each app, so they can be standalone, but it should really go in some centralized
 # part of the distro
 
 class _BaseForm(object):
@@ -420,4 +421,3 @@ class AdminInvitesUserForm(RoleForm, _BaseForm, forms.Form):
             raise forms.ValidationError(_("A user with this email address is already in "
                                           "this project or has a pending invitation."))
         return email
-

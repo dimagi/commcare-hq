@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import SQLLocation, LocationType
@@ -211,9 +212,9 @@ class MessageTestCase(TestCase):
             self.assertEqual(get_message_template_params(case), expected_result)
 
     def test_unicode_template_params(self):
-        message = u'Case name {case.name}'
-        context = {'case': {'name': u'\u0928\u092e\u0938\u094d\u0924\u0947'}}
+        message = 'Case name {case.name}'
+        context = {'case': {'name': '\u0928\u092e\u0938\u094d\u0924\u0947'}}
         self.assertEqual(
             Message.render(message, **context),
-            u'Case name \u0928\u092e\u0938\u094d\u0924\u0947'
+            'Case name \u0928\u092e\u0938\u094d\u0924\u0947'
         )

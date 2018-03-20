@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from corehq.apps.fixtures.upload import upload_fixture_file
 from soil import DownloadBase
 from celery.task import task

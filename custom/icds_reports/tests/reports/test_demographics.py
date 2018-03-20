@@ -59,11 +59,11 @@ class TestDemographics(TestCase):
         )
         expected = {
             "redirect": "adhaar",
-            "all": 500,
+            "all": 1582,
             "format": "percent_and_div",
             "color": "green",
-            "percent": 4.800000000000011,
-            "value": 131,
+            "percent": 10.423363522218837,
+            "value": 341,
             "label": "Percent Aadhaar-seeded Beneficiaries",
             "frequency": "month",
             "help_text": "Percentage of ICDS beneficiaries"
@@ -218,11 +218,11 @@ class TestDemographics(TestCase):
         )
         expected = {
             "redirect": "adhaar",
-            "all": 500,
+            "all": 1582,
             "format": "percent_and_div",
             "color": "green",
             "percent": "Data in the previous reporting period was 0",
-            "value": 131,
+            "value": 341,
             "label": "Percent Aadhaar-seeded Beneficiaries",
             "frequency": "day",
             "help_text": (
@@ -384,11 +384,11 @@ class TestDemographics(TestCase):
         )
         expected = {
             "redirect": "adhaar",
-            "all": 500,
+            "all": 1582,
             "format": "percent_and_div",
             "color": "green",
             "percent": "Data in the previous reporting period was 0",
-            "value": 131,
+            "value": 341,
             "label": "Percent Aadhaar-seeded Beneficiaries",
             "frequency": "day",
             "help_text": (

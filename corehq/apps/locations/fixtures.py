@@ -1,9 +1,14 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from itertools import groupby
 from collections import defaultdict
 from xml.etree.cElementTree import Element
 
 import six
+from django.db.models import IntegerField
+from django.contrib.postgres.fields.array import ArrayField
+from django_cte import With
+from django_cte.raw import raw_cte_sql
 
 from casexml.apps.phone.fixtures import FixtureProvider
 from corehq.apps.custom_data_fields.dbaccessors import get_by_domain_and_type
@@ -206,6 +211,10 @@ flat_location_fixture_generator = LocationFixtureProvider(
 )
 
 
+int_field = IntegerField()
+int_array = ArrayField(int_field)
+
+
 def get_location_fixture_queryset(user):
     if toggles.SYNC_ALL_LOCATIONS.enabled(user.domain):
         return SQLLocation.active_objects.filter(domain=user.domain).prefetch_related('location_type')
@@ -213,7 +222,36 @@ def get_location_fixture_queryset(user):
     timing = TimingContext("get_location_fixture_queryset")
     with timing("mptt"):
         mptt_set = mptt_get_location_fixture_queryset(user)
-    return ComparedQuerySet(mptt_set, timing)
+    with timing("cte"):
+        cte_set = cte_get_location_fixture_queryset(user)
+    return ComparedQuerySet(mptt_set, cte_set, timing)
+
+
+def cte_get_location_fixture_queryset(user):
+
+    user_locations = user.get_sql_locations(user.domain)
+
+    if user_locations.query.is_empty():
+        return user_locations
+
+    fixture_ids = With(raw_cte_sql(
+        """
+        SELECT "id", "path", "depth"
+        FROM get_location_fixture_ids(%s::TEXT, %s)
+        """,
+        [user.domain, list(user_locations.order_by().values_list("id", flat=True))],
+        {"id": int_field, "path": int_array, "depth": int_field},
+    ))
+
+    result = fixture_ids.join(
+        SQLLocation.objects.all(),
+        id=fixture_ids.col.id,
+    ).annotate(
+        path=fixture_ids.col.path,
+        depth=fixture_ids.col.depth,
+    ).with_cte(fixture_ids).prefetch_related('location_type')
+
+    return result
 
 
 def mptt_get_location_fixture_queryset(user):
@@ -223,9 +261,13 @@ def mptt_get_location_fixture_queryset(user):
 
     for user_location in user_locations:
         location_type = user_location.location_type
+        # returns either None or the level (integer) to exand to
         expand_to_level = _get_level_to_expand_to(user.domain, location_type.expand_to)
         expand_from_level = location_type.expand_from or location_type
+
+        # returns either all root locations or a single location (of expand_from_level type)
         expand_from_locations = _get_locs_to_expand_from(user.domain, user_location, expand_from_level)
+
         locs_below_expand_from = _get_children(expand_from_locations, expand_to_level)
         locs_at_or_above_expand_from = (SQLLocation.active_objects
                                         .mptt_get_queryset_ancestors(expand_from_locations, include_self=True))

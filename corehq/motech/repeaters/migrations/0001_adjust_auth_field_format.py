@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.db import migrations
 
 from corehq.motech.repeaters.models import Repeater

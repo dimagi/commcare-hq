@@ -126,7 +126,8 @@ class DataDumpTaskView(TemplateView):
         def run_task(task_name):
             run_custom_export_tasks.delay(
                 task_name,
-                request.POST.get('email')
+                request.POST.get('email'),
+                request.POST.get('full')
             )
         task_requested = request.POST.get('task')
         message = 'Invalid task. How did you manage that?'  # should never stay in this state

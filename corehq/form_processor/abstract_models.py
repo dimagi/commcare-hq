@@ -1,10 +1,12 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import collections
 import logging
 from abc import ABCMeta, abstractmethod
 
 import six as six
-from couchdbkit import ResourceNotFound
+
+from casexml.apps.phone.exceptions import MissingSyncLog
 
 from memoized import memoized
 from couchforms import const
@@ -128,7 +130,7 @@ class AbstractXFormInstance(object):
         if self.last_sync_token:
             try:
                 return get_properly_wrapped_sync_log(self.last_sync_token)
-            except ResourceNotFound:
+            except MissingSyncLog:
                 pass
         return None
 

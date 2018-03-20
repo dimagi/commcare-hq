@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from dimagi.ext.couchdbkit import (
     DictProperty,
     DocumentSchema,
@@ -88,10 +89,71 @@ class FormQuestionConcept(FormQuestion):
 
 
 class OpenmrsCaseConfig(DocumentSchema):
+
+    # "id_matchers": [
+    #     {
+    #         "case_property": "nid",
+    #         "identifier_type_id": "e2b966d0-1d5f-11e0-b929-000c29ad1d07",
+    #         "doc_type": "IdMatcher"
+    #     },
+    #     {
+    #         "case_property": "openmrs_uuid",
+    #         "identifier_type_id": "uuid",
+    #         "doc_type": "IdMatcher"
+    #     }
+    # ]
     id_matchers = SchemaListProperty(IdMatcher)
+
+    # "person_properties": {
+    #     "gender": {
+    #         "doc_type": "CaseProperty",
+    #         "case_property": "gender"
+    #     },
+    #     "birthdate": {
+    #         "doc_type": "CaseProperty",
+    #         "case_property": "dob"
+    #     }
+    # }
     person_properties = SchemaDictProperty(ValueSource)
+
+    # "person_preferred_name": {
+    #     "givenName": {
+    #         "doc_type": "CaseProperty",
+    #         "case_property": "given_name"
+    #     },
+    #     "middleName": {
+    #         "doc_type": "CaseProperty",
+    #         "case_property": "middle_name"
+    #     },
+    #     "familyName": {
+    #         "doc_type": "CaseProperty",
+    #         "case_property": "family_name"
+    #     }
+    # }
     person_preferred_name = SchemaDictProperty(ValueSource)
+
+    # "person_preferred_address": {
+    #     "address1": {
+    #         "doc_type": "CaseProperty",
+    #         "case_property": "address_1"
+    #     },
+    #     "address2": {
+    #         "doc_type": "CaseProperty",
+    #         "case_property": "address_2"
+    #     },
+    #     "cityVillage": {
+    #         "doc_type": "CaseProperty",
+    #         "case_property": "city"
+    #     }
+    # }
     person_preferred_address = SchemaDictProperty(ValueSource)
+
+    # "person_attributes": {
+    #     "e2b966d0-1d5f-11e0-b929-000c29ad1d07": {
+    #         "doc_type": "CaseProperty",
+    #         "case_property": "hiv_status"
+    #     }
+    # }
     person_attributes = SchemaDictProperty(ValueSource)
 
 

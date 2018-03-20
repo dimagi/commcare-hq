@@ -9,7 +9,8 @@
 # to check if your branch causes any conflicts before rebuilding
 #     $ scripts/rebuildstaging --no-push
 # to rebuild from your new spec and deploy
-#     $ scripts/rebuildstaging --deploy
+#     $ scripts/rebuildstaging
+#     $ commcare-cloud staging fab deploy
 # Above commands commands can be run without the flag as well.
 
 # CONFLICT RESOLUTION
@@ -50,15 +51,14 @@ name: autostaging
 branches:
   - vellum-staging # J$ 11/13
   # - je/cythonized-jsonobject # j$ 1/8
-  - xbryanc:dlemailbutton_updates  # Bryan 1/29
-  - sophiamcg:organization-structure-search-tree-interaction  # Sophia 1/29
-  - xbryanc:show_scheduled_reports_updates  # Bryan 1/31
-  - sophiamcg:organization-structure-collapse-button  # Sophia 1/31
   - fr/two-factor-mobile-users  # FR 2/7
-  - nh/omrs/repeater_format  # Norman 2/15
   - jr/ejs/sms-chat # Jordan 2/16
   - mk-mock-repeater-report # MK 28-Feb
   - ce/auto-batches # Cal 3/5
+  - sr-form-meta # Sravan 11-March
+  - nh/omrs/finders+rollback  # Norman 2018-03-15 (loving the date format diversity happening here)
+  - np/PyGithub==1.37  # NP 3/15
+  - jls/privacy-policy  # Jenny 3/19
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty

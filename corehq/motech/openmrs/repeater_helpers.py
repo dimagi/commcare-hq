@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+from __future__ import unicode_literals
 from collections import namedtuple
 from datetime import timedelta
 import re
@@ -57,6 +58,9 @@ ADDRESS_PROPERTIES = (
 # PERSON_UUID_IDENTIFIER_TYPE_ID. To match against any other OpenMRS identifier, set the IdMatcher's
 # identifier_type_id to the UUID of the OpenMRS Identifier Type.
 PERSON_UUID_IDENTIFIER_TYPE_ID = 'uuid'
+
+
+OpenmrsResponse = namedtuple('OpenmrsResponse', 'status_code reason')
 
 
 class Requests(object):
@@ -185,6 +189,7 @@ def create_visit(requests, person_uuid, provider_uuid, visit_datetime, values_fo
             observation_uuids.append(response.json()['uuid'])
 
     logger.debug('Observations created: ', observation_uuids)
+    return OpenmrsResponse(status_code=response.status_code, reason=response.reason)
 
 
 def search_patients(requests, search_string):
@@ -287,7 +292,7 @@ def get_subresource_instances(requests, person_uuid, subresource):
     )).json()['results']
 
 
-def get_patient(requests, info, openmrs_config, problem_log):
+def get_patient(requests, info, openmrs_config):
     patient = None
     for id_matcher in openmrs_config.case_config.id_matchers:
         assert isinstance(id_matcher, IdMatcher)
@@ -297,11 +302,6 @@ def get_patient(requests, info, openmrs_config, problem_log):
                 info.extra_fields[id_matcher.case_property])
             if patient:
                 break
-
-    if not patient:
-        problem_log.append("Could not find patient matching case")
-        return
-
     return patient
 
 
@@ -318,21 +318,6 @@ def update_person_properties(requests, info, openmrs_config, person_uuid):
             '/ws/rest/v1/person/{person_uuid}'.format(person_uuid=person_uuid),
             json=properties
         )
-
-
-def sync_person_attributes(requests, info, openmrs_config, person_uuid, attributes):
-    existing_person_attributes = {
-        attribute['attributeType']['uuid']: (attribute['uuid'], attribute['value'])
-        for attribute in attributes
-    }
-    for person_attribute_type, value_source in openmrs_config.case_config.person_attributes.items():
-        value = value_source.get_value(info)
-        if person_attribute_type in existing_person_attributes:
-            attribute_uuid, existing_value = existing_person_attributes[person_attribute_type]
-            if value != existing_value:
-                update_person_attribute(requests, person_uuid, attribute_uuid, person_attribute_type, value)
-        else:
-            create_person_attribute(requests, person_uuid, person_attribute_type, value)
 
 
 class PatientSearchParser(object):
@@ -363,8 +348,9 @@ def get_form_question_values(form_json):
     """
     Returns question-value pairs to result where questions are given as "/data/foo/bar"
 
-    >>> get_form_question_values({'form': {'foo': {'bar': 'baz'}}})
-    {'/data/foo/bar': 'baz'}
+    >>> values = get_form_question_values({'form': {'foo': {'bar': 'baz'}}})
+    >>> values == {'/data/foo/bar': 'baz'}
+    True
 
     """
     _reserved_keys = ('@uiVersion', '@xmlns', '@name', '#type', 'case', 'meta', '@version')
@@ -384,13 +370,13 @@ def get_form_question_values(form_json):
                 _recurse_form_questions(value, new_path, result_)
             else:
                 # key is a question and value is its answer
-                question = '/'.join(new_path)
+                question = '/'.join((p.decode('utf8') if isinstance(p, bytes) else p for p in new_path))
                 result_[question] = value
 
     result = {}
-    _recurse_form_questions(form_json['form'], ['/data'], result)  # "/data" is just convention, hopefully familiar
-    # from form builder. The form's data will usually be immediately under "form_json['form']" but not necessarily.
-    # If this causes problems we may need a more reliable way to get to it.
+    _recurse_form_questions(form_json['form'], [b'/data'], result)  # "/data" is just convention, hopefully
+    # familiar from form builder. The form's data will usually be immediately under "form_json['form']" but not
+    # necessarily. If this causes problems we may need a more reliable way to get to it.
     return result
 
 

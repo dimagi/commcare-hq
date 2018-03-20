@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from dimagi.utils.couch.database import safe_delete
 from corehq.util.test_utils import unit_testing_only
 from corehq.apps.reports.models import CaseExportSchema, FormExportSchema

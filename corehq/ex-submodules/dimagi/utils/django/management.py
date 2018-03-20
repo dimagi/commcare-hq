@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import csv
 from django.http import HttpResponse
 
@@ -53,7 +54,7 @@ def export_as_csv_action(description="Export selected objects as CSV file",
             field_names = field_names - excludeset
 
         response = HttpResponse(content_type='text/csv')
-        response['Content-Disposition'] = u'attachment; filename=%s.csv' % six.text_type(opts).replace('.', '_')
+        response['Content-Disposition'] = 'attachment; filename=%s.csv' % six.text_type(opts).replace('.', '_')
 
         writer = csv.writer(response)
         if header:

@@ -1,5 +1,6 @@
 # encoding: utf-8
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import json
 from io import BytesIO
 
@@ -33,7 +34,7 @@ class FakeDB(object):
 
     @staticmethod
     def get(blob_id):
-        content = 'foo\n'
+        content = b'foo\n'
         return StreamingBody(BytesIO(content), len(content))
 
     @staticmethod

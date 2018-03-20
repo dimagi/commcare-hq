@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.tests.utils import partitioned
@@ -874,6 +875,246 @@ class EndOfMonthScheduleTest(TestCase):
         self.assertNumInstancesForSchedule(1)
         self.assertTimedScheduleInstance(instance, 0, 3, datetime(2017, 6, 30, 16, 0), False, date(2017, 4, 1))
         self.assertEqual(send_patch.call_count, 2)
+
+
+@partitioned
+@patch('corehq.messaging.scheduling.models.content.SMSContent.send')
+@patch('corehq.messaging.scheduling.util.utcnow')
+class DailyRepeatEveryTest(BaseScheduleTest):
+
+    @classmethod
+    def setUpClass(cls):
+        super(DailyRepeatEveryTest, cls).setUpClass()
+
+        cls.schedule = TimedSchedule.create_simple_daily_schedule(
+            cls.domain,
+            TimedEvent(time=time(12, 0)),
+            SMSContent(),
+            total_iterations=3,
+            repeat_every=2,
+        )
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.schedule.delete()
+        super(DailyRepeatEveryTest, cls).tearDownClass()
+
+    def tearDown(self):
+        delete_timed_schedule_instances_for_schedule(TimedScheduleInstance, self.schedule.schedule_id)
+        super(DailyRepeatEveryTest, self).tearDown()
+
+    def test_schedule_start_to_finish(self, utcnow_patch, send_patch):
+        self.assertNumInstancesForSchedule(0)
+
+        # Schedule the instance
+        utcnow_patch.return_value = datetime(2018, 3, 1, 0, 0)
+        refresh_timed_schedule_instances(self.schedule.schedule_id, (('CommCareUser', self.user1.get_id),),
+            date(2018, 3, 1))
+        self.assertNumInstancesForSchedule(1)
+        [instance] = get_timed_schedule_instances_for_schedule(self.schedule)
+        self.assertTimedScheduleInstance(instance, 0, 1, datetime(2018, 3, 1, 17, 0), True, date(2018, 3, 1),
+            self.user1)
+        self.assertEqual(send_patch.call_count, 0)
+
+        # First iteration
+        utcnow_patch.return_value = datetime(2018, 3, 1, 17, 1)
+        instance.handle_current_event()
+        save_timed_schedule_instance(instance)
+        self.assertNumInstancesForSchedule(1)
+        self.assertTimedScheduleInstance(instance, 0, 2, datetime(2018, 3, 3, 17, 0), True, date(2018, 3, 1),
+            self.user1)
+        self.assertEqual(send_patch.call_count, 1)
+
+        # Second iteration
+        utcnow_patch.return_value = datetime(2018, 3, 3, 17, 1)
+        instance.handle_current_event()
+        save_timed_schedule_instance(instance)
+        self.assertNumInstancesForSchedule(1)
+        self.assertTimedScheduleInstance(instance, 0, 3, datetime(2018, 3, 5, 17, 0), True, date(2018, 3, 1),
+            self.user1)
+        self.assertEqual(send_patch.call_count, 2)
+
+        # Third (and last) iteration
+        utcnow_patch.return_value = datetime(2018, 3, 5, 17, 1)
+        instance.handle_current_event()
+        save_timed_schedule_instance(instance)
+        self.assertNumInstancesForSchedule(1)
+        self.assertTimedScheduleInstance(instance, 0, 4, datetime(2018, 3, 7, 17, 0), False, date(2018, 3, 1),
+            self.user1)
+        self.assertEqual(send_patch.call_count, 3)
+
+
+@partitioned
+@patch('corehq.messaging.scheduling.models.content.SMSContent.send')
+@patch('corehq.messaging.scheduling.util.utcnow')
+class WeeklyRepeatEveryTest(BaseScheduleTest):
+
+    @classmethod
+    def setUpClass(cls):
+        super(WeeklyRepeatEveryTest, cls).setUpClass()
+
+        cls.schedule = TimedSchedule.create_simple_weekly_schedule(
+            cls.domain,
+            TimedEvent(time=time(12, 0)),
+            SMSContent(),
+            [0, 4],
+            0,
+            total_iterations=3,
+            repeat_every=2,
+        )
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.schedule.delete()
+        super(WeeklyRepeatEveryTest, cls).tearDownClass()
+
+    def tearDown(self):
+        delete_timed_schedule_instances_for_schedule(TimedScheduleInstance, self.schedule.schedule_id)
+        super(WeeklyRepeatEveryTest, self).tearDown()
+
+    def test_schedule_start_to_finish(self, utcnow_patch, send_patch):
+        self.assertNumInstancesForSchedule(0)
+
+        # Schedule the instance
+        utcnow_patch.return_value = datetime(2018, 3, 5, 0, 0)
+        refresh_timed_schedule_instances(self.schedule.schedule_id, (('CommCareUser', self.user1.get_id),),
+            date(2018, 3, 5))
+        self.assertNumInstancesForSchedule(1)
+        [instance] = get_timed_schedule_instances_for_schedule(self.schedule)
+        self.assertTimedScheduleInstance(instance, 0, 1, datetime(2018, 3, 5, 17, 0), True, date(2018, 3, 5),
+            self.user1)
+        self.assertEqual(send_patch.call_count, 0)
+
+        # Iteration 1, Event 0
+        utcnow_patch.return_value = datetime(2018, 3, 5, 17, 1)
+        instance.handle_current_event()
+        save_timed_schedule_instance(instance)
+        self.assertNumInstancesForSchedule(1)
+        self.assertTimedScheduleInstance(instance, 1, 1, datetime(2018, 3, 9, 17, 0), True, date(2018, 3, 5),
+            self.user1)
+        self.assertEqual(send_patch.call_count, 1)
+
+        # Iteration 1, Event 1
+        utcnow_patch.return_value = datetime(2018, 3, 9, 17, 1)
+        instance.handle_current_event()
+        save_timed_schedule_instance(instance)
+        self.assertNumInstancesForSchedule(1)
+        self.assertTimedScheduleInstance(instance, 0, 2, datetime(2018, 3, 19, 16, 0), True, date(2018, 3, 5),
+            self.user1)
+        self.assertEqual(send_patch.call_count, 2)
+
+        # Iteration 2, Event 0
+        utcnow_patch.return_value = datetime(2018, 3, 19, 16, 1)
+        instance.handle_current_event()
+        save_timed_schedule_instance(instance)
+        self.assertNumInstancesForSchedule(1)
+        self.assertTimedScheduleInstance(instance, 1, 2, datetime(2018, 3, 23, 16, 0), True, date(2018, 3, 5),
+            self.user1)
+        self.assertEqual(send_patch.call_count, 3)
+
+        # Iteration 2, Event 1
+        utcnow_patch.return_value = datetime(2018, 3, 23, 16, 1)
+        instance.handle_current_event()
+        save_timed_schedule_instance(instance)
+        self.assertNumInstancesForSchedule(1)
+        self.assertTimedScheduleInstance(instance, 0, 3, datetime(2018, 4, 2, 16, 0), True, date(2018, 3, 5),
+            self.user1)
+        self.assertEqual(send_patch.call_count, 4)
+
+        # Iteration 3, Event 0
+        utcnow_patch.return_value = datetime(2018, 4, 2, 16, 1)
+        instance.handle_current_event()
+        save_timed_schedule_instance(instance)
+        self.assertNumInstancesForSchedule(1)
+        self.assertTimedScheduleInstance(instance, 1, 3, datetime(2018, 4, 6, 16, 0), True, date(2018, 3, 5),
+            self.user1)
+        self.assertEqual(send_patch.call_count, 5)
+
+        # Iteration 3, Event 1
+        utcnow_patch.return_value = datetime(2018, 4, 6, 16, 1)
+        instance.handle_current_event()
+        save_timed_schedule_instance(instance)
+        self.assertNumInstancesForSchedule(1)
+        self.assertTimedScheduleInstance(instance, 0, 4, datetime(2018, 4, 16, 16, 0), False, date(2018, 3, 5),
+            self.user1)
+        self.assertEqual(send_patch.call_count, 6)
+
+
+@partitioned
+@patch('corehq.messaging.scheduling.models.content.SMSContent.send')
+@patch('corehq.messaging.scheduling.util.utcnow')
+class MonthlyRepeatEveryTest(BaseScheduleTest):
+
+    @classmethod
+    def setUpClass(cls):
+        super(MonthlyRepeatEveryTest, cls).setUpClass()
+
+        cls.schedule = TimedSchedule.create_simple_monthly_schedule(
+            cls.domain,
+            TimedEvent(time=time(12, 0)),
+            [1],
+            SMSContent(),
+            total_iterations=4,
+            repeat_every=6,
+        )
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.schedule.delete()
+        super(MonthlyRepeatEveryTest, cls).tearDownClass()
+
+    def tearDown(self):
+        delete_timed_schedule_instances_for_schedule(TimedScheduleInstance, self.schedule.schedule_id)
+        super(MonthlyRepeatEveryTest, self).tearDown()
+
+    def test_schedule_start_to_finish(self, utcnow_patch, send_patch):
+        self.assertNumInstancesForSchedule(0)
+
+        # Schedule the instance
+        utcnow_patch.return_value = datetime(2018, 1, 1, 0, 0)
+        refresh_timed_schedule_instances(self.schedule.schedule_id, (('CommCareUser', self.user1.get_id),),
+            date(2018, 1, 1))
+        self.assertNumInstancesForSchedule(1)
+        [instance] = get_timed_schedule_instances_for_schedule(self.schedule)
+        self.assertTimedScheduleInstance(instance, 0, 1, datetime(2018, 1, 1, 17, 0), True, date(2018, 1, 1),
+            self.user1)
+        self.assertEqual(send_patch.call_count, 0)
+
+        # First iteration
+        utcnow_patch.return_value = datetime(2018, 1, 1, 17, 1)
+        instance.handle_current_event()
+        save_timed_schedule_instance(instance)
+        self.assertNumInstancesForSchedule(1)
+        self.assertTimedScheduleInstance(instance, 0, 2, datetime(2018, 7, 1, 16, 0), True, date(2018, 1, 1),
+            self.user1)
+        self.assertEqual(send_patch.call_count, 1)
+
+        # Second iteration
+        utcnow_patch.return_value = datetime(2018, 7, 1, 17, 1)
+        instance.handle_current_event()
+        save_timed_schedule_instance(instance)
+        self.assertNumInstancesForSchedule(1)
+        self.assertTimedScheduleInstance(instance, 0, 3, datetime(2019, 1, 1, 17, 0), True, date(2018, 1, 1),
+            self.user1)
+        self.assertEqual(send_patch.call_count, 2)
+
+        # Third iteration
+        utcnow_patch.return_value = datetime(2019, 1, 1, 17, 1)
+        instance.handle_current_event()
+        save_timed_schedule_instance(instance)
+        self.assertNumInstancesForSchedule(1)
+        self.assertTimedScheduleInstance(instance, 0, 4, datetime(2019, 7, 1, 16, 0), True, date(2018, 1, 1),
+            self.user1)
+        self.assertEqual(send_patch.call_count, 3)
+
+        # Fourth iteration
+        utcnow_patch.return_value = datetime(2019, 7, 1, 16, 1)
+        instance.handle_current_event()
+        save_timed_schedule_instance(instance)
+        self.assertNumInstancesForSchedule(1)
+        self.assertTimedScheduleInstance(instance, 0, 5, datetime(2020, 1, 1, 17, 0), False, date(2018, 1, 1),
+            self.user1)
+        self.assertEqual(send_patch.call_count, 4)
 
 
 @partitioned

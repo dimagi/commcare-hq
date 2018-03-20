@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.http import Http404, HttpResponse
 from django.core.exceptions import PermissionDenied
 from corehq.apps.domain.decorators import login_and_domain_required, domain_specific_login_redirect

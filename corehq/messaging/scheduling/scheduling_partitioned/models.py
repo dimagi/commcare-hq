@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import pytz
 import uuid
 from corehq.apps.casegroups.models import CommCareCaseGroup

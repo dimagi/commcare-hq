@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import copy
 from datetime import datetime
 
@@ -6,6 +7,7 @@ from django.test import TestCase
 
 from corehq.apps.commtrack.tests.util import make_loc
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.elastic import refresh_elasticsearch_index
 from corehq.apps.locations.tests.util import delete_all_locations
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.apps.users.management.commands import add_multi_location_property
@@ -99,6 +101,7 @@ class CCUserLocationAssignmentTest(TestCase):
 
     def test_deleting_location_updates_user(self):
         self.user.reset_locations(self.loc_ids)
+        refresh_elasticsearch_index('users')
         self.loc1.sql_location.full_delete()
         self.loc2.sql_location.full_delete()
         self.assertAssignedLocations([])

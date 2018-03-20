@@ -35,6 +35,7 @@ class ReadableFormdataTest(SimpleTestCase):
             'calculate': None,
             'required': False,
             'relevant': None,
+            'setvalue': 'default',
         }]
         form_data = {
             "@uiVersion": "1",
@@ -85,6 +86,7 @@ class ReadableFormdataTest(SimpleTestCase):
                 'comment': None,
                 'required': False,
                 'relevant': None,
+                'setvalue': 'default',
             }])
         )
 

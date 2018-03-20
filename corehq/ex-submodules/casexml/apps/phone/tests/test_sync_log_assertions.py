@@ -20,7 +20,8 @@ class SyncLogAssertionTest(TestCase):
                     indices=[CommCareCaseIndex(identifier='legs', referenced_id='hodor')],
                 ),
             ],
-            dependent_cases_on_phone=[CaseState(case_id='hodor')]
+            dependent_cases_on_phone=[CaseState(case_id='hodor')],
+            user_id="someuser"
         )
         xform_id = uuid.uuid4().hex
         xform = XFormInstance(_id=xform_id)
@@ -35,6 +36,8 @@ class SyncLogAssertionTest(TestCase):
     def test_update_dependent_case_owner_still_present(self):
         dependent_case_state = CaseState(case_id="d1", indices=[])
         sync_log = SyncLog(
+            domain="domain",
+            user_id="user",
             cases_on_phone=[
                 CaseState(case_id="c1", indices=[
                     CommCareCaseIndex(identifier="d1-id", referenced_id="d1")

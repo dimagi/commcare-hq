@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import tempfile
 
 from couchexport.export import export_raw
@@ -22,87 +23,87 @@ _make_path = make_make_path(__file__)
 
 validation_test_cases = [
     ('duplicate_tag', [
-        u"Lookup-tables should have unique 'table_id'. "
-        u"There are two rows with table_id 'things' in 'types' sheet.",
+        "Lookup-tables should have unique 'table_id'. "
+        "There are two rows with table_id 'things' in 'types' sheet.",
 
     ]),
     ('multiple_errors', [
-        u"Excel-sheet 'level_1' does not contain the column "
-        u"'field: fun_fact' as specified in its 'types' definition",
-        u"Excel-sheet 'level_1' does not contain the column "
-        u"'field: other' as specified in its 'types' definition",
-        u"Excel-sheet 'level_2' does not contain the column "
-        u"'field: other' as specified in its 'types' definition",
-        u"There's no sheet for type 'level_3' in 'types' sheet. "
-        u"There must be one sheet per row in the 'types' sheet.",
+        "Excel-sheet 'level_1' does not contain the column "
+        "'field: fun_fact' as specified in its 'types' definition",
+        "Excel-sheet 'level_1' does not contain the column "
+        "'field: other' as specified in its 'types' definition",
+        "Excel-sheet 'level_2' does not contain the column "
+        "'field: other' as specified in its 'types' definition",
+        "There's no sheet for type 'level_3' in 'types' sheet. "
+        "There must be one sheet per row in the 'types' sheet.",
     ]),
     ('type_has_no_sheet', [
-        u"There's no sheet for type 'things' in 'types' sheet. "
-        u"There must be one sheet per row in the 'types' sheet.",
+        "There's no sheet for type 'things' in 'types' sheet. "
+        "There must be one sheet per row in the 'types' sheet.",
     ]),
     ('has_no_field_column', [
-        u"Excel-sheet 'things' does not contain the column 'field: name' "
-        u"as specified in its 'types' definition",
+        "Excel-sheet 'things' does not contain the column 'field: name' "
+        "as specified in its 'types' definition",
     ]),
     ('has_extra_column', [
-        u"Excel-sheet 'things' has an extra column"
-        u"'field: fun_fact' that's not defined in its 'types' definition",
+        "Excel-sheet 'things' has an extra column"
+        "'field: fun_fact' that's not defined in its 'types' definition",
     ]),
     ('sheet_has_no_property', [
-        u"Excel-sheet 'things' does not contain property "
-        u"'lang' of the field 'name' as specified in its 'types' definition",
+        "Excel-sheet 'things' does not contain property "
+        "'lang' of the field 'name' as specified in its 'types' definition",
     ]),
     ('sheet_has_extra_property', [
-        u"Excel-sheet 'things' has an extra property "
-        u"'style' for the field 'name' that's not defined in its 'types' definition. "
-        u"Re-check the formatting",
+        "Excel-sheet 'things' has an extra property "
+        "'style' for the field 'name' that's not defined in its 'types' definition. "
+        "Re-check the formatting",
     ]),
     ('invalid_field_with_property', [
-        u"Fields with attributes should be numbered as 'field: name integer'",
+        "Fields with attributes should be numbered as 'field: name integer'",
         # also triggers wrong_field_property_combos
-        u"Number of values for field 'name' and attribute 'lang' should be same",
+        "Number of values for field 'name' and attribute 'lang' should be same",
     ]),
     ('invalid_property', [
-        u"Attribute should be written as 'name: lang integer'",
+        "Attribute should be written as 'name: lang integer'",
         # also triggers wrong_field_property_combos
-        u"Number of values for field 'name' and attribute 'lang' should be same",
+        "Number of values for field 'name' and attribute 'lang' should be same",
     ]),
     ('wrong_field_property_combos', [
-        u"Number of values for field 'name' and attribute 'lang' should be same",
+        "Number of values for field 'name' and attribute 'lang' should be same",
     ]),
     ('has_no_column', [
-        u"Workbook 'types' has no column 'table_id'.",
+        "Workbook 'types' has no column 'table_id'.",
     ]),
     ('neither_fields_nor_attributes', [
-        u"Lookup-tables can not have empty fields and empty properties on items. "
-        u"table_id 'things' has no fields and no properties",
+        "Lookup-tables can not have empty fields and empty properties on items. "
+        "table_id 'things' has no fields and no properties",
     ]),
     ('invalid_field_syntax', [
-        u"In excel-sheet 'things', field 'name' should be numbered as 'field: name integer",
+        "In excel-sheet 'things', field 'name' should be numbered as 'field: name integer",
     ]),
     ('wrong_property_syntax', [
-        u"Properties should be specified as 'field 1: property 1'. In 'types' sheet, "
-        u"'field 1' is not correctly formatted"
+        "Properties should be specified as 'field 1: property 1'. In 'types' sheet, "
+        "'field 1' is not correctly formatted"
     ]),
     ('invalid_field_name_numerical', [
-        u"Error in 'types' sheet for 'field 1', '100'. "
-        u"Field names should be strings, not numbers",
+        "Error in 'types' sheet for 'field 1', '100'. "
+        "Field names should be strings, not numbers",
     ]),
     ('not_excel_file', [
-        u"Invalid file-format. Please upload a valid xlsx file.",
+        "Invalid file-format. Please upload a valid xlsx file.",
     ]),
     ('no_types_sheet', [
-        u"Workbook does not contain a sheet called types",
+        "Workbook does not contain a sheet called types",
     ]),
     ('wrong_index_syntax', [
-        u"'field 1' is not correctly formatted in 'types' sheet. Whether a field is indexed should be specified "
+        "'field 1' is not correctly formatted in 'types' sheet. Whether a field is indexed should be specified "
         "as 'field 1: is_indexed?'. Its value should be 'yes' or 'no'.",
     ]),
     ('field_type_error', [
-        u"Fields with attributes should be numbered as 'field: name integer'"
+        "Fields with attributes should be numbered as 'field: name integer'"
     ]),
     ('property_type_error', [
-        u"Attribute should be written as 'name: lang integer'"
+        "Attribute should be written as 'name: lang integer'"
     ])
 ]
 

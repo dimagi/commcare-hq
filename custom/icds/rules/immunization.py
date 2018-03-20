@@ -1,6 +1,13 @@
 """
-This module contains utils which can be used for dealing with immunizations
-in the AWW app.
+NOTE: This module was added in September 2017 to provide utils for dealing
+with immunization information in the AWW app, for the purpose of sending SMS
+alerts related to immunizations. The immunization SMS alerts never ended up
+being used, but I'm leaving these utils here in case it will be useful at
+some later point. If you use these utils, you'll want to make sure the
+AWW app still matches up with what is being done here in case there have
+been changes since this was written, but this should at least
+provide a base to start from. If a year goes by and no one uses this, it
+can probably be removed along with the associated tests for it.
 
 Each immunization is represented by a CommCare Supply product. When an
 immunization is applied, it is recorded using a LedgerValue, where the entry_id

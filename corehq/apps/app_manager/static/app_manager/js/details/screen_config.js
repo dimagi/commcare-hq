@@ -393,12 +393,9 @@ hqDefine('app_manager/js/details/screen_config', function() {
 
                 this.saveAttempted = ko.observable(false);
                 var addOns = hqImport("hqwebapp/js/initial_page_data").get("add_ons");
-                this.useXpathExpression = ko.observable(addOns.calc_xpaths && this.original.useXpathExpression);
-                this.useXpathExpression.subscribe(function() {
-                    that.fire('change');
-                });
+                this.useXpathExpression = this.original.useXpathExpression;
                 this.showWarning = ko.computed(function() {
-                    if (this.useXpathExpression()) {
+                    if (this.useXpathExpression) {
                         return false;
                     }
                     if (this.isTab) {
@@ -424,7 +421,7 @@ hqDefine('app_manager/js/details/screen_config', function() {
                     }]);
                 }
 
-                if (this.useXpathExpression()) {
+                if (this.useXpathExpression) {
                     var menuOptionsToRemove = ['picture', 'audio'];
                     for (var i = 0; i < menuOptionsToRemove.length; i++) {
                         for(var j = 0; j < menuOptions.length; j++) {
@@ -697,14 +694,12 @@ hqDefine('app_manager/js/details/screen_config', function() {
                     column.on('change', that.fireChange);
 
                     column.field.on('change', function() {
-                        if (!column.useXpathExpression()) {
+                        if (!column.useXpathExpression) {
                             column.header.val(getPropertyTitle(this.val()));
                             column.header.fire("change");
                         }
                     });
-                    if (column.original.hasAutocomplete || (
-                        column.original.useXpathExpression && !column.useXpathExpression()
-                    )) {
+                    if (column.original.hasAutocomplete) {
                         module.CC_DETAIL_SCREEN.setUpAutocomplete(column.field, that.properties);
                     }
                     return column;
@@ -944,7 +939,7 @@ hqDefine('app_manager/js/details/screen_config', function() {
                     } else {
                         this.columns.splice(index, 0, column);
                     }
-                    column.useXpathExpression(!!columnConfiguration.useXpathExpression);
+                    column.useXpathExpression = !!columnConfiguration.useXpathExpression;
                 },
                 pasteCallback: function(data, index) {
                     try {

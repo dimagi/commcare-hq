@@ -143,6 +143,7 @@ def get_releases_context(request, domain, app_id):
         'latest_build_id': get_latest_build_id(domain, app_id),
         'prompt_settings_url': reverse(PromptSettingsUpdateView.urlname, args=[domain, app_id]),
         'prompt_settings_form': prompt_settings_form,
+        'full_name': request.couch_user.full_name,
     })
     if not app.is_remote_app():
         context.update({

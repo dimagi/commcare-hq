@@ -1420,6 +1420,48 @@
         "display_name": null,
         "type": "boolean",
         "column_id": "has_adequate_space_pse"
+      },
+      {
+        "column_id": "electricity_awc",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "icds_boolean",
+          "boolean_property": {
+            "type": "property_path",
+            "property_path": ["form", "infra_details", "electricity_awc"]
+          },
+          "true_values": ["1"],
+          "false_values": ["0"]
+        }
+      },
+      {
+        "column_id": "infantometer",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "icds_boolean",
+          "boolean_property": {
+            "type": "property_path",
+            "property_path": ["form", "infra_details", "supply_position_usable_1", "infantometer"]
+          },
+          "true_values": ["yes"],
+          "false_values": ["no"]
+        }
+      },
+      {
+        "column_id": "stadiometer",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "icds_boolean",
+          "boolean_property": {
+            "type": "property_path",
+            "property_path": ["form", "infra_details", "supply_position_usable_1", "stadiometer"]
+          },
+          "true_values": ["yes"],
+          "false_values": ["no"]
+        }
       }
     ],
     "named_expressions": {},

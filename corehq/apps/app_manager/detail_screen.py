@@ -122,7 +122,7 @@ class FormattedDetailColumn(object):
     @property
     def variables(self):
         variables = {}
-        if re.search(r'\$lang', self.column.field):
+        if re.search(r'\$lang', self.xpath_function):
             variables['lang'] = self.id_strings.current_language()
         return variables
 
@@ -133,6 +133,19 @@ class FormattedDetailColumn(object):
             form=self.template_form,
             width=self.template_width,
         )
+
+        if self.column.useXpathExpression:
+            xpath = sx.CalculatedPropertyXpath(function=self.xpath)
+            if re.search(r'\$lang', self.xpath):
+                xpath.variables.node.append(
+                    sx.CalculatedPropertyXpathVariable(
+                        name=u'lang',
+                        locale_id=self.id_strings.current_language()
+                    ).node
+                )
+            xpath_variable = sx.XpathVariable(name=u'calculated_property', xpath=xpath)
+            template.text.xpath.variables.node.append(xpath_variable.node)
+
         if self.variables:
             for key, value in sorted(self.variables.items()):
                 template.text.xpath.variables.node.append(
@@ -161,6 +174,18 @@ class FormattedDetailColumn(object):
                 type=sort_type,
             )
 
+            if self.column.useXpathExpression:
+                xpath = sx.CalculatedPropertyXpath(function=self.xpath)
+                if re.search(r'\$lang', self.xpath):
+                    xpath.variables.node.append(
+                        sx.CalculatedPropertyXpathVariable(
+                            name=u'lang',
+                            locale_id=self.id_strings.current_language()
+                        ).node
+                    )
+                xpath_variable = sx.XpathVariable(name=u'calculated_property', xpath=xpath)
+                sort.text.xpath.variables.node.append(xpath_variable.node)
+
         if self.sort_element:
             if not sort:
                 sort_type = {
@@ -179,6 +204,16 @@ class FormattedDetailColumn(object):
                     text=sx.Text(xpath_function=sort_xpath),
                     type=sort_type,
                 )
+                if not sort_calculation and self.column.useXpathExpression:
+                    xpath = sx.CalculatedPropertyXpath(function=self.xpath)
+                    if re.search(r'\$lang', self.xpath):
+                        xpath.variables.node.append(
+                            sx.CalculatedPropertyXpathVariable(
+                                name=u'lang', locale_id=self.id_strings.current_language()
+                            ).node
+                        )
+                    xpath_variable = sx.XpathVariable(name=u'calculated_property', xpath=xpath)
+                    sort.text.xpath.variables.node.append(xpath_variable.node)
 
             if self.sort_element.type == 'distance':
                 sort.text.xpath_function = self.evaluate_template(Distance.SORT_XPATH_FUNCTION)
@@ -198,6 +233,8 @@ class FormattedDetailColumn(object):
 
     @property
     def xpath(self):
+        if self.column.useXpathExpression:
+            return self.column.field
         return get_column_xpath_generator(self.app, self.module, self.detail,
                                           self.column).xpath
 
@@ -206,7 +243,7 @@ class FormattedDetailColumn(object):
     def evaluate_template(self, template):
         if template:
             return template.format(
-                xpath=self.xpath,
+                xpath=u'$calculated_property' if self.column.useXpathExpression else self.xpath,
                 app=self.app,
                 module=self.module,
                 detail=self.detail,
@@ -343,7 +380,7 @@ class Enum(FormattedDetailColumn):
                 xpath_fragment_template.format(
                     key=item.key,
                     key_as_var=item.key_as_variable,
-                    xpath=self.xpath,
+                    xpath=u'$calculated_property' if self.column.useXpathExpression else self.xpath,
                     i=i,
                 )
             )

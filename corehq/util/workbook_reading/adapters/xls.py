@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from contextlib import contextmanager
 from datetime import datetime, time, date
 import xlrd
@@ -13,7 +14,7 @@ def open_xls_workbook(filename):
         with xlrd.open_workbook(filename) as xlrd_workbook:
             yield _XLSWorkbookAdaptor(xlrd_workbook).to_workbook()
     except xlrd.XLRDError as e:
-        if e.message == u'Workbook is encrypted':
+        if e.message == 'Workbook is encrypted':
             raise SpreadsheetFileEncrypted(e.message)
         else:
             raise SpreadsheetFileInvalidError(e.message)

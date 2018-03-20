@@ -1,11 +1,14 @@
 from __future__ import print_function
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import re
 from collections import defaultdict
-from github import Github
+from github import Github, UnknownObjectException
 from django.template.loader import render_to_string
 import requests
 from gevent.pool import Pool
+from corehq.util.soft_assert import soft_assert
+
 
 LABELS_TO_EXPAND = [
     "product/all-users-all-environments",
@@ -41,10 +44,25 @@ def get_deploy_email_message_body(environment, user, compare_url):
 
 
 def _get_pr_numbers(last_deploy, current_deploy):
-    repo = Github().get_organization('dimagi').get_repo('commcare-hq')
-    last_deploy_sha = repo.get_commit(last_deploy).sha
-    current_deploy_sha = repo.get_commit(current_deploy).sha
-    comparison = repo.compare(last_deploy_sha, current_deploy_sha)
+    gh = Github()
+    repo = gh.get_organization('dimagi').get_repo('commcare-hq')
+    try:
+        last_deploy_sha = repo.get_commit(last_deploy).sha
+        current_deploy_sha = repo.get_commit(current_deploy).sha
+        comparison = repo.compare(last_deploy_sha, current_deploy_sha)
+    except UnknownObjectException as e:
+        print("An exception occurred while getting commits from the repo. This could be because of rate limiting")
+        print("Please see: https://manage.dimagi.com/default.asp?266529 for more info.")
+        print(e)
+        rate = gh.get_rate_limit().rate
+        print("\tWe have {} of {} requests left".format(rate.remaining, rate.limit))
+
+        if rate.remaining == 0:
+            _assert = soft_assert(to="@".join(['frener', 'dimagi.com']))
+            message = "Rate limit reached when getting commits. See https://manage.dimagi.com/default.asp?266529"
+            _assert(False, message, e)
+
+        raise
 
     return [
         int(re.search(r'Merge pull request #(\d+)', repo_commit.commit.message).group(1))

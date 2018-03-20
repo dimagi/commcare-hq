@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import datetime
 import json
 import uuid
@@ -79,18 +80,18 @@ class TestSmsExport(SimpleTestCase):
             self.assertEqual(
                 json.loads(export.read()),
                 {
-                    u'Messages': {
-                        u'headers': [
-                            u'Contact Type',
-                            u'Contact ID',
-                            u'Timestamp',
-                            u'User Name',
-                            u'Phone Number',
-                            u'Direction',
-                            u'Message',
-                            u'Type',
+                    'Messages': {
+                        'headers': [
+                            'Contact Type',
+                            'Contact ID',
+                            'Timestamp',
+                            'User Name',
+                            'Phone Number',
+                            'Direction',
+                            'Message',
+                            'Type',
                         ],
-                        u'rows': self._make_message_rows(docs()),
+                        'rows': self._make_message_rows(docs()),
                     }
                 }
             )
@@ -107,19 +108,19 @@ class TestSmsExport(SimpleTestCase):
             self.assertEqual(
                 json.loads(export.read()),
                 {
-                    u'Messages': {
-                        u'headers': [
-                            u'Contact Type',
-                            u'Contact ID',
-                            u'Timestamp',
-                            u'User Name',
-                            u'Phone Number',
-                            u'Direction',
-                            u'Message',
-                            u'Type',
-                            u'Message Log ID',
+                    'Messages': {
+                        'headers': [
+                            'Contact Type',
+                            'Contact ID',
+                            'Timestamp',
+                            'User Name',
+                            'Phone Number',
+                            'Direction',
+                            'Message',
+                            'Type',
+                            'Message Log ID',
                         ],
-                        u'rows': self._make_message_rows(docs(), include_meta=True),
+                        'rows': self._make_message_rows(docs(), include_meta=True),
                     }
                 }
             )
@@ -146,18 +147,18 @@ class TestSmsExport(SimpleTestCase):
             self.assertEqual(
                 json.loads(export.read()),
                 {
-                    u'Messages': {
-                        u'headers': [
-                            u'Contact Type',
-                            u'Contact ID',
-                            u'Timestamp',
-                            u'User Name',
-                            u'Phone Number',
-                            u'Direction',
-                            u'Message',
-                            u'Type',
+                    'Messages': {
+                        'headers': [
+                            'Contact Type',
+                            'Contact ID',
+                            'Timestamp',
+                            'User Name',
+                            'Phone Number',
+                            'Direction',
+                            'Message',
+                            'Type',
                         ],
-                        u'rows': rows_value
+                        'rows': rows_value
                     }
                 }
             )
@@ -182,18 +183,18 @@ class TestSmsExport(SimpleTestCase):
             self.assertEqual(
                 json.loads(export.read()),
                 {
-                    u'Messages': {
-                        u'headers': [
-                            u'Contact Type',
-                            u'Contact ID',
-                            u'Timestamp',
-                            u'User Name',
-                            u'Phone Number',
-                            u'Direction',
-                            u'Message',
-                            u'Type',
+                    'Messages': {
+                        'headers': [
+                            'Contact Type',
+                            'Contact ID',
+                            'Timestamp',
+                            'User Name',
+                            'Phone Number',
+                            'Direction',
+                            'Message',
+                            'Type',
                         ],
-                        u'rows': rows_value,
+                        'rows': rows_value,
                     }
                 }
             )
@@ -222,18 +223,18 @@ class TestSmsExport(SimpleTestCase):
             self.assertEqual(
                 json.loads(export.read()),
                 {
-                    u'Messages': {
-                        u'headers': [
-                            u'Contact Type',
-                            u'Contact ID',
-                            u'Timestamp',
-                            u'User Name',
-                            u'Phone Number',
-                            u'Direction',
-                            u'Message',
-                            u'Type',
+                    'Messages': {
+                        'headers': [
+                            'Contact Type',
+                            'Contact ID',
+                            'Timestamp',
+                            'User Name',
+                            'Phone Number',
+                            'Direction',
+                            'Message',
+                            'Type',
                         ],
-                        u'rows': rows_value
+                        'rows': rows_value
                     }
                 }
             )
