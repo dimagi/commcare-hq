@@ -226,20 +226,20 @@ class XFormInstance(DeferredBlobMixin, SafeSaveDocument, UnicodeMixIn,
 
     @property
     def time_start(self):
-        return self.metadata.timeStart
+        # Will be addressed in https://github.com/dimagi/commcare-hq/pull/19391/
+        return None
 
     @property
     def time_end(self):
-        return self.metadata.timeEnd
+        return None
 
     @property
     def commcare_version(self):
-        return self.metadata.commcare_version
+        return None
 
     @property
     def app_version(self):
-        from corehq.apps.receiverwrapper.util import get_version_from_build_id
-        return get_version_from_build_id(self.domain, self.build_id)
+        return None
 
     def __unicode__(self):
         return "%s (%s)" % (self.type, self.xmlns)
