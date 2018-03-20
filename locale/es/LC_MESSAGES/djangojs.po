@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2018-03-13 19:08+0000\n"
+"POT-Creation-Date: 2018-03-20 21:08+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: Gladys Teos <info@enestranslations.com>, 2017\n"
 "Language-Team: Spanish (https://www.transifex.com/dimagi/teams/9388/es/)\n"
@@ -515,17 +515,17 @@ msgstr "Seleccione un usuario"
 msgid "(Default)"
 msgstr "(Predeterminado)"
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:387
+#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:388
 msgid "Sorry, that didn't go through. Please reload your page and try again"
 msgstr ""
 "Lo sentimos, eso no se envió. Por favor cargue nuevamente su página e "
 "intente de nuevo"
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:421
+#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:422
 msgid "The versions list has changed since you loaded the page."
 msgstr "La lista de versiones ha cambiado desde que cargó la página."
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:426
+#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:427
 msgid "No new changes!"
 msgstr "¡No hay nuevos cambios!"
 
@@ -764,8 +764,12 @@ msgid "Question ID"
 msgstr "ID de Pregunta"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:11
+#, fuzzy
+#| msgid ""
+#| "The ID 'case' may cause problems with case management. It is recommended "
+#| "to pick a different Question ID."
 msgid ""
-"The ID 'case' may cause problems with case management. It is recommended to "
+"The ID '{nodeID}' may cause problems with form parsing. It is recommended to "
 "pick a different Question ID."
 msgstr ""
 "El ID 'caso' podría causar problemas con la administración de caso. Le "
@@ -2762,20 +2766,16 @@ msgid "Error saving user"
 msgstr "Error al guardar el usuario"
 
 #: corehq/apps/locations/static/locations/js/location.js:56
-#, fuzzy
-#| msgid "Available Groups"
 msgid "Available Products"
-msgstr "Grupos Disponibles"
+msgstr "Productos Disponibles"
 
 #: corehq/apps/locations/static/locations/js/location.js:57
 msgid "Products at Location"
-msgstr ""
+msgstr "Productos en Ubicación"
 
 #: corehq/apps/locations/static/locations/js/location.js:58
-#, fuzzy
-#| msgid "Search Group..."
 msgid "Search Products..."
-msgstr "Buscar Grupo..."
+msgstr ""
 
 #: corehq/apps/locations/static/locations/js/location_tree.async.js:288
 msgid "You have successfully archived the location <%=name%>"
@@ -3487,7 +3487,3 @@ msgstr ""
 #: corehq/motech/repeaters/static/repeaters/js/repeat_record_report.js:121
 msgid "Failed to cancel"
 msgstr ""
-
-#~ msgid "Children of repeat groups cannot have a different data parent"
-#~ msgstr ""
-#~ "Los Hijos de grupos repetidos no pueden tener padre de datos diferente."
