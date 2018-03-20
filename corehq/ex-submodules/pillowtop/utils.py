@@ -234,10 +234,10 @@ def build_bulk_payload(index_info, changes, doc_transform=None, error_collector=
 
 
 def prepare_bulk_payloads(bulk_changes, max_size, chunk_size=100):
-    payloads = ['']
+    payloads = [b'']
     for bulk_chunk in chunked(bulk_changes, chunk_size):
         current_payload = payloads[-1]
-        payload_chunk = '\n'.join(map(simplejson.dumps, bulk_chunk)) + '\n'
+        payload_chunk = b'\n'.join(map(simplejson.dumps, bulk_chunk)) + b'\n'
         appended_payload = current_payload + payload_chunk
         new_payload_size = sys.getsizeof(appended_payload)
         if new_payload_size > max_size:
