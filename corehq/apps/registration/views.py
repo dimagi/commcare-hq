@@ -128,19 +128,16 @@ class ProcessRegistrationView(JSONResponseMixin, NewUserNumberAbTestMixin, View)
         is_mobile = reg_form.cleaned_data.get('is_mobile')
         email = new_user.email
 
+        properties = {}
         if is_mobile:
             toggles.MOBILE_SIGNUP_REDIRECT_AB_TEST_CONTROLLER.set(
                 email, True)
+            variation = toggles.MOBILE_SIGNUP_REDIRECT_AB_TEST.enabled(email, toggles.NAMESPACE_USER)
+            properties = {"mobile_signups_test_march2018test": "variation" if variation else "control"}
+
         track_workflow(email,
                        "Requested new account",
-                       {
-                           'mobile_visitor_march2018test': reg_form.cleaned_data.get('is_mobile'),
-                           'mobile_visitor_cohort_march2018test': (
-                               "control" if is_mobile and
-                               toggles.MOBILE_SIGNUP_REDIRECT_AB_TEST.enabled(
-                                   email, toggles.NAMESPACE_USER)
-                               else "variation")
-                       })
+                       properties)
         login(self.request, new_user)
 
     @allow_remote_invocation
