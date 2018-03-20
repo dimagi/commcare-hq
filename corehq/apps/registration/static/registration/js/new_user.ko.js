@@ -90,7 +90,7 @@ hqDefine('registration/js/new_user.ko', function () {
 
     module.FormViewModel = function (defaults, containerSelector, steps) {
         var self = this;
-        
+
         module.onModuleLoad();
 
         // add a short delay to some of the validators so that
@@ -239,6 +239,7 @@ hqDefine('registration/js/new_user.ko', function () {
                 eula_confirmed: self.eulaConfirmed(),
                 phone_number: _private.getPhoneNumberFn() || self.phoneNumber(),
                 atypical_user: defaults.atypical_user,
+                is_mobile: window.innerWidth < 800 && window.innerHeight < 600,
             };
             if (self.hasPersonaFields) {
                 _.extend(data, {
@@ -324,6 +325,8 @@ hqDefine('registration/js/new_user.ko', function () {
         self.showThirdTimeout = ko.observable(false);
         self.showFourthTimeout = ko.observable(false);
 
+        self.isMobileExperience = ko.observable(false);
+
         self.submitForm = function () {
             self.showFirstTimeout(false);
             self.showSecondTimeout(false);
@@ -368,6 +371,7 @@ hqDefine('registration/js/new_user.ko', function () {
                         } else if (response.success) {
                             self.isSubmitting(false);
                             self.isSubmitSuccess(true);
+                            self.isMobileExperience(response.is_mobile_experience);
                             _private.submitSuccessAnalytics(submitData);
                         }
                     },

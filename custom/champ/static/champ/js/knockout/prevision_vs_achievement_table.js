@@ -1,5 +1,6 @@
 /* global ko, $, hqImport, moment */
 
+var ALL_OPTION = {'id': '', 'text': 'All'};
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 // eslint-disable-next-line no-unused-vars
@@ -26,10 +27,12 @@ function PrecisionVsAchievementsTableModel() {
 
     self.title = "Prevision vs Achievements";
     self.availableDistricts = ko.observableArray();
+    self.availableCbos = ko.observableArray();
     self.fiscalYears = ko.observableArray();
     self.groups = ko.observableArray();
     self.filters = {
         district: ko.observableArray(),
+        cbo: ko.observableArray(),
         visit_type: ko.observable(),
         activity_type: ko.observable(),
         client_type: ko.observableArray(),
@@ -73,7 +76,9 @@ function PrecisionVsAchievementsTableModel() {
         var hierarchy_url = url('hierarchy');
         $.getJSON(hierarchy_url, function(data) {
             self.districts = data.districts;
+            self.cbos = data.cbos;
             self.availableDistricts(self.districts);
+            self.availableCbos(self.cbos);
         });
         var group_url = url('group_filter');
         $.getJSON(group_url, function(data) {
@@ -107,14 +112,37 @@ function PrecisionVsAchievementsTableModel() {
             self.target_tx_new(data.target_tx_new);
             self.tx_undetect(data.tx_undetect);
             self.target_tx_undetect(data.target_tx_undetect);
+            $('#report-loading-container').hide();
         });
     };
 
     self.submit = function () {
+        $('#report-loading-container').show();
         self.getTableData();
     };
     
-    self.getTableData();
+    self.submit();
+
+    self.districtOnSelect = function (event) {
+        if (event.added !== void(0)) {
+            var $item = event.added;
+
+            self.filters.cbo([]);
+
+            if ($item.id === '' || self.filters.district().indexOf('') !== -1) {
+                self.filters.district([$item.id]);
+            }
+            var ids = self.filters.district();
+
+            if (ids.length === 0 || $item.id === '') {
+                self.availableCbos(self.cbos.slice());
+            } else {
+                self.availableCbos([ALL_OPTION].concat(self.cbos.slice().filter(function (item) {
+                    return ids.indexOf(item.parent_id) !== -1;
+                })));
+            }
+        }
+    };
 
     var pickers = $('.date-picker');
     if (pickers.length > 0) {

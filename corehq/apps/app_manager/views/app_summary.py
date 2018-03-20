@@ -287,6 +287,7 @@ FORM_SUMMARY_EXPORT_HEADER_NAMES = [
     "constraint",
     "required",
     "comment",
+    "default_value",
 ]
 FormSummaryRow = namedtuple('FormSummaryRow', FORM_SUMMARY_EXPORT_HEADER_NAMES)
 FormSummaryRow.__new__.__defaults__ = (None, ) * len(FORM_SUMMARY_EXPORT_HEADER_NAMES)
@@ -350,6 +351,7 @@ class DownloadFormSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
                     constraint=question_response.constraint,
                     required="true" if question_response.required else "false",
                     comment=question_response.comment,
+                    default_value=question_response.setvalue,
                 )
             )
         return tuple(form_summary_rows)

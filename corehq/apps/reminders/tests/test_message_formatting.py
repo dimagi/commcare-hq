@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import SQLLocation, LocationType
@@ -7,6 +8,7 @@ from corehq.apps.reminders.models import Message
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.tests.utils import run_with_all_backends
+from corehq.messaging.templating import _get_system_user_template_info
 from corehq.util.test_utils import create_test_case, set_parent_case
 from datetime import datetime, timedelta
 from django.test import TestCase
@@ -210,10 +212,17 @@ class MessageTestCase(TestCase):
             expected_result['case']['last_modified_by'] = self.get_expected_template_params_for_web()
             self.assertEqual(get_message_template_params(case), expected_result)
 
+        with create_test_case(self.domain, 'person', 'Joe', owner_id=self.location.location_id,
+                user_id='system') as case:
+            expected_result = {'case': case.to_json()}
+            expected_result['case']['owner'] = self.get_expected_template_params_for_location()
+            expected_result['case']['last_modified_by'] = _get_system_user_template_info()
+            self.assertEqual(get_message_template_params(case), expected_result)
+
     def test_unicode_template_params(self):
-        message = u'Case name {case.name}'
-        context = {'case': {'name': u'\u0928\u092e\u0938\u094d\u0924\u0947'}}
+        message = 'Case name {case.name}'
+        context = {'case': {'name': '\u0928\u092e\u0938\u094d\u0924\u0947'}}
         self.assertEqual(
             Message.render(message, **context),
-            u'Case name \u0928\u092e\u0938\u094d\u0924\u0947'
+            'Case name \u0928\u092e\u0938\u094d\u0924\u0947'
         )

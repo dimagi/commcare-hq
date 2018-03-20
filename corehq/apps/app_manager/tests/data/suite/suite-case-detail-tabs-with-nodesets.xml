@@ -113,7 +113,11 @@
         </header>
         <template>
           <text>
-            <xpath function="column"/>
+            <xpath function="$calculated_property">
+              <variable name="calculated_property">
+                <xpath function="column"/>
+              </variable>
+            </xpath>
           </text>
         </template>
       </field>
@@ -132,7 +136,11 @@
         </header>
         <template>
           <text>
-            <xpath function="column"/>
+            <xpath function="$calculated_property">
+              <variable name="calculated_property">
+                <xpath function="column"/>
+              </variable>
+            </xpath>
           </text>
         </template>
       </field>

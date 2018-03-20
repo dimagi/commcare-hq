@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.test import TestCase
 from corehq.apps.commtrack.tests.util import bootstrap_location_types
 from corehq.apps.domain.shortcuts import create_domain

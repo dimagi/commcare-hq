@@ -23,6 +23,7 @@ from corehq.apps.reports.dispatcher import DomainReportDispatcher
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.users.decorators import require_can_edit_web_users
 from corehq.form_processor.exceptions import XFormNotFound
+from corehq.motech.repeaters.forms import EmailBulkPayload
 from corehq.util.xml_utils import indent_xml
 
 from corehq.motech.repeaters.const import (
@@ -37,6 +38,7 @@ from corehq.motech.repeaters.dbaccessors import (
     get_repeat_records_by_payload_id,
 )
 from corehq.motech.repeaters.models import RepeatRecord
+from corehq.motech.utils import pformat_json
 
 
 class DomainForwardingRepeatRecords(GenericTabularReport):
@@ -48,6 +50,7 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
     ajax_pagination = True
     asynchronous = False
     sortable = False
+    custom_filter_action_template = "domain/partials/custom_repeat_record_report.html"
 
     fields = [
         'corehq.apps.reports.filters.select.RepeaterFilter',
@@ -220,6 +223,14 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
 
         return DataTablesHeader(*columns)
 
+    @property
+    def report_context(self):
+        context = super(DomainForwardingRepeatRecords, self).report_context
+        context.update(
+            email_bulk_payload_form=EmailBulkPayload(domain=self.domain),
+        )
+        return context
+
 
 @method_decorator(domain_admin_required, name='dispatch')
 class RepeatRecordView(View):
@@ -253,7 +264,7 @@ class RepeatRecordView(View):
         if content_type == 'text/xml':
             payload = indent_xml(payload)
         elif content_type == 'application/json':
-            payload = json.dumps(json.loads(payload), indent=4)
+            payload = pformat_json(payload)
         elif content_type == 'application/soap+xml':
             # we return a payload that is a dict, which is then converted to
             # XML by the zeep library before being sent along as a SOAP request.

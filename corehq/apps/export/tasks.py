@@ -22,7 +22,7 @@ from six.moves import filter
 logger = logging.getLogger('export_migration')
 
 
-@task
+@task(queue='export_download_queue')
 def populate_export_download_task(export_instances, filters, download_id, filename=None, expiry=10 * 60 * 60):
     export_file = get_export_file(
         export_instances,

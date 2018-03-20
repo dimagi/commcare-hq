@@ -92,10 +92,12 @@ function ServiceUptakeModel() {
             self.chart.xAxis.tickValues(data.tickValues);
             d3.select('#chart').datum(data.chart).call(self.chart);
             nv.utils.windowResize(self.chart.update);
+            $('#report-loading-container').hide();
         });
     };
 
     self.submit = function () {
+        $('#report-loading-container').show();
         self.getChartData();
     };
 

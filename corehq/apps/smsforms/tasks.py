@@ -27,7 +27,7 @@ def handle_due_survey_action(domain, contact_id, session_id):
                     workflow=session.workflow,
                     xforms_session_couch_id=session._id,
                 )
-                resp = current_question(session.session_id)
+                resp = current_question(session.session_id, domain)
                 send_sms_to_verified_number(
                     p,
                     resp.event.text_prompt,

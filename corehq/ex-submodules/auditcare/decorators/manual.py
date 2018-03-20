@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from models import AuditEvent
 
 def log_access(view_func):

@@ -1354,10 +1354,7 @@ else:
 if helper.is_testing():
     helper.assign_test_db_names(DATABASES)
 
-if USE_PARTITIONED_DATABASE:
-    DATABASE_ROUTERS = ['corehq.sql_db.routers.PartitionRouter']
-else:
-    DATABASE_ROUTERS = ['corehq.sql_db.routers.MonolithRouter']
+DATABASE_ROUTERS = ['corehq.sql_db.routers.MultiDBRouter']
 
 MVP_INDICATOR_DB = 'mvp-indicators'
 
@@ -1686,6 +1683,8 @@ AVAILABLE_CUSTOM_RULE_CRITERIA = {
         'custom.icds.rules.custom_criteria.person_case_is_under_6_years_old',
     'ICDS_PERSON_CASE_IS_UNDER_19_YEARS_OLD':
         'custom.icds.rules.custom_criteria.person_case_is_under_19_years_old',
+    'ICDS_CCS_RECORD_CASE_HAS_FUTURE_EDD':
+        'custom.icds.rules.custom_criteria.ccs_record_case_has_future_edd',
     'ICDS_IS_USERCASE_OF_AWW':
         'custom.icds.rules.custom_criteria.is_usercase_of_aww',
     'ICDS_IS_USERCASE_OF_LS':
@@ -2030,6 +2029,7 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'vhnd_form.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'visitorbook_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'complementary_feeding_forms.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'postnatal_care_forms.json'),
 
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'adherence.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_for_cc_outbound.json'),
@@ -2167,8 +2167,6 @@ CUSTOM_DASHBOARD_PAGE_URL_NAMES = {
 
 REMOTE_APP_NAMESPACE = "%(domain)s.commcarehq.org"
 
-# a DOMAIN_MODULE_CONFIG doc present in your couchdb can override individual
-# items.
 DOMAIN_MODULE_MAP = {
     'a5288-test': 'a5288',
     'a5288-study': 'a5288',
@@ -2262,6 +2260,9 @@ DOMAIN_MODULE_MAP = {
     'ilsgateway-test3': 'custom.ilsgateway',
     'mvp-mayange': 'mvp',
     'psi-unicef': 'psi',
+
+    # Used in tests.  TODO - use override_settings instead
+    'ewsghana-test-input-stock': 'custom.ewsghana',
 }
 
 CASEXML_FORCE_DOMAIN_CHECK = True
@@ -2330,3 +2331,10 @@ if RESTRICT_USED_PASSWORDS_FOR_NIC_COMPLIANCE:
     ]
 
 PACKAGE_MONITOR_REQUIREMENTS_FILE = os.path.join(FILEPATH, 'requirements', 'requirements.txt')
+
+IS_LOCATION_CTE_ENABLED = UNIT_TESTING or SERVER_ENVIRONMENT in [
+    'localdev',
+    'changeme',  # default value in localsettings.example.py
+    'staging',
+    'softlayer',
+]

@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+from __future__ import unicode_literals
 import tempfile
 from collections import OrderedDict
 
@@ -204,9 +205,9 @@ class LocationExporter(object):
         ])
         for loc_type in self.location_types:
             additional_headers = []
-            additional_headers.extend(u'data: {}'.format(f.slug) for f in self.data_model.fields)
+            additional_headers.extend('data: {}'.format(f.slug) for f in self.data_model.fields)
             if self.include_consumption_flag and loc_type.name not in self.administrative_types:
-                additional_headers.extend(u'consumption: {}'.format(code) for code in self.product_codes)
+                additional_headers.extend('consumption: {}'.format(code) for code in self.product_codes)
             additional_headers.append(LOCATION_SHEET_HEADERS_OPTIONAL['uncategorized_data'])
             additional_headers.append(LOCATION_SHEET_HEADERS_OPTIONAL['delete_uncategorized_data'])
 
@@ -246,7 +247,7 @@ class LocationExporter(object):
                     consumption_data = self.get_consumption(loc)
                     row.extend([consumption_data[code] for code in self.product_codes])
 
-                row.append(u', '.join(u'{}: {}'.format(*d) for d in uncategorized_data.items()))
+                row.append(', '.join('{}: {}'.format(*d) for d in uncategorized_data.items()))
 
                 yield row
                 self._increment_progress()
