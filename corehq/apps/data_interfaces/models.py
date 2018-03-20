@@ -33,7 +33,7 @@ from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import (
     get_case_alert_schedule_instances_for_schedule_id,
     get_case_timed_schedule_instances_for_schedule_id,
 )
-from corehq.sql_db.util import run_query_across_partitioned_databases
+from corehq.sql_db.util import run_query_across_partitioned_databases, get_db_aliases_for_partitioned_query
 from corehq.util.log import with_progress_bar
 from corehq.util.quickcache import quickcache
 from corehq.util.test_utils import unit_testing_only
@@ -46,6 +46,7 @@ from memoized import memoized
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.modules import to_function
 from django.conf import settings
+from django.contrib.postgres.fields import JSONField
 from django.db import models, transaction
 from django.db.models import Q
 from corehq.apps.hqcase.utils import update_case
@@ -216,14 +217,14 @@ class AutomaticUpdateRule(models.Model):
         return date
 
     @classmethod
-    def get_case_ids(cls, domain, case_type, boundary_date=None):
+    def get_case_ids(cls, domain, case_type, boundary_date=None, db=None):
         if should_use_sql_backend(domain):
-            return cls._get_case_ids_from_postgres(domain, case_type, boundary_date=boundary_date)
+            return cls._get_case_ids_from_postgres(domain, case_type, boundary_date=boundary_date, db=db)
         else:
             return cls._get_case_ids_from_es(domain, case_type, boundary_date=boundary_date)
 
     @classmethod
-    def _get_case_ids_from_postgres(cls, domain, case_type, boundary_date=None):
+    def _get_case_ids_from_postgres(cls, domain, case_type, boundary_date=None, db=None):
         q_expression = Q(
             domain=domain,
             type=case_type,
@@ -234,7 +235,12 @@ class AutomaticUpdateRule(models.Model):
         if boundary_date:
             q_expression = q_expression & Q(server_modified_on__lte=boundary_date)
 
-        return run_query_across_partitioned_databases(CommCareCaseSQL, q_expression, values=['case_id'])
+        if db:
+            for c_id in CommCareCaseSQL.objects.using(db).filter(q_expression).values_list('case_id', flat=True):
+                yield c_id
+        else:
+            for c_id in run_query_across_partitioned_databases(CommCareCaseSQL, q_expression, values=['case_id']):
+                yield c_id
 
     @classmethod
     def _get_case_ids_from_es(cls, domain, case_type, boundary_date=None):
@@ -1342,28 +1348,51 @@ class DomainCaseRuleRun(models.Model):
     finished_on = models.DateTimeField(null=True)
     status = models.CharField(max_length=1)
 
-    cases_checked = models.IntegerField(null=True)
-    num_updates = models.IntegerField(null=True)
-    num_closes = models.IntegerField(null=True)
-    num_related_updates = models.IntegerField(null=True)
-    num_related_closes = models.IntegerField(null=True)
-    num_creates = models.IntegerField(null=True)
+    cases_checked = models.IntegerField(default=0)
+    num_updates = models.IntegerField(default=0)
+    num_closes = models.IntegerField(default=0)
+    num_related_updates = models.IntegerField(default=0)
+    num_related_closes = models.IntegerField(default=0)
+    num_creates = models.IntegerField(default=0)
+
+    dbs_completed = JSONField(default=list)
 
     class Meta(object):
         index_together = (
             ('domain', 'started_on'),
         )
 
-    def done(self, status, cases_checked, result):
+    @classmethod
+    def done(cls, run_id, status, cases_checked, result, db=None):
         if not isinstance(result, CaseRuleActionResult):
             raise TypeError("Expected an instance of CaseRuleActionResult")
 
-        self.status = status
-        self.cases_checked = cases_checked
-        self.num_updates = result.num_updates
-        self.num_closes = result.num_closes
-        self.num_related_updates = result.num_related_updates
-        self.num_related_closes = result.num_related_closes
-        self.num_creates = result.num_creates
-        self.finished_on = datetime.utcnow()
-        self.save()
+        if status not in (cls.STATUS_HALTED, cls.STATUS_FINISHED):
+            raise ValueError("Expected STATUS_HALTED or STATUS_FINISHED")
+
+        with CriticalSection(['update-domain-case-rule-run-%s' % run_id]):
+            run = cls.objects.get(pk=run_id)
+
+            run.cases_checked += cases_checked
+            run.num_updates += result.num_updates
+            run.num_closes += result.num_closes
+            run.num_related_updates += result.num_related_updates
+            run.num_related_closes += result.num_related_closes
+            run.num_creates += result.num_creates
+
+            if db:
+                run.dbs_completed.append(db)
+                all_dbs = get_db_aliases_for_partitioned_query()
+
+                if set(all_dbs) == set(run.dbs_completed):
+                    run.finished_on = datetime.utcnow()
+            else:
+                run.finished_on = datetime.utcnow()
+
+            if status == cls.STATUS_HALTED:
+                run.status = status
+            elif status == cls.STATUS_FINISHED and run.status != cls.STATUS_HALTED and run.finished_on:
+                run.status = status
+
+            run.save()
+            return run
