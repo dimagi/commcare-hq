@@ -5,6 +5,7 @@ from collections import defaultdict
 from xml.etree.cElementTree import Element
 
 import six
+from django.conf import settings
 from django.db.models import IntegerField
 from django.contrib.postgres.fields.array import ArrayField
 from django_cte import With
@@ -222,8 +223,11 @@ def get_location_fixture_queryset(user):
     timing = TimingContext("get_location_fixture_queryset")
     with timing("mptt"):
         mptt_set = mptt_get_location_fixture_queryset(user)
-    with timing("cte"):
-        cte_set = cte_get_location_fixture_queryset(user)
+    if settings.IS_LOCATION_CTE_ENABLED:
+        with timing("cte"):
+            cte_set = cte_get_location_fixture_queryset(user)
+    else:
+        cte_set = None
     return ComparedQuerySet(mptt_set, cte_set, timing)
 
 

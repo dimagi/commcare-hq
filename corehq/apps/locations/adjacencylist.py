@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from django.conf import settings
 from django.contrib.postgres.fields.array import ArrayField
 from django.db.models import CharField, IntegerField
 from django.db.models.aggregates import Max
@@ -210,8 +211,11 @@ class AdjListManager(TreeManager):
             cte_qs = queryset._cte_set
         with timing("mptt"):
             mptt_set = self.mptt_get_queryset_ancestors(mptt_qs, include_self)
-        with timing("cte"):
-            cte_set = self.cte_get_queryset_ancestors(cte_qs, include_self)
+        if settings.IS_LOCATION_CTE_ENABLED:
+            with timing("cte"):
+                cte_set = self.cte_get_queryset_ancestors(cte_qs, include_self)
+        else:
+            cte_set = None
         return ComparedQuerySet(mptt_set, cte_set, timing)
 
     def get_queryset_descendants(self, queryset, include_self=False):
@@ -222,8 +226,11 @@ class AdjListManager(TreeManager):
             cte_qs = queryset._cte_set
         with timing("mptt"):
             mptt_set = self.mptt_get_queryset_descendants(mptt_qs, include_self)
-        with timing("cte"):
-            cte_set = self.cte_get_queryset_descendants(cte_qs, include_self)
+        if settings.IS_LOCATION_CTE_ENABLED:
+            with timing("cte"):
+                cte_set = self.cte_get_queryset_descendants(cte_qs, include_self)
+        else:
+            cte_set = None
         return ComparedQuerySet(mptt_set, cte_set, timing)
 
 
@@ -257,8 +264,11 @@ class AdjListModel(MPTTModel):
         timing = TimingContext("get_ancestors")
         with timing("mptt"):
             mptt_set = self.mptt_get_ancestors(**kw)
-        with timing("cte"):
-            cte_set = type(self).objects.cte_get_ancestors(self, **kw)
+        if settings.IS_LOCATION_CTE_ENABLED:
+            with timing("cte"):
+                cte_set = type(self).objects.cte_get_ancestors(self, **kw)
+        else:
+            cte_set = None
         return ComparedQuerySet(mptt_set, cte_set, timing)
 
     def get_descendants(self, **kw):
@@ -268,8 +278,11 @@ class AdjListModel(MPTTModel):
         timing = TimingContext("get_descendants")
         with timing("mptt"):
             mptt_set = self.mptt_get_descendants(**kw)
-        with timing("cte"):
-            cte_set = type(self).objects.cte_get_descendants(self, **kw)
+        if settings.IS_LOCATION_CTE_ENABLED:
+            with timing("cte"):
+                cte_set = type(self).objects.cte_get_descendants(self, **kw)
+        else:
+            cte_set = None
         return ComparedQuerySet(mptt_set, cte_set, timing)
 
 
