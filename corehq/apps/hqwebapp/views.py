@@ -151,7 +151,10 @@ def redirect_to_default(req, domain=None):
         if domain != None:
             url = reverse('domain_login', args=[domain])
         else:
-            url = reverse('login')
+            if settings.SERVER_ENVIRONMENT == 'production':
+                url = "https://www.dimagi.com/commcare/"
+            else:
+                url = reverse('login')
     elif domain and _two_factor_needed(domain, req):
         return TemplateResponse(
             request=req,
@@ -1271,7 +1274,7 @@ class HQJSONResponseMixin(JSONResponseMixin):
 
 
 def redirect_to_dimagi(endpoint):
-    def _redirect(request):
+    def _redirect(request, lang_code=None):
         if settings.SERVER_ENVIRONMENT in [
             'production',
             'softlayer',
@@ -1280,7 +1283,10 @@ def redirect_to_dimagi(endpoint):
             'localdev',
         ]:
             return HttpResponsePermanentRedirect(
-                "https://www.dimagi.com/{}".format(endpoint)
+                "https://www.dimagi.com/{}{}".format(
+                    endpoint,
+                    "?lang={}".format(lang_code) if lang_code else "",
+                )
             )
         return redirect_to_default(request)
     return _redirect
