@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 from collections import OrderedDict
 
 from corehq.apps.userreports.models import DataSourceConfiguration, get_datasource_config
+from corehq.apps.userreports.reports.filters.specs import create_filter_value
 from corehq.apps.userreports.reports.specs import ReportColumn, ExpressionColumn
 from corehq.apps.userreports.util import get_table_name
 import six

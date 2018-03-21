@@ -23,8 +23,6 @@ from corehq.apps.userreports.reports.filters.values import (
     QuarterFilterValue,
     LocationDrilldownFilterValue, MultiFieldChoiceListFilterValue)
 from corehq.apps.userreports.specs import TypeProperty
-from django.conf import settings
-from django.utils.module_loading import import_string
 
 
 def create_filter_value(raw_filter_spec, value):
