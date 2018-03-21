@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 import itertools
 from django.utils.translation import ugettext as _
 
-from corehq.apps.userreports.mixins import NoPropertyTypeCoersionMixIn
+from corehq.apps.userreports.mixins import NoPropertyTypeCoercionMixIn
 from dimagi.ext.jsonobject import JsonObject, DictProperty, StringProperty
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.specs import TypeProperty
@@ -20,7 +20,7 @@ def _evaluate_items_expression(itemx_ex, doc, context):
         return result
 
 
-class FilterItemsExpressionSpec(NoPropertyTypeCoersionMixIn, JsonObject):
+class FilterItemsExpressionSpec(NoPropertyTypeCoercionMixIn, JsonObject):
     type = TypeProperty('filter_items')
     items_expression = DefaultProperty(required=True)
     filter_expression = DictProperty(required=True)

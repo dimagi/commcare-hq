@@ -122,7 +122,7 @@ class ConfigurableReportDataSourceMixin(object):
             return [column_id]
 
 
-class NoPropertyTypeCoersionMixIn(object):
+class NoPropertyTypeCoercionMixIn(object):
     """
     This disables automatic type conversion on a JsonObject
     So, for example, nested date-like things don't get automatically converted to dates.
