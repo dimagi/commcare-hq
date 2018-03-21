@@ -5,61 +5,113 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import time
+import traceback
 from collections import defaultdict
 from contextlib import contextmanager
 
+from django.conf import settings
 from django.db.models.query import QuerySet
 
 from corehq.util.datadog.gauges import datadog_counter
 from corehq.util.datadog.utils import bucket_value
+from corehq.util.soft_assert import soft_assert
 
 
 class ComparedQuerySet(object):
-    """Measure times of MPTT queries
+    """Compare results and times of MPTT and CTE queries"""
 
-    Will be used to compare results and times of MPTT and CTE queries,
-    hence the name and slightly verbose implementation.
-    """
-
-    def __init__(self, mptt_set, timing_context):
+    def __init__(self, mptt_set, cte_set, timing_context):
         self._mptt_set = mptt_set
+        self._cte_set = cte_set if settings.IS_LOCATION_CTE_ENABLED else None
         if isinstance(timing_context, ComparedQuerySet):
             timing_context = timing_context._timing.clone()
         self._timing = timing_context
 
     def __str__(self):
-        return "MPTT query: {}".format(self._mptt_set.query)
+        return "MPTT query: {}\n\nCTE query: {}".format(
+            self._mptt_set.query,
+            self._cte_set.query if self._cte_set is not None else None,
+        )
 
     def __iter__(self):
+        items1 = []
+        finished = False
         with _commit_timing(self):
-            with self._timing("mptt") as timer1:
-                for item in self._mptt_set:
-                    with timer1.pause():
-                        yield item
+            try:
+                with self._timing("mptt") as timer1:
+                    for item in self._mptt_set:
+                        items1.append(item)
+                        with timer1.pause():
+                            yield item
+                finished = True
+            finally:
+                if self._cte_set is None:
+                    return
+                with self._timing("cte"):
+                    items2 = list(self._cte_set)
+                ids1 = {_identify(it) for it in items1}
+                ids2 = {_identify(it) for it in items2}
+                if (finished and ids1 != ids2) or not ids1.issubset(ids2):
+                    _report_diff(self, ids1, ids2, "" if finished else "incomplete iteration")
+                if finished:
+                    self.__len__()  # compares lengths -> reports diff if necessary
 
     def __len__(self):
         with _commit_timing(self):
             with self._timing("mptt"):
-                return len(self._mptt_set)
+                len1 = len(self._mptt_set)
+            if self._cte_set is not None:
+                with self._timing("cte"):
+                    len2 = len(self._cte_set)
+        if self._cte_set is not None and len1 != len2:
+            ids1 = {_identify(it) for it in self._mptt_set}
+            ids2 = {_identify(it) for it in self._cte_set}
+            _report_diff(self, ids1, ids2, "%s != %s" % (len1, len2))
+        return len1
 
     def __getitem__(self, key):
         with _commit_timing(self):
             with self._timing("mptt"):
-                result = self._mptt_set.__getitem__(key)
-        if isinstance(result, QuerySet):
-            return ComparedQuerySet(result, self)
-        return result
+                mptt_result = self._mptt_set.__getitem__(key)
+            if self._cte_set is not None:
+                with self._timing("cte"):
+                    cte_result = self._cte_set.__getitem__(key)
+        if isinstance(mptt_result, QuerySet):
+            if self._cte_set is None:
+                cte_result = None
+            elif not isinstance(cte_result, QuerySet):
+                _report_diff(self, mptt_result, cte_result)
+            return ComparedQuerySet(mptt_result, cte_result, self)
+        if self._cte_set is not None:
+            if isinstance(mptt_result, list) and isinstance(cte_result, list):
+                ids1 = [_identify(it) for it in mptt_result]
+                ids2 = [_identify(it) for it in cte_result]
+            else:
+                ids1 = _identify(mptt_result)
+                ids2 = _identify(cte_result)
+            if ids1 != ids2:
+                _report_diff(self, ids1, ids2)
+        return mptt_result
 
     def exists(self, *args, **kw):
         with _commit_timing(self):
             with self._timing("mptt"):
-                return self._mptt_set.exists(*args, **kw)
+                ex1 = self._mptt_set.exists(*args, **kw)
+            if self._cte_set is not None:
+                with self._timing("cte"):
+                    ex2 = self._cte_set.exists(*args, **kw)
+        if self._cte_set is not None and ex1 != ex2:
+            _report_diff(self, ex1, ex2)
+        return ex1
 
     def union(self, *other_qs, **kwargs):
         other_mptt = [qs._mptt_set if isinstance(qs, ComparedQuerySet) else qs
             for qs in other_qs]
+        other_cte = [qs._cte_set if isinstance(qs, ComparedQuerySet) else qs
+            for qs in other_qs]
         return ComparedQuerySet(
             self._mptt_set.union(*other_mptt, **kwargs),
+            self._cte_set.union(*other_cte, **kwargs) if self._cte_set is not None else None,
             self,
         )
 
@@ -78,18 +130,28 @@ class ComparedQuerySet(object):
         assert isinstance(ids_query, ComparedQuerySet), ids_query
         result = ComparedQuerySet(
             self._mptt_set.filter(id__in=ids_query._mptt_set),
+            self._cte_set.filter(id__in=ids_query._cte_set) if self._cte_set is not None else None,
             TimingContext("accessible_to_user"),
         )
         result._timing += ids_query._timing
         return result
 
 
+def _identify(item):
+    return getattr(item, "id", item)
+
+
 def _make_get_method(name):
     def method(self, *args, **kw):
         with _commit_timing(self):
             with self._timing("mptt"):
-                obj = getattr(self._mptt_set, name)(*args, **kw)
-        return obj
+                obj1 = getattr(self._mptt_set, name)(*args, **kw)
+            if self._cte_set is not None:
+                with self._timing("cte"):
+                    obj2 = getattr(self._cte_set, name)(*args, **kw)
+        if self._cte_set is not None and _identify(obj1) != _identify(obj2):
+            _report_diff(self, obj1, obj2)
+        return obj1
     method.__name__ = str(name)  # unicode_literals: must be bytes on PY2
     return method
 
@@ -98,6 +160,7 @@ def _make_qs_method(name):
     def method(self, *args, **kw):
         return ComparedQuerySet(
             getattr(self._mptt_set, name)(*args, **kw),
+            getattr(self._cte_set, name)(*args, **kw) if self._cte_set is not None else None,
             self,
         )
     method.__name__ = str(name)  # unicode_literals: must be bytes on PY2
@@ -127,6 +190,20 @@ for _make_method, name in [
     (_make_qs_method, "location_ids"),
 ]:
     setattr(ComparedQuerySet, name, _make_method(name))
+
+
+def _report_diff(cqs, obj1, obj2, context=""):
+    trace = "" if settings.UNIT_TESTING else "".join(traceback.format_stack())
+    message = """ComparedQuerySet difference:\n{trace}
+    MPTT query: {cqs._mptt_set.query}
+
+    CTE query: {cqs._cte_set.query}
+
+    MPTT result: {obj1!r}
+    CTE result:  {obj2!r}
+    {context}""".format(**locals())
+
+    soft_assert(to='{}@{}'.format('dmiller', 'dimagi.com'))(False, message)
 
 
 @contextmanager

@@ -148,10 +148,22 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBase):
         ("module1", (
           ("case_list_form_label", "list", "Register Mother", "Inscrivez-Mère"),
           ("name", "list", "Name", "Nom"),
+          ("Tab 0", "detail", "Name", "Nom"),
+          ("Tab 1", "detail", "Other", "Autre"),
           ("name", "detail", "", "Nom"),
           ("other-prop (ID Mapping Text)", "detail", "Other Prop", ""),
           ("foo (ID Mapping Value)", "detail", "bar", "french bar"),
           ("baz (ID Mapping Value)", "detail", "quz", ""),
+          ("mood (ID Mapping Text)", "detail", "Mood", ""),
+          (". < 3 (ID Mapping Value)", "detail", ":(", ":--("),
+          (". >= 3 (ID Mapping Value)", "detail", ":)", ":--)"),
+          ("energy (ID Mapping Text)", "detail", "Energy", ""),
+          (". < 3 (ID Mapping Value)", "detail",
+              "jr://file/commcare/image/module1_list_icon_energy_high_english.jpg",
+              "jr://file/commcare/image/module1_list_icon_energy_high_french.jpg"),
+          (". >= 3 (ID Mapping Value)", "detail",
+              "jr://file/commcare/image/module1_list_icon_energy_low_english.jpg",
+              "jr://file/commcare/image/module1_list_icon_energy_low_french.jpg"),
         )),
         ("module1_form1", (
           ("question1-label", "in english", "it's in french", "", "", "", "", "", ""),
@@ -184,7 +196,17 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBase):
           ('name', 'detail', 'Name', ''),
           ('other-prop (ID Mapping Text)', 'detail', 'Other Prop', 'Autre Prop'),
           ('foo (ID Mapping Value)', 'detail', 'bar', ''),
-          ('baz (ID Mapping Value)', 'detail', 'quz', ''))),
+          ('baz (ID Mapping Value)', 'detail', 'quz', ''),
+          ('mood (ID Mapping Text)', 'detail', 'Other Prop', ''),
+          ('. < 3 (ID Mapping Value)', 'detail', ':(', ':-('),
+          ('. >= 3 (ID Mapping Value)', 'detail', ':)', ':-)'),
+          ('energy (ID Mapping Text)', 'detail', 'Other Prop', ''),
+          ('. < 3 (ID Mapping Value)', 'detail',
+              'jr://file/commcare/image/module1_list_icon_energy_high.jpg',
+              'jr://file/commcare/image/module1_list_icon_energy_high_french.jpg'),
+          ('. >= 3 (ID Mapping Value)', 'detail',
+              'jr://file/commcare/image/module1_list_icon_energy_low.jpg',
+              'jr://file/commcare/image/module1_list_icon_energy_low_french.jpg'))),
         ('module1_form1',
          (('question1-label', 'question1', 'question1', '', '', '', '', '', ''),
           ('question2-label', 'question2', 'question2', '', '', '', '', '', ''),
@@ -224,12 +246,28 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBase):
 
         module = self.app.get_module(0)
         self.assertEqual(
+            module.case_details.long.tabs[0].header['en'],
+            'Name'
+        )
+        self.assertEqual(
+            module.case_details.long.tabs[1].header['fra'],
+            'Autre'
+        )
+        self.assertEqual(
             module.case_details.long.columns[1].enum[0].value['fra'],
             'french bar'
         )
         self.assertEqual(
             module.case_details.short.columns[0].header['fra'],
             'Nom'
+        )
+        self.assertEqual(
+            module.case_details.long.columns[2].enum[0].value['fra'],
+            ':--('
+        )
+        self.assertEqual(
+            module.case_details.long.columns[3].enum[0].value['en'],
+            'jr://file/commcare/image/module1_list_icon_energy_high_english.jpg'
         )
 
         # Test special characters and output refs

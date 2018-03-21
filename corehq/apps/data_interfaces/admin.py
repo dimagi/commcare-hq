@@ -15,6 +15,7 @@ class DomainCaseRuleRunAdmin(admin.ModelAdmin):
         'num_closes',
         'num_related_updates',
         'num_related_closes',
+        'dbs_completed',
     ]
 
     search_fields = [
