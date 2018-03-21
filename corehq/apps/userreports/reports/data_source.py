@@ -94,8 +94,8 @@ class ConfigurableReportDataSource(object):
     def set_filter_values(self, filter_values):
         self.data_source.set_filter_values(filter_values)
 
-    def defer_filters(self, filter_slugs):
-        self.data_source.defer_filters(filter_slugs)
+    def set_defer_fields(self, defer_fields):
+        self.data_source.set_defer_fields(defer_fields)
 
     def set_order_by(self, columns):
         self.data_source.set_order_by(columns)
