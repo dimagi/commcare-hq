@@ -50,7 +50,7 @@ from corehq.apps.userreports.models import (
     ReportConfiguration,
     report_config_id_is_static,
 )
-from corehq.apps.userreports.reports.factory import ReportFactory
+from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
 from corehq.apps.userreports.reports.util import (
     get_expanded_columns,
     has_location_filter,
@@ -210,7 +210,7 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
     @property
     @memoized
     def data_source(self):
-        report = ReportFactory.from_spec(self.spec, include_prefilters=True)
+        report = ConfigurableReportDataSource.from_spec(self.spec, include_prefilters=True)
         report.lang = self.lang
         return report
 

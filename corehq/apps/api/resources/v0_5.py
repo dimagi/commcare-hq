@@ -35,7 +35,7 @@ from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain_
 from corehq.apps.sms.util import strip_plus
 from corehq.apps.userreports.models import ReportConfiguration, \
     StaticReportConfiguration, report_config_id_is_static
-from corehq.apps.userreports.reports.factory import ReportFactory
+from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
 from corehq.apps.userreports.reports.view import query_dict_to_dict, \
     get_filter_values
 from corehq.apps.userreports.columns import UCRExpandDatabaseSubcolumn
@@ -631,7 +631,7 @@ class ConfigurableReportDataResource(HqBaseResource, DomainSpecificResourceMixin
             return ""
 
     def _get_report_data(self, report_config, domain, start, limit, get_params):
-        report = ReportFactory.from_spec(report_config)
+        report = ConfigurableReportDataSource.from_spec(report_config)
 
         string_type_params = [
             filter.name

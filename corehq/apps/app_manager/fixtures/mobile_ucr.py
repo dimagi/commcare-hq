@@ -25,7 +25,7 @@ from corehq.util.xml_utils import serialize
 from corehq.apps.userreports.const import UCR_ES_BACKEND, UCR_LABORATORY_BACKEND, UCR_SUPPORT_BOTH_BACKENDS
 from corehq.apps.userreports.exceptions import UserReportsError, ReportConfigurationNotFoundError
 from corehq.apps.userreports.models import get_report_config
-from corehq.apps.userreports.reports.factory import ReportFactory
+from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
 from corehq.apps.userreports.tasks import compare_ucr_dbs
 from corehq.apps.app_manager.dbaccessors import (
     get_apps_in_domain, get_brief_apps_in_domain, get_apps_by_id, get_brief_app
@@ -97,7 +97,7 @@ class BaseReportFixturesProvider(FixtureProvider):
     @staticmethod
     def _get_report_and_data_source(report_id, domain):
         report = get_report_config(report_id, domain)[0]
-        data_source = ReportFactory.from_spec(report, include_prefilters=True)
+        data_source = ConfigurableReportDataSource.from_spec(report, include_prefilters=True)
         if report.soft_rollout > 0 and data_source.config.backend_id == UCR_LABORATORY_BACKEND:
             if random.random() < report.soft_rollout:
                 data_source.override_backend_id(UCR_ES_BACKEND)

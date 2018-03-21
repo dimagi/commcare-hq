@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from corehq.apps.userreports.reports.filters.specs import ReportFilter
 from corehq.apps.userreports.const import UCR_ES_BACKEND, UCR_LABORATORY_BACKEND, UCR_SQL_BACKEND, UCR_ES_PRIMARY
 from corehq.apps.userreports.models import DataSourceConfiguration, get_datasource_config
 from corehq.apps.userreports.es.data_source import ConfigurableReportEsDataSource
@@ -8,8 +9,16 @@ import six
 
 
 class ConfigurableReportDataSource(object):
+    """
+    This class is a proxy class for ConfigurableReportSqlDataSource
+        and ConfigurableReportEsDataSource, which include logic to
+        query the SQL or ES datasource table.
+    """
 
     def __init__(self, domain, config_or_config_id, filters, aggregation_columns, columns, order_by, backend=None):
+        """
+            config_or_config_id: an instance of DataSourceConfiguration or an id pointing to it
+        """
         self.domain = domain
         self._data_source = None
         if isinstance(config_or_config_id, DataSourceConfiguration):
@@ -28,6 +37,21 @@ class ConfigurableReportDataSource(object):
             self.override_backend_id(backend)
         else:
             self._backend = None
+
+    @classmethod
+    def from_spec(cls, spec, include_prefilters=False, backend=None):
+        from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
+        order_by = [(o['field'], o['order']) for o in spec.sort_expression]
+        filters = spec.filters if include_prefilters else spec.filters_without_prefilters
+        return cls(
+            domain=spec.domain,
+            config_or_config_id=spec.config_id,
+            filters=[ReportFilter.wrap(f) for f in filters],
+            aggregation_columns=spec.aggregation_columns,
+            columns=spec.report_columns,
+            order_by=order_by,
+            backend=backend,
+        )
 
     @property
     def backend(self):
