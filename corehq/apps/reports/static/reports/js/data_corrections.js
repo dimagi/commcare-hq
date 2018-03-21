@@ -10,6 +10,7 @@ hqDefine("reports/js/data_corrections", function() {
         var self = this;
 
         self.url = options.url;
+        self.saveUrl = options.saveUrl;
         self.propertyNames = ko.observableArray();  // ordered list of names, populated by ajax call because it's slow
         self.properties = {};                       // map of name => PropertyModel, populated in init
 
@@ -126,7 +127,7 @@ hqDefine("reports/js/data_corrections", function() {
             var $button = $(e.currentTarget);
             $button.disableButton();
             $.post({
-                url: hqImport("hqwebapp/js/initial_page_data").reverse("edit_case"),
+                url: self.saveUrl,
                 data: _.mapObject(self.properties, function(model) {
                     return model.value();
                 }),

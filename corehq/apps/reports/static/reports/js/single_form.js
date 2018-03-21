@@ -7,11 +7,11 @@ hqDefine("reports/js/single_form", function() {
     var initSingleForm = function(form_question_map, $container) {
         $container = $container || $("body");
 
-        var initial_page_data = hqImport("hqwebapp/js/initial_page_data").get;
+        var initial_page_data = hqImport("hqwebapp/js/initial_page_data");
         var _analytics_usage = function(action, callback) {
             var label = 'standalone_form',
                 extra = {},
-                caseId = initial_page_data("context_case_id");
+                caseId = initial_page_data.get("context_case_id");
             if (caseId) {
                 label = 'case';
             }
@@ -28,6 +28,7 @@ hqDefine("reports/js/single_form", function() {
 
         hqImport("reports/js/data_corrections").init($container.find(".data-corrections-trigger"), $container.find(".data-corrections-modal"), {
             properties: form_question_map,
+            saveUrl: initial_page_data.reverse("edit_form"),    // TODO: pass instance ID
         });
 
         $("#archive-form", $container).submit(function() {

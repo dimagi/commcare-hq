@@ -19,6 +19,7 @@
 {% block page_content %}
     {% initial_page_data 'clipboardScript' "clipboard/dist/clipboard.js"|static %}
     {% initial_page_data 'question_response_map' question_response_map %}
+    {% registerurl "edit_form" instance.domain instance.get_id %}
 
     {% if not instance.initial_processing_complete and request|toggle_enabled:'SUPPORT' %}
     <div class="alert alert-danger">

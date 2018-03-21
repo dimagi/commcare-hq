@@ -2481,6 +2481,63 @@ def unarchive_form(request, domain, instance_id):
         redirect = reverse('render_form_data', args=[domain, instance_id])
     return HttpResponseRedirect(redirect)
 
+@require_form_view_permission
+@require_permission(Permissions.edit_data)
+@require_POST
+@location_safe
+def edit_form(request, domain, instance_id):
+    instance = _get_location_safe_form(domain, request.couch_user, instance_id)
+    assert instance.domain == domain
+
+    updates = {}
+    for name in request.POST:
+        question = re.sub(r'^#form/', '', name)
+        updates.update({
+            question: request.POST[name],
+        })
+
+    if updates:
+        from couchforms.models import XFormInstance, XFormOperation
+        from couchforms.const import ATTACHMENT_NAME
+        from lxml import etree
+        from corehq.form_processor.models import Attachment, XFormInstanceSQL, XFormOperationSQL
+        user_id = (instance.auth_context and instance.auth_context.get('user_id')) or 'unknown'     # TODO: change to current web user
+        operation = None
+
+        if type(instance) == XFormInstance:     # TODO: this test sucks, fix & also move the imports
+            xml = etree.fromstring(instance.fetch_attachment(ATTACHMENT_NAME))
+            for question, response in updates.iteritems():
+                instance.form_data[question] = response     # TODO: error handling, here and throughout this function
+                xml.find("{{{}}}{}".format(instance.xmlns, question)).text = response
+            instance.put_attachment(etree.tostring(xml), name=ATTACHMENT_NAME, content_type='text/xml')
+            operation = XFormOperation(user=user_id, date=datetime.utcnow(), operation='edit')
+        elif type(instance) == XFormInstanceSQL:
+            xml = instance.get_xml_element()
+            for question, response in updates.iteritems():
+                xml.find("{{{}}}{}".format(instance.xmlns, question)).text = response
+            all_attachments = {att.name: att for att in instance.get_attachments()}
+            form_attachment = all_attachments[ATTACHMENT_NAME]
+            attachment = Attachment(
+                name=form_attachment.name,
+                raw_content=etree.tostring(xml),
+                content_type='text/xml',
+            )
+            form_attachment.write_content(attachment.content)
+            form_attachment.save()
+            operation = XFormOperationSQL(user_id=user_id, date=datetime.utcnow(), operation=XFormOperationSQL.EDIT)
+
+        if operation:
+            instance.history.append(operation)  # TODO: should this show in Form History tab? it doesn't
+        instance.save()
+
+    # TODO: Does updated data appear properly in exports?
+
+    if updates:
+        messages.success(request, _('Question responses saved.'))
+    else:
+        messages.success(request, _('No changes made to form.'))
+    return JsonResponse({'success': 1}) # TODO: this should really send you to the new form (is there a new form?)
+
 
 @require_form_view_permission
 @require_permission(Permissions.edit_data)

@@ -204,6 +204,7 @@ hqDefine("reports/js/case_details", function() {
         hqImport("reports/js/data_corrections").init($("#case-actions .data-corrections-trigger"), $("body > .data-corrections-modal"), {
             properties: initial_page_data.get('dynamic_properties'),
             url: initial_page_data.reverse('case_property_names'),
+            saveUrl: initial_page_data.reverse("edit_case"),
         });
 
         $("#history").koApplyBindings(new XFormListViewModel());
