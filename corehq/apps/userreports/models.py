@@ -417,6 +417,7 @@ class ReportConfiguration(UnicodeMixIn, QuickCachedDocumentMixin, Document):
     """
     domain = StringProperty(required=True)
     visible = BooleanProperty(default=True)
+    # config_id of the datasource
     config_id = StringProperty(required=True)
     title = StringProperty()
     description = StringProperty()

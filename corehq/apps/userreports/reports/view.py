@@ -127,7 +127,7 @@ def tmp_report_config(report_config):
     report_config.delete()
 
 
-class ConfigurableReport(JSONResponseMixin, BaseDomainView):
+class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
     section_name = ugettext_noop("Reports")
     template_name = 'userreports/configurable_report.html'
     slug = "configurable"
@@ -143,7 +143,7 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
     def domain(self):
         if self._domain is not None:
             return self._domain
-        return super(ConfigurableReport, self).domain
+        return super(ConfigurableReportView, self).domain
 
     @use_select2
     @use_daterangepicker
@@ -156,7 +156,7 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
             from corehq.apps.userreports.views import paywall_home
             return HttpResponseRedirect(paywall_home(self.domain))
         else:
-            original = super(ConfigurableReport, self).dispatch(request, *args, **kwargs)
+            original = super(ConfigurableReportView, self).dispatch(request, *args, **kwargs)
             return original
 
     def should_redirect_to_paywall(self, request):
@@ -303,7 +303,7 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
                 }
                 context.update(self.main_context)
                 return self.render_to_response(context)
-            return super(ConfigurableReport, self).get(request, *args, **kwargs)
+            return super(ConfigurableReportView, self).get(request, *args, **kwargs)
         else:
             raise Http403()
 
@@ -618,7 +618,7 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
 
 
 # Base class for classes that provide custom rendering for UCRs
-class CustomConfigurableReport(ConfigurableReport):
+class CustomConfigurableReport(ConfigurableReportView):
     # Ensures that links in saved reports will hit CustomConfigurableReportDispatcher
     slug = 'custom_configurable'
 
@@ -678,7 +678,7 @@ class DownloadUCRStatusView(BaseDomainView):
                 'title': _("Download Report Status"),
                 'progress_text': _("Preparing report download."),
                 'error_text': _("There was an unexpected error! Please try again or report an issue."),
-                'next_url': reverse(ConfigurableReport.slug, args=[self.domain, self.report_config_id]),
+                'next_url': reverse(ConfigurableReportView.slug, args=[self.domain, self.report_config_id]),
                 'next_url_text': _("Go back to report"),
             })
             return render(request, 'hqwebapp/soil_status_full.html', context)
@@ -696,7 +696,7 @@ class DownloadUCRStatusView(BaseDomainView):
     def parent_pages(self):
         return [{
             'title': self.spec.title,
-            'url': reverse(ConfigurableReport.slug, args=[self.domain, self.report_config_id]),
+            'url': reverse(ConfigurableReportView.slug, args=[self.domain, self.report_config_id]),
         }]
 
     @property

@@ -97,7 +97,7 @@ from corehq.apps.userreports.reports.builder.forms import (
 from corehq.apps.userreports.reports.filters.choice_providers import (
     ChoiceQueryContext,
 )
-from corehq.apps.userreports.reports.view import ConfigurableReport
+from corehq.apps.userreports.reports.view import ConfigurableReportView
 from corehq.apps.userreports.specs import EvaluationContext
 from corehq.apps.userreports.sql import IndicatorSqlAdapter
 from corehq.apps.userreports.tasks import (
@@ -435,7 +435,7 @@ class EditReportInBuilder(View):
                 return ConfigureReport.as_view(existing_report=report)(request, *args, **kwargs)
             except BadBuilderConfigError as e:
                 messages.error(request, e.message)
-                return HttpResponseRedirect(reverse(ConfigurableReport.slug, args=[request.domain, report_id]))
+                return HttpResponseRedirect(reverse(ConfigurableReportView.slug, args=[request.domain, report_id]))
         raise Http404("Report was not created by the report builder")
 
 
@@ -632,7 +632,7 @@ class ConfigureReport(ReportBuilderView):
             self._delete_temp_data_source(report_data)
             send_hubspot_form(HUBSPOT_SAVED_UCR_FORM_ID, request)
             return json_response({
-                'report_url': reverse(ConfigurableReport.slug, args=[self.domain, report_configuration._id]),
+                'report_url': reverse(ConfigurableReportView.slug, args=[self.domain, report_configuration._id]),
                 'report_id': report_configuration._id,
             })
 
@@ -696,7 +696,7 @@ class ReportPreview(BaseDomainView):
         )
         if bound_form.is_valid():
             temp_report = bound_form.create_temp_report(data_source, self.request.user.username)
-            response_data = ConfigurableReport.report_preview_data(self.domain, temp_report)
+            response_data = ConfigurableReportView.report_preview_data(self.domain, temp_report)
             if response_data:
                 return json_response(response_data)
         return json_response({'status': 'error', 'message': 'Invalid report configuration'}, status_code=400)
@@ -762,7 +762,7 @@ def undelete_report(request, domain, report_id):
         )
     else:
         messages.info(request, _('Report "{name}" not deleted.').format(name=config.title))
-    return HttpResponseRedirect(reverse(ConfigurableReport.slug, args=[request.domain, report_id]))
+    return HttpResponseRedirect(reverse(ConfigurableReportView.slug, args=[request.domain, report_id]))
 
 
 class ImportConfigReportView(BaseUserConfigReportsView):

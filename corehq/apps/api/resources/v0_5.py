@@ -583,7 +583,7 @@ ConfigurableReportData = namedtuple("ConfigurableReportData", [
 class ConfigurableReportDataResource(HqBaseResource, DomainSpecificResourceMixin):
     """
     A resource that replicates the behavior of the ajax part of the
-    ConfigurableReport view.
+    ConfigurableReportView view.
     """
     data = fields.ListField(attribute="data", readonly=True)
     columns = fields.ListField(attribute="columns", readonly=True)

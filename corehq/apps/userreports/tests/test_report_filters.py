@@ -21,7 +21,7 @@ from corehq.apps.userreports.reports.filters.values import SHOW_ALL_CHOICE, \
     CHOICE_DELIMITER, NumericFilterValue, DateFilterValue, PreFilterValue, LocationDrilldownFilterValue
 from corehq.apps.userreports.reports.filters.factory import ReportFilterFactory
 from corehq.apps.userreports.reports.filters.specs import ReportFilter
-from corehq.apps.userreports.reports.view import ConfigurableReport, query_dict_to_dict
+from corehq.apps.userreports.reports.view import ConfigurableReportView, query_dict_to_dict
 from corehq.apps.userreports.tasks import rebuild_indicators
 from corehq.apps.userreports.tests.test_view import ConfigurableReportTestMixin
 from corehq.apps.userreports.util import get_indicator_adapter
@@ -252,7 +252,7 @@ class DateFilterDBTest(ConfigurableReportTestMixin, TestCase):
         request = HttpRequest()
         request.method = 'GET'
         request.GET.update(filter_values)
-        view = ConfigurableReport(request=request)
+        view = ConfigurableReportView(request=request)
         view._domain = self.domain
         view._lang = "en"
         view._report_config_id = self.report_config._id
