@@ -99,6 +99,7 @@ def test_filter_items_basic(self, doc, items_ex, filter_ex, expected):
     self.assertEqual(expression(doc), expected)
 
 
+
 @generate_cases([
     ([{'key': 'v1'}, {'key': 'v2'}], None),
     ([{'key': 'v1'}, {'key': 'v2'}], {}),
@@ -484,6 +485,48 @@ def test_sort_items_basic(self, doc, items_ex, sort_ex, expected):
         'sort_expression': sort_ex
     })
     self.assertEqual(expression(doc), expected)
+
+
+class NestedExpressionTest(SimpleTestCase):
+    DATE_LITERAL = '2018-01-01'
+    DATE_CONSTANT_EXPRESSION = {
+        'type': 'constant',
+        'constant': '2018-01-01',
+        'datatype': 'date',
+    }
+    DATE_LITERAL_FILTER = {
+        'type': 'boolean_expression',
+        'operator': 'eq',
+        'expression': {
+            'type': 'identity',
+        },
+        'property_value': DATE_LITERAL,
+    }
+    DATE_CONSTANT_FILTER = {
+        'type': 'boolean_expression',
+        'operator': 'eq',
+        'expression': {
+            'type': 'identity',
+        },
+        'property_value': DATE_CONSTANT_EXPRESSION,
+    }
+    ITEMS_EXPRESSION = {
+        'type': 'iterator',
+        "expressions": [
+            DATE_LITERAL,
+            DATE_CONSTANT_EXPRESSION,
+            'not a date',
+        ],
+    }
+
+    def test_filter_items_with_nested_dates(self):
+        for filter_spec in [self.DATE_LITERAL_FILTER, self.DATE_CONSTANT_FILTER]:
+            expression = ExpressionFactory.from_spec({
+                "type": "filter_items",
+                "items_expression": self.ITEMS_EXPRESSION,
+                "filter_expression": filter_spec,
+            })
+            self.assertEqual(2, len(expression({})))
 
 
 class ListExpressionTest(SimpleTestCase):
