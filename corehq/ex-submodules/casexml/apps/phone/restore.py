@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+from __future__ import unicode_literals
 import logging
 import os
 import shutil
@@ -554,8 +555,8 @@ class RestoreConfig(object):
 
         cached_response = self.get_cached_response()
         tags = [
-            u'domain:{}'.format(self.domain),
-            u'is_initial:{}'.format(not bool(self.sync_log)),
+            'domain:{}'.format(self.domain),
+            'is_initial:{}'.format(not bool(self.sync_log)),
         ]
         if cached_response:
             datadog_counter('commcare.restores.cache_hits.count', tags=tags)
@@ -708,12 +709,12 @@ class RestoreConfig(object):
             )
         is_webapps = device_id and device_id.startswith("WebAppsLogin")
         tags = [
-            u'status_code:{}'.format(status),
-            u'device_type:{}'.format('webapps' if is_webapps else 'other'),
+            'status_code:{}'.format(status),
+            'device_type:{}'.format('webapps' if is_webapps else 'other'),
         ]
         env = settings.SERVER_ENVIRONMENT
         if (env, self.domain) in settings.RESTORE_TIMING_DOMAINS:
-            tags.append(u'domain:{}'.format(self.domain))
+            tags.append('domain:{}'.format(self.domain))
         if timing is not None:
             timer_buckets = (5, 20, 60, 120)
             for timer in timing.to_list(exclude_root=True):
