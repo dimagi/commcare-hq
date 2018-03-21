@@ -3,7 +3,7 @@ from django.conf import settings
 from django.contrib.postgres.fields.array import ArrayField
 from django.db.models import CharField, IntegerField
 from django.db.models.aggregates import Max
-from django.db.models.expressions import F, Func, Value
+from django.db.models.expressions import Exists, F, Func, OuterRef, Value
 from django.db.models.query import Q, QuerySet, EmptyResultSet
 from django_cte import With
 from mptt.models import MPTTModel, TreeManager
@@ -182,6 +182,12 @@ class AdjListManager(TreeManager):
         query = (
             cte
             .join(self.all(), id=cte.col.id)
+            # EXISTS helps postgres avoid seq scan on locations table
+            # EXPLAIN ANALYZE showed postgres estimated > 1 million rows in the
+            # recursive CTE on softlayer when there were actually only 6 rows.
+            # The seq scan on the locations table took ~1 minute; EXISTS -> 3ms.
+            .annotate(_cte_exists=Exists(cte.queryset().filter(id=OuterRef("id"))))
+            .filter(_cte_exists=True)
             .order_by(cte.col._cte_ordering)
         )
         for item in ctes:
