@@ -142,7 +142,7 @@ def send_repeater_payloads(repeater_id, payload_ids, email_id):
             try:
                 payload = get_payload(payload_id)
                 payloads[payload_id] = payload
-                headers = list(set(headers + payload.keys()))
+                headers = list(set(headers + list(payload)))
             except Exception as e:
                 payloads[payload_id] = {'note': 'Could not generate payload, %s' % str(e)}
         return headers
