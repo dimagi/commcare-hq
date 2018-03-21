@@ -1,3 +1,10 @@
+"""
+PatientFinders are used to find OpenMRS patients that correspond to
+CommCare cases if none of the patient identifiers listed in
+OpenmrsCaseConfig.match_on_ids have successfully matched a patient.
+
+See `README.md`__ for more context.
+"""
 from __future__ import absolute_import
 from __future__ import division
 
@@ -18,7 +25,13 @@ from dimagi.ext.couchdbkit import (
 
 class PatientFinder(DocumentSchema):
     """
-    PatientFinder is used to find a patient if ID matchers fail.
+    Subclasses of the PatientFinder class implement particular
+    strategies for finding OpenMRS patients that suit a particular
+    project. (WeightedPropertyPatientFinder was first subclass to be
+    written. A future project with stronger emphasis on patient names
+    might use Levenshtein distance, for example.)
+
+    Subclasses must implement the `find_patients()` method.
     """
 
     @classmethod
@@ -40,9 +53,9 @@ class PatientFinder(DocumentSchema):
 
         NOTE:: False positives can result in overwriting one patient
                with the data of another. It is definitely better to
-               return no results than to return an invalid result.
-               Returned results should be logged.
-
+               return no results or multiple results than to return a
+               single invalid result. Returned results should be
+               logged.
         """
         raise NotImplementedError
 
@@ -131,16 +144,52 @@ class WeightedPropertyPatientFinder(PatientFinder):
         # Example value of case_config::
         #
         #     {
-        #       "person_properties": {
-        #         "birthdate": {
-        #           "doc_type": "CaseProperty",
-        #           "case_property": "dob"
+        #         "person_properties": {
+        #             "birthdate": {
+        #                 "doc_type": "CaseProperty",
+        #                 "case_property": "dob"
+        #             }
+        #         },
+        #         "person_preferred_name": {
+        #             "givenName": {
+        #                 "doc_type": "CaseProperty",
+        #                 "case_property": "given_name"
+        #             },
+        #             "familyName": {
+        #                 "doc_type": "CaseProperty",
+        #                 "case_property": "family_name"
+        #             }
+        #         },
+        #         "person_preferred_address": {
+        #             "address1": {
+        #                 "doc_type": "CaseProperty",
+        #                 "case_property": "address_1"
+        #             },
+        #             "address2": {
+        #                 "doc_type": "CaseProperty",
+        #                 "case_property": "address_2"
+        #             }
+        #         },
+        #         "person_attributes": {
+        #             "c1f4239f-3f10-11e4-adec-0800271c1b75": {
+        #                 "doc_type": "CaseProperty",
+        #                 "case_property": "caste"
+        #             },
+        #             "c1f455e7-3f10-11e4-adec-0800271c1b75": {
+        #                 "doc_type": "CasePropertyConcept",
+        #                 "case_property": "class",
+        #                 "value_concepts": {
+        #                     "sc": "c1fcd1c6-3f10-11e4-adec-0800271c1b75",
+        #                     "general": "c1fc20ab-3f10-11e4-adec-0800271c1b75",
+        #                     "obc": "c1fb51cc-3f10-11e4-adec-0800271c1b75",
+        #                     "other_caste": "c207073d-3f10-11e4-adec-0800271c1b75",
+        #                     "st": "c20478b6-3f10-11e4-adec-0800271c1b75"
+        #                 }
+        #             }
         #         }
-        #       },
-        #       // ...
+        #         // ...
         #     }
         #
-
         for person_prop, value_source in case_config['person_properties'].items():
             jsonpath = parse('person.' + person_prop)
             self._property_map.update(get_caseproperty_jsonpathvaluemap(jsonpath, value_source))
