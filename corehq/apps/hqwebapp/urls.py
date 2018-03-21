@@ -71,7 +71,7 @@ domain_specific = [
     url(r'couch_doc_counts', couch_doc_counts),
 ]
 
-legacy_prelogin = [
+prelogin_root = [
     url(r'^home/$', redirect_to_dimagi('commcare/'),
         name='public_home'),
     url(r'^impact/$', redirect_to_dimagi('commcare/'),
@@ -88,5 +88,9 @@ legacy_prelogin = [
     url(r'^askdemo/$', redirect_to_dimagi('commcare/'),
         name='public_demo_cta'),
     url(r'^supply/$', redirect_to_dimagi('commcare/')),
+]
+
+legacy_prelogin = prelogin_root + [
     url(r'^google9633af922b8b0064.html$', temporary_google_verify),
+    url(r'^lang/(?P<lang_code>[\w-]+)/', include(prelogin_root)),
 ]
