@@ -12,9 +12,9 @@ from collections import namedtuple
 from operator import eq
 from pprint import pformat
 
-from jsonpath_rw import Child, parse, Fields, Slice
+from jsonpath_rw import Child, parse, Fields, Slice, Where
 
-from corehq.motech.openmrs.jsonpath import WhereCmp
+from corehq.motech.openmrs.jsonpath import Cmp
 from dimagi.ext.couchdbkit import (
     DecimalProperty,
     DocumentSchema,
@@ -204,19 +204,17 @@ class WeightedPropertyPatientFinder(PatientFinder):
             # `jsonpath_rw documentation <https://github.com/kennknowles/python-jsonpath-rw#programmatic-jsonpath>`__
             #
             # The `Where` JSONPath expression "*jsonpath1* `where` *jsonpath2*" returns nodes matching *jsonpath1*
-            # where a child matches *jsonpath2*.
+            # where a child matches *jsonpath2*. `Cmp` does a comparison in *jsonpath2*. It accepts a
+            # comparison operator and a value. The JSONPath expression below is the equivalent of::
             #
-            # `WhereCmp` extends this to allow a comparison in *jsonpath2*. It accepts a comparison operator and a
-            # value. The JSONPath expression below is the equivalent of::
-            #
-            #     (person.attributes[*] where attributeType.uuid=attr_uuid).value
+            #     (person.attributes[*] where attributeType.uuid eq attr_uuid).value
             #
             # This `for` loop will let us extract the person attribute values where their attribute type UUIDs
             # match those configured in case_config['person_attributes']
             jsonpath = Child(
-                WhereCmp(
+                Where(
                     Child(Child(Fields('person'), Fields('attributes')), Slice()),
-                    Child(Fields('attributeType'), Fields('uuid')), eq, attr_uuid
+                    Cmp(Child(Fields('attributeType'), Fields('uuid')), eq, attr_uuid)
                 ),
                 Fields('value')
             )
@@ -236,14 +234,14 @@ class WeightedPropertyPatientFinder(PatientFinder):
             else:
                 # The JSONPath expression below is the equivalent of::
                 #
-                #     (identifiers[*] where identifierType.uuid=id_type_uuid).identifier
+                #     (identifiers[*] where identifierType.uuid eq id_type_uuid).identifier
                 #
                 # Similar to `person_attributes` above, this will extract the person identifier values where
                 # their identifier type UUIDs match those configured in case_config['patient_identifiers']
                 jsonpath = Child(
-                    WhereCmp(
+                    Where(
                         Child(Fields('identifiers'), Slice()),
-                        Child(Fields('identifierType'), Fields('uuid')), eq, id_type_uuid
+                        Cmp(Child(Fields('identifierType'), Fields('uuid')), eq, id_type_uuid)
                     ),
                     Fields('identifier')
                 )
