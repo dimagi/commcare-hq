@@ -91,6 +91,10 @@ def get_caseproperty_jsonpathvaluemap(jsonpath, value_source):
     if value_source['doc_type'] == 'CasePropertyConcept':
         value_map = {v: k for k, v in value_source['value_concepts'].items()}
         return {value_source['case_property']: JsonpathValuemap(jsonpath, value_map)}
+    raise ValueError(
+        '"{}" is not a recognised ValueSource for setting OpenMRS patient values from CommCare case properties. '
+        'Please check your OpenMRS case config.'.format(value_source['doc_type'])
+    )
 
 
 PatientScore = namedtuple('PatientScore', ['patient', 'score'])
