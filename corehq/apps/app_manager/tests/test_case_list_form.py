@@ -122,6 +122,22 @@ class CaseListFormSuiteTests(SimpleTestCase, TestXmlMixin):
         case_module.case_list_form.post_form_workflow = WORKFLOW_CASE_LIST
         self.assertXmlEqual(self.get_xml('case_list_form_end_of_form_case_list'), app.create_suite())
 
+    def test_case_list_registration_form_return_to_case_list_clmi_only(self):
+        factory = self._prep_case_list_form_app()
+        app = factory.app
+        clmi_module = factory.new_basic_module('clmi_only', factory.app.get_module(0).case_type, with_form=False)
+
+        case_module = app.get_module(0)
+        case_module.case_list_form.post_form_workflow = WORKFLOW_CASE_LIST
+
+        clmi_module.case_list_form.form_id = case_module.case_list_form.form_id
+        clmi_module.case_list_form.post_form_workflow = WORKFLOW_CASE_LIST
+        clmi_module.case_list.show = True
+
+        #self.assertXmlEqual(self.get_xml('case_list_form_end_of_form_case_list_clmi_only'), app.create_suite())
+        self.assertXmlPartialEqual(self.get_xml('case_list_form_end_of_form_case_list_clmi_only'),
+                                   factory.app.create_suite(), './entry[2]')
+
     def test_case_list_form_parent_child_advanced(self):
         # * Register house (case type = house, basic)
         #   * Register house form

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2018-03-13 19:08+0000\n"
+"POT-Creation-Date: 2018-03-20 21:08+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: Sarah Sagan <ssagan@dimagi.com>, 2018\n"
 "Language-Team: French (https://www.transifex.com/dimagi/teams/9388/fr/)\n"
@@ -515,17 +515,17 @@ msgstr "Sélectionner un utilisateur"
 msgid "(Default)"
 msgstr "(Par défaut)"
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:387
+#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:388
 msgid "Sorry, that didn't go through. Please reload your page and try again"
 msgstr ""
 "Désolé, ça n'a pas fonctionné. Veuillez rafraîchir la page et réessayer"
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:421
+#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:422
 msgid "The versions list has changed since you loaded the page."
 msgstr ""
 "La liste des versions a changé depuis votre dernier chargement de la page."
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:426
+#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:427
 msgid "No new changes!"
 msgstr "Pas de nouvelles modifications!"
 
@@ -768,7 +768,7 @@ msgstr "Code Question"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:11
 msgid ""
-"The ID 'case' may cause problems with case management. It is recommended to "
+"The ID '{nodeID}' may cause problems with form parsing. It is recommended to "
 "pick a different Question ID."
 msgstr ""
 
@@ -2636,20 +2636,16 @@ msgid "Error saving user"
 msgstr ""
 
 #: corehq/apps/locations/static/locations/js/location.js:56
-#, fuzzy
-#| msgid "Available Groups"
 msgid "Available Products"
-msgstr "Groupes disponibles"
+msgstr "Produits disponibles"
 
 #: corehq/apps/locations/static/locations/js/location.js:57
 msgid "Products at Location"
-msgstr ""
+msgstr "Produits au site"
 
 #: corehq/apps/locations/static/locations/js/location.js:58
-#, fuzzy
-#| msgid "Search Countries..."
 msgid "Search Products..."
-msgstr "Rechercher pays..."
+msgstr ""
 
 #: corehq/apps/locations/static/locations/js/location_tree.async.js:288
 msgid "You have successfully archived the location <%=name%>"

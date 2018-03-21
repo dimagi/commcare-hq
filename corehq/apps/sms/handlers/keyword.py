@@ -154,7 +154,7 @@ def global_keyword_current(v, text, msg, text_words, open_sessions):
             xforms_session_couch_id=session._id,
         )
         
-        resp = current_question(session.session_id)
+        resp = current_question(session.session_id, v.domain)
         send_sms_to_verified_number(v, resp.event.text_prompt,
             metadata=outbound_metadata)
     return True

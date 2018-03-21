@@ -760,6 +760,9 @@ PRELOGIN_APPS = (
     'corehq.apps.prelogin',
 )
 
+# dimagi.com urls
+PRICING_PAGE_URL = "https://www.dimagi.com/commcare/pricing/"
+
 # our production logstash aggregation
 LOGSTASH_DEVICELOG_PORT = 10777
 LOGSTASH_AUDITCARE_PORT = 10999
@@ -2331,3 +2334,10 @@ if RESTRICT_USED_PASSWORDS_FOR_NIC_COMPLIANCE:
     ]
 
 PACKAGE_MONITOR_REQUIREMENTS_FILE = os.path.join(FILEPATH, 'requirements', 'requirements.txt')
+
+IS_LOCATION_CTE_ENABLED = UNIT_TESTING or SERVER_ENVIRONMENT in [
+    'localdev',
+    'changeme',  # default value in localsettings.example.py
+    'staging',
+    'softlayer',
+]
