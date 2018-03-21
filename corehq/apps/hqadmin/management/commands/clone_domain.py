@@ -263,7 +263,10 @@ class Command(BaseCommand):
         datasources = get_datasources_for_domain(self.existing_domain)
         for datasource in datasources:
             datasource.meta.build.finished = False
+            datasource.meta.build.finished_in_place = False
             datasource.meta.build.initiated = None
+            datasource.meta.build.initiated_in_place = None
+            datasource.meta.build.rebuilt_asynchronously = False
 
             old_id, new_id = self.save_couch_copy(datasource, self.new_domain)
             datasource_map[old_id] = new_id

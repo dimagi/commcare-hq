@@ -1114,7 +1114,7 @@ def rebuild_data_source(request, domain, config_id):
 @require_POST
 def resume_building_data_source(request, domain, config_id):
     config, is_static = get_datasource_config_or_404(config_id, domain)
-    if not is_static and config.meta.build.finished:
+    if not is_static and (config.meta.build.finished or config.meta.build.finished_in_place):
         messages.warning(
             request,
             _('Table "{}" has already finished building. Rebuild table to start over.').format(

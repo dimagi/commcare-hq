@@ -89,7 +89,9 @@ def rebuild_indicators(indicator_config_id, initiated_by=None, limit=-1):
             # Save the start time now in case anything goes wrong. This way we'll be
             # able to see if the rebuild started a long time ago without finishing.
             config.meta.build.initiated = datetime.utcnow()
+            config.meta.build.initiated_in_place = None
             config.meta.build.finished = False
+            config.meta.build.finished_in_place = False
             config.meta.build.rebuilt_asynchronously = False
             config.save()
 
@@ -106,7 +108,9 @@ def rebuild_indicators_in_place(indicator_config_id, initiated_by=None):
     with notify_someone(initiated_by, success_message=success, error_message=failure, send=send):
         adapter = get_indicator_adapter(config, can_handle_laboratory=True)
         if not id_is_static(indicator_config_id):
+            config.meta.build.initiated = None
             config.meta.build.initiated_in_place = datetime.utcnow()
+            config.meta.build.finished = False
             config.meta.build.finished_in_place = False
             config.meta.build.rebuilt_asynchronously = False
             config.save()
@@ -170,10 +174,10 @@ def _iteratively_build_table(config, resume_helper=None, in_place=False, limit=-
             current_config = DataSourceConfiguration.get(config._id)
             # check that a new build has not yet started
             if in_place:
-                if config.meta.build.initiated_in_place == current_config.meta.build.initiated_in_place:
+                if config.meta.build.initiated_in_place == current_config.meta.build.initiated_in_place:  # check other too?
                     current_config.meta.build.finished_in_place = True
             else:
-                if config.meta.build.initiated == current_config.meta.build.initiated:
+                if config.meta.build.initiated == current_config.meta.build.initiated:  # check other?
                     current_config.meta.build.finished = True
             current_config.save()
         adapter = get_indicator_adapter(config, raise_errors=True, can_handle_laboratory=True)
