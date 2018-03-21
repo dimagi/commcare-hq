@@ -6,7 +6,7 @@ hqDefine("locations/js/location", function() {
         var $select = $('#id_users-selected_ids');
         // Add the newly created user to the users that are already at the location.
         var current_users = $select.select2('data');
-        current_users.push({ "text": user.text, "id": user.id });
+        current_users.push({ "text": user.text, "id": user.user_id });
         // Push the updated list of current_users to the ui
         $select.select2("data", current_users);
     };
