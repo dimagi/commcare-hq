@@ -20,7 +20,7 @@ class ConfigurableReportDataSourceMixin(object):
             self._config = None
             self._config_id = config_or_config_id
 
-        self._filters = {f.slug: f for f in filters}
+        self._filters = {f['slug']: f for f in filters}
         self._filter_values = {}
         self._defer_fields = {}
         self._order_by = order_by
@@ -80,7 +80,8 @@ class ConfigurableReportDataSourceMixin(object):
 
     def set_filter_values(self, filter_values):
         for filter_slug, value in filter_values.items():
-            self._filter_values[filter_slug] = self._filters[filter_slug].create_filter_value(value)
+            raw_filter_spec = self._filters[filter_slug]
+            self._filter_values[filter_slug] = create_filter_value(raw_filter_spec, value)
 
     def set_defer_fields(self, defer_fields):
         self._defer_fields = defer_fields

@@ -1,5 +1,4 @@
 from __future__ import absolute_import
-from corehq.apps.userreports.reports.filters.specs import ReportFilter
 from corehq.apps.userreports.const import UCR_ES_BACKEND, UCR_LABORATORY_BACKEND, UCR_SQL_BACKEND, UCR_ES_PRIMARY
 from corehq.apps.userreports.models import DataSourceConfiguration, get_datasource_config
 from corehq.apps.userreports.es.data_source import ConfigurableReportEsDataSource
@@ -45,7 +44,7 @@ class ConfigurableReportDataSource(object):
         return cls(
             domain=spec.domain,
             config_or_config_id=spec.config_id,
-            filters=[ReportFilter.wrap(f) for f in filters],
+            filters=filters,
             aggregation_columns=spec.aggregation_columns,
             columns=spec.report_columns,
             order_by=order_by,
