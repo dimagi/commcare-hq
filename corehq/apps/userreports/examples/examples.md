@@ -519,7 +519,7 @@ This will return the difference in seconds between two times (i.e. start and end
     "case_id_expression": {
         "type": "property_name",
         "property_name": "case_id"
-    },
+    }
 }
 ```
 
