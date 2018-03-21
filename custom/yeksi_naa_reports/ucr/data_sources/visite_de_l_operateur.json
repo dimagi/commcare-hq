@@ -1,0 +1,291 @@
+{
+  "domains": [
+    "test-pna"
+  ],
+  "config": {
+    "configured_indicators": [
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": "PPS ID",
+        "datatype": "string",
+        "type": "expression",
+        "transform": {
+        },
+        "is_primary_key": false,
+        "is_nullable": true,
+        "expression": {
+          "type": "root_doc",
+          "expression": {
+            "datatype": null,
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "location_id"
+            ]
+          }
+        },
+        "column_id": "pps_id"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": "District ID",
+        "datatype": "string",
+        "type": "expression",
+        "transform": {
+        },
+        "is_primary_key": false,
+        "is_nullable": true,
+        "expression": {
+          "location_id_expression": {
+            "type": "root_doc",
+            "expression": {
+              "datatype": null,
+              "type": "property_path",
+              "property_path": [
+                "form",
+                "location_id"
+              ]
+            }
+          },
+          "type": "location_parent_id"
+        },
+        "column_id": "district_id"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": "Region ID",
+        "datatype": "string",
+        "type": "expression",
+        "transform": {
+        },
+        "is_primary_key": false,
+        "is_nullable": true,
+        "expression": {
+          "location_id_expression": {
+            "location_id_expression": {
+              "type": "root_doc",
+              "expression": {
+                "datatype": null,
+                "type": "property_path",
+                "property_path": [
+                  "form",
+                  "location_id"
+                ]
+              }
+            },
+            "type": "location_parent_id"
+          },
+          "type": "location_parent_id"
+        },
+        "column_id": "region_id"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "property_path": [
+          "form",
+          "region_name"
+        ],
+        "datatype": "string",
+        "is_primary_key": false,
+        "column_id": "region_name",
+        "is_nullable": true,
+        "type": "raw",
+        "property_name": ""
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "property_path": [
+          "form",
+          "PPS_name"
+        ],
+        "datatype": "string",
+        "is_primary_key": false,
+        "column_id": "pps_name",
+        "is_nullable": true,
+        "type": "raw",
+        "property_name": ""
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "property_path": [
+          "form",
+          "site_code"
+        ],
+        "datatype": "string",
+        "is_primary_key": false,
+        "column_id": "site_code",
+        "is_nullable": true,
+        "type": "raw",
+        "property_name": ""
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "property_path": [
+          "form",
+          "district_name"
+        ],
+        "datatype": "string",
+        "is_primary_key": false,
+        "column_id": "district_name",
+        "is_nullable": true,
+        "type": "raw",
+        "property_name": ""
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "date",
+        "expression": {
+          "date_expression": {
+            "datatype": null,
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "real_date"
+            ]
+          },
+          "type": "month_start_date"
+        },
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "type": "expression",
+        "column_id": "real_date"
+      },
+      {
+        "filter": {
+          "operator": "eq",
+          "expression": {
+            "datatype": null,
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "pps_is_outstock"
+            ]
+          },
+          "type": "boolean_expression",
+          "comment": null,
+          "property_value": "1"
+        },
+        "type": "boolean",
+        "display_name": null,
+        "comment": null,
+        "column_id": "pps_is_outstock"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "property_path": [
+          "form",
+          "nb_products_stockout"
+        ],
+        "datatype": "integer",
+        "is_primary_key": false,
+        "column_id": "nb_products_stockout",
+        "is_nullable": true,
+        "type": "raw",
+        "property_name": ""
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "property_path": [
+          "form",
+          "pps_nb_products"
+        ],
+        "datatype": "integer",
+        "is_primary_key": false,
+        "column_id": "pps_nb_products",
+        "is_nullable": true,
+        "type": "raw",
+        "property_name": ""
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "property_path": [
+          "form",
+          "supply-point"
+        ],
+        "datatype": "string",
+        "is_primary_key": false,
+        "column_id": "supply-point",
+        "is_nullable": true,
+        "type": "raw",
+        "property_name": ""
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "property_path": [
+          "form",
+          "pps_total_amt_paid"
+        ],
+        "datatype": "integer",
+        "is_primary_key": false,
+        "column_id": "pps_total_amt_paid",
+        "is_nullable": true,
+        "type": "raw",
+        "property_name": ""
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "property_path": [
+          "form",
+          "pps_total_amt_owed"
+        ],
+        "datatype": "integer",
+        "is_primary_key": false,
+        "column_id": "pps_total_amt_owed",
+        "is_nullable": true,
+        "type": "raw",
+        "property_name": ""
+      }
+    ],
+    "base_item_expression": {
+    },
+    "configured_filter": {
+      "operator": "eq",
+      "type": "boolean_expression",
+      "expression": {
+        "datatype": null,
+        "type": "property_name",
+        "property_name": "xmlns"
+      },
+      "comment": null,
+      "property_value": "http://openrosa.org/formdesigner/EF8B5DB8-4FB2-4CFB-B0A2-CDD26ADDAE3D"
+    },
+    "disable_destructive_rebuild": false,
+    "description": "",
+    "referenced_doc_type": "XFormInstance",
+    "engine_id": "ucr",
+    "last_modified": "2018-03-13T10:30:36.141578Z",
+    "display_name": "Yeksi Naa Reports Visite de l'operateur",
+    "named_expressions": {
+    },
+    "doc_type": "DataSourceConfiguration",
+    "icds_rebuild_related_docs": false,
+    "table_id": "yeksi_naa_reports_visite_de_l_operateur",
+    "named_filters": {
+    },
+    "_id": "379af927f4a4457b69b9cc4bee33f59d"
+  }
+}

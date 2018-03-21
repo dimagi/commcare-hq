@@ -1,0 +1,5 @@
+from __future__ import absolute_import
+from __future__ import unicode_literals
+YEKSI_NAA_REPORTS_VISITE_DE_L_OPERATOUR = 'yeksi_naa_reports_visite_de_l_operateur'
+YEKSI_NAA_REPORTS_VISITE_DE_L_OPERATOUR_PER_PRODUCT = "yeksi_naa_reports_visite_de_l_operateur_per_product"
+YEKSI_NAA_REPORTS_LOGISTICIEN = 'yeksi_naa_reports_logisticien'
