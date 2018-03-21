@@ -327,7 +327,7 @@ class WeightedPropertyPatientFinder(PatientFinder):
             )
             return []
         if len(candidates) == 1:
-            patient = candidates.values()[0].patient
+            patient = list(candidates.values())[0].patient
             self.save_match_id(case, case_config, patient)
             logger.info(
                 'Matched case "%s" (%s) to ONLY patient candidate: \n%s',

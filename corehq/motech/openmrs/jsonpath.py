@@ -32,8 +32,8 @@ class Cmp(JSONPath):
 
     def __eq__(self, other):
         return (
-                isinstance(other, Cmp) and
-                other.jsonpath == self.jsonpath and
-                other.op == self.op and
-                other.operand == self.operand
+            isinstance(other, Cmp) and
+            other.jsonpath == self.jsonpath and
+            other.op == self.op and
+            other.operand == self.operand
         )

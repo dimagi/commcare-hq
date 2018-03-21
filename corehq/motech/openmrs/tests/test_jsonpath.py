@@ -4,7 +4,7 @@ import doctest
 from operator import gt, ge, eq
 
 from unittest import TestCase
-from jsonpath_rw import Child, Fields, Slice, Where, Root, parse
+from jsonpath_rw import Child, Fields, Slice, Where, Root
 
 import corehq.motech.openmrs.jsonpath
 from corehq.motech.openmrs.jsonpath import Cmp
