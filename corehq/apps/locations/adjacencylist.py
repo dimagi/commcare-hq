@@ -125,7 +125,6 @@ class AdjListManager(TreeManager):
         def make_cte_query(cte):
             return self.filter(where).order_by().values(
                 "id",
-                parent_col,
                 _cte_ordering=StrArray(ordering_col),
             ).union(
                 cte.join(
@@ -138,7 +137,6 @@ class AdjListManager(TreeManager):
                     )
                 ).values(
                     "id",
-                    parent_col,
                     "_cte_ordering",
                 ),
                 all=True,
@@ -171,7 +169,6 @@ class AdjListManager(TreeManager):
                 ).values(
                     id=cte.col.id,
                     _cte_ordering=cte.col._cte_ordering,
-                    **{parent_col: getattr(cte.col, parent_col)}
                 ),
                 name="xdups",
             )
