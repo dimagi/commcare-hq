@@ -328,15 +328,15 @@ class WeightedPropertyPatientFinder(PatientFinder):
                 case.name, case.get_id,
             )
             return []
-        patients_scores = sorted(candidates.values(), key=lambda cand: cand.score, reverse=True)
-        if len(patients_scores) == 1:
-            patient = patients_scores[0].patient
+        if len(candidates) == 1:
+            patient = candidates.values()[0].patient
             self.save_match_id(case, case_config, patient)
             logger.info(
                 'Matched case "%s" (%s) to ONLY patient candidate: \n%s',
                 case.name, case.get_id, pformat(patient, indent=2),
             )
             return [patient]
+        patients_scores = sorted(candidates.values(), key=lambda candidate: candidate.score, reverse=True)
         if patients_scores[0].score / patients_scores[1].score > 1 + self.confidence_margin:
             # There is more than a `confidence_margin` difference
             # (defaults to 10%) in score between the best-ranked
