@@ -61,9 +61,9 @@ class ConfigurableReportSqlDataSource(ConfigurableReportDataSourceMixin, SqlData
         fields = {c.slug for c in db_columns}
 
         return db_columns + [
-            DatabaseColumn('', SimpleColumn(deferred_filter.field))
-            for deferred_filter in self._deferred_filters.values()
-            if deferred_filter.field not in fields]
+            DatabaseColumn('', SimpleColumn(field))
+            for field in self._defer_fields
+            if field not in fields]
 
     @memoized
     @method_decorator(catch_and_raise_exceptions)
