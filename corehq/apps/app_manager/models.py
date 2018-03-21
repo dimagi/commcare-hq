@@ -2108,8 +2108,13 @@ class DetailColumn(IndexedSchema):
 
         # Lazy migration: xpath expressions from format to first-class property
         if data.get('format') == 'calculate':
-            property_xpath = PropertyXpathGenerator(None, None, None, super(DetailColumn, cls).wrap(data)).xpath
-            data['field'] = dot_interpolate(data.get('calc_xpath', '.'), property_xpath)
+            if data.get('model') == 'case':
+                property_xpath = PropertyXpathGenerator(
+                    None, None, None, super(DetailColumn, cls).wrap(data)
+                ).xpath
+                data['field'] = dot_interpolate(data.get('calc_xpath', '.'), property_xpath)
+            else:
+                data['field'] = dot_interpolate(data.get('calc_xpath', '.'), data['field'])
             data['useXpathExpression'] = True
             data['hasAutocomplete'] = False
             data['format'] = 'plain'
