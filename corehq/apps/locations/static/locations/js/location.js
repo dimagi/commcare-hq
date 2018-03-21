@@ -3,9 +3,12 @@ hqDefine("locations/js/location", function() {
     var initialPageData = hqImport('hqwebapp/js/initial_page_data');
     var LocationModels = hqImport('locations/js/location_drilldown');
     var insert_new_user = function(user) {
-        // var $select = $('#id_users-selected_ids');
-        // $select.multiSelect('addOption', { value: user.user_id, text: user.text });
-        // $select.multiSelect('select', user.user_id);
+        var $select = $('#id_users-selected_ids');
+        // Add the newly created user to the users that are already at the location.
+        var current_users = $select.select2('data');
+        current_users.push({ "text": user.text, "id": user.id });
+        // Push the updated list of current_users to the ui
+        $select.select2("data", current_users);
     };
     var TEMPLATE_STRINGS = {
         new_user_success: _.template(gettext("User <%= name %> added successfully. " +
