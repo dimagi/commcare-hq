@@ -89,6 +89,10 @@ class Command(BaseCommand):
                 'https://jenkins.dimagi.com/job/integration-tests/build',
                 params={'token': settings.MOBILE_INTEGRATION_TEST_TOKEN},
             )
+            requests.get(
+                'https://jenkins.dimagi.com/job/integration-tests-pipeline/build',
+                params={'token': settings.MOBILE_INTEGRATION_TEST_TOKEN},
+            )
 
         deploy_notification_text += "Find the diff {diff_link}"
 
