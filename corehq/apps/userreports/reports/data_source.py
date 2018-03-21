@@ -40,7 +40,6 @@ class ConfigurableReportDataSource(object):
 
     @classmethod
     def from_spec(cls, spec, include_prefilters=False, backend=None):
-        from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
         order_by = [(o['field'], o['order']) for o in spec.sort_expression]
         filters = spec.filters if include_prefilters else spec.filters_without_prefilters
         return cls(
