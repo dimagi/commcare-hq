@@ -252,7 +252,7 @@ class AvailabilityData(VisiteDeLOperateurDataSource):
         loc_names = {}
         for row in rows:
             if self.months[0] <= row['real_date'] < self.months[-1] + relativedelta(months=1):
-                if row[self.loc_id] not in data.keys():
+                if row[self.loc_id] not in data:
                     data[row[self.loc_id]] = ['no data entered'] * len(self.months)
                     loc_names[row[self.loc_id]] = row[self.loc_name]
                 for i in range(len(self.months)):
@@ -267,7 +267,7 @@ class AvailabilityData(VisiteDeLOperateurDataSource):
                         break
 
         new_rows = []
-        for loc_id in data.keys():
+        for loc_id in data:
             row = [loc_names[loc_id]]
             row.extend(data[loc_id])
             row.append("{:.2f}%".format(
@@ -356,7 +356,7 @@ class LossRateData(VisiteDeLOperateurPerProductDataSource):
         loc_names = {}
         for row in rows:
             if self.months[0] <= row['real_date_repeat'] < self.months[-1] + relativedelta(months=1):
-                if row[self.loc_id] not in data.keys():
+                if row[self.loc_id] not in data:
                     data[row[self.loc_id]] = ['no data entered'] * len(self.months)
                     loc_names[row[self.loc_id]] = row[self.loc_name]
                 for i in range(len(self.months)):
@@ -367,7 +367,7 @@ class LossRateData(VisiteDeLOperateurPerProductDataSource):
                         break
 
         new_rows = []
-        for loc_id in data.keys():
+        for loc_id in data:
             row = [loc_names[loc_id]]
             row.extend(data[loc_id])
             new_rows.append(row)
@@ -452,7 +452,7 @@ class ExpirationRateData(VisiteDeLOperateurPerProductDataSource):
         loc_names = {}
         for row in rows:
             if self.months[0] <= row['real_date_repeat'] < self.months[-1] + relativedelta(months=1):
-                if row[self.loc_id] not in data.keys():
+                if row[self.loc_id] not in data:
                     data[row[self.loc_id]] = ['no data entered'] * len(self.months)
                     loc_names[row[self.loc_id]] = row[self.loc_name]
                 for i in range(len(self.months)):
@@ -463,7 +463,7 @@ class ExpirationRateData(VisiteDeLOperateurPerProductDataSource):
                         break
 
         new_rows = []
-        for loc_id in data.keys():
+        for loc_id in data:
             row = [loc_names[loc_id]]
             row.extend(data[loc_id])
             new_rows.append(row)
@@ -541,7 +541,7 @@ class RecoveryRateByPPSData(VisiteDeLOperateurDataSource):
         pps_names = {}
         for row in rows:
             if self.months[0] <= row['real_date'] < self.months[-1] + relativedelta(months=1):
-                if row['pps_id'] not in data.keys():
+                if row['pps_id'] not in data:
                     data[row['pps_id']] = ['no data entered'] * len(self.months)
                     pps_names[row['pps_id']] = row['pps_name']
                 for i in range(len(self.months)):
@@ -552,7 +552,7 @@ class RecoveryRateByPPSData(VisiteDeLOperateurDataSource):
                         break
 
         new_rows = []
-        for pps in data.keys():
+        for pps in data:
             row = [pps_names[pps]]
             row.extend(data[pps])
             new_rows.append(row)
@@ -632,7 +632,7 @@ class RecoveryRateByDistrictData(LogisticienDataSource):
         district_names = {}
         for row in rows:
             if self.months[0] <= row['opened_on'] < self.months[-1] + relativedelta(months=1):
-                if row['district_id'] not in data.keys():
+                if row['district_id'] not in data:
                     data[row['district_id']] = ['no data entered'] * len(self.months)
                     district_names[row['district_id']] = row['district_name']
                 for i in range(len(self.months)):
@@ -643,7 +643,7 @@ class RecoveryRateByDistrictData(LogisticienDataSource):
                         break
 
         new_rows = []
-        for district in data.keys():
+        for district in data:
             row = [district_names[district]]
             row.extend(data[district])
             new_rows.append(row)
@@ -721,7 +721,7 @@ class RuptureRateByPPSData(VisiteDeLOperateurDataSource):
         pps_names = {}
         for row in rows:
             if self.months[0] <= row['real_date'] < self.months[-1] + relativedelta(months=1):
-                if row['pps_id'] not in data.keys():
+                if row['pps_id'] not in data:
                     data[row['pps_id']] = ['no data entered'] * len(self.months)
                     pps_names[row['pps_id']] = row['pps_name']
                 for i in range(len(self.months)):
@@ -732,7 +732,7 @@ class RuptureRateByPPSData(VisiteDeLOperateurDataSource):
                         break
 
         new_rows = []
-        for pps in data.keys():
+        for pps in data:
             row = [pps_names[pps]]
             row.extend(data[pps])
             new_rows.append(row)
@@ -798,7 +798,7 @@ class ValuationOfPNAStockPerProductData(VisiteDeLOperateurPerProductDataSource):
         product_names = {}
         for row in rows:
             if self.months[0] <= row['real_date_repeat'] < self.months[-1] + relativedelta(months=1):
-                if row['product_id'] not in data.keys():
+                if row['product_id'] not in data:
                     data[row['product_id']] = [0] * len(self.months)
                     product_names[row['product_id']] = row['product_name']
                 for i in range(len(self.months)):
@@ -808,7 +808,7 @@ class ValuationOfPNAStockPerProductData(VisiteDeLOperateurPerProductDataSource):
                         break
 
         new_rows = []
-        for product_id in data.keys():
+        for product_id in data:
             row = [product_names[product_id]]
             row.extend(['{:.2f}'.format(float(value)) for value in data[product_id]])
             new_rows.append(row)

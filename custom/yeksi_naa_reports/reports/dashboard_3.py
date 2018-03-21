@@ -2,8 +2,8 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from custom.yeksi_naa_reports.filters import LocationFilter, MonthsDateFilter
-from custom.yeksi_naa_reports.reports import MultiReport
-from custom.yeksi_naa_reports.sqldata import *
+from custom.yeksi_naa_reports.sqldata import ValuationOfPNAStockPerProductData
+from custom.yeksi_naa_reports.utils import MultiReport
 from django.utils.functional import cached_property
 
 
