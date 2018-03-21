@@ -132,9 +132,7 @@ class Command(BaseCommand):
                   "\n=============================================================\n")
 
         if options['mail_admins']:
-            message_body = get_deploy_email_message_body(
-                environment=options['environment'], user=options['user'],
-                compare_url=compare_url)
+            message_body = get_deploy_email_message_body(user=options['user'], compare_url=compare_url)
             call_command('mail_admins', message_body, **{'subject': 'Deploy successful', 'html': True})
             if settings.DAILY_DEPLOY_EMAIL:
                 recipient = settings.DAILY_DEPLOY_EMAIL
