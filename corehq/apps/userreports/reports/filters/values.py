@@ -40,6 +40,12 @@ CHOICE_DELIMITER = "\u001f"
 class FilterValue(object):
 
     def __init__(self, filter, value):
+        """
+        args:
+            filter: should be a raw filter spec, the filter dict
+                defined in the ReportConfiguraion
+            value: should be the filter value from the user request
+        """
         self.filter = filter
         self.value = value
 
@@ -411,4 +417,5 @@ class LocationDrilldownFilterValue(FilterValue):
 
 
 def dynamic_choice_list_url(domain, report, filter):
-    return reverse('choice_list_api', args=[domain, report.spec._id, filter['name']])
+    # filter must be an instance of DynamicChoiceListFilter
+    return reverse('choice_list_api', args=[domain, report.spec._id, filter.name])
