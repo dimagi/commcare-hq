@@ -788,7 +788,14 @@ class LocationDrilldownFilterTest(LocationHierarchyTestCase):
         }
         filter_value = LocationDrilldownFilterValue(filter, ['Middlesex'])
         self.assertDictEqual(filter_value.to_sql_values(), {'block_id_drill_0': 'Middlesex'})
-        self.assertEqual(filter_value.to_sql_filter().build_expression(mock_table), 'block_id IN (:Middlesex,)')
+        self.assertEqual(
+            str(filter_value.to_sql_filter().build_expression(mock_table)),
+            'block_id IN (:block_id_drill_0)'
+        )
+        self.assertEqual(
+            filter_value.to_sql_values(),
+            {'block_id_drill_0': 'Middlesex'}
+        )
 
     def test_prefix_ancestor_location(self):
         from sqlalchemy import Column, String
@@ -808,13 +815,13 @@ class LocationDrilldownFilterTest(LocationHierarchyTestCase):
         middlesex_id = self.locations['Middlesex'].location_id
         mass_id = self.locations['Massachusetts'].location_id
         filter_value = LocationDrilldownFilterValue(filter, [middlesex_id])
-        self.assertDictEqual(filter_value.to_sql_values(), {'block_id_drill_0': middlesex_id})
         self.assertEqual(
-            filter_value.to_sql_filter().build_expression(mock_table),
-            'state_id = :{mass_id} AND block_id IN (:{middlesex_id},)'.format(
-                mass_id=mass_id,
-                middlesex_id=middlesex_id
-            )
+            str(filter_value.to_sql_filter().build_expression(mock_table)),
+            'state_id = :state_id AND block_id IN (:block_id_drill_0)'
+        )
+        self.assertEqual(
+            filter_value.to_sql_values(),
+            {'state_id': mass_id, 'block_id_drill_0': middlesex_id}
         )
 
 
