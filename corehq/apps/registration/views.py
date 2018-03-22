@@ -163,11 +163,11 @@ class ProcessRegistrationView(JSONResponseMixin, NewUserNumberAbTestMixin, View)
 
 
             couch_user = CouchUser.get_by_username(reg_form.cleaned_data['email'])
-            in_appcues_ab_test = toggles.APPCUES_AB_TEST.enabled(reg_form.cleaned_data['email'],
-                                                                 toggles.NAMESPACE_USER)
+            appcues_ab_test = toggles.APPCUES_AB_TEST.enabled(reg_form.cleaned_data['email'],
+                                                              toggles.NAMESPACE_USER)
             if couch_user:
                 hubspot_fields = {
-                    "Appcues test": "On" if in_appcues_ab_test else "Off",
+                    "Appcues test": "On" if appcues_ab_test else "Off",
                 }
                 if reg_form.cleaned_data['persona']:
                     hubspot_fields['buyer_persona'] = reg_form.cleaned_data['persona']
@@ -181,7 +181,7 @@ class ProcessRegistrationView(JSONResponseMixin, NewUserNumberAbTestMixin, View)
                     reg_form.cleaned_data.get('is_mobile') and
                     toggles.MOBILE_SIGNUP_REDIRECT_AB_TEST.enabled(
                         reg_form.cleaned_data['email'], toggles.NAMESPACE_USER)),
-                'appcues_ab_test': in_appcues_ab_test,
+                'appcues_ab_test': appcues_ab_test,
             }
         logging.error(
             "There was an error processing a new user registration form."

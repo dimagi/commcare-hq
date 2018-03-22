@@ -54,11 +54,11 @@ hqDefine('registration/js/new_user.ko', function () {
 
             var appcuesEvent = "Assigned user to Appcues test",
                 appcuesData = {
-                'Appcues test': data.appcuesAbTest ? 'On' : 'Off',
+                'Appcues test': data.appcuesAbTest,
             };
 
             _appcues.identify(data.email, appcuesData);
-            _appcues.track.event(appcuesEvent, appcuesData);
+            _appcues.trackEvent(appcuesEvent, appcuesData);
 
             _kissmetrics.identify(data.email);
             _kissmetrics.identifyTraits(appcuesData);
@@ -387,7 +387,7 @@ hqDefine('registration/js/new_user.ko', function () {
                             self.isMobileExperience(response.is_mobile_experience);
                             _private.submitSuccessAnalytics(_.extend({}, submitData, {
                                 email: self.email(),
-                                appcuesAbTest: response.appcues_ab_test ? 'Yes' : 'No',
+                                appcuesAbTest: response.appcues_ab_test ? 'On' : 'Off',
                             }));
                         }
                     },
