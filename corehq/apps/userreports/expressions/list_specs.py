@@ -63,7 +63,7 @@ class MapItemsExpressionSpec(NoPropertyTypeCoercionMixIn, JsonObject):
                                                     map=add_tabbed_text(str(self._map_expression)))
 
 
-class ReduceItemsExpressionSpec(JsonObject):
+class ReduceItemsExpressionSpec(NoPropertyTypeCoercionMixIn, JsonObject):
     type = TypeProperty('reduce_items')
     items_expression = DefaultProperty(required=True)
     aggregation_fn = StringProperty(required=True)

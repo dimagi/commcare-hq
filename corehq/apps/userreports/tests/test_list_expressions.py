@@ -5,6 +5,7 @@ from django.test import SimpleTestCase
 
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
+from corehq.apps.userreports.expressions.utils import COUNT
 from corehq.util.test_utils import generate_cases
 
 
@@ -539,6 +540,14 @@ class NestedExpressionTest(SimpleTestCase):
             self.assertEqual(3, len(result))
             for val in result:
                 self.assertEqual(self.DATE, val)
+
+    def test_reduce_items_with_nested_dates(self):
+        expression = ExpressionFactory.from_spec({
+            "type": "reduce_items",
+            "items_expression": self.ITEMS_EXPRESSION,
+            "aggregation_fn": COUNT,
+        })
+        self.assertEqual(3, expression({}))
 
 
 class ListExpressionTest(SimpleTestCase):
