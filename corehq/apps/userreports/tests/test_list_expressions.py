@@ -574,7 +574,6 @@ class NestedExpressionTest(SimpleTestCase):
             self.assertEqual(self.DATE, val)
 
 
-
 class ListExpressionTest(SimpleTestCase):
     """
     Test filter, map, reduce, sort and flatten together for few expected use cases
