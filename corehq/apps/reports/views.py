@@ -980,7 +980,7 @@ class ScheduledReportsView(BaseProjectReportSectionView):
         owner = report_instance.owner
         owner_domain = report_instance.domain
         current_user = self.request.couch_user
-        return current_user == owner or current_user.is_domain_admin(owner_domain)
+        return current_user.user_id == owner.user_id or current_user.is_domain_admin(owner_domain)
 
     @property
     @memoized
