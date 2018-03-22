@@ -108,8 +108,8 @@ class BaseReportFixturesProvider(FixtureProvider):
         filters_elem = E.filters()
         for ui_filter in defer_filters:
             # @field is maybe a bad name for this attribute,
-            # since it's actually the filter slug
-            filter_elem = E.filter(field=ui_filter.slug)
+            # since it's actually the filter name
+            filter_elem = E.filter(field=ui_filter.name)
             option_values = filter_options_by_field[ui_filter.field]
             choices = ui_filter.choice_provider.get_sorted_choices_for_values(option_values, couch_user)
             for choice in choices:
