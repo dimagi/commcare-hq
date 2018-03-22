@@ -1058,7 +1058,7 @@ class ConfigureNewReportBase(forms.Form):
 
     def _get_view_model(self, filter):
         """
-        Given a ReportFilter, return a FilterViewModel representing
+        Given a filter_spec, return a FilterViewModel representing
         the knockout view model representing this filter in the report builder.
 
         """

@@ -17,7 +17,8 @@ from corehq.apps.userreports.models import (
     ReportConfiguration,
 )
 from corehq.apps.userreports.exceptions import BadSpecError
-from corehq.apps.userreports.reports.factory import ReportFactory, ReportColumnFactory
+from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
+from corehq.apps.userreports.reports.factory import ReportColumnFactory
 from corehq.apps.userreports.reports.specs import FieldColumn, PercentageColumn, AggregateDateColumn
 from corehq.apps.userreports.sql.columns import expand_column
 from corehq.apps.userreports.util import get_indicator_adapter
@@ -183,7 +184,7 @@ class TestExpandedColumn(TestCase):
         )
         report_config.save()
         self.addCleanup(report_config.delete)
-        data_source = ReportFactory.from_spec(report_config)
+        data_source = ConfigurableReportDataSource.from_spec(report_config)
 
         return data_source, data_source.top_level_columns[0]
 

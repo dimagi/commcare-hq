@@ -20,8 +20,8 @@ from corehq.apps.userreports.models import DataSourceConfiguration, ReportConfig
 from corehq.apps.userreports.reports.filters.values import SHOW_ALL_CHOICE, \
     CHOICE_DELIMITER, NumericFilterValue, DateFilterValue, PreFilterValue, LocationDrilldownFilterValue
 from corehq.apps.userreports.reports.filters.factory import ReportFilterFactory
-from corehq.apps.userreports.reports.filters.specs import ReportFilter
-from corehq.apps.userreports.reports.view import ConfigurableReport, query_dict_to_dict
+from corehq.apps.userreports.reports.filters.specs import create_filter_value
+from corehq.apps.userreports.reports.view import ConfigurableReportView, query_dict_to_dict
 from corehq.apps.userreports.tasks import rebuild_indicators
 from corehq.apps.userreports.tests.test_view import ConfigurableReportTestMixin
 from corehq.apps.userreports.util import get_indicator_adapter
@@ -119,8 +119,7 @@ class DateFilterTestCase(SimpleTestCase):
                 "date_range_inclusive": True,
             })
 
-            filter = ReportFilter.wrap(spec)
-            return filter.create_filter_value(reports_core_value).to_sql_values()
+            return create_filter_value(spec, reports_core_value).to_sql_values()
 
         val = get_query_value(compare_as_string=False)
         self.assertEqual(type(val['my_slug_startdate']), datetime)
@@ -252,7 +251,7 @@ class DateFilterDBTest(ConfigurableReportTestMixin, TestCase):
         request = HttpRequest()
         request.method = 'GET'
         request.GET.update(filter_values)
-        view = ConfigurableReport(request=request)
+        view = ConfigurableReportView(request=request)
         view._domain = self.domain
         view._lang = "en"
         view._report_config_id = self.report_config._id
@@ -312,8 +311,7 @@ class QuarterFilterTestCase(SimpleTestCase):
                 "my_slug-quarter": quarter
             })
 
-            filter = ReportFilter.wrap(spec)
-            return filter.create_filter_value(reports_core_value).to_sql_values()
+            return create_filter_value(spec, reports_core_value).to_sql_values()
 
         value = get_query_value(2016, 1)
         self.assertEqual(value['my_slug_startdate'], datetime(2016, 1, 1))
@@ -346,12 +344,12 @@ class NumericFilterTestCase(SimpleTestCase):
         self.assertEqual("Number of Children", filter.label)
 
     def test_numeric_filter_value(self):
-        filter = ReportFilter.wrap({
+        filter = {
             "type": "numeric",
             "field": "number_of_children_field",
             "slug": "number_of_children_slug",
             "display": "Number of Children",
-        })
+        }
         NumericFilterValue(filter, None)
         NumericFilterValue(filter, {'operator': '<', 'operand': 3})
         with self.assertRaises(AssertionError):
@@ -374,13 +372,13 @@ class PreFilterTestCase(SimpleTestCase):
 
     def test_pre_filter_value(self):
         pre_value = 'yes'
-        filter_ = ReportFilter.wrap({
+        filter_ = {
             'type': 'pre',
             'field': 'at_risk_field',
             'slug': 'at_risk_slug',
             'datatype': 'string',
             'pre_value': pre_value
-        })
+        }
         filter_value = PreFilterValue(filter_, {'operand': pre_value})
         self.assertEqual(filter_value.to_sql_values(), {'at_risk_slug': 'yes'})
 
@@ -392,13 +390,13 @@ class PreFilterTestCase(SimpleTestCase):
         table.c = [column]
 
         pre_value = None
-        filter_ = ReportFilter.wrap({
+        filter_ = {
             'type': 'pre',
             'field': 'at_risk_field',
             'slug': 'at_risk_slug',
             'datatype': 'string',
             'pre_value': pre_value
-        })
+        }
         filter_value = PreFilterValue(filter_, {'operand': pre_value})
         self.assertEqual(filter_value.to_sql_values(), {})
         self.assertEqual(filter_value.to_sql_filter().build_expression(table), 'foo')
@@ -411,13 +409,13 @@ class PreFilterTestCase(SimpleTestCase):
         table.c = [column]
 
         pre_value = ['yes', 'maybe']
-        filter_ = ReportFilter.wrap({
+        filter_ = {
             'type': 'pre',
             'field': 'at_risk_field',
             'slug': 'at_risk_slug',
             'datatype': 'array',
             'pre_value': pre_value
-        })
+        }
         filter_value = PreFilterValue(filter_, {'operand': pre_value})
         self.assertEqual(filter_value.to_sql_values(), {'at_risk_slug_0': 'yes', 'at_risk_slug_1': 'maybe'})
         self.assertEqual(filter_value.to_sql_filter().build_expression(table), 'foo')
@@ -437,14 +435,14 @@ class PreFilterTestCase(SimpleTestCase):
 
     def test_pre_filter_invalid_operator(self):
         value = {'operator': 'in', 'operand': 'no'}  # "in" is invalid for scalar operand
-        filter_ = ReportFilter.wrap({
+        filter_ = {
             'type': 'pre',
             'field': 'at_risk_field',
             'slug': 'at_risk_slug',
             'datatype': 'string',
             'pre_value': value['operand'],
             'pre_operator': value['operator'],
-        })
+        }
         filter_value = PreFilterValue(filter_, value)
         with self.assertRaises(TypeError):
             filter_value.to_sql_filter()
@@ -457,14 +455,14 @@ class PreFilterTestCase(SimpleTestCase):
         table.c = [column]
 
         value = {'operator': 'between', 'operand': ['2017-03-13', '2017-04-11']}
-        filter_ = ReportFilter.wrap({
+        filter_ = {
             'type': 'pre',
             'field': 'dob_field',
             'slug': 'dob_slug',
             'datatype': 'date',
             'pre_value': value['operand'],
             'pre_operator': value['operator'],
-        })
+        }
         filter_value = PreFilterValue(filter_, value)
         self.assertEqual(filter_value.to_sql_values(), {'dob_slug_0': '2017-03-13', 'dob_slug_1': '2017-04-11'})
         self.assertEqual(filter_value.to_sql_filter().build_expression(table), 'foo')
@@ -477,14 +475,14 @@ class PreFilterTestCase(SimpleTestCase):
         table.c = [column]
 
         value = {'operator': 'distinct from', 'operand': 'test'}
-        filter_ = ReportFilter.wrap({
+        filter_ = {
             'type': 'pre',
             'field': 'at_risk_field',
             'slug': 'at_risk_slug',
             'datatype': 'string',
             'pre_value': value['operand'],
             'pre_operator': value['operator'],
-        })
+        }
         filter_value = PreFilterValue(filter_, value)
         self.assertEqual(filter_value.to_sql_values(), {'at_risk_slug': 'test'})
         self.assertEqual(filter_value.to_sql_filter().build_expression(table), 'foo')
@@ -501,14 +499,14 @@ class PreFilterTestCase(SimpleTestCase):
         start_date, end_date = get_daterange_start_end_dates('lastmonth')
 
         value = {'operator': 'lastmonth', 'operand': [None]}
-        filter_ = ReportFilter.wrap({
+        filter_ = {
             'type': 'pre',
             'field': 'dob_field',
             'slug': 'dob_slug',
             'datatype': 'array',
             'pre_value': value['operand'],
             'pre_operator': value['operator'],
-        })
+        }
         filter_value = PreFilterValue(filter_, value)
         self.assertEqual(filter_value.to_sql_values(), {
             'dob_slug_0': str(start_date),
@@ -682,18 +680,18 @@ class DynamicChoiceListFilterTestCase(SimpleTestCase):
 
 class DateFilterOffsetTest(SimpleTestCase):
     def _computed_dates(self, actual_startdate, actual_enddate):
-        filter = ReportFilter(
-            compare_as_string=False,
-            field='submission_date',
-            slug='submitted_on',
-            type='date',
-            required=False
-        )
+        filter = {
+            'compare_as_string': False,
+            'field': 'submission_date',
+            'slug': 'submitted_on',
+            'type': 'date',
+            'required': False
+        }
         value = DateSpan(actual_startdate, actual_enddate)
         filter_value = DateFilterValue(filter, value)
         computed_values = filter_value.to_sql_values()
-        startdate = computed_values['%s_startdate' % filter.slug]
-        enddate = computed_values['%s_enddate' % filter.slug]
+        startdate = computed_values['%s_startdate' % filter['slug']]
+        enddate = computed_values['%s_enddate' % filter['slug']]
         return startdate, enddate
 
     def test_date_objects(self):
@@ -782,12 +780,12 @@ class LocationDrilldownFilterTest(LocationHierarchyTestCase):
         mock_table = Mock()
         mock_table.c = [Column(f, type_=String) for f in ['block_id', 'state_id']]
 
-        filter = ReportFilter.wrap({
+        filter = {
             "type": "location_drilldown",
             "field": "block_id",
             "slug": "block_id_drill",
             "display": "Drilldown by Location",
-        })
+        }
         filter_value = LocationDrilldownFilterValue(filter, ['Middlesex'])
         self.assertDictEqual(filter_value.to_sql_values(), {'block_id_drill_0': 'Middlesex'})
         self.assertEqual(filter_value.to_sql_filter().build_expression(mock_table), 'block_id IN (:Middlesex,)')
@@ -797,7 +795,7 @@ class LocationDrilldownFilterTest(LocationHierarchyTestCase):
         mock_table = Mock()
         mock_table.c = [Column(f, type_=String) for f in ['block_id', 'state_id']]
 
-        filter = ReportFilter.wrap({
+        filter = {
             "type": "location_drilldown",
             "field": "block_id",
             "slug": "block_id_drill",
@@ -806,12 +804,17 @@ class LocationDrilldownFilterTest(LocationHierarchyTestCase):
                 'field': 'state_id',
                 'location_type': 'state',
             }
-        })
-        filter_value = LocationDrilldownFilterValue(filter, ['Middlesex'])
-        self.assertDictEqual(filter_value.to_sql_values(), {'block_id_drill_0': 'Middlesex'})
+        }
+        middlesex_id = self.locations['Middlesex'].location_id
+        mass_id = self.locations['Massachusetts'].location_id
+        filter_value = LocationDrilldownFilterValue(filter, [middlesex_id])
+        self.assertDictEqual(filter_value.to_sql_values(), {'block_id_drill_0': middlesex_id})
         self.assertEqual(
             filter_value.to_sql_filter().build_expression(mock_table),
-            'state_id = :Massachusetts AND block_id IN (:Middlesex,)'
+            'state_id = :{mass_id} AND block_id IN (:{middlesex_id},)'.format(
+                mass_id=mass_id,
+                middlesex_id=middlesex_id
+            )
         )
 
 

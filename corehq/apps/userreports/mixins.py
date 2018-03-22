@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 from collections import OrderedDict
 
 from corehq.apps.userreports.models import DataSourceConfiguration, get_datasource_config
+from corehq.apps.userreports.reports.filters.specs import create_filter_value
 from corehq.apps.userreports.reports.specs import ReportColumn, ExpressionColumn
 from corehq.apps.userreports.util import get_table_name
 import six
@@ -20,9 +21,9 @@ class ConfigurableReportDataSourceMixin(object):
             self._config = None
             self._config_id = config_or_config_id
 
-        self._filters = {f.slug: f for f in filters}
+        self._filters = {f['slug']: f for f in filters}
         self._filter_values = {}
-        self._deferred_filters = {}
+        self._defer_fields = {}
         self._order_by = order_by
         self._aggregation_columns = aggregation_columns
         self._column_configs = OrderedDict()
@@ -37,8 +38,8 @@ class ConfigurableReportDataSourceMixin(object):
     @property
     def aggregation_columns(self):
         return self._aggregation_columns + [
-            deferred_filter.field for deferred_filter in self._deferred_filters.values()
-            if deferred_filter.field not in self._aggregation_columns]
+            deferred_filter for deferred_filter in self._defer_fields
+            if deferred_filter not in self._aggregation_columns]
 
     @property
     def config(self):
@@ -80,11 +81,11 @@ class ConfigurableReportDataSourceMixin(object):
 
     def set_filter_values(self, filter_values):
         for filter_slug, value in filter_values.items():
-            self._filter_values[filter_slug] = self._filters[filter_slug].create_filter_value(value)
+            raw_filter_spec = self._filters[filter_slug]
+            self._filter_values[filter_slug] = create_filter_value(raw_filter_spec, value)
 
-    def defer_filters(self, filter_slugs):
-        self._deferred_filters.update({
-            filter_slug: self._filters[filter_slug] for filter_slug in filter_slugs})
+    def set_defer_fields(self, defer_fields):
+        self._defer_fields = defer_fields
 
     def set_order_by(self, columns):
         self._order_by = columns

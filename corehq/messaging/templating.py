@@ -34,6 +34,15 @@ def _get_mobile_user_template_info(user):
     }
 
 
+def _get_system_user_template_info():
+    return {
+        'name': 'System',
+        'first_name': 'System',
+        'last_name': '',
+        'phone_number': '',
+    }
+
+
 def _get_group_template_info(group):
     return {
         'name': group.name,
@@ -207,6 +216,10 @@ class CaseMessagingTemplateParam(SimpleDictTemplateParam):
         so we cache the result using a private attribute.
         """
         if self.__last_modified_by_result:
+            return self.__last_modified_by_result
+
+        if self.__case.modified_by == 'system':
+            self.__last_modified_by_result = SimpleDictTemplateParam(_get_system_user_template_info())
             return self.__last_modified_by_result
 
         try:

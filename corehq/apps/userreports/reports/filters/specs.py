@@ -1,5 +1,9 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
+from django.conf import settings
+from django.utils.module_loading import import_string
+
 from dimagi.ext.jsonobject import (
     BooleanProperty,
     IntegerProperty,
@@ -21,19 +25,7 @@ from corehq.apps.userreports.reports.filters.values import (
 from corehq.apps.userreports.specs import TypeProperty
 
 
-class ReportFilter(JsonObject):
-    """
-    This is a spec class that is just used for validation on a ReportConfiguration object.
-
-    These get converted to FilterSpecs (below) by the FilterFactory.
-    """
-    # todo: this class is silly and can likely be removed.
-    type = StringProperty(required=True)
-    slug = StringProperty(required=True)
-    field = StringProperty(required=True)
-    display = DefaultProperty()
-    compare_as_string = BooleanProperty(default=False)
-
+def create_filter_value(raw_filter_spec, value):
     _class_map = {
         'quarter': QuarterFilterValue,
         'date': DateFilterValue,
@@ -44,9 +36,11 @@ class ReportFilter(JsonObject):
         'multi_field_dynamic_choice_list': MultiFieldChoiceListFilterValue,
         'location_drilldown': LocationDrilldownFilterValue,
     }
+    for type_name, path_to_class in settings.CUSTOM_UCR_REPORT_FILTER_VALUES:
+        _class_map[type_name] = import_string(path_to_class)
 
-    def create_filter_value(self, value):
-        return self._class_map[self.type](self, value)
+    filter_value = _class_map[raw_filter_spec['type']]
+    return filter_value(raw_filter_spec, value)
 
 
 class FilterChoice(JsonObject):

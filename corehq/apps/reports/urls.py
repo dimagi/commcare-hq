@@ -7,7 +7,7 @@ from django.core.exceptions import ImproperlyConfigured
 
 from corehq.apps.reports.standard.forms.reports import ReprocessXFormErrorView
 from corehq.apps.userreports.reports.view import (
-    ConfigurableReport,
+    ConfigurableReportView,
     CustomConfigurableReportDispatcher,
 )
 from corehq.apps.userreports.views import (
@@ -78,7 +78,7 @@ custom_report_urls = [
 ]
 
 urlpatterns = [
-    ConfigurableReport.url_pattern(),
+    ConfigurableReportView.url_pattern(),
     CustomConfigurableReportDispatcher.url_pattern(),
 
     # Report Builder
