@@ -5,7 +5,6 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import time
-import traceback
 from collections import defaultdict
 from contextlib import contextmanager
 
@@ -193,8 +192,7 @@ for _make_method, name in [
 
 
 def _report_diff(cqs, obj1, obj2, context=""):
-    trace = "" if settings.UNIT_TESTING else "".join(traceback.format_stack())
-    message = """ComparedQuerySet difference:\n{trace}
+    message = """ComparedQuerySet difference:
     MPTT query: {cqs._mptt_set.query}
 
     CTE query: {cqs._cte_set.query}
