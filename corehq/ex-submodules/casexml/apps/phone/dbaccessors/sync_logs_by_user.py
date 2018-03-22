@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from datetime import date
 from casexml.apps.phone.exceptions import CouldNotRetrieveSyncLogIds
 from casexml.apps.phone.models import SyncLog, SyncLogSQL, properly_wrap_sync_log

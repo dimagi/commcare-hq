@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from decimal import Decimal
 import logging
 from django.db.models.signals import pre_save, post_save, post_delete

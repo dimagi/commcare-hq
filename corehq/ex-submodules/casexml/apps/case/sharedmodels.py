@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import mimetypes
 
 from corehq.form_processor.abstract_models import CaseAttachmentMixin
@@ -48,12 +49,12 @@ class CommCareCaseIndex(LooselyEqualDocumentSchema, UnicodeMixIn):
 
     def __unicode__(self):
         return (
-            u"CommCareCaseIndex("
-            u"identifier='{index.identifier}', "
-            u"referenced_type='{index.referenced_type}', "
-            u"referenced_id='{index.referenced_id}', "
-            u"relationship='{index.relationship}'"
-            u")"
+            "CommCareCaseIndex("
+            "identifier='{index.identifier}', "
+            "referenced_type='{index.referenced_type}', "
+            "referenced_id='{index.referenced_id}', "
+            "relationship='{index.relationship}'"
+            ")"
         ).format(index=self)
 
     def __cmp__(self, other):

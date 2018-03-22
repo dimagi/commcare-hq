@@ -3,6 +3,7 @@ This isn't really a parser, but it's the code that generates case-like
 objects from things from xforms.
 """
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import os
 import datetime
 
