@@ -47,7 +47,7 @@ class FilterItemsExpressionSpec(NoPropertyTypeCoercionMixIn, JsonObject):
 class MapItemsExpressionSpec(JsonObject):
     type = TypeProperty('map_items')
     items_expression = DefaultProperty(required=True)
-    map_expression = DictProperty(required=True)
+    map_expression = DefaultProperty(required=True)
 
     def configure(self, items_expression, map_expression):
         self._items_expression = items_expression
