@@ -19,9 +19,9 @@ from django.contrib.auth.models import User
 from django.contrib.auth.views import logout as django_logout
 from django.core import cache
 from django.core.mail.message import EmailMessage
-from django.http import HttpResponseRedirect, HttpResponse, Http404,\
-    HttpResponseServerError, HttpResponseNotFound, HttpResponseBadRequest,\
-    HttpResponseForbidden
+from django.http import HttpResponseRedirect, HttpResponse, Http404, \
+    HttpResponseServerError, HttpResponseNotFound, HttpResponseBadRequest, \
+    HttpResponseForbidden, HttpResponsePermanentRedirect
 from django.shortcuts import redirect, render
 from django.template import loader
 from django.template.loader import render_to_string
@@ -151,13 +151,8 @@ def redirect_to_default(req, domain=None):
         if domain != None:
             url = reverse('domain_login', args=[domain])
         else:
-            if settings.ENABLE_PRELOGIN_SITE:
-                try:
-                    from corehq.apps.prelogin.views import HomePublicView
-                    url = reverse(HomePublicView.urlname)
-                except ImportError:
-                    # this happens when the prelogin app is not included.
-                    url = reverse('login')
+            if settings.SERVER_ENVIRONMENT == 'production':
+                url = "https://www.dimagi.com/commcare/"
             else:
                 url = reverse('login')
     elif domain and _two_factor_needed(domain, req):
@@ -1276,3 +1271,28 @@ class HQJSONResponseMixin(JSONResponseMixin):
         from djangular.templatetags.djangular_tags import djng_current_rmi
         context['djng_current_rmi'] = json.loads(djng_current_rmi(context))
         return context
+
+
+def redirect_to_dimagi(endpoint):
+    def _redirect(request, lang_code=None):
+        if settings.SERVER_ENVIRONMENT in [
+            'production',
+            'softlayer',
+            'staging',
+            'changeme',
+            'localdev',
+        ]:
+            return HttpResponsePermanentRedirect(
+                "https://www.dimagi.com/{}{}".format(
+                    endpoint,
+                    "?lang={}".format(lang_code) if lang_code else "",
+                )
+            )
+        return redirect_to_default(request)
+    return _redirect
+
+
+def temporary_google_verify(request):
+    # will remove once google search console verify process completes
+    # BMB 4/20/18
+    return render(request, "google9633af922b8b0064.html")

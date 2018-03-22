@@ -99,11 +99,13 @@ class TestCloneDomain(TestCase):
                 # exclude here instead of at end (on union queryset) because
                 # django discards filters on union queries?? (django bug?)
                 .exclude(domain=domain)
+                .values("name")
                 .order_by()  # discard ORDER BY
                 .union(
                     SQLLocation.objects
                     .get_queryset_descendants(locs_in_domain)
                     .exclude(domain=domain)  # exclude here instead of at end...
+                    .values("name")
                     .order_by(),  # discard ORDER BY
                     all=True,
                 )
