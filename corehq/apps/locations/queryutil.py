@@ -48,9 +48,9 @@ class ComparedQuerySet(object):
                     return
                 with self._timing("cte"):
                     items2 = list(self._cte_set)
-                ids1 = {_identify(it) for it in items1}
-                ids2 = {_identify(it) for it in items2}
-                if (finished and ids1 != ids2) or not ids1.issubset(ids2):
+                ids1 = [_identify(it) for it in items1]
+                ids2 = [_identify(it) for it in items2]
+                if (finished and ids1 != ids2) or not ids1 == ids2[:len(ids1)]:
                     _report_diff(self, ids1, ids2, "" if finished else "incomplete iteration")
                 if finished:
                     self.__len__()  # compares lengths -> reports diff if necessary
@@ -63,8 +63,8 @@ class ComparedQuerySet(object):
                 with self._timing("cte"):
                     len2 = len(self._cte_set)
         if self._cte_set is not None and len1 != len2:
-            ids1 = {_identify(it) for it in self._mptt_set}
-            ids2 = {_identify(it) for it in self._cte_set}
+            ids1 = [_identify(it) for it in self._mptt_set]
+            ids2 = [_identify(it) for it in self._cte_set]
             _report_diff(self, ids1, ids2, "%s != %s" % (len1, len2))
         return len1
 

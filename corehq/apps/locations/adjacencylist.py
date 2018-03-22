@@ -185,7 +185,8 @@ class AdjListManager(TreeManager):
             # The seq scan on the locations table took ~1 minute; EXISTS -> 3ms.
             .annotate(_cte_exists=Exists(cte.queryset().filter(id=OuterRef("id"))))
             .filter(_cte_exists=True)
-            .order_by(cte.col._cte_ordering)
+            # TODO uncomment when removing MPTT
+            #.order_by(cte.col._cte_ordering)
         )
         for item in ctes:
             query = query.with_cte(item)
