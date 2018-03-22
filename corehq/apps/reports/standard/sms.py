@@ -1626,8 +1626,8 @@ class ScheduleInstanceReport(ProjectReport, ProjectReportParametersMixin, Generi
             ]]
 
         return [
-             self.get_schedule_instance_display(schedule_instance)
-             for schedule_instance in self.get_current_page_records()
+            self.get_schedule_instance_display(schedule_instance)
+            for schedule_instance in self.get_current_page_records()
         ]
 
     @classmethod

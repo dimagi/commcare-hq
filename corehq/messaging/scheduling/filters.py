@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from corehq.apps.reports.filters.base import BaseReportFilter
 from django.utils.translation import ugettext_lazy
@@ -12,7 +13,7 @@ class ScheduleInstanceFilter(BaseReportFilter):
     TYPE_CONDITIONAL_ALERT = 'conditional_alert'
 
     SHOW_ALL_EVENTS = 'all'
-    SHOW_EVENTS_AFTER_DATE ='only_after'
+    SHOW_EVENTS_AFTER_DATE = 'only_after'
 
     @property
     def filter_context(self):
