@@ -57,10 +57,10 @@ hqDefine('registration/js/new_user.ko', function () {
                 'Appcues test': data.appcuesAbTest ? 'On' : 'Off',
             };
 
-            _appcues.identify(self.email(), appcuesData);
+            _appcues.identify(data.email, appcuesData);
             _appcues.track.event(appcuesEvent, appcuesData);
 
-            _kissmetrics.identify(self.email());
+            _kissmetrics.identify(data.email);
             _kissmetrics.identifyTraits(appcuesData);
             _kissmetrics.track.event(appcuesEvent, appcuesData);
         };
@@ -386,7 +386,8 @@ hqDefine('registration/js/new_user.ko', function () {
                             self.isSubmitSuccess(true);
                             self.isMobileExperience(response.is_mobile_experience);
                             _private.submitSuccessAnalytics(_.extend({}, submitData, {
-                                data.appcuesAbTest: response.appcues_ab_test ? 'Yes' : 'No',
+                                email: self.email(),
+                                appcuesAbTest: response.appcues_ab_test ? 'Yes' : 'No',
                             }));
                         }
                     },
