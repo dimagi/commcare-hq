@@ -59,7 +59,7 @@ from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import CommCareCaseSQL
 from corehq.form_processor.utils import is_commcarecase
-from corehq.messaging.scheduling.filters import MessageConfigurationFilter
+from corehq.messaging.scheduling.filters import ScheduleInstanceFilter
 from corehq.messaging.scheduling.models import ScheduledBroadcast, ImmediateBroadcast
 from corehq.messaging.scheduling.views import EditScheduleView, EditConditionalAlertView
 from corehq.messaging.scheduling.scheduling_partitioned.models import (
@@ -1384,7 +1384,7 @@ class ScheduleInstanceReport(ProjectReport, ProjectReportParametersMixin, Generi
     name = ugettext_lazy('Scheduled Messaging Events')
     slug = 'scheduled_messaging_events'
     fields = [
-        MessageConfigurationFilter,
+        ScheduleInstanceFilter,
     ]
     ajax_pagination = True
     sortable = False
@@ -1440,7 +1440,7 @@ class ScheduleInstanceReport(ProjectReport, ProjectReportParametersMixin, Generi
 
     @cached_property
     def configuration_filter_value(self):
-        return MessageConfigurationFilter.get_value(self.request, self.domain)
+        return ScheduleInstanceFilter.get_value(self.request, self.domain)
 
     @cached_property
     def configuration_type(self):
@@ -1460,7 +1460,7 @@ class ScheduleInstanceReport(ProjectReport, ProjectReportParametersMixin, Generi
 
     @cached_property
     def next_event_due_after_timestamp(self):
-        if self.date_selector_type != MessageConfigurationFilter.SHOW_EVENTS_AFTER_DATE:
+        if self.date_selector_type != ScheduleInstanceFilter.SHOW_EVENTS_AFTER_DATE:
             return None
 
         try:
@@ -1563,7 +1563,7 @@ class ScheduleInstanceReport(ProjectReport, ProjectReportParametersMixin, Generi
             return _("(unknown)")
 
     def get_querysets(self):
-        if self.configuration_type == MessageConfigurationFilter.TYPE_CONDITIONAL_ALERT:
+        if self.configuration_type == ScheduleInstanceFilter.TYPE_CONDITIONAL_ALERT:
             classes = (CaseAlertScheduleInstance, CaseTimedScheduleInstance)
         else:
             classes = (AlertScheduleInstance, TimedScheduleInstance)
@@ -1578,7 +1578,7 @@ class ScheduleInstanceReport(ProjectReport, ProjectReportParametersMixin, Generi
                 if self.next_event_due_after_timestamp:
                     qs = qs.filter(next_event_due__gte=self.next_event_due_after_timestamp)
 
-                if self.configuration_type == MessageConfigurationFilter.TYPE_CONDITIONAL_ALERT:
+                if self.configuration_type == ScheduleInstanceFilter.TYPE_CONDITIONAL_ALERT:
                     if self.rule_id:
                         qs = qs.filter(rule_id=self.rule_id)
 

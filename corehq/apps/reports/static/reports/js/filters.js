@@ -39,7 +39,7 @@ hqDefine("reports/js/filters", [
             }
         });
     };
-    var MessageConfigurationTypeFilterViewModel = function(initial, conditionalAlertChoices) {
+    var ScheduleInstanceFilterViewModel = function(initial, conditionalAlertChoices) {
         var self = this;
         var all = [{'id': '', 'name': gettext('All')}];
         self.date_selector_type = ko.observable(initial.date_selector_type);
@@ -220,7 +220,7 @@ hqDefine("reports/js/filters", [
         $(".report-filter-message-type-configuration").each(function (i, el) {
             var $el = $(el),
                 data = $el.data();
-            var model = new MessageConfigurationTypeFilterViewModel(data.initialValue, data.conditionalAlertChoices);
+            var model = new ScheduleInstanceFilterViewModel(data.initialValue, data.conditionalAlertChoices);
             $el.koApplyBindings(model);
 
             $('[name=rule_id]').each(function(i, el) {

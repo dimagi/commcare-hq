@@ -3,10 +3,10 @@ from corehq.apps.reports.filters.base import BaseReportFilter
 from django.utils.translation import ugettext_lazy
 
 
-class MessageConfigurationFilter(BaseReportFilter):
-    label = ugettext_lazy("Messaging Configuration")
-    slug = 'messaging_configuration_filter'
-    template = 'scheduling/configuration_filter.html'
+class ScheduleInstanceFilter(BaseReportFilter):
+    label = ugettext_lazy("")
+    slug = 'schedule_instance_filter'
+    template = 'scheduling/schedule_instance_filter.html'
 
     TYPE_BROADCAST = 'broadcast'
     TYPE_CONDITIONAL_ALERT = 'conditional_alert'
