@@ -36,4 +36,6 @@ class MessageConfigurationFilter(BaseReportFilter):
             'next_event_due_after': request.GET.get('next_event_due_after'),
             'configuration_type': request.GET.get('configuration_type'),
             'rule_id': request.GET.get('rule_id'),
+            'active': request.GET.get('active'),
+            'case_id': request.GET.get('case_id'),
         }

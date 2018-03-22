@@ -45,4 +45,10 @@
             </select>
         </div>
     </div>
+    <div>
+        {# These inputs are only used for debugging. We enable them below only if they have a value #}
+        {# so that they don't show up in the URL for normal requests and cause confusion. #}
+        <input type="hidden" name="active" data-bind="value: active, enable: active()" />
+        <input type="hidden" name="case_id" data-bind="value: case_id, enable: case_id()" />
+    </div>
 </div>

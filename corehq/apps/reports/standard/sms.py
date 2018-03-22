@@ -1410,6 +1410,35 @@ class ScheduleInstanceReport(ProjectReport, ProjectReportParametersMixin, Generi
         return sum(qs.count() for qs in self.get_querysets())
 
     @cached_property
+    def show_active_instances(self):
+        """
+        The `active` parameter is only used for debugging.
+
+        To use it, just pass active=false into the URL and the report will then only show
+        inactive schedule instances.
+
+        This shouldn't be made part of the user-facing filters because an inactive schedule
+        instance might show a next event due timestamp that looks confusing. For example,
+        for a one-time reminder that sends today at 9am, after it sends it will show as inactive and
+        have a next event due timestamp for tomorrow at 9am because it has moved past the last event
+        in the schedule and that's what deactivated it. That's normal behavior but would look
+        confusing to a user.
+
+        This can be a useful tool for developers when debugging.
+        """
+        return (self.configuration_filter_value['active'] or '').lower() != 'false'
+
+    @cached_property
+    def case_id(self):
+        """
+        The `case_id` parameter is only used for debugging.
+
+        To use it, just pass case_id=... into the URL and the report will then only show
+        case schedule instances that were triggered for that case.
+        """
+        return self.configuration_filter_value.get('case_id')
+
+    @cached_property
     def configuration_filter_value(self):
         return MessageConfigurationFilter.get_value(self.request, self.domain)
 
@@ -1543,17 +1572,18 @@ class ScheduleInstanceReport(ProjectReport, ProjectReportParametersMixin, Generi
             for cls in classes:
                 qs = cls.objects.using(db_alias).filter(
                     domain=self.domain,
-                    active=True,
+                    active=self.show_active_instances,
                 ).order_by('next_event_due', 'schedule_instance_id')
 
                 if self.next_event_due_after_timestamp:
                     qs = qs.filter(next_event_due__gte=self.next_event_due_after_timestamp)
 
-                if (
-                    self.configuration_type == MessageConfigurationFilter.TYPE_CONDITIONAL_ALERT and
-                    self.rule_id
-                ):
-                    qs = qs.filter(rule_id=self.rule_id)
+                if self.configuration_type == MessageConfigurationFilter.TYPE_CONDITIONAL_ALERT:
+                    if self.rule_id:
+                        qs = qs.filter(rule_id=self.rule_id)
+
+                    if self.case_id:
+                        qs = qs.filter(case_id=self.case_id)
 
                 yield qs
 
@@ -1609,9 +1639,17 @@ class ScheduleInstanceReport(ProjectReport, ProjectReportParametersMixin, Generi
 
     @property
     def shared_pagination_GET_params(self):
-        return [
+        result = [
             {'name': 'date_selector_type', 'value': self.date_selector_type},
             {'name': 'next_event_due_after', 'value': self.next_event_due_after},
             {'name': 'configuration_type', 'value': self.configuration_type},
             {'name': 'rule_id', 'value': self.rule_id},
         ]
+
+        if not self.show_active_instances:
+            result.append({'name': 'active', 'value': 'false'})
+
+        if self.case_id:
+            result.append({'name': 'case_id', 'value': self.case_id})
+
+        return result

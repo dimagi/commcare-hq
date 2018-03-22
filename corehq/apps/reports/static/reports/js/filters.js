@@ -47,6 +47,8 @@ hqDefine("reports/js/filters", [
         self.configuration_type = ko.observable(initial.configuration_type);
         self.rule_id = ko.observable(initial.rule_id);
         self.conditional_alert_choices = ko.observableArray(all.concat(conditionalAlertChoices));
+        self.active = ko.observable(initial.active);
+        self.case_id = ko.observable(initial.case_id);
 
         $(function() {
             $('#id_next_event_due_after').daterangepicker(
