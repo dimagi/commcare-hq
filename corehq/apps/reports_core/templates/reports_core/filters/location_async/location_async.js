@@ -9,7 +9,8 @@
       var hierarchy = {{ context_.hierarchy|JSON }};
 
       var show_location_filter = {% if not context_.loc_id %}'n'{% else %}'y'{% endif%};
-      var model = new hqImport('locations/js/location_drilldown').LocationSelectViewModel({
+      var locationDrilldown = hqImport('locations/js/location_drilldown')
+      var model = new locationDrilldown.LocationSelectViewModel({
         "hierarchy": hierarchy,
         "auto_drill": false,
         "loc_url": loc_url,
