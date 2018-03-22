@@ -277,16 +277,25 @@ def server_up(req):
 
     failed = False
     message = ['Problems with HQ (%s):' % os.uname()[1]]
-    for check, check_info in checkers.items():
-        if check_info['always_check'] or req.GET.get(check, None) is not None:
-            try:
-                status = check_info['check_func']()
-            except Exception:
-                # Don't display the exception message
-                status = checks.ServiceStatus(False, "{} has issues".format(check))
-            if not status.success:
-                failed = True
-                message.append(status.msg)
+    only = req.GET.get('only', None)
+    if only and only in checkers:
+        checks_to_do = [(only, checkers[only])]
+    else:
+        checks_to_do = [
+            (check, check_info)
+            for check, check_info in checkers.items()
+            if check_info['always_check'] or req.GET.get(check, None) is not None
+        ]
+
+    for check, check_info in checks_to_do:
+        try:
+            status = check_info['check_func']()
+        except Exception:
+            # Don't display the exception message
+            status = checks.ServiceStatus(False, "{} has issues".format(check))
+        if not status.success:
+            failed = True
+            message.append(status.msg)
 
     if failed and not is_deploy_in_progress():
         create_datadog_event(
