@@ -107,7 +107,7 @@ class FlattenExpressionSpec(NoPropertyTypeCoercionMixIn, JsonObject):
         return "flatten:\n{items}\n".format(items=add_tabbed_text(str(self._items_expression)))
 
 
-class SortItemsExpressionSpec(JsonObject):
+class SortItemsExpressionSpec(NoPropertyTypeCoercionMixIn, JsonObject):
     ASC, DESC = "ASC", "DESC"
     type = TypeProperty('sort_items')
     items_expression = DefaultProperty(required=True)

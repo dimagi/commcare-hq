@@ -1,6 +1,8 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import datetime
+from copy import copy
+
 from django.test import SimpleTestCase
 
 from corehq.apps.userreports.exceptions import BadSpecError
@@ -557,6 +559,20 @@ class NestedExpressionTest(SimpleTestCase):
         # in this case the expression fails and defaults to an empty list because the inner dates aren't iterable
         # this is fine as the bug was actually in the generation of the expression from the factory
         self.assertEqual([], expression({}))
+
+    def test_sort_items_with_nested_dates(self):
+        items_expression = copy(self.ITEMS_EXPRESSION)
+        items_expression['expressions'] = items_expression['expressions'][:2]
+        expression = ExpressionFactory.from_spec({
+            "type": "sort_items",
+            "items_expression": items_expression,
+            "sort_expression": {'type': 'identity'}
+        })
+        result = expression({})
+        self.assertEqual(2, len(result))
+        for val in result:
+            self.assertEqual(self.DATE, val)
+
 
 
 class ListExpressionTest(SimpleTestCase):
