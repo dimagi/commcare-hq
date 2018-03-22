@@ -10,8 +10,8 @@ from six.moves import zip
 
 from casexml.apps.case.xform import extract_case_blocks
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.motech.openmrs.finders import PatientFinder
 from corehq.motech.openmrs.logger import logger
-from corehq.motech.openmrs.openmrs_config import IdMatcher
 from corehq.motech.utils import pformat_json
 
 
@@ -292,16 +292,34 @@ def get_subresource_instances(requests, person_uuid, subresource):
     )).json()['results']
 
 
-def get_patient(requests, info, openmrs_config):
+def find_patient(requests, domain, case_id, openmrs_config):
+    case = CaseAccessors(domain).get_case(case_id)
+    patient_finder = PatientFinder.wrap(openmrs_config.case_config.patient_finder)
+    patients = patient_finder.find_patients(requests, case, openmrs_config.case_config)
+    # If PatientFinder can't narrow down the number of candidate
+    # patients, don't guess. Just admit that we don't know.
+    return patients[0] if len(patients) == 1 else None
+
+
+def get_patient(requests, domain, info, openmrs_config):
     patient = None
-    for id_matcher in openmrs_config.case_config.id_matchers:
-        assert isinstance(id_matcher, IdMatcher)
-        if id_matcher.case_property in info.extra_fields:
-            patient = get_patient_by_id(
-                requests, id_matcher.identifier_type_id,
-                info.extra_fields[id_matcher.case_property])
-            if patient:
-                break
+    for id_ in openmrs_config.case_config.match_on_ids:
+        identifier = openmrs_config.case_config.patient_identifiers[id_]
+        # identifier.case_property must be in info.extra_fields because OpenmrsRepeater put it there
+        assert identifier.case_property in info.extra_fields, 'identifier case_property missing from extra_fields'
+        patient = get_patient_by_id(requests, id_, info.extra_fields[identifier.case_property])
+        if patient:
+            break
+    else:
+        # Definitive IDs did not match a patient in OpenMRS.
+        if openmrs_config.case_config.patient_finder:
+            # Search for patients based on other case properties
+            logger.debug(
+                'Case %s did not match patient with OpenmrsCaseConfig.match_on_ids. Search using '
+                'PatientFinder "%s"', info.case_id, openmrs_config.case_config.patient_finder['doc_type'],
+            )
+            patient = find_patient(requests, domain, info.case_id, openmrs_config)
+
     return patient
 
 
@@ -325,13 +343,31 @@ class PatientSearchParser(object):
         self.response_json = response_json
 
     def get_patient_matching_identifiers(self, patient_identifier_type, patient_identifier):
-        patients = [
-            patient
-            for patient in self.response_json['results']
-            for identifier in patient['identifiers']
-            if identifier['identifier'] == patient_identifier and
-            identifier['identifierType']['uuid'] == patient_identifier_type
-        ]
+        """
+        Return the patient that matches the given identifier. If the
+        number of matches is zero or more than one, return None.
+
+        :param patient_identifier_type: PERSON_UUID_IDENTIFIER_TYPE_ID
+            to match the patient's OpenMRS Person UUID, otherwise the
+            UUID of the OpenMRS identifier type
+        :param patient_identifier: The value that uniquely identifies
+            the patient we want.
+
+        """
+        patients = []
+        for patient in self.response_json['results']:
+            if (
+                patient_identifier_type == PERSON_UUID_IDENTIFIER_TYPE_ID and
+                patient['uuid'] == patient_identifier
+            ):
+                patients.append(patient)
+            else:
+                for identifier in patient['identifiers']:
+                    if (
+                        identifier['identifier'] == patient_identifier and
+                        identifier['identifierType']['uuid'] == patient_identifier_type
+                    ):
+                        patients.append(patient)
         try:
             patient, = patients
         except ValueError:
