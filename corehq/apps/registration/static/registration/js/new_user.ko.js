@@ -54,8 +54,8 @@ hqDefine('registration/js/new_user.ko', function () {
 
             var appcuesEvent = "Assigned user to Appcues test",
                 appcuesData = {
-                'Appcues test': data.appcuesAbTest,
-            };
+                    'Appcues test': data.appcuesAbTest,
+                };
 
             _appcues.identify(data.email, appcuesData);
             _appcues.trackEvent(appcuesEvent, appcuesData);

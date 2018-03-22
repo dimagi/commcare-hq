@@ -161,7 +161,6 @@ class ProcessRegistrationView(JSONResponseMixin, NewUserNumberAbTestMixin, View)
                     }
                 }
 
-
             couch_user = CouchUser.get_by_username(reg_form.cleaned_data['email'])
             appcues_ab_test = toggles.APPCUES_AB_TEST.enabled(reg_form.cleaned_data['email'],
                                                               toggles.NAMESPACE_USER)

@@ -17,6 +17,7 @@ hqDefine('analytix/js/appcues', [
     'use strict';
     var _get = initialAnalytics.getFn('appcues'),
         _ready = $.Deferred(),
+        _logger = logging.getLoggerForApi('Appcues'),
         EVENT_TYPES = {
             FORM_LOADED: "Form is loaded",
             FORM_SAVE: "Saved a form",
@@ -27,9 +28,9 @@ hqDefine('analytix/js/appcues', [
 
     $(function () {
         var apiId = _get('apiId'),
-            scriptUrl = "//fast.appcues.com/" + apiId + '.js',
-            _logger = logging.getLoggerForApi('Appcues');
+            scriptUrl = "//fast.appcues.com/" + apiId + '.js';
 
+        _logger = logging.getLoggerForApi('Appcues');
         _ready = utils.initApi(_ready, apiId, scriptUrl, _logger, function () {
             identify(_get("username"), {
                 firstName: _get("firstName"),
