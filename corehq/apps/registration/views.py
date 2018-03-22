@@ -129,6 +129,7 @@ class ProcessRegistrationView(JSONResponseMixin, NewUserNumberAbTestMixin, View)
         email = new_user.email
 
         properties = {}
+        toggles.APPCUES_AB_TEST_CONTROLLER.set(email, True)
         if is_mobile:
             toggles.MOBILE_SIGNUP_REDIRECT_AB_TEST_CONTROLLER.set(
                 email, True)
