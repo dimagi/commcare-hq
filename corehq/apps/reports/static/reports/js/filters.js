@@ -42,9 +42,22 @@ hqDefine("reports/js/filters", [
     var MessageConfigurationTypeFilterViewModel = function(initial, conditionalAlertChoices) {
         var self = this;
         var all = [{'id': '', 'name': gettext('All')}];
+        self.date_selector_type = ko.observable(initial.date_selector_type);
+        self.next_event_due_after = ko.observable(initial.next_event_due_after);
         self.configuration_type = ko.observable(initial.configuration_type);
         self.rule_id = ko.observable(initial.rule_id);
         self.conditional_alert_choices = ko.observableArray(all.concat(conditionalAlertChoices));
+
+        $(function() {
+            $('#id_next_event_due_after').daterangepicker(
+                {
+                    locale: {
+                        format: 'YYYY-MM-DD',
+                    },
+                    singleDatePicker: true,
+                }
+            );
+        });
     };
     var SMSPhoneNumberFilterViewModel = function (initial_value, groups) {
         var PHONE_NUMBER_SELECT_OPTIONS =

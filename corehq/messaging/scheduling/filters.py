@@ -11,10 +11,14 @@ class MessageConfigurationFilter(BaseReportFilter):
     TYPE_BROADCAST = 'broadcast'
     TYPE_CONDITIONAL_ALERT = 'conditional_alert'
 
+    SHOW_ALL_EVENTS = 'all'
+    SHOW_EVENTS_AFTER_DATE ='only_after'
+
     @property
     def filter_context(self):
         return {
-            "initial_value": self.get_value(self.request, self.domain),
+            'timezone': self.timezone.zone,
+            'initial_value': self.get_value(self.request, self.domain),
             'conditional_alert_choices': self.get_conditional_alert_choices(),
         }
 
@@ -28,6 +32,8 @@ class MessageConfigurationFilter(BaseReportFilter):
     @classmethod
     def get_value(cls, request, domain):
         return {
+            'date_selector_type': request.GET.get('date_selector_type'),
+            'next_event_due_after': request.GET.get('next_event_due_after'),
             'configuration_type': request.GET.get('configuration_type'),
             'rule_id': request.GET.get('rule_id'),
         }

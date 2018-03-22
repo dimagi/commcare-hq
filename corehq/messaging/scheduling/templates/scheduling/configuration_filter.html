@@ -3,8 +3,30 @@
 
 <div class="report-filter-message-type-configuration" data-initial-value='{{ initial_value|JSON }}' data-conditional-alert-choices='{{ conditional_alert_choices|JSON }}'>
     <div class="form-group">
+        <label class="control-label {{ css_label_class }}"></label>
+        <div class="col-xs-6">
+            <p>{% blocktrans %}This report's timezone is {{ timezone }}.{% endblocktrans %}</p>
+        </div>
+    </div>
+    <div class="form-group">
         <label class="control-label {{ css_label_class }}">{% trans "Show" %}</label>
-        <div class="col-xs-4">
+        <div class="col-xs-3">
+            <select name="date_selector_type" class="form-control" data-bind="value: date_selector_type">
+                <option value="all">{% trans "All events" %}</option>
+                <option value="only_after">{% trans "Events to be sent after" %}</option>
+            </select>
+        </div>
+        <div class="col-xs-3" data-bind="visible: date_selector_type() === 'only_after'">
+            <input type="text"
+                   id="id_next_event_due_after"
+                   name="next_event_due_after"
+                   data-bind="value: next_event_due_after"
+                   class="form-control" />
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label {{ css_label_class }}">{% trans "Show" %}</label>
+        <div class="col-xs-3">
             <select name="configuration_type" class="form-control" data-bind="value: configuration_type">
                 <option value="broadcast">{% trans "Broadcasts" %}</option>
                 <option value="conditional_alert">{% trans "Conditional Alerts" %}</option>

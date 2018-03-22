@@ -23,7 +23,7 @@ from corehq.apps.sms.filters import (
     PhoneNumberReportFilter
 )
 from corehq.const import SERVER_DATETIME_FORMAT
-from corehq.util.timezones.conversions import ServerTime
+from corehq.util.timezones.conversions import ServerTime, UserTime
 from corehq.util.view_utils import absolute_reverse
 from memoized import memoized
 from corehq.apps.casegroups.models import CommCareCaseGroup
@@ -1380,14 +1380,12 @@ class PhoneNumberReport(BaseCommConnectLogReport):
         return self._get_rows(paginate=False, link_user=False)
 
 
-class ScheduleInstanceReport(ProjectReport, ProjectReportParametersMixin, GenericTabularReport, DatespanMixin):
+class ScheduleInstanceReport(ProjectReport, ProjectReportParametersMixin, GenericTabularReport):
     name = ugettext_lazy('Scheduled Messaging Events')
     slug = 'scheduled_messaging_events'
     fields = [
-        DatespanFilter,
         MessageConfigurationFilter,
     ]
-    default_datespan_end_date_to_today = True
     ajax_pagination = True
     sortable = False
 
@@ -1422,6 +1420,26 @@ class ScheduleInstanceReport(ProjectReport, ProjectReportParametersMixin, Generi
     @cached_property
     def rule_id(self):
         return self.configuration_filter_value['rule_id']
+
+    @cached_property
+    def date_selector_type(self):
+        return self.configuration_filter_value['date_selector_type']
+
+    @cached_property
+    def next_event_due_after(self):
+        return self.configuration_filter_value['next_event_due_after']
+
+    @cached_property
+    def next_event_due_after_timestamp(self):
+        if self.date_selector_type != MessageConfigurationFilter.SHOW_EVENTS_AFTER_DATE:
+            return None
+
+        try:
+            timestamp = datetime.strptime(self.next_event_due_after, '%Y-%m-%d')
+        except (TypeError, ValueError):
+            return None
+
+        return UserTime(timestamp, self.timezone).server_time().done().replace(tzinfo=None)
 
     def get_utc_timestamp_display(self, timestamp):
         return ServerTime(timestamp).user_time(self.timezone).done().strftime('%Y-%m-%d %H:%M:%S')
@@ -1526,9 +1544,10 @@ class ScheduleInstanceReport(ProjectReport, ProjectReportParametersMixin, Generi
                 qs = cls.objects.using(db_alias).filter(
                     domain=self.domain,
                     active=True,
-                    next_event_due__gte=self.datespan.startdate_utc,
-                    next_event_due__lt=self.datespan.enddate_utc,
                 ).order_by('next_event_due', 'schedule_instance_id')
+
+                if self.next_event_due_after_timestamp:
+                    qs = qs.filter(next_event_due__gte=self.next_event_due_after_timestamp)
 
                 if (
                     self.configuration_type == MessageConfigurationFilter.TYPE_CONDITIONAL_ALERT and
@@ -1591,8 +1610,8 @@ class ScheduleInstanceReport(ProjectReport, ProjectReportParametersMixin, Generi
     @property
     def shared_pagination_GET_params(self):
         return [
-            {'name': 'startdate', 'value': self.datespan.startdate.strftime('%Y-%m-%d')},
-            {'name': 'enddate', 'value': self.datespan.enddate.strftime('%Y-%m-%d')},
+            {'name': 'date_selector_type', 'value': self.date_selector_type},
+            {'name': 'next_event_due_after', 'value': self.next_event_due_after},
             {'name': 'configuration_type', 'value': self.configuration_type},
             {'name': 'rule_id', 'value': self.rule_id},
         ]
