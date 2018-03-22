@@ -740,7 +740,9 @@ def delete_report(request, domain, report_id):
 
     report_configs = ReportConfig.by_domain_and_owner(
         domain, request.couch_user.get_id, "configurable")
-    (rc.delete() for rc in report_configs if rc.subreport_slug == config.get_id)
+    for rc in report_configs:
+        if rc.subreport_slug == config.get_id:
+            rc.delete()
 
     if did_purge_something:
         messages.warning(
