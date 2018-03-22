@@ -8,7 +8,7 @@
 {% block title %}{{ module.name|clean_trans:langs }}{% endblock %}
 
 {% block stylesheets %}{{ block.super }}
-    {% if request|toggle_enabled:"APPCUES_AB_TEST_CONTROLLER" and request|toggle_enabled:"APPCUES_AB_TEST" %}
+    {% if request|toggle_enabled:"APPCUES_AB_TEST" %}
         <style type="text/css">
             .helpbubble {
                 display: none !important;
