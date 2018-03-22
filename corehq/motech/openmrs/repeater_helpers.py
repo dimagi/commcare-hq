@@ -57,9 +57,30 @@ ADDRESS_PROPERTIES = (
     'startDate',
     'endDate',
 )
-# To match cases against their OpenMRS Person UUID, set the IdMatcher's identifier_type_id to the value of
-# PERSON_UUID_IDENTIFIER_TYPE_ID. To match against any other OpenMRS identifier, set the IdMatcher's
-# identifier_type_id to the UUID of the OpenMRS Identifier Type.
+
+
+# To match cases against their OpenMRS Person UUID, in case config (Project Settings > Data Forwarding > Forward to
+# OpenMRS > Configure > Case config) "patient_identifiers", set the identifier's key to the value of
+# PERSON_UUID_IDENTIFIER_TYPE_ID. e.g.::
+#
+#     "patient_identifiers": {
+#         /* ... */
+#         "uuid": {
+#             "doc_type": "CaseProperty",
+#             "case_property": "openmrs_uuid",
+#         }
+#     }
+#
+# To match against any other OpenMRS identifier, set the key to the UUID of the OpenMRS Identifier Type. e.g.::
+#
+#     "patient_identifiers": {
+#         /* ... */
+#         "e2b966d0-1d5f-11e0-b929-000c29ad1d07": {
+#             "doc_type": "CaseProperty",
+#             "case_property": "nid"
+#         }
+#     }
+#
 PERSON_UUID_IDENTIFIER_TYPE_ID = 'uuid'
 
 
