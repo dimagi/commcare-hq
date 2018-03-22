@@ -152,7 +152,7 @@ def redirect_to_default(req, domain=None):
             url = reverse('domain_login', args=[domain])
         else:
             if settings.SERVER_ENVIRONMENT == 'production':
-                url = "https://www.dimagi.com/commcare/"
+                url = "https://www.dimagi.com/"
             else:
                 url = reverse('login')
     elif domain and _two_factor_needed(domain, req):
