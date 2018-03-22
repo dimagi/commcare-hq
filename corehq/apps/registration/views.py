@@ -168,7 +168,7 @@ class ProcessRegistrationView(JSONResponseMixin, NewUserNumberAbTestMixin, View)
                                                                  toggles.NAMESPACE_USER)
             if couch_user:
                 hubspot_fields = {
-                    "Appcues test": in_appcues_ab_test ? "On": "Off",
+                    "Appcues test": "On" if in_appcues_ab_test else "Off",
                 }
                 if reg_form.cleaned_data['persona']:
                     hubspot_fields['buyer_persona'] = reg_form.cleaned_data['persona']
