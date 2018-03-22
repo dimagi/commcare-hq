@@ -487,6 +487,7 @@ def test_sort_items_basic(self, doc, items_ex, sort_ex, expected):
 
 
 class NestedExpressionTest(SimpleTestCase):
+    DATE = datetime.date(2018, 1, 1)
     DATE_LITERAL = '2018-01-01'
     DATE_CONSTANT_EXPRESSION = {
         'type': 'constant',
@@ -526,6 +527,18 @@ class NestedExpressionTest(SimpleTestCase):
                 "filter_expression": filter_spec,
             })
             self.assertEqual(2, len(expression({})))
+
+    def test_map_items_with_nested_dates(self):
+        for inner_expression_spec in [self.DATE_LITERAL, self.DATE_CONSTANT_EXPRESSION]:
+            expression = ExpressionFactory.from_spec({
+                "type": "map_items",
+                "items_expression": self.ITEMS_EXPRESSION,
+                "map_expression": inner_expression_spec,
+            })
+            result = expression({})
+            self.assertEqual(3, len(result))
+            for val in result:
+                self.assertEqual(self.DATE, val)
 
 
 class ListExpressionTest(SimpleTestCase):

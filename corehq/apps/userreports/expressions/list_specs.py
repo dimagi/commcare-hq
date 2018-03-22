@@ -44,7 +44,7 @@ class FilterItemsExpressionSpec(NoPropertyTypeCoercionMixIn, JsonObject):
                                                           filter=add_tabbed_text(str(self._filter_expression)))
 
 
-class MapItemsExpressionSpec(JsonObject):
+class MapItemsExpressionSpec(NoPropertyTypeCoercionMixIn, JsonObject):
     type = TypeProperty('map_items')
     items_expression = DefaultProperty(required=True)
     map_expression = DefaultProperty(required=True)
