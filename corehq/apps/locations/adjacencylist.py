@@ -150,29 +150,21 @@ class AdjListManager(TreeManager):
             # id, retain the row with the longest path. TODO remove this
             # and ensure duplicates do not matter or the criteria never
             # matches both parents and children in all calling code.
-            max_lens = With(
-                cte.queryset().values(
-                    max_id=cte.col.id,
-                ).annotate(
-                    max_len=Max(
-                        array_length(F("_cte_ordering")),
-                        output_field=int_field
-                    )
-                ),
-                name="max_lens"
-            )
             xdups = With(
-                cte.join(
-                    max_lens.queryset(),
-                    max_id=cte.col.id,
-                    max_len=array_length(cte.col._cte_ordering),
+                cte.queryset().annotate(
+                    max_len=array_length(
+                        F("_cte_ordering"),
+                        output_field=int_field
+                    ),
+                ).distinct("id").order_by(
+                    "id",
+                    "-max_len",
                 ).values(
-                    id=cte.col.id,
-                    _cte_ordering=cte.col._cte_ordering,
+                    "id",
+                    "_cte_ordering",
                 ),
-                name="xdups",
+                name="xdups"
             )
-            ctes.append(max_lens)
             ctes.append(xdups)
             cte = xdups
 
