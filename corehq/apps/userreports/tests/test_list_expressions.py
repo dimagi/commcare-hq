@@ -99,7 +99,6 @@ def test_filter_items_basic(self, doc, items_ex, filter_ex, expected):
     self.assertEqual(expression(doc), expected)
 
 
-
 @generate_cases([
     ([{'key': 'v1'}, {'key': 'v2'}], None),
     ([{'key': 'v1'}, {'key': 'v2'}], {}),
