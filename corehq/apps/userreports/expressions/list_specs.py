@@ -85,7 +85,7 @@ class ReduceItemsExpressionSpec(NoPropertyTypeCoercionMixIn, JsonObject):
                                                   items=add_tabbed_text(str(self._items_expression)))
 
 
-class FlattenExpressionSpec(JsonObject):
+class FlattenExpressionSpec(NoPropertyTypeCoercionMixIn, JsonObject):
     type = TypeProperty('flatten')
     items_expression = DefaultProperty(required=True)
 

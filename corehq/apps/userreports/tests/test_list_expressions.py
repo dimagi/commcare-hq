@@ -549,6 +549,15 @@ class NestedExpressionTest(SimpleTestCase):
         })
         self.assertEqual(3, expression({}))
 
+    def test_flatten_items_with_nested_dates(self):
+        expression = ExpressionFactory.from_spec({
+            "type": "flatten",
+            "items_expression": self.ITEMS_EXPRESSION,
+        })
+        # in this case the expression fails and defaults to an empty list because the inner dates aren't iterable
+        # this is fine as the bug was actually in the generation of the expression from the factory
+        self.assertEqual([], expression({}))
+
 
 class ListExpressionTest(SimpleTestCase):
     """
