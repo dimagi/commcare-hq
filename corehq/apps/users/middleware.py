@@ -37,6 +37,8 @@ class UsersMiddleware(MiddlewareMixin):
             raise django.core.exceptions.MiddlewareNotUsed
 
     def process_view(self, request, view_func, view_args, view_kwargs):
+        import arrow
+        start = arrow.utcnow()
         request.analytics_enabled = True
         if 'domain' in view_kwargs:
             request.domain = view_kwargs['domain']
@@ -58,6 +60,9 @@ class UsersMiddleware(MiddlewareMixin):
                     request.couch_user.current_domain = domain
         elif is_public_reports(view_kwargs, request):
             request.couch_user = AnonymousCouchUser()
+
+        end = arrow.utcnow()
+        print ">>>>>getting user", (end.timestamp + end.microsecond / 1e6) - (start.timestamp + start.microsecond / 1e6)
         return None
 
 

@@ -29,7 +29,13 @@ class CCHQPRBACMiddleware(MiddlewareMixin):
     """
 
     def process_view(self, request, view_func, view_args, view_kwargs):
+        import arrow
+        start = arrow.utcnow()
         self.apply_prbac(request)
+
+        end = arrow.utcnow()
+        print(">>>>>getting prbac", (end.timestamp + end.microsecond / 1e6) - \
+            (start.timestamp + start.microsecond / 1e6))
         return None
 
     @classmethod
