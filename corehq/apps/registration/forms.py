@@ -63,10 +63,9 @@ class RegisterWebUserForm(forms.Form):
         required=False,
         label=mark_safe_lazy(_(
             """I have read and agree to the
-            <a data-toggle='modal'
-               data-target='#eulaModal'
-               href='#eulaModal'>
-               CommCare HQ End User License Agreement</a>.""")))
+            <a href="http://www.dimagi.com/terms/"
+               target="_blank">
+               CommCare HQ Terms of Service and Business Agreement</a>.""")))
     atypical_user = forms.BooleanField(required=False, widget=forms.HiddenInput())
     is_mobile = forms.BooleanField(required=False, widget=forms.HiddenInput())
 
@@ -239,7 +238,7 @@ class RegisterWebUserForm(forms.Form):
         data = self.cleaned_data['eula_confirmed']
         if data is not True:
             raise forms.ValidationError(
-                "You must agree to our End User License Agreement in order "
+                "You must agree to our Terms of Service and Business Agreement in order "
                 "to register an account."
             )
         return data
@@ -316,10 +315,9 @@ class WebUserInvitationForm(NoAutocompleteMixin, DomainRegistrationForm):
                                         label="",
                                         help_text=mark_safe_lazy(_(
                                             """I have read and agree to the
-                                               <a data-toggle='modal'
-                                                  data-target='#eulaModal'
-                                                  href='#eulaModal'>
-                                                  CommCare HQ End User License Agreement
+                                               <a href="http://www.dimagi.com/terms/"
+                                                  target="_blank">
+                                                  CommCare HQ Terms of Service and Business Agreement
                                                </a>.""")))
 
     def __init__(self, *args, **kwargs):
@@ -360,7 +358,8 @@ class WebUserInvitationForm(NoAutocompleteMixin, DomainRegistrationForm):
     def clean_eula_confirmed(self):
         data = self.cleaned_data['eula_confirmed']
         if data is not True:
-            raise forms.ValidationError('You must agree to our End User License Agreement in order to register an account.')
+            raise forms.ValidationError('You must agree to our Terms of Service and Business Agreement '
+                                        'in order to register an account.')
         return data
 
 
