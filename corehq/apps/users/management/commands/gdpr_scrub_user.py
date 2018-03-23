@@ -4,7 +4,8 @@ from __future__ import unicode_literals
 import xmltodict
 from django.core.management.base import BaseCommand
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
-from corehq.form_processor.models import XFormAttachmentSQL
+from corehq.form_processor.models import XFormAttachmentSQL, XFormOperationSQL
+from datetime import datetime
 
 
 class Command(BaseCommand):
@@ -39,8 +40,6 @@ class Command(BaseCommand):
         attachment_metadata = form_data.get_attachment_meta("form.xml")
         XFormAttachmentSQL.write_content(attachment_metadata, form_attachment_xml_new)
         attachment_metadata.save()
-
-
 
     def replace_username_in_metadata(self, form_data):
         form_data.metadata.username = "Delete COUCH username success"

@@ -363,7 +363,6 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
         from .serializers import XFormInstanceSQLSerializer
         serializer = XFormInstanceSQLSerializer(self, include_attachments=include_attachments)
         data = dict(serializer.data)
-        # print("TO JSON DATA: {}".format(data))
         data['history'] = [dict(op) for op in data['history']]
         data['backend_id'] = 'sql'
         return data
@@ -458,10 +457,12 @@ class AbstractAttachment(PartitionedModel, models.Model, SaveStateMixin):
             content_readable = StringIO(content)
         elif isinstance(content, six.binary_type):
             content_readable = BytesIO(content)
-
+        old_meta = self.blobs.get(self.name)
         db = get_blob_db()
         bucket = self.blobdb_bucket()
         info = db.put(content_readable, get_short_identifier(), bucket=bucket)
+        if old_meta and old_meta.id:
+            db.delete(old_meta.id, bucket)
         self.md5 = info.md5_hash
         self.content_length = info.length
         self.blob_id = info.identifier
