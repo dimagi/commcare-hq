@@ -6,6 +6,7 @@ from couchdbkit.exceptions import DocTypeError
 from couchdbkit.resource import ResourceNotFound
 from corehq.util.quickcache import quickcache
 from django.http import Http404
+from django.core.cache import cache
 
 from corehq.apps.es import AppES
 from dimagi.utils.couch.database import iter_docs
@@ -127,6 +128,17 @@ def get_current_app_doc(domain, app_id):
 
 def get_current_app(domain, app_id):
     return wrap_app(get_current_app_doc(domain, app_id))
+
+
+def get_app_cached(domain, app_id):
+    key = 'app_build_cache_{}_{}'.format(domain, app_id)
+    app = cache.get(key)
+    if not app:
+        app = get_app(domain, app_id)
+        if app.copy_of:
+            cache.set(key, app, 24 * 3600)
+
+    return app
 
 
 def get_app(domain, app_id, wrap_cls=None, latest=False, target=None):

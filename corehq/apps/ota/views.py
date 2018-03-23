@@ -19,7 +19,7 @@ from casexml.apps.case.models import CommCareCase
 from corehq import toggles
 from corehq.const import OPENROSA_VERSION_MAP
 from corehq.middleware import OPENROSA_VERSION_HEADER
-from corehq.apps.app_manager.util import get_app, LatestAppInfo
+from corehq.apps.app_manager.util import get_app_cached, LatestAppInfo
 from corehq.apps.case_search.models import QueryMergeException
 from corehq.apps.case_search.utils import CaseSearchCriteria
 from corehq.apps.domain.decorators import (
@@ -197,7 +197,7 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
     couch_restore_user = as_user_obj if uses_login_as else couch_user
     app = app_meta = None
     if app_id:
-        app = get_app(domain, app_id)
+        app = get_app_cached(domain, app_id)
         app_meta = DeviceAppMeta(
             app_id=app.master_id,
             build_id=app_id if app.copy_of else None,
@@ -265,7 +265,7 @@ def heartbeat(request, domain, app_build_id):
     except (Http404, AssertionError):
         # If it's not a valid 'brief' app id, find it by talking to couch
         notify_exception(request, 'Received an invalid heartbeat request')
-        app = get_app(domain, app_build_id)
+        app = get_app_cached(domain, app_build_id)
         brief_app_id = app.master_id
         info.update(LatestAppInfo(brief_app_id, domain).get_info())
 
