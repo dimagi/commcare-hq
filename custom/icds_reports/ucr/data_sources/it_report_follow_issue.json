@@ -38,28 +38,8 @@
         "datatype": "string",
         "display_name": "user_location_id",
         "expression": {
-          "doc_id_expression": {
-            "expression": {
-              "datatype": null,
-              "property_path": [
-                "form",
-                "meta",
-                "userID"
-              ],
-              "type": "property_path"
-            },
-            "type": "root_doc"
-          },
-          "related_doc_type": "CommCareUser",
-          "type": "related_doc",
-          "value_expression": {
-            "datatype": null,
-            "property_path": [
-              "domain_membership",
-              "location_id"
-            ],
-            "type": "property_path"
-          }
+          "type": "named",
+          "name": "user_location_id"
         },
         "is_nullable": true,
         "is_primary_key": false,
@@ -211,6 +191,20 @@
       }
     ],
     "named_expressions": {
+      "user_location_id": {
+        "type": "icds_user_location",
+        "user_id_expression": {
+          "type": "root_doc",
+          "expression": {
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "meta",
+              "userID"
+            ]
+          }
+        }
+      }
     },
     "named_filters": {},
     "sql_column_indexes": [],
