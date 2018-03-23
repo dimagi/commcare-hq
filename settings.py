@@ -760,6 +760,9 @@ PRELOGIN_APPS = (
     'corehq.apps.prelogin',
 )
 
+# dimagi.com urls
+PRICING_PAGE_URL = "https://www.dimagi.com/commcare/pricing/"
+
 # our production logstash aggregation
 LOGSTASH_DEVICELOG_PORT = 10777
 LOGSTASH_AUDITCARE_PORT = 10999

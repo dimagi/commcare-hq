@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.test import SimpleTestCase
 from dimagi.ext.jsonobject import StringProperty
 from casexml.apps.case.models import CommCareCase

@@ -1,6 +1,6 @@
 {
   "multimedia_map": {
-    
+
   },
   "build_langs": [
     "en",
@@ -16,7 +16,7 @@
   "build_signed": true,
   "recipients": "",
   "copy_history": [
-    
+
   ],
   "platform": "nokia\/s40",
   "application_version": "2.0",
@@ -30,10 +30,10 @@
   },
   "admin_password_charset": "n",
   "logo_refs": {
-    
+
   },
   "success_message": {
-    
+
   },
   "profile": {
     "features": {
@@ -74,7 +74,7 @@
     "doc_type": "UserRegistrationForm",
     "xmlns": null,
     "name": {
-      
+
     },
     "password_path": "password",
     "auto_gps_capture": false,
@@ -83,18 +83,18 @@
     "version": null,
     "no_vellum": false,
     "form_links": [
-      
+
     ],
     "post_form_workflow": "default",
     "form_type": "user_registration",
     "data_paths": {
-      
+
     },
     "unique_id": "a42522b72cd4f6917b1506ff9f8634dd6ead736c",
     "username_path": "username"
   },
   "translations": {
-    
+
   },
   "built_on": null,
   "built_with": {
@@ -114,7 +114,7 @@
   "build_broken_reason": null,
   "doc_type": "Application",
   "cached_properties": {
-    
+
   },
   "name": "temp: bulk app translation test",
   "amplifies_project": "not_set",
@@ -131,13 +131,13 @@
         "doc_type": "CaseList",
         "show": false,
         "media_audio": {
-          
+
         },
         "media_image": {
-          
+
         },
         "label": {
-          
+
         }
       },
       "media_image": null,
@@ -153,13 +153,13 @@
           "doc_type": "Detail",
           "lookup_name": null,
           "sort_elements": [
-            
+
           ],
           "tabs": [
-            
+
           ],
           "lookup_responses": [
-            
+
           ],
           "lookup_image": null,
           "filter": null,
@@ -169,7 +169,7 @@
           "pull_down_tile": null,
           "use_case_tiles": null,
           "lookup_extras": [
-            
+
           ],
           "lookup_action": null,
           "display": "short",
@@ -180,7 +180,7 @@
               "format": "plain",
               "late_flag": 30,
               "enum": [
-                
+
               ],
               "header": {
                 "en": "Name"
@@ -193,17 +193,17 @@
               "graph_configuration": {
                 "doc_type": "GraphConfiguration",
                 "series": [
-                  
+
                 ],
                 "locale_specific_config": {
-                  
+
                 },
                 "graph_type": null,
                 "config": {
-                  
+
                 },
                 "annotations": [
-                  
+
                 ]
               },
               "advanced": ""
@@ -214,13 +214,36 @@
           "doc_type": "Detail",
           "lookup_name": null,
           "sort_elements": [
-            
+
           ],
           "tabs": [
-            
+            {
+                "doc_type": "DetailTab",
+                "has_nodeset": false,
+                "header": {
+                    "en": "Name in English",
+                    "fra": "Name in French"
+                },
+                "isTab": true,
+                "nodeset": "",
+                "relevant": "",
+                "starting_index": 0
+            },
+            {
+                "doc_type": "DetailTab",
+                "has_nodeset": false,
+                "header": {
+                    "en": "Other in English",
+                    "fra": "Other in French"
+                },
+                "isTab": true,
+                "nodeset": "",
+                "relevant": "",
+                "starting_index": 1
+            }
           ],
           "lookup_responses": [
-            
+
           ],
           "lookup_image": null,
           "filter": null,
@@ -230,7 +253,7 @@
           "pull_down_tile": null,
           "use_case_tiles": null,
           "lookup_extras": [
-            
+
           ],
           "lookup_action": null,
           "display": "long",
@@ -241,7 +264,7 @@
               "format": "plain",
               "isTab": false,
               "enum": [
-                
+
               ],
               "late_flag": 30,
               "header": {
@@ -291,6 +314,86 @@
               "hasAutocomplete": true,
               "graph_configuration": null,
               "advanced": ""
+            },
+            {
+              "advanced": "",
+              "calc_xpath": ".",
+              "case_tile_field": "",
+              "doc_type": "DetailColumn",
+              "enum": [
+                {
+                  "doc_type": "MappingItem",
+                  "key": ". < 3",
+                  "value": {
+                    "en": ":(",
+                    "fra": ":-("
+                  }
+                },
+                {
+                  "doc_type": "MappingItem",
+                  "key": ". >= 3",
+                  "value": {
+                    "en": ":)",
+                    "fra": ":-)"
+                  }
+                }
+              ],
+              "field": "mood",
+              "filter_xpath": "",
+              "format": "conditional-enum",
+              "graph_configuration": null,
+              "hasAutocomplete": true,
+              "hasNodeset": false,
+              "header": {
+                "en": "Mood"
+              },
+              "isTab": false,
+              "late_flag": 30,
+              "model": "case",
+              "nodeset": "",
+              "relevant": "",
+              "time_ago_interval": 365.25,
+              "useXpathExpression": false
+            },
+            {
+              "advanced": "",
+              "calc_xpath": ".",
+              "case_tile_field": "",
+              "doc_type": "DetailColumn",
+              "enum": [
+                {
+                  "doc_type": "MappingItem",
+                  "key": ". < 3",
+                  "value": {
+                    "en": "jr://file/commcare/image/module1_list_icon_energy_high.jpg",
+                    "fra": "jr://file/commcare/image/module1_list_icon_energy_high_french.jpg"
+                  }
+                },
+                {
+                  "doc_type": "MappingItem",
+                  "key": ". >= 3",
+                  "value": {
+                    "en": "jr://file/commcare/image/module1_list_icon_energy_low.jpg",
+                    "fra": "jr://file/commcare/image/module1_list_icon_energy_low_french.jpg"
+                  }
+                }
+              ],
+              "field": "energy",
+              "filter_xpath": "",
+              "format": "enum-image",
+              "graph_configuration": null,
+              "hasAutocomplete": true,
+              "hasNodeset": false,
+              "header": {
+                "en": "Energy"
+              },
+              "isTab": false,
+              "late_flag": 30,
+              "model": "case",
+              "nodeset": "",
+              "relevant": "",
+              "time_ago_interval": 365.25,
+              "useXpathExpression": false
             }
           ]
         }
@@ -300,13 +403,13 @@
         "doc_type": "CaseList",
         "show": false,
         "media_audio": {
-          
+
         },
         "media_image": {
-          
+
         },
         "label": {
-          
+
         }
       },
       "module_filter": null,
@@ -319,24 +422,24 @@
           "en": "Register Mother"
         },
         "media_audio": {
-          
+
         },
         "form_id": "6c6c6315b3c514c616b6c57d48f7cf7c963f1714",
         "media_image": {
-          
+
         }
       },
       "task_list": {
         "doc_type": "CaseList",
         "show": false,
         "media_audio": {
-          
+
         },
         "media_image": {
-          
+
         },
         "label": {
-          
+
         }
       },
       "fixture_select": {
@@ -364,11 +467,11 @@
           "actions": {
             "doc_type": "FormActions",
             "subcases": [
-              
+
             ],
             "usercase_preload": {
               "preload": {
-                
+
               },
               "doc_type": "PreloadAction",
               "condition": {
@@ -382,7 +485,7 @@
             "update_case": {
               "doc_type": "UpdateCaseAction",
               "update": {
-                
+
               },
               "condition": {
                 "operator": "=",
@@ -429,7 +532,7 @@
             "usercase_update": {
               "doc_type": "UpdateCaseAction",
               "update": {
-                
+
               },
               "condition": {
                 "operator": "=",
@@ -452,7 +555,7 @@
             },
             "referral_preload": {
               "preload": {
-                
+
               },
               "doc_type": "PreloadAction",
               "condition": {
@@ -465,7 +568,7 @@
             },
             "case_preload": {
               "preload": {
-                
+
               },
               "doc_type": "PreloadAction",
               "condition": {
@@ -490,7 +593,7 @@
           "version": null,
           "no_vellum": false,
           "form_links": [
-            
+
           ],
           "media_image": null,
           "form_type": "module_form",
@@ -505,13 +608,13 @@
           "doc_type": "Detail",
           "lookup_name": null,
           "sort_elements": [
-            
+
           ],
           "tabs": [
-            
+
           ],
           "lookup_responses": [
-            
+
           ],
           "lookup_image": null,
           "filter": null,
@@ -521,25 +624,25 @@
           "pull_down_tile": null,
           "use_case_tiles": null,
           "lookup_extras": [
-            
+
           ],
           "lookup_action": null,
           "display": "short",
           "columns": [
-            
+
           ]
         },
         "long": {
           "doc_type": "Detail",
           "lookup_name": null,
           "sort_elements": [
-            
+
           ],
           "tabs": [
-            
+
           ],
           "lookup_responses": [
-            
+
           ],
           "lookup_image": null,
           "filter": null,
@@ -549,12 +652,12 @@
           "pull_down_tile": null,
           "use_case_tiles": null,
           "lookup_extras": [
-            
+
           ],
           "lookup_action": null,
           "display": "long",
           "columns": [
-            
+
           ]
         }
       },

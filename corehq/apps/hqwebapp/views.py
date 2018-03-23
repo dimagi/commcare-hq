@@ -19,9 +19,9 @@ from django.contrib.auth.models import User
 from django.contrib.auth.views import logout as django_logout
 from django.core import cache
 from django.core.mail.message import EmailMessage
-from django.http import HttpResponseRedirect, HttpResponse, Http404,\
-    HttpResponseServerError, HttpResponseNotFound, HttpResponseBadRequest,\
-    HttpResponseForbidden
+from django.http import HttpResponseRedirect, HttpResponse, Http404, \
+    HttpResponseServerError, HttpResponseNotFound, HttpResponseBadRequest, \
+    HttpResponseForbidden, HttpResponsePermanentRedirect
 from django.shortcuts import redirect, render
 from django.template import loader
 from django.template.loader import render_to_string
@@ -151,13 +151,8 @@ def redirect_to_default(req, domain=None):
         if domain != None:
             url = reverse('domain_login', args=[domain])
         else:
-            if settings.ENABLE_PRELOGIN_SITE:
-                try:
-                    from corehq.apps.prelogin.views import HomePublicView
-                    url = reverse(HomePublicView.urlname)
-                except ImportError:
-                    # this happens when the prelogin app is not included.
-                    url = reverse('login')
+            if settings.SERVER_ENVIRONMENT == 'production':
+                url = "https://www.dimagi.com/"
             else:
                 url = reverse('login')
     elif domain and _two_factor_needed(domain, req):
@@ -243,11 +238,17 @@ def password_change(req):
 
 
 def server_up(req):
-    '''
-    Hit serverup.txt to check any of the below item with always_check: True
-    Hit serverup.txt?celery (or heartbeat) to check a specific service
-    View that just returns "success", which can be hooked into server monitoring tools like: pingdom
-    '''
+    """
+    Health check view which can be hooked into server monitoring tools like 'pingdom'
+
+    Returns:
+        HttpResponse("success", status_code=200)
+        HttpResponse(error_message, status_code=500)
+
+    Hit serverup.txt to check all the default enabled services (always_check=True)
+    Hit serverup.txt?only={check_name} to only check a specific service
+    Hit serverup.txt?{check_name} to include a non-default check (currently only ``heartbeat``)
+    """
 
     checkers = {
         "heartbeat": {
@@ -282,16 +283,25 @@ def server_up(req):
 
     failed = False
     message = ['Problems with HQ (%s):' % os.uname()[1]]
-    for check, check_info in checkers.items():
-        if check_info['always_check'] or req.GET.get(check, None) is not None:
-            try:
-                status = check_info['check_func']()
-            except Exception:
-                # Don't display the exception message
-                status = checks.ServiceStatus(False, "{} has issues".format(check))
-            if not status.success:
-                failed = True
-                message.append(status.msg)
+    only = req.GET.get('only', None)
+    if only and only in checkers:
+        checks_to_do = [(only, checkers[only])]
+    else:
+        checks_to_do = [
+            (check, check_info)
+            for check, check_info in checkers.items()
+            if check_info['always_check'] or req.GET.get(check, None) is not None
+        ]
+
+    for check, check_info in checks_to_do:
+        try:
+            status = check_info['check_func']()
+        except Exception:
+            # Don't display the exception message
+            status = checks.ServiceStatus(False, "{} has issues".format(check))
+        if not status.success:
+            failed = True
+            message.append(status.msg)
 
     if failed and not is_deploy_in_progress():
         create_datadog_event(
@@ -1276,3 +1286,28 @@ class HQJSONResponseMixin(JSONResponseMixin):
         from djangular.templatetags.djangular_tags import djng_current_rmi
         context['djng_current_rmi'] = json.loads(djng_current_rmi(context))
         return context
+
+
+def redirect_to_dimagi(endpoint):
+    def _redirect(request, lang_code=None):
+        if settings.SERVER_ENVIRONMENT in [
+            'production',
+            'softlayer',
+            'staging',
+            'changeme',
+            'localdev',
+        ]:
+            return HttpResponsePermanentRedirect(
+                "https://www.dimagi.com/{}{}".format(
+                    endpoint,
+                    "?lang={}".format(lang_code) if lang_code else "",
+                )
+            )
+        return redirect_to_default(request)
+    return _redirect
+
+
+def temporary_google_verify(request):
+    # will remove once google search console verify process completes
+    # BMB 4/20/18
+    return render(request, "google9633af922b8b0064.html")

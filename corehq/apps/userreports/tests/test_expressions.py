@@ -659,6 +659,19 @@ class IteratorExpressionTest(SimpleTestCase):
         expression = ExpressionFactory.from_spec(spec)
         self.assertEqual([1], expression({'p1': 1, 'p2': ''}))
 
+    def test_type_coercion(self):
+        spec = copy.copy(self.spec)
+        spec['expressions'] = [
+            '2018-01-01',
+            {
+                'type': 'constant',
+                'constant': '2018-01-01',
+                'datatype': 'date',
+            },
+        ]
+        expression = ExpressionFactory.from_spec(spec)
+        self.assertEqual([date(2018, 1, 1), date(2018, 1, 1)], expression({}))
+
 
 class RootDocExpressionTest(SimpleTestCase):
 

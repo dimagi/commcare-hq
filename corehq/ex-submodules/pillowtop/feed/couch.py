@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from couchdbkit import ChangesStream
 from pillowtop.dao.couch import CouchDocumentStore
 from pillowtop.feed.interface import ChangeFeed, Change

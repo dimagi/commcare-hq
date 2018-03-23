@@ -1,9 +1,10 @@
 from __future__ import absolute_import
+from django.conf import settings
 from django.contrib.postgres.fields.array import ArrayField
 from django.db.models import CharField, IntegerField
 from django.db.models.aggregates import Max
-from django.db.models.expressions import F, Func, Value
-from django.db.models.query import Q, QuerySet
+from django.db.models.expressions import Exists, F, Func, OuterRef, Value
+from django.db.models.query import Q, QuerySet, EmptyResultSet
 from django_cte import With
 from mptt.models import MPTTModel, TreeManager
 
@@ -53,13 +54,13 @@ class AdjListManager(TreeManager):
             where = node
         elif include_self:
             if isinstance(node, QuerySet):
-                if node.query.is_empty():
+                if _is_empty(node):
                     return self.none()
                 where = Q(id__in=node.order_by())
             else:
                 where = Q(id=node.id)
         elif isinstance(node, QuerySet):
-            if node.query.is_empty():
+            if _is_empty(node):
                 return self.none()
             where = Q(id__in=node.order_by().values(parent_col))
         else:
@@ -107,14 +108,14 @@ class AdjListManager(TreeManager):
             discard_dups = True
         elif include_self:
             if isinstance(node, QuerySet):
-                if node.query.is_empty():
+                if _is_empty(node):
                     return self.none()
                 where = Q(id__in=node.order_by())
                 discard_dups = True
             else:
                 where = Q(id=node.id)
         elif isinstance(node, QuerySet):
-            if node.query.is_empty():
+            if _is_empty(node):
                 return self.none()
             where = Q(**{parent_col + "__in": node.order_by()})
             discard_dups = True
@@ -124,7 +125,6 @@ class AdjListManager(TreeManager):
         def make_cte_query(cte):
             return self.filter(where).order_by().values(
                 "id",
-                parent_col,
                 _cte_ordering=StrArray(ordering_col),
             ).union(
                 cte.join(
@@ -137,7 +137,6 @@ class AdjListManager(TreeManager):
                     )
                 ).values(
                     "id",
-                    parent_col,
                     "_cte_ordering",
                 ),
                 all=True,
@@ -170,7 +169,6 @@ class AdjListManager(TreeManager):
                 ).values(
                     id=cte.col.id,
                     _cte_ordering=cte.col._cte_ordering,
-                    **{parent_col: getattr(cte.col, parent_col)}
                 ),
                 name="xdups",
             )
@@ -181,6 +179,12 @@ class AdjListManager(TreeManager):
         query = (
             cte
             .join(self.all(), id=cte.col.id)
+            # EXISTS helps postgres avoid seq scan on locations table
+            # EXPLAIN ANALYZE showed postgres estimated > 1 million rows in the
+            # recursive CTE on softlayer when there were actually only 6 rows.
+            # The seq scan on the locations table took ~1 minute; EXISTS -> 3ms.
+            .annotate(_cte_exists=Exists(cte.queryset().filter(id=OuterRef("id"))))
+            .filter(_cte_exists=True)
             .order_by(cte.col._cte_ordering)
         )
         for item in ctes:
@@ -210,8 +214,11 @@ class AdjListManager(TreeManager):
             cte_qs = queryset._cte_set
         with timing("mptt"):
             mptt_set = self.mptt_get_queryset_ancestors(mptt_qs, include_self)
-        with timing("cte"):
-            cte_set = self.cte_get_queryset_ancestors(cte_qs, include_self)
+        if settings.IS_LOCATION_CTE_ENABLED:
+            with timing("cte"):
+                cte_set = self.cte_get_queryset_ancestors(cte_qs, include_self)
+        else:
+            cte_set = None
         return ComparedQuerySet(mptt_set, cte_set, timing)
 
     def get_queryset_descendants(self, queryset, include_self=False):
@@ -222,8 +229,11 @@ class AdjListManager(TreeManager):
             cte_qs = queryset._cte_set
         with timing("mptt"):
             mptt_set = self.mptt_get_queryset_descendants(mptt_qs, include_self)
-        with timing("cte"):
-            cte_set = self.cte_get_queryset_descendants(cte_qs, include_self)
+        if settings.IS_LOCATION_CTE_ENABLED:
+            with timing("cte"):
+                cte_set = self.cte_get_queryset_descendants(cte_qs, include_self)
+        else:
+            cte_set = None
         return ComparedQuerySet(mptt_set, cte_set, timing)
 
 
@@ -257,8 +267,11 @@ class AdjListModel(MPTTModel):
         timing = TimingContext("get_ancestors")
         with timing("mptt"):
             mptt_set = self.mptt_get_ancestors(**kw)
-        with timing("cte"):
-            cte_set = type(self).objects.cte_get_ancestors(self, **kw)
+        if settings.IS_LOCATION_CTE_ENABLED:
+            with timing("cte"):
+                cte_set = type(self).objects.cte_get_ancestors(self, **kw)
+        else:
+            cte_set = None
         return ComparedQuerySet(mptt_set, cte_set, timing)
 
     def get_descendants(self, **kw):
@@ -268,6 +281,20 @@ class AdjListModel(MPTTModel):
         timing = TimingContext("get_descendants")
         with timing("mptt"):
             mptt_set = self.mptt_get_descendants(**kw)
-        with timing("cte"):
-            cte_set = type(self).objects.cte_get_descendants(self, **kw)
+        if settings.IS_LOCATION_CTE_ENABLED:
+            with timing("cte"):
+                cte_set = type(self).objects.cte_get_descendants(self, **kw)
+        else:
+            cte_set = None
         return ComparedQuerySet(mptt_set, cte_set, timing)
+
+
+def _is_empty(queryset):
+    query = queryset.query
+    if query.is_empty():
+        return True
+    try:
+        query.sql_with_params()
+    except EmptyResultSet:
+        return True
+    return False
