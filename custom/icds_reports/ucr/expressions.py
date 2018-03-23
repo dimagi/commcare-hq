@@ -7,7 +7,6 @@ from quickcache.django_quickcache import get_django_quickcache
 from six.moves import filter
 
 from casexml.apps.case.xform import extract_case_blocks
-from corehq.apps.locations.models import SQLLocation
 from corehq.apps.receiverwrapper.util import get_version_from_appversion_text
 from corehq.apps.userreports.const import XFORM_CACHE_KEY_PREFIX
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
@@ -36,7 +35,7 @@ CUSTOM_UCR_EXPRESSIONS = [
     ('icds_get_app_version', 'custom.icds_reports.ucr.expressions.get_app_version'),
     ('icds_datetime_now', 'custom.icds_reports.ucr.expressions.datetime_now'),
     ('icds_boolean', 'custom.icds_reports.ucr.expressions.boolean_question'),
-    ('icds_location', 'custom.icds_reports.ucr.expressions.icds_location'),
+    ('icds_user_location', 'custom.icds_reports.ucr.expressions.icds_user_location'),
 ]
 
 
@@ -327,30 +326,11 @@ def _get_user_location_id(user_id):
     return user.user_data.get('commcare_location_id')
 
 
-@icds_ucr_quickcache(('location_id',))
-def _get_location_ancestors_by_type(location_id):
-    try:
-        location = SQLLocation.objects.prefetch_related('location_type').get(
-            location_id=location_id
-        )
-    except SQLLocation.DoesNotExist:
-        return None
-
-    if not location:
-        return {}
-
-    ancestors = (location.get_ancestors(include_self=True)
-                         .prefetch_related('location_type', 'parent'))
-    return {
-        ancestor.location_type.name: ancestor.to_json(include_lineage=False)
-        for ancestor in ancestors
-    }
-
-
-class ICDSLocation(JsonObject):
-    type = TypeProperty('icds_location')
+class ICDSUserLocation(JsonObject):
+    """Heavily cached expression to reduce queries to Couch
+    """
+    type = TypeProperty('icds_user_location')
     user_id_expression = DefaultProperty(required=True)
-    location_type = StringProperty(required=True)
 
     def configure(self, user_id_expression):
         self._user_id_expression = user_id_expression
@@ -361,17 +341,10 @@ class ICDSLocation(JsonObject):
         if not user_id:
             return None
 
-        location_id = _get_user_location_id(user_id)
-
-        if not location_id:
-            return None
-
-        ancestors = _get_location_ancestors_by_type(location_id)
-
-        return ancestors.get(self.location_type)
+        return _get_user_location_id(user_id)
 
     def __str__(self):
-        return "Location of type {}".format(self.location_type)
+        return "User's location id"
 
 
 def _datetime_now():
@@ -831,8 +804,8 @@ def boolean_question(spec, context):
     return ExpressionFactory.from_spec(spec, context)
 
 
-def icds_location(spec, context):
-    wrapped = ICDSLocation.wrap(spec)
+def icds_user_location(spec, context):
+    wrapped = ICDSUserLocation.wrap(spec)
     wrapped.configure(
         user_id_expression=ExpressionFactory.from_spec(wrapped.user_id_expression, context)
     )
