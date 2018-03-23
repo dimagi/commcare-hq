@@ -103,6 +103,4 @@ class Command(BaseDataDump):
             return self.get_person(voucher_case).get_case_property(calculation)
         elif case_reference == 'episode':
             return self.get_episode(voucher_case).get_case_property(calculation)
-        elif case_reference == 'test':
-            return self.get_test(voucher_case).get_case_property(calculation)
         raise Exception("unknown case reference %s" % case_reference)
