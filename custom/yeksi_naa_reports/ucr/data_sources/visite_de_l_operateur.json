@@ -86,61 +86,69 @@
         "comment": null,
         "create_index": false,
         "display_name": null,
-        "property_path": [
-          "form",
-          "region_name"
-        ],
+        "expression": {
+          "type": "property_path",
+          "property_path": [
+            "form",
+            "region_name"
+          ]
+        },
         "datatype": "string",
         "is_primary_key": false,
         "column_id": "region_name",
         "is_nullable": true,
-        "type": "raw",
-        "property_name": ""
+        "type": "expression"
       },
       {
         "comment": null,
         "create_index": false,
         "display_name": null,
-        "property_path": [
-          "form",
-          "PPS_name"
-        ],
+        "expression": {
+          "type": "property_path",
+          "property_path": [
+            "form",
+            "PPS_name"
+          ]
+        },
         "datatype": "string",
         "is_primary_key": false,
         "column_id": "pps_name",
         "is_nullable": true,
-        "type": "raw",
-        "property_name": ""
+        "type": "expression"
       },
       {
         "comment": null,
         "create_index": false,
         "display_name": null,
-        "property_path": [
-          "form",
-          "site_code"
-        ],
+        "expression": {
+          "type": "property_path",
+          "property_path": [
+            "form",
+            "site_code"
+          ]
+        },
         "datatype": "string",
         "is_primary_key": false,
         "column_id": "site_code",
         "is_nullable": true,
-        "type": "raw",
-        "property_name": ""
+        "type": "expression"
       },
       {
         "comment": null,
         "create_index": false,
         "display_name": null,
-        "property_path": [
-          "form",
-          "district_name"
-        ],
+        "expression": {
+          "type": "property_path",
+          "property_path": [
+            "form",
+            "district_name"
+          ]
+        },
         "datatype": "string",
         "is_primary_key": false,
         "column_id": "district_name",
         "is_nullable": true,
-        "type": "raw",
-        "property_name": ""
+        "type": "expression"
       },
       {
         "comment": null,
@@ -188,76 +196,86 @@
         "comment": null,
         "create_index": false,
         "display_name": null,
-        "property_path": [
-          "form",
-          "nb_products_stockout"
-        ],
+        "expression": {
+          "type": "property_path",
+          "property_path": [
+            "form",
+            "nb_products_stockout"
+          ]
+        },
         "datatype": "integer",
         "is_primary_key": false,
         "column_id": "nb_products_stockout",
         "is_nullable": true,
-        "type": "raw",
-        "property_name": ""
+        "type": "expression"
       },
       {
         "comment": null,
         "create_index": false,
         "display_name": null,
-        "property_path": [
-          "form",
-          "pps_nb_products"
-        ],
+        "expression": {
+          "type": "property_path",
+          "property_path": [
+            "form",
+            "pps_nb_products"
+          ]
+        },
         "datatype": "integer",
         "is_primary_key": false,
         "column_id": "pps_nb_products",
         "is_nullable": true,
-        "type": "raw",
-        "property_name": ""
+        "type": "expression"
       },
       {
         "comment": null,
         "create_index": false,
         "display_name": null,
-        "property_path": [
-          "form",
-          "supply-point"
-        ],
+        "expression": {
+          "type": "property_path",
+          "property_path": [
+            "form",
+            "supply-point"
+          ]
+        },
         "datatype": "string",
         "is_primary_key": false,
         "column_id": "supply-point",
         "is_nullable": true,
-        "type": "raw",
-        "property_name": ""
+        "type": "expression"
       },
       {
         "comment": null,
         "create_index": false,
         "display_name": null,
-        "property_path": [
-          "form",
-          "pps_total_amt_paid"
-        ],
+        "expression": {
+          "type": "property_path",
+          "property_path": [
+            "form",
+            "pps_total_amt_paid"
+          ]
+        },
         "datatype": "integer",
         "is_primary_key": false,
         "column_id": "pps_total_amt_paid",
         "is_nullable": true,
-        "type": "raw",
-        "property_name": ""
+        "type": "expression"
       },
       {
         "comment": null,
         "create_index": false,
         "display_name": null,
-        "property_path": [
-          "form",
-          "pps_total_amt_owed"
-        ],
+        "expression": {
+          "type": "property_path",
+          "property_path": [
+            "form",
+            "pps_total_amt_owed"
+          ]
+        },
         "datatype": "integer",
         "is_primary_key": false,
         "column_id": "pps_total_amt_owed",
         "is_nullable": true,
-        "type": "raw",
-        "property_name": ""
+        "type": "expression"
       }
     ],
     "base_item_expression": {

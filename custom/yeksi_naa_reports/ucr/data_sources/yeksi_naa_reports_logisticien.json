@@ -74,43 +74,49 @@
         "comment": null,
         "create_index": false,
         "display_name": null,
-        "property_path": [
-          "district_name"
-        ],
+        "expression": {
+          "type": "property_path",
+          "property_path": [
+            "district_name"
+          ]
+        },
         "datatype": "string",
         "is_primary_key": false,
         "column_id": "district_name",
         "is_nullable": true,
-        "type": "raw",
-        "property_name": ""
+        "type": "expression"
       },
       {
         "comment": null,
         "create_index": false,
         "display_name": null,
-        "property_path": [
-          "montant_paye"
-        ],
+        "expression": {
+          "type": "property_path",
+          "property_path": [
+            "montant_paye"
+          ]
+        },
         "datatype": "integer",
         "is_primary_key": false,
         "column_id": "montant_paye",
         "is_nullable": true,
-        "type": "raw",
-        "property_name": ""
+        "type": "expression"
       },
       {
         "comment": null,
         "create_index": false,
         "display_name": null,
-        "property_path": [
-          "montant_reel_a_payer"
-        ],
+        "expression": {
+          "type": "property_path",
+          "property_path": [
+            "montant_reel_a_payer"
+          ]
+        },
         "datatype": "integer",
         "is_primary_key": false,
         "column_id": "montant_reel_a_payer",
         "is_nullable": true,
-        "type": "raw",
-        "property_name": ""
+        "type": "expression"
       }
     ],
     "base_item_expression": {},

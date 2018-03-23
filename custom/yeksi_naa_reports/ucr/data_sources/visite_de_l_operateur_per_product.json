@@ -149,59 +149,67 @@
         "comment": null,
         "create_index": false,
         "display_name": null,
-        "property_path": [
-          "question1",
-          "loss_amt"
-        ],
+        "expression": {
+          "type": "property_path",
+          "property_path": [
+            "question1",
+            "loss_amt"
+          ]
+        },
         "datatype": "integer",
         "is_primary_key": false,
         "column_id": "loss_amt",
         "is_nullable": true,
-        "type": "raw",
-        "property_name": ""
+        "type": "expression"
       },
       {
         "comment": null,
         "create_index": false,
         "display_name": null,
-        "property_path": [
-          "pna_final_stock"
-        ],
+        "expression": {
+          "type": "property_path",
+          "property_path": [
+            "pna_final_stock"
+          ]
+        },
         "datatype": "integer",
         "is_primary_key": false,
         "column_id": "pna_final_stock",
         "is_nullable": true,
-        "type": "raw",
-        "property_name": ""
+        "type": "expression"
       },
       {
         "comment": null,
         "create_index": false,
         "display_name": null,
-        "property_path": [
-          "question1",
-          "expired_pna_valuation"
-        ],
+        "expression": {
+          "type": "property_path",
+          "property_path": [
+            "question1",
+            "expired_pna_valuation"
+          ]
+        },
         "datatype": "integer",
         "is_primary_key": false,
         "column_id": "expired_pna_valuation",
         "is_nullable": true,
-        "type": "raw",
-        "property_name": ""
+        "type": "expression"
       },
       {
         "comment": null,
         "create_index": false,
         "display_name": null,
-        "property_path": [
-          "final_pna_stock_valuation"
-        ],
+        "expression": {
+          "type": "property_path",
+          "property_path": [
+            "final_pna_stock_valuation"
+          ]
+        },
         "datatype": "integer",
         "is_primary_key": false,
         "column_id": "final_pna_stock_valuation",
         "is_nullable": true,
-        "type": "raw",
-        "property_name": ""
+        "type": "expression"
       },
       {
         "comment": null,
@@ -228,57 +236,65 @@
         "comment": null,
         "create_index": false,
         "display_name": null,
-        "property_path": [
-          "product_name"
-        ],
+        "expression": {
+          "type": "property_path",
+          "property_path": [
+            "product_name"
+          ]
+        },
         "datatype": "string",
         "is_primary_key": false,
         "column_id": "product_name",
         "is_nullable": true,
-        "type": "raw",
-        "property_name": ""
+        "type": "expression"
       },
       {
         "comment": null,
         "create_index": false,
         "display_name": null,
-        "property_path": [
-          "PPS_name"
-        ],
+        "expression": {
+          "type": "property_path",
+          "property_path": [
+            "PPS_name"
+          ]
+        },
         "datatype": "string",
         "is_primary_key": false,
         "column_id": "PPS_name",
         "is_nullable": true,
-        "type": "raw",
-        "property_name": ""
+        "type": "expression"
       },
       {
         "comment": null,
         "create_index": false,
         "display_name": null,
-        "property_path": [
-          "product_id"
-        ],
+        "expression": {
+          "type": "property_path",
+          "property_path": [
+            "product_id"
+          ]
+        },
         "datatype": "string",
         "is_primary_key": false,
         "column_id": "product_id",
         "is_nullable": true,
-        "type": "raw",
-        "property_name": ""
+        "type": "expression"
       },
       {
         "comment": null,
         "create_index": false,
         "display_name": null,
-        "property_path": [
-          "site_code"
-        ],
+        "expression": {
+          "type": "property_path",
+          "property_path": [
+            "site_code"
+          ]
+        },
         "datatype": "string",
         "is_primary_key": false,
         "column_id": "site_code",
         "is_nullable": true,
-        "type": "raw",
-        "property_name": ""
+        "type": "expression"
       },
       {
         "comment": null,
