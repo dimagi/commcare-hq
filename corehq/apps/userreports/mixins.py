@@ -2,14 +2,13 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from collections import OrderedDict
 
-from corehq.apps.userreports.models import DataSourceConfiguration, get_datasource_config
-from corehq.apps.userreports.reports.specs import ReportColumn, ExpressionColumn
 from corehq.apps.userreports.util import get_table_name
 import six
 
 
 class ConfigurableReportDataSourceMixin(object):
     def __init__(self, domain, config_or_config_id, filters, aggregation_columns, columns, order_by):
+        from corehq.apps.userreports.models import DataSourceConfiguration
         self.lang = None
         self.domain = domain
         if isinstance(config_or_config_id, DataSourceConfiguration):
@@ -42,6 +41,7 @@ class ConfigurableReportDataSourceMixin(object):
 
     @property
     def config(self):
+        from corehq.apps.userreports.models import get_datasource_config
         if self._config is None:
             self._config, _ = get_datasource_config(self._config_id, self.domain)
         return self._config
@@ -68,10 +68,13 @@ class ConfigurableReportDataSourceMixin(object):
 
     @property
     def top_level_db_columns(self):
+        from corehq.apps.userreports.reports.specs import ReportColumn
+
         return [col for col in self.top_level_columns if isinstance(col, ReportColumn)]
 
     @property
     def top_level_computed_columns(self):
+        from corehq.apps.userreports.reports.specs import ExpressionColumn
         return [col for col in self.top_level_columns if isinstance(col, ExpressionColumn)]
 
     @property
@@ -117,3 +120,14 @@ class ConfigurableReportDataSourceMixin(object):
         else:
             # if the column isn't found just treat it as a normal field
             return [column_id]
+
+
+class NoPropertyTypeCoercionMixIn(object):
+    """
+    This disables automatic type conversion on a JsonObject
+    So, for example, nested date-like things don't get automatically converted to dates.
+
+    Used by many of the spec classes.
+    """
+    class Meta(object):
+        string_conversions = ()

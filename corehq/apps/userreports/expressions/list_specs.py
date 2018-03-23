@@ -2,6 +2,8 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import itertools
 from django.utils.translation import ugettext as _
+
+from corehq.apps.userreports.mixins import NoPropertyTypeCoercionMixIn
 from dimagi.ext.jsonobject import JsonObject, DictProperty, StringProperty
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.specs import TypeProperty
@@ -18,7 +20,7 @@ def _evaluate_items_expression(itemx_ex, doc, context):
         return result
 
 
-class FilterItemsExpressionSpec(JsonObject):
+class FilterItemsExpressionSpec(NoPropertyTypeCoercionMixIn, JsonObject):
     type = TypeProperty('filter_items')
     items_expression = DefaultProperty(required=True)
     filter_expression = DictProperty(required=True)
@@ -42,10 +44,10 @@ class FilterItemsExpressionSpec(JsonObject):
                                                           filter=add_tabbed_text(str(self._filter_expression)))
 
 
-class MapItemsExpressionSpec(JsonObject):
+class MapItemsExpressionSpec(NoPropertyTypeCoercionMixIn, JsonObject):
     type = TypeProperty('map_items')
     items_expression = DefaultProperty(required=True)
-    map_expression = DictProperty(required=True)
+    map_expression = DefaultProperty(required=True)
 
     def configure(self, items_expression, map_expression):
         self._items_expression = items_expression
@@ -61,7 +63,7 @@ class MapItemsExpressionSpec(JsonObject):
                                                     map=add_tabbed_text(str(self._map_expression)))
 
 
-class ReduceItemsExpressionSpec(JsonObject):
+class ReduceItemsExpressionSpec(NoPropertyTypeCoercionMixIn, JsonObject):
     type = TypeProperty('reduce_items')
     items_expression = DefaultProperty(required=True)
     aggregation_fn = StringProperty(required=True)
@@ -83,7 +85,7 @@ class ReduceItemsExpressionSpec(JsonObject):
                                                   items=add_tabbed_text(str(self._items_expression)))
 
 
-class FlattenExpressionSpec(JsonObject):
+class FlattenExpressionSpec(NoPropertyTypeCoercionMixIn, JsonObject):
     type = TypeProperty('flatten')
     items_expression = DefaultProperty(required=True)
 
@@ -105,7 +107,7 @@ class FlattenExpressionSpec(JsonObject):
         return "flatten:\n{items}\n".format(items=add_tabbed_text(str(self._items_expression)))
 
 
-class SortItemsExpressionSpec(JsonObject):
+class SortItemsExpressionSpec(NoPropertyTypeCoercionMixIn, JsonObject):
     ASC, DESC = "ASC", "DESC"
     type = TypeProperty('sort_items')
     items_expression = DefaultProperty(required=True)
