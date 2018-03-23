@@ -41,7 +41,7 @@ class Command(BaseDataDump):
             get_last_episode(case)
         )
         if not self.context['last_episode']:
-            return Exception("could not find last episode for person %s" % case.case_id)
+            raise Exception("could not find last episode for person %s" % case.case_id)
         return self.context['last_episode']
 
     def get_last_occurrence(self, case):
@@ -50,7 +50,7 @@ class Command(BaseDataDump):
             get_last_occurrence(case)
         )
         if not self.context['last_occurrence']:
-            return Exception("could not find last occurrence for person %s" % case.case_id)
+            raise Exception("could not find last occurrence for person %s" % case.case_id)
         return self.context['last_occurrence']
 
     def get_custom_value(self, column_name, case):
@@ -63,7 +63,7 @@ class Command(BaseDataDump):
                 user = CommCareUser.get_by_user_id(user_id, DOMAIN)
                 return user.username
             except Exception as e:
-                return Exception("Could not get username. case opened by %s, %s" % (user_id, e))
+                raise Exception("Could not get username. case opened by %s, %s" % (user_id, e))
         elif column_name == "Created by User ID":
             return case.opened_by
         elif column_name == "Date of creation":
@@ -98,7 +98,7 @@ class Command(BaseDataDump):
                 return self.get_last_occurrence(case).get_case_property(calculation)
             except Exception as e:
                 return str(e)
-        return Exception("unknown case reference %s" % case_reference)
+        raise Exception("unknown case reference %s" % case_reference)
 
     def get_case_ids_query(self, case_type):
         """
