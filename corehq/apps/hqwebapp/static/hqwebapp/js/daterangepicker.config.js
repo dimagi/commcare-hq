@@ -37,7 +37,6 @@
             locale: {
                 format: 'YYYY-MM-DD',
                 separator: separator,
-                cancelLabel: gettext('Clear'),
             },
         };
         var hasStartAndEndDate = !_.isEmpty(startdate) && !_.isEmpty(enddate);
@@ -49,19 +48,27 @@
         $(this).daterangepicker(config);
 
         var $el = $(this);
-        $el.daterangepicker(config);
-        $el.on('cancel.daterangepicker', function() {
-            $el.val(gettext("Show All Dates"));
 
-            // Clear startdate and enddate filters
-            var filter_id = $(this)[0].getAttribute("name");
-            var filter_id_start = filter_id + "-start";
-            var filter_id_end = filter_id + "-end";
-            if (document.getElementById(filter_id_start) && document.getElementById(filter_id_end)) {
-                document.getElementById(filter_id_start).setAttribute("value", "");
-                document.getElementById(filter_id_end).setAttribute("value", "");
-            }
-        });
+        // UCRs
+        var ucr = "userreports/js/configurable_report";
+        if (typeof COMMCAREHQ_MODULES[ucr] !== 'undefined') {
+            // Change 'Cancel' button text to 'Clear'
+            config.locale.cancelLabel = gettext('Clear');
+
+            $el.daterangepicker(config);
+            $el.on('cancel.daterangepicker', function() {
+                $el.val(gettext("Show All Dates"));
+
+                // Clear startdate and enddate filters
+                var filter_id = $(this)[0].getAttribute("name");
+                var filter_id_start = filter_id + "-start";
+                var filter_id_end = filter_id + "-end";
+                if (document.getElementById(filter_id_start) && document.getElementById(filter_id_end)) {
+                    document.getElementById(filter_id_start).setAttribute("value", "");
+                    document.getElementById(filter_id_end).setAttribute("value", "");
+                }
+            });
+        }
 
         if (! hasStartAndEndDate){
             $(this).val("");
