@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 
 from __future__ import unicode_literals
-from collections import namedtuple
+from collections import namedtuple, defaultdict
 from datetime import timedelta
 import re
 
@@ -9,6 +9,8 @@ from requests import HTTPError
 from six.moves import zip
 
 from casexml.apps.case.xform import extract_case_blocks
+from corehq.apps.locations.models import SQLLocation
+from corehq.apps.users.cases import get_wrapped_owner, get_owner_id
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.motech.openmrs.finders import PatientFinder
 from corehq.motech.openmrs.logger import logger
@@ -111,6 +113,42 @@ def parse_request_exception(err):
 
 def url(url_format_string, **kwargs):
     return url_format_string.format(**kwargs)
+
+
+def get_case_location(case):
+    """
+    If the owner of the case is a location, return it. Otherwise return
+    the owner's primary location. If the case owner does not have a
+    primary location, return None.
+    """
+    case_owner = get_wrapped_owner(get_owner_id(case))
+    if isinstance(case_owner, SQLLocation):
+        return case_owner
+    location_id = case_owner.get_location_id(case.domain)
+    return SQLLocation.by_location_id(location_id) if location_id else None
+
+
+def get_case_location_ancestor_repeaters(case):
+    """
+    Determine the location of the case's owner, and search up its
+    ancestors to find the first OpenMRS Repeater(s).
+
+    Returns a list because more than one OpenmrsRepeater may have the
+    same location.
+    """
+    from corehq.motech.openmrs.dbaccessors import get_openmrs_repeaters_by_domain
+
+    case_location = get_case_location(case)
+    if not case_location:
+        return []
+    location_repeaters = defaultdict(list)
+    for repeater in get_openmrs_repeaters_by_domain(case.domain):
+        if repeater.location_id:
+            location_repeaters[repeater.location_id].append(repeater)
+    for location in case_location.get_ancestors(include_self=True):
+        if location.location_id in location_repeaters:
+            return location_repeaters[location.location_id]
+    return []
 
 
 def create_person_attribute(requests, person_uuid, attribute_type_uuid, value):
