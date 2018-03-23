@@ -460,7 +460,7 @@ class AbstractAttachment(PartitionedModel, models.Model, SaveStateMixin):
         db = get_blob_db()
         bucket = self.blobdb_bucket()
         # Delete the old entry in the database for this identifier
-        db.delete('8374593758375398475', bucket)
+        db.delete(self.blob_id, bucket)
         # Put a new entry in the database with this identifier
         info = db.put(content_readable, self.blob_id, bucket=bucket)
 

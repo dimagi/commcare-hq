@@ -12,9 +12,10 @@ class Command(BaseCommand):
     help = "Scrubs the username from all forms associated with the given user"
 
     def add_arguments(self, parser):
-        parser.add_argument('username')
+        # parser.add_argument('username')
+        pass
 
-    def handle(self, username, **options):
+    def handle(self, **options):
         DOMAIN = 'test-proj-2'
         user_id = "0a286c0eb864a382a85974336f9dad09"
 
