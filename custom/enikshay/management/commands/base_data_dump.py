@@ -117,7 +117,7 @@ class BaseDataDump(BaseCommand):
                         for case_reference, calculation in details.items():
                             if case_reference == "N/A":
                                 case_row[column_name] = ""
-                            elif case_reference == 'self':
+                            elif case_reference in ['self', 'Self']:
                                 if calculation == 'caseid':
                                     case_row[column_name] = case_to_dump.case_id
                                 else:
