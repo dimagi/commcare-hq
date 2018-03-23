@@ -307,7 +307,7 @@ class MySavedReportsView(BaseProjectReportSectionView):
                                    key=lambda s: s.configs[0].name)
         for report in scheduled_reports:
             self._adjust_report_day_and_time(report)
-        return scheduled_reports
+        return sorted(scheduled_reports, key=self._report_sort_key())
 
     @property
     def show_all_scheduled_reports(self):
@@ -346,7 +346,10 @@ class MySavedReportsView(BaseProjectReportSectionView):
                 ret.append(scheduled_report)
             elif user_email in scheduled_report.all_recipient_emails:
                 ret.append(scheduled_report)
-        return ret
+        return sorted(ret, key=self._report_sort_key())
+
+    def _report_sort_key(self):
+        return lambda report: report.configs[0].full_name.lower() if report.configs else None
 
     def _adjust_report_day_and_time(self, report):
         time_difference = get_timezone_difference(self.domain)
