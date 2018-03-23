@@ -238,7 +238,6 @@ HQ_APPS = (
     'corehq.apps.linked_domain',
     'corehq.apps.locations',
     'corehq.apps.products',
-    'corehq.apps.prelogin',
     'corehq.apps.programs',
     'corehq.apps.commtrack',
     'corehq.apps.consumption',
@@ -754,11 +753,8 @@ LOCAL_REPEATERS = ()
 # Set to None to enable all or empty tuple to disable all.
 REPEATERS_WHITELIST = None
 
-# Prelogin site
+# If ENABLE_PRELOGIN_SITE is set to true, redirect to Dimagi.com urls
 ENABLE_PRELOGIN_SITE = False
-PRELOGIN_APPS = (
-    'corehq.apps.prelogin',
-)
 
 # dimagi.com urls
 PRICING_PAGE_URL = "https://www.dimagi.com/commcare/pricing/"
@@ -1494,9 +1490,6 @@ EXTRA_COUCHDB_DATABASES = COUCH_SETTINGS_HELPER.get_extra_couchdbs()
 # it can be reverted whenever that's figured out.
 # https://github.com/dimagi/commcare-hq/pull/10034#issuecomment-174868270
 INSTALLED_APPS = LOCAL_APPS + INSTALLED_APPS
-
-if ENABLE_PRELOGIN_SITE:
-    INSTALLED_APPS += PRELOGIN_APPS
 
 seen = set()
 INSTALLED_APPS = [x for x in INSTALLED_APPS if x not in seen and not seen.add(x)]
