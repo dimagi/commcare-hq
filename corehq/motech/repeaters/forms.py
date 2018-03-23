@@ -4,6 +4,7 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
 
+from corehq.apps.users.forms import SupplyPointSelectWidget
 from corehq.motech.repeaters.dbaccessors import get_repeaters_by_domain
 from corehq.motech.repeaters.repeater_generators import RegisterGenerator
 from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain_es
@@ -197,6 +198,25 @@ class CaseRepeaterForm(GenericRepeaterForm):
         if not set(black_listed_users).issubset([t[0] for t in self.user_choices]):
             raise ValidationError(_('Unknown user'))
         return cleaned_data
+
+
+class OpenmrsRepeaterForm(CaseRepeaterForm):
+    location_id = forms.CharField(
+        label=_("Location"),
+        required=False,
+        help_text=_(
+            'Cases at this location and below will be forwarded. '
+            'Leave empty if this is the only OpenMRS Forwarder'
+        )
+    )
+
+    def __init__(self, *args, **kwargs):
+        super(OpenmrsRepeaterForm, self).__init__(*args, **kwargs)
+        self.fields['location_id'].widget = SupplyPointSelectWidget(self.domain, id='id_location_id')
+
+    def get_ordered_crispy_form_fields(self):
+        fields = super(OpenmrsRepeaterForm, self).get_ordered_crispy_form_fields()
+        return ['location_id'] + fields
 
 
 class SOAPCaseRepeaterForm(CaseRepeaterForm):
