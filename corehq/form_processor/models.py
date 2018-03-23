@@ -457,12 +457,13 @@ class AbstractAttachment(PartitionedModel, models.Model, SaveStateMixin):
             content_readable = StringIO(content)
         elif isinstance(content, six.binary_type):
             content_readable = BytesIO(content)
-        old_meta = self.blobs.get(self.name)
         db = get_blob_db()
         bucket = self.blobdb_bucket()
-        info = db.put(content_readable, get_short_identifier(), bucket=bucket)
-        if old_meta and old_meta.id:
-            db.delete(old_meta.id, bucket)
+        # Delete the old entry in the database for this identifier
+        db.delete('8374593758375398475', bucket)
+        # Put a new entry in the database with this identifier
+        info = db.put(content_readable, self.blob_id, bucket=bucket)
+
         self.md5 = info.md5_hash
         self.content_length = info.length
         self.blob_id = info.identifier

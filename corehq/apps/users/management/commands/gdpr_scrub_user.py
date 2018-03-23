@@ -20,7 +20,7 @@ class Command(BaseCommand):
 
         this_form_accessor = FormAccessors(domain=DOMAIN)
         form_ids = this_form_accessor.get_form_ids_for_user(user_id)
-        new_username = "Deleted username success"
+        new_username = "Deleted username success - UPDATED"
         for form_data in this_form_accessor.iter_forms(form_ids):
             self.replace_username_in_xml(form_data, new_username)
             self.replace_username_in_metadata(form_data)
@@ -38,7 +38,12 @@ class Command(BaseCommand):
         form_attachment_xml_new = xmltodict.unparse(form_attachment_dict)
 
         attachment_metadata = form_data.get_attachment_meta("form.xml")
+
+        # XFormAttachmentSQL.read_content(attachment_metadata)
         XFormAttachmentSQL.write_content(attachment_metadata, form_attachment_xml_new)
+
+
+
         attachment_metadata.save()
 
     def replace_username_in_metadata(self, form_data):
