@@ -7,7 +7,6 @@ from __future__ import (
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 
 from custom.enikshay.case_utils import (
-    CASE_TYPE_TEST,
     CASE_TYPE_EPISODE,
     CASE_TYPE_OCCURRENCE,
     CASE_TYPE_PRESCRIPTION,
