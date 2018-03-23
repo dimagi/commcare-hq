@@ -1518,3 +1518,12 @@ MOBILE_SIGNUP_REDIRECT_AB_TEST = PredictablyRandomToggle(
     namespaces=[NAMESPACE_USER],
     randomness=0.5
 )
+
+
+APPCUES_AB_TEST = PredictablyRandomToggle(
+    'appcues_ab_test',
+    'True if user is in variant group for Appcues AB test. Irrelevent if user is not in test.',
+    TAG_PRODUCT,
+    namespaces=[NAMESPACE_USER],
+    randomness=0.5
+)
