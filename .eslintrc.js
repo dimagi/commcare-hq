@@ -36,5 +36,9 @@ module.exports = {
         "indent": ["warn", 4, {"SwitchCase":1}],
         "linebreak-style": ["error", "unix"],
         "semi": ["error", "always"],
+        "no-new-object": ["error"],
+        "no-unneeded-ternary": ["error"],
+        "no-throw-literal": ["error"],
+        "no-use-before-define": ["error"],
     }
 };
