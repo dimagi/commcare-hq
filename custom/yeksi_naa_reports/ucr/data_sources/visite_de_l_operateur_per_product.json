@@ -3,6 +3,30 @@
     "test-pna"
   ],
   "config": {
+    "table_id": "yeksi_naa_reports_visite_de_l_operateur_per_product",
+    "display_name": "Yeksi Naa Reports Visite de l'operateur per product",
+    "referenced_doc_type": "XFormInstance",
+    "description": "",
+    "base_item_expression": {
+      "datatype": null,
+      "type": "property_path",
+      "property_path": [
+        "form",
+        "confirmed_products_update",
+        "products_update"
+      ]
+    },
+    "configured_filter": {
+      "operator": "eq",
+      "expression": {
+        "datatype": null,
+        "type": "property_name",
+        "property_name": "xmlns"
+      },
+      "type": "boolean_expression",
+      "comment": null,
+      "property_value": "http://openrosa.org/formdesigner/EF8B5DB8-4FB2-4CFB-B0A2-CDD26ADDAE3D"
+    },
     "configured_indicators": [
       {
         "comment": null,
@@ -319,37 +343,9 @@
         "column_id": "supply-point"
       }
     ],
-    "base_item_expression": {
-      "datatype": null,
-      "type": "property_path",
-      "property_path": [
-        "form",
-        "confirmed_products_update",
-        "products_update"
-      ]
-    },
-    "configured_filter": {
-      "operator": "eq",
-      "expression": {
-        "datatype": null,
-        "type": "property_name",
-        "property_name": "xmlns"
-      },
-      "type": "boolean_expression",
-      "comment": null,
-      "property_value": "http://openrosa.org/formdesigner/EF8B5DB8-4FB2-4CFB-B0A2-CDD26ADDAE3D"
-    },
-    "disable_destructive_rebuild": false,
-    "description": "",
-    "referenced_doc_type": "XFormInstance",
-    "engine_id": "ucr",
-    "last_modified": "2018-03-15T13:00:10.830038Z",
-    "display_name": "Yeksi Naa Reports Visite de l'operateur per product",
     "named_expressions": {},
-    "doc_type": "DataSourceConfiguration",
-    "icds_rebuild_related_docs": false,
-    "table_id": "yeksi_naa_reports_visite_de_l_operateur_per_product",
     "named_filters": {},
-    "_id": "7585fadfb6355caf6dc88ee1fc580561"
+    "engine_id": "ucr",
+    "disable_destructive_rebuild": false
   }
 }

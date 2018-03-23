@@ -3,6 +3,23 @@
     "test-pna"
   ],
   "config": {
+    "table_id": "yeksi_naa_reports_visite_de_l_operateur",
+    "display_name": "Yeksi Naa Reports Visite de l'operateur",
+    "referenced_doc_type": "XFormInstance",
+    "description": "",
+    "base_item_expression": {
+    },
+    "configured_filter": {
+      "operator": "eq",
+      "type": "boolean_expression",
+      "expression": {
+        "datatype": null,
+        "type": "property_name",
+        "property_name": "xmlns"
+      },
+      "comment": null,
+      "property_value": "http://openrosa.org/formdesigner/EF8B5DB8-4FB2-4CFB-B0A2-CDD26ADDAE3D"
+    },
     "configured_indicators": [
       {
         "comment": null,
@@ -278,32 +295,11 @@
         "type": "expression"
       }
     ],
-    "base_item_expression": {
-    },
-    "configured_filter": {
-      "operator": "eq",
-      "type": "boolean_expression",
-      "expression": {
-        "datatype": null,
-        "type": "property_name",
-        "property_name": "xmlns"
-      },
-      "comment": null,
-      "property_value": "http://openrosa.org/formdesigner/EF8B5DB8-4FB2-4CFB-B0A2-CDD26ADDAE3D"
-    },
-    "disable_destructive_rebuild": false,
-    "description": "",
-    "referenced_doc_type": "XFormInstance",
-    "engine_id": "ucr",
-    "last_modified": "2018-03-13T10:30:36.141578Z",
-    "display_name": "Yeksi Naa Reports Visite de l'operateur",
     "named_expressions": {
     },
-    "doc_type": "DataSourceConfiguration",
-    "icds_rebuild_related_docs": false,
-    "table_id": "yeksi_naa_reports_visite_de_l_operateur",
     "named_filters": {
     },
-    "_id": "379af927f4a4457b69b9cc4bee33f59d"
+    "engine_id": "ucr",
+    "disable_destructive_rebuild": false
   }
 }

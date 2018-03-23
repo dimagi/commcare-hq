@@ -3,6 +3,22 @@
     "test-pna"
   ],
   "config": {
+    "table_id": "yeksi_naa_reports_logisticien",
+    "display_name": "Yeksi Naa Reports Logisticien",
+    "referenced_doc_type": "CommCareCase",
+    "description": "",
+    "base_item_expression": {},
+    "configured_filter": {
+      "operator": "eq",
+      "expression": {
+        "datatype": null,
+        "type": "property_name",
+        "property_name": "type"
+      },
+      "type": "boolean_expression",
+      "comment": null,
+      "property_value": "payment"
+    },
     "configured_indicators": [
       {
         "comment": null,
@@ -119,29 +135,9 @@
         "type": "expression"
       }
     ],
-    "base_item_expression": {},
-    "configured_filter": {
-      "operator": "eq",
-      "expression": {
-        "datatype": null,
-        "type": "property_name",
-        "property_name": "type"
-      },
-      "type": "boolean_expression",
-      "comment": null,
-      "property_value": "payment"
-    },
-    "disable_destructive_rebuild": false,
-    "description": "",
-    "referenced_doc_type": "CommCareCase",
-    "engine_id": "ucr",
-    "last_modified": "2018-03-21T18:27:48.882697Z",
-    "display_name": "Yeksi Naa Reports Logisticien",
     "named_expressions": {},
-    "doc_type": "DataSourceConfiguration",
-    "icds_rebuild_related_docs": false,
-    "table_id": "yeksi_naa_reports_logisticien",
     "named_filters": {},
-    "_id": "9d475a122f6ff025e34b2a8d7b411f43"
+    "engine_id": "ucr",
+    "disable_destructive_rebuild": false
   }
 }
