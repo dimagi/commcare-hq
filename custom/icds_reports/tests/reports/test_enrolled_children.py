@@ -8,7 +8,7 @@ from custom.icds_reports.reports.enrolled_children import get_enrolled_children_
 from django.test import TestCase
 
 
-@override_settings(SERVER_ENVIRONMENT='icds')
+@override_settings(SERVER_ENVIRONMENT='icds-new')
 class TestEnrolledChildren(TestCase):
 
     def test_map_data(self):

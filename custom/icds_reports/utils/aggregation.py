@@ -3,7 +3,6 @@ from __future__ import unicode_literals
 import hashlib
 
 from dateutil.relativedelta import relativedelta
-from toggle.models import Toggle
 
 from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_datasource_config
 from corehq.apps.userreports.util import get_table_name
@@ -11,6 +10,7 @@ from custom.icds_reports.const import (
     AGG_COMP_FEEDING_TABLE,
     AGG_CCS_RECORD_PNC_TABLE,
     AGG_CHILD_HEALTH_PNC_TABLE,
+    DASHBOARD_DOMAIN
 )
 
 
@@ -46,7 +46,7 @@ class BaseICDSAggregationHelper(object):
     @property
     def domain(self):
         # Currently its only possible for one domain to have access to the ICDS dashboard per env
-        return Toggle.get('dashboard_icds_reports').enabled_users[0][len('domain:'):]
+        return DASHBOARD_DOMAIN
 
     @property
     def ucr_tablename(self):
