@@ -39,6 +39,5 @@ module.exports = {
         "no-new-object": ["error"],
         "no-unneeded-ternary": ["error"],
         "no-throw-literal": ["error"],
-        "no-use-before-define": ["error"],
     }
 };
