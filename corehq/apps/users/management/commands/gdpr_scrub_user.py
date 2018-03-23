@@ -12,14 +12,11 @@ class Command(BaseCommand):
     help = "Scrubs the username from all forms associated with the given user"
 
     def add_arguments(self, parser):
-        # parser.add_argument('username')
-        pass
+        parser.add_argument('user_id')
+        parser.add_argument('domain')
 
-    def handle(self, **options):
-        DOMAIN = 'test-proj-2'
-        user_id = "0a286c0eb864a382a85974336f9dad09"
-
-        this_form_accessor = FormAccessors(domain=DOMAIN)
+    def handle(self, user_id, domain, **options):
+        this_form_accessor = FormAccessors(domain=domain)
         form_ids = this_form_accessor.get_form_ids_for_user(user_id)
         new_username = "Deleted username success - UPDATED"
         for form_data in this_form_accessor.iter_forms(form_ids):
@@ -40,6 +37,8 @@ class Command(BaseCommand):
         # Convert the dict back to xml
         form_attachment_xml_new = xmltodict.unparse(form_attachment_dict)
         attachment_metadata = form_data.get_attachment_meta("form.xml")
+
+        print("Username: {}".format(form_data.metadata.username))
 
         # Write the new xml to the database
         XFormAttachmentSQL.write_content(attachment_metadata, form_attachment_xml_new)
