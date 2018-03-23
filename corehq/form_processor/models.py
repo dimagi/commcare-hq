@@ -124,6 +124,9 @@ class AttachmentMixin(SaveStateMixin):
                 return _get_attachment_from_list(getattr(self, list_attr))
 
         if self.is_saved():
+            print("Right here in get_attachment_meta: POINT 2")
+            a = self._get_attachment_from_db(attachment_name)
+            print("Printing a: {}".format(a))
             return self._get_attachment_from_db(attachment_name)
 
     def _get_attachment_from_db(self, attachment_name):
@@ -359,9 +362,11 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
         self.state |= self.DELETED
 
     def to_json(self, include_attachments=False):
+        print("IN TO_JSON()*#()*()*@)#($*@(#)$")
         from .serializers import XFormInstanceSQLSerializer
         serializer = XFormInstanceSQLSerializer(self, include_attachments=include_attachments)
         data = dict(serializer.data)
+        # print("TO JSON DATA: {}".format(data))
         data['history'] = [dict(op) for op in data['history']]
         data['backend_id'] = 'sql'
         return data
@@ -394,6 +399,7 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
 
     @memoized
     def get_xml(self):
+        print("In THIS get xml")
         return self.get_attachment('form.xml')
 
     def xml_md5(self):
