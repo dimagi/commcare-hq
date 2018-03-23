@@ -1,11 +1,13 @@
 from __future__ import absolute_import
-from django.test import SimpleTestCase
+
+from unittest import TestCase
+
 from mock import Mock
 
 from corehq.motech.openmrs.workflow import Task, WorkflowTask, execute_workflow, task, workflow_task
 
 
-class TaskTests(SimpleTestCase):
+class TaskTests(TestCase):
 
     def test_task_run_func_args_kwargs(self):
         """
@@ -37,7 +39,7 @@ class TaskTests(SimpleTestCase):
         sir_robin.run.assert_called_with('fled', tail='turned', where='away')
 
 
-class WorkflowTests(SimpleTestCase):
+class WorkflowTests(TestCase):
 
     def test_workflow_runs(self):
         """
@@ -115,7 +117,7 @@ class WorkflowTests(SimpleTestCase):
         delete_foo.assert_called_with(foo_id=5)
 
 
-class DecoratorTests(SimpleTestCase):
+class DecoratorTests(TestCase):
 
     def test_task_decorator(self):
         """
