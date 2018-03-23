@@ -238,11 +238,17 @@ def password_change(req):
 
 
 def server_up(req):
-    '''
-    Hit serverup.txt to check any of the below item with always_check: True
-    Hit serverup.txt?celery (or heartbeat) to check a specific service
-    View that just returns "success", which can be hooked into server monitoring tools like: pingdom
-    '''
+    """
+    Health check view which can be hooked into server monitoring tools like 'pingdom'
+
+    Returns:
+        HttpResponse("success", status_code=200)
+        HttpResponse(error_message, status_code=500)
+
+    Hit serverup.txt to check all the default enabled services (always_check=True)
+    Hit serverup.txt?only={check_name} to only check a specific service
+    Hit serverup.txt?{check_name} to include a non-default check (currently only ``heartbeat``)
+    """
 
     checkers = {
         "heartbeat": {
