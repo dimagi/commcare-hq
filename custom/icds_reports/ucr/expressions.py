@@ -339,7 +339,7 @@ def _get_location_ancestors_by_type(location_id):
     if not location:
         return {}
 
-    ancestors = (location.get_ancestors(include_self=False)
+    ancestors = (location.get_ancestors(include_self=True)
                          .prefetch_related('location_type', 'parent'))
     return {
         ancestor.location_type.name: ancestor.to_json(include_lineage=False)
