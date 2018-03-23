@@ -7,7 +7,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.utils.dateparse import parse_datetime
 
 from corehq import toggles
-from corehq.apps.domain.decorators import api_auth, check_domain_migration
+from corehq.apps.domain.decorators import api_auth, check_domain_migration, two_factor_exempt
 from dimagi.utils.web import json_response
 from dimagi.utils.logging import notify_exception
 
@@ -54,6 +54,7 @@ class UnenrollPatientRepeaterView(AddCaseRepeaterView):
 
 @toggles.NINETYNINE_DOTS.required_decorator()
 @api_auth
+@two_factor_exempt
 @require_POST
 @csrf_exempt
 @check_domain_migration
@@ -86,6 +87,7 @@ def update_patient_adherence(request, domain):
 
 @toggles.NINETYNINE_DOTS.required_decorator()
 @api_auth
+@two_factor_exempt
 @require_POST
 @csrf_exempt
 @check_domain_migration
@@ -105,6 +107,7 @@ def update_patient_details(request, domain):
 
 @toggles.NINETYNINE_DOTS.required_decorator()
 @api_auth
+@two_factor_exempt
 @require_POST
 @csrf_exempt
 @check_domain_migration
@@ -137,6 +140,7 @@ def update_adherence_confidence(request, domain):
 
 @toggles.NINETYNINE_DOTS.required_decorator()
 @api_auth
+@two_factor_exempt
 @require_POST
 @csrf_exempt
 @check_domain_migration
