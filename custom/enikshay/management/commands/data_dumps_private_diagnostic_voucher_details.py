@@ -26,7 +26,7 @@ class Command(BaseDataDump):
     https://docs.google.com/spreadsheets/d/1t6cd-VPy6p8EOEhQJD15IbULU0EJ05ALQ0tcdfx6ng8/edit#gid=1421401855&range=A42
     """
     TASK_NAME = "10_private_diagnostic_voucher_details"
-    INPUT_FILE_NAME = "data_dumps_diagnostic_voucher_details.csv"
+    INPUT_FILE_NAME = "data_dumps_private_diagnostic_voucher_details.csv"
 
     def __init__(self, *args, **kwargs):
         super(Command, self).__init__(*args, **kwargs)
@@ -80,7 +80,7 @@ class Command(BaseDataDump):
         return self.context['occurrence']
 
     def get_test(self, voucher_case):
-        if not self.context['test']:
+        if 'test' not in self.context:
             test_case = get_first_parent_of_case(voucher_case.domain, voucher_case.case_id,
                                                  CASE_TYPE_TEST)
             self.context['test'] = test_case

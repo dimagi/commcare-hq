@@ -104,7 +104,7 @@ class Command(BaseDataDump):
 
     def get_prescription(self, voucher_case):
         assert self._is_prescription_voucher(voucher_case)
-        if not self.context['prescription']:
+        if 'prescription' not in self.context:
             prescription_case = get_first_parent_of_case(voucher_case.domain, voucher_case.case_id,
                                                          CASE_TYPE_PRESCRIPTION)
             self.context['prescription'] = prescription_case

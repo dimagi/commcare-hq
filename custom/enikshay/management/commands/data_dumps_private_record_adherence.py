@@ -26,7 +26,7 @@ class Command(BaseDataDump):
     https://docs.google.com/spreadsheets/d/1t6cd-VPy6p8EOEhQJD15IbULU0EJ05ALQ0tcdfx6ng8/edit#gid=1444087620&range=A42
     """
     TASK_NAME = "09_record_adherence"
-    INPUT_FILE_NAME = "data_dumps_record_adherence.csv"
+    INPUT_FILE_NAME = "data_dumps_private_record_adherence.csv"
 
     def __init__(self, *args, **kwargs):
         super(Command, self).__init__(*args, **kwargs)

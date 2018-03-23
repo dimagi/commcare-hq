@@ -11,6 +11,7 @@ from custom.enikshay.case_utils import (
     CASE_TYPE_OCCURRENCE,
     CASE_TYPE_PERSON,
     CASE_TYPE_VOUCHER,
+    CASE_TYPE_PRESCRIPTION,
     get_first_parent_of_case,
 )
 
@@ -85,6 +86,16 @@ class Command(BaseDataDump):
         if not self.context['occurrence']:
             raise Exception("could not find occurrence for voucher %s" % voucher_case.case_id)
         return self.context['occurrence']
+
+    def get_prescription(self, voucher_case):
+        assert self._is_prescription_voucher(voucher_case)
+        if 'prescription' not in self.context:
+            prescription_case = get_first_parent_of_case(voucher_case.domain, voucher_case.case_id,
+                                                         CASE_TYPE_PRESCRIPTION)
+            self.context['prescription'] = prescription_case
+        if not self.context['prescription']:
+            raise Exception("could not find prescription for prescription voucher %s" % voucher_case.case_id)
+        return self.context['prescription']
 
     def get_test(self, voucher_case):
         if not self.context['test']:
