@@ -185,7 +185,11 @@ class AdjListManager(TreeManager):
         return query
 
     def cte_get_queryset_ancestors(self, node, include_self=False):
-        return self.cte_get_ancestors(node, include_self=include_self)
+        return (
+            self.cte_get_ancestors(node, include_self=include_self)
+            # TODO remove this order_by when removing MPTT
+            .order_by(self.tree_id_attr, self.left_attr)
+        )
 
     cte_get_queryset_descendants = cte_get_descendants
 
