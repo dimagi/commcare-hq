@@ -25,32 +25,31 @@ class Command(BaseCommand):
             self.replace_username_in_xml(form_data, new_username)
             self.replace_username_in_metadata(form_data)
 
-    def replace_username_in_xml(self, form_data, new_username):
-
+    @staticmethod
+    def replace_username_in_xml(form_data, new_username):
+        # Get the xml attachment from the form data
         form_attachment_xml = form_data.get_attachment("form.xml")
+
+        # Convert the xml string to dict
         form_attachment_dict = xmltodict.parse(form_attachment_xml)
 
-        # replace the old username with the new username
-        print("Current username: {}".format(form_attachment_dict["data"]["n0:meta"]["n0:username"]))
+        # Replace the old username with the new username
         form_attachment_dict["data"]["n0:meta"]["n0:username"] = new_username
 
-        # convert the dict back to xml
+        # Convert the dict back to xml
         form_attachment_xml_new = xmltodict.unparse(form_attachment_dict)
-
         attachment_metadata = form_data.get_attachment_meta("form.xml")
 
-        # XFormAttachmentSQL.read_content(attachment_metadata)
+        # Write the new xml to the database
         XFormAttachmentSQL.write_content(attachment_metadata, form_attachment_xml_new)
-
-
 
         attachment_metadata.save()
 
-    def replace_username_in_metadata(self, form_data):
+    @staticmethod
+    def replace_username_in_metadata(form_data):
         form_data.metadata.username = "Delete COUCH username success"
         form_data.save()
 
 
-
-if __name__=="__main__":
+if __name__ == "__main__":
     Command().handle(username="testuser")
