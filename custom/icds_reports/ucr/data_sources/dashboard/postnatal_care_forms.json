@@ -62,7 +62,7 @@
             "type": "ancestor_location",
             "location_id": {
               "type": "named",
-              "named": "user_location_id"
+              "name": "user_location_id"
             },
             "location_type": "state"
           }
