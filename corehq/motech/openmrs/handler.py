@@ -19,7 +19,7 @@ from corehq.motech.openmrs.repeater_helpers import (
     create_person_attribute,
     delete_person_attribute_task,
 )
-from corehq.motech.openmrs.workflow import Task, WorkflowTask, execute_workflow, workflow_task
+from corehq.motech.openmrs.workflow import Task, WorkflowTask, execute_workflow
 from corehq.motech.utils import pformat_json
 from dimagi.utils.parsing import string_to_utc_datetime
 
