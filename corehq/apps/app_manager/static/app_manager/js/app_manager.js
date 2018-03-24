@@ -153,7 +153,7 @@ hqDefine('app_manager/js/app_manager', function () {
         };
         _checkPublishStatus();
         // check publish status every 20 seconds
-        setInterval(_checkPublishStatus, 20000);
+        //setInterval(_checkPublishStatus, 20000);
 
         // sniff ajax calls to other urls that make app changes
         hqImport("app_manager/js/app_manager_utils").handleAjaxAppChange(function() {
