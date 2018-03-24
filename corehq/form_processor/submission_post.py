@@ -150,6 +150,7 @@ class SubmissionPost(object):
         Message is formatted with markdown.
         '''
 
+        '''
         if not instance.metadata or instance.metadata.deviceID != FORMPLAYER_DEVICE_ID:
             return '   √   '
 
@@ -157,13 +158,16 @@ class SubmissionPost(object):
         user = CouchUser.get_by_user_id(instance.user_id)
         if not user or not user.is_web_user():
             return _('Form successfully saved!')
+        '''
+        messages = []
 
         from corehq.apps.export.views import CaseExportListView, FormExportListView
         from corehq.apps.reports.views import CaseDetailsView, FormDataView
         form_link = case_link = form_export_link = case_export_link = None
         form_view = 'corehq.apps.reports.standard.inspect.SubmitHistory'
-        if has_permission_to_view_report(user, instance.domain, form_view):
-            form_link = reverse(FormDataView.urlname, args=[instance.domain, instance.form_id])
+        #if has_permission_to_view_report(user, instance.domain, form_view):
+        form_link = reverse(FormDataView.urlname, args=[instance.domain, instance.form_id])
+        '''
         case_view = 'corehq.apps.reports.standard.cases.basic.CaseListReport'
         if cases and has_permission_to_view_report(user, instance.domain, case_view):
             if len(cases) == 1:
@@ -176,6 +180,7 @@ class SubmissionPost(object):
             form_export_link = reverse(FormExportListView.urlname, args=[instance.domain])
         if cases and can_view_case_exports(user, instance.domain):
             case_export_link = reverse(CaseExportListView.urlname, args=[instance.domain])
+        '''
 
         # Start with generic message
         messages.append(_('Form successfully saved!'))
