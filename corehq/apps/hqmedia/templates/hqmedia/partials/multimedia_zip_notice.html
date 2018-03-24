@@ -33,7 +33,7 @@
     <div class="alert alert-info">{% blocktrans %}This application currently does not contain any multimedia references.{% endblocktrans %}</div>
 {% endif %}
 {% if multimedia_state.has_form_errors %}
-    <div class="alert alert-error"><i class="fa fa-exclamation-triangle"></i> {% blocktrans %}<strong>Warning:</strong>
+    <div class="alert alert-danger"><i class="fa fa-exclamation-triangle"></i> {% blocktrans %}<strong>Warning:</strong>
         This application contains forms with errors&mdash;we cannot pull any multimedia references from those forms.
     {% endblocktrans %}</div>
 {% endif %}
