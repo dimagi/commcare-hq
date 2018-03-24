@@ -99,10 +99,7 @@ class CaseInfo(object):
     @property
     @memoized
     def location(self):
-        try:
-            return SQLLocation.objects.get(location_id=self.owner_id)
-        except SQLLocation.DoesNotExist:
-            return None
+        return SQLLocation.objects.get_or_None(location_id=self.owner_id)
 
     @property
     def owner(self):

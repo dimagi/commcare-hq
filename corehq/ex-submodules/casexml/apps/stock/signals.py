@@ -81,10 +81,7 @@ def get_stock_state_for_transaction(transaction):
     except AttributeError:
         domain_name = sql_product.domain
 
-    try:
-        sql_location = SQLLocation.objects.get(supply_point_id=transaction.case_id)
-    except SQLLocation.DoesNotExist:
-        sql_location = None
+    sql_location = SQLLocation.objects.get_or_None(supply_point_id=transaction.case_id)
 
     try:
         state = StockState.include_archived.get(
