@@ -1,8 +1,8 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import json
-from couchdbkit.ext.django.schema import *
 
+from couchdbkit.ext.django.schema import SchemaProperty, StringProperty
 from django.utils.translation import ugettext_lazy as _
 from django.urls import reverse
 

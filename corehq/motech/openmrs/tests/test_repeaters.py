@@ -167,6 +167,7 @@ everywhere_chw_doc = {
 }
 everywhere_chw_owner = mock.Mock(return_value=mock.Mock(get=lambda owner_id: everywhere_chw_doc))
 
+
 class CaseLocationTests(TestCase):
 
     @mock.patch('corehq.apps.locations.models.SQLLocation.objects.get', mock.Mock(return_value=joburg))
@@ -244,7 +245,8 @@ joburg_repeater = OpenmrsRepeater(
     _id='2222',
     location_id='johannesburg'
 )
-get_repeaters_mock = mock.Mock(return_value=[cape_town_repeater, western_cape_repeater, joburg_repeater,])
+get_repeaters_mock = mock.Mock(return_value=[cape_town_repeater, western_cape_repeater, joburg_repeater])
+
 
 class AncestorRepeaterTests(TestCase):
 
