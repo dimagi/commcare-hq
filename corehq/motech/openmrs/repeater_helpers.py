@@ -124,10 +124,6 @@ def parse_request_exception(err):
     return err_request, err_response
 
 
-def url(url_format_string, **kwargs):
-    return url_format_string.format(**kwargs)
-
-
 def create_person_attribute(requests, person_uuid, attribute_type_uuid, value):
     return requests.post('/ws/rest/v1/person/{person_uuid}/attribute'.format(
         person_uuid=person_uuid), json={
