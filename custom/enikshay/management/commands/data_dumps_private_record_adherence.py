@@ -15,6 +15,7 @@ from custom.enikshay.case_utils import (
 from custom.enikshay.const import (
     ENROLLED_IN_PRIVATE,
 )
+from custom.enikshay.exceptions import ENikshayCaseNotFound
 from custom.enikshay.management.commands.base_data_dump import BaseDataDump
 
 DOMAIN = "enikshay"
@@ -45,11 +46,14 @@ class Command(BaseDataDump):
 
     def include_case_in_dump(self, episode):
         assert episode.type == CASE_TYPE_EPISODE
-        person = self.get_person(episode)
+        try:
+            person = self.get_person(episode)
+        except ENikshayCaseNotFound:
+            return False
         return (
             person and
             person.get_case_property('dataset') == 'real' and
-            person.get_case_property(ENROLLED_IN_PRIVATE) != 'true'
+            person.get_case_property(ENROLLED_IN_PRIVATE) == 'true'
         )
 
     def cases_to_dump(self, episode_case):
