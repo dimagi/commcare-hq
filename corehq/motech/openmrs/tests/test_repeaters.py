@@ -222,16 +222,16 @@ class CaseLocationTests(TestCase):
 
 
 cape_town_ancestors = [
-    FakeLocation('56_barnet_st'),
-    FakeLocation('gardens'),
-    FakeLocation('cape_town'),
-    FakeLocation('western_cape'),
-    FakeLocation('south_africa'),
+    'south_africa',
+    'western_cape',
+    'cape_town',
+    'gardens',
+    '56_barnet_st',
 ]
 joburg_ancestors = [
-    FakeLocation('johannesburg'),
-    FakeLocation('gauteng'),
-    FakeLocation('south_africa'),
+    'south_africa',
+    'gauteng',
+    'johannesburg',
 ]
 cape_town_repeater = OpenmrsRepeater(
     _id='0000',
@@ -252,8 +252,7 @@ class AncestorRepeaterTests(TestCase):
 
     @mock.patch('corehq.motech.openmrs.repeater_helpers.get_case_location',
                 mock.Mock(return_value=joburg))
-    @mock.patch('corehq.apps.locations.models.SQLLocation.get_ancestors',
-                mock.Mock(return_value=joburg_ancestors))
+    @mock.patch('corehq.apps.locations.models.SQLLocation.path', joburg_ancestors)
     @mock.patch('corehq.apps.locations.models.SQLLocation.by_location_id',
                 mock.Mock(side_effect=lambda loc_id: FakeLocation(loc_id) if loc_id else None))
     @mock.patch('corehq.motech.openmrs.dbaccessors.get_openmrs_repeaters_by_domain', get_repeaters_mock)
@@ -267,8 +266,7 @@ class AncestorRepeaterTests(TestCase):
 
     @mock.patch('corehq.motech.openmrs.repeater_helpers.get_case_location',
                 mock.Mock(return_value=cape_town))
-    @mock.patch('corehq.apps.locations.models.SQLLocation.get_ancestors',
-                mock.Mock(return_value=cape_town_ancestors))
+    @mock.patch('corehq.apps.locations.models.SQLLocation.path', cape_town_ancestors)
     @mock.patch('corehq.apps.locations.models.SQLLocation.by_location_id',
                 mock.Mock(side_effect=lambda loc_id: FakeLocation(loc_id) if loc_id else None))
     @mock.patch('corehq.motech.openmrs.dbaccessors.get_openmrs_repeaters_by_domain', get_repeaters_mock)

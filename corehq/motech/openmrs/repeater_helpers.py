@@ -145,9 +145,9 @@ def get_case_location_ancestor_repeaters(case):
     for repeater in get_openmrs_repeaters_by_domain(case.domain):
         if repeater.location_id:
             location_repeaters[repeater.location_id].append(repeater)
-    for location in case_location.get_ancestors(include_self=True):
-        if location.location_id in location_repeaters:
-            return location_repeaters[location.location_id]
+    for location_id in reversed(case_location.path):
+        if location_id in location_repeaters:
+            return location_repeaters[location_id]
     return []
 
 
