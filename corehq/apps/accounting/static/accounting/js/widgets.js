@@ -10,7 +10,7 @@ hqDefine('accounting/js/widgets', [
 ) {
     var AsyncSelect2Handler = function (field, multiple) {
         'use strict';
-        var self = this;
+        var self = {};
 
         self.fieldName = field;
         self.multiple = !! multiple;
@@ -55,11 +55,13 @@ hqDefine('accounting/js/widgets', [
             return null;
         };
 
+        return self;
     };
 
     var EmailSelect2Handler = function (field) {
         'use strict';
-        var self = this;
+        var self = {};
+
         self.fieldName = field;
         self.validEmailText = gettext("Please enter a valid email.");
 
@@ -94,6 +96,8 @@ hqDefine('accounting/js/widgets', [
                 return re.test(email);
             },
         };
+
+        return self;
     };
 
     var billingInfoUtils = {
@@ -110,27 +114,29 @@ hqDefine('accounting/js/widgets', [
     };
 
     var AdjustBalanceFormModel = function () {
-        var self = this;
+        var self = {};
         self.adjustmentType = ko.observable("current");
         self.showCustomAmount = ko.computed(function() {
             return self.adjustmentType() === 'credit';
         }, self);
+
+        return self;
     };
 
     $(function() {
         _.each($(".accounting-email-select2"), function(input) {
-            var handler = new EmailSelect2Handler($(input).attr("name"));
+            var handler = EmailSelect2Handler($(input).attr("name"));
             handler.init();
         });
         $(".accounting-email-select2").removeAttr('required');
 
         _.each($(".accounting-async-select2"), function(input) {
-            var handler = new AsyncSelect2Handler($(input).attr("name"));
+            var handler = AsyncSelect2Handler($(input).attr("name"));
             handler.init();
         });
 
         _.each($(".accounting-country-select2"), function() {
-            var country = new AsyncSelect2Handler('country');
+            var country = AsyncSelect2Handler('country');
             country.initSelection = function (element, callback) {
                 var data = {
                     text: element.data('countryname'),
@@ -142,7 +148,7 @@ hqDefine('accounting/js/widgets', [
         });
 
         _.each($('.ko-adjust-balance-form'), function(form) {
-            $(form).koApplyBindings(new AdjustBalanceFormModel());
+            $(form).koApplyBindings(AdjustBalanceFormModel());
         });
     });
 

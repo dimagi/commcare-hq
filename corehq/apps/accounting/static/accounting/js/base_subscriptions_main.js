@@ -12,11 +12,12 @@ hqDefine('accounting/js/base_subscriptions_main', [
 ) {
     var SubscriptionInfoHandler = function() {
         'use strict';
-        var self = this;
+        var self = {};
+
         var AsyncSelect2Handler = widgets.AsyncSelect2Handler;
-        self.domain = new AsyncSelect2Handler('domain');
-        self.account = new AsyncSelect2Handler('account');
-        self.plan_version = new AsyncSelect2Handler('plan_version');
+        self.domain = AsyncSelect2Handler('domain');
+        self.account = AsyncSelect2Handler('account');
+        self.plan_version = AsyncSelect2Handler('plan_version');
 
         self.init = function() {
             self.domain.init();
@@ -36,12 +37,15 @@ hqDefine('accounting/js/base_subscriptions_main', [
                 $('#id_plan_edition').change(deselectPlanVersion);
             });
         };
+
+        return self;
     };
 
     var InvoiceModel = function() {
-        var self = this;
+        var self = {};
         var invoice = $('#id_do_not_invoice').prop("checked");
         self.noInvoice = ko.observable(invoice);
+        return self;
     };
 
     $(function() {
@@ -55,10 +59,10 @@ hqDefine('accounting/js/base_subscriptions_main', [
             dateFormat: "yy-mm-dd",
         });
 
-        var subscriptionInfoHandler = new SubscriptionInfoHandler();
+        var subscriptionInfoHandler = SubscriptionInfoHandler();
         subscriptionInfoHandler.init();
 
-        var invoiceModel = new InvoiceModel();
+        var invoiceModel = InvoiceModel();
         // fieldset is not unique enough a css identifier
         // historically this has taken the first one without checking
         // todo: use a more specific identifier to make less brittle

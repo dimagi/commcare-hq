@@ -2,7 +2,7 @@
 hqDefine("accounting/js/stripe_card_manager", function() {
     var NewStripeCard = function(data, cardManager){
         'use strict';
-        var self = this;
+        var self = {};
         var mapping = {
             observe: ['number', 'cvc', 'expMonth','expYear', 'isAutopay', 'token'],
         };
@@ -150,7 +150,7 @@ hqDefine("accounting/js/stripe_card_manager", function() {
         var mapping = {
             'cards':{
                 create: function(card){
-                    return new StripeCard(card.data, data.url, self);
+                    return StripeCard(card.data, data.url, self);
                 },
             },
         };
@@ -161,7 +161,7 @@ hqDefine("accounting/js/stripe_card_manager", function() {
         self.wrap(data);
 
         self.autoPayButtonEnabled = ko.observable(true);
-        self.newCard = new NewStripeCard({url: data.url}, self);
+        self.newCard = NewStripeCard({url: data.url}, self);
 
         return self;
     };
