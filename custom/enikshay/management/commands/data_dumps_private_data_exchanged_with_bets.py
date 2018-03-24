@@ -21,6 +21,10 @@ from custom.enikshay.management.commands.base_data_dump import BaseDataDump
 DOMAIN = "enikshay"
 
 
+class IncorrectVoucherType(Exception):
+    pass
+
+
 class Command(BaseDataDump):
     """ 13. data dumps for private data exchanged with BETS
 
@@ -62,7 +66,10 @@ class Command(BaseDataDump):
         return voucher_case.get_case_property("voucher_type") == "lab"
 
     def include_case_in_dump(self, voucher_case):
-        person = self.get_person(voucher_case)
+        try:
+            person = self.get_person(voucher_case)
+        except IncorrectVoucherType as e:
+            return False
         return (
             person and
             person.get_case_property('dataset') == 'real' and
@@ -113,7 +120,7 @@ class Command(BaseDataDump):
             elif self._is_lab_voucher(voucher_case):
                 host_case = self.get_test(voucher_case)
             else:
-                raise Exception("Voucher id %s case neither lab or prescription" % voucher_case.case_id)
+                raise IncorrectVoucherType("Voucher id %s case neither lab or prescription" % voucher_case.case_id)
             episode_case = get_first_parent_of_case(host_case.domain, host_case.case_id,
                                                     CASE_TYPE_EPISODE)
             self.context['episode'] = episode_case
