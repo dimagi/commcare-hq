@@ -69,6 +69,8 @@ class Command(BaseDataDump):
                 raise Exception("Multiple voucher cases found for prescription %s" % prescription_case.case_id)
             elif len(voucher_cases) == 1:
                 self.context['voucher'] = voucher_cases[0]
+            else:
+                self.context['voucher'] = None
         if not self.context['voucher']:
             raise Exception("No voucher cases found for prescription %s" % prescription_case.case_id)
         return self.context['voucher']
