@@ -74,39 +74,30 @@ class Requests(object):
     def get_url(self, uri):
         return '/'.join((self.base_url.rstrip('/'), uri.lstrip('/')))
 
-    def delete(self, uri, **kwargs):
-        return self.requests.delete(self.get_url(uri),
-                                    auth=(self.username, self.password), **kwargs)
-
-    def delete_with_raise(self, uri, **kwargs):
-        response = self.delete(uri, **kwargs)
+    def send_request(self, method_func, *args, **kwargs):
+        raise_for_status = kwargs.pop('raise_for_status', False)
         try:
-            response.raise_for_status()
-        except HTTPError as err:
+            response = method_func(*args, **kwargs)
+            if raise_for_status:
+                response.raise_for_status()
+        except self.requests.RequestException as err:
             err_request, err_response = parse_request_exception(err)
             logger.error('Request: ', err_request)
             logger.error('Response: ', err_response)
             raise
         return response
 
+    def delete(self, uri, **kwargs):
+        return self.send_request(self.requests.delete, self.get_url(uri),
+                                 auth=(self.username, self.password), **kwargs)
+
     def get(self, uri, *args, **kwargs):
-        return self.requests.get(self.get_url(uri), *args,
+        return self.send_request(self.requests.get, self.get_url(uri), *args,
                                  auth=(self.username, self.password), **kwargs)
 
     def post(self, uri, *args, **kwargs):
-        return self.requests.post(self.get_url(uri), *args,
-                                  auth=(self.username, self.password), **kwargs)
-
-    def post_with_raise(self, uri, *args, **kwargs):
-        response = self.post(uri, *args, **kwargs)
-        try:
-            response.raise_for_status()
-        except HTTPError as err:
-            err_request, err_response = parse_request_exception(err)
-            logger.error('Request: ', err_request)
-            logger.error('Response: ', err_response)
-            raise
-        return response
+        return self.send_request(self.requests.post, self.get_url(uri), *args,
+                                 auth=(self.username, self.password), **kwargs)
 
 
 def parse_request_exception(err):
@@ -125,30 +116,37 @@ def parse_request_exception(err):
 
 
 def create_person_attribute(requests, person_uuid, attribute_type_uuid, value):
-    return requests.post('/ws/rest/v1/person/{person_uuid}/attribute'.format(
-        person_uuid=person_uuid), json={
-            'attributeType': attribute_type_uuid,
-            'value': value,
-        },
-    ).json()
+    response = requests.post(
+        '/ws/rest/v1/person/{person_uuid}/attribute'.format(person_uuid=person_uuid),
+        json={'attributeType': attribute_type_uuid, 'value': value},
+        raise_for_status=True,
+    )
+    return response.json()['uuid']
 
 
 @task
 def delete_person_attribute_task(requests, person_uuid, attribute_uuid=None):
     # if attribute_uuid is not set, it would be because the workflow task to create the attribute failed
     if attribute_uuid:
-        return requests.delete_with_raise('/ws/rest/v1/person/{person_uuid}/attribute/{attribute_uuid}'.format(
-            person_uuid=person_uuid, attribute_uuid=attribute_uuid
-        )).json()
+        response = requests.delete(
+            '/ws/rest/v1/person/{person_uuid}/attribute/{attribute_uuid}'.format(
+                person_uuid=person_uuid,
+                attribute_uuid=attribute_uuid
+            ),
+            raise_for_status=True,
+        )
+        return response.json()
 
 
 def update_person_attribute(requests, person_uuid, attribute_uuid, attribute_type_uuid, value):
-    return requests.post('/ws/rest/v1/person/{person_uuid}/attribute/{attribute_uuid}'.format(
-        person_uuid=person_uuid, attribute_uuid=attribute_uuid), json={
-            'value': value,
-            'attributeType': attribute_type_uuid,
-        }
-    ).json()
+    response = requests.post(
+        '/ws/rest/v1/person/{person_uuid}/attribute/{attribute_uuid}'.format(
+            person_uuid=person_uuid, attribute_uuid=attribute_uuid
+        ),
+        json={'value': value, 'attributeType': attribute_type_uuid},
+        raise_for_status=True,
+    )
+    return response.json()
 
 
 def server_datetime_to_openmrs_timestamp(dt):
@@ -176,14 +174,14 @@ class CreateVisitTask(WorkflowTask):
         }
         if location_uuid:
             visit['location'] = location_uuid
-        response = requests.post_with_raise('/ws/rest/v1/visit', json=visit)
+        response = requests.post('/ws/rest/v1/visit', json=visit, raise_for_status=True)
         visit_uuid = response.json()['uuid']
 
         self._subtasks.append(
             CreateEncounterTask(
                 None,
                 delete_encounter_task(requests),  # `encounter_uuid` doesn't need to be passed yet.
-                'encounter_uuid',                     # execute_workflow() sets the rollback task's kwargs later
+                'encounter_uuid',                 # execute_workflow() sets the rollback task's kwargs later
                 requests, person_uuid, provider_uuid, start_datetime, values_for_concept, encounter_type,
                 openmrs_form, visit_uuid, location_uuid,
             )
@@ -195,7 +193,11 @@ class CreateVisitTask(WorkflowTask):
 @task
 def delete_visit_task(requests, visit_uuid=None):
     if visit_uuid:
-        return requests.delete_with_raise('/ws/rest/v1/visit/{uuid}'.format(uuid=visit_uuid)).json()
+        response = requests.delete(
+            '/ws/rest/v1/visit/' + visit_uuid,
+            raise_for_status=True,
+        )
+        return response.json()
 
 
 class CreateEncounterTask(WorkflowTask):
@@ -215,7 +217,7 @@ class CreateEncounterTask(WorkflowTask):
         if provider_uuid:
             # TODO: Verify. See commented-out section below
             encounter['provider'] = provider_uuid
-        response = requests.post_with_raise('/ws/rest/v1/encounter', json=encounter)
+        response = requests.post('/ws/rest/v1/encounter', json=encounter, raise_for_status=True)
         encounter_uuid = response.json()['uuid']
 
         # TODO: This is suspicious. Doesn't match docs. If it's true, add it as a subtask
@@ -242,7 +244,8 @@ class CreateEncounterTask(WorkflowTask):
 @task
 def delete_encounter_task(requests, encounter_uuid=None):
     if encounter_uuid:
-        requests.delete_with_raise('/ws/rest/v1/encounter/{uuid}'.format(uuid=encounter_uuid)).json()
+        response = requests.delete('/ws/rest/v1/encounter/' + encounter_uuid, raise_for_status=True)
+        return response.json()
 
 
 def create_obs(requests, encounter_uuid, concept_uuid, person_uuid, start_datetime, value, location_uuid=None):
@@ -255,22 +258,22 @@ def create_obs(requests, encounter_uuid, concept_uuid, person_uuid, start_dateti
     }
     if location_uuid:
         observation['location'] = location_uuid
-    response = requests.post_with_raise('/ws/rest/v1/obs', json=observation)
+    response = requests.post('/ws/rest/v1/obs', json=observation, raise_for_status=True)
     return response.json()['uuid']
 
 
 @task
 def delete_obs_task(requests, obs_uuid=None):
     if obs_uuid:
-        return requests.delete_with_raise('/ws/rest/v1/obs/{uuid}'.format(uuid=obs_uuid)).json()
+        response = requests.delete('/ws/rest/v1/obs/' + obs_uuid, raise_for_status=True)
+        return response.json()
 
 
 def search_patients(requests, search_string):
     try:
         # Finding the patient is the first request sent to the server. If there is a mistake in the server details,
         # or the server is offline, this is where we will discover it.
-        response = requests.get('/ws/rest/v1/patient', {'q': search_string, 'v': 'full'})
-        response.raise_for_status()
+        response = requests.get('/ws/rest/v1/patient', {'q': search_string, 'v': 'full'}, raise_for_status=True)
     except HTTPError as err:
         # raise_for_status() raised an HTTPError.
         err_request, err_response = parse_request_exception(err)
@@ -299,7 +302,8 @@ def get_patient_by_uuid(requests, uuid):
     if not re.match(r'^[a-fA-F0-9\-]{36}$', uuid):
         logger.debug('Person UUID "{}" failed validation'.format(uuid))
         return None
-    return requests.get('/ws/rest/v1/patient/' + uuid, {'v': 'full'}).json()
+    response = requests.get('/ws/rest/v1/patient/' + uuid, {'v': 'full'})
+    return response.json()
 
 
 def get_patient_by_id(requests, patient_identifier_type, patient_identifier):
@@ -319,13 +323,15 @@ def update_person_name(requests, info, openmrs_config, person_uuid, name_uuid):
         if property_ in NAME_PROPERTIES and value_source.get_value(info)
     }
     if properties:
-        return requests.post_with_raise(
+        response = requests.post(
             '/ws/rest/v1/person/{person_uuid}/name/{name_uuid}'.format(
                 person_uuid=person_uuid,
                 name_uuid=name_uuid,
             ),
             json=properties,
-        ).json()
+            raise_for_status=True,
+        )
+        return response.json()
 
 
 @task
@@ -340,13 +346,15 @@ def rollback_person_name_task(requests, person, openmrs_config):
         if property_ in NAME_PROPERTIES
     }
     if properties:
-        return requests.post_with_raise(
+        response = requests.post(
             '/ws/rest/v1/person/{person_uuid}/name/{name_uuid}'.format(
                 person_uuid=person['uuid'],
                 name_uuid=person['preferredName']['uuid'],
             ),
             json=properties,
-        ).json()
+            raise_for_status=True,
+        )
+        return response.json()
 
 
 def create_person_address(requests, info, openmrs_config, person_uuid):
@@ -356,21 +364,25 @@ def create_person_address(requests, info, openmrs_config, person_uuid):
         if property_ in ADDRESS_PROPERTIES and value_source.get_value(info)
     }
     if properties:
-        return requests.post_with_raise(
+        response = requests.post(
             '/ws/rest/v1/person/{person_uuid}/address/'.format(person_uuid=person_uuid),
             json=properties,
-        ).json()['uuid']
+            raise_for_status=True,
+        )
+        return response.json()['uuid']
 
 
 @task
 def delete_person_address_task(requests, person, address_uuid=None):
     if address_uuid:
-        return requests.delete_with_raise(
+        response = requests.delete(
             '/ws/rest/v1/person/{person_uuid}/address/{address_uuid}'.format(
                 person_uuid=person['uuid'],
                 address_uuid=address_uuid,
-            )
-        ).json()
+            ),
+            raise_for_status=True,
+        )
+        return response.json()
 
 
 def update_person_address(requests, info, openmrs_config, person_uuid, address_uuid):
@@ -380,13 +392,15 @@ def update_person_address(requests, info, openmrs_config, person_uuid, address_u
         if property_ in ADDRESS_PROPERTIES and value_source.get_value(info)
     }
     if properties:
-        return requests.post_with_raise(
+        response = requests.post(
             '/ws/rest/v1/person/{person_uuid}/address/{address_uuid}'.format(
                 person_uuid=person_uuid,
                 address_uuid=address_uuid,
             ),
             json=properties,
-        ).json()
+            raise_for_status=True,
+        )
+        return response.json()
 
 
 @task
@@ -397,21 +411,26 @@ def rollback_person_address_task(requests, person, openmrs_config):
         if property_ in ADDRESS_PROPERTIES
     }
     if properties:
-        return requests.post_with_raise(
+        response = requests.post(
             '/ws/rest/v1/person/{person_uuid}/address/{address_uuid}'.format(
                 person_uuid=person['uuid'],
                 address_uuid=person['preferredAddress']['uuid'],
             ),
             json=properties,
-        ).json()
+            raise_for_status=True,
+        )
+        return response.json()
 
 
 def get_subresource_instances(requests, person_uuid, subresource):
     assert subresource in PERSON_SUBRESOURCES
-    return requests.get('/ws/rest/v1/person/{person_uuid}/{subresource}'.format(
-        person_uuid=person_uuid,
-        subresource=subresource,
-    )).json()['results']
+    response = requests.get(
+        '/ws/rest/v1/person/{person_uuid}/{subresource}'.format(
+            person_uuid=person_uuid,
+            subresource=subresource,
+        )
+    )
+    return response.json()['results']
 
 
 def find_patient(requests, domain, case_id, openmrs_config):
@@ -452,10 +471,12 @@ def update_person_properties(requests, info, openmrs_config, person_uuid):
         if property_ in PERSON_PROPERTIES and value_source.get_value(info)
     }
     if properties:
-        return requests.post_with_raise(
+        response = requests.post(
             '/ws/rest/v1/person/{person_uuid}'.format(person_uuid=person_uuid),
-            json=properties
-        ).json()
+            json=properties,
+            raise_for_status=True,
+        )
+        return response.json()
 
 
 @task
@@ -470,10 +491,12 @@ def rollback_person_properties_task(requests, person, openmrs_config):
         if property_ in PERSON_PROPERTIES
     }
     if properties:
-        return requests.post_with_raise(
+        response = requests.post(
             '/ws/rest/v1/person/{person_uuid}'.format(person_uuid=person['uuid']),
-            json=properties
-        ).json()
+            json=properties,
+            raise_for_status=True,
+        )
+        return response.json()
 
 
 class PatientSearchParser(object):
