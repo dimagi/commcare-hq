@@ -5,7 +5,7 @@ from collections import namedtuple
 from datetime import timedelta
 import re
 
-from requests import HTTPError
+from requests import RequestException
 from six.moves import zip
 
 from casexml.apps.case.xform import extract_case_blocks
@@ -269,31 +269,26 @@ def delete_obs_task(requests, obs_uuid=None):
         return response.json()
 
 
-def search_patients(requests, search_string):
+def get_patient_by_identifier(requests, identifier_type_uuid, value):
+    """
+    Return the patient that matches the given identifier. If the
+    number of matches is zero or more than one, return None.
+    """
+    response = requests.get('/ws/rest/v1/patient', {'q': value, 'v': 'full'}, raise_for_status=True)
+    patients = []
+    for patient in response.json()['results']:
+        for identifier in patient['identifiers']:
+            if (
+                identifier['identifier'] == value and
+                identifier['identifierType']['uuid'] == identifier_type_uuid
+            ):
+                patients.append(patient)
     try:
-        # Finding the patient is the first request sent to the server. If there is a mistake in the server details,
-        # or the server is offline, this is where we will discover it.
-        response = requests.get('/ws/rest/v1/patient', {'q': search_string, 'v': 'full'}, raise_for_status=True)
-    except HTTPError as err:
-        # raise_for_status() raised an HTTPError.
-        err_request, err_response = parse_request_exception(err)
-        logger.error('Error encountered searching patients')
-        logger.error('Request: ', err_request)
-        logger.error('Response: ', err_response)
-        http_error_msg = (
-            'An error was when encountered searching patients: {}. Check in Data Forwarding that the server URL '
-            'includes the path to the API, and that the password is correct'.format(err)
-        )  # This message will be shown in the Repeat Records report, and needs to be useful to an administrator
-        raise HTTPError(http_error_msg, response=err.response)
-    except Exception as err:
-        # get() failed -- probably a connection failure.
-        logger.error('Error encountered searching patients: ', str(err))
-        raise err.__class__(
-            'Unable to send request to OpenMRS server: {}. Please check the server address in Data Forwarding and '
-            'that the server is online.'.format(err)
-        )
-
-    return response.json()
+        patient, = patients
+    except ValueError:
+        return None
+    else:
+        return patient
 
 
 def get_patient_by_uuid(requests, uuid):
@@ -302,18 +297,26 @@ def get_patient_by_uuid(requests, uuid):
     if not re.match(r'^[a-fA-F0-9\-]{36}$', uuid):
         logger.debug('Person UUID "{}" failed validation'.format(uuid))
         return None
-    response = requests.get('/ws/rest/v1/patient/' + uuid, {'v': 'full'})
+    response = requests.get('/ws/rest/v1/patient/' + uuid, {'v': 'full'}, raise_for_status=True)
     return response.json()
 
 
 def get_patient_by_id(requests, patient_identifier_type, patient_identifier):
-    if patient_identifier_type == PERSON_UUID_IDENTIFIER_TYPE_ID:
-        patient = get_patient_by_uuid(requests, patient_identifier)
-        return patient
-    else:
-        response_json = search_patients(requests, patient_identifier)
-        return PatientSearchParser(response_json).get_patient_matching_identifiers(
-            patient_identifier_type, patient_identifier)
+    try:
+        # Fetching the patient is the first request sent to the server.
+        # If there is a mistake in the server details, or if the server
+        # is offline, this is when we find out.
+        if patient_identifier_type == PERSON_UUID_IDENTIFIER_TYPE_ID:
+            return get_patient_by_uuid(requests, patient_identifier)
+        else:
+            return get_patient_by_identifier(requests, patient_identifier_type, patient_identifier)
+    except RequestException as err:
+        http_error_msg = (
+            'An error was encountered when fetching patient details from OpenMRS: {}. Please check Data '
+            'Forwarding that the server URL includes the path to the API, that the password is correct and that '
+            'the server is online.'.format(err)
+        )  # This message will be shown in the Repeat Records report, and needs to be useful to an administrator
+        raise err.__class__(http_error_msg, response=err.response)
 
 
 def update_person_name(requests, info, openmrs_config, person_uuid, name_uuid):
@@ -497,44 +500,6 @@ def rollback_person_properties_task(requests, person, openmrs_config):
             raise_for_status=True,
         )
         return response.json()
-
-
-class PatientSearchParser(object):
-    def __init__(self, response_json):
-        self.response_json = response_json
-
-    def get_patient_matching_identifiers(self, patient_identifier_type, patient_identifier):
-        """
-        Return the patient that matches the given identifier. If the
-        number of matches is zero or more than one, return None.
-
-        :param patient_identifier_type: PERSON_UUID_IDENTIFIER_TYPE_ID
-            to match the patient's OpenMRS Person UUID, otherwise the
-            UUID of the OpenMRS identifier type
-        :param patient_identifier: The value that uniquely identifies
-            the patient we want.
-
-        """
-        patients = []
-        for patient in self.response_json['results']:
-            if (
-                patient_identifier_type == PERSON_UUID_IDENTIFIER_TYPE_ID and
-                patient['uuid'] == patient_identifier
-            ):
-                patients.append(patient)
-            else:
-                for identifier in patient['identifiers']:
-                    if (
-                        identifier['identifier'] == patient_identifier and
-                        identifier['identifierType']['uuid'] == patient_identifier_type
-                    ):
-                        patients.append(patient)
-        try:
-            patient, = patients
-        except ValueError:
-            return None
-        else:
-            return patient
 
 
 CaseTriggerInfo = namedtuple('CaseTriggerInfo',
