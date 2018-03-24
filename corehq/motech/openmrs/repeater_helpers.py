@@ -16,7 +16,6 @@ from corehq.motech.openmrs.workflow import WorkflowTask, task
 from corehq.motech.utils import pformat_json
 
 
-Should = namedtuple('Should', ['method', 'url', 'parser'])
 PERSON_PROPERTIES = (
     'gender',
     'age',
