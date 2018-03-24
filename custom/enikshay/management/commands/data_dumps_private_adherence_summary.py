@@ -20,8 +20,8 @@ class Command(BaseDataDump):
     10. Adherence Summary
     https://docs.google.com/spreadsheets/d/1t6cd-VPy6p8EOEhQJD15IbULU0EJ05ALQ0tcdfx6ng8/edit#gid=1198090176&range=A43
     """
-    TASK_NAME = "10_record_adherence"
-    INPUT_FILE_NAME = "data_dumps_adherence_summary.csv"
+    TASK_NAME = "11_private_adherence_summary"
+    INPUT_FILE_NAME = "data_dumps_private_adherence_summary.csv"
 
     def __init__(self, *args, **kwargs):
         super(Command, self).__init__(*args, **kwargs)

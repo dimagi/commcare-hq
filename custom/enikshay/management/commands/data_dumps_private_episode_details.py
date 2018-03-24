@@ -23,7 +23,7 @@ class Command(BaseDataDump):
     2. Episode details
     https://docs.google.com/spreadsheets/d/1t6cd-VPy6p8EOEhQJD15IbULU0EJ05ALQ0tcdfx6ng8/edit#gid=133934150&range=A41
     """
-    TASK_NAME = "02_episode_details"
+    TASK_NAME = "02_private_episode_details"
     INPUT_FILE_NAME = "data_dumps_private_episode_details.csv"
 
     def __init__(self, *args, **kwargs):
