@@ -17,7 +17,6 @@ from corehq.motech.openmrs.logger import logger
 from corehq.motech.utils import pformat_json
 
 
-Should = namedtuple('Should', ['method', 'url', 'parser'])
 PERSON_PROPERTIES = (
     'gender',
     'age',
