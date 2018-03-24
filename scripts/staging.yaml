@@ -59,6 +59,7 @@ branches:
   - jls/privacy-policy  # Jenny 3/19
   - nh/omrs/rollback  # Norman 2018-03-23
   - nh/omrs/repeater_location  # Norman 2018-03-24
+  - nh/omrs/rollback+repeater_location+location  # Norman 2018-03-24
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
