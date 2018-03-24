@@ -131,10 +131,6 @@ def parse_request_exception(err):
     return err_request, err_response
 
 
-def url(url_format_string, **kwargs):
-    return url_format_string.format(**kwargs)
-
-
 def get_case_location(case):
     """
     If the owner of the case is a location, return it. Otherwise return
