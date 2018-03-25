@@ -426,8 +426,10 @@ class LocationDrilldownFilterValue(FilterValue):
     def _ancestor_filter(self):
         ancestor_expression = self.filter.get('ancestor_expression')
         if (not (self.show_all and self.show_none) and
-            ancestor_expression and len(self.value) == 1):
-             return AncestorSQLParams(self.filter['ancestor_expression'], self.value[0])
+           ancestor_expression and len(self.value) == 1):
+            params = AncestorSQLParams(self.filter['ancestor_expression'], self.value[0])
+            if params.sql_value():
+                return params
 
     def to_sql_filter(self):
         if self.show_all:
@@ -474,10 +476,13 @@ class AncestorSQLParams(object):
     def sql_value(self):
         # all locations in self.value will have same ancestor, so just pick first one to query
         from corehq.apps.locations.models import SQLLocation
-
-        ancestor = SQLLocation.by_location_id(self.location_id).get_ancestor_of_type(
-            self.ancestor_expression['location_type']
-        )
+        location = SQLLocation.by_location_id(self.location_id)
+        if location:
+            ancestor = location.get_ancestor_of_type(
+                self.ancestor_expression['location_type']
+            )
+        else:
+            return None
         if ancestor:
             return {
                 self.ancestor_expression['field']: ancestor.location_id
