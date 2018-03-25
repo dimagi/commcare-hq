@@ -412,7 +412,10 @@ class SQLLocation(AdjListModel):
         """
         Returns the ancestor of given location_type_code of the location
         """
-        return self.get_ancestors().get(location_type__code=type_code)
+        try:
+            return self.get_ancestors().get(location_type__code=type_code)
+        except self.DoesNotExist:
+            return None
 
     @classmethod
     def get_sync_fields(cls):
