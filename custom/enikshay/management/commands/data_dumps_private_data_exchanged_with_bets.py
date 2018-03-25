@@ -68,7 +68,7 @@ class Command(BaseDataDump):
     def include_case_in_dump(self, voucher_case):
         try:
             person = self.get_person(voucher_case)
-        except IncorrectVoucherType as e:
+        except IncorrectVoucherType:
             return False
         return (
             person and
@@ -79,7 +79,8 @@ class Command(BaseDataDump):
     def get_person(self, voucher_case):
         if 'person' not in self.context:
             occurrence_case = self.get_occurrence(voucher_case)
-            person_case = get_first_parent_of_case(occurrence_case.domain, occurrence_case.case_id, CASE_TYPE_PERSON)
+            person_case = get_first_parent_of_case(occurrence_case.domain,
+                                                   occurrence_case.case_id, CASE_TYPE_PERSON)
             self.context['person'] = person_case
         if not self.context['person']:
             raise Exception("could not find person for voucher %s" % voucher_case.case_id)
@@ -88,7 +89,8 @@ class Command(BaseDataDump):
     def get_occurrence(self, voucher_case):
         if 'occurrence' not in self.context:
             episode_case = self.get_episode(voucher_case)
-            occurrence_case = get_first_parent_of_case(episode_case.domain, episode_case.case_id, CASE_TYPE_OCCURRENCE)
+            occurrence_case = get_first_parent_of_case(episode_case.domain,
+                                                       episode_case.case_id, CASE_TYPE_OCCURRENCE)
             self.context['occurrence'] = occurrence_case
         if not self.context['occurrence']:
             raise Exception("could not find occurrence for voucher %s" % voucher_case.case_id)

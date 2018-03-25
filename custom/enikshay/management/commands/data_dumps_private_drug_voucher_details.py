@@ -64,7 +64,7 @@ class Command(BaseDataDump):
     def get_voucher(self, prescription_case):
         if 'voucher' not in self.context:
             voucher_cases = self.case_accessor.get_reverse_indexed_cases(
-            [prescription_case.case_id], case_types=[CASE_TYPE_VOUCHER])
+                [prescription_case.case_id], case_types=[CASE_TYPE_VOUCHER])
             if len(voucher_cases) > 1:
                 raise Exception("Multiple voucher cases found for prescription %s" % prescription_case.case_id)
             elif len(voucher_cases) == 1:
@@ -78,7 +78,8 @@ class Command(BaseDataDump):
     def get_person(self, prescription_case):
         if 'person' not in self.context:
             occurrence_case = self.get_occurrence(prescription_case)
-            person_case = get_first_parent_of_case(occurrence_case.domain, occurrence_case.case_id, CASE_TYPE_PERSON)
+            person_case = get_first_parent_of_case(occurrence_case.domain,
+                                                   occurrence_case.case_id, CASE_TYPE_PERSON)
             self.context['person'] = person_case
         if not self.context['person']:
             raise Exception("could not find person for prescription %s" % prescription_case.case_id)
@@ -87,7 +88,8 @@ class Command(BaseDataDump):
     def get_occurrence(self, prescription_case):
         if 'occurrence' not in self.context:
             episode_case = self.get_episode(prescription_case)
-            occurrence_case = get_first_parent_of_case(episode_case.domain, episode_case.case_id, CASE_TYPE_OCCURRENCE)
+            occurrence_case = get_first_parent_of_case(episode_case.domain,
+                                                       episode_case.case_id, CASE_TYPE_OCCURRENCE)
             self.context['occurrence'] = occurrence_case
         if not self.context['occurrence']:
             raise Exception("could not find occurrence for prescription %s" % prescription_case.case_id)
