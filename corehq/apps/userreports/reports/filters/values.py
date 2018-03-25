@@ -426,7 +426,7 @@ class LocationDrilldownFilterValue(FilterValue):
     def _ancestor_filter(self):
         ancestor_expression = self.filter.get('ancestor_expression')
         if (not (self.show_all and self.show_none) and
-            ancestor_expression and len(self.value) ==1):
+            ancestor_expression and len(self.value) == 1):
              return AncestorSQLParams(self.filter['ancestor_expression'], self.value[0])
 
     def to_sql_filter(self):
