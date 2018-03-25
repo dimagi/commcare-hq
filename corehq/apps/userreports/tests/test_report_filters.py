@@ -864,7 +864,7 @@ class LocationDrilldownFilterTest(LocationHierarchyTestCase):
         )
         self.assertEqual(
             filter_value.to_sql_values(),
-            {'block_id_drill_0': middlesex_id, 'block_id_drill_0': 'Suffolk'}
+            {'block_id_drill_0': middlesex_id, 'block_id_drill_1': 'Suffolk'}
         )
         # no ancestor is passed if passed in location is invalid
         filter_value = LocationDrilldownFilterValue(filter, ['random'])
