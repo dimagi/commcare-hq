@@ -860,11 +860,21 @@ class LocationDrilldownFilterTest(LocationHierarchyTestCase):
         filter_value = LocationDrilldownFilterValue(filter, [middlesex_id, 'Suffolk'])
         self.assertEqual(
             str(filter_value.to_sql_filter().build_expression(mock_table)),
+            'block_id IN (:block_id_drill_0, :block_id_drill_1)'
+        )
+        self.assertEqual(
+            filter_value.to_sql_values(),
+            {'block_id_drill_0': middlesex_id, 'block_id_drill_0': 'Suffolk'}
+        )
+        # no ancestor is passed if passed in location is invalid
+        filter_value = LocationDrilldownFilterValue(filter, ['random'])
+        self.assertEqual(
+            str(filter_value.to_sql_filter().build_expression(mock_table)),
             'block_id IN (:block_id_drill_0)'
         )
         self.assertEqual(
             filter_value.to_sql_values(),
-            {'block_id_drill_0': middlesex_id}
+            {'block_id_drill_0': 'random'}
         )
 
 
