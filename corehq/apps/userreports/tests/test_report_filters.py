@@ -677,6 +677,25 @@ class DynamicChoiceListFilterTestCase(SimpleTestCase):
         for i, s in enumerate(test_strings):
             self.assertListEqual(choices[0:i + 1], filter.value(dynoslug=s))
 
+    def test_ancestor_expression(self):
+        filter = {
+            "type": "dynamic_choice_list",
+            "slug": "dynoslug",
+            "field": "dynofield",
+            "display": "Dynamic choice list",
+            "show_all": False,
+            "choice_provider": {"type": "user"},
+            "ancestor_expression": {
+                "field": "state_id",
+                "location_type": "state",
+            }
+        }
+
+        with self.assertRaises(BadSpecError):
+            ReportFilterFactory.from_spec(filter)
+        filter['choice_provider']['type'] = 'location'
+        ReportFilterFactory.from_spec(filter)
+
 
 class DateFilterOffsetTest(SimpleTestCase):
     def _computed_dates(self, actual_startdate, actual_enddate):
@@ -797,6 +816,19 @@ class LocationDrilldownFilterTest(LocationHierarchyTestCase):
             {'block_id_drill_0': 'Middlesex'}
         )
 
+    def test_ancestor_expression(self):
+        with self.assertRaises(BadSpecError):
+            ReportFilterFactory.from_spec({
+                "type": "location_drilldown",
+                "field": "block_id",
+                "slug": "block_id_drill",
+                "display": "Drilldown by Location",
+                "ancestor_expression": {
+                    'field': 'state_id',
+                    # missing 'location_type': 'state',
+                }
+            })
+
     def test_prefix_ancestor_location(self):
         from sqlalchemy import Column, String
         mock_table = Mock()
@@ -814,6 +846,7 @@ class LocationDrilldownFilterTest(LocationHierarchyTestCase):
         }
         middlesex_id = self.locations['Middlesex'].location_id
         mass_id = self.locations['Massachusetts'].location_id
+        # make sure ancestor gets passed if right block is passed
         filter_value = LocationDrilldownFilterValue(filter, [middlesex_id])
         self.assertEqual(
             str(filter_value.to_sql_filter().build_expression(mock_table)),
@@ -822,6 +855,16 @@ class LocationDrilldownFilterTest(LocationHierarchyTestCase):
         self.assertEqual(
             filter_value.to_sql_values(),
             {'state_id': mass_id, 'block_id_drill_0': middlesex_id}
+        )
+        # make sure ancestor doesn't get passed if multiple locations are passed
+        filter_value = LocationDrilldownFilterValue(filter, [middlesex_id, 'Suffolk'])
+        self.assertEqual(
+            str(filter_value.to_sql_filter().build_expression(mock_table)),
+            'block_id IN (:block_id_drill_0)'
+        )
+        self.assertEqual(
+            filter_value.to_sql_values(),
+            {'block_id_drill_0': middlesex_id}
         )
 
 
