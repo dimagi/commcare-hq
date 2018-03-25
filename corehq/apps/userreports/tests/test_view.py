@@ -19,7 +19,7 @@ from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.tests.util import delete_all_cases
 from casexml.apps.case.util import post_case_blocks
-from corehq.apps.userreports.reports.view import ConfigurableReport
+from corehq.apps.userreports.reports.view import ConfigurableReportView
 from corehq.sql_db.connections import Session
 from corehq.util.context_managers import drop_connected_signals
 
@@ -141,7 +141,7 @@ class ConfigurableReportViewTest(ConfigurableReportTestMixin, TestCase):
         report_config.save()
         self.addCleanup(report_config.delete)
 
-        view = ConfigurableReport(request=HttpRequest())
+        view = ConfigurableReportView(request=HttpRequest())
         view._domain = self.domain
         view._lang = "en"
         view._report_config_id = report_config._id
@@ -165,7 +165,7 @@ class ConfigurableReportViewTest(ConfigurableReportTestMixin, TestCase):
     @run_with_all_ucr_backends
     def test_export_table(self):
         """
-        Test the output of ConfigurableReport.export_table()
+        Test the output of ConfigurableReportView.export_table()
         """
         report, view = self._build_report_and_view()
 
