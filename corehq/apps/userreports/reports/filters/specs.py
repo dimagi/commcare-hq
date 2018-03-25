@@ -95,6 +95,7 @@ class DynamicChoiceListFilterSpec(FilterSpec):
     show_all = BooleanProperty(default=True)
     datatype = DataTypeProperty(default='string')
     choice_provider = DictProperty()
+    ancestor_expression = DictProperty(default={}, required=False)
 
     def get_choice_provider_spec(self):
         return self.choice_provider or {'type': DATA_SOURCE_COLUMN}

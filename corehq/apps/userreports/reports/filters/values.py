@@ -4,7 +4,7 @@ import datetime
 from collections import namedtuple
 
 from django.urls import reverse
-
+from memoized import memoized
 from sqlagg.filters import (
     BasicFilter,
     BetweenFilter,
@@ -328,23 +328,52 @@ class ChoiceListFilterValue(FilterValue):
     def is_null(self):
         return NONE_CHOICE in [choice.value for choice in self.value]
 
+    @property
+    def _ancestor_filter(self):
+        """
+        Returns an instance of AncestorSQLParams per the spec, returns None
+            if it is not applicable
+        """
+        ancestor_expression = self.filter.get('ancestor_expression')
+        if not (self.show_all and self.show_none) and ancestor_expression:
+            if len(self.value) > 1:
+                # if multiple locations are passed, for partition to work
+                #   multiple ancestor locations should be passed, but that
+                #   would require multiple DB calls. So instead don't pass
+                #   any ancestors at all
+                return None
+            location = self.value[0].value
+            params = AncestorSQLParams(self.filter['ancestor_expression'], location)
+            if params.sql_value():
+                return params
+
     def to_sql_filter(self):
         if self.show_all:
             return None
         if self.is_null:
             return ISNULLFilter(self.filter['field'])
-        return INFilter(
+
+        in_filter = INFilter(
             self.filter['field'],
             get_INFilter_bindparams(self.filter['slug'], self.value)
         )
+        if self._ancestor_filter:
+            return ANDFilter(
+                [self._ancestor_filter.sql_filter(), in_filter]
+            )
+        else:
+            return in_filter
 
     def to_sql_values(self):
         if self.show_all or self.is_null:
             return {}
-        return {
+        values = {
             get_INFilter_element_bindparam(self.filter['slug'], i): val.value
             for i, val in enumerate(self.value)
         }
+        if self._ancestor_filter:
+            values.update(self._ancestor_filter.sql_value())
+        return values
 
     def to_es_filter(self):
         if self.show_all:
@@ -393,16 +422,12 @@ class LocationDrilldownFilterValue(FilterValue):
     def show_none(self):
         return self.value == self.SHOW_NONE
 
-    def _should_prefix_ancestor(self):
-        return not (self.show_all and self.show_none) and self.filter.get('ancestor_expression')
-
     @property
     def _ancestor_filter(self):
         ancestor_expression = self.filter.get('ancestor_expression')
-        if not (self.show_all and self.show_none) and ancestor_expression:
+        if (not (self.show_all and self.show_none) and
+            ancestor_expression and len(self.value) ==1):
             return AncestorSQLParams(self.filter['ancestor_expression'], self.value[0])
-        else:
-            return None
 
     def to_sql_filter(self):
         if self.show_all:
@@ -445,13 +470,20 @@ class AncestorSQLParams(object):
     def sql_filter(self):
         return EQFilter(self.ancestor_expression['field'], self.ancestor_expression['field'])
 
+    @memoized
     def sql_value(self):
         # all locations in self.value will have same ancestor, so just pick first one to query
         from corehq.apps.locations.models import SQLLocation
-        return {
-            self.ancestor_expression['field']: SQLLocation.by_location_id(self.location_id).get_ancestor_of_type(
-                self.ancestor_expression['location_type']).location_id
-        }
+
+        ancestor = SQLLocation.by_location_id(self.location_id).get_ancestor_of_type(
+            self.ancestor_expression['location_type']
+        )
+        if ancestor:
+            return {
+                self.ancestor_expression['field']: ancestor.location_id
+            }
+        else:
+            return None
 
 
 def dynamic_choice_list_url(domain, report, filter):

@@ -77,6 +77,20 @@ def _build_dynamic_choice_list_filter(spec, report):
     choice_provider_spec = wrapped.get_choice_provider_spec()
     choice_provider = FilterChoiceProviderFactory.from_spec(choice_provider_spec)(report, wrapped.slug)
     choice_provider.configure(choice_provider_spec)
+
+    invalid_spec = (
+        wrapped.ancestor_expression and
+        not set(wrapped.ancestor_expression.keys()) == set(['field', 'location_type'])
+    )
+    if invalid_spec:
+        raise BadSpecError(_(
+            "'ancestor_expression' must be empty dictionary or have 'field', 'location_type' keys"))
+
+    if wrapped.ancestor_expression and not isinstance(choice_provider, LocationChoiceProvider):
+        raise BadSpecError(_(
+            "'ancestor_expression' is applicable only for location choices"
+        ))
+
     return DynamicChoiceListFilter(
         name=wrapped.slug,
         datatype=wrapped.datatype,
@@ -85,6 +99,7 @@ def _build_dynamic_choice_list_filter(spec, report):
         show_all=wrapped.show_all,
         url_generator=dynamic_choice_list_url,
         choice_provider=choice_provider,
+        ancestor_expression=wrapped.ancestor_expression,
     )
 
 
