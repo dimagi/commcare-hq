@@ -126,7 +126,7 @@ class ENikshayForwarderReport(DomainForwardingRepeatRecords):
 
     def _get_case_id_link(self, case_id):
         return '<a href="{url}" target="_blank">{case_id}</a>'.format(
-            url=reverse('case_details', args=[self.domain, case_id]),
+            url=reverse('case_data', args=[self.domain, case_id]),
             case_id=case_id
         )
 
