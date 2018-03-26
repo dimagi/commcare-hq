@@ -131,6 +131,11 @@ def get_current_app(domain, app_id):
 
 
 def get_app_cached(domain, app_id):
+    """Cached version of ``get_app`` for use in phone
+    api calls where most requests will be for app builds
+    which are read-only.
+
+    This only caches app builds."""
     key = 'app_build_cache_{}_{}'.format(domain, app_id)
     app = cache.get(key)
     if not app:
