@@ -8,7 +8,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST, require_GET
 from iso8601 import iso8601
 
-
+from corehq.apps.app_manager.dbaccessors import get_app_cached
 from corehq.apps.domain.auth import BASIC
 from corehq.form_processor.utils.xform import adjust_text_to_datetime
 from dimagi.utils.logging import notify_exception
@@ -19,7 +19,7 @@ from casexml.apps.case.models import CommCareCase
 from corehq import toggles
 from corehq.const import OPENROSA_VERSION_MAP
 from corehq.middleware import OPENROSA_VERSION_HEADER
-from corehq.apps.app_manager.util import get_app_cached, LatestAppInfo
+from corehq.apps.app_manager.util import LatestAppInfo
 from corehq.apps.case_search.models import QueryMergeException
 from corehq.apps.case_search.utils import CaseSearchCriteria
 from corehq.apps.domain.decorators import (
