@@ -35,6 +35,7 @@
     {% initial_page_data 'report_configs' report_configs %}
     {% initial_page_data 'has_datespan' report.has_datespan %}
     {% initial_page_data 'datespan_filters' datespan_filters %}
+    {% initial_page_data 'daterangepicker-show-clear' 'true'%}
     {% if request.datespan %}
         {% initial_page_data 'startdate' datespan.startdate|date:"Y-m-d" %}
         {% initial_page_data 'enddate' datespan.enddate|date:"Y-m-d" %}

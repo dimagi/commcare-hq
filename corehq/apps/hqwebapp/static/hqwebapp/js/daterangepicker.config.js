@@ -47,15 +47,15 @@
 
         $(this).daterangepicker(config);
 
-        var $el = $(this);
-
         // UCRs
-        var ucr = "userreports/js/configurable_report";
-        if (typeof COMMCAREHQ_MODULES[ucr] !== 'undefined') {
+        var initial_page_data = hqImport("hqwebapp/js/initial_page_data").get;
+        if (initial_page_data('daterangepicker-show-clear')) {
             // Change 'Cancel' button text to 'Clear'
+            var $el = $(this);
             config.locale.cancelLabel = gettext('Clear');
-
             $el.daterangepicker(config);
+
+            // Add clearing functionality
             $el.on('cancel.daterangepicker', function() {
                 $el.val(gettext("Show All Dates"));
 
