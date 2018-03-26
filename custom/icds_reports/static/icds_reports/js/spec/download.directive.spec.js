@@ -170,7 +170,7 @@ describe('Download Directive', function () {
 
         it('tests get formats when child beneficiary list is not selected', function () {
             controller.selectedIndicator = 5;
-            var expected = [{"id": "csv", "name": "CSV"}, {"id": "xls", "name": "Excel"}];
+            var expected = [{"id": "csv", "name": "CSV"}, {"id": "xlsx", "name": "Excel"}];
 
             var result = controller.getFormats();
             assert.deepEqual(expected, result);
@@ -188,7 +188,7 @@ describe('Download Directive', function () {
 
         it('tests on indicator select when child beneficiary list is not selected', function () {
             controller.selectedIndicator = 5;
-            var expected = "xls";
+            var expected = "xlsx";
 
             controller.onIndicatorSelect();
             var result = controller.selectedFormat;

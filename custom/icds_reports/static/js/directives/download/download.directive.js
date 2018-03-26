@@ -73,7 +73,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
     }
     vm.queuedISSNIPTask = false;
     vm.selectedIndicator = 1;
-    vm.selectedFormat = 'xls';
+    vm.selectedFormat = 'xlsx';
     vm.selectedPDFFormat = 'many';
     vm.selectedLocationId = userLocationId;
     vm.selectedLevel = 1;
@@ -96,7 +96,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
 
     vm.formats = [
         {id: 'csv', name: 'CSV'},
-        {id: 'xls', name: 'Excel'},
+        {id: 'xlsx', name: 'Excel'},
     ];
 
     vm.pdfFormats = [
@@ -363,7 +363,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
             init();
             vm.selectedFormat = vm.formats[0].id;
         } else {
-            vm.selectedFormat = 'xls';
+            vm.selectedFormat = 'xlsx';
         }
     };
 
@@ -400,7 +400,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         vm.selectedMonth = new Date().getMonth() + 1;
         vm.selectedYear = new Date().getFullYear();
         vm.selectedIndicator = 1;
-        vm.selectedFormat = 'xls';
+        vm.selectedFormat = 'xlsx';
         vm.selectedPDFFormat = 'many';
         initHierarchy();
     };
