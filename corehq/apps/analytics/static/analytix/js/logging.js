@@ -21,40 +21,40 @@ hqDefine('analytix/js/logging', [
         debug: _makeLevel('DEBUG', 'color: #004ebc;'),
     };
 
-    var _printPretty = function (message) {
+    var _printPretty = function (msg) {
         var _title, _value, _group;
-        if (_.isUndefined(message.value)) {
+        if (_.isUndefined(msg.value)) {
             console.log("Message was undefined");  // eslint-disable-line no-console
-        } else if (message.value.isGroup) {
-            _group = message.value;
-            _group.level = message.level;
+        } else if (msg.value.isGroup) {
+            _group = msg.value;
+            _group.level = msg.level;
             _group.print();
-        } else if (_.isArguments(message.value)) {
-            _title = "Arguments (" + message.value.length + ")    " + _.map(Array.from(message.value), JSON.stringify).join('    ');
-            _value = Array.from(message.value);
-            _group = Group(_title, Message(_value, message.level));
+        } else if (_.isArguments(msg.value)) {
+            _title = "Arguments (" + msg.value.length + ")    " + _.map(Array.from(msg.value), JSON.stringify).join('    ');
+            _value = Array.from(msg.value);
+            _group = group(_title, message(_value, msg.level));
             _group.isCollapsed = true;
             _group.print();
-        } else if (_.isArray(message.value)) {
-            _.each(message.value, function (msg) {
-                _printPretty(Message(msg, message.level));
+        } else if (_.isArray(msg.value)) {
+            _.each(msg.value, function (msg) {
+                _printPretty(message(msg, msg.level));
             });
-        } else if (_.isObject(message.value) && _.has(message.value, 0) && _.isElement(message.value[0])) {
+        } else if (_.isObject(msg.value) && _.has(msg.value, 0) && _.isElement(msg.value[0])) {
             // DOM element
-            _title = "#" + message.value.get(0).id + " ." + message.value.get(0).className.split(' ').join('.');
-            _value = message.value.get(0).outerHTML;
-            _group = Group(_title, Message(_value, message.level));
+            _title = "#" + msg.value.get(0).id + " ." + msg.value.get(0).className.split(' ').join('.');
+            _value = msg.value.get(0).outerHTML;
+            _group = group(_title, message(_value, msg.level));
             _group.isCollapsed = true;
             _group.print();
-        } else if (!_.isString(message.value) && !_.isUndefined(message.value)) {
-            _title = JSON.stringify(message.value);
-            _value = message.value;
-            _group = Group(_title, Message(_value, message.level));
+        } else if (!_.isString(msg.value) && !_.isUndefined(msg.value)) {
+            _title = JSON.stringify(msg.value);
+            _value = msg.value;
+            _group = group(_title, message(_value, msg.level));
             _group.isCollapsed = true;
             _group.isRaw = true;
             _group.print();
         } else {
-            message.print();
+            msg.print();
         }
     };
 
@@ -63,7 +63,7 @@ hqDefine('analytix/js/logging', [
         return (levelOptions) ? levelOptions.style : "";
     };
 
-    var Message = function (value, level) {
+    var message = function (value, level) {
         var msg = {};
         msg.level = level;
         msg.value = value;
@@ -78,7 +78,7 @@ hqDefine('analytix/js/logging', [
      * groups so that it's easier to skim data vs info text on the console output
      * and improve readability.
      */
-    var Group = function (title, message) {
+    var group = function (title, message) {
         var grp = {};
         grp.title = title;
         grp.level = message.level;
@@ -113,8 +113,7 @@ hqDefine('analytix/js/logging', [
             getPrint: function () {
                 return function (messageValue, messagePrefix) {
                     if (_log.isVisible) {
-                        var group = Group(_log.getPrefix(messagePrefix), Message(messageValue, _log.level));
-                        group.print();
+                        group(_log.getPrefix(messagePrefix), message(messageValue, _log.level)).print();
                     }
                 };
             },
@@ -125,7 +124,7 @@ hqDefine('analytix/js/logging', [
     };
 
     var levels = ['warning', 'debug', 'verbose'];
-    var Level = function (_levelSlug, _levelPrefix, _logger) {
+    var level = function (_levelSlug, _levelPrefix, _logger) {
         var globalLevel = initialAnalytics.getFn('global')('logLevel'),
             isVisible = levels.indexOf(_levelSlug) <= levels.indexOf(globalLevel),
             _levelData = {
@@ -145,18 +144,18 @@ hqDefine('analytix/js/logging', [
         return level;
     };
 
-    var Logger = function (_prefix) {
+    var logger = function (_prefix) {
         var logger = {};
         logger.prefix = _prefix;
         logger.createLevel = function (slug, name) {
-            return Level(slug, name, logger);
+            return level(slug, name, logger);
         };
         _.each(_LEVELS, function (options, key) {
             logger[key] = logger.createLevel(key, options.name);
         });
         logger.fmt = {};
-        logger.fmt.groupMsg = function (title, message) {
-            return Group(title, Message(message));
+        logger.fmt.groupMsg = function (title, msg) {
+            return group(title, message(msg));
         };
         /**
          * Outputs a list of group messages that maps argument labels to their values.
@@ -175,7 +174,7 @@ hqDefine('analytix/js/logging', [
 
     return {
         getLoggerForApi: function (apiName) {
-            return Logger(apiName);
+            return logger(apiName);
         },
     };
 });
