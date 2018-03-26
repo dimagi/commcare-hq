@@ -58,10 +58,9 @@ class Command(BaseDataDump):
         elif column_name == "Associated FO Name":
             fo_id = case.get_case_property('fo')
             if fo_id:
-                location = SQLLocation.active_objects.get_or_None(location_id=fo_id)
-                if location:
-                    return location.name
-                else:
+                try:
+                    return SQLLocation.objects.get(location_id=fo_id).name
+                except SQLLocation.DoesNotExist:
                     return "FO Location not found with id: %s" % fo_id
             else:
                 return "FO id not found on case"

@@ -40,10 +40,11 @@ class Command(BaseDataDump):
             person_case = self.get_person(case)
             return person_case.case_id
         elif column_name == "eNikshay episode UUID":
-            return ','.join([case.case_id
-                             for case in self.get_all_episode_cases(case)])
+            return ','.join([episode_case.case_id
+                             for episode_case in self.get_all_episode_cases(case)])
         elif column_name == "Organisation":
-            private_sector_organization_id = self.get_person(case).get_case_property('private_sector_organization_id')
+            private_sector_organization_id = self.get_person(case).get_case_property(
+                'private_sector_organization_id')
             if private_sector_organization_id:
                 private_sector_organization = SQLLocation.active_objects.get_or_None(
                     location_id=private_sector_organization_id)

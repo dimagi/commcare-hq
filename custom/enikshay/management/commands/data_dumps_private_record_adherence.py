@@ -39,7 +39,6 @@ class Command(BaseDataDump):
         return (self.case_search_instance
                 .case_type(case_type)
                 .case_property_query(ENROLLED_IN_PRIVATE, 'true', clause=queries.MUST)
-                # .case_property_filter("episode_type", ["confirmed_tb", "confirmed_drtb"])
                 )
 
     def include_case_in_dump(self, episode):
