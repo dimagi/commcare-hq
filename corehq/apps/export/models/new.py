@@ -1103,9 +1103,9 @@ class FormExportInstanceDefaults(ExportInstanceDefaults):
 
     @staticmethod
     def get_default_instance_name(schema):
-        return '{} ({})'.format(
-            xmlns_to_name(schema.domain, schema.xmlns, schema.app_id, separator=" - "),
-            datetime.now().strftime('%Y-%m-%d')
+        return _('{name} (created {date})').format(
+            name=xmlns_to_name(schema.domain, schema.xmlns, schema.app_id, separator=" - "),
+            date=datetime.now().strftime('%Y-%m-%d')
         )
 
     @staticmethod
@@ -1138,7 +1138,10 @@ class CaseExportInstanceDefaults(ExportInstanceDefaults):
 
     @staticmethod
     def get_default_instance_name(schema):
-        return '{}: {}'.format(schema.case_type, datetime.now().strftime('%Y-%m-%d'))
+        return _('{name} (created {date})').format(
+            name=schema.case_type,
+            date=datetime.now().strftime('%Y-%m-%d')
+        )
 
 
 class SMSExportInstanceDefaults(ExportInstanceDefaults):
@@ -1151,7 +1154,7 @@ class SMSExportInstanceDefaults(ExportInstanceDefaults):
 
     @staticmethod
     def get_default_instance_name(schema):
-        return 'Messages: {}'.format(datetime.now().strftime('%Y-%m-%d'))
+        return _('Messages (created {date})').format(date=datetime.now().strftime('%Y-%m-%d'))
 
 
 class ExportRow(object):
