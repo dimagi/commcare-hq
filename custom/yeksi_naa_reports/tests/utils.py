@@ -26,7 +26,7 @@ class YeksiTestCase(TestCase):
         domain.is_active = True
         domain.save()
         self.domain = domain
-        user = WebUser.all().first()
+        user = WebUser.get_by_username('test')
         if not user:
             user = WebUser.create(domain.name, 'test', 'passwordtest')
         user.is_authenticated = True
