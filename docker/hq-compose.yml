@@ -43,7 +43,7 @@ postgres:
     - ${VOLUME_PREFIX}postgresql:/var/lib/postgresql/data
 
 couch:
-  image: klaemo/couchdb:2.0-dev
+  image: couchdb:2.1.1
   command: ["--with-haproxy", "--with-admin-party-please", "-n", "1"]
   ulimits:
     # fix high CPU usage (1048576 is the default, tried 65536, 1024 fixed it)
@@ -54,7 +54,7 @@ couch:
   expose:
     - "5984"
   volumes:
-    - ${VOLUME_PREFIX}couchdb2:/usr/src/couchdb/dev/lib/node1/data
+    - ${VOLUME_PREFIX}couchdb2:/usr/local/var/lib/couchdb
 
 redis:
   image: redis
