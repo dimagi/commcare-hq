@@ -5,7 +5,6 @@ import xmltodict
 from django.core.management.base import BaseCommand
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.models import XFormAttachmentSQL, XFormOperationSQL
-from datetime import datetime
 
 
 class Command(BaseCommand):
@@ -20,11 +19,11 @@ class Command(BaseCommand):
         form_ids = this_form_accessor.get_form_ids_for_user(user_id)
         new_username = "Deleted username success - UPDATED"
         for form_data in this_form_accessor.iter_forms(form_ids):
-            self.replace_username_in_xml(form_data, new_username)
-            self.replace_username_in_metadata(form_data)
+            self.replace_username_in_xml_for_sql(form_data, new_username)
+            self.replace_username_in_metadata_for_couch(form_data)
 
     @staticmethod
-    def replace_username_in_xml(form_data, new_username):
+    def replace_username_in_xml_for_sql(form_data, new_username):
         # Get the xml attachment from the form data
         form_attachment_xml = form_data.get_attachment("form.xml")
 
@@ -46,7 +45,7 @@ class Command(BaseCommand):
         attachment_metadata.save()
 
     @staticmethod
-    def replace_username_in_metadata(form_data):
+    def replace_username_in_metadata_for_couch(form_data):
         form_data.metadata.username = "Delete COUCH username success"
         form_data.save()
 

@@ -988,7 +988,6 @@ class TestReportPillow(TestCase):
             }
         }
         for fn in transform_functions:
-
             cleaned = fn(bad_appVersion)
             self.assertFalse(isinstance(cleaned['form']['meta']['appVersion'], dict))
             self.assertTrue(isinstance(cleaned['form']['meta']['appVersion'], six.text_type))
