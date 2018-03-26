@@ -870,7 +870,7 @@ hqDefine('app_manager/js/details/screen_config', function() {
                         }
                     ));
 
-                    data.useCaseTiles = this.useCaseTiles() === "yes" ? true : false;
+                    data.useCaseTiles = this.useCaseTiles() === "yes";
                     data.persistCaseContext = this.persistCaseContext();
                     data.persistentCaseContextXML = this.persistentCaseContextXML();
                     data.persistTileOnForms = this.persistTileOnForms();
