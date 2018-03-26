@@ -89,15 +89,9 @@ class Command(BaseDataDump):
 
     def get_case_reference_value(self, case_reference, case, calculation):
         if case_reference == 'last_episode':
-            try:
-                return self.get_last_episode(case).get_case_property(calculation)
-            except Exception as e:
-                return str(e)
+            return self.get_last_episode(case).get_case_property(calculation)
         elif case_reference == "last_occurrence":
-            try:
-                return self.get_last_occurrence(case).get_case_property(calculation)
-            except Exception as e:
-                return str(e)
+            return self.get_last_occurrence(case).get_case_property(calculation)
         raise Exception("unknown case reference %s" % case_reference)
 
     def get_case_ids_query(self, case_type):
