@@ -10,6 +10,7 @@ from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 import json
 from corehq.apps.reports.filters.base import BaseReportFilter
 import datetime
+from six.moves import range
 
 
 class LocationFilter(AsyncLocationFilter):

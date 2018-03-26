@@ -12,6 +12,7 @@ from collections import namedtuple
 from operator import eq
 from pprint import pformat
 
+import six
 from jsonpath_rw import Child, parse, Fields, Slice, Where
 
 from corehq.motech.openmrs.jsonpath import Cmp
@@ -334,7 +335,7 @@ class WeightedPropertyPatientFinder(PatientFinder):
                 case.name, case.get_id, pformat(patient, indent=2),
             )
             return [patient]
-        patients_scores = sorted(candidates.values(), key=lambda candidate: candidate.score, reverse=True)
+        patients_scores = sorted(six.itervalues(candidates), key=lambda candidate: candidate.score, reverse=True)
         if patients_scores[0].score / patients_scores[1].score > 1 + self.confidence_margin:
             # There is more than a `confidence_margin` difference
             # (defaults to 10%) in score between the best-ranked
