@@ -1341,7 +1341,7 @@ def view_scheduled_report(request, domain, scheduled_report_id):
 @location_safe
 class CaseDataView(BaseProjectReportSectionView):
     urlname = 'case_details'
-    template_name = "reports/reportdata/case_details.html"
+    template_name = "reports/reportdata/case_data.html"
     page_title = ugettext_lazy("Case Details")
     http_method_names = ['get']
 
