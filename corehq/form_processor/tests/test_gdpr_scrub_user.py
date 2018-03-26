@@ -5,13 +5,15 @@ from django.test import TestCase
 from corehq.blobs.tests.util import TemporaryFilesystemBlobDB
 from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
 from corehq.form_processor.exceptions import AttachmentNotFound
+from corehq.form_processor.utils import get_simple_form_xml, convert_xform_to_json
 from corehq.form_processor.tests.utils import use_sql_backend
 from corehq.apps.users.management.commands.gdpr_scrub_user import Command
+from corehq.form_processor.utils import TestFormMetadata
 
 from corehq.form_processor.tests.utils import (
     create_form_for_test
 )
-from six.moves import range
+from corehq.form_processor.models import Attachment
 
 DOMAIN = 'test-form-accessor'
 USER_ID = '123'
@@ -29,12 +31,22 @@ class GDPRScrubUserTests(TestCase):
     @use_sql_backend
     def test_replace_username_in_xml_for_sql(self):
 
-        print("==========REACHED HEEER^^^^^^^^^^^^^^^^")
+        form = create_form_for_test(DOMAIN)
+        new_username = "replacement_username"
 
-        forms = [create_form_for_test(DOMAIN) for i in range(1)]
-        # new_username = "replacement_username"
-        #
-        # Command().replace_username_in_xml_for_sql(forms, new_username)
+        # Create an attachment
+        form_id = 123
+        test_metadata = TestFormMetadata(
+            domain=DOMAIN,
+            username="orig_username"
+            # time_end=datetime.utcnow(),
+            # received_on=datetime.utcnow(),
+        )
+        form_xml = get_simple_form_xml(form_id=form_id, metadata=test_metadata)
+        print("form xml: {}".format(form_xml))
+        Attachment(name='form.xml', raw_content=form_xml, content_type='text/xml')
+
+        Command().replace_username_in_xml_for_sql(form, new_username)
 
     #     form_ids = [form.form_id for form in forms]
     #     forms = FormAccessorSQL.get_forms(form_ids)

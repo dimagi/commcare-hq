@@ -18,15 +18,15 @@ SIMPLE_FORM = """<?xml version='1.0' ?>
 <data uiVersion="1" version="17" name="{form_name}" xmlns:jrm="http://dev.commcarehq.org/jr/xforms"
     xmlns="{xmlns}">
     <dalmation_count>yes</dalmation_count>
-    <n1:meta xmlns:n1="http://openrosa.org/jr/xforms">
-        <n1:deviceID>{device_id}</n1:deviceID>
-        <n1:timeStart>{time_start}</n1:timeStart>
-        <n1:timeEnd>{time_end}</n1:timeEnd>
-        <n1:username>{username}</n1:username>
-        <n1:userID>{user_id}</n1:userID>
-        <n1:instanceID>{uuid}</n1:instanceID>
-        <n2:appVersion xmlns:n2="http://commcarehq.org/xforms"></n2:appVersion>
-    </n1:meta>
+    <n0:meta xmlns:n1="http://openrosa.org/jr/xforms">
+        <n0:deviceID>{device_id}</n1:deviceID>
+        <n0:timeStart>{time_start}</n1:timeStart>
+        <n0:timeEnd>{time_end}</n1:timeEnd>
+        <n0:username>{username}</n1:username>
+        <n0:userID>{user_id}</n1:userID>
+        <n0:instanceID>{uuid}</n1:instanceID>
+        <n1:appVersion xmlns:n1="http://commcarehq.org/xforms"></n1:appVersion>
+    </n0:meta>
     {case_block}
 </data>"""
 

@@ -462,9 +462,10 @@ class AbstractAttachment(PartitionedModel, models.Model, SaveStateMixin):
         if self.blob_id:
             # Delete the old entry in the database for this identifier
             db.delete(self.blob_id, bucket)
-        # Put a new entry in the database with this identifier
-        info = db.put(content_readable, self.blob_id, bucket=bucket)
-
+            # Put a new entry in the database with this identifier
+            info = db.put(content_readable, self.blob_id, bucket=bucket)
+        else:
+            info = db.put(content_readable, get_short_identifier(), bucket=bucket)
         self.md5 = info.md5_hash
         self.content_length = info.length
         self.blob_id = info.identifier
