@@ -1886,6 +1886,17 @@ def _get_form_render_context(request, domain, instance, case_id=None):
     support_enabled = toggle_enabled(request, toggles.SUPPORT)
 
     form_data, question_list_not_found = get_readable_data_for_submission(instance)
+
+    question_response_map = {}
+    def _add_to_question_response_map(data):
+        for question in data:
+            if question.children:
+                _add_to_question_response_map(question.children)
+            else:
+                # TODO: hide labels, multimedia, etc based on q.type?
+                question_response_map[question.value] = question.response
+    _add_to_question_response_map(form_data)
+
     context.update({
         "context_case_id": case_id,
         "instance": instance,
@@ -1894,7 +1905,7 @@ def _get_form_render_context(request, domain, instance, case_id=None):
         "domain": domain,
         'question_list_not_found': question_list_not_found,
         "form_data": form_data,
-        "question_response_map": {q.hashtagValue: q.response for q in form_data},
+        "question_response_map": question_response_map,
         "tz_abbrev": timezone.localize(datetime.utcnow()).tzname(),
     })
 
@@ -2491,7 +2502,7 @@ def edit_form(request, domain, instance_id):
 
     updates = {}
     for name in request.POST:
-        question = re.sub(r'^#form/', '', name)
+        question = re.sub(r'^/[^\/]+/', '', name)  # TODO: cleaner way to do this?
         updates.update({
             question: request.POST[name],
         })
@@ -2504,17 +2515,34 @@ def edit_form(request, domain, instance_id):
         user_id = (instance.auth_context and instance.auth_context.get('user_id')) or 'unknown'     # TODO: change to current web user
         operation = None
 
+        def _update_xml(root, question):
+            levels = question.split("/")
+            levels.reverse()
+            node = xml
+            while levels:
+                node = node.find("{{{}}}{}".format(instance.xmlns, levels.pop()))
+            if node is not None:
+                node.text = response
+
+        # TODO: error handling throughout this function
         if type(instance) == XFormInstance:     # TODO: this test sucks, fix & also move the imports
             xml = etree.fromstring(instance.fetch_attachment(ATTACHMENT_NAME))
             for question, response in updates.iteritems():
-                instance.form_data[question] = response     # TODO: error handling, here and throughout this function
-                xml.find("{{{}}}{}".format(instance.xmlns, question)).text = response
+                levels = question.split("/")
+                levels.reverse()
+                qdata = instance.form_data
+                while qdata and len(levels) > 1:
+                    qid = levels.pop()
+                    qdata = qdata[qid]
+                if qdata and levels and isinstance(qdata, dict):    # TODO: repeat groups
+                    qdata[levels[0]] = response
+                _update_xml(xml, question)
             instance.put_attachment(etree.tostring(xml), name=ATTACHMENT_NAME, content_type='text/xml')
             operation = XFormOperation(user=user_id, date=datetime.utcnow(), operation='edit')
         elif type(instance) == XFormInstanceSQL:
             xml = instance.get_xml_element()
             for question, response in updates.iteritems():
-                xml.find("{{{}}}{}".format(instance.xmlns, question)).text = response
+                _update_xml(xml, question)
             all_attachments = {att.name: att for att in instance.get_attachments()}
             form_attachment = all_attachments[ATTACHMENT_NAME]
             attachment = Attachment(
