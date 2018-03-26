@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from couchexport.exceptions import SchemaMismatchException, ExportRebuildError
 from couchexport.models import GroupExportConfiguration, SavedBasicExport
 from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
@@ -41,7 +42,7 @@ def rebuild_export(config, schema, last_access_cutoff=None, filter=None):
     except SchemaMismatchException:
         # fire off a delayed force update to prevent this from happening again
         rebuild_schemas.delay(config.index)
-        raise ExportRebuildError(u'Schema mismatch for {}. Rebuilding tables...'.format(config.filename))
+        raise ExportRebuildError('Schema mismatch for {}. Rebuilding tables...'.format(config.filename))
 
     with files:
         _save_export_payload(files, saved_export, config, is_safe=schema.is_safe)

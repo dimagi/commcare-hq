@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from base64 import b64decode
 from codecs import BOM_UTF8
 import os
@@ -372,7 +373,7 @@ class Excel2007ExportWriter(ExportWriter):
 
         # Source: http://stackoverflow.com/questions/1707890/fast-way-to-filter-illegal-xml-unicode-chars-in-python
         dirty_chars = re.compile(
-            u'[\x00-\x08\x0b-\x1f\x7f-\x84\x86-\x9f\ud800-\udfff\ufdd0-\ufddf\ufffe-\uffff]'
+            '[\x00-\x08\x0b-\x1f\x7f-\x84\x86-\x9f\ud800-\udfff\ufdd0-\ufddf\ufffe-\uffff]'
         )
 
         def get_write_value(value):
@@ -383,8 +384,8 @@ class Excel2007ExportWriter(ExportWriter):
             elif value is not None:
                 value = six.text_type(value)
             else:
-                value = u''
-            return dirty_chars.sub(u'?', value)
+                value = ''
+            return dirty_chars.sub('?', value)
 
         # NOTE: don't touch this. changing anything like formatting in the
         # row by referencing the cells will cause huge memory issues.
