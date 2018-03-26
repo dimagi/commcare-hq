@@ -76,6 +76,13 @@ class UpdateCasePropertyViewTest(TestCase):
         self.assertEqual(response.status_code, 400)
         self._assert_type()
 
+    def test_update_no_name(self):
+        self._assert_type()
+        post_data = {"properties": '[{"caseType": "caseType", "name": "", "data_type": "date"}]'}
+        response = self.client.post(self.url, post_data)
+        self.assertEqual(response.status_code, 400)
+        self._assert_type()
+
     def test_update_of_correct_data_type(self):
         self._assert_type()
         post_data = {"properties": '[{"caseType": "caseType", "name": "property", "data_type": "date"}]'}
