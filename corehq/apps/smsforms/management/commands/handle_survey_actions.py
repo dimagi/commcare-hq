@@ -15,6 +15,13 @@ def skip_domain(domain):
 
 
 class Command(BaseCommand):
+    """
+    Based on our commcare-cloud code, there will be one instance of this
+    command running on every machine that has a celery worker which
+    consumes from the reminder_queue. This is ok because this process uses
+    locks to ensure items are only enqueued once, and it's what is desired
+    in order to more efficiently spawn the needed celery tasks.
+    """
     help = "Spawns tasks to handle the next actions due in SMS surveys"
 
     def get_enqueue_lock(self, session_id, current_action_due):

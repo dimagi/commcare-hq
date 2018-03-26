@@ -11,6 +11,13 @@ from hqscripts.generic_queue import GenericEnqueuingOperation
 
 
 class ReminderEnqueuingOperation(GenericEnqueuingOperation):
+    """
+    Based on our commcare-cloud code, there will be one instance of this
+    command running on every machine that has a celery worker which
+    consumes from the reminder_queue. This is ok because this process uses
+    locks to ensure items are only enqueued once, and it's what is desired
+    in order to more efficiently spawn the needed celery tasks.
+    """
     help = "Runs the Reminders Queue"
 
     def get_fetching_interval(self):
