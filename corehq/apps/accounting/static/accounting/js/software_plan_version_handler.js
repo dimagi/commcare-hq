@@ -246,8 +246,7 @@ hqDefine("accounting/js/software_plan_version_handler", [
     var baseSelect2Handler = select2Handler.baseSelect2Handler;
     var select2RateHandler = function (options, currentValue) {
         'use strict';
-        var self = {};
-        baseSelect2Handler.call(self, options);
+        var self = baseSelect2Handler(options);
 
         self.currentValue = currentValue;
         self.isNew = ko.observable(false);
