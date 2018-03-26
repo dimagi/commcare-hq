@@ -90,27 +90,16 @@ class Command(BaseDataDump):
 
     def get_occurrence(self, test_case):
         if 'occurrence' not in self.context:
-            episode_case = self.get_episode(test_case)
-            occurrence_case = get_first_parent_of_case(episode_case.domain,
-                                                       episode_case.case_id, CASE_TYPE_OCCURRENCE)
+            occurrence_case = get_first_parent_of_case(test_case.domain,
+                                                       test_case.case_id, CASE_TYPE_OCCURRENCE)
             self.context['occurrence'] = occurrence_case
         if not self.context['occurrence']:
             raise Exception("could not find occurrrence for test %s" % test_case.case_id)
         return self.context['occurrence']
 
-    def get_episode(self, test_case):
-        if 'episode' not in self.context:
-            episode_case = get_first_parent_of_case(test_case.domain, test_case.case_id, CASE_TYPE_EPISODE)
-            self.context['episode'] = episode_case
-        if not self.context['episode']:
-            raise Exception("could not find episode for test %s" % test_case.case_id)
-        return self.context['episode']
-
     def get_case_reference_value(self, case_reference, test_case, calculation):
         if case_reference == 'person':
             return self.get_person(test_case).get_case_property(calculation)
-        elif case_reference == 'episode':
-            return self.get_episode(test_case).get_case_property(calculation)
         raise Exception("unknown case reference %s" % case_reference)
 
     def get_all_episode_cases(self, test_case):

@@ -105,9 +105,9 @@ class Command(BaseDataDump):
 
     def get_occurrence(self, voucher_case):
         if 'occurrence' not in self.context:
-            episode_case = self.get_episode(voucher_case)
-            occurrence_case = get_first_parent_of_case(episode_case.domain,
-                                                       episode_case.case_id, CASE_TYPE_OCCURRENCE)
+            test_case = self.get_test(voucher_case)
+            occurrence_case = get_first_parent_of_case(test_case.domain,
+                                                       test_case.case_id, CASE_TYPE_OCCURRENCE)
             self.context['occurrence'] = occurrence_case
         if not self.context['occurrence']:
             raise Exception("could not find occurrence for voucher %s" % voucher_case.case_id)
@@ -122,24 +122,15 @@ class Command(BaseDataDump):
             raise Exception("could not find test for lab voucher %s" % voucher_case.case_id)
         return self.context['test']
 
-    def get_episode(self, voucher_case):
-        if 'episode' not in self.context:
-            host_case = self.get_test(voucher_case)
-            episode_case = get_first_parent_of_case(host_case.domain, host_case.case_id,
-                                                    CASE_TYPE_EPISODE)
-            self.context['episode'] = episode_case
-        if not self.context['episode']:
-            raise Exception("could not find episode for voucher %s" % voucher_case.case_id)
-        return self.context['episode']
-
     def get_case_reference_value(self, case_reference, voucher_case, calculation):
         if case_reference == 'person':
             return self.get_person(voucher_case).get_case_property(calculation)
-        elif case_reference == 'episode':
-            return self.get_episode(voucher_case).get_case_property(calculation)
+        elif case_reference == 'test':
+            return self.get_test(voucher_case).get_case_property(calculation)
         raise Exception("unknown case reference %s" % case_reference)
 
-    def get_all_episode_cases(self, test_case):
+    def get_all_episode_cases(self, voucher_case):
+        test_case = self.get_test(voucher_case)
         if 'all_episode_cases' not in self.context:
             occurrence_case = self.get_occurrence(test_case)
             self.context['all_episode_cases'] = [
