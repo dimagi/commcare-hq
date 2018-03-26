@@ -18,7 +18,7 @@ SIMPLE_FORM = """<?xml version='1.0' ?>
 <data uiVersion="1" version="17" name="{form_name}" xmlns:jrm="http://dev.commcarehq.org/jr/xforms"
     xmlns="{xmlns}">
     <dalmation_count>yes</dalmation_count>
-    <n0:meta xmlns:n1="http://openrosa.org/jr/xforms">
+    <n0:meta xmlns:n0="http://openrosa.org/jr/xforms">
         <n0:deviceID>{device_id}</n0:deviceID>
         <n0:timeStart>{time_start}</n0:timeStart>
         <n0:timeEnd>{time_end}</n0:timeEnd>
@@ -29,7 +29,6 @@ SIMPLE_FORM = """<?xml version='1.0' ?>
     </n0:meta>
     {case_block}
 </data>"""
-
 
 class TestFormMetadata(jsonobject.JsonObject):
     domain = jsonobject.StringProperty(required=False)

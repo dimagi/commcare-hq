@@ -21,7 +21,7 @@ class Command(BaseCommand):
         new_username = "Deleted username success - UPDATED"
         for form_data in this_form_accessor.iter_forms(form_ids):
             self.replace_username_in_xml_for_sql(form_data, new_username)
-            self.replace_username_in_metadata_for_couch(form_data)
+            self.replace_username_in_metadata_for_couch(form_data, new_username)
 
     @staticmethod
     def replace_username_in_xml_for_sql(form_data, new_username):
@@ -45,8 +45,8 @@ class Command(BaseCommand):
         attachment_metadata.save()
 
     @staticmethod
-    def replace_username_in_metadata_for_couch(form_data):
-        form_data.metadata.username = "Delete COUCH username success"
+    def replace_username_in_metadata_for_couch(form_data, new_username):
+        form_data.metadata.username = new_username
         form_data.save()
 
 
