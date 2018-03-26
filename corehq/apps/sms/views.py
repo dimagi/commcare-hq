@@ -781,7 +781,7 @@ def format_contact_data(domain, data):
         vn_id = row[4]
         if row[1] == 'case':
             row[1] = _('Case')
-            row[4] = reverse('case_details', args=[domain, contact_id])
+            row[4] = reverse('case_data', args=[domain, contact_id])
         elif row[1] == 'mobile_worker':
             row[1] = _('Mobile Worker')
             row[4] = reverse(EditCommCareUserView.urlname, args=[domain, contact_id])
