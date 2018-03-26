@@ -1,5 +1,6 @@
 from __future__ import print_function
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import json
 import mimetypes
 import os
@@ -1433,10 +1434,7 @@ class LedgerValue(PartitionedModel, SaveStateMixin, models.Model, TrackRelatedCh
     @memoized
     def location(self):
         from corehq.apps.locations.models import SQLLocation
-        try:
-            return SQLLocation.objects.get(supply_point_id=self.case_id)
-        except SQLLocation.DoesNotExist:
-            return None
+        return SQLLocation.objects.get_or_None(supply_point_id=self.case_id)
 
     @property
     def location_id(self):

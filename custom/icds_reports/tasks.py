@@ -1,7 +1,6 @@
 from __future__ import absolute_import
 
 from __future__ import unicode_literals
-from base64 import b64encode
 from collections import namedtuple
 import csv
 from datetime import date, datetime, timedelta
@@ -19,7 +18,6 @@ from django.db.models import F
 import pytz
 
 from corehq.apps.locations.models import SQLLocation
-from corehq.apps.settings.views import get_qrcode
 from corehq.apps.userreports.models import get_datasource_config
 from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.const import SERVER_DATE_FORMAT
@@ -30,9 +28,10 @@ from corehq.util.decorators import serial_task
 from corehq.util.log import send_HTML_email
 from corehq.util.soft_assert import soft_assert
 from corehq.util.view_utils import reverse
-from custom.icds_reports.models import AggChildHealthMonthly
+from custom.icds_reports.const import DASHBOARD_DOMAIN
+from custom.icds_reports.models import AggChildHealthMonthly, AggregateComplementaryFeedingForms
 from custom.icds_reports.reports.issnip_monthly_register import ISSNIPMonthlyReport
-from custom.icds_reports.utils import zip_folder, create_pdf_file
+from custom.icds_reports.utils import zip_folder, create_pdf_file, generate_qrcode
 from dimagi.utils.chunked import chunked
 from dimagi.utils.dates import force_to_date
 from dimagi.utils.logging import notify_exception
@@ -134,6 +133,13 @@ def aggregate_tables(self, current_task, future_tasks):
 
     db_alias = get_icds_ucr_db_alias()
     if db_alias:
+        state_ids = (SQLLocation.objects
+                     .filter(domain=DASHBOARD_DOMAIN, location_type__name='state')
+                     .values_list('location_id', flat=True))
+
+        for state_id in state_ids:
+            AggregateComplementaryFeedingForms.aggregate(state_id, force_to_date(aggregation_date))
+
         with connections[db_alias].cursor() as cursor:
             with open(path, "r") as sql_file:
                 sql_to_execute = sql_file.read()
@@ -232,7 +238,7 @@ def _find_stagnant_cases(adapter):
 india_timezone = pytz.timezone('Asia/Kolkata')
 
 
-@task(queue='background_queue')
+@task(queue='icds_dashboard_reports_queue')
 def prepare_issnip_monthly_register_reports(domain, user, awcs, pdf_format, month, year):
 
     utc_now = datetime.now(pytz.utc)
@@ -258,12 +264,12 @@ def prepare_issnip_monthly_register_reports(domain, user, awcs, pdf_format, mont
             'month': selected_date,
             'domain': domain
         })
-        qrcode = get_qrcode("{} {}".format(
-            awc_location.site_code,
-            india_now.strftime('%d %b %Y')
-        ))
+
         context = {
-            'qrcode_64': b64encode(qrcode),
+            'qrcode_64': generate_qrcode("{} {}".format(
+                awc_location.site_code,
+                india_now.strftime('%d %b %Y')
+            )),
             'report': report
         }
 

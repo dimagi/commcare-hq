@@ -9,6 +9,8 @@ from datetime import datetime, timedelta
 
 import operator
 
+import qrcode
+from base64 import b64encode
 from six.moves import cStringIO
 from dateutil.relativedelta import relativedelta
 from django.template.loader import render_to_string, get_template
@@ -20,7 +22,7 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.datatables import DataTablesColumn
 from corehq.apps.reports_core.filters import Choice
 from corehq.apps.userreports.models import StaticReportConfiguration
-from corehq.apps.userreports.reports.factory import ReportFactory
+from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
 from corehq.util.quickcache import quickcache
 from custom.icds_reports import const
 from custom.icds_reports.const import ISSUE_TRACKER_APP_ID, LOCATION_TYPES
@@ -64,7 +66,7 @@ class ASRData(object):
 class ICDSData(object):
 
     def __init__(self, domain, filters, report_id):
-        report_config = ReportFactory.from_spec(
+        report_config = ConfigurableReportDataSource.from_spec(
             self._get_static_report_configuration_without_owner_transform(report_id.format(domain=domain))
         )
         report_config.set_filter_values(filters)
@@ -491,6 +493,22 @@ def create_pdf_file(pdf_hash, pdf_context):
     return pdf_hash
 
 
+def generate_qrcode(data):
+    qr = qrcode.QRCode(
+        version=1,
+        error_correction=qrcode.constants.ERROR_CORRECT_L,
+        box_size=10,
+        border=4
+    )
+    qr.add_data(data)
+    qr.make(fit=True)
+    image = qr.make_image()
+    output = cStringIO()
+    image.save(output, "PNG")
+    qr_content = b64encode(output.getvalue())
+    return qr_content
+
+
 def icds_pre_release_features(user):
     return toggles.ICDS_DASHBOARD_REPORT_FEATURES.enabled(user.username)
 
@@ -521,14 +539,8 @@ def get_child_locations(domain, location_id, show_test):
 
 
 def person_has_aadhaar_column(beta):
-    if beta:
-        return 'cases_person_has_aadhaar_v2'
-
-    return 'cases_person_has_aadhaar'
+    return 'cases_person_has_aadhaar_v2'
 
 
 def person_is_beneficiary_column(beta):
-    if beta:
-        return 'cases_person_beneficiary_v2'
-
-    return 'cases_person_beneficiary'
+    return 'cases_person_beneficiary_v2'

@@ -1,5 +1,6 @@
 # encoding: utf-8
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.test import SimpleTestCase
 from django.test.utils import override_settings
 
@@ -8,27 +9,27 @@ from corehq.util.test_utils import generate_cases
 
 # 1 Special Character, 1 Number, 1 Capital Letter with the length of Minimum 8
 tests = [
-    (u'abcdefg', -2),
-    (u'ABCDEFG', -1),
-    (u'1234567', -1),
-    (u'!@#$%^&', -1),
-    (u'abcdef*', -1),
-    (u'Abcdef*', 0),
-    (u'0bcdef*', 0),
-    (u'Ab0000*', 1),
-    (u'AB0000*', 1),
+    ('abcdefg', -2),
+    ('ABCDEFG', -1),
+    ('1234567', -1),
+    ('!@#$%^&', -1),
+    ('abcdef*', -1),
+    ('Abcdef*', 0),
+    ('0bcdef*', 0),
+    ('Ab0000*', 1),
+    ('AB0000*', 1),
 
-    (u'abcdefgh', -1),
-    (u'ABCDEFGH', 0),
-    (u'12345678', 0),
-    (u'!@#$%^&*', 0),
-    (u'abcdefg*', 0),
-    (u'Abcdefg*', 1),
-    (u'0bcdefg*', 1),
-    (u'åb0000g*', 1),  # lowercase unicode character does not count
-    (u'Ab0000g*', 2),
-    (u'AB0000G*', 2),
-    (u'Åb0000g*', 2),  # uppercase unicode character
+    ('abcdefgh', -1),
+    ('ABCDEFGH', 0),
+    ('12345678', 0),
+    ('!@#$%^&*', 0),
+    ('abcdefg*', 0),
+    ('Abcdefg*', 1),
+    ('0bcdefg*', 1),
+    ('åb0000g*', 1),  # lowercase unicode character does not count
+    ('Ab0000g*', 2),
+    ('AB0000G*', 2),
+    ('Åb0000g*', 2),  # uppercase unicode character
 ]
 
 

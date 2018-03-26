@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from corehq.apps.tour.models import GuidedTour
 from corehq.apps.tour.views import EndTourView
 from corehq.util import reverse

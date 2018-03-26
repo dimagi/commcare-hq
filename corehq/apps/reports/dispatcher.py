@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+from django.conf import settings
 from django.urls import reverse
 from django.http import Http404, HttpResponseRedirect, HttpResponseBadRequest
 from django.utils.decorators import method_decorator
@@ -18,7 +19,6 @@ from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.domain.decorators import login_and_domain_required, cls_to_view
 from corehq.apps.domain.models import Domain
-from corehq.apps.domain.utils import get_domain_module_map
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.reports.exceptions import BadRequestError
 from corehq.util.quickcache import quickcache
@@ -94,7 +94,7 @@ class ReportDispatcher(View):
 
         corehq_reports = process(getattr(reports, attr_name, ()))
 
-        module_name = get_domain_module_map().get(domain)
+        module_name = settings.DOMAIN_MODULE_MAP.get(domain)
         if module_name is None:
             custom_reports = ()
         else:

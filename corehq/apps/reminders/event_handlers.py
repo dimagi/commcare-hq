@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from corehq.apps.accounting.utils import domain_is_on_trial
 from corehq.apps.reminders.models import (Message, METHOD_SMS,
     METHOD_SMS_CALLBACK, METHOD_SMS_SURVEY, METHOD_IVR_SURVEY,
@@ -27,7 +28,7 @@ from corehq.apps.sms.models import (
 from django.conf import settings
 from corehq.apps.app_manager.models import Form
 from corehq.form_processor.utils import is_commcarecase
-from corehq.messaging.templating import _get_obj_template_info
+from corehq.messaging.templating import _get_obj_template_info, _get_system_user_template_info
 from dimagi.utils.couch import CriticalSection
 from django.utils.translation import ugettext_noop
 from dimagi.utils.modules import to_function
@@ -107,6 +108,10 @@ def _add_owner_to_template_params(case, result):
 
 
 def _add_modified_by_to_template_params(case, result):
+    if case.modified_by == 'system':
+        result['case']['last_modified_by'] = _get_system_user_template_info()
+        return
+
     try:
         modified_by = CouchUser.get_by_user_id(case.modified_by)
     except KeyError:

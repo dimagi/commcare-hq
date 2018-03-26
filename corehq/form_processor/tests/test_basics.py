@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from datetime import datetime
 import uuid
 from django.conf import settings
@@ -139,7 +140,7 @@ class FundamentalCaseTests(FundamentalBaseTests):
 
         case_id = uuid.uuid4().hex
         modified_on = datetime.utcnow()
-        case_name = u'प्रसव'
+        case_name = 'प्रसव'
         _submit_case_block(
             True, case_id, user_id='user1', owner_id='owner1', case_type='demo',
             case_name=case_name, date_modified=modified_on, update={

@@ -17,11 +17,13 @@ from corehq.apps.locations.tests.util import (
     setup_locations_with_structure,
 )
 from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.tests.util import create_user_case
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.tests.utils import use_sql_backend
 from custom.icds.const import AWC_LOCATION_TYPE_CODE, SUPERVISOR_LOCATION_TYPE_CODE
 from custom.icds.rules.util import todays_date
 from datetime import datetime, date
+from dateutil.relativedelta import relativedelta
 
 
 @use_sql_backend
@@ -183,47 +185,88 @@ class CustomCriteriaTestCase(BaseCaseRuleTest):
         self.assertEqual(todays_date(datetime(2018, 2, 22, 18, 30)), date(2018, 2, 23))
 
     def _set_dob(self, case, dob):
-        update_case(self.domain, case.case_id, case_properties={'dob': dob})
+        return self._set_case_props(case, {'dob': dob})
+
+    def _set_case_props(self, case, case_properties):
+        update_case(self.domain, case.case_id, case_properties=case_properties)
         return CaseAccessors(self.domain).get_case(case.case_id)
 
     def test_person_case_is_under_6_years_old(self):
+        self.assert_person_case_is_under_n_years_old(
+            6, 'ICDS_PERSON_CASE_IS_UNDER_6_YEARS_OLD')
+
+    def test_person_case_is_under_19_years_old(self):
+        self.assert_person_case_is_under_n_years_old(
+            19, 'ICDS_PERSON_CASE_IS_UNDER_19_YEARS_OLD')
+
+    def assert_person_case_is_under_n_years_old(self, n_years, criteria_name):
         rule = _create_empty_rule(self.domain, case_type='person')
-        rule.add_criteria(CustomMatchDefinition, name='ICDS_PERSON_CASE_IS_UNDER_6_YEARS_OLD')
+        rule.add_criteria(CustomMatchDefinition, name=criteria_name)
 
         with _with_case(self.domain, 'person', datetime.utcnow()) as case:
+            dob = datetime(2018, 2, 22, 12, 0)
             # No value for dob yet
-            self.assertFalse(rule.criteria_match(case, datetime(2018, 2, 22, 12, 0)))
+            self.assertFalse(rule.criteria_match(case, dob))
 
             # Bad value for dob
             case = self._set_dob(case, 'x')
-            self.assertFalse(rule.criteria_match(case, datetime(2018, 2, 22, 12, 0)))
+            self.assertFalse(rule.criteria_match(case, dob))
 
             # Set dob
             case = self._set_dob(case, '2018-02-22')
 
-            # Test over 6 years old
-            self.assertFalse(rule.criteria_match(case, datetime(2024, 2, 22, 12, 0)))
-            self.assertFalse(rule.criteria_match(case, datetime(2024, 5, 22, 12, 0)))
-
-            # Test under 6 years old
-            self.assertTrue(rule.criteria_match(case, datetime(2024, 2, 21, 12, 0)))
-            self.assertTrue(rule.criteria_match(case, datetime(2018, 5, 22, 12, 0)))
+            for assert_, age in [
+                # Test over N years old
+                (self.assertFalse, relativedelta(years=n_years)),
+                (self.assertFalse, relativedelta(years=n_years, days=90)),
+                # Test under N years old
+                (self.assertTrue, relativedelta(years=n_years, days=-1)),
+                (self.assertTrue, relativedelta(days=90)),
+            ]:
+                assert_(rule.criteria_match(case, dob + age), age)
 
         # Test wrong case type
         rule = _create_empty_rule(self.domain, case_type='x')
-        rule.add_criteria(CustomMatchDefinition, name='ICDS_PERSON_CASE_IS_UNDER_6_YEARS_OLD')
+        rule.add_criteria(CustomMatchDefinition, name=criteria_name)
 
         with _with_case(self.domain, 'x', datetime.utcnow()) as case:
             case = self._set_dob(case, '2018-02-22')
-            self.assertFalse(rule.criteria_match(case, datetime(2018, 5, 22, 12, 0)))
+            self.assertFalse(rule.criteria_match(case, dob + relativedelta(days=90)))
+
+    def test_ccs_record_case_has_future_edd(self):
+        rule = _create_empty_rule(self.domain, case_type='ccs_record')
+        rule.add_criteria(CustomMatchDefinition,
+            name='ICDS_CCS_RECORD_CASE_HAS_FUTURE_EDD')
+
+        def check(case, edd, match):
+            case = self._set_case_props(case, {"edd": edd})
+            (self.assertTrue if match else self.assertFalse)(
+                rule.criteria_match(case, now),
+                "%s case with edd=%s should%s match" % (
+                    case.type, edd, "" if match else " not",
+                )
+            )
+
+        now = datetime(2018, 2, 22, 12, 0)
+        with _with_case(self.domain, 'ccs_record', datetime.utcnow()) as case:
+            for match, edd in [
+                (False, None),          # edd not set
+                (False, '2018-01-22'),  # past
+                (False, '2018-02-22'),  # past
+                (True, '2018-02-23'),   # future
+                (True, '2018-03-22'),   # future
+            ]:
+                check(case, edd, match)
+
+        # rule should not match person case
+        with _with_case(self.domain, 'person', datetime.utcnow()) as person:
+            check(person, '2018-03-22', False)
 
     def test_is_usercase_of_aww(self):
         rule = _create_empty_rule(self.domain, case_type=USERCASE_TYPE)
         rule.add_criteria(CustomMatchDefinition, name='ICDS_IS_USERCASE_OF_AWW')
 
-        with _with_case(self.domain, USERCASE_TYPE, datetime.utcnow(), owner_id=self.aww.get_id) as aww_uc,\
-                _with_case(self.domain, USERCASE_TYPE, datetime.utcnow(), owner_id=self.ls.get_id) as ls_uc:
-
+        with create_user_case(self.aww) as aww_uc, create_user_case(self.ls) as ls_uc:
             self.assertTrue(rule.criteria_match(aww_uc, datetime.utcnow()))
             self.assertFalse(rule.criteria_match(ls_uc, datetime.utcnow()))
 
@@ -231,8 +274,6 @@ class CustomCriteriaTestCase(BaseCaseRuleTest):
         rule = _create_empty_rule(self.domain, case_type=USERCASE_TYPE)
         rule.add_criteria(CustomMatchDefinition, name='ICDS_IS_USERCASE_OF_LS')
 
-        with _with_case(self.domain, USERCASE_TYPE, datetime.utcnow(), owner_id=self.aww.get_id) as aww_uc,\
-                _with_case(self.domain, USERCASE_TYPE, datetime.utcnow(), owner_id=self.ls.get_id) as ls_uc:
-
+        with create_user_case(self.aww) as aww_uc, create_user_case(self.ls) as ls_uc:
             self.assertFalse(rule.criteria_match(aww_uc, datetime.utcnow()))
             self.assertTrue(rule.criteria_match(ls_uc, datetime.utcnow()))

@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+from __future__ import unicode_literals
 import re
 import weakref
 from uuid import uuid4
@@ -21,6 +22,7 @@ from six.moves import range
 
 
 def delete_sync_logs(before_date, limit=1000, num_tries=10):
+    # Todo: convert to SQL including get_synclog_ids_before_date
     from casexml.apps.phone.dbaccessors.sync_logs_by_user import get_synclog_ids_before_date
     from casexml.apps.phone.models import SyncLog
     from dimagi.utils.couch.database import iter_bulk_delete_with_doc_type_verification

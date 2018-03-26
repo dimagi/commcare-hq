@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from datetime import datetime, timedelta
 import six.moves.urllib.request, six.moves.urllib.parse, six.moves.urllib.error
 import six.moves.urllib.parse
@@ -49,22 +50,22 @@ import six
 
 
 def log_repeater_timeout_in_datadog(domain):
-    datadog_counter('commcare.repeaters.timeout', tags=[u'domain:{}'.format(domain)])
+    datadog_counter('commcare.repeaters.timeout', tags=['domain:{}'.format(domain)])
 
 
 def log_repeater_error_in_datadog(domain, status_code, repeater_type):
     datadog_counter(REPEATER_ERROR_COUNT, tags=[
-        u'domain:{}'.format(domain),
-        u'status_code:{}'.format(status_code),
-        u'repeater_type:{}'.format(repeater_type),
+        'domain:{}'.format(domain),
+        'status_code:{}'.format(status_code),
+        'repeater_type:{}'.format(repeater_type),
     ])
 
 
 def log_repeater_success_in_datadog(domain, status_code, repeater_type):
     datadog_counter(REPEATER_SUCCESS_COUNT, tags=[
-        u'domain:{}'.format(domain),
-        u'status_code:{}'.format(status_code),
-        u'repeater_type:{}'.format(repeater_type),
+        'domain:{}'.format(domain),
+        'status_code:{}'.format(status_code),
+        'repeater_type:{}'.format(repeater_type),
     ])
 
 
@@ -695,7 +696,7 @@ class RepeatRecord(Document):
 
     @staticmethod
     def _format_response(response):
-        return u'{}: {}.\n{}'.format(
+        return '{}: {}.\n{}'.format(
             response.status_code, response.reason, getattr(response, 'content', None))
 
     def handle_success(self, response):

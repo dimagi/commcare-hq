@@ -8,7 +8,7 @@ from custom.icds_reports.reports.children_initiated_data import get_children_ini
 from django.test import TestCase
 
 
-@override_settings(SERVER_ENVIRONMENT='icds')
+@override_settings(SERVER_ENVIRONMENT='icds-new')
 class TestChildrenInitiated(TestCase):
     maxDiff = None
 

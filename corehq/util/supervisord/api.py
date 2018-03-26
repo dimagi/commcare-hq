@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import six.moves.xmlrpc_client
 from amqplib.client_0_8.method_framing import defaultdict
 from django.conf import settings

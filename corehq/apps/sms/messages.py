@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from corehq.apps.translations.models import StandaloneTranslationDoc
 from corehq.util.translation import localize
 from django.utils.translation import ugettext as _, ugettext_noop

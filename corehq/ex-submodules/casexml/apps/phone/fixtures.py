@@ -1,4 +1,5 @@
 from __future__ import absolute_import  # this package has a module named 'xml'
+from __future__ import unicode_literals
 from abc import ABCMeta, abstractmethod
 
 import six

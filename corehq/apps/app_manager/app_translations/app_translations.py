@@ -288,14 +288,25 @@ def expected_bulk_app_sheet_rows(app):
                         ('case_list_form_label', 'list') +
                         tuple(module.case_list_form.label.get(lang, '') for lang in app.langs)
                 )
-            for list_or_detail, case_properties in [
-                ("list", module.case_details.short.get_columns()),
-                ("detail", module.case_details.long.get_columns())
+
+            for list_or_detail, detail in [
+                ("list", module.case_details.short),
+                ("detail", module.case_details.long)
             ]:
+                # Add a row for each tab heading
+                for index, tab in enumerate(detail.tabs):
+                    rows[module_string].append(
+                        ("Tab {}".format(index), list_or_detail) +
+                        tuple(tab.header.get(lang, "") for lang in app.langs)
+                    )
+
+                # Add a row for each detail field
+                # Complex fields may get multiple rows
+                case_properties = detail.get_columns()
                 for detail in case_properties:
 
                     field_name = detail.field
-                    if detail.format == "enum":
+                    if re.search(r'\benum\b', detail.format):   # enum, conditional-enum, enum-image
                         field_name += " (ID Mapping Text)"
                     elif detail.format == "graph":
                         field_name += " (graph)"
@@ -307,7 +318,7 @@ def expected_bulk_app_sheet_rows(app):
                     )
 
                     # Add a row for any mapping pairs
-                    if detail.format == "enum":
+                    if re.search(r'\benum\b', detail.format):
                         for mapping in detail.enum:
                             rows[module_string].append(
                                 (
@@ -739,6 +750,7 @@ def _update_case_list_translations(sheet, rows, app):
 
     condensed_rows = []
     case_list_form_label = None
+    detail_tab_headers = [None for i in module.case_details.long.tabs]
     index_of_last_enum_in_condensed = -1
     index_of_last_graph_in_condensed = -1
     for i, row in enumerate(rows):
@@ -782,6 +794,22 @@ def _update_case_list_translations(sheet, rows, app):
         # It's a case list registration form label. Don't add it to condensed rows
         elif row['case_property'] == 'case_list_form_label':
             case_list_form_label = row
+
+        # If it's a tab header, don't add it to condensed rows
+        elif re.search(r'^Tab \d+$', row['case_property']):
+            index = int(row['case_property'].split(' ')[-1])
+            if index < len(detail_tab_headers):
+                detail_tab_headers[index] = row
+            else:
+                msgs.append((
+                    messages.error,
+                    "Expected {0} case detail tabs in sheet {1} but found row for Tab {2}. "
+                    "No changes were made for sheet {1}.".format(
+                        len(detail_tab_headers),
+                        sheet.worksheet.title,
+                        index
+                    )
+                ))
 
         # It's a normal case property
         else:
@@ -875,6 +903,9 @@ def _update_case_list_translations(sheet, rows, app):
                 detail['graph_configuration']['series'][series_index]['locale_specific_config'][config_key],
                 False
             )
+    for index, tab in enumerate(detail_tab_headers):
+        if tab:
+            _update_translation(tab, module.case_details.long.tabs[index].header)
     if case_list_form_label:
         _update_translation(case_list_form_label, module.case_list_form.label)
 

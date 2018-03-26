@@ -55,28 +55,8 @@
         "is_primary_key": false,
         "column_id": "location_id",
         "expression": {
-          "value_expression": {
-            "datatype": null,
-            "type": "property_path",
-            "property_path": [
-              "user_data",
-              "commcare_location_id"
-            ]
-          },
-          "type": "related_doc",
-          "related_doc_type": "CommCareUser",
-          "doc_id_expression": {
-            "type": "root_doc",
-            "expression": {
-              "datatype": null,
-              "type": "property_path",
-              "property_path": [
-                "form",
-                "meta",
-                "userID"
-              ]
-            }
-          }
+          "type": "named",
+          "name": "user_location_id"
         }
       },
       {
@@ -84,28 +64,8 @@
         "datatype": "string",
         "expression": {
           "location_id_expression": {
-            "value_expression": {
-              "datatype": null,
-              "type": "property_path",
-              "property_path": [
-                "user_data",
-                "commcare_location_id"
-              ]
-            },
-            "type": "related_doc",
-            "related_doc_type": "CommCareUser",
-            "doc_id_expression": {
-              "expression": {
-                "datatype": null,
-                "type": "property_path",
-                "property_path": [
-                  "form",
-                  "meta",
-                  "userID"
-                ]
-              },
-              "type": "root_doc"
-            }
+            "type": "named",
+            "name": "user_location_id"
           },
           "type": "location_parent_id"
         },
@@ -139,7 +99,22 @@
         "column_id": "home_visit_count"
       }
     ],
-    "named_expressions": {},
+    "named_expressions": {
+      "user_location_id": {
+        "type": "icds_user_location",
+        "user_id_expression": {
+          "type": "root_doc",
+          "expression": {
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "meta",
+              "userID"
+            ]
+          }
+        }
+      }
+    },
     "named_filters": {},
     "engine_id": "icds-ucr",
     "disable_destructive_rebuild": true

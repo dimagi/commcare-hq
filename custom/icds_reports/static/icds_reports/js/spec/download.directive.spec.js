@@ -97,7 +97,7 @@ describe('Download Directive', function () {
 
         it('tests initialize years', function () {
             var result = controller.years;
-            var expected = [{"name": 2014, "id": 2014}, {"name": 2015, "id": 2015}, {"name": 2016, "id": 2016}];
+            var expected = [];
             assert.deepEqual(expected, result);
         });
 
@@ -239,7 +239,7 @@ describe('Download Directive', function () {
             clock.restore();
         }));
 
-        it('tests not visible option to download ICDS-CAS monthly register report', function () {
+        it('tests that all users have access to ISSNIP monthly register', function () {
             var length = controller.indicators.length;
             assert.equal(7, length);
         });
@@ -287,9 +287,9 @@ describe('Download Directive', function () {
             clock.restore();
         }));
 
-        it('tests not visible option to download ICDS-CAS monthly register report', function () {
+        it('tests that all users have access to ISSNIP monthly register', function () {
             var length = controller.indicators.length;
-            assert.equal(6, length);
+            assert.equal(7, length);
         });
     });
 

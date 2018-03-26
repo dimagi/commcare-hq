@@ -1,5 +1,8 @@
 from __future__ import absolute_import
 from __future__ import division
+from __future__ import unicode_literals
+
+import itertools
 import six.moves.html_parser
 import json
 import socket
@@ -104,6 +107,7 @@ from .models import HqDeploy
 from .reporting.reports import get_project_spaces, get_stats_data, HISTO_TYPE_TO_FUNC
 from .utils import get_celery_stats
 import six
+from six.moves import filter
 
 
 @require_superuser
@@ -511,22 +515,30 @@ class AdminRestoreView(TemplateView):
         response, timing_context = self._get_restore_response()
         timing_context = timing_context or TimingContext(self.user.username)
         if isinstance(response, StreamingHttpResponse):
-            string_payload = ''.join(response.streaming_content)
+            string_payload = b''.join(response.streaming_content)
             xml_payload = etree.fromstring(string_payload)
             restore_id_element = xml_payload.find('{{{0}}}Sync/{{{0}}}restore_id'.format(SYNC_XMLNS))
             cases = xml_payload.findall('{http://commcarehq.org/case/transaction/v2}case')
             num_cases = len(cases)
-            case_type_counts = dict(Counter(
-                case.find(
-                    '{http://commcarehq.org/case/transaction/v2}create/'
-                    '{http://commcarehq.org/case/transaction/v2}case_type'
-                ).text for case in cases
-            ))
+
+            create_case_type = filter(None, [case.find(
+                '{http://commcarehq.org/case/transaction/v2}create/'
+                '{http://commcarehq.org/case/transaction/v2}case_type'
+            ) for case in cases])
+            update_case_type = filter(None, [case.find(
+                '{http://commcarehq.org/case/transaction/v2}update/'
+                '{http://commcarehq.org/case/transaction/v2}case_type'
+            ) for case in cases])
+            case_type_counts = dict(Counter([
+                case.type for case in itertools.chain(create_case_type, update_case_type)
+            ]))
+
             locations = xml_payload.findall(
                 "{{{0}}}fixture[@id='locations']/{{{0}}}locations/{{{0}}}location".format(RESPONSE_XMLNS)
             )
             num_locations = len(locations)
             location_type_counts = dict(Counter(location.attrib['type'] for location in locations))
+
             reports = xml_payload.findall(
                 "{{{0}}}fixture[@id='commcare:reports']/{{{0}}}reports/".format(RESPONSE_XMLNS)
             )
@@ -536,6 +548,7 @@ class AdminRestoreView(TemplateView):
                 for report in reports
                 if 'report_id' in report.attrib
             }
+
             num_ledger_entries = len(xml_payload.findall(
                 "{{{0}}}balance/{{{0}}}entry".format(COMMTRACK_REPORT_XMLNS)
             ))
@@ -770,7 +783,7 @@ def web_user_lookup(request):
     }
     if web_user is None:
         messages.error(
-            request, u"Sorry, no user found with email {}. Did you enter it correctly?".format(web_user_email)
+            request, "Sorry, no user found with email {}. Did you enter it correctly?".format(web_user_email)
         )
     else:
         from django_otp import user_has_device
@@ -1158,7 +1171,7 @@ def _gir_csv_response(month, year):
         domain_months[item.domain_name].append(item)
     field_names = GIR_FIELDS
     response = HttpResponse(content_type='text/csv')
-    response['Content-Disposition'] = u'attachment; filename=gir.csv'
+    response['Content-Disposition'] = 'attachment; filename=gir.csv'
     writer = UnicodeWriter(response)
     writer.writerow(list(field_names))
     for months in domain_months.values():

@@ -141,6 +141,7 @@
         $scope.showRelevance = false;
         $scope.showConstraints = false;
         $scope.showComments = false;
+        $scope.showDefaultValues = false;
         $scope.appLangs = summaryConfig.appLangs;
         $scope.getFormUrl = utils.getFormUrl;
         $scope.getModuleUrl = utils.getModuleUrl;

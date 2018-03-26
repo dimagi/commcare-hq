@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import architect
 from django.db import models
 
@@ -31,7 +32,7 @@ class DeviceReportEntry(models.Model):
         ]
 
     def __repr__(self):
-        return u"DeviceReportEntry(domain='{}', msg='{}')".format(self.domain, self.msg)
+        return "DeviceReportEntry(domain='{}', msg='{}')".format(self.domain, self.msg)
 
 
 class UserErrorEntry(models.Model):
@@ -62,7 +63,7 @@ class UserErrorEntry(models.Model):
         ]
 
     def __repr__(self):
-        return u"UserErrorEntry(domain='{}', msg='{}')".format(self.domain, self.msg)
+        return "UserErrorEntry(domain='{}', msg='{}')".format(self.domain, self.msg)
 
 
 class UserEntry(models.Model):
@@ -78,7 +79,7 @@ class UserEntry(models.Model):
         unique_together = [('xform_id', 'i')]
 
     def __repr__(self):
-        return u"UserEntry(username='{}')".format(self.username)
+        return "UserEntry(username='{}')".format(self.username)
 
 
 class ForceCloseEntry(models.Model):
@@ -108,4 +109,4 @@ class ForceCloseEntry(models.Model):
         ]
 
     def __repr__(self):
-        return u"ForceCloseEntry(domain='{}', msg='{}')".format(self.domain, self.msg)
+        return "ForceCloseEntry(domain='{}', msg='{}')".format(self.domain, self.msg)

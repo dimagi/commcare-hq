@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from jsonfield import JSONField
 from rest_framework import serializers
 

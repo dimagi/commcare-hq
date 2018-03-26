@@ -9,9 +9,22 @@ from dateutil.relativedelta import relativedelta
 
 def person_case_is_under_6_years_old(case, now):
     """
-    NOTE: Use this custom criteria with caution from SMS alerts, see below
-    for explanation.
+    NOTE: Use this custom criteria with caution for SMS alerts.
+    See `person_case_is_under_n_years_old` for explanation.
+    """
+    return person_case_is_under_n_years_old(case, now, 6)
 
+
+def person_case_is_under_19_years_old(case, now):
+    """
+    NOTE: Use this custom criteria with caution for SMS alerts.
+    See `person_case_is_under_n_years_old` for explanation.
+    """
+    return person_case_is_under_n_years_old(case, now, 19)
+
+
+def person_case_is_under_n_years_old(case, now, n_years):
+    """
     This custom criteria is fine to use with auto case update rules because
     those get run every day so the rule will be responsive to changes in today's date.
     For an auto case update rule, you actually wouldn't even need this custom
@@ -27,9 +40,9 @@ def person_case_is_under_6_years_old(case, now):
 
     For this criteria specifically, that means that you shouldn't use it to
     spawn an alert that repeats for a long period of time because the person
-    might not be under 6 years of age for the entire duration of the schedule,
+    might not be under N years of age for the entire duration of the schedule,
     or the schedule would stop erratically at the first case update that happens
-    after the person's 6th birthday.
+    after the person's Nth birthday.
 
     But if you're just using this specific criteria to spawn a one-time alert
     that sends only when it first matches the case, it can be ok. And that only
@@ -42,10 +55,27 @@ def person_case_is_under_6_years_old(case, now):
 
     try:
         dob = get_date(case.get_case_property('dob'))
-    except:
+    except Exception:
         return False
 
-    return todays_date(now) < (dob + relativedelta(years=6))
+    return todays_date(now) < (dob + relativedelta(years=n_years))
+
+
+def ccs_record_case_has_future_edd(case, now):
+    """
+    NOTE: This criteria references today's date.
+    Use this custom criteria with caution for SMS alerts.
+    See `person_case_is_under_n_years_old` for explanation.
+    """
+    if case.type != 'ccs_record':
+        return False
+
+    try:
+        edd = get_date(case.get_case_property('edd'))
+    except Exception:
+        return False
+
+    return todays_date(now) < edd
 
 
 def check_user_location_type(usercase, location_type_code):

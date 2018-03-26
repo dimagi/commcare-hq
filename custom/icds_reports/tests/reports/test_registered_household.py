@@ -8,7 +8,7 @@ from custom.icds_reports.reports.registered_household import get_registered_hous
 from django.test import TestCase
 
 
-@override_settings(SERVER_ENVIRONMENT='icds')
+@override_settings(SERVER_ENVIRONMENT='icds-new')
 class TestRegisteredHousehold(TestCase):
 
     def test_map_data(self):

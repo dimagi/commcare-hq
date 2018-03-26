@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.conf import settings
 from django.contrib.auth.forms import SetPasswordForm
 from crispy_forms.bootstrap import StrictButton
@@ -121,7 +122,7 @@ class LanguageField(forms.CharField):
         self.max_length = 3
 
     default_error_messages = {
-        'invalid': ugettext_lazy(u'Please enter a valid two or three digit language code.'),
+        'invalid': ugettext_lazy('Please enter a valid two or three digit language code.'),
     }
     default_validators = [wrapped_language_validation]
 
@@ -343,8 +344,8 @@ class UpdateCommCareUserInfoForm(BaseUserInfoForm, UpdateUserRoleForm):
     loadtest_factor = forms.IntegerField(
         required=False, min_value=1, max_value=50000,
         help_text=ugettext_lazy(
-            u"Multiply this user's case load by a number for load testing on phones. "
-            u"Leave blank for normal users."
+            "Multiply this user's case load by a number for load testing on phones. "
+            "Leave blank for normal users."
         ),
         widget=forms.HiddenInput())
 
@@ -496,7 +497,7 @@ class CommCareAccountForm(forms.Form):
 
         return self.cleaned_data
 
-validate_username = EmailValidator(message=ugettext_lazy(u'Username contains invalid characters.'))
+validate_username = EmailValidator(message=ugettext_lazy('Username contains invalid characters.'))
 
 
 _username_help = """
@@ -558,7 +559,7 @@ class NewMobileWorkerForm(forms.Form):
 
     def __init__(self, project, request_user, *args, **kwargs):
         super(NewMobileWorkerForm, self).__init__(*args, **kwargs)
-        email_string = u"@{}.commcarehq.org".format(project.name)
+        email_string = "@{}.commcarehq.org".format(project.name)
         max_chars_username = 80 - len(email_string)
         self.project = project
         self.domain = self.project.name

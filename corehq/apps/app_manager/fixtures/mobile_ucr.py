@@ -25,7 +25,7 @@ from corehq.util.xml_utils import serialize
 from corehq.apps.userreports.const import UCR_ES_BACKEND, UCR_LABORATORY_BACKEND, UCR_SUPPORT_BOTH_BACKENDS
 from corehq.apps.userreports.exceptions import UserReportsError, ReportConfigurationNotFoundError
 from corehq.apps.userreports.models import get_report_config
-from corehq.apps.userreports.reports.factory import ReportFactory
+from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
 from corehq.apps.userreports.tasks import compare_ucr_dbs
 from corehq.apps.app_manager.dbaccessors import (
     get_apps_in_domain, get_brief_apps_in_domain, get_apps_by_id, get_brief_app
@@ -97,7 +97,7 @@ class BaseReportFixturesProvider(FixtureProvider):
     @staticmethod
     def _get_report_and_data_source(report_id, domain):
         report = get_report_config(report_id, domain)[0]
-        data_source = ReportFactory.from_spec(report, include_prefilters=True)
+        data_source = ConfigurableReportDataSource.from_spec(report, include_prefilters=True)
         if report.soft_rollout > 0 and data_source.config.backend_id == UCR_LABORATORY_BACKEND:
             if random.random() < report.soft_rollout:
                 data_source.override_backend_id(UCR_ES_BACKEND)
@@ -106,10 +106,10 @@ class BaseReportFixturesProvider(FixtureProvider):
     @staticmethod
     def _get_filters_elem(defer_filters, filter_options_by_field, couch_user):
         filters_elem = E.filters()
-        for filter_slug, ui_filter in defer_filters.items():
+        for ui_filter in defer_filters:
             # @field is maybe a bad name for this attribute,
-            # since it's actually the filter slug
-            filter_elem = E.filter(field=filter_slug)
+            # since it's actually the filter name
+            filter_elem = E.filter(field=ui_filter.name)
             option_values = filter_options_by_field[ui_filter.field]
             choices = ui_filter.choice_provider.get_sorted_choices_for_values(option_values, couch_user)
             for choice in choices:
@@ -189,18 +189,18 @@ class ReportFixturesProvider(BaseReportFixturesProvider):
             filter_slug: filter_value for filter_slug, filter_value in all_filter_values.items()
             if filter_value is not None
         }
-        defer_filters = {
-            filter_slug: report.get_ui_filter(filter_slug)
+        defer_filters = [
+            report.get_ui_filter(filter_slug)
             for filter_slug, filter_value in all_filter_values.items()
             if filter_value is None and is_valid_mobile_select_filter_type(report.get_ui_filter(filter_slug))
-        }
+        ]
         data_source.set_filter_values(filter_values)
-        data_source.defer_filters(defer_filters)
+        data_source.set_defer_fields([f.field for f in defer_filters])
         filter_options_by_field = defaultdict(set)
 
         rows_elem = ReportFixturesProvider._get_v1_report_elem(
             data_source,
-            {ui_filter.field for ui_filter in defer_filters.values()},
+            {ui_filter.field for ui_filter in defer_filters},
             filter_options_by_field
         )
         filters_elem = BaseReportFixturesProvider._get_filters_elem(
@@ -362,18 +362,18 @@ class ReportFixturesProviderV2(BaseReportFixturesProvider):
             filter_slug: filter_value for filter_slug, filter_value in all_filter_values.items()
             if filter_value is not None
         }
-        defer_filters = {
-            filter_slug: report.get_ui_filter(filter_slug)
+        defer_filters = [
+            report.get_ui_filter(filter_slug)
             for filter_slug, filter_value in all_filter_values.items()
             if filter_value is None and is_valid_mobile_select_filter_type(report.get_ui_filter(filter_slug))
-        }
+        ]
         data_source.set_filter_values(filter_values)
-        data_source.defer_filters(defer_filters)
+        data_source.set_defer_fields([f.field for f in defer_filters])
         filter_options_by_field = defaultdict(set)
 
         rows_elem = ReportFixturesProviderV2._get_v2_report_elem(
             data_source,
-            {ui_filter.field for ui_filter in defer_filters.values()},
+            {f.field for f in defer_filters},
             filter_options_by_field
         )
         filters_elem = BaseReportFixturesProvider._get_filters_elem(

@@ -39,7 +39,7 @@ from corehq.apps.userreports.models import (
     id_is_static,
     get_report_config,
 )
-from corehq.apps.userreports.reports.factory import ReportFactory
+from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
 from corehq.apps.userreports.util import get_indicator_adapter, get_async_indicator_modify_lock_key
 from corehq.elastic import ESError
 from corehq.util.context_managers import notify_someone
@@ -108,6 +108,7 @@ def rebuild_indicators_in_place(indicator_config_id, initiated_by=None):
         if not id_is_static(indicator_config_id):
             config.meta.build.initiated_in_place = datetime.utcnow()
             config.meta.build.finished_in_place = False
+            config.meta.build.rebuilt_asynchronously = False
             config.save()
 
         adapter.build_table()
@@ -184,7 +185,7 @@ def compare_ucr_dbs(domain, report_config_id, filter_values, sort_column=None, s
     from corehq.apps.userreports.laboratory.experiment import UCRExperiment
 
     def _run_report(backend_to_use):
-        data_source = ReportFactory.from_spec(spec, include_prefilters=True, backend=backend_to_use)
+        data_source = ConfigurableReportDataSource.from_spec(spec, include_prefilters=True, backend=backend_to_use)
         data_source.set_filter_values(filter_values)
         if sort_column:
             data_source.set_order_by(

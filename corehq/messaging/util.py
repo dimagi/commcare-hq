@@ -1,4 +1,5 @@
 from __future__ import absolute_import, division
+from __future__ import unicode_literals
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 
 

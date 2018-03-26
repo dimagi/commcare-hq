@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from collections import namedtuple, OrderedDict
+import datetime
 from itertools import chain
 import json
 import uuid
@@ -619,10 +620,11 @@ class DataSourceBuilder(object):
     @property
     @memoized
     def data_source_name(self):
+        today = datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
         if self.source_type == 'form':
-            return "{} (v{})".format(self.source_form.default_name(), self.app.version)
+            return "{} (v{}) {}".format(self.source_form.default_name(), self.app.version, today)
         if self.source_type == 'case':
-            return "{} (v{})".format(self.source_id, self.app.version)
+            return "{} (v{}) {}".format(self.source_id, self.app.version, today)
 
     def _ds_config_kwargs(self, indicators, is_multiselect_chart_report=False, multiselect_field=None):
         if is_multiselect_chart_report:
@@ -1056,7 +1058,7 @@ class ConfigureNewReportBase(forms.Form):
 
     def _get_view_model(self, filter):
         """
-        Given a ReportFilter, return a FilterViewModel representing
+        Given a filter_spec, return a FilterViewModel representing
         the knockout view model representing this filter in the report builder.
 
         """

@@ -10,7 +10,6 @@ from dimagi.utils.couch import CriticalSection
 
 from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
 from corehq.apps.data_dictionary.util import get_all_case_properties
-from corehq.apps.domain.utils import get_domain_module_map
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
 from corehq.apps.locations.permissions import conditionally_location_safe, \
@@ -33,7 +32,6 @@ from six.moves.urllib.error import URLError
 
 from django.conf import settings
 from django.contrib import messages
-from django.contrib.auth.decorators import permission_required
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.files.base import ContentFile
 from django.http import (
@@ -189,6 +187,7 @@ from corehq.apps.hqwebapp.decorators import (
 )
 import six
 from six.moves import range
+from no_exceptions.exceptions import Http403
 
 
 # Number of columns in case property history popup
@@ -228,7 +227,7 @@ def can_view_attachments(request):
 @login_and_domain_required
 @location_safe
 def default(request, domain):
-    if domain in WORLD_VISION_DOMAINS and get_domain_module_map().get(domain):
+    if domain in WORLD_VISION_DOMAINS and settings.DOMAIN_MODULE_MAP.get(domain):
         from custom.world_vision.reports.mixed_report import MixedTTCReport
         return HttpResponseRedirect(MixedTTCReport.get_url(domain))
     return HttpResponseRedirect(reverse(MySavedReportsView.urlname, args=[domain]))
@@ -307,15 +306,7 @@ class MySavedReportsView(BaseProjectReportSectionView):
         scheduled_reports = sorted(scheduled_reports,
                                    key=lambda s: s.configs[0].name)
         for report in scheduled_reports:
-            time_difference = get_timezone_difference(self.domain)
-            (report.hour, day_change) = recalculate_hour(
-                report.hour,
-                int(time_difference[:3]),
-                int(time_difference[3:])
-            )
-            report.minute = 0
-            if day_change:
-                report.day = calculate_day(report.interval, report.day, day_change)
+            self._adjust_report_day_and_time(report)
         return scheduled_reports
 
     @property
@@ -350,11 +341,24 @@ class MySavedReportsView(BaseProjectReportSectionView):
         for scheduled_report in all_scheduled_reports:
             if not _is_valid(scheduled_report) or user_email == scheduled_report.owner_email:
                 continue
+            self._adjust_report_day_and_time(scheduled_report)
             if is_admin:
                 ret.append(scheduled_report)
             elif user_email in scheduled_report.all_recipient_emails:
                 ret.append(scheduled_report)
         return ret
+
+    def _adjust_report_day_and_time(self, report):
+        time_difference = get_timezone_difference(self.domain)
+        (report.hour, day_change) = recalculate_hour(
+            report.hour,
+            int(time_difference[:3]),
+            int(time_difference[3:])
+        )
+        report.minute = 0
+        if day_change:
+            report.day = calculate_day(report.interval, report.day, day_change)
+        return report
 
     @property
     def page_context(self):
@@ -976,7 +980,7 @@ class ScheduledReportsView(BaseProjectReportSectionView):
         owner = report_instance.owner
         owner_domain = report_instance.domain
         current_user = self.request.couch_user
-        return current_user == owner or current_user.is_domain_admin(owner_domain)
+        return current_user.user_id == owner.user_id or current_user.is_domain_admin(owner_domain)
 
     @property
     @memoized
@@ -994,7 +998,7 @@ class ScheduledReportsView(BaseProjectReportSectionView):
                 instance.day = calculate_day(instance.interval, instance.day, day_change)
 
             if not self.can_edit_report(instance):
-                return HttpResponseBadRequest()
+                raise Http403()
         else:
             instance = ReportNotification(
                 owner_id=self.request.couch_user._id,
@@ -1226,9 +1230,9 @@ def send_test_scheduled_report(request, domain, scheduled_report_id):
     except Exception as e:
         import logging
         logging.exception(e)
-        messages.error(request, "An error occured, message unable to send")
+        messages.error(request, _("An error occurred, message unable to send"))
     else:
-        messages.success(request, "Test message sent to %s" % user.get_email())
+        messages.success(request, _("Test message sent to the report's recipients."))
 
     return HttpResponseRedirect(reverse("reports_home", args=(domain,)))
 
