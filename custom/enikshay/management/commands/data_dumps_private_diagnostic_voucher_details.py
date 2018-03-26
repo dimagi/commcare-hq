@@ -4,7 +4,8 @@ from __future__ import (
     unicode_literals,
 )
 
-
+from corehq.apps.locations.models import SQLLocation
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from custom.enikshay.case_utils import (
     CASE_TYPE_TEST,
     CASE_TYPE_EPISODE,
@@ -37,8 +38,39 @@ class Command(BaseDataDump):
             person_case = self.get_person(case)
             return person_case.case_id
         elif column_name == "eNikshay episode UUID":
-            episode_case = self.get_episode(case)
-            return episode_case.case_id
+            return ','.join([case.case_id
+                             for case in self.get_all_episode_cases(case)])
+        elif column_name == "Organisation":
+            private_sector_organization_id = self.get_person(case).get_case_property('private_sector_organization_id')
+            if private_sector_organization_id:
+                private_sector_organization = SQLLocation.active_objects.get_or_None(
+                    location_id=private_sector_organization_id)
+                if private_sector_organization:
+                    return private_sector_organization.name
+                else:
+                    raise Exception("Could not find location with id %s" % private_sector_organization_id)
+            else:
+                raise Exception("Private sector org id not set for test %s" % case.case_id)
+        elif column_name == "Nikshay ID":
+            return ','.join([case.get_case_property('nikshay_id')
+                             for case in self.get_all_episode_cases(case)
+                             if case.get_case_property('nikshay_id')
+                             ])
+        elif column_name == "Rx Initiation Date":
+            return ','.join([case.get_case_property('treatment_initiation_date')
+                             for case in self.get_all_episode_cases(case)
+                             if case.get_case_property('treatment_initiation_date')
+                             ])
+        elif column_name == "Date of Episode creation":
+            return ','.join([case.get_case_property('opened_date')
+                             for case in self.get_all_episode_cases(case)
+                             if case.get_case_property('opened_date')
+                             ])
+        elif column_name == "Rx Initiation Status":
+            return ','.join([case.get_case_property('treatment_initiation_status')
+                             for case in self.get_all_episode_cases(case)
+                             if case.get_case_property('treatment_initiation_status')
+                             ])
         raise Exception("unknown custom column %s" % column_name)
 
     def get_case_ids_query(self, case_type):
@@ -106,3 +138,14 @@ class Command(BaseDataDump):
         elif case_reference == 'episode':
             return self.get_episode(voucher_case).get_case_property(calculation)
         raise Exception("unknown case reference %s" % case_reference)
+
+    def get_all_episode_cases(self, test_case):
+        if 'all_episode_cases' not in self.context:
+            occurrence_case = self.get_occurrence(test_case)
+            self.context['all_episode_cases'] = [
+                case for case in CaseAccessors(DOMAIN).get_reverse_indexed_cases(
+                    [occurrence_case.case_id], case_types=[CASE_TYPE_EPISODE])
+            ]
+        if not self.context['all_episode_cases']:
+            raise Exception("No episodes found for test %s" % test_case.case_id)
+        return self.context['all_episode_cases']
