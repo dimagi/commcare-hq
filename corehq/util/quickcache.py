@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import warnings
+import hashlib
 from quickcache.django_quickcache import get_django_quickcache
 from celery._state import get_current_task
 from corehq.util.global_request import get_request
@@ -18,9 +19,20 @@ def get_session_key():
     """
     returns a 7 character string that varies with the current "session" (task or request)
     """
-    session = get_current_task() or get_request()
-    if session:
-        return hex(id(session))[2:9]
+    current_task = get_current_task()
+    if current_task:
+        # at least in tests, current_task may have the same id between different tasks!
+        session_id = current_task.request.id
+    else:
+        request = get_request()
+        if request:
+            session_id = str(id(get_request()))
+        else:
+            session_id = None
+
+    if session_id:
+        # hash it so that similar numbers end up very different (esp. because we're truncating)
+        return hashlib.md5(session_id).hexdigest()[:7]
     else:
         # arbitrary 7-letter that is clearly not from a session
         return 'xxxxxxx'
