@@ -32,7 +32,7 @@ class ImporterExcelFileEncrypted(ImporterExcelError):
     """Raised when a file cannot be open because it is encrypted (password-protected)"""
 
 
-class InvalidCustomFieldNameException(Exception):
+class InvalidCustomFieldNameException(ImporterError):
     """Raised when a custom field name is reserved (e.g. "type")"""
     pass
 
