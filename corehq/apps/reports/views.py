@@ -315,9 +315,6 @@ class MySavedReportsView(BaseProjectReportSectionView):
 
     @property
     def others_scheduled_reports(self):
-        if not toggles.SHOW_ALL_SCHEDULED_REPORT_EMAILS.enabled(self.domain):
-            return []
-
         def _is_valid(rn):
             # the _id check is for weird bugs we've seen in the wild that look like
             # oddities in couch.
