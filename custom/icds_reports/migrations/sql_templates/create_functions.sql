@@ -265,6 +265,9 @@ BEGIN
 
     EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx2') || ' ON ' || quote_ident(_tablename) || '(case_id)';
 
+    EXECUTE 'CREATE INDEX ON ' || quote_ident(_tablename) || ' (cf_eligible) WHERE cf_eligible = 1';
+    EXECUTE 'CREATE INDEX ON ' || quote_ident(_tablename) || ' (cf_initiation_eligible) WHERE cf_initiation_eligible = 1';
+
     EXECUTE 'UPDATE ' || quote_ident(_tablename) || ' chm_monthly SET ' ||
       'cf_in_month = COALESCE(agg.comp_feeding_latest, 0), ' ||
       'cf_diet_diversity = COALESCE(agg.diet_diversity, 0), ' ||
