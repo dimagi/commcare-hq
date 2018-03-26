@@ -46,23 +46,34 @@
         "create_index": false,
         "display_name": "Region ID",
         "datatype": "string",
-        "type": "expression",
-        "transform": {},
-        "is_primary_key": false,
-        "is_nullable": true,
         "expression": {
-          "location_id_expression": {
-            "type": "root_doc",
-            "expression": {
+          "value_expression": {
+            "type": "property_name",
+            "property_name": "_id"
+          },
+          "type": "nested",
+          "argument_expression": {
+            "type": "ancestor_location",
+            "location_id": {
+              "expression": {
               "datatype": null,
               "type": "property_path",
               "property_path": [
                 "district_id"
               ]
+            },
+              "type": "root_doc"
+            },
+            "location_type": {
+              "type": "constant",
+              "constant": "Region"
             }
-          },
-          "type": "location_parent_id"
+          }
         },
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "type": "expression",
         "column_id": "region_id"
       },
       {
