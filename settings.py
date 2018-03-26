@@ -1539,8 +1539,8 @@ MESSAGE_TAGS = {
     messages.INFO: 'alert-info',
     messages.DEBUG: '',
     messages.SUCCESS: 'alert-success',
-    messages.WARNING: 'alert-error alert-warning',
-    messages.ERROR: 'alert-error alert-danger',
+    messages.WARNING: 'alert-warning',
+    messages.ERROR: 'alert-danger',
 }
 
 COMMCARE_USER_TERM = "Mobile Worker"
