@@ -20,25 +20,23 @@ class Command(BaseCommand):
         form_ids = this_form_accessor.get_form_ids_for_user(user_id)
         new_username = "Deleted username success - UPDATED"
         for form_data in this_form_accessor.iter_forms(form_ids):
-            self.replace_username_in_xml_for_sql(form_data, new_username)
-            self.replace_username_in_metadata_for_couch(form_data, new_username)
+            # Get the xml attachment from the form data
+            form_attachment_xml = form_data.get_attachment("form.xml")
+
+            # Convert the xml string to dict
+            form_attachment_dict = xmltodict.parse(form_attachment_xml)
+
+            # Replace the old username with the new username
+            form_attachment_dict["data"]["n0:meta"]["n0:username"] = new_username
+
+            # Convert the dict back to xml
+            form_attachment_xml_new = xmltodict.unparse(form_attachment_dict)
+            self.replace_username_in_xml_for_sql(form_data, form_attachment_xml_new, new_username)
+            self.replace_username_in_metadata_for_couch(form_data, form_attachment_xml_new, new_username)
 
     @staticmethod
-    def replace_username_in_xml_for_sql(form_data, new_username):
-        # Get the xml attachment from the form data
-        form_attachment_xml = form_data.get_attachment("form.xml")
-
-        # Convert the xml string to dict
-        form_attachment_dict = xmltodict.parse(form_attachment_xml)
-
-        # Replace the old username with the new username
-        form_attachment_dict["data"]["n0:meta"]["n0:username"] = new_username
-
-        # Convert the dict back to xml
-        form_attachment_xml_new = xmltodict.unparse(form_attachment_dict)
-
+    def replace_username_in_xml_for_sql(form_data, form_attachment_xml_new):
         attachment_metadata = form_data.get_attachment_meta("form.xml")
-
         # Write the new xml to the database
         XFormAttachmentSQL.write_content(attachment_metadata, form_attachment_xml_new)
         attachment_metadata.save()
@@ -48,35 +46,11 @@ class Command(BaseCommand):
         #                               operation=XFormOperationSQL.EDIT)
 
     @staticmethod
-    def replace_username_in_metadata_for_couch(form_data, new_username):
-        # Get the xml attachment from the form data
-        form_attachment_xml = form_data.get_attachment("form.xml")
-
-        # Convert the xml string to dict
-        form_attachment_dict = xmltodict.parse(form_attachment_xml)
-
-        # Replace the old username with the new username
-        form_attachment_dict["data"]["n0:meta"]["n0:username"] = new_username
-
-        # Convert the dict back to xml
-        form_attachment_xml_new = xmltodict.unparse(form_attachment_dict)
-
+    def replace_username_in_metadata_for_couch(form_data, form_attachment_xml_new):
         form_data.put_attachment(form_attachment_xml_new, name="form.xml", content_type='text/xml')
 
         form_data.save()
 
-
-        # form_data.metadata.username = new_username
-        # form_data.save()
-
-        # !#!#!#!#!#!#!#!#!#!#!#!#!#!#!#!#!#!#!#!#!#!#!#!#!#!#!#!#!#!#!#!#!#!#!#!#!#!#!#!
-
-        # if type(instance) == XFormInstance:  # TODO: this test sucks, fix & also move the imports
-        #     xml = etree.fromstring(instance.fetch_attachment(ATTACHMENT_NAME))
-        #     for question, response in updates.iteritems():
-        #         instance.form_data[question] = response  # TODO: error handling, here and throughout this function
-        #         xml.find("{{{}}}{}".format(instance.xmlns, question)).text = response
-        #     instance.put_attachment(etree.tostring(xml), name=ATTACHMENT_NAME, content_type='text/xml')
         # # # TODO: Add to the operation history that this happened
         # operation = XFormOperation(user=user_id, date=datetime.utcnow(), operation='edit')
 
