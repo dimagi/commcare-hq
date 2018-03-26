@@ -64,14 +64,6 @@ class OpenmrsRepeater(CaseRepeater):
         from corehq.motech.repeaters.views.repeaters import AddOpenmrsRepeaterView
         return reverse(AddOpenmrsRepeaterView.urlname, args=[domain])
 
-    def get_location(self):
-        if self.location_id:
-            try:
-                return SQLLocation.objects.get(location_id=self.location_id)
-            except SQLLocation.DoesNotExist:
-                pass
-        return None
-
     def allowed_to_forward(self, case):
         """
         Forward if superclass rules say it's OK, and if the last case
