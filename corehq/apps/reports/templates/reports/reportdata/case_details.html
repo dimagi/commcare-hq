@@ -209,9 +209,15 @@
     </div> {# end report-container #}
 
     {% if show_properties_edit %}
-    <!-- class='hide' keeps modal from showing before knockout initializes & overwrites the class -->
-    <div id="edit-dynamic-properties" class="hide" tabindex="-1" data-bind="attr: { 'class': 'modal fade ' + $root.modalClass() }, event: { 'hidden.bs.modal': init }">
-        <div data-bind="attr: { 'class': 'modal-dialog ' + $root.modalDialogClass() }">
+    <!-- class='hide' keeps modal from showing until knockout initializes & removes the class -->
+    <div id="edit-dynamic-properties" class="hide modal fade" tabindex="-1" data-bind="
+        css: {
+            'full-screen-modal': isLargeModal(),
+            'hide': false,
+        },
+        event: { 'hidden.bs.modal': init }"
+    >
+        <div class="modal-dialog" data-bind="css: { 'modal-lg': isMediumModal() }">
             <div class="modal-content">
                 <div class="modal-header with-controls">
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
