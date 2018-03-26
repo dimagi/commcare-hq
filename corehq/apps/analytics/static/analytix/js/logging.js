@@ -32,24 +32,24 @@ hqDefine('analytix/js/logging', [
         } else if (_.isArguments(message.value)) {
             _title = "Arguments (" + message.value.length + ")    " + _.map(Array.from(message.value), JSON.stringify).join('    ');
             _value = Array.from(message.value);
-            _group = new Group(_title, new Message(_value, message.level));
+            _group = Group(_title, Message(_value, message.level));
             _group.isCollapsed = true;
             _group.print();
         } else if (_.isArray(message.value)) {
             _.each(message.value, function (msg) {
-                _printPretty(new Message(msg, message.level));
+                _printPretty(Message(msg, message.level));
             });
         } else if (_.isObject(message.value) && _.has(message.value, 0) && _.isElement(message.value[0])) {
             // DOM element
             _title = "#" + message.value.get(0).id + " ." + message.value.get(0).className.split(' ').join('.');
             _value = message.value.get(0).outerHTML;
-            _group = new Group(_title, new Message(_value, message.level));
+            _group = Group(_title, Message(_value, message.level));
             _group.isCollapsed = true;
             _group.print();
         } else if (!_.isString(message.value) && !_.isUndefined(message.value)) {
             _title = JSON.stringify(message.value);
             _value = message.value;
-            _group = new Group(_title, new Message(_value, message.level));
+            _group = Group(_title, Message(_value, message.level));
             _group.isCollapsed = true;
             _group.isRaw = true;
             _group.print();
@@ -113,7 +113,7 @@ hqDefine('analytix/js/logging', [
             getPrint: function () {
                 return function (messageValue, messagePrefix) {
                     if (_log.isVisible) {
-                        var group = new Group(_log.getPrefix(messagePrefix), new Message(messageValue, _log.level));
+                        var group = Group(_log.getPrefix(messagePrefix), Message(messageValue, _log.level));
                         group.print();
                     }
                 };
@@ -136,7 +136,7 @@ hqDefine('analytix/js/logging', [
             level = {};
         level.addCategory = function (slug, category) {
             if (_.isUndefined(level[slug])) {
-                var _log = new Log(_levelData, _logger);
+                var _log = Log(_levelData, _logger);
                 _log.setCategory(category);
                 level[slug] = _log.getPrint();
             }
@@ -149,14 +149,14 @@ hqDefine('analytix/js/logging', [
         var logger = {};
         logger.prefix = _prefix;
         logger.createLevel = function (slug, name) {
-            return new Level(slug, name, logger);
+            return Level(slug, name, logger);
         };
         _.each(_LEVELS, function (options, key) {
             logger[key] = logger.createLevel(key, options.name);
         });
         logger.fmt = {};
         logger.fmt.groupMsg = function (title, message) {
-            return new Group(title, new Message(message));
+            return Group(title, Message(message));
         };
         /**
          * Outputs a list of group messages that maps argument labels to their values.
@@ -175,7 +175,7 @@ hqDefine('analytix/js/logging', [
 
     return {
         getLoggerForApi: function (apiName) {
-            return new Logger(apiName);
+            return Logger(apiName);
         },
     };
 });
