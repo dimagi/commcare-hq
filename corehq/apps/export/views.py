@@ -339,10 +339,10 @@ class BaseCreateCustomExportView(BaseExportView):
             app_id = request.GET.get('app_id')
             self.export_helper.custom_export = self.export_helper.ExportSchemaClass.default(
                 schema=schema,
-                name="%s: %s" % (
-                    xmlns_to_name(self.domain, export_tag[1], app_id=app_id)
-                        if self.export_helper.export_type == "form" else export_tag[1],
-                    json_format_date(datetime.utcnow())
+                name=_("{export_name} (created {date})").format(
+                    export_name=(xmlns_to_name(self.domain, export_tag[1], app_id=app_id)
+                                 if self.export_helper.export_type == "form" else export_tag[1]),
+                    date=json_format_date(datetime.utcnow())
                 ),
                 type=self.export_helper.export_type
             )
