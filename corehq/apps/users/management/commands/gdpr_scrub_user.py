@@ -13,6 +13,7 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('user_id')
         parser.add_argument('domain')
+        self.handle("0a286c0eb864a382a85974336f9dad09", "test-proj-2")
 
     def handle(self, user_id, domain, **options):
         this_form_accessor = FormAccessors(domain=domain)
@@ -35,9 +36,8 @@ class Command(BaseCommand):
 
         # Convert the dict back to xml
         form_attachment_xml_new = xmltodict.unparse(form_attachment_dict)
-        attachment_metadata = form_data.get_attachment_meta("form.xml")
 
-        print("Username: {}".format(form_data.metadata.username))
+        attachment_metadata = form_data.get_attachment_meta("form.xml")
 
         # Write the new xml to the database
         XFormAttachmentSQL.write_content(attachment_metadata, form_attachment_xml_new)
