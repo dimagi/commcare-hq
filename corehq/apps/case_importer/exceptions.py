@@ -35,17 +35,3 @@ class ImporterExcelFileEncrypted(ImporterExcelError):
 class InvalidCustomFieldNameException(ImporterError):
     """Raised when a custom field name is reserved (e.g. "type")"""
     pass
-
-
-class InvalidImportValueException(Exception):
-
-    def __init__(self, column=None):
-        self.column = column
-
-
-class InvalidDateException(InvalidImportValueException):
-    pass
-
-
-class InvalidIntegerException(InvalidImportValueException):
-    pass
