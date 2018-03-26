@@ -1339,7 +1339,7 @@ def view_scheduled_report(request, domain, scheduled_report_id):
 
 
 @location_safe
-class CaseDetailsView(BaseProjectReportSectionView):
+class CaseDataView(BaseProjectReportSectionView):
     urlname = 'case_details'
     template_name = "reports/reportdata/case_details.html"
     page_title = ugettext_lazy("Case Details")
@@ -1356,7 +1356,7 @@ class CaseDetailsView(BaseProjectReportSectionView):
         if not (request.can_access_all_locations or
                 user_can_access_case(self.domain, self.request.couch_user, self.case_instance)):
             raise location_restricted_exception(request)
-        return super(CaseDetailsView, self).dispatch(request, *args, **kwargs)
+        return super(CaseDataView, self).dispatch(request, *args, **kwargs)
 
     @property
     def case_id(self):
@@ -1554,7 +1554,7 @@ def case_property_changes(request, domain, case_id, case_property_name):
 
 
 @location_safe
-class CaseAttachmentsView(CaseDetailsView):
+class CaseAttachmentsView(CaseDataView):
     urlname = 'single_case_attachments'
     template_name = "reports/reportdata/case_attachments.html"
     page_title = ugettext_lazy("Case Attachments")

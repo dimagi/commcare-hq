@@ -159,7 +159,7 @@ class SubmissionPost(object):
             return _('Form successfully saved!')
 
         from corehq.apps.export.views import CaseExportListView, FormExportListView
-        from corehq.apps.reports.views import CaseDetailsView, FormDataView
+        from corehq.apps.reports.views import CaseDataView, FormDataView
         form_link = case_link = form_export_link = case_export_link = None
         form_view = 'corehq.apps.reports.standard.inspect.SubmitHistory'
         if has_permission_to_view_report(user, instance.domain, form_view):
@@ -167,10 +167,10 @@ class SubmissionPost(object):
         case_view = 'corehq.apps.reports.standard.cases.basic.CaseListReport'
         if cases and has_permission_to_view_report(user, instance.domain, case_view):
             if len(cases) == 1:
-                case_link = reverse(CaseDetailsView.urlname, args=[instance.domain, cases[0].case_id])
+                case_link = reverse(CaseDataView.urlname, args=[instance.domain, cases[0].case_id])
             else:
                 case_link = ", ".join(["[{}]({})".format(
-                    c.name, reverse(CaseDetailsView.urlname, args=[instance.domain, c.case_id])
+                    c.name, reverse(CaseDataView.urlname, args=[instance.domain, c.case_id])
                 ) for c in cases])
         if can_view_form_exports(user, instance.domain):
             form_export_link = reverse(FormExportListView.urlname, args=[instance.domain])
