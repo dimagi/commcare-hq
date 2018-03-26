@@ -8,7 +8,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('locations', '0011_locationtype_include_only'),
+        ('locations', '0012_get_location_fixture_ids'),
     ]
 
     operations = [
