@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import random
 from contextlib import contextmanager
 from six.moves.urllib.parse import urlencode
