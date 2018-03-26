@@ -71,16 +71,16 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
         self.stop_type = ko.observable(initial_values.stop_type);
         self.occurrences = ko.observable(initial_values.occurrences);
         self.recipient_types = ko.observableArray(initial_values.recipient_types || []);
-        self.user_recipients = new RecipientsSelect2Handler(select2_user_recipients,
+        self.user_recipients = new recipientsSelect2Handler(select2_user_recipients,
             initial_values.user_recipients, 'schedule-user_recipients');
         self.user_recipients.init();
-        self.user_group_recipients = new RecipientsSelect2Handler(select2_user_group_recipients,
+        self.user_group_recipients = new recipientsSelect2Handler(select2_user_group_recipients,
             initial_values.user_group_recipients, 'schedule-user_group_recipients');
         self.user_group_recipients.init();
-        self.user_organization_recipients = new RecipientsSelect2Handler(select2_user_organization_recipients,
+        self.user_organization_recipients = new recipientsSelect2Handler(select2_user_organization_recipients,
             initial_values.user_organization_recipients, 'schedule-user_organization_recipients');
         self.user_organization_recipients.init();
-        self.case_group_recipients = new RecipientsSelect2Handler(select2_case_group_recipients,
+        self.case_group_recipients = new recipientsSelect2Handler(select2_case_group_recipients,
             initial_values.case_group_recipients, 'schedule-case_group_recipients');
         self.case_group_recipients.init();
         self.reset_case_property_enabled = ko.observable(initial_values.reset_case_property_enabled);
@@ -98,7 +98,7 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
             hqImport("hqwebapp/js/initial_page_data").get("language_list"),
             initial_values.message
         );
-        self.visit_scheduler_app_and_form_unique_id = new FormSelect2Handler(current_visit_scheduler_form,
+        self.visit_scheduler_app_and_form_unique_id = new formSelect2Handler(current_visit_scheduler_form,
             'schedule-visit_scheduler_app_and_form_unique_id', self.timestamp);
         self.visit_scheduler_app_and_form_unique_id.init();
 
@@ -309,19 +309,18 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
         };
     };
 
-    var BaseSelect2Handler = hqImport("hqwebapp/js/select2_handler").BaseSelect2Handler,
-        RecipientsSelect2Handler = function (initial_object_list, initial_comma_separated_list, field) {
+    var baseSelect2Handler = hqImport("hqwebapp/js/select2_handler").baseSelect2Handler,
+        recipientsSelect2Handler = function (initial_object_list, initial_comma_separated_list, field) {
             /*
              * initial_object_list is a list of {id: ..., text: ...} objects representing the initial value
              *
              * intial_comma_separated_list is a string representation of initial_object_list consisting of just
              * the ids separated by a comma
              */
-            BaseSelect2Handler.call(this, {
+            var self = baseSelect2Handler({
                 fieldName: field,
                 multiple: true,
             });
-            var self = this;
         
             self.getHandlerSlug = function () {
                 return 'scheduling_select2_helper';
@@ -332,20 +331,21 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
             };
 
             self.value(initial_comma_separated_list);
+
+            return self;
         };
     
-    RecipientsSelect2Handler.prototype = Object.create(RecipientsSelect2Handler.prototype);
-    RecipientsSelect2Handler.prototype.constructor = RecipientsSelect2Handler;
+    recipientsSelect2Handler.prototype = Object.create(recipientsSelect2Handler.prototype);
+    recipientsSelect2Handler.prototype.constructor = recipientsSelect2Handler;
 
-    var FormSelect2Handler = function (initial_object, field, timestamp) {
+    var formSelect2Handler = function (initial_object, field, timestamp) {
         /*
          * initial_object is an {id: ..., text: ...} object representing the initial value
          */
-        BaseSelect2Handler.call(this, {
+        var self = baseSelect2Handler({
             fieldName: field,
             multiple: false,
         });
-        var self = this;
 
         self.getExtraData = function() {
             return {'timestamp': timestamp};
@@ -360,10 +360,12 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
         };
 
         self.value(initial_object ? initial_object.id : '');
+
+        return self;
     };
 
-    FormSelect2Handler.prototype = Object.create(FormSelect2Handler.prototype);
-    FormSelect2Handler.prototype.constructor = FormSelect2Handler;
+    formSelect2Handler.prototype = Object.create(formSelect2Handler.prototype);
+    formSelect2Handler.prototype.constructor = formSelect2Handler;
 
     $(function () {
         var scheduleViewModel = new CreateScheduleViewModel(

@@ -9,7 +9,7 @@ hqDefine('accounting/js/billing_account_form', [
     ko,
     initialPageData
 ) {
-    var BillingAccountForm = function (is_active) {
+    var billingAccountFormModel = function (is_active) {
         'use strict';
         var self = {};
 
@@ -22,7 +22,7 @@ hqDefine('accounting/js/billing_account_form', [
     };
 
     $(function () {
-        var baForm = BillingAccountForm(initialPageData.get('account_form_is_active'));
+        var baForm = billingAccountFormModel(initialPageData.get('account_form_is_active'));
         $('#account-form').koApplyBindings(baForm);
 
         $("#show_emails").click(function() {

@@ -16,7 +16,7 @@ hqDefine("accounting/js/software_plan_version_handler", [
     multiselectUtils
 ) {
     $(function() {
-        var planVersionFormHandler = SoftwarePlanVersionFormHandler(
+        var planVersionFormHandler = softwarePlanVersionFormHandler(
             initialPageData.get('role'),
             initialPageData.get('feature_rates'),
             initialPageData.get('product_rates')
@@ -25,13 +25,13 @@ hqDefine("accounting/js/software_plan_version_handler", [
         planVersionFormHandler.init();
     });
 
-    var SoftwarePlanVersionFormHandler = function (role, featureRates, productRates) {
+    var softwarePlanVersionFormHandler = function (role, featureRates, productRates) {
         'use strict';
         var self = {};
 
-        self.role = PermissionsManager(role);
-        self.featureRates = RateAsyncManager(FeatureRate, featureRates);
-        self.productRates = RateAsyncManager(ProductRate, productRates);
+        self.role = permissionsManager(role);
+        self.featureRates = rateAsyncManager(featureRate, featureRates);
+        self.productRates = rateAsyncManager(productRate, productRates);
 
         self.init = function () {
             self.role.init();
@@ -42,7 +42,7 @@ hqDefine("accounting/js/software_plan_version_handler", [
         return self;
     };
 
-    var RateAsyncManager = function (objClass, options) {
+    var rateAsyncManager = function (objClass, options) {
         'use strict';
         var self = {};
 
@@ -67,7 +67,7 @@ hqDefine("accounting/js/software_plan_version_handler", [
             });
         });
 
-        self.select2 = Select2RateHandler(options.select2Options, self.rateNames);
+        self.select2 = select2RateHandler(options.select2Options, self.rateNames);
 
         self.init = function () {
             self.select2.init();
@@ -129,7 +129,7 @@ hqDefine("accounting/js/software_plan_version_handler", [
         return self;
     };
 
-    var PermissionsManager = function (options) {
+    var permissionsManager = function (options) {
         'use strict';
         var self = {};
 
@@ -142,8 +142,8 @@ hqDefine("accounting/js/software_plan_version_handler", [
             return self.roleType() === 'existing';
         });
 
-        self.new = NewRoleManager(self.existingRoles, options.newPrivileges);
-        self.existing = ExistingRoleManager(self.existingRoles, options.currentRoleSlug);
+        self.new = newRoleManager(self.existingRoles, options.newPrivileges);
+        self.existing = existingRoleManager(self.existingRoles, options.currentRoleSlug);
 
         self.init = function () {
             if (options.multiSelectField) {
@@ -155,7 +155,7 @@ hqDefine("accounting/js/software_plan_version_handler", [
                 );
             }
             self.existingRoles(_.map(options.existingRoles, function (data) {
-                return Role(data);
+                return role(data);
             }));
             $('#id_new_role_slug').on('keyup change', function (event) {
                 var c = String.fromCharCode(event.keyCode);
@@ -176,7 +176,7 @@ hqDefine("accounting/js/software_plan_version_handler", [
         return self;
     };
 
-    var NewRoleManager = function (existingRoles, newPrivileges) {
+    var newRoleManager = function (existingRoles, newPrivileges) {
         'use strict';
         var self = {};
 
@@ -213,7 +213,7 @@ hqDefine("accounting/js/software_plan_version_handler", [
     };
 
 
-    var ExistingRoleManager = function (existingRoles, currentRoleSlug) {
+    var existingRoleManager = function (existingRoles, currentRoleSlug) {
         'use strict';
         var self = {};
 
@@ -243,11 +243,11 @@ hqDefine("accounting/js/software_plan_version_handler", [
     };
 
 
-    var BaseSelect2Handler = select2Handler.BaseSelect2Handler;
-    var Select2RateHandler = function (options, currentValue) {
+    var baseSelect2Handler = select2Handler.baseSelect2Handler;
+    var select2RateHandler = function (options, currentValue) {
         'use strict';
         var self = {};
-        BaseSelect2Handler.call(self, options);
+        baseSelect2Handler.call(self, options);
 
         self.currentValue = currentValue;
         self.isNew = ko.observable(false);
@@ -314,16 +314,16 @@ hqDefine("accounting/js/software_plan_version_handler", [
         return self;
     };
 
-    Select2RateHandler.prototype = Object.create( BaseSelect2Handler.prototype );
-    Select2RateHandler.prototype.constructor = Select2RateHandler;
+    select2RateHandler.prototype = Object.create(baseSelect2Handler.prototype);
+    select2RateHandler.prototype.constructor = select2RateHandler;
 
 
-    var Role = function (data) {
+    var role = function (data) {
         'use strict';
         var self = {};
 
         self.privileges = ko.observableArray(_.map(data.privileges, function (priv) {
-            return Privilege(priv);
+            return privilege(priv);
         }));
         self.privilegeSlugs = ko.computed(function () {
             return _.map(self.privileges(), function (priv) {
@@ -339,7 +339,7 @@ hqDefine("accounting/js/software_plan_version_handler", [
     };
 
 
-    var Privilege = function (data) {
+    var privilege = function (data) {
         'use strict';
         var self = {};
         self.slug = ko.observable(data[0]);
@@ -348,7 +348,7 @@ hqDefine("accounting/js/software_plan_version_handler", [
     };
 
 
-    var FeatureRate = function (data) {
+    var featureRate = function (data) {
         'use strict';
         var self = {};
 
@@ -377,7 +377,7 @@ hqDefine("accounting/js/software_plan_version_handler", [
     };
 
 
-    var ProductRate = function (data) {
+    var productRate = function (data) {
         'use strict';
         var self = {};
 

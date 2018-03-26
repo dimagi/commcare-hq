@@ -10,14 +10,14 @@ hqDefine('accounting/js/base_subscriptions_main', [
     ko,
     widgets
 ) {
-    var SubscriptionInfoHandler = function() {
+    var subscriptionInfoHandlerModel = function() {
         'use strict';
         var self = {};
 
-        var AsyncSelect2Handler = widgets.AsyncSelect2Handler;
-        self.domain = AsyncSelect2Handler('domain');
-        self.account = AsyncSelect2Handler('account');
-        self.plan_version = AsyncSelect2Handler('plan_version');
+        var asyncSelect2Handler = widgets.asyncSelect2Handler;
+        self.domain = asyncSelect2Handler('domain');
+        self.account = asyncSelect2Handler('account');
+        self.plan_version = asyncSelect2Handler('plan_version');
 
         self.init = function() {
             self.domain.init();
@@ -41,7 +41,7 @@ hqDefine('accounting/js/base_subscriptions_main', [
         return self;
     };
 
-    var InvoiceModel = function() {
+    var invoiceModel = function() {
         var self = {};
         var invoice = $('#id_do_not_invoice').prop("checked");
         self.noInvoice = ko.observable(invoice);
@@ -59,13 +59,13 @@ hqDefine('accounting/js/base_subscriptions_main', [
             dateFormat: "yy-mm-dd",
         });
 
-        var subscriptionInfoHandler = SubscriptionInfoHandler();
+        var subscriptionInfoHandler = subscriptionInfoHandlerModel();
         subscriptionInfoHandler.init();
 
-        var invoiceModel = InvoiceModel();
+        var invoice = invoiceModel();
         // fieldset is not unique enough a css identifier
         // historically this has taken the first one without checking
         // todo: use a more specific identifier to make less brittle
-        $('fieldset').first().koApplyBindings(invoiceModel);
+        $('fieldset').first().koApplyBindings(invoice);
     });
 });

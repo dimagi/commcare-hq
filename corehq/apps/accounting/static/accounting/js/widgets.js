@@ -8,7 +8,7 @@ hqDefine('accounting/js/widgets', [
     ko,
     _
 ) {
-    var AsyncSelect2Handler = function (field, multiple) {
+    var asyncSelect2Handler = function (field, multiple) {
         'use strict';
         var self = {};
 
@@ -58,7 +58,7 @@ hqDefine('accounting/js/widgets', [
         return self;
     };
 
-    var EmailSelect2Handler = function (field) {
+    var emailSelect2Handler = function (field) {
         'use strict';
         var self = {};
 
@@ -113,7 +113,7 @@ hqDefine('accounting/js/widgets', [
         },
     };
 
-    var AdjustBalanceFormModel = function () {
+    var adjustBalanceFormModel = function () {
         var self = {};
         self.adjustmentType = ko.observable("current");
         self.showCustomAmount = ko.computed(function() {
@@ -125,18 +125,18 @@ hqDefine('accounting/js/widgets', [
 
     $(function() {
         _.each($(".accounting-email-select2"), function(input) {
-            var handler = EmailSelect2Handler($(input).attr("name"));
+            var handler = emailSelect2Handler($(input).attr("name"));
             handler.init();
         });
         $(".accounting-email-select2").removeAttr('required');
 
         _.each($(".accounting-async-select2"), function(input) {
-            var handler = AsyncSelect2Handler($(input).attr("name"));
+            var handler = asyncSelect2Handler($(input).attr("name"));
             handler.init();
         });
 
         _.each($(".accounting-country-select2"), function() {
-            var country = AsyncSelect2Handler('country');
+            var country = asyncSelect2Handler('country');
             country.initSelection = function (element, callback) {
                 var data = {
                     text: element.data('countryname'),
@@ -148,12 +148,12 @@ hqDefine('accounting/js/widgets', [
         });
 
         _.each($('.ko-adjust-balance-form'), function(form) {
-            $(form).koApplyBindings(AdjustBalanceFormModel());
+            $(form).koApplyBindings(adjustBalanceFormModel());
         });
     });
 
     return {
-        AsyncSelect2Handler: AsyncSelect2Handler,
-        EmailSelect2Handler: EmailSelect2Handler,
+        asyncSelect2Handler: asyncSelect2Handler,
+        emailSelect2Handler: emailSelect2Handler,
     };
 });
