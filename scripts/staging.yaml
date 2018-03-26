@@ -67,8 +67,6 @@ submodules:
     branches: []
   submodules/django-digest-src:
     branches: []
-  corehq/apps/prelogin:
-    branches: []
   corehq/apps/hqmedia/static/hqmedia/MediaUploader:
     branches: []
   submodules/commcare-translations:
