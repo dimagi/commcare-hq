@@ -1,8 +1,11 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import json
-from django.test import SimpleTestCase
-from corehq.motech.openmrs.repeater_helpers import PatientSearchParser
+from unittest import TestCase
+
+from mock import Mock
+
+from corehq.motech.openmrs.repeater_helpers import get_patient_by_identifier
 
 
 PATIENT_SEARCH_RESPONSE = json.loads("""{
@@ -63,8 +66,13 @@ PATIENT_SEARCH_RESPONSE = json.loads("""{
 }""")
 
 
-class PatientSearchParserTest(SimpleTestCase):
-    def test_patient_search_parser(self):
-        patient = PatientSearchParser(PATIENT_SEARCH_RESPONSE).get_patient_matching_identifiers(
-            'e2b966d0-1d5f-11e0-b929-000c29ad1d07', '11111111/11/1111')
+class GetPatientTest(TestCase):
+    def test_get_patient_by_identifier(self):
+        response_mock = Mock()
+        response_mock.json.return_value = PATIENT_SEARCH_RESPONSE
+        requests_mock = Mock()
+        requests_mock.get.return_value = response_mock
+
+        patient = get_patient_by_identifier(
+            requests_mock, 'e2b966d0-1d5f-11e0-b929-000c29ad1d07', '11111111/11/1111')
         self.assertEqual(patient['uuid'], '5ba94fa2-9cb3-4ae6-b400-7bf45783dcbf')

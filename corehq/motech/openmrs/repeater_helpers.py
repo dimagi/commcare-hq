@@ -5,17 +5,17 @@ from collections import namedtuple
 from datetime import timedelta
 import re
 
-from requests import HTTPError
+from requests import RequestException
 from six.moves import zip
 
 from casexml.apps.case.xform import extract_case_blocks
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.motech.openmrs.finders import PatientFinder
 from corehq.motech.openmrs.logger import logger
+from corehq.motech.openmrs.workflow import WorkflowTask, task
 from corehq.motech.utils import pformat_json
 
 
-Should = namedtuple('Should', ['method', 'url', 'parser'])
 PERSON_PROPERTIES = (
     'gender',
     'age',
@@ -81,7 +81,7 @@ ADDRESS_PROPERTIES = (
 PERSON_UUID_IDENTIFIER_TYPE_ID = 'uuid'
 
 
-OpenmrsResponse = namedtuple('OpenmrsResponse', 'status_code reason')
+OpenmrsResponse = namedtuple('OpenmrsResponse', 'status_code reason content')
 
 
 class Requests(object):
@@ -95,24 +95,30 @@ class Requests(object):
     def get_url(self, uri):
         return '/'.join((self.base_url.rstrip('/'), uri.lstrip('/')))
 
-    def get(self, uri, *args, **kwargs):
-        return self.requests.get(self.get_url(uri), *args,
-                                 auth=(self.username, self.password), **kwargs)
-
-    def post(self, uri, *args, **kwargs):
-        return self.requests.post(self.get_url(uri), *args,
-                                  auth=(self.username, self.password), **kwargs)
-
-    def post_with_raise(self, uri, *args, **kwargs):
-        response = self.post(uri, *args, **kwargs)
+    def send_request(self, method_func, *args, **kwargs):
+        raise_for_status = kwargs.pop('raise_for_status', False)
         try:
-            response.raise_for_status()
-        except HTTPError as err:
+            response = method_func(*args, **kwargs)
+            if raise_for_status:
+                response.raise_for_status()
+        except self.requests.RequestException as err:
             err_request, err_response = parse_request_exception(err)
             logger.error('Request: ', err_request)
             logger.error('Response: ', err_response)
             raise
         return response
+
+    def delete(self, uri, **kwargs):
+        return self.send_request(self.requests.delete, self.get_url(uri),
+                                 auth=(self.username, self.password), **kwargs)
+
+    def get(self, uri, *args, **kwargs):
+        return self.send_request(self.requests.get, self.get_url(uri), *args,
+                                 auth=(self.username, self.password), **kwargs)
+
+    def post(self, uri, *args, **kwargs):
+        return self.send_request(self.requests.post, self.get_url(uri), *args,
+                                 auth=(self.username, self.password), **kwargs)
 
 
 def parse_request_exception(err):
@@ -130,26 +136,38 @@ def parse_request_exception(err):
     return err_request, err_response
 
 
-def url(url_format_string, **kwargs):
-    return url_format_string.format(**kwargs)
-
-
 def create_person_attribute(requests, person_uuid, attribute_type_uuid, value):
-    return requests.post('/ws/rest/v1/person/{person_uuid}/attribute'.format(
-        person_uuid=person_uuid), json={
-            'attributeType': attribute_type_uuid,
-            'value': value,
-        },
-    ).json()
+    response = requests.post(
+        '/ws/rest/v1/person/{person_uuid}/attribute'.format(person_uuid=person_uuid),
+        json={'attributeType': attribute_type_uuid, 'value': value},
+        raise_for_status=True,
+    )
+    return response.json()['uuid']
+
+
+@task
+def delete_person_attribute_task(requests, person_uuid, attribute_uuid=None):
+    # if attribute_uuid is not set, it would be because the workflow task to create the attribute failed
+    if attribute_uuid:
+        response = requests.delete(
+            '/ws/rest/v1/person/{person_uuid}/attribute/{attribute_uuid}'.format(
+                person_uuid=person_uuid,
+                attribute_uuid=attribute_uuid
+            ),
+            raise_for_status=True,
+        )
+        return response.json()
 
 
 def update_person_attribute(requests, person_uuid, attribute_uuid, attribute_type_uuid, value):
-    return requests.post('/ws/rest/v1/person/{person_uuid}/attribute/{attribute_uuid}'.format(
-        person_uuid=person_uuid, attribute_uuid=attribute_uuid), json={
-            'value': value,
-            'attributeType': attribute_type_uuid,
-        }
-    ).json()
+    response = requests.post(
+        '/ws/rest/v1/person/{person_uuid}/attribute/{attribute_uuid}'.format(
+            person_uuid=person_uuid, attribute_uuid=attribute_uuid
+        ),
+        json={'value': value, 'attributeType': attribute_type_uuid},
+        raise_for_status=True,
+    )
+    return response.json()
 
 
 def server_datetime_to_openmrs_timestamp(dt):
@@ -159,86 +177,139 @@ def server_datetime_to_openmrs_timestamp(dt):
     return openmrs_timestamp
 
 
-def create_visit(requests, person_uuid, provider_uuid, visit_datetime, values_for_concept, encounter_type,
-                 openmrs_form, visit_type, location_uuid=None, patient_uuid=None):
-    patient_uuid = patient_uuid or person_uuid
-    start_datetime = server_datetime_to_openmrs_timestamp(visit_datetime)
-    stop_datetime = server_datetime_to_openmrs_timestamp(
-        visit_datetime + timedelta(days=1) - timedelta(seconds=1)
-    )
+class CreateVisitTask(WorkflowTask):
 
-    visit = {
-        'patient': patient_uuid,
-        'visitType': visit_type,
-        'startDatetime': start_datetime,
-        'stopDatetime': stop_datetime,
-    }
-    if location_uuid:
-        visit['location'] = location_uuid
-    response = requests.post_with_raise('/ws/rest/v1/visit', json=visit)
-    visit_uuid = response.json()['uuid']
+    def run(self, requests, person_uuid, provider_uuid, visit_datetime, values_for_concept, encounter_type,
+            openmrs_form, visit_type, location_uuid=None):
 
-    encounter = {
-        'encounterDatetime': start_datetime,
-        'patient': patient_uuid,
-        'form': openmrs_form,
-        'encounterType': encounter_type,
-        'visit': visit_uuid,
-    }
-    if location_uuid:
-        encounter['location'] = location_uuid
-    response = requests.post_with_raise('/ws/rest/v1/encounter', json=encounter)
-    encounter_uuid = response.json()['uuid']
-    if provider_uuid:
-        encounter_provider = {'provider': provider_uuid}
-        uri = '/ws/rest/v1/encounter/{uuid}/encounterprovider'.format(uuid=encounter_uuid)
-        requests.post_with_raise(uri, json=encounter_provider)
-
-    observation_uuids = []
-    for concept_uuid, values in values_for_concept.items():
-        for value in values:
-            observation = {
-                'concept': concept_uuid,
-                'person': person_uuid,
-                'obsDatetime': start_datetime,
-                'encounter': encounter_uuid,
-                'value': value,
-            }
-            if location_uuid:
-                observation['location'] = location_uuid
-            response = requests.post_with_raise('/ws/rest/v1/obs', json=observation)
-            observation_uuids.append(response.json()['uuid'])
-
-    logger.debug('Observations created: ', observation_uuids)
-    return OpenmrsResponse(status_code=response.status_code, reason=response.reason)
-
-
-def search_patients(requests, search_string):
-    try:
-        # Finding the patient is the first request sent to the server. If there is a mistake in the server details,
-        # or the server is offline, this is where we will discover it.
-        response = requests.get('/ws/rest/v1/patient', {'q': search_string, 'v': 'full'})
-        response.raise_for_status()
-    except HTTPError as err:
-        # raise_for_status() raised an HTTPError.
-        err_request, err_response = parse_request_exception(err)
-        logger.error('Error encountered searching patients')
-        logger.error('Request: ', err_request)
-        logger.error('Response: ', err_response)
-        http_error_msg = (
-            'An error was when encountered searching patients: {}. Check in Data Forwarding that the server URL '
-            'includes the path to the API, and that the password is correct'.format(err)
-        )  # This message will be shown in the Repeat Records report, and needs to be useful to an administrator
-        raise HTTPError(http_error_msg, response=err.response)
-    except Exception as err:
-        # get() failed -- probably a connection failure.
-        logger.error('Error encountered searching patients: ', str(err))
-        raise err.__class__(
-            'Unable to send request to OpenMRS server: {}. Please check the server address in Data Forwarding and '
-            'that the server is online.'.format(err)
+        start_datetime = server_datetime_to_openmrs_timestamp(visit_datetime)
+        stop_datetime = server_datetime_to_openmrs_timestamp(
+            visit_datetime + timedelta(days=1) - timedelta(seconds=1)
         )
 
-    return response.json()
+        visit = {
+            'patient': person_uuid,
+            'visitType': visit_type,
+            'startDatetime': start_datetime,
+            'stopDatetime': stop_datetime,
+        }
+        if location_uuid:
+            visit['location'] = location_uuid
+        response = requests.post('/ws/rest/v1/visit', json=visit, raise_for_status=True)
+        visit_uuid = response.json()['uuid']
+
+        self._subtasks.append(
+            CreateEncounterTask(
+                None,
+                delete_encounter_task(requests),  # `encounter_uuid` doesn't need to be passed yet.
+                'encounter_uuid',                 # execute_workflow() sets the rollback task's kwargs later
+                requests, person_uuid, provider_uuid, start_datetime, values_for_concept, encounter_type,
+                openmrs_form, visit_uuid, location_uuid,
+            )
+        )
+
+        return visit_uuid
+
+
+@task
+def delete_visit_task(requests, visit_uuid=None):
+    if visit_uuid:
+        response = requests.delete(
+            '/ws/rest/v1/visit/' + visit_uuid,
+            raise_for_status=True,
+        )
+        return response.json()
+
+
+class CreateEncounterTask(WorkflowTask):
+
+    def run(self, requests, person_uuid, provider_uuid, start_datetime, values_for_concept, encounter_type,
+            openmrs_form, visit_uuid, location_uuid=None):
+
+        encounter = {
+            'encounterDatetime': start_datetime,
+            'patient': person_uuid,
+            'form': openmrs_form,
+            'encounterType': encounter_type,
+            'visit': visit_uuid,
+        }
+        if location_uuid:
+            encounter['location'] = location_uuid
+        if provider_uuid:
+            # TODO: Verify. See commented-out section below
+            encounter['provider'] = provider_uuid
+        response = requests.post('/ws/rest/v1/encounter', json=encounter, raise_for_status=True)
+        encounter_uuid = response.json()['uuid']
+
+        # TODO: This is suspicious. Doesn't match docs. If it's true, add it as a subtask
+        # if provider_uuid:
+        #     encounter_provider = {'provider': provider_uuid}
+        #     uri = '/ws/rest/v1/encounter/{uuid}/encounterprovider'.format(uuid=encounter_uuid)
+        #     requests.post_with_raise(uri, json=encounter_provider)
+
+        for concept_uuid, values in values_for_concept.items():
+            for value in values:
+
+                self._subtasks.append(
+                    WorkflowTask(
+                        create_obs,
+                        delete_obs_task(requests),
+                        'obs_uuid',
+                        requests, encounter_uuid, concept_uuid, person_uuid, start_datetime, value, location_uuid,
+                    )
+                )
+
+        return encounter_uuid
+
+
+@task
+def delete_encounter_task(requests, encounter_uuid=None):
+    if encounter_uuid:
+        response = requests.delete('/ws/rest/v1/encounter/' + encounter_uuid, raise_for_status=True)
+        return response.json()
+
+
+def create_obs(requests, encounter_uuid, concept_uuid, person_uuid, start_datetime, value, location_uuid=None):
+    observation = {
+        'concept': concept_uuid,
+        'person': person_uuid,
+        'obsDatetime': start_datetime,
+        'encounter': encounter_uuid,
+        'value': value,
+    }
+    if location_uuid:
+        observation['location'] = location_uuid
+    response = requests.post('/ws/rest/v1/obs', json=observation, raise_for_status=True)
+    return response.json()['uuid']
+
+
+@task
+def delete_obs_task(requests, obs_uuid=None):
+    if obs_uuid:
+        response = requests.delete('/ws/rest/v1/obs/' + obs_uuid, raise_for_status=True)
+        return response.json()
+
+
+def get_patient_by_identifier(requests, identifier_type_uuid, value):
+    """
+    Return the patient that matches the given identifier. If the
+    number of matches is zero or more than one, return None.
+    """
+    response = requests.get('/ws/rest/v1/patient', {'q': value, 'v': 'full'}, raise_for_status=True)
+    patients = []
+    for patient in response.json()['results']:
+        for identifier in patient['identifiers']:
+            if (
+                identifier['identifier'] == value and
+                identifier['identifierType']['uuid'] == identifier_type_uuid
+            ):
+                patients.append(patient)
+    try:
+        patient, = patients
+    except ValueError:
+        return None
+    else:
+        return patient
 
 
 def get_patient_by_uuid(requests, uuid):
@@ -247,17 +318,26 @@ def get_patient_by_uuid(requests, uuid):
     if not re.match(r'^[a-fA-F0-9\-]{36}$', uuid):
         logger.debug('Person UUID "{}" failed validation'.format(uuid))
         return None
-    return requests.get('/ws/rest/v1/patient/' + uuid, {'v': 'full'}).json()
+    response = requests.get('/ws/rest/v1/patient/' + uuid, {'v': 'full'}, raise_for_status=True)
+    return response.json()
 
 
 def get_patient_by_id(requests, patient_identifier_type, patient_identifier):
-    if patient_identifier_type == PERSON_UUID_IDENTIFIER_TYPE_ID:
-        patient = get_patient_by_uuid(requests, patient_identifier)
-        return patient
-    else:
-        response_json = search_patients(requests, patient_identifier)
-        return PatientSearchParser(response_json).get_patient_matching_identifiers(
-            patient_identifier_type, patient_identifier)
+    try:
+        # Fetching the patient is the first request sent to the server.
+        # If there is a mistake in the server details, or if the server
+        # is offline, this is when we find out.
+        if patient_identifier_type == PERSON_UUID_IDENTIFIER_TYPE_ID:
+            return get_patient_by_uuid(requests, patient_identifier)
+        else:
+            return get_patient_by_identifier(requests, patient_identifier_type, patient_identifier)
+    except RequestException as err:
+        http_error_msg = (
+            'An error was encountered when fetching patient details from OpenMRS: {}. Please check Data '
+            'Forwarding that the server URL includes the path to the API, that the password is correct and that '
+            'the server is online.'.format(err)
+        )  # This message will be shown in the Repeat Records report, and needs to be useful to an administrator
+        raise err.__class__(http_error_msg, response=err.response)
 
 
 def update_person_name(requests, info, openmrs_config, person_uuid, name_uuid):
@@ -267,13 +347,38 @@ def update_person_name(requests, info, openmrs_config, person_uuid, name_uuid):
         if property_ in NAME_PROPERTIES and value_source.get_value(info)
     }
     if properties:
-        requests.post_with_raise(
+        response = requests.post(
             '/ws/rest/v1/person/{person_uuid}/name/{name_uuid}'.format(
                 person_uuid=person_uuid,
                 name_uuid=name_uuid,
             ),
             json=properties,
+            raise_for_status=True,
         )
+        return response.json()
+
+
+@task
+def rollback_person_name_task(requests, person, openmrs_config):
+    """
+    Reset the name changes previously set by `update_person_name()` back to their original values, which are
+    taken from the patient details that OpenMRS returned at the start of the workflow.
+    """
+    properties = {
+        property_: person['preferredName'][property_]
+        for property_ in openmrs_config.case_config.person_preferred_name.keys()
+        if property_ in NAME_PROPERTIES
+    }
+    if properties:
+        response = requests.post(
+            '/ws/rest/v1/person/{person_uuid}/name/{name_uuid}'.format(
+                person_uuid=person['uuid'],
+                name_uuid=person['preferredName']['uuid'],
+            ),
+            json=properties,
+            raise_for_status=True,
+        )
+        return response.json()
 
 
 def create_person_address(requests, info, openmrs_config, person_uuid):
@@ -283,10 +388,25 @@ def create_person_address(requests, info, openmrs_config, person_uuid):
         if property_ in ADDRESS_PROPERTIES and value_source.get_value(info)
     }
     if properties:
-        requests.post_with_raise(
+        response = requests.post(
             '/ws/rest/v1/person/{person_uuid}/address/'.format(person_uuid=person_uuid),
             json=properties,
+            raise_for_status=True,
         )
+        return response.json()['uuid']
+
+
+@task
+def delete_person_address_task(requests, person, address_uuid=None):
+    if address_uuid:
+        response = requests.delete(
+            '/ws/rest/v1/person/{person_uuid}/address/{address_uuid}'.format(
+                person_uuid=person['uuid'],
+                address_uuid=address_uuid,
+            ),
+            raise_for_status=True,
+        )
+        return response.json()
 
 
 def update_person_address(requests, info, openmrs_config, person_uuid, address_uuid):
@@ -296,21 +416,45 @@ def update_person_address(requests, info, openmrs_config, person_uuid, address_u
         if property_ in ADDRESS_PROPERTIES and value_source.get_value(info)
     }
     if properties:
-        requests.post_with_raise(
+        response = requests.post(
             '/ws/rest/v1/person/{person_uuid}/address/{address_uuid}'.format(
                 person_uuid=person_uuid,
                 address_uuid=address_uuid,
             ),
             json=properties,
+            raise_for_status=True,
         )
+        return response.json()
+
+
+@task
+def rollback_person_address_task(requests, person, openmrs_config):
+    properties = {
+        property_: person['preferredAddress'][property_]
+        for property_ in openmrs_config.case_config.person_preferred_address.keys()
+        if property_ in ADDRESS_PROPERTIES
+    }
+    if properties:
+        response = requests.post(
+            '/ws/rest/v1/person/{person_uuid}/address/{address_uuid}'.format(
+                person_uuid=person['uuid'],
+                address_uuid=person['preferredAddress']['uuid'],
+            ),
+            json=properties,
+            raise_for_status=True,
+        )
+        return response.json()
 
 
 def get_subresource_instances(requests, person_uuid, subresource):
     assert subresource in PERSON_SUBRESOURCES
-    return requests.get('/ws/rest/v1/person/{person_uuid}/{subresource}'.format(
-        person_uuid=person_uuid,
-        subresource=subresource,
-    )).json()['results']
+    response = requests.get(
+        '/ws/rest/v1/person/{person_uuid}/{subresource}'.format(
+            person_uuid=person_uuid,
+            subresource=subresource,
+        )
+    )
+    return response.json()['results']
 
 
 def find_patient(requests, domain, case_id, openmrs_config):
@@ -351,50 +495,32 @@ def update_person_properties(requests, info, openmrs_config, person_uuid):
         if property_ in PERSON_PROPERTIES and value_source.get_value(info)
     }
     if properties:
-        for p in properties:
-            assert p in PERSON_PROPERTIES
-        requests.post_with_raise(
+        response = requests.post(
             '/ws/rest/v1/person/{person_uuid}'.format(person_uuid=person_uuid),
-            json=properties
+            json=properties,
+            raise_for_status=True,
         )
+        return response.json()
 
 
-class PatientSearchParser(object):
-    def __init__(self, response_json):
-        self.response_json = response_json
-
-    def get_patient_matching_identifiers(self, patient_identifier_type, patient_identifier):
-        """
-        Return the patient that matches the given identifier. If the
-        number of matches is zero or more than one, return None.
-
-        :param patient_identifier_type: PERSON_UUID_IDENTIFIER_TYPE_ID
-            to match the patient's OpenMRS Person UUID, otherwise the
-            UUID of the OpenMRS identifier type
-        :param patient_identifier: The value that uniquely identifies
-            the patient we want.
-
-        """
-        patients = []
-        for patient in self.response_json['results']:
-            if (
-                patient_identifier_type == PERSON_UUID_IDENTIFIER_TYPE_ID and
-                patient['uuid'] == patient_identifier
-            ):
-                patients.append(patient)
-            else:
-                for identifier in patient['identifiers']:
-                    if (
-                        identifier['identifier'] == patient_identifier and
-                        identifier['identifierType']['uuid'] == patient_identifier_type
-                    ):
-                        patients.append(patient)
-        try:
-            patient, = patients
-        except ValueError:
-            return None
-        else:
-            return patient
+@task
+def rollback_person_properties_task(requests, person, openmrs_config):
+    """
+    Reset the properties previously set by `update_person_properties()` back to their original values, which are
+    taken from the patient details that OpenMRS returned at the start of the workflow.
+    """
+    properties = {
+        property_: person[property_]
+        for property_ in openmrs_config.case_config.person_properties.keys()
+        if property_ in PERSON_PROPERTIES
+    }
+    if properties:
+        response = requests.post(
+            '/ws/rest/v1/person/{person_uuid}'.format(person_uuid=person['uuid']),
+            json=properties,
+            raise_for_status=True,
+        )
+        return response.json()
 
 
 CaseTriggerInfo = namedtuple('CaseTriggerInfo',
