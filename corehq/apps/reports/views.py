@@ -1350,8 +1350,8 @@ class CaseDataView(BaseProjectReportSectionView):
     def dispatch(self, request, *args, **kwargs):
         if not self.case_instance:
             messages.info(request,
-                          "Sorry, we couldn't find that case. If you think this "
-                          "is a mistake please report an issue.")
+                          _("Sorry, we couldn't find that case. If you think this "
+                            "is a mistake please report an issue."))
             return HttpResponseRedirect(CaseListReport.get_url(domain=self.domain))
         if not (request.can_access_all_locations or
                 user_can_access_case(self.domain, self.request.couch_user, self.case_instance)):
