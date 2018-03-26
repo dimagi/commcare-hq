@@ -12,6 +12,7 @@ from custom.enikshay.case_utils import (
     CASE_TYPE_EPISODE,
     CASE_TYPE_OCCURRENCE,
     CASE_TYPE_PERSON,
+    CASE_TYPE_VOUCHER,
     get_first_parent_of_case,
 )
 
@@ -69,13 +70,20 @@ class Command(BaseDataDump):
                 .case_type(case_type)
                 )
 
+    @staticmethod
+    def get_vouchers_from_test(test_case):
+        return [
+            case for case in CaseAccessors(DOMAIN).get_reverse_indexed_cases(
+                [test_case.case_id], case_types=[CASE_TYPE_VOUCHER])
+        ]
+
     def include_case_in_dump(self, test_case):
-        # ToDo: add check for no voucher once we know how to find vouchers for a test
         person = self.get_person(test_case)
         return (
             person and
             person.get_case_property('dataset') == 'real' and
-            person.get_case_property(ENROLLED_IN_PRIVATE) == 'true'
+            person.get_case_property(ENROLLED_IN_PRIVATE) == 'true' and
+            self.get_vouchers_from_test(test_case)
         )
 
     def get_person(self, test_case):
