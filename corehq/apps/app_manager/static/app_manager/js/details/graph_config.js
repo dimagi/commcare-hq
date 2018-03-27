@@ -444,7 +444,7 @@ hqDefine('app_manager/js/details/graph_config', function() {
             if (self.selectedGraphType() === "bubble") {
                 return bubbleGraphSeries.apply(undefined, arguments);
             } else if (self.selectedGraphType() === "bar") {
-                return barGraphSeriesi.apply(undefined, arguments);
+                return barGraphSeries.apply(undefined, arguments);
             } else {
                 return xyGraphSeries.apply(undefined, arguments);
             }
