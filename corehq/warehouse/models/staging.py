@@ -29,7 +29,9 @@ from corehq.warehouse.const import (
     FORM_STAGING_SLUG,
     SYNCLOG_STAGING_SLUG,
     LOCATION_STAGING_SLUG,
-    APPLICATION_STAGING_SLUG
+    APPLICATION_STAGING_SLUG,
+    APP_STATUS_FORM_STAGING_SLUG,
+    APP_STATUS_SYNCLOG_STAGING_SLUG
 )
 
 from corehq.warehouse.utils import truncate_records_for_cls
@@ -407,3 +409,36 @@ class ApplicationStagingTable(StagingTable, CouchToDjangoETLMixin):
         application_ids = get_application_ids_by_last_modified(start_datetime, end_datetime)
 
         return iter_docs(Application.get_db(), application_ids)
+
+
+class AppStatusFormStaging(StagingTable, CustomSQLETLMixin):
+
+    slug = APP_STATUS_FORM_STAGING_SLUG
+
+    domain_dim_id = models.CharField(max_length=255, default=None, db_index=True)
+    app_dim_id = models.CharField(max_length=255, null=True, db_index=True)
+    user_dim_id = models.CharField(max_length=255, null=True, db_index=True)
+    last_submission = models.DateTimeField(db_index=True)
+    submission_build_version = models.CharField(max_length=255, null=True, db_index=True)
+
+    @classmethod
+    def dependencies(cls):
+        return [
+            FORM_STAGING_SLUG
+        ]
+
+
+class AppStatusSynclogStaging(StagingTable, CustomSQLETLMixin):
+
+    slug = APP_STATUS_SYNCLOG_STAGING_SLUG
+
+    last_sync = models.DateTimeField(null=True, db_index=True)
+    domain_dim_id = models.CharField(max_length=255, null=True, db_index=True)
+    user_dim_id = models.CharField(max_length=255, null=True, db_index=True)
+    sync_build_version = models.CharField(max_length=255, null=True, db_index=True)
+
+    @classmethod
+    def dependencies(cls):
+        return [
+            SYNCLOG_STAGING_SLUG
+        ]

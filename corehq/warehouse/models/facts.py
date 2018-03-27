@@ -119,12 +119,10 @@ class ApplicationStatusFact(BaseFact, CustomSQLETLMixin):
     slug = APP_STATUS_FACT_SLUG
 
     app_dim = models.ForeignKey(ApplicationDim, on_delete=models.PROTECT)
-    app_id = models.CharField(max_length=255)
 
     domain_dim = models.ForeignKey(DomainDim, on_delete=models.PROTECT)
 
     user_dim = models.ForeignKey(UserDim, on_delete=models.PROTECT)
-    user_id = models.CharField(max_length=255)
 
     last_form_submission_date = models.DateTimeField(null=True)
     last_sync_log_date = models.DateTimeField(null=True)
@@ -137,7 +135,7 @@ class ApplicationStatusFact(BaseFact, CustomSQLETLMixin):
     # last_sync_log_app_source = models.CharField(max_length=255)
 
     class Meta:
-        unique_together = ('app_id', 'user_id')
+        unique_together = ('app_dim', 'user_dim')
 
     @classmethod
     def dependencies(cls):

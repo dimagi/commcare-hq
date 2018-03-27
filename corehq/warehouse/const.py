@@ -9,6 +9,8 @@ FORM_STAGING_SLUG = 'form_staging'
 SYNCLOG_STAGING_SLUG = 'synclog_staging'
 LOCATION_STAGING_SLUG = 'location_staging'
 APPLICATION_STAGING_SLUG = 'application_staging'
+APP_STATUS_FORM_STAGING_SLUG = 'app_status_form_staging'
+APP_STATUS_SYNCLOG_STAGING_SLUG = 'app_status_synclog_staging'
 
 USER_DIM_SLUG = 'user_dim'
 GROUP_DIM_SLUG = 'group_dim'
@@ -46,6 +48,8 @@ STAGING_TABLES = [
     SYNCLOG_STAGING_SLUG,
     LOCATION_STAGING_SLUG,
     APPLICATION_STAGING_SLUG,
+    APP_STATUS_FORM_STAGING_SLUG,
+    APP_STATUS_SYNCLOG_STAGING_SLUG
 ]
 
 ALL_TABLES = (
