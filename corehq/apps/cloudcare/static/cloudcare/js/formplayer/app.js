@@ -162,7 +162,7 @@ FormplayerFrontend.on('startForm', function (data) {
                     analyticsLinks = [
                         { url: reverse('list_case_exports'), text: '[Data Feedback Loop Test] Clicked on Export Cases Link' },
                         { url: reverse('list_form_exports'), text: '[Data Feedback Loop Test] Clicked on Export Forms Link' },
-                        { url: reverse('case_details', '.*'), text: '[Data Feedback Loop Test] Clicked on Case Data Link' },
+                        { url: reverse('case_data', '.*'), text: '[Data Feedback Loop Test] Clicked on Case Data Link' },
                         { url: reverse('render_form_data', '.*'), text: '[Data Feedback Loop Test] Clicked on Form Data Link' },
                     ],
                     dataFeedbackLoopAnalytics = function(e) {

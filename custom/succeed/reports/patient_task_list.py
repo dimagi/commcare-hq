@@ -64,7 +64,7 @@ class PatientTaskListReport(SqlTabularReport, CustomProjectReport, ProjectReport
 
     def name_link(self, name, doc_id, is_closed):
         if is_closed == 0:
-            details_url = reverse('case_details', args=[self.domain, doc_id])
+            details_url = reverse('case_data', args=[self.domain, doc_id])
             url = details_url + '#!history'
         else:
             url = self.get_form_url(self.app_dict,

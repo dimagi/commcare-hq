@@ -30,7 +30,7 @@ from .views import (
     EditFormInstance,
     AddSavedReportConfigView,
     FormDataView,
-    CaseDetailsView,
+    CaseDataView,
     CaseAttachmentsView,
     MySavedReportsView,
     ScheduledReportsView,
@@ -96,7 +96,7 @@ urlpatterns = [
     url(r'^saved/', MySavedReportsView.as_view(), name=MySavedReportsView.urlname),
     url(r'^saved_reports', old_saved_reports, name='old_saved_reports'),
 
-    url(r'^case_data/(?P<case_id>[\w\-]+)/$', CaseDetailsView.as_view(), name=CaseDetailsView.urlname),
+    url(r'^case_data/(?P<case_id>[\w\-]+)/$', CaseDataView.as_view(), name=CaseDataView.urlname),
     url(r'^case_data/(?P<case_id>[\w\-]+)/forms/$', case_forms, name="single_case_forms"),
     url(r'^case_data/(?P<case_id>[\w\-]+)/attachments/$',
         CaseAttachmentsView.as_view(), name=CaseAttachmentsView.urlname),
