@@ -49,7 +49,7 @@ class WorkflowTask(object):
                 else:
                     self.rollback_args.append(result)
         else:
-            raise NotImplementedError('Task.func must be set, or Task.run() must be defined.')
+            raise NotImplementedError('func must be set, or run() must be defined.')
 
     def rollback(self):
         if self.rollback_func:
