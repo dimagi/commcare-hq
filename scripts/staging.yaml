@@ -56,7 +56,6 @@ branches:
   - jls/privacy-policy  # Jenny 3/19
 #  - nh/omrs/rollback  # Norman 2018-03-23
 #  - nh/omrs/location  # Norman 2018-03-24
-  - np/270364  # NP 3/26
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
