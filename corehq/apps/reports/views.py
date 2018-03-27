@@ -1898,6 +1898,7 @@ def _get_form_render_context(request, domain, instance, case_id=None):
                     'label': question.label,    # TODO: these are missing for non-children of root
                     'icon': question.icon,      # TODO: these are missing for non-children of root
                     'value': question.response,
+                    'splitName': re.sub(r'/', '/\u200B', question.value),
                 }
     _add_to_question_response_map(form_data)
 

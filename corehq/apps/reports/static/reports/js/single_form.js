@@ -28,7 +28,7 @@ hqDefine("reports/js/single_form", function() {
 
         hqImport("reports/js/data_corrections").init($container.find(".data-corrections-trigger"), $container.find(".data-corrections-modal"), {
             properties: form_question_map,
-            propertyTemplate: "<i data-bind='attr: { class: icon }'></i> <span data-bind='text: label'></span>",
+            propertyTemplate: "<i data-bind='attr: { class: icon }'></i> <span data-bind='text: splitName'></span>",
             saveUrl: initial_page_data.reverse("edit_form"),    // TODO: pass instance ID
         });
 
