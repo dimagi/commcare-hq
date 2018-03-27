@@ -44,7 +44,7 @@ class ZippedExportWriterTests(SimpleTestCase):
 
     def test_zipped_export_writer_utf8(self):
         mock_zip_file = self.MockZipFile.return_value
-        self.writer.table_names = {0: '\xe3\x81\xb2\xe3\x82\x89\xe3\x81\x8c\xe3\x81\xaa'}
+        self.writer.table_names = {0: b'\xe3\x81\xb2\xe3\x82\x89\xe3\x81\x8c\xe3\x81\xaa'.decode('utf-8')}
         self.writer._write_final_result()
         mock_zip_file.write.assert_called_with(
             'tmp',
