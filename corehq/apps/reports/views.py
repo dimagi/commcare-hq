@@ -2526,7 +2526,8 @@ def edit_form(request, domain, instance_id):
         from couchforms.const import ATTACHMENT_NAME
         from lxml import etree
         from corehq.form_processor.models import Attachment, XFormInstanceSQL, XFormOperationSQL
-        user_id = (instance.auth_context and instance.auth_context.get('user_id')) or 'unknown'     # TODO: change to current web user
+        import pdb; pdb.set_trace()
+        user_id = request.couch_user.get_id
         operation = None
 
         def _update_xml(root, question, response):
