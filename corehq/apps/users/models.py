@@ -1,5 +1,4 @@
 from __future__ import absolute_import
-
 from __future__ import unicode_literals
 import inspect
 from datetime import datetime
@@ -22,7 +21,6 @@ from corehq.apps.users.permissions import EXPORT_PERMISSIONS
 from corehq.apps.users.const import ANONYMOUS_USERNAME
 from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
-from corehq.util.global_request import get_request
 from corehq.util.soft_assert import soft_assert
 from dimagi.ext.couchdbkit import (
     StringProperty,
@@ -83,32 +81,9 @@ import six
 from six.moves import range
 from six.moves import map
 
-debug_save_logger = logging.getLogger('debug_user_save')
-
 COUCH_USER_AUTOCREATED_STATUS = 'autocreated'
 
 MAX_LOGIN_ATTEMPTS = 5
-
-
-def log_user_save(type_, doc):
-    """function to log a user save event for debugging purposes"""
-    if debug_save_logger.isEnabledFor(logging.INFO):
-        try:
-            caller = None
-            for tb in inspect.stack():
-                frame, filename, lineno, function, context, index = tb
-                if filename != __file__:
-                    caller = '%s:%s:%s' % (filename, lineno, function)
-                    break
-            req_path = ''
-            request = get_request()
-            if request:
-                req_path = request.path
-            debug_save_logger.info(
-                "%s,%s,%s,%s,%s", type_, doc['_id'], doc['_rev'], caller, req_path
-            )
-        except Exception:
-            debug_save_logger.exception('Error attempting to log user save')
 
 
 def _add_to_list(list, obj, default):
@@ -1481,7 +1456,6 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         utcnow = datetime.utcnow()
         for doc in docs:
             doc['last_modified'] = utcnow
-            log_user_save('bulk', doc)
         super(CouchUser, cls).save_docs(docs, **kwargs)
 
     bulk_save = save_docs
@@ -1489,7 +1463,6 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
     def save(self, fire_signals=True, **params):
         self.last_modified = datetime.utcnow()
         self.clear_quickcache_for_user()
-        log_user_save('single', self)
         with CriticalSection(['username-check-%s' % self.username], timeout=120):
             # test no username conflict
             by_username = self.get_db().view('users/by_username', key=self.username, reduce=False).first()
