@@ -17,7 +17,7 @@ def _bootstrap_new_standard_user_limit(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('accounting', '0019_standard_pricing_march_2018'),
+        ('accounting', '0020_payment_method__unique_together'),
     ]
 
     operations = [
