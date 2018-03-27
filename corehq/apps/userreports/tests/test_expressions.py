@@ -982,6 +982,7 @@ def test_add_days_to_date_expression(self, source_doc, count_expression, expecte
     ),
     ({}, "a + b", {"a": Decimal(2), "b": Decimal(3)}, Decimal(5)),
     ({}, "a + b", {"a": Decimal(2.2), "b": Decimal(3.1)}, Decimal(5.3)),
+    ({}, "range(3)", {}, [0, 1, 2]),
 ])
 def test_valid_eval_expression(self, source_doc, statement, context, expected_value):
     expression = ExpressionFactory.from_spec({
