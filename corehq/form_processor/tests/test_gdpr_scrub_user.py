@@ -50,7 +50,9 @@ class GDPRScrubUserTests(TestCase):
 
     @use_sql_backend
     def test_modify_attachment_xml_and_metadata_sql(self):
-        form = get_simple_wrapped_form(uuid.uuid4().hex, metadata=TestFormMetadata(domain=DOMAIN), simple_form=GDPR_SIMPLE_FORM)
+        form = get_simple_wrapped_form(uuid.uuid4().hex,
+                                       metadata=TestFormMetadata(domain=DOMAIN),
+                                       simple_form=GDPR_SIMPLE_FORM)
         new_form_xml = Command().parse_form_data(form, self.new_username)
         FormAccessors(DOMAIN).modify_attachment_xml_and_metadata(form, new_form_xml)
 
@@ -67,8 +69,14 @@ class GDPRScrubUserTests(TestCase):
         attachment_metadata_dict = xmltodict.parse(form_data_from_db)
         self.assertEqual(attachment_metadata_dict["data"]["n0:meta"]["n0:username"], self.new_username)
 
+        # Test the operations
+        operations = FormAccessors(DOMAIN).db_accessor.get_form_operations(form.form_id)
+        print("OPERATIONS: {}".format(operations))
+
     def test_modify_attachment_xml_and_metadata_couch(self):
-        form = get_simple_wrapped_form(uuid.uuid4().hex, metadata=TestFormMetadata(domain=DOMAIN), simple_form=GDPR_SIMPLE_FORM)
+        form = get_simple_wrapped_form(uuid.uuid4().hex,
+                                       metadata=TestFormMetadata(domain=DOMAIN),
+                                       simple_form=GDPR_SIMPLE_FORM)
         new_form_xml = Command().parse_form_data(form, self.new_username)
         FormAccessors(DOMAIN).modify_attachment_xml_and_metadata(form, new_form_xml)
 
