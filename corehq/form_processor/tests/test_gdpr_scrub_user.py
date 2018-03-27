@@ -21,7 +21,6 @@ import xmltodict
 
 DOMAIN = 'test-form-accessor'
 
-
 class GDPRScrubUserTests(TestCase):
     def setUp(self):
         super(GDPRScrubUserTests, self).setUp()
@@ -36,7 +35,8 @@ class GDPRScrubUserTests(TestCase):
         # Create a form
         form = create_form_for_test(DOMAIN)
         new_username = "replacement_sql_username"
-        Command().replace_username_in_xml_for_sql(form, new_username)
+        new_form_xml = Command().parse_form_data(form, new_username)
+        Command().replace_username_in_xml_for_sql(form, new_form_xml)
 
         # Test that the xml changed
         form_attachment_xml = form.get_attachment("form.xml")
@@ -55,7 +55,8 @@ class GDPRScrubUserTests(TestCase):
     def test_replace_username_in_metadata_for_couch(self):
         new_username = "replacement_couch_username"
         form = get_simple_wrapped_form(uuid.uuid4().hex, metadata=TestFormMetadata(domain=DOMAIN))
-        Command().replace_username_in_metadata_for_couch(form, new_username)
+        new_form_xml = Command().parse_form_data(form, new_username)
+        Command().replace_username_in_metadata_for_couch(form, new_form_xml)
 
         form_attachment_xml = form.get_attachment("form.xml")
         form_attachment_dict = xmltodict.parse(form_attachment_xml)

@@ -2,9 +2,11 @@ from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import xmltodict
+from datetime import datetime
 from django.core.management.base import BaseCommand
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.models import XFormAttachmentSQL, XFormOperationSQL
+from couchforms.models import XFormOperation
 
 
 class Command(BaseCommand):
@@ -20,39 +22,44 @@ class Command(BaseCommand):
         form_ids = this_form_accessor.get_form_ids_for_user(user_id)
         new_username = "Deleted username success - UPDATED"
         for form_data in this_form_accessor.iter_forms(form_ids):
-            # Get the xml attachment from the form data
-            form_attachment_xml = form_data.get_attachment("form.xml")
-
-            # Convert the xml string to dict
-            form_attachment_dict = xmltodict.parse(form_attachment_xml)
-
-            # Replace the old username with the new username
-            form_attachment_dict["data"]["n0:meta"]["n0:username"] = new_username
-
-            # Convert the dict back to xml
-            form_attachment_xml_new = xmltodict.unparse(form_attachment_dict)
-            self.replace_username_in_xml_for_sql(form_data, form_attachment_xml_new, new_username)
-            self.replace_username_in_metadata_for_couch(form_data, form_attachment_xml_new, new_username)
+            form_attachment_xml_new = self.parse_form_data(form_data, new_username)
+            self.replace_username_in_xml_for_sql(form_data, form_attachment_xml_new)
+            self.replace_username_in_metadata_for_couch(form_data, form_attachment_xml_new)
 
     @staticmethod
-    def replace_username_in_xml_for_sql(form_data, form_attachment_xml_new):
+    def parse_form_data(form_data, new_username):
+        # Get the xml attachment from the form data
+        form_attachment_xml = form_data.get_attachment("form.xml")
+
+        # Convert the xml string to dict
+        form_attachment_dict = xmltodict.parse(form_attachment_xml)
+
+        # Replace the old username with the new username
+        form_attachment_dict["data"]["n0:meta"]["n0:username"] = new_username
+        # Convert the dict back to xml
+        form_attachment_xml_new = xmltodict.unparse(form_attachment_dict)
+        return form_attachment_xml_new
+
+    @staticmethod
+    def replace_username_in_xml_for_sql(form_data, form_attachment_new_xml):
         attachment_metadata = form_data.get_attachment_meta("form.xml")
         # Write the new xml to the database
-        XFormAttachmentSQL.write_content(attachment_metadata, form_attachment_xml_new)
+        XFormAttachmentSQL.write_content(attachment_metadata, form_attachment_new_xml)
         attachment_metadata.save()
 
         # # TODO: Add to the operation history that this happened
-        # operation = XFormOperationSQL(user_id=user_id, date=datetime.utcnow(),
-        #                               operation=XFormOperationSQL.EDIT)
+        operation = XFormOperationSQL(date=datetime.utcnow(), operation='scrub username for '
+                                                                                         'GDPR compliance.')
 
     @staticmethod
-    def replace_username_in_metadata_for_couch(form_data, form_attachment_xml_new):
-        form_data.put_attachment(form_attachment_xml_new, name="form.xml", content_type='text/xml')
+    def replace_username_in_metadata_for_couch(form_data, form_attachment_new_xml):
+        form_data.put_attachment(form_attachment_new_xml, name="form.xml", content_type='text/xml')
 
         form_data.save()
 
         # # # TODO: Add to the operation history that this happened
-        # operation = XFormOperation(user=user_id, date=datetime.utcnow(), operation='edit')
+        operation = XFormOperation(date=datetime.utcnow(), operation='scrub username for '
+                                                                                   'GDPR compliance.')
 
 
 
