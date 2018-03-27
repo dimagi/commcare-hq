@@ -52,13 +52,13 @@ class Command(BaseCommand):
                     ]
                     if len(matching_owner_ids) == 1:
                         matched_owner_id = matching_owner_ids[0]
-                        print('Assign case %s to owner %s' % (case.case_id, matched_owner_id), file=log_file)
+                        print('%s: Assign case %s to owner %s' % (domain, case.case_id, matched_owner_id), file=log_file)
                         if execute:
                             CaseFactory(domain).update_case(case.case_id, update={'owner_id': matched_owner_id})
                     elif len(matching_owner_ids) == 0:
-                        print('No owner found for case %s' % case.case_id, file=log_file)
+                        print('%s: No owner found for case %s' % (domain, case.case_id), file=log_file)
                     elif len(matching_owner_ids) > 1:
-                        print('Impossible to determine owner for case %s' % case.case_id, file=log_file)
+                        print('%s: Impossible to determine owner for case %s' % (domain, case.case_id), file=log_file)
 
 
 def get_valid_owner_ids(domain):
