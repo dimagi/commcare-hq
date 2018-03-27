@@ -16,7 +16,7 @@
                     {% if not cell.colspan %}
                     <th title="{{ cell.expr }}">
                         {% if cell.info_url %}
-                            <a href="#" data-bind="openRemoteModal: '{{ cell.info_url }}'">
+                            <a href="#" data-property-name="{{ cell.expr }}" class="case-property-name">
                                 {{ cell.name }}
                             </a>
                         {% else %}
