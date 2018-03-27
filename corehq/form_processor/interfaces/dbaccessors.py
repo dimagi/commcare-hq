@@ -180,6 +180,10 @@ class FormAccessors(object):
     def soft_undelete_forms(self, form_ids):
         return self.db_accessor.soft_undelete_forms(self.domain, form_ids)
 
+    def modify_attachment_xml_and_metadata(self, form_data, form_attachment_new_xml):
+        return self.db_accessor.modify_attachment_xml_and_metadata(form_data, form_attachment_new_xml)
+
+
 
 class AbstractCaseAccessor(six.with_metaclass(ABCMeta)):
     """

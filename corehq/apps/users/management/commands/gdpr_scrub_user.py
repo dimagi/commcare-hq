@@ -1,13 +1,9 @@
 from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import unicode_literals
-from corehq.apps.users.util import SYSTEM_USER_ID
 import xmltodict
-from datetime import datetime
 from django.core.management.base import BaseCommand
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
-from corehq.form_processor.models import XFormAttachmentSQL, XFormOperationSQL
-from couchforms.models import XFormOperation
 
 
 class Command(BaseCommand):
@@ -24,11 +20,7 @@ class Command(BaseCommand):
         new_username = "Deleted username success - UPDATED"
         for form_data in this_form_accessor.iter_forms(form_ids):
             form_attachment_xml_new = self.parse_form_data(form_data, new_username)
-            operation = self.replace_username_in_xml_for_sql(form_data, form_attachment_xml_new)
-            operation = self.replace_username_in_metadata_for_couch(form_data, form_attachment_xml_new)
-
-            form_data.history.append(operation)  # TODO: should this show in Form History tab? it doesn't
-            form_data.save()
+            this_form_accessor.modify_attachment_xml_and_metadata(form_data, form_attachment_xml_new)
 
     @staticmethod
     def parse_form_data(form_data, new_username):
@@ -43,31 +35,6 @@ class Command(BaseCommand):
         # Convert the dict back to xml
         form_attachment_xml_new = xmltodict.unparse(form_attachment_dict)
         return form_attachment_xml_new
-
-    @staticmethod
-    def replace_username_in_xml_for_sql(form_data, form_attachment_new_xml):
-        attachment_metadata = form_data.get_attachment_meta("form.xml")
-        # Write the new xml to the database
-        XFormAttachmentSQL.write_content(attachment_metadata, form_attachment_new_xml)
-        attachment_metadata.save()
-
-        # # TODO: Add to the operation history that this happened
-        operation = XFormOperationSQL(user=SYSTEM_USER_ID, date=datetime.utcnow(), operation='scrub username for '
-                                                                                         'GDPR compliance.')
-        return operation
-
-    @staticmethod
-    def replace_username_in_metadata_for_couch(form_data, form_attachment_new_xml):
-        form_data.put_attachment(form_attachment_new_xml, name="form.xml", content_type='text/xml')
-
-        form_data.save()
-
-        # # TODO: Add to the operation history that this happened
-        operation = XFormOperation(user=SYSTEM_USER_ID, date=datetime.utcnow(), operation='scrub username for '
-                                                                                   'GDPR compliance.')
-        return operation
-
-
 
 if __name__ == "__main__":
     Command().handle(username="testuser")
