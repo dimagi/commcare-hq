@@ -1889,20 +1889,23 @@ def _get_form_render_context(request, domain, instance, case_id=None):
 
     question_response_map = {}
     ordered_question_values = []
-    def _add_to_question_response_map(data):
-        for question in data:
+    def _add_to_question_response_map(data, repeat_index=None):
+        for index, question in enumerate(data):
             if question.children:
-                _add_to_question_response_map(question.children)
+                _add_to_question_response_map(question.children, repeat_index=index)
             elif question.type in ['Date', 'DateTime', 'Double', 'Geopoint', 'Int', 'Long', 'MSelect',
                                    'PhoneNumber', 'Secret', 'Select', 'Text', 'Time']:  # TODO: more canonical way to do this?
                                                                                         # or move into VELLUM_TYPES
-                question_response_map[question.value] = {
+                value = question.value
+                if question.repeat:
+                    value = "{}[{}]{}".format(question.repeat, repeat_index + 1, re.sub(r'^' + question.repeat, '', question.value))
+                question_response_map[value] = {
                     'label': question.label,    # TODO: these are missing for non-children of root
                     'icon': question.icon,      # TODO: these are missing for non-children of root
                     'value': question.response,
-                    'splitName': re.sub(r'/', '/\u200B', question.value),
+                    'splitName': re.sub(r'/', '/\u200B', value),
                 }
-                ordered_question_values.append(question.value)
+                ordered_question_values.append(value)
     _add_to_question_response_map(form_data)
 
     context.update({
@@ -2513,7 +2516,7 @@ def edit_form(request, domain, instance_id):
     updates = {}
     for name in request.POST:
         question = re.sub(r'^/[^\/]+/', '', name)  # TODO: cleaner way to do this?
-        updates.update({
+        updates.update({                           # TODO: only include actual changes?
             question: request.POST[name],
         })
 
@@ -2525,12 +2528,17 @@ def edit_form(request, domain, instance_id):
         user_id = (instance.auth_context and instance.auth_context.get('user_id')) or 'unknown'     # TODO: change to current web user
         operation = None
 
-        def _update_xml(root, question):
+        def _update_xml(root, question, response):
             levels = question.split("/")
             levels.reverse()
             node = xml
             while levels:
-                node = node.find("{{{}}}{}".format(instance.xmlns, levels.pop()))
+                (qid, index) = re.match(r'(\w+)(?:\[(\d+)])?', levels.pop()).groups()
+                if index is None:
+                    node = node.find("{{{}}}{}".format(instance.xmlns, qid))
+                else:
+                    index = int(index) - 1
+                    node = node.findall("{{{}}}{}".format(instance.xmlns, qid))[index]
             if node is not None:
                 node.text = response
 
@@ -2542,17 +2550,20 @@ def edit_form(request, domain, instance_id):
                 levels.reverse()
                 qdata = instance.form_data
                 while qdata and len(levels) > 1:
-                    qid = levels.pop()
+                    (qid, index) = re.match(r'(\w+)(?:\[(\d+)])?', levels.pop()).groups()
                     qdata = qdata[qid]
-                if qdata and levels and isinstance(qdata, dict):    # TODO: repeat groups
+                    if index is not None:
+                        index = int(index) - 1
+                        qdata = qdata[index]
+                if qdata and levels:
                     qdata[levels[0]] = response
-                _update_xml(xml, question)
+                _update_xml(xml, question, response)
             instance.put_attachment(etree.tostring(xml), name=ATTACHMENT_NAME, content_type='text/xml')
             operation = XFormOperation(user=user_id, date=datetime.utcnow(), operation='edit')
         elif type(instance) == XFormInstanceSQL:
             xml = instance.get_xml_element()
             for question, response in updates.iteritems():
-                _update_xml(xml, question)
+                _update_xml(xml, question, response)
             all_attachments = {att.name: att for att in instance.get_attachments()}
             form_attachment = all_attachments[ATTACHMENT_NAME]
             attachment = Attachment(
