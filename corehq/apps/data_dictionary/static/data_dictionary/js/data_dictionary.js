@@ -19,8 +19,8 @@ define([
         self.name = name;
         self.properties = ko.observableArray();
 
-        self.init = function (group_dict, changeSaveButton) {
-            _.each(group_dict, function (properties, group) {
+        self.init = function (groupDict, changeSaveButton) {
+            _.each(groupDict, function (properties, group) {
                 var groupObj = propertyListItem(group, true, group, self.name);
                 self.properties.push(groupObj);
                 _.each(properties, function (prop) {
