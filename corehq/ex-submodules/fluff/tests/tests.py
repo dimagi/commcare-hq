@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.conf import settings
 from django.test import TestCase
 
@@ -435,8 +436,8 @@ class FluffTest(TestCase):
         str_field = fluff.FlatField(lambda case: "hello")
         self.assertEquals(str_field.calculate('bar'), "hello")
 
-        unicode_field = fluff.FlatField(lambda case: u"unicode!!")
-        self.assertEquals(unicode_field.calculate('bar'), u"unicode!!")
+        unicode_field = fluff.FlatField(lambda case: "unicode!!")
+        self.assertEquals(unicode_field.calculate('bar'), "unicode!!")
 
         num_field = fluff.FlatField(lambda case: 432123141)
         self.assertRaises(AssertionError, num_field.calculate, 'bar')
@@ -453,12 +454,12 @@ class FluffTest(TestCase):
         current.calculate(MockDoc.wrap(doc))
         current.save_to_sql(current.diff(None), self.engine)
         expected = [
-            (u'123', date(1, 1, 1), u'mock', u'test_owner', None, None, None, None, None, 2, None, 1),
-            (u'123', date(2013, 1, 1), u'abc', u'123', None, None, 2, None, 1, None, None, None),
-            (u'123', date(2012, 9, 24), u'mock', u'test_owner', 3, None, None, None, None, None, 1, None),
-            (u'123', date(2012, 9, 23), u'mock', u'test_owner', 2, None, None, None, None, None, 1, None),
-            (u'123', date(1, 1, 1), u'abc', u'xyz', None, None, None, 1, None, None, None, None),
-            (u'123', date(2013, 1, 1), u'abc', u'xyz', None, 3, None, None, None, None, None, None),
+            ('123', date(1, 1, 1), 'mock', 'test_owner', None, None, None, None, None, 2, None, 1),
+            ('123', date(2013, 1, 1), 'abc', '123', None, None, 2, None, 1, None, None, None),
+            ('123', date(2012, 9, 24), 'mock', 'test_owner', 3, None, None, None, None, None, 1, None),
+            ('123', date(2012, 9, 23), 'mock', 'test_owner', 2, None, None, None, None, None, 1, None),
+            ('123', date(1, 1, 1), 'abc', 'xyz', None, None, None, 1, None, None, None, None),
+            ('123', date(2013, 1, 1), 'abc', 'xyz', None, 3, None, None, None, None, None, None),
         ]
 
         with self.engine.begin() as connection:
@@ -481,11 +482,11 @@ class FluffTest(TestCase):
         current.calculate(MockDoc.wrap(doc))
         current.save_to_sql(current.diff(None), self.engine)
         expected = [
-            (u'123', date(1, 1, 1), u'mock', u'test_owner', None, None, None, None, None, 2, None, 1),
-            (u'123', date(2013, 1, 1), u'abc', u'123', None, None, 2, None, 1, None, None, None),
-            (u'123', date(2012, 9, 23), u'mock', u'test_owner', 5, None, None, None, None, None, 1, None),
-            (u'123', date(1, 1, 1), u'abc', u'xyz', None, None, None, 1, None, None, None, None),
-            (u'123', date(2013, 1, 1), u'abc', u'xyz', None, 3, None, None, None, None, None, None),
+            ('123', date(1, 1, 1), 'mock', 'test_owner', None, None, None, None, None, 2, None, 1),
+            ('123', date(2013, 1, 1), 'abc', '123', None, None, 2, None, 1, None, None, None),
+            ('123', date(2012, 9, 23), 'mock', 'test_owner', 5, None, None, None, None, None, 1, None),
+            ('123', date(1, 1, 1), 'abc', 'xyz', None, None, None, 1, None, None, None, None),
+            ('123', date(2013, 1, 1), 'abc', 'xyz', None, 3, None, None, None, None, None, None),
         ]
 
         with self.engine.begin() as connection:
@@ -508,12 +509,12 @@ class FluffTest(TestCase):
         current.calculate(MockDoc.wrap(doc))
         current.save_to_sql(current.diff(None), self.engine)
         expected = [
-            (u'123', date(2012, 9, 24), u'2012-09-23', u'2013-09-23', u'mock', u'test_owner', 3, None, None, None, None, None, 1, None),
-            (u'123', date(2013, 1, 1), u'2012-09-23', u'2013-09-23', u'abc', u'123', None, None, 2, None, 1, None, None, None),
-            (u'123', date(1, 1, 1), u'2012-09-23', u'2013-09-23', u'abc', u'xyz', None, None, None, 1, None, None, None, None),
-            (u'123', date(2012, 9, 23), u'2012-09-23', u'2013-09-23', u'mock', u'test_owner', 2, None, None, None, None, None, 1, None),
-            (u'123', date(1, 1, 1), u'2012-09-23', u'2013-09-23', u'mock', u'test_owner', None, None, None, None, None, 2, None, 1),
-            (u'123', date(2013, 1, 1), u'2012-09-23', u'2013-09-23', u'abc', u'xyz', None, 3, None, None, None, None, None, None),
+            ('123', date(2012, 9, 24), '2012-09-23', '2013-09-23', 'mock', 'test_owner', 3, None, None, None, None, None, 1, None),
+            ('123', date(2013, 1, 1), '2012-09-23', '2013-09-23', 'abc', '123', None, None, 2, None, 1, None, None, None),
+            ('123', date(1, 1, 1), '2012-09-23', '2013-09-23', 'abc', 'xyz', None, None, None, 1, None, None, None, None),
+            ('123', date(2012, 9, 23), '2012-09-23', '2013-09-23', 'mock', 'test_owner', 2, None, None, None, None, None, 1, None),
+            ('123', date(1, 1, 1), '2012-09-23', '2013-09-23', 'mock', 'test_owner', None, None, None, None, None, 2, None, 1),
+            ('123', date(2013, 1, 1), '2012-09-23', '2013-09-23', 'abc', 'xyz', None, 3, None, None, None, None, None, None),
         ]
 
         with self.engine.begin() as connection:
