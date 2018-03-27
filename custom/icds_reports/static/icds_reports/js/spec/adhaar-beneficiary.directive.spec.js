@@ -181,13 +181,13 @@ describe('Adhaar Beneficiary Directive', function () {
 
     it('tests chart tooltip content', function () {
         var day = {y: 0.24561403508771928, all: 171, series: 0};
-        var val = {value: "Jul 2017", series: []};
+        var month = {value: "Jul 2017", series: []};
 
         var expected = '<p><strong>Jul 2017</strong></p><br/>' +
             '<div>Total number of ICDS beneficiaries whose Aadhaar has been captured: <strong>0</strong></div>' +
             '<div>% of ICDS beneficiaries whose Aadhaar has been captured: <strong>24.56%</strong></div>';
 
-        var result = controller.getTooltipContent(val, day);
+        var result = controller.getTooltipContent(month.value, day);
         assert.equal(expected, result);
     });
 
