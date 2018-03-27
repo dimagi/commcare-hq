@@ -1888,19 +1888,21 @@ def _get_form_render_context(request, domain, instance, case_id=None):
     form_data, question_list_not_found = get_readable_data_for_submission(instance)
 
     question_response_map = {}
+    ordered_question_values = []
     def _add_to_question_response_map(data):
         for question in data:
             if question.children:
                 _add_to_question_response_map(question.children)
             elif question.type in ['Date', 'DateTime', 'Double', 'Geopoint', 'Int', 'Long', 'MSelect',
-                    'PhoneNumber', 'Secret', 'Select', 'Text', 'Time']:  # TODO: more canonical way to do this?
-                                                                         # or move into VELLUM_TYPES
+                                   'PhoneNumber', 'Secret', 'Select', 'Text', 'Time']:  # TODO: more canonical way to do this?
+                                                                                        # or move into VELLUM_TYPES
                 question_response_map[question.value] = {
                     'label': question.label,    # TODO: these are missing for non-children of root
                     'icon': question.icon,      # TODO: these are missing for non-children of root
                     'value': question.response,
                     'splitName': re.sub(r'/', '/\u200B', question.value),
                 }
+                ordered_question_values.append(question.value)
     _add_to_question_response_map(form_data)
 
     context.update({
@@ -1912,6 +1914,7 @@ def _get_form_render_context(request, domain, instance, case_id=None):
         'question_list_not_found': question_list_not_found,
         "form_data": form_data,
         "question_response_map": question_response_map,
+        "ordered_question_values": ordered_question_values,
         "tz_abbrev": timezone.localize(datetime.utcnow()).tzname(),
     })
 
@@ -2224,6 +2227,7 @@ def case_form_data(request, domain, case_id, xform_id):
     return JsonResponse({
         'html': render_to_string("reports/form/partials/single_form.html", context, request=request),
         'question_response_map': context['question_response_map'],
+        'ordered_question_values': context['ordered_question_values'],
     })
 
 

@@ -19,7 +19,7 @@ hqDefine("reports/js/data_corrections", function() {
             nodes: $("<div>" + (options.propertyTemplate || "<span data-bind='text: name'></span>" )+ "</div>"),
         };
         self.displayProperty = ko.observable(options.displayProperty || '');
-        self.propertyNames = ko.observableArray();  // ordered list of names, populated by ajax call because it's slow
+        self.propertyNames = ko.observableArray();  // ordered list of names, sometimes populated by ajax call because it's slow
         self.properties = {};                       // map of name => PropertyModel, populated in init
 
         self.updateDisplayProperty = function(model, e) {
@@ -187,7 +187,7 @@ hqDefine("reports/js/data_corrections", function() {
                 },
             });
         } else {
-            _success(_.keys(options.properties));
+            _success(options.propertyNames || _.keys(options.properties));
         }
 
         return self;

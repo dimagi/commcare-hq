@@ -18,6 +18,7 @@
 
 {% block page_content %}
     {% initial_page_data 'clipboardScript' "clipboard/dist/clipboard.js"|static %}
+    {% initial_page_data 'ordered_question_values' ordered_question_values %}
     {% initial_page_data 'question_response_map' question_response_map %}
     {% registerurl "edit_form" instance.domain instance.get_id %}
 

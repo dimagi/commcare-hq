@@ -4,7 +4,7 @@
     form" button when looking at a form in case history.
 */
 hqDefine("reports/js/single_form", function() {
-    var initSingleForm = function(form_question_map, $container) {
+    var initSingleForm = function(form_question_map, ordered_question_values, $container) {
         $container = $container || $("body");
 
         var initial_page_data = hqImport("hqwebapp/js/initial_page_data");
@@ -28,6 +28,7 @@ hqDefine("reports/js/single_form", function() {
 
         hqImport("reports/js/data_corrections").init($container.find(".data-corrections-trigger"), $container.find(".data-corrections-modal"), {
             properties: form_question_map,
+            propertyNames: ordered_question_values,
             propertyTemplate: "<i data-bind='attr: { class: icon }'></i> " +
                 "<span data-bind='text: splitName, visible: $root.displayProperty() === \"name\"'></span>" +
                 "<span data-bind='text: label, visible: $root.displayProperty() === \"label\"'></span>",
