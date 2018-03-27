@@ -132,30 +132,32 @@ var CaseManagement = function (o) {
     };
 };
 
-ko.bindingHandlers.caseReassignmentForm = {
-    update: function(element, valueAccessor) {
-        var value = valueAccessor()();
-        var $element = $(element);
-        if (value.length > 0) {
-            $element.slideDown();
-        } else {
-            $element.find("[type='submit']").enableButton();
-            $element.slideUp();
-        }
-    },
-};
+$(function() {
+    ko.bindingHandlers.caseReassignmentForm = {
+        update: function(element, valueAccessor) {
+            var value = valueAccessor()();
+            var $element = $(element);
+            if (value.length > 0) {
+                $element.slideDown();
+            } else {
+                $element.find("[type='submit']").enableButton();
+                $element.slideUp();
+            }
+        },
+    };
 
-ko.bindingHandlers.grabUniqueDefault = {
-    update: function(element, valueAccessor) {
-        var value = valueAccessor()();
-        var unique = _.unique(value);
-        if (unique.length === 1) {
-            $(element).val(unique[0]);
-        } else {
-            // okay, so ideally this should deselect the select and combobox. unfortunately I think this requires
-            // some reworking of the combobox, so just have it set at whatever value is set by default for now is fine.
-            // bleh.
-        }
-        $(element).trigger('change');
-    },
-};
+    ko.bindingHandlers.grabUniqueDefault = {
+        update: function(element, valueAccessor) {
+            var value = valueAccessor()();
+            var unique = _.unique(value);
+            if (unique.length === 1) {
+                $(element).val(unique[0]);
+            } else {
+                // okay, so ideally this should deselect the select and combobox. unfortunately I think this requires
+                // some reworking of the combobox, so just have it set at whatever value is set by default for now is fine.
+                // bleh.
+            }
+            $(element).trigger('change');
+        },
+    };
+});
