@@ -126,6 +126,11 @@ hqDefine('userreports/js/report_config', function() {
                     var wasAggregationEnabled = self.isAggregationEnabled();
                     self.isAggregationEnabled(newValue === constants.REPORT_TYPE_TABLE);
                     self.previewChart(newValue === constants.REPORT_TYPE_TABLE && self.selectedChart() !== "none");
+                    if (self.reportType() === constants.REPORT_TYPE_LIST) {
+                        self.columnList.columns().forEach(function(val, index) {
+                            val.calculation(constants.GROUP_BY);
+                        });
+                    }
                     if (self.isAggregationEnabled() && !wasAggregationEnabled) {
                         self.columnList.columns().forEach(function(val, index) {
                             if (index === 0) {
