@@ -250,18 +250,18 @@ var animal = function(options) {
   self.name = options.name;
   
   self.run = function(time) {
-    self.location += time * speed;
+    location += time * speed;
   };
   
   self.getLocation = function() {
-    return self.location;
+    return location;
   }
   
   return self;
 };
 
 var bear = animal({ name: 'Oso' });
-bear.run();
+bear.run(1);
 // bear.name => "Oso"
 // bear.getLocation() => 5
 // bear.location => undefined
@@ -278,9 +278,9 @@ var bird = function(options) {
   return self;
 };
 
-var duck = animal({ name: 'Pato' });
-duck.run();
-duck.fly();
+var duck = bird({ name: 'Pato' });
+duck.run(1);
+duck.fly(1);
 // duck.name => "Pato"
 // duck.getLocation => 15
 ```
