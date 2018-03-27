@@ -76,7 +76,7 @@
       },
       {
         "column_id": "where_born",
-        "datatype": "small_int",
+        "datatype": "small_integer",
         "type": "expression",
         "expression": {
           "type": "switch",
@@ -106,7 +106,7 @@
       },
       {
         "column_id": "which_hospital",
-        "datatype": "small_int",
+        "datatype": "small_integer",
         "type": "expression",
         "expression": {
           "type": "switch",
