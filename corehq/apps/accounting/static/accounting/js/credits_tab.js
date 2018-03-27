@@ -8,16 +8,16 @@ hqDefine("accounting/js/credits_tab", [
     $(function() {
         var $form = $('#credit-form');
         if ($form.length) {
-            var CreditFormModel = function () {
-                var self = this;
+            var creditFormModel = function () {
+                var self = {};
                 self.rateType = ko.observable("");
                 self.showFeature = ko.computed(function() {
                     return self.rateType() === 'Feature';
                 }, self);
+                return self;
             };
 
-            var creditFormModel = new CreditFormModel();
-            $form.koApplyBindings(creditFormModel);
+            $form.koApplyBindings(creditFormModel());
         }
     });
 });

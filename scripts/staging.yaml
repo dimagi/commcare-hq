@@ -57,9 +57,8 @@ branches:
 #  - ce/auto-batches # Cal 3/5
 #  - sr-form-meta # Sravan 11-March
   - jls/privacy-policy  # Jenny 3/19
-#  - nh/omrs/rollback  # Norman 2018-03-23
-#  - nh/omrs/repeater_location  # Norman 2018-03-24
-  - nh/omrs/rollback+repeater_location+location  # Norman 2018-03-24
+  - nh/omrs/rollback  # Norman 2018-03-23
+  - nh/omrs/location  # Norman 2018-03-24
   - np/270364  # NP 3/26
 submodules:
   submodules/touchforms-src:

@@ -149,6 +149,13 @@ class _BlobDBTests(object):
         self.assertNotIn(".", info.identifier)
         return info
 
+    def test_put_with_colliding_blob_id(self):
+        ident = get_id()
+        self.db.put(BytesIO(b"bing"), ident)
+        self.db.put(BytesIO(b"bang"), ident)
+        with self.db.get(ident) as fh:
+            self.assertEqual(fh.read(), b"bang")
+
 
 @generate_cases([
     ("test.1", "\u4500.1"),
@@ -179,14 +186,6 @@ class TestFilesystemBlobDB(TestCase, _BlobDBTests):
         rmtree(cls.rootdir)
         cls.rootdir = None
         super(TestFilesystemBlobDB, cls).tearDownClass()
-
-    def test_put_with_colliding_blob_id(self):
-        # unfortunately can't do this on S3 because there is no way to
-        # reliably check if an object exists before putting it.
-        ident = get_id()
-        self.db.put(BytesIO(b"bing"), ident)
-        with self.assertRaises(mod.FileExists):
-            self.db.put(BytesIO(b"bang"), ident)
 
     def test_delete(self):
         info, bucket = super(TestFilesystemBlobDB, self).test_delete()
