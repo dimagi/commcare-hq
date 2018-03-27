@@ -18,8 +18,13 @@ hqDefine("reports/js/data_corrections", function() {
             // TODO: make icons blue, like in readable form, and make text less bold
             nodes: $("<div>" + (options.propertyTemplate || "<span data-bind='text: name'></span>" )+ "</div>"),
         };
+        self.displayProperty = ko.observable(options.displayProperty || '');
         self.propertyNames = ko.observableArray();  // ordered list of names, populated by ajax call because it's slow
         self.properties = {};                       // map of name => PropertyModel, populated in init
+
+        self.updateDisplayProperty = function(model, e) {
+            self.displayProperty($(e.currentTarget).data("display"));
+        };
 
         // If there are a lot of items, make a bigger modal and render properties as columns
         // Supports a small one-column modal, a larger two-column modal, or a full-screen three-column modal

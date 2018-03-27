@@ -15,6 +15,12 @@
                     <span aria-hidden="true">&times;</span>
                 </button>
                 <div class="form-inline pull-right" data-bind="visible: !showSpinner()">
+                    {% if instance %}{# This is a form, not a case #}
+                        <ul class="nav nav-pills" style="display: inline-block;"><!-- TODO: make style less terrible -->
+                            <li data-bind="click: updateDisplayProperty, css: { active: displayProperty() === 'label' }" data-display='label'><a>{% trans "Labels" %}</a></li>
+                            <li data-bind="click: updateDisplayProperty, css: { active: displayProperty() === 'name' }" data-display='name'><a>{% trans "Question IDs" %}</a></li>
+                        </ul>
+                    {% endif %}
                     <div class="input-group input-group-sm">
                         <input type="text" class="form-control" placeholder="{% trans "Search" %}"
                                data-bind="value: query, valueUpdate: 'afterkeydown'" />
