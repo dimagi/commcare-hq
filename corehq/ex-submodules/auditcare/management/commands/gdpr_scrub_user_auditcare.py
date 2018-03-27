@@ -1,8 +1,10 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from django.core.management.base import BaseCommand
-
 from auditcare.utils.export import get_docs_by_user
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class Command(BaseCommand):
@@ -18,5 +20,6 @@ class Command(BaseCommand):
             for doc in doc_list:
                 doc.user = new_username
                 doc.save()
+            logger.info("Updated username in {} documents.".format(len(doc_list)))
         else:
-            print("The user {} has no associated docs in auditcare.".format(username))
+            logger.info("The user {} has no associated docs in auditcare.".format(username))
