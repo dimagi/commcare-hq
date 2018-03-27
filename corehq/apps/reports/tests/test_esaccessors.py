@@ -579,6 +579,7 @@ class TestFormESAccessors(BaseESAccessorsTest):
         self._send_form_to_es(received_on=received_on, user_id=None, app_id=app2, xmlns=xmlns2)
 
         counts = get_form_counts_by_user_xmlns(self.domain, start, end)
+        print("COUNTS: {}".format(counts))
         self.assertEqual(counts, {
             (user1, app1, xmlns1): 2,
             (user1, app2, xmlns2): 1,

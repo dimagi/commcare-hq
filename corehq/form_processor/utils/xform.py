@@ -18,15 +18,15 @@ SIMPLE_FORM = """<?xml version='1.0' ?>
 <data uiVersion="1" version="17" name="{form_name}" xmlns:jrm="http://dev.commcarehq.org/jr/xforms"
     xmlns="{xmlns}">
     <dalmation_count>yes</dalmation_count>
-    <n0:meta xmlns:n0="http://openrosa.org/jr/xforms">
-        <n0:deviceID>{device_id}</n0:deviceID>
-        <n0:timeStart>{time_start}</n0:timeStart>
-        <n0:timeEnd>{time_end}</n0:timeEnd>
-        <n0:username>{username}</n0:username>
-        <n0:userID>{user_id}</n0:userID>
-        <n0:instanceID>{uuid}</n0:instanceID>
-        <n1:appVersion xmlns:n1="http://commcarehq.org/xforms"></n1:appVersion>
-    </n0:meta>
+    <n1:meta xmlns:n1="http://openrosa.org/jr/xforms">
+        <n1:deviceID>{device_id}</n1:deviceID>
+        <n1:timeStart>{time_start}</n1:timeStart>
+        <n1:timeEnd>{time_end}</n1:timeEnd>
+        <n1:username>{username}</n1:username>
+        <n1:userID>{user_id}</n1:userID>
+        <n1:instanceID>{uuid}</n1:instanceID>
+        <n2:appVersion xmlns:n2="http://commcarehq.org/xforms"></n2:appVersion>
+    </n1:meta>
     {case_block}
 </data>"""
 
@@ -44,14 +44,14 @@ class TestFormMetadata(jsonobject.JsonObject):
     received_on = jsonobject.DateTimeProperty(default=datetime.utcnow)
 
 
-def get_simple_form_xml(form_id, case_id=None, metadata=None):
+def get_simple_form_xml(form_id, case_id=None, metadata=None, simple_form=SIMPLE_FORM):
     from casexml.apps.case.mock import CaseBlock
 
     metadata = metadata or TestFormMetadata()
     case_block = ''
     if case_id:
         case_block = CaseBlock(create=True, case_id=case_id).as_string()
-    form_xml = SIMPLE_FORM.format(uuid=form_id, case_block=case_block, **metadata.to_json())
+    form_xml = simple_form.format(uuid=form_id, case_block=case_block, **metadata.to_json())
 
     if not metadata.user_id:
         form_xml = form_xml.replace('<n1:userID>{}</n1:userID>'.format(metadata.user_id), '')
@@ -59,11 +59,11 @@ def get_simple_form_xml(form_id, case_id=None, metadata=None):
     return form_xml
 
 
-def get_simple_wrapped_form(form_id, case_id=None, metadata=None, save=True):
+def get_simple_wrapped_form(form_id, case_id=None, metadata=None, save=True, simple_form=SIMPLE_FORM):
     from corehq.form_processor.interfaces.processor import FormProcessorInterface
 
     metadata = metadata or TestFormMetadata()
-    xml = get_simple_form_xml(form_id=form_id, metadata=metadata)
+    xml = get_simple_form_xml(form_id=form_id, metadata=metadata, simple_form=simple_form)
     form_json = convert_xform_to_json(xml)
     interface = FormProcessorInterface(domain=metadata.domain)
     wrapped_form = interface.new_xform(form_json)
