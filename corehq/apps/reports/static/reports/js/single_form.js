@@ -4,7 +4,7 @@
     form" button when looking at a form in case history.
 */
 hqDefine("reports/js/single_form", function() {
-    var initSingleForm = function(form_question_map, ordered_question_values, $container) {
+    var initSingleForm = function(instanceId, form_question_map, ordered_question_values, $container) {
         $container = $container || $("body");
 
         var initial_page_data = hqImport("hqwebapp/js/initial_page_data");
@@ -33,7 +33,7 @@ hqDefine("reports/js/single_form", function() {
                 "<span data-bind='text: splitName, visible: $root.displayProperty() === \"name\"'></span>" +
                 "<span data-bind='text: label, visible: $root.displayProperty() === \"label\"'></span>",
             displayProperty: 'label',
-            saveUrl: initial_page_data.reverse("edit_form"),    // TODO: pass instance ID
+            saveUrl: initial_page_data.reverse("edit_form", instanceId),
         });
 
         $("#archive-form", $container).submit(function() {
