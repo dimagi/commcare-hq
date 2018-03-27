@@ -22,7 +22,7 @@ class WorkflowTask(object):
     """
     def __init__(self, func, func_args=None, func_kwargs=None,
                  rollback_func=None, rollback_args=None, rollback_kwargs=None,
-                 pass_result=False, pass_result_as=None):
+                 returns_result=False, pass_result_as=None, returns_subtasks=False):
         """
         Instantiate WorkflowTask
         """
@@ -34,20 +34,32 @@ class WorkflowTask(object):
         self.rollback_args = rollback_args or []
         self.rollback_kwargs = rollback_kwargs or {}
 
-        self.pass_result = pass_result or pass_result_as
+        self.returns_result = returns_result or pass_result_as
         self.pass_result_as = pass_result_as
+        self.returns_subtasks = returns_subtasks
 
     def __str__(self):
         return self.func.__name__ if self.func else self.__class__.__name__
 
     def run(self):
         if self.func:
-            result = self.func(*self.func_args, **self.func_kwargs)
-            if self.pass_result:
+            result_subtasks = self.func(*self.func_args, **self.func_kwargs)
+
+            if self.returns_result and self.returns_subtasks:
+                result, subtasks = result_subtasks
+            elif self.returns_result:
+                result = result_subtasks
+            elif self.returns_subtasks:
+                subtasks = result_subtasks
+
+            if self.returns_result:
                 if self.pass_result_as:
                     self.rollback_kwargs[self.pass_result_as] = result
                 else:
                     self.rollback_args.append(result)
+
+            if self.returns_subtasks:
+                return subtasks
         else:
             raise NotImplementedError('func must be set, or run() must be defined.')
 

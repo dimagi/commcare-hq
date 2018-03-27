@@ -15,7 +15,7 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.motech.openmrs.finders import PatientFinder
 from corehq.motech.openmrs.logger import logger
 from corehq.motech.openmrs.workflow import WorkflowTask
-from corehq.motech.utils import pformat_json, unpack_args
+from corehq.motech.utils import pformat_json
 
 Should = namedtuple('Should', ['method', 'url', 'parser'])
 PERSON_PROPERTIES = (
@@ -220,46 +220,38 @@ def server_datetime_to_openmrs_timestamp(dt):
     return openmrs_timestamp
 
 
-class CreateVisitTask(WorkflowTask):
+def create_visit(requests, person_uuid, provider_uuid, visit_datetime, values_for_concept, encounter_type,
+                 openmrs_form, visit_type, location_uuid=None):
+    subtasks = []
+    start_datetime = server_datetime_to_openmrs_timestamp(visit_datetime)
+    stop_datetime = server_datetime_to_openmrs_timestamp(
+        visit_datetime + timedelta(days=1) - timedelta(seconds=1)
+    )
 
-    def run(self):
-        self.func_kwargs.setdefault('location_uuid', None)
-        (requests, person_uuid, provider_uuid, visit_datetime, values_for_concept, encounter_type,
-         openmrs_form, visit_type, location_uuid) = unpack_args(
-            'requests person_uuid provider_uuid visit_datetime values_for_concept encounter_type openmrs_form '
-            'visit_type location_uuid', *self.func_args, **self.func_kwargs
+    visit = {
+        'patient': person_uuid,
+        'visitType': visit_type,
+        'startDatetime': start_datetime,
+        'stopDatetime': stop_datetime,
+    }
+    if location_uuid:
+        visit['location'] = location_uuid
+    response = requests.post_with_raise('/ws/rest/v1/visit', json=visit)
+    visit_uuid = response.json()['uuid']
+
+    subtasks.append(
+        WorkflowTask(
+            func=create_encounter,
+            func_args=(requests, person_uuid, provider_uuid, start_datetime, values_for_concept,
+                       encounter_type, openmrs_form, visit_uuid, location_uuid),
+            rollback_func=delete_encounter,
+            rollback_args=(requests, ),
+            returns_result=True,
+            returns_subtasks=True
         )
+    )
 
-        subtasks = []
-        start_datetime = server_datetime_to_openmrs_timestamp(visit_datetime)
-        stop_datetime = server_datetime_to_openmrs_timestamp(
-            visit_datetime + timedelta(days=1) - timedelta(seconds=1)
-        )
-
-        visit = {
-            'patient': person_uuid,
-            'visitType': visit_type,
-            'startDatetime': start_datetime,
-            'stopDatetime': stop_datetime,
-        }
-        if location_uuid:
-            visit['location'] = location_uuid
-        response = requests.post_with_raise('/ws/rest/v1/visit', json=visit)
-        visit_uuid = response.json()['uuid']
-        self.rollback_args.append(visit_uuid)
-
-        subtasks.append(
-            CreateEncounterTask(
-                func=None,
-                func_args=(requests, person_uuid, provider_uuid, start_datetime, values_for_concept,
-                           encounter_type, openmrs_form, visit_uuid, location_uuid),
-                rollback_func=delete_encounter,
-                rollback_args=(requests, ),
-                pass_result=True,
-            )
-        )
-
-        return subtasks
+    return visit_uuid, subtasks
 
 
 def delete_visit(requests, visit_uuid=None):
@@ -267,47 +259,37 @@ def delete_visit(requests, visit_uuid=None):
         return requests.delete_with_raise('/ws/rest/v1/visit/{uuid}'.format(uuid=visit_uuid)).json()
 
 
-class CreateEncounterTask(WorkflowTask):
+def create_encounter(requests, person_uuid, provider_uuid, start_datetime, values_for_concept, encounter_type,
+                     openmrs_form, visit_uuid, location_uuid=None):
+    subtasks = []
+    encounter = {
+        'encounterDatetime': start_datetime,
+        'patient': person_uuid,
+        'form': openmrs_form,
+        'encounterType': encounter_type,
+        'visit': visit_uuid,
+    }
+    if location_uuid:
+        encounter['location'] = location_uuid
+    if provider_uuid:
+        encounter['provider'] = provider_uuid
+    response = requests.post_with_raise('/ws/rest/v1/encounter', json=encounter)
+    encounter_uuid = response.json()['uuid']
 
-    def run(self):
-        self.func_kwargs.setdefault('location_uuid', None)
-        (requests, person_uuid, provider_uuid, start_datetime, values_for_concept, encounter_type, openmrs_form, 
-         visit_uuid, location_uuid) = unpack_args(
-            'requests person_uuid provider_uuid start_datetime values_for_concept encounter_type openmrs_form '
-            'visit_uuid location_uuid', *self.func_args, **self.func_kwargs
-        )
-
-        subtasks = []
-        encounter = {
-            'encounterDatetime': start_datetime,
-            'patient': person_uuid,
-            'form': openmrs_form,
-            'encounterType': encounter_type,
-            'visit': visit_uuid,
-        }
-        if location_uuid:
-            encounter['location'] = location_uuid
-        if provider_uuid:
-            encounter['provider'] = provider_uuid
-        response = requests.post_with_raise('/ws/rest/v1/encounter', json=encounter)
-        encounter_uuid = response.json()['uuid']
-
-        self.rollback_args.append(encounter_uuid)
-
-        for concept_uuid, values in values_for_concept.items():
-            for value in values:
-                subtasks.append(
-                    WorkflowTask(
-                        func=create_obs,
-                        func_args=(requests, encounter_uuid, concept_uuid, person_uuid, start_datetime, value,
-                                   location_uuid),
-                        rollback_func=delete_obs,
-                        rollback_args=(requests, ),
-                        pass_result=True,
-                    )
+    for concept_uuid, values in values_for_concept.items():
+        for value in values:
+            subtasks.append(
+                WorkflowTask(
+                    func=create_obs,
+                    func_args=(requests, encounter_uuid, concept_uuid, person_uuid, start_datetime, value,
+                               location_uuid),
+                    rollback_func=delete_obs,
+                    rollback_args=(requests, ),
+                    returns_result=True,
                 )
+            )
 
-        return subtasks
+    return encounter_uuid, subtasks
 
 
 def delete_encounter(requests, encounter_uuid=None):

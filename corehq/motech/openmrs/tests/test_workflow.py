@@ -77,16 +77,16 @@ class WorkflowTests(TestCase):
         rollback_black_knight.assert_called()
         rollback_func1.assert_called()
 
-    def test_pass_result(self):
+    def test_returns_result(self):
         """
-        WorkflowTask.pass_result should pass the result of func as an arg to rollback_func.
+        WorkflowTask.returns_result should pass the result of func as an arg to rollback_func.
         """
         create_foo = Mock(return_value=5)
         delete_foo = Mock()
         fail = Mock(side_effect=Exception('Fail'))
 
         workflow = [
-            WorkflowTask(func=create_foo, rollback_func=delete_foo, pass_result=True),
+            WorkflowTask(func=create_foo, rollback_func=delete_foo, returns_result=True),
             WorkflowTask(func=fail),
         ]
         errors = execute_workflow(workflow)
@@ -112,6 +112,42 @@ class WorkflowTests(TestCase):
         self.assertTrue(errors)
         create_foo.assert_called()
         delete_foo.assert_called_with(foo_id=5)
+
+    def test_returns_subtasks(self):
+        """
+        WorkflowTask.returns_subtasks should add subtasks to the workflow.
+        """
+        func2 = Mock()
+        func1 = Mock(return_value=[WorkflowTask(func=func2)])
+
+        workflow = [
+            WorkflowTask(func=func1, returns_subtasks=True),
+        ]
+        errors = execute_workflow(workflow)
+
+        self.assertFalse(errors)
+        func1.assert_called()
+        func2.assert_called()
+
+    def test_returns_result_subtasks(self):
+        """
+        returns_result and returns_subtasks should do both.
+        """
+        do_bar = Mock()
+        create_foo = Mock(return_value=(5, [WorkflowTask(func=do_bar)]))
+        delete_foo = Mock()
+        fail = Mock(side_effect=Exception('Fail'))
+
+        workflow = [
+            WorkflowTask(func=create_foo, rollback_func=delete_foo, returns_result=True, returns_subtasks=True),
+            WorkflowTask(func=fail),
+        ]
+        errors = execute_workflow(workflow)
+
+        self.assertTrue(errors)
+        create_foo.assert_called()
+        do_bar.assert_called()
+        delete_foo.assert_called_with(5)
 
 
 class WorkflowErrorTests(TestCase):
