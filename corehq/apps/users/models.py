@@ -2205,12 +2205,25 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
         device = self.get_device(device_id)
         if device:
+            do_update = False
             if when.date() > device.last_used.date():
+                do_update = True
+            elif device_app_meta:
+                existing_app_meta = device.get_meta_for_app(device_app_meta.app_id)
+                if not existing_app_meta:
+                    do_update = True
+                else:
+                    last_request = device_app_meta.last_request
+                    do_update = (
+                        last_request
+                        and existing_app_meta.last_request
+                        and last_request > existing_app_meta.last_request.date()
+                    )
+
+            if do_update:
                 device.last_used = when
                 device.update_meta(commcare_version, device_app_meta)
                 return True
-            else:
-                return False
         else:
             device = DeviceIdLastUsed(device_id=device_id, last_used=when)
             device.update_meta(commcare_version, device_app_meta)
