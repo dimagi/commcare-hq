@@ -57,6 +57,9 @@ class WorkflowTask(object):
 
 
 WorkflowError = namedtuple('WorkflowError', 'task exception is_rollback_error')
+WorkflowError.__str__ = lambda self: 'WorkflowTask "{}" {}failed: {}: {}'.format(
+    self.task, 'rollback ' if self.is_rollback_error else '', self.exception.__class__.__name__, self.exception
+)
 
 
 def execute_workflow(workflow):
