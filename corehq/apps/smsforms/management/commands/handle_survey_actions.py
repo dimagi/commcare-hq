@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from corehq.apps.domain_migration_flags.api import any_migrations_in_progress
 from corehq.apps.smsforms.models import SQLXFormsSession
 from corehq.apps.smsforms.tasks import handle_due_survey_action

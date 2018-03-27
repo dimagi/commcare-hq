@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from corehq.apps.sms.api import send_sms_to_verified_number, MessageMetadata
 from corehq.apps.sms.models import PhoneNumber
 from corehq.apps.smsforms.models import SQLXFormsSession
