@@ -1421,15 +1421,9 @@ class CaseDataView(BaseProjectReportSectionView):
             definition = get_default_definition(
                 dynamic_keys, num_columns=DYNAMIC_CASE_PROPERTIES_COLUMNS)
 
-            info_url = None
-            if toggles.CASE_PROPERTY_HISTORY.enabled_for_request(self.request) \
-                    or toggles.SUPPORT.enabled_for_request(self.request):
-                info_url = reverse('case_property_changes', args=[self.domain, self.case_id, '__placeholder__'])
-
             dynamic_properties = _get_tables_as_rows(
                 dynamic_data,
                 definition,
-                info_url=info_url,
             )
         else:
             dynamic_properties = None
