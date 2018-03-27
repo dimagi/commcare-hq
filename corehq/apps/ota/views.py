@@ -193,17 +193,6 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
     if not is_permitted:
         return HttpResponse(message, status=401), None
 
-    couch_restore_user = as_user_obj if uses_login_as else couch_user
-    app = app_meta = None
-    if app_id:
-        app = get_app_cached(domain, app_id)
-        app_meta = DeviceAppMeta(
-            app_id=app.master_id,
-            build_id=app_id if app.copy_of else None,
-            last_sync=datetime.utcnow(),
-        )
-    update_device_meta(couch_restore_user, device_id, device_app_meta=app_meta)
-
     restore_user = get_restore_user(domain, couch_user, as_user_obj)
     if not restore_user:
         return HttpResponse('Could not find user', status=404), None
