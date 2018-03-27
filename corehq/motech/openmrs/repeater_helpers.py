@@ -12,6 +12,7 @@ from casexml.apps.case.xform import extract_case_blocks
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.cases import get_wrapped_owner, get_owner_id
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.motech.openmrs.const import PERSON_UUID_IDENTIFIER_TYPE_ID
 from corehq.motech.openmrs.finders import PatientFinder
 from corehq.motech.openmrs.logger import logger
 from corehq.motech.openmrs.workflow import WorkflowTask
@@ -55,31 +56,6 @@ ADDRESS_PROPERTIES = (
     'startDate',
     'endDate',
 )
-
-
-# To match cases against their OpenMRS Person UUID, in case config (Project Settings > Data Forwarding > Forward to
-# OpenMRS > Configure > Case config) "patient_identifiers", set the identifier's key to the value of
-# PERSON_UUID_IDENTIFIER_TYPE_ID. e.g.::
-#
-#     "patient_identifiers": {
-#         /* ... */
-#         "uuid": {
-#             "doc_type": "CaseProperty",
-#             "case_property": "openmrs_uuid",
-#         }
-#     }
-#
-# To match against any other OpenMRS identifier, set the key to the UUID of the OpenMRS Identifier Type. e.g.::
-#
-#     "patient_identifiers": {
-#         /* ... */
-#         "e2b966d0-1d5f-11e0-b929-000c29ad1d07": {
-#             "doc_type": "CaseProperty",
-#             "case_property": "nid"
-#         }
-#     }
-#
-PERSON_UUID_IDENTIFIER_TYPE_ID = 'uuid'
 
 
 OpenmrsResponse = namedtuple('OpenmrsResponse', 'status_code reason content')
