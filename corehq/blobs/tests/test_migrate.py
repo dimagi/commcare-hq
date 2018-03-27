@@ -1,6 +1,7 @@
 # coding=utf-8
 from __future__ import print_function
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import json
 import os
 import uuid
@@ -211,7 +212,7 @@ class TestApplicationMigrations(BaseMigrationTest):
 
     def test_migrate_happy_path(self):
         apps = {}
-        form = u'<fake xform source>\u2713</fake>'
+        form = '<fake xform source>\u2713</fake>'
         for doc_type, model_class in self.doc_type_map.items():
             app = model_class()
             app.save()
@@ -340,7 +341,7 @@ class TestXFormInstanceMigrations(BaseMigrationTest):
     def test_migrate_happy_path(self):
         items = {}
         form_name = mod.xform.ATTACHMENT_NAME
-        form = u'<fake xform submission>\u2713</fake>'
+        form = '<fake xform submission>\u2713</fake>'
         data = b'binary data not valid utf-8 \xe4\x94'
         for doc_type, model_class in self.doc_type_map.items():
             item = model_class()

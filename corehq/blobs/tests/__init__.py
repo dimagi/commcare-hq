@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import sys
 
 if "django.conf" not in sys.modules:

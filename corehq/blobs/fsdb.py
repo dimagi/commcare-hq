@@ -1,6 +1,7 @@
 """Filesystem database for large binary data objects (blobs)
 """
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import base64
 import errno
 import os
@@ -123,10 +124,10 @@ def safejoin(root, subpath):
     """
     root = realpath(root)
     if not SAFENAME.match(subpath):
-        raise BadName(u"unsafe path name: %r" % subpath)
+        raise BadName("unsafe path name: %r" % subpath)
     path = realpath(join(root, subpath))
     if commonprefix([root + sep, path]) != root + sep:
-        raise BadName(u"invalid relative path: %r" % subpath)
+        raise BadName("invalid relative path: %r" % subpath)
     return path
 
 
