@@ -318,6 +318,8 @@ class ZippedExportWriter(OnDiskExportWriter):
         self.file.seek(0)
 
     def _get_archive_filename(self, name):
+        if isinstance(name, six.binary_type):
+            name = name.decode('utf-8')
         return os.path.join(self.archive_basepath, '{}{}'.format(name, self.table_file_extension))
 
 
