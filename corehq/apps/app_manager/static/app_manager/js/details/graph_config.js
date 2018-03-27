@@ -386,7 +386,7 @@ hqDefine('app_manager/js/details/graph_config', function() {
         self.lang = moduleOptions.lang;
         self.langs = moduleOptions.langs;
 
-        self.selectedGraphType.subscribe(function(newValue) {
+        self.selectedGraphType.subscribe(function() {
             // Recreate the series objects to be of the correct type.
             self.series(_.map(self.series(), function(series) {
                 return self.createSeries(ko.toJS(series), self.childCaseTypes, self.fixtures, self.lang, self.langs);
@@ -430,7 +430,7 @@ hqDefine('app_manager/js/details/graph_config', function() {
         self.removeSeries = function(series) {
             self.series.remove(series);
         };
-        self.addSeries = function(series) {
+        self.addSeries = function() {
             self.series.push(self.createSeries({}, self.childCaseTypes, self.fixtures, self.lang, self.langs));
         };
         /**
@@ -498,11 +498,11 @@ hqDefine('app_manager/js/details/graph_config', function() {
          * @returns {string}
          */
         self.getDefaultDataPath = function(source) {
-            if (source.type == "custom") {
+            if (source.type === "custom") {
                 return "instance('name')/root/path-to-point/point";
-            } else if (source.type == 'case') {
+            } else if (source.type === 'case') {
                 return "instance('casedb')/casedb/case[@case_type='" + source.name + "'][@status='open'][index/parent=current()/@case_id]";
-            } else if (source.type == 'fixture') {
+            } else if (source.type === 'fixture') {
                 return "instance('" + self.getFixtureInstanceId(source.name) + "')/" + source.name + "_list/" + source.name;
             }
         };
@@ -632,7 +632,7 @@ hqDefine('app_manager/js/details/graph_config', function() {
             self.showDataPath(!self.showDataPath());
         };
         self.selectedSource.subscribe(function(newValue) {
-            if (newValue.value == "custom") {
+            if (newValue.value === "custom") {
                 self.showDataPath(true);
             }
             self.dataPath(self.getDefaultDataPath(newValue.value));
