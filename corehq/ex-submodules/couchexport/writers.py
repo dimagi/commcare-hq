@@ -153,7 +153,7 @@ class ExportWriter(object):
     max_table_name_size = 500
     target_app = 'Excel'  # Where does this writer export to? Export button to say "Export to Excel"
 
-    def open(self, header_table, file, max_column_size=2000, table_titles=None, archive_basepath=''):
+    def open(self, header_table, file, max_column_size=2000, table_titles=None, archive_basepath=b''):
         """
         Create any initial files, headings, etc necessary.
         :param header_table: tuple of one of the following formats
