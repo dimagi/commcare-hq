@@ -872,6 +872,12 @@ class DeviceIdLastUsed(DocumentSchema):
     def get_meta_for_app(self, app_id):
         return filter_by_app(self.app_meta, app_id)
 
+    def get_last_used_app_meta(self):
+        try:
+            return max(self.app_meta, key=lambda a: a.last_request)
+        except ValueError:
+            pass
+
     def __eq__(self, other):
         return all(getattr(self, p) == getattr(other, p) for p in self.properties())
 
@@ -924,6 +930,8 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
 
     # this is the real list of devices
     devices = SchemaListProperty(DeviceIdLastUsed)
+    # most recent device with most recent app for easy reporting
+    last_device = SchemaProperty(DeviceIdLastUsed)
 
     phone_numbers = ListProperty()
     created_on = DateTimeProperty(default=datetime(year=1900, month=1, day=1))
@@ -2223,11 +2231,16 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             if do_update:
                 device.last_used = when
                 device.update_meta(commcare_version, device_app_meta)
+
+                self.last_device = DeviceIdLastUsed.wrap(self.get_last_used_device().to_json())
+                meta = self.last_device.get_last_used_app_meta()
+                self.last_device.app_meta = [meta] if meta else []
                 return True
         else:
             device = DeviceIdLastUsed(device_id=device_id, last_used=when)
             device.update_meta(commcare_version, device_app_meta)
             self.devices.append(device)
+            self.last_device = device
             return True
 
     def get_last_used_device(self):
