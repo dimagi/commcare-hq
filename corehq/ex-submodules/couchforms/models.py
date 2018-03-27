@@ -235,7 +235,7 @@ class XFormInstance(DeferredBlobMixin, SafeSaveDocument, UnicodeMixIn,
 
     @property
     def commcare_version(self):
-        return None
+        return str(self.metadata.commcare_version)
 
     @property
     def app_version(self):

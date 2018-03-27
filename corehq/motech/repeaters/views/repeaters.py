@@ -25,6 +25,7 @@ from corehq.motech.repeaters.forms import (
     CaseRepeaterForm,
     FormRepeaterForm,
     GenericRepeaterForm,
+    OpenmrsRepeaterForm,
     SOAPCaseRepeaterForm,
     SOAPLocationRepeaterForm,
 )
@@ -202,8 +203,14 @@ class AddCaseRepeaterView(AddRepeaterView):
 
 class AddOpenmrsRepeaterView(AddCaseRepeaterView):
     urlname = 'new_openmrs_repeater$'
+    repeater_form_class = OpenmrsRepeaterForm
     page_title = ugettext_lazy("Forward to OpenMRS")
     page_name = ugettext_lazy("Forward to OpenMRS")
+
+    def set_repeater_attr(self, repeater, cleaned_data):
+        repeater = super(AddOpenmrsRepeaterView, self).set_repeater_attr(repeater, cleaned_data)
+        repeater.location_id = self.add_repeater_form.cleaned_data['location_id']
+        return repeater
 
 
 class AddCustomSOAPCaseRepeaterView(AddCaseRepeaterView):

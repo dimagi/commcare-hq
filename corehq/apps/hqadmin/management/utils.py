@@ -18,7 +18,7 @@ LABELS_TO_EXPAND = [
 ]
 
 
-def get_deploy_email_message_body(environment, user, compare_url):
+def get_deploy_email_message_body(user, compare_url):
     try:
         ref_comparison = compare_url.split('/')[-1]
         last_deploy, current_deploy = ref_comparison.split('...')
@@ -134,4 +134,4 @@ if __name__ == '__main__':
     import sys
     if sys.argv[1] == 'get_deploy_email_message_body':
         setup_fake_django()
-        print(get_deploy_email_message_body(*sys.argv[2:5]).encode('utf-8'))
+        print(get_deploy_email_message_body(*sys.argv[3:5]).encode('utf-8'))

@@ -8,7 +8,7 @@ from custom.icds_reports.reports.immunization_coverage_data import get_immunizat
 from django.test import TestCase
 
 
-@override_settings(SERVER_ENVIRONMENT='icds')
+@override_settings(SERVER_ENVIRONMENT='icds-new')
 class TestImmunizationCoverage(TestCase):
     maxDiff = None
 

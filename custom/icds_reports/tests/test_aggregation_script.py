@@ -19,7 +19,7 @@ from six.moves import range
 OUTPUT_PATH = os.path.join(os.path.dirname(__file__), 'outputs')
 
 
-@override_settings(SERVER_ENVIRONMENT='icds')
+@override_settings(SERVER_ENVIRONMENT='icds-new')
 class AggregationScriptTest(TestCase):
 
     def _load_csv(self, path):

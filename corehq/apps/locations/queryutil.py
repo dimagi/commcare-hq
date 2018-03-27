@@ -5,7 +5,6 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import time
-import traceback
 from collections import defaultdict
 from contextlib import contextmanager
 
@@ -22,8 +21,7 @@ class ComparedQuerySet(object):
 
     def __init__(self, mptt_set, cte_set, timing_context):
         self._mptt_set = mptt_set
-        self._cte_set = cte_set
-        self._enable_cte = settings.IS_LOCATION_CTE_ENABLED
+        self._cte_set = cte_set if settings.IS_LOCATION_CTE_ENABLED else None
         if isinstance(timing_context, ComparedQuerySet):
             timing_context = timing_context._timing.clone()
         self._timing = timing_context
@@ -31,7 +29,7 @@ class ComparedQuerySet(object):
     def __str__(self):
         return "MPTT query: {}\n\nCTE query: {}".format(
             self._mptt_set.query,
-            self._cte_set.query,
+            self._cte_set.query if self._cte_set is not None else None,
         )
 
     def __iter__(self):
@@ -46,13 +44,13 @@ class ComparedQuerySet(object):
                             yield item
                 finished = True
             finally:
-                if not self._enable_cte:
+                if self._cte_set is None:
                     return
                 with self._timing("cte"):
                     items2 = list(self._cte_set)
-                ids1 = {_identify(it) for it in items1}
-                ids2 = {_identify(it) for it in items2}
-                if (finished and ids1 != ids2) or not ids1.issubset(ids2):
+                ids1 = [_identify(it) for it in items1]
+                ids2 = [_identify(it) for it in items2]
+                if (finished and ids1 != ids2) or not ids1 == ids2[:len(ids1)]:
                     _report_diff(self, ids1, ids2, "" if finished else "incomplete iteration")
                 if finished:
                     self.__len__()  # compares lengths -> reports diff if necessary
@@ -61,12 +59,12 @@ class ComparedQuerySet(object):
         with _commit_timing(self):
             with self._timing("mptt"):
                 len1 = len(self._mptt_set)
-            if self._enable_cte:
+            if self._cte_set is not None:
                 with self._timing("cte"):
                     len2 = len(self._cte_set)
-        if self._enable_cte and len1 != len2:
-            ids1 = {_identify(it) for it in self._mptt_set}
-            ids2 = {_identify(it) for it in self._cte_set}
+        if self._cte_set is not None and len1 != len2:
+            ids1 = [_identify(it) for it in self._mptt_set]
+            ids2 = [_identify(it) for it in self._cte_set]
             _report_diff(self, ids1, ids2, "%s != %s" % (len1, len2))
         return len1
 
@@ -74,14 +72,16 @@ class ComparedQuerySet(object):
         with _commit_timing(self):
             with self._timing("mptt"):
                 mptt_result = self._mptt_set.__getitem__(key)
-            if self._enable_cte or isinstance(mptt_result, QuerySet):
+            if self._cte_set is not None:
                 with self._timing("cte"):
                     cte_result = self._cte_set.__getitem__(key)
         if isinstance(mptt_result, QuerySet):
-            if not isinstance(cte_result, QuerySet):
+            if self._cte_set is None:
+                cte_result = None
+            elif not isinstance(cte_result, QuerySet):
                 _report_diff(self, mptt_result, cte_result)
             return ComparedQuerySet(mptt_result, cte_result, self)
-        if self._enable_cte:
+        if self._cte_set is not None:
             if isinstance(mptt_result, list) and isinstance(cte_result, list):
                 ids1 = [_identify(it) for it in mptt_result]
                 ids2 = [_identify(it) for it in cte_result]
@@ -96,10 +96,10 @@ class ComparedQuerySet(object):
         with _commit_timing(self):
             with self._timing("mptt"):
                 ex1 = self._mptt_set.exists(*args, **kw)
-            if self._enable_cte:
+            if self._cte_set is not None:
                 with self._timing("cte"):
                     ex2 = self._cte_set.exists(*args, **kw)
-        if self._enable_cte and ex1 != ex2:
+        if self._cte_set is not None and ex1 != ex2:
             _report_diff(self, ex1, ex2)
         return ex1
 
@@ -110,7 +110,7 @@ class ComparedQuerySet(object):
             for qs in other_qs]
         return ComparedQuerySet(
             self._mptt_set.union(*other_mptt, **kwargs),
-            self._cte_set.union(*other_cte, **kwargs),
+            self._cte_set.union(*other_cte, **kwargs) if self._cte_set is not None else None,
             self,
         )
 
@@ -129,7 +129,7 @@ class ComparedQuerySet(object):
         assert isinstance(ids_query, ComparedQuerySet), ids_query
         result = ComparedQuerySet(
             self._mptt_set.filter(id__in=ids_query._mptt_set),
-            self._cte_set.filter(id__in=ids_query._cte_set),
+            self._cte_set.filter(id__in=ids_query._cte_set) if self._cte_set is not None else None,
             TimingContext("accessible_to_user"),
         )
         result._timing += ids_query._timing
@@ -145,10 +145,10 @@ def _make_get_method(name):
         with _commit_timing(self):
             with self._timing("mptt"):
                 obj1 = getattr(self._mptt_set, name)(*args, **kw)
-            if self._enable_cte:
+            if self._cte_set is not None:
                 with self._timing("cte"):
                     obj2 = getattr(self._cte_set, name)(*args, **kw)
-        if self._enable_cte and _identify(obj1) != _identify(obj2):
+        if self._cte_set is not None and _identify(obj1) != _identify(obj2):
             _report_diff(self, obj1, obj2)
         return obj1
     method.__name__ = str(name)  # unicode_literals: must be bytes on PY2
@@ -159,7 +159,7 @@ def _make_qs_method(name):
     def method(self, *args, **kw):
         return ComparedQuerySet(
             getattr(self._mptt_set, name)(*args, **kw),
-            getattr(self._cte_set, name)(*args, **kw),
+            getattr(self._cte_set, name)(*args, **kw) if self._cte_set is not None else None,
             self,
         )
     method.__name__ = str(name)  # unicode_literals: must be bytes on PY2
@@ -192,8 +192,7 @@ for _make_method, name in [
 
 
 def _report_diff(cqs, obj1, obj2, context=""):
-    trace = "" if settings.UNIT_TESTING else "".join(traceback.format_stack())
-    message = """ComparedQuerySet difference:\n{trace}
+    message = """ComparedQuerySet difference:
     MPTT query: {cqs._mptt_set.query}
 
     CTE query: {cqs._cte_set.query}

@@ -32,28 +32,8 @@
         "display_name": "AWC ID",
         "datatype": "string",
         "expression": {
-          "value_expression": {
-            "datatype": null,
-            "type": "property_path",
-            "property_path": [
-              "user_data",
-              "commcare_location_id"
-            ]
-          },
-          "type": "related_doc",
-          "related_doc_type": "CommCareUser",
-          "doc_id_expression": {
-            "expression": {
-              "datatype": null,
-              "type": "property_path",
-              "property_path": [
-                "form",
-                "meta",
-                "userID"
-              ]
-            },
-            "type": "root_doc"
-          }
+          "type": "named",
+          "name": "user_location_id"
         },
         "is_primary_key": false,
         "transform": {},
@@ -66,28 +46,8 @@
         "datatype": "string",
         "expression": {
           "location_id_expression": {
-            "value_expression": {
-              "datatype": null,
-              "type": "property_path",
-              "property_path": [
-                "user_data",
-                "commcare_location_id"
-              ]
-            },
-            "type": "related_doc",
-            "related_doc_type": "CommCareUser",
-            "doc_id_expression": {
-              "expression": {
-                "datatype": null,
-                "type": "property_path",
-                "property_path": [
-                  "form",
-                  "meta",
-                  "userID"
-                ]
-              },
-              "type": "root_doc"
-            }
+            "type": "named",
+            "name": "user_location_id"
           },
           "type": "location_parent_id"
         },
@@ -111,28 +71,8 @@
             "related_doc_type": "Location",
             "doc_id_expression": {
               "location_id_expression": {
-                "value_expression": {
-                  "datatype": null,
-                  "type": "property_path",
-                  "property_path": [
-                    "user_data",
-                    "commcare_location_id"
-                  ]
-                },
-                "type": "related_doc",
-                "related_doc_type": "CommCareUser",
-                "doc_id_expression": {
-                  "expression": {
-                    "datatype": null,
-                    "type": "property_path",
-                    "property_path": [
-                      "form",
-                      "meta",
-                      "userID"
-                    ]
-                  },
-                  "type": "root_doc"
-                }
+                "type": "named",
+                "name": "user_location_id"
               },
               "type": "location_parent_id"
             }
@@ -168,28 +108,8 @@
                 "related_doc_type": "Location",
                 "doc_id_expression": {
                   "location_id_expression": {
-                    "value_expression": {
-                      "datatype": null,
-                      "type": "property_path",
-                      "property_path": [
-                        "user_data",
-                        "commcare_location_id"
-                      ]
-                    },
-                    "type": "related_doc",
-                    "related_doc_type": "CommCareUser",
-                    "doc_id_expression": {
-                      "expression": {
-                        "datatype": null,
-                        "type": "property_path",
-                        "property_path": [
-                          "form",
-                          "meta",
-                          "userID"
-                        ]
-                      },
-                      "type": "root_doc"
-                    }
+                    "type": "named",
+                    "name": "user_location_id"
                   },
                   "type": "location_parent_id"
                 }
@@ -237,28 +157,8 @@
                     "related_doc_type": "Location",
                     "doc_id_expression": {
                       "location_id_expression": {
-                        "value_expression": {
-                          "datatype": null,
-                          "type": "property_path",
-                          "property_path": [
-                            "user_data",
-                            "commcare_location_id"
-                          ]
-                        },
-                        "type": "related_doc",
-                        "related_doc_type": "CommCareUser",
-                        "doc_id_expression": {
-                          "expression": {
-                            "datatype": null,
-                            "type": "property_path",
-                            "property_path": [
-                              "form",
-                              "meta",
-                              "userID"
-                            ]
-                          },
-                          "type": "root_doc"
-                        }
+                        "type": "named",
+                        "name": "user_location_id"
                       },
                       "type": "location_parent_id"
                     }
@@ -522,6 +422,20 @@
           "index_expression": {
             "type": "constant",
             "constant": 0
+          }
+        }
+      },
+      "user_location_id": {
+        "type": "icds_user_location",
+        "user_id_expression": {
+          "type": "root_doc",
+          "expression": {
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "meta",
+              "userID"
+            ]
           }
         }
       }

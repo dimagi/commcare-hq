@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 
 from __future__ import unicode_literals
-from collections import namedtuple
+from collections import namedtuple, defaultdict
 from datetime import timedelta
 import re
 
@@ -9,9 +9,11 @@ from requests import HTTPError
 from six.moves import zip
 
 from casexml.apps.case.xform import extract_case_blocks
+from corehq.apps.locations.models import SQLLocation
+from corehq.apps.users.cases import get_wrapped_owner, get_owner_id
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.motech.openmrs.finders import PatientFinder
 from corehq.motech.openmrs.logger import logger
-from corehq.motech.openmrs.openmrs_config import IdMatcher
 from corehq.motech.utils import pformat_json
 
 
@@ -54,9 +56,30 @@ ADDRESS_PROPERTIES = (
     'startDate',
     'endDate',
 )
-# To match cases against their OpenMRS Person UUID, set the IdMatcher's identifier_type_id to the value of
-# PERSON_UUID_IDENTIFIER_TYPE_ID. To match against any other OpenMRS identifier, set the IdMatcher's
-# identifier_type_id to the UUID of the OpenMRS Identifier Type.
+
+
+# To match cases against their OpenMRS Person UUID, in case config (Project Settings > Data Forwarding > Forward to
+# OpenMRS > Configure > Case config) "patient_identifiers", set the identifier's key to the value of
+# PERSON_UUID_IDENTIFIER_TYPE_ID. e.g.::
+#
+#     "patient_identifiers": {
+#         /* ... */
+#         "uuid": {
+#             "doc_type": "CaseProperty",
+#             "case_property": "openmrs_uuid",
+#         }
+#     }
+#
+# To match against any other OpenMRS identifier, set the key to the UUID of the OpenMRS Identifier Type. e.g.::
+#
+#     "patient_identifiers": {
+#         /* ... */
+#         "e2b966d0-1d5f-11e0-b929-000c29ad1d07": {
+#             "doc_type": "CaseProperty",
+#             "case_property": "nid"
+#         }
+#     }
+#
 PERSON_UUID_IDENTIFIER_TYPE_ID = 'uuid'
 
 
@@ -111,6 +134,42 @@ def parse_request_exception(err):
 
 def url(url_format_string, **kwargs):
     return url_format_string.format(**kwargs)
+
+
+def get_case_location(case):
+    """
+    If the owner of the case is a location, return it. Otherwise return
+    the owner's primary location. If the case owner does not have a
+    primary location, return None.
+    """
+    case_owner = get_wrapped_owner(get_owner_id(case))
+    if isinstance(case_owner, SQLLocation):
+        return case_owner
+    location_id = case_owner.get_location_id(case.domain)
+    return SQLLocation.by_location_id(location_id) if location_id else None
+
+
+def get_case_location_ancestor_repeaters(case):
+    """
+    Determine the location of the case's owner, and search up its
+    ancestors to find the first OpenMRS Repeater(s).
+
+    Returns a list because more than one OpenmrsRepeater may have the
+    same location.
+    """
+    from corehq.motech.openmrs.dbaccessors import get_openmrs_repeaters_by_domain
+
+    case_location = get_case_location(case)
+    if not case_location:
+        return []
+    location_repeaters = defaultdict(list)
+    for repeater in get_openmrs_repeaters_by_domain(case.domain):
+        if repeater.location_id:
+            location_repeaters[repeater.location_id].append(repeater)
+    for location_id in reversed(case_location.path):
+        if location_id in location_repeaters:
+            return location_repeaters[location_id]
+    return []
 
 
 def create_person_attribute(requests, person_uuid, attribute_type_uuid, value):
@@ -292,16 +351,34 @@ def get_subresource_instances(requests, person_uuid, subresource):
     )).json()['results']
 
 
-def get_patient(requests, info, openmrs_config):
+def find_patient(requests, domain, case_id, openmrs_config):
+    case = CaseAccessors(domain).get_case(case_id)
+    patient_finder = PatientFinder.wrap(openmrs_config.case_config.patient_finder)
+    patients = patient_finder.find_patients(requests, case, openmrs_config.case_config)
+    # If PatientFinder can't narrow down the number of candidate
+    # patients, don't guess. Just admit that we don't know.
+    return patients[0] if len(patients) == 1 else None
+
+
+def get_patient(requests, domain, info, openmrs_config):
     patient = None
-    for id_matcher in openmrs_config.case_config.id_matchers:
-        assert isinstance(id_matcher, IdMatcher)
-        if id_matcher.case_property in info.extra_fields:
-            patient = get_patient_by_id(
-                requests, id_matcher.identifier_type_id,
-                info.extra_fields[id_matcher.case_property])
-            if patient:
-                break
+    for id_ in openmrs_config.case_config.match_on_ids:
+        identifier = openmrs_config.case_config.patient_identifiers[id_]
+        # identifier.case_property must be in info.extra_fields because OpenmrsRepeater put it there
+        assert identifier.case_property in info.extra_fields, 'identifier case_property missing from extra_fields'
+        patient = get_patient_by_id(requests, id_, info.extra_fields[identifier.case_property])
+        if patient:
+            break
+    else:
+        # Definitive IDs did not match a patient in OpenMRS.
+        if openmrs_config.case_config.patient_finder:
+            # Search for patients based on other case properties
+            logger.debug(
+                'Case %s did not match patient with OpenmrsCaseConfig.match_on_ids. Search using '
+                'PatientFinder "%s"', info.case_id, openmrs_config.case_config.patient_finder['doc_type'],
+            )
+            patient = find_patient(requests, domain, info.case_id, openmrs_config)
+
     return patient
 
 
@@ -325,13 +402,31 @@ class PatientSearchParser(object):
         self.response_json = response_json
 
     def get_patient_matching_identifiers(self, patient_identifier_type, patient_identifier):
-        patients = [
-            patient
-            for patient in self.response_json['results']
-            for identifier in patient['identifiers']
-            if identifier['identifier'] == patient_identifier and
-            identifier['identifierType']['uuid'] == patient_identifier_type
-        ]
+        """
+        Return the patient that matches the given identifier. If the
+        number of matches is zero or more than one, return None.
+
+        :param patient_identifier_type: PERSON_UUID_IDENTIFIER_TYPE_ID
+            to match the patient's OpenMRS Person UUID, otherwise the
+            UUID of the OpenMRS identifier type
+        :param patient_identifier: The value that uniquely identifies
+            the patient we want.
+
+        """
+        patients = []
+        for patient in self.response_json['results']:
+            if (
+                patient_identifier_type == PERSON_UUID_IDENTIFIER_TYPE_ID and
+                patient['uuid'] == patient_identifier
+            ):
+                patients.append(patient)
+            else:
+                for identifier in patient['identifiers']:
+                    if (
+                        identifier['identifier'] == patient_identifier and
+                        identifier['identifierType']['uuid'] == patient_identifier_type
+                    ):
+                        patients.append(patient)
         try:
             patient, = patients
         except ValueError:

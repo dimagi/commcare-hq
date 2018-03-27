@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from datetime import datetime
 from abc import ABCMeta, abstractmethod
 from corehq.sql_db.util import handle_connection_failure, get_default_and_partitioned_db_aliases
@@ -74,7 +75,7 @@ class Change(object):
         return self.document
 
     def __repr__(self):
-        return u'Change id: {}, seq: {}, deleted: {}, metadata: {}, doc: {}'.format(
+        return 'Change id: {}, seq: {}, deleted: {}, metadata: {}, doc: {}'.format(
             self.id, self.sequence_id, self.deleted, self.metadata, self.document
         )
 

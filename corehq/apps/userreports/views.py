@@ -53,6 +53,7 @@ from corehq.apps.domain.decorators import login_and_domain_required, login_or_ba
 from corehq.apps.locations.permissions import conditionally_location_safe
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.reports.dispatcher import cls_to_view_login_and_domain
+from corehq.apps.reports.models import ReportConfig
 from corehq.apps.hqwebapp.decorators import (
     use_select2,
     use_daterangepicker,
@@ -279,7 +280,7 @@ class ReportBuilderView(BaseDomainView):
             ),
             'report_limit': allowed_num_reports,
             'paywall_url': paywall_home(self.domain),
-            'pricing_page_url': reverse('public_pricing') if settings.ENABLE_PRELOGIN_SITE else "",
+            'pricing_page_url': settings.PRICING_PAGE_URL,
             'support_email': settings.SUPPORT_EMAIL,
         })
         return main_context
@@ -346,7 +347,7 @@ class ReportBuilderPaywallPricing(ReportBuilderPaywallBase):
             'at_report_limit': num_builder_reports >= max_allowed_reports and max_allowed_reports is not None,
             'max_allowed_reports': max_allowed_reports if max_allowed_reports is not None else 0,
             'support_email': settings.SUPPORT_EMAIL,
-            'pricing_page_url': reverse('public_pricing') if settings.ENABLE_PRELOGIN_SITE else "",
+            'pricing_page_url': settings.PRICING_PAGE_URL,
         })
         return context
 
@@ -736,6 +737,13 @@ def delete_report(request, domain, report_id):
         ),
         extra_tags='html'
     )
+
+    report_configs = ReportConfig.by_domain_and_owner(
+        domain, request.couch_user.get_id, "configurable")
+    for rc in report_configs:
+        if rc.subreport_slug == config.get_id:
+            rc.delete()
+
     if did_purge_something:
         messages.warning(
             request,

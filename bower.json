@@ -36,6 +36,7 @@
     "jquery-form": "4.2.2",
     "jquery-migrate": "1.2.1",
     "jquery.rmi": "dimagi/jquery.rmi#8c34f32817",
+    "jquery-textchange": "0.2.3",
     "jquery-timeago": "1.2.0",
     "jquery-tiny-pubsub": "https://github.com/cowboy/jquery-tiny-pubsub.git#~0.7.0",
     "jquery-treetable": "^3.2.0",

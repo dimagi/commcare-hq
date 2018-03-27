@@ -121,15 +121,17 @@ $BODY$
 DECLARE
 	_tablename text;
 	_ucr_child_monthly_table text;
+  _agg_complementary_feeding_table text;
 	_start_date date;
 BEGIN
 	_start_date = date_trunc('MONTH', $1)::DATE;
 	_tablename := 'child_health_monthly' || '_' || _start_date;
 	EXECUTE 'SELECT table_name FROM ucr_table_name_mapping WHERE table_type = ' || quote_literal('child_health_monthly') INTO _ucr_child_monthly_table;
+	EXECUTE 'SELECT table_name FROM ucr_table_name_mapping WHERE table_type = ' || quote_literal('complementary_feeding') INTO _agg_complementary_feeding_table;
 
 	EXECUTE 'DELETE FROM ' || quote_ident(_tablename);
 	EXECUTE 'INSERT INTO ' || quote_ident(_tablename) ||
-	'(SELECT ' ||
+  ' ( ' ||
 		'awc_id, ' ||
 		'case_id, ' ||
 		'month, ' ||
@@ -156,28 +158,20 @@ BEGIN
 		'ebf_no_bf_child_too_old, ' ||
 		'ebf_no_bf_mother_sick, ' ||
 		'cf_eligible, ' ||
-		'cf_in_month, ' ||
-		'cf_diet_diversity, ' ||
-		'cf_diet_quantity, ' ||
-		'cf_handwashing, ' ||
-		'cf_demo, ' ||
 		'fully_immunized_eligible, ' ||
 		'fully_immunized_on_time, ' ||
 		'fully_immunized_late, ' ||
 		'counsel_ebf, ' ||
 		'counsel_adequate_bf, ' ||
-		'counsel_pediatric_ifa, ' ||
-		'counsel_comp_feeding_vid, ' ||
 		'counsel_increase_food_bf, ' ||
 		'counsel_manage_breast_problems, ' ||
 		'counsel_skin_to_skin, ' ||
 		'counsel_immediate_breastfeeding, ' ||
-		'weight_recorded_in_month, ' ||
-		'height_recorded_in_month, ' ||
+		'recorded_weight, ' ||
+		'recorded_height, ' ||
 		'has_aadhar_id, ' ||
 		'thr_eligible, ' ||
 		'pnc_eligible, ' ||
-		'cf_initiated, ' ||
 		'cf_initiation_eligible, ' ||
 		'height_measured_in_month, ' ||
 		'current_month_stunting, ' ||
@@ -187,12 +181,105 @@ BEGIN
 		'valid_in_month, ' ||
 		'valid_all_registered_in_month, ' ||
 		'ebf_no_info_recorded, ' ||
-		'dob ' ||
+		'dob, ' ||
+		'sex, ' ||
+		'age_tranche, ' ||
+		'caste, ' ||
+		'disabled, ' ||
+		'minority, ' ||
+		'resident ' ||
+  ') (SELECT ' ||
+		'awc_id, ' ||
+		'case_id, ' ||
+		'month, ' ||
+		'age_in_months, ' ||
+		'open_in_month, ' ||
+		'alive_in_month, ' ||
+		'wer_eligible, ' ||
+		'nutrition_status_last_recorded, ' ||
+		'current_month_nutrition_status, ' ||
+		'nutrition_status_weighed, ' ||
+		'num_rations_distributed, ' ||
+		'pse_eligible, ' ||
+		'pse_days_attended, ' ||
+		'born_in_month, ' ||
+		'low_birth_weight_born_in_month, ' ||
+		'bf_at_birth_born_in_month, ' ||
+		'ebf_eligible, ' ||
+		'ebf_in_month, ' ||
+		'ebf_not_breastfeeding_reason, ' ||
+		'ebf_drinking_liquid, ' ||
+		'ebf_eating, ' ||
+		'ebf_no_bf_no_milk, ' ||
+		'ebf_no_bf_pregnant_again, ' ||
+		'ebf_no_bf_child_too_old, ' ||
+		'ebf_no_bf_mother_sick, ' ||
+		'cf_eligible, ' ||
+		'fully_immunized_eligible, ' ||
+		'fully_immunized_on_time, ' ||
+		'fully_immunized_late, ' ||
+		'counsel_ebf, ' ||
+		'counsel_adequate_bf, ' ||
+		'counsel_increase_food_bf, ' ||
+		'counsel_manage_breast_problems, ' ||
+		'counsel_skin_to_skin, ' ||
+		'counsel_immediate_breastfeeding, ' ||
+		'weight_recorded_in_month, ' ||
+		'height_recorded_in_month, ' ||
+		'has_aadhar_id, ' ||
+		'thr_eligible, ' ||
+		'pnc_eligible, ' ||
+		'cf_initiation_eligible, ' ||
+		'height_measured_in_month, ' ||
+		'current_month_stunting, ' ||
+		'stunting_last_recorded, ' ||
+		'wasting_last_recorded, ' ||
+		'current_month_wasting, ' ||
+		'valid_in_month, ' ||
+		'valid_all_registered_in_month, ' ||
+		'ebf_no_info_recorded, ' ||
+		'dob, ' ||
+		'sex, ' ||
+		'age_tranche, ' ||
+		'caste, ' ||
+		'disabled, ' ||
+		'minority, ' ||
+		'resident ' ||
 		'FROM ' || quote_ident(_ucr_child_monthly_table) || ' WHERE month = ' || quote_literal(_start_date) || ')';
 
-    EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx1') || ' ON ' || quote_ident(_tablename) || '(awc_id, case_id)';
+    EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx2') || ' ON ' || quote_ident(_tablename) || '(case_id)';
 
-    -- There may be better indexes to put here. Should investigate what tableau queries
+    EXECUTE 'UPDATE ' || quote_ident(_tablename) || ' chm_monthly SET ' ||
+      'cf_in_month = COALESCE(agg.comp_feeding_latest, 0), ' ||
+      'cf_diet_diversity = COALESCE(agg.diet_diversity, 0), ' ||
+      'cf_diet_quantity = COALESCE(agg.diet_quantity, 0), ' ||
+      'cf_handwashing = COALESCE(agg.hand_wash, 0), ' ||
+      'cf_demo = COALESCE(agg.demo_comp_feeding, 0), ' ||
+      'counsel_pediatric_ifa = COALESCE(agg.counselled_pediatric_ifa, 0) , ' ||
+      'counsel_comp_feeding_vid = COALESCE(agg.play_comp_feeding_vid, 0)  ' ||
+    'FROM ' || quote_ident(_agg_complementary_feeding_table) || ' agg ' ||
+    'WHERE chm_monthly.case_id = agg.case_id AND chm_monthly.cf_eligible = 1 AND agg.month = ' || quote_literal(_start_date);
+
+    EXECUTE 'UPDATE ' || quote_ident(_tablename) || ' chm_monthly SET ' ||
+    '  cf_initiation_in_month = COALESCE(agg.comp_feeding_ever, 0) ' ||
+    'FROM ' || quote_ident(_agg_complementary_feeding_table) || ' agg ' ||
+    'WHERE chm_monthly.case_id = agg.case_id AND chm_monthly.cf_initiation_eligible = 1 AND agg.month = ' || quote_literal(_start_date);
+
+    -- Likely not needed, but these have been coerced to 0 historically
+    EXECUTE 'UPDATE ' || quote_ident(_tablename) || ' chm_monthly SET ' ||
+      'cf_in_month = COALESCE(cf_in_month, 0), ' ||
+      'cf_diet_diversity = COALESCE(cf_diet_diversity, 0), ' ||
+      'cf_diet_quantity = COALESCE(cf_diet_quantity, 0), ' ||
+      'cf_handwashing = COALESCE(cf_handwashing, 0), ' ||
+      'cf_demo = COALESCE(cf_demo, 0), ' ||
+      'counsel_pediatric_ifa = COALESCE(counsel_pediatric_ifa, 0), ' ||
+      'counsel_comp_feeding_vid = COALESCE(counsel_comp_feeding_vid, 0), ' ||
+      'cf_initiation_in_month = COALESCE(cf_initiation_in_month, 0) ' ||
+    'WHERE cf_in_month IS NULL OR cf_diet_diversity IS NULL OR cf_diet_quantity IS NULL ' ||
+      'OR cf_handwashing IS NULL OR cf_demo IS NULL OR counsel_pediatric_ifa IS NULL ' ||
+      'OR counsel_comp_feeding_vid IS NULL OR cf_initiation_in_month IS NULL';
+
+    EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx1') || ' ON ' || quote_ident(_tablename) || '(awc_id, case_id)';
 END;
 $BODY$
 LANGUAGE plpgsql;
@@ -313,6 +400,7 @@ DECLARE
 	_tablename4 text;
 	_tablename5 text;
 	_ucr_child_monthly_table text;
+	_child_health_monthly_table text;
 	_start_date date;
 	_end_date date;
 	_all_text text;
@@ -328,13 +416,77 @@ BEGIN
 	_tablename3 := 'agg_child_health' || '_' || _start_date || '_3';
 	_tablename4 := 'agg_child_health' || '_' || _start_date || '_4';
 	_tablename5 := 'agg_child_health' || '_' || _start_date || '_5';
+	_child_health_monthly_table := 'child_health_monthly' || '_' || _start_date;
 	EXECUTE 'SELECT table_name FROM ucr_table_name_mapping WHERE table_type = ' || quote_literal('child_health_monthly') INTO _ucr_child_monthly_table;
 	_all_text = 'All';
 	_null_value = NULL;
 	_blank_value = '';
 	_no_text = 'no';
 
-	EXECUTE 'INSERT INTO ' || quote_ident(_tablename5) || '(SELECT ' ||
+	EXECUTE 'INSERT INTO ' || quote_ident(_tablename5) || ' ' ||
+    '(' ||
+		'state_id, ' ||
+		'district_id, ' ||
+		'block_id, ' ||
+		'supervisor_id, ' ||
+		'awc_id, ' ||
+		'month, ' ||
+		'gender, ' ||
+		'age_tranche, ' ||
+		'caste, ' ||
+		'disabled, ' ||
+    'minority, ' ||
+    'resident, ' ||
+		'valid_in_month, ' ||
+		'nutrition_status_weighed, ' ||
+		'nutrition_status_unweighed, ' ||
+		'nutrition_status_normal, ' ||
+		'nutrition_status_moderately_underweight, ' ||
+		'nutrition_status_severely_underweight, ' ||
+		'wer_eligible, ' ||
+		'thr_eligible, ' ||
+		'rations_21_plus_distributed, ' ||
+		'pse_eligible, ' ||
+		'pse_attended_16_days, ' ||
+		'born_in_month, ' ||
+		'low_birth_weight_in_month, ' ||
+		'bf_at_birth, ' ||
+		'ebf_eligible, ' ||
+		'ebf_in_month, ' ||
+		'cf_eligible, ' ||
+		'cf_in_month, ' ||
+		'cf_diet_diversity, ' ||
+		'cf_diet_quantity, ' ||
+		'cf_demo, ' ||
+		'cf_handwashing, ' ||
+		'counsel_increase_food_bf, ' ||
+		'counsel_manage_breast_problems, ' ||
+		'counsel_ebf, ' ||
+		'counsel_adequate_bf, ' ||
+		'counsel_pediatric_ifa, ' ||
+		'counsel_play_cf_video, ' ||
+		'fully_immunized_eligible, ' ||
+		'fully_immunized_on_time, ' ||
+		'fully_immunized_late, ' ||
+		'has_aadhar_id, ' ||
+		'aggregation_level, ' ||
+		'pnc_eligible, ' ||
+		'height_eligible, ' ||
+		'wasting_moderate, ' ||
+		'wasting_severe, ' ||
+		'stunting_moderate, ' ||
+		'stunting_severe, ' ||
+		'cf_initiation_in_month, ' ||
+		'cf_initiation_eligible, ' ||
+		'height_measured_in_month, ' ||
+		'wasting_normal, ' ||
+		'stunting_normal, ' ||
+		'valid_all_registered_in_month, ' ||
+		'ebf_no_info_recorded, ' ||
+		'weighed_and_height_measured_in_month,' ||
+		'weighed_and_born_in_month ' ||
+    ')' ||
+  '(SELECT ' ||
 		'state_id, ' ||
 		'district_id, ' ||
 		'block_id, ' ||
@@ -344,9 +496,9 @@ BEGIN
 		'sex, ' ||
 		'age_tranche, ' ||
 		'caste, ' ||
-		'COALESCE(disabled, ' || quote_nullable(_no_text) || '), ' ||
-		'COALESCE(minority, ' || quote_nullable(_no_text) || '), ' ||
-		'COALESCE(resident, ' || quote_nullable(_no_text) || '), ' ||
+		'COALESCE(disabled, ' || quote_nullable(_no_text) || ') as coalesce_disabled, ' ||
+		'COALESCE(minority, ' || quote_nullable(_no_text) || ') as coalesce_minority, ' ||
+		'COALESCE(resident, ' || quote_nullable(_no_text) || ') as coalesce_resident, ' ||
 		'sum(valid_in_month), ' ||
 		'sum(nutrition_status_weighed), ' ||
 		'sum(nutrition_status_unweighed), ' ||
@@ -363,18 +515,18 @@ BEGIN
 		'sum(bf_at_birth_born_in_month), ' ||
 		'sum(ebf_eligible), ' ||
 		'sum(ebf_in_month), ' ||
-		'sum(cf_eligible), ' ||
-		'sum(cf_in_month), ' ||
-		'sum(cf_diet_diversity), ' ||
-		'sum(cf_diet_quantity), ' ||
-		'sum(cf_demo), ' ||
-		'sum(cf_handwashing), ' ||
+		'0, ' ||
+		'0, ' ||
+		'0, ' ||
+		'0, ' ||
+		'0, ' ||
+		'0, ' ||
 		'sum(counsel_increase_food_bf), ' ||
 		'sum(counsel_manage_breast_problems), ' ||
 		'sum(counsel_ebf), ' ||
 		'sum(counsel_adequate_bf), ' ||
-		'sum(counsel_pediatric_ifa), ' ||
-		'sum(counsel_comp_feeding_vid), ' ||
+		'0, ' ||
+		'0, ' ||
 		'sum(fully_immunized_eligible), ' ||
 		'sum(fully_immunized_on_time), ' ||
 		'sum(fully_immunized_late), ' ||
@@ -386,8 +538,8 @@ BEGIN
 		'sum(CASE WHEN wasting_severe = 1 AND nutrition_status_weighed = 1 AND height_measured_in_month = 1 THEN 1 ELSE 0 END), ' ||
 		'sum(CASE WHEN stunting_moderate = 1 AND height_measured_in_month = 1 THEN 1 ELSE 0 END), ' ||
 		'sum(CASE WHEN stunting_severe = 1 AND height_measured_in_month = 1 THEN 1 ELSE 0 END), ' ||
-		'sum(cf_initiated), ' ||
-		'sum(cf_initiation_eligible), ' ||
+		'0, ' ||
+		'0, ' ||
 		'sum(height_measured_in_month), ' ||
 		'sum(CASE WHEN wasting_normal = 1 AND nutrition_status_weighed = 1 AND height_measured_in_month = 1 THEN 1 ELSE 0 END), ' ||
 		'sum(CASE WHEN stunting_normal = 1 AND height_measured_in_month = 1 THEN 1 ELSE 0 END), ' ||
@@ -397,7 +549,7 @@ BEGIN
 		'sum(CASE WHEN (born_in_month = 1 AND (nutrition_status_weighed = 1 OR low_birth_weight_born_in_month = 1)) THEN 1 ELSE 0 END) ' ||
 		'FROM ' || quote_ident(_ucr_child_monthly_table) || ' ' ||
     'WHERE state_id != ' || quote_literal(_blank_value) ||  ' AND month = ' || quote_literal(_start_date) || ' ' ||
-		'GROUP BY state_id, district_id, block_id, supervisor_id, awc_id, month, sex, age_tranche, caste, disabled, minority, resident)';
+		'GROUP BY state_id, district_id, block_id, supervisor_id, awc_id, month, sex, age_tranche, caste, coalesce_disabled, coalesce_minority, coalesce_resident)';
 
 	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename5 || '_indx1') || ' ON ' || quote_ident(_tablename5) || '(state_id, district_id, block_id, supervisor_id, awc_id)';
 	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename5 || '_indx2') || ' ON ' || quote_ident(_tablename5) || '(district_id)';
@@ -407,6 +559,35 @@ BEGIN
 	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename5 || '_indx6') || ' ON ' || quote_ident(_tablename5) || '(gender)';
 	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename5 || '_indx7') || ' ON ' || quote_ident(_tablename5) || '(age_tranche)';
 
+  EXECUTE 'UPDATE ' || quote_ident(_tablename5) || ' agg_child_health SET ' ||
+    'cf_eligible = temp.cf_eligible, ' ||
+    'cf_in_month = temp.cf_in_month, ' ||
+    'cf_diet_diversity = temp.cf_diet_diversity, ' ||
+    'cf_diet_quantity = temp.cf_diet_quantity, ' ||
+    'cf_demo = temp.cf_demo, ' ||
+    'cf_handwashing = temp.cf_handwashing, ' ||
+    'counsel_pediatric_ifa = temp.counsel_pediatric_ifa, ' ||
+    'counsel_play_cf_video = temp.counsel_comp_feeding_vid, ' ||
+    'cf_initiation_in_month = temp.cf_initiation_in_month, ' ||
+    'cf_initiation_eligible = temp.cf_initiation_eligible ' ||
+    'FROM (SELECT ' ||
+      'awc_id, month, sex, age_tranche, caste, disabled, minority, resident, ' ||
+      'sum(cf_eligible) as cf_eligible, ' ||
+      'sum(cf_in_month) as cf_in_month, ' ||
+      'sum(cf_diet_diversity) as cf_diet_diversity, ' ||
+      'sum(cf_diet_quantity) as cf_diet_quantity, ' ||
+      'sum(cf_demo) as cf_demo, ' ||
+      'sum(cf_handwashing) as cf_handwashing, ' ||
+      'sum(counsel_pediatric_ifa) as counsel_pediatric_ifa, ' ||
+      'sum(counsel_comp_feeding_vid) as counsel_comp_feeding_vid, ' ||
+      'sum(cf_initiation_in_month) as cf_initiation_in_month, ' ||
+      'sum(cf_initiation_eligible) as cf_initiation_eligible ' ||
+      'FROM ' || quote_ident(_child_health_monthly_table) || ' ' ||
+      'GROUP BY awc_id, month, sex, age_tranche, caste, disabled, minority, resident) temp ' ||
+    'WHERE temp.awc_id = agg_child_health.awc_id AND temp.month = agg_child_health.month AND temp.sex = agg_child_health.gender ' ||
+      'AND temp.age_tranche = agg_child_health.age_tranche AND temp.caste = agg_child_health.caste ' ||
+      'AND temp.disabled = agg_child_health.disabled AND temp.minority = agg_child_health.minority ' ||
+      'AND temp.resident = agg_child_health.resident';
 
 	--Roll up by location
 	_rollup_text = 'sum(valid_in_month), ' ||
