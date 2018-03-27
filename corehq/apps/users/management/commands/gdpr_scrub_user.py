@@ -12,12 +12,11 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('user_id')
         parser.add_argument('domain')
-        self.handle("0a286c0eb864a382a85974336f9dad09", "test-proj-2")
 
     def handle(self, user_id, domain, **options):
         this_form_accessor = FormAccessors(domain=domain)
         form_ids = this_form_accessor.get_form_ids_for_user(user_id)
-        new_username = "Deleted username success - UPDATED"
+        new_username = "Redacted User (GDPR)"
         for form_data in this_form_accessor.iter_forms(form_ids):
             form_attachment_xml_new = self.parse_form_data(form_data, new_username)
             this_form_accessor.modify_attachment_xml_and_metadata(form_data, form_attachment_xml_new)
@@ -35,6 +34,3 @@ class Command(BaseCommand):
         # Convert the dict back to xml
         form_attachment_xml_new = xmltodict.unparse(form_attachment_dict)
         return form_attachment_xml_new
-
-if __name__ == "__main__":
-    Command().handle(username="testuser")

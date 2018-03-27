@@ -18,21 +18,29 @@ import xmltodict
 
 DOMAIN = 'test-form-accessor'
 
+
 class GDPRScrubUserTests(TestCase):
     def setUp(self):
         super(GDPRScrubUserTests, self).setUp()
         self.db = TemporaryFilesystemBlobDB()
+        self.new_username = "replacement_sql_username"
 
     def tearDown(self):
         self.db.close()
         super(GDPRScrubUserTests, self).tearDown()
 
+    def test_parse_form_data(self):
+        form = create_form_for_test(DOMAIN)
+        new_form_xml = Command().parse_form_data(form, self.new_username)
+        new_form_dict = xmltodict.parse(new_form_xml)
+        self.assertEqual(new_form_dict["data"]["n0:meta"]["n0:username"], self.new_username)
+
     @use_sql_backend
     def test_modify_attachment_xml_and_metadata_sql(self):
         # Create a form
-        form = create_form_for_test(DOMAIN)
-        new_username = "replacement_sql_username"
-        new_form_xml = Command().parse_form_data(form, new_username)
+        # form = create_form_for_test(DOMAIN)
+        form = get_simple_wrapped_form(uuid.uuid4().hex, metadata=TestFormMetadata(domain=DOMAIN))
+        new_form_xml = Command().parse_form_data(form, self.new_username)
         FormAccessors(DOMAIN).modify_attachment_xml_and_metadata(form, new_form_xml)
 
         # Test that the xml changed
@@ -40,23 +48,22 @@ class GDPRScrubUserTests(TestCase):
         form_attachment_dict = xmltodict.parse(form_attachment_xml)
         username_in_dict = form_attachment_dict["data"]["n0:meta"]["n0:username"]
 
-        self.assertEqual(username_in_dict, new_username)
+        self.assertEqual(username_in_dict, self.new_username)
 
-        # Test that the database updated
+        # Test that the metadata changed in the database
         attachment_metadata = form.get_attachment_meta("form.xml")
-        # Read content:
         form_data_from_db = XFormAttachmentSQL.read_content(attachment_metadata)
         attachment_metadata_dict = xmltodict.parse(form_data_from_db)
-        self.assertEqual(attachment_metadata_dict["data"]["n0:meta"]["n0:username"], new_username)
+        self.assertEqual(attachment_metadata_dict["data"]["n0:meta"]["n0:username"], self.new_username)
 
     def test_modify_attachment_xml_and_metadata_couch(self):
-        new_username = "replacement_couch_username"
         form = get_simple_wrapped_form(uuid.uuid4().hex, metadata=TestFormMetadata(domain=DOMAIN))
-        new_form_xml = Command().parse_form_data(form, new_username)
+        new_form_xml = Command().parse_form_data(form, self.new_username)
         FormAccessors(DOMAIN).modify_attachment_xml_and_metadata(form, new_form_xml)
 
+        # Test that the metadata changed in the database
         form_attachment_xml = form.get_attachment("form.xml")
         form_attachment_dict = xmltodict.parse(form_attachment_xml)
         username_in_dict = form_attachment_dict["data"]["n0:meta"]["n0:username"]
 
-        self.assertEqual(username_in_dict, new_username)
+        self.assertEqual(username_in_dict, self.new_username)
