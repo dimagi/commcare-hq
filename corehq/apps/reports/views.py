@@ -1892,8 +1892,9 @@ def _get_form_render_context(request, domain, instance, case_id=None):
         for question in data:
             if question.children:
                 _add_to_question_response_map(question.children)
-            else:
-                # TODO: hide labels, multimedia, etc based on q.type?
+            elif question.type in ['Date', 'DateTime', 'Double', 'Geopoint', 'Int', 'Long', 'MSelect',
+                    'PhoneNumber', 'Secret', 'Select', 'Text', 'Time']:  # TODO: more canonical way to do this?
+                                                                         # or move into VELLUM_TYPES
                 question_response_map[question.value] = {
                     'label': question.label,    # TODO: these are missing for non-children of root
                     'icon': question.icon,      # TODO: these are missing for non-children of root
