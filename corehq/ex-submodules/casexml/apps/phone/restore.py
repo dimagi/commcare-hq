@@ -449,6 +449,7 @@ class RestoreState(object):
             previous_log_id=previous_log_id,
             previous_log_rev=previous_log_rev,
             extensions_checked=True,
+            device_id=self.params.device_id,
         )
         if self.is_livequery:
             new_synclog.log_format = LOG_FORMAT_LIVEQUERY

@@ -829,6 +829,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
     extension_index_tree = SchemaProperty(IndexTree)  # index tree of extensions
     closed_cases = SetProperty(six.text_type)
     extensions_checked = BooleanProperty(default=False)
+    device_id = StringProperty()
 
     _purged_cases = None
 
