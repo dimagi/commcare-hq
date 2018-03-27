@@ -1,9 +1,12 @@
 hqDefine("reports/js/data_corrections", function() {
     var PropertyModel = function(options) {
-        var self = this;
+        var self = options;
+
         self.name = options.name;
         self.value = ko.observable(options.value || '');
         self.dirty = ko.observable(false);
+
+        return self;
     };
 
     var DataCorrectionsModel = function(options) {
@@ -11,6 +14,10 @@ hqDefine("reports/js/data_corrections", function() {
 
         self.url = options.url;
         self.saveUrl = options.saveUrl;
+        self.propertyTemplate = {
+            // TODO: make icons blue, like in readable form, and make text less bold
+            nodes: $("<div>" + (options.propertyTemplate || "<span data-bind='text: name'></span>" )+ "</div>"),
+        };
         self.propertyNames = ko.observableArray();  // ordered list of names, populated by ajax call because it's slow
         self.properties = {};                       // map of name => PropertyModel, populated in init
 
@@ -143,11 +150,13 @@ hqDefine("reports/js/data_corrections", function() {
         };
 
         self.init = function() {
-            self.properties = _.extend({}, _.mapObject(options.properties, function(value, name) {
-                return new PropertyModel({
+            self.properties = _.extend({}, _.mapObject(options.properties, function(data, name) {
+                if (typeof(data) === "string") {
+                    data = { value: data };
+                }
+                return new PropertyModel(_.extend({}, data, {
                     name: name,
-                    value: value,
-                });
+                }));
             }));
             self.initQuery();
             self.currentPage(1);

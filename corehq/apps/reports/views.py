@@ -1894,7 +1894,11 @@ def _get_form_render_context(request, domain, instance, case_id=None):
                 _add_to_question_response_map(question.children)
             else:
                 # TODO: hide labels, multimedia, etc based on q.type?
-                question_response_map[question.value] = question.response
+                question_response_map[question.value] = {
+                    'label': question.label,    # TODO: these are missing for non-children of root
+                    'icon': question.icon,      # TODO: these are missing for non-children of root
+                    'value': question.response,
+                }
     _add_to_question_response_map(form_data)
 
     context.update({
