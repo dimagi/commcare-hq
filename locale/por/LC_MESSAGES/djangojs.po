@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2018-03-20 21:08+0000\n"
+"POT-Creation-Date: 2018-03-27 20:21+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: Marco Horta <mhorta@dimagi.com>, 2017\n"
 "Language-Team: Portuguese (https://www.transifex.com/dimagi/teams/9388/pt/)\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: corehq/apps/accounting/static/accounting/js/widgets.js:64
+#: corehq/apps/accounting/static/accounting/js/widgets.js:66
 #: corehq/apps/domain/static/domain/js/pro-bono.js:29
 msgid "Please enter a valid email."
 msgstr ""
@@ -57,12 +57,12 @@ msgid ""
 "page and try again"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/graph_config.js:552
+#: corehq/apps/app_manager/static/app_manager/js/details/graph_config.js:557
 #: corehq/apps/app_manager/static/app_manager/js/settings/commcare_settings.js:412
 msgid "Copied!"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/graph_config.js:564
+#: corehq/apps/app_manager/static/app_manager/js/details/graph_config.js:569
 msgid ""
 "It is recommended that you leave this value blank. Future changes to your "
 "report's chart configuration will not be reflected here."
@@ -488,7 +488,7 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/releases/language_profiles.js:45
 #: corehq/apps/app_manager/static/app_manager/js/settings/linked_whitelist.js:14
-#: corehq/apps/data_dictionary/static/data_dictionary/js/data_dictionary.js:102
+#: corehq/apps/data_dictionary/static/data_dictionary/js/data_dictionary.js:106
 #: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:246
 msgid "There was an error saving"
 msgstr ""
@@ -2322,8 +2322,14 @@ msgid ""
 "try again in a little bit."
 msgstr ""
 
-#: corehq/apps/data_dictionary/static/data_dictionary/js/data_dictionary.js:71
+#: corehq/apps/data_dictionary/static/data_dictionary/js/data_dictionary.js:75
 msgid "You have unsaved changes to your data dictionary."
+msgstr ""
+
+#: corehq/apps/data_dictionary/static/data_dictionary/js/data_dictionary.js:151
+msgid ""
+"You have unsaved changes to this case type. Are you sure you would like to "
+"continue?"
 msgstr ""
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/manage_case_groups.js:49
@@ -2488,6 +2494,15 @@ msgstr ""
 msgid "Error saving, please try again."
 msgstr ""
 
+#: corehq/apps/hqwebapp/static/hqwebapp/js/daterangepicker.config.js:55
+msgid "Clear"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/daterangepicker.config.js:60
+#: corehq/apps/reports_core/templates/reports_core/filters/datespan_filter/datespan_filter.js:18
+msgid "Show All Dates"
+msgstr ""
+
 #: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:243
 msgid "Saving..."
 msgstr ""
@@ -2640,31 +2655,31 @@ msgid ""
 "please report an issue"
 msgstr ""
 
-#: corehq/apps/registration/static/registration/js/new_user.ko.js:105
+#: corehq/apps/registration/static/registration/js/new_user.ko.js:118
 msgid "Please enter your name."
 msgstr ""
 
-#: corehq/apps/registration/static/registration/js/new_user.ko.js:114
+#: corehq/apps/registration/static/registration/js/new_user.ko.js:127
 msgid "Please specify an email."
 msgstr ""
 
-#: corehq/apps/registration/static/registration/js/new_user.ko.js:141
+#: corehq/apps/registration/static/registration/js/new_user.ko.js:154
 msgid "There is already a user with this email."
 msgstr ""
 
-#: corehq/apps/registration/static/registration/js/new_user.ko.js:149
+#: corehq/apps/registration/static/registration/js/new_user.ko.js:162
 msgid "Checking email..."
 msgstr ""
 
-#: corehq/apps/registration/static/registration/js/new_user.ko.js:159
+#: corehq/apps/registration/static/registration/js/new_user.ko.js:172
 msgid "Please specify a password."
 msgstr ""
 
-#: corehq/apps/registration/static/registration/js/new_user.ko.js:179
+#: corehq/apps/registration/static/registration/js/new_user.ko.js:192
 msgid "Please specify a project name."
 msgstr ""
 
-#: corehq/apps/registration/static/registration/js/new_user.ko.js:196
+#: corehq/apps/registration/static/registration/js/new_user.ko.js:209
 msgid "Please specify."
 msgstr ""
 
@@ -2789,15 +2804,20 @@ msgid ""
 "duplicate sheet names."
 msgstr ""
 
-#: corehq/apps/reports/static/reports/js/filters.js:45
+#: corehq/apps/reports/static/reports/js/filters.js:44
+#: corehq/apps/reports/static/reports/js/filters.js:229
+msgid "All"
+msgstr ""
+
+#: corehq/apps/reports/static/reports/js/filters.js:67
 msgid "That have phone numbers"
 msgstr ""
 
-#: corehq/apps/reports/static/reports/js/filters.js:46
+#: corehq/apps/reports/static/reports/js/filters.js:68
 msgid "That do not have phone numbers"
 msgstr ""
 
-#: corehq/apps/reports/static/reports/js/filters.js:207
+#: corehq/apps/reports/static/reports/js/filters.js:242
 msgid "Select a group"
 msgstr ""
 
@@ -2897,10 +2917,6 @@ msgstr ""
 msgid "Satellite"
 msgstr ""
 
-#: corehq/apps/reports_core/templates/reports_core/filters/datespan_filter/datespan_filter.js:18
-msgid "Show All Dates"
-msgstr ""
-
 #: corehq/apps/sms/static/sms/js/add_gateway.js:10
 msgid "You must have at least one phone number."
 msgstr ""
@@ -2973,20 +2989,20 @@ msgstr ""
 
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js:360
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js:375
-#: corehq/apps/userreports/static/userreports/js/report_config.js:285
-#: corehq/apps/userreports/static/userreports/js/report_config.js:313
+#: corehq/apps/userreports/static/userreports/js/report_config.js:290
+#: corehq/apps/userreports/static/userreports/js/report_config.js:318
 msgid "Choose the property you would like to add as a filter to this report."
 msgstr ""
 
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js:361
-#: corehq/apps/userreports/static/userreports/js/report_config.js:286
+#: corehq/apps/userreports/static/userreports/js/report_config.js:291
 msgid ""
 "Web users viewing the report will see this display text instead of the "
 "property name. Name your filter something easy for users to understand."
 msgstr ""
 
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js:362
-#: corehq/apps/userreports/static/userreports/js/report_config.js:287
+#: corehq/apps/userreports/static/userreports/js/report_config.js:292
 msgid ""
 "What type of property is this filter?<br/><br/><strong>Date</strong>: Select "
 "this if the property is a date.<br/><strong>Choice</strong>: Select this if "
@@ -2994,7 +3010,7 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js:376
-#: corehq/apps/userreports/static/userreports/js/report_config.js:314
+#: corehq/apps/userreports/static/userreports/js/report_config.js:319
 msgid ""
 "What type of property is this filter?<br/><br/><strong>Date</strong>: Select "
 "this to filter the property by a date range.<br/><strong>Value</strong>: "
@@ -3002,7 +3018,7 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js:377
-#: corehq/apps/userreports/static/userreports/js/report_config.js:315
+#: corehq/apps/userreports/static/userreports/js/report_config.js:320
 msgid "What value or date range must the property be equal to?"
 msgstr ""
 
