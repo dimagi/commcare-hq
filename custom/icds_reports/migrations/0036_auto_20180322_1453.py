@@ -62,8 +62,12 @@ class Migration(migrations.Migration):
                 ('counsel_manage_breast_problems', models.IntegerField(blank=True, null=True)),
                 ('counsel_skin_to_skin', models.IntegerField(blank=True, null=True)),
                 ('counsel_immediate_breastfeeding', models.IntegerField(blank=True, null=True)),
-                ('recorded_weight', models.DecimalField(max_digits=65535, decimal_places=65535, blank=True, null=True)),
-                ('recorded_height', models.DecimalField(max_digits=65535, decimal_places=65535, blank=True, null=True)),
+                ('recorded_weight', models.DecimalField(
+                    max_digits=65535, decimal_places=65535, blank=True, null=True
+                )),
+                ('recorded_height', models.DecimalField(
+                    max_digits=65535, decimal_places=65535, blank=True, null=True
+                )),
                 ('has_aadhar_id', models.IntegerField(blank=True, null=True)),
                 ('thr_eligible', models.IntegerField(blank=True, null=True)),
                 ('pnc_eligible', models.IntegerField(blank=True, null=True)),

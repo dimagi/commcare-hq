@@ -29,7 +29,8 @@ from corehq.util.log import send_HTML_email
 from corehq.util.soft_assert import soft_assert
 from corehq.util.view_utils import reverse
 from custom.icds_reports.const import DASHBOARD_DOMAIN
-from custom.icds_reports.models import AggChildHealthMonthly, AggregateComplementaryFeedingForms, UcrTableNameMapping
+from custom.icds_reports.models import AggChildHealthMonthly, AggregateComplementaryFeedingForms, \
+    UcrTableNameMapping
 from custom.icds_reports.reports.issnip_monthly_register import ISSNIPMonthlyReport
 from custom.icds_reports.utils import zip_folder, create_pdf_file, generate_qrcode
 from dimagi.utils.chunked import chunked
