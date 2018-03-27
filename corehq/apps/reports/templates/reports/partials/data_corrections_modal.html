@@ -36,13 +36,13 @@
                         {% blocktrans %}
                             Data Corrections is replacing the old "Edit this form" functionality, which will be removed in June 2018.
                         {% endblocktrans %}
-
                         <a href="{% url 'edit_form_instance' domain instance.form_id %}" target="_blank" id="edit-form">
                             {% trans 'Click here to access the old "edit this form" page.' %}
                         </a>
 
                         <br><br>
 
+                        <i class="fa fa-exclamation-triangle"></i>
                         {% blocktrans %}
                             Data Corrections will only update individual question responses.
                             It will <strong>not</strong> run any logic or make any changes to cases.
@@ -70,7 +70,7 @@
                                 <!-- ko foreach: $data -->
                                     <div class="form-group container-fluid" data-bind="css: {'has-success': dirty()}">
                                         <label class="col-sm-6 control-label">
-                                            <i class="fa fa-pencil-square" data-bind="visible: dirty()"></i>
+                                            <i class="fa fa-pencil-square pull-left" data-bind="visible: dirty()"></i>
                                             <span data-bind="template: $root.propertyTemplate"></span>
                                         </label>
                                         <div class="col-sm-6">
