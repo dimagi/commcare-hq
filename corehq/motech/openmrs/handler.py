@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
 from corehq.motech.openmrs.logger import logger
 from corehq.motech.openmrs.repeater_helpers import (
     CaseTriggerInfo,
@@ -11,6 +12,7 @@ from corehq.motech.openmrs.repeater_helpers import (
     UpdatePersonAttributeTask,
     UpdatePersonNameTask,
     UpdatePersonPropertiesTask,
+    get_openmrs_location_uuid,
     get_patient,
 )
 from corehq.motech.openmrs.workflow import WorkflowTask, execute_workflow
@@ -58,7 +60,7 @@ def send_openmrs_data(requests, domain, form_json, openmrs_config, case_trigger_
                 requests, info, openmrs_config, patient['person']['uuid'], patient['person']['attributes']
             ),
             CreateVisitsTask(
-                requests, info, form_json, form_question_values, openmrs_config, patient['person']['uuid']
+                requests, domain, info, form_json, form_question_values, openmrs_config, patient['person']['uuid']
             ),
         ])
 
@@ -108,8 +110,9 @@ class SyncPersonAttributesTask(WorkflowTask):
 
 class CreateVisitsTask(WorkflowTask):
 
-    def __init__(self, requests, info, form_json, form_question_values, openmrs_config, person_uuid):
+    def __init__(self, requests, domain, info, form_json, form_question_values, openmrs_config, person_uuid):
         self.requests = requests
+        self.domain = domain
         self.info = info
         self.form_json = form_json
         self.form_question_values = form_question_values
@@ -122,6 +125,7 @@ class CreateVisitsTask(WorkflowTask):
         """
         subtasks = []
         provider_uuid = getattr(self.openmrs_config, 'openmrs_provider', None)
+        location_uuid = get_openmrs_location_uuid(self.domain, self.info.case_id)
         self.info.form_question_values.update(self.form_question_values)
         for form_config in self.openmrs_config.form_configs:
             if form_config.xmlns == self.form_json['form']['@xmlns']:
@@ -137,8 +141,7 @@ class CreateVisitsTask(WorkflowTask):
                         encounter_type=form_config.openmrs_encounter_type,
                         openmrs_form=form_config.openmrs_form,
                         visit_type=form_config.openmrs_visit_type,
-                        # TODO: Set location = location of case owner (CHW)
-                        # location_uuid=location[meta][openmrs_uuid]
+                        location_uuid=location_uuid,
                     )
                 )
         return subtasks

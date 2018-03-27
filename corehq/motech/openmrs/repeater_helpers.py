@@ -12,7 +12,7 @@ from casexml.apps.case.xform import extract_case_blocks
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.cases import get_wrapped_owner, get_owner_id
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.motech.openmrs.const import PERSON_UUID_IDENTIFIER_TYPE_ID
+from corehq.motech.openmrs.const import LOCATION_OPENMRS_UUID, PERSON_UUID_IDENTIFIER_TYPE_ID
 from corehq.motech.openmrs.finders import PatientFinder
 from corehq.motech.openmrs.logger import logger
 from corehq.motech.openmrs.workflow import WorkflowTask
@@ -164,6 +164,12 @@ def get_case_location_ancestor_repeaters(case):
         if location_id in location_repeaters:
             return location_repeaters[location_id]
     return []
+
+
+def get_openmrs_location_uuid(domain, case_id):
+    case = CaseAccessors(domain).get_case(case_id)
+    location = get_case_location(case)
+    return location.metadata.get(LOCATION_OPENMRS_UUID) if location else None
 
 
 class CreatePersonAttributeTask(WorkflowTask):
