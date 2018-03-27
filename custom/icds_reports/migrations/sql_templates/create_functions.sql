@@ -121,17 +121,19 @@ $BODY$
 DECLARE
 	_tablename text;
 	_ucr_child_monthly_table text;
-  _agg_complementary_feeding_table text;
+	_agg_complementary_feeding_table text;
+	_ucr_child_health_cases_table text;
 	_start_date date;
 BEGIN
 	_start_date = date_trunc('MONTH', $1)::DATE;
 	_tablename := 'child_health_monthly' || '_' || _start_date;
 	EXECUTE 'SELECT table_name FROM ucr_table_name_mapping WHERE table_type = ' || quote_literal('child_health_monthly') INTO _ucr_child_monthly_table;
 	EXECUTE 'SELECT table_name FROM ucr_table_name_mapping WHERE table_type = ' || quote_literal('complementary_feeding') INTO _agg_complementary_feeding_table;
+	EXECUTE 'SELECT table_name FROM ucr_table_name_mapping WHERE table_type = ' || quote_literal('child_health_cases') INTO _ucr_child_health_cases_table;
 
 	EXECUTE 'DELETE FROM ' || quote_ident(_tablename);
 	EXECUTE 'INSERT INTO ' || quote_ident(_tablename) ||
-  ' ( ' ||
+	' ( ' ||
 		'awc_id, ' ||
 		'case_id, ' ||
 		'month, ' ||
@@ -187,7 +189,11 @@ BEGIN
 		'caste, ' ||
 		'disabled, ' ||
 		'minority, ' ||
-		'resident ' ||
+		'resident, ' ||
+		'current_month_nutrition_status_sort, ' ||
+		'current_month_stunting_sort, ' ||
+		'current_month_wasting_sort, ' ||
+		'fully_immunized ' ||
   ') (SELECT ' ||
 		'awc_id, ' ||
 		'case_id, ' ||
@@ -244,7 +250,20 @@ BEGIN
 		'caste, ' ||
 		'disabled, ' ||
 		'minority, ' ||
-		'resident ' ||
+		'resident, ' ||
+		'CASE WHEN current_month_nutrition_status = ' || quote_literal('severely_underweight') || ' THEN 1 ' ||
+			'WHEN current_month_nutrition_status = ' || quote_literal('moderately_underweight') || '  THEN 2 ' ||
+			'WHEN current_month_nutrition_status = ' || quote_literal('normal') || ' THEN 3 ' ||
+			'ELSE 4 END AS current_month_nutrition_status_sort, ' ||
+		'CASE WHEN current_month_stunting = '|| quote_literal('severe') || ' THEN 1 ' ||
+			'WHEN current_month_stunting = ' || quote_literal('moderate') || ' THEN 2 ' ||
+			'WHEN current_month_stunting = ' || quote_literal('normal') || ' THEN 3 ' ||
+			'ELSE 4 END AS current_month_stunting_sort, ' ||
+		'CASE WHEN current_month_wasting = ' || quote_literal('several') || ' THEN 1 ' ||
+			'WHEN current_month_wasting = ' || quote_literal('moderate') || '  THEN 2 ' ||
+			'WHEN current_month_wasting = ' || quote_literal('normal') || ' THEN 3 ' ||
+			'ELSE 4 END AS current_month_wasting_sort, ' ||
+		'GREATEST(fully_immunized_on_time, fully_immunized_late) AS fully_immunized ' ||
 		'FROM ' || quote_ident(_ucr_child_monthly_table) || ' WHERE month = ' || quote_literal(_start_date) || ')';
 
     EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx2') || ' ON ' || quote_ident(_tablename) || '(case_id)';
@@ -279,7 +298,14 @@ BEGIN
       'OR cf_handwashing IS NULL OR cf_demo IS NULL OR counsel_pediatric_ifa IS NULL ' ||
       'OR counsel_comp_feeding_vid IS NULL OR cf_initiation_in_month IS NULL';
 
+		EXECUTE 'UPDATE ' || quote_ident(_tablename) || ' chm_monthly SET ' ||
+		'  person_name = ucr_case.person_name, ' ||
+		'  mother_name = ucr_case.mother_name ' ||
+			'FROM ' || quote_ident(_ucr_child_health_cases_table) || ' ucr_case ' ||
+			'WHERE chm_monthly.case_id = ucr_case.case_id AND chm_monthly.month = ' || quote_literal(_start_date);
+
     EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx1') || ' ON ' || quote_ident(_tablename) || '(awc_id, case_id)';
+		EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx3') || ' ON ' || quote_ident(_tablename) || '(awc_id, case_id, month, open_in_month, valid_in_month, age_in_months)';
 END;
 $BODY$
 LANGUAGE plpgsql;

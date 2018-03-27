@@ -92,11 +92,10 @@ class AggregationScriptTest(TestCase):
             differences = []
 
             for key in dict1.keys():
-                value1 = dict1[key].replace('\r\n', '\n')
-                value2 = dict2[key].replace('\r\n', '\n')
+                value1 = dict1[key].decode('utf-8').replace('\r\n', '\n')
+                value2 = dict2[key].decode('utf-8').replace('\r\n', '\n')
                 if value1 != value2:
                     differences.append(key)
-
             if differences:
                 messages.append("""
                     Actual and expected row {} are not the same
@@ -104,8 +103,12 @@ class AggregationScriptTest(TestCase):
                     Expected: {}
                 """.format(
                     idx + 1,
-                    ', '.join(['{}: {}'.format(difference, dict1[difference]) for difference in differences]),
-                    ', '.join(['{}: {}'.format(difference, dict2[difference]) for difference in differences])
+                    ', '.join(['{}: {}'.format(
+                        difference, dict1[difference].decode('utf-8')) for difference in differences]
+                    ),
+                    ', '.join(['{}: {}'.format(
+                        difference, dict2[difference].decode('utf-8')) for difference in differences]
+                    )
                 ))
 
         if messages:
