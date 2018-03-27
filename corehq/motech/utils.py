@@ -98,3 +98,18 @@ def pformat_json(data):
         return json.dumps(json_data, indent=2, sort_keys=True)
     except ValueError:
         return data
+
+
+def unpack_args(names, *args, **kwargs):
+    """
+    Unpack arguments named `names` with values `args` and `kwargs`, and
+    return them as a tuple.
+
+    >>> unpack_args('foo bar baz qux', 1, 2, qux=4, baz=3)
+    (1, 2, 3, 4)
+
+    """
+    if isinstance(names, six.string_types):
+        names = names.split()
+    args_dict = dict(zip(names, args), **kwargs)
+    return tuple(args_dict[n] for n in names)
