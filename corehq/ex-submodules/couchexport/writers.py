@@ -310,19 +310,15 @@ class ZippedExportWriter(OnDiskExportWriter):
     table_file_extension = ".csv"
 
     def _write_final_result(self):
-
         archive = zipfile.ZipFile(self.file, 'w', zipfile.ZIP_DEFLATED)
         for index, name in self.table_names.items():
-            if isinstance(name, six.text_type):
-                name = name.encode('utf-8')
             path = self.tables[index].get_path()
             archive.write(path, self._get_archive_filename(name))
         archive.close()
         self.file.seek(0)
 
     def _get_archive_filename(self, name):
-        path = _encode_if_needed(self.archive_basepath)
-        return os.path.join(path, '{}{}'.format(name, self.table_file_extension))
+        return os.path.join(self.archive_basepath, '{}{}'.format(name, self.table_file_extension))
 
 
 class CsvExportWriter(ZippedExportWriter):
@@ -339,7 +335,6 @@ class UnzippedCsvExportWriter(OnDiskExportWriter):
     format = Format.UNZIPPED_CSV
 
     def _write_final_result(self):
-
         tablefile = list(self.tables.values())[0].get_file()
         for line in tablefile:
             self.file.write(line)
