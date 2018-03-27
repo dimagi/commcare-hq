@@ -64,7 +64,7 @@ class CsvFileWriterTests(SimpleTestCase):
         writer.write_row(headers)
         writer.finish()
         file_start = writer.get_file().read(6)
-        self.assertEqual(file_start, BOM_UTF8 + 'ham')
+        self.assertEqual(file_start, BOM_UTF8 + b'ham')
 
 
 class HtmlExportWriterTests(SimpleTestCase):
