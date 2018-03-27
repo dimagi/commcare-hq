@@ -34,7 +34,7 @@ class FilesystemBlobDB(AbstractBlobDB):
             os.makedirs(dirpath)
         length = 0
         digest = md5()
-        with openfile(path, "xb") as fh:
+        with open(path, "wb") as fh:
             while True:
                 chunk = content.read(CHUNK_SIZE)
                 if not chunk:
@@ -104,7 +104,7 @@ class FilesystemBlobDB(AbstractBlobDB):
         dirpath = dirname(path)
         if not isdir(dirpath):
             os.makedirs(dirpath)
-        with openfile(path, "xb") as fh:
+        with open(path, "wb") as fh:
             while True:
                 chunk = content.read(CHUNK_SIZE)
                 if not chunk:
@@ -144,32 +144,3 @@ def _count_size(path):
 
 
 _CountSize = namedtuple("_CountSize", "count size")
-
-
-def openfile(path, mode="r", *args, **kw):
-    """Open file
-
-    Aside from the normal modes accepted by `open()`, this function
-    accepts an `x` mode that causes the file to be opened for exclusive-
-    write, which means that an exception (`FileExists`) will be raised
-    if the file being opened already exists.
-    """
-    if "x" not in mode or sys.version_info > (3, 0):
-        return open(path, mode, *args, **kw)
-    # http://stackoverflow.com/a/10979569/10840
-    # O_EXCL is only supported on NFS when using NFSv3 or later on kernel 2.6 or later.
-    flags = os.O_CREAT | os.O_EXCL | os.O_WRONLY
-    try:
-        handle = os.open(path, flags)
-    except OSError as err:
-        if err.errno == errno.EEXIST:
-            raise FileExists(path)
-        raise
-    return os.fdopen(handle, mode.replace("x", "w"), *args, **kw)
-
-
-try:
-    FileExists = FileExistsError
-except NameError:
-    class FileExists(Exception):
-        pass
