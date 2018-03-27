@@ -1900,8 +1900,8 @@ def _get_form_render_context(request, domain, instance, case_id=None):
                 if question.repeat:
                     value = "{}[{}]{}".format(question.repeat, repeat_index + 1, re.sub(r'^' + question.repeat, '', question.value))
                 question_response_map[value] = {
-                    'label': question.label,    # TODO: these are missing for non-children of root
-                    'icon': question.icon,      # TODO: these are missing for non-children of root
+                    'label': question.label,
+                    'icon': question.icon,
                     'value': question.response,
                     'splitName': re.sub(r'/', '/\u200B', value),
                 }
@@ -2582,12 +2582,12 @@ def edit_form(request, domain, instance_id):
     # TODO: Does updated data appear properly in exports?
 
     if dirty['dirty'] and operation:
-        instance.history.append(operation)  # TODO: should this show in Form History tab? it doesn't
+        instance.history.append(operation)
         instance.save()
         messages.success(request, _('Question responses saved.'))
     else:
         messages.success(request, _('No changes made to form.'))
-    return JsonResponse({'success': 1}) # TODO: this should really send you to the new form (is there a new form?)
+    return JsonResponse({'success': 1})
 
 
 @require_form_view_permission
