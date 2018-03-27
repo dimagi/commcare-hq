@@ -13,6 +13,7 @@ from corehq.apps.es.users import UserES
 from corehq.apps.es.groups import GroupES, is_case_sharing
 from corehq.apps.locations.models import SQLLocation
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors
+from corehq.util.log import with_progress_bar
 
 
 class Command(BaseCommand):
@@ -27,31 +28,37 @@ class Command(BaseCommand):
             '--execute',
             action='store_true',
         )
+        parser.add_argument(
+            '--log_filename',
+            default='fix_bad_reassigned_owner_ids.txt',
+        )
 
     def handle(self, domains, **options):
         execute = options['execute']
+        log_filename = options['log_filename']
         if not domains:
             domains = Domain.get_all_names()
 
-        for domain in domains:
-            valid_owner_ids = get_valid_owner_ids(domain)
-            for case in get_affected_cases(domain):
-                if case.owner_id in valid_owner_ids:
-                    continue
+        with open(log_filename, 'w') as log_file:
+            for domain in with_progress_bar(domains):
+                valid_owner_ids = get_valid_owner_ids(domain)
+                for case in get_affected_cases(domain):
+                    if case.owner_id in valid_owner_ids:
+                        continue
 
-                matching_owner_ids = [
-                    valid_owner_id for valid_owner_id in valid_owner_ids
-                    if case.owner_id in valid_owner_id
-                ]
-                if len(matching_owner_ids) == 1:
-                    matched_owner_id = matching_owner_ids[0]
-                    print('Assign case %s to owner %s' % (case.case_id, matched_owner_id))
-                    if execute:
-                        CaseFactory(domain).update_case(case.case_id, update={'owner_id': matched_owner_id})
-                elif len(matching_owner_ids) == 0:
-                    print('No owner found for case %s' % case.case_id)
-                elif len(matching_owner_ids) > 1:
-                    raise Exception('Impossible to determine owner for case %s' % case.case_id)
+                    matching_owner_ids = [
+                        valid_owner_id for valid_owner_id in valid_owner_ids
+                        if case.owner_id in valid_owner_id
+                    ]
+                    if len(matching_owner_ids) == 1:
+                        matched_owner_id = matching_owner_ids[0]
+                        print('Assign case %s to owner %s' % (case.case_id, matched_owner_id), file=log_file)
+                        if execute:
+                            CaseFactory(domain).update_case(case.case_id, update={'owner_id': matched_owner_id})
+                    elif len(matching_owner_ids) == 0:
+                        print('No owner found for case %s' % case.case_id, file=log_file)
+                    elif len(matching_owner_ids) > 1:
+                        print('Impossible to determine owner for case %s' % case.case_id, file=log_file)
 
 
 def get_valid_owner_ids(domain):
