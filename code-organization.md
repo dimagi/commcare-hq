@@ -8,6 +8,7 @@ TL;DR
   This has been done using varying degrees of discipline,
   and you should always feel comfortable converting these to `hqDefine`
 - avoid global variables like the plague
+- when creating class-like objects, use a functional inheritance pattern
 
 For those of you looking for a little more from this page,
 please keep reading.
@@ -237,3 +238,61 @@ But what it gives us is extreme consistency by the most correct thing
 also the easiest.
 
 For a summary, please scroll back up and see the TL;DR section.
+
+## Inheritance
+
+We use a functional approach to inheritance, in this style:
+```
+var animal = function(options) {
+  var self = {},
+      location = 0,
+      speed = 5;
+  self.name = options.name;
+  
+  self.run = function(time) {
+    self.location += time * speed;
+  };
+  
+  self.getLocation = function() {
+    return self.location;
+  }
+  
+  return self;
+};
+
+var bear = animal({ name: 'Oso' });
+bear.run();
+// bear.name => "Oso"
+// bear.getLocation() => 5
+// bear.location => undefined
+
+var bird = function(options) {
+  var self = animal(options);
+  
+  self.fly = function(time) {
+    // Flying is fast
+    self.run(time);
+    self.run(time);
+  };
+  
+  return self;
+};
+
+var duck = animal({ name: 'Pato' });
+duck.run();
+duck.fly();
+// duck.name => "Pato"
+// duck.getLocation => 15
+```
+Note that:
+- A class-like object is defined as a function that returns an instance.
+- The instance is initialized to an empty object, or to an instance of the parent class if there is one.
+- Create a private member by adding a local variable.
+- Create a public member by attaching a variable to the instance that will be returned.
+- Class name are `lowerFirstCamelCase`, distinct from `UpperFirstCamelCase` which is used for built-in objects like `Date` that require the `new` operator.
+
+Avoid prototypical inheritance, which does not support information hiding as well.
+
+Avoid classical-style inheritance (the `new` operator) because it also isn't great for information hiding and because forgetting to use `new` when creating an object can lead to nasty bugs.
+
+Our approach to inheritance is heavily influenced by Crockford's _Javascript: The Good Parts_, which is good background reading.
