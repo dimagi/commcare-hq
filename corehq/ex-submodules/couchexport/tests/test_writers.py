@@ -39,7 +39,7 @@ class ZippedExportWriterTests(SimpleTestCase):
         self.writer._write_final_result()
         mock_zip_file.write.assert_called_with(
             'tmp',
-            os.path.join(self.writer.archive_basepath, b'ひらがな.csv')
+            os.path.join(self.writer.archive_basepath, 'ひらがな.csv'.encode('utf-8'))
         )
 
     def test_zipped_export_writer_utf8(self):
@@ -48,7 +48,7 @@ class ZippedExportWriterTests(SimpleTestCase):
         self.writer._write_final_result()
         mock_zip_file.write.assert_called_with(
             'tmp',
-            os.path.join(self.writer.archive_basepath, b'ひらがな.csv')
+            os.path.join(self.writer.archive_basepath, 'ひらがな.csv'.encode('utf-8'))
         )
 
 
