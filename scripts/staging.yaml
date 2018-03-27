@@ -54,6 +54,7 @@ branches:
   - jr/ejs/sms-chat # Jordan 2/16
   - mk-mock-repeater-report # MK 28-Feb
   - jls/privacy-policy  # Jenny 3/19
+  - jls/data-corrections-forms  # Jenny 3/27
 #  - nh/omrs/rollback  # Norman 2018-03-23
 #  - nh/omrs/location  # Norman 2018-03-24
 submodules:
