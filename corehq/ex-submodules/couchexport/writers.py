@@ -20,10 +20,6 @@ from six.moves import zip
 from six.moves import map
 
 
-def _encode_if_needed(val):
-    return val.encode("utf8") if isinstance(val, six.text_type) else val
-
-
 class UniqueHeaderGenerator(object):
 
     def __init__(self, max_column_size=None):
