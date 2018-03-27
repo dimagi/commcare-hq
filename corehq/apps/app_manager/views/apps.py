@@ -131,7 +131,8 @@ def default_new_app(request, domain):
         app.secure_submissions = True
     clear_app_cache(request, domain)
     app.save()
-    return HttpResponseRedirect(reverse('view_app', args=[domain, app._id]))
+    # GET param can be removed when APPCUES_AB_TEST is finished
+    return HttpResponseRedirect(reverse('view_app', args=[domain, app._id]) + "?appcues=1")
 
 
 def get_app_view_context(request, app):

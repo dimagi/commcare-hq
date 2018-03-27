@@ -60,17 +60,8 @@
           "argument_expression": {
             "type": "ancestor_location",
             "location_id": {
-              "value_expression": {
-                "datatype": null,
-                "type": "property_path",
-                "property_path": [
-                  "user_data",
-                  "commcare_location_id"
-                ]
-              },
-              "type": "related_doc",
-              "related_doc_type": "CommCareUser",
-              "doc_id_expression": {
+              "type": "icds_user_location",
+              "user_id_expression": {
                 "expression": {
                   "datatype": null,
                   "type": "property_path",

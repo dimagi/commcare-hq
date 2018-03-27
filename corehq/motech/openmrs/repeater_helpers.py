@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 
 from __future__ import unicode_literals
-from collections import namedtuple
+from collections import namedtuple, defaultdict
 from datetime import timedelta
 import re
 
@@ -9,6 +9,8 @@ from requests import HTTPError
 from six.moves import zip
 
 from casexml.apps.case.xform import extract_case_blocks
+from corehq.apps.locations.models import SQLLocation
+from corehq.apps.users.cases import get_wrapped_owner, get_owner_id
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.motech.openmrs.finders import PatientFinder
 from corehq.motech.openmrs.logger import logger
@@ -54,9 +56,30 @@ ADDRESS_PROPERTIES = (
     'startDate',
     'endDate',
 )
-# To match cases against their OpenMRS Person UUID, set the IdMatcher's identifier_type_id to the value of
-# PERSON_UUID_IDENTIFIER_TYPE_ID. To match against any other OpenMRS identifier, set the IdMatcher's
-# identifier_type_id to the UUID of the OpenMRS Identifier Type.
+
+
+# To match cases against their OpenMRS Person UUID, in case config (Project Settings > Data Forwarding > Forward to
+# OpenMRS > Configure > Case config) "patient_identifiers", set the identifier's key to the value of
+# PERSON_UUID_IDENTIFIER_TYPE_ID. e.g.::
+#
+#     "patient_identifiers": {
+#         /* ... */
+#         "uuid": {
+#             "doc_type": "CaseProperty",
+#             "case_property": "openmrs_uuid",
+#         }
+#     }
+#
+# To match against any other OpenMRS identifier, set the key to the UUID of the OpenMRS Identifier Type. e.g.::
+#
+#     "patient_identifiers": {
+#         /* ... */
+#         "e2b966d0-1d5f-11e0-b929-000c29ad1d07": {
+#             "doc_type": "CaseProperty",
+#             "case_property": "nid"
+#         }
+#     }
+#
 PERSON_UUID_IDENTIFIER_TYPE_ID = 'uuid'
 
 
@@ -111,6 +134,42 @@ def parse_request_exception(err):
 
 def url(url_format_string, **kwargs):
     return url_format_string.format(**kwargs)
+
+
+def get_case_location(case):
+    """
+    If the owner of the case is a location, return it. Otherwise return
+    the owner's primary location. If the case owner does not have a
+    primary location, return None.
+    """
+    case_owner = get_wrapped_owner(get_owner_id(case))
+    if isinstance(case_owner, SQLLocation):
+        return case_owner
+    location_id = case_owner.get_location_id(case.domain)
+    return SQLLocation.by_location_id(location_id) if location_id else None
+
+
+def get_case_location_ancestor_repeaters(case):
+    """
+    Determine the location of the case's owner, and search up its
+    ancestors to find the first OpenMRS Repeater(s).
+
+    Returns a list because more than one OpenmrsRepeater may have the
+    same location.
+    """
+    from corehq.motech.openmrs.dbaccessors import get_openmrs_repeaters_by_domain
+
+    case_location = get_case_location(case)
+    if not case_location:
+        return []
+    location_repeaters = defaultdict(list)
+    for repeater in get_openmrs_repeaters_by_domain(case.domain):
+        if repeater.location_id:
+            location_repeaters[repeater.location_id].append(repeater)
+    for location_id in reversed(case_location.path):
+        if location_id in location_repeaters:
+            return location_repeaters[location_id]
+    return []
 
 
 def create_person_attribute(requests, person_uuid, attribute_type_uuid, value):

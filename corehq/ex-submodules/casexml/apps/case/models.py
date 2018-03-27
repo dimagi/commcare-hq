@@ -5,6 +5,7 @@ For details on casexml check out:
 http://bitbucket.org/javarosa/javarosa/wiki/casexml
 """
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from collections import OrderedDict
 import re
 from datetime import datetime

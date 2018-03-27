@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from datetime import datetime
 from django.test import SimpleTestCase
 from xml.etree import cElementTree as ElementTree

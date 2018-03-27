@@ -1893,10 +1893,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     def sql_location(self):
         from corehq.apps.locations.models import SQLLocation
         if self.location_id:
-            try:
-                return SQLLocation.objects.get(location_id=self.location_id)
-            except SQLLocation.DoesNotExist:
-                pass
+            return SQLLocation.objects.get_or_None(location_id=self.location_id)
         return None
 
     def get_location_ids(self, domain):

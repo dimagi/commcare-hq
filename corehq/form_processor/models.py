@@ -1440,10 +1440,7 @@ class LedgerValue(PartitionedModel, SaveStateMixin, models.Model, TrackRelatedCh
     @memoized
     def location(self):
         from corehq.apps.locations.models import SQLLocation
-        try:
-            return SQLLocation.objects.get(supply_point_id=self.case_id)
-        except SQLLocation.DoesNotExist:
-            return None
+        return SQLLocation.objects.get_or_None(supply_point_id=self.case_id)
 
     @property
     def location_id(self):

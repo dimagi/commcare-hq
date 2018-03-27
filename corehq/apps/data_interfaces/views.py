@@ -430,7 +430,7 @@ class CaseGroupCaseManagementView(DataInterfaceSection, CRUDPaginatedViewMixin):
     def _get_item_data(self, case):
         return {
             'id': case.case_id,
-            'detailsUrl': reverse('case_details', args=[self.domain, case.case_id]),
+            'detailsUrl': reverse('case_data', args=[self.domain, case.case_id]),
             'name': case.name,
             'externalId': case.external_id if case.external_id else '--',
             'phoneNumber': case.get_case_property('contact_phone_number') or '--',
