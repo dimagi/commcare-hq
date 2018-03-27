@@ -6,8 +6,10 @@ import weakref
 from uuid import uuid4
 from xml.etree import cElementTree as ElementTree
 from collections import defaultdict
+from datetime import datetime
 
 from couchdbkit.exceptions import BulkSaveError
+from django.db.models import Min
 
 from casexml.apps.case.mock import CaseBlock, CaseFactory, CaseStructure
 from casexml.apps.case.xml import V1, V2, V2_NAMESPACE
@@ -17,6 +19,7 @@ from casexml.apps.phone.restore_caching import RestorePayloadPathCache
 from casexml.apps.phone.xml import SYNC_XMLNS
 from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
 from casexml.apps.stock.mock import Balance
+from corehq.form_processor.backends.sql.dbaccessors import get_cursor
 from memoized import memoized
 from six.moves import range
 
@@ -38,8 +41,20 @@ def delete_sync_logs(before_date, limit=1000, num_tries=10):
     raise CouldNotPruneSyncLogs()
 
 
-def delete_sql_synclogs(before_date):
-    SyncLogSQL.objects.filter(date__lt=before_date).delete()
+def prune_sql_synclogs():
+    """
+    Drops all partition tables containing data that's older than 63 days (9 weeks)
+    """
+    oldest_synclog = SyncLogSQL.objects.aggregate(Min('date'))['date__min']
+    while (datetime.today() - oldest_synclog).days > 9*7:
+        year, week, _ = oldest_synclog.isocalendar()
+        table_name = "{base_name}_y{year}w{week}".format(
+            base_name=SyncLogSQL._meta.db_table,
+            year=year,
+            week="%02d" % week
+        )
+        drop_query = "DROP TABLE IF EXISTS {}".format(table_name)
+        get_cursor(SyncLogSQL).execute(drop_query)
 
 ITEMS_COMMENT_PREFIX = b'<!--items='
 ITESM_COMMENT_REGEX = re.compile(br'(<!--items=(\d+)-->)')
