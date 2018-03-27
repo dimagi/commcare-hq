@@ -265,10 +265,10 @@ class TestMultimediaMigrations(BaseMigrationTest):
 
     slug = "multimedia"
     test_items = [
-        (mod.hqmedia.CommCareAudio, "audio.mp3"),
-        (mod.hqmedia.CommCareImage, "image.jpg"),
-        (mod.hqmedia.CommCareVideo, "video.3gp"),
-        (mod.hqmedia.CommCareMultimedia, "file.bin"),
+        (mod.hqmedia.CommCareAudio, b"audio.mp3"),
+        (mod.hqmedia.CommCareImage, b"image.jpg"),
+        (mod.hqmedia.CommCareVideo, b"video.3gp"),
+        (mod.hqmedia.CommCareMultimedia, b"file.bin"),
     ]
 
     @staticmethod
@@ -302,8 +302,8 @@ class TestMultimediaMigrations(BaseMigrationTest):
             self.assertEqual(exp.fetch_attachment(exp.attachment_id), name + data)
 
     def test_migrate_with_concurrent_modification(self):
-        new_data = 'something new not valid utf-8 \xe4\x94'
-        old_data = 'something old not valid utf-8 \xe4\x94'
+        new_data = b'something new not valid utf-8 \xe4\x94'
+        old_data = b'something old not valid utf-8 \xe4\x94'
         media = {}
         for media_class, name in self.test_items:
             item = self.make_unmigrated(media_class, name, name + old_data)
