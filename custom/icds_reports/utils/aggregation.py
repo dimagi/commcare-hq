@@ -242,7 +242,7 @@ class PostnatalCareFormsChildHealthAggregationHelper(BaseICDSAggregationHelper):
         next_month_start = month_formatter(self.month + relativedelta(months=1))
 
         return """
-        SELECT child_health_case_id AS case_id,
+        SELECT DISTINCT child_health_case_id AS case_id,
         LAST_VALUE(timeend) OVER w AS latest_time_end,
         MAX(counsel_increase_food_bf) OVER w AS counsel_increase_food_bf,
         MAX(counsel_breast) OVER w AS counsel_breast,
@@ -367,7 +367,7 @@ class PostnatalCareFormsCcsRecordAggregationHelper(BaseICDSAggregationHelper):
         next_month_start = month_formatter(self.month + relativedelta(months=1))
 
         return """
-        SELECT ccs_record_case_id AS case_id,
+        SELECT DISTINCT ccs_record_case_id AS case_id,
         LAST_VALUE(timeend) OVER w AS latest_time_end,
         MAX(counsel_methods) AS counsel_methods
         FROM "{ucr_tablename}"
