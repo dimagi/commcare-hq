@@ -1,121 +1,83 @@
 from __future__ import absolute_import
 
+from collections import namedtuple
 
-class Task(object):
+
+class WorkflowTask(object):
     """
-    Tasks are instantiated with a function to run, and args and kwargs that must be passed to it.
+    WorkflowTasks are instantiated with a function to run, and args and
+    kwargs that must be passed to it.
 
-    Instances of this class are used for rollback.
+    If a task is not instantiated with a function, it must implement
+    its own run() method.
 
-    If a task is not instantiated with a function, it must implement a run() method. It will be passed the args
-    and kwargs that the class was instantiated with.
+    `WorkflowTask.run()` can return subtasks, which will be prepended
+    to the workflow queue. If a task needs to make more than one
+    change, it should split them up into subtasks.
+
+    A WorkflowTask can accept a rollback_func when it is instantiated,
+    or its rollback() method can be overridden. If rollback_func needs
+    values set by `func`, then the `run()` method should add them to
+    `rollback_args` or `rollback_kwargs`.
     """
-
-    def __init__(self, func=None, *args, **kwargs):
-        self.func = func
-        self.args = args
-        self.kwargs = kwargs
-
-    def run_func(self):
-        if self.func:
-            return self.func(*self.args, **self.kwargs)
-        else:
-            return self.run(*self.args, **self.kwargs)
-
-    def run(self, *args, **kwargs):
-        raise NotImplementedError('Task.func must be set, or Task.run() must be defined.')
-
-
-class WorkflowTask(Task):
-    """
-    Extends rollback tasks. Workflow tasks can define subtasks, which will be prepended to the workflow queue
-    after the task is run.
-
-    If a workflow task is not instantiated with a rollback task, either it must implement its own
-    get_rollback_task() method, or it will be assumed that the task does not cause a change of state (probably
-    because its subtasks do).
-    """
-
-    def __init__(self, rollback_task=None, pass_result_as=None, func=None, *args, **kwargs):
+    def __init__(self, func, func_args, func_kwargs,
+                 rollback_func=None, rollback_args=None, rollback_kwargs=None):
         """
         Instantiate WorkflowTask
-
-        :param rollback_task: A Task instance
-        :param pass_result_as: A parameter name, to be passed as a kwarg to rollback_task
-        :param func: The function this task must run
-        :param args: Arguments to pass to func or self.run()
-        :param kwargs: Keyword arguments to pass to func or self.run()
         """
-        self.rollback_task = rollback_task
-        self.pass_result_as = pass_result_as
-        super(WorkflowTask, self).__init__(func, *args, **kwargs)
-        self._subtasks = []
+        self.func = func
+        self.func_args = func_args
+        self.func_kwargs = func_kwargs
 
-    def get_rollback_task(self):
-        return self.rollback_task
+        self.rollback_func = rollback_func
+        self.rollback_args = rollback_args
+        self.rollback_kwargs = rollback_kwargs
 
-    def get_subtasks(self):
-        return self._subtasks
+        self.subtasks = []
 
+    def __str__(self):
+        return self.func.__name__ if self.func else self.__class__.__name__
 
-def task(func):
-    # Doesn't use `@wraps` because `call()` doesn't execute func; it returns a Task instantiated with func
-    def call(*args, **kwargs):
-        instance = Task(func, *args, **kwargs)
-        return instance
-    return call
+    def run(self):
+        if self.func:
+            self.func(*self.func_args, **self.func_kwargs)
+            return self.subtasks
+        else:
+            raise NotImplementedError('Task.func must be set, or Task.run() must be defined.')
 
-
-def workflow_task(rollback_task=None, pass_result_as=None):
-    def decorate(func):
-        def call(*args, **kwargs):
-            instance = WorkflowTask(rollback_task, pass_result_as, func, *args, **kwargs)
-            return instance
-        return call
-    return decorate
+    def rollback(self):
+        if self.rollback_func:
+            return self.rollback_func(*self.rollback_args, **self.rollback_kwargs)
 
 
-def execute_workflow(workflow_queue):
-    """
-    We use two lists to execute a workflow:
+WorkflowError = namedtuple('WorkflowError', 'task exception is_rollback_error')
 
-    1. The (given) workflow queue, where tasks are pulled off the front and run, until an error is encountered.
-    2. A rollback stack, where each workflow task appends a reverse task to undo its action, to be run if the
-       workflow fails.
 
-    """
-    success = True
+def execute_workflow(workflow):
     errors = []
-    rollback_stack = []
+    executed_tasks = []
 
-    try:
-        while workflow_queue:
-            workflow_task = workflow_queue.pop(0)
-            rollback_task = workflow_task.get_rollback_task()
-            if rollback_task:
-                rollback_stack.append(rollback_task)
-            # Note: The rollback task is added before the workflow task is run. This offers developers an
-            # opportunity to try to fix whatever the workflow task might have broken before it failed.
-            # ...
-            # BUT if the workflow task needs to make more than one change, it should split them up into subtasks.
-            result = workflow_task.run_func()
-            if workflow_task.pass_result_as and rollback_task:
-                # Useful for rollback tasks that must delete something created by the workflow task
-                rollback_task.kwargs.update({workflow_task.pass_result_as: result})
-            for i, subtask in enumerate(workflow_task.get_subtasks()):
-                workflow_queue.insert(i, subtask)
+    while workflow:
+        task = workflow.pop(0)
+        # .. NOTE: The task is added to executed_tasks before it is
+        #          actually run. This allows its rollback() method
+        #          the opportunity to clean up anything that might
+        #          have happened at the point of failure.
+        executed_tasks.append(task)
+        try:
+            subtasks = task.run() or []
+            assert hasattr(subtasks, '__iter__') and all(isinstance(t, WorkflowTask) for t in subtasks), \
+                'Error running WorkflowTask "{}". run() should return subtasks or None. Got {} instead'.format(
+                    task, repr(subtasks))
+        except Exception as err:
+            errors.append(WorkflowError(task, err, False))
+            for task in reversed(executed_tasks):
+                try:
+                    task.rollback()
+                except Exception as err:
+                    errors.append(WorkflowError(task, err, True))
+            break
+        else:
+            workflow[0:0] = subtasks
 
-    except Exception as workflow_error:
-        success = False
-        errors.append('Workflow failed: {name}: {message}'.format(
-            name=workflow_error.__class__.__name__, message=str(workflow_error)
-        ))
-        for rollback_task in reversed(rollback_stack):
-            try:
-                rollback_task.run_func()
-            except Exception as rollback_error:
-                errors.append('Rollback error: {name}: {message}'.format(
-                    name=rollback_error.__class__.__name__, message=str(rollback_error)
-                ))
-
-    return success, errors
+    return errors
