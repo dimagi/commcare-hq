@@ -75,7 +75,7 @@ class UserSyncHistoryProcessor(PillowProcessor):
                 save |= update_device_meta(user, device_id, device_app_meta=app_meta, save=False)
 
             if save:
-                user.save()
+                user.save(fire_signals=False)
 
 
 class UserSyncHistoryReindexerDocProcessor(BaseDocProcessor):
