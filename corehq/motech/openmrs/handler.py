@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
 from corehq.motech.openmrs.logger import logger
 from corehq.motech.openmrs.repeater_helpers import (
     CaseTriggerInfo,
@@ -18,6 +19,7 @@ from corehq.motech.openmrs.repeater_helpers import (
     update_person_attribute,
     create_person_attribute,
     delete_person_attribute,
+    get_openmrs_location_uuid,
 )
 from corehq.motech.openmrs.workflow import WorkflowTask, execute_workflow
 from corehq.motech.utils import pformat_json
@@ -92,12 +94,13 @@ def sync_person_attributes(requests, info, openmrs_config, person_uuid, attribut
     return subtasks
 
 
-def create_visits(requests, info, form_json, form_question_values, openmrs_config, person_uuid):
+def create_visits(requests, domain, info, form_json, form_question_values, openmrs_config, person_uuid):
     """
     Returns WorkflowTasks for creating visits, encounters and observations
     """
     subtasks = []
     provider_uuid = getattr(openmrs_config, 'openmrs_provider', None)
+    location_uuid = get_openmrs_location_uuid(domain, info.case_id)
     info.form_question_values.update(form_question_values)
     for form_config in openmrs_config.form_configs:
         logger.debug('Send visit for form?', form_config, form_json)
@@ -118,8 +121,7 @@ def create_visits(requests, info, form_json, form_question_values, openmrs_confi
                         encounter_type=form_config.openmrs_encounter_type,
                         openmrs_form=form_config.openmrs_form,
                         visit_type=form_config.openmrs_visit_type,
-                        # TODO: Set location = location of case owner (CHW)
-                        # location_uuid=location[meta][openmrs_uuid]
+                        location_uuid=location_uuid
                     ),
                     rollback_func=delete_visit,
                     rollback_args=(requests, ),
@@ -189,7 +191,7 @@ def sync_openmrs_patient(requests, domain, info, form_json, form_question_values
 
         WorkflowTask(
             func=create_visits,
-            func_args=(requests, info, form_json, form_question_values, openmrs_config, person_uuid),
+            func_args=(requests, domain, info, form_json, form_question_values, openmrs_config, person_uuid),
             returns_subtasks=True,
         )
     ])
