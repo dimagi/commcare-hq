@@ -400,7 +400,7 @@ hqDefine('app_manager/js/details/graph_config', function() {
                 return self.createSeries(o, self.childCaseTypes, self.fixtures, self.lang, self.langs);
             }));
             self.annotations(_.map(obj.annotations, function(o) {
-                return new Annotation(o);
+                return annotation(o);
             }));
 
             if (obj.axisTitleConfigurations.length !== 0) {
@@ -454,7 +454,7 @@ hqDefine('app_manager/js/details/graph_config', function() {
             self.annotations.remove(annotation);
         };
         self.addAnnotation = function() {
-            self.annotations.push(new Annotation({
+            self.annotations.push(annotation({
                 lang: self.lang,
                 langs: self.langs,
             }));
@@ -464,7 +464,7 @@ hqDefine('app_manager/js/details/graph_config', function() {
     };
 
     // private
-    var Annotation = function(original) {
+    var annotation = function(original) {
         var self = localizableValue(original);
         original = original || {};
 
@@ -473,8 +473,6 @@ hqDefine('app_manager/js/details/graph_config', function() {
 
         return self;
     };
-    Annotation.prototype = localizableValue();
-    Annotation.prototype.constructor = Annotation;
 
     // private
     var graphSeries = function(original, childCaseTypes, fixtures, lang, langs) {
