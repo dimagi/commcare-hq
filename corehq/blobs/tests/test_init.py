@@ -14,7 +14,7 @@ from settingshelper import SharedDriveConfiguration
 
 @generate_cases([
     dict(root=None, msg=r"invalid shared drive path: None$"),
-    dict(root="", msg=r"invalid shared drive path: ''$"),
+    dict(root=b"", msg=r"invalid shared drive path: ''$"),
     dict(root="file", msg=r"shared drive path is not a directory: '.*/file'$"),
     dict(blob_dir=None, msg="blob_dir is empty or not configured"),
     dict(blob_dir="", msg="blob_dir is empty or not configured"),
