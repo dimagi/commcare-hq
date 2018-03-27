@@ -40,6 +40,14 @@ def navigation_event_ids_by_user(user, start_date=None, end_date=None):
     return ids
 
 
+def get_docs_by_user(user):
+    event_ids = navigation_event_ids_by_user(user)
+    doc_list = []
+    for event in iter_docs(NavigationEventAudit.get_db(), event_ids):
+        doc_list.append(NavigationEventAudit.wrap(event))
+        return doc_list
+
+
 def write_log_events(writer, user, domain=None, override_user=None, start_date=None, end_date=None):
     event_ids = navigation_event_ids_by_user(user, start_date, end_date)
     for event in iter_docs(NavigationEventAudit.get_db(), event_ids):
