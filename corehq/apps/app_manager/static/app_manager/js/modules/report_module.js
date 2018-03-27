@@ -12,7 +12,7 @@ hqDefine('app_manager/js/modules/report_module', function () {
         graph_configs = graph_configs || {};
 
         self.graphUiElements = {};
-        var GraphConfigurationUiElement = hqImport('app_manager/js/details/graph_config').GraphConfigurationUiElement;
+        var graphConfigurationUiElement = hqImport('app_manager/js/details/graph_config').graphConfigurationUiElement;
         for (var i = 0; i < availableReportIds.length; i++) {
             var currentReportId = availableReportIds[i];
             self.graphUiElements[currentReportId] = {};
@@ -38,7 +38,7 @@ hqDefine('app_manager/js/modules/report_module', function () {
                     }
                 });
 
-                var graph_el = new GraphConfigurationUiElement({
+                var graph_el = graphConfigurationUiElement({
                     childCaseTypes: [],
                     fixtures: [],
                     lang: lang,

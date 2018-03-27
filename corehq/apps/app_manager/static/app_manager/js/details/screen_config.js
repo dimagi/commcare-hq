@@ -450,8 +450,8 @@ hqDefine('app_manager/js/details/screen_config', function() {
                     };
                     that.enum_extra = uiElement.key_value_mapping(o);
                 }());
-                var GraphConfigurationUiElement = hqImport('app_manager/js/details/graph_config').GraphConfigurationUiElement;
-                this.graph_extra = new GraphConfigurationUiElement({
+                var graphConfigurationUiElement = hqImport('app_manager/js/details/graph_config').graphConfigurationUiElement;
+                this.graph_extra = graphConfigurationUiElement({
                     childCaseTypes: this.screen.childCaseTypes,
                     fixtures: this.screen.fixtures,
                     lang: this.lang,
