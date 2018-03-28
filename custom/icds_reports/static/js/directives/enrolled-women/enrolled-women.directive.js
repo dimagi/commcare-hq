@@ -189,8 +189,8 @@ function EnrolledWomenController($scope, $routeParams, $location, $filter, demog
             callback: function (chart) {
                 var tooltip = chart.interactiveLayer.tooltip;
                 tooltip.contentGenerator(function (d) {
-                    var day = _.find(vm.chartData[0].values, function(num) { return d3.time.format('%b %Y')(new Date(num['x'])) === d.value;});
-                    return vm.tooltipContent(d.value, day);
+                    var day = _.find(vm.chartData[0].values, function(num) { return num['x'] === d.value; });
+                    return vm.tooltipContent(d3.time.format('%b %Y')(new Date(d.value)), day);
                 });
                 return chart;
             },

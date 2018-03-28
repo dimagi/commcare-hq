@@ -152,13 +152,13 @@ class TestLactatingEnrolledWomen(TestCase):
                     "average_format": "number",
                     'extended_info': [
                         {
-                            'indicator': 'Number of pregnant women who are enrolled for Anganwadi Services:',
+                            'indicator': 'Number of lactating women who are enrolled for Anganwadi Services:',
                             'value': "166"
                         },
-                        {'indicator': 'Total number of pregnant women who are registered:', 'value': "166"},
+                        {'indicator': 'Total number of lactating women who are registered:', 'value': "166"},
                         {
                             'indicator': (
-                                'Percentage of registered pregnant women who are enrolled for Anganwadi Services:'
+                                'Percentage of registered lactating women who are enrolled for Anganwadi Services:'
                             ),
                             'value': '100.00%'
                         }
@@ -206,13 +206,13 @@ class TestLactatingEnrolledWomen(TestCase):
                     "average_format": "number",
                     'extended_info': [
                         {
-                            'indicator': 'Number of pregnant women who are enrolled for Anganwadi Services:',
+                            'indicator': 'Number of lactating women who are enrolled for Anganwadi Services:',
                             'value': "87"
                         },
-                        {'indicator': 'Total number of pregnant women who are registered:', 'value': "87"},
+                        {'indicator': 'Total number of lactating women who are registered:', 'value': "87"},
                         {
                             'indicator': (
-                                'Percentage of registered pregnant women who are enrolled for Anganwadi Services:'
+                                'Percentage of registered lactating women who are enrolled for Anganwadi Services:'
                             ),
                             'value': '100.00%'
                         }

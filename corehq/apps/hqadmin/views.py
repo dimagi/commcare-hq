@@ -1221,7 +1221,6 @@ def _get_submodules():
     """
     returns something like
     ['corehq/apps/hqmedia/static/hqmedia/MediaUploader',
-     'corehq/apps/prelogin',
      'submodules/auditcare-src',
      ...]
     """

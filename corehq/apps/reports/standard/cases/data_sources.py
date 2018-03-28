@@ -50,7 +50,7 @@ class CaseInfo(object):
     @property
     def case_detail_url(self):
         try:
-            return absolute_reverse('case_details', args=[self.report.domain, self.case_id])
+            return absolute_reverse('case_data', args=[self.report.domain, self.case_id])
         except NoReverseMatch:
             return None
 
