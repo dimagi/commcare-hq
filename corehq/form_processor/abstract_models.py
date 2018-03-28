@@ -403,7 +403,7 @@ class XFormQuestionValueIterator(object):
         return (qid, index)
 
     def last(self):
-        if self._last is None and len(levels) == 1:
+        if self._last is None and len(self.levels) == 1:
             self._last = self._next()[0]
         return self._last
 
