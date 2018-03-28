@@ -50,7 +50,11 @@ hqDefine('userreports/js/report_config', function() {
                 if (this.newProperty()) {
                     var item = this._createListItem();
                     item.property(this.newProperty());
-                    item.calculation(item.getDefaultCalculation());
+                    if (this.reportType() === constants.REPORT_TYPE_LIST) {
+                        item.calculation(constants.GROUP_BY);
+                    } else {
+                        item.calculation(item.getDefaultCalculation());
+                    }
                     this.newProperty(null);
                     this.columns.push(item);
                     if (_.isFunction(this.addItemCallback)) {
