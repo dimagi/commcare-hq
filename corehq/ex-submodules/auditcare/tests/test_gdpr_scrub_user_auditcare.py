@@ -20,13 +20,11 @@ class TestGDPRScrubUserAuditcare(TestCase):
             "auditcare/urlpath_by_user_date",
             reduce=False,
         ).all()]))
-
         iter_bulk_delete(NavigationEventAudit.get_db(), all_auditcare_ids)
 
     def test_get_docs_by_existing_user(self):
         auditcare_returned_docs = get_auditcare_docs_by_username("test_user1")
         self.assertEqual(len(auditcare_returned_docs), 3)
-
         self.assertEqual(auditcare_returned_docs[0].request_path, "/fake/path/2")
         self.assertEqual(auditcare_returned_docs[1].request_path, "/fake/path/1")
         self.assertEqual(auditcare_returned_docs[2].request_path, "/fake/path/0")
@@ -34,12 +32,10 @@ class TestGDPRScrubUserAuditcare(TestCase):
     def test_get_docs_by_nonexistent_user(self):
         username = "nonexistent_user"
         auditcare_returned_docs = get_auditcare_docs_by_username(username)
-        print("auditcare_returned_docs: {}".format(auditcare_returned_docs))
         self.assertEqual(len(auditcare_returned_docs), 0)
 
     def test_update_username_no_returned_docs(self):
-        Command().handle("nonexistant_user")
-        # Make sure no usernames were redacted
+        Command().handle("nonexistent_user")
         redacted_username_docs = get_auditcare_docs_by_username("Redacted User (GDPR)")
         self.assertEqual(len(redacted_username_docs), 0)
         orig_username_docs = get_auditcare_docs_by_username("test_user1")
