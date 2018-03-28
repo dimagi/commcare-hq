@@ -4,7 +4,6 @@ from __future__ import division
 from __future__ import unicode_literals
 import datetime
 import math
-import operator
 from collections import defaultdict, namedtuple
 
 from django.conf import settings
@@ -61,7 +60,6 @@ from memoized import memoized
 from dimagi.utils.parsing import json_format_date, string_to_utc_datetime
 
 import six
-from functools import reduce
 from six.moves import range
 from six.moves import map
 from six.moves.urllib.parse import urlencode
@@ -1611,11 +1609,8 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
             if group_name == 'no_group':
                 continue
 
-            owner_ids_nested = [
-                [user['user_id'].lower(), user['location_id']] + user['group_ids']
-                for user in users
-            ]
-            owner_ids = set(reduce(operator.add, owner_ids_nested, []))
+            owner_ids = _get_owner_ids_from_users(users)
+
             active_cases = sum([int(report_data.active_cases_by_owner.get(owner_id, 0)) for owner_id in owner_ids])
             total_cases = sum([int(report_data.total_cases_by_owner.get(owner_id, 0)) for owner_id in owner_ids])
             active_users = int(active_users_by_group.get(group, 0))
@@ -1738,17 +1733,8 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
     def _report_data(self):
         avg_datespan = self.avg_datespan
 
-        case_owners = set()
-        user_ids = []
-        for user in self.users_to_iterate:
-            user_ids.append(user.user_id)
-            case_owners = case_owners.union((user.user_id, user.location_id))
-            case_owners = case_owners.union(user.group_ids)
-
-        try:
-            case_owners.remove(None)
-        except KeyError:
-            pass
+        case_owners = _get_owner_ids_from_users(self.users_to_iterate)
+        user_ids = self.user_ids
 
         return WorkerActivityReportData(
             avg_submissions_by_user=get_submission_counts_by_user(
@@ -1783,10 +1769,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
             else:
                 total_row.append('---')
         num = len([row for row in rows if row[3] != _(self.NO_FORMS_TEXT)])
-        case_owners = set()
-        for user in self.users_to_iterate:
-            case_owners = case_owners.union((user.user_id, user.location_id))
-            case_owners = case_owners.union(user.group_ids)
+        case_owners = _get_owner_ids_from_users(self.users_to_iterate)
         total_row[6] = sum(
             [int(report_data.active_cases_by_owner.get(id, 0))
              for id in case_owners])
@@ -1844,3 +1827,17 @@ def _get_selected_users(domain, request):
         request.GET.getlist(EMWF.slug),
         request.couch_user,
     ))
+
+
+def _get_owner_ids_from_users(users):
+    owner_ids = set()
+    for user in users:
+        owner_ids = owner_ids.union([user['user_id'].lower(), user['location_id']])
+        owner_ids = owner_ids.union(user['group_ids'])
+
+    try:
+        owner_ids.remove(None)
+    except KeyError:
+        pass
+
+    return list(owner_ids)
