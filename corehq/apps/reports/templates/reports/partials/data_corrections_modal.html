@@ -10,12 +10,15 @@
                     <span aria-hidden="true">&times;</span>
                 </button>
                 <div class="form-inline pull-right" data-bind="visible: !showSpinner()">
-                    {% if instance %}{# This is a form, not a case #}
+                    <!-- ko if: displayProperties.length > 1 -->
                         <ul class="nav nav-pills">
-                            <li data-bind="click: updateDisplayProperty, css: { active: displayProperty() === 'label' }" data-display='label'><a>{% trans "Labels" %}</a></li>
-                            <li data-bind="click: updateDisplayProperty, css: { active: displayProperty() === 'name' }" data-display='name'><a>{% trans "Question IDs" %}</a></li>
+                            <!-- ko foreach: displayProperties -->
+                                <li data-bind="click: $root.updateDisplayProperty(property), css: { active: $root.displayProperty() === property }">
+                                    <a data-bind="text: name"></a>
+                                </li>
+                            <!--/ko-->
                         </ul>
-                    {% endif %}
+                    <!--/ko-->
                     <div class="input-group input-group-sm">
                         <input type="text" class="form-control" placeholder="{% trans "Search" %}"
                                data-bind="value: query, valueUpdate: 'afterkeydown'" />

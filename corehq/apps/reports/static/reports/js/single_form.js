@@ -29,10 +29,19 @@ hqDefine("reports/js/single_form", function() {
         hqImport("reports/js/data_corrections").init($container.find(".data-corrections-trigger"), $container.find(".data-corrections-modal"), {
             properties: form_question_map,
             propertyNames: ordered_question_values,
-            propertyTemplate: "<div class='form-data-question'><i data-bind='attr: { class: icon }'></i> " +
-                "<span data-bind='text: splitName, visible: $root.displayProperty() === \"name\"'></span>" +
-                "<span data-bind='text: label, visible: $root.displayProperty() === \"label\"'></span></div>",
-            displayProperty: 'label',
+            propertyPrefix: "<div class='form-data-question'><i data-bind='attr: { class: icon }'></i> ",
+            propertySuffix: "</div>",
+            displayProperties: [
+                {
+                    property: 'label',
+                    name: gettext('Labels'),
+                },
+                {
+                    property: 'splitName',
+                    name: gettext('Question IDs'),
+                    search: 'name',
+                },
+            ],
             saveUrl: initial_page_data.reverse("edit_form", instanceId),
         });
 

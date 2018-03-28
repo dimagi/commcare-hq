@@ -14,15 +14,38 @@ hqDefine("reports/js/data_corrections", function() {
 
         self.url = options.url;
         self.saveUrl = options.saveUrl;
-        self.propertyTemplate = {
-            nodes: $("<div>" + (options.propertyTemplate || "<span data-bind='text: name'></span>" )+ "</div>"),
-        };
-        self.displayProperty = ko.observable(options.displayProperty || '');
         self.propertyNames = ko.observableArray();  // ordered list of names, sometimes populated by ajax call because it's slow
         self.properties = {};                       // map of name => PropertyModel, populated in init
+        self.searchableNames = [];
 
-        self.updateDisplayProperty = function(model, e) {
-            self.displayProperty($(e.currentTarget).data("display"));
+        self.generateSearchableNames = function() {
+            if (self.displayProperty() === 'name') {
+                self.searchableNames = self.propertyNames();
+            } else {
+                var displayPropertyObj = _.findWhere(self.displayProperties, { property: self.displayProperty() }),
+                    search = displayPropertyObj.search || displayPropertyObj.property;
+                self.searchableNames = [];
+                _.each(self.propertyNames(), function(name) {
+                    if (self.properties[name]) {
+                        self.searchableNames.push(self.properties[name][search]);
+                    }
+                });
+            }
+        };
+
+        self.displayProperties = _.isEmpty(options.displayProperties) ? [{ property: 'name' }] : options.displayProperties;
+        self.displayProperty = ko.observable(_.first(self.displayProperties).property);
+        self.updateDisplayProperty = function(newValue) {
+            self.displayProperty(newValue);
+            self.initQuery();
+            self.generateSearchableNames();
+        };
+
+        var innerTemplate = _.map(self.displayProperties, function(p) {
+            return _.template("<span data-bind='text: <%= property %>, visible: $root.displayProperty() === \"<%= property %>\"'></span>")(p);
+        }).join("");
+        self.propertyTemplate = {
+            nodes: $("<div>" + (options.propertyPrefix || "") + innerTemplate + (options.propertySuffix || "") + "</div>"),
         };
 
         // If there are a lot of items, make a bigger modal and render properties as columns
@@ -40,6 +63,7 @@ hqDefine("reports/js/data_corrections", function() {
             self.columnClass("col-sm-" + (12 / self.columnsPerPage()));
             self.isLargeModal(self.columnsPerPage() === 2);
             self.isFullScreenModal(self.columnsPerPage() === 3);
+            self.generateSearchableNames();
         });
 
         // This modal supports pagination and a search box, all of which is done client-side
@@ -83,7 +107,7 @@ hqDefine("reports/js/data_corrections", function() {
 
             // Cycle over all items on previous pages
             while (added < self.itemsPerPage() * (self.currentPage() - 1) && index < self.propertyNames().length) {
-                if (self.matchesQuery(self.propertyNames()[index])) {
+                if (self.matchesQuery(self.searchableNames[index])) {
                     added++;
                 }
                 index++;
@@ -92,7 +116,7 @@ hqDefine("reports/js/data_corrections", function() {
             // Add as many items as fit on a page
             added = 0;
             while (added < self.itemsPerPage() && index < self.propertyNames().length) {
-                if (self.matchesQuery(self.propertyNames()[index])) {
+                if (self.matchesQuery(self.searchableNames[index])) {
                     var name = self.propertyNames()[index];
                     if (!self.properties[name]) {
                         self.properties[name] = new PropertyModel({ name: name });
@@ -117,7 +141,7 @@ hqDefine("reports/js/data_corrections", function() {
 
         self.query.subscribe(function() {
             self.currentPage(1);
-            self.totalPages(Math.ceil(_.filter(self.propertyNames(), self.matchesQuery).length / self.itemsPerPage()) || 1);
+            self.totalPages(Math.ceil(_.filter(self.searchableNames, self.matchesQuery).length / self.itemsPerPage()) || 1);
             self.render();
         });
 
@@ -162,6 +186,7 @@ hqDefine("reports/js/data_corrections", function() {
                     name: name,
                 }));
             }));
+            self.generateSearchableNames();
             self.initQuery();
             self.currentPage(1);
             self.showError(false);
