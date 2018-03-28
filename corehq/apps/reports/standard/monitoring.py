@@ -1744,6 +1744,11 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
             case_owners = case_owners.union((user.user_id, user.location_id))
             case_owners = case_owners.union(user.group_ids)
 
+        try:
+            case_owners.remove(None)
+        except KeyError:
+            pass
+
         return WorkerActivityReportData(
             avg_submissions_by_user=get_submission_counts_by_user(
                 self.domain, avg_datespan, user_ids=user_ids
