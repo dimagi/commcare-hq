@@ -3,21 +3,15 @@ from __future__ import unicode_literals
 from corehq.motech.openmrs.logger import logger
 from corehq.motech.openmrs.repeater_helpers import (
     CaseTriggerInfo,
+    CreatePersonAddressTask,
+    CreatePersonAttributeTask,
+    CreateVisitTask,
     OpenmrsResponse,
-    create_visit,
-    delete_visit,
+    UpdatePersonAddressTask,
+    UpdatePersonAttributeTask,
+    UpdatePersonNameTask,
+    UpdatePersonPropertiesTask,
     get_patient,
-    update_person_properties,
-    rollback_person_properties,
-    update_person_name,
-    rollback_person_name,
-    update_person_address,
-    rollback_person_address,
-    create_person_address,
-    delete_person_address,
-    update_person_attribute,
-    create_person_attribute,
-    delete_person_attribute,
 )
 from corehq.motech.openmrs.workflow import WorkflowTask, execute_workflow
 from corehq.motech.utils import pformat_json
@@ -41,11 +35,7 @@ def send_openmrs_data(requests, domain, form_json, openmrs_config, case_trigger_
     workflow = []
     for info in case_trigger_infos:
         workflow.append(
-            WorkflowTask(
-                func=sync_openmrs_patient,
-                func_args=(requests, domain, info, form_json, form_question_values, openmrs_config),
-                returns_subtasks=True,
-            )
+            SyncOpenmrsPatientTask(requests, domain, info, form_json, form_question_values, openmrs_config)
         )
 
     errors = execute_workflow(workflow)
@@ -56,142 +46,127 @@ def send_openmrs_data(requests, domain, form_json, openmrs_config, case_trigger_
         return OpenmrsResponse(200, 'OK', '')
 
 
-def sync_person_attributes(requests, info, openmrs_config, person_uuid, attributes):
-    """
-    Returns WorkflowTasks for creating and updating OpenMRS person attributes.
-    """
-    subtasks = []
-    existing_person_attributes = {
-        attribute['attributeType']['uuid']: (attribute['uuid'], attribute['value'])
-        for attribute in attributes
-    }
-    for person_attribute_type, value_source in openmrs_config.case_config.person_attributes.items():
-        value = value_source.get_value(info)
-        if person_attribute_type in existing_person_attributes:
-            attribute_uuid, existing_value = existing_person_attributes[person_attribute_type]
-            if value != existing_value:
-                subtasks.append(
-                    WorkflowTask(
-                        func=update_person_attribute,
-                        func_args=(requests, person_uuid, attribute_uuid, person_attribute_type, value),
-                        rollback_func=update_person_attribute,
-                        rollback_args=(requests, person_uuid, attribute_uuid, person_attribute_type,
-                                       existing_value),
+class SyncPersonAttributesTask(WorkflowTask):
+
+    def __init__(self, requests, info, openmrs_config, person_uuid, attributes):
+        self.requests = requests
+        self.info = info
+        self.openmrs_config = openmrs_config
+        self.person_uuid = person_uuid
+        self.attributes = attributes
+
+    def run(self):
+        """
+        Returns WorkflowTasks for creating and updating OpenMRS person attributes.
+        """
+        subtasks = []
+        existing_person_attributes = {
+            attribute['attributeType']['uuid']: (attribute['uuid'], attribute['value'])
+            for attribute in self.attributes
+        }
+        for person_attribute_type, value_source in self.openmrs_config.case_config.person_attributes.items():
+            value = value_source.get_value(self.info)
+            if person_attribute_type in existing_person_attributes:
+                attribute_uuid, existing_value = existing_person_attributes[person_attribute_type]
+                if value != existing_value:
+                    subtasks.append(
+                        UpdatePersonAttributeTask(
+                            self.requests, self.person_uuid, attribute_uuid, person_attribute_type, value,
+                            existing_value
+                        )
                     )
+            else:
+                subtasks.append(
+                    CreatePersonAttributeTask(self.requests, self.person_uuid, person_attribute_type, value)
                 )
-        else:
-            subtasks.append(
-                WorkflowTask(
-                    func=create_person_attribute,
-                    func_args=(requests, person_uuid, person_attribute_type, value),
-                    rollback_func=delete_person_attribute,
-                    rollback_args=(requests, person_uuid),
-                    returns_result=True
-                )
-            )
-    return subtasks
+        return subtasks
 
 
-def create_visits(requests, info, form_json, form_question_values, openmrs_config, person_uuid):
-    """
-    Returns WorkflowTasks for creating visits, encounters and observations
-    """
-    subtasks = []
-    provider_uuid = getattr(openmrs_config, 'openmrs_provider', None)
-    info.form_question_values.update(form_question_values)
-    for form_config in openmrs_config.form_configs:
-        logger.debug('Send visit for form?', form_config, form_json)
-        if form_config.xmlns == form_json['form']['@xmlns']:
-            logger.debug('Yes')
+class CreateVisitsTask(WorkflowTask):
 
-            subtasks.append(
-                WorkflowTask(
-                    func=create_visit,
-                    func_args=(requests, ),
-                    func_kwargs=dict(
-                        person_uuid=person_uuid,
+    def __init__(self, requests, info, form_json, form_question_values, openmrs_config, person_uuid):
+        self.requests = requests
+        self.info = info
+        self.form_json = form_json
+        self.form_question_values = form_question_values
+        self.openmrs_config = openmrs_config
+        self.person_uuid = person_uuid
+
+    def run(self):
+        """
+        Returns WorkflowTasks for creating visits, encounters and observations
+        """
+        subtasks = []
+        provider_uuid = getattr(self.openmrs_config, 'openmrs_provider', None)
+        self.info.form_question_values.update(self.form_question_values)
+        for form_config in self.openmrs_config.form_configs:
+            logger.debug('Send visit for form?', form_config, self.form_json)
+            if form_config.xmlns == self.form_json['form']['@xmlns']:
+                logger.debug('Yes')
+
+                subtasks.append(
+                    CreateVisitTask(
+                        self.requests,
+                        person_uuid=self.person_uuid,
                         provider_uuid=provider_uuid,
-                        visit_datetime=string_to_utc_datetime(form_json['form']['meta']['timeEnd']),
-                        values_for_concept={obs.concept: [obs.value.get_value(info)]
+                        visit_datetime=string_to_utc_datetime(self.form_json['form']['meta']['timeEnd']),
+                        values_for_concept={obs.concept: [obs.value.get_value(self.info)]
                                             for obs in form_config.openmrs_observations
-                                            if obs.value.get_value(info)},
+                                            if obs.value.get_value(self.info)},
                         encounter_type=form_config.openmrs_encounter_type,
                         openmrs_form=form_config.openmrs_form,
                         visit_type=form_config.openmrs_visit_type,
                         # TODO: Set location = location of case owner (CHW)
                         # location_uuid=location[meta][openmrs_uuid]
-                    ),
-                    rollback_func=delete_visit,
-                    rollback_args=(requests, ),
-                    # create_visit returns visit_uuid, subtasks
-                    returns_result=True,  # Pass visit_uuid to delete_visit on rollback
-                    returns_subtasks=True,
+                    )
                 )
+        return subtasks
+
+
+class SyncOpenmrsPatientTask(WorkflowTask):
+
+    def __init__(self, requests, domain, info, form_json, form_question_values, openmrs_config):
+        self.requests = requests
+        self.domain = domain
+        self.info = info
+        self.form_json = form_json
+        self.form_question_values = form_question_values
+        self.openmrs_config = openmrs_config
+
+    def run(self):
+        subtasks = []
+        assert isinstance(self.info, CaseTriggerInfo)
+        logger.debug('Fetching OpenMRS patient UUID with ', self.info)
+        patient = get_patient(self.requests, self.domain, self.info, self.openmrs_config)
+        if patient is None:
+            raise ValueError('CommCare patient was not found in OpenMRS')
+        person_uuid = patient['person']['uuid']
+        logger.debug('OpenMRS patient found: ', person_uuid)
+
+        subtasks.extend([
+            UpdatePersonPropertiesTask(self.requests, self.info, self.openmrs_config, patient['person']),
+
+            UpdatePersonNameTask(self.requests, self.info, self.openmrs_config, patient['person'])
+        ])
+
+        if patient['person']['preferredAddress']:
+            subtasks.append(
+                UpdatePersonAddressTask(self.requests, self.info, self.openmrs_config, patient['person'])
             )
-    return subtasks
-
-
-def sync_openmrs_patient(requests, domain, info, form_json, form_question_values, openmrs_config):
-    subtasks = []
-    assert isinstance(info, CaseTriggerInfo)
-    logger.debug('Fetching OpenMRS patient UUID with ', info)
-    patient = get_patient(requests, domain, info, openmrs_config)
-    if patient is None:
-        raise ValueError('CommCare patient was not found in OpenMRS')
-    person_uuid = patient['person']['uuid']
-    logger.debug('OpenMRS patient found: ', person_uuid)
-
-    subtasks.extend([
-        WorkflowTask(
-            func=update_person_properties,
-            func_args=(requests, info, openmrs_config, person_uuid),
-            rollback_func=rollback_person_properties,
-            rollback_args=(requests, patient['person'], openmrs_config),
-        ),
-
-        WorkflowTask(
-            func=update_person_name,
-            func_args=(requests, info, openmrs_config, person_uuid,
-                       patient['person']['preferredName']['uuid']),
-            rollback_func=rollback_person_name,
-            rollback_args=(requests, patient['person'], openmrs_config),
-        ),
-    ])
-
-    if patient['person']['preferredAddress']:
-        subtasks.append(
-            WorkflowTask(
-                func=update_person_address,
-                func_args=(requests, info, openmrs_config, person_uuid,
-                           patient['person']['preferredAddress']['uuid']),
-                rollback_func=rollback_person_address,
-                rollback_args=(requests, patient['person'], openmrs_config),
+        else:
+            subtasks.append(
+                CreatePersonAddressTask(self.requests, self.info, self.openmrs_config, patient['person'])
             )
-        )
 
-    else:
-        subtasks.append(
-            WorkflowTask(
-                func=create_person_address,
-                func_args=(requests, info, openmrs_config, person_uuid),
-                rollback_func=delete_person_address,
-                rollback_args=(requests, patient['person']),
-                returns_result=True,
-            )
-        )
+        subtasks.extend([
+            SyncPersonAttributesTask(
+                self.requests, self.info, self.openmrs_config, person_uuid, patient['person']['attributes']
+            ),
 
-    subtasks.extend([
-        WorkflowTask(
-            func=sync_person_attributes,
-            func_args=(requests, info, openmrs_config, person_uuid, patient['person']['attributes']),
-            returns_subtasks=True,
-        ),
+            CreateVisitsTask(
+                self.requests, self.info, self.form_json, self.form_question_values, self.openmrs_config,
+                person_uuid
+            ),
+        ])
 
-        WorkflowTask(
-            func=create_visits,
-            func_args=(requests, info, form_json, form_question_values, openmrs_config, person_uuid),
-            returns_subtasks=True,
-        )
-    ])
-
-    return subtasks
+        return subtasks
