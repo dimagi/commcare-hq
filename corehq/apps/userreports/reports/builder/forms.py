@@ -331,7 +331,6 @@ class DataSourceBuilder(object):
             )
             self.case_properties = sorted(set(prop_map[self.source_id]) | {'closed'})
 
-
     @property
     @memoized
     def source_doc_type(self):
