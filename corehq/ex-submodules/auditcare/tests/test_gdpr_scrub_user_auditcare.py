@@ -1,39 +1,20 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from django.test import TestCase
-import time
-from django.test import Client
-from auditcare.inspect import history_for_doc
-from auditcare.utils import _thread_locals
-from django.contrib.auth.models import User
-from auditcare.models import AuditEvent, ModelActionAudit
-from auditcare.tests.testutils import delete_all
-from django.test import TestCase
-from mock import mock
-from corehq.apps.users.models import CommCareUser
-
-from auditcare.management.commands.gdpr_scrub_user_auditcare import Command
 from auditcare.utils.export import get_auditcare_docs_by_username
-from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from auditcare.models import NavigationEventAudit
-from corehq.apps.users.dbaccessors.all_commcare_users import get_user_docs_by_username
-
-from collections import namedtuple
-
-from corehq.apps.users.models import CommCareUser
-from corehq.apps.es import UserES
-from corehq.util.quickcache import quickcache
 from corehq.util.test_utils import unit_testing_only
-from dimagi.utils.couch.database import iter_docs, iter_bulk_delete
-from six.moves import map
-
+from dimagi.utils.couch.database import iter_bulk_delete
+import uuid
 
 
 class TestGDPRScrubUserAuditcare(TestCase):
 
     def setUp(self):
-        # delete_all_auditcare_entries()
-        NavigationEventAudit(user='test_user').save()
+        delete_all_auditcare_entries()
+        NavigationEventAudit(user='test_user1', request_path="/fake/path/1").save()
+        NavigationEventAudit(user='test_user1', request_path="/fake/path/2").save()
+        NavigationEventAudit(user='test_user1', request_path="/fake/path/3").save()
         pass
 
     def tearDown(self):
@@ -41,9 +22,11 @@ class TestGDPRScrubUserAuditcare(TestCase):
         pass
 
     def test_get_docs_by_user(self):
-        pass
-        username = "test_user"
+        username = "test_user1"
         auditcare_returned_docs = get_auditcare_docs_by_username(username)
+        print("auditcare_returned_docs: {}".format(auditcare_returned_docs))
+        self.assertEqual(len(auditcare_returned_docs), 3)
+
 
 @unit_testing_only
 def delete_all_auditcare_entries():
