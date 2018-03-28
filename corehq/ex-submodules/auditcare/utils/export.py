@@ -42,10 +42,8 @@ def navigation_event_ids_by_user(user, start_date=None, end_date=None):
 
 def get_auditcare_docs_by_username(username):
     event_ids = navigation_event_ids_by_user(username)
-    doc_list = []
     for event in iter_docs(NavigationEventAudit.get_db(), event_ids):
-        doc_list.append(NavigationEventAudit.wrap(event))
-    return doc_list
+        yield NavigationEventAudit.wrap(event)
 
 
 def write_log_events(writer, user, domain=None, override_user=None, start_date=None, end_date=None):
