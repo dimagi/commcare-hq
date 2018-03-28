@@ -27,6 +27,9 @@ def navigation_event_ids_by_user(user, start_date=None, end_date=None):
     else:
         endkey.append({})
 
+    print("start key: {}".format(startkey))
+    print("end key: {}".format(endkey))
+
     ids = OrderedSet()
     results = database.view(
         'auditcare/urlpath_by_user_date',
@@ -40,8 +43,9 @@ def navigation_event_ids_by_user(user, start_date=None, end_date=None):
     return ids
 
 
-def get_docs_by_user(user):
-    event_ids = navigation_event_ids_by_user(user)
+def get_auditcare_docs_by_username(username):
+    event_ids = navigation_event_ids_by_user(username)
+    print("EVENT IDS: {}".format(len(event_ids)))
     doc_list = []
     for event in iter_docs(NavigationEventAudit.get_db(), event_ids):
         doc_list.append(NavigationEventAudit.wrap(event))

@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from django.core.management.base import BaseCommand
-from auditcare.utils.export import get_docs_by_user
+from auditcare.utils.export import get_auditcare_docs_by_username
 import logging
 
 logger = logging.getLogger(__name__)
@@ -15,7 +15,8 @@ class Command(BaseCommand):
 
     def handle(self, username, **options):
         new_username = "Redacted User (GDPR)"
-        doc_list = get_docs_by_user(username)
+        doc_list = get_auditcare_docs_by_username(username)
+        print("==========Document list:{}".format(doc_list))
         if doc_list:
             for doc in doc_list:
                 doc.user = new_username
