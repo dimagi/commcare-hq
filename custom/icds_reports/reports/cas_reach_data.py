@@ -27,6 +27,7 @@ def get_cas_reach_data(domain, now_date, config, show_test=False):
             districts=Sum('num_launched_districts') if level <= 2 else Max('num_launched_districts'),
             blocks=Sum('num_launched_blocks') if level <= 3 else Max('num_launched_blocks'),
             supervisors=Sum('num_launched_supervisors') if level <= 4 else Max('num_launched_supervisors'),
+            awc_num_open=Sum('awc_num_open'),
             awcs=Sum('num_launched_awcs') if level <= 5 else Max('num_launched_awcs'),
             all_awcs=Sum('num_awcs') if level <= 5 else Max('num_awcs')
         )
@@ -56,33 +57,39 @@ def get_cas_reach_data(domain, now_date, config, show_test=False):
     awc_prev_month_data = get_data_for_awc_monthly(previous_month, config)
 
     current_month_selected = (current_month.year == now_date.year and current_month.month == now_date.month)
-    if not current_month_selected:
-        yesterday_date = current_month + relativedelta(months=1) - relativedelta(days=1)
 
-    two_days_ago = yesterday_date - relativedelta(days=1)
-    daily_yesterday = get_data_for_daily_usage(yesterday_date, config)
-    daily_two_days_ago = get_data_for_daily_usage(two_days_ago, config)
-    if not daily_yesterday:
-        daily_yesterday = daily_two_days_ago
-        daily_two_days_ago = get_data_for_daily_usage(two_days_ago - relativedelta(days=1), config)
-
-    daily_attendance_percent = percent_increase('daily_attendance', daily_yesterday, daily_two_days_ago)
-    number_of_awc_open_yesterday = {
-        'label': _('Number of AWCs Open yesterday'),
-        'help_text': _(("Total Number of Angwanwadi Centers that were open yesterday "
-                        "by the AWW or the AWW helper")),
-        'color': 'green' if daily_attendance_percent > 0 else 'red',
-        'percent': daily_attendance_percent,
-        'value': get_value(daily_yesterday, 'daily_attendance'),
-        'all': get_value(daily_yesterday, 'awcs'),
-        'format': 'div',
-        'frequency': 'day',
-    }
     if current_month_selected:
-        number_of_awc_open_yesterday['redirect'] = 'awc_daily_status'
+        two_days_ago = yesterday_date - relativedelta(days=1)
+        daily_yesterday = get_data_for_daily_usage(yesterday_date, config)
+        daily_two_days_ago = get_data_for_daily_usage(two_days_ago, config)
+        if not daily_yesterday:
+            daily_yesterday = daily_two_days_ago
+            daily_two_days_ago = get_data_for_daily_usage(two_days_ago - relativedelta(days=1), config)
+        daily_attendance_percent = percent_increase('daily_attendance', daily_yesterday, daily_two_days_ago)
+        number_of_awc_open_yesterday = {
+            'label': _('Number of AWCs Open yesterday'),
+            'help_text': _(("Total Number of Angwanwadi Centers that were open yesterday "
+                            "by the AWW or the AWW helper")),
+            'color': 'green' if daily_attendance_percent > 0 else 'red',
+            'percent': daily_attendance_percent,
+            'value': get_value(daily_yesterday, 'daily_attendance'),
+            'all': get_value(daily_yesterday, 'awcs'),
+            'format': 'div',
+            'frequency': 'day',
+            'redirect': 'awc_daily_status',
+        }
     else:
-        number_of_awc_open_yesterday['help_text'] = _(("Total Number of AWCs open for at least one day in month"))
-        number_of_awc_open_yesterday['label'] = _('Number of AWCs open for at least one day in month')
+        monthly_attendance_percent = percent_increase('awc_num_open', awc_this_month_data, awc_prev_month_data)
+        number_of_awc_open_yesterday = {
+            'help_text': _(("Total Number of AWCs open for at least one day in month")),
+            'label': _('Number of AWCs open for at least one day in month'),
+            'color': 'green' if monthly_attendance_percent > 0 else 'red',
+            'percent': monthly_attendance_percent,
+            'value': get_value(awc_this_month_data, 'awc_num_open'),
+            'all': get_value(awc_this_month_data, 'all_awcs'),
+            'format': 'div',
+            'frequency': 'day',
+        }
 
     return {
         'records': [
