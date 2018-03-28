@@ -1,10 +1,11 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from django.test import TestCase
+from django.core import management
 from auditcare.utils.export import get_auditcare_docs_by_username
 from auditcare.models import NavigationEventAudit
-from dimagi.utils.couch.database import iter_bulk_delete
 from auditcare.management.commands.gdpr_scrub_user_auditcare import Command
+from dimagi.utils.couch.database import iter_bulk_delete
 
 
 class TestGDPRScrubUserAuditcare(TestCase):
@@ -35,14 +36,14 @@ class TestGDPRScrubUserAuditcare(TestCase):
         self.assertEqual(len(auditcare_returned_docs), 0)
 
     def test_update_username_no_returned_docs(self):
-        Command().handle("nonexistent_user")
+        management.call_command("gdpr_scrub_user_auditcare", "nonexistent_user")
         redacted_username_docs = get_auditcare_docs_by_username("Redacted User (GDPR)")
         self.assertEqual(len(redacted_username_docs), 0)
         orig_username_docs = get_auditcare_docs_by_username("test_user1")
         self.assertEqual(len(orig_username_docs), 3)
 
     def test_update_username_returned_docs(self):
-        Command().handle("test_user1")
+        management.call_command("gdpr_scrub_user_auditcare", "test_user1")
         orig_username_docs = get_auditcare_docs_by_username("test_user1")
         self.assertEqual(len(orig_username_docs), 0)
         redacted_username_docs = get_auditcare_docs_by_username("Redacted User (GDPR)")
