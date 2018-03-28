@@ -1887,6 +1887,9 @@ def _get_form_render_context(request, domain, instance, case_id=None):
 
     form_data, question_list_not_found = get_readable_data_for_submission(instance)
 
+    # Build map of question values => responses
+    # Question values will be formatted to be processed by XFormQuestionValueIterator,
+    # for example "/data/group/repeat_group[2]/question_id"
     question_response_map = {}
     ordered_question_values = []
     def _add_to_question_response_map(data, repeat_index=None):

@@ -177,8 +177,12 @@ def resave_form(domain, form):
         XFormInstance.get_db().save_doc(form.to_json())
 
 
-def update_response(root, question, response, xmlns=None):
-    node = root
+def update_response(xml, question, response, xmlns=None):
+    '''
+    Given a form submission's xml element, updates the response for an individual question.
+    Question and response are both strings; see XFormQuestionValueIterator for question format.
+    '''
+    node = xml
     i = XFormQuestionValueIterator(question)
     for (qid, index) in i:
         node = node.findall("{{{}}}{}".format(xmlns, qid))[index or 0]

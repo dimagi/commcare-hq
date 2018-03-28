@@ -365,6 +365,23 @@ class CaseAttachmentMixin(IsImageMixin):
 
 
 class XFormQuestionValueIterator(object):
+    '''
+    Iterator to help navigate a data structure (likely xml or json)
+    representing an xml document, based on a given path. Skips root node.
+    Each call of `next` returns a tuple of id and index. Iterates until
+    the last non-leaf node. After iterating, the leaf node's id and index
+    are available via `last`. Example:
+
+    i = XFormQuestionValueIterator("/data/group/repeat_group[2]/question_id")
+    i.next()    # ('group', None)
+    i.next()    # ('repeat_group', 1)
+    i.next()    # raises StopIteration
+    i.last()    # ('question_id', None)
+
+    Note that repeat groups in the given path are ONE-indexed as in xpath, while
+    the indices returned by next/last are ZERO-indexed for easier array indexing.
+    '''
+
     def __init__(self, path):
         path = re.sub(r'^/[^\/]+/', '', path)   # strip root
         self.levels = path.split("/")
@@ -386,7 +403,7 @@ class XFormQuestionValueIterator(object):
         return (qid, index)
 
     def last(self):
-        if self._last is None:
+        if self._last is None and len(levels) == 1:
             self._last = self._next()[0]
         return self._last
 
