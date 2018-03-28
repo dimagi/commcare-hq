@@ -2484,32 +2484,6 @@ def unarchive_form(request, domain, instance_id):
     return HttpResponseRedirect(redirect)
 
 
-class QuestionValueIterator(object):
-    def __init__(self, path):
-        path = re.sub(r'^/[^\/]+/', '', path)   # strip root
-        self.levels = path.split("/")
-        self.levels.reverse()
-
-    def __iter__(self):
-        return self
-
-    def next(self):
-        if len(self.levels) > 1:
-            return self._next()
-        raise StopIteration
-
-    def _next(self):
-        (qid, index) = re.match(r'(\w+)(?:\[(\d+)])?', self.levels.pop()).groups()
-        if index is not None:
-            index = int(index) - 1
-        return (qid, index)
-
-    def last(self):
-        return self._next()[0]
-
-    __next__ = next
-
-
 @require_form_view_permission
 @require_permission(Permissions.edit_data)
 @require_POST
@@ -2524,58 +2498,7 @@ def edit_form(request, domain, instance_id):
             name: request.POST[name],
         })
 
-    from couchforms.models import XFormInstance, XFormOperation
-    from couchforms.const import ATTACHMENT_NAME
-    from lxml import etree
-    from corehq.form_processor.models import Attachment, XFormInstanceSQL, XFormOperationSQL
-    user_id = request.couch_user.get_id
-    operation = None
-    dirty = { 'dirty': False }  # dict so it's accessible inside _update_xml
-
-    def _update_xml(root, question, response):
-        node = xml
-        i = QuestionValueIterator(question)
-        for (qid, index) in i:
-            node = node.findall("{{{}}}{}".format(instance.xmlns, qid))[index or 0]
-        node = node.find("{{{}}}{}".format(instance.xmlns, i.last()))
-        if node is not None and node.text != response:
-            dirty['dirty'] = True
-            node.text = response
-
-    if type(instance) == XFormInstance:     # TODO: this test sucks, fix & also move the imports & write tests
-        xml = etree.fromstring(instance.fetch_attachment(ATTACHMENT_NAME))
-        for question, response in updates.iteritems():
-            qdata = instance.form_data
-            i = QuestionValueIterator(question)
-            for (qid, index) in i:
-                qdata = qdata[qid]
-                if index is not None:
-                    qdata = qdata[index]
-            qdata[i.last()] = response
-            _update_xml(xml, question, response)
-        if dirty['dirty']:
-            instance.put_attachment(etree.tostring(xml), name=ATTACHMENT_NAME, content_type='text/xml')
-        operation = XFormOperation(user=user_id, date=datetime.utcnow(), operation='edit')
-    elif type(instance) == XFormInstanceSQL:
-        xml = instance.get_xml_element()
-        for question, response in updates.iteritems():
-            _update_xml(xml, question, response)
-        all_attachments = {att.name: att for att in instance.get_attachments()}
-        form_attachment = all_attachments[ATTACHMENT_NAME]
-        attachment = Attachment(
-            name=form_attachment.name,
-            raw_content=etree.tostring(xml),
-            content_type='text/xml',
-        )
-        form_attachment.write_content(attachment.content)
-        form_attachment.save()
-        operation = XFormOperationSQL(user_id=user_id, date=datetime.utcnow(), operation=XFormOperationSQL.EDIT)
-
-    # TODO: Does updated data appear properly in exports?
-
-    if dirty['dirty'] and operation:
-        instance.history.append(operation)
-        instance.save()
+    if instance.update_responses(updates, request.couch_user.get_id):
         messages.success(request, _('Question responses saved.'))
     else:
         messages.success(request, _('No changes made to form.'))

@@ -22,7 +22,7 @@ from corehq.apps.sms.mixin import MessagingCaseContactMixin
 from corehq.blobs import get_blob_db
 from corehq.blobs.mixin import get_short_identifier
 from corehq.blobs.exceptions import NotFound, BadName
-from corehq.form_processor.abstract_models import DEFAULT_PARENT_IDENTIFIER
+from corehq.form_processor.abstract_models import DEFAULT_PARENT_IDENTIFIER, XFormQuestionValueIterator
 from corehq.form_processor.exceptions import InvalidAttachment, UnknownActionType
 from corehq.form_processor.track_related import TrackRelatedChanges
 from corehq.apps.tzmigration.api import force_phone_timezones_should_be_processed
@@ -398,6 +398,33 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
 
     def xml_md5(self):
         return self.get_attachment_meta('form.xml').md5
+
+    def update_responses(self, value_responses_map, user_id):
+        from corehq.form_processor.utils.xform import update_response
+
+        xml = self.get_xml_element()
+        dirty = False
+        for question, response in value_responses_map.iteritems():
+            if update_response(xml, question, response, xmlns=self.xmlns):
+                dirty = True
+
+        if dirty:
+            from couchforms.const import ATTACHMENT_NAME
+            all_attachments = {att.name: att for att in self.get_attachments()}
+            form_attachment = all_attachments[ATTACHMENT_NAME]
+            attachment = Attachment(
+                name=form_attachment.name,
+                raw_content=etree.tostring(xml),
+                content_type='text/xml',
+            )
+            form_attachment.write_content(attachment.content)
+            form_attachment.save()
+            operation = XFormOperationSQL(user_id=user_id, date=datetime.utcnow(), operation=XFormOperationSQL.EDIT)
+            self.history.append(operation)
+            self.save()
+            return True
+
+        return False
 
     def archive(self, user_id=None):
         if self.is_archived:
