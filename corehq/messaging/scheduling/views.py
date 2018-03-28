@@ -90,22 +90,25 @@ class MessagingDashboardView(BaseMessagingSectionView):
     def page_context(self):
         return {}
 
-    def get_ajax_response(self):
-        result = {}
+    @cached_property
+    def timezone(self):
+        return self.domain_object.get_default_timezone()
 
-        timezone = self.domain_object.get_default_timezone()
-        domain_now = ServerTime(datetime.utcnow()).user_time(timezone).done()
+    @cached_property
+    def domain_now(self):
+        return ServerTime(datetime.utcnow()).user_time(self.timezone).done()
 
+    def add_sms_status_info(self, result):
         if len(self.domain_object.restricted_sms_times) > 0:
             result['uses_restricted_time_windows'] = True
             result['within_allowed_sms_times'] = time_within_windows(
-                domain_now,
+                self.domain_now,
                 self.domain_object.restricted_sms_times
             )
             if not result['within_allowed_sms_times']:
                 for i in range(1, 7 * 24 * 60):
                     # This is a very fast check so it's ok to iterate this many times.
-                    resume_time = domain_now + timedelta(minutes=i)
+                    resume_time = self.domain_now + timedelta(minutes=i)
                     if time_within_windows(resume_time, self.domain_object.restricted_sms_times):
                         result['sms_resume_time'] = resume_time.strftime('%Y-%m-%d %H:%M')
                         break
@@ -115,11 +118,16 @@ class MessagingDashboardView(BaseMessagingSectionView):
 
         result.update({
             'queued_sms_count': QueuedSMS.objects.filter(domain=self.domain).count(),
-            'last_refresh_time': domain_now.strftime('%Y-%m-%d %H:%M:%S'),
-            'project_timezone': timezone.zone,
             'outbound_sms_sent_today': OutboundDailyCounter(self.domain_object).current_usage,
             'daily_outbound_sms_limit': self.domain_object.daily_outbound_sms_limit,
         })
+
+    def get_ajax_response(self):
+        result = {
+            'last_refresh_time': self.domain_now.strftime('%Y-%m-%d %H:%M:%S'),
+            'project_timezone': self.timezone.zone,
+        }
+        self.add_sms_status_info(result)
         return JsonResponse(result)
 
     def get(self, request, *args, **kwargs):
