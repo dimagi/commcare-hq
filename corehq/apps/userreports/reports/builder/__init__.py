@@ -23,10 +23,11 @@ FORM_METADATA_PROPERTIES = [
     ('deviceID', 'Text'),
 ]
 
-
+DATA_SOURCE_TYPE_CASE = 'case'
+DATA_SOURCE_TYPE_FORM = 'form'
 DATA_SOURCE_TYPE_CHOICES = (
-    ("case", _("Cases")),
-    ("form", _("Forms")),
+    (DATA_SOURCE_TYPE_CASE, _("Cases")),
+    (DATA_SOURCE_TYPE_FORM, _("Forms")),
 )
 
 
