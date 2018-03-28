@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+import mock
 import uuid
 from collections import namedtuple
 
@@ -9,7 +10,9 @@ from django.test.utils import override_settings
 
 from casexml.apps.case.mock import CaseFactory, CaseBlock
 from corehq.apps.commtrack.helpers import make_product
-from corehq.apps.hqcase.utils import submit_case_blocks
+from corehq.apps.hqcase.utils import submit_case_blocks, SYSTEM_FORM_XMLNS
+from corehq.apps.receiverwrapper.util import submit_form_locally
+from corehq.form_processor.backends.couch.processor import FormProcessorCouch
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL, LedgerAccessorSQL
 from corehq.form_processor.document_stores import LedgerV1DocumentStore
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
@@ -23,6 +26,8 @@ from six.moves import zip
 DOMAIN = 'ledger-tests'
 TransactionValues = namedtuple('TransactionValues', ['type', 'product_id', 'delta', 'updated_balance'])
 
+
+ledger_test_race_condition_global = False
 
 class LedgerTests(TestCase):
 
@@ -209,6 +214,63 @@ class LedgerTests(TestCase):
 
     def _expected_val(self, delta, updated_balance, type_=LedgerTransaction.TYPE_BALANCE, product_id=None):
         return TransactionValues(type_, product_id or self.product_a._id, delta, updated_balance)
+
+    def test_duplicate_submission_with_ledger_transfer(self):
+        """
+        only allow one save per (case_id, product_id, form_id) at a time
+        """
+        import datetime
+        from django.template.loader import render_to_string
+        from corehq.apps.commtrack.models import StockState
+        from corehq.apps.commtrack.tests.util import get_single_transfer_block
+        from casexml.apps.stock.models import StockTransaction
+
+        # Make form adding 100 units
+        case_blocks = [
+            get_single_transfer_block(None, self.case.case_id, self.product_a._id, 100),
+            CaseBlock(case_id=self.case.case_id, update={'a': "1"}).as_string(),
+        ]
+        form_id = uuid.uuid4().hex
+        form_xml = render_to_string('hqcase/xml/case_block.xml', {
+            'xmlns': SYSTEM_FORM_XMLNS,
+            'case_block': case_blocks,
+            'time': datetime.datetime.utcnow(),
+            'uid': form_id,
+            'username': "system",
+            'user_id': "",
+            'device_id': "",
+        })
+
+        def second_form_submission(*args, **kwargs):
+            global ledger_test_race_condition_global
+            if not ledger_test_race_condition_global:
+                ledger_test_race_condition_global = True
+                print "side effect"
+                submit_form_locally(instance=form_xml, domain=DOMAIN)
+            print "finished submitting second form"
+
+        # Start processing that form, but don't actually commit - this is meant
+        # to mimic two copies being processed simultaneously
+
+        # Uncomment this to mock the full save method, it throws a BulkSaveError
+        # from corehq.form_processor.backends.couch.processor import FormProcessorCouch
+        # mocked_save = mock.Mock(side_effect=second_form_submission, wraps=FormProcessorCouch.save_processed_models)
+        # with mock.patch('corehq.form_processor.backends.couch.processor.FormProcessorCouch.save_processed_models', new=mocked_save) as save_fn:
+        #     result = submit_form_locally(instance=form_xml, domain=DOMAIN)
+
+        # Uncomment this to mock only the ledger part of the save method
+        # This causes a duplicate StockTransaction to be created
+        from corehq.apps.commtrack.processing import commit_stock
+        mocked_save = mock.Mock(side_effect=second_form_submission, wraps=commit_stock)
+        with mock.patch('corehq.apps.commtrack.processing.commit_stock', new=mocked_save) as save_fn:
+            result = submit_form_locally(instance=form_xml, domain=DOMAIN)
+
+        # If I do a second form submission here rather than during the
+        # processing of the first, only one StockTransaction is created:
+        # submit_form_locally(instance=form_xml, domain=DOMAIN)
+
+        print list(StockState.objects.filter(case_id=self.case.case_id).values('product_id', 'section_id', 'stock_on_hand'))
+        print list(StockTransaction.objects.filter(case_id=self.case.case_id).values('product_id', 'section_id', 'stock_on_hand'))
 
 
 @use_sql_backend

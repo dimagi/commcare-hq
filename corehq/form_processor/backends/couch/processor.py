@@ -248,7 +248,8 @@ class FormProcessorCouch(object):
                 case_doc = CommCareCase.get_lite(case_id, wrap=wrap)
             elif lock:
                 try:
-                    case, lock = CommCareCase.get_locked_obj(_id=case_id)
+                    # TODO this is the other lock that's timing out
+                    case, lock = CommCareCase.get_locked_obj(_id=case_id, timeout_seconds=10)
                     if case and not wrap:
                         case = case.to_json()
                     return case, lock

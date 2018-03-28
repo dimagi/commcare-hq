@@ -61,16 +61,21 @@ class StockProcessingResult(object):
 
     def commit(self):
         assert self.populated
-        for to_delete in self.models_to_delete:
-            to_delete.delete()
-        for to_save in self.models_to_save:
-            to_save.save()
+        commit_stock(self)
 
     def finalize(self):
         """
         Finalize anything else that needs to happen - this runs after models are saved.
         """
         pass
+
+
+# pulling this out to make it easier to mock
+def commit_stock(result):
+    for to_delete in result.models_to_delete:
+        to_delete.delete()
+    for to_save in result.models_to_save:
+        to_save.save()
 
 
 LedgerValues = namedtuple('LedgerValues', ['balance', 'delta'])
