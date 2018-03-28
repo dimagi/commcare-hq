@@ -192,10 +192,6 @@ def namedtupledict(name, fields):
     })
 
 
-SimplifiedUserInfo_ES_FIELDS = [
-    '_id', 'username', 'first_name', 'last_name', 'doc_type', 'is_active', 'location_id', '__group_ids'
-]
-
 class SimplifiedUserInfo(
         namedtupledict(b'SimplifiedUserInfo' if six.PY2 else 'SimplifiedUserInfo', (
             'user_id',
@@ -204,6 +200,10 @@ class SimplifiedUserInfo(
             'is_active',
             'location_id',
         ))):
+
+    ES_FIELDS = [
+        '_id', 'username', 'first_name', 'last_name', 'doc_type', 'is_active', 'location_id', '__group_ids'
+    ]
 
     @property
     @memoized
@@ -257,7 +257,7 @@ def get_simplified_users(user_es_query):
     Accepts an instance of UserES and returns SimplifiedUserInfo dicts for the
     matching users, sorted by username.
     """
-    users = user_es_query.fields(SimplifiedUserInfo_ES_FIELDS).run().hits
+    users = user_es_query.fields(SimplifiedUserInfo.ES_FIELDS).run().hits
     users = list(map(_report_user_dict, users))
     return sorted(users, key=lambda u: u['username_in_report'])
 
