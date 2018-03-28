@@ -105,7 +105,7 @@ def sub_git_info(git_dir, log_count=1):
     p = sub_git_cmd(git_dir, args)
     url = sub_git_remote_url(git_dir)
     gitout = p.stdout.read().strip()
-    all_raw_revs = gitout.split('\0')
+    all_raw_revs = gitout.split(b'\0')
 
     def parse_rev_block(block_text):
         ret = {}
