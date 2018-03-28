@@ -4,7 +4,6 @@ from django.test import TestCase
 from django.core import management
 from auditcare.utils.export import get_auditcare_docs_by_username
 from auditcare.models import NavigationEventAudit
-from auditcare.management.commands.gdpr_scrub_user_auditcare import Command
 from dimagi.utils.couch.database import iter_bulk_delete
 
 
