@@ -16,7 +16,7 @@ class Command(BaseCommand):
     def handle(self, username, **options):
         new_username = "Redacted User (GDPR)"
         num_docs_updated = 0
-        for doc in get_auditcare_docs_by_username:
+        for doc in get_auditcare_docs_by_username(username):
             doc.user = new_username
             doc.save()
             num_docs_updated += 1
