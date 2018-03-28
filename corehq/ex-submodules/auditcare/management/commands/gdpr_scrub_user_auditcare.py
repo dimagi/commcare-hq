@@ -23,4 +23,3 @@ class Command(BaseCommand):
             logger.info("Updated username in {} documents.".format(len(doc_list)))
         else:
             logger.info("The user {} has no associated docs in auditcare.".format(username))
-
