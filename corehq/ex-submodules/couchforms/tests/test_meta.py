@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from decimal import Decimal
 import os
 from datetime import date, datetime
@@ -37,16 +38,16 @@ class TestMeta(TestCase, TestFileMixin):
         self.assertEqual("f7f0c79e-8b79-11df-b7de-005056c00008", xform.metadata.userID)
         self.assertEqual("v1.2.3 (biz bazzle)", xform.metadata.appVersion)
         result = {
-            'username': u'admin',
+            'username': 'admin',
             'doc_type': 'Metadata',
             'instanceID': None,
-            'userID': u'f7f0c79e-8b79-11df-b7de-005056c00008',
+            'userID': 'f7f0c79e-8b79-11df-b7de-005056c00008',
             'timeEnd': '2010-07-23T13:55:11.648000Z',
-            'appVersion': u'v1.2.3 (biz bazzle)',
+            'appVersion': 'v1.2.3 (biz bazzle)',
             'timeStart': '2010-07-22T13:54:27.971000Z',
             'deprecatedID': None,
             'deviceID': None,
-            'clinic_id': u'5020280',
+            'clinic_id': '5020280',
             'location': None,
         }
         self._check_metadata(xform, result)
@@ -62,16 +63,16 @@ class TestMeta(TestCase, TestFileMixin):
 
         self.assertEqual(xform.metadata.appVersion, '2.0')
         result = {
-            'username': u'admin',
+            'username': 'admin',
             'doc_type': 'Metadata',
             'instanceID': None,
-            'userID': u'f7f0c79e-8b79-11df-b7de-005056c00008',
+            'userID': 'f7f0c79e-8b79-11df-b7de-005056c00008',
             'timeEnd': '2010-07-23T13:55:11.648000Z',
-            'appVersion': u'2.0',
+            'appVersion': '2.0',
             'timeStart': '2010-07-22T13:54:27.971000Z',
             'deprecatedID': None,
             'deviceID': None,
-            'clinic_id': u'5020280',
+            'clinic_id': '5020280',
             'location': None,
         }
         self._check_metadata(xform, result)
@@ -82,15 +83,15 @@ class TestMeta(TestCase, TestFileMixin):
 
         self.assertEqual(xform.metadata.appVersion, '2.0')
         result = {
-            'username': u'2013-07-19',
+            'username': '2013-07-19',
             'doc_type': 'Metadata',
-            'instanceID': u'e8afaec3c66745ef80e48062d4b91b56',
-            'userID': u'f7f0c79e-8b79-11df-b7de-005056c00008',
+            'instanceID': 'e8afaec3c66745ef80e48062d4b91b56',
+            'userID': 'f7f0c79e-8b79-11df-b7de-005056c00008',
             'timeEnd': '2013-07-20T00:02:27.493000Z',
-            'appVersion': u'2.0',
+            'appVersion': '2.0',
             'timeStart': '2013-07-19T21:21:31.188000Z',
             'deprecatedID': None,
-            'deviceID': u'commconnect',
+            'deviceID': 'commconnect',
             'location': None,
         }
         self._check_metadata(xform, result)
@@ -101,15 +102,15 @@ class TestMeta(TestCase, TestFileMixin):
 
         self.assertEqual(xform.metadata.appVersion, '2.0')
         result = {
-            'username': u'some_username@test.commcarehq.org',
+            'username': 'some_username@test.commcarehq.org',
             'doc_type': 'Metadata',
-            'instanceID': u'5d3d01561f584e85b53669a48bfc6039',
-            'userID': u'f7f0c79e-8b79-11df-b7de-005056c00008',
+            'instanceID': '5d3d01561f584e85b53669a48bfc6039',
+            'userID': 'f7f0c79e-8b79-11df-b7de-005056c00008',
             'timeEnd': '2013-07-20T00:02:27.493000Z',
-            'appVersion': u'2.0',
+            'appVersion': '2.0',
             'timeStart': '2013-07-19T21:21:31.188000Z',
             'deprecatedID': None,
-            'deviceID': u'commconnect',
+            'deviceID': 'commconnect',
             'location': None,
         }
         self._check_metadata(xform, result)
@@ -131,15 +132,15 @@ class TestMeta(TestCase, TestFileMixin):
         )
 
         result = {
-            'username': u'some_username@test.commcarehq.org',
+            'username': 'some_username@test.commcarehq.org',
             'doc_type': 'Metadata',
-            'instanceID': u'5d3d01561f584e85b53669a48bfc6039',
-            'userID': u'f7f0c79e-8b79-11df-b7de-005056c00008',
+            'instanceID': '5d3d01561f584e85b53669a48bfc6039',
+            'userID': 'f7f0c79e-8b79-11df-b7de-005056c00008',
             'timeEnd': '2013-07-20T00:02:27.493000Z',
-            'appVersion': u'2.0',
+            'appVersion': '2.0',
             'timeStart': '2013-07-19T21:21:31.188000Z',
             'deprecatedID': None,
-            'deviceID': u'commconnect',
+            'deviceID': 'commconnect',
             'location': '42.3739063 -71.1109113 0.0 886.0',
         }
         self._check_metadata(xform, result)
