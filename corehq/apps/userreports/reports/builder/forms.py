@@ -50,6 +50,7 @@ from corehq.apps.userreports.reports.builder import (
     make_form_data_source_filter,
     get_filter_format_from_question_type,
     DATA_SOURCE_TYPE_CHOICES,
+    get_data_source_doc_type,
 )
 from corehq.apps.userreports.exceptions import BadBuilderConfigError
 from corehq.apps.userreports.reports.builder.const import (
@@ -332,13 +333,11 @@ class DataSourceBuilder(object):
             )
             self.case_properties = sorted(set(prop_map[self.source_id]) | {'closed'})
 
+
     @property
     @memoized
     def source_doc_type(self):
-        if self.source_type == "case":
-            return "CommCareCase"
-        if self.source_type == "form":
-            return "XFormInstance"
+        return get_data_source_doc_type(self.source_type)
 
     @property
     @memoized
