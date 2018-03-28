@@ -1,26 +1,20 @@
 from __future__ import absolute_import
 
-from unittest import TestCase
+import unittest
 
 from mock import Mock
 
 from corehq.motech.openmrs.workflow import WorkflowTask, WorkflowError, execute_workflow
 
 
-class WorkflowTests(TestCase):
-
-    def test_workflow_func_str(self):
-        def run_away():
-            pass
-
-        task = WorkflowTask(func=run_away)
-        self.assertEqual(str(task), 'run_away')
+class WorkflowTests(unittest.TestCase):
 
     def test_workflow_class_str(self):
         class RunAwayTask(WorkflowTask):
-            pass
+            def run(self):
+                pass
 
-        task = RunAwayTask(func=None)
+        task = RunAwayTask()
         self.assertEqual(str(task), 'RunAwayTask')
 
     def test_workflow_runs(self):
@@ -29,9 +23,18 @@ class WorkflowTests(TestCase):
         """
         func1 = Mock()
         func2 = Mock()
+
+        class Task1(WorkflowTask):
+            def run(self):
+                func1()
+
+        class Task2(WorkflowTask):
+            def run(self):
+                func2()
+
         workflow = [
-            WorkflowTask(func1),
-            WorkflowTask(func2),
+            Task1(),
+            Task2(),
         ]
 
         errors = execute_workflow(workflow)
@@ -45,23 +48,38 @@ class WorkflowTests(TestCase):
         If an error is encountered, the workflow should stop, and the rollback should run to completion
         """
         func1 = Mock()
+        rollback1 = Mock()
+
         black_knight_error = ValueError("'Tis but a flesh wound")
         black_knight = Mock(side_effect=black_knight_error)
-        func3 = Mock()
-
-        rollback_func1 = Mock()
         black_knight_rollback_error = ValueError("Come back here and take what's comin' ta ya!")
-        rollback_black_knight = Mock(side_effect=black_knight_rollback_error)
-        rollback_func3 = Mock()
+        black_knight_rollback = Mock(side_effect=black_knight_rollback_error)
 
-        black_knight_task = WorkflowTask(func=black_knight, rollback_func=rollback_black_knight)
+        func3 = Mock(return_value=None)
+
+        class Task1(WorkflowTask):
+            def run(self):
+                func1()
+            def rollback(self):
+                rollback1()
+
+        class BlackKnightTask(WorkflowTask):
+            def run(self):
+                black_knight()
+            def rollback(self):
+                black_knight_rollback()
+
+        class Task3(WorkflowTask):
+            def run(self):
+                func3()
+
+        black_knight_task = BlackKnightTask()
 
         workflow = [
-            WorkflowTask(func=func1, rollback_func=rollback_func1),
+            Task1(),
             black_knight_task,
-            WorkflowTask(func=func3, rollback_func=rollback_func3),
+            Task3(),
         ]
-
         errors = execute_workflow(workflow)
         self.assertEqual(errors, [
             WorkflowError(black_knight_task, black_knight_error, is_rollback_error=False),
@@ -74,91 +92,20 @@ class WorkflowTests(TestCase):
         func3.assert_not_called()
 
         # Check rollback continued after error
-        rollback_black_knight.assert_called()
-        rollback_func1.assert_called()
-
-    def test_returns_result(self):
-        """
-        WorkflowTask.returns_result should pass the result of func as an arg to rollback_func.
-        """
-        create_foo = Mock(return_value=5)
-        delete_foo = Mock()
-        fail = Mock(side_effect=Exception('Fail'))
-
-        workflow = [
-            WorkflowTask(func=create_foo, rollback_func=delete_foo, returns_result=True),
-            WorkflowTask(func=fail),
-        ]
-        errors = execute_workflow(workflow)
-
-        self.assertTrue(errors)
-        create_foo.assert_called()
-        delete_foo.assert_called_with(5)
-
-    def test_pass_result_as(self):
-        """
-        WorkflowTask.pass_result_as should pass the result of func as a kwarg to rollback_func.
-        """
-        create_foo = Mock(return_value=5)
-        delete_foo = Mock()
-        fail = Mock(side_effect=Exception('Fail'))
-
-        workflow = [
-            WorkflowTask(func=create_foo, rollback_func=delete_foo, pass_result_as='foo_id'),
-            WorkflowTask(func=fail),
-        ]
-        errors = execute_workflow(workflow)
-
-        self.assertTrue(errors)
-        create_foo.assert_called()
-        delete_foo.assert_called_with(foo_id=5)
-
-    def test_returns_subtasks(self):
-        """
-        WorkflowTask.returns_subtasks should add subtasks to the workflow.
-        """
-        func2 = Mock()
-        func1 = Mock(return_value=[WorkflowTask(func=func2)])
-
-        workflow = [
-            WorkflowTask(func=func1, returns_subtasks=True),
-        ]
-        errors = execute_workflow(workflow)
-
-        self.assertFalse(errors)
+        black_knight_rollback.assert_called()
         func1.assert_called()
-        func2.assert_called()
-
-    def test_returns_result_subtasks(self):
-        """
-        returns_result and returns_subtasks should do both.
-        """
-        do_bar = Mock()
-        create_foo = Mock(return_value=(5, [WorkflowTask(func=do_bar)]))
-        delete_foo = Mock()
-        fail = Mock(side_effect=Exception('Fail'))
-
-        workflow = [
-            WorkflowTask(func=create_foo, rollback_func=delete_foo, returns_result=True, returns_subtasks=True),
-            WorkflowTask(func=fail),
-        ]
-        errors = execute_workflow(workflow)
-
-        self.assertTrue(errors)
-        create_foo.assert_called()
-        do_bar.assert_called()
-        delete_foo.assert_called_with(5)
 
 
-class WorkflowErrorTests(TestCase):
+class WorkflowErrorTests(unittest.TestCase):
 
     def test_str(self):
-        def get_airspeed_velocity(bird, is_laden):
-            pass
+        class AirspeedVelocityTask(WorkflowTask):
+            def run(self):
+                raise TypeError('Missing argument: african_or_european')
 
-        task = WorkflowTask(func=get_airspeed_velocity, func_args=('swallow', ), func_kwargs={'is_laden': False})
-        error = WorkflowError(task, TypeError('Missing argument: african_or_european'), False)
+        workflow = [AirspeedVelocityTask()]
+        errors = execute_workflow(workflow)
         self.assertEqual(
-            str(error),
-            'WorkflowTask "get_airspeed_velocity" failed: TypeError: Missing argument: african_or_european'
+            str(errors[0]),
+            'AirspeedVelocityTask.run() failed: TypeError: Missing argument: african_or_european'
         )
