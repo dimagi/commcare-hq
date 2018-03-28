@@ -1738,13 +1738,20 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
     def _report_data(self):
         avg_datespan = self.avg_datespan
 
+        case_owners = set()
+        user_ids = []
+        for user in self.users_to_iterate:
+            user_ids.append(user.user_id)
+            case_owners = case_owners.union((user.user_id, user.location_id))
+            case_owners = case_owners.union(user.group_ids)
+
         return WorkerActivityReportData(
-            avg_submissions_by_user=get_submission_counts_by_user(self.domain, avg_datespan),
-            submissions_by_user=get_submission_counts_by_user(self.domain, self.datespan),
-            active_cases_by_owner=get_active_case_counts_by_owner(self.domain, self.datespan, self.case_types),
-            total_cases_by_owner=get_total_case_counts_by_owner(self.domain, self.datespan, self.case_types),
-            cases_closed_by_user=get_case_counts_closed_by_user(self.domain, self.datespan, self.case_types),
-            cases_opened_by_user=get_case_counts_opened_by_user(self.domain, self.datespan, self.case_types),
+            avg_submissions_by_user=get_submission_counts_by_user(self.domain, avg_datespan, user_ids=user_ids),
+            submissions_by_user=get_submission_counts_by_user(self.domain, self.datespan, user_ids=user_ids),
+            active_cases_by_owner=get_active_case_counts_by_owner(self.domain, self.datespan, self.case_types, owner_ids=case_owners),
+            total_cases_by_owner=get_total_case_counts_by_owner(self.domain, self.datespan, self.case_types, owner_ids=case_owners),
+            cases_closed_by_user=get_case_counts_closed_by_user(self.domain, self.datespan, self.case_types, owner_ids=user_ids),
+            cases_opened_by_user=get_case_counts_opened_by_user(self.domain, self.datespan, self.case_types, owner_ids=user_ids),
         )
 
     def _total_row(self, rows, report_data):
