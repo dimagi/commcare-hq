@@ -158,7 +158,7 @@ define([
             self.saveButton.setState('saved');
         };
 
-        this.newCaseProperty = function () {
+        self.newCaseProperty = function () {
             if (_.isString(self.newPropertyName())) {
                 var prop = propertyListItem(self.newPropertyName(), false, '', self.activeCaseType());
                 prop.dataType.subscribe(changeSaveButton);
