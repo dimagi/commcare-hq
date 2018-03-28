@@ -117,8 +117,6 @@ class BaseGroupedMobileWorkerFilter(BaseSingleOptionFilter):
 
 
 class EmwfUtils(object):
-    SimplifiedUserInfo_ES_FIELDS = util.SimplifiedUserInfo_ES_FIELDS
-
     def __init__(self, domain):
         self.domain = domain
 
