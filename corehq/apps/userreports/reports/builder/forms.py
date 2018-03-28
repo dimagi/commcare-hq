@@ -13,6 +13,7 @@ from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 from corehq.apps.app_manager.app_schemas.case_properties import get_case_properties
+from corehq.apps.userreports.app_manager.data_source_meta import DATA_SOURCE_TYPE_CHOICES, get_data_source_doc_type
 
 from corehq.apps.userreports.reports.builder.columns import (
     QuestionColumnOption,
@@ -49,8 +50,6 @@ from corehq.apps.userreports.reports.builder import (
     make_case_data_source_filter,
     make_form_data_source_filter,
     get_filter_format_from_question_type,
-    DATA_SOURCE_TYPE_CHOICES,
-    get_data_source_doc_type,
 )
 from corehq.apps.userreports.exceptions import BadBuilderConfigError
 from corehq.apps.userreports.reports.builder.const import (
