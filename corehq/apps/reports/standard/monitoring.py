@@ -1455,6 +1455,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         ) if ufilters else []
 
     @property
+    @memoized
     def users_to_iterate(self):
         if toggles.EMWF_WORKER_ACTIVITY_REPORT.enabled(self.request.domain):
             user_query = EMWF.user_es_query(
