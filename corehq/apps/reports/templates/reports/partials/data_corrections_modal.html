@@ -1,13 +1,8 @@
 {% load i18n %}
 
 <!-- class='hide' keeps modal from showing until knockout initializes & removes the class -->
-<div id="edit-dynamic-properties" class="hide modal fade" tabindex="-1" data-bind="
-    css: {
-        'full-screen-modal': isFullScreenModal(),
-        'hide': false,
-    },
-    event: { 'hidden.bs.modal': init }"
->
+<div class="hide modal fade data-corrections-modal" tabindex="-1"
+     data-bind="css: { 'full-screen-modal': isFullScreenModal(), 'hide': false }, event: { 'hidden.bs.modal': init }">
     <div class="modal-dialog" data-bind="css: { 'modal-lg': isLargeModal() }">
         <div class="modal-content">
             <div class="modal-header with-controls">
