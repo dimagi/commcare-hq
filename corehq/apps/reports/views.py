@@ -2483,6 +2483,33 @@ def unarchive_form(request, domain, instance_id):
         redirect = reverse('render_form_data', args=[domain, instance_id])
     return HttpResponseRedirect(redirect)
 
+
+class QuestionValueIterator(object):
+    def __init__(self, path):
+        path = re.sub(r'^/[^\/]+/', '', path)   # strip root
+        self.levels = path.split("/")
+        self.levels.reverse()
+
+    def __iter__(self):
+        return self
+
+    def next(self):
+        if len(self.levels) > 1:
+            return self._next()
+        raise StopIteration
+
+    def _next(self):
+        (qid, index) = re.match(r'(\w+)(?:\[(\d+)])?', self.levels.pop()).groups()
+        if index is not None:
+            index = int(index) - 1
+        return (qid, index)
+
+    def last(self):
+        return self._next()[0]
+
+    __next__ = next
+
+
 @require_form_view_permission
 @require_permission(Permissions.edit_data)
 @require_POST
@@ -2493,9 +2520,8 @@ def edit_form(request, domain, instance_id):
 
     updates = {}
     for name in request.POST:
-        question = re.sub(r'^/[^\/]+/', '', name)  # TODO: cleaner way to do this?
         updates.update({
-            question: request.POST[name],
+            name: request.POST[name],
         })
 
     from couchforms.models import XFormInstance, XFormOperation
@@ -2507,36 +2533,25 @@ def edit_form(request, domain, instance_id):
     dirty = { 'dirty': False }  # dict so it's accessible inside _update_xml
 
     def _update_xml(root, question, response):
-        levels = question.split("/")
-        levels.reverse()
         node = xml
-        while levels:
-            (qid, index) = re.match(r'(\w+)(?:\[(\d+)])?', levels.pop()).groups()
-            if index is None:
-                node = node.find("{{{}}}{}".format(instance.xmlns, qid))
-            else:
-                index = int(index) - 1
-                node = node.findall("{{{}}}{}".format(instance.xmlns, qid))[index]
-        if node is not None:
-            if node.text != response:
-                dirty['dirty'] = True
+        i = QuestionValueIterator(question)
+        for (qid, index) in i:
+            node = node.findall("{{{}}}{}".format(instance.xmlns, qid))[index or 0]
+        node = node.find("{{{}}}{}".format(instance.xmlns, i.last()))
+        if node is not None and node.text != response:
+            dirty['dirty'] = True
             node.text = response
 
-    # TODO: error handling throughout this function
-    if type(instance) == XFormInstance:     # TODO: this test sucks, fix & also move the imports
+    if type(instance) == XFormInstance:     # TODO: this test sucks, fix & also move the imports & write tests
         xml = etree.fromstring(instance.fetch_attachment(ATTACHMENT_NAME))
         for question, response in updates.iteritems():
-            levels = question.split("/")
-            levels.reverse()
             qdata = instance.form_data
-            while qdata and len(levels) > 1:
-                (qid, index) = re.match(r'(\w+)(?:\[(\d+)])?', levels.pop()).groups()
+            i = QuestionValueIterator(question)
+            for (qid, index) in i:
                 qdata = qdata[qid]
                 if index is not None:
-                    index = int(index) - 1
                     qdata = qdata[index]
-            if qdata and levels:
-                qdata[levels[0]] = response
+            qdata[i.last()] = response
             _update_xml(xml, question, response)
         if dirty['dirty']:
             instance.put_attachment(etree.tostring(xml), name=ATTACHMENT_NAME, content_type='text/xml')
