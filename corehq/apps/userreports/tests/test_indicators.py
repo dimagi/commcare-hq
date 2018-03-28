@@ -17,9 +17,9 @@ from corehq.apps.commtrack.processing import StockProcessingResult
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.userreports.exceptions import BadSpecError
-from corehq.apps.userreports.indicators import LedgerBalancesIndicator
 from corehq.apps.userreports.indicators.factory import IndicatorFactory
 from corehq.apps.userreports.specs import EvaluationContext
+from corehq.apps.userreports.indicators.utils import get_values_by_product
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.parsers.ledgers.helpers import StockReportHelper, StockTransactionHelper
 from corehq.form_processor.tests.utils import run_with_all_backends
@@ -551,13 +551,12 @@ class LedgerBalancesIndicatorTest(SimpleTestCase):
         }
         self.stock_states = {'abc': 32, 'def': 85, 'ghi': 11}
 
-    @patch.object(LedgerBalancesIndicator, '_get_values_by_product')
-    def test_ledger_balances_indicator(self, get_values_by_product):
-        get_values_by_product.return_value = self.stock_states
+    def test_ledger_balances_indicator(self):
         indicator = IndicatorFactory.from_spec(self.spec)
-
         doc = {'_id': 'case1', 'domain': 'domain'}
-        values = indicator.get_values(doc, EvaluationContext(doc, 0))
+
+        with patch('corehq.apps.userreports.indicators.get_values_by_product', return_value=self.stock_states):
+            values = indicator.get_values(doc, EvaluationContext(doc, 0))
 
         self.assertEqual(
             [(val.column.id, val.value) for val in values],
@@ -644,8 +643,8 @@ class TestGetValuesByProduct(TestCase):
 
     @run_with_all_backends
     def test_get_soh_values_by_product(self):
-        values = LedgerBalancesIndicator._get_values_by_product(
-            'soh', self.case_id, ['coke', 'surge', 'new_coke'], self.domain_name
+        values = get_values_by_product(
+            self.domain_name, self.case_id, 'soh', ['coke', 'surge', 'new_coke']
         )
         self.assertEqual(values['coke'], 32)
         self.assertEqual(values['surge'], 85)
@@ -653,8 +652,8 @@ class TestGetValuesByProduct(TestCase):
 
     @run_with_all_backends
     def test_get_consumption_by_product(self):
-        values = LedgerBalancesIndicator._get_values_by_product(
-            'consumption', self.case_id, ['coke', 'surge', 'new_coke'], self.domain_name
+        values = get_values_by_product(
+            self.domain_name, self.case_id, 'consumption', ['coke', 'surge', 'new_coke']
         )
         self.assertEqual(values['coke'], 63)
         self.assertEqual(values['surge'], 0)
