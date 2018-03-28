@@ -251,6 +251,10 @@ class OutboundDailyCounter(object):
         return self.client.decr(self.key)
 
     @property
+    def current_usage(self):
+        return self.client.get(self.key) or 0
+
+    @property
     def daily_limit(self):
         if self.domain_object:
             return self.domain_object.daily_outbound_sms_limit

@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from functools import wraps
+from datetime import datetime, timedelta
 from django.contrib import messages
 from django.db import transaction
 from django.http import (
@@ -8,6 +9,7 @@ from django.http import (
     HttpResponse,
     HttpResponseRedirect,
     HttpResponseBadRequest,
+    JsonResponse,
 )
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -19,9 +21,11 @@ from corehq import toggles
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule, CreateScheduleInstanceActionDefinition
 from corehq.apps.domain.models import Domain
+from corehq.apps.sms.models import QueuedSMS
+from corehq.apps.sms.tasks import time_within_windows, OutboundDailyCounter
 from corehq.apps.sms.views import BaseMessagingSectionView
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
-from corehq.apps.hqwebapp.decorators import use_datatables, use_select2, use_jquery_ui, use_timepicker
+from corehq.apps.hqwebapp.decorators import use_datatables, use_select2, use_jquery_ui, use_timepicker, use_nvd3
 from corehq.apps.hqwebapp.views import DataTablesAJAXPaginationMixin
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
@@ -71,6 +75,58 @@ def _requires_new_reminder_framework():
             raise Http404()
         return wrapped
     return decorate
+
+
+class MessagingDashboardView(BaseMessagingSectionView):
+    urlname = 'messaging_dashboard'
+    page_title = ugettext_lazy("Dashboard")
+    template_name = 'scheduling/dashboard.html'
+
+    @use_nvd3
+    def dispatch(self, *args, **kwargs):
+        return super(MessagingDashboardView, self).dispatch(*args, **kwargs)
+
+    @property
+    def page_context(self):
+        return {}
+
+    def get_ajax_response(self):
+        result = {}
+
+        timezone = self.domain_object.get_default_timezone()
+        domain_now = ServerTime(datetime.utcnow()).user_time(timezone).done()
+
+        if len(self.domain_object.restricted_sms_times) > 0:
+            result['uses_restricted_time_windows'] = True
+            result['within_allowed_sms_times'] = time_within_windows(
+                domain_now,
+                self.domain_object.restricted_sms_times
+            )
+            if not result['within_allowed_sms_times']:
+                for i in range(1, 7 * 24 * 60):
+                    # This is a very fast check so it's ok to iterate this many times.
+                    resume_time = domain_now + timedelta(minutes=i)
+                    if time_within_windows(resume_time, self.domain_object.restricted_sms_times):
+                        result['sms_resume_time'] = resume_time.strftime('%Y-%m-%d %H:%M')
+                        break
+        else:
+            result['uses_restricted_time_windows'] = False
+            result['within_allowed_sms_times'] = True
+
+        result.update({
+            'queued_sms_count': QueuedSMS.objects.filter(domain=self.domain).count(),
+            'last_refresh_time': domain_now.strftime('%Y-%m-%d %H:%M:%S'),
+            'project_timezone': timezone.zone,
+            'outbound_sms_sent_today': OutboundDailyCounter(self.domain_object).current_usage,
+            'daily_outbound_sms_limit': self.domain_object.daily_outbound_sms_limit,
+        })
+        return JsonResponse(result)
+
+    def get(self, request, *args, **kwargs):
+        if request.GET.get('action') == 'raw':
+            return self.get_ajax_response()
+
+        return super(MessagingDashboardView, self).get(request, *args, **kwargs)
 
 
 class BroadcastListView(BaseMessagingSectionView, DataTablesAJAXPaginationMixin):
