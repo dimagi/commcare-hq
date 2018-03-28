@@ -166,7 +166,7 @@ class EmwfOptionsView(LoginAndDomainMixin, JSONResponseMixin, View):
 
     def get_users(self, query, start, size):
         users = (self.user_es_query(query)
-                 .fields(['_id', 'username', 'first_name', 'last_name', 'doc_type'])
+                 .fields(self.utils.SimplifiedUserInfo_ES_FIELDS)
                  .start(start)
                  .size(size)
                  .sort("username.exact"))
