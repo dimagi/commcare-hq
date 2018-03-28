@@ -57,6 +57,11 @@ class FormQuestion(JsonObject):
                 return self.value[len(prefix):]
         return '/'.join(self.value.split('/')[2:])
 
+    @property
+    def editable(self):
+        vtype = VELLUM_TYPES[self.type]
+        return vtype['editable'] if 'editable' in vtype else False
+
 
 class FormQuestionResponse(FormQuestion):
     response = DefaultProperty()

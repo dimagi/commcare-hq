@@ -1893,9 +1893,7 @@ def _get_form_render_context(request, domain, instance, case_id=None):
         for index, question in enumerate(data):
             if question.children:
                 _add_to_question_response_map(question.children, repeat_index=index)
-            elif question.type in ['Date', 'DateTime', 'Double', 'Geopoint', 'Int', 'Long', 'MSelect',
-                                   'PhoneNumber', 'Secret', 'Select', 'Text', 'Time']:  # TODO: more canonical way to do this?
-                                                                                        # or move into VELLUM_TYPES
+            elif question.editable:
                 value = question.value
                 if question.repeat:
                     value = "{}[{}]{}".format(question.repeat, repeat_index + 1, re.sub(r'^' + question.repeat, '', question.value))
