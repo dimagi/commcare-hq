@@ -16,7 +16,6 @@ class Command(BaseCommand):
     def handle(self, username, **options):
         new_username = "Redacted User (GDPR)"
         doc_list = get_auditcare_docs_by_username(username)
-        print("==========Document list:{}".format(doc_list))
         if doc_list:
             for doc in doc_list:
                 doc.user = new_username
@@ -24,3 +23,4 @@ class Command(BaseCommand):
             logger.info("Updated username in {} documents.".format(len(doc_list)))
         else:
             logger.info("The user {} has no associated docs in auditcare.".format(username))
+
