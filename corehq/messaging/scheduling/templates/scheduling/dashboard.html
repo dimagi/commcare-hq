@@ -108,5 +108,23 @@
                 </div>
             </div>
         </div>
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">
+                    <strong>{% trans "Reminder Status:" %}</strong>
+                    <strong class="text-success" data-bind="visible: events_pending() === 0">{% trans "All Caught Up" %}</strong>
+                    <strong class="text-warning" data-bind="visible: events_pending() > 0">{% trans "Working" %},</strong>
+                    <span data-bind="visible: events_pending() > 0">
+                        <span data-bind="text: events_pending"></span>
+                        {% trans "event(s) in the queue" %}
+                    </span>
+                </h3>
+            </div>
+            <div class="panel-body">
+                {% blocktrans %}
+                View <a target="_blank" href="{{ scheduled_events_url }}">scheduled events</a>
+                {% endblocktrans %}
+            </div>
+        </div>
     </div>
 {% endblock %}

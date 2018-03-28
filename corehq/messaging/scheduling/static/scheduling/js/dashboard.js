@@ -13,6 +13,7 @@ hqDefine("scheduling/js/dashboard", function() {
         self.project_timezone = ko.observable();
         self.outbound_sms_sent_today = ko.observable();
         self.daily_outbound_sms_limit = ko.observable();
+        self.events_pending = ko.observable();
 
         self.percentage_daily_outbound_sms_used = ko.computed(function() {
             return Math.round(100.0 * self.outbound_sms_sent_today() / self.daily_outbound_sms_limit());
@@ -35,6 +36,7 @@ hqDefine("scheduling/js/dashboard", function() {
             self.project_timezone(values.project_timezone);
             self.outbound_sms_sent_today(values.outbound_sms_sent_today);
             self.daily_outbound_sms_limit(values.daily_outbound_sms_limit);
+            self.events_pending(values.events_pending);
         }
     };
 

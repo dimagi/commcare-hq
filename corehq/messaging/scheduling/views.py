@@ -21,6 +21,8 @@ from corehq import toggles
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule, CreateScheduleInstanceActionDefinition
 from corehq.apps.domain.models import Domain
+from corehq.apps.reminders.models import CaseReminderHandler
+from corehq.apps.reminders.views import ScheduledRemindersCalendarView
 from corehq.apps.sms.models import QueuedSMS
 from corehq.apps.sms.tasks import time_within_windows, OutboundDailyCounter
 from corehq.apps.sms.views import BaseMessagingSectionView
@@ -41,6 +43,9 @@ from corehq.messaging.scheduling.models import (
     TimedSchedule,
     ImmediateBroadcast,
     ScheduledBroadcast,
+)
+from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import (
+    get_count_of_active_schedule_instances_due,
 )
 from corehq.messaging.scheduling.tasks import refresh_alert_schedule_instances, refresh_timed_schedule_instances
 from corehq.messaging.tasks import initiate_messaging_rule_run
@@ -88,7 +93,17 @@ class MessagingDashboardView(BaseMessagingSectionView):
 
     @property
     def page_context(self):
-        return {}
+        from corehq.apps.reports.standard.sms import ScheduleInstanceReport
+
+        if self.domain_object.uses_new_reminders:
+            scheduled_events_url = reverse(ScheduleInstanceReport.dispatcher.name(), args=[],
+                kwargs={'domain': self.domain, 'report_slug': ScheduleInstanceReport.slug})
+        else:
+            scheduled_events_url = reverse(ScheduledRemindersCalendarView.urlname, args=[self.domain])
+
+        return {
+            'scheduled_events_url': scheduled_events_url,
+        }
 
     @cached_property
     def timezone(self):
@@ -122,12 +137,25 @@ class MessagingDashboardView(BaseMessagingSectionView):
             'daily_outbound_sms_limit': self.domain_object.daily_outbound_sms_limit,
         })
 
+    def add_reminder_status_info(self, result):
+        if self.domain_object.uses_new_reminders:
+            events_pending = get_count_of_active_schedule_instances_due(self.domain, datetime.utcnow())
+        else:
+            events_pending = len(CaseReminderHandler.get_all_reminders(
+                domain=self.domain,
+                due_before=datetime.utcnow(),
+                ids_only=True
+            ))
+
+        result['events_pending'] = events_pending
+
     def get_ajax_response(self):
         result = {
             'last_refresh_time': self.domain_now.strftime('%Y-%m-%d %H:%M:%S'),
             'project_timezone': self.timezone.zone,
         }
         self.add_sms_status_info(result)
+        self.add_reminder_status_info(result)
         return JsonResponse(result)
 
     def get(self, request, *args, **kwargs):
