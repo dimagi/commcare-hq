@@ -49,6 +49,7 @@ from corehq.apps.userreports.reports.builder import (
     make_case_data_source_filter,
     make_form_data_source_filter,
     get_filter_format_from_question_type,
+    DATA_SOURCE_TYPE_CHOICES,
 )
 from corehq.apps.userreports.exceptions import BadBuilderConfigError
 from corehq.apps.userreports.reports.builder.const import (
@@ -670,7 +671,7 @@ class DataSourceForm(forms.Form):
         # TODO: Map reports.
         self.app_source_helper = ApplicationDataSourceUIHelper()
         self.app_source_helper.source_type_field.label = _('Forms or Cases')
-        self.app_source_helper.source_type_field.choices = [("case", _("Cases")), ("form", _("Forms"))]
+        self.app_source_helper.source_type_field.choices = DATA_SOURCE_TYPE_CHOICES
         self.app_source_helper.source_field.label = '<span data-bind="text: labelMap[sourceType()]"></span>'
         self.app_source_helper.bootstrap(self.domain)
         report_source_fields = self.app_source_helper.get_fields()
