@@ -14,7 +14,7 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 from corehq.apps.app_manager.app_schemas.case_properties import get_case_properties
 from corehq.apps.userreports.app_manager.data_source_meta import DATA_SOURCE_TYPE_CHOICES, \
-    get_data_source_doc_type, make_case_data_source_filter, make_form_data_source_filter
+    get_data_source_doc_type, make_case_data_source_filter, make_form_data_source_filter, get_app_data_source_meta
 
 from corehq.apps.userreports.reports.builder.columns import (
     QuestionColumnOption,
@@ -321,9 +321,10 @@ class DataSourceBuilder(object):
         self.source_type = source_type
         # source_id is a case type of form id
         self.source_id = source_id
+        self.data_source_meta = get_app_data_source_meta(self.domain, self.source_type, self.source_id)
         if self.source_type == 'form':
-            self.source_form = Form.get_form(self.source_id)
-            self.source_xform = XForm(self.source_form.source)
+            self.source_form = self.data_source_meta.source_form
+            self.source_xform = self.data_source_meta.source_xform
         if self.source_type == 'case':
             prop_map = get_case_properties(
                 self.app, [self.source_id], defaults=list(DEFAULT_CASE_PROPERTY_DATATYPES),
@@ -334,7 +335,7 @@ class DataSourceBuilder(object):
     @property
     @memoized
     def source_doc_type(self):
-        return get_data_source_doc_type(self.source_type)
+        return self.data_source_meta.get_doc_type()
 
     @property
     @memoized
@@ -342,10 +343,7 @@ class DataSourceBuilder(object):
         """
         Return the filter configuration for the DataSourceConfiguration.
         """
-        if self.source_type == "case":
-            return make_case_data_source_filter(self.source_id)
-        if self.source_type == "form":
-            return make_form_data_source_filter(self.source_xform.data_node.tag_xmlns)
+        return self.data_source_meta.get_filter()
 
     def base_item_expression(self, is_multiselect_chart_report, multiselect_field=None):
         """
