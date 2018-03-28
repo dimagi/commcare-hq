@@ -1759,10 +1759,10 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
                 self.domain, self.datespan, self.case_types, owner_ids=case_owners
             ),
             cases_closed_by_user=get_case_counts_closed_by_user(
-                self.domain, self.datespan, self.case_types, owner_ids=user_ids
+                self.domain, self.datespan, self.case_types, user_ids=user_ids
             ),
             cases_opened_by_user=get_case_counts_opened_by_user(
-                self.domain, self.datespan, self.case_types, owner_ids=user_ids
+                self.domain, self.datespan, self.case_types, user_ids=user_ids
             ),
         )
 
