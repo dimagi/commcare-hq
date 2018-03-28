@@ -1610,11 +1610,13 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
             if group_name == 'no_group':
                 continue
 
-            case_sharing_groups = set(reduce(operator.add, [u['group_ids'] + [u['location_id']] for u in users], []))
-            active_cases = sum([int(report_data.active_cases_by_owner.get(u["user_id"].lower(), 0)) for u in users]) + \
-                sum([int(report_data.active_cases_by_owner.get(g_id, 0)) for g_id in case_sharing_groups])
-            total_cases = sum([int(report_data.total_cases_by_owner.get(u["user_id"].lower(), 0)) for u in users]) + \
-                sum([int(report_data.total_cases_by_owner.get(g_id, 0)) for g_id in case_sharing_groups])
+            owner_ids_nested = [
+                [user['user_id'].lower(), user['location_id']] + user['group_ids']
+                for user in users
+            ]
+            owner_ids = set(reduce(operator.add, owner_ids_nested, []))
+            active_cases = sum([int(report_data.active_cases_by_owner.get(owner_id, 0)) for owner_id in owner_ids])
+            total_cases = sum([int(report_data.total_cases_by_owner.get(owner_id, 0)) for owner_id in owner_ids])
             active_users = int(active_users_by_group.get(group, 0))
             total_users = len(self.users_by_group.get(group, []))
 
@@ -1666,12 +1668,9 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         rows = []
         last_form_by_user = self.es_last_submissions()
         for user in self.users_to_iterate:
-            active_cases = int(report_data.active_cases_by_owner.get(user["user_id"].lower(), 0)) + \
-                sum([int(report_data.active_cases_by_owner.get(group_id, 0)) for group_id in user["group_ids"]]) + \
-                int(report_data.active_cases_by_owner.get(user["location_id"], 0))
-            total_cases = int(report_data.total_cases_by_owner.get(user["user_id"].lower(), 0)) + \
-                sum([int(report_data.total_cases_by_owner.get(group_id, 0)) for group_id in user["group_ids"]]) + \
-                int(report_data.total_cases_by_owner.get(user["location_id"], 0))
+            owner_ids = set([user["user_id"].lower(), user["location_id"]] + user["group_ids"])
+            active_cases = sum([int(report_data.active_cases_by_owner.get(owner_id, 0)) for owner_id in owner_ids])
+            total_cases = sum([int(report_data.total_cases_by_owner.get(owner_id, 0)) for owner_id in owner_ids])
 
             cases_opened = int(report_data.cases_opened_by_user.get(user["user_id"].lower(), 0))
             cases_closed = int(report_data.cases_closed_by_user.get(user["user_id"].lower(), 0))
