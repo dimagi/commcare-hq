@@ -2,7 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 from copy import copy
-from datetime import datetime
+from datetime import datetime, date
 from decimal import Decimal
 import uuid
 
@@ -561,6 +561,39 @@ class LedgerBalancesIndicatorTest(SimpleTestCase):
         self.assertEqual(
             [(val.column.id, val.value) for val in values],
             [('soh_abc', 32), ('soh_def', 85), ('soh_ghi', 11)]
+        )
+
+
+class DueListDateIndicatorTest(SimpleTestCase):
+
+    def setUp(self):
+        self.spec = {
+            "type": "due_list_date",
+            "column_id": "immun_dates",
+            "display_name": "Immunization date",
+            "ledger_section": "immuns",
+            "product_codes": ["tt_1", "tt_2", "hpv"],
+            "case_id_expression": {
+                "type": "property_name",
+                "property_name": "_id"
+            }
+        }
+        self.stock_states = {'tt_1': 17000, 'tt_2': 17020, 'hpv': 18000}
+
+    def test_ledger_balances_indicator(self):
+        indicator = IndicatorFactory.from_spec(self.spec)
+        doc = {'_id': 'case1', 'domain': 'domain'}
+
+        with patch('corehq.apps.userreports.indicators.get_values_by_product', return_value=self.stock_states):
+            values = indicator.get_values(doc, EvaluationContext(doc, 0))
+
+        self.assertEqual(
+            [(val.column.id, val.value) for val in values],
+            [
+                ('immun_dates_tt_1', date(2016, 7, 18)),
+                ('immun_dates_tt_2', date(2016, 8, 7)),
+                ('immun_dates_hpv', date(2019, 4, 14))
+            ]
         )
 
 

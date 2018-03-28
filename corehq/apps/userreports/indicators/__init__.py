@@ -1,9 +1,13 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+from datetime import date, timedelta
+
+import six
+
 from corehq.apps.userreports.indicators.utils import get_values_by_product
 from corehq.apps.userreports.util import truncate_value
-from fluff import TYPE_INTEGER, TYPE_SMALL_INTEGER
+from fluff import TYPE_DATE, TYPE_INTEGER, TYPE_SMALL_INTEGER
 
 
 class Column(object):
@@ -141,3 +145,15 @@ class LedgerBalancesIndicator(ConfigurableIndicator):
             ColumnValue(self._make_column(product_code), values[product_code])
             for product_code in self.product_codes
         ]
+
+
+class DueListDateIndicator(LedgerBalancesIndicator):
+    column_datatype = TYPE_DATE
+
+    def _get_values_by_product(self, domain, case_id):
+        unix_epoch = date(1970, 1, 1)
+        values_by_product = super(DueListDateIndicator, self)._get_values_by_product(domain, case_id)
+        return {
+            product_code: unix_epoch + timedelta(days=value)
+            for product_code, value in six.iteritems(values_by_product)
+        }
