@@ -27,7 +27,7 @@ def get_cas_reach_data(domain, now_date, config, show_test=False):
             districts=Sum('num_launched_districts') if level <= 2 else Max('num_launched_districts'),
             blocks=Sum('num_launched_blocks') if level <= 3 else Max('num_launched_blocks'),
             supervisors=Sum('num_launched_supervisors') if level <= 4 else Max('num_launched_supervisors'),
-            awc_num_open=Sum('awc_num_open'),
+            awc_num_open=Sum('awc_num_open') if level <= 5 else Max('awc_num_open'),
             awcs=Sum('num_launched_awcs') if level <= 5 else Max('num_launched_awcs'),
             all_awcs=Sum('num_awcs') if level <= 5 else Max('num_awcs')
         )
