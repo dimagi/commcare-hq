@@ -15,7 +15,6 @@ hqDefine("reports/js/data_corrections", function() {
         self.url = options.url;
         self.saveUrl = options.saveUrl;
         self.propertyTemplate = {
-            // TODO: make icons blue, like in readable form, and make text less bold
             nodes: $("<div>" + (options.propertyTemplate || "<span data-bind='text: name'></span>" )+ "</div>"),
         };
         self.displayProperty = ko.observable(options.displayProperty || '');
