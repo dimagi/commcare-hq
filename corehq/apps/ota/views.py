@@ -203,6 +203,8 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
         and openrosa_version
         and LooseVersion(openrosa_version) >= LooseVersion(OPENROSA_VERSION_MAP['ASYNC_RESTORE'])
     )
+
+    app = get_app_cached(domain, app_id) if app_id else None
     restore_config = RestoreConfig(
         project=project,
         restore_user=restore_user,
