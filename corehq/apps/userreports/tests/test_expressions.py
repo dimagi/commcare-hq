@@ -995,9 +995,10 @@ def test_valid_eval_expression(self, source_doc, statement, context, expected_va
 
 
 @generate_cases([
-    # context must be non-empty dict
+    # context must be a dict
     ({}, "2 + 3", "text context"),
-    ({}, "2 + 3", {}),
+    ({}, "2 + 3", 42),
+    ({}, "2 + 3", []),
     # statement must be string
     ({}, 2 + 3, {"a": 2, "b": 3})
 ])
