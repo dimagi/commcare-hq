@@ -514,6 +514,11 @@ class SQLLocation(AdjListModel):
             user.save()
 
         _unassign_users_from_location(self.domain, self.location_id)
+        self.notify_users_at_ancestor_locations()
+
+    def notify_users_at_ancestor_locations(self):
+        for location_id in self.get_ancestors().location_ids():
+            notify_users_at_location(location_id)
 
     def archive(self):
         """
@@ -761,3 +766,19 @@ def _unassign_users_from_location(domain, location_id):
             user.unset_location_by_id(domain, location_id, fall_back_to_next=True)
         elif user.is_commcare_user():
             user.unset_location_by_id(location_id, fall_back_to_next=True)
+
+
+def notify_users_at_location(location_id):
+    """
+    Notify users at parent locations that locations fixture has been updated
+    """
+    from corehq.apps.locations.dbaccessors import user_ids_at_locations
+    from corehq.apps.fixtures.models import UserFixtureType
+    from corehq.apps.users.models import CommCareUser
+    from dimagi.utils.couch.database import iter_docs
+
+    user_ids = user_ids_at_locations([location_id])
+    for doc in iter_docs(CommCareUser.get_db(), user_ids):
+        user = CommCareUser.wrap(doc)
+        if user.is_commcare_user():
+            user.update_fixture_status(UserFixtureType.LOCATION)
