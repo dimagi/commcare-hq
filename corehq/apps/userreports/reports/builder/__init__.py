@@ -1,6 +1,5 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-from django.utils.translation import ugettext_lazy as _
 import six
 DEFAULT_CASE_PROPERTY_DATATYPES = {
     "name": "string",
@@ -22,30 +21,6 @@ FORM_METADATA_PROPERTIES = [
     ('timeEnd', 'DateTime'),
     ('deviceID', 'Text'),
 ]
-
-
-def make_case_data_source_filter(case_type):
-    return {
-        "type": "boolean_expression",
-        "operator": "eq",
-        "expression": {
-            "type": "property_name",
-            "property_name": "type"
-        },
-        "property_value": case_type,
-    }
-
-
-def make_form_data_source_filter(xmlns):
-    return {
-        "type": "boolean_expression",
-        "operator": "eq",
-        "expression": {
-            "type": "property_name",
-            "property_name": "xmlns"
-        },
-        "property_value": xmlns,
-    }
 
 
 def make_case_property_indicator(property_name, column_id=None, datatype=None):
