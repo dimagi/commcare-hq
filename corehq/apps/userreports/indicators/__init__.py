@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from collections import defaultdict
 
+from corehq.apps.products.models import SQLProduct
 from corehq.apps.userreports.util import truncate_value
 from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors
 from fluff import TYPE_INTEGER, TYPE_SMALL_INTEGER
@@ -130,13 +131,24 @@ class LedgerBalancesIndicator(ConfigurableIndicator):
     @staticmethod
     def _get_values_by_product(ledger_section, case_id, product_codes, domain):
         """returns a defaultdict mapping product codes to their values"""
-        ret = defaultdict(lambda: 0)
         ledgers = LedgerAccessors(domain).get_ledger_values_for_case(case_id)
-        for ledger in ledgers:
-            if ledger.section_id == ledger_section and ledger.entry_id in product_codes:
-                ret[ledger.entry_id] = ledger.stock_on_hand
 
-        return ret
+        products = SQLProduct.objects.filter(
+            domain=domain, code__in=product_codes
+        ).values('product_id', 'code')
+
+        entry_id_to_code = {
+            product['product_id']: product['code']
+            for product in products
+        }
+
+        ledger_values = defaultdict(lambda: 0)
+        for ledger in ledgers:
+            if ledger.section_id == ledger_section and ledger.entry_id in entry_id_to_code:
+                product_code = entry_id_to_code[ledger.entry_id]
+                ledger_values[product_code] = ledger.stock_on_hand
+
+        return ledger_values
 
     def get_columns(self):
         return [self._make_column(product_code) for product_code in self.product_codes]

@@ -592,17 +592,11 @@ class TestGetValuesByProduct(TestCase):
     def setUpClass(cls):
         super(TestGetValuesByProduct, cls).setUpClass()
         cls.data = [
-            {"product": "coke", "section": "soh", "balance": 32},
-            {"product": "coke", "section": "consumption", "balance": 63},
-            {"product": "surge", "section": "soh", "balance": 85},
-            {"product": "fanta", "section": "soh", "balance": 11},
+            {"product_id": uuid.uuid4().hex, "product": "coke", "section": "soh", "balance": 32},
+            {"product_id": uuid.uuid4().hex, "product": "coke", "section": "consumption", "balance": 63},
+            {"product_id": uuid.uuid4().hex, "product": "surge", "section": "soh", "balance": 85},
+            {"product_id": uuid.uuid4().hex, "product": "fanta", "section": "soh", "balance": 11},
         ]
-        product_ids = {p['product'] for p in cls.data}
-
-        SQLProduct.objects.bulk_create([
-            SQLProduct(domain=cls.domain_name, product_id=id, code=id)
-            for id in product_ids
-        ])
 
     @classmethod
     def tearDownClass(cls):
@@ -613,18 +607,23 @@ class TestGetValuesByProduct(TestCase):
         super(TestGetValuesByProduct, self).setUp()
         self.ledger_processor = FormProcessorInterface(domain=self.domain_name).ledger_processor
         self.domain_obj = create_domain(self.domain_name)
+        SQLProduct.objects.bulk_create([
+            SQLProduct(domain=self.domain_name, product_id=data['product_id'], code=data['product'])
+            for data in self.data
+        ])
 
         transactions_flat = []
         self.transactions = {}
         for d in self.data:
             product = d['product']
+            product_id = d['product_id']
             section = d['section']
             balance = d['balance']
             transactions_flat.append(
                 StockTransactionHelper(
                     case_id=self.case_id,
                     section_id=section,
-                    product_id=product,
+                    product_id=product_id,
                     action='soh',
                     quantity=balance,
                     timestamp=datetime.utcnow()
