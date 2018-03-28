@@ -36,7 +36,7 @@ from corehq.apps.app_manager.models import (
 )
 from corehq.apps.app_manager.xform import XForm
 from corehq.apps.userreports import tasks
-from corehq.apps.userreports.app_manager import _clean_table_name
+from corehq.apps.userreports.app_manager.helpers import _clean_table_name
 from corehq.apps.userreports.models import (
     DataSourceBuildInformation,
     DataSourceConfiguration,
