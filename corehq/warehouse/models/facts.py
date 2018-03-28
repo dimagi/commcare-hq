@@ -7,7 +7,7 @@ from corehq.sql_db.routers import db_for_read_write
 from corehq.util.test_utils import unit_testing_only
 from corehq.warehouse.const import (APPLICATION_DIM_SLUG, APP_STATUS_FACT_SLUG,
     DOMAIN_DIM_SLUG, FORM_FACT_SLUG, FORM_STAGING_SLUG, SYNCLOG_FACT_SLUG,
-    SYNCLOG_STAGING_SLUG, USER_DIM_SLUG)
+    SYNCLOG_STAGING_SLUG, USER_DIM_SLUG, APP_STATUS_FORM_STAGING_SLUG, APP_STATUS_SYNCLOG_STAGING_SLUG)
 from corehq.warehouse.etl import CustomSQLETLMixin
 from corehq.warehouse.models.dimensions import DomainDim, UserDim, ApplicationDim
 from corehq.warehouse.models.shared import WarehouseTable
@@ -118,11 +118,11 @@ class ApplicationStatusFact(BaseFact, CustomSQLETLMixin):
     '''
     slug = APP_STATUS_FACT_SLUG
 
-    app_dim = models.ForeignKey(ApplicationDim, on_delete=models.PROTECT)
+    app_id = models.CharField(max_length=255, null=True, db_index=True)
 
-    domain_dim = models.ForeignKey(DomainDim, on_delete=models.PROTECT)
+    domain = models.CharField(max_length=255, null=True, db_index=True)
 
-    user_dim = models.ForeignKey(UserDim, on_delete=models.PROTECT)
+    user_id = models.CharField(max_length=255, null=True, db_index=True)
 
     last_form_submission_date = models.DateTimeField(null=True)
     last_sync_log_date = models.DateTimeField(null=True)
@@ -131,20 +131,15 @@ class ApplicationStatusFact(BaseFact, CustomSQLETLMixin):
     last_form_app_commcare_version = models.CharField(max_length=255, null=True)
     # last_form_app_source = models.CharField(max_length=255)
 
-    last_sync_log_app_build_version = models.CharField(max_length=255)
+    last_sync_log_app_build_version = models.CharField(max_length=255, null=True)
     # last_sync_log_app_source = models.CharField(max_length=255)
 
     class Meta:
-        unique_together = ('app_dim', 'user_dim')
+        unique_together = ('app_id', 'user_id')
 
     @classmethod
     def dependencies(cls):
         return [
-            USER_DIM_SLUG,
-            FORM_STAGING_SLUG,
-            FORM_FACT_SLUG,
-            SYNCLOG_STAGING_SLUG,
-            SYNCLOG_FACT_SLUG,
-            DOMAIN_DIM_SLUG,
-            APPLICATION_DIM_SLUG
+            APP_STATUS_SYNCLOG_STAGING_SLUG,
+            APP_STATUS_FORM_STAGING_SLUG,
         ]

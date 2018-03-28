@@ -28,7 +28,9 @@ from corehq.warehouse.models.staging import (
     FormStagingTable,
     SyncLogStagingTable,
     LocationStagingTable,
-    ApplicationStagingTable
+    ApplicationStagingTable,
+    AppStatusFormStaging,
+    AppStatusSynclogStaging
 )
 
 
@@ -54,4 +56,6 @@ def get_cls_by_slug(slug):
         ApplicationStatusFact.slug: ApplicationStatusFact,
         FormFact.slug: FormFact,
         SyncLogFact.slug: SyncLogFact,
+        AppStatusFormStaging.slug: AppStatusFormStaging,
+        AppStatusSynclogStaging.slug: AppStatusSynclogStaging
     }[slug]
