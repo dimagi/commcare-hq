@@ -331,7 +331,7 @@ def get_user_stubs(user_ids):
     return (UserES()
         .user_ids(user_ids)
         .show_inactive()
-        .values(SimplifiedUserInfo_ES_FIELDS))
+        .values(*SimplifiedUserInfo_ES_FIELDS))
 
 
 def get_forms(domain, startdate, enddate, user_ids=None, app_ids=None, xmlnss=None, by_submission_time=True):
