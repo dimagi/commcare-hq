@@ -514,11 +514,11 @@ class SQLLocation(AdjListModel):
             user.save()
 
         _unassign_users_from_location(self.domain, self.location_id)
-        self.notify_users_at_ancestor_locations()
+        self.update_users_at_ancestor_locations()
 
-    def notify_users_at_ancestor_locations(self):
+    def update_users_at_ancestor_locations(self):
         for location_id in self.get_ancestors().location_ids():
-            notify_users_at_location(location_id)
+            update_users_at_location(location_id)
 
     def archive(self):
         """
@@ -768,7 +768,7 @@ def _unassign_users_from_location(domain, location_id):
             user.unset_location_by_id(location_id, fall_back_to_next=True)
 
 
-def notify_users_at_location(location_id):
+def update_users_at_location(location_id):
     """
     Notify users at parent locations that locations fixture has been updated
     """
