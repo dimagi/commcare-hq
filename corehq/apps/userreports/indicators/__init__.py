@@ -114,6 +114,7 @@ class CompoundIndicator(ConfigurableIndicator):
 
 
 class LedgerBalancesIndicator(ConfigurableIndicator):
+    column_datatype = TYPE_INTEGER
 
     def __init__(self, spec):
         self.product_codes = spec.product_codes
@@ -124,10 +125,10 @@ class LedgerBalancesIndicator(ConfigurableIndicator):
 
     def _make_column(self, product_code):
         column_id = '{}_{}'.format(self.column_id, product_code)
-        return Column(column_id, TYPE_INTEGER)
+        return Column(column_id, self.column_datatype)
 
-    def _get_values_by_product(self, ledger_section, case_id, product_codes, domain):
-        return get_values_by_product(domain, case_id, ledger_section, product_codes)
+    def _get_values_by_product(self, domain, case_id):
+        return get_values_by_product(domain, case_id, self.ledger_section, self.product_codes)
 
     def get_columns(self):
         return [self._make_column(product_code) for product_code in self.product_codes]
@@ -135,6 +136,8 @@ class LedgerBalancesIndicator(ConfigurableIndicator):
     def get_values(self, item, context=None):
         case_id = self.case_id_expression(item)
         domain = context.root_doc['domain']
-        values = self._get_values_by_product(self.ledger_section, case_id, self.product_codes, domain)
-        return [ColumnValue(self._make_column(product_code), values[product_code])
-                for product_code in self.product_codes]
+        values = self._get_values_by_product(domain, case_id)
+        return [
+            ColumnValue(self._make_column(product_code), values[product_code])
+            for product_code in self.product_codes
+        ]
