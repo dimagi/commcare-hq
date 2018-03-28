@@ -1832,8 +1832,8 @@ def _get_selected_users(domain, request):
 def _get_owner_ids_from_users(users):
     owner_ids = set()
     for user in users:
-        owner_ids = owner_ids.union([user['user_id'].lower(), user['location_id']])
-        owner_ids = owner_ids.union(user['group_ids'])
+        owner_ids.update([user['user_id'].lower(), user['location_id']])
+        owner_ids.update(user['group_ids'])
 
     try:
         owner_ids.remove(None)
