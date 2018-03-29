@@ -296,12 +296,12 @@ class ISSNIPMonthlyReport(object):
     @cached_property
     def to_pdf_format(self):
         for awc in self.config['awc_id']:
-            agg_awc_monthly_data = filter(lambda x: x['awc_id'] == awc, self.agg_awc_monthly_data)
-            child_health_monthly_data = filter(lambda x: x['awc_id'] == awc, self.child_health_monthly_data)
-            css_record_monthly = filter(lambda x: x['awc_id'] == awc, self.css_record_monthly)
-            infrastructure_data = filter(lambda x: x['awc_id'] == awc, self.infrastructure_data)
-            vhnd_data = filter(lambda x: x['awc_id'] == awc, self.vhnd_data)
-            agg_child_health_monthly = filter(lambda x: x['awc_id'] == awc, self.agg_child_health_monthly)
+            agg_awc_monthly_data = [x for x in self.agg_awc_monthly_data if x['awc_id'] == awc]
+            child_health_monthly_data = [x for x in self.child_health_monthly_data if x['awc_id'] == awc]
+            css_record_monthly = [x for x in self.css_record_monthly if x['awc_id'] == awc]
+            infrastructure_data = [x for x in self.infrastructure_data if x['awc_id'] == awc]
+            vhnd_data = [x for x in self.vhnd_data if x['awc_id'] == awc]
+            agg_child_health_monthly = [x for x in self.agg_child_health_monthly if x['awc_id'] == awc]
             yield dict(
                 awc_name=self.get_awc_name(awc),
                 agg_awc_monthly_data=agg_awc_monthly_data[0] if agg_awc_monthly_data else None,

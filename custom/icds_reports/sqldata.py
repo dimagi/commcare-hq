@@ -2742,7 +2742,6 @@ class AWCInfrastructureUCR(SqlData):
         self.awcs = config['awc_id']
         super(AWCInfrastructureUCR, self).__init__(config)
 
-
     @property
     def filter_values(self):
         clean_IN_filter_value(self.config, 'awc_id')
