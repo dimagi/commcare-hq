@@ -69,9 +69,7 @@ class GDPRScrubUserTests(TestCase):
         attachment_metadata_dict = xmltodict.parse(form_data_from_db)
         self.assertEqual(attachment_metadata_dict["data"]["n0:meta"]["n0:username"], self.new_username)
 
-        # Test the operations
-        operations = FormAccessors(DOMAIN).db_accessor.get_form_operations(form.form_id)
-        print("OPERATIONS: {}".format(operations))
+        # TODO: Test that the operations history is updated
 
     def test_modify_attachment_xml_and_metadata_couch(self):
         form = get_simple_wrapped_form(uuid.uuid4().hex,
@@ -86,3 +84,5 @@ class GDPRScrubUserTests(TestCase):
         username_in_dict = form_attachment_dict["data"]["n0:meta"]["n0:username"]
 
         self.assertEqual(username_in_dict, self.new_username)
+
+        # TODO: Test that the operations history is updated

@@ -124,7 +124,6 @@ class AttachmentMixin(SaveStateMixin):
                 return _get_attachment_from_list(getattr(self, list_attr))
 
         if self.is_saved():
-            a = self._get_attachment_from_db(attachment_name)
             return self._get_attachment_from_db(attachment_name)
 
     def _get_attachment_from_db(self, attachment_name):
@@ -793,7 +792,6 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
         return None
 
     def _get_attachment_from_db(self, identifier):
-
         from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
         return CaseAccessorSQL.get_attachment_by_identifier(self.case_id, identifier)
 
