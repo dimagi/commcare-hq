@@ -67,7 +67,7 @@ Think through the performance of your additions to this script. Previous mistake
 - Don't look up other documents in a UCR
 - Only collect raw data in the UCR. Use as few expressions in the UCR as possible.
 - Keep the same names as the app as far as possible into the aggregation. It's very confusing when sex changes to gender...
-- Prefer small_int when possible and always use small_boolean instead of boolean
+- Prefer small_integer when possible and always use small_boolean instead of boolean
 
 Rebuilding UCR Data Sources
 ---------------------------
