@@ -1,5 +1,5 @@
 hqDefine('app_manager/js/releases/releases', function () {
-    function SavedApp(app_data, releasesMain) {
+    function savedAppModel(app_data, releasesMain) {
         var self = ko.mapping.fromJS(app_data);
         $.each(['comment_user_name', '_deleteState'], function (i, attr) {
             self[attr] = self[attr] || ko.observable();
@@ -57,14 +57,14 @@ hqDefine('app_manager/js/releases/releases', function () {
         self.build_profile.subscribe(self.changeAppCode);
 
         self.should_generate_url = function(url_type) {
-            var types = _.values(SavedApp.URL_TYPES);
+            var types = _.values(savedAppModel.URL_TYPES);
             return (types.indexOf(url_type) !== 1 &&
                 !ko.utils.unwrapObservable(self[url_type]));
         };
 
         self.generate_short_url = function(url_type) {
             //accepted_url_types = ['short_odk_url', 'short_odk_media_url', 'short_url']
-            url_type = url_type || SavedApp.URL_TYPES.SHORT_ODK_URL;
+            url_type = url_type || savedAppModel.URL_TYPES.SHORT_ODK_URL;
             var base_url = self.base_url(),
                 should_generate_url = self.should_generate_url();
 
@@ -93,9 +93,9 @@ hqDefine('app_manager/js/releases/releases', function () {
         self.get_short_odk_url = function() {
             var url_type;
             if (self.include_media()) {
-                url_type = SavedApp.URL_TYPES.SHORT_ODK_MEDIA_URL;
+                url_type = savedAppModel.URL_TYPES.SHORT_ODK_MEDIA_URL;
             } else {
-                url_type = SavedApp.URL_TYPES.SHORT_ODK_URL;
+                url_type = savedAppModel.URL_TYPES.SHORT_ODK_URL;
             }
             if (!(ko.utils.unwrapObservable(self[url_type])) || self.build_profile()) {
                 return self.generate_short_url(url_type);
@@ -122,7 +122,7 @@ hqDefine('app_manager/js/releases/releases', function () {
             hqImport('analytix/js/google').track.event('App Manager', 'Initiate Install', 'Get App Code');
             hqImport('analytix/js/kissmetrix').track.event('Initiate Installation Method');
         };
-        
+
         self.get_app_code = function() {
             var short_odk_url = self.get_short_odk_url();
             if (short_odk_url) {
@@ -201,9 +201,9 @@ hqDefine('app_manager/js/releases/releases', function () {
         return self;
     }
 
-    function ReleasesMain(o) {
+    function releasesMainModel(o) {
         /* {fetchUrl, deleteUrl} */
-        var AsyncDownloader = hqImport('app_manager/js/download_async_modal').AsyncDownloader;
+        var asyncDownloader = hqImport('app_manager/js/download_async_modal').asyncDownloader;
         var appDiff = hqImport('app_manager/js/releases/app_diff').init('#app-diff-modal .modal-body');
         var self = this;
         self.options = o;
@@ -221,7 +221,7 @@ hqDefine('app_manager/js/releases/releases', function () {
         self.lastAppVersion = ko.observable();
 
         self.download_modal = $(self.options.download_modal_id);
-        self.async_downloader = new AsyncDownloader(self.download_modal);
+        self.async_downloader = asyncDownloader(self.download_modal);
 
         self.download_application_zip = function(appId, multimedia_only, build_profile) {
             var url_slug = multimedia_only ? 'download_multimedia_zip' : 'download_ccz';
@@ -304,7 +304,7 @@ hqDefine('app_manager/js/releases/releases', function () {
         self.addSavedApps = function (savedApps) {
             var i, savedApp;
             for (i = 0; i < savedApps.length; i++) {
-                savedApp = SavedApp(savedApps[i], self);
+                savedApp = savedAppModel(savedApps[i], self);
                 self.addSavedApp(savedApp);
             }
             if (i) {
@@ -445,7 +445,7 @@ hqDefine('app_manager/js/releases/releases', function () {
                 success: function(data) {
                     $('#build-errors-wrapper').html(data.error_html);
                     if (data.saved_app) {
-                        var app = SavedApp(data.saved_app, self);
+                        var app = savedAppModel(data.saved_app, self);
                         self.addSavedApp(app, true);
                     }
                     self.buildState('');
@@ -458,16 +458,18 @@ hqDefine('app_manager/js/releases/releases', function () {
                 },
             });
         };
+
+        return self;
     }
 
-    SavedApp.URL_TYPES = {
+    savedAppModel.URL_TYPES = {
         SHORT_ODK_URL: 'short_odk_url',
         SHORT_ODK_MEDIA_URL: 'short_odk_media_url',
         SHORT_URL: 'short_url',
     };
 
     return {
-        ReleasesMain: ReleasesMain,
-        SavedApp: SavedApp,
+        releasesMainModel: releasesMainModel,
+        savedAppModel: savedAppModel,
     };
 });

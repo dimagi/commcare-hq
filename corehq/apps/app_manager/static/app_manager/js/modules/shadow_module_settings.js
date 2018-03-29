@@ -29,26 +29,32 @@ hqDefine('app_manager/js/modules/shadow_module_settings', function () {
                 return _.map(exclForms, function (form) { return form.uniqueId; });
             });
 
-            var SourceModule = function (uniqueId, name, rootId) {
-                this.uniqueId = uniqueId;
-                this.name = name;
-                this.rootId = rootId;
-                this.forms = ko.observableArray();
+            var sourceModule = function (uniqueId, name, rootId) {
+                var self = this;
+
+                self.uniqueId = uniqueId;
+                self.name = name;
+                self.rootId = rootId;
+                self.forms = ko.observableArray();
+
+                return self;
             };
 
-            var SourceModuleForm = function (uniqueId, name) {
-                this.uniqueId = uniqueId;
-                this.name = name;
+            var sourceModuleForm = function (uniqueId, name) {
+                return {
+                    uniqueId: uniqueId,
+                    name: name,
+                };
             };
 
-            var sourceModule = new SourceModule('', 'None');
+            var sourceModule = sourceModule('', 'None');
             self.modules.push(sourceModule);
             for (var i = 0; i < modules.length; i++) {
                 var mod = modules[i];
-                sourceModule = new SourceModule(mod.unique_id, mod.name, mod.root_module_id);
+                sourceModule = sourceModule(mod.unique_id, mod.name, mod.root_module_id);
                 for (var j = 0; j < mod.forms.length; j++) {
                     var form = mod.forms[j];
-                    var sourceModuleForm = new SourceModuleForm(form.unique_id, form.name);
+                    var sourceModuleForm = sourceModuleForm(form.unique_id, form.name);
                     sourceModule.forms.push(sourceModuleForm);
                     if (excludedFormIds.indexOf(form.unique_id) === -1) {
                         self.includedFormIds.push(form.unique_id);
