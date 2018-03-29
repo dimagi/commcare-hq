@@ -232,7 +232,7 @@ def run_checks(checks_to_do):
             check_info = CHECKS[check_name]
             with timer(check_name):
                 try:
-                        status = check_info['check_func']()
+                    status = check_info['check_func']()
                 except Exception as e:
                     status = ServiceStatus(False, "{} raised an error".format(check_name), e)
                 status.duration = timer.peek().duration
