@@ -563,7 +563,9 @@ class UsersAtLocationForm(forms.Form):
         to_add = selected_users - previous_users
         self.unassign_users(to_remove)
         self.assign_users(to_add)
-
+        self.cache_users_at_location(selected_users)
+        
+    def cache_users_at_location(self, selected_users):
         user_cache_list = []
         for doc in iter_docs(CommCareUser.get_db(), selected_users):
             display_username = user_display_string(
