@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 
 import itertools
 from six.moves import map
+import time
 
 from django.core.management import BaseCommand
 
@@ -12,6 +13,8 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.es.users import UserES
 from corehq.apps.es.groups import GroupES, is_case_sharing
 from corehq.apps.locations.models import SQLLocation
+from corehq.elastic import ESError
+from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors
 from corehq.util.log import with_progress_bar
 
@@ -62,18 +65,26 @@ class Command(BaseCommand):
 
 
 def get_valid_owner_ids(domain):
-    return set(itertools.chain(
-        get_case_sharing_group_ids(domain),
-        get_location_ids(domain),
-        get_user_ids(domain)
-    ))
+    while True:
+        try:
+            return set(itertools.chain(
+                get_case_sharing_group_ids(domain),
+                get_location_ids(domain),
+                get_user_ids(domain)
+            ))
+        except ESError:
+            # Wait one minute
+            time.sleep(60)
 
 
 def get_affected_cases(domain):
     form_accessor = FormAccessors(domain)
     for form_id in form_accessor.iter_form_ids_by_xmlns('http://commcarehq.org/cloudcare/custom-edit'):
         case_id = form_accessor.get_form(form_id).form_data['case']['@case_id']
-        yield CaseAccessors(domain).get_case(case_id)
+        try:
+            yield CaseAccessors(domain).get_case(case_id)
+        except CaseNotFound:
+            pass
 
 
 def get_case_sharing_group_ids(domain):
