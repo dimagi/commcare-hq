@@ -17,7 +17,6 @@ from corehq.motech.openmrs.logger import logger
 from corehq.motech.utils import pformat_json
 
 
-Should = namedtuple('Should', ['method', 'url', 'parser'])
 PERSON_PROPERTIES = (
     'gender',
     'age',
@@ -94,27 +93,35 @@ class Requests(object):
         self.username = username
         self.password = password
 
-    def get_url(self, uri):
-        return '/'.join((self.base_url.rstrip('/'), uri.lstrip('/')))
-
-    def get(self, uri, *args, **kwargs):
-        return self.requests.get(self.get_url(uri), *args,
-                                 auth=(self.username, self.password), **kwargs)
-
-    def post(self, uri, *args, **kwargs):
-        return self.requests.post(self.get_url(uri), *args,
-                                  auth=(self.username, self.password), **kwargs)
-
-    def post_with_raise(self, uri, *args, **kwargs):
-        response = self.post(uri, *args, **kwargs)
+    def send_request(self, method_func, *args, **kwargs):
+        raise_for_status = kwargs.pop('raise_for_status', False)
         try:
-            response.raise_for_status()
-        except HTTPError as err:
+            response = method_func(*args, **kwargs)
+            if raise_for_status:
+                response.raise_for_status()
+        except self.requests.RequestException as err:
             err_request, err_response = parse_request_exception(err)
             logger.error('Request: ', err_request)
             logger.error('Response: ', err_response)
             raise
         return response
+
+    def get_url(self, uri):
+        return '/'.join((self.base_url.rstrip('/'), uri.lstrip('/')))
+
+    def get(self, uri, *args, **kwargs):
+        return self.send_request(self.requests.get, self.get_url(uri), *args,
+                                 auth=(self.username, self.password), **kwargs)
+
+    def post(self, uri, *args, **kwargs):
+        return self.send_request(self.requests.post, self.get_url(uri), *args,
+                                 auth=(self.username, self.password), **kwargs)
+
+    def post_with_raise(self, uri, *args, **kwargs):
+        # When nh/omrs/rollback is merged TODO: drop this method
+        # and pass raise_for_status=True to get()/post()/delete() calls instead
+        return self.send_request(self.requests.post, self.get_url(uri), *args,
+                                 auth=(self.username, self.password), raise_for_status=True, **kwargs)
 
 
 def parse_request_exception(err):
@@ -130,10 +137,6 @@ def parse_request_exception(err):
     err_content = pformat_json(err.response.content)  # pformat_json returns non-JSON values unchanged
     err_response = '\n\n'.join((str(err), err_content))
     return err_request, err_response
-
-
-def url(url_format_string, **kwargs):
-    return url_format_string.format(**kwargs)
 
 
 def get_case_location(case):

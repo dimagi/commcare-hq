@@ -7,7 +7,7 @@ from django.test import SimpleTestCase, TestCase, override_settings
 
 from casexml.apps.case.util import post_case_blocks
 from corehq.apps.userreports import tasks
-from corehq.apps.userreports.app_manager import _clean_table_name
+from corehq.apps.userreports.app_manager.helpers import _clean_table_name
 from corehq.apps.userreports.columns import get_distinct_values
 from corehq.apps.userreports.const import (
     DEFAULT_MAXIMUM_EXPANSION, UCR_SQL_BACKEND, UCR_ES_BACKEND
