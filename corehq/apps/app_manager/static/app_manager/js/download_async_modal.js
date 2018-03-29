@@ -101,6 +101,6 @@ hqDefine('app_manager/js/download_async_modal', function () {
     };
 
     return {
-        asyncDownloader: asyncDownloader
+        asyncDownloader: asyncDownloader,
     };
 });
