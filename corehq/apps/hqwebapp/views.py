@@ -252,10 +252,10 @@ def server_up(req):
     """
     only = req.GET.get('only', None)
     if only and only in CHECKS:
-        checks_to_do = [(only, CHECKS[only])]
+        checks_to_do = [only]
     else:
         checks_to_do = [
-            (check, check_info)
+            check
             for check, check_info in CHECKS.items()
             if check_info['always_check'] or req.GET.get(check, None) is not None
         ]

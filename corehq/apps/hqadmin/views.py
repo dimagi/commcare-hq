@@ -356,7 +356,7 @@ def check_services(request):
             msg = result.msg
         return "{} {}: {}<br/>".format(status, service_name, msg)
 
-    statuses = run_checks(service_checks.CHECKS.items())
+    statuses = run_checks(service_checks.CHECKS.keys())
     results = [
         get_message(name, status) for name, status in statuses
     ]

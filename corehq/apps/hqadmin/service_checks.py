@@ -40,6 +40,10 @@ class ServiceStatus(object):
     exception = attr.ib(default=None)
 
 
+class UnknownCheckException(Exception):
+    pass
+
+
 def check_redis():
     if 'redis' in settings.CACHES:
         import redis
@@ -219,7 +223,11 @@ def check_formplayer():
 
 def run_checks(checks_to_do):
     statuses = []
-    for check, check_info in checks_to_do:
+    for check in checks_to_do:
+        if check not in CHECKS:
+            raise UnknownCheckException(check)
+
+        check_info = CHECKS[check]
         try:
             status = check_info['check_func']()
         except Exception as e:
