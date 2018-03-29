@@ -1,8 +1,6 @@
 from __future__ import absolute_import
 from django.conf import settings
-from django.contrib.postgres.fields.array import ArrayField
-from django.db.models import CharField, IntegerField
-from django.db.models.aggregates import Max
+from django.db.models import Field
 from django.db.models.expressions import Exists, F, Func, OuterRef, Value
 from django.db.models.query import Q, QuerySet, EmptyResultSet
 from django_cte import With
@@ -10,27 +8,26 @@ from mptt.models import MPTTModel, TreeManager
 
 from .queryutil import ComparedQuerySet, TimingContext
 
-int_field = IntegerField()
-str_array = ArrayField(CharField())
+field = Field()  # generic output field type
 
 
-class StrArray(Func):
+class str_array(Func):
     function = "Array"
     # HACK fool postgres with concat
     # https://stackoverflow.com/a/12488455/10840 (see comment by KajMagnus)
     template = "%(function)s[%(expressions)s || '']::varchar[]"
-    output_field = str_array
+    output_field = field
 
 
 class array_append(Func):
     function = "array_append"
-    output_field = str_array
+    output_field = field
 
 
 class array_length(Func):
     function = "array_length"
     template = "%(function)s(%(expressions)s, 1)"
-    output_field = int_field
+    output_field = field
 
 
 class AdjListManager(TreeManager):
@@ -70,7 +67,7 @@ class AdjListManager(TreeManager):
             return self.filter(where).order_by().values(
                 "id",
                 parent_col,
-                _depth=Value(0, output_field=int_field),
+                _depth=Value(0, output_field=field),
             ).union(
                 cte.join(
                     self.all().order_by(),
@@ -78,7 +75,7 @@ class AdjListManager(TreeManager):
                 ).values(
                     "id",
                     parent_col,
-                    _depth=cte.col._depth + Value(1, output_field=int_field),
+                    _depth=cte.col._depth + Value(1, output_field=field),
                 ),
             )
 
@@ -123,9 +120,8 @@ class AdjListManager(TreeManager):
             where = Q(**{parent_col: node.id})
 
         def make_cte_query(cte):
-            return self.filter(where).order_by().values(
-                "id",
-                _cte_ordering=StrArray(ordering_col),
+            return self.filter(where).order_by().annotate(
+                _cte_ordering=str_array(ordering_col),
             ).union(
                 cte.join(
                     self.all().order_by(),
@@ -135,14 +131,11 @@ class AdjListManager(TreeManager):
                         cte.col._cte_ordering,
                         F(ordering_col),
                     )
-                ).values(
-                    "id",
-                    "_cte_ordering",
                 ),
                 all=True,
             )
         cte = With.recursive(make_cte_query)
-        ctes = [cte]
+        query = cte.queryset().with_cte(cte)
 
         if discard_dups:
             # Remove duplicates when the supplied Queryset or Q object
@@ -154,7 +147,7 @@ class AdjListManager(TreeManager):
                 cte.queryset().annotate(
                     max_len=array_length(
                         F("_cte_ordering"),
-                        output_field=int_field
+                        output_field=field
                     ),
                 ).distinct("id").order_by(
                     "id",
@@ -165,23 +158,15 @@ class AdjListManager(TreeManager):
                 ),
                 name="xdups"
             )
-            ctes.append(xdups)
-            cte = xdups
+            query = query.annotate(
+                _exclude_dups=Exists(xdups.queryset().filter(
+                    id=OuterRef("id"),
+                    _cte_ordering=OuterRef("_cte_ordering"),
+                ))
+            ).filter(_exclude_dups=True).with_cte(xdups)
 
-        query = (
-            cte
-            .join(self.all(), id=cte.col.id)
-            # EXISTS helps postgres avoid seq scan on locations table
-            # EXPLAIN ANALYZE showed postgres estimated > 1 million rows in the
-            # recursive CTE on softlayer when there were actually only 6 rows.
-            # The seq scan on the locations table took ~1 minute; EXISTS -> 3ms.
-            .annotate(_cte_exists=Exists(cte.queryset().filter(id=OuterRef("id"))))
-            .filter(_cte_exists=True)
-            # TODO uncomment when removing MPTT
-            #.order_by(cte.col._cte_ordering)
-        )
-        for item in ctes:
-            query = query.with_cte(item)
+        query = query.order_by(self.tree_id_attr, self.left_attr)
+        #.order_by(cte.col._cte_ordering)  # TODO use after removing MPTT
         return query
 
     def cte_get_queryset_ancestors(self, node, include_self=False):
