@@ -13,7 +13,6 @@ class TestGDPRScrubUserAuditcare(TestCase):
         NavigationEventAudit(user="test_user1", request_path="/fake/path/0").save()
         NavigationEventAudit(user="test_user1", request_path="/fake/path/1").save()
         NavigationEventAudit(user="test_user1", request_path="/fake/path/2").save()
-        self.returned_docs = get_auditcare_docs_by_username("test_user1")
 
     def tearDown(self):
         all_auditcare_ids = list(set([result["id"] for result in NavigationEventAudit.get_db().view(
