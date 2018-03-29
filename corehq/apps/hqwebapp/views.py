@@ -715,10 +715,6 @@ def render_static(request, template, page_name):
                   {'tmpl': template, 'page_name': page_name})
 
 
-def eula(request):
-    return render_static(request, "eula.html", _("End User License Agreement"))
-
-
 def cda(request):
     return render_static(request, "cda.html", _("Content Distribution Agreement"))
 
@@ -729,10 +725,6 @@ def apache_license(request):
 
 def bsd_license(request):
     return render_static(request, "bsd_license.html", _("BSD License"))
-
-
-def product_agreement(request):
-    return render_static(request, "product_agreement.html", _("Product Subscription Agreement"))
 
 
 def unsubscribe(request, user_id):
