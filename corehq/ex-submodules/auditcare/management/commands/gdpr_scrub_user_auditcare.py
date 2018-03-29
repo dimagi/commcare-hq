@@ -1,9 +1,12 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from corehq.util.log import with_progress_bar
+from corehq.util.couch import iter_update, DocUpdate
 from django.core.management.base import BaseCommand
-from auditcare.utils.export import get_auditcare_docs_by_username, get_num_auditcare_events_by_username
+from auditcare.utils.export import navigation_event_ids_by_user
 import logging
+from auditcare.models import NavigationEventAudit
+
 
 logger = logging.getLogger(__name__)
 
@@ -15,14 +18,12 @@ class Command(BaseCommand):
         parser.add_argument('username', help="Username to scrub")
 
     def handle(self, username, **options):
+        def update_username(event_dict):
+            audit_doc = NavigationEventAudit.wrap(event_dict)
+            audit_doc.user = new_username
+            event_dict['user'] = new_username
+            return DocUpdate(doc=audit_doc)
+
         new_username = "Redacted User (GDPR)"
-        num_docs_updated = 0
-        for doc in with_progress_bar(get_auditcare_docs_by_username(username),
-                                     length=get_num_auditcare_events_by_username(username)):
-            doc.user = new_username
-            doc.save()
-            num_docs_updated += 1
-        if num_docs_updated:
-            logger.warning("Updated username in {} documents.".format(num_docs_updated))
-        else:
-            logger.warning("The user {} has no associated docs in auditcare.".format(username))
+        event_ids = navigation_event_ids_by_user(username)
+        iter_update(NavigationEventAudit.get_db(), update_username, with_progress_bar(event_ids, len(event_ids)))

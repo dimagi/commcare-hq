@@ -322,10 +322,14 @@ def iter_update(db, fn, ids, max_retries=3, verbose=False):
                     else:
                         # copy the dictionary so we can tell if it changed
                         doc_update = fn(deepcopy(raw_doc))
+                        if isinstance(doc_update.doc, dict):
+                            updated_doc_id = doc_update.doc.get('_id')
+                        else:
+                            updated_doc_id = doc_update.doc._id
                         if doc_update is None:
                             results.ignored_ids.add(doc_id)
                         elif (not isinstance(doc_update, DocUpdate)
-                              or doc_update.doc.get('_id') != doc_id):
+                              or updated_doc_id != doc_id):
                             results.error_ids.add(doc_id)
                         elif doc_update.delete:
                             iter_db.delete(raw_doc)
