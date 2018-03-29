@@ -608,7 +608,7 @@ class ExportIndicatorView(View):
 
         sql_location = None
 
-        if location:
+        if location and indicator != ISSNIP_MONTHLY_REGISTER_PDF:
             try:
                 sql_location = SQLLocation.objects.get(location_id=location, domain=self.kwargs['domain'])
                 locations = sql_location.get_ancestors(include_self=True)
@@ -674,7 +674,6 @@ class ExportIndicatorView(View):
             pdf_format = request.POST.get('pdfformat')
             task = prepare_issnip_monthly_register_reports.delay(
                 self.kwargs['domain'],
-                self.request.couch_user,
                 awcs,
                 pdf_format,
                 month,

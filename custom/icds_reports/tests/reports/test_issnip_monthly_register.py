@@ -7,18 +7,20 @@ from django.test.utils import override_settings
 from django.test import TestCase
 
 from custom.icds_reports.reports.issnip_monthly_register import ISSNIPMonthlyReport
-
+import mock
 
 @override_settings(SERVER_ENVIRONMENT='icds-new')
 class TestInstitutionalDeliveriesSector(TestCase):
 
     def test_agg_awc_monthly_data(self):
         config = {
-            'awc_id': 'a48',
+            'awc_id': ['a48'],
             'month': datetime(2017, 5, 1).date(),
             'domain': 'icds-cas'
         }
-        data = ISSNIPMonthlyReport(config=config).agg_awc_monthly_data
+        with mock.patch('custom.icds_reports.reports.issnip_monthly_register.ISSNIPMonthlyReport.get_awc_name',
+                        return_value='a48'):
+            data = list(ISSNIPMonthlyReport(config=config).to_pdf_format)[0]['agg_awc_monthly_data']
         self.assertEqual(data['block_name'], 'b4')
         self.assertEqual(data['awc_name'], 'a48')
         self.assertEqual(data['awc_site_code'], 'a48')
@@ -33,11 +35,13 @@ class TestInstitutionalDeliveriesSector(TestCase):
 
     def test_child_health_monthly_data(self):
         config = {
-            'awc_id': 'a48',
+            'awc_id': ['a48'],
             'month': datetime(2017, 5, 1).date(),
             'domain': 'icds-cas'
         }
-        data = ISSNIPMonthlyReport(config=config).child_health_monthly_data
+        with mock.patch('custom.icds_reports.reports.issnip_monthly_register.ISSNIPMonthlyReport.get_awc_name',
+                        return_value='a48'):
+            data = list(ISSNIPMonthlyReport(config=config).to_pdf_format)[0]['child_health_monthly_data']
         self.assertEqual(data['infants_0_6'], 4)
         self.assertEqual(data['children_6_36'], 9)
         self.assertEqual(data['children_36_72'], 38)
@@ -48,43 +52,51 @@ class TestInstitutionalDeliveriesSector(TestCase):
 
     def test_css_record_monthly(self):
         config = {
-            'awc_id': 'a48',
+            'awc_id': ['a48'],
             'month': datetime(2017, 5, 1).date(),
             'domain': 'icds-cas'
         }
-        data = ISSNIPMonthlyReport(config=config).css_record_monthly
+        with mock.patch('custom.icds_reports.reports.issnip_monthly_register.ISSNIPMonthlyReport.get_awc_name',
+                        return_value='a48'):
+            data = list(ISSNIPMonthlyReport(config=config).to_pdf_format)[0]['css_record_monthly']
         self.assertEqual(data['pregnant_women_thr'], 5)
         self.assertEqual(data['lactating_women_thr'], 7)
 
     def test_vhnd_data(self):
         config = {
-            'awc_id': 'a48',
+            'awc_id': ['a48'],
             'month': datetime(2017, 5, 1).date(),
             'domain': 'icds-cas'
         }
-        data = ISSNIPMonthlyReport(config=config).vhnd_data
+        with mock.patch('custom.icds_reports.reports.issnip_monthly_register.ISSNIPMonthlyReport.get_awc_name',
+                        return_value='a48'):
+            data = list(ISSNIPMonthlyReport(config=config).to_pdf_format)[0]['vhnd_data']
         self.assertEqual(data['vhsnd_date_past_month'], datetime(2017, 5, 13).date())
         self.assertEqual(data['local_leader'], 1)
         self.assertEqual(data['aww_present'], 1)
 
     def test_ccs_record_monthly_ucr(self):
         config = {
-            'awc_id': 'a48',
+            'awc_id': ['a48'],
             'month': datetime(2017, 5, 1).date(),
             'domain': 'icds-cas'
         }
-        data = ISSNIPMonthlyReport(config=config).ccs_record_monthly_ucr
+        with mock.patch('custom.icds_reports.reports.issnip_monthly_register.ISSNIPMonthlyReport.get_awc_name',
+                        return_value='a48'):
+            data = list(ISSNIPMonthlyReport(config=config).to_pdf_format)[0]['ccs_record_monthly_ucr']
         self.assertEqual(data['obc_lactating'], 4)
         self.assertEqual(data['total_lactating'], 4)
         self.assertEqual(data['minority_lactating'], 4)
 
     def test_child_health_monthly_ucr(self):
         config = {
-            'awc_id': 'a3',
+            'awc_id': ['a3'],
             'month': datetime(2017, 5, 1).date(),
             'domain': 'icds-cas'
         }
-        data = ISSNIPMonthlyReport(config=config).child_health_monthly_ucr
+        with mock.patch('custom.icds_reports.reports.issnip_monthly_register.ISSNIPMonthlyReport.get_awc_name',
+                        return_value='a3'):
+            data = list(ISSNIPMonthlyReport(config=config).to_pdf_format)[0]['child_health_monthly_ucr']
         self.assertEqual(data['pre_st_boys_36_72'], 1)
         self.assertEqual(data['pre_obc_boys_36_72'], 3)
         self.assertEqual(data['pre_obc_girls_36_72'], 3)
@@ -93,11 +105,13 @@ class TestInstitutionalDeliveriesSector(TestCase):
 
     def test_agg_child_health_monthly(self):
         config = {
-            'awc_id': 'a3',
+            'awc_id': ['a3'],
             'month': datetime(2017, 5, 1).date(),
             'domain': 'icds-cas'
         }
-        data = ISSNIPMonthlyReport(config=config).agg_child_health_monthly
+        with mock.patch('custom.icds_reports.reports.issnip_monthly_register.ISSNIPMonthlyReport.get_awc_name',
+                        return_value='a3'):
+            data = list(ISSNIPMonthlyReport(config=config).to_pdf_format)[0]['agg_child_health_monthly']
         self.assertEqual(data['boys_normal_0_3'], 1)
         self.assertEqual(data['girls_normal_0_3'], 1)
         self.assertEqual(data['boys_normal_3_5'], 7)

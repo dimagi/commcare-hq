@@ -15,7 +15,6 @@ from dateutil.relativedelta import relativedelta
 from django.conf import settings
 from django.db import Error, IntegrityError, connections
 from django.db.models import F
-import pytz
 
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.userreports.models import get_datasource_config
@@ -31,7 +30,7 @@ from corehq.util.view_utils import reverse
 from custom.icds_reports.const import DASHBOARD_DOMAIN
 from custom.icds_reports.models import AggChildHealthMonthly, AggregateComplementaryFeedingForms
 from custom.icds_reports.reports.issnip_monthly_register import ISSNIPMonthlyReport
-from custom.icds_reports.utils import zip_folder, create_pdf_file, generate_qrcode
+from custom.icds_reports.utils import zip_folder, create_pdf_file
 from dimagi.utils.chunked import chunked
 from dimagi.utils.dates import force_to_date
 from dimagi.utils.logging import notify_exception
@@ -235,15 +234,8 @@ def _find_stagnant_cases(adapter):
     return query.all()
 
 
-india_timezone = pytz.timezone('Asia/Kolkata')
-
-
 @task(queue='icds_dashboard_reports_queue')
-def prepare_issnip_monthly_register_reports(domain, user, awcs, pdf_format, month, year):
-
-    utc_now = datetime.now(pytz.utc)
-    india_now = utc_now.astimezone(india_timezone)
-
+def prepare_issnip_monthly_register_reports(domain, awcs, pdf_format, month, year):
     selected_date = date(year, month, 1)
     report_context = {
         'reports': []
@@ -251,41 +243,28 @@ def prepare_issnip_monthly_register_reports(domain, user, awcs, pdf_format, mont
 
     pdf_files = []
 
-    for awc in awcs:
-        pdf_hash = uuid.uuid4().hex
+    report_data = ISSNIPMonthlyReport(config={
+        'awc_id': awcs,
+        'month': selected_date,
+        'domain': domain
+    }).to_pdf_format
 
-        awc_location = SQLLocation.objects.get(location_id=awc)
-        pdf_files.append({
-            'uuid': pdf_hash,
-            'location_name': awc_location.name.replace(' ', '_')
-        })
-        report = ISSNIPMonthlyReport(config={
-            'awc_id': awc_location.location_id,
-            'month': selected_date,
-            'domain': domain
-        })
-
-        context = {
-            'qrcode_64': generate_qrcode("{} {}".format(
-                awc_location.site_code,
-                india_now.strftime('%d %b %Y')
-            )),
-            'report': report
-        }
-
-        if pdf_format == 'one':
-            report_context['reports'].append(context)
-        else:
-            report_context['reports'] = [context]
+    if pdf_format == 'one':
+        report_context['reports'] = report_data
+        cache_key = create_pdf_file(uuid.uuid4().hex, report_context)
+    else:
+        for data in report_data:
+            pdf_hash = uuid.uuid4().hex
+            report_context['reports'] = [data]
+            pdf_files.append({
+                'uuid': pdf_hash,
+                'location_name': data['awc_name']
+            })
             create_pdf_file(
                 pdf_hash,
                 report_context
             )
-
-    if pdf_format == 'many':
         cache_key = zip_folder(pdf_files)
-    else:
-        cache_key = create_pdf_file(uuid.uuid4().hex, report_context)
 
     params = {
         'domain': domain,
