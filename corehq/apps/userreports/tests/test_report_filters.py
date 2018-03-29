@@ -816,7 +816,7 @@ class LocationDrilldownFilterTest(LocationHierarchyTestCase):
             {'block_id_drill_0': 'Middlesex'}
         )
 
-    def test_ancestor_expression(self):
+    def test_ancestor_expression_missing_location_type(self):
         with self.assertRaises(BadSpecError):
             ReportFilterFactory.from_spec({
                 "type": "location_drilldown",
