@@ -31,7 +31,7 @@ from lxml import etree
 from lxml.etree import XMLSyntaxError
 
 from corehq.blobs.mixin import DeferredBlobMixin
-from corehq.form_processor.abstract_models import AbstractXFormInstance
+from corehq.form_processor.abstract_models import AbstractXFormInstance, XFormQuestionValueIterator
 from corehq.form_processor.exceptions import XFormNotFound
 from corehq.form_processor.utils import clean_metadata
 
@@ -243,6 +243,32 @@ class XFormInstance(DeferredBlobMixin, SafeSaveDocument, UnicodeMixIn,
 
     def __unicode__(self):
         return "%s (%s)" % (self.type, self.xmlns)
+
+    def update_responses(self, value_responses_map, user_id):
+        from corehq.form_processor.utils.xform import update_response
+
+        xml = etree.fromstring(self.fetch_attachment(ATTACHMENT_NAME))
+        dirty = False
+        for question, response in value_responses_map.iteritems():
+            if update_response(xml, question, response, xmlns=self.xmlns):
+                dirty = True
+
+            data = self.form_data
+            i = XFormQuestionValueIterator(question)
+            for (qid, index) in i:
+                data = data[qid]
+                if index is not None:
+                    data = data[index]
+            data[i.last()] = response
+
+        if dirty:
+            self.put_attachment(etree.tostring(xml), name=ATTACHMENT_NAME, content_type='text/xml')
+            operation = XFormOperation(user=user_id, date=datetime.datetime.utcnow(), operation='edit')
+            self.history.append(operation)
+            self.save()
+            return True
+
+        return False
 
     def save(self, **kwargs):
         # HACK: cloudant has a race condition when saving newly created forms
