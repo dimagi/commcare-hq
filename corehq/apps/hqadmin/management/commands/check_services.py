@@ -30,12 +30,13 @@ class Command(BaseCommand):
 
     @staticmethod
     def perform_check(service_name, service_check):
+        check_func = service_check['check_func']
         try:
-            status = service_check()
+            status = check_func()
         except Exception as e:
             print("\033[91mEXCEPTION\033[0m {}: Service check '{}' errored with exception '{}'".format(
                 service_name,
-                service_check.__name__,
+                check_func.__name__,
                 repr(e)
             ))
         else:

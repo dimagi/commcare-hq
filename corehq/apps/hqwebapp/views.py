@@ -39,6 +39,7 @@ from couchdbkit import ResourceNotFound
 from two_factor.views import LoginView
 from two_factor.forms import AuthenticationTokenForm, BackupTokenForm
 from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_class
+from corehq.apps.hqadmin.service_checks import CHECKS
 from corehq.apps.users.landing_pages import get_redirect_url, get_cloudcare_urlname
 
 from corehq.form_processor.utils.general import should_use_sql_backend
@@ -250,46 +251,15 @@ def server_up(req):
     Hit serverup.txt?{check_name} to include a non-default check (currently only ``heartbeat``)
     """
 
-    checkers = {
-        "heartbeat": {
-            "always_check": False,
-            "check_func": checks.check_heartbeat,
-        },
-        "celery": {
-            "always_check": True,
-            "check_func": checks.check_celery,
-        },
-        "postgres": {
-            "always_check": True,
-            "check_func": checks.check_postgres,
-        },
-        "couch": {
-            "always_check": True,
-            "check_func": checks.check_couch,
-        },
-        "redis": {
-            "always_check": True,
-            "check_func": checks.check_redis,
-        },
-        "formplayer": {
-            "always_check": True,
-            "check_func": checks.check_formplayer,
-        },
-        "elasticsearch": {
-            "always_check": True,
-            "check_func": checks.check_elasticsearch,
-        },
-    }
-
     failed = False
     message = ['Problems with HQ (%s):' % os.uname()[1]]
     only = req.GET.get('only', None)
-    if only and only in checkers:
-        checks_to_do = [(only, checkers[only])]
+    if only and only in CHECKS:
+        checks_to_do = [(only, CHECKS[only])]
     else:
         checks_to_do = [
             (check, check_info)
-            for check, check_info in checkers.items()
+            for check, check_info in CHECKS.items()
             if check_info['always_check'] or req.GET.get(check, None) is not None
         ]
 

@@ -348,7 +348,7 @@ def check_services(request):
 
     def run_test(service_name, test):
         try:
-            result = test()
+            result = test['check_func']()
         except Exception as e:
             status = "EXCEPTION"
             msg = repr(e)

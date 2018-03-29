@@ -212,15 +212,48 @@ def check_formplayer():
 
 
 CHECKS = {
-    'kafka': check_kafka,
-    'redis': check_redis,
-    'postgres': check_postgres,
-    'couch': check_couch,
-    'celery': check_celery,
-    'heartbeat': check_heartbeat,
-    'touchforms': check_touchforms,
-    'elasticsearch': check_elasticsearch,
-    'blobdb': check_blobdb,
-    'formplayer': check_formplayer,
-    'rabbitmq': check_rabbitmq,
+    'kafka': {
+        "always_check": True,
+        "check_func": check_kafka,
+    },
+    'redis': {
+        "always_check": True,
+        "check_func": check_redis,
+    },
+    'postgres': {
+        "always_check": True,
+        "check_func": check_postgres,
+    },
+    'couch': {
+        "always_check": True,
+        "check_func": check_couch,
+    },
+    'celery': {
+        "always_check": True,
+        "check_func": check_celery,
+    },
+    'heartbeat': {
+        "always_check": False,
+        "check_func": check_heartbeat,
+    },
+    'touchforms': {
+        "always_check": True,
+        "check_func": check_touchforms,
+    },
+    'elasticsearch': {
+        "always_check": True,
+        "check_func": check_elasticsearch,
+    },
+    'blobdb': {
+        "always_check": True,
+        "check_func": check_blobdb,
+    },
+    'formplayer': {
+        "always_check": True,
+        "check_func": check_formplayer,
+    },
+    'rabbitmq': {
+        "always_check": True,
+        "check_func": check_rabbitmq,
+    },
 }
