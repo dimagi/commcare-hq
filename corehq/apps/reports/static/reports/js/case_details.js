@@ -205,11 +205,11 @@ hqDefine("reports/js/case_details", function() {
             return false;
         });
 
-        var initial_page_data = hqImport("hqwebapp/js/initial_page_data");
+        var initialPageData = hqImport("hqwebapp/js/initial_page_data");
         hqImport("reports/js/data_corrections").init($("#case-actions .data-corrections-trigger"), $("body > .data-corrections-modal"), {
-            properties: initial_page_data.get('dynamic_properties'),
-            propertyNamesUrl: initial_page_data.reverse('case_property_names'),
-            saveUrl: initial_page_data.reverse("edit_case"),
+            properties: initialPageData.get('dynamic_properties'),
+            propertyNamesUrl: initialPageData.reverse('case_property_names'),
+            saveUrl: initialPageData.reverse("edit_case"),
         });
 
         $("#history").koApplyBindings(new XFormListViewModel());

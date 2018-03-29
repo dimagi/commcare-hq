@@ -13,7 +13,7 @@ describe('assert_properties', function() {
         try {
             lib.assert(object, ['alpha', 'beta', 'delta', 'gamma'], []);
         } catch (e) {
-            assert.equal(e.message, "Required properties missing: gamma")
+            assert.equal(e.message, "Required properties missing: gamma");
         }
     });
 

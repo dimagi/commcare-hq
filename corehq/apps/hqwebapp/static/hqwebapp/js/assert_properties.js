@@ -18,4 +18,4 @@ hqDefine("hqwebapp/js/assert_properties", ['underscore'], function(_) {
     return {
         assert: assert,
     };
-})
+});

@@ -1892,6 +1892,7 @@ def _get_form_render_context(request, domain, instance, case_id=None):
     # for example "/data/group/repeat_group[2]/question_id"
     question_response_map = {}
     ordered_question_values = []
+
     def _add_to_question_response_map(data, repeat_index=None):
         for index, question in enumerate(data):
             if question.children:
@@ -1899,7 +1900,8 @@ def _get_form_render_context(request, domain, instance, case_id=None):
             elif question.editable:
                 value = question.value
                 if question.repeat:
-                    value = "{}[{}]{}".format(question.repeat, repeat_index + 1, re.sub(r'^' + question.repeat, '', question.value))
+                    value = "{}[{}]{}".format(question.repeat, repeat_index + 1,
+                                              re.sub(r'^' + question.repeat, '', question.value))
                 question_response_map[value] = {
                     'label': question.label,
                     'icon': question.icon,
@@ -1955,6 +1957,7 @@ def _get_cases_changed_context(domain, form, case_id=None):
             case_blocks.insert(0, block)
     cases = []
     from corehq.apps.hqwebapp.templatetags.proptable_tags import get_default_definition, get_tables_as_columns
+
     def _sorted_case_update_keys(keys):
         """Put common @ attributes at the bottom"""
         return sorted(keys, key=lambda k: (k[0] == '@', k))
@@ -2073,7 +2076,7 @@ def _sorted_form_metadata_keys(keys):
             return 0
 
         return cmp(x, y)
-    return sorted(keys, cmp=mycmp) 
+    return sorted(keys, cmp=mycmp)
 
 
 def _get_edit_info(instance):

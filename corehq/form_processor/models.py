@@ -22,7 +22,7 @@ from corehq.apps.sms.mixin import MessagingCaseContactMixin
 from corehq.blobs import get_blob_db
 from corehq.blobs.mixin import get_short_identifier
 from corehq.blobs.exceptions import NotFound, BadName
-from corehq.form_processor.abstract_models import DEFAULT_PARENT_IDENTIFIER, XFormQuestionValueIterator
+from corehq.form_processor.abstract_models import DEFAULT_PARENT_IDENTIFIER
 from corehq.form_processor.exceptions import InvalidAttachment, UnknownActionType
 from corehq.form_processor.track_related import TrackRelatedChanges
 from corehq.apps.tzmigration.api import force_phone_timezones_should_be_processed
@@ -419,7 +419,8 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
             )
             form_attachment.write_content(attachment.content)
             form_attachment.save()
-            operation = XFormOperationSQL(user_id=user_id, date=datetime.utcnow(), operation=XFormOperationSQL.EDIT)
+            operation = XFormOperationSQL(user_id=user_id, date=datetime.utcnow(),
+                                          operation=XFormOperationSQL.EDIT)
             self.history.append(operation)
             self.save()
             return True

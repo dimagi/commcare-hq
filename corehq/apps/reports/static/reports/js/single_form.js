@@ -1,3 +1,4 @@
+/* globals Clipboard */
 /*
     Interactivity for a single form. Used on the list of forms in the Case History tab when viewing a case, and
     also in the single form view page that's accessible from the submit history report or the "View standalone
@@ -9,23 +10,23 @@ hqDefine("reports/js/single_form", function() {
 
         var $container = options.container || $("body");
 
-        var initial_page_data = hqImport("hqwebapp/js/initial_page_data");
-        var _analytics_usage = function(action, callback) {
+        var initialPageData = hqImport("hqwebapp/js/initial_page_data");
+        var analyticsUsage = function(action, callback) {
             var label = 'standalone_form',
                 extra = {},
-                caseId = initial_page_data.get("context_case_id");
+                caseId = initialPageData.get("context_case_id");
             if (caseId) {
                 label = 'case';
             }
             hqImport('analytix/js/google').track.event('Edit Data', action, label, '', extra, callback);
-        }
+        };
 
         $('.hq-help-template', $container).each(function () {
             hqImport("hqwebapp/js/main").transformHelpTemplate($(this), true);
         });
 
         $('#edit-form', $container).click(function() {
-            _analytics_usage('Edit Form Submission')
+            analyticsUsage('Edit Form Submission');
         });
 
         hqImport("reports/js/data_corrections").init($container.find(".data-corrections-trigger"), $container.find(".data-corrections-modal"), {
@@ -44,7 +45,7 @@ hqDefine("reports/js/single_form", function() {
                     search: 'name',
                 },
             ],
-            saveUrl: initial_page_data.reverse("edit_form", options.instance_id),
+            saveUrl: initialPageData.reverse("edit_form", options.instance_id),
         });
 
         $("#archive-form", $container).submit(function() {
@@ -54,10 +55,9 @@ hqDefine("reports/js/single_form", function() {
             // _.after(2,...) means the callback will only be called after *both* analytics
             // functions have finished.
             var analyticsCallback = _.after(2, function() {
-                    document.getElementById('archive-form').submit();
-                }
-            );
-            _analytics_usage('Archive Form Submission', analyticsCallback);
+                document.getElementById('archive-form').submit();
+            });
+            analyticsUsage('Archive Form Submission', analyticsCallback);
             hqImport('analytix/js/kissmetrix').track.event("Clicked on Archive Form", {}, analyticsCallback);
 
             return false;
@@ -85,7 +85,7 @@ hqDefine("reports/js/single_form", function() {
             });
             clipboard.on('success', function() {
                 $copyBtn.tooltip('show');
-                window.setTimeout(function() { $copyBtn.tooltip('hide'); }, 1000)
+                window.setTimeout(function() { $copyBtn.tooltip('hide'); }, 1000);
             });
         });
     };
