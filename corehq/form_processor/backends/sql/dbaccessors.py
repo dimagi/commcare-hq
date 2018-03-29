@@ -375,7 +375,6 @@ class FormAccessorSQL(AbstractFormAccessor):
         if not form_ids:
             return []
         forms = list(XFormInstanceSQL.objects.raw('SELECT * from get_forms_by_id(%s)', [form_ids]))
-
         if ordered:
             _sort_with_id_list(forms, form_ids, 'form_id')
 

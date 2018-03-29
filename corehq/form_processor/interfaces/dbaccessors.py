@@ -184,7 +184,6 @@ class FormAccessors(object):
         return self.db_accessor.modify_attachment_xml_and_metadata(form_data, form_attachment_new_xml)
 
 
-
 class AbstractCaseAccessor(six.with_metaclass(ABCMeta)):
     """
     Contract for common methods expected on CaseAccessor(SQL/Couch). All methods
