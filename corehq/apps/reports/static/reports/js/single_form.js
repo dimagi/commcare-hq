@@ -4,8 +4,10 @@
     form" button when looking at a form in case history.
 */
 hqDefine("reports/js/single_form", function() {
-    var initSingleForm = function(instanceId, form_question_map, ordered_question_values, $container) {
-        $container = $container || $("body");
+    var initSingleForm = function(options) {
+        hqImport("hqwebapp/js/assert_properties").assert(options, ['instance_id', 'form_question_map', 'ordered_question_values'], ['container']);
+
+        var $container = options.container || $("body");
 
         var initial_page_data = hqImport("hqwebapp/js/initial_page_data");
         var _analytics_usage = function(action, callback) {
@@ -27,8 +29,8 @@ hqDefine("reports/js/single_form", function() {
         });
 
         hqImport("reports/js/data_corrections").init($container.find(".data-corrections-trigger"), $container.find(".data-corrections-modal"), {
-            properties: form_question_map,
-            propertyNames: ordered_question_values,
+            properties: options.form_question_map,
+            propertyNames: options.ordered_question_values,
             propertyPrefix: "<div class='form-data-question'><i data-bind='attr: { class: icon }'></i> ",
             propertySuffix: "</div>",
             displayProperties: [
@@ -42,7 +44,7 @@ hqDefine("reports/js/single_form", function() {
                     search: 'name',
                 },
             ],
-            saveUrl: initial_page_data.reverse("edit_form", instanceId),
+            saveUrl: initial_page_data.reverse("edit_form", options.instance_id),
         });
 
         $("#archive-form", $container).submit(function() {

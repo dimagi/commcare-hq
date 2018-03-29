@@ -73,7 +73,12 @@ hqDefine("reports/js/case_details", function() {
                 "success": function(data) {
                     var $panel = $("#xform_data_panel");
                     $panel.html(data.html);
-                    hqImport("reports/js/single_form").initSingleForm(data.xform_id, data.question_response_map, data.ordered_question_values, $panel);
+                    hqImport("reports/js/single_form").initSingleForm({
+                        instance_id: data.xform_id,
+                        form_question_map: data.question_response_map,
+                        ordered_question_values: data.ordered_question_values,
+                        container: $panel,
+                    });
                 },
             });
         };
