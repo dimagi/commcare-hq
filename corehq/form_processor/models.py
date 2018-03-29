@@ -456,10 +456,13 @@ class AbstractAttachment(PartitionedModel, models.Model, SaveStateMixin):
             content_readable = StringIO(content)
         elif isinstance(content, six.binary_type):
             content_readable = BytesIO(content)
-
         db = get_blob_db()
         bucket = self.blobdb_bucket()
-        info = db.put(content_readable, get_short_identifier(), bucket=bucket)
+        if self.blob_id:
+            # Overwrite and rewrite the existing entry in the database with this identifier
+            info = db.put(content_readable, self.blob_id, bucket=bucket)
+        else:
+            info = db.put(content_readable, get_short_identifier(), bucket=bucket)
         self.md5 = info.md5_hash
         self.content_length = info.length
         self.blob_id = info.identifier

@@ -159,6 +159,9 @@ class FormAccessors(object):
     def save_new_form(self, form):
         self.db_accessor.save_new_form(form)
 
+    def update_form(self, form):
+        self.db_accessor.update_form(form)
+
     def update_form_problem_and_state(self, form):
         self.db_accessor.update_form_problem_and_state(form)
 
@@ -176,6 +179,10 @@ class FormAccessors(object):
 
     def soft_undelete_forms(self, form_ids):
         return self.db_accessor.soft_undelete_forms(self.domain, form_ids)
+
+    def modify_attachment_xml_and_metadata(self, form_data, form_attachment_new_xml):
+        return self.db_accessor.modify_attachment_xml_and_metadata(form_data, form_attachment_new_xml)
+
 
 
 class AbstractCaseAccessor(six.with_metaclass(ABCMeta)):

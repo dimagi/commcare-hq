@@ -23,6 +23,7 @@ from django.db.models import Q, F
 from django.db.models.functions import Greatest, Concat
 from django.db.models.expressions import Value
 
+from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.blobs import get_blob_db
 from corehq.form_processor.exceptions import (
     XFormNotFound,
@@ -374,6 +375,7 @@ class FormAccessorSQL(AbstractFormAccessor):
         if not form_ids:
             return []
         forms = list(XFormInstanceSQL.objects.raw('SELECT * from get_forms_by_id(%s)', [form_ids]))
+
         if ordered:
             _sort_with_id_list(forms, form_ids, 'form_id')
 
@@ -580,6 +582,17 @@ class FormAccessorSQL(AbstractFormAccessor):
                 publish_form_saved(form)
 
         return return_value
+
+    @staticmethod
+    def modify_attachment_xml_and_metadata(form_data, form_attachment_new_xml):
+        attachment_metadata = form_data.get_attachment_meta("form.xml")
+        # Write the new xml to the database
+        XFormAttachmentSQL.write_content(attachment_metadata, form_attachment_new_xml)
+        attachment_metadata.save()
+        operation = XFormOperationSQL(user_id=SYSTEM_USER_ID, date=datetime.utcnow(),
+                                      operation='Scrub username for GDPR compliance.')
+        form_data.history.append(operation)  # TODO: should this show in Form History tab? it doesn't
+        form_data.save()
 
     @staticmethod
     def soft_delete_forms(domain, form_ids, deletion_date=None, deletion_id=None):
