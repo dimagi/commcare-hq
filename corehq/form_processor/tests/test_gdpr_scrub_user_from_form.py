@@ -5,7 +5,7 @@ from django.test import TestCase
 from corehq.blobs.tests.util import TemporaryFilesystemBlobDB
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.tests.utils import use_sql_backend
-from corehq.apps.users.management.commands.gdpr_scrub_user import Command
+from corehq.apps.users.management.commands.gdpr_scrub_user_from_forms import Command
 from corehq.form_processor.models import XFormAttachmentSQL
 from corehq.form_processor.utils import TestFormMetadata
 from corehq.form_processor.utils import get_simple_wrapped_form
@@ -31,15 +31,15 @@ GDPR_SIMPLE_FORM = """<?xml version='1.0' ?>
 </data>"""
 
 
-class GDPRScrubUserTests(TestCase):
+class GDPRScrubUserFromFormTests(TestCase):
     def setUp(self):
-        super(GDPRScrubUserTests, self).setUp()
+        super(GDPRScrubUserFromFormTests, self).setUp()
         self.db = TemporaryFilesystemBlobDB()
         self.new_username = "replacement_sql_username"
 
     def tearDown(self):
         self.db.close()
-        super(GDPRScrubUserTests, self).tearDown()
+        super(GDPRScrubUserFromFormTests, self).tearDown()
 
     def test_parse_form_data(self):
         form = get_simple_wrapped_form(uuid.uuid4().hex, metadata=TestFormMetadata(domain=DOMAIN),
