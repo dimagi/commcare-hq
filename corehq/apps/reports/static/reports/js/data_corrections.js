@@ -1,5 +1,38 @@
+/**
+ *  UI for data corrections for cases and forms, which is a modal that lists out properties and an editable value
+ *  for each. The modal includes a search box (which does client-side filtering only), pagination, and the option
+ *  to toggle between different display properties (useful with forms, for toggling between question id and label).
+ *
+ *  Used with reports/partials/data_corrections_trigger.html and reports/partials/data_corrections_modal.html
+ *  Usage: hqImport("reports/js/data_corrections").init($triggerElement, $modalElement, options);
+ *  Options:
+ *      Required:
+ *          saveUrl
+ *          properties: An object, where keys are the property name and values may be either strings or objects.
+ *              If strings, they are assumed to be the property values. If objects, they should have a 'value' key
+ *              with the property value and may then have arbitrary other properties to be used for display (see
+ *              displayProperties below).
+ *      Optional:
+ *          propertyNames: All property names, in the order that properties should be displayed.
+ *          propertyNamesUrl: Ignore propertyNames and instead fetch that list from this URL.
+ *          propertyPrefix: HTML string to display before each property. Rendered as a knockout template that has
+ *              access to the property.
+ *          propertySuffix: Same idea as proeprtyPrefix.
+ *          displayProperties: A list of objects, each with the keys 'property', 'name', and optionally 'search'.
+ *              Property is the data, plucked from the properties array. Name is displayed in the menu that lets
+ *              user toggle between display properties. Search, which defaults to match property, lets the user
+ *              search by a different property.
+ */
 hqDefine("reports/js/data_corrections", function() {
     var PropertyModel = function(options) {
+        // Don't assert properties of options because PropertyModel allows for
+        // arbitrary keys to be used as display properties. Do error if any of
+        // these arbitrary keys conflict with existing PropertyModel members.
+        var reservedKeys = _.intersection(['dirty'], _.keys(options));
+        if (reservedKeys.length) {
+            throw new Error("Keys disallowed in PropertyModel: " + reservedKeys.join(", "));
+        }
+
         var self = options;
 
         self.name = options.name;
@@ -10,9 +43,10 @@ hqDefine("reports/js/data_corrections", function() {
     };
 
     var DataCorrectionsModel = function(options) {
-        var self = this;
+        hqImport("hqwebapp/js/assert_properties").assert(options, ['saveUrl', 'properties'],
+            ['propertyNames', 'propertyNamesUrl', 'displayProperties', 'propertyPrefix', 'propertySuffix']);
+        var self = {};
 
-        self.url = options.url;
         self.saveUrl = options.saveUrl;
         self.propertyNames = ko.observableArray();  // ordered list of names, sometimes populated by ajax call because it's slow
         self.properties = {};                       // map of name => PropertyModel, populated in init
@@ -184,6 +218,8 @@ hqDefine("reports/js/data_corrections", function() {
                 }
                 return new PropertyModel(_.extend({}, data, {
                     name: name,
+                    value: data.value,
+                    display: _.without(data, 'name', 'value'),
                 }));
             }));
             self.generateSearchableNames();
@@ -194,24 +230,24 @@ hqDefine("reports/js/data_corrections", function() {
             self.render();
         };
 
-        var _success = function(names) {
+        var _loadPropertyNames = function(names) {
             _.each(names, function(name) {
                 self.propertyNames.push(name);
             });
             self.showSpinner(false);
             self.init();
         };
-        if (self.url) {
+        if (options.propertyNamesUrl) {
             $.get({
-                url: self.url,
-                success: _success,
+                url: options.propertyNamesUrl,
+                success: _loadPropertyNames,
                 error: function() {
                     self.showSpinner(false);
                     self.showError(true);
                 },
             });
         } else {
-            _success(options.propertyNames || _.keys(options.properties));
+            _loadPropertyNames(options.propertyNames || _.keys(options.properties));
         }
 
         return self;
