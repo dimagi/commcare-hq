@@ -77,7 +77,7 @@ from corehq.middleware import always_allow_browser_caching
 from corehq.util.datadog.const import DATADOG_UNKNOWN
 from corehq.util.datadog.metrics import JSERROR_COUNT
 from corehq.util.datadog.utils import create_datadog_event, sanitize_url
-from corehq.util.datadog.gauges import datadog_counter
+from corehq.util.datadog.gauges import datadog_counter, datadog_gauge
 from corehq.util.soft_assert import soft_assert
 from corehq.util.view_utils import reverse
 import six
@@ -262,6 +262,14 @@ def server_up(req):
 
     statuses = run_checks(checks_to_do)
     failed_checks = [(check, status) for check, status in statuses if not status.success]
+
+    tags = [
+        'status:{}'.format('failed' if failed_checks else 'ok'),
+    ]
+    for check_name, status in statuses:
+        datadog_gauge('commcare.serverup.check', status.duration, tags=tags + [
+            'check:{}'.format(check_name)
+        ])
 
     if failed_checks and not is_deploy_in_progress():
         status_messages = [

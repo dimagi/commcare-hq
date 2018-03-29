@@ -19,6 +19,8 @@ from django.db.utils import OperationalError
 from restkit import Resource
 from celery import Celery
 import requests
+
+from corehq.util.timer import TimingContext
 from soil import heartbeat
 
 from corehq.apps.hqadmin.escheck import check_es_cluster_health
@@ -38,6 +40,7 @@ class ServiceStatus(object):
     success = attr.ib()
     msg = attr.ib()
     exception = attr.ib(default=None)
+    duration = attr.ib(default=None)
 
 
 class UnknownCheckException(Exception):
@@ -223,16 +226,19 @@ def check_formplayer():
 
 def run_checks(checks_to_do):
     statuses = []
-    for check in checks_to_do:
-        if check not in CHECKS:
-            raise UnknownCheckException(check)
+    with TimingContext() as timer:
+        for check_name in checks_to_do:
+            if check_name not in CHECKS:
+                raise UnknownCheckException(check_name)
 
-        check_info = CHECKS[check]
-        try:
-            status = check_info['check_func']()
-        except Exception as e:
-            status = ServiceStatus(False, "{} raised an error".format(check), e)
-        statuses.append((check, status))
+            check_info = CHECKS[check_name]
+            with timer(check_name):
+                try:
+                        status = check_info['check_func']()
+                except Exception as e:
+                    status = ServiceStatus(False, "{} raised an error".format(check_name), e)
+                status.duration = timer.peek().duration
+            statuses.append((check_name, status))
     return statuses
 
 
