@@ -533,6 +533,7 @@ class UsersAtLocationForm(forms.Form):
             )
         )
 
+    # Adding a 5 second timeout because that is the elasticsearch refresh interval.
     @memoized
     @quickcache(['self.domain_object.name', 'self.location.location_id'], memoize_timeout=0, timeout=5)
     def get_users_at_location(self):
@@ -564,7 +565,7 @@ class UsersAtLocationForm(forms.Form):
         self.unassign_users(to_remove)
         self.assign_users(to_add)
         self.cache_users_at_location(selected_users)
-        
+
     def cache_users_at_location(self, selected_users):
         user_cache_list = []
         for doc in iter_docs(CommCareUser.get_db(), selected_users):
