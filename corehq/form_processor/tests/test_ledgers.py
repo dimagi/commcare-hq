@@ -17,7 +17,7 @@ from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL, Ledg
 from corehq.form_processor.document_stores import LedgerV1DocumentStore
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
-from corehq.form_processor.models import LedgerTransaction
+from corehq.form_processor.models import LedgerTransaction, LedgerValue
 from corehq.form_processor.parsers.ledgers.helpers import UniqueLedgerReference
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, use_sql_backend
 from corehq.form_processor.utils.general import should_use_sql_backend
@@ -221,9 +221,7 @@ class LedgerTests(TestCase):
         """
         import datetime
         from django.template.loader import render_to_string
-        from corehq.apps.commtrack.models import StockState
         from corehq.apps.commtrack.tests.util import get_single_transfer_block
-        from casexml.apps.stock.models import StockTransaction
 
         # Make form adding 100 units
         case_blocks = [
@@ -260,21 +258,39 @@ class LedgerTests(TestCase):
 
         # Uncomment this to mock only the ledger part of the save method
         # This causes a duplicate StockTransaction to be created
-        from corehq.apps.commtrack.processing import commit_stock
-        mocked_save = mock.Mock(side_effect=second_form_submission, wraps=commit_stock)
-        with mock.patch('corehq.apps.commtrack.processing.commit_stock', new=mocked_save) as save_fn:
-            result = submit_form_locally(instance=form_xml, domain=DOMAIN)
+        self._submit_form_with_concurrent_duplicate(second_form_submission, form_xml)
 
         # If I do a second form submission here rather than during the
         # processing of the first, only one StockTransaction is created:
         # submit_form_locally(instance=form_xml, domain=DOMAIN)
+        self._print_stock_state()
 
+    def _submit_form_with_concurrent_duplicate(self, second_form_submission, form_xml):
+        from corehq.apps.commtrack.processing import commit_stock
+        mocked_save = mock.Mock(side_effect=second_form_submission, wraps=commit_stock)
+        with mock.patch('corehq.apps.commtrack.processing.commit_stock', new=mocked_save) as save_fn:
+            submit_form_locally(instance=form_xml, domain=DOMAIN)
+
+    def _print_stock_state(self):
+        from corehq.apps.commtrack.models import StockState
+        from casexml.apps.stock.models import StockTransaction
         print list(StockState.objects.filter(case_id=self.case.case_id).values('product_id', 'section_id', 'stock_on_hand'))
         print list(StockTransaction.objects.filter(case_id=self.case.case_id).values('product_id', 'section_id', 'stock_on_hand'))
 
 
 @use_sql_backend
 class LedgerTestsSQL(LedgerTests):
+
+    def _submit_form_with_concurrent_duplicate(self, second_form_submission, form_xml):
+        from corehq.form_processor.backends.sql.processor import FormProcessorSQL
+        mocked_save = mock.Mock(side_effect=second_form_submission, wraps=FormProcessorSQL.save_processed_models)
+        with mock.patch('corehq.form_processor.backends.sql.processor.FormProcessorSQL.save_processed_models', new=mocked_save) as save_fn:
+            submit_form_locally(instance=form_xml, domain=DOMAIN)
+
+    def _print_stock_state(self):
+        print list(LedgerValue.objects.using(None).filter(case_id=self.case.case_id).values('entry_id', 'section_id', 'balance'))
+        print list(LedgerTransaction.objects.using(None).filter(case_id=self.case.case_id).values('entry_id', 'section_id', 'updated_balance'))
+
     def test_edit_form_that_removes_ledgers(self):
         from corehq.apps.commtrack.tests.util import get_single_balance_block
         form_id = uuid.uuid4().hex

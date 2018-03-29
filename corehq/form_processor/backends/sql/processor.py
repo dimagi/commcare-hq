@@ -329,7 +329,7 @@ class FormProcessorSQL(object):
         try:
             if lock:
                 try:
-                    return CommCareCaseSQL.get_locked_obj(_id=case_id)
+                    return CommCareCaseSQL.get_locked_obj(_id=case_id, timeout_seconds=10)
                 except redis.RedisError:
                     case = CaseAccessorSQL.get_case(case_id)
             else:
