@@ -40,8 +40,7 @@ hqDefine('case/js/case_property_modal', function(){
                 error: function(){
                     self.showError(true);
                     self.showSpinner(false);
-                }
-
+                },
             });
         };
 
