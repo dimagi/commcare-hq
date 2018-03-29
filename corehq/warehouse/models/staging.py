@@ -24,6 +24,7 @@ from corehq.warehouse.dbaccessors import (get_application_ids_by_last_modified,
     get_user_ids_by_last_modified)
 from corehq.warehouse.etl import CouchToDjangoETLMixin, CustomSQLETLMixin
 from corehq.warehouse.models.shared import WarehouseTable
+from corehq.warehouse.models.dimensions import ApplicationDim, UserDim
 from corehq.warehouse.utils import truncate_records_for_cls
 from dimagi.utils.couch.database import iter_docs
 
@@ -405,8 +406,8 @@ class AppStatusFormStaging(StagingTable, CustomSQLETLMixin):
     slug = APP_STATUS_FORM_STAGING_SLUG
 
     domain = models.CharField(max_length=255, default=None, db_index=True)
-    app_id = models.CharField(max_length=255, null=True, db_index=True)
-    user_id = models.CharField(max_length=255, null=True, db_index=True)
+    app_dim = models.ForeignKey(ApplicationDim, on_delete=models.PROTECT)
+    user_dim = models.ForeignKey(UserDim, on_delete=models.PROTECT)
     last_submission = models.DateTimeField(db_index=True)
     submission_build_version = models.CharField(max_length=255, null=True, db_index=True)
     commcare_version = models.CharField(max_length=255, null=True, db_index=True)
@@ -428,8 +429,7 @@ class AppStatusSynclogStaging(StagingTable, CustomSQLETLMixin):
 
     last_sync = models.DateTimeField(null=True, db_index=True)
     domain = models.CharField(max_length=255, null=True, db_index=True)
-    user_id = models.CharField(max_length=255, null=True, db_index=True)
-    sync_build_version = models.CharField(max_length=255, null=True, db_index=True)
+    user_dim = models.ForeignKey(UserDim, on_delete=models.PROTECT)
 
     @classmethod
     def dependencies(cls):
