@@ -22,7 +22,7 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.datatables import DataTablesColumn
 from corehq.apps.reports_core.filters import Choice
 from corehq.apps.userreports.models import StaticReportConfiguration
-from corehq.apps.userreports.reports.factory import ReportFactory
+from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
 from corehq.util.quickcache import quickcache
 from custom.icds_reports import const
 from custom.icds_reports.const import ISSUE_TRACKER_APP_ID, LOCATION_TYPES
@@ -66,7 +66,7 @@ class ASRData(object):
 class ICDSData(object):
 
     def __init__(self, domain, filters, report_id):
-        report_config = ReportFactory.from_spec(
+        report_config = ConfigurableReportDataSource.from_spec(
             self._get_static_report_configuration_without_owner_transform(report_id.format(domain=domain))
         )
         report_config.set_filter_values(filters)

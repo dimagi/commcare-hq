@@ -96,15 +96,15 @@ def _get_case_case_counts_by_owner(domain, datespan, case_types, is_total=False,
     return case_query.run().aggregations.owner_id.counts_by_bucket()
 
 
-def get_case_counts_closed_by_user(domain, datespan, case_types=None, owner_ids=None):
-    return _get_case_counts_by_user(domain, datespan, case_types, False, owner_ids)
+def get_case_counts_closed_by_user(domain, datespan, case_types=None, user_ids=None):
+    return _get_case_counts_by_user(domain, datespan, case_types, False, user_ids)
 
 
-def get_case_counts_opened_by_user(domain, datespan, case_types=None, owner_ids=None):
-    return _get_case_counts_by_user(domain, datespan, case_types, True, owner_ids)
+def get_case_counts_opened_by_user(domain, datespan, case_types=None, user_ids=None):
+    return _get_case_counts_by_user(domain, datespan, case_types, True, user_ids)
 
 
-def _get_case_counts_by_user(domain, datespan, case_types=None, is_opened=True, owner_ids=None):
+def _get_case_counts_by_user(domain, datespan, case_types=None, is_opened=True, user_ids=None):
     date_field = 'opened_on' if is_opened else 'closed_on'
     user_field = 'opened_by' if is_opened else 'closed_by'
 
@@ -125,8 +125,8 @@ def _get_case_counts_by_user(domain, datespan, case_types=None, is_opened=True, 
     else:
         case_query = case_query.filter(filters.NOT(case_type_filter('commcare-user')))
 
-    if owner_ids:
-        case_query = case_query.filter(filters.term(user_field, owner_ids))
+    if user_ids:
+        case_query = case_query.filter(filters.term(user_field, user_ids))
 
     return case_query.run().aggregations.by_user.counts_by_bucket()
 
@@ -327,10 +327,11 @@ def get_group_stubs(group_ids):
 
 
 def get_user_stubs(user_ids):
+    from corehq.apps.reports.util import SimplifiedUserInfo
     return (UserES()
         .user_ids(user_ids)
         .show_inactive()
-        .values('_id', 'username', 'first_name', 'last_name', 'doc_type', 'is_active'))
+        .values(*SimplifiedUserInfo.ES_FIELDS))
 
 
 def get_forms(domain, startdate, enddate, user_ids=None, app_ids=None, xmlnss=None, by_submission_time=True):

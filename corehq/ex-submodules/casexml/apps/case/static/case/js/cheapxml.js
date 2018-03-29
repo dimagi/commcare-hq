@@ -55,7 +55,7 @@ var cheapxml = {
             };
             this.is = function (selector) {
                 if (selector === ':parent') {
-                    return children || children.length ? true : false;
+                    return children || children.length;
                 }
             };
             this.serialize = function (stream) {

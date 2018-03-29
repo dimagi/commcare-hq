@@ -8,8 +8,16 @@ import six
 
 
 class ConfigurableReportDataSource(object):
+    """
+    This class is a proxy class for ConfigurableReportSqlDataSource
+        and ConfigurableReportEsDataSource, which include logic to
+        query the SQL or ES datasource table.
+    """
 
     def __init__(self, domain, config_or_config_id, filters, aggregation_columns, columns, order_by, backend=None):
+        """
+            config_or_config_id: an instance of DataSourceConfiguration or an id pointing to it
+        """
         self.domain = domain
         self._data_source = None
         if isinstance(config_or_config_id, DataSourceConfiguration):
@@ -28,6 +36,20 @@ class ConfigurableReportDataSource(object):
             self.override_backend_id(backend)
         else:
             self._backend = None
+
+    @classmethod
+    def from_spec(cls, spec, include_prefilters=False, backend=None):
+        order_by = [(o['field'], o['order']) for o in spec.sort_expression]
+        filters = spec.filters if include_prefilters else spec.filters_without_prefilters
+        return cls(
+            domain=spec.domain,
+            config_or_config_id=spec.config_id,
+            filters=filters,
+            aggregation_columns=spec.aggregation_columns,
+            columns=spec.report_columns,
+            order_by=order_by,
+            backend=backend,
+        )
 
     @property
     def backend(self):
@@ -71,8 +93,8 @@ class ConfigurableReportDataSource(object):
     def set_filter_values(self, filter_values):
         self.data_source.set_filter_values(filter_values)
 
-    def defer_filters(self, filter_slugs):
-        self.data_source.defer_filters(filter_slugs)
+    def set_defer_fields(self, defer_fields):
+        self.data_source.set_defer_fields(defer_fields)
 
     def set_order_by(self, columns):
         self.data_source.set_order_by(columns)

@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from couchdbkit.ext.django.loading import get_db
 from django.test import TestCase, SimpleTestCase
 from corehq.util.test_utils import DocTestMixin
@@ -84,7 +85,7 @@ class SavedSchemaTest(TestCase):
             }]
         })
         self.custom_export.filter_function = SerializableFunction()
-        self.schema = [{'#export_tag': [u'string'], 'tag': u'string', 'multi': u'string'}]
+        self.schema = [{'#export_tag': ['string'], 'tag': 'string', 'multi': 'string'}]
 
     def tearDown(self):
         for doc in self.db.all_docs():

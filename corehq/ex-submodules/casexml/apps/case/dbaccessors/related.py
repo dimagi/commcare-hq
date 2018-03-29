@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
 from casexml.apps.case.const import CASE_INDEX_CHILD, CASE_INDEX_EXTENSION
 from corehq.form_processor.interfaces.dbaccessors import CaseIndexInfo

@@ -1,5 +1,6 @@
 # coding=utf-8
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import json
 
 from django.test import SimpleTestCase
@@ -12,7 +13,7 @@ from six.moves import range
 class BulkTest(SimpleTestCase):
 
     def test_prepare_bulk_payloads_unicode(self):
-        unicode_domain = u'हिंदी'
+        unicode_domain = 'हिंदी'
         bulk_changes = [
             {'id': 'doc1'},
             {'id': 'doc2', 'domain': unicode_domain},

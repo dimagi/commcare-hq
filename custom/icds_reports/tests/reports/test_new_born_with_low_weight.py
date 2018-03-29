@@ -8,7 +8,7 @@ from custom.icds_reports.reports.new_born_with_low_weight import get_newborn_wit
 from django.test import TestCase
 
 
-@override_settings(SERVER_ENVIRONMENT='icds')
+@override_settings(SERVER_ENVIRONMENT='icds-new')
 class TestNewBornWithLowWeight(TestCase):
 
     def test_map_data_keys(self):

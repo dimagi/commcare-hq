@@ -297,7 +297,7 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
     def _dispatcher(self):
         from corehq.apps.userreports.models import CUSTOM_REPORT_PREFIX
         from corehq.apps.userreports.reports.view import (
-            ConfigurableReport,
+            ConfigurableReportView,
             CustomConfigurableReportDispatcher,
         )
 
@@ -314,7 +314,7 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
             if self.subreport_slug.startswith(CUSTOM_REPORT_PREFIX):
                 return CustomConfigurableReportDispatcher()
             else:
-                return ConfigurableReport()
+                return ConfigurableReportView()
 
         if self.doc_type != 'ReportConfig-Deleted':
             self.doc_type += '-Deleted'
@@ -581,8 +581,8 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
 
     @property
     def is_configurable_report(self):
-        from corehq.apps.userreports.reports.view import ConfigurableReport
-        return self.report_type == ConfigurableReport.prefix
+        from corehq.apps.userreports.reports.view import ConfigurableReportView
+        return self.report_type == ConfigurableReportView.prefix
 
     @property
     @memoized
@@ -594,8 +594,8 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
     @property
     @memoized
     def configurable_report(self):
-        from corehq.apps.userreports.reports.view import ConfigurableReport
-        return ConfigurableReport.get_report(
+        from corehq.apps.userreports.reports.view import ConfigurableReportView
+        return ConfigurableReportView.get_report(
             self.domain, self.report_slug, self.subreport_slug
         )
 

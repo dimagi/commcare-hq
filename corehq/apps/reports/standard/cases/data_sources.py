@@ -50,7 +50,7 @@ class CaseInfo(object):
     @property
     def case_detail_url(self):
         try:
-            return absolute_reverse('case_details', args=[self.report.domain, self.case_id])
+            return absolute_reverse('case_data', args=[self.report.domain, self.case_id])
         except NoReverseMatch:
             return None
 
@@ -99,10 +99,7 @@ class CaseInfo(object):
     @property
     @memoized
     def location(self):
-        try:
-            return SQLLocation.objects.get(location_id=self.owner_id)
-        except SQLLocation.DoesNotExist:
-            return None
+        return SQLLocation.objects.get_or_None(location_id=self.owner_id)
 
     @property
     def owner(self):

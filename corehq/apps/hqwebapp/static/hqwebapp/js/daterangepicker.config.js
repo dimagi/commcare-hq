@@ -17,7 +17,6 @@
     $.fn.createDateRangePicker = function(
         range_labels, separator, startdate, enddate
     ) {
-        var now = moment();
         var ranges = {};
         ranges[range_labels.last_7_days] = [
             moment().subtract('7', 'days').startOf('days'),
@@ -47,6 +46,29 @@
         }
 
         $(this).daterangepicker(config);
+
+        // UCRs
+        var initial_page_data = hqImport("hqwebapp/js/initial_page_data").get;
+        if (initial_page_data('daterangepicker-show-clear')) {
+            // Change 'Cancel' button text to 'Clear'
+            var $el = $(this);
+            config.locale.cancelLabel = gettext('Clear');
+            $el.daterangepicker(config);
+
+            // Add clearing functionality
+            $el.on('cancel.daterangepicker', function() {
+                $el.val(gettext("Show All Dates"));
+
+                // Clear startdate and enddate filters
+                var filter_id = $(this)[0].getAttribute("name");
+                var filter_id_start = filter_id + "-start";
+                var filter_id_end = filter_id + "-end";
+                if (document.getElementById(filter_id_start) && document.getElementById(filter_id_end)) {
+                    document.getElementById(filter_id_start).setAttribute("value", "");
+                    document.getElementById(filter_id_end).setAttribute("value", "");
+                }
+            });
+        }
 
         if (! hasStartAndEndDate){
             $(this).val("");

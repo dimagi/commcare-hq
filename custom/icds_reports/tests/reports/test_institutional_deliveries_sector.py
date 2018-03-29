@@ -8,7 +8,7 @@ from custom.icds_reports.reports.institutional_deliveries_sector import get_inst
 from django.test import TestCase
 
 
-@override_settings(SERVER_ENVIRONMENT='icds')
+@override_settings(SERVER_ENVIRONMENT='icds-new')
 class TestInstitutionalDeliveriesSector(TestCase):
     maxDiff = None
 

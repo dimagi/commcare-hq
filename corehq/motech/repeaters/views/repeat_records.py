@@ -183,7 +183,7 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
             '</a> {payload_id}'
         ).format(
             url=reverse('global_quick_find'),
-            flower=static('prelogin/images/commcare-flower.png'),
+            flower=static('hqwebapp/images/commcare-flower.png'),
             payload_id=payload_id,
         )
 

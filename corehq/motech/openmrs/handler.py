@@ -16,7 +16,7 @@ from corehq.motech.openmrs.repeater_helpers import (
 from dimagi.utils.parsing import string_to_utc_datetime
 
 
-def send_openmrs_data(requests, form_json, openmrs_config, case_trigger_infos, form_question_values):
+def send_openmrs_data(requests, domain, form_json, openmrs_config, case_trigger_infos, form_question_values):
     """
     Updates an OpenMRS patient and creates visits
 
@@ -26,7 +26,7 @@ def send_openmrs_data(requests, form_json, openmrs_config, case_trigger_infos, f
     logger.debug('Fetching OpenMRS patient UUIDs with ', case_trigger_infos)
     for info in case_trigger_infos:
         assert isinstance(info, CaseTriggerInfo)
-        response = sync_openmrs_patient(requests, info, form_json, form_question_values, openmrs_config)
+        response = sync_openmrs_patient(requests, domain, info, form_json, form_question_values, openmrs_config)
     return response or OpenmrsResponse(404, 'Not Found')
 
 
@@ -67,8 +67,8 @@ def create_visits(requests, info, form_json, form_question_values, openmrs_confi
             )
 
 
-def sync_openmrs_patient(requests, info, form_json, form_question_values, openmrs_config):
-    patient = get_patient(requests, info, openmrs_config)
+def sync_openmrs_patient(requests, domain, info, form_json, form_question_values, openmrs_config):
+    patient = get_patient(requests, domain, info, openmrs_config)
     if patient is None:
         raise ValueError('CommCare patient was not found in OpenMRS')
     person_uuid = patient['person']['uuid']

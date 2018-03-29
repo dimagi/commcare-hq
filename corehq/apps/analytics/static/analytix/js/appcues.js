@@ -17,6 +17,7 @@ hqDefine('analytix/js/appcues', [
     'use strict';
     var _get = initialAnalytics.getFn('appcues'),
         _ready = $.Deferred(),
+        _logger = logging.getLoggerForApi('Appcues'),
         EVENT_TYPES = {
             FORM_LOADED: "Form is loaded",
             FORM_SAVE: "Saved a form",
@@ -27,11 +28,11 @@ hqDefine('analytix/js/appcues', [
 
     $(function () {
         var apiId = _get('apiId'),
-            scriptUrl = "//fast.appcues.com/" + apiId + '.js',
-            _logger = logging.getLoggerForApi('Appcues');
+            scriptUrl = "//fast.appcues.com/" + apiId + '.js';
 
+        _logger = logging.getLoggerForApi('Appcues');
         _ready = utils.initApi(_ready, apiId, scriptUrl, _logger, function () {
-            Appcues.identify(_get("username"), {
+            identify(_get("username"), {
                 firstName: _get("firstName"),
                 lastName: _get("lastName"),
                 email: _get("username"),
@@ -42,8 +43,18 @@ hqDefine('analytix/js/appcues', [
         });
     });
 
-    function trackEvent(label, data) {
+    function identify(email, properties) {
+        var originalArgs = arguments;
         _ready.done(function () {
+            _logger.debug.log(originalArgs, 'Identify');
+            Appcues.identify(email, properties);
+        });
+    }
+
+    function trackEvent(label, data) {
+        var originalArgs = arguments;
+        _ready.done(function () {
+            _logger.debug.log(originalArgs, 'RECORD EVENT');
             if (_.isObject(data)) {
                 Appcues.track(label, data);
             } else {
@@ -56,6 +67,7 @@ hqDefine('analytix/js/appcues', [
     }
 
     return {
+        identify: identify,
         trackEvent: trackEvent,
         EVENT_TYPES: EVENT_TYPES,
         then: then,

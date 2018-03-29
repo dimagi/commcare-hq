@@ -109,7 +109,7 @@ hqDefine("fixtures/js/lookup-manage", [
         };
         for (var i = 0; i < raw_fields.length; i += 1) {
             var tag = raw_fields[i].field_name();
-            var with_props = (raw_fields[i].properties().length == 0) ? false : true;
+            var with_props = !!raw_fields[i].properties().length;
             self.addField(undefined, undefined, {
                 tag: tag,
                 with_props: with_props,

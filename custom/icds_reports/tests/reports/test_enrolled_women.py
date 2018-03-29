@@ -8,7 +8,7 @@ from custom.icds_reports.reports.enrolled_women import get_enrolled_women_data_m
 from django.test import TestCase
 
 
-@override_settings(SERVER_ENVIRONMENT='icds')
+@override_settings(SERVER_ENVIRONMENT='icds-new')
 class TestEnrolledWomen(TestCase):
 
     def test_map_data(self):

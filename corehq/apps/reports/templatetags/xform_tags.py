@@ -228,7 +228,7 @@ def _get_cases_changed_context(domain, form, case_id=None):
             valid_case = False
 
         if this_case and this_case.case_id:
-            url = reverse('case_details', args=[domain, this_case.case_id])
+            url = reverse('case_data', args=[domain, this_case.case_id])
         else:
             url = "#"
 

@@ -17,7 +17,7 @@ from dimagi.ext import jsonobject
 from jsonobject.exceptions import BadValueError
 
 from corehq import toggles
-from corehq.apps.domain.decorators import api_auth
+from corehq.apps.domain.decorators import api_auth, two_factor_exempt
 from corehq.apps.locations.resources.v0_5 import LocationResource
 from corehq.motech.repeaters.views import AddCaseRepeaterView
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
@@ -186,6 +186,7 @@ def _validate_updates_exist(domain, updates):
 @require_POST
 @csrf_exempt
 @api_auth
+@two_factor_exempt
 @toggles.ENIKSHAY_API.required_decorator()
 def payment_confirmation(request, domain):
     try:

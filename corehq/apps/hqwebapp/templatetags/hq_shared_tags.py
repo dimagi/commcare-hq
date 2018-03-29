@@ -493,15 +493,17 @@ def maintenance_alert():
         )
 
 
-@register.simple_tag(takes_context=True)
-def prelogin_url(context, urlname):
+@register.simple_tag
+def prelogin_url(urlname):
     """
-    A prefix aware url tag replacement for prelogin URLs
+    Fetches the correct dimagi.com url for a "prelogin" view.
     """
-    if context.get('url_uses_prefix', False) and context.get('LANGUAGE_CODE', False):
-        return reverse(urlname, args=[context['LANGUAGE_CODE']])
-    else:
-        return reverse(urlname)
+    urlname_to_url = {
+        'go_to_pricing': 'https://dimagi.com/commcare/pricing/',
+        'public_pricing': 'https://dimagi.com/commcare/pricing/',
+
+    }
+    return urlname_to_url.get(urlname, 'https://dimagi.com/commcare/')
 
 
 @register.tag

@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.test import SimpleTestCase, override_settings
 import mock
 from corehq.apps.case_importer.util import is_valid_owner, \

@@ -782,7 +782,12 @@ class SoftwarePlanVersion(models.Model):
         from corehq.apps.accounting.user_text import DESC_BY_EDITION, FEATURE_TYPE_TO_NAME
 
         def _default_description(plan, monthly_limit):
-            if plan.edition != SoftwarePlanEdition.ENTERPRISE:
+            if plan.edition in [
+                SoftwarePlanEdition.COMMUNITY,
+                SoftwarePlanEdition.STANDARD,
+                SoftwarePlanEdition.PRO,
+                SoftwarePlanEdition.ADVANCED,
+            ]:
                 return DESC_BY_EDITION[plan.edition]['description'] % monthly_limit
             else:
                 return DESC_BY_EDITION[plan.edition]['description']
@@ -2775,6 +2780,7 @@ class PaymentMethod(models.Model):
 
     class Meta(object):
         app_label = 'accounting'
+        unique_together = ('web_user', 'method_type')
 
 
 class StripePaymentMethod(PaymentMethod):

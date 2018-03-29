@@ -1,4 +1,5 @@
 # how long a cached payload sits around for (in seconds).
+from __future__ import unicode_literals
 INITIAL_SYNC_CACHE_TIMEOUT = 60 * 60  # 1 hour
 
 # the threshold for setting a cached payload on initial sync (in seconds).

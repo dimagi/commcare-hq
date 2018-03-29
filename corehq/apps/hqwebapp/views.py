@@ -151,7 +151,10 @@ def redirect_to_default(req, domain=None):
         if domain != None:
             url = reverse('domain_login', args=[domain])
         else:
-            url = reverse('login')
+            if settings.SERVER_ENVIRONMENT == 'production':
+                url = "https://www.dimagi.com/"
+            else:
+                url = reverse('login')
     elif domain and _two_factor_needed(domain, req):
         return TemplateResponse(
             request=req,
@@ -235,11 +238,17 @@ def password_change(req):
 
 
 def server_up(req):
-    '''
-    Hit serverup.txt to check any of the below item with always_check: True
-    Hit serverup.txt?celery (or heartbeat) to check a specific service
-    View that just returns "success", which can be hooked into server monitoring tools like: pingdom
-    '''
+    """
+    Health check view which can be hooked into server monitoring tools like 'pingdom'
+
+    Returns:
+        HttpResponse("success", status_code=200)
+        HttpResponse(error_message, status_code=500)
+
+    Hit serverup.txt to check all the default enabled services (always_check=True)
+    Hit serverup.txt?only={check_name} to only check a specific service
+    Hit serverup.txt?{check_name} to include a non-default check (currently only ``heartbeat``)
+    """
 
     checkers = {
         "heartbeat": {
@@ -274,16 +283,25 @@ def server_up(req):
 
     failed = False
     message = ['Problems with HQ (%s):' % os.uname()[1]]
-    for check, check_info in checkers.items():
-        if check_info['always_check'] or req.GET.get(check, None) is not None:
-            try:
-                status = check_info['check_func']()
-            except Exception:
-                # Don't display the exception message
-                status = checks.ServiceStatus(False, "{} has issues".format(check))
-            if not status.success:
-                failed = True
-                message.append(status.msg)
+    only = req.GET.get('only', None)
+    if only and only in checkers:
+        checks_to_do = [(only, checkers[only])]
+    else:
+        checks_to_do = [
+            (check, check_info)
+            for check, check_info in checkers.items()
+            if check_info['always_check'] or req.GET.get(check, None) is not None
+        ]
+
+    for check, check_info in checks_to_do:
+        try:
+            status = check_info['check_func']()
+        except Exception:
+            # Don't display the exception message
+            status = checks.ServiceStatus(False, "{} has issues".format(check))
+        if not status.success:
+            failed = True
+            message.append(status.msg)
 
     if failed and not is_deploy_in_progress():
         create_datadog_event(
@@ -1271,7 +1289,7 @@ class HQJSONResponseMixin(JSONResponseMixin):
 
 
 def redirect_to_dimagi(endpoint):
-    def _redirect(request):
+    def _redirect(request, lang_code=None):
         if settings.SERVER_ENVIRONMENT in [
             'production',
             'softlayer',
@@ -1280,7 +1298,10 @@ def redirect_to_dimagi(endpoint):
             'localdev',
         ]:
             return HttpResponsePermanentRedirect(
-                "https://www.dimagi.com/{}".format(endpoint)
+                "https://www.dimagi.com/{}{}".format(
+                    endpoint,
+                    "?lang={}".format(lang_code) if lang_code else "",
+                )
             )
         return redirect_to_default(request)
     return _redirect
