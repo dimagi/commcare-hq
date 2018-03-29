@@ -59,8 +59,12 @@ class FormQuestion(JsonObject):
 
     @property
     def editable(self):
+        if not self.type:
+            return False
         vtype = VELLUM_TYPES[self.type]
-        return vtype['editable'] if 'editable' in vtype else False
+        if 'editable' not in vtype:
+            return False
+        return vtype['editable']
 
 
 class FormQuestionResponse(FormQuestion):
