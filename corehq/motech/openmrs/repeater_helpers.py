@@ -17,7 +17,6 @@ from corehq.motech.openmrs.logger import logger
 from corehq.motech.utils import pformat_json
 
 
-Should = namedtuple('Should', ['method', 'url', 'parser'])
 PERSON_PROPERTIES = (
     'gender',
     'age',
@@ -138,10 +137,6 @@ def parse_request_exception(err):
     err_content = pformat_json(err.response.content)  # pformat_json returns non-JSON values unchanged
     err_response = '\n\n'.join((str(err), err_content))
     return err_request, err_response
-
-
-def url(url_format_string, **kwargs):
-    return url_format_string.format(**kwargs)
 
 
 def get_case_location(case):
