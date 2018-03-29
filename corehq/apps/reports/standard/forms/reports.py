@@ -43,7 +43,7 @@ class SubmissionErrorReport(DeploymentsReport):
                                    DataTablesColumn(_("Submit Time"), prop_name="received_on"),
                                    DataTablesColumn(_("Form Type"), sortable=False),
                                    DataTablesColumn(_("Error Type"), sortable=False),
-                                   DataTablesColumn(_("Error Message"), prop_name="problem"))
+                                   DataTablesColumn(_("Error Message"), sortable=False))
         if self.support_toggle_enabled:
             headers.add_column(DataTablesColumn(_("Re-process Form")))
         return headers
