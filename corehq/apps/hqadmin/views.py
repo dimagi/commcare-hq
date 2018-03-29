@@ -354,7 +354,7 @@ def check_services(request):
         else:
             status = "SUCCESS" if result.success else "FAILURE"
             msg = result.msg
-        return "{} {}: {}<br/>".format(status, service_name, msg)
+        return "{} (Took {:6.2f}s) {:15}: {}<br/>".format(status, result.duration, service_name, msg)
 
     statuses = run_checks(service_checks.CHECKS.keys())
     results = [

@@ -35,10 +35,11 @@ class Command(BaseCommand):
     def print_results(results):
         for service_name, status in results:
             if status.exception:
-                print("\033[91mEXCEPTION\033[0m {}: Service check errored with exception '{}'".format(
+                print("\033[91mEXCEPTION\033[0m (Took {:6.2f}s) {:15}:".format(
+                    status.duration,
                     service_name,
-                    repr(status.exception)
-                ))
+                ), end=' ')
+                print("Service check errored with exception '{}'".format(repr(status.exception)))
             else:
                 print("\033[92mSUCCESS\033[0m" if status.success else "\033[91mFAILURE\033[0m", end=' ')
-                print("{}: {}".format(service_name, status.msg))
+                print("(Took {:6.2f}s) {:15}: {}".format(status.duration, service_name, status.msg))
