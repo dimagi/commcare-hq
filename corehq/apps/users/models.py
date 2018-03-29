@@ -798,7 +798,7 @@ class DjangoUserMixin(DocumentSchema):
 
 
 class EulaMixin(DocumentSchema):
-    CURRENT_VERSION = '2.0' # Set this to the most up to date version of the eula
+    CURRENT_VERSION = '3.0'  # Set this to the most up to date version of the eula
     eulas = SchemaListProperty(LicenseAgreement)
 
     @classmethod
