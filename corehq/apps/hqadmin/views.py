@@ -59,6 +59,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.es import filters
 from corehq.apps.es.domains import DomainES
 from corehq.apps.hqadmin.reporting.exceptions import HistoTypeNotFoundException
+from corehq.apps.hqadmin.service_checks import run_checks
 from corehq.apps.hqwebapp.views import BaseSectionPageView
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.ota.views import get_restore_response, get_restore_params
@@ -346,18 +347,19 @@ def system_ajax(request):
 @require_superuser_or_developer
 def check_services(request):
 
-    def run_test(service_name, test):
-        try:
-            result = test['check_func']()
-        except Exception as e:
+    def get_message(service_name, result):
+        if result.exception:
             status = "EXCEPTION"
-            msg = repr(e)
+            msg = repr(result.exception)
         else:
             status = "SUCCESS" if result.success else "FAILURE"
             msg = result.msg
         return "{} {}: {}<br/>".format(status, service_name, msg)
 
-    results = [run_test(service_name, test) for service_name, test in service_checks.CHECKS.items()]
+    statuses = run_checks(service_checks.CHECKS.items())
+    results = [
+        get_message(name, status) for name, status in statuses
+    ]
     return HttpResponse("<pre>" + "".join(results) + "</pre>")
 
 

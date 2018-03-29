@@ -5,6 +5,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from collections import namedtuple
 from io import BytesIO
+import attr
 import datetime
 import json
 import logging
@@ -31,7 +32,12 @@ from corehq.elastic import send_to_elasticsearch, refresh_elasticsearch_index
 from corehq.util.decorators import change_log_level
 from corehq.apps.hqadmin.utils import parse_celery_workers, parse_celery_pings
 
-ServiceStatus = namedtuple("ServiceStatus", "success msg")
+
+@attr.s
+class ServiceStatus(object):
+    success = attr.ib()
+    msg = attr.ib()
+    exception = attr.ib(default=None)
 
 
 def check_redis():
@@ -216,10 +222,8 @@ def run_checks(checks_to_do):
     for check, check_info in checks_to_do:
         try:
             status = check_info['check_func']()
-        except Exception:
-            # Don't display the exception message
-            status = ServiceStatus(False, "{} has issues".format(check))
-
+        except Exception as e:
+            status = ServiceStatus(False, "{} raised an error".format(check), e)
         statuses.append((check, status))
     return statuses
 
