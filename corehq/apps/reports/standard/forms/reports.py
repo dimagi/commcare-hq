@@ -58,9 +58,9 @@ class SubmissionErrorReport(DeploymentsReport):
 
     @property
     def sort_params(self):
-        sort_col_idx = int(self.request.GET.get('iSortCol_0', 2))
+        sort_col_idx = int(self.request.GET.get('iSortCol_0', None))
         col = self.headers.header[sort_col_idx]
-        sort_prop = col.prop_name
+        sort_prop = hasattr(col, "prop_name") and col.prop_name
         desc = self.request.GET.get('sSortDir_0') == 'desc'
         return sort_prop, desc
 
