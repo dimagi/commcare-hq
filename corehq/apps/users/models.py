@@ -2200,7 +2200,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         if not new:
             user_fixture_sync.last_modified = now
             user_fixture_sync.save()
-        self._get_fixture_statuses.clear(self)
+        get_fixture_statuses(self._id).clear()
 
     def __repr__(self):
         return ("{class_name}(username={self.username!r})".format(
@@ -2254,6 +2254,16 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         for device in self.devices:
             if device.device_id == device_id:
                 return device
+
+
+@quickcache(['user_id'], lambda _: settings.UNIT_TESTING)
+def get_fixture_statuses(user_id):
+    from corehq.apps.fixtures.models import UserFixtureType, UserFixtureStatus
+    last_modifieds = {choice[0]: UserFixtureStatus.DEFAULT_LAST_MODIFIED
+                      for choice in UserFixtureType.CHOICES}
+    for fixture_status in UserFixtureStatus.objects.filter(user_id=user_id):
+        last_modifieds[fixture_status.fixture_type] = fixture_status.last_modified
+    return last_modifieds
 
 
 class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
