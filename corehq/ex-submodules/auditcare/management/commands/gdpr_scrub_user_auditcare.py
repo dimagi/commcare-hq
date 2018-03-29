@@ -19,10 +19,8 @@ class Command(BaseCommand):
 
     def handle(self, username, **options):
         def update_username(event_dict):
-            audit_doc = NavigationEventAudit.wrap(event_dict)
-            audit_doc.user = new_username
             event_dict['user'] = new_username
-            return DocUpdate(doc=audit_doc)
+            return DocUpdate(doc=event_dict)
 
         new_username = "Redacted User (GDPR)"
         event_ids = navigation_event_ids_by_user(username)
