@@ -1,5 +1,6 @@
 # coding=utf-8
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import uuid
 import os
 from django.test import TestCase
@@ -15,8 +16,8 @@ class XMLElementTest(TestCase, TestFileMixin):
 
     def test_various_encodings(self):
         tests = (
-            ('utf-8', u'हिन्दी चट्टानों'),
-            ('UTF-8', u'हिन्दी चट्टानों'),
+            ('utf-8', 'हिन्दी चट्टानों'),
+            ('UTF-8', 'हिन्दी चट्टानों'),
             ('ASCII', 'hello'),
         )
         xml_template = self.get_xml('encoding')
