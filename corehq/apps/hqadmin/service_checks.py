@@ -211,6 +211,19 @@ def check_formplayer():
         return ServiceStatus(res.ok, msg)
 
 
+def run_checks(checks_to_do):
+    statuses = []
+    for check, check_info in checks_to_do:
+        try:
+            status = check_info['check_func']()
+        except Exception:
+            # Don't display the exception message
+            status = ServiceStatus(False, "{} has issues".format(check))
+
+        statuses.append((check, status))
+    return statuses
+
+
 CHECKS = {
     'kafka': {
         "always_check": True,

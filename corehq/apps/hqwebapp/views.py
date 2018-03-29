@@ -39,7 +39,7 @@ from couchdbkit import ResourceNotFound
 from two_factor.views import LoginView
 from two_factor.forms import AuthenticationTokenForm, BackupTokenForm
 from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_class
-from corehq.apps.hqadmin.service_checks import CHECKS
+from corehq.apps.hqadmin.service_checks import CHECKS, run_checks
 from corehq.apps.users.landing_pages import get_redirect_url, get_cloudcare_urlname
 
 from corehq.form_processor.utils.general import should_use_sql_backend
@@ -250,9 +250,6 @@ def server_up(req):
     Hit serverup.txt?only={check_name} to only check a specific service
     Hit serverup.txt?{check_name} to include a non-default check (currently only ``heartbeat``)
     """
-
-    failed = False
-    message = ['Problems with HQ (%s):' % os.uname()[1]]
     only = req.GET.get('only', None)
     if only and only in CHECKS:
         checks_to_do = [(only, CHECKS[only])]
@@ -263,22 +260,20 @@ def server_up(req):
             if check_info['always_check'] or req.GET.get(check, None) is not None
         ]
 
-    for check, check_info in checks_to_do:
-        try:
-            status = check_info['check_func']()
-        except Exception:
-            # Don't display the exception message
-            status = checks.ServiceStatus(False, "{} has issues".format(check))
-        if not status.success:
-            failed = True
-            message.append(status.msg)
+    statuses = run_checks(checks_to_do)
+    failed_checks = [(check, status) for check, status in statuses if not status.success]
 
-    if failed and not is_deploy_in_progress():
+    if failed_checks and not is_deploy_in_progress():
+        status_messages = [
+            '{}: {}'.format(check, status.msg)
+            for check, status in failed_checks
+        ]
         create_datadog_event(
-            'Serverup check failed', '\n'.join(message),
+            'Serverup check failed', '\n'.join(status_messages),
             alert_type='error', aggregation_key='serverup',
         )
-        return HttpResponse('<br>'.join(message), status=500)
+        status_messages.insert(0, 'Failed Checks (%s):' % os.uname()[1])
+        return HttpResponse('<br>'.join(status_messages), status=500)
     else:
         return HttpResponse("success")
 
