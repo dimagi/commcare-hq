@@ -34,9 +34,33 @@ def send_openmrs_data(requests, domain, form_json, openmrs_config, case_trigger_
     """
     workflow = []
     for info in case_trigger_infos:
-        workflow.append(
-            SyncOpenmrsPatientTask(requests, domain, info, form_json, form_question_values, openmrs_config)
-        )
+        assert isinstance(info, CaseTriggerInfo)
+        patient = get_patient(requests, domain, info, openmrs_config)
+        if patient is None:
+            return OpenmrsResponse(
+                404, 'Not Found', 'CommCare patient "{}" was not found in OpenMRS'.format(info.case_id)
+            )
+
+        workflow.extend([
+            UpdatePersonPropertiesTask(requests, info, openmrs_config, patient['person']),
+            UpdatePersonNameTask(requests, info, openmrs_config, patient['person'])
+        ])
+        if patient['person']['preferredAddress']:
+            workflow.append(
+                UpdatePersonAddressTask(requests, info, openmrs_config, patient['person'])
+            )
+        else:
+            workflow.append(
+                CreatePersonAddressTask(requests, info, openmrs_config, patient['person'])
+            )
+        workflow.extend([
+            SyncPersonAttributesTask(
+                requests, info, openmrs_config, patient['person']['uuid'], patient['person']['attributes']
+            ),
+            CreateVisitsTask(
+                requests, info, form_json, form_question_values, openmrs_config, patient['person']['uuid']
+            ),
+        ])
 
     errors = execute_workflow(workflow)
     if errors:
@@ -100,10 +124,7 @@ class CreateVisitsTask(WorkflowTask):
         provider_uuid = getattr(self.openmrs_config, 'openmrs_provider', None)
         self.info.form_question_values.update(self.form_question_values)
         for form_config in self.openmrs_config.form_configs:
-            logger.debug('Send visit for form?', form_config, self.form_json)
             if form_config.xmlns == self.form_json['form']['@xmlns']:
-                logger.debug('Yes')
-
                 subtasks.append(
                     CreateVisitTask(
                         self.requests,
@@ -120,53 +141,4 @@ class CreateVisitsTask(WorkflowTask):
                         # location_uuid=location[meta][openmrs_uuid]
                     )
                 )
-        return subtasks
-
-
-class SyncOpenmrsPatientTask(WorkflowTask):
-
-    def __init__(self, requests, domain, info, form_json, form_question_values, openmrs_config):
-        self.requests = requests
-        self.domain = domain
-        self.info = info
-        self.form_json = form_json
-        self.form_question_values = form_question_values
-        self.openmrs_config = openmrs_config
-
-    def run(self):
-        subtasks = []
-        assert isinstance(self.info, CaseTriggerInfo)
-        logger.debug('Fetching OpenMRS patient UUID with ', self.info)
-        patient = get_patient(self.requests, self.domain, self.info, self.openmrs_config)
-        if patient is None:
-            raise ValueError('CommCare patient was not found in OpenMRS')
-        person_uuid = patient['person']['uuid']
-        logger.debug('OpenMRS patient found: ', person_uuid)
-
-        subtasks.extend([
-            UpdatePersonPropertiesTask(self.requests, self.info, self.openmrs_config, patient['person']),
-
-            UpdatePersonNameTask(self.requests, self.info, self.openmrs_config, patient['person'])
-        ])
-
-        if patient['person']['preferredAddress']:
-            subtasks.append(
-                UpdatePersonAddressTask(self.requests, self.info, self.openmrs_config, patient['person'])
-            )
-        else:
-            subtasks.append(
-                CreatePersonAddressTask(self.requests, self.info, self.openmrs_config, patient['person'])
-            )
-
-        subtasks.extend([
-            SyncPersonAttributesTask(
-                self.requests, self.info, self.openmrs_config, person_uuid, patient['person']['attributes']
-            ),
-
-            CreateVisitsTask(
-                self.requests, self.info, self.form_json, self.form_question_values, self.openmrs_config,
-                person_uuid
-            ),
-        ])
-
         return subtasks
