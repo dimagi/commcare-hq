@@ -16,7 +16,7 @@ class Command(BaseCommand):
         )
 
     def handle(self, service_name, **options):
-        checks_to_do = [service_name] if service_name else CHECKS.keys()
+        checks_to_do = [service_name] if service_name else list(CHECKS)
 
         try:
             statuses = run_checks(checks_to_do)

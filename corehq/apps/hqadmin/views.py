@@ -356,7 +356,7 @@ def check_services(request):
             msg = result.msg
         return "{} (Took {:6.2f}s) {:15}: {}<br/>".format(status, result.duration, service_name, msg)
 
-    statuses = run_checks(service_checks.CHECKS.keys())
+    statuses = run_checks(list(service_checks.CHECKS))
     results = [
         get_message(name, status) for name, status in statuses
     ]
