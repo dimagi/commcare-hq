@@ -93,7 +93,7 @@ hqDefine('accounting/js/pricing_table', function () {
             return self.slug() === 'enterprise';
         });
 
-        return this;
+        return self;
     };
 
     $(function () {
