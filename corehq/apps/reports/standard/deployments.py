@@ -5,6 +5,7 @@ from collections import namedtuple
 from datetime import date, datetime, timedelta
 
 from couchdbkit import ResourceNotFound
+from django.conf import settings
 from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.http import HttpResponseRedirect
 from django.utils.translation import (ugettext as _, ugettext_lazy,
@@ -259,7 +260,6 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
                 user.last_form_app_build_version,
                 user.last_form_app_commcare_version
             ])
-
 
     def get_sql_sort(self):
         res = []
