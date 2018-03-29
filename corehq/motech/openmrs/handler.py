@@ -32,19 +32,21 @@ def send_openmrs_data(requests, domain, form_json, openmrs_config, case_trigger_
 
     .. _OpenMRS REST Web Services: https://wiki.openmrs.org/display/docs/REST+Web+Services+API+For+Clients
     """
-    workflow = []
+    errors = []
     for info in case_trigger_infos:
         assert isinstance(info, CaseTriggerInfo)
         patient = get_patient(requests, domain, info, openmrs_config)
         if patient is None:
-            return OpenmrsResponse(
-                404, 'Not Found', 'CommCare patient "{}" was not found in OpenMRS'.format(info.case_id)
-            )
+            errors.append('Warning: CommCare case "{}" was not found in OpenMRS'.format(info.case_id))
+            continue
 
-        workflow.extend([
+        # case_trigger_infos are info about all of the cases
+        # created/updated by the form. Execute a separate workflow to
+        # update each patient.
+        workflow = [
             UpdatePersonPropertiesTask(requests, info, openmrs_config, patient['person']),
             UpdatePersonNameTask(requests, info, openmrs_config, patient['person'])
-        ])
+        ]
         if patient['person']['preferredAddress']:
             workflow.append(
                 UpdatePersonAddressTask(requests, info, openmrs_config, patient['person'])
@@ -61,10 +63,16 @@ def send_openmrs_data(requests, domain, form_json, openmrs_config, case_trigger_
                 requests, info, form_json, form_question_values, openmrs_config, patient['person']['uuid']
             ),
         ])
+        errors.extend(
+            execute_workflow(workflow)
+        )
 
-    errors = execute_workflow(workflow)
     if errors:
         logger.error('Errors encountered sending OpenMRS data: %s', errors)
+        # If the form included multiple patients, some workflows may
+        # have succeeded, but don't say everything was OK if any
+        # workflows failed. (Of course most forms will only involve one
+        # case, so one workflow.)
         return OpenmrsResponse(400, 'Bad Request', pformat_json([str(e) for e in errors]))
     else:
         return OpenmrsResponse(200, 'OK', '')
