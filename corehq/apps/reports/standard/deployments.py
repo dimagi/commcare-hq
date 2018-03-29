@@ -60,7 +60,8 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
 
     @property
     def warehouse(self):
-        return settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS
+        return settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS \
+            or settings.SERVER_ENVIRONMENT == 'staging'
 
     @property
     def headers(self):
