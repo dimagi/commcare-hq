@@ -73,7 +73,7 @@
                 </div>
                 <i class="fa fa-spinner fa-spin fa-5x" data-bind="visible: showSpinner"></i>
                 <div data-bind="visible: !showSpinner()">
-                    <div class="text-muted" data-bind="visible: showNoData">{% trans "No properties found" %}</div>
+                    <div class="text-muted" data-bind="visible: showNoData">{% trans "No editable properties found" %}</div>
                     <div class="container-fluid">
                         <!-- ko foreach: visibleColumns -->
                             <div data-bind="attr: { 'class': $root.columnClass }">

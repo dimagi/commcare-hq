@@ -2,6 +2,7 @@
  *  UI for data corrections for cases and forms, which is a modal that lists out properties and an editable value
  *  for each. The modal includes a search box (which does client-side filtering only), pagination, and the option
  *  to toggle between different display properties (useful with forms, for toggling between question id and label).
+ *  The modal will be sized depending on the number of properties: small, large, or full-screen.
  *
  *  Used with reports/partials/data_corrections_trigger.html and reports/partials/data_corrections_modal.html
  *  Usage: hqImport("reports/js/data_corrections").init($triggerElement, $modalElement, options);
@@ -24,6 +25,7 @@
  *              search by a different property.
  */
 hqDefine("reports/js/data_corrections", function() {
+    // Represents a single property/value pair, e.g., a form question and its response
     var PropertyModel = function(options) {
         // Don't assert properties of options because PropertyModel allows for
         // arbitrary keys to be used as display properties. Do error if any of
@@ -42,48 +44,17 @@ hqDefine("reports/js/data_corrections", function() {
         return self;
     };
 
+    // Controls the full modal UI
     var DataCorrectionsModel = function(options) {
         hqImport("hqwebapp/js/assert_properties").assert(options, ['saveUrl', 'properties'],
             ['propertyNames', 'propertyNamesUrl', 'displayProperties', 'propertyPrefix', 'propertySuffix']);
         var self = {};
 
-        self.saveUrl = options.saveUrl;
-        self.propertyNames = ko.observableArray();  // ordered list of names, sometimes populated by ajax call because it's slow
+        // Core data, and the order in which it should be displayed
         self.properties = {};                       // map of name => PropertyModel, populated in init
-        self.searchableNames = [];
+        self.propertyNames = ko.observableArray();  // populated in init, whether names were provided in options or via ajax
 
-        self.generateSearchableNames = function() {
-            if (self.displayProperty() === 'name') {
-                self.searchableNames = self.propertyNames();
-            } else {
-                var displayPropertyObj = _.findWhere(self.displayProperties, { property: self.displayProperty() }),
-                    search = displayPropertyObj.search || displayPropertyObj.property;
-                self.searchableNames = [];
-                _.each(self.propertyNames(), function(name) {
-                    if (self.properties[name]) {
-                        self.searchableNames.push(self.properties[name][search]);
-                    }
-                });
-            }
-        };
-
-        self.displayProperties = _.isEmpty(options.displayProperties) ? [{ property: 'name' }] : options.displayProperties;
-        self.displayProperty = ko.observable(_.first(self.displayProperties).property);
-        self.updateDisplayProperty = function(newValue) {
-            self.displayProperty(newValue);
-            self.initQuery();
-            self.generateSearchableNames();
-        };
-
-        var innerTemplate = _.map(self.displayProperties, function(p) {
-            return _.template("<span data-bind='text: <%= property %>, visible: $root.displayProperty() === \"<%= property %>\"'></span>")(p);
-        }).join("");
-        self.propertyTemplate = {
-            nodes: $("<div>" + (options.propertyPrefix || "") + innerTemplate + (options.propertySuffix || "") + "</div>"),
-        };
-
-        // If there are a lot of items, make a bigger modal and render properties as columns
-        // Supports a small one-column modal, a larger two-column modal, or a full-screen three-column modal
+        // Handle modal size: small, large or full-screen, with one, two, or three columns, respectively.
         self.itemsPerColumn = 12;
         self.columnsPerPage = ko.observable(1);
         self.itemsPerPage = ko.computed(function() {
@@ -100,38 +71,27 @@ hqDefine("reports/js/data_corrections", function() {
             self.generateSearchableNames();
         });
 
-        // This modal supports pagination and a search box, all of which is done client-side
-        self.currentPage = ko.observable();
-        self.totalPages = ko.observable();  // observable because it will change if there's a search query
-        self.query = ko.observable();
-
-        self.showSpinner = ko.observable(true);
-        self.showPagination = ko.computed(function() {
-            return !self.showSpinner() && self.propertyNames().length > self.itemsPerPage();
-        });
-        self.showError = ko.observable(false);
-        self.showRetry = ko.observable(false);
-        self.disallowSave = ko.computed(function() {
-            return self.showSpinner() || self.showError();
-        });
-
-        self.incrementPage = function(increment) {
-            var newCurrentPage = self.currentPage() + increment;
-            if (newCurrentPage <= 0 || newCurrentPage > self.totalPages()) {
-                return;
-            }
-            self.currentPage(newCurrentPage);
+        // Support for displaying different property attributes (e.g., name and id)
+        self.displayProperties = _.isEmpty(options.displayProperties) ? [{ property: 'name' }] : options.displayProperties;
+        self.displayProperty = ko.observable(_.first(self.displayProperties).property);
+        self.updateDisplayProperty = function(newValue) {
+            self.displayProperty(newValue);
+            self.initQuery();
+            self.generateSearchableNames();
+        };
+        var innerTemplate = _.map(self.displayProperties, function(p) {
+            return _.template("<span data-bind='text: <%= property %>, visible: $root.displayProperty() === \"<%= property %>\"'></span>")(p);
+        }).join("");
+        self.propertyTemplate = {
+            nodes: $("<div>" + (options.propertyPrefix || "") + innerTemplate + (options.propertySuffix || "") + "</div>"),
         };
 
-        self.visibleItems = ko.observableArray([]);     // All items visible on the current page
-        self.visibleColumns = ko.observableArray([]);   // visibleItems broken down into columns for rendering; an array of arrays
-
-        self.showNoData = ko.computed(function() {
-            return !self.showError() && self.visibleItems().length === 0;
-        });
-
-        // Handle pagination and filtering, filling visibleItems with whatever should be on the current page
-        // Forces a re-render because it clears and re-fills visibleColumns
+        // Draw items on the current page, taking into account pagination and searching.
+        // visibleItems is a list of whichever properties should be displayed on the current page.
+        // visibleColumns is a list of lists: the same properties, but organized into columns
+        // to simplify the knockout template.
+        self.visibleItems = ko.observableArray([]);
+        self.visibleColumns = ko.observableArray([]);
         self.render = function() {
             var added = 0,
                 index = 0;
@@ -169,34 +129,64 @@ hqDefine("reports/js/data_corrections", function() {
             }
         };
 
+        // Pagination
+        self.currentPage = ko.observable();
+        self.totalPages = ko.observable();  // observable because it will change if there's a search query
+        self.incrementPage = function(increment) {
+            var newCurrentPage = self.currentPage() + increment;
+            if (newCurrentPage <= 0 || newCurrentPage > self.totalPages()) {
+                return;
+            }
+            self.currentPage(newCurrentPage);
+        };
+
+        // Track an array of page numbers, e.g., [1, 2, 3], used by the pagination UI.
+        // Having it as an array makes knockout rendering simpler.
+        self.visiblePages = ko.observableArray([]);
+        self.totalPages.subscribe(function(newValue) {
+            self.visiblePages(_.map(_.range(newValue), function(p) { return p + 1; }));
+        });
+        self.currentPage.subscribe(self.render);
+
+        // Search
+        self.query = ko.observable();
+        self.matchesQuery = function(propertyName) {
+            return !self.query() || propertyName.toLowerCase().indexOf(self.query().toLowerCase()) !== -1;
+        };
         self.initQuery = function() {
             self.query("");
         };
-
         self.query.subscribe(function() {
             self.currentPage(1);
             self.totalPages(Math.ceil(_.filter(self.searchableNames, self.matchesQuery).length / self.itemsPerPage()) || 1);
             self.render();
         });
 
-        // Track an array of page numbers, e.g., [1, 2, 3], to render the pagination widget.
-        // Having it as an array makes knockout rendering simpler.
-        self.visiblePages = ko.observableArray([]);
-        self.totalPages.subscribe(function(newValue) {
-            self.visiblePages(_.map(_.range(newValue), function(p) { return p + 1; }));
-        });
-
-        self.matchesQuery = function(propertyName) {
-            return !self.query() || propertyName.toLowerCase().indexOf(self.query().toLowerCase()) !== -1;
+        // Because of how search is implemented, it's useful to store a list of the values that we're going to
+        // search against, ordered the same way properties are displayed. Regenerate this list each time
+        // the current display property changes.
+        self.searchableNames = [];
+        self.generateSearchableNames = function() {
+            if (self.displayProperty() === 'name') {
+                self.searchableNames = self.propertyNames();
+            } else {
+                var displayPropertyObj = _.findWhere(self.displayProperties, { property: self.displayProperty() }),
+                    search = displayPropertyObj.search || displayPropertyObj.property;
+                self.searchableNames = [];
+                _.each(self.propertyNames(), function(name) {
+                    if (self.properties[name]) {
+                        self.searchableNames.push(self.properties[name][search]);
+                    }
+                });
+            }
         };
 
-        self.currentPage.subscribe(self.render);
-
+        // Saving
         self.submitForm = function(model, e) {
             var $button = $(e.currentTarget);
             $button.disableButton();
             $.post({
-                url: self.saveUrl,
+                url: options.saveUrl,
                 data: _.mapObject(self.properties, function(model) {
                     return model.value();
                 }),
@@ -211,6 +201,21 @@ hqDefine("reports/js/data_corrections", function() {
             return true;
         };
 
+        // Control visibility around loading (spinner is shown if names are fetched via ajax) and error handling.
+        self.showSpinner = ko.observable(true);
+        self.showPagination = ko.computed(function() {
+            return !self.showSpinner() && self.propertyNames().length > self.itemsPerPage();
+        });
+        self.showError = ko.observable(false);
+        self.showRetry = ko.observable(false);
+        self.disallowSave = ko.computed(function() {
+            return self.showSpinner() || self.showError();
+        });
+        self.showNoData = ko.computed(function() {
+            return !self.showError() && self.visibleItems().length === 0;
+        });
+
+        // Setup to do once property names exist
         self.init = function() {
             self.properties = _.extend({}, _.mapObject(options.properties, function(data, name) {
                 if (typeof(data) === "string") {
@@ -230,6 +235,7 @@ hqDefine("reports/js/data_corrections", function() {
             self.render();
         };
 
+        // Initialization: fetch property names if needed
         var _loadPropertyNames = function(names) {
             _.each(names, function(name) {
                 self.propertyNames.push(name);
