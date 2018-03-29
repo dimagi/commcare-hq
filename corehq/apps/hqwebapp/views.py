@@ -62,7 +62,6 @@ from corehq.apps.dropbox.decorators import require_dropbox_session
 from corehq.apps.dropbox.exceptions import DropboxUploadAlreadyInProgress, DropboxInvalidToken
 from corehq.apps.dropbox.models import DropboxUploadHelper
 from corehq.apps.dropbox.views import DROPBOX_ACCESS_TOKEN, DropboxAuthInitiate
-from corehq.apps.hqadmin import service_checks as checks
 from corehq.apps.hqadmin.management.commands.deploy_in_progress import DEPLOY_IN_PROGRESS_FLAG
 from corehq.apps.hqwebapp.doc_info import get_doc_info, get_object_info
 from corehq.apps.hqwebapp.encoders import LazyEncoder

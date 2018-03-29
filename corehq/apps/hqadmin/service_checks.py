@@ -3,13 +3,11 @@ A collection of functions which test the most basic operations of various servic
 """
 from __future__ import absolute_import
 from __future__ import unicode_literals
-from collections import namedtuple
 from io import BytesIO
 import attr
 import datetime
 import json
 import logging
-import time
 
 from django.core import cache
 from django.conf import settings
