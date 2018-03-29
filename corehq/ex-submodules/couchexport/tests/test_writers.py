@@ -1,5 +1,6 @@
 # coding: utf-8
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from codecs import BOM_UTF8
 from contextlib import closing
 import io
@@ -24,7 +25,7 @@ class ZippedExportWriterTests(SimpleTestCase):
         self.path_mock.get_path.return_value = 'tmp'
 
         self.writer = ZippedExportWriter()
-        self.writer.archive_basepath = '✓path'
+        self.writer.archive_basepath = '✓path'.encode('utf-8')
         self.writer.tables = [self.path_mock]
         self.writer.file = Mock()
 
@@ -34,20 +35,20 @@ class ZippedExportWriterTests(SimpleTestCase):
 
     def test_zipped_export_writer_unicode(self):
         mock_zip_file = self.MockZipFile.return_value
-        self.writer.table_names = {0: u'ひらがな'}
+        self.writer.table_names = {0: 'ひらがな'}
         self.writer._write_final_result()
         mock_zip_file.write.assert_called_with(
             'tmp',
-            os.path.join(self.writer.archive_basepath, 'ひらがな.csv')
+            os.path.join(self.writer.archive_basepath, 'ひらがな.csv'.encode('utf-8'))
         )
 
     def test_zipped_export_writer_utf8(self):
         mock_zip_file = self.MockZipFile.return_value
-        self.writer.table_names = {0: '\xe3\x81\xb2\xe3\x82\x89\xe3\x81\x8c\xe3\x81\xaa'}
+        self.writer.table_names = {0: b'\xe3\x81\xb2\xe3\x82\x89\xe3\x81\x8c\xe3\x81\xaa'}
         self.writer._write_final_result()
         mock_zip_file.write.assert_called_with(
             'tmp',
-            os.path.join(self.writer.archive_basepath, 'ひらがな.csv')
+            os.path.join(self.writer.archive_basepath, 'ひらがな.csv'.encode('utf-8'))
         )
 
 
@@ -63,7 +64,7 @@ class CsvFileWriterTests(SimpleTestCase):
         writer.write_row(headers)
         writer.finish()
         file_start = writer.get_file().read(6)
-        self.assertEqual(file_start, BOM_UTF8 + 'ham')
+        self.assertEqual(file_start, BOM_UTF8 + b'ham')
 
 
 class HtmlExportWriterTests(SimpleTestCase):

@@ -336,7 +336,7 @@ class DictExpressionSpec(JsonObject):
 class EvalExpressionSpec(JsonObject):
     type = TypeProperty('evaluator')
     statement = StringProperty(required=True)
-    context_variables = DictProperty(required=True)
+    context_variables = DictProperty()
     datatype = DataTypeProperty(required=False)
 
     def configure(self, context_variables):

@@ -13,6 +13,8 @@ from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 from corehq.apps.app_manager.app_schemas.case_properties import get_case_properties
+from corehq.apps.userreports.app_manager.data_source_meta import DATA_SOURCE_TYPE_CHOICES, \
+    get_data_source_doc_type, make_case_data_source_filter, make_form_data_source_filter
 
 from corehq.apps.userreports.reports.builder.columns import (
     QuestionColumnOption,
@@ -35,7 +37,7 @@ from corehq.apps.app_manager.models import (
 )
 from corehq.apps.app_manager.xform import XForm
 from corehq.apps.userreports import tasks
-from corehq.apps.userreports.app_manager import _clean_table_name
+from corehq.apps.userreports.app_manager.helpers import _clean_table_name
 from corehq.apps.userreports.models import (
     DataSourceBuildInformation,
     DataSourceConfiguration,
@@ -46,8 +48,6 @@ from corehq.apps.userreports.models import (
 from corehq.apps.userreports.reports.builder import (
     DEFAULT_CASE_PROPERTY_DATATYPES,
     FORM_METADATA_PROPERTIES,
-    make_case_data_source_filter,
-    make_form_data_source_filter,
     get_filter_format_from_question_type,
 )
 from corehq.apps.userreports.exceptions import BadBuilderConfigError
@@ -334,10 +334,7 @@ class DataSourceBuilder(object):
     @property
     @memoized
     def source_doc_type(self):
-        if self.source_type == "case":
-            return "CommCareCase"
-        if self.source_type == "form":
-            return "XFormInstance"
+        return get_data_source_doc_type(self.source_type)
 
     @property
     @memoized
@@ -670,7 +667,7 @@ class DataSourceForm(forms.Form):
         # TODO: Map reports.
         self.app_source_helper = ApplicationDataSourceUIHelper()
         self.app_source_helper.source_type_field.label = _('Forms or Cases')
-        self.app_source_helper.source_type_field.choices = [("case", _("Cases")), ("form", _("Forms"))]
+        self.app_source_helper.source_type_field.choices = DATA_SOURCE_TYPE_CHOICES
         self.app_source_helper.source_field.label = '<span data-bind="text: labelMap[sourceType()]"></span>'
         self.app_source_helper.bootstrap(self.domain)
         report_source_fields = self.app_source_helper.get_fields()

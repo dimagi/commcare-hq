@@ -6,7 +6,7 @@ from datetime import datetime
 from mock import patch, Mock
 from django.test import SimpleTestCase
 from corehq.apps.app_manager.models import Application
-from corehq.apps.userreports.app_manager import get_case_data_sources, get_form_data_sources
+from corehq.apps.userreports.app_manager.helpers import get_case_data_sources, get_form_data_sources
 from corehq.apps.userreports.reports.builder import DEFAULT_CASE_PROPERTY_DATATYPES
 from dimagi.utils.parsing import json_format_datetime
 

@@ -50,16 +50,13 @@ trunk: master
 name: autostaging
 branches:
   - vellum-staging # J$ 11/13
-  # - je/cythonized-jsonobject # j$ 1/8
   - fr/two-factor-mobile-users  # FR 2/7
   - jr/ejs/sms-chat # Jordan 2/16
   - mk-mock-repeater-report # MK 28-Feb
-#  - ce/auto-batches # Cal 3/5
-#  - sr-form-meta # Sravan 11-March
   - jls/privacy-policy  # Jenny 3/19
+  - jls/data-corrections-forms  # Jenny 3/27
   - nh/omrs/rollback  # Norman 2018-03-23
   - nh/omrs/location  # Norman 2018-03-24
-  - np/270364  # NP 3/26
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty

@@ -45,7 +45,7 @@
           {% endif %}
 
           {% if location.supply_point_id %}
-          <a class="btn btn-default" href="{% url "case_details" domain location.supply_point_id %}">
+          <a class="btn btn-default" href="{% url "case_data" domain location.supply_point_id %}">
             <i class="fa fa-external-link"></i> {% trans "View Location Case" %}
           </a>
           {% endif %}

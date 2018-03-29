@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from datetime import timedelta
 from dimagi.utils.data.deid_generator import DeidGenerator
 from memoized import memoized
