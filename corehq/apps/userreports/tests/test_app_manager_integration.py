@@ -40,9 +40,6 @@ class AppManagerDataSourceConfigTest(TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.app.delete()
-        # for config in DataSourceConfiguration.all():
-        #     config.delete()
-        # delete_all_report_configs()
         super(AppManagerDataSourceConfigTest, cls).tearDownClass()
 
     def setUp(self):
