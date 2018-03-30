@@ -33,9 +33,7 @@ class Command(BaseCommand):
         ET.register_namespace("n1", "http://commcarehq.org/xforms")
         ET.register_namespace("", "http://openrosa.org/formdesigner/form-processor")
 
-        namespaces = {"n0": "http://openrosa.org/jr/xforms",
-                      "n1": "http://commcarehq.org/xforms",
-                      "": "http://openrosa.org/formdesigner/form-processor"}
+        namespaces = {"n0": "http://openrosa.org/jr/xforms"}
         tree.find("n0:meta", namespaces).find("n0:username", namespaces).text = new_username
         form_attachment_xml = ET.tostring(tree)
 

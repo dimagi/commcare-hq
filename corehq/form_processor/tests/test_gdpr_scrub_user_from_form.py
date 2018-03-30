@@ -24,13 +24,13 @@ GDPR_SIMPLE_FORM = """<?xml version='1.0' ?>
         <n0:timeEnd>{time_end}</n0:timeEnd>
         <n0:username>{username}</n0:username>
         <n0:userID>{user_id}</n0:userID>
-        <n0:instanceID>{uuid}</n0:instanceID>
+        <n0:instanceID>fake_instance_id</n0:instanceID>
         <n1:appVersion xmlns:n1="http://commcarehq.org/xforms"></n1:appVersion>
     </n0:meta>
     {case_block}
 </data>"""
 
-EXPECTED_FORM = """<?xml version='1.0' ?>
+EXPECTED_FORM_XML = """<?xml version='1.0' ?>
 <data uiVersion="1" version="17" name="New Form" xmlns:jrm="http://dev.commcarehq.org/jr/xforms"
     xmlns="http://openrosa.org/formdesigner/form-processor">
     <dalmation_count>yes</dalmation_count>
@@ -40,7 +40,7 @@ EXPECTED_FORM = """<?xml version='1.0' ?>
         <n0:timeEnd>2013-04-19T16:52:02.000000Z</n0:timeEnd>
         <n0:username>replacement_username</n0:username>
         <n0:userID>cruella_deville</n0:userID>
-        <n0:instanceID>bd4643a6db384885b69e0136598e3a1a</n0:instanceID>
+        <n0:instanceID>fake_instance_id</n0:instanceID>
         <n1:appVersion xmlns:n1="http://commcarehq.org/xforms"></n1:appVersion>
     </n0:meta>
 </data>"""
@@ -71,8 +71,10 @@ class GDPRScrubUserFromFormTests(TestCase):
         new_form_xml = Command().parse_form_data(form, self.new_username)
         FormAccessors(DOMAIN).modify_attachment_xml_and_metadata(form, new_form_xml)
 
-        form_attachment_xml = form.get_attachment("form.xml")
-        self.assertXMLEqual(EXPECTED_FORM, form_attachment_xml)
+        actual_form_xml = form.get_attachment("form.xml")
+        print("EXPECTED: {}".format(EXPECTED_FORM_XML))
+        print("ACTUAL: {}".format(actual_form_xml))
+        self.assertXMLEqual(EXPECTED_FORM_XML, actual_form_xml)
 
         # # Test that the xml changed
         # form_attachment_xml = form.get_attachment("form.xml")
