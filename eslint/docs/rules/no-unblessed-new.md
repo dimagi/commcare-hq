@@ -1,36 +1,32 @@
 # Disallow new expect for specified objects. (no-unblessed-new)
 
-Please describe the origin of the rule here.
-
+Created to help make inheritance style more consistent.
 
 ## Rule Details
 
-This rule aims to...
+This rule aims to move away from use of the `new` operator except when working with built-in Javascript or
+third-party code that requires it.
 
-Examples of **incorrect** code for this rule:
+Examples of **incorrect** code for this rule, assuming options is `['Thing']`:
 
 ```js
 
-// fill me in
+var thing = new OtherThing();
 
 ```
 
-Examples of **correct** code for this rule:
+Examples of **correct** code for this rule, assuming options is `['Thing']`:
 
 ```js
 
-// fill me in
+var thing = new Thing();
 
 ```
 
 ### Options
 
-If there are any options, describe them here. Otherwise, delete this section.
+Accepts an array of names. These names are allowed to be created with `new`.
 
 ## When Not To Use It
 
-Give a short description of when it would be appropriate to turn off this rule.
-
-## Further Reading
-
-If there are other links that describe the issue this rule addresses, please include them here in a bulleted list.
+When you wish to allow pseudo-classical inheritance.

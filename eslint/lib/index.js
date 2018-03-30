@@ -1,6 +1,6 @@
 /**
  * @fileoverview Dimagi-specific ESLint rules
- * @author Jenny
+ * @author Jenny Schweers
  */
 "use strict";
 

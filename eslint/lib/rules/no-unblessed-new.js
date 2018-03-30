@@ -1,6 +1,6 @@
 /**
  * @fileoverview Disallow new expect for specified objects.
- * @author Jenny
+ * @author Jenny Schweers
  */
 "use strict";
 
