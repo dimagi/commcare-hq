@@ -41,6 +41,13 @@ class Command(BaseDataDump):
                     raise Exception("Private Sector Organization ID not set for location %s" % owner_id)
             else:
                 raise Exception("Location not found for id %s" % owner_id)
+        elif column_name == "Facility/Provider assigned to Name - ID":
+            owner_id = case.owner_id
+            location = SQLLocation.active_objects.get_or_None(location_id=owner_id)
+            if location:
+                return location.name
+            else:
+                return "Location not found with id: %s" % owner_id
         elif column_name == "Facility/Provider assigned to type":
             owner_id = case.owner_id
             location = SQLLocation.active_objects.get_or_None(location_id=owner_id)
