@@ -514,6 +514,12 @@ class SQLLocation(AdjListModel):
             user.save()
 
         _unassign_users_from_location(self.domain, self.location_id)
+        self.update_users_at_ancestor_locations()
+
+    def update_users_at_ancestor_locations(self):
+        from . tasks import update_users_at_locations
+        location_ids = list(self.get_ancestors().location_ids())
+        update_users_at_locations.delay(location_ids)
 
     def archive(self):
         """

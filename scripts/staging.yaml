@@ -51,12 +51,17 @@ name: autostaging
 branches:
   - vellum-staging # J$ 11/13
   - fr/two-factor-mobile-users  # FR 2/7
-  - jr/ejs/sms-chat # Jordan 2/16
   - mk-mock-repeater-report # MK 28-Feb
   - jls/privacy-policy  # Jenny 3/19
-  - jls/data-corrections-forms  # Jenny 3/27
+#  - jls/data-corrections-forms  # Jenny 3/27
+#  - fr/property-changes-paginated # FR 29/3
+  - property-changes-paginated+data-corrections-forms  # ^^^ NH merged 30 Mar
+#  - jr/ejs/sms-chat # Jordan 2/16
+  - jls/externalize-js-sms-chat # Jenny 3/29
+#  - sms-chat+externalize-js-sms-chat  # ^^^ NH merged optimistically 30 Mar
   - nh/omrs/rollback  # Norman 2018-03-23
   - nh/omrs/location  # Norman 2018-03-24
+  - nh/omrs/allowed_to_forward  # Norman 2018-03-30
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
