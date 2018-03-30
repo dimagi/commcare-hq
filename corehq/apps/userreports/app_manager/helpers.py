@@ -29,7 +29,7 @@ def get_case_data_source(app, case_type):
     return DataSourceConfiguration(
         domain=app.domain,
         referenced_doc_type='CommCareCase',
-        table_id=_clean_table_name(app.domain, case_type),
+        table_id=clean_table_name(app.domain, case_type),
         display_name=case_type,
         configured_filter=make_case_data_source_filter(case_type),
         configured_indicators=[
@@ -61,7 +61,7 @@ def get_form_data_source(app, form):
     return DataSourceConfiguration(
         domain=app.domain,
         referenced_doc_type='XFormInstance',
-        table_id=_clean_table_name(app.domain, form_name),
+        table_id=clean_table_name(app.domain, form_name),
         display_name=form_name,
         configured_filter=make_form_data_source_filter(xform.data_node.tag_xmlns),
         configured_indicators=[
@@ -74,7 +74,7 @@ def get_form_data_source(app, form):
     )
 
 
-def _clean_table_name(domain, readable_name):
+def clean_table_name(domain, readable_name):
     """
     Slugifies and truncates readable name to make a valid configurable report table name.
     """

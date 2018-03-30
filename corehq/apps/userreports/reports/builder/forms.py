@@ -37,7 +37,7 @@ from corehq.apps.app_manager.models import (
 )
 from corehq.apps.app_manager.xform import XForm
 from corehq.apps.userreports import tasks
-from corehq.apps.userreports.app_manager.helpers import _clean_table_name
+from corehq.apps.userreports.app_manager.helpers import clean_table_name
 from corehq.apps.userreports.models import (
     DataSourceBuildInformation,
     DataSourceConfiguration,
@@ -839,7 +839,7 @@ class ConfigureNewReportBase(forms.Form):
         data_source_config = DataSourceConfiguration(
             domain=self.domain,
             # The uuid gets truncated, so it's not really universally unique.
-            table_id=_clean_table_name(self.domain, str(uuid.uuid4().hex)),
+            table_id=clean_table_name(self.domain, str(uuid.uuid4().hex)),
             **self._get_data_source_configuration_kwargs()
         )
         data_source_config.validate()
@@ -940,7 +940,7 @@ class ConfigureNewReportBase(forms.Form):
 
         data_source_config = DataSourceConfiguration(
             domain=self.domain,
-            table_id=_clean_table_name(self.domain, uuid.uuid4().hex),
+            table_id=clean_table_name(self.domain, uuid.uuid4().hex),
             **self.ds_builder.get_temp_ds_config_kwargs(columns, filters)
         )
         data_source_config.validate()
