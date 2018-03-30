@@ -77,7 +77,7 @@ class AppDataSourceMeta(six.with_metaclass(ABCMeta, object)):
 
     @abstractmethod
     def get_filter(self):
-        return make_case_data_source_filter
+        pass
 
 
 class CaseDataSourceMeta(AppDataSourceMeta):
