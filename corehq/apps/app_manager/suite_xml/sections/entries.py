@@ -85,7 +85,7 @@ class EntriesHelper(object):
 
     @staticmethod
     def get_nodeset_xpath(case_type, filter_xpath=''):
-        return "instance('casedb')/casedb/case[@case_type='{case_type}'][@status='open']{filter_xpath}".format(
+        return u"instance('casedb')/casedb/case[@case_type='{case_type}'][@status='open']{filter_xpath}".format(
             case_type=case_type,
             filter_xpath=filter_xpath,
         )
