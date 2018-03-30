@@ -8,13 +8,9 @@
     <script src="{% static 'case_search/js/case_search.js' %}"></script>
 {% endblock js %}
 {% endcompress %}
-{% block js-inline %}
-    <script>
-     var CaseSearchModel = hqImport('case_search/js/case_search');
-     $("#case-search").koApplyBindings(new CaseSearchModel("{% url 'case_data' request.domain '___' %}"));
-    </script>
-{% endblock %}
 {% block page_content %}
+    {% registerurl 'case_data' request.domain '___' %}
+
     <div id="case-search">
         <h3>{% trans "Search Parameters" %}</h3>
         <div class="row">
