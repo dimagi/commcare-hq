@@ -18,7 +18,10 @@ from custom.enikshay.case_utils import (
 
 from custom.enikshay.const import ENROLLED_IN_PRIVATE
 from custom.enikshay.exceptions import ENikshayCaseNotFound
-from custom.enikshay.management.commands.base_data_dump import BaseDataDump
+from custom.enikshay.management.commands.base_data_dump import (
+    BaseDataDump,
+    PRIVATE_SECTOR_ID_MAPPING,
+)
 
 DOMAIN = "enikshay"
 
@@ -43,17 +46,16 @@ class Command(BaseDataDump):
             return ','.join([episode_case.case_id
                              for episode_case in self.get_all_episode_cases(case)])
         elif column_name == "Organisation":
-            private_sector_organization_id = self.get_person(case).get_case_property(
-                'private_sector_organization_id')
-            if private_sector_organization_id:
-                private_sector_organization = SQLLocation.active_objects.get_or_None(
-                    location_id=private_sector_organization_id)
-                if private_sector_organization:
-                    return private_sector_organization.name
+            owner_id = self.get_person(case).owner_id
+            location = SQLLocation.active_objects.get_or_None(location_id=owner_id)
+            if location:
+                private_sector_org_id = location.metadata.get('private_sector_org_id')
+                if private_sector_org_id:
+                    return PRIVATE_SECTOR_ID_MAPPING.get(private_sector_org_id, private_sector_org_id)
                 else:
-                    raise Exception("Could not find location with id %s" % private_sector_organization_id)
+                    raise Exception("Private Sector Organization ID not set for location %s" % owner_id)
             else:
-                raise Exception("Private sector org id not set for test %s" % case.case_id)
+                raise Exception("Location not found for id %s" % owner_id)
         elif column_name == "Nikshay ID":
             return ','.join([episode_case.get_case_property('nikshay_id')
                              for episode_case in self.get_all_episode_cases(case)

@@ -12,30 +12,12 @@ from custom.enikshay.const import (
     ENROLLED_IN_PRIVATE,
     DSTB_EPISODE_TYPE,
 )
-from custom.enikshay.management.commands.base_data_dump import BaseDataDump
+from custom.enikshay.management.commands.base_data_dump import (
+    BaseDataDump,
+    PRIVATE_SECTOR_ID_MAPPING,
+)
 
 DOMAIN = "enikshay"
-
-PRIVATE_SECTOR_ID_MAPPING = {
-    '1': "PATH",
-    '2': "MJK",
-    '3': "Alert-India",
-    '4': "WHP-Patna",
-    '5': "DTO-Mehsana",
-    '6': "Vertex",
-    '7': "Accenture",
-    '8': "BMGF",
-    '9': "EY",
-    '10': "CTD",
-    '11': "Nagpur",
-    '12': "Nagpur-rural",
-    '13': "Nagpur_Corp",
-    '14': "Surat",
-    '15': "SMC",
-    '16': "Surat_Rural",
-    '17': "Rajkot",
-    '18': "WHP-AMC"
-}
 
 
 class Command(BaseDataDump):
@@ -84,9 +66,9 @@ class Command(BaseDataDump):
                 if private_sector_org_id:
                     return PRIVATE_SECTOR_ID_MAPPING.get(private_sector_org_id, private_sector_org_id)
                 else:
-                    return "Private Sector Organization ID not set for location %s" % private_sector_org_id
+                    raise Exception("Private Sector Organization ID not set for location %s" % owner_id)
             else:
-                return "Location not found for id %s" % owner_id
+                raise Exception("Location not found for id %s" % owner_id)
         elif column_name == "Treating Provider Name":
             person_case = self.get_person(episode)
             owner_id = person_case.owner_id

@@ -10,8 +10,10 @@ from custom.enikshay.case_utils import (
     CASE_TYPE_PERSON,
 )
 from custom.enikshay.const import ENROLLED_IN_PRIVATE
-from custom.enikshay.management.commands.base_data_dump import BaseDataDump
-
+from custom.enikshay.management.commands.base_data_dump import (
+    BaseDataDump,
+    PRIVATE_SECTOR_ID_MAPPING,
+)
 DOMAIN = "enikshay"
 
 
@@ -29,15 +31,16 @@ class Command(BaseDataDump):
 
     def get_custom_value(self, column_name, case):
         if column_name == "Organisation":
-            private_sector_organization_id = case.get_case_property('private_sector_organization_id')
-            if private_sector_organization_id:
-                location = SQLLocation.active_objects.get_or_None(location_id=private_sector_organization_id)
-                if location:
-                    return location.name
+            owner_id = case.owner_id
+            location = SQLLocation.active_objects.get_or_None(location_id=owner_id)
+            if location:
+                private_sector_org_id = location.metadata.get('private_sector_org_id')
+                if private_sector_org_id:
+                    return PRIVATE_SECTOR_ID_MAPPING.get(private_sector_org_id, private_sector_org_id)
                 else:
-                    return "Location not found with id: %s" % private_sector_organization_id
+                    raise Exception("Private Sector Organization ID not set for location %s" % owner_id)
             else:
-                return "Organization Location not found on case"
+                raise Exception("Location not found for id %s" % owner_id)
         elif column_name == "Facility/Provider assigned to type":
             owner_id = case.owner_id
             location = SQLLocation.active_objects.get_or_None(location_id=owner_id)
