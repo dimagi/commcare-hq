@@ -2,14 +2,21 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import doctest
 import os
+import uuid
 from collections import namedtuple
-from unittest import TestCase
+import unittest
 import mock
+from django.test import TestCase as DjangoTestCase
+
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.locations.models import SQLLocation
+from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import XFormInstanceSQL
+# from corehq.form_processor.tests.test_case_dbaccessor import _create_case
+from corehq.motech.openmrs.const import XMLNS_OPENMRS
 from corehq.motech.openmrs.repeaters import OpenmrsRepeater
-from corehq.util.test_utils import TestFileMixin
+from corehq.util.test_utils import TestFileMixin, _create_case
 import corehq.motech.openmrs.repeater_helpers
 from corehq.motech.openmrs.repeater_helpers import (
     get_patient_by_uuid,
@@ -28,7 +35,7 @@ DOMAIN = 'test-domain'
     '65e55473-e83b-4d78-9dde-eaf949758997': CommCareCase(
         type='paciente', case_id='65e55473-e83b-4d78-9dde-eaf949758997')
 }[case_id] for case_id in case_ids])
-class OpenmrsRepeaterTest(TestCase, TestFileMixin):
+class OpenmrsRepeaterTest(unittest.TestCase, TestFileMixin):
     file_path = ('data',)
     root = os.path.dirname(__file__)
 
@@ -74,7 +81,7 @@ class OpenmrsRepeaterTest(TestCase, TestFileMixin):
         )
 
 
-class GetPatientByUuidTests(TestCase):
+class GetPatientByUuidTests(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
@@ -109,7 +116,7 @@ class GetPatientByUuidTests(TestCase):
         self.assertEqual(patient, self.patient)
 
 
-class GetFormQuestionValuesTests(TestCase):
+class GetFormQuestionValuesTests(unittest.TestCase):
 
     def test_unicode_answer(self):
         value = get_form_question_values({'form': {'foo': {'bar': u'b\u0105z'}}})
@@ -128,6 +135,50 @@ class GetFormQuestionValuesTests(TestCase):
         # Form Builder questions are expected to be ASCII
         value = get_form_question_values({'form': {'foo': {b'b\xc4\x85r': 'baz'}}})
         self.assertEqual(value, {u'/data/foo/b\u0105r': 'baz'})
+
+
+class AllowedToForwardTests(DjangoTestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        cls.owner = CommCareUser.create(DOMAIN, 'chw@example.com', '123')
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.owner.delete()
+
+    def test_update_from_openmrs(self):
+        """
+        payloads from OpenMRS should not be forwarded back to OpenMRS
+        """
+        payload = XFormInstanceSQL(
+            domain=DOMAIN,
+            xmlns=XMLNS_OPENMRS,
+        )
+        repeater = OpenmrsRepeater()
+        self.assertFalse(repeater.allowed_to_forward(payload))
+
+    def test_excluded_case_type(self):
+        """
+        If the repeater has white-listed case types, excluded case types should not be forwarded
+        """
+        case_id = uuid.uuid4().hex
+        form_payload, cases = _create_case(
+            domain=DOMAIN, case_id=case_id, case_type='notpatient', owner_id=self.owner.get_id
+        )
+        repeater = OpenmrsRepeater()
+        repeater.white_listed_case_types = ['patient']
+        self.assertFalse(repeater.allowed_to_forward(form_payload))
+
+    def test_allowed_to_forward(self):
+        """
+        If all criteria pass, the payload should be allowed to forward
+        :return:
+        """
+        case_id = uuid.uuid4().hex
+        form_payload, cases = _create_case(domain=DOMAIN, case_id=case_id, owner_id=self.owner.get_id)
+        repeater = OpenmrsRepeater()
+        self.assertTrue(repeater.allowed_to_forward(form_payload))
 
 
 joburg = SQLLocation(location_id='johannesburg')
@@ -168,7 +219,7 @@ everywhere_chw_doc = {
 everywhere_chw_owner = mock.Mock(return_value=mock.Mock(get=lambda owner_id: everywhere_chw_doc))
 
 
-class CaseLocationTests(TestCase):
+class CaseLocationTests(unittest.TestCase):
 
     @mock.patch('corehq.apps.locations.models.SQLLocation.objects.get', mock.Mock(return_value=joburg))
     def test_owner_is_location(self):
@@ -248,7 +299,7 @@ joburg_repeater = OpenmrsRepeater(
 get_repeaters_mock = mock.Mock(return_value=[cape_town_repeater, western_cape_repeater, joburg_repeater])
 
 
-class AncestorRepeaterTests(TestCase):
+class AncestorRepeaterTests(unittest.TestCase):
 
     @mock.patch('corehq.motech.openmrs.repeater_helpers.get_case_location',
                 mock.Mock(return_value=joburg))
@@ -280,7 +331,7 @@ class AncestorRepeaterTests(TestCase):
         self.assertEqual(repeaters, [cape_town_repeater])
 
 
-class DocTests(TestCase):
+class DocTests(unittest.TestCase):
 
     def test_doctests(self):
         results = doctest.testmod(corehq.motech.openmrs.repeater_helpers)
