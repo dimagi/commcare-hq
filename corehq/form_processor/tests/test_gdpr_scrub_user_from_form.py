@@ -24,7 +24,6 @@ GDPR_SIMPLE_FORM = """<?xml version='1.0' ?>
         <n0:timeEnd>{time_end}</n0:timeEnd>
         <n0:username>{username}</n0:username>
         <n0:userID>{user_id}</n0:userID>
-        <n0:instanceID>fake_instance_id</n0:instanceID>
         <n1:appVersion xmlns:n1="http://commcarehq.org/xforms"></n1:appVersion>
     </n0:meta>
     {case_block}
@@ -40,7 +39,6 @@ EXPECTED_FORM_XML = """<?xml version='1.0' ?>
         <n0:timeEnd>2013-04-19T16:52:02.000000Z</n0:timeEnd>
         <n0:username>replacement_username</n0:username>
         <n0:userID>cruella_deville</n0:userID>
-        <n0:instanceID>fake_instance_id</n0:instanceID>
         <n1:appVersion xmlns:n1="http://commcarehq.org/xforms"></n1:appVersion>
     </n0:meta>
 </data>"""
@@ -71,23 +69,14 @@ class GDPRScrubUserFromFormTests(TestCase):
         new_form_xml = Command().parse_form_data(form, self.new_username)
         FormAccessors(DOMAIN).modify_attachment_xml_and_metadata(form, new_form_xml)
 
+        # Test that the xml changed
         actual_form_xml = form.get_attachment("form.xml")
-        print("EXPECTED: {}".format(EXPECTED_FORM_XML))
-        print("ACTUAL: {}".format(actual_form_xml))
         self.assertXMLEqual(EXPECTED_FORM_XML, actual_form_xml)
 
-        # # Test that the xml changed
-        # form_attachment_xml = form.get_attachment("form.xml")
-        # form_attachment_dict = xmltodict.parse(form_attachment_xml)
-        # username_in_dict = form_attachment_dict["data"]["n0:meta"]["n0:username"]
-        #
-        # self.assertEqual(username_in_dict, self.new_username)
-        #
-        # # Test that the metadata changed in the database
-        # attachment_metadata = form.get_attachment_meta("form.xml")
-        # form_data_from_db = XFormAttachmentSQL.read_content(attachment_metadata)
-        # attachment_metadata_dict = xmltodict.parse(form_data_from_db)
-        # self.assertEqual(attachment_metadata_dict["data"]["n0:meta"]["n0:username"], self.new_username)
+        # Test that the metadata changed in the database
+        attachment_metadata = form.get_attachment_meta("form.xml")
+        actual_form_xml_from_db = XFormAttachmentSQL.read_content(attachment_metadata)
+        self.assertXMLEqual(EXPECTED_FORM_XML, actual_form_xml_from_db)
 
         # TODO: Test that the operations history is updated
 
@@ -99,10 +88,7 @@ class GDPRScrubUserFromFormTests(TestCase):
         FormAccessors(DOMAIN).modify_attachment_xml_and_metadata(form, new_form_xml)
 
         # Test that the metadata changed in the database
-        form_attachment_xml = form.get_attachment("form.xml")
-        form_attachment_dict = xmltodict.parse(form_attachment_xml)
-        username_in_dict = form_attachment_dict["data"]["n0:meta"]["n0:username"]
-
-        self.assertEqual(username_in_dict, self.new_username)
+        actual_form_xml = form.get_attachment("form.xml")
+        self.assertXMLEqual(EXPECTED_FORM_XML, actual_form_xml)
 
         # TODO: Test that the operations history is updated
