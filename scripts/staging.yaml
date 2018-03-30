@@ -59,6 +59,7 @@ branches:
   - fr/property-changes-paginated # FR 29/3
 #  - nh/omrs/location  # Norman 2018-03-24
   - jls/externalize-js-sms-chat # Jenny 3/29
+  - nh/omrs/allowed_to_forward  # Norman 2018-03-24
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
