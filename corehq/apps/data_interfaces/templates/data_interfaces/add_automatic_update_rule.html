@@ -7,9 +7,10 @@
 
 {% block js-inline %}{{ block.super }}
 <script>
-(function (angular, initial) {
     'use strict';
-    var autoUpdateRuleApp = angular.module('addUpdateRuleApp', ['ng.django.rmi']);
+    var angular = window.angular,
+        initial = hqImport("hqwebapp/js/initial_page_data").get('current_values'),
+        autoUpdateRuleApp = angular.module('addUpdateRuleApp', ['ng.django.rmi']);
 
     autoUpdateRuleApp.config(['$httpProvider', function($httpProvider) {
         $httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
@@ -19,7 +20,7 @@
     }]);
 
     autoUpdateRuleApp.config(function(djangoRMIProvider) {
-        djangoRMIProvider.configure({% djng_current_rmi %});
+        djangoRMIProvider.configure(hqImport("hqwebapp/js/initial_page_data").get('djng_current_rmi'));
     });
 
     autoUpdateRuleApp.controller('UpdateRuleController', function($scope, djangoRMI) {
@@ -90,11 +91,12 @@
             $scope.init_typeahead();
         });
     });
-}(window.angular, {{ form.current_values|JSON }}));
 </script>
 {% endblock %}
 
 {% block page_content %}
+{% initial_page_data 'current_values' form.current_values %}
+{% initial_page_data 'djng_current_rmi' djng_current_rmi %}
 <div ng-app="addUpdateRuleApp" ng-controller="UpdateRuleController" ng-cloak>
     <div id="add-rule-form">
         {% crispy form %}
