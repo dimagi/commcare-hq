@@ -1,17 +1,44 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-import json
 import os
 from datetime import datetime
+
+from django.test import TestCase
 from mock import patch, Mock
-from django.test import SimpleTestCase
-from corehq.apps.app_manager.models import Application
+from corehq.apps.app_manager.models import Application, Module
+from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.userreports.app_manager.helpers import get_case_data_sources, get_form_data_sources
 from corehq.apps.userreports.reports.builder import DEFAULT_CASE_PROPERTY_DATATYPES
 from dimagi.utils.parsing import json_format_datetime
 
 
-class AppManagerDataSourceConfigTest(SimpleTestCase):
+class AppManagerDataSourceConfigTest(TestCase):
+    domain = 'userreports_test'
+    case_type = 'app_data_case'
+    case_properties = ['first_name', 'last_name', 'children', 'dob']
+
+    @classmethod
+    def setUpClass(cls):
+        super(AppManagerDataSourceConfigTest, cls).setUpClass()
+        cls.app = Application.new_app(cls.domain, 'Application Data Source App')
+        module = cls.app.add_module(Module.new_module('Untitled Module', None))
+        module.case_type = cls.case_type
+        with open(os.path.join(os.path.dirname(__file__), 'data', 'forms', 'simple.xml')) as f:
+            form_source = f.read()
+        cls.form = cls.app.new_form(module.id, "Untitled Form", 'en', form_source)
+        AppFactory.form_requires_case(cls.form, case_type=cls.case_type, update={
+            cp: '/data/{}'.format(cp) for cp in cls.case_properties
+        })
+        cls.app.save()
+        cls.app = Application.get(cls.app._id)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.app.delete()
+        # for config in DataSourceConfiguration.all():
+        #     config.delete()
+        # delete_all_report_configs()
+        super(AppManagerDataSourceConfigTest, cls).tearDownClass()
 
     def setUp(self):
         self.is_usercase_in_use_patch = patch('corehq.apps.app_manager.models.is_usercase_in_use')
@@ -21,40 +48,35 @@ class AppManagerDataSourceConfigTest(SimpleTestCase):
     def tearDown(self):
         self.is_usercase_in_use_patch.stop()
 
-    def get_json(self, name):
-        with open(os.path.join(os.path.dirname(__file__), 'data', 'app_manager', name)) as f:
-            return json.loads(f.read())
-
     @patch('corehq.apps.userreports.specs.datetime')
     @patch('corehq.apps.app_manager.app_schemas.case_properties.get_per_type_defaults', Mock(return_value={}))
     def test_simple_case_management(self, datetime_mock):
         fake_time_now = datetime(2015, 4, 24, 12, 30, 8, 24886)
         datetime_mock.utcnow.return_value = fake_time_now
 
-        app = Application.wrap(self.get_json('simple_app.json'))
-        self.assertEqual('userreports_test', app.domain)
+        app = self.app
         data_sources = get_case_data_sources(app)
         self.assertEqual(1, len(data_sources))
-        data_source = data_sources['ticket']
-        self.assertEqual(app.domain, data_source.domain)
+        data_source = data_sources[self.case_type]
+        self.assertEqual(self.domain, data_source.domain)
         self.assertEqual('CommCareCase', data_source.referenced_doc_type)
-        self.assertEqual('ticket', data_source.table_id)
-        self.assertEqual('ticket', data_source.display_name)
+        self.assertEqual(self.case_type, data_source.table_id)
+        self.assertEqual(self.case_type, data_source.display_name)
 
         # test the filter
         self.assertTrue(data_source.filter(
-            {'doc_type': 'CommCareCase', 'domain': app.domain, 'type': 'ticket'}))
+            {'doc_type': 'CommCareCase', 'domain': self.domain, 'type': self.case_type}))
         self.assertFalse(data_source.filter(
-            {'doc_type': 'CommCareCase', 'domain': 'wrong domain', 'type': 'ticket'}))
+            {'doc_type': 'CommCareCase', 'domain': 'wrong-domain', 'type': self.case_type}))
         self.assertFalse(data_source.filter(
-            {'doc_type': 'NotCommCareCase', 'domain': app.domain, 'type': 'ticket'}))
+            {'doc_type': 'NotCommCareCase', 'domain': self.domain, 'type': self.case_type}))
         self.assertFalse(data_source.filter(
-            {'doc_type': 'CommCareCase', 'domain': app.domain, 'type': 'not-ticket'}))
+            {'doc_type': 'CommCareCase', 'domain': self.domain, 'type': 'wrong-type'}))
 
         # check the indicators
         expected_columns = set(
             ["doc_id", "modified_on", "user_id", "opened_on",
-             "owner_id", "name", "category", "priority", "starred", "estimate", "inserted_at"]
+             "owner_id", 'inserted_at', 'name'] + self.case_properties
         )
         self.assertEqual(expected_columns, set(col_back.id for col_back in data_source.get_columns()))
 
@@ -69,11 +91,11 @@ class AppManagerDataSourceConfigTest(SimpleTestCase):
             owner_id="0923409230948",
             name="priority ticket",
             domain=app.domain,
-            type='ticket',
-            category='bug',
-            priority='4',
-            starred='yes',
-            estimate='2',
+            type=self.case_type,
+            first_name='test first',
+            last_name='test last',
+            children='3',
+            dob='2001-01-01',
         )
 
         def _get_column_property(column):
@@ -100,10 +122,9 @@ class AppManagerDataSourceConfigTest(SimpleTestCase):
                     )
 
     def test_simple_form_management(self):
-        app = Application.wrap(self.get_json('simple_app.json'))
-        self.assertEqual('userreports_test', app.domain)
+        app = self.app
         data_sources = get_form_data_sources(app)
         self.assertEqual(1, len(data_sources))
-        data_source = data_sources['http://openrosa.org/formdesigner/AF6F83BA-09A9-4773-9177-AB51EA6CF802']
+        data_source = data_sources[self.form.xmlns]
         for indicator in data_source.configured_indicators:
             self.assertIsNotNone(indicator)
