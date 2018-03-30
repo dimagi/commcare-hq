@@ -60,6 +60,16 @@ class Command(BaseDataDump):
                              for episode_case in self.get_all_episode_cases(case)
                              if episode_case.get_case_property('nikshay_id')
                              ])
+        elif column_name == "Lab Name and ID":
+            testing_facility_id = case.get_case_property('testing_facility_id')
+            if testing_facility_id:
+                try:
+                    testing_facility = SQLLocation.active_objects.get(location_id=testing_facility_id)
+                    return testing_facility.name
+                except SQLLocation.DoesNotExist:
+                    raise Exception("Could not find location with id %s" % testing_facility_id)
+            else:
+                raise Exception("Testing facility id not set for test %s" % case.case_id)
         raise Exception("unknown custom column %s" % column_name)
 
     def get_case_ids_query(self, case_type):
