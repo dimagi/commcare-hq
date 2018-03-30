@@ -772,13 +772,9 @@ def update_users_at_locations(location_ids):
     """
     Notify users at parent locations that locations fixture has been updated
     """
+    from corehq.apps.users.models import update_fixture_status_for_users
     from corehq.apps.locations.dbaccessors import user_ids_at_locations
     from corehq.apps.fixtures.models import UserFixtureType
-    from corehq.apps.users.models import CommCareUser
-    from dimagi.utils.couch.database import iter_docs
 
     user_ids = user_ids_at_locations(location_ids)
-    for doc in iter_docs(CommCareUser.get_db(), user_ids):
-        user = CommCareUser.wrap(doc)
-        if user.is_commcare_user():
-            user.update_fixture_status(UserFixtureType.LOCATION)
+    update_fixture_status_for_users(user_ids, UserFixtureType.LOCATION)

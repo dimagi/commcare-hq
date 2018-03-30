@@ -2247,6 +2247,20 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
                 return device
 
 
+def update_fixture_status_for_users(user_ids, fixture_type):
+    from corehq.apps.fixtures.models import UserFixtureStatus
+    from dimagi.utils.chunked import chunked
+
+    now = datetime.utcnow()
+    for ids in chunked(user_ids, 50):
+        (UserFixtureStatus.objects
+         .filter(user_id__in=ids,
+                 fixture_type=fixture_type)
+         .update(last_modified=now))
+    for user_id in user_ids:
+        get_fixture_statuses.clear(user_id)
+
+
 @quickcache(['user_id'], lambda _: settings.UNIT_TESTING)
 def get_fixture_statuses(user_id):
     from corehq.apps.fixtures.models import UserFixtureType, UserFixtureStatus
