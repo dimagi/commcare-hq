@@ -10,6 +10,7 @@
         <link type="text/less" rel="stylesheet" media="all" href="{% static 'hqwebapp/less/style.less' %}"/>
         {% endcompress %}
         {% javascript_libraries ko=True %}
+        <script src="{% static "sms/js/chat.js" %}"></script>
         <style>
             html, body {
                 height: 100%;
@@ -135,6 +136,7 @@
             </table>
         </div>
         <script>
+            var initialPageData = hqImport("hqwebapp/js/initial_page_data");
             $(function() {
                 function resize_messages() {
                     body_height = $("body").height();
@@ -177,7 +179,7 @@
                     self.title_flag = true;
                     self.is_focused = true;
                     self.message_count = ko.observable(0);
-                    self.message_count_threshold = {{ message_count_threshold }};
+                    self.message_count_threshold = initialPageData.get("message_count_threshold");
                     self.first_update = true;
                     self.last_read_message_utc_timestamp = null;
                     self.allow_highlights_to_disappear = false;
@@ -198,9 +200,9 @@
                     self.update_in_progress = false;
 
                     self.history_choices = ko.observableArray([]);
-                    {% for description, timestamp in history_choices %}
-                    self.history_choices.push(new MessageHistoryChoice("{{ description }}", "{{ timestamp }}"));
-                    {% endfor %}
+                    _.each(initialPageData.get('history_choice'), function(timestamp, description) {
+                        self.history_choices.push(new MessageHistoryChoice(description, timestamp));
+                    });
                     self.selected_history_choice = ko.observable();
                     // false until the user selects one of the history choices
                     self.history_choice_selected = false;
@@ -223,13 +225,13 @@
                     self.update_messages = function(set_next_timeout) {
                         self.update_in_progress = true;
                         payload = {
-                            contact_id : "{{ contact_id }}"
+                            contact_id : initialPageData.get("contact_id"),
                         };
                         if(self.latest_message_utc_timestamp != null) {
                             payload.start_date = self.latest_message_utc_timestamp;
                         }
                         request = $.ajax({
-                            url : "{% url 'api_history' domain %}",
+                            url : initialPageData.reverse('api_history'),
                             data : payload,
                             async : true,
                             dataType : "json",
@@ -292,11 +294,11 @@
                     self.send_message = function() {
                         $("#send_sms_button").prop("disabled", true);
                         request = $.ajax({
-                            url : "{% url 'api_send_sms' domain %}",
+                            url : initialPageData.reverse('api_send_sms'),
                             type : "POST",
                             data : {
-                                contact_id : "{{ contact_id }}",
-                                vn_id: "{{ vn_id|default:'' }}",
+                                contact_id : initialPageData.get("contact_id"),
+                                vn_id: initialPageData.get("vn_id"),
                                 chat : "true",
                                 text : $("#text_box").val()
                             }
@@ -371,7 +373,7 @@
                         self.flash_off();
                     };
                     self.flash_on = function() {
-                        document.title = "{% trans '(New Message)' %} - " + self.original_title;
+                        document.title = gettext("(New Message) - ") + self.original_title;
                         $("body").css("background-color", "#6060FF");
                     };
                     self.flash_off = function() {
@@ -396,11 +398,11 @@
                     };
                     self.update_last_read_message = function() {
                         request = $.ajax({
-                            url : "{% url 'api_last_read_message' domain %}",
+                            url : initialPageData.reverse('api_last_read_message'),
                             type : "GET",
                             async : false,
                             data : {
-                                contact_id : "{{ contact_id }}",
+                                contact_id : initialPageData.get("contact_id"),
                             },
                             dataType : "json",
                             success : function(data, textStatus, jqXHR) {
@@ -434,5 +436,24 @@
                 resize_messages();
             });
         </script>
+
+        {% initial_page_data 'contact_id' contact_id %}
+        {% initial_page_data 'history_choices' history_choices %}
+        {% initial_page_data 'message_count_threshold' message_count_threshold %}
+        {% initial_page_data 'vn_id' vn_id|default:'' %}
+        {% registerurl 'api_last_read_message' domain %}
+        {% registerurl 'api_send_sms' domain %}
+        {% registerurl 'api_history' domain %}
+
+        <div class="initial-page-data" class="hide">
+        {% block initial_page_data %}
+            {# do not override this block, use initial_page_data template tag to populate #}
+        {% endblock %}
+        </div>
+        <div class="commcarehq-urls" class="hide">
+        {% block registered_urls %}
+            {# do not override this block, use registerurl template tag to populate #}
+        {% endblock %}
+        </div>
     </body>
 </html>
