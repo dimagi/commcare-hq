@@ -126,7 +126,7 @@ hqDefine('app_manager/js/releases/releases', function () {
         self.get_app_code = function() {
             var shortOdkUrl = self.get_short_odk_url();
             if (shortOdkUrl) {
-                self.app_code(self.parse_bitly_url(short_odk_url));
+                self.app_code(self.parse_bitly_url(shortOdkUrl));
             }
         };
 
