@@ -31,7 +31,11 @@ from corehq.apps.cachehq.mixins import (
     CachedCouchDocumentMixin,
     QuickCachedDocumentMixin,
 )
-from corehq.apps.userreports.const import UCR_SQL_BACKEND, VALID_REFERENCED_DOC_TYPES
+from corehq.apps.userreports.const import (
+    FILTER_INTERPOLATION_DOC_TYPES,
+    UCR_SQL_BACKEND,
+    VALID_REFERENCED_DOC_TYPES
+)
 from corehq.apps.userreports.dbaccessors import get_number_of_report_configs_by_data_source, \
     get_report_configs_for_domain, get_datasources_for_domain
 from corehq.apps.userreports.exceptions import (
@@ -375,40 +379,37 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
         If this can't figure out the case types or xmlns's that filter, then returns [None]
         Currently returns [None] due to a loop in _iteratively_build_table
         """
-        def _get_property_value(config_filter, prop_name):
-            filter_type = config_filter.get('type')
-            if filter_type == 'and':
-                sub_config_filters = [
-                    _get_property_value(f, prop_name)
-                    for f in config_filter.get('filters')
-                ]
-                for filter_ in sub_config_filters:
-                    if filter_[0]:
-                        return filter_
-
-            if filter_type != 'boolean_expression':
-                return [None]
-
-            if config_filter['operator'] not in ('eq', 'in'):
-                return [None]
-
-            expression = config_filter['expression']
-            if expression['type'] == 'property_name' and expression['property_name'] == prop_name:
-                prop_value = config_filter['property_value']
-                if not isinstance(prop_value, list):
-                    prop_value = [prop_value]
-                return prop_value
+        if self.referenced_doc_type not in FILTER_INTERPOLATION_DOC_TYPES:
             return [None]
 
-        if self.referenced_doc_type == 'CommCareCase':
-            prop_value = _get_property_value(self.configured_filter, 'type')
-            if prop_value:
-                return prop_value
-        elif self.referenced_doc_type == 'XFormInstance':
-            prop_value = _get_property_value(self.configured_filter, 'xmlns')
-            if prop_value:
-                return prop_value
+        property_name = FILTER_INTERPOLATION_DOC_TYPES[self.referenced_doc_type]
+        prop_value = self._filter_interploation_helper(self.configured_filter, property_name)
 
+        return prop_value or [None]
+
+    def _filter_interploation_helper(self, config_filter, property_name):
+        filter_type = config_filter.get('type')
+        if filter_type == 'and':
+            sub_config_filters = [
+                self._filter_interploation_helper(f, property_name)
+                for f in config_filter.get('filters')
+            ]
+            for filter_ in sub_config_filters:
+                if filter_[0]:
+                    return filter_
+
+        if filter_type != 'boolean_expression':
+            return [None]
+
+        if config_filter['operator'] not in ('eq', 'in'):
+            return [None]
+
+        expression = config_filter['expression']
+        if expression['type'] == 'property_name' and expression['property_name'] == property_name:
+            prop_value = config_filter['property_value']
+            if not isinstance(prop_value, list):
+                prop_value = [prop_value]
+            return prop_value
         return [None]
 
 
