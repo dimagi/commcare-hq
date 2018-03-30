@@ -78,7 +78,7 @@ class AppManagerDataSourceConfigTest(TestCase):
         # check the indicators
         expected_columns = set(
             ["doc_id", "modified_on", "user_id", "opened_on",
-             "owner_id", 'inserted_at', 'name'] + self.case_properties.keys()
+             "owner_id", 'inserted_at', 'name'] + list(self.case_properties.keys())
         )
         self.assertEqual(expected_columns, set(col_back.id for col_back in data_source.get_columns()))
 
