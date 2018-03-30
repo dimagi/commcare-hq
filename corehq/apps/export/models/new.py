@@ -21,6 +21,7 @@ from corehq.apps.app_manager.app_schemas.case_properties import ParentCaseProper
     get_case_properties
 
 from corehq.apps.reports.models import HQUserType
+from corehq.apps.userreports.app_manager.data_source_meta import get_form_indicator_data_type
 from corehq.blobs import get_blob_db
 from corehq.blobs.atomic import AtomicBlobs
 from corehq.blobs.exceptions import NotFound
@@ -156,6 +157,7 @@ class ExportItem(DocumentSchema):
     tag = StringProperty()
     last_occurrences = DictProperty()
     transform = StringProperty(choices=list(TRANSFORM_FUNCTIONS))
+    datatype = StringProperty()  # this is not used by exports, but other things that use this schema (e.g. app-based UCRs)
 
     # True if this item was inferred from different actions in HQ (i.e. case upload)
     # False if the item was found in the application structure
@@ -206,6 +208,7 @@ class ExportItem(DocumentSchema):
             path=_question_path_to_path_nodes(question['value'], repeats),
             label=question['label'],
             last_occurrences={app_id: app_version},
+            datatype=get_form_indicator_data_type(question['type'])
         )
 
     @classmethod
