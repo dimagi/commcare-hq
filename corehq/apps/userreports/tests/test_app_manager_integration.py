@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import os
+from copy import copy
 from datetime import datetime
 
 from django.test import TestCase
@@ -15,7 +16,12 @@ from dimagi.utils.parsing import json_format_datetime
 class AppManagerDataSourceConfigTest(TestCase):
     domain = 'userreports_test'
     case_type = 'app_data_case'
-    case_properties = ['first_name', 'last_name', 'children', 'dob']
+    case_properties = {
+        'first_name': 'string',
+        'last_name': 'string',
+        'children': 'integer',
+        'dob': 'date',
+    }
 
     @classmethod
     def setUpClass(cls):
@@ -27,7 +33,7 @@ class AppManagerDataSourceConfigTest(TestCase):
             form_source = f.read()
         cls.form = cls.app.new_form(module.id, "Untitled Form", 'en', form_source)
         AppFactory.form_requires_case(cls.form, case_type=cls.case_type, update={
-            cp: '/data/{}'.format(cp) for cp in cls.case_properties
+            cp: '/data/{}'.format(cp) for cp in cls.case_properties.keys()
         })
         cls.app.save()
         cls.app = Application.get(cls.app._id)
@@ -76,7 +82,7 @@ class AppManagerDataSourceConfigTest(TestCase):
         # check the indicators
         expected_columns = set(
             ["doc_id", "modified_on", "user_id", "opened_on",
-             "owner_id", 'inserted_at', 'name'] + self.case_properties
+             "owner_id", 'inserted_at', 'name'] + self.case_properties.keys()
         )
         self.assertEqual(expected_columns, set(col_back.id for col_back in data_source.get_columns()))
 
@@ -121,10 +127,25 @@ class AppManagerDataSourceConfigTest(TestCase):
                         default_case_property_datatypes[result.column.id]
                     )
 
-    def test_simple_form_management(self):
+    def test_simple_form_data_source(self):
         app = self.app
         data_sources = get_form_data_sources(app)
         self.assertEqual(1, len(data_sources))
         data_source = data_sources[self.form.xmlns]
+        form_properties = copy(self.case_properties)
+        form_properties['state'] = 'string'
+        meta_properties = {
+            'username': 'string',
+            'userID': 'string',
+            'timeStart': 'datetime',
+            'timeEnd': 'datetime',
+            'deviceID': 'string',
+        }
+        expected_props = len(form_properties) + len(meta_properties)
+        self.assertEqual(expected_props, len(data_source.configured_indicators))
         for indicator in data_source.configured_indicators:
-            self.assertIsNotNone(indicator)
+            if indicator['display_name'] in form_properties:
+                datatype = form_properties.pop(indicator['display_name'])
+            else:
+                datatype = meta_properties.pop(indicator['display_name'])
+            self.assertEqual(datatype, indicator['datatype'])
