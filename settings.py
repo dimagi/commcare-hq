@@ -2339,5 +2339,4 @@ IS_LOCATION_CTE_ENABLED = UNIT_TESTING or SERVER_ENVIRONMENT in [
     'localdev',
     'changeme',  # default value in localsettings.example.py
     'staging',
-    'softlayer',
 ]
