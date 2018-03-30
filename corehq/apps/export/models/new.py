@@ -157,7 +157,8 @@ class ExportItem(DocumentSchema):
     tag = StringProperty()
     last_occurrences = DictProperty()
     transform = StringProperty(choices=list(TRANSFORM_FUNCTIONS))
-    datatype = StringProperty()  # this is not used by exports, but other things that use this schema (e.g. app-based UCRs)
+    # this is not used by exports, but other things that use this schema (e.g. app-based UCRs)
+    datatype = StringProperty()
 
     # True if this item was inferred from different actions in HQ (i.e. case upload)
     # False if the item was found in the application structure
