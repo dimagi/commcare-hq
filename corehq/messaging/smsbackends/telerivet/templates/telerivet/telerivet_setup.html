@@ -7,9 +7,9 @@
 
 {% block js-inline %}{{ block.super }}
 <script>
-(function (angular) {
     'use strict';
-    var telerivetSetupApp = angular.module('telerivetSetupApp', ['ngRoute', 'ng.django.rmi']);
+    var initialPageData = hqImport("hqwebapp/js/initial_page_data").get,
+        telerivetSetupApp = window.angular.module('telerivetSetupApp', ['ngRoute', 'ng.django.rmi']);
 
     var globalApiKey = '';
     var globalProjectId = '';
@@ -25,7 +25,7 @@
     }]);
 
     telerivetSetupApp.config(function(djangoRMIProvider) {
-        djangoRMIProvider.configure({% djng_current_rmi %});
+        djangoRMIProvider.configure(initialPageData('djng_current_rmi'));
     });
 
     telerivetSetupApp.config(function($routeProvider) {
@@ -44,8 +44,8 @@
         $scope.projectId = globalProjectId;
         $scope.phoneId = globalPhoneId;
         $scope.testPhoneNumber = globalTestPhoneNumber;
-        $scope.name = {{ finalize_gateway_form.name.value|JSON }};
-        $scope.setAsDefault = {{ finalize_gateway_form.set_as_default.value|JSON }};
+        $scope.name = initialPageData('form_name');
+        $scope.setAsDefault = initialPageData('form_set_as_default');
 
         // error messages
         $scope.apiKeyError = null;
@@ -93,7 +93,7 @@
                 project_id: $scope.projectId,
                 phone_id: $scope.phoneId,
                 test_phone_number: $scope.testPhoneNumber,
-                request_token: '{{ request_token }}',
+                request_token: initialPageData('request_token'),
             })
             .success(function(data) {
                 $('#id_send_sms_button')
@@ -117,14 +117,14 @@
                 api_key: $scope.apiKey,
                 project_id: $scope.projectId,
                 phone_id: $scope.phoneId,
-                request_token: '{{ request_token }}',
+                request_token: initialPageData('request_token'),
                 set_as_default: $scope.setAsDefault
             })
             .success(function(data) {
                 if(data.success) {
                     $scope.setupComplete = true;
                     setTimeout(function() {
-                        window.location.href = '{{ gateway_list_url }}';
+                        window.location.href = initialPageData('gateway_list_url')
                     }, 2000);
                 } else {
                     $scope.nameError = data.unexpected_error || data.name_error;
@@ -144,7 +144,7 @@
 
         $scope.getLastInboundSMS = function() {
             djangoRMI.get_last_inbound_sms({
-                request_token: '{{ request_token }}',
+                request_token: initialPageData('request_token'),
             })
             .success(function(data) {
                 if(data.success) {
@@ -193,12 +193,16 @@
             globalTestSMSSent = newValue;
         });
     });
-}(window.angular));
 </script>
 {% endblock %}
 
 
 {% block page_content %}
+{% initial_page_data 'djng_current_rmi' djng_current_rmi %}
+{% initial_page_data 'form_name' finalize_gateway_form.name.value %}
+{% initial_page_data 'form_set_as_default' finalize_gateway_form.set_as_default.value %}
+{% initial_page_data 'gateway_list_url' gateway_list_url %}
+{% initial_page_data 'request_token' request_token %}
 <div ng-app="telerivetSetupApp">
     {% include "telerivet/partials/start.html" %}
     {% include "telerivet/partials/step1.html" %}
