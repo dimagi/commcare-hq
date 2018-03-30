@@ -171,7 +171,8 @@ requires proptable.css to be included in the main template
         <ul class="list-inline">
             {% if instance.app_id %}<li><a href="{% url "view_app" domain instance.app_id %}">{% trans "View app" %}</a></li>{% endif %}
             {% if instance.build_id and request.user.is_superuser %}
-                <a href="{% url "download_index" domain instance.build_id %}">{% trans "View build" %}</a>
+                <li><a href="{% url "download_index" domain instance.build_id %}">{% trans "View build" %}</a></li>
+                <li><a href="{{ download_url }}?download=true">{% trans "Download Form Source" %} <i class='fa fa-download'></i></a></li>
             {% endif %}
         </ul>
     </div>

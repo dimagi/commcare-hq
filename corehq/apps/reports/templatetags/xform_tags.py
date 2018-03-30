@@ -15,6 +15,7 @@ from corehq import privileges
 from corehq.apps.cloudcare import CLOUDCARE_DEVICE_ID
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 
+from corehq.apps.app_manager.util import get_form_source_download_url
 from corehq.apps.receiverwrapper.auth import AuthContext
 from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id, DocInfo
 from corehq.apps.locations.permissions import can_edit_form_location
@@ -99,6 +100,7 @@ def render_form(form, domain, options):
         "context_case_id": case_id,
         "instance": form,
         "is_archived": form.is_archived,
+        "download_url": get_form_source_download_url(form),
         "edit_info": _get_edit_info(form),
         "domain": domain,
         'question_list_not_found': question_list_not_found,

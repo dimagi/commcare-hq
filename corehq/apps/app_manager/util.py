@@ -658,3 +658,20 @@ class LatestAppInfo(object):
             "latest_apk_version": self.get_latest_apk_version(),
             "latest_ccz_version": self.get_latest_app_version(),
         }
+
+
+def get_form_source_download_url(xform):
+    """Returns the download url for the form source for a submitted XForm
+    """
+    from corehq.apps.app_manager.models import Application
+    app = Application.get(xform.build_id)
+    try:
+        form = app.get_forms_by_xmlns(xform.xmlns)[0]
+    except KeyError:
+        return None
+
+    return reverse("app_download_file", args=[
+        xform.domain,
+        xform.build_id,
+        app.get_form_filename(module=form.get_module(), form=form),
+    ])
