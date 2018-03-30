@@ -55,50 +55,54 @@ BOTTOM_MAIN_FORM_TABLE_PROPERTIES = [
     ExportColumn(
         tags=[PROPERTY_TAG_INFO],
         label='completed_time',
-        item=ExportItem(path=[
-            PathNode(name='form'), PathNode(name='meta'), PathNode(name='timeEnd')
-        ]),
+        item=ExportItem(
+            path=[PathNode(name='form'), PathNode(name='meta'), PathNode(name='timeEnd')],
+            datatype='datetime',
+        ),
         help_text=_('The time at which this form was completed'),
         selected=True,
     ),
     ExportColumn(
         tags=[PROPERTY_TAG_INFO],
         label='started_time',
-        item=ExportItem(path=[
-            PathNode(name='form'), PathNode(name='meta'), PathNode(name='timeStart')
-        ]),
+        item=ExportItem(
+            path=[PathNode(name='form'), PathNode(name='meta'), PathNode(name='timeStart')],
+            datatype='datetime',
+        ),
         help_text=_('The time at which this form was started'),
         selected=True,
     ),
     ExportColumn(
         tags=[PROPERTY_TAG_INFO],
         label='username',
-        item=ExportItem(path=[
-            PathNode(name='form'), PathNode(name='meta'), PathNode(name='username')
-        ]),
+        item=ExportItem(
+            path=[PathNode(name='form'), PathNode(name='meta'), PathNode(name='username')],
+            datatype='string',
+        ),
         help_text=_('The username of the user who submitted this form'),
         selected=True,
     ),
     ExportColumn(
         tags=[PROPERTY_TAG_INFO],
         label='userID',
-        item=ExportItem(path=[
-            PathNode(name='form'), PathNode(name='meta'), PathNode(name='userID')
-        ]),
+        item=ExportItem(
+            path=[PathNode(name='form'), PathNode(name='meta'), PathNode(name='userID')],
+            datatype='string',
+        ),
         is_advanced=True,
         help_text=_("The ID of the user who submitted this form")
     ),
     ExportColumn(
         tags=[PROPERTY_TAG_INFO],
         label='@xmlns',
-        item=ExportItem(path=[PathNode(name='xmlns')]),
+        item=ExportItem(path=[PathNode(name='xmlns')], datatype='string'),
         is_advanced=True,
         help_text=_('The XMLNS of this form')
     ),
     ExportColumn(
         tags=[PROPERTY_TAG_INFO],
         label='@name',
-        item=ExportItem(path=[PathNode(name='form'), PathNode(name='@name')]),
+        item=ExportItem(path=[PathNode(name='form'), PathNode(name='@name')], datatype='string'),
         is_advanced=True,
         help_text=_('The name of this form')
     ),
@@ -106,89 +110,92 @@ BOTTOM_MAIN_FORM_TABLE_PROPERTIES = [
         tags=[PROPERTY_TAG_INFO],
         label='App Version',
         item=ExportItem(path=[
-            PathNode(name='form'), PathNode(name='meta'), PathNode(name='appVersion')
+            PathNode(name='form'), PathNode(name='meta'), PathNode(name='appVersion', datatype='string')
         ]),
         is_advanced=True,
         help_text=_('The version of CommCare and the app that was used to submit this form')),
     ExportColumn(
         tags=[PROPERTY_TAG_INFO],
         label='deviceID',
-        item=ExportItem(path=[
-            PathNode(name='form'), PathNode(name='meta'), PathNode(name='deviceID')
-        ]),
+        item=ExportItem(
+            path=[PathNode(name='form'), PathNode(name='meta'), PathNode(name='deviceID')],
+            datatype='string',
+        ),
         is_advanced=True,
         help_text=_("The ID of the device that submitted this form")
     ),
     SplitGPSExportColumn(
         tags=[PROPERTY_TAG_INFO],
         label='location',
-        item=GeopointItem(path=[
-            PathNode(name='form'), PathNode(name='meta'), PathNode(name='location')
-        ]),
+        item=GeopointItem(
+            path=[PathNode(name='form'), PathNode(name='meta'), PathNode(name='location')],
+            datatype='string',
+        ),
         is_advanced=True,
         help_text=_("GPS capture when opening the form"),
     ),
     ExportColumn(
         tags=[PROPERTY_TAG_APP],
         label='app_id',
-        item=ExportItem(path=[PathNode(name='app_id')]),
+        item=ExportItem(path=[PathNode(name='app_id')], datatype='string'),
         is_advanced=True,
         help_text=_("The ID of the app that this form is part of")
     ),
     ExportColumn(
         tags=[PROPERTY_TAG_APP],
         label='build_id',
-        item=ExportItem(path=[PathNode(name='build_id')]),
+        item=ExportItem(path=[PathNode(name='build_id')], datatype='string'),
         is_advanced=True,
         help_text=_("The ID of the published app that this form is part of")
     ),
     ExportColumn(
         tags=[PROPERTY_TAG_APP],
         label='@version',
-        item=ExportItem(path=[
-            PathNode(name='form'), PathNode(name='@version')
-        ]),
+        item=ExportItem(
+            path=[PathNode(name='form'), PathNode(name='@version')],
+            datatype='string',
+        ),
         is_advanced=True,
         help_text=_("The version of the app in which this form was last updated prior to being published")
     ),
     ExportColumn(
         tags=[PROPERTY_TAG_SERVER],
         label="state",
-        item=ExportItem(path=[PathNode(name="doc_type")]),
+        item=ExportItem(path=[PathNode(name="doc_type")], datatype='string'),
         is_advanced=True
     ),
     ExportColumn(
         tags=[PROPERTY_TAG_SERVER],
         label="last_sync_token",
-        item=ExportItem(path=[PathNode(name="last_sync_token")]),
+        item=ExportItem(path=[PathNode(name="last_sync_token")], datatype='string'),
         is_advanced=True,
         help_text=_("The ID of the last sync on the phone that occurred prior to submitting this form.")
     ),
     ExportColumn(
         tags=[PROPERTY_TAG_SERVER],
         label="partial_submission",
-        item=ExportItem(path=[PathNode(name="partial_submission")]),
+        item=ExportItem(path=[PathNode(name="partial_submission")], datatype='boolean'),
         is_advanced=True,
         help_text=_("True if the form was a partial submission, False otherwise.")
     ),
     ExportColumn(
         tags=[PROPERTY_TAG_SERVER],
         label="received_on",
-        item=ExportItem(path=[PathNode(name="received_on")]),
+        item=ExportItem(path=[PathNode(name="received_on")], datatype='datetime'),
         selected=True,
         help_text=_("The time at which the server receive this form submission"),
     ),
     ExportColumn(
         tags=[PROPERTY_TAG_SERVER],
         label="edited_on",
-        item=ExportItem(path=[PathNode(name="edited_on")]),
+        item=ExportItem(path=[PathNode(name="edited_on")], datatype='datetime'),
         is_advanced=True,
         help_text=_("The time at which this form was last edited."),
     ),
     ExportColumn(
         tags=[PROPERTY_TAG_SERVER],
         label="submit_ip",
-        item=ExportItem(path=[PathNode(name="submit_ip")]),
+        item=ExportItem(path=[PathNode(name="submit_ip")], datatype='string'),
         is_advanced=True,
         help_text=_("The IP address from which the form was submitted")
     ),
