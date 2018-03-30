@@ -80,7 +80,7 @@ class SQLPartition(DocumentSchema):
     http://architect.readthedocs.io/features/partition/index.html
     """
     column = StringProperty()
-    subtype = StringProperty(choices=['date', 'string_firstchars'])
+    subtype = StringProperty(choices=['date', 'string_firstchars', 'string_lastchars'])
     constraint = StringProperty()
 
 

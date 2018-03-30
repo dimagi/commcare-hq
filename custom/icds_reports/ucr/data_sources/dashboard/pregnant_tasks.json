@@ -45,7 +45,7 @@
           "type": "ancestor_location",
           "location_id": {
             "type": "property_name",
-            "name": "owner_id"
+            "property_name": "owner_id"
           },
           "location_type": "state",
           "location_property": "_id"
@@ -57,7 +57,7 @@
         "type": "expression",
         "expression": {
           "type": "property_name",
-          "name": "owner_id"
+          "property_name": "owner_id"
         }
       },
       {
