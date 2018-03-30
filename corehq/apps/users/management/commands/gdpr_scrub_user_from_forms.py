@@ -4,6 +4,8 @@ from __future__ import unicode_literals
 import xmltodict
 from django.core.management.base import BaseCommand
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
+from xml.etree import ElementTree as ET
+import xml
 
 
 class Command(BaseCommand):
@@ -26,11 +28,18 @@ class Command(BaseCommand):
         # Get the xml attachment from the form data
         form_attachment_xml = form_data.get_attachment("form.xml")
 
-        # Convert the xml string to dict
-        form_attachment_dict = xmltodict.parse(form_attachment_xml)
+        print("FORM ATTACHMENT BEFORE: {}".format(form_attachment_xml))
+        print("============")
 
-        # Replace the old username with the new username
-        form_attachment_dict["data"]["n0:meta"]["n0:username"] = new_username
-        # Convert the dict back to xml
-        form_attachment_xml_new = xmltodict.unparse(form_attachment_dict)
-        return form_attachment_xml_new
+        tree = ET.fromstring(form_attachment_xml)
+        ET.register_namespace("n0", "http://openrosa.org/jr/xforms")
+        ET.register_namespace("n1", "http://commcarehq.org/xforms")
+        ET.register_namespace("", "http://openrosa.org/formdesigner/form-processor")
+
+        namespaces = {"n0": "http://openrosa.org/jr/xforms",
+                      "n1": "http://commcarehq.org/xforms",
+                      "": "http://openrosa.org/formdesigner/form-processor"}
+        tree.find("n0:meta", namespaces).find("n0:username", namespaces).text = new_username
+        form_attachment_xml = ET.tostring(tree)
+
+        return form_attachment_xml
