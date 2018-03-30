@@ -1,5 +1,6 @@
 from __future__ import print_function
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import json
 import requests
 from collections import defaultdict
@@ -115,15 +116,15 @@ def print_result(matches, view, database):
         return
 
     if len(matches) == 1:
-        print(u"{}All is consistent in {} for view {}{}".format(Colors.OKGREEN, database, view, Colors.ENDC))
+        print("{}All is consistent in {} for view {}{}".format(Colors.OKGREEN, database, view, Colors.ENDC))
         return
 
     print("{}{} - {}{}".format(Colors.WARNING, database, view, Colors.ENDC))
     for wiggle_range, match_tuples in matches.items():
-        print(u"Couches for wiggle range {}: ".format(wiggle_range))
+        print("Couches for wiggle range {}: ".format(wiggle_range))
         for couch_uri, rows in match_tuples:
-            print(u"\t{}".format(couch_uri))
-            print(u"\tHad this many {}{}{} rows for this view".format(
+            print("\t{}".format(couch_uri))
+            print("\tHad this many {}{}{} rows for this view".format(
                 Colors.BOLD,
                 rows,
                 Colors.ENDC))
@@ -155,7 +156,7 @@ class CouchConfig(JsonObject):
 
     @property
     def uri(self):
-        return u"https://{user}:{password}@{host}".format(
+        return "https://{user}:{password}@{host}".format(
             user=self.user,
             password=self.password,
             host=self.host
