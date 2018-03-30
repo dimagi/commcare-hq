@@ -517,8 +517,9 @@ class SQLLocation(AdjListModel):
         self.update_users_at_ancestor_locations()
 
     def update_users_at_ancestor_locations(self):
+        from . tasks import update_users_at_locations
         location_ids = list(self.get_ancestors().location_ids())
-        update_users_at_locations(location_ids)
+        update_users_at_locations.delay(location_ids)
 
     def archive(self):
         """
@@ -766,15 +767,3 @@ def _unassign_users_from_location(domain, location_id):
             user.unset_location_by_id(domain, location_id, fall_back_to_next=True)
         elif user.is_commcare_user():
             user.unset_location_by_id(location_id, fall_back_to_next=True)
-
-
-def update_users_at_locations(location_ids):
-    """
-    Update location fixtures for users given locations
-    """
-    from corehq.apps.users.models import update_fixture_status_for_users
-    from corehq.apps.locations.dbaccessors import user_ids_at_locations
-    from corehq.apps.fixtures.models import UserFixtureType
-
-    user_ids = user_ids_at_locations(location_ids)
-    update_fixture_status_for_users(user_ids, UserFixtureType.LOCATION)
