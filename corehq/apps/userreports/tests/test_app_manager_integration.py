@@ -137,15 +137,17 @@ class AppManagerDataSourceConfigTest(TestCase):
         meta_properties = {
             'username': 'string',
             'userID': 'string',
-            'timeStart': 'datetime',
-            'timeEnd': 'datetime',
+            'started_time': 'datetime',
+            'completed_time': 'datetime',
             'deviceID': 'string',
         }
-        expected_props = len(form_properties) + len(meta_properties)
-        self.assertEqual(expected_props, len(data_source.configured_indicators))
         for indicator in data_source.configured_indicators:
             if indicator['display_name'] in form_properties:
                 datatype = form_properties.pop(indicator['display_name'])
-            else:
+                self.assertEqual(datatype, indicator['datatype'])
+            elif indicator['display_name'] in meta_properties:
                 datatype = meta_properties.pop(indicator['display_name'])
-            self.assertEqual(datatype, indicator['datatype'])
+                self.assertEqual(datatype, indicator['datatype'])
+
+        self.assertEqual({}, form_properties)
+        self.assertEqual({}, meta_properties)
