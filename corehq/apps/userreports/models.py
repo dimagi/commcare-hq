@@ -373,9 +373,20 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
         """Returns a list of case types or xmlns from the filter of this data source.
 
         If this can't figure out the case types or xmlns's that filter, then returns [None]
+        Currently returns [None] due to a loop in _iteratively_build_table
         """
         def _get_property_value(config_filter, prop_name):
-            if config_filter.get('type') != 'boolean_expression':
+            filter_type = config_filter.get('type')
+            if filter_type == 'and':
+                sub_config_filters = [
+                    _get_property_value(f, prop_name)
+                    for f in config_filter.get('filters')
+                ]
+                for filter_ in sub_config_filters:
+                    if filter_[0]:
+                        return filter_
+
+            if filter_type != 'boolean_expression':
                 return [None]
 
             if config_filter['operator'] not in ('eq', 'in'):
