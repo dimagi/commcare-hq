@@ -187,8 +187,8 @@ function NewbornWithLowBirthController($scope, $routeParams, $location, $filter,
                 var tooltip = chart.interactiveLayer.tooltip;
                 tooltip.contentGenerator(function (d) {
 
-                    var dataInMonth = _.find(vm.chartData[0].values, function(num) { return d3.time.format('%b %Y')(new Date(num['x'])) === d.value;});
-                    return vm.tooltipContent(d.value, dataInMonth);
+                    var dataInMonth = _.find(vm.chartData[0].values, function(num) { return num['x'] === d.value;});
+                    return vm.tooltipContent(d3.time.format('%b %Y')(new Date(d.value)), dataInMonth);
                 });
                 return chart;
             },
