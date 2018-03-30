@@ -6,7 +6,6 @@ from datetime import datetime
 
 from django.test import TestCase
 from mock import patch, Mock
-from corehq.apps.app_manager.models import Application, Module
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.userreports.app_manager.helpers import get_case_data_sources, get_form_data_sources
 from corehq.apps.userreports.reports.builder import DEFAULT_CASE_PROPERTY_DATATYPES
@@ -26,17 +25,17 @@ class AppManagerDataSourceConfigTest(TestCase):
     @classmethod
     def setUpClass(cls):
         super(AppManagerDataSourceConfigTest, cls).setUpClass()
-        cls.app = Application.new_app(cls.domain, 'Application Data Source App')
-        module = cls.app.add_module(Module.new_module('Untitled Module', None))
-        module.case_type = cls.case_type
+        factory = AppFactory(domain=cls.domain)
+        m0, f0 = factory.new_basic_module('A Module', cls.case_type)
         with open(os.path.join(os.path.dirname(__file__), 'data', 'forms', 'simple.xml')) as f:
             form_source = f.read()
-        cls.form = cls.app.new_form(module.id, "Untitled Form", 'en', form_source)
-        AppFactory.form_requires_case(cls.form, case_type=cls.case_type, update={
+        f0.source = form_source
+        cls.form = f0
+        factory.form_requires_case(f0, case_type=cls.case_type, update={
             cp: '/data/{}'.format(cp) for cp in cls.case_properties.keys()
         })
+        cls.app = factory.app
         cls.app.save()
-        cls.app = Application.get(cls.app._id)
 
     @classmethod
     def tearDownClass(cls):
