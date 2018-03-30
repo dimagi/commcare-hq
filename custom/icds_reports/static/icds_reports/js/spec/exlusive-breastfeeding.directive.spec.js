@@ -195,7 +195,7 @@ describe('Exclusive Breastfeeding Directive', function () {
             + '<div>Total number of children (0-6 months) exclusively breastfed in the given month: <strong>5</strong></div>'
             + '<div>% children (0-6 months) exclusively breastfed in the given month: <strong>72.00%</strong></div>';
 
-        var result = controller.tooltipContent(month.value, data);
+        var result = controller.getTooltipContent(month.value, data);
         assert.equal(expected, result);
     });
 

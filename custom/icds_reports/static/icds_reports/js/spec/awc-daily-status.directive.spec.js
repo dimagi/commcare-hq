@@ -190,7 +190,7 @@ describe('AWC Daily Status Directive', function () {
             + "<div>Total number of AWCs that have been launched: <strong>10</strong></div>"
             + "<div>% of AWCs open on <strong>Jul 2017</strong>: <strong>50.00%</strong></div>";
 
-        var result = controller.tooltipContent(month.value, value, total);
+        var result = controller.getTooltipContent(month.value, value, total);
         assert.equal(expected, result);
     });
 

@@ -184,7 +184,7 @@ describe('Medicine Kit Directive', function () {
             '<div>Number of AWCs that reported having a Medicine Kit: <strong>5</strong></div>' +
             '<div>Percentage of AWCs that reported having a Medicine Kit: <strong>72.00%</strong></div>';
 
-        var result = controller.tooltipContent(month.value, data);
+        var result = controller.getTooltipContent(month.value, data);
         assert.equal(expected, result);
     });
 

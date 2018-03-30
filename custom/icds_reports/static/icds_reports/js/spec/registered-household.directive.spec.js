@@ -182,7 +182,7 @@ describe('Registered Household Directive', function () {
         var expected = '<p><strong>Jul 2017</strong></p><br/>'
             + '<div>Total number of household registered: <strong>60</strong></div>';
 
-        var result = controller.tooltipContent(month.value, 60);
+        var result = controller.getTooltipContent(month.value, 60);
         assert.equal(expected, result);
     });
 

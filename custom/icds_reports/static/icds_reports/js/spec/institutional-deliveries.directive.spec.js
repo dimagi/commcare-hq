@@ -190,7 +190,7 @@ describe('Institutional Deliveries Directive', function () {
             + '<div>Total number of pregnant women who delivered in a public/private medical facilitiy in the last month: <strong>5</strong></div>'
             + '<div>% pregnant women who delivered in a public or private medical facility in the last month: <strong>72.00%</strong></div>';
 
-        var result = controller.tooltipContent(month.value, data);
+        var result = controller.getTooltipContent(month.value, data);
         assert.equal(expected, result);
     });
 

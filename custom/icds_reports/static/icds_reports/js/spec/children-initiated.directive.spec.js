@@ -197,7 +197,7 @@ describe('Children Initiated Directive', function () {
             + '<div>Total number of children (6-8 months) given timely introduction to sold or semi-solid food in the given month: <strong>5</strong></div>'
             + '<div>% children (6-8 months) given timely introduction to solid or semi-solid food in the given month: <strong>24.34%</strong></div>';
 
-        var result = controller.tooltipContent(month.value, data);
+        var result = controller.getTooltipContent(month.value, data);
         assert.equal(expected, result);
     });
 

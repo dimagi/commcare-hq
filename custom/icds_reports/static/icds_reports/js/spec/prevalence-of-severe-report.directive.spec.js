@@ -210,7 +210,7 @@ describe('Prevalence Of Severe Directive', function () {
             '<div>% children (6 - 60 months)  with Moderate Acute Malnutrition (MAM): <strong>15.00%</strong></div>' +
             '<div>% children (6 - 60 months)  with Severe Acute Malnutrition (SAM): <strong>20.00%</strong></div>';
 
-        var result = controller.tooltipContent(month.value, 0.1, 0.15, 0.2, 20, 10, 30);
+        var result = controller.getTooltipContent(month.value, 0.1, 0.15, 0.2, 20, 10, 30);
         assert.equal(expected, result);
     });
 

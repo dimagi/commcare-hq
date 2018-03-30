@@ -191,7 +191,7 @@ describe('Enrolled Women Directive', function () {
             + "<div>Total number of pregnant women who are registered: <strong>72</strong></div>"
             + "<div>Percentage of registered pregnant women who are enrolled for Anganwadi Services: <strong>100.00%</strong></div>";
 
-        var result = controller.tooltipContent(month.value, data);
+        var result = controller.getTooltipContent(month.value, data);
         assert.equal(expected, result);
     });
 });

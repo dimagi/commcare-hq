@@ -185,7 +185,7 @@ describe('Adult Weight Scale Directive', function () {
             '<div>Number of AWCs that reported having a weighing scale for mother and child: <strong>42</strong></div>' +
             '<div>% of AWCs that reported having a weighing scale for mother and child: <strong>24.56%</strong></div>';
 
-        var result = controller.tooltipContent(month.value, data);
+        var result = controller.getTooltipContent(month.value, data);
         assert.equal(expected, result);
     });
 

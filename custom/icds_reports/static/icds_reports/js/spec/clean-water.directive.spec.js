@@ -187,7 +187,7 @@ describe('Clean Water Directive', function () {
             '<div>Number of AWCs that reported having a source of clean drinking water: <strong>10</strong></div>' +
             '<div>% of AWCs that reported having a source of clean drinking water: <strong>50.00%</strong></div>';
 
-        var result = controller.tooltipContent(month.value, data);
+        var result = controller.getTooltipContent(month.value, data);
         assert.equal(expected, result);
     });
 

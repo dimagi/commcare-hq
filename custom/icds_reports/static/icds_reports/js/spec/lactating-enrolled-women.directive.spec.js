@@ -190,7 +190,7 @@ describe('Lactating Enrolled Women Directive', function () {
             + "<div>Total number of lactating women who are registered: <strong>84</strong></div>"
             + "<div>Percentage of registered lactating women who are enrolled for Anganwadi Services: <strong>50.00%</strong></div>";
 
-        var result = controller.tooltipContent(month.value, data);
+        var result = controller.getTooltipContent(month.value, data);
         assert.equal(expected, result);
     });
 });

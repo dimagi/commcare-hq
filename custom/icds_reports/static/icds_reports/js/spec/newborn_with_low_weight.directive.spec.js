@@ -196,7 +196,7 @@ describe('Newborn Low Weight Directive', function () {
             + '<div>% newborns with LBW in given month: <strong>72.00%</strong></div>'
             + '<div>% Unweighted: <strong>83.33%</strong></div>';
 
-        var result = controller.tooltipContent(month.value, data);
+        var result = controller.getTooltipContent(month.value, data);
         assert.equal(expected, result);
     });
 

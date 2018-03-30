@@ -199,7 +199,7 @@ describe('Enrolled Children Directive', function () {
         var expected = "<div>Total number of children between the age of 0 - 6 years who are enrolled for Anganwadi Services: <strong>2</strong></div>"
             + "<div>% of children test age: <strong>25.00%</strong></div>";
 
-        var result = controller.tooltipContent(data, x);
+        var result = controller.getTooltipContent(data, x);
         assert.equal(expected, result);
     });
 

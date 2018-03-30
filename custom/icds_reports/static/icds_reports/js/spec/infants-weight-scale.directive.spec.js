@@ -184,7 +184,7 @@ describe('Infants Weight Scale Directive', function () {
             '<div>Number of AWCs that reported having a weighing scale for infants: <strong>5</strong></div>' +
             '<div>Percentage of AWCs that reported having a weighing scale for infants: <strong>72.00%</strong></div>';
 
-        var result = controller.tooltipContent(month.value, data);
+        var result = controller.getTooltipContent(month.value, data);
         assert.equal(expected, result);
     });
 
