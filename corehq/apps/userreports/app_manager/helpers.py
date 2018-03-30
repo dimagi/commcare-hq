@@ -3,14 +3,12 @@ from __future__ import unicode_literals
 from corehq.apps.app_manager.app_schemas.case_properties import get_case_properties
 from corehq.apps.app_manager.xform import XForm
 from corehq.apps.userreports.app_manager.data_source_meta import make_form_data_source_filter, \
-    make_case_data_source_filter
+    make_case_data_source_filter, make_form_question_indicator, make_form_meta_block_indicator
 from corehq.apps.userreports.models import DataSourceConfiguration
 from corehq.apps.userreports.reports.builder import (
     DEFAULT_CASE_PROPERTY_DATATYPES,
     FORM_METADATA_PROPERTIES,
     make_case_property_indicator,
-    make_form_meta_block_indicator,
-    make_form_question_indicator,
 )
 from corehq.apps.userreports.sql import get_column_name
 import unidecode
