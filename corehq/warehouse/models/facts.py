@@ -94,7 +94,8 @@ class SyncLogFact(BaseFact, CustomSQLETLMixin):
     domain = models.CharField(max_length=255, null=True)
 
     user_dim = models.ForeignKey(UserDim, on_delete=models.PROTECT)
-    domain_dim = models.ForeignKey(DomainDim, on_delete=models.PROTECT)
+    # not all synclogs have domains, added in 11/2016
+    domain_dim = models.ForeignKey(DomainDim, on_delete=models.PROTECT, null=True)
 
     # these can be null per SyncLogStagingTable
     build_id = models.CharField(max_length=255, null=True)
@@ -120,16 +121,15 @@ class ApplicationStatusFact(BaseFact, CustomSQLETLMixin):
 
     app_dim = models.ForeignKey(ApplicationDim, on_delete=models.PROTECT)
 
-    domain = models.CharField(max_length=255, null=True, db_index=True)
+    domain = models.CharField(max_length=255, db_index=True)
 
     user_dim = models.ForeignKey(UserDim, on_delete=models.PROTECT)
 
-    last_form_submission_date = models.DateTimeField(null=True)
-    last_sync_log_date = models.DateTimeField(null=True)
+    last_form_submission_date = models.DateTimeField()
+    last_sync_log_date = models.DateTimeField()
 
-    last_form_app_build_version = models.CharField(max_length=255, null=True)
-    last_form_app_commcare_version = models.CharField(max_length=255, null=True)
-    # last_form_app_source = models.CharField(max_length=255)
+    last_form_app_build_version = models.CharField(max_length=255)
+    last_form_app_commcare_version = models.CharField(max_length=255)
 
     class Meta:
         unique_together = ('app_dim', 'user_dim')

@@ -16,7 +16,7 @@ SELECT
 	CASE
 	    WHEN sync_date < app_status.last_sync_log_date
 	    THEN app_status.last_sync_log_date
-	    ELSE first_value(sync_date AT TIME ZONE 'UTC') OVER wnd
+	    ELSE sync_date
 	END AS last_sync,
 	user_dim.id as user_dim_id,
 	sync_staging.domain as domain
@@ -24,7 +24,7 @@ SELECT
 	LEFT JOIN {{ user_dim }} as user_dim
 	ON sync_staging.user_id = user_dim.user_id
 	LEFT JOIN {{ app_status_fact }} as app_status
-	ON sync_staging.user_id = app_status.user_id
+	ON user_dim.id = app_status.user_dim_id
         WINDOW wnd AS (
             PARTITION BY sync_staging.user_id ORDER BY sync_date AT TIME ZONE 'UTC' DESC
             ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
