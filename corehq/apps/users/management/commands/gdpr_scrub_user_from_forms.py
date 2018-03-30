@@ -28,9 +28,6 @@ class Command(BaseCommand):
         # Get the xml attachment from the form data
         form_attachment_xml = form_data.get_attachment("form.xml")
 
-        print("FORM ATTACHMENT BEFORE: {}".format(form_attachment_xml))
-        print("============")
-
         tree = ET.fromstring(form_attachment_xml)
         ET.register_namespace("n0", "http://openrosa.org/jr/xforms")
         ET.register_namespace("n1", "http://commcarehq.org/xforms")
