@@ -170,9 +170,13 @@ requires proptable.css to be included in the main template
         <br/>
         <ul class="list-inline">
             {% if instance.app_id %}<li><a href="{% url "view_app" domain instance.app_id %}">{% trans "View app" %}</a></li>{% endif %}
-            {% if instance.build_id and request.user.is_superuser %}
-                <li><a href="{% url "download_index" domain instance.build_id %}">{% trans "View build" %}</a></li>
-                <li><a href="{{ download_url }}?download=true">{% trans "Download Form Source" %} <i class='fa fa-download'></i></a></li>
+            {% if request.user.is_superuser %}
+                {% if instance.build_id %}
+                    <li><a href="{% url "download_index" domain instance.build_id %}">{% trans "View build" %}</a></li>
+                {% endif %}
+                {% if form_source_download_url %}
+                    <li><a href="{{ form_source_download_url }}?download=true">{% trans "Download Form Source" %} <i class='fa fa-download'></i></a></li>
+                {% endif %}
             {% endif %}
         </ul>
     </div>

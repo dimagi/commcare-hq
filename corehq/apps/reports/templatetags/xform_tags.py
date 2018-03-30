@@ -100,7 +100,7 @@ def render_form(form, domain, options):
         "context_case_id": case_id,
         "instance": form,
         "is_archived": form.is_archived,
-        "download_url": get_form_source_download_url(form),
+        "form_source_download_url": get_form_source_download_url(form),
         "edit_info": _get_edit_info(form),
         "domain": domain,
         'question_list_not_found': question_list_not_found,
