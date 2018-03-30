@@ -659,6 +659,19 @@ class IteratorExpressionTest(SimpleTestCase):
         expression = ExpressionFactory.from_spec(spec)
         self.assertEqual([1], expression({'p1': 1, 'p2': ''}))
 
+    def test_type_coercion(self):
+        spec = copy.copy(self.spec)
+        spec['expressions'] = [
+            '2018-01-01',
+            {
+                'type': 'constant',
+                'constant': '2018-01-01',
+                'datatype': 'date',
+            },
+        ]
+        expression = ExpressionFactory.from_spec(spec)
+        self.assertEqual([date(2018, 1, 1), date(2018, 1, 1)], expression({}))
+
 
 class RootDocExpressionTest(SimpleTestCase):
 
@@ -969,6 +982,7 @@ def test_add_days_to_date_expression(self, source_doc, count_expression, expecte
     ),
     ({}, "a + b", {"a": Decimal(2), "b": Decimal(3)}, Decimal(5)),
     ({}, "a + b", {"a": Decimal(2.2), "b": Decimal(3.1)}, Decimal(5.3)),
+    ({}, "range(3)", {}, [0, 1, 2]),
 ])
 def test_valid_eval_expression(self, source_doc, statement, context, expected_value):
     expression = ExpressionFactory.from_spec({
@@ -981,9 +995,10 @@ def test_valid_eval_expression(self, source_doc, statement, context, expected_va
 
 
 @generate_cases([
-    # context must be non-empty dict
+    # context must be a dict
     ({}, "2 + 3", "text context"),
-    ({}, "2 + 3", {}),
+    ({}, "2 + 3", 42),
+    ({}, "2 + 3", []),
     # statement must be string
     ({}, 2 + 3, {"a": 2, "b": 3})
 ])

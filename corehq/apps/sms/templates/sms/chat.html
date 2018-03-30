@@ -19,6 +19,8 @@
         {% registerurl 'api_last_read_message' domain %}
 
         {% javascript_libraries ko=True %}
+        <script src="{% static 'hqwebapp/js/initial_page_data.js' %}"></script>
+        <script src="{% static "sms/js/chat.js" %}"></script>
         <style>
             html, body {
                 height: 100%;
@@ -142,6 +144,17 @@
                     </tr>
                 </tbody>
             </table>
+        </div>
+
+        <div class="initial-page-data" class="hide">
+        {% block initial_page_data %}
+            {# do not override this block, use initial_page_data template tag to populate #}
+        {% endblock %}
+        </div>
+        <div class="commcarehq-urls" class="hide">
+        {% block registered_urls %}
+            {# do not override this block, use registerurl template tag to populate #}
+        {% endblock %}
         </div>
     </body>
 </html>

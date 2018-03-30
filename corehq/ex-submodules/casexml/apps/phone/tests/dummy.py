@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from mock import MagicMock
 from datetime import date, datetime
 from casexml.apps.case.xml.generator import date_to_xml_string

@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import copy
 from django.test import SimpleTestCase
 from django.conf import settings

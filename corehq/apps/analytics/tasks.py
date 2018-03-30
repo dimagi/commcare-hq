@@ -33,8 +33,9 @@ from corehq.util.datadog.utils import (
     DATADOG_HUBSPOT_TRACK_DATA_POST_METRIC
 )
 
+from dimagi.utils.chunked import chunked
 from dimagi.utils.logging import notify_exception
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 from corehq.apps.analytics.utils import analytics_enabled_for_email
 
@@ -198,7 +199,7 @@ def _get_client_ip(meta):
     return ip
 
 
-def _send_form_to_hubspot(form_id, webuser, cookies, meta, extra_fields=None, email=False):
+def _send_form_to_hubspot(form_id, webuser, hubspot_cookie, meta, extra_fields=None, email=False):
     """
     This sends hubspot the user's first and last names and tracks everything they did
     up until the point they signed up.
@@ -209,7 +210,6 @@ def _send_form_to_hubspot(form_id, webuser, cookies, meta, extra_fields=None, em
         return
 
     hubspot_id = settings.ANALYTICS_IDS.get('HUBSPOT_API_ID')
-    hubspot_cookie = cookies.get(HUBSPOT_COOKIE)
     if hubspot_id and hubspot_cookie:
         url = u"https://forms.hubspot.com/uploads/form/v2/{hubspot_id}/{form_id}".format(
             hubspot_id=hubspot_id,
@@ -244,7 +244,7 @@ def update_hubspot_properties(webuser, properties):
 
 
 @analytics_task()
-def track_user_sign_in_on_hubspot(webuser, cookies, meta, path):
+def track_user_sign_in_on_hubspot(webuser, hubspot_cookie, meta, path):
     from corehq.apps.registration.views import ProcessRegistrationView
     if path.startswith(reverse(ProcessRegistrationView.urlname)):
         tracking_dict = {
@@ -262,8 +262,8 @@ def track_user_sign_in_on_hubspot(webuser, cookies, meta, path):
             })
         tracking_dict.update(get_ab_test_properties(webuser))
         _track_on_hubspot(webuser, tracking_dict)
-        _send_form_to_hubspot(HUBSPOT_SIGNUP_FORM_ID, webuser, cookies, meta)
-    _send_form_to_hubspot(HUBSPOT_SIGNIN_FORM_ID, webuser, cookies, meta)
+        _send_form_to_hubspot(HUBSPOT_SIGNUP_FORM_ID, webuser, hubspot_cookie, meta)
+    _send_form_to_hubspot(HUBSPOT_SIGNIN_FORM_ID, webuser, hubspot_cookie, meta)
 
 
 @analytics_task()
@@ -299,19 +299,19 @@ def send_hubspot_form(form_id, request, user=None):
         user = getattr(request, 'couch_user', None)
     if request and user and user.is_web_user():
         meta = get_meta(request)
-        send_hubspot_form_task.delay(form_id, user, request.COOKIES, meta)
+        send_hubspot_form_task.delay(form_id, user, request.COOKIES.get(HUBSPOT_COOKIE), meta)
 
 
 @analytics_task()
-def send_hubspot_form_task(form_id, web_user, cookies, meta):
-    _send_form_to_hubspot(form_id, web_user, cookies, meta)
+def send_hubspot_form_task(form_id, web_user, hubspot_cookie, meta):
+    _send_form_to_hubspot(form_id, web_user, hubspot_cookie, meta)
 
 @analytics_task()
-def track_clicked_deploy_on_hubspot(webuser, cookies, meta):
+def track_clicked_deploy_on_hubspot(webuser, hubspot_cookie, meta):
     ab = {
         'a_b_variable_deploy': 'A' if deterministic_random(webuser.username + 'a_b_variable_deploy') > 0.5 else 'B',
     }
-    _send_form_to_hubspot(HUBSPOT_CLICKED_DEPLOY_FORM_ID, webuser, cookies, meta, extra_fields=ab)
+    _send_form_to_hubspot(HUBSPOT_CLICKED_DEPLOY_FORM_ID, webuser, hubspot_cookie, meta, extra_fields=ab)
 
 
 @analytics_task()
@@ -323,13 +323,7 @@ def track_job_candidate_on_hubspot(user_email):
 
 
 @analytics_task()
-def track_saved_app_on_hubspot(couchuser, cookies, meta):
-    if couchuser.is_web_user():
-        _send_form_to_hubspot(HUBSPOT_SAVED_APP_FORM_ID, couchuser, cookies, meta)
-
-
-@analytics_task()
-def track_clicked_signup_on_hubspot(email, cookies, meta):
+def track_clicked_signup_on_hubspot(email, hubspot_cookie, meta):
     data = {'lifecyclestage': 'subscriber'}
     number = deterministic_random(email + 'a_b_test_variable_newsletter')
     if number < 0.33:
@@ -339,7 +333,10 @@ def track_clicked_signup_on_hubspot(email, cookies, meta):
     else:
         data['a_b_test_variable_newsletter'] = 'C'
     if email:
-        _send_form_to_hubspot(HUBSPOT_CLICKED_SIGNUP_FORM, None, cookies, meta, extra_fields=data, email=email)
+        _send_form_to_hubspot(
+            HUBSPOT_CLICKED_SIGNUP_FORM, None, hubspot_cookie,
+            meta, extra_fields=data, email=email
+        )
 
 
 def track_workflow(email, event, properties=None):
@@ -397,7 +394,7 @@ def _get_report_count(domain):
     return get_report_builder_count(domain)
 
 
-@periodic_task(run_every=crontab(minute="0", hour="0"), queue='background_queue')
+@periodic_task(run_every=crontab(minute="0", hour="4"), queue='background_queue')
 def track_periodic_data():
     """
     Sync data that is neither event or page based with hubspot/Kissmetrics
@@ -428,69 +425,70 @@ def track_periodic_data():
 
     # For each web user, iterate through their domains and select the max number of form submissions and
     # max number of mobile workers
-    submit = []
-    for user in users_to_domains:
-        email = user.get('email')
-        if not _email_is_valid(email):
-            continue
+    for users in chunked(users_to_domains, 500):
+        submit = []
+        for user in users:
+            email = user.get('email')
+            if not _email_is_valid(email):
+                continue
 
-        number_of_users += 1
-        date_created = user.get('date_joined')
-        max_forms = 0
-        max_workers = 0
-        max_export = 0
-        max_report = 0
+            number_of_users += 1
+            date_created = user.get('date_joined')
+            max_forms = 0
+            max_workers = 0
+            max_export = 0
+            max_report = 0
 
-        for domain in user['domains']:
-            if domain in domains_to_forms and domains_to_forms[domain] > max_forms:
-                max_forms = domains_to_forms[domain]
-            if domain in domains_to_mobile_users and domains_to_mobile_users[domain] > max_workers:
-                max_workers = domains_to_mobile_users[domain]
-            if _get_export_count(domain) > max_export:
-                max_export = _get_export_count(domain)
-            if _get_report_count(domain) > max_report:
-                max_report = _get_report_count(domain)
+            for domain in user['domains']:
+                if domain in domains_to_forms and domains_to_forms[domain] > max_forms:
+                    max_forms = domains_to_forms[domain]
+                if domain in domains_to_mobile_users and domains_to_mobile_users[domain] > max_workers:
+                    max_workers = domains_to_mobile_users[domain]
+                if _get_export_count(domain) > max_export:
+                    max_export = _get_export_count(domain)
+                if _get_report_count(domain) > max_report:
+                    max_report = _get_report_count(domain)
 
-        project_spaces_created = ", ".join(get_domains_created_by_user(email))
+            project_spaces_created = ", ".join(get_domains_created_by_user(email))
 
-        user_json = {
-            'email': email,
-            'properties': [
-                {
-                    'property': '{}max_form_submissions_in_a_domain'.format(env),
-                    'value': max_forms
-                },
-                {
-                    'property': '{}max_mobile_workers_in_a_domain'.format(env),
-                    'value': max_workers
-                },
-                {
-                    'property': '{}project_spaces_created_by_user'.format(env),
-                    'value': project_spaces_created,
-                },
-                {
-                    'property': '{}over_300_form_submissions'.format(env),
-                    'value': max_forms > HUBSPOT_THRESHOLD
-                },
-                {
-                    'property': '{}date_created'.format(env),
-                    'value': date_created
-                },
-                {
-                    'property': '{}max_exports_in_a_domain'.format(env),
-                    'value': max_export
-                },
-                {
-                    'property': '{}max_custom_reports_in_a_domain'.format(env),
-                    'value': max_report
-                }
-            ]
-        }
-        submit.append(user_json)
+            user_json = {
+                'email': email,
+                'properties': [
+                    {
+                        'property': '{}max_form_submissions_in_a_domain'.format(env),
+                        'value': max_forms
+                    },
+                    {
+                        'property': '{}max_mobile_workers_in_a_domain'.format(env),
+                        'value': max_workers
+                    },
+                    {
+                        'property': '{}project_spaces_created_by_user'.format(env),
+                        'value': project_spaces_created,
+                    },
+                    {
+                        'property': '{}over_300_form_submissions'.format(env),
+                        'value': max_forms > HUBSPOT_THRESHOLD
+                    },
+                    {
+                        'property': '{}date_created'.format(env),
+                        'value': date_created
+                    },
+                    {
+                        'property': '{}max_exports_in_a_domain'.format(env),
+                        'value': max_export
+                    },
+                    {
+                        'property': '{}max_custom_reports_in_a_domain'.format(env),
+                        'value': max_report
+                    }
+                ]
+            }
+            submit.append(user_json)
 
-    submit_json = json.dumps(submit)
+        submit_json = json.dumps(submit)
 
-    submit_data_to_hub_and_kiss(submit_json)
+        submit_data_to_hub_and_kiss(submit_json)
     update_datadog_metrics({
         DATADOG_WEB_USERS_GAUGE: number_of_users,
         DATADOG_DOMAINS_EXCEEDING_FORMS_GAUGE: number_of_domains_with_forms_gt_threshold

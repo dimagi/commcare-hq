@@ -16,6 +16,7 @@ otherwise:
     open a new supply point case as normal
 """
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import datetime
 
 from casexml.apps.stock.const import SECTION_TYPE_STOCK

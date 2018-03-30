@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import division
+from __future__ import unicode_literals
 from collections import defaultdict
 from casexml.apps.stock.models import StockTransaction
 from datetime import timedelta, datetime
@@ -16,7 +17,7 @@ from django.utils.translation import ugettext as _
 from custom.ilsgateway.tanzania.reports.utils import link_format, format_percent, make_url, get_hisp_resp_rate, \
     get_last_reported, calculate_months_remaining
 from dimagi.utils.dates import get_day_of_month
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from django.db.models.aggregates import Avg, Max
 from custom.ilsgateway.tanzania import ILSData, DetailsReport
 

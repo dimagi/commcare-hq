@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from collections import defaultdict, namedtuple
 import uuid
 
@@ -13,6 +14,7 @@ from restkit.errors import ResourceError
 from casexml.apps.case.const import CASE_ACTION_UPDATE, CASE_ACTION_CREATE
 from casexml.apps.case.dbaccessors import get_indexed_case_ids
 from casexml.apps.case.exceptions import PhoneDateValueError
+from casexml.apps.phone.exceptions import MissingSyncLog
 from casexml.apps.phone.models import SyncLogAssertionError, get_properly_wrapped_sync_log
 from casexml.apps.phone.xml import get_case_element
 from casexml.apps.stock.models import StockReport
@@ -155,7 +157,7 @@ def prune_previous_log(sync_log):
             previous_log.delete()
             sync_log.previous_log_removed = True
             sync_log.save()
-        except ResourceError:
+        except MissingSyncLog:
             pass
 
 

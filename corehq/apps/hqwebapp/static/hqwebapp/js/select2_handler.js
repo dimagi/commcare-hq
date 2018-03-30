@@ -5,11 +5,11 @@ hqDefine("hqwebapp/js/select2_handler", [
     $,
     ko
 ) {
-    var BaseSelect2Handler = function (options) {
+    var baseSelect2Handler = function (options) {
         // For use with BaseAsyncHandler
         // todo: documentation (biyeun)
         'use strict';
-        var self = this;
+        var self = {};
         self.fieldName = options.fieldName;
         self.multiple = options.multiple || false;
         self.value = ko.observable();
@@ -89,15 +89,17 @@ hqDefine("hqwebapp/js/select2_handler", [
                         var data = self.getInitialData(element);
                         if (data) callback(data);
                     }
-                }
+                },
             });
             if (self.onSelect2Change) {
                 fieldInput.on("change", self.onSelect2Change);
             }
         };
+
+        return self;
     };
 
     return {
-        BaseSelect2Handler: BaseSelect2Handler,
+        baseSelect2Handler: baseSelect2Handler,
     };
 });

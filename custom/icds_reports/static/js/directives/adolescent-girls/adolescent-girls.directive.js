@@ -117,7 +117,7 @@ function AdolescentWomenController($scope, $routeParams, $location, $filter, dem
 
     vm.init = function() {
         var locationId = vm.filtersData.location_id || vm.userLocationId;
-        if (!vm.userLocationId || !locationId || locationId === 'all') {
+        if (!locationId || ["all", "null", "undefined"].indexOf(locationId) >= 0) {
             vm.loadData();
             vm.loaded = true;
             return;
@@ -192,8 +192,8 @@ function AdolescentWomenController($scope, $routeParams, $location, $filter, dem
                 var tooltip = chart.interactiveLayer.tooltip;
                 tooltip.contentGenerator(function (d) {
 
-                    var day = _.find(vm.chartData[0].values, function(num) { return d3.time.format('%b %Y')(new Date(num['x'])) === d.value;});
-                    return vm.tooltipContent(d.value, day);
+                    var day = _.find(vm.chartData[0].values, function(num) { return num['x'] === d.value; });
+                    return vm.tooltipContent(d3.time.format('%b %Y')(new Date(d.value)), day);
                 });
                 return chart;
             },

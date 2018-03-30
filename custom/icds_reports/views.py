@@ -1,5 +1,10 @@
 from __future__ import absolute_import
 
+from __future__ import unicode_literals
+
+from collections import OrderedDict
+from wsgiref.util import FileWrapper
+
 import requests
 
 from datetime import datetime, date
@@ -9,15 +14,16 @@ from dateutil.relativedelta import relativedelta
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied
 from django.db.models.query_utils import Q
-from django.http.response import JsonResponse, HttpResponseBadRequest, HttpResponse, Http404
+from django.http.response import JsonResponse, HttpResponseBadRequest, HttpResponse, StreamingHttpResponse, Http404
 from django.shortcuts import get_object_or_404, redirect
+from django.urls import reverse
 from django.utils.decorators import method_decorator
-from django.views.generic.base import View, TemplateView
+from django.views.generic.base import View, TemplateView, RedirectView
 
-import settings
+
 from corehq import toggles
 from corehq.apps.cloudcare.utils import webapps_url
-from corehq.apps.domain.decorators import login_and_domain_required
+from corehq.apps.domain.decorators import login_and_domain_required, api_auth
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.hqwebapp.views import BugReportView
 from corehq.apps.locations.models import SQLLocation
@@ -25,13 +31,12 @@ from corehq.apps.locations.permissions import location_safe, user_can_access_loc
 from corehq.apps.locations.util import location_hierarchy_config
 from corehq.apps.hqwebapp.decorators import use_daterangepicker
 from corehq.apps.users.models import UserRole
+from corehq.form_processor.exceptions import AttachmentNotFound
+from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from custom.icds.const import AWC_LOCATION_TYPE_CODE
 from custom.icds_reports.const import LocationTypes, BHD_ROLE, ICDS_SUPPORT_EMAIL, CHILDREN_EXPORT, \
     PREGNANT_WOMEN_EXPORT, DEMOGRAPHICS_EXPORT, SYSTEM_USAGE_EXPORT, AWC_INFRASTRUCTURE_EXPORT,\
     BENEFICIARY_LIST_EXPORT, ISSNIP_MONTHLY_REGISTER_PDF
-from custom.icds_reports.filters import CasteFilter, MinorityFilter, DisabledFilter, \
-    ResidentFilter, MaternalStatusFilter, ChildAgeFilter, THRBeneficiaryType, ICDSMonthFilter, \
-    TableauLocationFilter, ICDSYearFilter
 
 from custom.icds_reports.reports.adhaar import get_adhaar_data_chart, get_adhaar_data_map, get_adhaar_sector_data
 from custom.icds_reports.reports.adolescent_girls import get_adolescent_girls_data_map, \
@@ -98,57 +103,13 @@ from .exceptions import TableauTokenException
 
 @location_safe
 @method_decorator([toggles.ICDS_REPORTS.required_decorator(), login_and_domain_required], name='dispatch')
-class TableauView(TemplateView):
+class TableauView(RedirectView):
 
-    template_name = 'icds_reports/tableau.html'
+    permanent = True
+    pattern_name = 'icds_dashboard'
 
-    filters = [
-        ICDSMonthFilter,
-        ICDSYearFilter,
-        TableauLocationFilter,
-        CasteFilter,
-        MinorityFilter,
-        DisabledFilter,
-        ResidentFilter,
-        MaternalStatusFilter,
-        ChildAgeFilter,
-        THRBeneficiaryType
-    ]
-
-    @property
-    def domain(self):
-        return self.kwargs['domain']
-
-    @property
-    def couch_user(self):
-        return self.request.couch_user
-
-    def get_context_data(self, **kwargs):
-        location_type_code, user_location_id, state_id, district_id, block_id = _get_user_location(
-            self.couch_user, self.domain
-        )
-        client_ip = self.request.META.get('X-Forwarded-For', '')
-        tableau_access_url = get_tableau_trusted_url(client_ip)
-
-        kwargs.update({
-            'report_workbook': self.kwargs.get('workbook'),
-            'report_worksheet': self.kwargs.get('worksheet'),
-            'debug': self.request.GET.get('debug', False),
-            'view_by': location_type_code,
-            'view_by_value': user_location_id,
-            'state_id': state_id,
-            'district_id': district_id,
-            'block_id': block_id,
-            'tableau_access_url': tableau_access_url,
-            'filters': [
-                {
-                    'html': view_filter(request=self.request, domain=self.domain).render(),
-                    'slug': view_filter(request=self.request, domain=self.domain).slug
-                }
-                for view_filter in self.filters
-            ]
-        })
-        return super(TableauView, self).get_context_data(**kwargs)
+    def get_redirect_url(self, domain=None, **kwargs):
+        return reverse('icds_dashboard', args=[domain])
 
 
 def _get_user_location(user, domain):
@@ -248,8 +209,10 @@ class DashboardView(TemplateView):
         kwargs.update(self.kwargs)
         kwargs['location_hierarchy'] = location_hierarchy_config(self.domain)
         kwargs['user_location_id'] = self.couch_user.get_location_id(self.domain)
-        kwargs['have_access'] = icds_pre_release_features(self.couch_user)
-
+        kwargs['have_access_to_features'] = icds_pre_release_features(self.couch_user)
+        kwargs['have_access_to_all_locations'] = self.couch_user.has_permission(
+            self.domain, 'access_all_locations'
+        )
         is_commcare_user = self.couch_user.is_commcare_user()
 
         if self.couch_user.is_web_user():
@@ -378,10 +341,16 @@ class LocationView(View):
 
     def get(self, request, *args, **kwargs):
         location_id = request.GET.get('location_id')
+        user_locations_with_parents = SQLLocation.objects.get_queryset_ancestors(
+            self.request.couch_user.get_sql_locations(self.kwargs['domain']), include_self=True
+        ).distinct()
+        parent_ids = [loc.location_id for loc in user_locations_with_parents]
         if location_id == 'null' or location_id == 'undefined':
             location_id = None
         if location_id:
-            if not user_can_access_location_id(self.kwargs['domain'], request.couch_user, location_id):
+            if not user_can_access_location_id(
+                self.kwargs['domain'], request.couch_user, location_id
+            ) and location_id not in parent_ids:
                 return JsonResponse({})
             location = get_object_or_404(
                 SQLLocation,
@@ -392,12 +361,16 @@ class LocationView(View):
             map_location_name = location.name
             if 'map_location_name' in location.metadata and location.metadata['map_location_name']:
                 map_location_name = location.metadata['map_location_name']
-
             return JsonResponse({
                 'name': location.name,
                 'map_location_name': map_location_name,
                 'location_type': location.location_type.code,
-                'location_type_name': location.location_type_name
+                'location_type_name': location.location_type_name,
+                'user_have_access': user_can_access_location_id(
+                    self.kwargs['domain'],
+                    request.couch_user, location.location_id
+                ),
+                'user_have_access_to_parent': location.location_id in parent_ids
             })
 
         parent_id = request.GET.get('parent_id')
@@ -407,9 +380,12 @@ class LocationView(View):
 
         locations = SQLLocation.objects.accessible_to_user(self.kwargs['domain'], self.request.couch_user)
         if not parent_id:
-            locations = SQLLocation.objects.filter(domain=self.kwargs['domain'], parent_id__isnull=True)
+            locations = locations.filter(parent_id__isnull=True)
         else:
             locations = locations.filter(parent__location_id=parent_id)
+
+        if locations.count() == 0:
+            locations = user_locations_with_parents.filter(parent__location_id=parent_id)
 
         if name:
             locations = locations.filter(name__iexact=name)
@@ -422,6 +398,11 @@ class LocationView(View):
                     'name': loc.name,
                     'parent_id': parent_id,
                     'location_type_name': loc.location_type_name,
+                    'user_have_access': user_can_access_location_id(
+                        self.kwargs['domain'],
+                        request.couch_user, loc.location_id
+                    ),
+                    'user_have_access_to_parent': loc.location_id in parent_ids
                 }
                 for loc in locations if show_test or loc.metadata.get('is_test_location', 'real') != 'test'
             ]
@@ -441,11 +422,13 @@ class LocationAncestorsView(View):
             self.request.couch_user.get_sql_locations(self.kwargs['domain']), include_self=True
         ).distinct()) + list(selected_location.get_ancestors())
         parent_ids = [x.pk for x in parents]
+        parent_locations_ids = [loc.location_id for loc in parents]
         locations = SQLLocation.objects.accessible_to_user(
             domain=self.kwargs['domain'], user=self.request.couch_user
         ).filter(
             ~Q(pk__in=parent_ids) & (Q(parent_id__in=parent_ids) | Q(parent_id__isnull=True))
         ).select_related('parent').distinct().order_by('name')
+
         return JsonResponse(data={
             'locations': [
                 {
@@ -453,15 +436,25 @@ class LocationAncestorsView(View):
                     'name': location.name,
                     'parent_id': location.parent.location_id if location.parent else None,
                     'location_type_name': location.location_type_name,
+                    'user_have_access': user_can_access_location_id(
+                        self.kwargs['domain'],
+                        request.couch_user, location.location_id
+                    ),
+                    'user_have_access_to_parent': location.location_id in parent_locations_ids
                 }
-                for location in set(list(locations) + list(parents))
+                for location in list(OrderedDict.fromkeys(list(locations) + list(parents)))
                 if show_test or location.metadata.get('is_test_location', 'real') != 'test'
             ],
             'selected_location': {
                 'location_type_name': selected_location.location_type_name,
                 'location_id': selected_location.location_id,
                 'name': selected_location.name,
-                'parent_id': selected_location.parent.location_id if selected_location.parent else None
+                'parent_id': selected_location.parent.location_id if selected_location.parent else None,
+                'user_have_access': user_can_access_location_id(
+                    self.kwargs['domain'],
+                    request.couch_user, selected_location.location_id
+                ),
+                'user_have_access_to_parent': selected_location.location_id in parent_locations_ids
             }
         })
 
@@ -474,9 +467,9 @@ class AWCLocationView(View):
         if location_id == 'null' or location_id == 'undefined':
             location_id = None
         selected_location = get_object_or_404(SQLLocation, location_id=location_id, domain=self.kwargs['domain'])
-        awcs = selected_location.get_descendants().filter(
-            location_type__code=AWC_LOCATION_TYPE_CODE
-        ).order_by('name')
+        awcs = SQLLocation.objects.accessible_to_user(
+            domain=self.kwargs['domain'], user=self.request.couch_user
+        ).filter(parent_id=selected_location.pk).order_by('name')
         return JsonResponse(data={
             'locations': [
                 {
@@ -569,7 +562,7 @@ class AwcReportsView(BaseReportView):
                 order_dir = request.GET.get('order[0][dir]', 'asc')
                 if order_by_name_column == 'age':  # age and date of birth is stored in database as one value
                     order_by_name_column = 'dob'
-                order = "%s%s" % ('-' if order_dir == 'desc' else '', order_by_name_column)
+                order = "%s %s" % (order_by_name_column, order_dir)
 
                 data = get_awc_report_beneficiary(
                     start,
@@ -579,9 +572,11 @@ class AwcReportsView(BaseReportView):
                     config['awc_id'],
                     tuple(current_month.timetuple())[:3],
                     tuple(two_before.timetuple())[:3],
+                    domain
                 )
         elif step == 'beneficiary_details':
             data = get_beneficiary_details(
+                domain,
                 self.request.GET.get('case_id')
             )
         return JsonResponse(data=data)
@@ -686,8 +681,7 @@ class ExportIndicatorView(View):
                 year
             )
             task_id = task.task_id
-            url = redirect('icds_dashboard', domain=self.kwargs['domain'])
-            return redirect(url.url + '#/download?task_id=' + task_id)
+            return JsonResponse(data={'task_id': task_id})
 
 
 @method_decorator([login_and_domain_required], name='dispatch')
@@ -1505,11 +1499,11 @@ class DownloadPDFReport(View):
         client = get_redis_client()
         if format == 'one':
             response = HttpResponse(client.get(uuid), content_type='application/pdf')
-            response['Content-Disposition'] = 'attachment; filename="ISSNIP_monthly_register_cumulative.pdf"'
+            response['Content-Disposition'] = 'attachment; filename="ICDS_CAS_monthly_register_cumulative.pdf"'
             return response
         else:
             response = HttpResponse(client.get(uuid), content_type='application/zip')
-            response['Content-Disposition'] = 'attachment; filename="ISSNIP_monthly_register.zip"'
+            response['Content-Disposition'] = 'attachment; filename="ICDS_CAS_monthly_register.zip"'
             return response
 
 
@@ -1531,3 +1525,21 @@ class CheckPDFReportStatus(View):
                 }
             )
         return JsonResponse({'task_ready': status})
+
+
+@location_safe
+class ICDSImagesAccessorAPI(View):
+    @method_decorator(api_auth)
+    def get(self, request, domain, form_id=None, attachment_id=None):
+        if not form_id or not attachment_id:
+            raise Http404
+        try:
+            content = FormAccessors(domain).get_attachment_content(form_id, attachment_id)
+        except AttachmentNotFound:
+            raise Http404
+        if 'image' not in content.content_type:
+            raise Http404
+        return StreamingHttpResponse(
+            streaming_content=FileWrapper(content.content_stream),
+            content_type=content.content_type
+        )

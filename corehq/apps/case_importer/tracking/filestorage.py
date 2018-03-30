@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from collections import namedtuple
 import os
 from tempfile import mkstemp
@@ -8,7 +9,7 @@ from corehq.apps.case_importer.tracking.models import CaseUploadFileMeta
 from corehq.blobs import get_blob_db
 from corehq.blobs.util import random_url_id
 from corehq.util.files import file_extention_from_filename
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 BUCKET = 'case_importer'
 

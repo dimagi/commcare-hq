@@ -6,11 +6,8 @@ from django.http import JsonResponse, Http404, HttpResponse, HttpResponseBadRequ
 from django.utils.translation import ugettext as _
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST, require_GET
-from iso8601 import iso8601
 
-
-from corehq.apps.domain.auth import BASIC
-from corehq.form_processor.utils.xform import adjust_text_to_datetime
+from corehq.apps.app_manager.dbaccessors import get_app_cached
 from dimagi.utils.logging import notify_exception
 from casexml.apps.case.cleanup import claim_case, get_first_claim
 from casexml.apps.case.fixtures import CaseDBFixture
@@ -19,7 +16,7 @@ from casexml.apps.case.models import CommCareCase
 from corehq import toggles
 from corehq.const import OPENROSA_VERSION_MAP
 from corehq.middleware import OPENROSA_VERSION_HEADER
-from corehq.apps.app_manager.util import get_app, LatestAppInfo
+from corehq.apps.app_manager.util import LatestAppInfo
 from corehq.apps.case_search.models import QueryMergeException
 from corehq.apps.case_search.utils import CaseSearchCriteria
 from corehq.apps.domain.decorators import (
@@ -38,7 +35,7 @@ from .models import SerialIdBucket
 from .utils import (
     demo_user_restore_response, get_restore_user, is_permitted_to_restore,
     handle_401_response)
-from corehq.apps.users.util import update_device_meta, update_latest_builds, update_last_sync
+from corehq.apps.users.util import update_device_meta
 
 
 @location_safe
@@ -197,7 +194,7 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
     couch_restore_user = as_user_obj if uses_login_as else couch_user
     app = app_meta = None
     if app_id:
-        app = get_app(domain, app_id)
+        app = get_app_cached(domain, app_id)
         app_meta = DeviceAppMeta(
             app_id=app.master_id,
             build_id=app_id if app.copy_of else None,
@@ -265,7 +262,7 @@ def heartbeat(request, domain, app_build_id):
     except (Http404, AssertionError):
         # If it's not a valid 'brief' app id, find it by talking to couch
         notify_exception(request, 'Received an invalid heartbeat request')
-        app = get_app(domain, app_build_id)
+        app = get_app_cached(domain, app_build_id)
         brief_app_id = app.master_id
         info.update(LatestAppInfo(brief_app_id, domain).get_info())
 

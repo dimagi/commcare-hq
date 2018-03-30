@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from corehq.apps.sms.models import SQLSMSBackend, PhoneLoadBalancingMixin, SMS
 from corehq.messaging.smsbackends.twilio.forms import TwilioBackendForm
 from twilio.base.exceptions import TwilioRestException
@@ -11,7 +12,7 @@ ERROR_INVALID_TO_PHONE_NUMBER = 21211
 
 class SQLTwilioBackend(SQLSMSBackend, PhoneLoadBalancingMixin):
 
-    class Meta:
+    class Meta(object):
         app_label = 'sms'
         proxy = True
 

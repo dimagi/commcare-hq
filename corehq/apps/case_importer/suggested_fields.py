@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.utils.translation import ugettext as _
 import itertools
 from corehq.apps.case_importer.util import get_case_properties_for_case_type, \

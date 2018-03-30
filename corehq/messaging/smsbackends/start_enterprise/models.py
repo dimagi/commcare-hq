@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import jsonfield
 import re
 import requests
@@ -39,7 +40,7 @@ class StartEnterpriseDeliveryReceipt(models.Model):
 
 
 class StartEnterpriseBackend(SQLSMSBackend):
-    class Meta:
+    class Meta(object):
         app_label = 'sms'
         proxy = True
 

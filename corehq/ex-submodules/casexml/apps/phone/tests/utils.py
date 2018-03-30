@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from xml.etree import cElementTree as ElementTree
 from casexml.apps.case.xml import V1, V2
 from casexml.apps.phone.models import (

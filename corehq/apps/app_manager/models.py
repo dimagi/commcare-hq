@@ -76,6 +76,7 @@ from corehq.const import USER_DATE_FORMAT, USER_TIME_FORMAT
 from corehq.apps.analytics.tasks import track_workflow, send_hubspot_form, HUBSPOT_SAVED_APP_FORM_ID
 from corehq.apps.app_manager.feature_support import CommCareFeatureSupportMixin
 from corehq.util.quickcache import quickcache
+from corehq.util.soft_assert import soft_assert
 from corehq.util.timezones.conversions import ServerTime
 from dimagi.utils.couch import CriticalSection
 from django_prbac.exceptions import PermissionDenied
@@ -91,7 +92,7 @@ from corehq.apps.app_manager.xpath import (
 from corehq.apps.builds import get_default_build_spec
 from dimagi.utils.couch.undo import DeleteRecord, DELETED_SUFFIX
 from dimagi.utils.dates import DateSpan
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.make_uuid import random_hex
 from dimagi.utils.web import get_url_base, parse_int
 from corehq.util import bitly
@@ -1441,12 +1442,20 @@ class NavMenuItemMediaMixin(DocumentSchema):
 
     @classmethod
     def wrap(cls, data):
-        # ToDo - Remove after migration
+        # Lazy migration from single-language media to localizable media
         for media_attr in ('media_image', 'media_audio'):
             old_media = data.get(media_attr, None)
-            if old_media and isinstance(old_media, six.string_types):
-                new_media = {'default': old_media}
-                data[media_attr] = new_media
+            if old_media:
+                # Single-language media was stored in a plain string.
+                # Convert this to a dict, using a dummy key because we
+                # don't know the app's supported or default lang yet.
+                if isinstance(old_media, six.string_types):
+                    new_media = {'default': old_media}
+                    data[media_attr] = new_media
+                elif isinstance(old_media, dict):
+                    # Once the media has localized data, discard the dummy key
+                    if 'default' in old_media and len(old_media) > 1:
+                        old_media.pop('default')
 
         return super(NavMenuItemMediaMixin, cls).wrap(data)
 
@@ -1477,13 +1486,22 @@ class NavMenuItemMediaMixin(DocumentSchema):
 
     @property
     def default_media_image(self):
-        # For older apps that were migrated
-        return self.icon_by_language('default')
+        # For older apps that were migrated: just return the first available item
+        self._assert_unexpected_default_media_call('media_image')
+        return self.icon_by_language('')
 
     @property
     def default_media_audio(self):
-        # For older apps that were migrated
-        return self.audio_by_language('default')
+        # For older apps that were migrated: just return the first available item
+        self._assert_unexpected_default_media_call('media_audio')
+        return self.audio_by_language('')
+
+    def _assert_unexpected_default_media_call(self, media_attr):
+        assert media_attr in ('media_image', 'media_audio')
+        media = getattr(self, media_attr)
+        if isinstance(media, dict) and list(media) == ['default']:
+            _assert = soft_assert(['jschweers' + '@' + 'dimagi.com'])
+            _assert(False, 'Called default_media_image on app with localized media')
 
     def icon_by_language(self, lang, strict=False):
         return self._get_media_by_language('media_image', lang, strict=strict)
@@ -2518,7 +2536,7 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
         raise IncompatibleFormTypeException()
 
 
-class ModuleDetailsMixin():
+class ModuleDetailsMixin(object):
 
     @classmethod
     def wrap_details(cls, data):
@@ -2680,6 +2698,7 @@ class Module(ModuleBase, ModuleDetailsMixin):
                 header={(lang or 'en'): ugettext("Name")},
                 field='name',
                 model='case',
+                hasAutocomplete=True,
             )]
         )
         module = Module(
@@ -6135,7 +6154,7 @@ class RemoteApp(ApplicationBase):
     manage_urls = BooleanProperty(default=False)
 
     questions_map = DictProperty(required=False)
-    
+
     def is_remote_app(self):
         return True
 

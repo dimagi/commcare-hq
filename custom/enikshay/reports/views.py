@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+from __future__ import unicode_literals
 from django.http.response import JsonResponse
 from django.utils.decorators import method_decorator
 from django.shortcuts import render

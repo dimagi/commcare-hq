@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import division
+from __future__ import unicode_literals
 from collections import defaultdict
 from datetime import timedelta
 from django.db.models.aggregates import Count
@@ -156,7 +157,7 @@ class MonthOfStockProduct(EWSData):
             if not self.config['export']:
                 headers.add_column(DataTablesColumn(product.code))
             else:
-                headers.add_column(DataTablesColumn(u'{} ({})'.format(product.name, product.code)))
+                headers.add_column(DataTablesColumn('{} ({})'.format(product.name, product.code)))
         return headers
 
     @property

@@ -4,7 +4,7 @@ from corehq.apps.crud.interface import BaseCRUDAdminInterface
 from corehq.apps.indicators.dispatcher import IndicatorAdminInterfaceDispatcher
 from corehq.apps.indicators.utils import get_namespaces
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 
 class BaseIndicatorAdminInterface(BaseCRUDAdminInterface):

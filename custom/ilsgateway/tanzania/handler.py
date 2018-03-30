@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import re
 from corehq.apps.sms.api import send_sms_to_verified_number
 from corehq.toggles import EMG_AND_REC_SMS_HANDLERS

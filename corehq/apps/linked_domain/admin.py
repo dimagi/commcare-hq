@@ -14,6 +14,7 @@ class DomainLinkAdmin(admin.ModelAdmin):
         'master_domain',
         'remote_base_url',
         'last_pull',
+        'deleted',
     ]
     list_filter = [
         'linked_domain',
@@ -24,6 +25,18 @@ class DomainLinkAdmin(admin.ModelAdmin):
     inlines = [
         DomainLinkHistoryInline,
     ]
+    actions = [
+        'delete', 'undelete'
+    ]
+
+    def delete(self, request, queryset):
+        queryset.update(deleted=True)
+    delete.short_description = "Mark selected items as deleted"
+
+    def undelete(self, request, queryset):
+        queryset.update(deleted=False)
+    undelete.short_description = "Undelete selected items"
 
 
+admin.site.disable_action('delete_selected')
 admin.site.register(DomainLink, DomainLinkAdmin)

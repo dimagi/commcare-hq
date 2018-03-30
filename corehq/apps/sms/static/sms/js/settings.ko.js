@@ -15,7 +15,7 @@ hqDefine("sms/js/settings.ko", function() {
             } else {
                 return "BETWEEN";
             }
-        }
+        };
 
         self.time_input_relationship = ko.observable(
             time_input_relationship || self.time_input_relationship_initial()
@@ -35,12 +35,12 @@ hqDefine("sms/js/settings.ko", function() {
         self.sms_conversation_times = ko.observableArray();
         self.use_custom_chat_template = ko.observable();
         self.sms_case_registration_enabled = ko.observable();
-        self.sms_case_registration_owner_id = new SettingsSelect2Handler(
+        self.sms_case_registration_owner_id = settingsSelect2Handler(
             initial.sms_case_registration_owner_id,
             'sms_case_registration_owner_id'
         );
         self.sms_case_registration_owner_id.init();
-        self.sms_case_registration_user_id = new SettingsSelect2Handler(
+        self.sms_case_registration_user_id = settingsSelect2Handler(
             initial.sms_case_registration_user_id,
             'sms_case_registration_user_id'
         );
@@ -105,7 +105,7 @@ hqDefine("sms/js/settings.ko", function() {
                 $(this).timepicker({
                     showMeridian: false,
                     showSeconds: false,
-                    defaultTime: $(this).val() || false
+                    defaultTime: $(this).val() || false,
                 });
             });
         };
@@ -148,16 +148,15 @@ hqDefine("sms/js/settings.ko", function() {
 
     }
 
-    var BaseSelect2Handler = hqImport("hqwebapp/js/select2_handler").BaseSelect2Handler;
-    var SettingsSelect2Handler = function (initialValue, fieldName) {
+    var baseSelect2Handler = hqImport("hqwebapp/js/select2_handler").baseSelect2Handler;
+    var settingsSelect2Handler = function (initialValue, fieldName) {
         /*
          * initialValue is an object like {id: ..., text: ...}
          */
-        BaseSelect2Handler.call(this, {
+        var self = baseSelect2Handler({
             fieldName: fieldName,
             multiple: false,
         });
-        var self = this;
 
         self.getHandlerSlug = function () {
             return 'sms_settings_async';
@@ -168,11 +167,9 @@ hqDefine("sms/js/settings.ko", function() {
         };
 
         self.value(initialValue ? initialValue.id : '');
+
+        return self;
     };
-
-    SettingsSelect2Handler.prototype = Object.create(SettingsSelect2Handler.prototype);
-    SettingsSelect2Handler.prototype.constructor = SettingsSelect2Handler;
-
 
     $(function() {
         var settingsViewModel = new SettingsViewModel(
@@ -181,5 +178,4 @@ hqDefine("sms/js/settings.ko", function() {
         $('#sms-settings-form').koApplyBindings(settingsViewModel);
         settingsViewModel.init();
     });
-
 });

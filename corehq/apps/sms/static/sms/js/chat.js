@@ -64,15 +64,9 @@ hqDefine('sms/js/chat', function () {
             self.update_in_progress = false;
 
             self.history_choices = ko.observableArray([]);
-            var initial_history_choices = initialPageData.get('history_choices');
-            for (var choice in initial_history_choices) {
-                self.history_choices.push(
-                    new MessageHistoryChoice(
-                        initial_history_choices[choice].description,
-                        initial_history_choices[choice].timestamp
-                    )
-                );
-            }
+            _.each(initialPageData.get('history_choice'), function(timestamp, description) {
+                self.history_choices.push(new MessageHistoryChoice(description, timestamp));
+            });
             self.selected_history_choice = ko.observable();
             // false until the user selects one of the history choices
             self.history_choice_selected = false;
@@ -242,7 +236,7 @@ hqDefine('sms/js/chat', function () {
                 self.flash_off();
             };
             self.flash_on = function () {
-                document.title = "(" + gettext('New Message') + ") - " + self.original_title;
+                document.title = gettext("(New Message) - ") + self.original_title;
                 $("body").css("background-color", "#6060FF");
             };
             self.flash_off = function () {

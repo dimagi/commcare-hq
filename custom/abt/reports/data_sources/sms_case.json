@@ -10,19 +10,36 @@
     "airsrwanda",
     "airsethiopia",
     "airskenya",
-    "airszambia"
+    "airszambia",
+    "vectorlink-uganda"
   ],
   "config": {
     "engine_id": "default",
     "base_item_expression": {},
     "configured_filter": {
-      "expression": {
-        "property_name": "type",
-        "type": "property_name"
-      },
-      "operator": "eq",
-      "property_value": "pmt_data",
-      "type": "boolean_expression"
+        "type": "and",
+        "filters": [
+            {
+                "expression": {
+                    "property_name": "type",
+                    "type": "property_name"
+                },
+                "operator": "eq",
+                "property_value": "pmt_data",
+                "type": "boolean_expression"
+            },
+            {
+              "operator": "eq",
+              "expression": {
+                "datatype": null,
+                "type": "property_name",
+                "property_name": "closed"
+              },
+              "type": "boolean_expression",
+              "comment": null,
+              "property_value": false
+            }
+        ]
     },
     "configured_indicators": [
       {

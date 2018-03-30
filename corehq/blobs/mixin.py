@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import re
 import sys
 import uuid
@@ -21,7 +22,7 @@ from dimagi.ext.couchdbkit import (
     IntegerProperty,
     StringProperty,
 )
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 import six
 
 
@@ -38,7 +39,7 @@ class BlobMeta(DocumentSchema):
 
 class BlobMixin(Document):
 
-    class Meta:
+    class Meta(object):
         abstract = True
 
     external_blobs = DictProperty(BlobMeta)
@@ -136,7 +137,7 @@ class BlobMixin(Document):
             blob = db.get(meta.id, self._blobdb_bucket())
         except NotFound:
             raise ResourceNotFound(
-                u"{model} {model_id} attachment: {name!r}".format(
+                "{model} {model_id} attachment: {name!r}".format(
                     model=type(self).__name__,
                     name=name,
                     model_id=self._id,
@@ -356,7 +357,7 @@ class DeferredBlobMixin(BlobMixin):
     recommended to use this in new code.
     """
 
-    class Meta:
+    class Meta(object):
         abstract = True
 
     _deferred_blobs = None
@@ -398,7 +399,7 @@ class DeferredBlobMixin(BlobMixin):
         if self._deferred_blobs and name in self._deferred_blobs:
             if self._deferred_blobs[name] is None:
                 raise ResourceNotFound(
-                    u"{model} {model_id} attachment: {name!r}".format(
+                    "{model} {model_id} attachment: {name!r}".format(
                         model=type(self).__name__,
                         model_id=self._id,
                         name=name,
@@ -539,7 +540,7 @@ def _get_couchdb_name(doc_class):
 
 def safe_id(identifier):
     if not SAFENAME.match(identifier):
-        identifier = u'sha1-' + sha1(identifier.encode('utf-8')).hexdigest()
+        identifier = 'sha1-' + sha1(identifier.encode('utf-8')).hexdigest()
     elif SHA1_ID.match(identifier):
         # could collide with "safe" id and should never happen anyway
         raise ValueError("illegal doc id: {!r}".format(identifier))

@@ -19,18 +19,13 @@ from corehq.apps.hqwebapp.templatetags.hq_shared_tags import static
 from corehq.apps.reports.urls import report_urls
 from corehq.apps.registration.utils import PRICING_LINK
 from corehq.apps.sms.views import sms_in
+from corehq.apps.hqwebapp.urls import legacy_prelogin
 
 try:
     from localsettings import LOCAL_APP_URLS
 except ImportError:
     LOCAL_APP_URLS = []
 
-try:
-    from localsettings import PRELOGIN_APP_URLS
-except ImportError:
-    PRELOGIN_APP_URLS = [
-        url(r'', include('corehq.apps.prelogin.urls')),
-    ]
 admin.autodiscover()
 
 handler500 = 'corehq.apps.hqwebapp.views.server_error'
@@ -79,7 +74,6 @@ domain_specific = [
     url(r'^', include('custom.uth.urls')),
     url(r'^dashboard/', include('corehq.apps.dashboard.urls')),
     url(r'^configurable_reports/', include('corehq.apps.userreports.urls')),
-    url(r'^', include('custom.icds.urls')),
     url(r'^', include('custom.icds_reports.urls')),
     url(r'^', include('custom.enikshay.urls')),
     url(r'^champ_cameroon/', include('custom.champ.urls')),
@@ -163,7 +157,10 @@ urlpatterns = [
 ] + LOCAL_APP_URLS
 
 if settings.ENABLE_PRELOGIN_SITE:
-    urlpatterns += PRELOGIN_APP_URLS
+    # handle redirects from old prelogin
+    urlpatterns += [
+        url(r'', include(legacy_prelogin)),
+    ]
 
 if settings.DEBUG:
     try:

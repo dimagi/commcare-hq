@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from mock import patch, MagicMock
 from django.test import TestCase, override_settings
 
@@ -44,8 +45,8 @@ class TestDiagnosticInvestigationsTask(ENikshayCaseStructureMixin, TestCase):
         })
 
         expected = {
-            'diagnostic_tests': u'X-Ray: Chest, CBNAAT: Sputum',
-            'diagnostic_test_results': u'TB Not Detected: scanty, TB Detected: 3+ scanty'
+            'diagnostic_tests': 'X-Ray: Chest, CBNAAT: Sputum',
+            'diagnostic_test_results': 'TB Not Detected: scanty, TB Detected: 3+ scanty'
         }
 
         self.assertDictEqual(

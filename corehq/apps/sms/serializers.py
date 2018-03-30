@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from corehq.apps.sms.models import SMS
 from rest_framework import serializers
 
@@ -8,6 +9,6 @@ class SMSSerializer(serializers.ModelSerializer):
     messaging_subevent_id = serializers.IntegerField()
     custom_metadata = serializers.DictField()
 
-    class Meta:
+    class Meta(object):
         model = SMS
         exclude = ('couch_id', 'messaging_subevent')

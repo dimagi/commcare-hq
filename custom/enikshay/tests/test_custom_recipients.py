@@ -1,8 +1,9 @@
 from __future__ import absolute_import
-from corehq.apps.data_interfaces.tests.util import create_case
+from __future__ import unicode_literals
 from corehq.apps.hqcase.utils import update_case
 from corehq.apps.reminders.models import CaseReminder
 from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.tests.util import create_user_case
 from corehq.form_processor.models import CommCareCaseSQL
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from custom.enikshay.const import LOCATION_SITE_CODE_MEHSANA
@@ -27,13 +28,6 @@ class ENikshayCustomRecipientsTest(ENikshayCaseStructureMixin, ENikshayLocationS
     def tearDown(self):
         super(ENikshayCustomRecipientsTest, self).tearDown()
         FormProcessorTestUtils.delete_all_cases(domain=self.domain)
-
-    def create_user_case(self, user):
-        create_case_kwargs = {
-            'external_id': user.get_id,
-            'update': {'hq_user_id': user.get_id},
-        }
-        return create_case(self.domain, 'commcare-user', **create_case_kwargs)
 
     def test_person_case_from_voucher_case(self):
         prescription = self.create_prescription_case()
@@ -73,7 +67,7 @@ class ENikshayCustomRecipientsTest(ENikshayCaseStructureMixin, ENikshayLocationS
         user = CommCareUser.create(self.domain, 'mobile', 'password')
         update_case(self.domain, voucher.case_id, case_properties={'voucher_fulfilled_by_id': user.get_id})
 
-        with self.create_user_case(user) as user_case:
+        with create_user_case(user) as user_case:
             self.assertEqual(
                 agency_user_case_from_voucher_fulfilled_by_id(
                     None,
@@ -100,7 +94,7 @@ class ENikshayCustomRecipientsTest(ENikshayCaseStructureMixin, ENikshayLocationS
         self.assertEqual(result.case_id, self.person_id)
 
         # Create user case
-        with self.create_user_case(user) as user_case:
+        with create_user_case(user) as user_case:
             result = beneficiary_registration_recipients(
                 None,
                 CaseReminder(domain=self.domain, case_id=self.person_id)
@@ -143,7 +137,7 @@ class ENikshayCustomRecipientsTest(ENikshayCaseStructureMixin, ENikshayLocationS
         self.assertEqual(result.case_id, self.person_id)
 
         # Create user case
-        with self.create_user_case(user) as user_case:
+        with create_user_case(user) as user_case:
             result = prescription_voucher_alert_recipients(
                 None,
                 CaseReminder(domain=self.domain, case_id=voucher.case_id)

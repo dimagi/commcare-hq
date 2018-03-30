@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import json
 import re
 from corehq.apps.data_interfaces.forms import CaseRuleCriteriaForm, validate_case_property_name
@@ -22,7 +23,7 @@ from django.forms.fields import (
 from django.forms.forms import Form
 from django.forms.widgets import CheckboxSelectMultiple, HiddenInput
 from django.utils.functional import cached_property
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.django.fields import TrimmedCharField
 from django.utils.translation import ugettext as _, ugettext_lazy
 from corehq.apps.app_manager.dbaccessors import get_latest_released_app
@@ -35,6 +36,7 @@ from corehq.apps.reminders.util import get_form_list
 from corehq.apps.sms.util import get_or_create_translation_doc
 from corehq.apps.smsforms.models import SQLXFormsSession
 from corehq.apps.users.models import CommCareUser
+from corehq.messaging.scheduling.async_handlers import get_combined_id
 from corehq.messaging.scheduling.const import (
     VISIT_WINDOW_START,
     VISIT_WINDOW_END,
@@ -90,6 +92,20 @@ def validate_date(value):
     return value.date()
 
 
+def validate_int(value, min_value):
+    error = ValidationError(_("Please enter a whole number greater than or equal to {}").format(min_value))
+
+    try:
+        value = int(value)
+    except (TypeError, ValueError):
+        raise error
+
+    if value < min_value:
+        raise error
+
+    return value
+
+
 class RecipientField(CharField):
     def to_python(self, value):
         if not value:
@@ -107,7 +123,6 @@ class ScheduleForm(Form):
     SEND_MONTHLY = 'monthly'
     SEND_IMMEDIATELY = 'immediately'
 
-    STOP_AFTER_FIRST_OCCURRENCE = 'after_first_occurrence'
     STOP_AFTER_OCCURRENCES = 'after_occurrences'
     STOP_NEVER = 'never'
 
@@ -116,6 +131,10 @@ class ScheduleForm(Form):
     CONTENT_SMS_SURVEY = 'sms_survey'
     CONTENT_IVR_SURVEY = 'ivr_survey'
     CONTENT_CUSTOM_SMS = 'custom_sms'
+
+    REPEAT_NO = 'no'
+    REPEAT_EVERY_1 = 'repeat_every_1'
+    REPEAT_EVERY_N = 'repeat_every_n'
 
     LANGUAGE_PROJECT_DEFAULT = 'PROJECT_DEFAULT'
 
@@ -174,18 +193,34 @@ class ScheduleForm(Form):
         max_value=1439,
         label='',
     )
+    start_date = CharField(
+        label='',
+        required=False
+    )
+    repeat = ChoiceField(
+        required=False,
+        # The text for REPEAT_EVERY_1 gets set dynamically
+        choices=(
+            (REPEAT_NO, ugettext_lazy('no')),
+            (REPEAT_EVERY_1, ''),
+            (REPEAT_EVERY_N, ugettext_lazy('every')),
+        ),
+    )
+    repeat_every = IntegerField(
+        required=False,
+        min_value=2,
+        label='',
+    )
     stop_type = ChoiceField(
         required=False,
         choices=(
-            # The text for STOP_AFTER_FIRST_OCCURRENCE and STOP_AFTER_OCCURRENCES gets set dynamically
-            (STOP_AFTER_FIRST_OCCURRENCE, ''),
-            (STOP_AFTER_OCCURRENCES, ''),
-            (STOP_NEVER, ugettext_lazy('Never')),
+            (STOP_AFTER_OCCURRENCES, ugettext_lazy('after')),
+            (STOP_NEVER, ugettext_lazy('never')),
         )
     )
     occurrences = IntegerField(
         required=False,
-        min_value=1,
+        min_value=2,
         label='',
     )
     recipient_types = MultipleChoiceField(
@@ -322,13 +357,29 @@ class ScheduleForm(Form):
 
         self.add_initial_for_send_time(initial)
 
-        if self.initial_schedule.total_iterations == TimedSchedule.REPEAT_INDEFINITELY:
-            initial['stop_type'] = self.STOP_NEVER
-        elif self.initial_schedule.total_iterations == 1:
-            initial['stop_type'] = self.STOP_AFTER_FIRST_OCCURRENCE
+        if self.initial_schedule.total_iterations == 1:
+            initial['repeat'] = self.REPEAT_NO
         else:
-            initial['stop_type'] = self.STOP_AFTER_OCCURRENCES
-            initial['occurrences'] = self.initial_schedule.total_iterations
+            if initial['send_frequency'] == self.SEND_DAILY:
+                repeat_every = self.initial_schedule.repeat_every
+            elif initial['send_frequency'] == self.SEND_WEEKLY:
+                repeat_every = self.initial_schedule.repeat_every // 7
+            elif initial['send_frequency'] == self.SEND_MONTHLY:
+                repeat_every = self.initial_schedule.repeat_every * -1
+            else:
+                raise ValueError("Unexpected value for send_frequency: %s" % initial['send_frequency'])
+
+            if repeat_every == 1:
+                initial['repeat'] = self.REPEAT_EVERY_1
+            else:
+                initial['repeat'] = self.REPEAT_EVERY_N
+                initial['repeat_every'] = repeat_every
+
+            if self.initial_schedule.total_iterations == TimedSchedule.REPEAT_INDEFINITELY:
+                initial['stop_type'] = self.STOP_NEVER
+            elif self.initial_schedule.total_iterations > 1:
+                initial['stop_type'] = self.STOP_AFTER_OCCURRENCES
+                initial['occurrences'] = self.initial_schedule.total_iterations
 
     def add_initial_recipients(self, recipients, initial):
         recipient_types = set()
@@ -437,14 +488,12 @@ class ScheduleForm(Form):
         return form, app
 
     @memoized
-    def get_latest_released_form_and_app(self, form_unique_id):
+    def get_latest_released_form_and_app(self, app_id, form_unique_id):
         """
         Returns the form and app associated with the latest released
         build of an app.
         """
-        form, app = self.get_form_and_app(form_unique_id)
-
-        latest_released_app = get_latest_released_app(app.domain, app.get_id)
+        latest_released_app = get_latest_released_app(self.domain, app_id)
         if latest_released_app is None:
             raise ValidationError(_("Please make a released build of the application"))
 
@@ -600,23 +649,78 @@ class ScheduleForm(Form):
 
         result.extend([
             hqcrispy.B3MultiField(
+                _("Repeat"),
+                crispy.Div(
+                    twbscrispy.InlineField(
+                        'repeat',
+                        data_bind='value: repeat',
+                    ),
+                    css_class='col-sm-4',
+                ),
+                crispy.Div(
+                    twbscrispy.InlineField(
+                        'repeat_every',
+                        data_bind='value: repeat_every',
+                    ),
+                    css_class='col-sm-2',
+                    data_bind="visible: repeat() === '%s'" % self.REPEAT_EVERY_N,
+                ),
+                crispy.Div(
+                    crispy.Div(
+                        crispy.HTML('<label class="control-label">%s</label>' % _("days")),
+                        css_class='col-sm-4',
+                        data_bind="visible: send_frequency() === '%s'" % self.SEND_DAILY,
+                    ),
+                    crispy.Div(
+                        crispy.HTML('<label class="control-label">%s</label>' % _("weeks")),
+                        css_class='col-sm-4',
+                        data_bind="visible: send_frequency() === '%s'" % self.SEND_WEEKLY,
+                    ),
+                    crispy.Div(
+                        crispy.HTML('<label class="control-label">%s</label>' % _("months")),
+                        css_class='col-sm-4',
+                        data_bind="visible: send_frequency() === '%s'" % self.SEND_MONTHLY,
+                    ),
+                    data_bind="visible: repeat() === '%s'" % self.REPEAT_EVERY_N,
+                ),
+                data_bind='visible: showRepeatInput',
+            ),
+            hqcrispy.B3MultiField(
                 _("Stop"),
                 crispy.Div(
                     twbscrispy.InlineField(
                         'stop_type',
                         data_bind='value: stop_type',
                     ),
-                    css_class='col-sm-6',
+                    css_class='col-sm-4',
                 ),
                 crispy.Div(
                     twbscrispy.InlineField(
                         'occurrences',
                         data_bind='value: occurrences',
                     ),
-                    css_class='col-sm-6',
+                    css_class='col-sm-2',
                     data_bind="visible: stop_type() === '%s'" % self.STOP_AFTER_OCCURRENCES,
                 ),
-                data_bind='visible: showStopInput',
+                crispy.Div(
+                    crispy.Div(
+                        crispy.HTML('<label class="control-label">%s</label>' % _("occurrences")),
+                        css_class='col-sm-4',
+                        data_bind="visible: send_frequency() === '%s'" % self.SEND_DAILY,
+                    ),
+                    crispy.Div(
+                        crispy.HTML('<label class="control-label">%s</label>' % _("weekly occurrences")),
+                        css_class='col-sm-4',
+                        data_bind="visible: send_frequency() === '%s'" % self.SEND_WEEKLY,
+                    ),
+                    crispy.Div(
+                        crispy.HTML('<label class="control-label">%s</label>' % _("monthly occurrences")),
+                        css_class='col-sm-4',
+                        data_bind="visible: send_frequency() === '%s'" % self.SEND_MONTHLY,
+                    ),
+                    data_bind="visible: stop_type() === '%s'" % self.STOP_AFTER_OCCURRENCES,
+                ),
+                data_bind="visible: showStopInput() && repeat() !== '%s'" % self.REPEAT_NO,
             ),
             hqcrispy.B3MultiField(
                 "",
@@ -1002,8 +1106,36 @@ class ScheduleForm(Form):
 
         return value
 
-    def clean_stop_type(self):
+    def clean_start_date(self):
         if self.cleaned_data.get('send_frequency') == self.SEND_IMMEDIATELY:
+            return None
+
+        return validate_date(self.cleaned_data.get('start_date'))
+
+    def clean_repeat(self):
+        if self.cleaned_data.get('send_frequency') == self.SEND_IMMEDIATELY:
+            return None
+
+        repeat = self.cleaned_data.get('repeat')
+        if not repeat:
+            raise ValidationError(_("This field is required"))
+
+        return repeat
+
+    def clean_repeat_every(self):
+        if (
+            self.cleaned_data.get('send_frequency') == self.SEND_IMMEDIATELY or
+            self.cleaned_data.get('repeat') != self.REPEAT_EVERY_N
+        ):
+            return None
+
+        return validate_int(self.cleaned_data.get('repeat_every'), 2)
+
+    def clean_stop_type(self):
+        if (
+            self.cleaned_data.get('send_frequency') == self.SEND_IMMEDIATELY or
+            self.cleaned_data.get('repeat') == self.REPEAT_NO
+        ):
             return None
 
         stop_type = self.cleaned_data.get('stop_type')
@@ -1015,22 +1147,12 @@ class ScheduleForm(Form):
     def clean_occurrences(self):
         if (
             self.cleaned_data.get('send_frequency') == self.SEND_IMMEDIATELY or
+            self.cleaned_data.get('repeat') == self.REPEAT_NO or
             self.cleaned_data.get('stop_type') != self.STOP_AFTER_OCCURRENCES
         ):
             return None
 
-        error = ValidationError(_("Please enter a whole number greater than 0"))
-
-        occurrences = self.cleaned_data.get('occurrences')
-        try:
-            occurrences = int(occurrences)
-        except (TypeError, ValueError):
-            raise error
-
-        if occurrences <= 0:
-            raise error
-
-        return occurrences
+        return validate_int(self.cleaned_data.get('occurrences'), 2)
 
     def clean_subject(self):
         if self.cleaned_data.get('content') != self.CONTENT_EMAIL:
@@ -1151,12 +1273,18 @@ class ScheduleForm(Form):
 
     def distill_total_iterations(self):
         form_data = self.cleaned_data
-        if form_data['stop_type'] == self.STOP_NEVER:
-            return TimedSchedule.REPEAT_INDEFINITELY
-        elif form_data['stop_type'] == self.STOP_AFTER_FIRST_OCCURRENCE:
+        if form_data['repeat'] == self.REPEAT_NO:
             return 1
+        elif form_data['stop_type'] == self.STOP_NEVER:
+            return TimedSchedule.REPEAT_INDEFINITELY
 
         return form_data['occurrences']
+
+    def distill_repeat_every(self):
+        if self.cleaned_data['repeat'] == self.REPEAT_EVERY_N:
+            return self.cleaned_data['repeat_every']
+
+        return 1
 
     def distill_default_language_code(self):
         value = self.cleaned_data['default_language_code']
@@ -1220,6 +1348,7 @@ class ScheduleForm(Form):
 
     def save_daily_schedule(self):
         form_data = self.cleaned_data
+        repeat_every = self.distill_repeat_every()
         total_iterations = self.distill_total_iterations()
         content = self.distill_content()
         extra_scheduling_options = self.distill_extra_scheduling_options()
@@ -1233,6 +1362,7 @@ class ScheduleForm(Form):
                 total_iterations=total_iterations,
                 start_offset=self.distill_start_offset(),
                 extra_options=extra_scheduling_options,
+                repeat_every=repeat_every,
             )
         else:
             schedule = TimedSchedule.create_simple_daily_schedule(
@@ -1242,12 +1372,14 @@ class ScheduleForm(Form):
                 total_iterations=total_iterations,
                 start_offset=self.distill_start_offset(),
                 extra_options=extra_scheduling_options,
+                repeat_every=repeat_every,
             )
 
         return schedule
 
     def save_weekly_schedule(self):
         form_data = self.cleaned_data
+        repeat_every = self.distill_repeat_every()
         total_iterations = self.distill_total_iterations()
         content = self.distill_content()
         extra_scheduling_options = self.distill_extra_scheduling_options()
@@ -1262,6 +1394,7 @@ class ScheduleForm(Form):
                 self.distill_start_day_of_week(),
                 total_iterations=total_iterations,
                 extra_options=extra_scheduling_options,
+                repeat_every=repeat_every,
             )
         else:
             schedule = TimedSchedule.create_simple_weekly_schedule(
@@ -1272,12 +1405,14 @@ class ScheduleForm(Form):
                 self.distill_start_day_of_week(),
                 total_iterations=total_iterations,
                 extra_options=extra_scheduling_options,
+                repeat_every=repeat_every,
             )
 
         return schedule
 
     def save_monthly_schedule(self):
         form_data = self.cleaned_data
+        repeat_every = self.distill_repeat_every()
         total_iterations = self.distill_total_iterations()
         content = self.distill_content()
         extra_scheduling_options = self.distill_extra_scheduling_options()
@@ -1295,6 +1430,7 @@ class ScheduleForm(Form):
                 content,
                 total_iterations=total_iterations,
                 extra_options=extra_scheduling_options,
+                repeat_every=repeat_every,
             )
         else:
             schedule = TimedSchedule.create_simple_monthly_schedule(
@@ -1304,6 +1440,7 @@ class ScheduleForm(Form):
                 content,
                 total_iterations=total_iterations,
                 extra_options=extra_scheduling_options,
+                repeat_every=repeat_every,
             )
 
         return schedule
@@ -1324,11 +1461,6 @@ class BroadcastForm(ScheduleForm):
         required=True,
         label=ugettext_lazy('Schedule Name'),
         max_length=1000,
-    )
-
-    start_date = CharField(
-        label='',
-        required=False
     )
 
     def __init__(self, domain, schedule, can_use_sms_surveys, broadcast, *args, **kwargs):
@@ -1357,7 +1489,7 @@ class BroadcastForm(ScheduleForm):
                         'start_date',
                         data_bind='value: start_date',
                     ),
-                    css_class='col-sm-6',
+                    css_class='col-sm-4',
                 ),
                 data_bind='visible: showStartDateInput',
             ),
@@ -1379,12 +1511,6 @@ class BroadcastForm(ScheduleForm):
                 result['start_date'] = self.initial_broadcast.start_date.strftime('%Y-%m-%d')
 
         return result
-
-    def clean_start_date(self):
-        if self.cleaned_data.get('send_frequency') == self.SEND_IMMEDIATELY:
-            return None
-
-        return validate_date(self.cleaned_data.get('start_date'))
 
     def distill_start_offset(self):
         return 0
@@ -1447,6 +1573,7 @@ class BroadcastForm(ScheduleForm):
 class ConditionalAlertScheduleForm(ScheduleForm):
     START_DATE_RULE_TRIGGER = 'RULE_TRIGGER'
     START_DATE_CASE_PROPERTY = 'CASE_PROPERTY'
+    START_DATE_SPECIFIC_DATE = 'SPECIFIC_DATE'
     START_DATE_FROM_VISIT_SCHEDULER = 'VISIT_SCHEDULER'
 
     START_OFFSET_ZERO = 'ZERO'
@@ -1456,11 +1583,20 @@ class ConditionalAlertScheduleForm(ScheduleForm):
     YES = 'Y'
     NO = 'N'
 
+    # start_date is defined on the superclass but cleaning it in this subclass
+    # depends on start_date_type, which depends on send_frequency
+    field_order = [
+        'send_frequency',
+        'start_date_type',
+        'start_date',
+    ]
+
     start_date_type = ChoiceField(
-        required=True,
+        required=False,
         choices=(
             (START_DATE_RULE_TRIGGER, ugettext_lazy("The first available time after the rule is satisfied")),
-            (START_DATE_CASE_PROPERTY, ugettext_lazy("The date from case property: ")),
+            (START_DATE_CASE_PROPERTY, ugettext_lazy("The date from case property:")),
+            (START_DATE_SPECIFIC_DATE, ugettext_lazy("A specific date:")),
         )
     )
 
@@ -1529,7 +1665,8 @@ class ConditionalAlertScheduleForm(ScheduleForm):
         required=False,
     )
 
-    visit_scheduler_form_unique_id = CharField(
+    # The app id and form unique id of a visit scheduler form, separated by '|'
+    visit_scheduler_app_and_form_unique_id = CharField(
         label=ugettext_lazy("Scheduler: Form"),
         required=False,
     )
@@ -1607,18 +1744,22 @@ class ConditionalAlertScheduleForm(ScheduleForm):
                 (self.CONTENT_CUSTOM_SMS, _("Custom SMS")),
             ]
 
+    def split_app_and_form_unique_id(self, value):
+        return value.split('|')
+
     @property
     def current_visit_scheduler_form(self):
-        value = self['visit_scheduler_form_unique_id'].value()
+        value = self['visit_scheduler_app_and_form_unique_id'].value()
         if not value:
             return {}
 
+        app_id, form_unique_id = self.split_app_and_form_unique_id(value)
         try:
-            form, app = self.get_latest_released_form_and_app(value)
+            form, app = self.get_latest_released_form_and_app(app_id, form_unique_id)
         except:
             return {}
 
-        return {'id': form.unique_id, 'text': form.full_path_name}
+        return {'id': value, 'text': form.full_path_name}
 
     @property
     def scheduling_fieldset_legend(self):
@@ -1712,22 +1853,6 @@ class ConditionalAlertScheduleForm(ScheduleForm):
 
     def compute_initial(self):
         result = super(ConditionalAlertScheduleForm, self).compute_initial()
-        if self.initial_schedule:
-            schedule = self.initial_schedule
-            if isinstance(schedule, TimedSchedule):
-                if schedule.start_offset == 0:
-                    result['start_offset_type'] = self.START_OFFSET_ZERO
-                elif schedule.start_offset > 0:
-                    result['start_offset_type'] = self.START_OFFSET_POSITIVE
-                    result['start_offset'] = schedule.start_offset
-                else:
-                    result['start_offset_type'] = self.START_OFFSET_NEGATIVE
-                    result['start_offset'] = abs(schedule.start_offset)
-
-                if schedule.start_day_of_week >= 0:
-                    result['start_day_of_week'] = str(schedule.start_day_of_week)
-
-            self.add_initial_for_custom_metadata(result)
 
         if self.initial_rule:
             action_definition = self.initial_rule.memoized_actions[0].definition
@@ -1742,8 +1867,14 @@ class ConditionalAlertScheduleForm(ScheduleForm):
             if action_definition.start_date_case_property:
                 result['start_date_type'] = self.START_DATE_CASE_PROPERTY
                 result['start_date_case_property'] = action_definition.start_date_case_property
+            elif action_definition.specific_start_date:
+                result['start_date_type'] = self.START_DATE_SPECIFIC_DATE
+                result['start_date'] = action_definition.specific_start_date
             elif scheduler_module_info.enabled:
-                result['visit_scheduler_form_unique_id'] = scheduler_module_info.form_unique_id
+                result['visit_scheduler_app_and_form_unique_id'] = get_combined_id(
+                    scheduler_module_info.app_id,
+                    scheduler_module_info.form_unique_id
+                )
                 result['start_date_type'] = self.START_DATE_FROM_VISIT_SCHEDULER
 
                 # Convert to 1-based index for display as in the form builder
@@ -1751,6 +1882,26 @@ class ConditionalAlertScheduleForm(ScheduleForm):
                 result['visit_window_position'] = scheduler_module_info.window_position
             else:
                 result['start_date_type'] = self.START_DATE_RULE_TRIGGER
+
+        if self.initial_schedule:
+            schedule = self.initial_schedule
+            if (
+                isinstance(schedule, TimedSchedule) and
+                result.get('start_date_type') != self.START_DATE_SPECIFIC_DATE
+            ):
+                if schedule.start_offset == 0:
+                    result['start_offset_type'] = self.START_OFFSET_ZERO
+                elif schedule.start_offset > 0:
+                    result['start_offset_type'] = self.START_OFFSET_POSITIVE
+                    result['start_offset'] = schedule.start_offset
+                else:
+                    result['start_offset_type'] = self.START_OFFSET_NEGATIVE
+                    result['start_offset'] = abs(schedule.start_offset)
+
+                if schedule.start_day_of_week >= 0:
+                    result['start_day_of_week'] = str(schedule.start_day_of_week)
+
+            self.add_initial_for_custom_metadata(result)
 
         return result
 
@@ -1773,13 +1924,21 @@ class ConditionalAlertScheduleForm(ScheduleForm):
                     css_class='col-sm-4',
                 ),
                 crispy.Div(
+                    twbscrispy.InlineField(
+                        'start_date',
+                        data_bind='value: start_date',
+                    ),
+                    data_bind="visible: start_date_type() === '%s'" % self.START_DATE_SPECIFIC_DATE,
+                    css_class='col-sm-4',
+                ),
+                crispy.Div(
                     self.get_system_admin_label(),
                     data_bind="visible: start_date_type() === '%s'" % self.START_DATE_FROM_VISIT_SCHEDULER,
                 ),
                 data_bind='visible: showStartDateInput',
             ),
             crispy.Div(
-                crispy.Field('visit_scheduler_form_unique_id'),
+                crispy.Field('visit_scheduler_app_and_form_unique_id'),
                 hqcrispy.B3MultiField(
                     _("Scheduler: Visit"),
                     crispy.Div(
@@ -1808,12 +1967,14 @@ class ConditionalAlertScheduleForm(ScheduleForm):
                     crispy.HTML("<span>%s</span>" % _("day(s)")),
                     data_bind="visible: start_offset_type() !== '%s'" % self.START_OFFSET_ZERO,
                 ),
-                data_bind="visible: send_frequency() === '%s'" % self.SEND_DAILY,
+                data_bind=("visible: send_frequency() === '%s' && start_date_type() !== '%s'" %
+                           (self.SEND_DAILY, self.START_DATE_SPECIFIC_DATE)),
             ),
             hqcrispy.B3MultiField(
                 _("Begin"),
                 twbscrispy.InlineField('start_day_of_week'),
-                data_bind="visible: send_frequency() === '%s'" % self.SEND_WEEKLY,
+                data_bind=("visible: send_frequency() === '%s' && start_date_type() !== '%s'" %
+                           (self.SEND_WEEKLY, self.START_DATE_SPECIFIC_DATE)),
             ),
         ]
 
@@ -1900,7 +2061,10 @@ class ConditionalAlertScheduleForm(ScheduleForm):
         """ % _("Requires System Admin"))
 
     def clean_start_offset_type(self):
-        if self.cleaned_data.get('send_frequency') != self.SEND_DAILY:
+        if (
+            self.cleaned_data.get('send_frequency') != self.SEND_DAILY or
+            self.cleaned_data.get('start_date_type') == self.START_DATE_SPECIFIC_DATE
+        ):
             return None
 
         value = self.cleaned_data.get('start_offset_type')
@@ -1916,9 +2080,38 @@ class ConditionalAlertScheduleForm(ScheduleForm):
 
         return value
 
+    def clean_start_offset(self):
+        if (
+            self.cleaned_data.get('send_frequency') != self.SEND_DAILY or
+            self.cleaned_data.get('start_date_type') == self.START_DATE_SPECIFIC_DATE or
+            self.cleaned_data.get('start_offset_type') == self.START_OFFSET_ZERO
+        ):
+            return None
+
+        return validate_int(self.cleaned_data.get('start_offset'), 1)
+
+    def clean_start_date_type(self):
+        if self.cleaned_data.get('send_frequency') == self.SEND_IMMEDIATELY:
+            return None
+
+        value = self.cleaned_data.get('start_date_type')
+        if not value:
+            raise ValidationError(_("This field is required"))
+
+        return value
+
+    def clean_start_date(self):
+        if self.cleaned_data.get('start_date_type') != self.START_DATE_SPECIFIC_DATE:
+            return None
+
+        return super(ConditionalAlertScheduleForm, self).clean_start_date()
+
     def clean_start_day_of_week(self):
-        if self.cleaned_data.get('send_frequency') != self.SEND_WEEKLY:
-            return TimedSchedule.ANY_DAY
+        if (
+            self.cleaned_data.get('send_frequency') != self.SEND_WEEKLY or
+            self.cleaned_data.get('start_date_type') == self.START_DATE_SPECIFIC_DATE
+        ):
+            return None
 
         value = self.cleaned_data.get('start_day_of_week')
         error = ValidationError(_("Invalid choice selected"))
@@ -2002,35 +2195,23 @@ class ConditionalAlertScheduleForm(ScheduleForm):
             allow_parent_case_references=False,
         )
 
-    def clean_visit_scheduler_form_unique_id(self):
+    def clean_visit_scheduler_app_and_form_unique_id(self):
         if self.cleaned_data.get('start_date_type') != self.START_DATE_FROM_VISIT_SCHEDULER:
             return None
 
-        value = self.cleaned_data.get('visit_scheduler_form_unique_id')
+        value = self.cleaned_data.get('visit_scheduler_app_and_form_unique_id')
         if not value:
             raise ValidationError(_("This field is required"))
 
-        form, app = self.get_latest_released_form_and_app(value)
+        app_id, form_unique_id = self.split_app_and_form_unique_id(value)
+        form, app = self.get_latest_released_form_and_app(app_id, form_unique_id)
+
         if isinstance(form, AdvancedForm) and form.schedule and form.schedule.enabled:
             return value
 
         raise ValidationError(_("Please select a visit scheduler form"))
 
-    def clean_visit_number(self):
-        if self.cleaned_data.get('start_date_type') != self.START_DATE_FROM_VISIT_SCHEDULER:
-            return None
-
-        form_unique_id = self.cleaned_data.get('visit_scheduler_form_unique_id')
-        if not form_unique_id:
-            raise ValidationError(_("Please first select a visit scheduler form"))
-
-        value = self.cleaned_data.get('visit_number')
-        if value is None or value <= 0:
-            raise ValidationError(_("Please enter a number greater than 0"))
-
-        visit_index = value - 1
-
-        form, app = self.get_latest_released_form_and_app(form_unique_id)
+    def validate_visit(self, form, visit_index):
         try:
             visit = form.schedule.visits[visit_index]
         except IndexError:
@@ -2049,6 +2230,22 @@ class ConditionalAlertScheduleForm(ScheduleForm):
                 _("The referenced visit in the latest released app build does not have a window end date. "
                   "Visits which do not have a window end date are not supported")
             )
+
+    def clean_visit_number(self):
+        if self.cleaned_data.get('start_date_type') != self.START_DATE_FROM_VISIT_SCHEDULER:
+            return None
+
+        visit_scheduler_app_and_form_unique_id = self.cleaned_data.get('visit_scheduler_app_and_form_unique_id')
+        if not visit_scheduler_app_and_form_unique_id:
+            raise ValidationError(_("Please first select a visit scheduler form"))
+
+        value = self.cleaned_data.get('visit_number')
+        if value is None or value <= 0:
+            raise ValidationError(_("Please enter a number greater than 0"))
+
+        app_id, form_unique_id = self.split_app_and_form_unique_id(visit_scheduler_app_and_form_unique_id)
+        form, app = self.get_latest_released_form_and_app(app_id, form_unique_id)
+        self.validate_visit(form, value - 1)
 
         return value
 
@@ -2085,12 +2282,13 @@ class ConditionalAlertScheduleForm(ScheduleForm):
     def distill_start_offset(self):
         send_frequency = self.cleaned_data.get('send_frequency')
         start_offset_type = self.cleaned_data.get('start_offset_type')
+        start_date_type = self.cleaned_data.get('start_date_type')
 
         if (
             send_frequency == self.SEND_DAILY and
+            start_date_type != self.START_DATE_SPECIFIC_DATE and
             start_offset_type in (self.START_OFFSET_NEGATIVE, self.START_OFFSET_POSITIVE)
         ):
-
             start_offset = self.cleaned_data.get('start_offset')
 
             if start_offset is None:
@@ -2104,18 +2302,26 @@ class ConditionalAlertScheduleForm(ScheduleForm):
         return 0
 
     def distill_start_day_of_week(self):
+        if self.cleaned_data['send_frequency'] != self.SEND_WEEKLY:
+            return TimedSchedule.ANY_DAY
+
+        if self.cleaned_data['start_date_type'] == self.START_DATE_SPECIFIC_DATE:
+            return self.cleaned_data['start_date'].weekday()
+
         return self.cleaned_data['start_day_of_week']
 
     def distill_scheduler_module_info(self):
         if self.cleaned_data.get('start_date_type') != self.START_DATE_FROM_VISIT_SCHEDULER:
             return CreateScheduleInstanceActionDefinition.SchedulerModuleInfo(enabled=False)
 
-        form_unique_id = self.cleaned_data['visit_scheduler_form_unique_id']
-        form, app = self.get_form_and_app(form_unique_id)
+        app_id, form_unique_id = self.split_app_and_form_unique_id(
+            self.cleaned_data['visit_scheduler_app_and_form_unique_id']
+        )
+
         return CreateScheduleInstanceActionDefinition.SchedulerModuleInfo(
             enabled=True,
             # The id of the primary application doc
-            app_id=app.get_id,
+            app_id=app_id,
             form_unique_id=form_unique_id,
             # Convert to 0-based index
             visit_number=self.cleaned_data['visit_number'] - 1,
@@ -2173,6 +2379,7 @@ class ConditionalAlertScheduleForm(ScheduleForm):
             'reset_case_property_name': self.cleaned_data['reset_case_property_name'],
             'scheduler_module_info': self.distill_scheduler_module_info().to_json(),
             'start_date_case_property': self.cleaned_data['start_date_case_property'],
+            'specific_start_date': self.cleaned_data['start_date'],
         }
 
         if isinstance(schedule, AlertSchedule):
@@ -2193,6 +2400,7 @@ class ConditionalAlertScheduleForm(ScheduleForm):
         action_definition.reset_case_property_name = self.cleaned_data['reset_case_property_name']
         action_definition.set_scheduler_module_info(self.distill_scheduler_module_info())
         action_definition.start_date_case_property = self.cleaned_data['start_date_case_property']
+        action_definition.specific_start_date = self.cleaned_data['start_date']
         action_definition.save()
 
     def validate_existing_action_definition(self, action_definition, schedule):

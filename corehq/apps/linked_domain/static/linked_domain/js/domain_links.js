@@ -41,8 +41,7 @@ hqDefine("linked_domain/js/domain_links", [
                 self.hasSuccess(true);
                 self.showSpinner(false);
             })
-                .fail(function (jqXHR, textStatus, errorThrown) {
-                    console.log(errorThrown);
+                .fail(function() {
                     self.hasError(true);
                     self.showSpinner(false);
                 });
@@ -74,11 +73,10 @@ hqDefine("linked_domain/js/domain_links", [
 
         self.deleteLink = function(link) {
             _private.RMI("delete_domain_link", {"linked_domain": link.linked_domain()})
-                .done(function (data) {
+                .done(function () {
                     self.linked_domains.remove(link);
                 })
-                .fail(function (jqXHR, textStatus, errorThrown) {
-                    console.log(errorThrown);
+                .fail(function() {
                     alert_user.alert_user(gettext('Something unexpected happened.\n' +
                         'Please try again, or report an issue if the problem persists.'), 'danger');
                 });
@@ -91,8 +89,6 @@ hqDefine("linked_domain/js/domain_links", [
         self.is_remote = link.is_remote;
         self.master_domain = link.master_domain;
         self.remote_base_url = ko.observable(link.remote_base_url);
-        self.remote_username = ko.observable(link.remote_username);
-        self.remote_api_key = ko.observable(link.remote_api_key);
         self.last_update = link.last_update;
         if (self.is_remote){
             self.domain_link = self.linked_domain;

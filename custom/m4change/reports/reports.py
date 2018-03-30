@@ -1,6 +1,7 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from dimagi.utils.dates import DateSpan
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 from corehq.apps.reports.api import ReportDataSource
 from corehq.apps.reports.standard import CustomProjectReport

@@ -920,7 +920,7 @@ class PutInOldCopyToNewBlobDB(TemporaryMigratingBlobDB):
 
 class BaseFakeDocument(Document):
 
-    class Meta:
+    class Meta(object):
         app_label = "couch"
 
     saved = False
@@ -933,10 +933,10 @@ class BaseFakeDocument(Document):
 
     @classmethod
     def get_db(cls):
-        class fake_db:
+        class fake_db(object):
             dbname = "commcarehq_test"
 
-            class server:
+            class server(object):
 
                 @staticmethod
                 def next_uuid():
@@ -946,7 +946,7 @@ class BaseFakeDocument(Document):
 
 class FakeCouchDocument(mod.BlobMixin, BaseFakeDocument):
 
-    class Meta:
+    class Meta(object):
         app_label = "couch"
 
     doc_type = "FakeCouchDocument"
@@ -954,7 +954,7 @@ class FakeCouchDocument(mod.BlobMixin, BaseFakeDocument):
 
 class DeferredPutBlobDocument(mod.DeferredBlobMixin, BaseFakeDocument):
 
-    class Meta:
+    class Meta(object):
         app_label = "couch"
 
 
@@ -991,7 +991,7 @@ class AttachmentFallback(object):
 
 class FallbackToCouchDocument(mod.BlobMixin, AttachmentFallback, Document):
 
-    class Meta:
+    class Meta(object):
         app_label = "couch"
 
     doc_type = "FallbackToCouchDocument"
@@ -999,7 +999,7 @@ class FallbackToCouchDocument(mod.BlobMixin, AttachmentFallback, Document):
 
     @classmethod
     def get_db(cls):
-        class fake_db:
+        class fake_db(object):
             dbname = "commcarehq_test"
 
             @staticmethod

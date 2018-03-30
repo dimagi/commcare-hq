@@ -18,6 +18,7 @@ from corehq.apps.hqadmin.reports import (
     CommCareVersionReport,
     UserAuditReport)
 from corehq.apps.hqpillow_retry.views import PillowErrorsReport
+from corehq.apps.linked_domain.views import DomainLinkHistoryReport
 from corehq.apps.reports.standard import (
     monitoring, inspect, export,
     deployments, sms, ivr
@@ -30,7 +31,7 @@ from corehq.apps.userreports.models import (
     ReportConfiguration,
 )
 from corehq.apps.userreports.reports.view import (
-    ConfigurableReport,
+    ConfigurableReportView,
     CustomConfigurableReportDispatcher,
 )
 from corehq.apps.userreports.views import TEMP_REPORT_PREFIX
@@ -142,6 +143,7 @@ def REPORTS(project):
         ivr.CallReport,
         ivr.ExpectedCallbackReport,
         sms.PhoneNumberReport,
+        sms.ScheduleInstanceReport,
     ])
 
     messaging_reports += getattr(Domain.get_module_by_name(project.name), 'MESSAGING_REPORTS', ())
@@ -225,7 +227,7 @@ def _make_report_class(config, show_in_dropdown=False, show_in_nav=False):
     def get_url(cls, domain, **kwargs):
         from corehq.apps.userreports.models import CUSTOM_REPORT_PREFIX
         slug = (
-            ConfigurableReport.slug
+            ConfigurableReportView.slug
             if not config._id.startswith(CUSTOM_REPORT_PREFIX)
             else CustomConfigurableReportDispatcher.slug
         )
@@ -386,5 +388,6 @@ ADMIN_REPORTS = (
 DOMAIN_REPORTS = (
     (_('Project Settings'), (
         DomainForwardingRepeatRecords,
+        DomainLinkHistoryReport,
     )),
 )

@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from contextlib import contextmanager
 import itertools
 from couchexport.exceptions import SchemaMismatchException,\
@@ -9,7 +10,7 @@ from couchexport.models import ExportSchema, Format
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.couch.database import get_db, iter_docs
 from couchexport import writers
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from couchexport.util import get_schema_index_view_keys, default_cleanup
 from datetime import datetime
 import six

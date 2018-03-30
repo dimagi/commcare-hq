@@ -1,5 +1,6 @@
 from __future__ import absolute_import
-from dimagi.utils.decorators.memoized import Memoized
+from __future__ import unicode_literals
+from memoized import Memoized
 from django.test import TestCase, SimpleTestCase
 import mock
 from corehq.apps.export.views import user_can_view_deid_exports

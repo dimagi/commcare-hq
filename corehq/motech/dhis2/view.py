@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import json
 from django.http import HttpResponseRedirect, Http404
 from django.urls import reverse
@@ -14,7 +15,7 @@ from corehq.motech.dhis2.forms import Dhis2ConnectionForm
 from corehq.motech.dhis2.models import DataValueMap, DataSetMap, JsonApiLog
 from corehq.motech.dhis2.tasks import send_datasets
 from corehq.apps.domain.views import BaseProjectSettingsView
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.web import json_response
 from six.moves import range
 

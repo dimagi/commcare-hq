@@ -1,10 +1,12 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.conf.urls import include, url
 
 from custom.enikshay.views import (
     EpisodeTaskDebugView,
     EpisodeTaskStatusView,
     ReconciliationTaskView,
+    DataDumpTaskView,
 )
 from custom.enikshay.reports.views import LocationsView, DistrictLocationsView, DuplicateIdsReport
 
@@ -22,5 +24,6 @@ urlpatterns = [
         {'case_type': 'voucher'}, name='enikshay_duplicate_voucher_ids'),
     url(r'^duplicate_ids/person/$', DuplicateIdsReport.as_view(),
         {'case_type': 'person'}, name='enikshay_duplicate_person_ids'),
-    url(r'^reconciliation_tasks/$', ReconciliationTaskView.as_view())
+    url(r'^reconciliation_tasks/$', ReconciliationTaskView.as_view()),
+    url(r'^data_dump_tasks/$', DataDumpTaskView.as_view()),
 ]

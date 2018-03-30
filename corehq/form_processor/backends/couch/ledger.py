@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from casexml.apps.stock import const
 from casexml.apps.stock.models import StockReport, StockTransaction
 from corehq.apps.commtrack.processing import compute_ledger_values, rebuild_stock_state

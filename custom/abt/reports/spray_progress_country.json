@@ -11,7 +11,8 @@
         "airsbenin",
         "airsmozambique",
         "airskenya",
-        "airs-testing"
+        "airs-testing",
+        "vectorlink-uganda"
     ],
     "data_source_table":"static-sms-indicators-001",
     "report_id":"spray-progress-report-country",

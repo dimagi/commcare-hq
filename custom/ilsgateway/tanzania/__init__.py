@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import division
+from __future__ import unicode_literals
 from datetime import datetime
 from dateutil import rrule
 from dateutil.relativedelta import relativedelta
@@ -15,7 +16,7 @@ from custom.common import ALL_OPTION
 from custom.ilsgateway.models import SupplyPointStatusTypes, OrganizationSummary
 from corehq.apps.reports.graph_models import PieChart
 from dimagi.utils.dates import DateSpan
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from custom.ilsgateway.tanzania.reports.utils import make_url
 from dimagi.utils.parsing import ISO_DATE_FORMAT
 

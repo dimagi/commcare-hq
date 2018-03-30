@@ -2,7 +2,7 @@ from __future__ import absolute_import
 import collections
 import random
 
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 ABTestConfig = collections.namedtuple('ABTestConfig', ('name', 'slug', 'options'))
 
@@ -50,4 +50,15 @@ NEW_USER_NUMBER = ABTestConfig(
     'New User Phone Number',
     'new_phone_jan2016',
     (NEW_USER_NUMBER_OPTION_SHOW_NUM, NEW_USER_NUMBER_OPTION_HIDE_NUM)
+)
+
+
+DATA_FEEDBACK_LOOP_OPTION_ON = 'data_feedback_loop_on'
+DATA_FEEDBACK_LOOP_OPTION_OFF = 'data_feedback_loop_off'
+
+
+DATA_FEEDBACK_LOOP = ABTestConfig(
+    'Data Feedback Loop',
+    'data_feedback_loop_feb2018',
+    (DATA_FEEDBACK_LOOP_OPTION_ON, DATA_FEEDBACK_LOOP_OPTION_OFF)
 )

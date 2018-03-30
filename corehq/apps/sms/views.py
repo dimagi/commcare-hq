@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import base64
 import io
 from datetime import datetime, timedelta, time
@@ -86,7 +87,7 @@ from corehq.apps.domain.models import Domain
 from corehq.const import SERVER_DATETIME_FORMAT, SERVER_DATE_FORMAT
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from dimagi.utils.parsing import json_format_datetime, string_to_boolean
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.decorators.view import get_file
 from django.utils.functional import cached_property
 from dimagi.utils.logging import notify_exception
@@ -117,6 +118,14 @@ def default(request, domain):
 
 class BaseMessagingSectionView(BaseDomainView):
     section_name = ugettext_noop("Messaging")
+
+    @cached_property
+    def reminders_migration_in_progress(self):
+        return toggles.REMINDERS_MIGRATION_IN_PROGRESS.enabled(self.domain)
+
+    @cached_property
+    def new_reminders_migrator(self):
+        return toggles.NEW_REMINDERS_MIGRATOR.enabled(self.request.couch_user.username)
 
     @cached_property
     def can_use_inbound_sms(self):
@@ -772,7 +781,7 @@ def format_contact_data(domain, data):
         vn_id = row[4]
         if row[1] == 'case':
             row[1] = _('Case')
-            row[4] = reverse('case_details', args=[domain, contact_id])
+            row[4] = reverse('case_data', args=[domain, contact_id])
         elif row[1] == 'mobile_worker':
             row[1] = _('Mobile Worker')
             row[4] = reverse(EditCommCareUserView.urlname, args=[domain, contact_id])
@@ -1834,11 +1843,6 @@ class SMSSettingsView(BaseMessagingSectionView, AsyncHandlerMixin):
             return WELCOME_RECIPIENT_MOBILE_WORKER
         else:
             return WELCOME_RECIPIENT_NONE
-
-    @property
-    @memoized
-    def new_reminders_migrator(self):
-        return toggles.NEW_REMINDERS_MIGRATOR.enabled(self.request.couch_user.username)
 
     @property
     @memoized

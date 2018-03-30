@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import logging
 from collections import namedtuple
 
@@ -7,7 +8,7 @@ from django.conf import settings
 from redis.exceptions import RedisError
 
 from casexml.apps.case.exceptions import IllegalCaseId
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from ..utils import should_use_sql_backend
 
 CaseUpdateMetadata = namedtuple('CaseUpdateMetadata', ['case', 'is_creation', 'previous_owner_id'])

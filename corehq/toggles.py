@@ -1012,6 +1012,13 @@ FORMPLAYER_USE_LIVEQUERY = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
+SMS_USE_FORMPLAYER = StaticToggle(
+    'sms_use_formplayer',
+    'Use Formplayer for SMS',
+    TAG_INTERNAL,
+    [NAMESPACE_DOMAIN],
+)
+
 FIXTURE_CASE_SELECTION = StaticToggle(
     'fixture_case',
     'ICDS: Allow a configurable case list that is filtered based on a fixture type and '
@@ -1126,6 +1133,14 @@ NEW_REMINDERS_MIGRATOR = StaticToggle(
     "Enables features to handle migrating domains to the new reminders framework",
     TAG_INTERNAL,
     [NAMESPACE_USER]
+)
+
+
+REMINDERS_MIGRATION_IN_PROGRESS = StaticToggle(
+    'reminders_migration_in_progress',
+    "Disables editing of reminders so that the migration to the new framework can happen.",
+    TAG_INTERNAL,
+    [NAMESPACE_DOMAIN]
 )
 
 
@@ -1322,8 +1337,8 @@ VIEW_APP_CHANGES = StaticToggle(
 
 COUCH_SQL_MIGRATION_BLACKLIST = StaticToggle(
     'couch_sql_migration_blacklist',
-    "Domains to exclude from migrating to SQL backend. Includes the following "
-    "by default: 'ews-ghana', 'ils-gateway', 'ils-gateway-train'",
+    "Domains to exclude from migrating to SQL backend because the reference legacy models in custom code. "
+    "Includes the following by default: 'ews-ghana', 'ils-gateway', 'ils-gateway-train'",
     TAG_INTERNAL,
     [NAMESPACE_DOMAIN],
     always_enabled={
@@ -1461,28 +1476,6 @@ MOBILE_LOGIN_LOCKOUT = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-EMAIL_EXPORT_WHEN_DONE_BUTTON = StaticToggle(
-    'email_export_when_done_button',
-    "Show button that emails when export is done",
-    TAG_PRODUCT,
-    [NAMESPACE_DOMAIN],
-)
-
-LOCATION_SEARCH = StaticToggle(
-    'location_search',
-    "Allow search for location in organization structure",
-    TAG_PRODUCT,
-    [NAMESPACE_DOMAIN],
-)
-
-SHOW_ALL_SCHEDULED_REPORT_EMAILS = StaticToggle(
-    'show_all_scheduled_report_emails',
-    "In the 'My Scheduled Reports' tab, show all reports the user is part of (if the user is an "
-    "admin, show all in the current project)",
-    TAG_PRODUCT,
-    [NAMESPACE_DOMAIN],
-)
-
 LINKED_DOMAINS = StaticToggle(
     'linked_domains',
     'Allow linking domains (successor to linked apps)',
@@ -1492,4 +1485,37 @@ LINKED_DOMAINS = StaticToggle(
         "Link project spaces to allow syncing apps, lookup tables, organizations etc."
     ),
     help_link='https://confluence.dimagi.com/display/ccinternal/Linked+Applications'
+)
+
+SUMOLOGIC_LOGS = DynamicallyPredictablyRandomToggle(
+    'sumologic_logs',
+    'Send logs to sumologic',
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_OTHER],
+)
+
+
+MOBILE_SIGNUP_REDIRECT_AB_TEST_CONTROLLER = StaticToggle(
+    'mobile_signup_redirect_ab_test_controller',
+    'Enable the ab test for telling mobile signups to use desktops. Set on the fly on registration if mobile',
+    TAG_PRODUCT,
+    namespaces=[NAMESPACE_USER]
+)
+
+
+MOBILE_SIGNUP_REDIRECT_AB_TEST = PredictablyRandomToggle(
+    'mobile_signup_redirect_ab_test',
+    'Randomly sorts mobile users into group 1 for new mobile experience or 0 for control',
+    TAG_PRODUCT,
+    namespaces=[NAMESPACE_USER],
+    randomness=0.5
+)
+
+
+APPCUES_AB_TEST = PredictablyRandomToggle(
+    'appcues_ab_test',
+    'True if user is in variant group for Appcues AB test. Irrelevent if user is not in test.',
+    TAG_PRODUCT,
+    namespaces=[NAMESPACE_USER],
+    randomness=0.5
 )

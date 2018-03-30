@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import division
+from __future__ import unicode_literals
 import collections
 from collections import OrderedDict
 from datetime import timedelta
@@ -23,7 +24,7 @@ from custom.ewsghana.models import FacilityInCharge, EWSExtension
 from custom.ewsghana.reports import EWSData, MultiReport, EWSLineChart, ProductSelectionPane
 from custom.ewsghana.utils import has_input_stock_permissions, ews_date_format
 from dimagi.utils.couch.database import iter_docs
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from django.utils.translation import ugettext as _
 from corehq.apps.locations.dbaccessors import get_users_by_location_id
 from corehq.apps.locations.models import get_location, SQLLocation
@@ -271,12 +272,12 @@ class InputStock(EWSData):
         if has_input_stock_permissions(self.config['user'],
                                        SQLLocation.objects.get(location_id=self.config['location_id']),
                                        self.domain):
-            rows.append([u"<a href='{}'>INPUT STOCK for {}</a>".format(link, self.location.name)])
+            rows.append(["<a href='{}'>INPUT STOCK for {}</a>".format(link, self.location.name)])
 
         try:
             rows.append(
                 [
-                    u'The last report received was at <b>{}.</b>'.format(
+                    'The last report received was at <b>{}.</b>'.format(
                         StockState.objects.filter(case_id=self.location.supply_point_id)
                         .values('last_modified_date')
                         .latest('last_modified_date')['last_modified_date']

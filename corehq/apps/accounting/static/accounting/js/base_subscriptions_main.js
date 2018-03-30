@@ -5,30 +5,31 @@ hqDefine('accounting/js/base_subscriptions_main', [
     'hqwebapp/js/stay_on_tab',
     'accounting/js/credits_tab',
     'jquery-ui/ui/datepicker',
-], function (
+], function(
     $,
     ko,
     widgets
 ) {
-    var SubscriptionInfoHandler = function () {
+    var subscriptionInfoHandlerModel = function() {
         'use strict';
-        var self = this;
-        var AsyncSelect2Handler = widgets.AsyncSelect2Handler;
-        self.domain = new AsyncSelect2Handler('domain');
-        self.account = new AsyncSelect2Handler('account');
-        self.plan_version = new AsyncSelect2Handler('plan_version');
+        var self = {};
 
-        self.init = function () {
+        var asyncSelect2Handler = widgets.asyncSelect2Handler;
+        self.domain = asyncSelect2Handler('domain');
+        self.account = asyncSelect2Handler('account');
+        self.plan_version = asyncSelect2Handler('plan_version');
+
+        self.init = function() {
             self.domain.init();
             self.account.init();
             self.plan_version.init();
-            self.plan_version.getAdditionalData = function () {
+            self.plan_version.getAdditionalData = function() {
                 return {
                     'edition': $('#id_plan_edition').val(),
                 };
             };
-            $(function () {
-                var deselectPlanVersion = function () {
+            $(function() {
+                var deselectPlanVersion = function() {
                     var $planVer = $('#id_plan_version');
                     $planVer.val('');
                     $planVer.select2('val', '');
@@ -36,26 +37,35 @@ hqDefine('accounting/js/base_subscriptions_main', [
                 $('#id_plan_edition').change(deselectPlanVersion);
             });
         };
+
+        return self;
     };
 
-    var InvoiceModel = function () {
-        var self = this;
+    var invoiceModel = function() {
+        var self = {};
         var invoice = $('#id_do_not_invoice').prop("checked");
         self.noInvoice = ko.observable(invoice);
+        return self;
     };
 
     $(function() {
-        $( "#id_start_date" ).datepicker({ dateFormat: "yy-mm-dd" });
-        $( "#id_end_date" ).datepicker({ dateFormat: "yy-mm-dd" });
-        $( "#id_delay_invoice_until" ).datepicker({ dateFormat: "yy-mm-dd" });
+        $("#id_start_date").datepicker({
+            dateFormat: "yy-mm-dd",
+        });
+        $("#id_end_date").datepicker({
+            dateFormat: "yy-mm-dd",
+        });
+        $("#id_delay_invoice_until").datepicker({
+            dateFormat: "yy-mm-dd",
+        });
 
-       var subscriptionInfoHandler = new SubscriptionInfoHandler();
-       subscriptionInfoHandler.init();
+        var subscriptionInfoHandler = subscriptionInfoHandlerModel();
+        subscriptionInfoHandler.init();
 
-        var invoiceModel = new InvoiceModel();
+        var invoice = invoiceModel();
         // fieldset is not unique enough a css identifier
         // historically this has taken the first one without checking
         // todo: use a more specific identifier to make less brittle
-        $('fieldset').first().koApplyBindings(invoiceModel);
+        $('fieldset').first().koApplyBindings(invoice);
     });
 });

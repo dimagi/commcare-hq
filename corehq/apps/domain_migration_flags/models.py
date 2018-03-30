@@ -26,6 +26,6 @@ class DomainMigrationProgress(models.Model):
                                         max_length=MigrationStatus.max_length,
                                         default=MigrationStatus.NOT_STARTED)
 
-    class Meta:
+    class Meta(object):
         app_label = 'domain_migration_flags'
         unique_together = ('domain', 'migration_slug')

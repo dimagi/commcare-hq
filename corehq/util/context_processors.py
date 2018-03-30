@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.conf import settings
 from django.urls import resolve, reverse
 from django.http import Http404
@@ -35,17 +36,26 @@ def is_commtrack(project, request):
 
 def get_per_domain_context(project, request=None):
     custom_logo_url = None
-    if (project and project.has_custom_logo
-            and domain_has_privilege(project.name, privileges.CUSTOM_BRANDING)):
+    if (project and project.has_custom_logo and
+            domain_has_privilege(project.name, privileges.CUSTOM_BRANDING)):
         custom_logo_url = reverse('logo', args=[project.name])
 
-    report_an_issue = True
-    if (hasattr(request, 'couch_user') and request.couch_user and project
-            and not request.couch_user.has_permission(project.name, 'report_an_issue')):
-        report_an_issue = False
+    if getattr(request, 'couch_user', None) and project:
+        allow_report_an_issue = request.couch_user.has_permission(project.name, 'report_an_issue')
+    elif settings.ENTERPRISE_MODE:
+        if not getattr(request, 'couch_user', None):
+            allow_report_an_issue = False
+        elif request.couch_user.is_web_user():
+            allow_report_an_issue = True
+        else:
+            domain_name = request.couch_user.domain
+            allow_report_an_issue = request.couch_user.has_permission(domain_name, 'report_an_issue')
+    else:
+        allow_report_an_issue = True
+
     return {
         'CUSTOM_LOGO_URL': custom_logo_url,
-        'allow_report_an_issue': report_an_issue,
+        'allow_report_an_issue': allow_report_an_issue,
     }
 
 

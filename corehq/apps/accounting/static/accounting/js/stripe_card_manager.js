@@ -1,10 +1,10 @@
 /* global Stripe */
 hqDefine("accounting/js/stripe_card_manager", function() {
-    var NewStripeCard = function(data){
+    var newStripeCardModel = function(data, cardManager){
         'use strict';
-        var self = this;
+        var self = {};
         var mapping = {
-            observe: ['number', 'cvc', 'expMonth','expYear', 'isAutopay', 'token']
+            observe: ['number', 'cvc', 'expMonth','expYear', 'isAutopay', 'token'],
         };
 
         self.wrap = function(data){
@@ -60,7 +60,7 @@ hqDefine("accounting/js/stripe_card_manager", function() {
                 number: self.number(),
                 cvc: self.cvc(),
                 exp_month: self.expMonth(),
-                exp_year: self.expYear()
+                exp_year: self.expYear(),
             }, handleStripeResponse);
         };
 
@@ -72,12 +72,12 @@ hqDefine("accounting/js/stripe_card_manager", function() {
         return self;
     };
 
-    var StripeCard = function(card, baseUrl){
+    var stripeCardModel = function(card, baseUrl, cardManager){
         'use strict';
         var self = this;
         var mapping = {
             include: ['brand', 'last4', 'exp_month','exp_year', 'is_autopay'],
-            copy: ['url', 'token']
+            copy: ['url', 'token'],
         };
 
         self.wrap = function(data){
@@ -144,15 +144,15 @@ hqDefine("accounting/js/stripe_card_manager", function() {
     };
 
 
-    var StripeCardManager = function(data){
+    var stripeCardManager = function(data){
         'use strict';
         var self = this;
         var mapping = {
             'cards':{
                 create: function(card){
-                    return new StripeCard(card.data, data.url);
-                }
-            }
+                    return stripeCardModel(card.data, data.url, self);
+                },
+            },
         };
 
         self.wrap = function(data){
@@ -161,12 +161,12 @@ hqDefine("accounting/js/stripe_card_manager", function() {
         self.wrap(data);
 
         self.autoPayButtonEnabled = ko.observable(true);
-        self.newCard = new NewStripeCard({url: data.url});
+        self.newCard = newStripeCardModel({url: data.url}, self);
 
         return self;
     };
 
     return {
-        StripeCardManager: StripeCardManager,
+        stripeCardManager: stripeCardManager,
     };
 });

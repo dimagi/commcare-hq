@@ -52,7 +52,7 @@ from django.urls import reverse
 from django.http import HttpResponseRedirect, Http404, HttpResponseServerError, HttpResponseBadRequest
 from django.shortcuts import render
 from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from soil.exceptions import TaskFailedError
 from soil.util import expose_cached_download, get_download_context
@@ -430,7 +430,7 @@ class CaseGroupCaseManagementView(DataInterfaceSection, CRUDPaginatedViewMixin):
     def _get_item_data(self, case):
         return {
             'id': case.case_id,
-            'detailsUrl': reverse('case_details', args=[self.domain, case.case_id]),
+            'detailsUrl': reverse('case_data', args=[self.domain, case.case_id]),
             'name': case.name,
             'externalId': case.external_id if case.external_id else '--',
             'phoneNumber': case.get_case_property('contact_phone_number') or '--',

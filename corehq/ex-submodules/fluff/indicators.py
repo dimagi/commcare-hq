@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import functools
 from couchdbkit.ext.django import schema
 import datetime
@@ -402,5 +403,5 @@ class IndicatorDocument(six.with_metaclass(IndicatorDocumentMeta, schema.Documen
             for calc_name, calc in cls._calculators.items()
         )
 
-    class Meta:
+    class Meta(object):
         app_label = 'fluff'

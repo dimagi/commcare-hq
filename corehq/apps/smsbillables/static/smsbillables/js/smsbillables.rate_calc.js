@@ -2,10 +2,10 @@ hqDefine("smsbillables/js/smsbillables.rate_calc", function() {
     var SMSRateCalculator = function (form_data) {
         'use strict';
         var self = this;
-    
+
         self.gateway = ko.observable();
         self.direction = ko.observable();
-        self.select2CountryCode = new Select2SmsRateHandler(form_data.country_code);
+        self.select2CountryCode = select2SmsRateHandler(form_data.country_code);
         self.rate = ko.observable();
         self.hasError = ko.observable(false);
         self.noError = ko.computed(function () {
@@ -15,9 +15,9 @@ hqDefine("smsbillables/js/smsbillables.rate_calc", function() {
         self.showRateInfo = ko.computed(function () {
             return self.rate() && ! self.calculatingRate();
         });
-    
+
         self.init = function () {
-            self.select2CountryCode.getExtraData = function (term) {
+            self.select2CountryCode.getExtraData = function () {
                 return {
                     'gateway': self.gateway(),
                     'direction': self.direction(),
@@ -25,12 +25,12 @@ hqDefine("smsbillables/js/smsbillables.rate_calc", function() {
             };
             self.select2CountryCode.init();
         };
-    
+
         self.clearSelect2 = function () {
             self.select2CountryCode.clear();
             self.rate('');
         };
-    
+
         self.updateRate = function () {
             if (self.select2CountryCode.value()) {
                 self.calculatingRate(true);
@@ -63,11 +63,11 @@ hqDefine("smsbillables/js/smsbillables.rate_calc", function() {
             }
         };
     };
-    
-    var PublicSMSRateCalculator = function (form_data) {
+
+    var PublicSMSRateCalculator = function() {
         'use strict';
         var self = this;
-    
+
         var rates = [];
         self.country_code = ko.observable();
         self.rate_table = ko.observableArray(rates);
@@ -83,7 +83,7 @@ hqDefine("smsbillables/js/smsbillables.rate_calc", function() {
         self.showRateInfo = ko.computed(function () {
             return self.rateErrorText() && ! self.calculatingRate();
         });
-    
+
         var updateRate = function () {
             self.calculatingRate(true);
             $.ajax({
@@ -105,34 +105,32 @@ hqDefine("smsbillables/js/smsbillables.rate_calc", function() {
                     self.calculatingRate(false);
                     self.hasError(true);
                     self.rateErrorText(gettext("There was an error fetching the SMS rate."));
-                }
+                },
             });
         };
         self.country_code.subscribe(updateRate);
     };
-    
-    var BaseSelect2Handler = hqImport("hqwebapp/js/select2_handler").BaseSelect2Handler;
-    var Select2SmsRateHandler = function (options) {
+
+    var baseSelect2Handler = hqImport("hqwebapp/js/select2_handler").baseSelect2Handler;
+    var select2SmsRateHandler = function (options) {
         'use strict';
-        BaseSelect2Handler.call(this, options);
-        var self = this;
-    
+        var self = baseSelect2Handler(options);
+
         self.getHandlerSlug = function () {
             return 'sms_rate_calc';
         };
-    
+
         self.formatSelection = function (result) {
             return result.text || (result.name + ' [' + result.rate_type + ']');
         };
-    
+
         self.getInitialData = function (element) {
             return {id: element.val(), text: element.val()};
         };
+
+        return self;
     };
-    
-    Select2SmsRateHandler.prototype = Object.create( BaseSelect2Handler.prototype );
-    Select2SmsRateHandler.prototype.constructor = Select2SmsRateHandler;
-    
+
     $(function() {
         _.each($(".ko-sms-rate-calculator"), function(element) {
             var smsRateCalculator = new SMSRateCalculator({
@@ -144,7 +142,7 @@ hqDefine("smsbillables/js/smsbillables.rate_calc", function() {
             $(element).koApplyBindings(smsRateCalculator);
             smsRateCalculator.init();
         });
-    
+
         _.each($(".ko-public-sms-rate-calculator"), function(element) {
             var smsRateCalculator = new PublicSMSRateCalculator({
                 country_code: {

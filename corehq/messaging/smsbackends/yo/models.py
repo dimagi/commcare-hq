@@ -1,10 +1,11 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from corehq.messaging.smsbackends.http.models import SQLHttpBackend
 
 
 class SQLYoBackend(SQLHttpBackend):
 
-    class Meta:
+    class Meta(object):
         app_label = 'sms'
         proxy = True
 

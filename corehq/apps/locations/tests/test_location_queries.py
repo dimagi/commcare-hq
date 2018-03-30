@@ -1,8 +1,10 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from ..models import SQLLocation
 from .util import LocationHierarchyTestCase
 from corehq.apps.users.models import WebUser
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
+from django.test.utils import override_settings
 
 
 class BaseTestLocationQuerysetMethods(LocationHierarchyTestCase):
@@ -48,6 +50,42 @@ class TestLocationQuerysetMethods(BaseTestLocationQuerysetMethods):
             ['Middlesex', 'Cambridge', 'Somerville'],
             [loc.name for loc in middlesex_locs]
         )
+
+    def test_ancestors(self):
+        boston_matches = (SQLLocation.objects
+                          .filter_by_user_input(self.domain, "Boston"))
+
+        self.assertItemsEqual(
+            [loc.name for loc in boston_matches[0].mptt_get_ancestors()],
+            ['Suffolk', 'Massachusetts']
+        )
+
+    def test_ancestor_of_type(self):
+        boston = (SQLLocation.objects
+                  .filter_by_user_input(self.domain, "Boston"))[0]
+        self.assertEqual(
+            boston.get_ancestor_of_type('county').name,
+            'Suffolk'
+        )
+        self.assertEqual(
+            boston.get_ancestor_of_type('state').name,
+            'Massachusetts'
+        )
+
+    def test_get_ancestors_with_empty_queryset(self):
+        empty = SQLLocation.objects.none()
+        locs = SQLLocation.objects.get_queryset_ancestors(empty)
+        self.assertEqual(locs.count(), 0)
+
+    def test_get_descendants_with_empty_queryset(self):
+        empty = SQLLocation.objects.none()
+        locs = SQLLocation.objects.get_queryset_descendants(empty)
+        self.assertEqual(locs.count(), 0)
+
+    @override_settings(IS_LOCATION_CTE_ENABLED=False)
+    def test_getitem_with_slice(self):
+        locs = SQLLocation.objects.get(name='Suffolk').get_descendants()
+        self.assertEqual([x.name for x in locs[:2]], ['Boston'])
 
 
 class TestLocationScopedQueryset(BaseTestLocationQuerysetMethods):

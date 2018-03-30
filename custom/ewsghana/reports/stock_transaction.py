@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from collections import OrderedDict
 from casexml.apps.stock.models import StockTransaction
 from corehq.apps.locations.models import SQLLocation
@@ -10,7 +11,7 @@ from custom.ewsghana.filters import EWSRestrictionLocationFilter, TransactionChe
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin, DatespanMixin
 from custom.ewsghana.filters import MultiProductFilter
 from custom.ewsghana.utils import ews_date_format, get_country_id
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 import six
 
 

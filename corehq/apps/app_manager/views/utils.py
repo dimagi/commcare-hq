@@ -159,7 +159,8 @@ def get_default_followup_form_xml(context):
 def overwrite_app(app, master_build, report_map=None):
     excluded_fields = set(Application._meta_fields).union([
         'date_created', 'build_profiles', 'copy_history', 'copy_of',
-        'name', 'comment', 'doc_type', '_LAZY_ATTACHMENTS', 'practice_mobile_worker_id'
+        'name', 'comment', 'doc_type', '_LAZY_ATTACHMENTS', 'practice_mobile_worker_id',
+        'custom_base_url'
     ])
     master_json = master_build.to_json()
     app_json = app.to_json()

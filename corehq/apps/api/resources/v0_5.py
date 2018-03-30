@@ -35,7 +35,7 @@ from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain_
 from corehq.apps.sms.util import strip_plus
 from corehq.apps.userreports.models import ReportConfiguration, \
     StaticReportConfiguration, report_config_id_is_static
-from corehq.apps.userreports.reports.factory import ReportFactory
+from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
 from corehq.apps.userreports.reports.view import query_dict_to_dict, \
     get_filter_values
 from corehq.apps.userreports.columns import UCRExpandDatabaseSubcolumn
@@ -522,7 +522,7 @@ class NoCountingPaginator(Paginator):
 
 class DeviceReportResource(HqBaseResource, ModelResource):
 
-    class Meta:
+    class Meta(object):
         queryset = DeviceReportEntry.objects.all()
         list_allowed_methods = ['get']
         detail_allowed_methods = ['get']
@@ -544,7 +544,7 @@ class DeviceReportResource(HqBaseResource, ModelResource):
 
 class StockTransactionResource(HqBaseResource, ModelResource):
 
-    class Meta:
+    class Meta(object):
         queryset = StockTransaction.objects.all()
         list_allowed_methods = ['get']
         detail_allowed_methods = ['get']
@@ -583,7 +583,7 @@ ConfigurableReportData = namedtuple("ConfigurableReportData", [
 class ConfigurableReportDataResource(HqBaseResource, DomainSpecificResourceMixin):
     """
     A resource that replicates the behavior of the ajax part of the
-    ConfigurableReport view.
+    ConfigurableReportView view.
     """
     data = fields.ListField(attribute="data", readonly=True)
     columns = fields.ListField(attribute="columns", readonly=True)
@@ -631,7 +631,7 @@ class ConfigurableReportDataResource(HqBaseResource, DomainSpecificResourceMixin
             return ""
 
     def _get_report_data(self, report_config, domain, start, limit, get_params):
-        report = ReportFactory.from_spec(report_config)
+        report = ConfigurableReportDataSource.from_spec(report_config)
 
         string_type_params = [
             filter.name
@@ -786,7 +786,7 @@ class UserDomainsResource(Resource):
     domain_name = fields.CharField(attribute='domain_name')
     project_name = fields.CharField(attribute='project_name')
 
-    class Meta:
+    class Meta(object):
         resource_name = 'user_domains'
         authentication = ApiKeyAuthentication()
         object_class = UserDomain
@@ -833,7 +833,7 @@ class DomainForms(Resource):
     form_xmlns = fields.CharField(attribute='form_xmlns')
     form_name = fields.CharField(attribute='form_name')
 
-    class Meta:
+    class Meta(object):
         resource_name = 'domain_forms'
         authentication = ApiKeyAuthentication()
         object_class = Form
@@ -879,7 +879,7 @@ class DomainCases(Resource):
     placeholder = fields.CharField(attribute='placeholder')
     case_type = fields.CharField(attribute='case_type')
 
-    class Meta:
+    class Meta(object):
         resource_name = 'domain_cases'
         authentication = ApiKeyAuthentication()
         object_class = CaseType
@@ -910,7 +910,7 @@ class DomainUsernames(Resource):
     user_id = fields.CharField(attribute='user_id')
     user_name = fields.CharField(attribute='user_name')
 
-    class Meta:
+    class Meta(object):
         resource_name = 'domain_usernames'
         authentication = ApiKeyAuthentication()
         object_class = User

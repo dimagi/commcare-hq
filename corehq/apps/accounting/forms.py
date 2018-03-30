@@ -25,7 +25,7 @@ from crispy_forms.helper import FormHelper
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from django_countries.data import COUNTRIES
 
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from django_prbac.models import Role, Grant, UserRole
 
 from corehq import privileges
@@ -309,7 +309,7 @@ class BillingAccountContactForm(forms.ModelForm):
 
     account_contact = forms.CharField(widget=forms.HiddenInput, required=False)
 
-    class Meta:
+    class Meta(object):
         model = BillingContactInfo
         fields = [
             'first_name',
@@ -1517,7 +1517,7 @@ class FeatureRateForm(forms.ModelForm):
         widget=forms.HiddenInput,
     )
 
-    class Meta:
+    class Meta(object):
         model = FeatureRate
         fields = ['monthly_fee', 'monthly_limit', 'per_excess_fee']
 
@@ -1570,7 +1570,7 @@ class ProductRateForm(forms.ModelForm):
         widget=forms.HiddenInput,
     )
 
-    class Meta:
+    class Meta(object):
         model = SoftwareProductRate
         fields = ['monthly_fee', 'name']
 

@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from datetime import datetime
 
 from dateutil.relativedelta import relativedelta
@@ -14,7 +15,6 @@ from custom.icds_reports.utils import get_value, percent_increase, apply_exclude
 def get_cas_reach_data(domain, now_date, config, show_test=False):
     now_date = datetime(*now_date)
     yesterday_date = (now_date - relativedelta(days=1)).date()
-    two_days_ago = (now_date - relativedelta(days=2)).date()
 
     def get_data_for_awc_monthly(month, filters):
         level = filters['aggregation_level']
@@ -27,6 +27,7 @@ def get_cas_reach_data(domain, now_date, config, show_test=False):
             districts=Sum('num_launched_districts') if level <= 2 else Max('num_launched_districts'),
             blocks=Sum('num_launched_blocks') if level <= 3 else Max('num_launched_blocks'),
             supervisors=Sum('num_launched_supervisors') if level <= 4 else Max('num_launched_supervisors'),
+            awc_num_open=Sum('awc_num_open') if level <= 5 else Max('awc_num_open'),
             awcs=Sum('num_launched_awcs') if level <= 5 else Max('num_launched_awcs'),
             all_awcs=Sum('num_awcs') if level <= 5 else Max('num_awcs')
         )
@@ -55,13 +56,40 @@ def get_cas_reach_data(domain, now_date, config, show_test=False):
     awc_this_month_data = get_data_for_awc_monthly(current_month, config)
     awc_prev_month_data = get_data_for_awc_monthly(previous_month, config)
 
-    daily_yesterday = get_data_for_daily_usage(yesterday_date, config)
-    daily_two_days_ago = get_data_for_daily_usage(two_days_ago, config)
-    if not daily_yesterday:
-        daily_yesterday = daily_two_days_ago
-        daily_two_days_ago = get_data_for_daily_usage((now_date - relativedelta(days=3)).date(), config)
+    current_month_selected = (current_month.year == now_date.year and current_month.month == now_date.month)
 
-    daily_attendance_percent = percent_increase('daily_attendance', daily_yesterday, daily_two_days_ago)
+    if current_month_selected:
+        two_days_ago = yesterday_date - relativedelta(days=1)
+        daily_yesterday = get_data_for_daily_usage(yesterday_date, config)
+        daily_two_days_ago = get_data_for_daily_usage(two_days_ago, config)
+        if not daily_yesterday:
+            daily_yesterday = daily_two_days_ago
+            daily_two_days_ago = get_data_for_daily_usage(two_days_ago - relativedelta(days=1), config)
+        daily_attendance_percent = percent_increase('daily_attendance', daily_yesterday, daily_two_days_ago)
+        number_of_awc_open_yesterday = {
+            'label': _('Number of AWCs Open yesterday'),
+            'help_text': _(("Total Number of Angwanwadi Centers that were open yesterday "
+                            "by the AWW or the AWW helper")),
+            'color': 'green' if daily_attendance_percent > 0 else 'red',
+            'percent': daily_attendance_percent,
+            'value': get_value(daily_yesterday, 'daily_attendance'),
+            'all': get_value(daily_yesterday, 'awcs'),
+            'format': 'div',
+            'frequency': 'day',
+            'redirect': 'awc_daily_status',
+        }
+    else:
+        monthly_attendance_percent = percent_increase('awc_num_open', awc_this_month_data, awc_prev_month_data)
+        number_of_awc_open_yesterday = {
+            'help_text': _(("Total Number of AWCs open for at least one day in month")),
+            'label': _('Number of AWCs open for at least one day in month'),
+            'color': 'green' if monthly_attendance_percent > 0 else 'red',
+            'percent': monthly_attendance_percent,
+            'value': get_value(awc_this_month_data, 'awc_num_open'),
+            'all': get_value(awc_this_month_data, 'all_awcs'),
+            'format': 'div',
+            'frequency': 'day',
+        }
 
     return {
         'records': [
@@ -82,18 +110,7 @@ def get_cas_reach_data(domain, now_date, config, show_test=False):
                     'frequency': 'month',
                     'redirect': 'awcs_covered'
                 },
-                {
-                    'label': _('Number of AWCs Open yesterday'),
-                    'help_text': _(("Total Number of Angwanwadi Centers that were open yesterday "
-                                    "by the AWW or the AWW helper")),
-                    'color': 'green' if daily_attendance_percent > 0 else 'red',
-                    'percent': daily_attendance_percent,
-                    'value': get_value(daily_yesterday, 'daily_attendance'),
-                    'all': get_value(daily_yesterday, 'awcs'),
-                    'format': 'div',
-                    'frequency': 'day',
-                    'redirect': 'awc_daily_status'
-                }
+                number_of_awc_open_yesterday
             ],
             [
                 {

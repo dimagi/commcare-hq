@@ -87,7 +87,7 @@ class CaseSearchConfig(models.Model):
     """
     Contains config for case search
     """
-    class Meta:
+    class Meta(object):
         app_label = 'case_search'
 
     domain = models.CharField(

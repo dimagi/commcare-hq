@@ -1,4 +1,5 @@
 from __future__ import absolute_import, print_function
+from __future__ import unicode_literals
 from django.core.management.base import BaseCommand
 from corehq.sql_db.shard_data_management import get_count_of_unmatched_models_by_shard
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query, get_all_sharded_models

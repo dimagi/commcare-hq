@@ -1,11 +1,12 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import json
 
 from django.conf import settings
 from jsonobject.api import JsonObject
 from jsonobject.properties import IntegerProperty, StringProperty
 
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from six.moves import zip
 from .exceptions import PartitionValidationError, NotPowerOf2Error, NonContinuousShardsError, NotZeroStartError, \
     NoSuchShardDatabaseError

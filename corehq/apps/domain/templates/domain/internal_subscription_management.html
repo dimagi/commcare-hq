@@ -5,23 +5,7 @@
 
 {% block js %}{{ block.super }}
     <script src="{% static 'accounting/js/widgets.js' %}"></script>
-{% endblock %}
-
-{% block js-inline %}{{ block.super }}
-    <script>
-        var viewModel = {
-            subscriptionType: ko.observable($('#id_subscription_type').val() || null),
-            trialLength: ko.observable(90)
-        };
-        viewModel.end_date = ko.computed(function() {
-            var date = new Date('{{ today.isoformat }}');
-            date.setDate(date.getDate() + parseInt(viewModel.trialLength()));
-            return date.toJSON().slice(0, 10);
-        });
-        $('#subscription_management').koApplyBindings(viewModel);
-
-        $('.date-picker').datepicker({ dateFormat: "yy-mm-dd" });
-    </script>
+    <script src="{% static 'domain/js/internal_subscription_management.js' %}"></script>
 {% endblock %}
 
 {% block page_content %}

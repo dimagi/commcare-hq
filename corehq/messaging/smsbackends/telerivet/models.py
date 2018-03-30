@@ -1,7 +1,9 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import requests
 from corehq.apps.sms.util import clean_phone_number
-from corehq.apps.sms.models import SQLSMSBackend
+from corehq.apps.sms.models import SQLSMSBackend, SMS
+from corehq.messaging.smsbackends.telerivet.exceptions import TelerivetException
 from corehq.messaging.smsbackends.telerivet.forms import TelerivetBackendForm
 from django.conf import settings
 from django.db import models
@@ -12,7 +14,7 @@ MESSAGE_TYPE_SMS = "sms"
 
 class SQLTelerivetBackend(SQLSMSBackend):
 
-    class Meta:
+    class Meta(object):
         app_label = 'sms'
         proxy = True
 
@@ -67,25 +69,37 @@ class SQLTelerivetBackend(SQLSMSBackend):
         return info.get('phone_number')
 
     def send(self, msg, *args, **kwargs):
-        text = msg.text.encode('utf-8')
         config = self.config
-        params = {
-            'phone_id': str(config.phone_id),
-            'to_number': clean_phone_number(msg.phone_number),
-            'content': text,
+        payload = {
+            'route_id': config.phone_id,
+            'to_number': msg.phone_number,
+            'content': msg.text,
             'message_type': MESSAGE_TYPE_SMS,
         }
-        url = 'https://api.telerivet.com/v1/projects/%s/messages/outgoing' % str(config.project_id)
+        url = 'https://api.telerivet.com/v1/projects/%s/messages/send' % config.project_id
 
-        result = requests.post(
+        # Sending with the json param automatically sets the Content-Type header to application/json
+        response = requests.post(
             url,
-            auth=(str(config.api_key), ''),
-            data=params,
+            auth=(config.api_key, ''),
+            json=payload,
             verify=True,
             timeout=settings.SMS_GATEWAY_TIMEOUT,
         )
 
-        result = result.json()
+        if response.status_code == 200:
+            result = response.json()
+            if 'error' in result:
+                raise TelerivetException("Error with backend %s: %s" % (self.pk, result['error']['code']))
+
+            msg.backend_message_id = result.get('id')
+        elif response.status_code in (401, 402):
+            # These are account-related errors, retrying won't help
+            msg.set_system_error(SMS.ERROR_TOO_MANY_UNSUCCESSFUL_ATTEMPTS)
+        else:
+            raise TelerivetException(
+                "Received HTTP response status code %s from backend %s" % (response.status_code, self.pk)
+            )
 
     @classmethod
     def by_webhook_secret(cls, webhook_secret):

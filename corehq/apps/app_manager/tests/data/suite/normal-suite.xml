@@ -286,7 +286,11 @@
         </header>
         <template>
             <text>
-                <xpath function="concat(plain, plain)"/>
+                <xpath function="$calculated_property">
+                    <variable name="calculated_property">
+                        <xpath function="concat(plain, plain)"/>
+                    </variable>
+                </xpath>
             </text>
         </template>
     </field>
@@ -298,11 +302,35 @@
         </header>
         <template>
             <text>
-                <xpath function="if($lang = 'en', plain, 'nope')">
-                    <variable name="lang">
-                        <locale id="lang.current"/>
+                <xpath function="$calculated_property">
+                    <variable name="calculated_property">
+                        <xpath function="if($lang = 'en', plain, 'nope')">
+                            <variable name="lang">
+                                <locale id="lang.current"/>
+                            </variable>
+                        </xpath>
                     </variable>
                 </xpath>
+            </text>
+        </template>
+    </field>
+    <field>
+        <header>
+            <text>
+                <locale id="m0.case_long.case_calculated_property_12.header"/>
+            </text>
+        </header>
+        <template>
+            <text>
+              <xpath function="$calculated_property">
+                <variable name="calculated_property">
+                  <xpath function="if($lang = 'en', case_name, 'nope')">
+                    <variable name="lang">
+                      <locale id="lang.current"/>
+                    </variable>
+                  </xpath>
+                </variable>
+              </xpath>
             </text>
         </template>
     </field>

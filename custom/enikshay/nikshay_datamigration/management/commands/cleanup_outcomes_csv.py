@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from custom.enikshay.nikshay_datamigration.management.commands.base_cleanup_command import BaseCleanupCommand
 from six.moves import range
 

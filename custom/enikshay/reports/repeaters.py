@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from datetime import datetime, timedelta
 
 from django.conf import settings
@@ -6,7 +7,7 @@ from dimagi.utils.chunked import chunked
 from django.utils.html import escape
 from django.utils.translation import ugettext as _
 from django.urls import reverse
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 from corehq.elastic import ES_MAX_CLAUSE_COUNT
 from corehq.apps.es.case_search import flatten_result
@@ -110,7 +111,7 @@ class ENikshayForwarderReport(DomainForwardingRepeatRecords):
             self._get_state(record)[1],
             self._get_person_id_link(record),
             self._get_case_id_link(record.payload_id),
-            record.url if record.url else _(u'Unable to generate url for record'),
+            record.url if record.url else _('Unable to generate url for record'),
             self._format_date(record.last_checked) if record.last_checked else '---',
             ",<br />".join(attempt_messages),
         ]
@@ -121,11 +122,11 @@ class ENikshayForwarderReport(DomainForwardingRepeatRecords):
             person_id = get_person_case(self.domain, record.payload_id).case_id
             return self._get_case_id_link(person_id)
         except ENikshayException as error:
-            return u"Error: {}".format(error)
+            return "Error: {}".format(error)
 
     def _get_case_id_link(self, case_id):
         return '<a href="{url}" target="_blank">{case_id}</a>'.format(
-            url=reverse('case_details', args=[self.domain, case_id]),
+            url=reverse('case_data', args=[self.domain, case_id]),
             case_id=case_id
         )
 

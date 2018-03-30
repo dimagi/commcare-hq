@@ -8,7 +8,7 @@ from jenkinsapi.jenkins import Jenkins
 
 from corehq.apps.builds.models import CommCareBuild
 from django.core.management.base import BaseCommand, CommandError
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from six.moves import input
 import six
 

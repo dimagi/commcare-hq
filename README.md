@@ -58,6 +58,8 @@ Once all the dependencies are in order, please do the following:
     $ workon commcare-hq  # if your "commcare-hq" virtualenv is not already activated
     $ pip install -r requirements/requirements.txt
 
+(If the last command fails you may need to [install lxml's dependencies](https://stackoverflow.com/a/5178444/8207).)
+
 There is also a separate collection of Dimagi dev oriented tools that you can install:
 
     $ pip install -r requirements/dev-requirements.txt
@@ -65,7 +67,7 @@ There is also a separate collection of Dimagi dev oriented tools that you can in
 And for production environments you may want:
 
     $ pip install -r requirements/prod-requirements.txt
-    
+
 Note that once you're up and running, you'll want to periodically re-run these steps, and a few others, to keep your environment up to date. Some developers have found it helpful to automate these tasks. For pulling code, instead of `git pull`, you can run [this script](https://github.com/dimagi/commcare-hq/blob/master/scripts/update-code.sh) to update all code, including submodules. [This script](https://github.com/dimagi/commcare-hq/blob/master/scripts/hammer.sh) will update all code and do a few more tasks like run migrations and update libraries, so it's good to run once a month or so, or when you pull code and then immediately hit an error.
 
 #### Setup localsettings
@@ -112,7 +114,7 @@ To set up elasticsearch indexes run the following:
 
     $ ./manage.py ptop_preindex
 
-This will create all of the elasticsearch indexes (that don't already exist) and populate them with any 
+This will create all of the elasticsearch indexes (that don't already exist) and populate them with any
 data that's in the database.
 
 Next, set the aliases of the elastic indices. These can be set by a management command that sets the stored index
@@ -142,7 +144,7 @@ you'll need to run `./manage.py bower install` and install `bower`. Follow these
 3. Run bower with:
 
         $ bower install
-        
+
 
 ### Install JS-XPATH
 
@@ -219,7 +221,41 @@ the following contents:
 URL_ROOT = 'http://localhost:8000/a/{{DOMAIN}}'
 ```
 
+##### Running Formplayer in Docker
+
 Please refer to FormPlayer's install instructions under "[Running in Docker](https://github.com/dimagi/formplayer#running-in-docker)".
+
+If you are on Mac, don't bother trying to run this in Docker. There seems to be some kind of bug.
+Instead, try running formplayer from a .jar file
+
+##### Running formplayer.jar
+
+Prerequisite: install Java (left as an exercise for the reader)
+
+To get set up, download the settings file and `formplayer.jar`. You may run this
+in the commcare-hq repo root.
+
+```bash
+$ curl https://raw.githubusercontent.com/dimagi/formplayer/master/config/application.example.properties -o formplayer.properties
+$ curl https://s3.amazonaws.com/dimagi-formplayer-jars/latest-successful/formplayer.jar -o formplayer.jar
+```
+
+Thereafter, to run formplayer, navigate to the dir where you installed them
+above (probably the repo root), and run:
+
+```bash
+$ java -jar formplayer.jar --spring.config.name=formplayer
+```
+
+This starts a process in the foreground, so you'll need to keep it open as long
+as you plan on using formplayer. If formplayer stops working, you can try
+re-fetching it using the same command above. Feel free to add it to your
+`hammer` command or wherever.
+
+```bash
+$ curl https://s3.amazonaws.com/dimagi-formplayer-jars/latest-successful/formplayer.jar -o formplayer.jar
+```
+
 
 Running CommCare HQ
 -------------------
@@ -233,13 +269,13 @@ Then run the following separately:
 
     # Keeps elasticsearch index in sync
     $ ./manage.py run_ptop --all
-    
+
     # Setting up the asynchronous task scheduler (only required if you have CELERY_ALWAYS_EAGER=False in settings)
     # For Mac / Linux
     $ ./manage.py celeryd --verbosity=2 --beat --statedb=celery.db --events
     # Windows
     > manage.py celeryd --settings=settings
-  
+
 If you want to use CloudCare you will also need to run the Touchforms server.
 
     # run Touchforms server
@@ -284,10 +320,10 @@ In the postgres shell, run the following as a superuser: `ALTER USER commcarehq 
 ### REUSE DB
 To avoid having to run the databse setup for each test run you can specify the `REUSE_DB` environment variable
  which will use an existing test database if one exists:
- 
+
     $ REUSE_DB=1 ./manage.py test corehq.apps.app_manager
     $ REUSE_DB=reset ./manage.py test corehq.apps.app_manager  # drop the current test DB and create a fresh one
-    
+
 See `corehq.tests.nose.HqdbContext` for full description of `REUSE_DB`.
 
 ### Running tests by tag
@@ -546,7 +582,7 @@ that you have a 32bit version of Python installed.
  [pillow]: https://github.com/python-imaging/Pillow
  [psycopg2]: http://www.lfd.uci.edu/~gohlke/pythonlibs/#psycopg
  [greenlet]: http://www.lfd.uci.edu/~gohlke/pythonlibs/#greenlet
- 
+
 
 #### Common issues
 
@@ -569,16 +605,16 @@ that you have a 32bit version of Python installed.
 + If you have an authentication error running `./manage.py migrate` the first
   time, open `pg_hba.conf` (`/etc/postgresql/9.1/main/pg_hba.conf` on Ubuntu)
   and change the line "local all all peer" to "local all all md5".
-  
+
 + When running `./manage.py sync_couch_views`:
     + If you encounter an error stemming from any Python modules when running `./manage.py sync_couch_views` for the first time, the issue may be that your virtualenv is relying on the `site-packages` directory of your local Python installation for some of its requirements. (Creating your virtualenv with the `--no-site-packages` flag should prevent this, but it seems that it does not always work). You can check if this is the case by running `pip show {name-of-module-that-is-erroring}`. This will show the location that your virtualenv is pulling that module from; if the location is somewhere other than the path to your virtualenv, then something is wrong. The easiest solution to this is to remove any conflicting modules from the location that your virtualenv is pulling them from (as long as you use virtualenvs for all of your Python projects, this won't cause you any issues).
     + If you encounter an error stemming from an Incompatible Library Version of libxml2.2.dylib on Mac OS X, try running the following commands:
-        
+
             $ brew install libxml2
 	        $ brew install libxslt
 	        $ brew link libxml2 --force
 	        $ brew link libxslt --force
-	
+
 	+ If you encounter an authorization error related to CouchDB, try going to your `localsettings.py` file and change `COUCH_PASSWORD` to an empty string.
 
 + On Windows, to get python-magic to work you will need to install the following dependencies.

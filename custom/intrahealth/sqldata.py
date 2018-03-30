@@ -1,6 +1,7 @@
 # coding=utf-8
 from __future__ import absolute_import
 from __future__ import division
+from __future__ import unicode_literals
 import sqlalchemy
 from sqlagg.base import AliasColumn, QueryMeta, CustomQueryColumn, TableNotFoundException
 from sqlagg.columns import SumColumn, MaxColumn, SimpleColumn, CountColumn, CountUniqueColumn, MeanColumn
@@ -16,23 +17,23 @@ from django.utils.translation import ugettext as _
 from sqlalchemy import select
 from corehq.apps.reports.util import get_INFilter_bindparams
 from custom.utils.utils import clean_IN_filter_value
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.parsing import json_format_date
 import six
 from functools import reduce
 from six.moves import range
 
 PRODUCT_NAMES = {
-    u'diu': [u"diu"],
-    u'jadelle': [u"jadelle"],
-    u'depo-provera': [u"d\xe9po-provera", u"depo-provera"],
-    u'd\xe9po-provera': [u"d\xe9po-provera", u"depo-provera"],
-    u'microlut/ovrette': [u"microlut/ovrette"],
-    u'microgynon/lof.': [u"microgynon/lof."],
-    u'preservatif masculin': [u"pr\xe9servatif masculin", u"preservatif masculin"],
-    u'preservatif feminin': [u"pr\xe9servatif f\xe9minin", u"preservatif feminin"],
-    u'cu': [u"cu"],
-    u'collier': [u"collier"]
+    'diu': ["diu"],
+    'jadelle': ["jadelle"],
+    'depo-provera': ["d\xe9po-provera", "depo-provera"],
+    'd\xe9po-provera': ["d\xe9po-provera", "depo-provera"],
+    'microlut/ovrette': ["microlut/ovrette"],
+    'microgynon/lof.': ["microgynon/lof."],
+    'preservatif masculin': ["pr\xe9servatif masculin", "preservatif masculin"],
+    'preservatif feminin': ["pr\xe9servatif f\xe9minin", "preservatif feminin"],
+    'cu': ["cu"],
+    'collier': ["collier"]
 }
 
 
@@ -241,7 +242,7 @@ class DispDesProducts(BaseSqlData):
 
 class TauxDeRuptures(BaseSqlData):
     slug = 'taux_de_ruptures'
-    title = u'Disponibilité des Produits - Taux des Ruptures de Stock'
+    title = 'Disponibilité des Produits - Taux des Ruptures de Stock'
     table_name = 'fluff_IntraHealthFluff'
     col_names = ['total_stock_total']
     have_groups = False
@@ -346,7 +347,7 @@ class FicheData(BaseSqlData):
 
 class PPSAvecDonnees(BaseSqlData):
     slug = 'pps_avec_donnees'
-    title = u'PPS Avec Données'
+    title = 'PPS Avec Données'
     table_name = 'fluff_CouvertureFluff'
     col_names = ['location_id']
     have_groups = False
@@ -376,7 +377,7 @@ class PPSAvecDonnees(BaseSqlData):
         else:
             columns.append(DatabaseColumn(_("PPS"), SimpleColumn('pps_name')))
 
-        columns.append(DatabaseColumn(_(u"PPS Avec Données Soumises"),
+        columns.append(DatabaseColumn(_("PPS Avec Données Soumises"),
                                       CountUniqueAndSumCustomColumn('location_id'),
                                       format_fn=lambda x: {'sort_key': int(x), 'html': int(x)})
         )
@@ -655,7 +656,7 @@ class NombreData(BaseSqlData):
 
 class GestionDeLIPMTauxDeRuptures(TauxDeRuptures):
     table_name = 'fluff_TauxDeRuptureFluff'
-    title = u'Gestion de l`IPM - Taux des Ruptures de Stock'
+    title = 'Gestion de l`IPM - Taux des Ruptures de Stock'
 
     @property
     def filters(self):
@@ -676,7 +677,7 @@ class GestionDeLIPMTauxDeRuptures(TauxDeRuptures):
 class DureeData(BaseSqlData):
     slug = 'duree'
     custom_total_calculate = True
-    title = u'Durée moyenne des retards de livraison'
+    title = 'Durée moyenne des retards de livraison'
     table_name = 'fluff_LivraisonFluff'
     have_groups = False
     col_names = ['duree_moyenne_livraison_total']
@@ -688,7 +689,7 @@ class DureeData(BaseSqlData):
     @property
     def columns(self):
         columns = [DatabaseColumn(_("District"), SimpleColumn('district_name')),
-                   DatabaseColumn(_(u"Retards de livraison (jours)"),
+                   DatabaseColumn(_("Retards de livraison (jours)"),
                                   SumAndAvgGCustomColumn('duree_moyenne_livraison_total'),
                                   format_fn=lambda x: {'sort_key': float(x), 'html': float(x)})]
         return columns
@@ -704,7 +705,7 @@ class DureeData(BaseSqlData):
 class RecouvrementDesCouts(BaseSqlData):
     slug = 'recouvrement'
     custom_total_calculate = True
-    title = u'Recouvrement des côuts - Taxu de Recouvrement'
+    title = 'Recouvrement des côuts - Taxu de Recouvrement'
 
     table_name = 'fluff_RecouvrementFluff'
     have_groups = False
@@ -723,11 +724,11 @@ class RecouvrementDesCouts(BaseSqlData):
     @property
     def columns(self):
         columns = [DatabaseColumn(_("District"), SimpleColumn('district_name'))]
-        columns.append(DatabaseColumn(_(u"Montant dû"), SumColumn('payments_amount_to_pay')))
-        columns.append(DatabaseColumn(_(u"Montant payé"), SumColumn('payments_amount_paid')))
-        columns.append(DatabaseColumn(_(u"Payé dans le 30 jours"), SumColumn('payments_in_30_days')))
-        columns.append(DatabaseColumn(_(u"Payé dans le 3 mois"), SumColumn('payments_in_3_months')))
-        columns.append(DatabaseColumn(_(u"Payé dans l`annèe"), SumColumn('payments_in_year')))
+        columns.append(DatabaseColumn(_("Montant dû"), SumColumn('payments_amount_to_pay')))
+        columns.append(DatabaseColumn(_("Montant payé"), SumColumn('payments_amount_paid')))
+        columns.append(DatabaseColumn(_("Payé dans le 30 jours"), SumColumn('payments_in_30_days')))
+        columns.append(DatabaseColumn(_("Payé dans le 3 mois"), SumColumn('payments_in_3_months')))
+        columns.append(DatabaseColumn(_("Payé dans l`annèe"), SumColumn('payments_in_year')))
         return columns
 
     def calculate_total_row(self, rows):

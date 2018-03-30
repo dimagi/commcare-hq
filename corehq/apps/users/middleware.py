@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.conf import settings
 import django.core.exceptions
 from django.template.response import TemplateResponse
@@ -16,7 +17,7 @@ def is_public_reports(view_kwargs, request):
     return (
         request.user.is_anonymous and
         'domain' in view_kwargs and
-        request.path.startswith(u'/a/{}/reports/custom'.format(view_kwargs['domain'])) and
+        request.path.startswith('/a/{}/reports/custom'.format(view_kwargs['domain'])) and
         PUBLISH_CUSTOM_REPORTS.enabled(view_kwargs['domain'])
     )
 
@@ -77,14 +78,14 @@ class Enforce2FAMiddleware(MiddlewareMixin):
         ):
             return None
 
-        if not toggles.TWO_FACTOR_SUPERUSER_ROLLOUT.enabled(request.user.username):
+        if (toggles.TWO_FACTOR_SUPERUSER_ROLLOUT.enabled(request.user.username)
+                and not request.couch_user.two_factor_disabled
+                and not request.user.is_verified()
+                and not request.path.startswith('/account/')):
+            return TemplateResponse(
+                request=request,
+                template='two_factor/core/otp_required.html',
+                status=403,
+            )
+        else:
             return None
-        elif request.user.is_staff or request.user.is_superuser and not request.user.is_verified():
-            if request.path.startswith('/account/') or request.couch_user.two_factor_disabled:
-                return None
-            else:
-                return TemplateResponse(
-                    request=request,
-                    template='two_factor/core/otp_required.html',
-                    status=403,
-                )

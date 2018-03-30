@@ -2,7 +2,7 @@ from __future__ import absolute_import
 from collections import defaultdict
 import re
 
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from django.utils.translation import ugettext_noop, ugettext
 from corehq.apps.app_manager import static_strings
 import os

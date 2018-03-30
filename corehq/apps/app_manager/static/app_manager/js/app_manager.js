@@ -370,7 +370,7 @@ hqDefine('app_manager/js/app_manager', function () {
                         });
                         module.setPublishStatus(true);
                     }
-                }
+                },
             };
             if (sorting_forms) {
                 init_dict["connectWith"] = '.sortable-forms';

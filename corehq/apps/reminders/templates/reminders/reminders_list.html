@@ -76,6 +76,7 @@
 
     <script type="text/html" id="deactivate-reminder-template">
         <button type="button"
+                {% if reminders_migration_in_progress %}disabled{% endif %}
                 data-bind="visible: active, event: {
                     click: deactivate
                 }"
@@ -91,6 +92,7 @@
 
     <script type="text/html" id="activate-reminder-template">
         <button type="button"
+                {% if reminders_migration_in_progress %}disabled{% endif %}
                 data-bind="visible: !active(), event: {
                     click: activate
                 }"
@@ -106,6 +108,7 @@
 
     <script type="text/html" id="delete-reminder-template">
         <button type="button"
+                {% if reminders_migration_in_progress %}disabled{% endif %}
                 data-bind="event: {
                     click: function(_, event) {
                         if(confirm('{% trans "Are you sure you want to delete this reminder?" %}')) {

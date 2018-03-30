@@ -1,11 +1,12 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.test import override_settings, TestCase
 from mock import MagicMock, patch
 
 from sqlagg.filters import EQ, OR
 
 from corehq.apps.userreports.models import ReportConfiguration, DataSourceConfiguration
-from corehq.apps.userreports.reports.factory import ReportFactory
+from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
 from corehq.apps.userreports.reports.view import get_filter_values
 from custom.enikshay.tests.utils import ENikshayLocationStructureMixin
 from six.moves import range
@@ -55,7 +56,7 @@ class LocationHierarchyFilterTests(ENikshayLocationStructureMixin, TestCase):
                 config_id="123",
                 filters=[filter_spec]
             )
-            report = ReportFactory().from_spec(report_config)
+            report = ConfigurableReportDataSource.from_spec(report_config)
             filter_values = get_filter_values(
                 report_config.ui_filters,
                 {slug: self.cto.location_id},

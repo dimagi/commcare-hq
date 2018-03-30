@@ -22,7 +22,6 @@
 {% endblock %}
 {% block js %}{{ block.super }}
     {% compress js %}
-    <script src="{% static 'hqwebapp/js/guidGenerator.js' %}"></script>
     <script src="{% static 'hqwebapp/js/key-value-mapping.js' %}"></script>
     <script src="{% static 'app_manager/js/details/graph_config.js' %}"></script>
     {% endcompress %}

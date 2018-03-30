@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from datetime import datetime
 import json
 import logging
@@ -39,7 +40,7 @@ def heartbeat_status(request):
     return HttpResponse(json.dumps({"last_timestamp": str(last_heartbeat()),
                                     "last_from_file": get_file_heartbeat(),
                                     "last_from_cache": get_cache_heartbeat()}))
-    
+
 
 @login_required
 def ajax_job_poll(request, download_id, template="soil/partials/dl_status.html"):
@@ -55,7 +56,7 @@ def ajax_job_poll(request, download_id, template="soil/partials/dl_status.html")
 @login_required
 def retrieve_download(request, download_id, template="soil/file_download.html", extra_context=None):
     """
-    Retrieve a download that's waiting to be generated. If it is the get_file, 
+    Retrieve a download that's waiting to be generated. If it is the get_file,
     then download it, else, let the ajax on the page poll.
     """
     context = RequestContext(request)

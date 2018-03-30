@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import requests
 from corehq.apps.sms.models import SQLSMSBackend
 from corehq.messaging.smsbackends.push.forms import PushBackendForm
@@ -48,7 +49,7 @@ class PushException(Exception):
 
 class PushBackend(SQLSMSBackend):
 
-    class Meta:
+    class Meta(object):
         app_label = 'sms'
         proxy = True
 

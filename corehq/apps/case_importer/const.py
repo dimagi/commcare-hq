@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.utils.translation import ugettext_noop
 from six.moves import range
 
@@ -11,11 +12,11 @@ from six.moves import range
 MAX_CASE_IMPORTER_COLUMNS = 300
 
 
-class LookupErrors:
+class LookupErrors(object):
     NotFound, MultipleResults = list(range(2))
 
 
-class ImportErrors:
+class ImportErrors(object):
     InvalidOwnerName = ugettext_noop('Invalid Owner Name')
     InvalidOwnerId = ugettext_noop('Invalid Owner ID')
     InvalidParentId = ugettext_noop('Invalid Parent ID')

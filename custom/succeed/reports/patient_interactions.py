@@ -1,11 +1,12 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from collections import OrderedDict
 from django.utils import html
 from corehq.apps.users.models import CouchUser
 from custom.succeed.reports.patient_task_list import PatientTaskListReport
 from custom.succeed.reports import *
 from custom.succeed.reports.patient_details import PatientDetailsReport
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from custom.succeed.utils import is_cm, is_chw
 import six
 

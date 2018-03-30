@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import json
 
 from django.conf import settings
@@ -498,8 +499,6 @@ class BETSBeneficiaryRepeater(BaseBETSRepeater):
 
 @receiver(case_post_save, sender=CommCareCaseSQL, dispatch_uid="create_BETS_case_repeat_records")
 def create_BETS_repeat_records(sender, case, **kwargs):
-    if settings.SERVER_ENVIRONMENT != "enikshay":
-        return
     create_repeat_records(ChemistBETSVoucherRepeater, case)
     create_repeat_records(LabBETSVoucherRepeater, case)
     create_repeat_records(BETS180TreatmentRepeater, case)
@@ -512,12 +511,11 @@ def create_BETS_repeat_records(sender, case, **kwargs):
 
 @receiver(post_save, sender=SQLLocation, dispatch_uid="create_BETS_location_repeat_records")
 def create_BETS_location_repeat_records(sender, raw=False, **kwargs):
-    if raw or settings.SERVER_ENVIRONMENT != "enikshay":
+    if raw:
         return
     create_repeat_records(BETSLocationRepeater, kwargs['instance'])
 
 
 @receiver(commcare_user_post_save, dispatch_uid="create_BETS_user_repeat_records")
 def create_BETS_user_repeat_records(sender, couch_user, **kwargs):
-    if settings.SERVER_ENVIRONMENT == "enikshay":
-        create_repeat_records(BETSUserRepeater, couch_user)
+    create_repeat_records(BETSUserRepeater, couch_user)

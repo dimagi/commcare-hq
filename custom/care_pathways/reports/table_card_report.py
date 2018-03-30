@@ -1,9 +1,10 @@
 from __future__ import absolute_import
 from __future__ import division
+from __future__ import unicode_literals
 from corehq.apps.reports.graph_models import MultiBarChart, Axis
 from custom.care_pathways.reports import CareBaseReport
 from custom.care_pathways.filters import TableCardGroupByFilter, TableCardTypeFilter
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from custom.care_pathways.sqldata import TableCardReportIndividualPercentSqlData, TableCardReportGrouppedPercentSqlData, TableCardSqlData
 
 

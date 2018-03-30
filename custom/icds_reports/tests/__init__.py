@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import print_function
+from __future__ import unicode_literals
 import os
 from datetime import datetime
 
@@ -30,7 +31,8 @@ FILE_NAME_TO_TABLE_MAPPING = {
     'person_cases': 'config_report_icds-cas_static-person_cases_v2_b4b5d57a',
     'ucr_table_name_mapping': 'ucr_table_name_mapping',
     'usage': 'config_report_icds-cas_static-usage_forms_92fbe2aa',
-    'vhnd': 'config_report_icds-cas_static-vhnd_form_28e7fd58'
+    'vhnd': 'config_report_icds-cas_static-vhnd_form_28e7fd58',
+    'complementary_feeding': 'config_report_icds-cas_static-complementary_feeding_fo_4676987e',
 }
 
 
@@ -56,6 +58,17 @@ def setUpModule():
         location_type=location_type
     )
 
+    state_location_type = LocationType.objects.create(
+        domain=domain.name,
+        name='state',
+    )
+    SQLLocation.objects.create(
+        domain=domain.name,
+        name='st1',
+        location_id='st1',
+        location_type=state_location_type
+    )
+
     awc_location_type = LocationType.objects.create(
         domain=domain.name,
         name='awc',
@@ -67,7 +80,7 @@ def setUpModule():
         location_type=awc_location_type
     )
 
-    with override_settings(SERVER_ENVIRONMENT='icds'):
+    with override_settings(SERVER_ENVIRONMENT='icds-new'):
         configs = StaticDataSourceConfiguration.by_domain('icds-cas')
         adapters = [get_indicator_adapter(config) for config in configs]
 
@@ -85,7 +98,8 @@ def setUpModule():
             with open(os.path.join(path, file_name)) as f:
                 table_name = FILE_NAME_TO_TABLE_MAPPING[file_name[:-4]]
                 table = metadata.tables[table_name]
-                postgres_copy.copy_from(f, table, engine, format='csv', null='', header=True)
+                if not table_name.startswith('icds_dashboard_'):
+                    postgres_copy.copy_from(f, table, engine, format=b'csv', null=b'', header=True)
 
         try:
             move_ucr_data_into_aggregation_tables(datetime(2017, 5, 28), intervals=2)
@@ -102,7 +116,7 @@ def tearDownModule():
         'corehq.apps.callcenter.data_source.call_center_data_source_configuration_provider'
     )
     _call_center_domain_mock.start()
-    with override_settings(SERVER_ENVIRONMENT='icds'):
+    with override_settings(SERVER_ENVIRONMENT='icds-new'):
         configs = StaticDataSourceConfiguration.by_domain('icds-cas')
         adapters = [get_indicator_adapter(config) for config in configs]
         for adapter in adapters:

@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import hashlib
 from couchdbkit.exceptions import ResourceNotFound
 from dimagi.ext.couchdbkit import (
@@ -17,7 +18,7 @@ class QuestionMeta(DocumentSchema):
     options = ListProperty()
     repeat_context = StringProperty()
 
-    class Meta:
+    class Meta(object):
         app_label = 'export'
 
 
@@ -39,7 +40,7 @@ class FormQuestionSchema(Document):
     apps_with_errors = SetProperty(six.text_type)
     question_schema = SchemaDictProperty(QuestionMeta)
 
-    class Meta:
+    class Meta(object):
         app_label = 'export'
 
     @classmethod

@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import division
+from __future__ import unicode_literals
 import csv
 import xlrd
 
@@ -30,7 +31,7 @@ def bootstrap_twilio_gateway(apps, twilio_rates_filename):
             else:
                 try:
                     iso = row[0].lower()
-                    provider = row[2].split('-')[1].lower().replace(' ', '')
+                    provider = row[2].split(b'-')[1].lower().replace(b' ', b'')
                     rate = float(row[3])
                     if not(iso in twilio_data):
                         twilio_data[iso] = {}
@@ -75,7 +76,7 @@ def bootstrap_twilio_gateway(apps, twilio_rates_filename):
             country_code = None
             calculate_other = False
             for twilio_provider in twilio_data[iso]:
-                if twilio_provider == 'other':
+                if twilio_provider == b'other':
                     calculate_other = True
                 else:
                     for mach_provider in mach_data[iso]:
@@ -89,7 +90,7 @@ def bootstrap_twilio_gateway(apps, twilio_rates_filename):
                         except UnicodeDecodeError:
                             pass
             if calculate_other:
-                other_rate_twilio = twilio_data[iso]['other']
+                other_rate_twilio = twilio_data[iso][b'other']
                 for _, subscriptions in mach_data[iso].values():
                     weighted_price += other_rate_twilio * subscriptions
                     total_subscriptions += subscriptions

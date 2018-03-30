@@ -211,6 +211,7 @@ hqDefine('app_manager/js/releases/releases', function () {
         self.savedApps = ko.observableArray();
         self.doneFetching = ko.observable(false);
         self.buildState = ko.observable('');
+        self.buildErrorCode = ko.observable('');
         self.onlyShowReleased = ko.observable(false);
         self.fetchState = ko.observable('');
         self.nextVersionToFetch = null;
@@ -259,6 +260,14 @@ hqDefine('app_manager/js/releases/releases', function () {
                 arguments[i] = ko.utils.unwrapObservable(arguments[i]);
             }
             return hqImport("hqwebapp/js/initial_page_data").reverse.apply(null, arguments);
+        };
+        self.webAppsUrl = function(idObservable) {
+            var url = hqImport("hqwebapp/js/initial_page_data").reverse("formplayer_main"),
+                data = {
+                    appId: ko.utils.unwrapObservable(idObservable),
+                };
+
+            return url + '#' + encodeURI(JSON.stringify(data));
         };
         self.app_error_url = function(app_id, version) {
             return self.reverse('project_report_dispatcher') + '?app=' + app_id + '&version_number=' + version;
@@ -337,7 +346,7 @@ hqDefine('app_manager/js/releases/releases', function () {
                 },
                 error: function () {
                     self.fetchState('error');
-                }
+                },
             });
         };
 
@@ -365,7 +374,7 @@ hqDefine('app_manager/js/releases/releases', function () {
                     error: function () {
                         savedApp.is_released('error');
                         $(event.currentTarget).parent().prev('.js-release-waiting').addClass('hide');
-                    }
+                    },
                 });
             }
         };
@@ -440,9 +449,11 @@ hqDefine('app_manager/js/releases/releases', function () {
                         self.addSavedApp(app, true);
                     }
                     self.buildState('');
+                    self.buildErrorCode('');
                     hqImport('app_manager/js/app_manager').setPublishStatus(false);
                 },
-                error: function() {
+                error: function(xhr) {
+                    self.buildErrorCode(xhr.status);
                     self.buildState('error');
                 },
             });
@@ -452,11 +463,11 @@ hqDefine('app_manager/js/releases/releases', function () {
     SavedApp.URL_TYPES = {
         SHORT_ODK_URL: 'short_odk_url',
         SHORT_ODK_MEDIA_URL: 'short_odk_media_url',
-        SHORT_URL: 'short_url'
+        SHORT_URL: 'short_url',
     };
 
     return {
         ReleasesMain: ReleasesMain,
-        SavedApp: SavedApp
+        SavedApp: SavedApp,
     };
 });

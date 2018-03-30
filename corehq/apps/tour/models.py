@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.contrib.auth.models import User
 from django.db import models
 
@@ -15,7 +16,7 @@ class GuidedTour(models.Model):
     )
     date_completed = models.DateTimeField(auto_now=True)
 
-    class Meta:
+    class Meta(object):
         unique_together = ('user', 'tour_slug')
 
     @classmethod

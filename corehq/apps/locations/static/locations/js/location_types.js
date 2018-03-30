@@ -271,9 +271,9 @@ hqDefine('locations/js/location_types', function(){
         self.expand_from_options = function() {
             // traverse all locations upwards, include a root option
             var root_type = new LocationTypeModel(
-                {name: "root", pk: ROOT_LOCATION_ID},
-                commtrack_enabled, this
-            ),
+                    {name: "root", pk: ROOT_LOCATION_ID},
+                    commtrack_enabled, this
+                ),
                 parents = self.parents();
             parents.push(root_type);
             return parents.reverse();

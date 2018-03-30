@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+from __future__ import unicode_literals
 from datetime import datetime
 
 from django.test.utils import override_settings
@@ -8,7 +9,7 @@ from django.test import TestCase
 from custom.icds_reports.reports.issnip_monthly_register import ISSNIPMonthlyReport
 
 
-@override_settings(SERVER_ENVIRONMENT='icds')
+@override_settings(SERVER_ENVIRONMENT='icds-new')
 class TestInstitutionalDeliveriesSector(TestCase):
 
     def test_agg_awc_monthly_data(self):

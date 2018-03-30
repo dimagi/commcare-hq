@@ -32,24 +32,24 @@ hqDefine('analytix/js/logging', [
         } else if (_.isArguments(message.value)) {
             _title = "Arguments (" + message.value.length + ")    " + _.map(Array.from(message.value), JSON.stringify).join('    ');
             _value = Array.from(message.value);
-            _group = new Group(_title, new Message(_value, message.level));
+            _group = groupModel(_title, messageModel(_value, message.level));
             _group.isCollapsed = true;
             _group.print();
         } else if (_.isArray(message.value)) {
             _.each(message.value, function (msg) {
-                _printPretty(new Message(msg, message.level));
+                _printPretty(messageModel(msg, message.level));
             });
         } else if (_.isObject(message.value) && _.has(message.value, 0) && _.isElement(message.value[0])) {
             // DOM element
             _title = "#" + message.value.get(0).id + " ." + message.value.get(0).className.split(' ').join('.');
             _value = message.value.get(0).outerHTML;
-            _group = new Group(_title, new Message(_value, message.level));
+            _group = groupModel(_title, messageModel(_value, message.level));
             _group.isCollapsed = true;
             _group.print();
         } else if (!_.isString(message.value) && !_.isUndefined(message.value)) {
             _title = JSON.stringify(message.value);
             _value = message.value;
-            _group = new Group(_title, new Message(_value, message.level));
+            _group = groupModel(_title, messageModel(_value, message.level));
             _group.isCollapsed = true;
             _group.isRaw = true;
             _group.print();
@@ -63,7 +63,7 @@ hqDefine('analytix/js/logging', [
         return (levelOptions) ? levelOptions.style : "";
     };
 
-    var Message = function (value, level) {
+    var messageModel = function (value, level) {
         var msg = {};
         msg.level = level;
         msg.value = value;
@@ -78,7 +78,7 @@ hqDefine('analytix/js/logging', [
      * groups so that it's easier to skim data vs info text on the console output
      * and improve readability.
      */
-    var Group = function (title, message) {
+    var groupModel = function (title, message) {
         var grp = {};
         grp.title = title;
         grp.level = message.level;
@@ -95,7 +95,7 @@ hqDefine('analytix/js/logging', [
         return grp;
     };
 
-    var Log = function(level, logger) {
+    var logModel = function(level, logger) {
         var _log = {};
         _log.level = level.slug;
         _log.isVisible = level.isVisible;
@@ -113,7 +113,7 @@ hqDefine('analytix/js/logging', [
             getPrint: function () {
                 return function (messageValue, messagePrefix) {
                     if (_log.isVisible) {
-                        var group = new Group(_log.getPrefix(messagePrefix), new Message(messageValue, _log.level));
+                        var group = groupModel(_log.getPrefix(messagePrefix), messageModel(messageValue, _log.level));
                         group.print();
                     }
                 };
@@ -136,7 +136,7 @@ hqDefine('analytix/js/logging', [
             level = {};
         level.addCategory = function (slug, category) {
             if (_.isUndefined(level[slug])) {
-                var _log = new Log(_levelData, _logger);
+                var _log = logModel(_levelData, _logger);
                 _log.setCategory(category);
                 level[slug] = _log.getPrint();
             }
@@ -145,18 +145,18 @@ hqDefine('analytix/js/logging', [
         return level;
     };
 
-    var Logger = function (_prefix) {
+    var loggerModel = function (_prefix) {
         var logger = {};
         logger.prefix = _prefix;
         logger.createLevel = function (slug, name) {
-            return new Level(slug, name, logger);
+            return Level(slug, name, logger);
         };
         _.each(_LEVELS, function (options, key) {
             logger[key] = logger.createLevel(key, options.name);
         });
         logger.fmt = {};
         logger.fmt.groupMsg = function (title, message) {
-            return new Group(title, new Message(message));
+            return groupModel(title, messageModel(message));
         };
         /**
          * Outputs a list of group messages that maps argument labels to their values.
@@ -175,7 +175,7 @@ hqDefine('analytix/js/logging', [
 
     return {
         getLoggerForApi: function (apiName) {
-            return new Logger(apiName);
+            return loggerModel(apiName);
         },
     };
 });

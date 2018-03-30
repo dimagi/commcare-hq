@@ -20,13 +20,13 @@ hqDefine("reports/js/case_details", function() {
             return self.itemsPerColumn * self.columnsPerPage();
         });
         self.columnClass = ko.observable('');
-        self.modalClass = ko.observable('');
-        self.modalDialogClass = ko.observable('');
+        self.isFullScreenModal = ko.observable(false);
+        self.isLargeModal = ko.observable(false);
         self.propertyNames.subscribe(function(newValue) {
             self.columnsPerPage(Math.min(3, Math.ceil(newValue.length / self.itemsPerColumn)));
             self.columnClass("col-sm-" + (12 / self.columnsPerPage()));
-            self.modalClass(self.columnsPerPage() === 3 ? "full-screen-modal" : "");
-            self.modalDialogClass(self.columnsPerPage() === 2 ? "modal-lg" : "");
+            self.isLargeModal(self.columnsPerPage() === 2);
+            self.isFullScreenModal(self.columnsPerPage() === 3);
         });
 
         // This modal supports pagination and a search box, all of which is done client-side

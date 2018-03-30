@@ -131,7 +131,8 @@ def default_new_app(request, domain):
         app.secure_submissions = True
     clear_app_cache(request, domain)
     app.save()
-    return HttpResponseRedirect(reverse('view_app', args=[domain, app._id]))
+    # GET param can be removed when APPCUES_AB_TEST is finished
+    return HttpResponseRedirect(reverse('view_app', args=[domain, app._id]) + "?appcues=1")
 
 
 def get_app_view_context(request, app):
@@ -845,42 +846,3 @@ def update_linked_whitelist(request, domain, app_id):
     app.linked_whitelist = new_whitelist
     app.save()
     return HttpResponse()
-
-
-@method_decorator(csrf_exempt, name='dispatch')
-@method_decorator(api_key_auth, name='dispatch')
-@method_decorator(no_conflict, name='dispatch')
-@method_decorator(require_can_edit_apps, name='dispatch')
-class PatchLinkedAppWhitelist(View):
-    urlname = 'patch_linked_app_whitelist'
-
-    def patch(self, request, domain, app_id):
-        app, item = self._get_app_and_item(app_id, domain, request)
-        if not item:
-            return HttpResponseBadRequest()
-
-        if item not in app.linked_whitelist:
-            app.linked_whitelist.append(item)
-            app.save()
-
-        return HttpResponse()
-
-    def delete(self, request, domain, app_id):
-        app, item = self._get_app_and_item(app_id, domain, request)
-        try:
-            app.linked_whitelist.remove(item)
-            app.save()
-        except ValueError:
-            return HttpResponseBadRequest()
-
-        return HttpResponse()
-
-    def _get_app_and_item(self, app_id, domain, request):
-        try:
-            app = get_current_app(domain, app_id)
-        except ResourceNotFound:
-            raise Http404
-        item = request.GET.get('whitelist_item')
-        if not item:
-            item = QueryDict(request.body).get('whitelist_item')
-        return app, item

@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from tastypie import fields
 from tastypie.bundle import Bundle
 from tastypie.constants import ALL
@@ -14,7 +15,7 @@ from ..models import SQLLocation, LocationType
 class LocationTypeResource(ModelResource, HqBaseResource):
     parent = fields.ForeignKey('self', 'parent_type', null=True)
 
-    class Meta:
+    class Meta(object):
         resource_name = 'location_type'
         queryset = LocationType.objects.all()
         authentication = DomainAdminAuthentication()
@@ -53,7 +54,7 @@ class LocationResource(ModelResource, HqBaseResource):
     location_type = fields.ForeignKey(LocationTypeResource, 'location_type')
     parent = fields.ForeignKey('self', 'parent', null=True)
 
-    class Meta:
+    class Meta(object):
         resource_name = 'location'
         detail_uri_name = 'location_id'
         queryset = SQLLocation.objects.filter(is_archived=False).all()

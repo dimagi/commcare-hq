@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+from __future__ import unicode_literals
 import io
 import datetime
 import re
@@ -32,7 +33,7 @@ from corehq.util.view_utils import absolute_reverse
 from couchexport.export import export_from_tables
 from couchexport.shortcuts import export_response
 from dimagi.utils.couch.pagination import DatatablesParams
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.modules import to_function
 from dimagi.utils.web import json_request, json_response
 from dimagi.utils.parsing import string_to_boolean
@@ -492,6 +493,11 @@ class GenericReportView(object):
                 export_target=self.export_target,
                 js_scripts=self.js_scripts,
                 js_options=self.js_options,
+                custom_filter_action_template=(
+                    self.custom_filter_action_template
+                    if hasattr(self, 'custom_filter_action_template')
+                    else False
+                ),
             ),
             current_config_id=current_config_id,
             default_config=default_config,
@@ -846,6 +852,7 @@ class GenericTabularReport(GenericReportView):
     # and return a dictionary of items that will show up in
     # the report context
     extra_context_providers = []
+    custom_filter_action_template = None
 
     @property
     def headers(self):

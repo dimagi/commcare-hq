@@ -343,5 +343,5 @@ class SQLProduct(models.Model):
     def get_id(self):
         return self.product_id
 
-    class Meta:
+    class Meta(object):
         app_label = 'products'

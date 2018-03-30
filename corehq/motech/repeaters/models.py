@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from datetime import datetime, timedelta
 import six.moves.urllib.request, six.moves.urllib.parse, six.moves.urllib.error
 import six.moves.urllib.parse
@@ -23,7 +24,7 @@ from dimagi.ext.couchdbkit import *
 from casexml.apps.case.xml import V2, LEGAL_VERSIONS
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors
 from couchforms.const import DEVICE_LOG_XMLNS
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.parsing import json_format_datetime
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.post import simple_post, perform_SOAP_operation
@@ -49,22 +50,22 @@ import six
 
 
 def log_repeater_timeout_in_datadog(domain):
-    datadog_counter('commcare.repeaters.timeout', tags=[u'domain:{}'.format(domain)])
+    datadog_counter('commcare.repeaters.timeout', tags=['domain:{}'.format(domain)])
 
 
 def log_repeater_error_in_datadog(domain, status_code, repeater_type):
     datadog_counter(REPEATER_ERROR_COUNT, tags=[
-        u'domain:{}'.format(domain),
-        u'status_code:{}'.format(status_code),
-        u'repeater_type:{}'.format(repeater_type),
+        'domain:{}'.format(domain),
+        'status_code:{}'.format(status_code),
+        'repeater_type:{}'.format(repeater_type),
     ])
 
 
 def log_repeater_success_in_datadog(domain, status_code, repeater_type):
     datadog_counter(REPEATER_SUCCESS_COUNT, tags=[
-        u'domain:{}'.format(domain),
-        u'status_code:{}'.format(status_code),
-        u'repeater_type:{}'.format(repeater_type),
+        'domain:{}'.format(domain),
+        'status_code:{}'.format(status_code),
+        'repeater_type:{}'.format(repeater_type),
     ])
 
 
@@ -301,14 +302,14 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
         return attempt
 
     @property
-    def is_form_repeater(self):
-        # check if any of parent class is FormRepeater
-        return isinstance(self, FormRepeater)
+    def form_class_name(self):
+        """
+        Return the name of the class whose edit form this class uses.
 
-    @property
-    def is_case_repeater(self):
-        # check if any of parent class is CaseRepeater
-        return isinstance(self, CaseRepeater)
+        (Most classes that extend CaseRepeater, and all classes that
+        extend FormRepeater, use the same form.)
+        """
+        return self.__class__.__name__
 
 
 class FormRepeater(Repeater):
@@ -326,6 +327,13 @@ class FormRepeater(Repeater):
     @memoized
     def payload_doc(self, repeat_record):
         return FormAccessors(repeat_record.domain).get_form(repeat_record.payload_id)
+
+    @property
+    def form_class_name(self):
+        """
+        FormRepeater and its subclasses use the same form for editing
+        """
+        return 'FormRepeater'
 
     def allowed_to_forward(self, payload):
         return (
@@ -388,6 +396,13 @@ class CaseRepeater(Repeater):
     @memoized
     def payload_doc(self, repeat_record):
         return CaseAccessors(repeat_record.domain).get_case(repeat_record.payload_id)
+
+    @property
+    def form_class_name(self):
+        """
+        CaseRepeater and most of its subclasses use the same form for editing
+        """
+        return 'CaseRepeater'
 
     def get_headers(self, repeat_record):
         headers = super(CaseRepeater, self).get_headers(repeat_record)
@@ -681,7 +696,7 @@ class RepeatRecord(Document):
 
     @staticmethod
     def _format_response(response):
-        return u'{}: {}.\n{}'.format(
+        return '{}: {}.\n{}'.format(
             response.status_code, response.reason, getattr(response, 'content', None))
 
     def handle_success(self, response):

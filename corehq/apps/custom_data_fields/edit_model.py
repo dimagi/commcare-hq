@@ -11,7 +11,7 @@ from django import forms
 from corehq.apps.hqwebapp.decorators import use_jquery_ui
 from corehq.toggles import MULTIPLE_CHOICE_CUSTOM_FIELD, REGEX_FIELD_VALIDATION
 
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 from .models import (CustomDataFieldsDefinition, CustomDataField,
                      validate_reserved_words)
@@ -59,7 +59,7 @@ class XmlSlugField(forms.SlugField):
     default_validators = [
         validate_slug,
         validate_reserved_words,
-        RegexValidator(r'^[a-zA-Z]', ''),
+        RegexValidator(r'\D', ''),  # disallow property names that are just numbers, which breaks
     ]
 
 

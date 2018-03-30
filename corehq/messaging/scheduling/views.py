@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from functools import wraps
 from django.contrib import messages
 from django.db import transaction

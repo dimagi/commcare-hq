@@ -14,6 +14,7 @@ from corehq.apps.userreports.const import XFORM_CACHE_KEY_PREFIX, NAMED_EXPRESSI
 from corehq.apps.userreports.decorators import ucr_context_cache
 from corehq.apps.userreports.document_stores import get_document_store
 from corehq.apps.userreports.exceptions import BadSpecError
+from corehq.apps.userreports.mixins import NoPropertyTypeCoercionMixIn
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.couch import get_db_by_doc_type
@@ -205,7 +206,7 @@ class SwitchExpressionSpec(JsonObject):
             default=add_tabbed_text((str(self._default_expression))))
 
 
-class IteratorExpressionSpec(JsonObject):
+class IteratorExpressionSpec(NoPropertyTypeCoercionMixIn, JsonObject):
     type = TypeProperty('iterator')
     expressions = ListProperty(required=True)
     # an optional filter to test the values on - if they don't match they won't be included in the iteration
@@ -335,7 +336,7 @@ class DictExpressionSpec(JsonObject):
 class EvalExpressionSpec(JsonObject):
     type = TypeProperty('evaluator')
     statement = StringProperty(required=True)
-    context_variables = DictProperty(required=True)
+    context_variables = DictProperty()
     datatype = DataTypeProperty(required=False)
 
     def configure(self, context_variables):

@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from xml.etree import cElementTree as ElementTree
 from django.http import HttpResponse
 from tastypie.authentication import Authentication
@@ -33,7 +34,7 @@ TEMPLATE = """<?xml version="1.0" encoding="UTF-8"?>
 
 class SQLGrapevineBackend(SQLSMSBackend):
 
-    class Meta:
+    class Meta(object):
         app_label = 'sms'
         proxy = True
 
@@ -176,7 +177,7 @@ class GrapevineResource(Resource):
     smsLocation: The short code to which the SMS was sent.
     content: The message text of the SMS message.
     """
-    class Meta:
+    class Meta(object):
         resource_name = 'sms'
         object_class = SmsMessage
         authorization = Authorization()

@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import architect
 from django.db import models
 
@@ -31,7 +32,7 @@ class DeviceReportEntry(models.Model):
         ]
 
     def __repr__(self):
-        return u"DeviceReportEntry(domain='{}', msg='{}')".format(self.domain, self.msg)
+        return "DeviceReportEntry(domain='{}', msg='{}')".format(self.domain, self.msg)
 
 
 class UserErrorEntry(models.Model):
@@ -54,7 +55,7 @@ class UserErrorEntry(models.Model):
     session = models.TextField()
     type = models.CharField(max_length=32, db_index=True)
 
-    class Meta:
+    class Meta(object):
         app_label = 'phonelog'
         unique_together = [('xform_id', 'i')]
         index_together = [
@@ -62,7 +63,7 @@ class UserErrorEntry(models.Model):
         ]
 
     def __repr__(self):
-        return u"UserErrorEntry(domain='{}', msg='{}')".format(self.domain, self.msg)
+        return "UserErrorEntry(domain='{}', msg='{}')".format(self.domain, self.msg)
 
 
 class UserEntry(models.Model):
@@ -73,12 +74,12 @@ class UserEntry(models.Model):
     username = models.CharField(max_length=100, db_index=True)
     server_date = models.DateTimeField(null=True, db_index=True)
 
-    class Meta:
+    class Meta(object):
         app_label = 'phonelog'
         unique_together = [('xform_id', 'i')]
 
     def __repr__(self):
-        return u"UserEntry(username='{}')".format(self.username)
+        return "UserEntry(username='{}')".format(self.username)
 
 
 class ForceCloseEntry(models.Model):
@@ -101,11 +102,11 @@ class ForceCloseEntry(models.Model):
     session_readable = models.TextField()
     session_serialized = models.TextField()
 
-    class Meta:
+    class Meta(object):
         app_label = 'phonelog'
         index_together = [
             ("domain", "server_date"),
         ]
 
     def __repr__(self):
-        return u"ForceCloseEntry(domain='{}', msg='{}')".format(self.domain, self.msg)
+        return "ForceCloseEntry(domain='{}', msg='{}')".format(self.domain, self.msg)

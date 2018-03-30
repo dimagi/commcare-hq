@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.contrib import messages
 from django.urls import reverse
 from django.http import HttpResponseRedirect
@@ -7,7 +8,7 @@ from django.utils.translation import ugettext_noop, ugettext as _
 from corehq.apps.domain.decorators import login_required
 from corehq.apps.hqwebapp.views import BaseSectionPageView
 from corehq.apps.styleguide.examples.simple_crispy_form.forms import ExampleUserLoginForm
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 
 class BaseSimpleCrispyFormSectionView(BaseSectionPageView):

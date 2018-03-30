@@ -1,10 +1,12 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import copy
 import datetime
 from decimal import Decimal
 import logging
 import json
 import io
+import csv
 
 from couchdbkit import ResourceNotFound
 import dateutil
@@ -116,12 +118,13 @@ from corehq.apps.domain.models import (
     LICENSES,
     TransferDomainRequest,
 )
-from corehq.apps.domain.utils import normalize_domain_name
+from corehq.apps.domain.utils import normalize_domain_name, send_repeater_payloads
 from corehq.apps.hqwebapp.views import BaseSectionPageView, BasePageView, CRUDPaginatedViewMixin
 from corehq.apps.domain.forms import ProjectSettingsForm
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.web import get_ip, json_response, get_site_domain
-from corehq.apps.users.decorators import require_permission
+
+from corehq.apps.users.decorators import require_can_edit_web_users, require_permission
 from toggle.models import Toggle
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.hqwebapp.signals import clear_login_attempts
@@ -514,6 +517,22 @@ class EditOpenClinicaSettingsView(BaseProjectSettingsView):
         return self.get(request, *args, **kwargs)
 
 
+@require_POST
+@require_can_edit_web_users
+def generate_repeater_payloads(request, domain):
+    try:
+        email_id = request.POST.get('email_id')
+        repeater_id = request.POST.get('repeater_id')
+        data = csv.reader(request.FILES['payload_ids_file'])
+        payload_ids = [row[0] for row in data]
+    except Exception as e:
+        messages.error(request, _("Could not process the file. %s") % str(e))
+    else:
+        send_repeater_payloads.delay(repeater_id, payload_ids, email_id)
+        messages.success(request, _("Successfully queued request. You should receive an email shortly."))
+    return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
+
+
 def autocomplete_fields(request, field):
     prefix = request.GET.get('prefix', '')
     results = Domain.field_by_prefix(field, prefix)
@@ -699,8 +718,6 @@ class DomainSubscriptionView(DomainAccountingSettings):
             'plan': self.plan,
             'change_plan_url': reverse(SelectPlanView.urlname, args=[self.domain]),
             'can_purchase_credits': self.can_purchase_credits,
-            'credit_card_url': reverse(CreditsStripePaymentView.urlname, args=[self.domain]),
-            'wire_url': reverse(CreditsWireInvoiceView.urlname, args=[self.domain]),
             'stripe_public_key': settings.STRIPE_PUBLIC_KEY,
             'payment_error_messages': PAYMENT_ERROR_MESSAGES,
             'sms_rate_calc_url': reverse(SMSRatesView.urlname,
@@ -921,8 +938,8 @@ class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMix
                 }
             except BillingRecord.DoesNotExist:
                 log_accounting_error(
-                    u"An invoice was generated for %(invoice_id)d "
-                    u"(domain: %(domain)s), but no billing record!" % {
+                    "An invoice was generated for %(invoice_id)d "
+                    "(domain: %(domain)s), but no billing record!" % {
                         'invoice_id': invoice.id,
                         'domain': self.domain,
                     }
@@ -1280,10 +1297,10 @@ class SelectPlanView(DomainAccountingSettings):
 
     @property
     def steps(self):
-        edition_name = u" (%s)" % self.edition_name if self.edition_name else ""
+        edition_name = " (%s)" % self.edition_name if self.edition_name else ""
         return [
             {
-                'title': _(u"1. Select a Plan%(edition_name)s") % {
+                'title': _("1. Select a Plan%(edition_name)s") % {
                     "edition_name": edition_name
                 },
                 'url': reverse(SelectPlanView.urlname, args=[self.domain]),
@@ -1542,16 +1559,20 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
             return self.async_response
         if self.is_form_post and self.billing_account_info_form.is_valid():
             is_saved = self.billing_account_info_form.save()
-            software_plan_name = DESC_BY_EDITION[self.selected_plan_version.plan.edition]['name'].encode('utf-8')
+            software_plan_name = DESC_BY_EDITION[self.selected_plan_version.plan.edition]['name']
             if not is_saved:
                 messages.error(
-                    request, _("It appears there was an issue subscribing your project to the %s Software Plan. You "
-                               "may try resubmitting, but if that doesn't work, rest assured someone will be "
-                               "contacting you shortly.") % software_plan_name)
+                    request, _(
+                        "It appears there was an issue subscribing your project to the %s Software Plan. You "
+                        "may try resubmitting, but if that doesn't work, rest assured someone will be "
+                        "contacting you shortly."
+                    ) % software_plan_name
+                )
             else:
                 messages.success(
-                    request, _("Your project has been successfully subscribed to the %s Software Plan."
-                               % software_plan_name)
+                    request, _(
+                        "Your project has been successfully subscribed to the %s Software Plan."
+                    ) % software_plan_name
                 )
                 return HttpResponseRedirect(reverse(DomainSubscriptionView.urlname, args=[self.domain]))
         return super(ConfirmBillingAccountInfoView, self).post(request, *args, **kwargs)
@@ -2244,6 +2265,8 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
         initial = {
             'countries': self.domain_object.deployment.countries,
             'is_test': self.domain_object.is_test,
+            'use_custom_auto_case_update_limit': 'Y' if self.domain_object.auto_case_update_limit else 'N',
+            'auto_case_update_limit': self.domain_object.auto_case_update_limit,
         }
         internal_attrs = [
             'sf_contract_id',
@@ -2453,7 +2476,7 @@ def set_published_snapshot(request, domain, snapshot_name=''):
     return redirect('domain_snapshot_settings', domain.name)
 
 
-class ProBonoMixin():
+class ProBonoMixin(object):
     page_title = ugettext_lazy("Pro-Bono Application")
     is_submitted = False
 
@@ -2641,7 +2664,7 @@ class TransferDomainView(BaseAdminProjectSettingsView):
             if request.GET.get('resend', None):
                 self.active_transfer.send_transfer_request()
                 messages.info(request,
-                              _(u"Resent transfer request for project '{domain}'").format(domain=self.domain))
+                              _("Resent transfer request for project '{domain}'").format(domain=self.domain))
 
         return super(TransferDomainView, self).get(request, *args, **kwargs)
 
@@ -2711,7 +2734,7 @@ class ActivateTransferDomainView(BasePageView):
             return HttpResponseRedirect(reverse("no_permissions"))
 
         self.active_transfer.transfer_domain(ip=get_ip(request))
-        messages.success(request, _(u"Successfully transferred ownership of project '{domain}'")
+        messages.success(request, _("Successfully transferred ownership of project '{domain}'")
                          .format(domain=self.active_transfer.domain))
 
         return HttpResponseRedirect(reverse('dashboard_default', args=[self.active_transfer.domain]))
@@ -2743,7 +2766,7 @@ class DeactivateTransferDomainView(View):
         # Do not want to send them back to the activate page
         if referer.endswith(reverse('activate_transfer_domain', args=[guid])):
             messages.info(request,
-                          _(u"Declined ownership of project '{domain}'").format(domain=transfer.domain))
+                          _("Declined ownership of project '{domain}'").format(domain=transfer.domain))
             return HttpResponseRedirect('/')
         else:
             return HttpResponseRedirect(referer)

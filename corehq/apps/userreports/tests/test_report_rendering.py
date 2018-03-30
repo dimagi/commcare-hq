@@ -2,10 +2,10 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from django.test import SimpleTestCase
-from corehq.apps.userreports.reports.view import ConfigurableReport
+from corehq.apps.userreports.reports.view import ConfigurableReportView
 
 
-class VeryFakeReportView(ConfigurableReport):
+class VeryFakeReportView(ConfigurableReportView):
     # note: this is very coupled to what it tests below, but it beats bootstrapping a whole UCR thing
 
     def __init__(self, data):

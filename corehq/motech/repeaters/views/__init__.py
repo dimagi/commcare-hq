@@ -7,6 +7,7 @@ from .repeaters import (
     DomainForwardingOptionsView,
     EditCaseRepeaterView,
     EditFormRepeaterView,
+    EditOpenmrsRepeaterView,
     EditRepeaterView,
     drop_repeater,
     pause_repeater,

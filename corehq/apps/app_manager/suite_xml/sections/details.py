@@ -41,7 +41,7 @@ from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.exceptions import SuiteError
 from corehq.apps.app_manager.xpath import session_var, XPath
 from corehq import toggles
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 
 class DetailContributor(SectionContributor):
@@ -172,8 +172,6 @@ class DetailContributor(SectionContributor):
                     detail_type=detail_type, *column_info
                 ).fields
                 for field in fields:
-                    if column_info.column.useXpathExpression:
-                        field.template.text.xpath_function = column_info.column.field
                     d.fields.append(field)
 
             # Add actions

@@ -10,7 +10,7 @@
             {% if not is_owner %}
             <th>{% trans "Owner" %}</th>
             {% endif %}
-            <th>{% trans "Saved Reports" %}</th>
+            <th>{% trans "Reports" %}</th>
             <th>{% trans "Day and Time" %}</th>
             <th>{% trans "Recipients" %}</th>
             <th>{% trans "Actions" %}</th>
@@ -26,15 +26,15 @@
             {% endif %}
             <td>
                 {% if report.configs|length == 1 %}
-                {% for config in report.configs %}
-                <a href="{{ config.url }}">{{ config.full_name }}</a>
-                {% endfor %}
-                {% else %}
-                <ul style="float: left">
                     {% for config in report.configs %}
-                    <li><a href="{{ config.url }}">{{ config.full_name }}</a></li>
+                        <a href="{{ config.url }}">{{ config.full_name }}</a>
                     {% endfor %}
-                </ul>
+                {% else %}
+                    <ul style="float: left">
+                        {% for config in report.configs %}
+                            <li><a href="{{ config.url }}">{{ config.full_name }}</a></li>
+                        {% endfor %}
+                    </ul>
                 {% endif %}
             </td>
             <td>{{ report.day_name }} at {{ report.hour }}:00</td>

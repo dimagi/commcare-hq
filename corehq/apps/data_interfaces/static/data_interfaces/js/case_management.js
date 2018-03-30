@@ -41,7 +41,7 @@ var CaseManagement = function (o) {
             var $checkbox = $('#case-management input[data-caseid="' + case_id + '"].selected-commcare-case'),
                 username = $('#reassign_owner_select').data().select2.data().text,
                 date_message = (self.on_today) ? '<span title="0"></span>' :
-                                '<span class="label label-warning" title="0">Out of range of filter. Will ' +
+                    '<span class="label label-warning" title="0">Out of range of filter. Will ' +
                                     'not appear on page refresh.</span>';
             $checkbox.data('owner', owner_id);
             $checkbox.data('ownertype', owner_type);
@@ -99,9 +99,11 @@ var CaseManagement = function (o) {
             $modal = $('#caseManagementStatusModal'),
             owner_type = getOwnerType(new_owner);
 
-        // groups and users have different number of characters before the id
-        // users are u__id and groups are sg__id
-        new_owner = new_owner.slice(new_owner.indexOf('__') + 2);
+        if (new_owner.includes('__')) {
+            // groups and users have different number of characters before the id
+            // users are u__id and groups are sg__id
+            new_owner = new_owner.slice(new_owner.indexOf('__') + 2);
+        }
 
         if (_.isEmpty(new_owner)) {
             $modal.find('.modal-body').text("Please select an owner");
@@ -113,18 +115,18 @@ var CaseManagement = function (o) {
                     xform;
                 xform = casexml.CaseDelta.wrap({
                     case_id: case_id,
-                    properties: {owner_id: new_owner}
+                    properties: {owner_id: new_owner},
                 }).asXFormInstance({
                     user_id: self.webUserID,
                     username: self.webUserName,
-                    form_name: self.form_name
+                    form_name: self.form_name,
                 }).serialize();
 
                 $.ajax({
                     url: self.receiverUrl,
                     type: 'post',
                     data: xform,
-                    success: updateCaseRow(case_id, new_owner, owner_type)
+                    success: updateCaseRow(case_id, new_owner, owner_type),
                 });
 
             }
@@ -142,7 +144,7 @@ ko.bindingHandlers.caseReassignmentForm = {
             $element.find("[type='submit']").enableButton();
             $element.slideUp();
         }
-    }
+    },
 };
 
 ko.bindingHandlers.grabUniqueDefault = {
@@ -157,5 +159,5 @@ ko.bindingHandlers.grabUniqueDefault = {
             // bleh.
         }
         $(element).trigger('change');
-    }
+    },
 };

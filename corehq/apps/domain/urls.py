@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+from __future__ import unicode_literals
 from django.conf import settings
 from django.conf.urls import url, include
 from django.contrib.auth.views import (
@@ -60,6 +61,7 @@ from corehq.apps.domain.views import (
     select,
     set_published_snapshot,
     toggle_diff,
+    generate_repeater_payloads,
 )
 from corehq.apps.linked_domain.views import DomainLinkView
 from corehq.apps.reports.dispatcher import DomainReportDispatcher
@@ -70,6 +72,7 @@ from corehq.motech.repeaters.views import (
     DomainForwardingOptionsView,
     EditCaseRepeaterView,
     EditFormRepeaterView,
+    EditOpenmrsRepeaterView,
     EditRepeaterView,
     RepeatRecordView,
     cancel_repeat_record,
@@ -82,6 +85,7 @@ from corehq.motech.repeaters.views import (
 
 urlpatterns = [
     url(r'^domain/select/$', select, name='domain_select'),
+    url(r'^domain/select_redirect/$', select, {'do_not_redirect': True}, name='domain_select_redirect'),
     url(r'^domain/autocomplete/(?P<field>[\w-]+)/$', autocomplete_fields, name='domain_autocomplete_fields'),
     url(r'^domain/transfer/(?P<guid>\w+)/activate$',
         ActivateTransferDomainView.as_view(), name='activate_transfer_domain'),
@@ -164,6 +168,8 @@ domain_settings = [
     url(r'^repeat_record/', RepeatRecordView.as_view(), name=RepeatRecordView.urlname),
     url(r'^repeat_record_report/cancel/', cancel_repeat_record, name='cancel_repeat_record'),
     url(r'^repeat_record_report/requeue/', requeue_repeat_record, name='requeue_repeat_record'),
+    url(r'^repeat_record_report/generate_repeater_payloads/', generate_repeater_payloads,
+        name='generate_repeater_payloads'),
     url(r'^forwarding/$', DomainForwardingOptionsView.as_view(), name=DomainForwardingOptionsView.urlname),
     url(r'^forwarding/new/FormRepeater/$', AddFormRepeaterView.as_view(), {'repeater_type': 'FormRepeater'},
         name=AddFormRepeaterView.urlname),
@@ -171,12 +177,16 @@ domain_settings = [
         name=AddCaseRepeaterView.urlname),
     url(r'^forwarding/new/(?P<repeater_type>\w+)/$', AddRepeaterView.as_view(), name=AddRepeaterView.urlname),
     url(r'^forwarding/test/$', test_repeater, name='test_repeater'),
+
     url(r'^forwarding/CaseRepeater/edit/(?P<repeater_id>\w+)/$', EditCaseRepeaterView.as_view(),
         {'repeater_type': 'CaseRepeater'}, name=EditCaseRepeaterView.urlname),
     url(r'^forwarding/FormRepeater/edit/(?P<repeater_id>\w+)/$', EditFormRepeaterView.as_view(),
         {'repeater_type': 'FormRepeater'}, name=EditFormRepeaterView.urlname),
-    url(r'^forwarding/edit/(?P<repeater_id>\w+)/$', EditRepeaterView.as_view(),
+    url(r'^forwarding/OpenmrsRepeater/edit/(?P<repeater_id>\w+)/$', EditOpenmrsRepeaterView.as_view(),
+        {'repeater_type': 'OpenmrsRepeater'}, name=EditOpenmrsRepeaterView.urlname),
+    url(r'^forwarding/(?P<repeater_type>\w+)/edit/(?P<repeater_id>\w+)/$', EditRepeaterView.as_view(),
         name=EditRepeaterView.urlname),
+
     url(r'^forwarding/(?P<repeater_id>[\w-]+)/stop/$', drop_repeater, name='drop_repeater'),
     url(r'^forwarding/(?P<repeater_id>[\w-]+)/pause/$', pause_repeater, name='pause_repeater'),
     url(r'^forwarding/(?P<repeater_id>[\w-]+)/resume/$', resume_repeater, name='resume_repeater'),

@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import re
 import uuid
 import datetime
@@ -9,7 +10,7 @@ from django.conf import settings
 from corehq.apps.hqcase.utils import submit_case_block_from_template
 from corehq.util.quickcache import quickcache
 from django.core.exceptions import ValidationError
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.parsing import json_format_datetime
 from dimagi.utils.modules import to_function
 from django.utils.translation import ugettext as _
@@ -171,12 +172,12 @@ CLEAN_TEXT_REPLACEMENTS = (
     (":p", ": p"),
     (":P", ": P"),
     # Special punctuation ascii conversion
-    (u"\u2013", "-"), # Dash
-    (u"\u201c", '"'), # Open double quote
-    (u"\u201d", '"'), # Close double quote
-    (u"\u2018", "'"), # Open single quote
-    (u"\u2019", "'"), # Close single quote
-    (u"\u2026", "..."), # Ellipsis
+    ("\u2013", "-"),  # Dash
+    ("\u201c", '"'),  # Open double quote
+    ("\u201d", '"'),  # Close double quote
+    ("\u2018", "'"),  # Open single quote
+    ("\u2019", "'"),  # Close single quote
+    ("\u2026", "..."),  # Ellipsis
 )
 
 

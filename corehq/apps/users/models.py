@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+from __future__ import unicode_literals
 import inspect
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
@@ -38,13 +39,14 @@ from dimagi.ext.couchdbkit import (
     DateProperty
 )
 from couchdbkit.resource import ResourceNotFound
+from corehq.util.dates import get_timestamp
 from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.database import get_safe_write_kwargs, iter_docs
 from dimagi.utils.logging import notify_exception, log_signal_errors
 
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.make_uuid import random_hex
 from dimagi.utils.modules import to_function
 from corehq.util.quickcache import quickcache
@@ -478,7 +480,7 @@ class DomainMembership(Membership):
     def viewable_reports(self):
         return self.permissions.view_report_list
 
-    class Meta:
+    class Meta(object):
         app_label = 'users'
 
 
@@ -1011,7 +1013,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         # redact hashed password
         properties = sorted(predefined_properties - {'password'}) + sorted(dynamic_properties - {'password'})
 
-        return u'{name}({keyword_args})'.format(
+        return '{name}({keyword_args})'.format(
             name=name,
             keyword_args=', '.join('{key}={value!r}'.format(
                 key=key,
@@ -1087,7 +1089,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
 
     @property
     def full_name(self):
-        return (u"%s %s" % (self.first_name or u'', self.last_name or u'')).strip()
+        return ("%s %s" % (self.first_name or '', self.last_name or '')).strip()
 
     @property
     def human_friendly_name(self):
@@ -1102,6 +1104,10 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
     def days_since_created(self):
         # Note this does not round, but returns the floor of days since creation
         return (datetime.utcnow() - self.created_on).days
+
+    @property
+    def timestamp_created(self):
+        return get_timestamp(self.created_on)
 
     formatted_name = full_name
     name = full_name
@@ -1887,10 +1893,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     def sql_location(self):
         from corehq.apps.locations.models import SQLLocation
         if self.location_id:
-            try:
-                return SQLLocation.objects.get(location_id=self.location_id)
-            except SQLLocation.DoesNotExist:
-                pass
+            return SQLLocation.objects.get_or_None(location_id=self.location_id)
         return None
 
     def get_location_ids(self, domain):
@@ -2014,8 +2017,10 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             self.save()
 
     def _remove_location_from_user(self, location_id):
+        from corehq.apps.fixtures.models import UserFixtureType
         try:
             self.assigned_location_ids.remove(location_id)
+            self.update_fixture_status(UserFixtureType.LOCATION)
         except ValueError:
             notify_exception(None, "Location missing from user", {
                 'user_id': self._id,
@@ -2473,7 +2478,7 @@ class DomainRequest(models.Model):
     is_approved = models.BooleanField(default=False)
     domain = models.CharField(max_length=255, db_index=True)
 
-    class Meta:
+    class Meta(object):
         app_label = "users"
 
     @classmethod

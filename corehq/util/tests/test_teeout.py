@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import print_function
+from __future__ import unicode_literals
 import re
 import sys
 from contextlib import contextmanager
@@ -48,7 +49,7 @@ def test_tee_output_with_SystemExit():
 
 @contextmanager
 def stdfake():
-    class fake:
+    class fake(object):
         stdout = StringIO()
         stderr = StringIO()
     with replattr((sys, "stdout", fake.stdout), (sys, "stderr", fake.stderr)):

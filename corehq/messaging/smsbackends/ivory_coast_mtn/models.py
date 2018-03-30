@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import pytz
 import requests
 from datetime import datetime
@@ -13,7 +14,7 @@ from lxml import etree
 
 class IvoryCoastMTNBackend(SQLSMSBackend):
 
-    class Meta:
+    class Meta(object):
         app_label = 'sms'
         proxy = True
 

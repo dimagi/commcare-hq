@@ -1,16 +1,16 @@
 from __future__ import absolute_import
 from __future__ import print_function
+from __future__ import unicode_literals
 import uuid
 import functools
 import json
 import logging
-from io import BytesIO
+from io import StringIO
 
 import mock
 import os
-import sys
 from unittest import TestCase, SkipTest
-from collections import namedtuple
+from collections import defaultdict, namedtuple
 from contextlib import contextmanager
 
 from functools import wraps
@@ -283,7 +283,7 @@ class capture_log_output(ContextDecorator):
         self.original_handlers = self.logger.handlers
         for handler in self.original_handlers:
             self.logger.removeHandler(handler)
-        self.output = BytesIO()
+        self.output = StringIO()
         self.logger.addHandler(logging.StreamHandler(self.output))
 
     def __enter__(self):
@@ -532,3 +532,24 @@ def make_make_path(current_directory):
         return os.path.join(os.path.dirname(current_directory), *args)
 
     return _make_path
+
+
+@contextmanager
+def patch_datadog():
+    from corehq.util.datadog.gauges import _enforce_prefix
+
+    def record(fn, name, value, enforce_prefix='commcare', tags=None):
+        _enforce_prefix(name, enforce_prefix)
+        if tags:
+            for tag in (tags or []):
+                stats[name + "." + tag].append(value)
+        else:
+            stats[name].append(value)
+
+    stats = defaultdict(list)
+    patch = mock.patch("corehq.util.datadog.gauges._datadog_record", new=record)
+    patch.start()
+    try:
+        yield stats
+    finally:
+        patch.stop()

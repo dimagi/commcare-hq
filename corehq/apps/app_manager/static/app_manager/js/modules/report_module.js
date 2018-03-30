@@ -4,33 +4,33 @@ hqDefine('app_manager/js/modules/report_module', function () {
     //       also defined corehq.apps.userreports.reports.filters.CHOICE_DELIMITER
     var select2Separator = "\u001F";
 
-    function GraphConfig(reportId, reportName, availableReportIds, reportCharts, graph_configs,
-                         columnXpathTemplate, dataPathPlaceholders, lang, langs, changeSaveButton) {
+    function GraphConfig(reportId, reportName, availableReportIds, reportCharts, graphConfigs,
+        columnXpathTemplate, dataPathPlaceholders, lang, langs, changeSaveButton) {
         var self = this,
             columnTemplate = _.template(columnXpathTemplate);
 
-        graph_configs = graph_configs || {};
+        graphConfigs = graphConfigs || {};
 
         self.graphUiElements = {};
-        var GraphConfigurationUiElement = hqImport('app_manager/js/details/graph_config').GraphConfigurationUiElement;
+        var graphConfigurationUiElement = hqImport('app_manager/js/details/graph_config').graphConfigurationUiElement;
         for (var i = 0; i < availableReportIds.length; i++) {
             var currentReportId = availableReportIds[i];
             self.graphUiElements[currentReportId] = {};
             for (var j = 0; j < reportCharts[currentReportId].length; j++) {
                 var currentChart = reportCharts[currentReportId][j];
-                var graph_config = graph_configs[currentChart.chart_id] || {
+                var graphConfig = graphConfigs[currentChart.chart_id] || {
                     graph_type: 'bar',
-                    series: _.map(currentChart.y_axis_columns, function(c) { return {}; }),
+                    series: _.map(currentChart.y_axis_columns, function() { return {}; }),
                 };
 
                 // Add series placeholders
                 _.each(currentChart.y_axis_columns, function(column, index) {
-                    if (graph_config.series[index]) {
+                    if (graphConfig.series[index]) {
                         var dataPathPlaceholder = dataPathPlaceholders && dataPathPlaceholders[currentReportId]
                             ? dataPathPlaceholders[currentReportId][currentChart.chart_id]
                             : "[path will be automatically generated]"
                         ;
-                        _.extend(graph_config.series[index], {
+                        _.extend(graphConfig.series[index], {
                             data_path_placeholder: dataPathPlaceholder,
                             x_placeholder: columnTemplate({ id: currentChart.x_axis_column }),
                             y_placeholder: columnTemplate({ id: column.column_id }),
@@ -38,16 +38,16 @@ hqDefine('app_manager/js/modules/report_module', function () {
                     }
                 });
 
-                var graph_el = new GraphConfigurationUiElement({
+                var graphEl = graphConfigurationUiElement({
                     childCaseTypes: [],
                     fixtures: [],
                     lang: lang,
                     langs: langs,
-                }, graph_config);
-                graph_el.setName(reportName);
-                self.graphUiElements[currentReportId][currentChart.chart_id] = graph_el;
+                }, graphConfig);
+                graphEl.setName(reportName);
+                self.graphUiElements[currentReportId][currentChart.chart_id] = graphEl;
 
-                graph_el.on("change", function() {
+                graphEl.on("change", function() {
                     changeSaveButton();
                 });
             }
@@ -70,15 +70,15 @@ hqDefine('app_manager/js/modules/report_module', function () {
             return reportCharts[reportId()];
         });
 
-        this.getCurrentGraphUiElement = function(chart_id) {
-            return self.currentGraphUiElements()[chart_id];
+        this.getCurrentGraphUiElement = function(chartId) {
+            return self.currentGraphUiElements()[chartId];
         };
 
         this.toJSON = function () {
             var chartsToConfigs = {};
             var currentChartsToConfigs = self.currentGraphUiElements();
-            _.each(currentChartsToConfigs, function(graph_config, chart_id) {
-                chartsToConfigs[chart_id] = graph_config.val();
+            _.each(currentChartsToConfigs, function(graphConfig, chartId) {
+                chartsToConfigs[chartId] = graphConfig.val();
             });
             return chartsToConfigs;
         };
@@ -105,7 +105,7 @@ hqDefine('app_manager/js/modules/report_module', function () {
                     filter.selectedValue.doc_type = ko.observable(filter.selectedValue.doc_type);
                 } else {
                     filter.selectedValue = {
-                        doc_type: ko.observable(null)
+                        doc_type: ko.observable(null),
                     };
                 }
                 var filterFields = [
@@ -119,10 +119,10 @@ hqDefine('app_manager/js/modules/report_module', function () {
                     'date_number2',
                     'start_of_month',
                     'period',
-                    'ancestor_location_type_name'
+                    'ancestor_location_type_name',
                 ];
                 for(var filterFieldsIndex = 0; filterFieldsIndex < filterFields.length; filterFieldsIndex++) {
-                    startVal = filter.selectedValue[filterFields[filterFieldsIndex]];
+                    var startVal = filter.selectedValue[filterFields[filterFieldsIndex]];
                     if (startVal === 0) {
                         filter.selectedValue[filterFields[filterFieldsIndex]] = ko.observable(0);
                     } else {
@@ -192,12 +192,12 @@ hqDefine('app_manager/js/modules/report_module', function () {
         };
     }
 
-    function ReportConfig(report_id, display,
-                          localizedDescription, xpathDescription, useXpathDescription,
-                          showDataTable, syncDelay, uuid, availableReportIds,
-                          reportCharts, graph_configs, columnXpathTemplate, dataPathPlaceholders,
-                          filterValues, reportFilters,
-                          language, languages, changeSaveButton) {
+    function ReportConfig(reportId, display,
+        localizedDescription, xpathDescription, useXpathDescription,
+        showDataTable, syncDelay, uuid, availableReportIds,
+        reportCharts, graphConfigs, columnXpathTemplate, dataPathPlaceholders,
+        filterValues, reportFilters,
+        language, languages, changeSaveButton) {
         var self = this;
         this.lang = language;
         this.fullDisplay = display || {};
@@ -205,7 +205,7 @@ hqDefine('app_manager/js/modules/report_module', function () {
         this.uuid = uuid;
         this.availableReportIds = availableReportIds;
 
-        this.reportId = ko.observable(report_id);
+        this.reportId = ko.observable(reportId);
         this.display = ko.observable(this.fullDisplay[this.lang]);
         this.localizedDescription = ko.observable(this.fullLocalizedDescription[this.lang]);
         this.xpathDescription = ko.observable(xpathDescription);
@@ -222,12 +222,12 @@ hqDefine('app_manager/js/modules/report_module', function () {
         this.syncDelay.subscribe(changeSaveButton);
 
         self.graphConfig = new GraphConfig(this.reportId, this.display(), availableReportIds, reportCharts,
-                                           graph_configs, columnXpathTemplate, dataPathPlaceholders,
-                                           this.lang, languages, changeSaveButton);
+            graphConfigs, columnXpathTemplate, dataPathPlaceholders,
+            this.lang, languages, changeSaveButton);
         this.display.subscribe(function(newValue) {
             self.graphConfig.name(newValue);
         });
-        this.filterConfig = new FilterConfig(report_id, this.reportId, filterValues, reportFilters, changeSaveButton);
+        this.filterConfig = new FilterConfig(reportId, this.reportId, filterValues, reportFilters, changeSaveButton);
 
         this.toJSON = function () {
             self.fullDisplay[self.lang] = self.display();
@@ -282,11 +282,11 @@ hqDefine('app_manager/js/modules/report_module', function () {
         self.dataPathPlaceholders = options.dataPathPlaceholders || {};
         for (var i = 0; i < availableReports.length; i++) {
             var report = availableReports[i];
-            var report_id = report.report_id;
-            self.reportTitles[report_id] = report.title;
-            self.reportDescriptions[report_id] = report.description;
-            self.reportCharts[report_id] = report.charts;
-            self.reportFilters[report_id] = report.filter_structure;
+            var reportId = report.report_id;
+            self.reportTitles[reportId] = report.title;
+            self.reportDescriptions[reportId] = report.description;
+            self.reportCharts[reportId] = report.charts;
+            self.reportFilters[reportId] = report.filter_structure;
         }
 
         self.availableReportIds = _.map(options.availableReports, function (r) { return r.report_id; });
@@ -331,10 +331,10 @@ hqDefine('app_manager/js/modules/report_module', function () {
                         name: JSON.stringify(self.moduleName),
                         module_filter: self.moduleFilter,
                         reports: JSON.stringify(_.map(self.reports(), function (r) { return r.toJSON(); })),
-                        multimedia: JSON.stringify(self.multimedia())
-                    }
+                        multimedia: JSON.stringify(self.multimedia()),
+                    },
                 });
-            }
+            },
         });
 
         self.changeSaveButton = function () {
@@ -386,8 +386,7 @@ hqDefine('app_manager/js/modules/report_module', function () {
 
         // add existing reports to UI
         for (i = 0; i < currentReports.length; i += 1) {
-            var report = newReport(currentReports[i]);
-            self.reports.push(report);
+            self.reports.push(newReport(currentReports[i]));
         }
     }
 
@@ -399,7 +398,7 @@ hqDefine('app_manager/js/modules/report_module', function () {
     return {
         ReportModule: ReportModule,
         StaticFilterData: StaticFilterData,
-        select2Separator: select2Separator
+        select2Separator: select2Separator,
     };
 });
 

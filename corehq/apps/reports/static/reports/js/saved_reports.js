@@ -1,6 +1,6 @@
 var ReportConfig = function (data) {
     var self = ko.mapping.fromJS(data, {
-        'copy': ['filters']
+        'copy': ['filters'],
     });
 
     self.error = ko.observable(false);
@@ -55,7 +55,7 @@ var ReportConfig = function (data) {
                 changeMonth: true,
                 changeYear: true,
                 showButtonPanel: true,
-                dateFormat: 'yy-mm-dd'
+                dateFormat: 'yy-mm-dd',
             });
         }
     });
@@ -106,7 +106,7 @@ var ReportConfigsViewModel = function (options) {
             url: options.saveUrl + '/' + config._id(),
             success: function (data) {
                 window.location.reload();
-            }
+            },
         });
     };
 
@@ -205,7 +205,7 @@ var ReportConfigsViewModel = function (options) {
             changeMonth: true,
             changeYear: true,
             showButtonPanel: true,
-            dateFormat: 'yy-mm-dd'
+            dateFormat: 'yy-mm-dd',
         });
     };
 
@@ -257,9 +257,9 @@ var ReportConfigsViewModel = function (options) {
                         jqXHR.abort();
                         $('#modal-save-button')[0].saveButton.setState('retry');
                     }
-                }
+                },
             };
-        }
+        },
     };
 };
 

@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from casexml.apps.case.exceptions import CommCareCaseError
 from corehq.util.datadog.gauges import datadog_counter
 from corehq.util.datadog.metrics import DATE_OPENED_CASEBLOCK_ERROR_COUNT

@@ -25,7 +25,8 @@
                          ng-class="{'kpi-percent': cell.redirect}">
                         <span class="white" ng-class="{'kpi-percents-text': cell.redirect}"
                               ng-show="cell.percent !== null && $ctrl.isNumber(cell.percent) && $ctrl.showPercentInfo()">
-                            <i class="fa" style="font-size: 1.5em" ng-class="{'fa-arrow-down': cell.percent < 0, 'fa-arrow-up': cell.percent > 0, 'green': cell.color === 'green', 'red': cell.color === 'red'}" ></i>&nbsp;
+                            <i class="fa" style="font-size: 1.5em" ng-show="cell.percent !== 0"
+                               ng-class="{'fa-arrow-down': cell.percent < 0, 'fa-arrow-up': cell.percent > 0, 'green': cell.color === 'green', 'red': cell.color === 'red'}" ></i>&nbsp;
                             <span class="white" ng-bind="cell.percent | number:2"></span>% from previous {$ cell.frequency $}
                         </span>
                         <span class="white" ng-class="{'kpi-percents-text': cell.redirect}"

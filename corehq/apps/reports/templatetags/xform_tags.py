@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from collections import OrderedDict
 from functools import partial
 
@@ -49,7 +50,7 @@ def render_form_xml(form):
     if isinstance(xml, six.text_type):
         xml = xml.encode('utf-8', errors='replace')
     formatted_xml = indent_xml(xml) if xml else ''
-    return format_html(u'<pre class="prettyprint linenums"><code class="no-border language-xml">{}</code></pre>',
+    return format_html('<pre class="prettyprint linenums"><code class="no-border language-xml">{}</code></pre>',
                        formatted_xml)
 
 
@@ -227,7 +228,7 @@ def _get_cases_changed_context(domain, form, case_id=None):
             valid_case = False
 
         if this_case and this_case.case_id:
-            url = reverse('case_details', args=[domain, this_case.case_id])
+            url = reverse('case_data', args=[domain, this_case.case_id])
         else:
             url = "#"
 

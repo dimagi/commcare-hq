@@ -7,12 +7,12 @@ function MainController($scope, $route, $routeParams, $location, $uibModal, $win
     $scope.systemUsageCollapsed = true;
     $scope.healthCollapsed = true;
     $scope.isWebUser = isWebUser;
-    var selected_month = parseInt($location.search()['month']) || new Date().getMonth() + 1;
-    var selected_year = parseInt($location.search()['year']) || new Date().getFullYear();
-    var current_month = new Date().getMonth() + 1;
-    var current_year = new Date().getFullYear();
 
     $scope.showInfoMessage = function() {
+        var selected_month = parseInt($location.search()['month']) || new Date().getMonth() + 1;
+        var selected_year = parseInt($location.search()['year']) || new Date().getFullYear();
+        var current_month = new Date().getMonth() + 1;
+        var current_year = new Date().getFullYear();
         if (!$location.path().startsWith("/fact_sheets") && !$location.path().startsWith("/download") &&
             selected_month === current_month && selected_year === current_year &&
             (new Date().getDate() === 1 || new Date().getDate() === 2)) {

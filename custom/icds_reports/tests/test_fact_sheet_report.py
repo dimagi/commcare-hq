@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+from __future__ import unicode_literals
 from datetime import datetime
 from django.test.testcases import TestCase
 from custom.icds_reports.views import FactSheetsReport
@@ -298,7 +299,8 @@ class TestFactSheetReportMaternalAndChildNutrition(TestCase):
                 'data_source': 'AggChildHealthMonthlyDataSource',
                 'format': 'percent',
                 'header': 'Percent of children born in month with low birth weight',
-                'slug': 'low_birth_weight'
+                'slug': 'low_birth_weight',
+                'reverseColors': True,
             }
         )
 
@@ -1020,18 +1022,18 @@ class TestFactSheetReportDemographics(TestCase):
             self.get_data()['config']['sections'][0]['rows_config'][2],
             {
                 'average': {
-                    'html': 500,
-                    'sort_key': 500
+                    'html': 1582,
+                    'sort_key': 1582
                 },
                 'data': [
                     {'html': 'Total number of members enrolled at AWC'},
-                    {'html': 484, 'sort_key': 484},
-                    {'html': 500, 'sort_key': 500},
+                    {'html': 1501, 'sort_key': 1501},
+                    {'html': 1582, 'sort_key': 1582},
                     {'html': 0}
                 ],
                 'data_source': 'AggAWCMonthlyDataSource',
                 'header': 'Total number of members enrolled at AWC',
-                'slug': 'cases_person_beneficiary',
+                'slug': 'cases_person_beneficiary_v2',
             }
         )
 
@@ -1040,13 +1042,13 @@ class TestFactSheetReportDemographics(TestCase):
             self.get_data()['config']['sections'][0]['rows_config'][3],
             {
                 'average': {
-                    'html': 26.2,
-                    'sort_key': 26.2
+                    'html': 21.554993678887485,
+                    'sort_key': 21.554993678887485
                 },
                 'data': [
                     {'html': 'Percent Aadhaar-seeded beneficiaries'},
-                    {'html': 25.0, 'sort_key': 25.0},
-                    {'html': 26.2, 'sort_key': 26.2},
+                    {'html': 19.520319786808795, 'sort_key': 19.520319786808795},
+                    {'html': 21.554993678887485, 'sort_key': 21.554993678887485},
                     {'html': 0}
                 ],
                 'data_source': 'AggAWCMonthlyDataSource',
