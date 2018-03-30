@@ -4,6 +4,7 @@ import collections
 import logging
 from abc import ABCMeta, abstractmethod
 
+import re
 import six as six
 
 from casexml.apps.phone.exceptions import MissingSyncLog
@@ -90,6 +91,9 @@ class AbstractXFormInstance(object):
         raise NotImplementedError()
 
     def get_xml(self):
+        raise NotImplementedError()
+
+    def update_responses(self, value_response_map, user_id):
         raise NotImplementedError()
 
     def save(self, *args, **kwargs):
@@ -358,3 +362,49 @@ class CaseAttachmentMixin(IsImageMixin):
             return False
         else:
             return True
+
+
+class XFormQuestionValueIterator(object):
+    '''
+    Iterator to help navigate a data structure (likely xml or json)
+    representing an xml document, based on a given path. Skips root node.
+    Each call of `next` returns a tuple of id and index. Iterates until
+    the last non-leaf node. After iterating, the leaf node's id and index
+    are available via `last`. Example:
+
+    i = XFormQuestionValueIterator("/data/group/repeat_group[2]/question_id")
+    i.next()    # ('group', None)
+    i.next()    # ('repeat_group', 1)
+    i.next()    # raises StopIteration
+    i.last()    # ('question_id', None)
+
+    Note that repeat groups in the given path are ONE-indexed as in xpath, while
+    the indices returned by next/last are ZERO-indexed for easier array indexing.
+    '''
+
+    def __init__(self, path):
+        path = re.sub(r'^/[^\/]+/', '', path)   # strip root
+        self.levels = path.split("/")
+        self.levels.reverse()
+        self._last = None
+
+    def __iter__(self):
+        return self
+
+    def next(self):
+        if len(self.levels) > 1:
+            return self._next()
+        raise StopIteration
+
+    def _next(self):
+        (qid, index) = re.match(r'(\w+)(?:\[(\d+)])?', self.levels.pop()).groups()
+        if index is not None:
+            index = int(index) - 1
+        return (qid, index)
+
+    def last(self):
+        if self._last is None and len(self.levels) == 1:
+            self._last = self._next()[0]
+        return self._last
+
+    __next__ = next
