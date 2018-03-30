@@ -1,11 +1,10 @@
 from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import unicode_literals
-import xmltodict
 from django.core.management.base import BaseCommand
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
-from xml.etree import ElementTree as ET
-import xml
+from StringIO import StringIO
+from lxml import etree
 
 
 class Command(BaseCommand):
@@ -25,16 +24,14 @@ class Command(BaseCommand):
 
     @staticmethod
     def parse_form_data(form_data, new_username):
-        # Get the xml attachment from the form data
         form_attachment_xml = form_data.get_attachment("form.xml")
 
-        tree = ET.fromstring(form_attachment_xml)
-        ET.register_namespace("n0", "http://openrosa.org/jr/xforms")
-        ET.register_namespace("n1", "http://commcarehq.org/xforms")
-        ET.register_namespace("", "http://openrosa.org/formdesigner/form-processor")
+        xml_elem = etree.parse(StringIO(form_attachment_xml))
+        id_elem = xml_elem.find("{http://openrosa.org/jr/xforms}meta").find(
+            "{http://openrosa.org/jr/xforms}username")
+        id_elem.text = new_username
 
-        namespaces = {"n0": "http://openrosa.org/jr/xforms"}
-        tree.find("n0:meta", namespaces).find("n0:username", namespaces).text = new_username
-        form_attachment_xml = ET.tostring(tree)
+        print("NEW ETREE!!!!:")
+        new_form_attachment_xml = etree.tostring(xml_elem, pretty_print=True).decode("UTF-8")
 
-        return form_attachment_xml
+        return new_form_attachment_xml
