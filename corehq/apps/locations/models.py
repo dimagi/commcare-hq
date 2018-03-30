@@ -770,7 +770,7 @@ def _unassign_users_from_location(domain, location_id):
 
 def update_users_at_locations(location_ids):
     """
-    Notify users at parent locations that locations fixture has been updated
+    Update location fixtures for users given locations
     """
     from corehq.apps.users.models import update_fixture_status_for_users
     from corehq.apps.locations.dbaccessors import user_ids_at_locations
