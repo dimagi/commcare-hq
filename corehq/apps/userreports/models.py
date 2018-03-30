@@ -377,7 +377,8 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
         """Returns a list of case types or xmlns from the filter of this data source.
 
         If this can't figure out the case types or xmlns's that filter, then returns [None]
-        Currently returns [None] due to a loop in _iteratively_build_table
+        Currently always returns a list because it is called by a loop in _iteratively_build_table
+        Could be reworked to return [] to be more pythonic
         """
         if self.referenced_doc_type not in FILTER_INTERPOLATION_DOC_TYPES:
             return [None]
