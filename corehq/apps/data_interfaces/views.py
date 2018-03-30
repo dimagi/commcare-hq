@@ -606,7 +606,7 @@ def xform_management_job_poll(request, domain, download_id,
     return render(request, template, context)
 
 
-class AutomaticUpdateRuleListView(JSONResponseMixin, DataInterfaceSection):
+class AutomaticUpdateRuleListView(HQJSONResponseMixin, DataInterfaceSection):
     template_name = 'data_interfaces/list_automatic_update_rules.html'
     urlname = 'automatic_update_rule_list'
     page_title = ugettext_lazy("Automatically Close Cases")
