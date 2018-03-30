@@ -67,7 +67,34 @@ class Command(BaseDataDump):
                     return "FO Location not found with id: %s" % fo_id
             else:
                 return "FO id not found on case"
-
+        elif column_name == "State/Union territory":
+            current_address_state_choice = case.get_case_property('current_address_state_choice')
+            if current_address_state_choice:
+                try:
+                    return SQLLocation.objects.get(location_id=current_address_state_choice).name
+                except SQLLocation.DoesNotExist:
+                    return "Location not found with id: %s" % current_address_state_choice
+        elif column_name == "District":
+            current_address_district_choice = case.get_case_property('current_address_district_choice')
+            if current_address_district_choice:
+                try:
+                    return SQLLocation.objects.get(location_id=current_address_district_choice).name
+                except SQLLocation.DoesNotExist:
+                    return "Location not found with id: %s" % current_address_district_choice
+        elif column_name == "Block":
+            current_address_block_taluka_mandal = case.get_case_property('current_address_block_taluka_mandal')
+            if current_address_block_taluka_mandal:
+                try:
+                    return SQLLocation.objects.get(location_id=current_address_block_taluka_mandal).name
+                except SQLLocation.DoesNotExist:
+                    return "Location not found with id: %s" % current_address_block_taluka_mandal
+        elif column_name == "Ward":
+            current_address_ward = case.get_case_property('current_address_ward')
+            if current_address_ward:
+                try:
+                    return SQLLocation.objects.get(location_id=current_address_ward).name
+                except SQLLocation.DoesNotExist:
+                    return "Location not found with id: %s" % current_address_ward
         raise Exception("unknown custom column %s" % column_name)
 
     def get_case_ids_query(self, case_type):
