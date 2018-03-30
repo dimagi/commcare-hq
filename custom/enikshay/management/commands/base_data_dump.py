@@ -14,6 +14,7 @@ from django.urls import reverse
 
 from couchexport.models import Format
 
+from corehq.apps.locations.models import SQLLocation
 from corehq.blobs import get_blob_db
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.files import safe_filename_header
@@ -25,6 +26,10 @@ from dimagi.utils.web import get_url_base
 
 from soil.util import expose_blob_download
 from casexml.apps.case.util import get_all_changes_to_case_property
+
+from custom.enikshay.case_utils import (
+    CASE_TYPE_PERSON,
+)
 
 DOMAIN = "enikshay"
 LIMITED_TEST_DUMP_SIZE = 500
@@ -222,3 +227,13 @@ class BaseDataDump(BaseCommand):
             raise Exception("Case Property not %s set as %s by any user on case %s" % (
                 case_property_name, case_property_value, test_case.case_id
             ))
+
+    @staticmethod
+    def person_belongs_to_real_location(person_case):
+        assert person_case.type == CASE_TYPE_PERSON
+        try:
+            owner_id = person_case.owner_id
+            owner_location = SQLLocation.active_objects.get(location_id=owner_id)
+            return owner_location.metadata['is_test'] != "yes"
+        except SQLLocation.DoesNotExist:
+            return True

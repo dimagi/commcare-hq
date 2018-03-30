@@ -76,3 +76,6 @@ class Command(BaseDataDump):
                 .case_property_query(ENROLLED_IN_PRIVATE, 'true')
                 .case_property_query("dataset", 'real')
                 )
+
+    def include_case_in_dump(self, case):
+        return self.person_belongs_to_real_location(case)

@@ -92,6 +92,7 @@ class Command(BaseDataDump):
             person and
             person.get_case_property('dataset') == 'real' and
             person.get_case_property(ENROLLED_IN_PRIVATE) == 'true' and
+            self.person_belongs_to_real_location(person) and
             self.get_vouchers_from_test(test_case)
         )
 

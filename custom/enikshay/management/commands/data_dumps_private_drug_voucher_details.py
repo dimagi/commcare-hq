@@ -58,7 +58,8 @@ class Command(BaseDataDump):
         return (
             person and
             person.get_case_property('dataset') == 'real' and
-            person.get_case_property(ENROLLED_IN_PRIVATE) == 'true'
+            person.get_case_property(ENROLLED_IN_PRIVATE) == 'true' and
+            self.person_belongs_to_real_location(person)
         )
 
     def get_voucher(self, prescription_case):
