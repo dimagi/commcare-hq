@@ -56,9 +56,9 @@ class Command(BaseDataDump):
             else:
                 raise Exception("Private sector org id not set for test %s" % case.case_id)
         elif column_name == "Nikshay ID":
-            return ','.join([case.get_case_property('nikshay_id')
-                             for case in self.get_all_episode_cases(case)
-                             if case.get_case_property('nikshay_id')
+            return ','.join([episode_case.get_case_property('nikshay_id')
+                             for episode_case in self.get_all_episode_cases(case)
+                             if episode_case.get_case_property('nikshay_id')
                              ])
         raise Exception("unknown custom column %s" % column_name)
 
