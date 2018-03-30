@@ -38,6 +38,10 @@ DESC_BY_EDITION = {
         'name': _("Reseller"),
         'description': _("Reseller")
     },
+    SoftwarePlanEdition.MANAGED_HOSTING: {
+        'name': _("Managed Hosting"),
+        'description': _("Managed Hosting"),
+    }
 }
 
 FEATURE_TYPE_TO_NAME = {

@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from corehq.blobs import DEFAULT_BUCKET
 from corehq.blobs.exceptions import InvalidContext
 

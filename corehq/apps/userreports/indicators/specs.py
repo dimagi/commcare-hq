@@ -143,3 +143,10 @@ class LedgerBalancesIndicatorSpec(IndicatorSpecBase):
 
     def readable_output(self, context):
         return "Ledgers from {}".format(str(self.get_case_id_expression(context)))
+
+
+class DueListDateIndicatorSpec(LedgerBalancesIndicatorSpec):
+    type = TypeProperty('due_list_date')
+
+    def readable_output(self, context):
+        return "Due List Dates from {}".format(str(self.get_case_id_expression(context)))

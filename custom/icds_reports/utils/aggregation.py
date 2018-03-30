@@ -3,7 +3,6 @@ from __future__ import unicode_literals
 import hashlib
 
 from dateutil.relativedelta import relativedelta
-from toggle.models import Toggle
 
 from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_datasource_config
 from corehq.apps.userreports.util import get_table_name
@@ -11,6 +10,7 @@ from custom.icds_reports.const import (
     AGG_COMP_FEEDING_TABLE,
     AGG_CCS_RECORD_PNC_TABLE,
     AGG_CHILD_HEALTH_PNC_TABLE,
+    DASHBOARD_DOMAIN
 )
 
 
@@ -46,7 +46,7 @@ class BaseICDSAggregationHelper(object):
     @property
     def domain(self):
         # Currently its only possible for one domain to have access to the ICDS dashboard per env
-        return Toggle.get('dashboard_icds_reports').enabled_users[0][len('domain:'):]
+        return DASHBOARD_DOMAIN
 
     @property
     def ucr_tablename(self):
@@ -242,7 +242,7 @@ class PostnatalCareFormsChildHealthAggregationHelper(BaseICDSAggregationHelper):
         next_month_start = month_formatter(self.month + relativedelta(months=1))
 
         return """
-        SELECT child_health_case_id AS case_id,
+        SELECT DISTINCT child_health_case_id AS case_id,
         LAST_VALUE(timeend) OVER w AS latest_time_end,
         MAX(counsel_increase_food_bf) OVER w AS counsel_increase_food_bf,
         MAX(counsel_breast) OVER w AS counsel_breast,
@@ -367,7 +367,7 @@ class PostnatalCareFormsCcsRecordAggregationHelper(BaseICDSAggregationHelper):
         next_month_start = month_formatter(self.month + relativedelta(months=1))
 
         return """
-        SELECT ccs_record_case_id AS case_id,
+        SELECT DISTINCT ccs_record_case_id AS case_id,
         LAST_VALUE(timeend) OVER w AS latest_time_end,
         MAX(counsel_methods) AS counsel_methods
         FROM "{ucr_tablename}"

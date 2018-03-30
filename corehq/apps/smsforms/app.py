@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import uuid
 from corehq.apps.app_manager.util import get_cloudcare_session_data
 from corehq.apps.cloudcare.touchforms_api import CaseSessionDataHelper

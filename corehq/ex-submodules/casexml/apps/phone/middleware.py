@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.utils.deprecation import MiddlewareMixin
 
 LAST_SYNCTOKEN_HEADER = "HTTP_X_COMMCAREHQ_LASTSYNCTOKEN"

@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 class CommCareCaseError(Exception):
     """
     Parent type for all case errors

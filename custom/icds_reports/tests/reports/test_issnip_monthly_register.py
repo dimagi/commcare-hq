@@ -9,7 +9,7 @@ from django.test import TestCase
 from custom.icds_reports.reports.issnip_monthly_register import ISSNIPMonthlyReport
 
 
-@override_settings(SERVER_ENVIRONMENT='icds')
+@override_settings(SERVER_ENVIRONMENT='icds-new')
 class TestInstitutionalDeliveriesSector(TestCase):
 
     def test_agg_awc_monthly_data(self):

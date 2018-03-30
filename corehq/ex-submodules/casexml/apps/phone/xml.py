@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import logging
 from xml.sax import saxutils
 from xml.etree import cElementTree as ElementTree

@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import settings
 from casexml.apps.case.xml import V1, V2, V3, check_version, V2_NAMESPACE
 from xml.etree import cElementTree as ElementTree

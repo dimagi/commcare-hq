@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from abc import ABCMeta, abstractproperty, abstractmethod
 from datetime import datetime
 
@@ -112,7 +113,7 @@ class PillowBase(six.with_metaclass(ABCMeta, object)):
                         with timer:
                             self.process_with_error_handling(change)
                     except Exception as e:
-                        notify_exception(None, u'processor error in pillow {} {}'.format(
+                        notify_exception(None, 'processor error in pillow {} {}'.format(
                             self.get_name(), e,
                         ))
                         self._record_change_exception_in_datadog(change)
@@ -190,15 +191,15 @@ class PillowBase(six.with_metaclass(ABCMeta, object)):
     def __record_change_metric_in_datadog(self, metric, change, timer=None):
         if change.metadata is not None:
             tags = [
-                u'datasource:{}'.format(change.metadata.data_source_name),
-                u'is_deletion:{}'.format(change.metadata.is_deletion),
-                u'pillow_name:{}'.format(self.get_name()),
+                'datasource:{}'.format(change.metadata.data_source_name),
+                'is_deletion:{}'.format(change.metadata.is_deletion),
+                'pillow_name:{}'.format(self.get_name()),
             ]
             datadog_counter(metric, tags=tags)
 
             change_lag = (datetime.utcnow() - change.metadata.publish_timestamp).seconds
             datadog_gauge('commcare.change_feed.change_lag', change_lag, tags=[
-                u'pillow_name:{}'.format(self.get_name()),
+                'pillow_name:{}'.format(self.get_name()),
                 _topic_for_ddog(change.topic),
             ])
 
@@ -281,7 +282,7 @@ def handle_pillow_error(pillow, change, exception):
             error_id = error.id
 
     pillow_logging.exception(
-        u"[%s] Error on change: %s, %s. Logged as: %s" % (
+        "[%s] Error on change: %s, %s. Logged as: %s" % (
             pillow.get_name(),
             change['id'],
             exception,

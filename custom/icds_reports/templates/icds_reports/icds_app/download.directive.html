@@ -18,8 +18,8 @@
         <div class="alert alert-info col-md-12" ng-if="$ctrl.isISSNIPMonthlyRegisterSelected() && $ctrl.hasErrorsISSNIPExport()">
             <strong>Please make the following selections before you can export:</strong>
             <ul>
-                <li ng-if="$ctrl.isCombinedPDFSelected() && !$ctrl.isBlockOrBelowSelected()" style="padding: 5px;">Select at least a block-level location</li>
-                <li ng-if="!$ctrl.isCombinedPDFSelected() && !$ctrl.isDistrictOrBelowSelected()" style="padding: 5px;">Select at least a district-level location</li>
+                <li ng-if="!$ctrl.isBlockOrBelowSelected()" style="padding: 5px;">Select at least a block-level location</li>
+                <li ng-if="!$ctrl.isAWCsSelected()" style="padding: 5px;">Select at least one AWC</li>
             </ul>
         </div>
         <div class="form-horizontal black">
@@ -167,7 +167,7 @@
                            popover-placement="top-right"
                            popover-trigger="'mouseenter'"></i></label>
                     <div style="margin-bottom: 15px;" class="col-sm-6">
-                        <ui-select multiple ng-disabled="!$ctrl.isDistrictOrBelowSelected()" ng-model="$ctrl.selectedAWCs" on-select="$ctrl.onSelectAWCs($item)" close-on-select="false" theme="bootstrap">
+                        <ui-select multiple ng-disabled="!$ctrl.isBlockOrBelowSelected()" ng-model="$ctrl.selectedAWCs" on-select="$ctrl.onSelectAWCs($item)" close-on-select="false" theme="bootstrap">
                             <ui-select-match placeholder="Please select AWCs"><span ng-bind="$item.name"></span></ui-select-match>
                               <ui-select-choices repeat="location.location_id as location in $ctrl.awcLocations | propsFilter: {name: $select.search}">
                                   <div ng-bind-html="location.name | highlight: $select.search"></div>

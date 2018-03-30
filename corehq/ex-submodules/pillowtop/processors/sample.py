@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from pillowtop.logger import pillow_logging
 from pillowtop.processors.interface import PillowProcessor
 

@@ -1,8 +1,9 @@
 from __future__ import absolute_import
+from django.conf import settings
 from django.contrib.postgres.fields.array import ArrayField
 from django.db.models import CharField, IntegerField
 from django.db.models.aggregates import Max
-from django.db.models.expressions import F, Func, Value
+from django.db.models.expressions import Exists, F, Func, OuterRef, Value
 from django.db.models.query import Q, QuerySet, EmptyResultSet
 from django_cte import With
 from mptt.models import MPTTModel, TreeManager
@@ -124,7 +125,6 @@ class AdjListManager(TreeManager):
         def make_cte_query(cte):
             return self.filter(where).order_by().values(
                 "id",
-                parent_col,
                 _cte_ordering=StrArray(ordering_col),
             ).union(
                 cte.join(
@@ -137,7 +137,6 @@ class AdjListManager(TreeManager):
                     )
                 ).values(
                     "id",
-                    parent_col,
                     "_cte_ordering",
                 ),
                 all=True,
@@ -151,44 +150,46 @@ class AdjListManager(TreeManager):
             # id, retain the row with the longest path. TODO remove this
             # and ensure duplicates do not matter or the criteria never
             # matches both parents and children in all calling code.
-            max_lens = With(
-                cte.queryset().values(
-                    max_id=cte.col.id,
-                ).annotate(
-                    max_len=Max(
-                        array_length(F("_cte_ordering")),
-                        output_field=int_field
-                    )
-                ),
-                name="max_lens"
-            )
             xdups = With(
-                cte.join(
-                    max_lens.queryset(),
-                    max_id=cte.col.id,
-                    max_len=array_length(cte.col._cte_ordering),
+                cte.queryset().annotate(
+                    max_len=array_length(
+                        F("_cte_ordering"),
+                        output_field=int_field
+                    ),
+                ).distinct("id").order_by(
+                    "id",
+                    "-max_len",
                 ).values(
-                    id=cte.col.id,
-                    _cte_ordering=cte.col._cte_ordering,
-                    **{parent_col: getattr(cte.col, parent_col)}
+                    "id",
+                    "_cte_ordering",
                 ),
-                name="xdups",
+                name="xdups"
             )
-            ctes.append(max_lens)
             ctes.append(xdups)
             cte = xdups
 
         query = (
             cte
             .join(self.all(), id=cte.col.id)
-            .order_by(cte.col._cte_ordering)
+            # EXISTS helps postgres avoid seq scan on locations table
+            # EXPLAIN ANALYZE showed postgres estimated > 1 million rows in the
+            # recursive CTE on softlayer when there were actually only 6 rows.
+            # The seq scan on the locations table took ~1 minute; EXISTS -> 3ms.
+            .annotate(_cte_exists=Exists(cte.queryset().filter(id=OuterRef("id"))))
+            .filter(_cte_exists=True)
+            # TODO uncomment when removing MPTT
+            #.order_by(cte.col._cte_ordering)
         )
         for item in ctes:
             query = query.with_cte(item)
         return query
 
     def cte_get_queryset_ancestors(self, node, include_self=False):
-        return self.cte_get_ancestors(node, include_self=include_self)
+        return (
+            self.cte_get_ancestors(node, include_self=include_self)
+            # TODO remove this order_by when removing MPTT
+            .order_by(self.tree_id_attr, self.left_attr)
+        )
 
     cte_get_queryset_descendants = cte_get_descendants
 
@@ -210,8 +211,11 @@ class AdjListManager(TreeManager):
             cte_qs = queryset._cte_set
         with timing("mptt"):
             mptt_set = self.mptt_get_queryset_ancestors(mptt_qs, include_self)
-        with timing("cte"):
-            cte_set = self.cte_get_queryset_ancestors(cte_qs, include_self)
+        if settings.IS_LOCATION_CTE_ENABLED:
+            with timing("cte"):
+                cte_set = self.cte_get_queryset_ancestors(cte_qs, include_self)
+        else:
+            cte_set = None
         return ComparedQuerySet(mptt_set, cte_set, timing)
 
     def get_queryset_descendants(self, queryset, include_self=False):
@@ -222,8 +226,11 @@ class AdjListManager(TreeManager):
             cte_qs = queryset._cte_set
         with timing("mptt"):
             mptt_set = self.mptt_get_queryset_descendants(mptt_qs, include_self)
-        with timing("cte"):
-            cte_set = self.cte_get_queryset_descendants(cte_qs, include_self)
+        if settings.IS_LOCATION_CTE_ENABLED:
+            with timing("cte"):
+                cte_set = self.cte_get_queryset_descendants(cte_qs, include_self)
+        else:
+            cte_set = None
         return ComparedQuerySet(mptt_set, cte_set, timing)
 
 
@@ -257,8 +264,11 @@ class AdjListModel(MPTTModel):
         timing = TimingContext("get_ancestors")
         with timing("mptt"):
             mptt_set = self.mptt_get_ancestors(**kw)
-        with timing("cte"):
-            cte_set = type(self).objects.cte_get_ancestors(self, **kw)
+        if settings.IS_LOCATION_CTE_ENABLED:
+            with timing("cte"):
+                cte_set = type(self).objects.cte_get_ancestors(self, **kw)
+        else:
+            cte_set = None
         return ComparedQuerySet(mptt_set, cte_set, timing)
 
     def get_descendants(self, **kw):
@@ -268,8 +278,11 @@ class AdjListModel(MPTTModel):
         timing = TimingContext("get_descendants")
         with timing("mptt"):
             mptt_set = self.mptt_get_descendants(**kw)
-        with timing("cte"):
-            cte_set = type(self).objects.cte_get_descendants(self, **kw)
+        if settings.IS_LOCATION_CTE_ENABLED:
+            with timing("cte"):
+                cte_set = type(self).objects.cte_get_descendants(self, **kw)
+        else:
+            cte_set = None
         return ComparedQuerySet(mptt_set, cte_set, timing)
 
 

@@ -8,7 +8,7 @@ from corehq.apps.userreports.const import UCR_BACKENDS, UCR_SQL_BACKEND, UCR_ES_
 from corehq.apps.userreports.exceptions import UserReportsError
 from corehq.apps.userreports.models import DataSourceConfiguration, \
     ReportConfiguration
-from corehq.apps.userreports.reports.view import ConfigurableReport
+from corehq.apps.userreports.reports.view import ConfigurableReportView
 from corehq.apps.userreports.tasks import rebuild_indicators
 from corehq.apps.userreports.tests.test_view import ConfigurableReportTestMixin
 from corehq.apps.userreports.util import get_indicator_adapter
@@ -103,7 +103,7 @@ class TestReportAggregationSQL(ConfigurableReportTestMixin, TestCase):
         return report_config
 
     def _create_view(self, report_config):
-        view = ConfigurableReport(request=HttpRequest())
+        view = ConfigurableReportView(request=HttpRequest())
         view._domain = self.domain
         view._lang = "en"
         view._report_config_id = report_config._id
@@ -741,7 +741,7 @@ class TestReportMultipleAggregationsSQL(ConfigurableReportTestMixin, TestCase):
         )
 
     def _create_view(self, report_config):
-        view = ConfigurableReport(request=HttpRequest())
+        view = ConfigurableReportView(request=HttpRequest())
         view._domain = self.domain
         view._lang = "en"
         view._report_config_id = report_config._id

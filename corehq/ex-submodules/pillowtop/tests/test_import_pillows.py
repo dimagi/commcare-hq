@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.test import override_settings, SimpleTestCase, TestCase
 from pillowtop import get_all_pillow_instances, get_all_pillow_classes, get_pillow_by_name
 from pillowtop.checkpoints.manager import PillowCheckpoint

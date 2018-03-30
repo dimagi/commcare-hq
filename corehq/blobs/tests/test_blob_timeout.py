@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from io import StringIO
 from mock import patch
 from datetime import datetime, timedelta
@@ -34,7 +35,7 @@ class BlobExpireTest(TestCase):
         now = datetime(2017, 1, 1)
 
         with patch('corehq.blobs.util._utcnow', return_value=now):
-            self.db.put(StringIO(u'content'), self.identifier, bucket=self.bucket, timeout=60)
+            self.db.put(StringIO('content'), self.identifier, bucket=self.bucket, timeout=60)
 
         self.assertIsNotNone(self.db.get(self.identifier, self.bucket))
         with patch('corehq.blobs.tasks._utcnow', return_value=now + timedelta(minutes=61)):
@@ -51,7 +52,7 @@ class BlobExpireTest(TestCase):
         now = datetime(2017, 1, 1)
 
         with patch('corehq.blobs.util._utcnow', return_value=now):
-            self.db.put(StringIO(u'content'), self.identifier, bucket=self.bucket, timeout=60)
+            self.db.put(StringIO('content'), self.identifier, bucket=self.bucket, timeout=60)
 
         self.assertIsNotNone(self.db.get(self.identifier, self.bucket))
         with patch('corehq.blobs.tasks._utcnow', return_value=now + timedelta(minutes=30)):
@@ -64,7 +65,7 @@ class BlobExpireTest(TestCase):
         now = datetime(2017, 1, 1)
 
         with patch('corehq.blobs.util._utcnow', return_value=now):
-            self.db.put(StringIO(u'content'), self.identifier, bucket=self.bucket, timeout=60)
+            self.db.put(StringIO('content'), self.identifier, bucket=self.bucket, timeout=60)
 
         self.assertIsNotNone(self.db.get(self.identifier, self.bucket))
         with patch('corehq.blobs.tasks._utcnow', return_value=now + timedelta(minutes=61)):
@@ -76,7 +77,7 @@ class BlobExpireTest(TestCase):
         now = datetime(2018, 1, 1)
         # Put another blob a year later with the same identifier
         with patch('corehq.blobs.util._utcnow', return_value=now):
-            self.db.put(StringIO(u'content'), self.identifier, bucket=self.bucket, timeout=60)
+            self.db.put(StringIO('content'), self.identifier, bucket=self.bucket, timeout=60)
 
         # Even though there is an old BlobExpiration record for that bucket/identifier,
         # we should not delete delete the new blob

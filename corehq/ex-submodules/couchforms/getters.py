@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.utils.datastructures import MultiValueDictKeyError
 from corehq.util.global_request import get_request_domain
 from couchforms.const import (

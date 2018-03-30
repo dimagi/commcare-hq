@@ -9,7 +9,7 @@ from custom.icds_reports.reports.prevalence_of_undernutrition import get_prevale
 from django.test import TestCase
 
 
-@override_settings(SERVER_ENVIRONMENT='icds')
+@override_settings(SERVER_ENVIRONMENT='icds-new')
 class TestPrevalenceOfUndernutrition(TestCase):
     maxDiff = None
 

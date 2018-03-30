@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.db import transaction
 from corehq.apps.case_importer.exceptions import ImporterRefError
 from corehq.apps.case_importer.tracking.filestorage import transient_file_store, \
