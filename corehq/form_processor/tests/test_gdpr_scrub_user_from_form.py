@@ -31,17 +31,20 @@ GDPR_SIMPLE_FORM = """<?xml version='1.0' ?>
 </data>"""
 
 EXPECTED_FORM_XML = """<?xml version='1.0' ?>
-<data uiVersion="1" version="17" name="New Form" xmlns:jrm="http://dev.commcarehq.org/jr/xforms"
+<data uiVersion="1" version="17" name="New Form" 
+xmlns:jrm="http://dev.commcarehq.org/jr/xforms"
+xmlns:n1="http://commcarehq.org/xforms"
+xmlns:n0="http://openrosa.org/jr/xforms"
     xmlns="http://openrosa.org/formdesigner/form-processor">
     <dalmation_count>yes</dalmation_count>
-    <n0:meta xmlns:n0="http://openrosa.org/jr/xforms">
+    <n0:meta>
         <n0:deviceID>DEV IL</n0:deviceID>
         <n0:timeStart>2013-04-19T16:53:02.000000Z</n0:timeStart>
         <n0:timeEnd>2013-04-19T16:52:02.000000Z</n0:timeEnd>
         <n0:username>replacement_username</n0:username>
         <n0:userID>cruella_deville</n0:userID>
         <n0:instanceID>fake_instance_id</n0:instanceID>
-        <n1:appVersion xmlns:n1="http://commcarehq.org/xforms"></n1:appVersion>
+        <n1:appVersion ></n1:appVersion>
     </n0:meta>
 </data>"""
 
