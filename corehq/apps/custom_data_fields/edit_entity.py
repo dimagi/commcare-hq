@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from collections import OrderedDict
 from django.core.validators import RegexValidator
 from django.urls import reverse
@@ -164,7 +165,7 @@ class CustomDataEditor(object):
     def uncategorized_form(self):
 
         def FakeInput(val):
-            return HTML(u'<p class="form-control-static">{}</p>'
+            return HTML('<p class="form-control-static">{}</p>'
                         .format(val))
 
         def Label(val):
