@@ -88,13 +88,8 @@ class Command(BaseDataDump):
                     return SQLLocation.objects.get(location_id=current_address_district_choice).name
                 except SQLLocation.DoesNotExist:
                     return "Location not found with id: %s" % current_address_district_choice
-        elif column_name == "Block":
-            current_address_block_taluka_mandal = case.get_case_property('current_address_block_taluka_mandal')
-            if current_address_block_taluka_mandal:
-                try:
-                    return SQLLocation.objects.get(location_id=current_address_block_taluka_mandal).name
-                except SQLLocation.DoesNotExist:
-                    return "Location not found with id: %s" % current_address_block_taluka_mandal
+            else:
+                raise Exception("No District Selected")
         elif column_name == "Ward":
             current_address_ward = case.get_case_property('current_address_ward')
             if current_address_ward:
@@ -102,6 +97,8 @@ class Command(BaseDataDump):
                     return SQLLocation.objects.get(location_id=current_address_ward).name
                 except SQLLocation.DoesNotExist:
                     return "Location not found with id: %s" % current_address_ward
+            else:
+                raise Exception("No Ward Selected")
         elif column_name == "Last Modification Date":
             return case.modified_on
         elif column_name == "Last Modified By":
