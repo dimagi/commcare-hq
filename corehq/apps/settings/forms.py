@@ -17,6 +17,8 @@ from corehq.apps.users.models import CouchUser
 from django.utils.translation import ugettext as _
 from django.utils.safestring import mark_safe
 
+from corehq.apps.domain.decorators import two_factor_exempt
+
 from datetime import datetime
 
 from custom.nic_compliance.forms import EncodedPasswordChangeFormMixin

@@ -26,7 +26,7 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import (ugettext as _, ugettext_noop, ugettext_lazy,
     activate, LANGUAGE_SESSION_KEY)
 from corehq.apps.domain.decorators import (login_and_domain_required, require_superuser,
-                                           login_required)
+                                           login_required, two_factor_exempt)
 from django.urls import reverse
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.hqwebapp.views import BaseSectionPageView
@@ -113,11 +113,13 @@ class MyAccountSettingsView(BaseMyAccountView):
     template_name = 'settings/edit_my_account.html'
 
     @use_select2
+    @two_factor_exempt
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
         # this is only here to add the login_required decorator
         return super(MyAccountSettingsView, self).dispatch(request, *args, **kwargs)
 
+    @two_factor_exempt
     def get_or_create_api_key(self):
         if not self.api_key:
             with CriticalSection(['get-or-create-api-key-for-%d' % self.request.user.id]):
@@ -127,6 +129,7 @@ class MyAccountSettingsView(BaseMyAccountView):
 
     @property
     @memoized
+    @two_factor_exempt
     def settings_form(self):
         language_choices = langcodes.get_all_langs_for_select()
         api_key = self.get_or_create_api_key()
@@ -152,6 +155,7 @@ class MyAccountSettingsView(BaseMyAccountView):
         return form
 
     @property
+    @two_factor_exempt
     def page_context(self):
         user = self.request.couch_user
         return {
@@ -162,12 +166,14 @@ class MyAccountSettingsView(BaseMyAccountView):
             'user_type': 'mobile' if user.is_commcare_user() else 'web',
         }
 
+    @two_factor_exempt
     def phone_number_is_valid(self):
         return (
             isinstance(self.phone_number, six.string_types) and
             re.compile('^\d+$').match(self.phone_number) is not None
         )
 
+    @two_factor_exempt
     def process_add_phone_number(self):
         if self.phone_number_is_valid():
             user = self.request.couch_user
@@ -179,11 +185,13 @@ class MyAccountSettingsView(BaseMyAccountView):
                 "Please enter number, including country code, in digits only."))
         return HttpResponseRedirect(reverse(MyAccountSettingsView.urlname))
 
+    @two_factor_exempt
     def process_delete_phone_number(self):
         self.request.couch_user.delete_phone_number(self.phone_number)
         messages.success(self.request, _("Phone number deleted."))
         return HttpResponseRedirect(reverse(MyAccountSettingsView.urlname))
 
+    @two_factor_exempt
     def process_make_phone_number_default(self):
         self.request.couch_user.set_default_phone_number(self.phone_number)
         messages.success(self.request, _("Primary phone number updated."))
@@ -191,11 +199,13 @@ class MyAccountSettingsView(BaseMyAccountView):
 
     @property
     @memoized
+    @two_factor_exempt
     def phone_number(self):
         return self.request.POST.get('phone_number')
 
     @property
     @memoized
+    @two_factor_exempt
     def form_actions(self):
         return {
             'add-phonenumber': self.process_add_phone_number,
@@ -205,9 +215,11 @@ class MyAccountSettingsView(BaseMyAccountView):
 
     @property
     @memoized
+    @two_factor_exempt
     def form_type(self):
         return self.request.POST.get('form_type')
 
+    @two_factor_exempt
     def post(self, request, *args, **kwargs):
         if self.form_type and self.form_type in self.form_actions:
             return self.form_actions[self.form_type]()

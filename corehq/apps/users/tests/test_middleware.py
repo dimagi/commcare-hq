@@ -6,7 +6,7 @@ from django.test.client import Client
 from django_otp.middleware import OTPMiddleware
 from corehq.util.test_utils import flag_enabled
 from corehq.apps.users.models import CouchUser
-from corehq.apps.users.middleware import Enforce2FAMiddleware
+from corehq.apps.users.middleware import UsersMiddleware
 import mock
 
 
@@ -47,8 +47,10 @@ class TestTwoFactorMiddleware(TestCase):
         with mock.patch('corehq.apps.users.models.CouchUser.two_factor_disabled',
                         new_callable=mock.PropertyMock,
                         return_value=disable_two_factor):
-            response = Enforce2FAMiddleware().process_view(request, "test_view_func",
-                                                           "test_view_args", "test_view_kwargs")
+            response = UsersMiddleware().process_view(request=request,
+                                                      view_func="test_view_func",
+                                                      view_args="test_view_args",
+                                                      view_kwargs="test_view_kwargs")
             return response
 
     @flag_enabled('TWO_FACTOR_SUPERUSER_ROLLOUT')
