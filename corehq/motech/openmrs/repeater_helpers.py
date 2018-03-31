@@ -423,7 +423,7 @@ def get_patient_by_identifier(requests, identifier_type_uuid, value):
     response_json = search_patients(requests, value)
     patients = []
     for patient in response_json['results']:
-       for identifier in patient['identifiers']:
+        for identifier in patient['identifiers']:
             if (
                 identifier['identifierType']['uuid'] == identifier_type_uuid and
                 identifier['identifier'] == value
