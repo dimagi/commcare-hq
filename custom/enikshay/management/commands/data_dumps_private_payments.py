@@ -4,6 +4,7 @@ from __future__ import (
     unicode_literals,
 )
 
+from corehq.apps.locations.models import SQLLocation
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 
 from custom.enikshay.case_utils import (
@@ -17,7 +18,7 @@ from custom.enikshay.case_utils import (
 )
 
 from custom.enikshay.const import ENROLLED_IN_PRIVATE
-from custom.enikshay.management.commands.base_data_dump import BaseDataDump
+from custom.enikshay.management.commands.base_data_dump import BaseDataDump, PRIVATE_SECTOR_ID_MAPPING
 
 DOMAIN = "enikshay"
 
@@ -46,6 +47,17 @@ class Command(BaseDataDump):
         elif column_name == "eNikshay episode UUID":
             episode_case = self.get_episode(case)
             return episode_case.case_id
+        elif column_name == "Organisation":
+            owner_id = self.get_person(case).owner_id
+            location = SQLLocation.active_objects.get_or_None(location_id=owner_id)
+            if location:
+                private_sector_org_id = location.metadata.get('private_sector_org_id')
+                if private_sector_org_id:
+                    return PRIVATE_SECTOR_ID_MAPPING.get(private_sector_org_id, private_sector_org_id)
+                else:
+                    raise Exception("Private Sector Organization ID not set for location %s" % owner_id)
+            else:
+                raise Exception("Location not found for id %s" % owner_id)
         raise Exception("unknown custom column %s" % column_name)
 
     def get_case_ids_query(self, case_type):
