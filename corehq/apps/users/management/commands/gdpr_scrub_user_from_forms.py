@@ -4,7 +4,7 @@ from __future__ import unicode_literals
 from django.core.management.base import BaseCommand
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
-from StringIO import StringIO
+from io import StringIO
 from lxml import etree
 import sys
 import logging
@@ -35,7 +35,6 @@ class Command(BaseCommand):
             this_form_accessor.modify_attachment_xml_and_metadata(form_data, form_attachment_xml_new)
             forms_updated += 1
         logging.info("Updated {} forms for user {}".format(forms_updated, username))
-
 
     @staticmethod
     def parse_form_data(form_data, new_username):
