@@ -67,7 +67,7 @@ class Command(BaseDataDump):
                              if episode_case.get_case_property('treatment_initiation_date')
                              ])
         elif column_name == "Date of Episode creation":
-            return ','.join([episode_case.opened_on
+            return ','.join([str(episode_case.opened_on)
                              for episode_case in self.get_all_episode_cases(case)
                              if episode_case.opened_on
                              ])
