@@ -72,6 +72,10 @@ class Command(BaseDataDump):
                     raise Exception("Could not find location with id %s" % testing_facility_id)
             else:
                 raise Exception("Testing facility id not set for test %s" % case.case_id)
+        elif column_name == "Last Modified Date":
+            return case.modified_on
+        elif column_name == "Last Modified By":
+            return case.modified_by
         raise Exception("unknown custom column %s" % column_name)
 
     def get_case_ids_query(self, case_type):

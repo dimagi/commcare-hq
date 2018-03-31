@@ -97,6 +97,10 @@ class Command(BaseDataDump):
                     return "Episode fo not found with id: %s" % episode_fo_id
             else:
                 return "Episode fo id not found on case"
+        elif column_name == "Last Modification Date":
+            return episode.modified_on
+        elif column_name == "Last Modified by":
+            return episode.modified_by
         return Exception("unknown custom column %s" % column_name)
 
     def get_person(self, episode):

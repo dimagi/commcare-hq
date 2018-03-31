@@ -102,6 +102,10 @@ class Command(BaseDataDump):
                     return SQLLocation.objects.get(location_id=current_address_ward).name
                 except SQLLocation.DoesNotExist:
                     return "Location not found with id: %s" % current_address_ward
+        elif column_name == "Last Modification Date":
+            return case.modified_on
+        elif column_name == "Last Modified By":
+            return case.modified_by
         raise Exception("unknown custom column %s" % column_name)
 
     def get_case_ids_query(self, case_type):
