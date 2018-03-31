@@ -1,10 +1,12 @@
 from __future__ import absolute_import
 
 from __future__ import unicode_literals
+
 from custom.icds_reports.models import AggAwcMonthly, ChildHealthMonthlyView, CcsRecordMonthly, \
     AggChildHealthMonthly
 from django.db.models.aggregates import Sum, Count
 from django.db.models import Case, When, Q, F, IntegerField
+from django.utils.functional import cached_property
 
 from custom.icds_reports.sqldata import AWCInfrastructureUCR, VHNDFormUCR, CcsRecordMonthlyURC, \
     ChildHealthMonthlyURC
@@ -24,7 +26,7 @@ class ISSNIPMonthlyReport(object):
             output_field=IntegerField()
         )
 
-    @property
+    @cached_property
     def agg_awc_monthly_data(self):
         data = AggAwcMonthly.objects.filter(
             awc_id=self.config['awc_id'],
@@ -37,7 +39,7 @@ class ISSNIPMonthlyReport(object):
         )
         return data[0] if data else None
 
-    @property
+    @cached_property
     def child_health_monthly_data(self):
         data = ChildHealthMonthlyView.objects.filter(
             awc_id=self.config['awc_id'],
@@ -71,7 +73,7 @@ class ISSNIPMonthlyReport(object):
         )
         return data[0] if data else None
 
-    @property
+    @cached_property
     def css_record_monthly(self):
         data = CcsRecordMonthly.objects.filter(
             awc_id=self.config['awc_id'],
@@ -94,27 +96,27 @@ class ISSNIPMonthlyReport(object):
         )
         return data[0] if data else None
 
-    @property
+    @cached_property
     def infrastructure_data(self):
         data = AWCInfrastructureUCR(self.config).data
         return list(data.values())[-1] if data else None
 
-    @property
+    @cached_property
     def vhnd_data(self):
         data = VHNDFormUCR(self.config).data
         return list(data.values())[-1] if data else None
 
-    @property
+    @cached_property
     def ccs_record_monthly_ucr(self):
         data = CcsRecordMonthlyURC(self.config).data
         return data[self.config['awc_id']] if data else None
 
-    @property
+    @cached_property
     def child_health_monthly_ucr(self):
         data = ChildHealthMonthlyURC(self.config).data
         return data[self.config['awc_id']] if data else None
 
-    @property
+    @cached_property
     def agg_child_health_monthly(self):
         data = AggChildHealthMonthly.objects.filter(
             awc_id=self.config['awc_id'],

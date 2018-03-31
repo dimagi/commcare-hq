@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import os
 from base64 import urlsafe_b64encode
 from datetime import datetime, timedelta
@@ -59,7 +60,7 @@ def random_url_id(nbytes):
     :param nbytes: Number of random bytes to include in the ID.
     :returns: A URL-safe string.
     """
-    return urlsafe_b64encode(os.urandom(nbytes)).decode('ascii').rstrip(u'=')
+    return urlsafe_b64encode(os.urandom(nbytes)).decode('ascii').rstrip('=')
 
 
 def set_blob_expire_object(bucket, identifier, length, timeout):

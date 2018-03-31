@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from unittest import TestCase
 
 from corehq.apps.es.case_search import CaseSearchES, flatten_result, RELEVANCE_SCORE

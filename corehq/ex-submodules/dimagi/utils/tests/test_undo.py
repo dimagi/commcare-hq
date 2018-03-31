@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.test import SimpleTestCase
 from dimagi.ext.couchdbkit import Document
 from dimagi.utils.couch.undo import get_deleted_doc_type

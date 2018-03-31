@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import json
 from django_prbac.utils import has_privilege
 from corehq import privileges
@@ -8,7 +9,7 @@ from corehq.apps.reports.models import FormExportSchema, HQGroupExportConfigurat
 from corehq.apps.reports.standard.export import DeidExportReport
 from couchexport.models import ExportTable, ExportSchema, ExportColumn, display_column_types, SplitColumn
 from django.utils.translation import ugettext as _, ugettext_lazy
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from corehq.apps.commtrack.models import StockExportColumn
 from corehq.apps.domain.models import Domain
 from six.moves import filter

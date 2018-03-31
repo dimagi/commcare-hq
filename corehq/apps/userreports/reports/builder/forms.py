@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from collections import namedtuple, OrderedDict
+import datetime
 from itertools import chain
 import json
 import uuid
@@ -12,6 +13,8 @@ from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 from corehq.apps.app_manager.app_schemas.case_properties import get_case_properties
+from corehq.apps.userreports.app_manager.data_source_meta import DATA_SOURCE_TYPE_CHOICES, \
+    get_data_source_doc_type, make_case_data_source_filter, make_form_data_source_filter
 
 from corehq.apps.userreports.reports.builder.columns import (
     QuestionColumnOption,
@@ -34,7 +37,7 @@ from corehq.apps.app_manager.models import (
 )
 from corehq.apps.app_manager.xform import XForm
 from corehq.apps.userreports import tasks
-from corehq.apps.userreports.app_manager import _clean_table_name
+from corehq.apps.userreports.app_manager.helpers import _clean_table_name
 from corehq.apps.userreports.models import (
     DataSourceBuildInformation,
     DataSourceConfiguration,
@@ -45,8 +48,6 @@ from corehq.apps.userreports.models import (
 from corehq.apps.userreports.reports.builder import (
     DEFAULT_CASE_PROPERTY_DATATYPES,
     FORM_METADATA_PROPERTIES,
-    make_case_data_source_filter,
-    make_form_data_source_filter,
     get_filter_format_from_question_type,
 )
 from corehq.apps.userreports.exceptions import BadBuilderConfigError
@@ -68,7 +69,7 @@ from corehq.apps.userreports.reports.builder.const import (
 from corehq.apps.userreports.sql import get_column_name
 from corehq.apps.userreports.ui.fields import JsonField
 from corehq.apps.userreports.util import has_report_builder_access
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 import six
 
 # This dict maps filter types from the report builder frontend to UCR filter types
@@ -333,10 +334,7 @@ class DataSourceBuilder(object):
     @property
     @memoized
     def source_doc_type(self):
-        if self.source_type == "case":
-            return "CommCareCase"
-        if self.source_type == "form":
-            return "XFormInstance"
+        return get_data_source_doc_type(self.source_type)
 
     @property
     @memoized
@@ -619,10 +617,11 @@ class DataSourceBuilder(object):
     @property
     @memoized
     def data_source_name(self):
+        today = datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
         if self.source_type == 'form':
-            return "{} (v{})".format(self.source_form.default_name(), self.app.version)
+            return "{} (v{}) {}".format(self.source_form.default_name(), self.app.version, today)
         if self.source_type == 'case':
-            return "{} (v{})".format(self.source_id, self.app.version)
+            return "{} (v{}) {}".format(self.source_id, self.app.version, today)
 
     def _ds_config_kwargs(self, indicators, is_multiselect_chart_report=False, multiselect_field=None):
         if is_multiselect_chart_report:
@@ -668,7 +667,7 @@ class DataSourceForm(forms.Form):
         # TODO: Map reports.
         self.app_source_helper = ApplicationDataSourceUIHelper()
         self.app_source_helper.source_type_field.label = _('Forms or Cases')
-        self.app_source_helper.source_type_field.choices = [("case", _("Cases")), ("form", _("Forms"))]
+        self.app_source_helper.source_type_field.choices = DATA_SOURCE_TYPE_CHOICES
         self.app_source_helper.source_field.label = '<span data-bind="text: labelMap[sourceType()]"></span>'
         self.app_source_helper.bootstrap(self.domain)
         report_source_fields = self.app_source_helper.get_fields()
@@ -1056,7 +1055,7 @@ class ConfigureNewReportBase(forms.Form):
 
     def _get_view_model(self, filter):
         """
-        Given a ReportFilter, return a FilterViewModel representing
+        Given a filter_spec, return a FilterViewModel representing
         the knockout view model representing this filter in the report builder.
 
         """

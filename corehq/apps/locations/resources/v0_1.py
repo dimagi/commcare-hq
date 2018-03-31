@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import json
 from tastypie import fields
 from tastypie.exceptions import BadRequest
@@ -13,7 +14,7 @@ from corehq.apps.locations.permissions import (
     location_safe, LOCATION_ACCESS_DENIED)
 from corehq.apps.users.models import WebUser
 from corehq.util.quickcache import quickcache
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 from ..models import SQLLocation
 from ..permissions import user_can_access_location_id

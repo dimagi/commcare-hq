@@ -1,6 +1,7 @@
 #modified version of django-axes axes/decorator.py
 #for more information see: http://code.google.com/p/django-axes/
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.contenttypes.models import ContentType
 from django.http import HttpResponse
@@ -121,7 +122,7 @@ def single_model_history(request, model_name, *args, **kwargs):
     # it's for a particular model
     context=RequestContext(request)
     db = AccessAudit.get_db()
-    vals = db.view('auditcare/model_actions_by_id', group=True, startkey=[model_name, u''], endkey=[model_name, u'z']).all()
+    vals = db.view('auditcare/model_actions_by_id', group=True, startkey=[model_name, ''], endkey=[model_name, 'z']).all()
     model_dict= dict((x['key'][1], x['value']) for x in vals)
     context['instances_dict']=model_dict
     context['model'] = model_name

@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from casexml.apps.phone.data_providers import AsyncDataProvider
 from casexml.apps.phone.data_providers.case.clean_owners import CleanOwnerCaseSyncOperation
 from casexml.apps.phone.data_providers.case.livequery import do_livequery

@@ -5,7 +5,7 @@
         </div>
     </div>
     <div class="report-content">
-        <div class="alert alert-info" ng-show="$ctrl.now === $ctrl.selectedMonth">
+        <div class="alert alert-info" ng-show="$ctrl.showWarning()">
             <strong>Info!</strong> "You are downloading data for the current calendar month. Data for this report is calculated using calendar months (for example, January 1st-January 31st). Data for this month will not be complete until the end of the month."
         </div>
         <div class="alert alert-info col-md-12" ng-if="$ctrl.isChildBeneficiaryListSelected() && $ctrl.hasErrors()">
@@ -18,7 +18,8 @@
         <div class="alert alert-info col-md-12" ng-if="$ctrl.isISSNIPMonthlyRegisterSelected() && $ctrl.hasErrorsISSNIPExport()">
             <strong>Please make the following selections before you can export:</strong>
             <ul>
-                <li ng-if="!$ctrl.isDistrictOrBelowSelected()" style="padding: 5px;">Select at least a district-level location</li>
+                <li ng-if="!$ctrl.isBlockOrBelowSelected()" style="padding: 5px;">Select at least a block-level location</li>
+                <li ng-if="!$ctrl.isAWCsSelected()" style="padding: 5px;">Select at least one AWC</li>
             </ul>
         </div>
         <div class="form-horizontal black">
@@ -95,7 +96,7 @@
                            popover-placement="top-right"
                            popover-trigger="'mouseenter'"></i></label>
                     <div class="col-sm-6">
-                        <ui-select ng-model="$ctrl.selectedYear" theme="bootstrap">
+                        <ui-select ng-model="$ctrl.selectedYear" theme="bootstrap" on-select="$ctrl.onSelectYear($item)">
                             <ui-select-match placeholder="Year"><span ng-bind="$select.selected.name"></span></ui-select-match>
                             <ui-select-choices repeat="year.id as year in $ctrl.years| propsFilter: {name: $select.search}">
                                 <div ng-bind-html="year.name"></div>
@@ -166,7 +167,7 @@
                            popover-placement="top-right"
                            popover-trigger="'mouseenter'"></i></label>
                     <div style="margin-bottom: 15px;" class="col-sm-6">
-                        <ui-select multiple ng-disabled="!$ctrl.isDistrictOrBelowSelected()" ng-model="$ctrl.selectedAWCs" on-select="$ctrl.onSelectAWCs($item)" close-on-select="false" theme="bootstrap">
+                        <ui-select multiple ng-disabled="!$ctrl.isBlockOrBelowSelected()" ng-model="$ctrl.selectedAWCs" on-select="$ctrl.onSelectAWCs($item)" close-on-select="false" theme="bootstrap">
                             <ui-select-match placeholder="Please select AWCs"><span ng-bind="$item.name"></span></ui-select-match>
                               <ui-select-choices repeat="location.location_id as location in $ctrl.awcLocations | propsFilter: {name: $select.search}">
                                   <div ng-bind-html="location.name | highlight: $select.search"></div>
@@ -192,7 +193,7 @@
                            popover-placement="top-right"
                            popover-trigger="'mouseenter'"></i></label>
                     <div class="col-sm-6">
-                        <ui-select ng-model="$ctrl.selectedYear" theme="bootstrap">
+                        <ui-select ng-model="$ctrl.selectedYear" theme="bootstrap" on-select="$ctrl.onSelectYear($item)">
                             <ui-select-match placeholder="Year"><span ng-bind="$select.selected.name"></span></ui-select-match>
                             <ui-select-choices repeat="year.id as year in $ctrl.years| propsFilter: {name: $select.search}">
                                 <div ng-bind-html="year.name"></div>

@@ -23,7 +23,7 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.dispatcher import CustomProjectReportDispatcher
 from django.utils.html import format_html
 from corehq.apps.groups.models import Group
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from casexml.apps.case.models import CommCareCase
 from custom.bihar.reports.indicators.mixins import IndicatorConfigMixIn
 

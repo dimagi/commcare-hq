@@ -3,7 +3,7 @@ from dimagi.ext.couchdbkit import Document, StringProperty,\
     BooleanProperty, DateTimeProperty
 import datetime
 from corehq.apps.domain.models import Domain
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 
 class RegistrationRequest(Document):

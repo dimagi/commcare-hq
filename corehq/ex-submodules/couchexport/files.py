@@ -1,7 +1,7 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import os
 import tempfile
-from dimagi.utils.decorators.memoized import memoized
 import six
 
 

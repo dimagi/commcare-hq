@@ -8,16 +8,16 @@ from django.utils.translation import ugettext_lazy as _
 
 from casexml.apps.case.xml import V2_NAMESPACE
 from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
-from corehq.apps import nimbus_api
+from corehq.apps import formplayer_api
 from corehq.apps.app_manager.const import (
     SCHEDULE_PHASE, SCHEDULE_LAST_VISIT, SCHEDULE_LAST_VISIT_DATE,
     CASE_ID, USERCASE_ID, SCHEDULE_UNSCHEDULED_VISIT, SCHEDULE_CURRENT_VISIT_NUMBER,
     SCHEDULE_GLOBAL_NEXT_VISIT_DATE, SCHEDULE_NEXT_DUE)
 from lxml import etree as ET
 
-from corehq.apps.nimbus_api.exceptions import NimbusAPIException
+from corehq.apps.formplayer_api.exceptions import FormplayerAPIException
 from corehq.util.view_utils import get_request
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from .xpath import CaseIDXPath, session_var, QualifiedScheduleFormXPath
 from .exceptions import XFormException, CaseError, XFormValidationError, BindNotFound, XFormValidationFailed
 import collections
@@ -573,8 +573,8 @@ def validate_xform(domain, source):
     # normalize and strip comments
     source = ET.tostring(parse_xml(source))
     try:
-        validation_results = nimbus_api.validate_form(source)
-    except NimbusAPIException:
+        validation_results = formplayer_api.validate_form(source)
+    except FormplayerAPIException:
         raise XFormValidationFailed("Unable to validate form")
 
     if not validation_results.success:
@@ -988,6 +988,7 @@ class XForm(WrappedNode):
                 "constraint": cnode.constraint,
                 "comment": self._get_comment(leaf_data_nodes, path),
                 "hashtagValue": self.hashtag_path(path),
+                "setvalue": self.get_setvalue(path),
             }
             if include_translations:
                 question["translations"] = self.get_label_translations(node, langs)
@@ -1189,6 +1190,12 @@ class XForm(WrappedNode):
         try:
             return leaf_data_nodes[path].attrib.get('{v}comment')
         except KeyError:
+            return None
+
+    def get_setvalue(self, path):
+        try:
+            return self.model_node.find('{f}setvalue[@ref="%s"]' % path).attrib['value']
+        except (KeyError, AttributeError):
             return None
 
     def get_path(self, node):

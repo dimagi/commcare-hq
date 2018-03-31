@@ -17,7 +17,7 @@ from custom.succeed.reports import EMPTY_FIELD, OUTPUT_DATE_FORMAT, \
     CM_APP_UPDATE_VIEW_TASK_MODULE, CM_UPDATE_TASK, TASK_RISK_FACTOR, TASK_ACTIVITY
 from custom.succeed.utils import SUCCEED_CM_APPNAME, get_app_build
 from custom.utils.utils import clean_IN_filter_value
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 
 class PatientTaskListReport(SqlTabularReport, CustomProjectReport, ProjectReportParametersMixin):
@@ -64,7 +64,7 @@ class PatientTaskListReport(SqlTabularReport, CustomProjectReport, ProjectReport
 
     def name_link(self, name, doc_id, is_closed):
         if is_closed == 0:
-            details_url = reverse('case_details', args=[self.domain, doc_id])
+            details_url = reverse('case_data', args=[self.domain, doc_id])
             url = details_url + '#!history'
         else:
             url = self.get_form_url(self.app_dict,

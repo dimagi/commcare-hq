@@ -17,7 +17,7 @@ hqDefine("reports/js/config.dataTables.bootstrap", [
         self.autoWidth = (options.autoWidth != undefined) ? options.autoWidth : true;
         self.defaultSort = (options.defaultSort != undefined) ? options.defaultSort : true;
         self.customSort = options.customSort || null;
-        self.ajaxParams = options.ajaxParams || new Object();
+        self.ajaxParams = options.ajaxParams || {};
         self.ajaxSource = options.ajaxSource;
         self.ajaxMethod = options.ajaxMethod || 'GET';
         self.loadingText = options.loadingText || gettext("Loading") +

@@ -193,40 +193,6 @@ class CouchDumpLoadTest(TestCase):
 
         self._dump_and_load([web_user], [other_user])
 
-    def test_sync_log(self):
-        from casexml.apps.phone.models import SyncLog, SimplifiedSyncLog
-        from corehq.apps.users.models import WebUser, CommCareUser
-        from casexml.apps.phone.models import get_sync_log_class_by_format
-
-        web_user = WebUser.create(
-            domain=self.domain_name,
-            username='webuser_4',
-            password='secret',
-            email='webuser1@example.com',
-        )
-        mobile_user = CommCareUser.create(
-            self.domain_name, 'mobile_user1', 'secret'
-        )
-        other_user = CommCareUser.create(
-            'other_domain', 'mobile_user2', 'secret'
-        )
-        self.addCleanup(other_user.delete)
-
-        l1 = SyncLog(user_id=web_user._id)
-        l1.save()
-        l2 = SimplifiedSyncLog(user_id=mobile_user._id)
-        l2.save()
-        other_log = SyncLog(user_id=other_user._id)
-        other_log.save()
-
-        def _synclog_to_class(doc):
-            if doc['doc_type'] == 'SyncLog':
-                return get_sync_log_class_by_format(doc.get('log_format'))
-
-        expected_docs = [web_user, mobile_user, l1, l2]
-        not_expected_docs = [other_user, other_log]
-        self._dump_and_load(expected_docs, not_expected_docs, doc_to_doc_class=_synclog_to_class)
-
 
 class TestDumpLoadToggles(SimpleTestCase):
 

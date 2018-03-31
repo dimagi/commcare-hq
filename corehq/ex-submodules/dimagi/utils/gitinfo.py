@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import os
 import re
 from subprocess import Popen, PIPE
@@ -77,15 +78,15 @@ def sub_git_info(git_dir, log_count=1):
     """
     return_dict = {}
     kv_line_format = {
-        'sha': '%H',
-        'author': '%an <%ae>',
-        'date': '%ai',
-        'subject': '%s',
-        'message': '%b'
+        b'sha': b'%H',
+        b'author': b'%an <%ae>',
+        b'date': b'%ai',
+        b'subject': b'%s',
+        b'message': b'%b'
     }
 
-    KV_DELIMITER = ':~@#$~:'
-    LINE_DELIMITER = '@#\n#@'
+    KV_DELIMITER = b':~@#$~:'
+    LINE_DELIMITER = b'@#\n#@'
 
     # construct an output of git log that is essentially a:
     # key=value
@@ -94,17 +95,17 @@ def sub_git_info(git_dir, log_count=1):
     # there might be newlines in messages and subjects
     # the git log -z format delimits the entire log by null, but we need separation of each property
 
-    line_by_line_format = LINE_DELIMITER.join(['%s%s%s' % (k, KV_DELIMITER, v) for k, v in kv_line_format.items()])
+    line_by_line_format = LINE_DELIMITER.join([b'%s%s%s' % (k, KV_DELIMITER, v) for k, v in kv_line_format.items()])
 
-    args = ['log',
-            '-%s' % log_count,
-            '-z',
-            '--pretty=format:%s' % line_by_line_format
+    args = [b'log',
+            b'-%s' % log_count,
+            b'-z',
+            b'--pretty=format:%s' % line_by_line_format
     ]
     p = sub_git_cmd(git_dir, args)
     url = sub_git_remote_url(git_dir)
     gitout = p.stdout.read().strip()
-    all_raw_revs = gitout.split('\0')
+    all_raw_revs = gitout.split(b'\0')
 
     def parse_rev_block(block_text):
         ret = {}
@@ -114,7 +115,7 @@ def sub_git_info(git_dir, log_count=1):
             try:
                 k, v = prop.split(KV_DELIMITER)
             except ValueError:
-                k = "GitParseError"
+                k = b"GitParseError"
                 v = prop
             ret[k] = v.decode('utf-8')
         return ret

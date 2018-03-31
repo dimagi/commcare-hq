@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import datetime
 import io
 import logging
@@ -89,7 +90,7 @@ from corehq.privileges import (
 from corehq.toggles import HIPAA_COMPLIANCE_CHECKBOX, MOBILE_UCR
 from corehq.util.timezones.fields import TimeZoneField
 from corehq.util.timezones.forms import TimeZoneChoiceField
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 import six
 from six.moves import range
 from six import unichr
@@ -402,8 +403,8 @@ class SnapshotSettingsForm(forms.Form):
 
 
 class TransferDomainFormErrors(object):
-    USER_DNE = ugettext_lazy(u'The user being transferred to does not exist')
-    DOMAIN_MISMATCH = ugettext_lazy(u'Mismatch in domains when confirming')
+    USER_DNE = ugettext_lazy('The user being transferred to does not exist')
+    DOMAIN_MISMATCH = ugettext_lazy('Mismatch in domains when confirming')
 
 
 class TransferDomainForm(forms.ModelForm):
@@ -417,8 +418,8 @@ class TransferDomainForm(forms.ModelForm):
         self.current_domain = domain
         self.from_username = from_username
 
-        self.fields['domain'].label = _(u'Type the name of the project to confirm')
-        self.fields['to_username'].label = _(u'New owner\'s CommCare username')
+        self.fields['domain'].label = _('Type the name of the project to confirm')
+        self.fields['to_username'].label = _('New owner\'s CommCare username')
 
         self.helper = FormHelper()
         self.helper.layout = crispy.Layout(
@@ -784,8 +785,7 @@ class PrivacySecurityForm(forms.Form):
     two_factor_auth = BooleanField(
         label=ugettext_lazy("Two Factor Authentication"),
         required=False,
-        help_text=ugettext_lazy("All web users on this project will be required to enable two factor "
-                                "authentication")
+        help_text=ugettext_lazy("All users on this project will be required to enable two factor authentication")
     )
     strong_mobile_passwords = BooleanField(
         label=ugettext_lazy("Require Strong Passwords for Mobile Workers"),
@@ -1268,17 +1268,17 @@ def legacy_get_password_strength(value):
 def _get_uppercase_unicode_regexp():
     # rather than add another dependency (regex library)
     # http://stackoverflow.com/a/17065040/10840
-    uppers = [u'[']
+    uppers = ['[']
     for i in range(sys.maxunicode):
         c = unichr(i)
         if c.isupper():
             uppers.append(c)
-    uppers.append(u']')
-    upper_group = u"".join(uppers)
+    uppers.append(']')
+    upper_group = "".join(uppers)
     return re.compile(upper_group, re.UNICODE)
 
-SPECIAL = re.compile(ur"\W", re.UNICODE)
-NUMBER = re.compile(ur"\d", re.UNICODE)  # are there other unicode numerals?
+SPECIAL = re.compile(r"\W", re.UNICODE)
+NUMBER = re.compile(r"\d", re.UNICODE)  # are there other unicode numerals?
 UPPERCASE = _get_uppercase_unicode_regexp()
 
 
@@ -1606,7 +1606,6 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                         adjustment_method=SubscriptionAdjustmentMethod.USER,
                         service_type=SubscriptionType.PRODUCT,
                         pro_bono_status=ProBonoStatus.NO,
-                        skip_auto_downgrade=False,
                         do_not_invoice=False,
                         no_invoice_reason='',
                         date_delay_invoicing=None,
@@ -1619,7 +1618,6 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                         service_type=SubscriptionType.PRODUCT,
                         pro_bono_status=ProBonoStatus.NO,
                         funding_source=FundingSource.CLIENT,
-                        skip_auto_downgrade=False,
                     )
                 return True
         except Exception as e:
@@ -1881,7 +1879,6 @@ class InternalSubscriptionManagementForm(forms.Form):
     def subscription_default_fields(self):
         return {
             'internal_change': True,
-            'skip_auto_downgrade': False,
             'web_user': self.web_user,
         }
 

@@ -36,18 +36,14 @@ TODO:
             <th></th>
             <th>
                 <!--ko if: $data.propertyHelpText -->
-                <span class="hq-help-template" data-bind="
-                    attr: {'data-content': propertyHelpText}
-                "></span>
+                <span data-bind="makeHqHelp: {description: propertyHelpText}"></span>
                 <!--/ko-->
                 {% trans "Property" %}
             </th>
             <!--ko if: $data.hasDisplayCol -->
             <th>
                 <!--ko if: $data.displayHelpText -->
-                <span class="hq-help-template" data-bind="
-                    attr: {'data-content': displayHelpText}
-                "></span>
+                <span data-bind="makeHqHelp: {description: displayHelpText}"></span>
                 <!--/ko-->
                 {% trans "Label" %}
             </th>
@@ -55,10 +51,7 @@ TODO:
             <!--ko if: $data.hasFormatCol -->
             <th class="table-editprops-format">
                 <!--ko if: $data.formatHelpText -->
-                <span class="hq-help-template" data-bind="
-                    if: formatHelpText,
-                    attr: {'data-content': formatHelpText}
-                "></span>
+                <span data-bind="makeHqHelp: {description: formatHelpText}"></span>
                 <!--/ko-->
                 {% trans "Format" %}
             </th>
@@ -67,10 +60,7 @@ TODO:
             <th class="table-editprops-format">
                 {% trans "Format" %}
                 <!--ko if: $data.calcHelpText -->
-                <span class="hq-help-template" data-bind="
-                    if: calcHelpText,
-                    attr: {'data-content': calcHelpText}
-                "></span>
+                <span data-bind="makeHqHelp: {description: calcHelpText}"></span>
                 <!--/ko-->
             </th>
             <!--/ko-->
@@ -78,10 +68,7 @@ TODO:
             <th class="table-editprops-filterval">
                 {% trans "Filter Value" %}
                 <!--ko if: $data.filterValueHelpText -->
-                <span class="hq-help-template" data-bind="
-                    if: filterValueHelpText,
-                    attr: {'data-content': filterValueHelpText}
-                "></span>
+                <span data-bind="makeHqHelp: {description: filterValueHelpText}"></span>
                 <!--/ko-->
             </th>
             <!--/ko-->
@@ -151,14 +138,14 @@ TODO:
         <td>
             <!--ko if: !$parent.hasFilterValueCol -->
             <select class="form-control input-sm" data-bind="
-                options: ReportBuilder.Constants.FORMAT_OPTIONS,
+                options: hqImport('userreports/js/constants').FORMAT_OPTIONS,
                 value: format,
                 attr: {disabled: !existsInCurrentVersion()}
             "></select>
             <!--/ko-->
             <!--ko if: $parent.hasFilterValueCol -->
             <select class="form-control input-sm" data-bind="
-                options: ReportBuilder.Constants.DEFAULT_FILTER_FORMAT_OPTIONS,
+                options: hqImport('userreports/js/constants').DEFAULT_FILTER_FORMAT_OPTIONS,
                 value: format,
                 attr: {disabled: !existsInCurrentVersion()}
             "></select>
@@ -229,4 +216,3 @@ TODO:
     <label class="help-block" data-bind="text: requireColumnsText">
     </label>
 </div>
-

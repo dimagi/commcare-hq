@@ -46,6 +46,7 @@ do
 done
 
 function rebuildstaging() {
+    echo "rebuilding staging branch, this might take a while..."
     python scripts/rebuildstaging.py < scripts/staging.yaml "$@"
 }
 

@@ -10,7 +10,7 @@ from custom.world_vision.sqldata.main_sqldata import DeliveryPlaceDetails, \
 from custom.world_vision.sqldata.mother_sqldata import MotherRegistrationDetails, ClosedMotherCasesBreakdown, \
     PregnantMotherBreakdownByTrimester, DeliveryLiveBirthDetails, PostnatalCareOverview, \
     CauseOfMaternalDeaths, AnteNatalCareServiceOverviewExtended
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 
 class MixedTTCReport(TTCReport):

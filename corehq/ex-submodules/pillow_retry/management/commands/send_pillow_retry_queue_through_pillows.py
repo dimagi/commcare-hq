@@ -1,4 +1,7 @@
 from __future__ import absolute_import
+from __future__ import print_function
+from datetime import datetime
+
 from django.core.management.base import BaseCommand
 
 from pillow_retry.models import PillowError
@@ -22,6 +25,7 @@ class Command(BaseCommand):
 
     def get_next_errors(self):
         num_retrieved = 1
+        count = 0
 
         while num_retrieved > 0:
             pillow_errors = (
@@ -33,5 +37,9 @@ class Command(BaseCommand):
             num_retrieved = len(pillow_errors)
             yield pillow_errors
 
+            print("deleting")
             doc_ids = [error.doc_id for error in pillow_errors]
-            PillowError.objects(doc_id__in=doc_ids).delete()
+            PillowError.objects.filter(doc_id__in=doc_ids).delete()
+            count += num_retrieved
+            print(count)
+            print(datetime.utcnow())

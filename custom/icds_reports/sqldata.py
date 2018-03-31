@@ -26,7 +26,7 @@ from couchexport.export import export_from_tables
 from couchexport.shortcuts import export_response
 
 from custom.utils.utils import clean_IN_filter_value
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 import six
 from six.moves import range
 

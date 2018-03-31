@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from jsonfield import JSONField
 from rest_framework import serializers
 
@@ -50,7 +51,7 @@ class XFormInstanceSQLSerializer(DeletableModelSerializer):
 
     class Meta(object):
         model = XFormInstanceSQL
-        exclude = ('id', 'form_id')
+        exclude = ('id', 'form_id', 'time_end', 'time_start', 'commcare_version', 'app_version')
 
     def __init__(self, *args, **kwargs):
         include_attachments = kwargs.pop('include_attachments', False)

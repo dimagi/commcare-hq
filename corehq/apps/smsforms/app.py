@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import uuid
 from corehq.apps.app_manager.util import get_cloudcare_session_data
 from corehq.apps.cloudcare.touchforms_api import CaseSessionDataHelper
@@ -71,6 +72,7 @@ def start_session(session, domain, contact, app, module, form, case_id=None, yie
                           language=language,
                           session_data=session_data,
                           auth=AUTH,
+                          domain=domain,
                           **kwargs)
 
     session_start_info = tfsms.start_session(config)
@@ -99,7 +101,7 @@ def get_responses(domain, session_id, text):
     
     Returns a list of responses if there are any.
     """
-    return list(tfsms.next_responses(session_id, text))
+    return list(tfsms.next_responses(session_id, text, domain))
 
 
 def _responses_to_text(responses):
@@ -119,7 +121,7 @@ def submit_unfinished_form(session):
     """
     # Get and clean the raw xml
     try:
-        xml = get_raw_instance(session.session_id)['output']
+        xml = get_raw_instance(session.session_id, session.domain)['output']
     except InvalidSessionIdException:
         return
     root = XML(xml)

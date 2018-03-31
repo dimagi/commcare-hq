@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 from custom.enikshay.case_utils import get_occurrence_case_from_episode
 from custom.enikshay.exceptions import ENikshayCaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 
 class TransitionedPatientsMissingProperties(object):

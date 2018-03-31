@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import functools
 from couchdbkit.ext.django import schema
 import datetime

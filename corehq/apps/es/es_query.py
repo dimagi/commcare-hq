@@ -99,11 +99,12 @@ Language
 """
 from __future__ import print_function
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from collections import namedtuple
 from copy import deepcopy
 import json
 
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 from corehq.elastic import (
     ES_META,

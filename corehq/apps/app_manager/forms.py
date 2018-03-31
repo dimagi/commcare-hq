@@ -76,7 +76,7 @@ class CopyApplicationForm(forms.Form):
 
 class PromptUpdateSettingsForm(forms.Form):
     app_prompt = forms.ChoiceField(
-        label=ugettext_lazy("Prompt Updates to Latest Released App Version"),
+        label=ugettext_lazy("Prompt Updates to App"),
         choices=(
             ('off', ugettext_lazy('Off')),
             ('on', ugettext_lazy('On')),
@@ -84,14 +84,14 @@ class PromptUpdateSettingsForm(forms.Form):
         ),
         help_text=ugettext_lazy(
             "If enabled, users will receive in-app prompts to update "
-            "to the latest released version of the app, if they are not "
+            "to the selected version of the app, if they are not "
             "already on it. (Selecting 'Forced' will make it so that users "
             "cannot continue to use CommCare until they update)"
         )
     )
 
     apk_prompt = forms.ChoiceField(
-        label=ugettext_lazy("Prompt Updates to Latest CommCare Version"),
+        label=ugettext_lazy("Prompt Updates to CommCare"),
         choices=(
             ('off', ugettext_lazy('Off')),
             ('on', ugettext_lazy('On')),
@@ -99,7 +99,7 @@ class PromptUpdateSettingsForm(forms.Form):
         ),
         help_text=ugettext_lazy(
             "If enabled, users will receive in-app prompts to update "
-            "to the latest version of CommCare, if they are not already "
+            "to the selected version of CommCare, if they are not already "
             "on it. (Selecting 'Forced' will make it so that users cannot "
             "continue to use CommCare until they upgrade)"
         )

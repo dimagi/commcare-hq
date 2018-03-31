@@ -45,7 +45,7 @@ from corehq.apps.userreports.filters.factory import FilterFactory
 from corehq.apps.userreports.indicators.factory import IndicatorFactory
 from corehq.apps.userreports.indicators import CompoundIndicator
 from corehq.apps.userreports.reports.filters.factory import ReportFilterFactory
-from corehq.apps.userreports.reports.factory import ReportFactory, ChartFactory, \
+from corehq.apps.userreports.reports.factory import ChartFactory, \
     ReportColumnFactory, ReportOrderByFactory
 from corehq.apps.userreports.reports.filters.specs import FilterSpec
 from corehq.apps.userreports.specs import EvaluationContext, FactoryContext
@@ -55,7 +55,7 @@ from corehq.util.couch import get_document_or_not_found, DocumentNotFound
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.bulk import get_docs
 from dimagi.utils.couch.database import iter_docs
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.mixins import UnicodeMixIn
 
 from dimagi.utils.modules import to_function
@@ -417,6 +417,7 @@ class ReportConfiguration(UnicodeMixIn, QuickCachedDocumentMixin, Document):
     """
     domain = StringProperty(required=True)
     visible = BooleanProperty(default=True)
+    # config_id of the datasource
     config_id = StringProperty(required=True)
     title = StringProperty()
     description = StringProperty()
@@ -519,6 +520,7 @@ class ReportConfiguration(UnicodeMixIn, QuickCachedDocumentMixin, Document):
         return langs
 
     def validate(self, required=True):
+        from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
         def _check_for_duplicates(supposedly_unique_list, error_msg):
             # http://stackoverflow.com/questions/9835762/find-and-list-duplicates-in-python-list
             duplicate_items = set(
@@ -542,7 +544,7 @@ class ReportConfiguration(UnicodeMixIn, QuickCachedDocumentMixin, Document):
         )
 
         # these calls all implicitly do validation
-        ReportFactory.from_spec(self)
+        ConfigurableReportDataSource.from_spec(self)
         self.ui_filters
         self.charts
         self.sort_order

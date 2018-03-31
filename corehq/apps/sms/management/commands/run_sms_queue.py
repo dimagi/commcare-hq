@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from corehq.apps.domain_migration_flags.api import any_migrations_in_progress
 from corehq.apps.sms.models import QueuedSMS
 from corehq.apps.sms.tasks import send_to_sms_queue
@@ -14,6 +15,13 @@ def skip_domain(domain):
 
 
 class SMSEnqueuingOperation(BaseCommand):
+    """
+    Based on our commcare-cloud code, there will be one instance of this
+    command running on every machine that has a celery worker which
+    consumes from the sms_queue. This is ok because this process uses
+    locks to ensure items are only enqueued once, and it's what is desired
+    in order to more efficiently spawn the needed celery tasks.
+    """
     help = "Spawns tasks to process queued SMS"
 
     def get_enqueue_lock(self, queued_sms):

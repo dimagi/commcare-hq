@@ -26,6 +26,7 @@
 
 {% block js %}{{ block.super }}
     <script src="{% static 'moment/moment.js' %}"></script>
+    {# This is fine as an inline script; it'll be removed once form designer is migrated to RequireJS #}
     <script>
         /*
             When r.js optimizes the bundle.js files, one thing it does is add a call to `define` the module.
@@ -37,10 +38,10 @@
         define = undefined;
     </script>
     {% compress js %}
-    <script src="{% static 'app_manager/js/forms/app_notifications.js' %}"></script>
-    <script src="{% static 'js/ws4redis.js' %}"></script>
-    <script src="{% static 'app_manager/js/forms/edit_form_details.js' %}"></script>
-    <script src="{% static 'app_manager/js/forms/form_designer.js' %}"></script>
+        <script src="{% static 'app_manager/js/forms/app_notifications.js' %}"></script>
+        <script src="{% static 'js/ws4redis.js' %}"></script>
+        <script src="{% static 'app_manager/js/forms/edit_form_details.js' %}"></script>
+        <script src="{% static 'app_manager/js/forms/form_designer.js' %}"></script>
     {% endcompress %}
 {% endblock %}
 
@@ -154,7 +155,7 @@
               </form>
           </div>
       </div>
-</div>
+  </div>
 {% endblock %}
 
 {% block footer %}{% endblock %}

@@ -97,7 +97,6 @@ hqDefine('notifications/js/notifications_service', [
                     });
                 })
                 .fail(function (jqXHR, textStatus, errorThrown) {
-                    console.log(errorThrown);
                     self.hasError(true);
                 });
         };

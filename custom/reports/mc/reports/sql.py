@@ -6,7 +6,7 @@ import re
 from sqlagg.base import AliasColumn
 from sqlagg.filters import EQ, OR, AND, BETWEEN, NOTEQ
 from corehq.apps.userreports.util import get_table_name
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from sqlagg.columns import *
 from django.utils.translation import ugettext as _, ugettext_noop
 from corehq.apps.fixtures.models import FixtureDataItem

@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import math
 from django.db import models
 from corehq.apps.products.models import SQLProduct

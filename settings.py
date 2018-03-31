@@ -238,7 +238,6 @@ HQ_APPS = (
     'corehq.apps.linked_domain',
     'corehq.apps.locations',
     'corehq.apps.products',
-    'corehq.apps.prelogin',
     'corehq.apps.programs',
     'corehq.apps.commtrack',
     'corehq.apps.consumption',
@@ -374,6 +373,7 @@ HQ_APPS = (
     'custom.hki',
     'corehq.motech.openmrs',
     'custom.champ',
+    'custom.yeksi_naa_reports',
 )
 
 ENIKSHAY_APPS = (
@@ -750,11 +750,15 @@ LOCAL_MIDDLEWARE = ()
 LOCAL_PILLOWTOPS = {}
 LOCAL_REPEATERS = ()
 
-# Prelogin site
+# tuple of fully qualified repeater class names that are enabled.
+# Set to None to enable all or empty tuple to disable all.
+REPEATERS_WHITELIST = None
+
+# If ENABLE_PRELOGIN_SITE is set to true, redirect to Dimagi.com urls
 ENABLE_PRELOGIN_SITE = False
-PRELOGIN_APPS = (
-    'corehq.apps.prelogin',
-)
+
+# dimagi.com urls
+PRICING_PAGE_URL = "https://www.dimagi.com/commcare/pricing/"
 
 # our production logstash aggregation
 LOGSTASH_DEVICELOG_PORT = 10777
@@ -860,6 +864,9 @@ ENVIRONMENT_HOSTS = {
 
 DATADOG_API_KEY = None
 DATADOG_APP_KEY = None
+
+SYNCLOGS_SQL_DB_ALIAS = 'default'
+WAREHOUSE_DATABASE_ALIAS = 'default'
 
 # Override with the PEM export of an RSA private key, for use with any
 # encryption or signing workflows.
@@ -1347,10 +1354,7 @@ else:
 if helper.is_testing():
     helper.assign_test_db_names(DATABASES)
 
-if USE_PARTITIONED_DATABASE:
-    DATABASE_ROUTERS = ['corehq.sql_db.routers.PartitionRouter']
-else:
-    DATABASE_ROUTERS = ['corehq.sql_db.routers.MonolithRouter']
+DATABASE_ROUTERS = ['corehq.sql_db.routers.MultiDBRouter']
 
 MVP_INDICATOR_DB = 'mvp-indicators'
 
@@ -1488,9 +1492,6 @@ EXTRA_COUCHDB_DATABASES = COUCH_SETTINGS_HELPER.get_extra_couchdbs()
 # https://github.com/dimagi/commcare-hq/pull/10034#issuecomment-174868270
 INSTALLED_APPS = LOCAL_APPS + INSTALLED_APPS
 
-if ENABLE_PRELOGIN_SITE:
-    INSTALLED_APPS += PRELOGIN_APPS
-
 seen = set()
 INSTALLED_APPS = [x for x in INSTALLED_APPS if x not in seen and not seen.add(x)]
 
@@ -1531,8 +1532,8 @@ MESSAGE_TAGS = {
     messages.INFO: 'alert-info',
     messages.DEBUG: '',
     messages.SUCCESS: 'alert-success',
-    messages.WARNING: 'alert-error alert-warning',
-    messages.ERROR: 'alert-error alert-danger',
+    messages.WARNING: 'alert-warning',
+    messages.ERROR: 'alert-danger',
 }
 
 COMMCARE_USER_TERM = "Mobile Worker"
@@ -1616,12 +1617,6 @@ AVAILABLE_CUSTOM_SCHEDULING_CONTENT = {
     "ICDS_CF_VISITS_COMPLETE":
         ["custom.icds.messaging.custom_content.cf_visits_complete",
          "ICDS: CF Visits Complete"],
-    "ICDS_DPT3_AND_MEASLES_ARE_DUE":
-        ["custom.icds.messaging.custom_content.dpt3_and_measles_are_due",
-         "ICDS: DPT3 and Measles Due"],
-    "ICDS_CHILD_VACCINATIONS_COMPLETE":
-        ["custom.icds.messaging.custom_content.child_vaccinations_complete",
-         "ICDS: Child vaccinations complete"],
     "ICDS_AWW_1":
         ["custom.icds.messaging.custom_content.aww_1",
          "ICDS: Weekly AWC Submission Performance to AWW"],
@@ -1666,9 +1661,15 @@ AVAILABLE_CUSTOM_REMINDER_RECIPIENTS = {
 
 # Used by the new reminders framework
 AVAILABLE_CUSTOM_SCHEDULING_RECIPIENTS = {
+    'ICDS_MOTHER_PERSON_CASE_FROM_CCS_RECORD_CASE':
+        ['custom.icds.messaging.custom_recipients.recipient_mother_person_case_from_ccs_record_case',
+         "ICDS: Mother person case from ccs_record case"],
     'ICDS_MOTHER_PERSON_CASE_FROM_CHILD_HEALTH_CASE':
         ['custom.icds.messaging.custom_recipients.recipient_mother_person_case_from_child_health_case',
          "ICDS: Mother person case from child_health case"],
+    'ICDS_MOTHER_PERSON_CASE_FROM_CHILD_PERSON_CASE':
+        ['custom.icds.messaging.custom_recipients.recipient_mother_person_case_from_child_person_case',
+         "ICDS: Mother person case from child person case"],
     'ICDS_SUPERVISOR_FROM_AWC_OWNER':
         ['custom.icds.messaging.custom_recipients.supervisor_from_awc_owner',
          "ICDS: Supervisor Location from AWC Owner"],
@@ -1677,6 +1678,10 @@ AVAILABLE_CUSTOM_SCHEDULING_RECIPIENTS = {
 AVAILABLE_CUSTOM_RULE_CRITERIA = {
     'ICDS_PERSON_CASE_IS_UNDER_6_YEARS_OLD':
         'custom.icds.rules.custom_criteria.person_case_is_under_6_years_old',
+    'ICDS_PERSON_CASE_IS_UNDER_19_YEARS_OLD':
+        'custom.icds.rules.custom_criteria.person_case_is_under_19_years_old',
+    'ICDS_CCS_RECORD_CASE_HAS_FUTURE_EDD':
+        'custom.icds.rules.custom_criteria.ccs_record_case_has_future_edd',
     'ICDS_IS_USERCASE_OF_AWW':
         'custom.icds.rules.custom_criteria.is_usercase_of_aww',
     'ICDS_IS_USERCASE_OF_LS':
@@ -2021,6 +2026,10 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'vhnd_form.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'visitorbook_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'complementary_feeding_forms.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'postnatal_care_forms.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'usage_forms_v2.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'commcare_user_cases.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'delivery_forms.json'),
 
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'adherence.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_for_cc_outbound.json'),
@@ -2055,7 +2064,10 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'pnlppgi', 'resources', 'site_reporting_rates.json'),
     os.path.join('custom', 'pnlppgi', 'resources', 'malaria.json'),
     os.path.join('custom', 'champ', 'ucr_data_sources', 'champ_cameroon.json'),
-    os.path.join('custom', 'champ', 'ucr_data_sources', 'enhanced_peer_mobilization.json')
+    os.path.join('custom', 'champ', 'ucr_data_sources', 'enhanced_peer_mobilization.json'),
+    os.path.join('custom', 'yeksi_naa_reports', 'ucr', 'data_sources', 'visite_de_l_operateur.json'),
+    os.path.join('custom', 'yeksi_naa_reports', 'ucr', 'data_sources', 'visite_de_l_operateur_per_product.json'),
+    os.path.join('custom', 'yeksi_naa_reports', 'ucr', 'data_sources', 'yeksi_naa_reports_logisticien.json')
 ]
 
 STATIC_DATA_SOURCE_PROVIDERS = [
@@ -2158,8 +2170,6 @@ CUSTOM_DASHBOARD_PAGE_URL_NAMES = {
 
 REMOTE_APP_NAMESPACE = "%(domain)s.commcarehq.org"
 
-# a DOMAIN_MODULE_CONFIG doc present in your couchdb can override individual
-# items.
 DOMAIN_MODULE_MAP = {
     'a5288-test': 'a5288',
     'a5288-study': 'a5288',
@@ -2234,7 +2244,28 @@ DOMAIN_MODULE_MAP = {
     'care-macf-bangladesh': 'custom.care_pathways',
     'care-macf-ghana': 'custom.care_pathways',
     'pnlppgi': 'custom.pnlppgi',
-    'champ-cameroon': 'custom.champ'
+    'champ-cameroon': 'custom.champ',
+
+    # From DOMAIN_MODULE_CONFIG on production
+    'dca-malawi': 'dca',
+    'eagles-fahu': 'dca',
+    'ews-ghana': 'custom.ewsghana',
+    'ews-ghana-1': 'custom.ewsghana',
+    'ewsghana-6': 'custom.ewsghana',
+    'ewsghana-september': 'custom.ewsghana',
+    'ewsghana-test-4': 'custom.ewsghana',
+    'ewsghana-test-5': 'custom.ewsghana',
+    'ewsghana-test3': 'custom.ewsghana',
+    'ils-gateway': 'custom.ilsgateway',
+    'ils-gateway-training': 'custom.ilsgateway',
+    'ilsgateway-full-test': 'custom.ilsgateway',
+    'ilsgateway-test-2': 'custom.ilsgateway',
+    'ilsgateway-test3': 'custom.ilsgateway',
+    'mvp-mayange': 'mvp',
+    'psi-unicef': 'psi',
+    # Used in tests.  TODO - use override_settings instead
+    'ewsghana-test-input-stock': 'custom.ewsghana',
+    'test-pna': 'custom.yeksi_naa_reports',
 }
 
 CASEXML_FORCE_DOMAIN_CHECK = True
@@ -2303,3 +2334,9 @@ if RESTRICT_USED_PASSWORDS_FOR_NIC_COMPLIANCE:
     ]
 
 PACKAGE_MONITOR_REQUIREMENTS_FILE = os.path.join(FILEPATH, 'requirements', 'requirements.txt')
+
+IS_LOCATION_CTE_ENABLED = UNIT_TESTING or SERVER_ENVIRONMENT in [
+    'localdev',
+    'changeme',  # default value in localsettings.example.py
+    'staging',
+]

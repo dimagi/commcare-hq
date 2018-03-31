@@ -6,7 +6,7 @@ from dateutil.parser import parser
 import json
 from casexml.apps.case.models import CommCareCase
 from couchforms.models import XFormInstance
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.parsing import json_format_date
 from pact import enums
 

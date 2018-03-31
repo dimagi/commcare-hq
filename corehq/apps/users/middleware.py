@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.conf import settings
 import django.core.exceptions
 from django.template.response import TemplateResponse
@@ -16,7 +17,7 @@ def is_public_reports(view_kwargs, request):
     return (
         request.user.is_anonymous and
         'domain' in view_kwargs and
-        request.path.startswith(u'/a/{}/reports/custom'.format(view_kwargs['domain'])) and
+        request.path.startswith('/a/{}/reports/custom'.format(view_kwargs['domain'])) and
         PUBLISH_CUSTOM_REPORTS.enabled(view_kwargs['domain'])
     )
 

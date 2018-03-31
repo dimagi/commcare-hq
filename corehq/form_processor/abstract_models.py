@@ -1,12 +1,14 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import collections
 import logging
 from abc import ABCMeta, abstractmethod
 
 import six as six
-from couchdbkit import ResourceNotFound
 
-from dimagi.utils.decorators.memoized import memoized
+from casexml.apps.phone.exceptions import MissingSyncLog
+
+from memoized import memoized
 from couchforms import const
 
 
@@ -124,7 +126,7 @@ class AbstractXFormInstance(object):
         if self.last_sync_token:
             try:
                 return get_properly_wrapped_sync_log(self.last_sync_token)
-            except ResourceNotFound:
+            except MissingSyncLog:
                 pass
         return None
 
@@ -228,10 +230,26 @@ class AbstractCommCareCase(CaseToXMLMixin):
                 host._resolve_case_property(property_name[5:], result)
             return
 
-        result.append(CasePropertyResult(
-            self,
-            self.to_json().get(property_name)
-        ))
+        from corehq.form_processor.models import CommCareCaseSQL
+        if isinstance(self, CommCareCaseSQL):
+            if property_name == '_id':
+                property_name = 'case_id'
+
+            # Use .get_case_property() for the CommCareCaseSQL because
+            # using .to_json() makes a lot of unnecessary db calls to find
+            # things like case indices and case actions which we don't need here
+            result.append(CasePropertyResult(
+                self,
+                self.get_case_property(property_name)
+            ))
+        else:
+            # Use .to_json() for the couch CommCareCase because if we used
+            # get_case_property() then dynamic case properties might end
+            # up being coerced into data types other than string
+            result.append(CasePropertyResult(
+                self,
+                self.to_json().get(property_name)
+            ))
 
     def resolve_case_property(self, property_name):
         """

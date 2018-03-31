@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from copy import deepcopy
 from pydoc import html
 from django.http import Http404
@@ -39,6 +40,7 @@ class FormQuestion(JsonObject):
     relevant = StringProperty()
     required = BooleanProperty()
     comment = StringProperty()
+    setvalue = StringProperty()
 
     @property
     def icon(self):
@@ -358,14 +360,14 @@ def absolute_path_from_context(path, path_context):
 
 def _html_interpolate_output_refs(itext_value, context):
     if hasattr(itext_value, 'with_refs'):
-        underline_template = u'<u>&nbsp;&nbsp;%s&nbsp;&nbsp;</u>'
+        underline_template = '<u>&nbsp;&nbsp;%s&nbsp;&nbsp;</u>'
         return mark_safe(
             itext_value.with_refs(
                 context,
                 processor=lambda x: underline_template % (
                     html.escape(x)
                     if x is not None
-                    else u'<i class="fa fa-question-circle"></i>'
+                    else '<i class="fa fa-question-circle"></i>'
                 ),
                 escape=html.escape,
             )

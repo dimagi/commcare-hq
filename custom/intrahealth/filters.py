@@ -1,3 +1,4 @@
+# encoding: utf-8
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import calendar
@@ -66,7 +67,7 @@ class RecapPassageLocationFilter(LocationFilter):
 
 
 class FRYearFilter(YearFilter):
-    label = ugettext_noop("Ann\xe9e")
+    label = ugettext_noop("Année")
 
 
 class FRMonthFilter(MonthFilter):

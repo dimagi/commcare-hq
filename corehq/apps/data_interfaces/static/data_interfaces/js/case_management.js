@@ -99,9 +99,11 @@ var CaseManagement = function (o) {
             $modal = $('#caseManagementStatusModal'),
             owner_type = getOwnerType(new_owner);
 
-        // groups and users have different number of characters before the id
-        // users are u__id and groups are sg__id
-        new_owner = new_owner.slice(new_owner.indexOf('__') + 2);
+        if (new_owner.includes('__')) {
+            // groups and users have different number of characters before the id
+            // users are u__id and groups are sg__id
+            new_owner = new_owner.slice(new_owner.indexOf('__') + 2);
+        }
 
         if (_.isEmpty(new_owner)) {
             $modal.find('.modal-body').text("Please select an owner");
@@ -142,20 +144,5 @@ ko.bindingHandlers.caseReassignmentForm = {
             $element.find("[type='submit']").enableButton();
             $element.slideUp();
         }
-    },
-};
-
-ko.bindingHandlers.grabUniqueDefault = {
-    update: function(element, valueAccessor) {
-        var value = valueAccessor()();
-        var unique = _.unique(value);
-        if (unique.length === 1) {
-            $(element).val(unique[0]);
-        } else {
-            // okay, so ideally this should deselect the select and combobox. unfortunately I think this requires
-            // some reworking of the combobox, so just have it set at whatever value is set by default for now is fine.
-            // bleh.
-        }
-        $(element).trigger('change');
     },
 };

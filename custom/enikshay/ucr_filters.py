@@ -4,7 +4,7 @@ from collections import namedtuple
 
 from sqlagg.filters import ORFilter, EQFilter
 
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 from corehq.apps.es import filters
 from corehq.apps.locations.models import SQLLocation
@@ -31,20 +31,20 @@ class ENikshayLocationHierarchyFilterValue(FilterValue):
             # This report could be filtered by a user who is not assigned to one of the pertinent location types.
             # In that case, the report should show nothing, so return a filter that is guaranteed not to match
             # any records.
-            return [_LocationFilter("phi", "{}_phi".format(self.filter.slug), location_id)]
+            return [_LocationFilter("phi", "{}_phi".format(self.filter['slug']), location_id)]
 
         filters = []
         for ancestor in location.get_ancestors(include_self=True):
             if ancestor.location_type.code in relevant_location_types:
                 column = ancestor.location_type.code
-                parameter = "{slug}_{column}".format(slug=self.filter.slug, column=column)
+                parameter = "{slug}_{column}".format(slug=self.filter['slug'], column=column)
                 value = ancestor.location_id
                 filters.append(
                     _LocationFilter(column, parameter, value)
                 )
 
         below_column = "below_{}".format(location.location_type.code)
-        below_parameter = "{slug}_{column}".format(slug=self.filter.slug, column=below_column)
+        below_parameter = "{slug}_{column}".format(slug=self.filter['slug'], column=below_column)
         filters.append(
             _LocationFilter(below_column, below_parameter, location.location_id)
         )

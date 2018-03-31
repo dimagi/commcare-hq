@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import json
 import os
 import uuid
@@ -34,6 +35,7 @@ class ReadableFormdataTest(SimpleTestCase):
             'calculate': None,
             'required': False,
             'relevant': None,
+            'setvalue': 'default',
         }]
         form_data = {
             "@uiVersion": "1",
@@ -84,6 +86,7 @@ class ReadableFormdataTest(SimpleTestCase):
                 'comment': None,
                 'required': False,
                 'relevant': None,
+                'setvalue': 'default',
             }])
         )
 
@@ -296,9 +299,9 @@ class ReadableFormTest(TestCase):
         actual, _ = get_readable_data_for_submission(xform)
 
         expected = [{
-            'value': u'/data/dalmation_count',
-            'label': u'dalmation_count',
-            'response': u'yes'
+            'value': '/data/dalmation_count',
+            'label': 'dalmation_count',
+            'response': 'yes'
         }]
         self.assertJSONEqual(
             json.dumps([q.to_json() for q in actual]),

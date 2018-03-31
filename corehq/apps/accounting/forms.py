@@ -25,7 +25,7 @@ from crispy_forms.helper import FormHelper
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from django_countries.data import COUNTRIES
 
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from django_prbac.models import Role, Grant, UserRole
 
 from corehq import privileges

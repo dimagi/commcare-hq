@@ -1012,6 +1012,13 @@ FORMPLAYER_USE_LIVEQUERY = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
+SMS_USE_FORMPLAYER = StaticToggle(
+    'sms_use_formplayer',
+    'Use Formplayer for SMS',
+    TAG_INTERNAL,
+    [NAMESPACE_DOMAIN],
+)
+
 FIXTURE_CASE_SELECTION = StaticToggle(
     'fixture_case',
     'ICDS: Allow a configurable case list that is filtered based on a fixture type and '
@@ -1469,14 +1476,6 @@ MOBILE_LOGIN_LOCKOUT = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-SHOW_ALL_SCHEDULED_REPORT_EMAILS = StaticToggle(
-    'show_all_scheduled_report_emails',
-    "In the 'My Scheduled Reports' tab, show all reports the user is part of (if the user is an "
-    "admin, show all in the current project)",
-    TAG_PRODUCT,
-    [NAMESPACE_DOMAIN],
-)
-
 LINKED_DOMAINS = StaticToggle(
     'linked_domains',
     'Allow linking domains (successor to linked apps)',
@@ -1493,4 +1492,30 @@ SUMOLOGIC_LOGS = DynamicallyPredictablyRandomToggle(
     'Send logs to sumologic',
     TAG_INTERNAL,
     namespaces=[NAMESPACE_OTHER],
+)
+
+
+MOBILE_SIGNUP_REDIRECT_AB_TEST_CONTROLLER = StaticToggle(
+    'mobile_signup_redirect_ab_test_controller',
+    'Enable the ab test for telling mobile signups to use desktops. Set on the fly on registration if mobile',
+    TAG_PRODUCT,
+    namespaces=[NAMESPACE_USER]
+)
+
+
+MOBILE_SIGNUP_REDIRECT_AB_TEST = PredictablyRandomToggle(
+    'mobile_signup_redirect_ab_test',
+    'Randomly sorts mobile users into group 1 for new mobile experience or 0 for control',
+    TAG_PRODUCT,
+    namespaces=[NAMESPACE_USER],
+    randomness=0.5
+)
+
+
+APPCUES_AB_TEST = PredictablyRandomToggle(
+    'appcues_ab_test',
+    'True if user is in variant group for Appcues AB test. Irrelevent if user is not in test.',
+    TAG_PRODUCT,
+    namespaces=[NAMESPACE_USER],
+    randomness=0.5
 )

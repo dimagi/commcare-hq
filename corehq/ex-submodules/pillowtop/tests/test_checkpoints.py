@@ -1,7 +1,8 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.test import SimpleTestCase, override_settings, TestCase
 import time
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from pillowtop.checkpoints.manager import PillowCheckpoint, get_or_create_checkpoint
 from pillowtop.checkpoints.util import get_machine_id
 from pillowtop.exceptions import PillowtopCheckpointReset

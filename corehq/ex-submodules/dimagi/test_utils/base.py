@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+from __future__ import unicode_literals
 from django.conf import settings
 from six.moves import range
 
@@ -10,7 +11,7 @@ if not settings.configured:
 from mock import MagicMock, NonCallableMock, patch
 from unittest2 import TestCase
 
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.chunked import chunked
 from dimagi.utils.read_only import ReadOnlyObject
 from dimagi.utils.couch.sync_docs import sync_design_docs, copy_designs

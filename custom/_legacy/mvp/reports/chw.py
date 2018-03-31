@@ -10,7 +10,7 @@ from corehq.apps.indicators.models import DynamicIndicatorDefinition, CombinedCo
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DataTablesColumnGroup
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import DatespanMixin
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from django.utils.html import format_html
 from mvp.models import MVP
 from mvp.reports import MVPIndicatorReport

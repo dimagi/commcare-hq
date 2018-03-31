@@ -79,6 +79,39 @@ class TestPVATable(ChampTestCase):
 
         self.assertDictEqual(expected_data, content)
 
+    def test_report_filter_by_cbo(self):
+        if self.factory is None:
+            return
+        working_reverse = reverse(self.url, kwargs={'domain': self.domain.name})
+
+        filters = {
+            'cbo': ['alternatives_deido', 'cmwa_bda']
+        }
+
+        request = self.factory.post(
+            working_reverse,
+            data=json.dumps(filters),
+            content_type='application/json'
+        )
+        request.user = self.user
+        response = self.view(request, domain=self.domain.name)
+        content = json.loads(response.content)
+        expected_data = {
+            'target_kp_prev': 61,
+            'target_htc_tst': 2563,
+            'target_htc_pos': 1254,
+            'target_care_new': 3256,
+            'target_tx_new': 123,
+            'target_tx_undetect': 1452,
+            'kp_prev': 2691,
+            'htc_tst': 1059,
+            'htc_pos': 99,
+            'care_new': 210,
+            'tx_new': 91,
+            'tx_undetect': 141,
+        }
+        self.assertDictEqual(expected_data, content)
+
     def test_report_filter_by_visit_type(self):
         if self.factory is None:
             return

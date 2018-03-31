@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import division
+from __future__ import unicode_literals
 import time
 
 import itertools
@@ -35,6 +36,8 @@ class NestableTimer(object):
         """Get timer duration in seconds"""
         if self.beginning and self.end:
             return self.end - self.beginning
+        elif self.beginning:
+            return time.time() - self.beginning
 
     @property
     def percent_of_total(self):

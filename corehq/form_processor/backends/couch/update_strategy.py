@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import copy
 from functools import cmp_to_key
 import logging
@@ -86,9 +87,9 @@ class CouchCaseUpdateStrategy(UpdateStrategy):
             error = None
             for a in self.case.actions:
                 if a.server_date is None:
-                    error = u"Case {0} action server_date is None: {1}"
+                    error = "Case {0} action server_date is None: {1}"
                 elif a.xform_id is None:
-                    error = u"Case {0} action xform_id is None: {1}"
+                    error = "Case {0} action xform_id is None: {1}"
                 if error:
                     raise ReconciliationError(error.format(self.case.case_id, a))
 
@@ -116,8 +117,8 @@ class CouchCaseUpdateStrategy(UpdateStrategy):
                 found_actions = [other for other in ret if actions_match(a, other)]
                 if found_actions:
                     if len(found_actions) != 1:
-                        error = (u"Case {0} action conflicts "
-                                 u"with multiple other actions: {1}")
+                        error = ("Case {0} action conflicts "
+                                 "with multiple other actions: {1}")
                         raise ReconciliationError(error.format(self.case.case_id, a))
                     match = found_actions[0]
                     # when they disagree, choose the _earlier_ one as this is
@@ -135,7 +136,7 @@ class CouchCaseUpdateStrategy(UpdateStrategy):
         )
         if sorted_actions:
             if sorted_actions[0].action_type != const.CASE_ACTION_CREATE:
-                error = u"Case {0} first action not create action: {1}"
+                error = "Case {0} first action not create action: {1}"
                 raise ReconciliationError(
                     error.format(self.case.case_id, sorted_actions[0])
                 )

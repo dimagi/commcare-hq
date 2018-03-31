@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.contrib import messages
 from django.urls import reverse
 from django.http import HttpResponseRedirect
@@ -10,7 +11,7 @@ from corehq.apps.hqwebapp.decorators import use_select2
 from corehq.apps.styleguide.examples.controls_demo.forms import (
     SelectControlDemoForm,
 )
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 
 class BaseControlDemoFormsView(BaseSectionPageView):

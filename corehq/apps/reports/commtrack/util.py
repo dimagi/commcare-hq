@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.core.exceptions import ObjectDoesNotExist
 from casexml.apps.stock.consumption import ConsumptionHelper
 from corehq.apps.locations.models import SQLLocation
@@ -42,12 +43,8 @@ class StockLedgerValueWrapper(jsonobject.JsonObject):
     @property
     def sql_location(self):
         if self.location_id and not self._sql_location:
-            try:
-                self._sql_location = SQLLocation.objects.get(domain=self.domain, location_id=self.location_id)
-            except ObjectDoesNotExist:
-                # todo: cache this result so multiple failing calls don't keep hitting the DB
-                return None
-
+            self._sql_location = SQLLocation.objects.get_or_None(domain=self.domain, location_id=self.location_id)
+            # todo: cache this result so multiple failing calls don't keep hitting the DB
         return self._sql_location
 
     @classmethod

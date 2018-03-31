@@ -5,6 +5,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
     var vm = this;
 
     vm.months = [];
+    vm.monthsCopy = [];
     vm.years = [];
     vm.task_id = $location.search()['task_id'] || '';
     $rootScope.issnip_report_link = '';
@@ -42,28 +43,47 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
 
     vm.userLocationId = userLocationId;
 
+    vm.selectedMonth = new Date().getMonth() + 1;
+    vm.selectedYear = new Date().getFullYear();
+
     window.angular.forEach(moment.months(), function(key, value) {
-        vm.months.push({
+        vm.monthsCopy.push({
             name: key,
             id: value + 1,
         });
     });
 
-    for (var year=2014; year <= new Date().getFullYear(); year++ ) {
+    if (vm.selectedYear === new Date().getFullYear()) {
+        vm.months = _.filter(vm.monthsCopy, function (month) {
+            return month.id <= new Date().getMonth() + 1;
+        });
+    } else if (vm.selectedYear === 2017) {
+        vm.months = _.filter(vm.monthsCopy, function (month) {
+            return month.id >= 3;
+        });
+    } else {
+        vm.months = vm.monthsCopy;
+    }
+
+    for (var year=2017; year <= new Date().getFullYear(); year++ ) {
         vm.years.push({
             name: year,
             id: year,
         });
     }
     vm.queuedISSNIPTask = false;
-    vm.selectedMonth = new Date().getMonth() + 1;
-    vm.selectedYear = new Date().getFullYear();
     vm.selectedIndicator = 1;
-    vm.selectedFormat = 'xls';
+    vm.selectedFormat = 'xlsx';
     vm.selectedPDFFormat = 'many';
     vm.selectedLocationId = userLocationId;
     vm.selectedLevel = 1;
     vm.now = new Date().getMonth() + 1;
+    vm.showWarning = function () {
+        return (
+            vm.now === vm.selectedMonth &&
+            new Date().getFullYear() === vm.selectedYear
+        );
+    };
     vm.levels = [
         {id: 1, name: 'State'},
         {id: 2, name: 'District'},
@@ -76,7 +96,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
 
     vm.formats = [
         {id: 'csv', name: 'CSV'},
-        {id: 'xls', name: 'Excel'},
+        {id: 'xlsx', name: 'Excel'},
     ];
 
     vm.pdfFormats = [
@@ -95,12 +115,8 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         {id: 4, name: 'System Usage'},
         {id: 5, name: 'AWC Infrastructure'},
         {id: 6, name: 'Child Beneficiary List'},
-
+        {id: 7, name: 'ICDS-CAS Monthly Register'},
     ];
-
-    if (haveAccessToFeatures) {
-        vm.indicators.push({id: 7, name: 'ICDS-CAS Monthly Register'});
-    }
 
     var ALL_OPTION = {name: 'All', location_id: 'all'};
     var NATIONAL_OPTION = {name: 'National', location_id: 'all'};
@@ -152,7 +168,14 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
 
                 for (var parentId in locationsGrouppedByParent) {
                     if (locationsGrouppedByParent.hasOwnProperty(parentId)) {
-                        locationsCache[parentId] = [ALL_OPTION].concat(locationsGrouppedByParent[parentId]);
+                        var sorted_locations = _.sortBy(locationsGrouppedByParent[parentId], function(o) {
+                            return o.name;
+                        });
+                        if (selectedLocation.user_have_access) {
+                            locationsCache[parentId] = [ALL_OPTION].concat(sorted_locations);
+                        } else {
+                            locationsCache[parentId] = sorted_locations;
+                        }
                     }
                 }
 
@@ -244,19 +267,24 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         if (vm.userLocationId === null) {
             return false;
         }
-        var i = -1;
-        window.angular.forEach(vm.selectedLocations, function (key, value) {
-            if (key === userLocationId) {
-                i = value;
+        var notDisabledLocationsForLevel = 0;
+        window.angular.forEach(vm.getLocationsForLevel(level), function(location) {
+            if (location.user_have_access || location.user_have_access_to_parent) {
+                notDisabledLocationsForLevel += 1;
             }
         });
-        return selectedLocationIndex() !== -1 && i >= level;
+
+        return notDisabledLocationsForLevel <= 1;
     };
 
     vm.onSelectForISSNIP = function ($item, level) {
         var selectedLocationId = vm.selectedLocations[selectedLocationIndex()];
         locationsService.getAwcLocations(selectedLocationId).then(function (data) {
-            vm.awcLocations = [ALL_OPTION].concat(data);
+            if ($item.user_have_access) {
+                vm.awcLocations = [ALL_OPTION].concat(data);
+            } else {
+                vm.awcLocations = data;
+            }
         });
         vm.selectedAWCs = [];
         vm.onSelect($item, level);
@@ -264,10 +292,27 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
 
     vm.onSelect = function($item, level) {
         resetLevelsBelow(level);
+        if (level < 4) {
+            locationsService.getChildren($item.location_id).then(function (data) {
+                if ($item.user_have_access) {
+                    locationsCache[$item.location_id] = [ALL_OPTION].concat(data.locations);
+                    vm.selectedLevel = selectedLocationIndex() + 1;
+                    vm.selectedLocations[level + 1] = ALL_OPTION.location_id;
+                    vm.selectedLocationId = vm.selectedLocations[selectedLocationIndex()];
+                } else {
+                    locationsCache[$item.location_id] = data.locations;
+                    vm.selectedLevel = selectedLocationIndex() + 1;
+                    vm.selectedLocations[level + 1] = data.locations[0].location_id;
+                    vm.selectedLocationId = vm.selectedLocations[selectedLocationIndex()];
+                    if (level === 2 && vm.isISSNIPMonthlyRegisterSelected()) {
+                        vm.onSelectForISSNIP(data.locations[0], level + 1);
+                    } else {
+                        vm.onSelect(data.locations[0], level + 1);
+                    }
 
-        locationsService.getChildren($item.location_id).then(function(data) {
-            locationsCache[$item.location_id] = [ALL_OPTION].concat(data.locations);
-        });
+                }
+            });
+        }
         var levels = [];
         window.angular.forEach(vm.levels, function (value) {
             if (value.id > selectedLocationIndex()) {
@@ -275,10 +320,6 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
             }
         });
         vm.groupByLevels = levels;
-        vm.selectedLevel = selectedLocationIndex() + 1;
-
-        vm.selectedLocations[level + 1] = ALL_OPTION.location_id;
-        vm.selectedLocationId = vm.selectedLocations[selectedLocationIndex()];
     };
 
     vm.onSelectAWCs = function($item) {
@@ -286,6 +327,22 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
             vm.selectedAWCs = [$item.location_id];
         } else if (vm.selectedAWCs.indexOf('all') !== -1) {
             vm.selectedAWCs = [$item.location_id];
+        }
+    };
+
+    vm.onSelectYear = function (item) {
+        if (item.id === new Date().getFullYear()) {
+            vm.months = _.filter(vm.monthsCopy, function(month) {
+                return month.id <= new Date().getMonth() + 1;
+            });
+            vm.selectedMonth = vm.selectedMonth <= new Date().getMonth() + 1 ? vm.selectedMonth : new Date().getMonth() + 1;
+        } else if (item.id === 2017) {
+            vm.months = _.filter(vm.monthsCopy, function (month) {
+                return month.id >= 3;
+            });
+            vm.selectedMonth = vm.selectedMonth >= 3 ? vm.selectedMonth : 3;
+        } else {
+            vm.months = vm.monthsCopy;
         }
     };
 
@@ -302,11 +359,11 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
     };
 
     vm.onIndicatorSelect = function() {
-        if (vm.isChildBeneficiaryListSelected() && !vm.isDistrictOrBelowSelected()) {
+        if (vm.isChildBeneficiaryListSelected()) {
             init();
             vm.selectedFormat = vm.formats[0].id;
         } else {
-            vm.selectedFormat = 'xls';
+            vm.selectedFormat = 'xlsx';
         }
     };
 
@@ -343,7 +400,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         vm.selectedMonth = new Date().getMonth() + 1;
         vm.selectedYear = new Date().getFullYear();
         vm.selectedIndicator = 1;
-        vm.selectedFormat = 'xls';
+        vm.selectedFormat = 'xlsx';
         vm.selectedPDFFormat = 'many';
         initHierarchy();
     };
@@ -352,11 +409,19 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
         return vm.isChildBeneficiaryListSelected() && (vm.selectedFilterOptions().length === 0 || !vm.isDistrictOrBelowSelected());
     };
 
+    vm.isCombinedPDFSelected = function() {
+        return vm.isISSNIPMonthlyRegisterSelected() && vm.selectedPDFFormat === 'one';
+    };
+
+    vm.isBlockOrBelowSelected = function () {
+        return vm.selectedLocations[2] && vm.selectedLocations[2] !== ALL_OPTION.location_id;
+    };
+
     vm.hasErrorsISSNIPExport = function() {
         if (vm.selectedPDFFormat === 'one') {
-            return vm.isISSNIPMonthlyRegisterSelected() && !vm.isDistrictOrBelowSelected();
+            return vm.isISSNIPMonthlyRegisterSelected() && !vm.isBlockOrBelowSelected();
         }
-        return vm.isISSNIPMonthlyRegisterSelected() && (!vm.isDistrictOrBelowSelected() || !vm.isAWCsSelected());
+        return vm.isISSNIPMonthlyRegisterSelected() && (!vm.isBlockOrBelowSelected() || !vm.isAWCsSelected());
     };
 
     vm.isVisible = function(level) {
@@ -394,9 +459,11 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
     };
 
     vm.goToLink = function () {
-        window.open($rootScope.issnip_report_link);
-        vm.downloaded = true;
-        $rootScope.issnip_report_link = '';
+        if (vm.readyToDownload()) {
+            window.open($rootScope.issnip_report_link);
+            vm.downloaded = true;
+            $rootScope.issnip_report_link = '';
+        }
     };
 
 }

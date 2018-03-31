@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+from __future__ import unicode_literals
 import inspect
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
@@ -45,7 +46,7 @@ from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.database import get_safe_write_kwargs, iter_docs
 from dimagi.utils.logging import notify_exception, log_signal_errors
 
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.make_uuid import random_hex
 from dimagi.utils.modules import to_function
 from corehq.util.quickcache import quickcache
@@ -1012,7 +1013,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         # redact hashed password
         properties = sorted(predefined_properties - {'password'}) + sorted(dynamic_properties - {'password'})
 
-        return u'{name}({keyword_args})'.format(
+        return '{name}({keyword_args})'.format(
             name=name,
             keyword_args=', '.join('{key}={value!r}'.format(
                 key=key,
@@ -1088,7 +1089,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
 
     @property
     def full_name(self):
-        return (u"%s %s" % (self.first_name or u'', self.last_name or u'')).strip()
+        return ("%s %s" % (self.first_name or '', self.last_name or '')).strip()
 
     @property
     def human_friendly_name(self):
@@ -1892,10 +1893,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     def sql_location(self):
         from corehq.apps.locations.models import SQLLocation
         if self.location_id:
-            try:
-                return SQLLocation.objects.get(location_id=self.location_id)
-            except SQLLocation.DoesNotExist:
-                pass
+            return SQLLocation.objects.get_or_None(location_id=self.location_id)
         return None
 
     def get_location_ids(self, domain):
@@ -2019,8 +2017,10 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             self.save()
 
     def _remove_location_from_user(self, location_id):
+        from corehq.apps.fixtures.models import UserFixtureType
         try:
             self.assigned_location_ids.remove(location_id)
+            self.update_fixture_status(UserFixtureType.LOCATION)
         except ValueError:
             notify_exception(None, "Location missing from user", {
                 'user_id': self._id,
@@ -2171,16 +2171,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     @property
     def fixture_statuses(self):
         """Returns all of the last modified times for each fixture type"""
-        return self._get_fixture_statuses()
-
-    @quickcache(['self._id'], lambda _: settings.UNIT_TESTING)
-    def _get_fixture_statuses(self):
-        from corehq.apps.fixtures.models import UserFixtureType, UserFixtureStatus
-        last_modifieds = {choice[0]: UserFixtureStatus.DEFAULT_LAST_MODIFIED
-                          for choice in UserFixtureType.CHOICES}
-        for fixture_status in UserFixtureStatus.objects.filter(user_id=self._id):
-            last_modifieds[fixture_status.fixture_type] = fixture_status.last_modified
-        return last_modifieds
+        return get_fixture_statuses(self._id)
 
     def fixture_status(self, fixture_type):
         try:
@@ -2200,7 +2191,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         if not new:
             user_fixture_sync.last_modified = now
             user_fixture_sync.save()
-        self._get_fixture_statuses.clear(self)
+        get_fixture_statuses.clear(self._id)
 
     def __repr__(self):
         return ("{class_name}(username={self.username!r})".format(
@@ -2254,6 +2245,30 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         for device in self.devices:
             if device.device_id == device_id:
                 return device
+
+
+def update_fixture_status_for_users(user_ids, fixture_type):
+    from corehq.apps.fixtures.models import UserFixtureStatus
+    from dimagi.utils.chunked import chunked
+
+    now = datetime.utcnow()
+    for ids in chunked(user_ids, 50):
+        (UserFixtureStatus.objects
+         .filter(user_id__in=ids,
+                 fixture_type=fixture_type)
+         .update(last_modified=now))
+    for user_id in user_ids:
+        get_fixture_statuses.clear(user_id)
+
+
+@quickcache(['user_id'], lambda _: settings.UNIT_TESTING)
+def get_fixture_statuses(user_id):
+    from corehq.apps.fixtures.models import UserFixtureType, UserFixtureStatus
+    last_modifieds = {choice[0]: UserFixtureStatus.DEFAULT_LAST_MODIFIED
+                      for choice in UserFixtureType.CHOICES}
+    for fixture_status in UserFixtureStatus.objects.filter(user_id=user_id):
+        last_modifieds[fixture_status.fixture_type] = fixture_status.last_modified
+    return last_modifieds
 
 
 class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):

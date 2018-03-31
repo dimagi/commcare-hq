@@ -1,4 +1,4 @@
-/* global module, inject, chai */
+/* global module, inject, chai, sinon */
 "use strict";
 
 var pageData = hqImport('hqwebapp/js/initial_page_data');
@@ -18,6 +18,8 @@ describe('Progress Report Directive', function () {
         $scope = $rootScope.$new();
         $httpBackend = _$httpBackend_;
         $location = _$location_;
+        var fakeDate = new Date(2017, 9, 1);
+        var clock = sinon.useFakeTimers(fakeDate.getTime());
 
         $httpBackend.expectGET('template').respond(200, '<div></div>');
         var element = window.angular.element("<progress-report data='test'></progress-report>");
@@ -26,6 +28,8 @@ describe('Progress Report Directive', function () {
         $httpBackend.flush();
         $scope.$digest();
         controller = compiled.controller('progressReport');
+
+        clock.restore();
     }));
 
     it('tests instantiate the controller properly', function () {
@@ -33,7 +37,8 @@ describe('Progress Report Directive', function () {
     });
 
     it('tests initial state', function () {
-        assert.equal(controller.showWarning, true);
+        assert.equal(controller.showWarning, false);
+        assert.equal(controller.showPreviousMonthWarning, true);
         assert.deepEqual(controller.filtersData, {});
     });
 

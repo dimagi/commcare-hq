@@ -393,12 +393,9 @@ hqDefine('app_manager/js/details/screen_config', function() {
 
                 this.saveAttempted = ko.observable(false);
                 var addOns = hqImport("hqwebapp/js/initial_page_data").get("add_ons");
-                this.useXpathExpression = ko.observable(addOns.calc_xpaths && this.original.useXpathExpression);
-                this.useXpathExpression.subscribe(function() {
-                    that.fire('change');
-                });
+                this.useXpathExpression = this.original.useXpathExpression;
                 this.showWarning = ko.computed(function() {
-                    if (this.useXpathExpression()) {
+                    if (this.useXpathExpression) {
                         return false;
                     }
                     if (this.isTab) {
@@ -410,7 +407,7 @@ hqDefine('app_manager/js/details/screen_config', function() {
                 }, this);
 
                 // Add the graphing option if this is a graph so that we can set the value to graph
-                var menuOptions = DetailScreenConfig.MENU_OPTIONS;
+                var menuOptions = DetailScreenConfig.MENU_OPTIONS.slice();
                 if (this.original.format === "graph") {
                     menuOptions = menuOptions.concat([{
                         value: "graph",
@@ -422,6 +419,20 @@ hqDefine('app_manager/js/details/screen_config', function() {
                         value: "markdown",
                         label: gettext('Markdown'),
                     }]);
+                }
+
+                if (this.useXpathExpression) {
+                    var menuOptionsToRemove = ['picture', 'audio'];
+                    for (var i = 0; i < menuOptionsToRemove.length; i++) {
+                        for(var j = 0; j < menuOptions.length; j++) {
+                            if (
+                                menuOptions[j].value !== this.original.format
+                                && menuOptions[j].value === menuOptionsToRemove[i]
+                            ) {
+                                menuOptions.splice(j, 1);
+                            }
+                        }
+                    }
                 }
 
                 this.format = uiElement.select(menuOptions).val(this.original.format || null);
@@ -439,8 +450,8 @@ hqDefine('app_manager/js/details/screen_config', function() {
                     };
                     that.enum_extra = uiElement.key_value_mapping(o);
                 }());
-                var GraphConfigurationUiElement = hqImport('app_manager/js/details/graph_config').GraphConfigurationUiElement;
-                this.graph_extra = new GraphConfigurationUiElement({
+                var graphConfigurationUiElement = hqImport('app_manager/js/details/graph_config').graphConfigurationUiElement;
+                this.graph_extra = graphConfigurationUiElement({
                     childCaseTypes: this.screen.childCaseTypes,
                     fixtures: this.screen.fixtures,
                     lang: this.lang,
@@ -683,14 +694,12 @@ hqDefine('app_manager/js/details/screen_config', function() {
                     column.on('change', that.fireChange);
 
                     column.field.on('change', function() {
-                        if (!column.useXpathExpression()) {
+                        if (!column.useXpathExpression) {
                             column.header.val(getPropertyTitle(this.val()));
                             column.header.fire("change");
                         }
                     });
-                    if (column.original.hasAutocomplete || (
-                        column.original.useXpathExpression && !column.useXpathExpression()
-                    )) {
+                    if (column.original.hasAutocomplete) {
                         module.CC_DETAIL_SCREEN.setUpAutocomplete(column.field, that.properties);
                     }
                     return column;
@@ -861,7 +870,7 @@ hqDefine('app_manager/js/details/screen_config', function() {
                         }
                     ));
 
-                    data.useCaseTiles = this.useCaseTiles() === "yes" ? true : false;
+                    data.useCaseTiles = this.useCaseTiles() === "yes";
                     data.persistCaseContext = this.persistCaseContext();
                     data.persistentCaseContextXML = this.persistentCaseContextXML();
                     data.persistTileOnForms = this.persistTileOnForms();
@@ -930,7 +939,7 @@ hqDefine('app_manager/js/details/screen_config', function() {
                     } else {
                         this.columns.splice(index, 0, column);
                     }
-                    column.useXpathExpression(!!columnConfiguration.useXpathExpression);
+                    column.useXpathExpression = !!columnConfiguration.useXpathExpression;
                 },
                 pasteCallback: function(data, index) {
                     try {

@@ -1,7 +1,8 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import jsonfield
 import uuid
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from django.db import models, transaction
 from corehq.apps.reminders.util import get_one_way_number_for_recipient
 from corehq.apps.sms.api import MessageMetadata, send_sms

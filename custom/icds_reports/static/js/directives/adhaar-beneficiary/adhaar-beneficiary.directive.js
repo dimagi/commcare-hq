@@ -189,8 +189,8 @@ function AdhaarController($scope, $routeParams, $location, $filter, demographics
             callback: function(chart) {
                 var tooltip = chart.interactiveLayer.tooltip;
                 tooltip.contentGenerator(function (d) {
-                    var day = _.find(vm.chartData[0].values, function(num) { return d3.time.format('%b %Y')(new Date(num['x'])) === d.value;});
-                    var tooltip_content = vm.getTooltipContent(d, day);
+                    var day = _.find(vm.chartData[0].values, function(num) { return num['x'] === d.value; });
+                    var tooltip_content = vm.getTooltipContent(d3.time.format('%b %Y')(new Date(d.value)), day);
                     return tooltip_content;
                 });
                 return chart;
@@ -207,8 +207,8 @@ function AdhaarController($scope, $routeParams, $location, $filter, demographics
         },
     };
 
-    vm.getTooltipContent = function(val, day) {
-        var content = "<p><strong>" + val.value + "</strong></p><br/>";
+    vm.getTooltipContent = function(monthName, day) {
+        var content = "<p><strong>" + monthName + "</strong></p><br/>";
         content += "<div>Total number of ICDS beneficiaries whose Aadhaar has been captured: <strong>" + $filter('indiaNumbers')(day.in_month) + "</strong></div>";
         content += "<div>% of ICDS beneficiaries whose Aadhaar has been captured: <strong>" + d3.format('.2%')(day.y) + "</strong></div>";
         return content;

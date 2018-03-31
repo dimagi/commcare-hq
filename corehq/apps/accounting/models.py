@@ -22,7 +22,7 @@ import jsonfield
 import stripe
 
 from dimagi.ext.couchdbkit import DateTimeProperty, StringProperty, SafeSaveDocument, BooleanProperty
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.web import get_site_domain
 
 from corehq.apps.accounting.emails import send_subscription_change_alert
@@ -782,7 +782,12 @@ class SoftwarePlanVersion(models.Model):
         from corehq.apps.accounting.user_text import DESC_BY_EDITION, FEATURE_TYPE_TO_NAME
 
         def _default_description(plan, monthly_limit):
-            if plan.edition != SoftwarePlanEdition.ENTERPRISE:
+            if plan.edition in [
+                SoftwarePlanEdition.COMMUNITY,
+                SoftwarePlanEdition.STANDARD,
+                SoftwarePlanEdition.PRO,
+                SoftwarePlanEdition.ADVANCED,
+            ]:
                 return DESC_BY_EDITION[plan.edition]['description'] % monthly_limit
             else:
                 return DESC_BY_EDITION[plan.edition]['description']
@@ -988,14 +993,14 @@ class Subscription(models.Model):
     account = models.ForeignKey(BillingAccount, on_delete=models.PROTECT)
     plan_version = models.ForeignKey(SoftwarePlanVersion, on_delete=models.PROTECT)
     subscriber = models.ForeignKey(Subscriber, on_delete=models.PROTECT)
-    salesforce_contract_id = models.CharField(blank=True, null=True, max_length=80)
+    salesforce_contract_id = models.CharField(blank=True, max_length=80)
     date_start = models.DateField()
     date_end = models.DateField(blank=True, null=True)
     date_delay_invoicing = models.DateField(blank=True, null=True)
     date_created = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=False)
     do_not_invoice = models.BooleanField(default=False)
-    no_invoice_reason = models.CharField(blank=True, null=True, max_length=256)
+    no_invoice_reason = models.CharField(blank=True, max_length=256)
     do_not_email_invoice = models.BooleanField(default=False)
     do_not_email_reminder = models.BooleanField(default=False)
     auto_generate_credits = models.BooleanField(default=False)
@@ -1216,8 +1221,7 @@ class Subscription(models.Model):
                     note=None, web_user=None, adjustment_method=None,
                     service_type=None, pro_bono_status=None, funding_source=None,
                     transfer_credits=True, internal_change=False, account=None,
-                    do_not_invoice=None, no_invoice_reason=None,
-                    skip_auto_downgrade=None, **kwargs):
+                    do_not_invoice=None, no_invoice_reason=None, **kwargs):
         """
         Changing a plan TERMINATES the current subscription and
         creates a NEW SUBSCRIPTION where the old plan left off.
@@ -1254,7 +1258,7 @@ class Subscription(models.Model):
             service_type=(service_type or SubscriptionType.NOT_SET),
             pro_bono_status=(pro_bono_status or ProBonoStatus.NO),
             funding_source=(funding_source or FundingSource.CLIENT),
-            skip_auto_downgrade=skip_auto_downgrade if skip_auto_downgrade is not None else self.skip_auto_downgrade,
+            skip_auto_downgrade=False,
             **kwargs
         )
 
@@ -2776,6 +2780,7 @@ class PaymentMethod(models.Model):
 
     class Meta(object):
         app_label = 'accounting'
+        unique_together = ('web_user', 'method_type')
 
 
 class StripePaymentMethod(PaymentMethod):

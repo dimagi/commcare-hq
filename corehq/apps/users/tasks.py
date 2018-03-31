@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from datetime import datetime
 from celery.exceptions import MaxRetriesExceededError
 from celery.schedules import crontab

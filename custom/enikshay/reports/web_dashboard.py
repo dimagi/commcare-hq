@@ -7,13 +7,13 @@ from corehq.apps.reports.graph_models import PieChart, MultiBarChart, Axis
 from corehq.apps.reports_core.filters import Choice
 from corehq.apps.hqwebapp.decorators import use_nvd3
 from corehq.apps.userreports.models import StaticReportConfiguration
-from corehq.apps.userreports.reports.factory import ReportFactory
+from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
 from custom.enikshay.reports.filters import EnikshayLocationFilter, EnikshayMigrationFilter
 from custom.enikshay.reports.generic import EnikshayReport
 from custom.enikshay.reports.sqldata.case_finding_sql_data import CaseFindingSqlData
 from custom.enikshay.reports.sqldata.charts_sql_data import ChartsSqlData
 from custom.enikshay.reports.sqldata.treatment_outcome_sql_data import TreatmentOutcomeSqlData
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 from django.utils.translation import ugettext_lazy, ugettext as _
 
@@ -66,7 +66,7 @@ class WebDashboardReport(EnikshayReport):
     @property
     def charts(self):
         case_finding_sql_data = self.case_finding_sql_data[0]
-        sputum_conversion_report = ReportFactory.from_spec(
+        sputum_conversion_report = ConfigurableReportDataSource.from_spec(
             StaticReportConfiguration.by_id('static-%s-sputum_conversion' % self.domain), include_prefilters=True
         )
 

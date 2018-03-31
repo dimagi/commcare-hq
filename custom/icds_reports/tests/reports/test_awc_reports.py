@@ -14,14 +14,14 @@ from custom.icds_reports.reports.awc_reports import get_beneficiary_details, get
 
 class TestAWCReport(TestCase):
     def test_beneficiary_details_recorded_weight_none(self):
-        data = get_beneficiary_details(case_id='6b234c5b-883c-4849-9dfd-b1571af8717b')
+        data = get_beneficiary_details(domain='icds-cas', case_id='6b234c5b-883c-4849-9dfd-b1571af8717b')
         self.assertEqual(data['age_in_months'], 69)
         self.assertEqual(data['sex'], 'M')
         self.assertEqual(data['person_name'], 'Name 3342')
         self.assertEqual(data['mother_name'], 'संगीता')
 
     def test_beneficiary_details_recorded_weight_is_not_none(self):
-        data = get_beneficiary_details(case_id='8e226cc6-740f-4146-b017-69d9f6e9651b')
+        data = get_beneficiary_details(domain='icds-cas', case_id='8e226cc6-740f-4146-b017-69d9f6e9651b')
         self.assertEqual(data['age_in_months'], 54)
         self.assertEqual(data['sex'], 'M')
         self.assertEqual(data['person_name'], 'Name 3141')
@@ -31,7 +31,7 @@ class TestAWCReport(TestCase):
         self.assertEqual(filter(lambda r: r['x'] == 96.0, data['wfl'])[0]['y'], 12.6)
 
     def test_beneficiary_details_have_age_in_month_not_have_recorded_height(self):
-        data = get_beneficiary_details(case_id='411c4234-8475-415a-9c28-911b85868aa5')
+        data = get_beneficiary_details(domain='icds-cas', case_id='411c4234-8475-415a-9c28-911b85868aa5')
         self.assertEqual(data['age_in_months'], 37)
         self.assertEqual(data['sex'], 'F')
         self.assertEqual(data['person_name'], 'Name 3483')
@@ -321,19 +321,19 @@ class TestAWCReport(TestCase):
                 },
                 {
                     "date": "02/05/2017",
-                    "image": "http://localhost:8000/a/icds-cas/api/form/attachment/"
+                    "image": "http://localhost:8000/a/icds-cas/icds_dashboard/icds_image_accessor/"
                              "00a368e6-e88f-41ee-96aa-25a8ec5ab3d6/1493703284010.jpg",
                     "id": 1
                 },
                 {
                     "date": "03/05/2017",
-                    "image": "http://localhost:8000/a/icds-cas/api/form/attachment/"
+                    "image": "http://localhost:8000/a/icds-cas/icds_dashboard/icds_image_accessor/"
                              "ef336dda-12a1-42a4-9bee-405d17c2aba8/1493790538044.jpg",
                     "id": 2
                 },
                 {
                     "date": "04/05/2017",
-                    "image": "http://localhost:8000/a/icds-cas/api/form/attachment/"
+                    "image": "http://localhost:8000/a/icds-cas/icds_dashboard/icds_image_accessor/"
                              "00ec149e-c1a9-4083-a73c-cdc39df17137/1493876634200.jpg",
                     "id": 3
                 }
@@ -360,7 +360,7 @@ class TestAWCReport(TestCase):
             [
                 {
                     "date": "05/05/2017",
-                    "image": "http://localhost:8000/a/icds-cas/api/form/attachment/"
+                    "image": "http://localhost:8000/a/icds-cas/icds_dashboard/icds_image_accessor/"
                              "ebb1f3c8-34c7-4ed1-9f35-0b209cb4d683/1493959451474.jpg",
                     "id": 4
                 },
@@ -402,7 +402,7 @@ class TestAWCReport(TestCase):
             [
                 {
                     "date": "09/05/2017",
-                    "image": "http://localhost:8000/a/icds-cas/api/form/attachment/"
+                    "image": "http://localhost:8000/a/icds-cas/icds_dashboard/icds_image_accessor/"
                              "eb20b019-97ef-45e0-9698-fda3d964a096/1494308187855.jpg",
                     "id": 8
                 },
@@ -454,13 +454,13 @@ class TestAWCReport(TestCase):
                 },
                 {
                     "date": "15/05/2017",
-                    "image": "http://localhost:8000/a/icds-cas/api/form/attachment/"
+                    "image": "http://localhost:8000/a/icds-cas/icds_dashboard/icds_image_accessor/"
                              "036ab123-0a1e-43b6-8e7d-4bcf9abcdfa2/1494826363729.jpg",
                     "id": 14
                 },
                 {
                     "date": "16/05/2017",
-                    "image": "http://localhost:8000/a/icds-cas/api/form/attachment/"
+                    "image": "http://localhost:8000/a/icds-cas/icds_dashboard/icds_image_accessor/"
                              "dda9c427-4ba7-4f90-9c5b-d2a02cff9e31/1494911839185.jpg",
                     "id": 15
                 }
@@ -487,25 +487,25 @@ class TestAWCReport(TestCase):
             [
                 {
                     "date": "17/05/2017",
-                    "image": "http://localhost:8000/a/icds-cas/api/form/attachment/"
+                    "image": "http://localhost:8000/a/icds-cas/icds_dashboard/icds_image_accessor/"
                              "1be8a49b-c63c-4288-bcb2-9e5bf132834f/1494997946602.jpg",
                     "id": 16
                 },
                 {
                     "date": "18/05/2017",
-                    "image": "http://localhost:8000/a/icds-cas/api/form/attachment/"
+                    "image": "http://localhost:8000/a/icds-cas/icds_dashboard/icds_image_accessor/"
                              "c7f6d174-1218-4f8e-ab84-f80e17b1ebdb/1495084707730.jpg",
                     "id": 17
                 },
                 {
                     "date": "19/05/2017",
-                    "image": "http://localhost:8000/a/icds-cas/api/form/attachment/"
+                    "image": "http://localhost:8000/a/icds-cas/icds_dashboard/icds_image_accessor/"
                              "416990d9-f354-457f-8c52-1866e98840f5/1495173038810.jpg",
                     "id": 18
                 },
                 {
                     "date": "20/05/2017",
-                    "image": "http://localhost:8000/a/icds-cas/api/form/attachment/"
+                    "image": "http://localhost:8000/a/icds-cas/icds_dashboard/icds_image_accessor/"
                              "3fea99f8-c6f4-48c9-9386-152639fe1b17/1495259635314.jpg",
                     "id": 19
                 }
@@ -537,7 +537,7 @@ class TestAWCReport(TestCase):
                 },
                 {
                     "date": "22/05/2017",
-                    "image": "http://localhost:8000/a/icds-cas/api/form/attachment/"
+                    "image": "http://localhost:8000/a/icds-cas/icds_dashboard/icds_image_accessor/"
                              "ce528857-f34e-4785-913f-41d221fbeed8/1495432106324.jpg",
                     "id": 21
                 },
@@ -548,7 +548,7 @@ class TestAWCReport(TestCase):
                 },
                 {
                     "date": "24/05/2017",
-                    "image": "http://localhost:8000/a/icds-cas/api/form/attachment/"
+                    "image": "http://localhost:8000/a/icds-cas/icds_dashboard/icds_image_accessor/"
                              "5d0f2aa4-6d5b-424f-91d1-c4afb2d0555b/1495605536823.jpg",
                     "id": 23
                 }
@@ -575,19 +575,19 @@ class TestAWCReport(TestCase):
             [
                 {
                     "date": "25/05/2017",
-                    "image": "http://localhost:8000/a/icds-cas/api/form/attachment/"
+                    "image": "http://localhost:8000/a/icds-cas/icds_dashboard/icds_image_accessor/"
                              "20e4d641-a85a-4927-96ab-994fa46a8ea0/1495690578649.jpg",
                     "id": 24
                 },
                 {
                     "date": "26/05/2017",
-                    "image": "http://localhost:8000/a/icds-cas/api/form/attachment/"
+                    "image": "http://localhost:8000/a/icds-cas/icds_dashboard/icds_image_accessor/"
                              "f86e701b-1531-469f-8996-705e297bf498/1495776461721.jpg",
                     "id": 25
                 },
                 {
                     "date": "27/05/2017",
-                    "image": "http://localhost:8000/a/icds-cas/api/form/attachment/"
+                    "image": "http://localhost:8000/a/icds-cas/icds_dashboard/icds_image_accessor/"
                              "6701b39d-4b6f-4ae3-8a88-eadb61b1a105/1495865744995.jpg",
                     "id": 26
                 },
@@ -619,13 +619,13 @@ class TestAWCReport(TestCase):
             [
                 {
                     "date": "29/05/2017",
-                    "image": "http://localhost:8000/a/icds-cas/api/form/attachment/"
+                    "image": "http://localhost:8000/a/icds-cas/icds_dashboard/icds_image_accessor/"
                              "6376d77d-bb2a-48ac-9042-7892dda97bba/1496036503892.jpg",
                     "id": 28
                 },
                 {
                     "date": "30/05/2017",
-                    "image": "http://localhost:8000/a/icds-cas/api/form/attachment/"
+                    "image": "http://localhost:8000/a/icds-cas/icds_dashboard/icds_image_accessor/"
                              "c0d002ca-f7b0-4bd2-a531-881b46610c2f/1496120210768.jpg",
                     "id": 29
                 },
@@ -1407,7 +1407,7 @@ class TestAWCReport(TestCase):
                 (2017, 5, 1),
             )['kpi'][0][1],
             {
-                "all": 1,
+                "all": 0,
                 'color': 'green',
                 "format": "percent_and_div",
                 "percent": "Data in the previous reporting period was 0",
@@ -1665,7 +1665,7 @@ class TestAWCReport(TestCase):
                 (2017, 5, 1),
             )['kpi'][0][1],
             {
-                "all": 1,
+                "all": 0,
                 'color': 'green',
                 "format": "percent_and_div",
                 "percent": "Data in the previous reporting period was 0",
@@ -1915,7 +1915,7 @@ class TestAWCReport(TestCase):
                 (2017, 5, 1),
             )['kpi'][0][1],
             {
-                "all": 1,
+                "all": 0,
                 'color': 'green',
                 "format": "percent_and_div",
                 "percent": "Data in the previous reporting period was 0",
@@ -2125,7 +2125,9 @@ class TestAWCReport(TestCase):
         )
 
     def test_awc_report_beneficiary_ca040875_2e42_4ce4_acf7_f96695b370f1(self):
-        data = get_awc_report_beneficiary(0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1))['data'][0]
+        data = get_awc_report_beneficiary(
+            0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1), 'icds-cas'
+        )['data'][0]
         self.assertJSONEqual(
             json.dumps(data, cls=DjangoJSONEncoder),
             json.dumps(
@@ -2150,16 +2152,16 @@ class TestAWCReport(TestCase):
                     "case_id": "ca040875-2e42-4ce4-acf7-f96695b370f1",
                     "recorded_height": "95.0000000000000000",
                     "fully_immunized": "No",
-                    "person_name": "Name 4416",
-                    "sex": "F",
-                    "mother_name": "रामकन्या"
+                    "person_name": "Name 4416"
                 },
                 cls=DjangoJSONEncoder
             )
         )
 
     def test_awc_report_beneficiary_82f33fa1_2aec_45ba_8d6c_d3ca9f50ab73(self):
-        data = get_awc_report_beneficiary(0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1))['data'][1]
+        data = get_awc_report_beneficiary(
+            0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1), 'icds-cas'
+        )['data'][1]
         self.assertJSONEqual(
             json.dumps(data, cls=DjangoJSONEncoder),
             json.dumps(
@@ -2185,15 +2187,15 @@ class TestAWCReport(TestCase):
                     "recorded_height": 0,
                     "fully_immunized": "No",
                     "person_name": "Name 4445",
-                    "sex": "F",
-                    "mother_name": "किरणबाई"
                 },
                 cls=DjangoJSONEncoder
             )
         )
 
     def test_awc_report_beneficiary_b954eb28_75de_43c8_9ec0_d38b7d246ead(self):
-        data = get_awc_report_beneficiary(0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1))['data'][2]
+        data = get_awc_report_beneficiary(
+            0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1), 'icds-cas'
+        )['data'][2]
         self.assertJSONEqual(
             json.dumps(data, cls=DjangoJSONEncoder),
             json.dumps(
@@ -2219,15 +2221,15 @@ class TestAWCReport(TestCase):
                     "recorded_height": 0,
                     "fully_immunized": "No",
                     "person_name": "Name 2617",
-                    "sex": "M",
-                    "mother_name": "ताराकुँवर पति राजेन्द्रसिंह"
                 },
                 cls=DjangoJSONEncoder
             )
         )
 
     def test_awc_report_beneficiary_519720be_4343_41e7_a9f6_cdfad6ecf8d8(self):
-        data = get_awc_report_beneficiary(0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1))['data'][3]
+        data = get_awc_report_beneficiary(
+            0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1), 'icds-cas'
+        )['data'][3]
         self.assertJSONEqual(
             json.dumps(data, cls=DjangoJSONEncoder),
             json.dumps(
@@ -2253,15 +2255,15 @@ class TestAWCReport(TestCase):
                     "recorded_height": 0,
                     "fully_immunized": "No",
                     "person_name": "Name 4412",
-                    "sex": "M",
-                    "mother_name": "जशोदा"
                 },
                 cls=DjangoJSONEncoder
             )
         )
 
     def test_awc_report_beneficiary_80099a73_b7ec_4de9_a402_459ed15f6641(self):
-        data = get_awc_report_beneficiary(0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1))['data'][4]
+        data = get_awc_report_beneficiary(
+            0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1), 'icds-cas'
+        )['data'][4]
         self.assertJSONEqual(
             json.dumps(data, cls=DjangoJSONEncoder),
             json.dumps(
@@ -2287,15 +2289,15 @@ class TestAWCReport(TestCase):
                     "recorded_height": 0,
                     "fully_immunized": "No",
                     "person_name": "Name 4411",
-                    "sex": "F",
-                    "mother_name": "लक्ष्मी बाई"
                 },
                 cls=DjangoJSONEncoder
             )
         )
 
     def test_awc_report_beneficiary_532f3754_e231_40ec_a861_abbb2a06dff5(self):
-        data = get_awc_report_beneficiary(0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1))['data'][5]
+        data = get_awc_report_beneficiary(
+            0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1), 'icds-cas'
+        )['data'][5]
         self.assertJSONEqual(
             json.dumps(data, cls=DjangoJSONEncoder),
             json.dumps(
@@ -2321,15 +2323,15 @@ class TestAWCReport(TestCase):
                     "recorded_height": 0,
                     "fully_immunized": "No",
                     "person_name": "Name 4408",
-                    "sex": "F",
-                    "mother_name": "छनुकुवर पति चोकसिंह"
                 },
                 cls=DjangoJSONEncoder
             )
         )
 
     def test_awc_report_beneficiary_4cd07ebf_abce_4345_a930_f6db7ede8996(self):
-        data = get_awc_report_beneficiary(0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1))['data'][6]
+        data = get_awc_report_beneficiary(
+            0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1), 'icds-cas'
+        )['data'][6]
         self.assertJSONEqual(
             json.dumps(data, cls=DjangoJSONEncoder),
             json.dumps(
@@ -2355,15 +2357,15 @@ class TestAWCReport(TestCase):
                     "recorded_height": 0,
                     "fully_immunized": "No",
                     "person_name": "Name 4399",
-                    "sex": "F",
-                    "mother_name": "संगीताबाई पति धनसिंह"
                 },
                 cls=DjangoJSONEncoder
             )
         )
 
     def test_awc_report_beneficiary_c9ee2435_d7fc_4307_9c18_9d5d83d2a691(self):
-        data = get_awc_report_beneficiary(0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1))['data'][7]
+        data = get_awc_report_beneficiary(
+            0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1), 'icds-cas'
+        )['data'][7]
         self.assertJSONEqual(
             json.dumps(data, cls=DjangoJSONEncoder),
             json.dumps(
@@ -2389,15 +2391,15 @@ class TestAWCReport(TestCase):
                     "recorded_height": "94.0000000000000000",
                     "fully_immunized": "No",
                     "person_name": "Name 4402",
-                    "sex": "M",
-                    "mother_name": "पोपा बाई"
                 },
                 cls=DjangoJSONEncoder
             )
         )
 
     def test_awc_report_beneficiary_d44f7902_83d4_4f1d_a913_4176cf41094e(self):
-        data = get_awc_report_beneficiary(0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1))['data'][8]
+        data = get_awc_report_beneficiary(
+            0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1), 'icds-cas'
+        )['data'][8]
         self.assertJSONEqual(
             json.dumps(data, cls=DjangoJSONEncoder),
             json.dumps(
@@ -2423,15 +2425,15 @@ class TestAWCReport(TestCase):
                     "recorded_height": 0,
                     "fully_immunized": "No",
                     "person_name": "Name 4414",
-                    "sex": "M",
-                    "mother_name": "भूराकुवर पति धर्मेन्द्रसिंह"
                 },
                 cls=DjangoJSONEncoder
             )
         )
 
     def test_awc_report_beneficiary_71230690_c828_4863_b2c1_f61a75aed9d7(self):
-        data = get_awc_report_beneficiary(0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1))['data'][9]
+        data = get_awc_report_beneficiary(
+            0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1), 'icds-cas'
+        )['data'][9]
         self.assertJSONEqual(
             json.dumps(data, cls=DjangoJSONEncoder),
             json.dumps(
@@ -2457,22 +2459,20 @@ class TestAWCReport(TestCase):
                     "recorded_height": 0,
                     "fully_immunized": "No",
                     "person_name": "Name 4407",
-                    "sex": "M",
-                    "mother_name": "ममता बाई"
                 },
                 cls=DjangoJSONEncoder
             )
         )
 
     def test_awc_report_beneficiary_data_length(self):
-        data = get_awc_report_beneficiary(0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1))
+        data = get_awc_report_beneficiary(0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1), 'icds-cas')
         self.assertEqual(
             len(data['data']),
             10
         )
 
     def test_awc_report_beneficiary_data_without_data(self):
-        data = get_awc_report_beneficiary(0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1))
+        data = get_awc_report_beneficiary(0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1), 'icds-cas')
         del data['data']
         self.assertJSONEqual(
             json.dumps(data, cls=DjangoJSONEncoder),
@@ -2490,7 +2490,7 @@ class TestAWCReport(TestCase):
         )
 
     def test_awc_report_beneficiary_keys(self):
-        data = get_awc_report_beneficiary(0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1))
+        data = get_awc_report_beneficiary(0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1), 'icds-cas')
         self.assertJSONEqual(
             json.dumps(list(data.keys()), cls=DjangoJSONEncoder),
             json.dumps(

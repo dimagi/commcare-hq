@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from couchdbkit.exceptions import ResourceNotFound
 from django.conf import settings
 from django.utils.safestring import mark_safe
@@ -17,7 +18,7 @@ from corehq.apps.reports.analytics.esaccessors import (
 from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter, BaseSingleOptionFilter
 from corehq.const import MISSING_APP_ID
 from couchforms.analytics import get_all_xmlns_app_id_pairs_submitted_to_in_domain
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 
 # For translations
 from django.utils.translation import ugettext as _

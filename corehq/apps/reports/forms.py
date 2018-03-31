@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.utils.translation import ugettext
 from corehq.apps.hqwebapp.crispy import FormActions, B3MultiField
 import langcodes
@@ -7,7 +8,7 @@ from django import forms
 from django.core.validators import MinLengthValidator
 from django.template.loader import render_to_string
 from corehq.apps.hqwebapp.fields import MultiEmailField
-from corehq.apps.userreports.reports.view import ConfigurableReport
+from corehq.apps.userreports.reports.view import ConfigurableReportView
 from crispy_forms import layout as crispy
 from crispy_forms.helper import FormHelper
 from .models import (
@@ -79,7 +80,7 @@ class SavedReportConfigForm(forms.Form):
         date_range = self.cleaned_data['date_range']
 
         if (
-            self.cleaned_data['report_type'] == ConfigurableReport.prefix
+            self.cleaned_data['report_type'] == ConfigurableReportView.prefix
             and not self.cleaned_data['datespan_slug']
         ):
             self.cleaned_data['date_range'] = None
@@ -89,7 +90,7 @@ class SavedReportConfigForm(forms.Form):
             elif date_range == 'last30':
                 self.cleaned_data['days'] = 30
             elif (date_range == 'lastn' and self.cleaned_data.get('days') is None
-                  and self.cleaned_data['report_type'] != ConfigurableReport.prefix):
+                  and self.cleaned_data['report_type'] != ConfigurableReportView.prefix):
                 raise forms.ValidationError(
                     "Field 'days' was expected but not provided."
                 )

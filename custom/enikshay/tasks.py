@@ -24,7 +24,7 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import CommCareCaseSQL
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 from corehq.util.soft_assert import soft_assert
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from casexml.apps.case.const import ARCHIVED_CASE_OWNER_ID
 from corehq.apps.hqwebapp.tasks import send_html_email_async
@@ -900,10 +900,11 @@ def run_model_reconciliation(command_name, email, person_case_ids=None, commit=F
 
 
 @task(queue='background_queue', ignore_result=True)
-def run_custom_export_tasks(command_name, email):
+def run_custom_export_tasks(command_name, email, full):
     if settings.SERVER_ENVIRONMENT == "enikshay":
         call_command(command_name,
-                     recipient=email)
+                     recipient=email,
+                     full=full)
 
 
 @task

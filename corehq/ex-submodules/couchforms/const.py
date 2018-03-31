@@ -1,4 +1,5 @@
 
+from __future__ import unicode_literals
 TAG_TYPE = "#type"
 TAG_XML = "#xml"
 TAG_VERSION = "@version"

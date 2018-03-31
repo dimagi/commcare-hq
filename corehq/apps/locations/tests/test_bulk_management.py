@@ -1,5 +1,6 @@
 # coding: utf-8
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from collections import namedtuple, defaultdict
 
 from django.test import SimpleTestCase, TestCase
@@ -863,8 +864,8 @@ class TestBulkManagement(TestCase):
     def test_custom_data(self):
         data_model = get_location_data_model(self.domain.name)
         tree = [
-            (u'省 1', 's1', 'state', '', '', False, '', '', '', {u'a': 1}, 0, data_model, False),
-            ('County 11', 'c1', 'county', 's1', '', False, '', '', '', {u'国际字幕': u'试验'}, 0, data_model, False),
+            ('省 1', 's1', 'state', '', '', False, '', '', '', {'a': 1}, 0, data_model, False),
+            ('County 11', 'c1', 'county', 's1', '', False, '', '', '', {'国际字幕': '试验'}, 0, data_model, False),
         ]
         result = self.bulk_update_locations(
             FLAT_LOCATION_TYPES,
@@ -875,16 +876,16 @@ class TestBulkManagement(TestCase):
         self.assertLocationsMatch(self.as_pairs(tree))
 
         locations = SQLLocation.objects.all()
-        self.assertEqual(locations[0].metadata, {u'a': u'1'})  # test that ints are coerced to strings
-        self.assertEqual(locations[1].metadata, {u'国际字幕': u'试验'})
+        self.assertEqual(locations[0].metadata, {'a': '1'})  # test that ints are coerced to strings
+        self.assertEqual(locations[1].metadata, {'国际字幕': '试验'})
 
     def test_custom_data_delete_uncategorized(self):
         data_model = get_location_data_model(self.domain.name)
 
         # setup some metadata
         tree = [
-            ('State 1', 's1', 'state', '', '', False, '', '', '', {u'a': 1}, 0, data_model, False),
-            ('County 11', 'c1', 'county', 's1', '', False, '', '', '', {u'b': u'test'}, 0, data_model, False),
+            ('State 1', 's1', 'state', '', '', False, '', '', '', {'a': 1}, 0, data_model, False),
+            ('County 11', 'c1', 'county', 's1', '', False, '', '', '', {'b': 'test'}, 0, data_model, False),
         ]
         self.bulk_update_locations(
             FLAT_LOCATION_TYPES,
@@ -892,11 +893,11 @@ class TestBulkManagement(TestCase):
         )
 
         locations = SQLLocation.objects.all()
-        self.assertEqual(locations[0].metadata, {u'a': u'1'})
-        self.assertEqual(locations[1].metadata, {u'b': u'test'})
+        self.assertEqual(locations[0].metadata, {'a': '1'})
+        self.assertEqual(locations[1].metadata, {'b': 'test'})
 
         tree = [
-            ('State 1', 's1', 'state', '', '', False, '', '', '', {u'a': 1}, 0, data_model, True),
+            ('State 1', 's1', 'state', '', '', False, '', '', '', {'a': 1}, 0, data_model, True),
             ('County 11', 'c1', 'county', 's1', '', False, '', '', '', {}, 0, data_model, False),
         ]
         self.bulk_update_locations(
@@ -906,7 +907,7 @@ class TestBulkManagement(TestCase):
 
         locations = SQLLocation.objects.all()
         self.assertEqual(locations[0].metadata, {})  # uncategorized data get's removed
-        self.assertEqual(locations[1].metadata, {u'b': u'test'})  # uncategorized data get's kept
+        self.assertEqual(locations[1].metadata, {'b': 'test'})  # uncategorized data get's kept
 
     def test_case_sensitivity(self):
         # site-codes are automatically converted to lower-case

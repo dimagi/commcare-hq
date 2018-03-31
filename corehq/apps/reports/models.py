@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import calendar
 import hashlib
 import uuid
@@ -64,7 +65,7 @@ from couchforms.filters import instances
 from dimagi.ext.couchdbkit import *
 from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.couch.database import iter_docs
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.logging import notify_exception
 from django_prbac.exceptions import PermissionDenied
 import six
@@ -296,7 +297,7 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
     def _dispatcher(self):
         from corehq.apps.userreports.models import CUSTOM_REPORT_PREFIX
         from corehq.apps.userreports.reports.view import (
-            ConfigurableReport,
+            ConfigurableReportView,
             CustomConfigurableReportDispatcher,
         )
 
@@ -313,7 +314,7 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
             if self.subreport_slug.startswith(CUSTOM_REPORT_PREFIX):
                 return CustomConfigurableReportDispatcher()
             else:
-                return ConfigurableReport()
+                return ConfigurableReportView()
 
         if self.doc_type != 'ReportConfig-Deleted':
             self.doc_type += '-Deleted'
@@ -580,8 +581,8 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
 
     @property
     def is_configurable_report(self):
-        from corehq.apps.userreports.reports.view import ConfigurableReport
-        return self.report_type == ConfigurableReport.prefix
+        from corehq.apps.userreports.reports.view import ConfigurableReportView
+        return self.report_type == ConfigurableReportView.prefix
 
     @property
     @memoized
@@ -593,8 +594,8 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
     @property
     @memoized
     def configurable_report(self):
-        from corehq.apps.userreports.reports.view import ConfigurableReport
-        return ConfigurableReport.get_report(
+        from corehq.apps.userreports.reports.view import ConfigurableReportView
+        return ConfigurableReportView.get_report(
             self.domain, self.report_slug, self.subreport_slug
         )
 

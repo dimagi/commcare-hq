@@ -67,7 +67,7 @@ from dimagi.utils.post import parse_SOAP_response
 
 from custom.enikshay.integrations.nikshay.utils import get_location_user_for_notification
 from custom.enikshay.location_utils import get_health_establishment_hierarchy_codes
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 import six
 
 ENIKSHAY_ID = 8

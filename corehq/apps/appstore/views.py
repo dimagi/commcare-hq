@@ -15,7 +15,7 @@ from django.utils.translation import ugettext as _, ugettext_lazy
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.database import apply_update
 from dimagi.utils.couch.resource_conflict import retry_resource
-from dimagi.utils.decorators.memoized import memoized
+from memoized import memoized
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.name_to_url import name_to_url
 

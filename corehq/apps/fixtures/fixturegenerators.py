@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from collections import defaultdict
 from xml.etree import cElementTree as ElementTree
 from io import BytesIO
@@ -19,7 +20,7 @@ from .utils import get_index_schema_node
 # HACK if this string is present anywhere in an item list it will be replaced
 # with the restore user's user_id. DO NOT DEPEND ON THIS IMPLEMENTATION DETAIL.
 # This is an optimization to avoid an extra XML parse/serialize cycle.
-GLOBAL_USER_ID = u'global-user-id-7566F038-5000-4419-B3EF-5349FB2FF2E9'
+GLOBAL_USER_ID = 'global-user-id-7566F038-5000-4419-B3EF-5349FB2FF2E9'
 
 
 def item_lists_by_domain(domain):
@@ -39,7 +40,7 @@ def item_lists_by_domain(domain):
         ret.append({
             'id': data_type.tag,
             'uri': uri,
-            'path': u"/{tag}_list/{tag}".format(tag=data_type.tag),
+            'path': "/{tag}_list/{tag}".format(tag=data_type.tag),
             'name': data_type.tag,
             'structure': structure,
         })

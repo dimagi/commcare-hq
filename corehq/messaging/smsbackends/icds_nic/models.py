@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from six.moves.urllib.parse import urlencode
 from six.moves.urllib.request import urlopen
 

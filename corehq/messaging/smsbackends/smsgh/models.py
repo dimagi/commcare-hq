@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import division
+from __future__ import unicode_literals
 import requests
 from corehq.apps.sms.models import SMS, SQLSMSBackend
 from corehq.messaging.smsbackends.smsgh.forms import SMSGHBackendForm
