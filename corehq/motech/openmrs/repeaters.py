@@ -6,7 +6,6 @@ from couchdbkit.ext.django.schema import SchemaProperty, StringProperty
 from django.utils.translation import ugettext_lazy as _
 from django.urls import reverse
 
-from corehq.apps.locations.models import SQLLocation
 from corehq.motech.repeaters.models import CaseRepeater
 from corehq.motech.repeaters.repeater_generators import FormRepeaterJsonPayloadGenerator
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
