@@ -415,14 +415,46 @@ def get_patient_by_uuid(requests, uuid):
     return requests.get('/ws/rest/v1/patient/' + uuid, {'v': 'full'}).json()
 
 
-def get_patient_by_id(requests, patient_identifier_type, patient_identifier):
-    if patient_identifier_type == PERSON_UUID_IDENTIFIER_TYPE_ID:
-        patient = get_patient_by_uuid(requests, patient_identifier)
-        return patient
+def get_patient_by_identifier(requests, identifier_type_uuid, value):
+    """
+    Return the patient that matches the given identifier. If the
+    number of matches is zero or more than one, return None.
+    """
+    response_json = search_patients(requests, value)
+    patients = []
+    for patient in response_json['results']:
+       for identifier in patient['identifiers']:
+            if (
+                identifier['identifierType']['uuid'] == identifier_type_uuid and
+                identifier['identifier'] == value
+            ):
+                patients.append(patient)
+    try:
+        patient, = patients
+    except ValueError:
+        return None
     else:
-        response_json = search_patients(requests, patient_identifier)
-        return PatientSearchParser(response_json).get_patient_matching_identifiers(
-            patient_identifier_type, patient_identifier)
+        return patient
+
+
+def get_patient_by_id(requests, patient_identifier_type, patient_identifier):
+    # Fetching the patient is the first request sent to the server. If
+    # there is a mistake in the server details, or the server is
+    # offline, this is where we will discover it.
+    try:
+        if patient_identifier_type == PERSON_UUID_IDENTIFIER_TYPE_ID:
+            return get_patient_by_uuid(requests, patient_identifier)
+        else:
+            return get_patient_by_identifier(requests, patient_identifier_type, patient_identifier)
+    except requests.RequestException as err:
+        # This message needs to be useful to an administrator because
+        # it will be shown in the Repeat Records report.
+        http_error_msg = (
+            'An error was when encountered searching patients: {}. Please check that the server is online. If '
+            'this is a new forwarding location, please check the server address in Data Forwarding, check that '
+            'the server URL includes the path to the API, and that the password is correct'.format(err)
+        )
+        raise err.__class__(http_error_msg)
 
 
 class UpdatePersonNameTask(WorkflowTask):
@@ -620,44 +652,6 @@ class UpdatePersonPropertiesTask(WorkflowTask):
                 '/ws/rest/v1/person/{person_uuid}'.format(person_uuid=self.person['uuid']),
                 json=properties
             )
-
-
-class PatientSearchParser(object):
-    def __init__(self, response_json):
-        self.response_json = response_json
-
-    def get_patient_matching_identifiers(self, patient_identifier_type, patient_identifier):
-        """
-        Return the patient that matches the given identifier. If the
-        number of matches is zero or more than one, return None.
-
-        :param patient_identifier_type: PERSON_UUID_IDENTIFIER_TYPE_ID
-            to match the patient's OpenMRS Person UUID, otherwise the
-            UUID of the OpenMRS identifier type
-        :param patient_identifier: The value that uniquely identifies
-            the patient we want.
-
-        """
-        patients = []
-        for patient in self.response_json['results']:
-            if (
-                patient_identifier_type == PERSON_UUID_IDENTIFIER_TYPE_ID and
-                patient['uuid'] == patient_identifier
-            ):
-                patients.append(patient)
-            else:
-                for identifier in patient['identifiers']:
-                    if (
-                        identifier['identifier'] == patient_identifier and
-                        identifier['identifierType']['uuid'] == patient_identifier_type
-                    ):
-                        patients.append(patient)
-        try:
-            patient, = patients
-        except ValueError:
-            return None
-        else:
-            return patient
 
 
 CaseTriggerInfo = namedtuple('CaseTriggerInfo',
