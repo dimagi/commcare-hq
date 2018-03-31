@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 from collections import OrderedDict
 from datetime import datetime, date, time, timedelta
 from xml.etree import cElementTree as ElementTree
+import six
 from casexml.apps.case.tests.util import check_xml_line_by_line
 from casexml.apps.phone.models import SyncLog, OTARestoreCommCareUser, OTARestoreWebUser
 from casexml.apps.phone.tests.utils import call_fixture_generator
@@ -27,7 +28,7 @@ class MockIndicatorSet(object):
         return datetime(2014, 1, 1, 0, 0)
 
 
-mock_indicators_fixture_generator = type('IndicatorsFixturesProviderFake', (IndicatorsFixturesProvider,), {
+mock_indicators_fixture_generator = type('IndicatorsFixturesProviderFake' if six.PY3 else b'IndicatorsFixturesProviderFake', (IndicatorsFixturesProvider,), {
     '_should_return_no_fixtures': (lambda self, domain, last_sync: False),
 })()
 
