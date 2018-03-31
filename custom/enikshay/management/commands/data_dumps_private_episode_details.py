@@ -101,6 +101,8 @@ class Command(BaseDataDump):
             return episode.modified_on
         elif column_name == "Last Modified by":
             return episode.modified_by
+        elif column_name == "Date of submission of episode details form":
+            return episode.opened_on
         return Exception("unknown custom column %s" % column_name)
 
     def get_person(self, episode):
