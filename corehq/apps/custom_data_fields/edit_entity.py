@@ -133,7 +133,7 @@ class CustomDataEditor(object):
         else:
             field_names = list(fields)
 
-        CustomDataForm = type('CustomDataForm', (forms.Form,), fields)
+        CustomDataForm = type('CustomDataForm' if six.PY3 else b'CustomDataForm', (forms.Form,), fields)
         CustomDataForm.helper = FormHelper()
         CustomDataForm.helper.form_tag = False
         CustomDataForm.helper.label_class = 'col-sm-4' if self.angular_model else 'col-lg-3'
