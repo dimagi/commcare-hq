@@ -63,6 +63,8 @@ class Command(BaseDataDump):
             return self.get_voucher(case).case_id
         elif column_name == "Prescription UUID":
             return case.case_id
+        elif column_name == "Date of Episode creation":
+            return self.get_episode(case).opened_on
         raise Exception("unknown custom column %s" % column_name)
 
     def get_case_ids_query(self, case_type):
