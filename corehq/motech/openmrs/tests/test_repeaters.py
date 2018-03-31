@@ -5,6 +5,7 @@ import json
 import os
 import uuid
 import unittest
+import warnings
 import mock
 from django.test import TestCase as DjangoTestCase
 
@@ -185,13 +186,13 @@ class GetFormQuestionValuesTests(unittest.TestCase):
         self.assertEqual(value, {'/data/foo/bar': b'b\xc4\x85z'})
 
     def test_unicode_question(self):
-        # Form Builder questions are expected to be ASCII
         value = get_form_question_values({'form': {'foo': {u'b\u0105r': 'baz'}}})
         self.assertEqual(value, {u'/data/foo/b\u0105r': 'baz'})
 
     def test_utf8_question(self):
-        # Form Builder questions are expected to be ASCII
-        value = get_form_question_values({'form': {'foo': {b'b\xc4\x85r': 'baz'}}})
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", UnicodeWarning)
+            value = get_form_question_values({'form': {'foo': {b'b\xc4\x85r': 'baz'}}})
         self.assertEqual(value, {u'/data/foo/b\u0105r': 'baz'})
 
 
