@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+import six
 import uuid
 
 COMMTRACK_USERNAME = 'commtrack-system'
@@ -44,7 +45,7 @@ PARENT_CASE_REF = 'parent'
 
 
 def enum(**enums):
-    return type('Enum', (), enums)
+    return type('Enum' if six.PY3 else b'Enum', (), enums)
 
 StockActions = enum(
     STOCKONHAND='stockonhand',
