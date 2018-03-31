@@ -1,14 +1,12 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import json
-from itertools import chain
 
 from couchdbkit.ext.django.schema import SchemaProperty, StringProperty
 from django.utils.translation import ugettext_lazy as _
 from django.urls import reverse
 
 from casexml.apps.case.xform import extract_case_blocks
-from corehq.apps.locations.models import SQLLocation
 from corehq.motech.repeaters.models import CaseRepeater
 from corehq.motech.repeaters.repeater_generators import FormRepeaterJsonPayloadGenerator
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors
