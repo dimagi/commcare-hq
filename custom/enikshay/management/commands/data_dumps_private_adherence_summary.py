@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 from __future__ import print_function
-
+import math
 from corehq.apps.es import queries
 
 from custom.enikshay.case_utils import (
@@ -11,6 +11,7 @@ from custom.enikshay.const import (
     ENROLLED_IN_PRIVATE,
 )
 from custom.enikshay.management.commands.base_data_dump import BaseDataDump
+from django.utils.dateparse import parse_date
 
 DOMAIN = "enikshay"
 
@@ -51,6 +52,64 @@ class Command(BaseDataDump):
         if column_name == "eNikshay person UUID":
             person_case = self.get_person(episode)
             return person_case.case_id
+        elif column_name == "Total Doses Expected":
+            adherence_latest_date_recorded = episode.get_case_property('adherence_latest_date_recorded')
+            if not adherence_latest_date_recorded:
+                raise Exception("Adherence latest date recorded not present")
+            adherence_schedule_date_start = episode.get_case_property('adherence_schedule_date_start')
+            if not adherence_schedule_date_start:
+                raise Exception("Adherence schedule date start not present")
+            doses_per_week = episode.get_case_property('doses_per_week')
+            if not doses_per_week:
+                raise Exception("Doses per week not present")
+            adherence_latest_date_recorded = parse_date(adherence_latest_date_recorded)
+            adherence_schedule_date_start = parse_date(adherence_schedule_date_start)
+            doses_per_week = int(doses_per_week)
+            return doses_per_week * (
+                math.ceil((adherence_latest_date_recorded - adherence_schedule_date_start).days/7)
+            )
+        elif column_name == "No. of missed and unknown doses":
+            adherence_latest_date_recorded = episode.get_case_property('adherence_latest_date_recorded')
+            if not adherence_latest_date_recorded:
+                raise Exception("Adherence latest date recorded not present")
+            adherence_schedule_date_start = episode.get_case_property('adherence_schedule_date_start')
+            if not adherence_schedule_date_start:
+                raise Exception("Adherence schedule date start not present")
+            doses_per_week = episode.get_case_property('doses_per_week')
+            if not doses_per_week:
+                raise Exception("Doses per week not present")
+            adherence_total_doses_taken = episode.get_case_property('adherence_total_doses_taken')
+            if not adherence_total_doses_taken:
+                raise Exception("Adherence total doses taken not present")
+            adherence_latest_date_recorded = parse_date(adherence_latest_date_recorded)
+            adherence_schedule_date_start = parse_date(adherence_schedule_date_start)
+            doses_per_week = int(doses_per_week)
+            adherence_total_doses_taken = int(adherence_total_doses_taken)
+            total_expected_doses_taken = doses_per_week * (
+                math.ceil((adherence_latest_date_recorded - adherence_schedule_date_start).days / 7)
+            )
+            return int(adherence_total_doses_taken) - total_expected_doses_taken
+        elif column_name == "Total Adherence Score":
+            adherence_latest_date_recorded = episode.get_case_property('adherence_latest_date_recorded')
+            if not adherence_latest_date_recorded:
+                raise Exception("Adherence latest date recorded not present")
+            adherence_schedule_date_start = episode.get_case_property('adherence_schedule_date_start')
+            if not adherence_schedule_date_start:
+                raise Exception("Adherence schedule date start not present")
+            doses_per_week = episode.get_case_property('doses_per_week')
+            if not doses_per_week:
+                raise Exception("Doses per week not present")
+            adherence_total_doses_taken = episode.get_case_property('adherence_total_doses_taken')
+            if not adherence_total_doses_taken:
+                raise Exception("Adherence total doses taken not present")
+            adherence_latest_date_recorded = parse_date(adherence_latest_date_recorded)
+            adherence_schedule_date_start = parse_date(adherence_schedule_date_start)
+            doses_per_week = int(doses_per_week)
+            adherence_total_doses_taken = int(adherence_total_doses_taken)
+            total_expected_doses_taken = doses_per_week * (
+                math.ceil((adherence_latest_date_recorded - adherence_schedule_date_start).days / 7)
+            )
+            return (int(adherence_total_doses_taken)/total_expected_doses_taken)*100
         raise Exception("unknown custom column %s" % column_name)
 
     def get_person(self, episode):
