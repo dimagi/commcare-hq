@@ -76,8 +76,8 @@ class Requests(object):
                 response.raise_for_status()
         except self.requests.RequestException as err:
             err_request, err_response = parse_request_exception(err)
-            logger.error('Request: ', err_request)
-            logger.error('Response: ', err_response)
+            logger.error('Request: %s', err_request)
+            logger.error('Response: %s', err_response)
             raise
         return response
 
@@ -558,10 +558,6 @@ def get_patient(requests, domain, info, openmrs_config):
         # Definitive IDs did not match a patient in OpenMRS.
         if openmrs_config.case_config.patient_finder:
             # Search for patients based on other case properties
-            logger.debug(
-                'Case %s did not match patient with OpenmrsCaseConfig.match_on_ids. Search using '
-                'PatientFinder "%s"', info.case_id, openmrs_config.case_config.patient_finder['doc_type'],
-            )
             patient = find_patient(requests, domain, info.case_id, openmrs_config)
 
     return patient
