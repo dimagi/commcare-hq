@@ -64,7 +64,7 @@ class CallcenterFixtureTests(SimpleTestCase):
             ('user_case1', {'i1': 1, 'i2': 2}),
             ('user_case2', {'i1': 0, 'i2': 3})
         ]))
-        restore_user = type('OTARestoreCommCareUserFake', (OTARestoreCommCareUser,), {
+        restore_user = type('OTARestoreCommCareUserFake' if six.PY3 else b'OTARestoreCommCareUserFake', (OTARestoreCommCareUser,), {
             'project': Domain(name='test', default_timezone='UTC'),
             'get_call_center_indicators': lambda self, config: indicator_set,
         })('test', user)
@@ -76,7 +76,7 @@ class CallcenterFixtureTests(SimpleTestCase):
 
     def test_callcenter_fixture_web_user(self):
         user = WebUser(_id='123')
-        restore_user = type('OTARestoreWebUserFake', (OTARestoreWebUser,), {
+        restore_user = type('OTARestoreWebUserFake' if six.PY3 else b'OTARestoreWebUserFake', (OTARestoreWebUser,), {
             'project': Domain(name='test', default_timezone='UTC'),
         })('test', user)
 
