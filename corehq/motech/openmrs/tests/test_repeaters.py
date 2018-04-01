@@ -4,10 +4,9 @@ import doctest
 import json
 import os
 import uuid
-import unittest
 import warnings
 import mock
-from django.test import TestCase as DjangoTestCase
+from django.test import SimpleTestCase, TestCase
 
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.locations.tests.util import LocationHierarchyTestCase
@@ -94,7 +93,7 @@ PATIENT_SEARCH_RESPONSE = json.loads("""{
     '65e55473-e83b-4d78-9dde-eaf949758997': CommCareCase(
         type='paciente', case_id='65e55473-e83b-4d78-9dde-eaf949758997')
 }[case_id] for case_id in case_ids])
-class OpenmrsRepeaterTest(unittest.TestCase, TestFileMixin):
+class OpenmrsRepeaterTest(SimpleTestCase, TestFileMixin):
     file_path = ('data',)
     root = os.path.dirname(__file__)
 
@@ -140,7 +139,7 @@ class OpenmrsRepeaterTest(unittest.TestCase, TestFileMixin):
         )
 
 
-class GetPatientByUuidTests(unittest.TestCase):
+class GetPatientByUuidTests(SimpleTestCase):
 
     @classmethod
     def setUpClass(cls):
@@ -175,7 +174,7 @@ class GetPatientByUuidTests(unittest.TestCase):
         self.assertEqual(patient, self.patient)
 
 
-class GetFormQuestionValuesTests(unittest.TestCase):
+class GetFormQuestionValuesTests(SimpleTestCase):
 
     def test_unicode_answer(self):
         value = get_form_question_values({'form': {'foo': {'bar': u'b\u0105z'}}})
@@ -196,7 +195,7 @@ class GetFormQuestionValuesTests(unittest.TestCase):
         self.assertEqual(value, {u'/data/foo/b\u0105r': 'baz'})
 
 
-class AllowedToForwardTests(DjangoTestCase):
+class AllowedToForwardTests(TestCase):
 
     @classmethod
     def setUpClass(cls):
@@ -380,7 +379,7 @@ class CaseLocationTests(LocationHierarchyTestCase):
         self.assertEqual(repeaters, [])
 
 
-class GetPatientTest(unittest.TestCase):
+class GetPatientTest(SimpleTestCase):
 
     def test_get_patient_by_identifier(self):
         response_mock = mock.Mock()
@@ -393,7 +392,7 @@ class GetPatientTest(unittest.TestCase):
         self.assertEqual(patient['uuid'], '5ba94fa2-9cb3-4ae6-b400-7bf45783dcbf')
 
 
-class DocTests(unittest.TestCase):
+class DocTests(SimpleTestCase):
 
     def test_doctests(self):
         results = doctest.testmod(corehq.motech.openmrs.repeater_helpers)
