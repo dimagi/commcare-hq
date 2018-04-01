@@ -119,7 +119,7 @@ class Command(BaseDataDump):
             person = self.get_person(voucher_case)
         except ENikshayCaseNotFound as e:
             print("----ENikshayCaseNotFound----")
-            print(e.message)
+            print(e)
             print(voucher_case.case_id)
             print("-----------------------------")
             return False

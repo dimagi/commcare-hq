@@ -100,7 +100,7 @@ class Command(BaseDataDump):
             person = self.get_person(test_case)
         except ENikshayCaseNotFound as e:
             print("----ENikshayCaseNotFound----")
-            print(e.message)
+            print(e)
             print(test_case.case_id)
             print("-----------------------------")
             return False
