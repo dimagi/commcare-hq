@@ -110,7 +110,7 @@ class Command(BaseDataDump):
             total_expected_doses_taken = doses_per_week * (
                 math.ceil((adherence_latest_date_recorded - adherence_schedule_date_start).days / 7)
             )
-            return (int(adherence_total_doses_taken)/total_expected_doses_taken) * 100
+            return (int(adherence_total_doses_taken) / total_expected_doses_taken) * 100
         raise Exception("unknown custom column %s" % column_name)
 
     def get_person(self, episode):
