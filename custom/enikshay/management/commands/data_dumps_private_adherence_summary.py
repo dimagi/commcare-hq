@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import print_function
+from __future__ import division
 import math
 from corehq.apps.es import queries
 
@@ -66,7 +67,7 @@ class Command(BaseDataDump):
             adherence_schedule_date_start = parse_date(adherence_schedule_date_start)
             doses_per_week = int(doses_per_week)
             return doses_per_week * (
-                math.ceil((adherence_latest_date_recorded - adherence_schedule_date_start).days/7)
+                math.ceil((adherence_latest_date_recorded - adherence_schedule_date_start).days / 7)
             )
         elif column_name == "No. of missed and unknown doses":
             adherence_latest_date_recorded = episode.get_case_property('adherence_latest_date_recorded')
@@ -109,7 +110,7 @@ class Command(BaseDataDump):
             total_expected_doses_taken = doses_per_week * (
                 math.ceil((adherence_latest_date_recorded - adherence_schedule_date_start).days / 7)
             )
-            return (int(adherence_total_doses_taken)/total_expected_doses_taken)*100
+            return (int(adherence_total_doses_taken)/total_expected_doses_taken) * 100
         raise Exception("unknown custom column %s" % column_name)
 
     def get_person(self, episode):
