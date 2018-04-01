@@ -13,7 +13,7 @@ from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.cases import get_wrapped_owner, get_owner_id
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.motech.openmrs.const import LOCATION_OPENMRS_UUID, PERSON_UUID_IDENTIFIER_TYPE_ID
+from corehq.motech.openmrs.const import LOCATION_OPENMRS_UUID, PERSON_UUID_IDENTIFIER_TYPE_ID, XMLNS_OPENMRS
 from corehq.motech.openmrs.finders import PatientFinder
 from corehq.motech.openmrs.logger import logger
 from corehq.motech.openmrs.workflow import WorkflowTask
@@ -561,7 +561,7 @@ def save_match_ids(case, case_config, patient):
         create=False,
         update=case_update,
     )
-    submit_case_blocks([case_block.as_string()], case.domain)
+    submit_case_blocks([case_block.as_string()], case.domain, xmlns=XMLNS_OPENMRS)
 
 
 def find_patient(requests, domain, case_id, openmrs_config):
