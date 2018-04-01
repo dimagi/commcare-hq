@@ -4,7 +4,9 @@ from __future__ import (
     unicode_literals,
 )
 
+import json
 
+from corehq.motech.repeaters.dbaccessors import get_repeat_records_by_payload_id
 from custom.enikshay.case_utils import (
     CASE_TYPE_TEST,
     CASE_TYPE_EPISODE,
@@ -37,6 +39,21 @@ class Command(BaseDataDump):
         super(Command, self).__init__(*args, **kwargs)
         self.case_type = CASE_TYPE_VOUCHER
 
+    def get_bets_repeat_records(self, voucher_case):
+        if 'bets_repeat_records' not in self.context:
+            repeat_records = get_repeat_records_by_payload_id(voucher_case.domain, voucher_case.case_id)
+            if not repeat_records:
+                raise Exception("Found no repeat records for voucher %s" % voucher_case.case_id)
+            self.context['bets_repeat_records'] = repeat_records
+        return self.context['bets_repeat_records']
+
+    def get_bets_repeat_record_payload(self, voucher_case):
+        if 'bets_repeater_payload' not in self.context:
+            repeat_records = self.get_bets_repeat_records(voucher_case)
+            repeat_record = sorted(repeat_records, key=lambda x: x.last_checked, reverse=True)[0]
+            self.context['bets_repeater_payload'] = json.loads(repeat_record.get_payload())['voucher_details'][0]
+        return self.context['bets_repeater_payload']
+
     def get_custom_value(self, column_name, case):
         if column_name == "eNikshay person UUID":
             person_case = self.get_person(case)
@@ -44,6 +61,26 @@ class Command(BaseDataDump):
         elif column_name == "eNikshay episode UUID":
             episode_case = self.get_episode(case)
             return episode_case.case_id
+        elif column_name == "Event ID (as defined in BETS)":
+            return self.get_bets_repeat_record_payload(case)['EventID']
+        elif column_name == "Beneficiary Type (Lab or Chemist)":
+            return self.get_bets_repeat_record_payload(case)['BeneficiaryType']
+        elif column_name == "Enikshay Approver username":
+            return self.get_bets_repeat_record_payload(case)['EnikshayApprover']
+        elif column_name == "Enikshay Approver Role":
+            return self.get_bets_repeat_record_payload(case)['EnikshayRole']
+        elif column_name == "Status (Successfully sent to BETS or not)/Acknowledgement from BETS":
+            return [{rr.get_id: rr.state} for rr in self.get_bets_repeat_records(case)]
+        elif column_name == "Failure Description (if failed to send to BETS)":
+            return [{rr.get_id: rr.failure_reason} for rr in self.get_bets_repeat_records(case)]
+        elif column_name == "Amount sent to BETS":
+            return case.get_case_property('amount_approved') or case.get_case_property('amount_fulfilled')
+        elif column_name == "Date when sent to BETS":
+            all_attempts_datetime = {}
+            for repeat_record in self.get_bets_repeat_records(case):
+                attempts = repeat_record.attempts
+                all_attempts_datetime[repeat_record.get_id] = [attempt.datetime for attempt in attempts]
+            return all_attempts_datetime
         raise Exception("unknown custom column %s" % column_name)
 
     def get_case_ids_query(self, case_type):
