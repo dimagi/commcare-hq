@@ -107,9 +107,9 @@ class GetPatientByUuidTests(unittest.TestCase):
         self.assertIsNone(patient)
 
     def test_invalid_uuid(self):
-        patient = get_patient_by_uuid(self.requests, uuid='c83d9989585f4db3bf55ca1d0ee7c0af')
-        # OpenMRS UUIDs have "-" separators
-        self.assertIsNone(patient)
+        with self.assertRaises(ValueError):
+            # OpenMRS UUIDs have "-" separators
+            get_patient_by_uuid(self.requests, uuid='c83d9989585f4db3bf55ca1d0ee7c0af')
 
     def test_valid_uuid(self):
         patient = get_patient_by_uuid(self.requests, uuid='c83d9989-585f-4db3-bf55-ca1d0ee7c0af')

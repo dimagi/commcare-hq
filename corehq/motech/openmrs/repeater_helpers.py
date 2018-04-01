@@ -5,7 +5,6 @@ from collections import namedtuple, defaultdict
 from datetime import timedelta
 import re
 
-from requests import HTTPError
 from six.moves import zip
 
 from casexml.apps.case.xform import extract_case_blocks
@@ -89,17 +88,6 @@ class Requests(object):
         return self.requests.delete(self.get_url(uri),
                                     auth=(self.username, self.password), **kwargs)
 
-    def delete_with_raise(self, uri, **kwargs):
-        response = self.delete(uri, **kwargs)
-        try:
-            response.raise_for_status()
-        except HTTPError as err:
-            err_request, err_response = parse_request_exception(err)
-            logger.error('Request: ', err_request)
-            logger.error('Response: ', err_response)
-            raise
-        return response
-
     def get(self, uri, *args, **kwargs):
         return self.send_request(self.requests.get, self.get_url(uri), *args,
                                  auth=(self.username, self.password), **kwargs)
@@ -107,12 +95,6 @@ class Requests(object):
     def post(self, uri, *args, **kwargs):
         return self.send_request(self.requests.post, self.get_url(uri), *args,
                                  auth=(self.username, self.password), **kwargs)
-
-    def post_with_raise(self, uri, *args, **kwargs):
-        # When nh/omrs/rollback is merged TODO: drop this method
-        # and pass raise_for_status=True to get()/post()/delete() calls instead
-        return self.send_request(self.requests.post, self.get_url(uri), *args,
-                                 auth=(self.username, self.password), raise_for_status=True, **kwargs)
 
 
 def parse_request_exception(err):
@@ -191,10 +173,11 @@ class CreatePersonAttributeTask(WorkflowTask):
     def rollback(self):
         # if attribute_uuid is not set, it would be because the workflow task to create the attribute failed
         if self.attribute_uuid:
-            self.requests.delete_with_raise(
+            self.requests.delete(
                 '/ws/rest/v1/person/{person_uuid}/attribute/{attribute_uuid}'.format(
                     person_uuid=self.person_uuid, attribute_uuid=self.attribute_uuid
-                )
+                ),
+                raise_for_status=True,
             )
 
 
@@ -267,7 +250,7 @@ class CreateVisitTask(WorkflowTask):
         }
         if self.location_uuid:
             visit['location'] = self.location_uuid
-        response = self.requests.post_with_raise('/ws/rest/v1/visit', json=visit)
+        response = self.requests.post('/ws/rest/v1/visit', json=visit, raise_for_status=True)
         self.visit_uuid = response.json()['uuid']
 
         subtasks.append(
@@ -280,7 +263,7 @@ class CreateVisitTask(WorkflowTask):
 
     def rollback(self):
         if self.visit_uuid:
-            self.requests.delete_with_raise('/ws/rest/v1/visit/{uuid}'.format(uuid=self.visit_uuid))
+            self.requests.delete('/ws/rest/v1/visit/{uuid}'.format(uuid=self.visit_uuid), raise_for_status=True)
 
 
 class CreateEncounterTask(WorkflowTask):
@@ -311,7 +294,7 @@ class CreateEncounterTask(WorkflowTask):
             encounter['location'] = self.location_uuid
         if self.provider_uuid:
             encounter['provider'] = self.provider_uuid
-        response = self.requests.post_with_raise('/ws/rest/v1/encounter', json=encounter)
+        response = self.requests.post('/ws/rest/v1/encounter', json=encounter, raise_for_status=True)
         self.encounter_uuid = response.json()['uuid']
 
         for concept_uuid, values in self.values_for_concept.items():
@@ -326,7 +309,9 @@ class CreateEncounterTask(WorkflowTask):
 
     def rollback(self):
         if self.encounter_uuid:
-            self.requests.delete_with_raise('/ws/rest/v1/encounter/{uuid}'.format(uuid=self.encounter_uuid))
+            self.requests.delete(
+                '/ws/rest/v1/encounter/{uuid}'.format(uuid=self.encounter_uuid), raise_for_status=True
+            )
 
 
 class CreateObsTask(WorkflowTask):
@@ -352,39 +337,16 @@ class CreateObsTask(WorkflowTask):
         }
         if self.location_uuid:
             observation['location'] = self.location_uuid
-        response = self.requests.post_with_raise('/ws/rest/v1/obs', json=observation)
+        response = self.requests.post('/ws/rest/v1/obs', json=observation, raise_for_status=True)
         self.obs_uuid = response.json()['uuid']
 
     def rollback(self):
         if self.obs_uuid:
-            self.requests.delete_with_raise('/ws/rest/v1/obs/{uuid}'.format(uuid=self.obs_uuid))
+            self.requests.delete('/ws/rest/v1/obs/{uuid}'.format(uuid=self.obs_uuid), raise_for_status=True)
 
 
 def search_patients(requests, search_string):
-    try:
-        # Finding the patient is the first request sent to the server. If there is a mistake in the server details,
-        # or the server is offline, this is where we will discover it.
-        response = requests.get('/ws/rest/v1/patient', {'q': search_string, 'v': 'full'})
-        response.raise_for_status()
-    except HTTPError as err:
-        # raise_for_status() raised an HTTPError.
-        err_request, err_response = parse_request_exception(err)
-        logger.error('Error encountered searching patients')
-        logger.error('Request: ', err_request)
-        logger.error('Response: ', err_response)
-        http_error_msg = (
-            'An error was when encountered searching patients: {}. Check in Data Forwarding that the server URL '
-            'includes the path to the API, and that the password is correct'.format(err)
-        )  # This message will be shown in the Repeat Records report, and needs to be useful to an administrator
-        raise HTTPError(http_error_msg, response=err.response)
-    except Exception as err:
-        # get() failed -- probably a connection failure.
-        logger.error('Error encountered searching patients: ', str(err))
-        raise err.__class__(
-            'Unable to send request to OpenMRS server: {}. Please check the server address in Data Forwarding and '
-            'that the server is online.'.format(err)
-        )
-
+    response = requests.get('/ws/rest/v1/patient', {'q': search_string, 'v': 'full'}, raise_for_status=True)
     return response.json()
 
 
@@ -392,19 +354,32 @@ def get_patient_by_uuid(requests, uuid):
     if not uuid:
         return None
     if not re.match(r'^[a-fA-F0-9\-]{36}$', uuid):
-        logger.debug('Person UUID "{}" failed validation'.format(uuid))
-        return None
-    return requests.get('/ws/rest/v1/patient/' + uuid, {'v': 'full'}).json()
+        # UUID should come from OpenMRS. If this ever happens we want to know about it.
+        raise ValueError('Person UUID "{}" failed validation'.format(uuid))
+    response = requests.get('/ws/rest/v1/patient/' + uuid, {'v': 'full'}, raise_for_status=True)
+    return response.json()
 
 
 def get_patient_by_id(requests, patient_identifier_type, patient_identifier):
-    if patient_identifier_type == PERSON_UUID_IDENTIFIER_TYPE_ID:
-        patient = get_patient_by_uuid(requests, patient_identifier)
-        return patient
-    else:
-        response_json = search_patients(requests, patient_identifier)
-        return PatientSearchParser(response_json).get_patient_matching_identifiers(
-            patient_identifier_type, patient_identifier)
+    # Fetching the patient is the first request sent to the server. If
+    # there is a mistake in the server details, or the server is
+    # offline, this is where we will discover it.
+    try:
+        if patient_identifier_type == PERSON_UUID_IDENTIFIER_TYPE_ID:
+            return get_patient_by_uuid(requests, patient_identifier)
+        else:
+            response_json = search_patients(requests, patient_identifier)
+            return PatientSearchParser(response_json).get_patient_matching_identifiers(
+                patient_identifier_type, patient_identifier)
+    except requests.RequestException as err:
+        # This message needs to be useful to an administrator because
+        # it will be shown in the Repeat Records report.
+        http_error_msg = (
+            'An error was when encountered searching patients: {}. Please check that the server is online. If '
+            'this is a new forwarding location, please check the server address in Data Forwarding, check that '
+            'the server URL includes the path to the API, and that the password is correct'.format(err)
+        )
+        raise err.__class__(http_error_msg)
 
 
 class UpdatePersonNameTask(WorkflowTask):
@@ -424,12 +399,13 @@ class UpdatePersonNameTask(WorkflowTask):
             if property_ in NAME_PROPERTIES and value_source.get_value(self.info)
         }
         if properties:
-            self.requests.post_with_raise(
+            self.requests.post(
                 '/ws/rest/v1/person/{person_uuid}/name/{name_uuid}'.format(
                     person_uuid=self.person_uuid,
                     name_uuid=self.name_uuid,
                 ),
                 json=properties,
+                raise_for_status=True,
             )
 
     def rollback(self):
@@ -444,12 +420,13 @@ class UpdatePersonNameTask(WorkflowTask):
             if property_ in NAME_PROPERTIES
         }
         if properties:
-            self.requests.post_with_raise(
+            self.requests.post(
                 '/ws/rest/v1/person/{person_uuid}/name/{name_uuid}'.format(
                     person_uuid=self.person_uuid,
                     name_uuid=self.name_uuid,
                 ),
                 json=properties,
+                raise_for_status=True,
             )
 
 
@@ -470,19 +447,21 @@ class CreatePersonAddressTask(WorkflowTask):
             if property_ in ADDRESS_PROPERTIES and value_source.get_value(self.info)
         }
         if properties:
-            response = self.requests.post_with_raise(
+            response = self.requests.post(
                 '/ws/rest/v1/person/{person_uuid}/address/'.format(person_uuid=self.person_uuid),
                 json=properties,
+                raise_for_status=True,
             )
             self.address_uuid = response.json()['uuid']
 
     def rollback(self):
         if self.address_uuid:
-            self.requests.delete_with_raise(
+            self.requests.delete(
                 '/ws/rest/v1/person/{person_uuid}/address/{address_uuid}'.format(
                     person_uuid=self.person_uuid,
                     address_uuid=self.address_uuid,
-                )
+                ),
+                raise_for_status=True,
             )
 
 
@@ -503,12 +482,13 @@ class UpdatePersonAddressTask(WorkflowTask):
             if property_ in ADDRESS_PROPERTIES and value_source.get_value(self.info)
         }
         if properties:
-            self.requests.post_with_raise(
+            self.requests.post(
                 '/ws/rest/v1/person/{person_uuid}/address/{address_uuid}'.format(
                     person_uuid=self.person_uuid,
                     address_uuid=self.address_uuid,
                 ),
                 json=properties,
+                raise_for_status=True,
             )
 
     def rollback(self):
@@ -518,12 +498,13 @@ class UpdatePersonAddressTask(WorkflowTask):
             if property_ in ADDRESS_PROPERTIES
         }
         if properties:
-            self.requests.post_with_raise(
+            self.requests.post(
                 '/ws/rest/v1/person/{person_uuid}/address/{address_uuid}'.format(
                     person_uuid=self.person_uuid,
                     address_uuid=self.address_uuid,
                 ),
                 json=properties,
+                raise_for_status=True,
             )
 
 
@@ -581,9 +562,10 @@ class UpdatePersonPropertiesTask(WorkflowTask):
             if property_ in PERSON_PROPERTIES and value_source.get_value(self.info)
         }
         if properties:
-            self.requests.post_with_raise(
+            self.requests.post(
                 '/ws/rest/v1/person/{person_uuid}'.format(person_uuid=self.person['uuid']),
-                json=properties
+                json=properties,
+                raise_for_status=True,
             )
 
     def rollback(self):
@@ -598,9 +580,10 @@ class UpdatePersonPropertiesTask(WorkflowTask):
             if property_ in PERSON_PROPERTIES
         }
         if properties:
-            self.requests.post_with_raise(
+            self.requests.post(
                 '/ws/rest/v1/person/{person_uuid}'.format(person_uuid=self.person['uuid']),
-                json=properties
+                json=properties,
+                raise_for_status=True,
             )
 
 
