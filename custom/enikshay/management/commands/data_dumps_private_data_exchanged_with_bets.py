@@ -72,14 +72,17 @@ class Command(BaseDataDump):
         elif column_name == "Status (Successfully sent to BETS or not)/Acknowledgement from BETS":
             return [{rr.get_id: rr.state} for rr in self.get_bets_repeat_records(case)]
         elif column_name == "Failure Description (if failed to send to BETS)":
-            return [{rr.get_id: rr.failure_reason} for rr in self.get_bets_repeat_records(case)]
+            return [{rr.get_id: rr.failure_reason}
+                    for rr in self.get_bets_repeat_records(case)
+                    if rr.failure_reason
+                    ]
         elif column_name == "Amount sent to BETS":
             return case.get_case_property('amount_approved') or case.get_case_property('amount_fulfilled')
         elif column_name == "Date when sent to BETS":
             all_attempts_datetime = {}
             for repeat_record in self.get_bets_repeat_records(case):
                 attempts = repeat_record.attempts
-                all_attempts_datetime[repeat_record.get_id] = [attempt.datetime for attempt in attempts]
+                all_attempts_datetime[repeat_record.get_id] = [str(attempt.datetime) for attempt in attempts]
             return all_attempts_datetime
         raise Exception("unknown custom column %s" % column_name)
 
