@@ -59,6 +59,8 @@ branches:
 #  - jr/ejs/sms-chat # Jordan 2/16
   - jls/externalize-js-sms-chat # Jenny 3/29
 #  - sms-chat+externalize-js-sms-chat  # ^^^ NH merged optimistically 30 Mar
+  - nh/orms/sync_identifiers  # NH --04-01
+  - nh/omrs/save_match_ids  # NH --04-01
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
