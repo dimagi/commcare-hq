@@ -9,7 +9,7 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.domain.decorators import _two_factor_required
 
 
-class TestDecorators(TestCase):
+class TestTwoFactorCheck(TestCase):
 
     def setUp(self):
         self.domain = create_domain("test_domain")
