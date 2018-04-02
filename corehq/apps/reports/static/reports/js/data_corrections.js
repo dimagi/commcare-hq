@@ -35,7 +35,7 @@ hqDefine("reports/js/data_corrections", function() {
             throw new Error("Keys disallowed in PropertyModel: " + reservedKeys.join(", "));
         }
 
-        var self = options;
+        var self = _.extend({}, options);
 
         self.name = options.name;
         self.value = ko.observable(options.value || '');
@@ -260,12 +260,15 @@ hqDefine("reports/js/data_corrections", function() {
     };
 
     var init = function($trigger, $modal, options) {
+        var model = undefined;
         if ($trigger.length && $modal.length) {
             $trigger.click(function() {
                 $modal.modal();
             });
-            $modal.koApplyBindings(new DataCorrectionsModel(options));
+            model = new DataCorrectionsModel(options);
+            $modal.koApplyBindings(model);
         }
+        return model;
     };
 
     return {
