@@ -119,16 +119,12 @@ class HQDeviceValidationForm(DeviceValidationForm):
             ),
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(
-<<<<<<< HEAD
                     _('Next'),
                     css_class='btn-primary',
                     type='submit',
                 ),
                 twbscrispy.StrictButton(
-                    _("Back"),
-=======
                     _('Back'),
->>>>>>> parent of ce9f3f003c... Revert "Pv/back btns 268514"
                     css_class='btn-default',
                     type='submit',
                     value='method',
@@ -163,7 +159,6 @@ class HQTwoFactorMethodForm(MethodForm):
                     _('Next'),
                     css_class='btn-primary',
                     type='submit',
-<<<<<<< HEAD
                 ),
                 twbscrispy.StrictButton(
                     _("Back"),
@@ -172,9 +167,6 @@ class HQTwoFactorMethodForm(MethodForm):
                     value='welcome',
                     name="wizard_goto_step",
                 ),
-=======
-                )
->>>>>>> parent of ce9f3f003c... Revert "Pv/back btns 268514"
             )
         )
 
@@ -196,16 +188,12 @@ class HQTOTPDeviceForm(TOTPDeviceForm):
             ),
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(
-<<<<<<< HEAD
                     _('Next'),
                     css_class='btn-primary',
                     type='submit',
                 ),
                 twbscrispy.StrictButton(
-                    _("Back"),
-=======
                     _('Back'),
->>>>>>> parent of ce9f3f003c... Revert "Pv/back btns 268514"
                     css_class='btn-default',
                     type='submit',
                     value='method',
@@ -244,16 +232,12 @@ class HQPhoneNumberForm(PhoneNumberForm):
             ),
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(
-<<<<<<< HEAD
                     _('Next'),
                     css_class='btn-primary',
                     type='submit',
                 ),
                 twbscrispy.StrictButton(
-                    _("Back"),
-=======
                     _('Back'),
->>>>>>> parent of ce9f3f003c... Revert "Pv/back btns 268514"
                     css_class='btn-default',
                     type='submit',
                     value='method',
